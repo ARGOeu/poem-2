@@ -1,11 +1,12 @@
 import React from 'react';
-import { render, waitFor, screen, within } from '@testing-library/react';
+import { render, waitFor, screen, within, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { Backend, WebApi } from '../DataManager';
 import { ReportsList, ReportsChange } from '../Reports';
 import { queryCache } from 'react-query';
+import { NotificationManager } from 'react-notifications';
 
 
 jest.mock('../DataManager', () => {
@@ -14,6 +15,10 @@ jest.mock('../DataManager', () => {
     WebApi: jest.fn()
   }
 })
+
+
+const mockChangeObject = jest.fn();
+const mockChangeReport = jest.fn();
 
 
 beforeEach(() => {
@@ -555,6 +560,8 @@ describe('Tests for reports listview', () => {
 })
 
 describe('Tests for reports changeview', () => {
+  jest.spyOn(NotificationManager, 'success');
+
   beforeAll(() => {
     WebApi.mockImplementation(() => {
       return {
@@ -563,13 +570,15 @@ describe('Tests for reports changeview', () => {
         fetchAggregationProfiles: () => Promise.resolve(mockAggregationProfiles),
         fetchOperationsProfiles: () => Promise.resolve(mockOperationsProfiles),
         fetchReportsTopologyTags: () => Promise.resolve(mockReportsTopologyTags),
-        fetchReportsTopologyGroups: () => Promise.resolve(mockReportsTopologyGroups)
+        fetchReportsTopologyGroups: () => Promise.resolve(mockReportsTopologyGroups),
+        changeReport: mockChangeReport
       }
     })
     Backend.mockImplementation(() => {
       return {
         isActiveSession: () => Promise.resolve(mockActiveSession),
-        fetchData: () => Promise.resolve(mockBackendReport)
+        fetchData: () => Promise.resolve(mockBackendReport),
+        changeObject: mockChangeObject
       }
     })
   })
@@ -643,5 +652,130 @@ describe('Tests for reports changeview', () => {
     expect(unknownThresholdField).toBeEnabled();
     expect(downtimeThresholdField.value).toBe('0.1');
     expect(downtimeThresholdField).toBeEnabled();
+
+    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
+  })
+
+  test('Test change report and save', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+    mockChangeReport.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 201, statusText: 'OK' })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+    })
+
+    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'More elaborate description of the critical report.' } })
+
+    fireEvent.change(screen.getByTestId('metricProfile'), { target: { value: 'OPS_MONITOR_RHEL7' } });
+    fireEvent.change(screen.getByTestId('aggregationProfile'), { target: { value: 'ops-mon-critical' } });
+
+    const card_groups = within(screen.getByTestId('card-group-of-groups'));
+    const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
+
+    fireEvent.click(card_groups.getByTestId(/remove-2/i));
+
+    fireEvent.click(card_endpoints.getByTestId(/remove-0/i));
+
+    fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '70' } });
+    fireEvent.change(screen.getByLabelText(/reliability/i), { target: { value: '80' } });
+    fireEvent.change(screen.getByLabelText(/uptime/i), { target: { value: '1.0' } });
+    fireEvent.change(screen.getByLabelText(/unknown/i), { target: { value: '0.2' } });
+    fireEvent.change(screen.getByLabelText(/downtime/i), { target: { value: '0.2' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeReport).toHaveBeenCalledWith({
+        id: 'yee9chel-5o4u-l4j4-410b-eipi3ohrah5i',
+        info: {
+          name: 'Critical',
+          description: 'More elaborate description of the critical report.'
+        },
+        thresholds: {
+          availability: 70,
+          reliability: 80,
+          uptime: 1.0,
+          unknown: 0.2,
+          downtime: 0.2
+        },
+        disabled: false,
+        profiles: [
+          {
+            id: 'il8aimoh-r2ov-05aq-z4l2-uko2moophi9s',
+            name: 'OPS_MONITOR_RHEL7',
+            type: 'metric'
+          },
+          {
+            id: 'ye3ioph5-1ryg-k4ea-e6eb-nei6zoupain2',
+            name: 'ops-mon-critical',
+            type: 'aggregation'
+          },
+          {
+            id: 'gahjohf1-xx39-e0c9-p0rj-choh6ahziz9e',
+            name: 'egi_ops',
+            type: 'operations'
+          }
+        ],
+        filter_tags: [
+          {
+            context: 'argo.group.filter.tags.array',
+            name: 'certification',
+            value: 'Certified'
+          },
+          {
+            context: 'argo.group.filter.tags.array',
+            name: 'infrastructure',
+            value: 'Production'
+          },
+          {
+            context: 'argo.endpoint.filter.tags',
+            name: 'monitored',
+            value: '1'
+          },
+          {
+            context: 'argo.endpoint.filter.tags.array',
+            name: 'scope',
+            value: 'EGI*'
+          }
+        ],
+        topology_schema: {
+          group: {
+            type: 'NGI',
+            group: {
+              type: 'SITES'
+            }
+          }
+        }
+      }, 'yee9chel-5o4u-l4j4-410b-eipi3ohrah5i')
+    })
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/reports/',
+        {
+          name: 'Critical',
+          description: 'More elaborate description of the critical report.',
+          groupname: 'TEST',
+          apiid: 'yee9chel-5o4u-l4j4-410b-eipi3ohrah5i'
+        }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Report successfully changed', 'Changed', 2000
+    )
   })
 })
