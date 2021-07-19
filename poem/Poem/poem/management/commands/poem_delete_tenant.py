@@ -1,6 +1,6 @@
 from Poem.tenants.models import Tenant
 from django.core.management.base import BaseCommand
-from tenant_schemas.utils import get_public_schema_name
+from django_tenants.utils import get_public_schema_name
 
 
 class Command(BaseCommand):
