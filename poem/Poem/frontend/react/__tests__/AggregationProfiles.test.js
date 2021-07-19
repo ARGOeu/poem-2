@@ -528,9 +528,9 @@ describe('Tests for aggregation profiles changeview', () => {
 
     const nameField = screen.getByTestId('name');
     const groupField = screen.getByTestId('groupname');
-    const metricOperation = screen.getByTestId('metric_operation').firstChild;
-    const aggrOperation = screen.getByTestId('profile_operation').firstChild;
-    const endpointGroup = screen.getByTestId('endpoint_group').firstChild;
+    const metricOperation = screen.getByTestId('metric_operation_col').firstChild;
+    const aggrOperation = screen.getByTestId('profile_operation_col').firstChild;
+    const endpointGroup = screen.getByTestId('endpoint_group_col').firstChild;
     const metricProfileRow = within(screen.getByTestId('metric_profile_row'));
     const metricProfileField = metricProfileRow.getByRole('combobox');
 
@@ -629,9 +629,9 @@ describe('Tests for aggregation profiles changeview', () => {
 
     const nameField = screen.getByTestId('name');
     const groupField = screen.getByTestId('groupname');
-    const metricOperation = screen.getByTestId('metric_operation').firstChild;
-    const aggrOperation = screen.getByTestId('profile_operation').firstChild;
-    const endpointGroup = screen.getByTestId('endpoint_group').firstChild;
+    const metricOperation = screen.getByTestId('metric_operation_col').firstChild;
+    const aggrOperation = screen.getByTestId('profile_operation_col').firstChild;
+    const endpointGroup = screen.getByTestId('endpoint_group_col').firstChild;
     const metricProfileRow = within(screen.getByTestId('metric_profile_row'));
     const metricProfileField = metricProfileRow.getByRole('textbox');
 
@@ -739,9 +739,9 @@ describe('Tests for aggregation profiles changeview', () => {
 
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
 
-    fireEvent.change(screen.getByTestId('metric_operation').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(screen.getByTestId('profile_operation').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(screen.getByTestId('endpoint_group').firstChild, { target: { value: 'sites' } });
+    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'OR' } });
+    fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'OR' } });
+    fireEvent.change(screen.getByTestId('endpoint_group_col').firstChild, { target: { value: 'sites' } });
     fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'FEDCLOUD' } })
 
     const card0 = within(screen.getByTestId('card-0'));
@@ -852,9 +852,9 @@ describe('Tests for aggregation profiles changeview', () => {
 
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
 
-    fireEvent.change(screen.getByTestId('metric_operation').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(screen.getByTestId('profile_operation').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(screen.getByTestId('endpoint_group').firstChild, { target: { value: 'sites' } });
+    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'OR' } });
+    fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'OR' } });
+    fireEvent.change(screen.getByTestId('endpoint_group_col').firstChild, { target: { value: 'sites' } });
     fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'FEDCLOUD' } })
 
     const card0 = within(screen.getByTestId('card-0'));
@@ -972,9 +972,9 @@ describe('Tests for aggregation profiles changeview', () => {
 
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
 
-    fireEvent.change(screen.getByTestId('metric_operation').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(screen.getByTestId('profile_operation').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(screen.getByTestId('endpoint_group').firstChild, { target: { value: 'sites' } });
+    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'OR' } });
+    fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'OR' } });
+    fireEvent.change(screen.getByTestId('endpoint_group_col').firstChild, { target: { value: 'sites' } });
     fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'FEDCLOUD' } })
 
     const card0 = within(screen.getByTestId('card-0'));
@@ -1143,9 +1143,9 @@ describe('Tests for aggregation profiles changeview', () => {
 
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
 
-    fireEvent.change(screen.getByTestId('metric_operation').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(screen.getByTestId('profile_operation').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(screen.getByTestId('endpoint_group').firstChild, { target: { value: 'sites' } });
+    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'OR' } });
+    fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'OR' } });
+    fireEvent.change(screen.getByTestId('endpoint_group_col').firstChild, { target: { value: 'sites' } });
     fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'FEDCLOUD' } })
 
     const card0 = within(screen.getByTestId('card-0'));
@@ -1314,9 +1314,9 @@ describe('Tests for aggregation profiles changeview', () => {
 
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
 
-    fireEvent.change(screen.getByTestId('metric_operation').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(screen.getByTestId('profile_operation').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(screen.getByTestId('endpoint_group').firstChild, { target: { value: 'sites' } });
+    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'OR' } });
+    fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'OR' } });
+    fireEvent.change(screen.getByTestId('endpoint_group_col').firstChild, { target: { value: 'sites' } });
     fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'FEDCLOUD' } })
 
     const card0 = within(screen.getByTestId('card-0'));
@@ -1705,9 +1705,9 @@ describe('Tests for aggregation profile addview', () => {
 
     const nameField = screen.getByTestId('name');
     const groupField = screen.getByTestId('groupname');
-    const metricOperation = screen.getByTestId('metric_operation').firstChild;
-    const aggrOperation = screen.getByTestId('profile_operation').firstChild;
-    const endpointGroup = screen.getByTestId('endpoint_group').firstChild;
+    const metricOperation = screen.getByTestId('metric_operation_col').firstChild;
+    const aggrOperation = screen.getByTestId('profile_operation_col').firstChild;
+    const endpointGroup = screen.getByTestId('endpoint_group_col').firstChild;
     const metricProfileRow = within(screen.getByTestId('metric_profile_row'));
     const metricProfileField = metricProfileRow.getByRole('combobox');
 
@@ -1766,9 +1766,9 @@ describe('Tests for aggregation profile addview', () => {
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
 
-    fireEvent.change(screen.getByTestId('metric_operation').firstChild, { target: { value: 'AND' } });
-    fireEvent.change(screen.getByTestId('profile_operation').firstChild, { target: { value: 'AND' } })
-    fireEvent.change(screen.getByTestId('endpoint_group').firstChild, { target: { value: 'servicegroups' } });
+    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'AND' } });
+    fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'AND' } })
+    fireEvent.change(screen.getByTestId('endpoint_group_col').firstChild, { target: { value: 'servicegroups' } });
     fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'ARGO_MON_CRITICAL' } })
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
@@ -1913,9 +1913,9 @@ describe('Tests for aggregation profile addview', () => {
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
 
-    fireEvent.change(screen.getByTestId('metric_operation').firstChild, { target: { value: 'AND' } });
-    fireEvent.change(screen.getByTestId('profile_operation').firstChild, { target: { value: 'AND' } })
-    fireEvent.change(screen.getByTestId('endpoint_group').firstChild, { target: { value: 'servicegroups' } });
+    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'AND' } });
+    fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'AND' } })
+    fireEvent.change(screen.getByTestId('endpoint_group_col').firstChild, { target: { value: 'servicegroups' } });
     fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'ARGO_MON_CRITICAL' } })
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
@@ -2014,9 +2014,9 @@ describe('Tests for aggregation profile addview', () => {
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
 
-    fireEvent.change(screen.getByTestId('metric_operation').firstChild, { target: { value: 'AND' } });
-    fireEvent.change(screen.getByTestId('profile_operation').firstChild, { target: { value: 'AND' } })
-    fireEvent.change(screen.getByTestId('endpoint_group').firstChild, { target: { value: 'servicegroups' } });
+    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'AND' } });
+    fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'AND' } })
+    fireEvent.change(screen.getByTestId('endpoint_group_col').firstChild, { target: { value: 'servicegroups' } });
     fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'ARGO_MON_CRITICAL' } })
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
@@ -2138,9 +2138,9 @@ describe('Tests for aggregation profile addview', () => {
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
 
-    fireEvent.change(screen.getByTestId('metric_operation').firstChild, { target: { value: 'AND' } });
-    fireEvent.change(screen.getByTestId('profile_operation').firstChild, { target: { value: 'AND' } })
-    fireEvent.change(screen.getByTestId('endpoint_group').firstChild, { target: { value: 'servicegroups' } });
+    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'AND' } });
+    fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'AND' } })
+    fireEvent.change(screen.getByTestId('endpoint_group_col').firstChild, { target: { value: 'servicegroups' } });
     fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'ARGO_MON_CRITICAL' } })
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
@@ -2295,9 +2295,9 @@ describe('Tests for aggregation profile addview', () => {
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
 
-    fireEvent.change(screen.getByTestId('metric_operation').firstChild, { target: { value: 'AND' } });
-    fireEvent.change(screen.getByTestId('profile_operation').firstChild, { target: { value: 'AND' } })
-    fireEvent.change(screen.getByTestId('endpoint_group').firstChild, { target: { value: 'servicegroups' } });
+    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'AND' } });
+    fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'AND' } })
+    fireEvent.change(screen.getByTestId('endpoint_group_col').firstChild, { target: { value: 'servicegroups' } });
     fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'ARGO_MON_CRITICAL' } })
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
@@ -2441,9 +2441,9 @@ describe('Test for aggregation profile version detail page', () => {
 
     const nameField = screen.getByTestId('name');
     const groupField = screen.getByTestId('groupname');
-    const metricOperation = screen.getByTestId('metric_operation').firstChild;
-    const aggrOperation = screen.getByTestId('profile_operation').firstChild;
-    const endpointGroup = screen.getByTestId('endpoint_group').firstChild;
+    const metricOperation = screen.getByTestId('metric_operation_col').firstChild;
+    const aggrOperation = screen.getByTestId('profile_operation_col').firstChild;
+    const endpointGroup = screen.getByTestId('endpoint_group_col').firstChild;
     const metricProfileRow = within(screen.getByTestId('metric_profile_row'));
     const metricProfileField = metricProfileRow.getByRole('textbox');
 
