@@ -72,10 +72,17 @@ class ListTenants(APIView):
 
     def delete(self, request, name):
         if request.tenant.schema_name == get_public_schema_name():
-            tenant = Tenant.objects.get(name=name)
-            tenant.delete()
+            if request.user.is_superuser:
+                tenant = Tenant.objects.get(name=name)
+                tenant.delete()
 
-            return Response(status=status.HTTP_204_NO_CONTENT)
+                return Response(status=status.HTTP_204_NO_CONTENT)
+
+            else:
+                return error_response(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail='You do not have permission to delete tenants.'
+                )
 
         else:
             return error_response(
