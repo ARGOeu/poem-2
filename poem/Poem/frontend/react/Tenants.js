@@ -19,6 +19,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faIdBadge } from '@fortawesome/free-solid-svg-icons';
 import { useQuery } from 'react-query';
+import Button from 'reactstrap/lib/Button';
 
 
 export const TenantList = (props) => {
@@ -227,6 +228,16 @@ export const TenantChange = (props) => {
                   </Col>
                 </Row>
               </FormGroup>
+              <>
+                <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                  <Button
+                    color='danger'
+                  >
+                    Delete
+                  </Button>
+                </div>
+                <div></div>
+              </>
             </Form>
           )}
         </Formik>

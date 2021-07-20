@@ -157,7 +157,7 @@ describe('Test tenants changeview', () => {
     expect(createdField).toHaveAttribute('readonly');
 
     expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
   })
 })
