@@ -74,10 +74,17 @@ class ListTenants(APIView):
         if name:
             if request.tenant.schema_name == get_public_schema_name():
                 if request.user.is_superuser:
-                    tenant = Tenant.objects.get(name=name)
-                    tenant.delete()
+                    try:
+                        tenant = Tenant.objects.get(name=name)
+                        tenant.delete()
 
-                    return Response(status=status.HTTP_204_NO_CONTENT)
+                        return Response(status=status.HTTP_204_NO_CONTENT)
+
+                    except Tenant.DoesNotExist:
+                        return error_response(
+                            status_code=status.HTTP_404_NOT_FOUND,
+                            detail='Tenant not found.'
+                        )
 
                 else:
                     return error_response(

@@ -4,13 +4,13 @@ from unittest.mock import patch
 from Poem.api import views_internal as views
 from Poem.tenants.models import Tenant
 from Poem.users.models import CustUser
+from django.db import connection
 from django_tenants.test.cases import TenantTestCase
 from django_tenants.test.client import TenantRequestFactory
 from django_tenants.utils import schema_context, get_public_schema_name, \
     get_tenant_domain_model
 from rest_framework import status
 from rest_framework.test import force_authenticate
-from django.db import connection
 
 
 def mock_tenant_resources(*args, **kwargs):
@@ -227,3 +227,13 @@ class ListTenantsTests(TenantTestCase):
         self.assertEqual(
             response.data['detail'], 'Tenant name should be specified.'
         )
+
+    def test_delete_nonexisting_tenant(self):
+        self.assertEqual(Tenant.objects.all().count(), 4)
+        request = self.factory.delete(self.url + 'nonexisting')
+        request.tenant = self.tenant3
+        force_authenticate(request, user=self.supertenant_superuser)
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(Tenant.objects.all().count(), 4)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['detail'], 'Tenant not found.')
