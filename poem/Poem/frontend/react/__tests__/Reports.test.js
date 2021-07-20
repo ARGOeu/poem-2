@@ -4,9 +4,10 @@ import '@testing-library/jest-dom/extend-expect';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { Backend, WebApi } from '../DataManager';
-import { ReportsList, ReportsChange } from '../Reports';
+import { ReportsList, ReportsChange, ReportsAdd } from '../Reports';
 import { queryCache } from 'react-query';
 import { NotificationManager } from 'react-notifications';
+import selectEvent from 'react-select-event';
 
 
 jest.mock('../DataManager', () => {
@@ -16,11 +17,14 @@ jest.mock('../DataManager', () => {
   }
 })
 
+jest.setTimeout(10000);
 
 const mockChangeObject = jest.fn();
 const mockChangeReport = jest.fn();
 const mockDeleteObject = jest.fn();
 const mockDeleteReport = jest.fn();
+const mockAddObject = jest.fn();
+const mockAddReport = jest.fn();
 
 
 beforeEach(() => {
@@ -514,6 +518,31 @@ function renderChangeView() {
         <Route
           path='/ui/reports/:name'
           render={ props => <ReportsChange
+            {...props}
+            webapitoken='token'
+            webapireports={webapireports}
+            webapimetric='https://mock.metric.com'
+            webapiaggregation='https://mock.aggr.com'
+            webapioperations='https://mock.operations.com'
+          /> }
+        />
+      </Router>
+    )
+  }
+}
+
+
+function renderAddView() {
+  const route = '/ui/reports/add';
+  const history = createMemoryHistory({ initialEntries: [route] });
+
+  return {
+    ...render(
+      <Router history={history}>
+        <Route
+          path='/ui/reports/add'
+          usergroups={['TEST', 'ARGO']}
+          render={ props => <ReportsAdd
             {...props}
             webapitoken='token'
             webapireports={webapireports}
@@ -1489,6 +1518,760 @@ describe('Tests for reports changeview', () => {
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Internal API error deleting report</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Internal API error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
+    )
+  })
+})
+
+
+describe('Tests for reports addview', () => {
+  jest.spyOn(NotificationManager, 'success');
+  jest.spyOn(NotificationManager, 'error');
+
+  beforeAll(() => {
+    WebApi.mockImplementation(() => {
+      return {
+        fetchMetricProfiles: () => Promise.resolve(mockMetricProfiles),
+        fetchAggregationProfiles: () => Promise.resolve(mockAggregationProfiles),
+        fetchOperationsProfiles: () => Promise.resolve(mockOperationsProfiles),
+        fetchReportsTopologyTags: () => Promise.resolve(mockReportsTopologyTags),
+        fetchReportsTopologyGroups: () => Promise.resolve(mockReportsTopologyGroups),
+        addReport: mockAddReport
+      }
+    })
+    Backend.mockImplementation(() => {
+      return {
+        isActiveSession: () => Promise.resolve(mockActiveSession),
+        addObject: mockAddObject
+      }
+    })
+  })
+
+  test('Test that page renders properly', async () => {
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+    })
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const disabledField = screen.getByLabelText(/disabled/i);
+    const descriptionField = screen.getByLabelText(/description/i);
+    const groupField = screen.getByTestId('groupname');
+    const metricProfileField = screen.getByTestId('metricProfile')
+    const aggrProfileField = screen.getByTestId('aggregationProfile');
+    const operationsProfileField = screen.getByTestId('operationsProfile')
+    const topologyTypeField = screen.getByTestId('topologyType');
+    const availabilityThresholdField = screen.getByLabelText(/availability/i);
+    const reliabilityThresholdField = screen.getByLabelText(/reliability/i);
+    const uptimeThresholdField = screen.getByLabelText(/uptime/i);
+    const unknownThresholdField = screen.getByLabelText(/unknown/i);
+    const downtimeThresholdField = screen.getByLabelText(/downtime/i);
+
+    expect(nameField.value).toBe('');
+    expect(nameField).toBeEnabled();
+    expect(disabledField.checked).toBeFalsy();
+    expect(descriptionField.value).toBe('');
+    expect(descriptionField).toBeEnabled();
+    expect(groupField.value).toBe('');
+    expect(groupField).toBeEnabled();
+
+    expect(metricProfileField.value).toBe('');
+    expect(metricProfileField).toBeEnabled();
+    expect(aggrProfileField.value).toBe('');
+    expect(aggrProfileField).toBeEnabled();
+    expect(operationsProfileField.value).toBe('');
+    expect(operationsProfileField).toBeEnabled();
+
+    expect(topologyTypeField.value).toBe('');
+
+    expect(screen.getAllByTestId(/card/i)).toHaveLength(2);
+    const card_groups = within(screen.getByTestId('card-group-of-groups'));
+    const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
+
+    expect(card_groups.getAllByRole('textbox')).toHaveLength(2);
+    expect(card_groups.queryAllByTestId(/remove/i)).toHaveLength(0);
+    expect(card_groups.getByRole('button', { name: /add new/i })).toBeInTheDocument();
+    expect(card_groups.getAllByText(/search/i)).toHaveLength(2);
+
+    expect(card_endpoints.queryAllByRole('textbox')).toHaveLength(0);
+    expect(card_endpoints.getByRole('button', { name: /add new/i })).toBeInTheDocument();
+
+    expect(availabilityThresholdField.value).toBe('');
+    expect(availabilityThresholdField).toBeEnabled();
+    expect(reliabilityThresholdField.value).toBe('');
+    expect(reliabilityThresholdField).toBeEnabled();
+    expect(uptimeThresholdField.value).toBe('');
+    expect(uptimeThresholdField).toBeEnabled();
+    expect(unknownThresholdField.value).toBe('');
+    expect(unknownThresholdField).toBeEnabled();
+    expect(downtimeThresholdField.value).toBe('');
+    expect(downtimeThresholdField).toBeEnabled();
+
+    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
+  })
+
+  test('Test successfully adding a report', async () => {
+    mockAddReport.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({
+          status: {
+            message: 'Report Created',
+            code: "200"
+          },
+          data: {
+            id: 'Ohs2duRu-tU6N-mF3Q-jV8F-Wiush8ieR7me',
+            links: {
+              self: 'string'
+            }
+          }
+        }),
+        ok: true,
+        status: 200,
+        statusText: 'Report Created'
+      })
+    )
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 201, statusText: 'CREATED' })
+    )
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'OPS-MONITOR' } });
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'A/R report for Operations services.' } });
+    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
+
+    fireEvent.change(screen.getByTestId('metricProfile'), { target: { value: 'OPS_MONITOR_RHEL7' } });
+    fireEvent.change(screen.getByTestId('aggregationProfile'), { target: { value: 'ops-mon-critical' } });
+    fireEvent.change(screen.getByTestId('operationsProfile'), { target: { value: 'egi_ops' } })
+
+    fireEvent.change(screen.getByTestId('topologyType'), { target: { value: 'Sites' } })
+
+    const card_groups = within(screen.getByTestId('card-group-of-groups'));
+    const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
+
+    fireEvent.click(card_groups.getByRole('button', { name: /add new/i }));
+    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'certification');
+    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'Certified');
+
+    fireEvent.click(card_endpoints.getByRole('button', { name: /add new/i }));
+    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'monitored');
+    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'yes');
+
+    fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '80' } });
+    fireEvent.change(screen.getByLabelText(/reliability/i), { target: { value: '85' } });
+    fireEvent.change(screen.getByLabelText(/uptime/i), { target: { value: '0.8' } });
+    fireEvent.change(screen.getByLabelText(/unknown/i), { target: { value: '0.1' } });
+    fireEvent.change(screen.getByLabelText(/downtime/i), { target: { value: '0.1' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddReport).toHaveBeenCalledWith({
+        info: {
+          name: 'OPS-MONITOR',
+          description: 'A/R report for Operations services.'
+        },
+        thresholds: {
+          availability: 80,
+          reliability: 85,
+          uptime: 0.8,
+          unknown: 0.1,
+          downtime: 0.1
+        },
+        disabled: false,
+        profiles: [
+          {
+            id: 'il8aimoh-r2ov-05aq-z4l2-uko2moophi9s',
+            name: 'OPS_MONITOR_RHEL7',
+            type: 'metric'
+          },
+          {
+            id: 'ye3ioph5-1ryg-k4ea-e6eb-nei6zoupain2',
+            name: 'ops-mon-critical',
+            type: 'aggregation'
+          },
+          {
+            id: 'gahjohf1-xx39-e0c9-p0rj-choh6ahziz9e',
+            name: 'egi_ops',
+            type: 'operations'
+          }
+        ],
+        filter_tags: [
+          {
+            context: 'argo.group.filter.tags.array',
+            name: 'certification',
+            value: 'Certified'
+          },
+          {
+            context: 'argo.endpoint.filter.tags.array',
+            name: 'monitored',
+            value: 'yes'
+          }
+        ],
+        topology_schema: {
+          group: {
+            type: 'NGI',
+            group: {
+              type: 'SITES'
+            }
+          }
+        }
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/reports/',
+        {
+          apiid: 'Ohs2duRu-tU6N-mF3Q-jV8F-Wiush8ieR7me',
+          name: 'OPS-MONITOR',
+          groupname: 'ARGO',
+          description: 'A/R report for Operations services.'
+        }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Report successfully added', 'Added', 2000
+    )
+  })
+
+  test('Test error adding a report in web api with error message', async () => {
+    mockAddReport.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({
+          code: '406',
+          message: 'Content Not acceptable',
+          errors: [
+            {
+              message: 'Content Not acceptable',
+              code: '406',
+              details: 'There has been an error.'
+            }
+          ],
+          details: 'There has been an error.'
+        }),
+        status: 406,
+        statusText: 'Content Not acceptable'
+      })
+    )
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'OPS-MONITOR' } });
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'A/R report for Operations services.' } });
+    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
+
+    fireEvent.change(screen.getByTestId('metricProfile'), { target: { value: 'OPS_MONITOR_RHEL7' } });
+    fireEvent.change(screen.getByTestId('aggregationProfile'), { target: { value: 'ops-mon-critical' } });
+    fireEvent.change(screen.getByTestId('operationsProfile'), { target: { value: 'egi_ops' } })
+
+    fireEvent.change(screen.getByTestId('topologyType'), { target: { value: 'Sites' } })
+
+    const card_groups = within(screen.getByTestId('card-group-of-groups'));
+    const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
+
+    fireEvent.click(card_groups.getByRole('button', { name: /add new/i }));
+    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'certification');
+    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'Certified');
+
+    fireEvent.click(card_endpoints.getByRole('button', { name: /add new/i }));
+    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'monitored');
+    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'yes');
+
+    fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '80' } });
+    fireEvent.change(screen.getByLabelText(/reliability/i), { target: { value: '85' } });
+    fireEvent.change(screen.getByLabelText(/uptime/i), { target: { value: '0.8' } });
+    fireEvent.change(screen.getByLabelText(/unknown/i), { target: { value: '0.1' } });
+    fireEvent.change(screen.getByLabelText(/downtime/i), { target: { value: '0.1' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddReport).toHaveBeenCalledWith({
+        info: {
+          name: 'OPS-MONITOR',
+          description: 'A/R report for Operations services.'
+        },
+        thresholds: {
+          availability: 80,
+          reliability: 85,
+          uptime: 0.8,
+          unknown: 0.1,
+          downtime: 0.1
+        },
+        disabled: false,
+        profiles: [
+          {
+            id: 'il8aimoh-r2ov-05aq-z4l2-uko2moophi9s',
+            name: 'OPS_MONITOR_RHEL7',
+            type: 'metric'
+          },
+          {
+            id: 'ye3ioph5-1ryg-k4ea-e6eb-nei6zoupain2',
+            name: 'ops-mon-critical',
+            type: 'aggregation'
+          },
+          {
+            id: 'gahjohf1-xx39-e0c9-p0rj-choh6ahziz9e',
+            name: 'egi_ops',
+            type: 'operations'
+          }
+        ],
+        filter_tags: [
+          {
+            context: 'argo.group.filter.tags.array',
+            name: 'certification',
+            value: 'Certified'
+          },
+          {
+            context: 'argo.endpoint.filter.tags.array',
+            name: 'monitored',
+            value: 'yes'
+          }
+        ],
+        topology_schema: {
+          group: {
+            type: 'NGI',
+            group: {
+              type: 'SITES'
+            }
+          }
+        }
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockAddObject).not.toHaveBeenCalled();
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>There has been an error.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Web API error: 406 Content Not acceptable',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error adding a report in web api without error message', async () => {
+    mockAddReport.mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    )
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'OPS-MONITOR' } });
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'A/R report for Operations services.' } });
+    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
+
+    fireEvent.change(screen.getByTestId('metricProfile'), { target: { value: 'OPS_MONITOR_RHEL7' } });
+    fireEvent.change(screen.getByTestId('aggregationProfile'), { target: { value: 'ops-mon-critical' } });
+    fireEvent.change(screen.getByTestId('operationsProfile'), { target: { value: 'egi_ops' } })
+
+    fireEvent.change(screen.getByTestId('topologyType'), { target: { value: 'Sites' } })
+
+    const card_groups = within(screen.getByTestId('card-group-of-groups'));
+    const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
+
+    fireEvent.click(card_groups.getByRole('button', { name: /add new/i }));
+    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'certification');
+    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'Certified');
+
+    fireEvent.click(card_endpoints.getByRole('button', { name: /add new/i }));
+    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'monitored');
+    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'yes');
+
+    fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '80' } });
+    fireEvent.change(screen.getByLabelText(/reliability/i), { target: { value: '85' } });
+    fireEvent.change(screen.getByLabelText(/uptime/i), { target: { value: '0.8' } });
+    fireEvent.change(screen.getByLabelText(/unknown/i), { target: { value: '0.1' } });
+    fireEvent.change(screen.getByLabelText(/downtime/i), { target: { value: '0.1' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddReport).toHaveBeenCalledWith({
+        info: {
+          name: 'OPS-MONITOR',
+          description: 'A/R report for Operations services.'
+        },
+        thresholds: {
+          availability: 80,
+          reliability: 85,
+          uptime: 0.8,
+          unknown: 0.1,
+          downtime: 0.1
+        },
+        disabled: false,
+        profiles: [
+          {
+            id: 'il8aimoh-r2ov-05aq-z4l2-uko2moophi9s',
+            name: 'OPS_MONITOR_RHEL7',
+            type: 'metric'
+          },
+          {
+            id: 'ye3ioph5-1ryg-k4ea-e6eb-nei6zoupain2',
+            name: 'ops-mon-critical',
+            type: 'aggregation'
+          },
+          {
+            id: 'gahjohf1-xx39-e0c9-p0rj-choh6ahziz9e',
+            name: 'egi_ops',
+            type: 'operations'
+          }
+        ],
+        filter_tags: [
+          {
+            context: 'argo.group.filter.tags.array',
+            name: 'certification',
+            value: 'Certified'
+          },
+          {
+            context: 'argo.endpoint.filter.tags.array',
+            name: 'monitored',
+            value: 'yes'
+          }
+        ],
+        topology_schema: {
+          group: {
+            type: 'NGI',
+            group: {
+              type: 'SITES'
+            }
+          }
+        }
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockAddObject).not.toHaveBeenCalled();
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Web API error adding report</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Web API error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error adding a report in internal api with error message', async () => {
+    mockAddReport.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({
+          status: {
+            message: 'Report Created',
+            code: "200"
+          },
+          data: {
+            id: 'Ohs2duRu-tU6N-mF3Q-jV8F-Wiush8ieR7me',
+            links: {
+              self: 'string'
+            }
+          }
+        }),
+        ok: true,
+        status: 200,
+        statusText: 'Report Created'
+      })
+    )
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({ detail: 'There has been an error.' }),
+        status: 400,
+        statusText: 'BAD REQUEST'
+      })
+    )
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'OPS-MONITOR' } });
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'A/R report for Operations services.' } });
+    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
+
+    fireEvent.change(screen.getByTestId('metricProfile'), { target: { value: 'OPS_MONITOR_RHEL7' } });
+    fireEvent.change(screen.getByTestId('aggregationProfile'), { target: { value: 'ops-mon-critical' } });
+    fireEvent.change(screen.getByTestId('operationsProfile'), { target: { value: 'egi_ops' } })
+
+    fireEvent.change(screen.getByTestId('topologyType'), { target: { value: 'Sites' } })
+
+    const card_groups = within(screen.getByTestId('card-group-of-groups'));
+    const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
+
+    fireEvent.click(card_groups.getByRole('button', { name: /add new/i }));
+    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'certification');
+    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'Certified');
+
+    fireEvent.click(card_endpoints.getByRole('button', { name: /add new/i }));
+    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'monitored');
+    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'yes');
+
+    fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '80' } });
+    fireEvent.change(screen.getByLabelText(/reliability/i), { target: { value: '85' } });
+    fireEvent.change(screen.getByLabelText(/uptime/i), { target: { value: '0.8' } });
+    fireEvent.change(screen.getByLabelText(/unknown/i), { target: { value: '0.1' } });
+    fireEvent.change(screen.getByLabelText(/downtime/i), { target: { value: '0.1' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddReport).toHaveBeenCalledWith({
+        info: {
+          name: 'OPS-MONITOR',
+          description: 'A/R report for Operations services.'
+        },
+        thresholds: {
+          availability: 80,
+          reliability: 85,
+          uptime: 0.8,
+          unknown: 0.1,
+          downtime: 0.1
+        },
+        disabled: false,
+        profiles: [
+          {
+            id: 'il8aimoh-r2ov-05aq-z4l2-uko2moophi9s',
+            name: 'OPS_MONITOR_RHEL7',
+            type: 'metric'
+          },
+          {
+            id: 'ye3ioph5-1ryg-k4ea-e6eb-nei6zoupain2',
+            name: 'ops-mon-critical',
+            type: 'aggregation'
+          },
+          {
+            id: 'gahjohf1-xx39-e0c9-p0rj-choh6ahziz9e',
+            name: 'egi_ops',
+            type: 'operations'
+          }
+        ],
+        filter_tags: [
+          {
+            context: 'argo.group.filter.tags.array',
+            name: 'certification',
+            value: 'Certified'
+          },
+          {
+            context: 'argo.endpoint.filter.tags.array',
+            name: 'monitored',
+            value: 'yes'
+          }
+        ],
+        topology_schema: {
+          group: {
+            type: 'NGI',
+            group: {
+              type: 'SITES'
+            }
+          }
+        }
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/reports/',
+        {
+          apiid: 'Ohs2duRu-tU6N-mF3Q-jV8F-Wiush8ieR7me',
+          name: 'OPS-MONITOR',
+          groupname: 'ARGO',
+          description: 'A/R report for Operations services.'
+        }
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>There has been an error.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Internal API error: 400 BAD REQUEST',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error adding a report in internal api without error message', async () => {
+    mockAddReport.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({
+          status: {
+            message: 'Report Created',
+            code: "200"
+          },
+          data: {
+            id: 'Ohs2duRu-tU6N-mF3Q-jV8F-Wiush8ieR7me',
+            links: {
+              self: 'string'
+            }
+          }
+        }),
+        ok: true,
+        status: 200,
+        statusText: 'Report Created'
+      })
+    )
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    )
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'OPS-MONITOR' } });
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'A/R report for Operations services.' } });
+    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
+
+    fireEvent.change(screen.getByTestId('metricProfile'), { target: { value: 'OPS_MONITOR_RHEL7' } });
+    fireEvent.change(screen.getByTestId('aggregationProfile'), { target: { value: 'ops-mon-critical' } });
+    fireEvent.change(screen.getByTestId('operationsProfile'), { target: { value: 'egi_ops' } })
+
+    fireEvent.change(screen.getByTestId('topologyType'), { target: { value: 'Sites' } })
+
+    const card_groups = within(screen.getByTestId('card-group-of-groups'));
+    const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
+
+    fireEvent.click(card_groups.getByRole('button', { name: /add new/i }));
+    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'certification');
+    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'Certified');
+
+    fireEvent.click(card_endpoints.getByRole('button', { name: /add new/i }));
+    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'monitored');
+    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'yes');
+
+    fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '80' } });
+    fireEvent.change(screen.getByLabelText(/reliability/i), { target: { value: '85' } });
+    fireEvent.change(screen.getByLabelText(/uptime/i), { target: { value: '0.8' } });
+    fireEvent.change(screen.getByLabelText(/unknown/i), { target: { value: '0.1' } });
+    fireEvent.change(screen.getByLabelText(/downtime/i), { target: { value: '0.1' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddReport).toHaveBeenCalledWith({
+        info: {
+          name: 'OPS-MONITOR',
+          description: 'A/R report for Operations services.'
+        },
+        thresholds: {
+          availability: 80,
+          reliability: 85,
+          uptime: 0.8,
+          unknown: 0.1,
+          downtime: 0.1
+        },
+        disabled: false,
+        profiles: [
+          {
+            id: 'il8aimoh-r2ov-05aq-z4l2-uko2moophi9s',
+            name: 'OPS_MONITOR_RHEL7',
+            type: 'metric'
+          },
+          {
+            id: 'ye3ioph5-1ryg-k4ea-e6eb-nei6zoupain2',
+            name: 'ops-mon-critical',
+            type: 'aggregation'
+          },
+          {
+            id: 'gahjohf1-xx39-e0c9-p0rj-choh6ahziz9e',
+            name: 'egi_ops',
+            type: 'operations'
+          }
+        ],
+        filter_tags: [
+          {
+            context: 'argo.group.filter.tags.array',
+            name: 'certification',
+            value: 'Certified'
+          },
+          {
+            context: 'argo.endpoint.filter.tags.array',
+            name: 'monitored',
+            value: 'yes'
+          }
+        ],
+        topology_schema: {
+          group: {
+            type: 'NGI',
+            group: {
+              type: 'SITES'
+            }
+          }
+        }
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/reports/',
+        {
+          apiid: 'Ohs2duRu-tU6N-mF3Q-jV8F-Wiush8ieR7me',
+          name: 'OPS-MONITOR',
+          groupname: 'ARGO',
+          description: 'A/R report for Operations services.'
+        }
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Internal API error adding report</p>
         <p>Click to dismiss.</p>
       </div>,
       'Internal API error: 500 SERVER ERROR',

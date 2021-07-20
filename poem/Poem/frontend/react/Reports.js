@@ -1442,17 +1442,22 @@ export const ReportsComponent = (props) => {
               {
                 (write_perm && crud) &&
                 <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                  <Button
-                    color="danger"
-                    onClick={() => {
-                      setModalMsg('Are you sure you want to delete Report?')
-                      setModalTitle('Delete report')
-                      setAreYouSureModal(!areYouSureModal);
-                      setFormikValues(props.values)
-                      setOnYes('delete')
-                    }}>
-                    Delete
-                  </Button>
+                  {
+                    !addview ?
+                      <Button
+                        color="danger"
+                        onClick={() => {
+                          setModalMsg('Are you sure you want to delete Report?')
+                          setModalTitle('Delete report')
+                          setAreYouSureModal(!areYouSureModal);
+                          setFormikValues(props.values)
+                          setOnYes('delete')
+                        }}>
+                        Delete
+                      </Button>
+                    :
+                      <div></div>
+                  }
                   <Button color="success" id="submit-button" type="submit">Save</Button>
                 </div>
               }
