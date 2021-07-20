@@ -209,8 +209,21 @@ class ListTenantsTests(TenantTestCase):
         request.tenant = self.tenant3
         force_authenticate(request, user=self.supertenant_user)
         response = self.view(request, 'TEST1')
+        self.assertEqual(Tenant.objects.all().count(), 4)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(
             response.data['detail'],
             'You do not have permission to delete tenants.'
+        )
+
+    def test_delete_tenant_without_name(self):
+        self.assertEqual(Tenant.objects.all().count(), 4)
+        request = self.factory.delete(self.url)
+        request.tenant = self.tenant3
+        force_authenticate(request, user=self.supertenant_superuser)
+        response = self.view(request)
+        self.assertEqual(Tenant.objects.all().count(), 4)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data['detail'], 'Tenant name should be specified.'
         )
