@@ -10,6 +10,7 @@ from django_tenants.utils import schema_context, get_public_schema_name, \
     get_tenant_domain_model
 from rest_framework import status
 from rest_framework.test import force_authenticate
+from django.db import connection
 
 
 def mock_tenant_resources(*args, **kwargs):
@@ -59,6 +60,9 @@ class ListTenantsTests(TenantTestCase):
             )
             get_tenant_domain_model().objects.create(
                 domain='domain.url', tenant=self.tenant3, is_primary=True
+            )
+            self.supertenant_user = CustUser.objects.create_user(
+                username='poem', is_superuser=True
             )
 
     def test_get_tenants_no_auth(self):
@@ -169,3 +173,31 @@ class ListTenantsTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data['detail'], 'Tenant not found.')
         self.assertFalse(mock_resources.called)
+
+    def test_delete_tenant(self):
+        self.assertEqual(Tenant.objects.all().count(), 4)
+        request = self.factory.delete(self.url + 'TEST1')
+        request.tenant = self.tenant3
+        connection.set_schema_to_public()
+        force_authenticate(request, user=self.supertenant_user)
+        response = self.view(request, 'TEST1')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Tenant.objects.all().count(), 3)
+        self.assertRaises(
+            Tenant.DoesNotExist,
+            Tenant.objects.get,
+            name='TEST1'
+        )
+
+    def test_delete_tenant_when_not_public_schema(self):
+        self.assertEqual(Tenant.objects.all().count(), 4)
+        request = self.factory.delete(self.url + 'TEST1')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'TEST1')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            response.data['detail'],
+            'Cannot delete tenant outside public schema.'
+        )
+        self.assertEqual(Tenant.objects.all().count(), 4)
