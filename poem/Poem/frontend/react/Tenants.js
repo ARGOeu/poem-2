@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Backend } from './DataManager';
-import { LoadingAnim, ErrorComponent, BaseArgoView, ParagraphTitle } from './UIElements';
+import { LoadingAnim, ErrorComponent, BaseArgoView, ParagraphTitle, NotifyError, NotifyOk } from './UIElements';
 import { Formik, Form, Field } from 'formik';
 import {
   FormGroup,
@@ -14,12 +14,12 @@ import {
   CardFooter,
   Badge,
   CardTitle,
-  CardSubtitle
+  CardSubtitle,
+  Button
 } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faIdBadge } from '@fortawesome/free-solid-svg-icons';
 import { useQuery } from 'react-query';
-import Button from 'reactstrap/lib/Button';
 
 
 export const TenantList = (props) => {
@@ -115,10 +115,15 @@ export const TenantChange = (props) => {
   const [tenant, setTenant] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [areYouSureModal, setAreYouSureModal] = useState(false);
+  const [modalTitle, setModalTitle] = useState(undefined);
+  const [modalMsg, setModalMsg] = useState(undefined);
 
   const name = props.match.params.name;
   const location = props.location;
+  const history = props.history;
 
+  const backend = new Backend();
 
   useEffect(() => {
     const backend = new Backend();
@@ -137,6 +142,33 @@ export const TenantChange = (props) => {
     fetchData();
   }, [name]);
 
+  function toggleAreYouSure() {
+    setAreYouSureModal(!areYouSureModal);
+  }
+
+  async function doDelete() {
+    let response = await backend.deleteObject(`/api/v2/internal/tenants/${name.trim().split(' ').join('_')}`);
+    if (!response.ok) {
+      let msg = '';
+      try {
+        let json = await response.json();
+        msg = json.detail;
+      } catch (err) {
+        msg = 'Error deleting tenant.';
+      }
+      NotifyError({
+        title: `Error: ${response.status} ${response.statusText}`,
+        msg: msg
+      })
+    } else {
+      NotifyOk({
+        msg: 'Tenant successfully deleted',
+        title: 'Deleted',
+        callback: () => history.push('/ui/tenants')
+      });
+    }
+  }
+
   if (loading)
     return (<LoadingAnim/>);
 
@@ -150,6 +182,14 @@ export const TenantChange = (props) => {
         location={location}
         history={false}
         infoview={true}
+        modal={true}
+        state={{
+          areYouSureModal,
+          modalTitle,
+          modalMsg,
+          modalFunc: doDelete
+        }}
+        toggle={toggleAreYouSure}
       >
         <Formik
           initialValues = {{
@@ -232,6 +272,11 @@ export const TenantChange = (props) => {
                 <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
                   <Button
                     color='danger'
+                    onClick={() => {
+                      setModalMsg('Are you sure you want to delete tenant?');
+                      setModalTitle('Delete tenant');
+                      toggleAreYouSure();
+                    }}
                   >
                     Delete
                   </Button>
