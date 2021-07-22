@@ -70,6 +70,40 @@ class ListTenants(APIView):
 
         return Response(results)
 
+    def delete(self, request, name=None):
+        if name:
+            if request.tenant.schema_name == get_public_schema_name():
+                if request.user.is_superuser:
+                    try:
+                        tenant = Tenant.objects.get(name=name)
+                        tenant.delete()
+
+                        return Response(status=status.HTTP_204_NO_CONTENT)
+
+                    except Tenant.DoesNotExist:
+                        return error_response(
+                            status_code=status.HTTP_404_NOT_FOUND,
+                            detail='Tenant not found.'
+                        )
+
+                else:
+                    return error_response(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail='You do not have permission to delete tenants.'
+                    )
+
+            else:
+                return error_response(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail='Cannot delete tenant outside public schema.'
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='Tenant name should be specified.'
+            )
+
 
 class ListPublicTenants(ListTenants):
     authentication_classes = ()

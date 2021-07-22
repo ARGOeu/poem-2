@@ -1,10 +1,11 @@
 import React from 'react';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { TenantChange, TenantList } from '../Tenants';
 import { Backend } from '../DataManager';
+import { NotificationManager } from 'react-notifications';
 
 
 jest.mock('../DataManager', () => {
@@ -12,6 +13,8 @@ jest.mock('../DataManager', () => {
     Backend: jest.fn()
   }
 })
+
+const mockDeleteObject = jest.fn();
 
 
 beforeEach(() => {
@@ -120,6 +123,9 @@ describe('Test list of tenants', () => {
 
 
 describe('Test tenants changeview', () => {
+  jest.spyOn(NotificationManager, 'success');
+  jest.spyOn(NotificationManager, 'error');
+
   beforeAll(() => {
     Backend.mockImplementation(() => {
       return {
@@ -128,7 +134,8 @@ describe('Test tenants changeview', () => {
             case '/api/v2/internal/tenants/TENANT1':
               return Promise.resolve(mockTenants[0])
           }
-        }
+        },
+        deleteObject: mockDeleteObject
       }
     })
   })
@@ -157,7 +164,107 @@ describe('Test tenants changeview', () => {
     expect(createdField).toHaveAttribute('readonly');
 
     expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
+  })
+
+  test('Test deleting tenant', async () => {
+    mockDeleteObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 204, statusText: 'NO CONTENT' })
+    )
+
+    renderTenantChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /tenant/i }).textContent).toBe('Tenant details');
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'delete' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        '/api/v2/internal/tenants/TENANT1'
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Tenant successfully deleted', 'Deleted', 2000
+    )
+  })
+
+  test('Test error deleting tenant with error message', async () => {
+    mockDeleteObject.mockReturnValueOnce(
+      Promise.resolve({
+        json: () => Promise.resolve({ detail: 'You do not have permission to delete tenants.' }),
+        status: 401,
+        statusText: 'UNAUTHORIZED'
+      })
+    )
+
+    renderTenantChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /tenant/i }).textContent).toBe('Tenant details');
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'delete' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        '/api/v2/internal/tenants/TENANT1'
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>You do not have permission to delete tenants.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 401 UNAUTHORIZED',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error deleting tenant without error message', async () => {
+    mockDeleteObject.mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    )
+
+    renderTenantChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /tenant/i }).textContent).toBe('Tenant details');
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'delete' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        '/api/v2/internal/tenants/TENANT1'
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error deleting tenant.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error: 500 SERVER ERROR',
+      0,
+      expect.any(Function)
+    )
   })
 })
