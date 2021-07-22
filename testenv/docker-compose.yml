@@ -1,0 +1,16 @@
+version: '2.2'
+services:
+  web-poem-tests:
+    image: poem-react-tests
+    container_name: poem-react-tests
+    hostname: poem-react-test
+    tty: true
+    stdin_open: true
+    depends_on:
+      - db-poem-tests
+    volumes:
+      - /dev/log:/dev/log
+      - /etc/localtime:/etc/localtime:ro
+  db-poem-tests:
+    container_name: poem-react-tests-postgres10
+    image: postgres:10

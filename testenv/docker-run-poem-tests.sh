@@ -10,6 +10,7 @@ docker run \
 -v $HOME:/mnt/ \
 -v $HOME/.ssh:/home/user/.ssh/ \
 -v /tmp/.X11-unix:/tmp/.X11-unix \
+-v /home/daniel/my_work/srce/git.poem-react/poem-react/:/home/user/poem-react-source \
 -h docker-centos7 \
 --net host \
 --name poem-react-tests \

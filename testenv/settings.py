@@ -1,17 +1,12 @@
 # Django settings
-from os import path as os_path
-from os import environ
+import os
 from configparser import ConfigParser, NoSectionError
-from distutils.sysconfig import get_python_lib
 from django.core.exceptions import ImproperlyConfigured
-import saml2
 
-VENV = '/home/pyvenv/poem'
-APP_PATH = os_path.abspath(os_path.split(__file__)[0])
-PROJECT_PATH = os_path.abspath(os_path.join(APP_PATH, '..'))
-CONFIG_FILE = '{}/etc/poem/poem.conf'.format(VENV)
-LOG_CONFIG = '{}/etc/poem/poem_logging.conf'.format(VENV)
-SAML_CONFIG_FILE = '{}/etc/poem/saml2.conf'.format(VENV)
+VENV = '.'
+APP_PATH = os.path.abspath(os.path.split(__file__)[0])
+CONFIG_FILE = '{}/poem.conf'.format(VENV)
+LOG_CONFIG = '{}/poem_logging.conf'.format(VENV)
 
 try:
     config = ConfigParser()
@@ -20,48 +15,44 @@ try:
         raise ImproperlyConfigured('Unable to parse config file %s' % CONFIG_FILE)
 
     # General
-    DEBUG = bool(config.get('GENERAL','debug'))
-    POEM_NAMESPACE = config.get('GENERAL', 'namespace')
+    DEBUG = bool(config.getboolean('GENERAL', 'debug'))
     TIME_ZONE = config.get('GENERAL', 'timezone')
-    SAMLLOGINSTRING = config.get('GENERAL', 'samlloginstring')
-
-    SUPERUSER_NAME = config.get('SUPERUSER', 'name')
-    SUPERUSER_PASS = config.get('SUPERUSER', 'password')
-    SUPERUSER_EMAIL = config.get('SUPERUSER', 'email')
-
-    if not all([SUPERUSER_EMAIL, SUPERUSER_NAME, SUPERUSER_PASS]):
-        raise ImproperlyConfigured('Missing superuser value in config file %s' % CONFIG_FILE)
 
     DBNAME = config.get('DATABASE', 'name')
     DBUSER = config.get('DATABASE', 'user')
     DBPASSWORD = config.get('DATABASE', 'password')
     DBHOST = config.get('DATABASE', 'host')
-    DBPORT = config.get('DATABASE', 'port')
+    DBPORT = config.getint('DATABASE', 'port')
 
     if not all([DBNAME, DBHOST, DBPORT, DBUSER, DBPASSWORD]):
         raise ImproperlyConfigured('Missing database settings in %s' % CONFIG_FILE)
 
-    # XXX: Using sqlite for testing purposes
     DATABASES = {
         'default': {
-            'NAME': '{}/var/lib/poem/poemserv.db'.format(VENV),
-            'ENGINE': 'django.db.backends.sqlite3',
+            'ENGINE': 'django_tenants.postgresql_backend',
+            'NAME': DBNAME,
+            'USER': DBUSER,
+            'PASSWORD': DBPASSWORD,
+            'HOST': DBHOST,
+            'PORT': DBPORT,
         }
     }
 
-    HTTPAUTH = config.getboolean('SYNC', 'useplainhttpauth')
-    HTTPUSER = config.get('SYNC', 'httpuser')
-    HTTPPASS = config.get('SYNC', 'httppass')
-
-    SERVICETYPE_URL = config.get('SYNC', 'servicetype')
-    VO_URL = config.get('SYNC', 'vo')
+    DATABASE_ROUTERS = ('django_tenants.routers.TenantSyncRouter',)
 
     ALLOWED_HOSTS = config.get('SECURITY', 'AllowedHosts')
-    CAFILE = config.get('SECURITY', 'CAFile')
-    CAPATH = config.get('SECURITY', 'CAPath')
     HOST_CERT = config.get('SECURITY', 'HostCert')
     HOST_KEY = config.get('SECURITY', 'HostKey')
     SECRETKEY_PATH = config.get('SECURITY', 'SecretKeyPath')
+    WEBAPI_METRIC = config.get('WEBAPI', 'MetricProfile')
+    WEBAPI_AGGREGATION = config.get('WEBAPI', 'AggregationProfile')
+    WEBAPI_THRESHOLDS = config.get('WEBAPI', 'ThresholdsProfile')
+    WEBAPI_OPERATIONS = config.get('WEBAPI', 'OperationsProfile')
+    WEBAPI_REPORTS = config.get('WEBAPI', 'Reports')
+    WEBAPI_REPORTSCRUD = config.getboolean('WEBAPI', 'ReportsCRUD')
+    WEBAPI_REPORTSTAGS = config.get('WEBAPI', 'ReportsTopologyTags')
+    WEBAPI_REPORTSTOPOLOGYGROUPS = config.get('WEBAPI', 'ReportsTopologyGroups')
+    WEBAPI_REPORTSTOPOLOGYENDPOINTS = config.get('WEBAPI', 'ReportsTopologyEndpoints')
 
 
 except NoSectionError as e:
@@ -90,30 +81,55 @@ AUTHENTICATION_BACKENDS = (
     'Poem.auth_backend.saml2.backends.SAML2Backend',
 )
 
-AUTH_USER_MODEL = 'poem.CustUser'
+AUTH_USER_MODEL = 'users.CustUser'
 ROOT_URLCONF = 'Poem.urls'
 
 APPEND_SLASH = True
 
-INSTALLED_APPS = (
+SHARED_APPS = (
+    'django_tenants',
+    'Poem.tenants',
+    'django.contrib.contenttypes',
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.staticfiles',
+    'django.contrib.messages',
+    'django.contrib.sessions',
+    'rest_framework',
+    'rest_framework.authtoken',
+    'rest_framework_api_key',
+    'rest_auth',
+    'Poem.users',
+    'Poem.poem_super_admin',
+    'Poem.api',
+)
+
+TENANT_APPS = (
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.staticfiles',
     'django.contrib.messages',
     'django.contrib.sessions',
-    'ajax_select',
     'djangosaml2',
-    'modelclone',
-    'reversion',
-    'reversion_compare',
     'rest_framework',
+    'rest_framework.authtoken',
     'rest_framework_api_key',
+    'rest_auth',
+    'webpack_loader',
     'Poem.api',
     'Poem.poem',
+    'Poem.users',
 )
 
+INSTALLED_APPS = list(SHARED_APPS) + \
+    [app for app in TENANT_APPS if app not in SHARED_APPS]
+
+TENANT_MODEL = 'tenants.Tenant'
+TENANT_DOMAIN_MODEL = 'tenants.Domain'
+
 MIDDLEWARE = [
+    'django_tenants.middleware.main.TenantMainMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -121,12 +137,13 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'djangosaml2.middleware.SamlSessionMiddleware'
 ]
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ['{}/poem/templates/'.format(APP_PATH)],
+        'DIRS': ['{}/templates/'.format(APP_PATH)],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -139,15 +156,7 @@ TEMPLATES = [
     },
 ]
 
-AJAX_LOOKUP_CHANNELS = {
-    'hintsvo' : ('Poem.poem.lookups', 'VOLookup'),
-    'hintstags' : ('Poem.poem.lookups', 'TagsLookup'),
-    'hintsprobes' : ('Poem.poem.lookups', 'ProbeLookup'),
-    'hintsmetricsfilt' : ('Poem.poem.lookups', 'MetricsFilteredLookup'),
-    'hintsmetricsall' : ('Poem.poem.lookups', 'MetricsAllLookup'),
-    'hintsmetricinstances' : ('Poem.poem.lookups', 'MetricsInstancesLookup'),
-    'hintsserviceflavours' : ('Poem.poem.lookups', 'ServiceFlavoursLookup'),
-}
+TEMPLATE_CONTEXT_PROCESSORS = ('django.core.context_processors.request',)
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -179,27 +188,31 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ]
 }
-TOKEN_HEADER = 'HTTP_X_API_KEY'
+API_KEY_CUSTOM_HEADER = 'HTTP_X_API_KEY'
 
 # Django development server settings
 # MEDIA_URL = '/poem_media/'
 # MEDIA_ROOT = '{}/usr/share/poem/media/'.format(VENV)
 # STATIC_URL = '/static/'
+#DEFAULT_FILE_STORAGE = 'tenant_schemas.storage.TenantFileSystemStorage'
+
+STATICFILES_DIRS = [os.path.join(APP_PATH, 'frontend/bundles/')]
 
 # Apache settings
 STATIC_URL = '/static/'
 STATIC_ROOT = '{}/usr/share/poem/static/'.format(VENV)
 
 # load SAML settings
-try:
-    if os_path.exists(SAML_CONFIG_FILE):
-        buf = open(SAML_CONFIG_FILE).readlines()
-        buf = ''.join(buf)
-        exec(buf)
-    else:
-        print('%s does not exist' % SAML_CONFIG_FILE)
-        raise SystemExit(1)
+LOGIN_REDIRECT_URL = '/ui/login'
+LOGOUT_REDIRECT_URL = '/ui/login'
+SAML_CONFIG_LOADER = 'Poem.poem.saml2.config.get_saml_config'
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_SAMESITE = None
 
-except Exception as e:
-    print(e)
-    raise SystemExit(1)
+
+WEBPACK_LOADER = {
+    'DEFAULT': {
+        'BUNDLE_DIR_NAME': 'reactbundle/',
+        'STATS_FILE': os.path.join(APP_PATH, 'webpack-stats.json')
+    }
+}
