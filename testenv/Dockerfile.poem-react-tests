@@ -45,26 +45,26 @@ RUN scl enable rh-python36 'source /etc/profile.d/venv_poem.sh; \
     mkdir -p $WORKON_HOME; \
     mkvirtualenv poem'
 WORKDIR /home/user
-ADD https://github.com/ARGOeu/poem-2/archive/devel.zip poem-devel.zip
-RUN unzip poem-devel.zip
-WORKDIR poem-2-devel
-RUN source /etc/profile.d/venv_poem.sh; \
-    workon poem; \
-    make wheel-devel; \
-    pip3 install dist/*; \
-    pip3 install -r requirements.txt
+ADD https://cacerts.digicert.com/TERENAeScienceSSLCA3.crt.pem /etc/pki/tls/certs/
+RUN yum -y install ca-policy-egi-core; \
+    rm -rf /etc/pki/ca-trust/source/anchors/*; \
+    cp /etc/pki/tls/certs/TERENAeScienceSSLCA3.crt.pem /etc/pki/ca-trust/source/anchors; \
+    cp /etc/grid-security/certificates/*.pem /etc/pki/ca-trust/source/anchors; \
+    update-ca-trust
+ADD hostcert.pem hostkey.pem /etc/grid-security/
 WORKDIR /home/user
 COPY \
+	secret_key \
 	poem.conf \
-	collectstatic.sh \
-	setup.sh \
-	restarthttpd.sh \
-	safety.sh \
-	entrypoint.sh \
+    poem-install.sh \
+    entrypoint.sh \
 	/home/user/
-RUN ./setup.sh
-# COPY tmux-2.9a-3.el7.x86_64.rpm ./
-# RUN yum localinstall -y tmux-2.9a-3.el7.x86_64.rpm
+COPY apache/poem-apache.ini /etc/supervisord.d/
+COPY apache/poem.conf /opt/rh/httpd24/root/etc/httpd/conf.d/
+RUN sed -r -i 's/(^SSLCertificate.*)/# \1/' /opt/rh/httpd24/root/etc/httpd/conf.d/ssl.conf; \
+    sed -r -i 's/(^SSLCACertificate.*)/# \1/' /opt/rh/httpd24/root/etc/httpd/conf.d/ssl.conf
 RUN echo "user ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers
 USER user
 ENTRYPOINT ["/home/user/entrypoint.sh"]
+
+# vim ft: dockerfile
