@@ -31,10 +31,15 @@ import {
   FormGroup,
   FormText,
   Label,
-  Row
+  Row,
+  ButtonDropdown,
+  DropdownToggle,
+  DropdownMenu,
+  DropdownItem
 } from 'reactstrap';
 import { useQuery, queryCache } from 'react-query';
 import * as Yup from 'yup';
+import { downloadFile } from './Helpers';
 
 import ReactDiffViewer from 'react-diff-viewer';
 
@@ -572,9 +577,12 @@ export const AggregationProfilesChange = (props) => {
   const [modalMsg, setModalMsg] = useState(undefined);
   const [modalTitle, setModalTitle] = useState(undefined);
   const [onYes, setOnYes] = useState('')
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   // TODO: useFormik hook with formik 2.x
   const [formikValues, setFormikValues] = useState({})
   const querykey = `aggregationprofiles_${addview ? 'addview' : `${profile_name}_${publicView ? 'publicview' : 'changeview'}`}`;
+  const hiddenFileInput = React.useRef(null);
+  const formikRef = React.useRef();
 
   const backend = new Backend();
   const webapi = new WebApi({
@@ -949,6 +957,24 @@ export const AggregationProfilesChange = (props) => {
     return isMissing
   }
 
+  const handleFileRead = (e) => {
+    let jsonData = JSON.parse(e.target.result);
+    formikRef.current.setFieldValue('metric_operation', jsonData.metric_operation);
+    formikRef.current.setFieldValue('profile_operation', jsonData.profile_operation);
+    formikRef.current.setFieldValue('metric_profile', jsonData.metric_profile);
+    formikRef.current.setFieldValue('endpoint_group', jsonData.endpoint_group)
+    let groups = insertDummyGroup(
+      insertEmptyServiceForNoServices(jsonData.groups)
+    )
+    formikRef.current.setFieldValue('groups', groups);
+  }
+
+  const handleFileChosen = (file) => {
+    var reader = new FileReader();
+    reader.onload = handleFileRead;
+    reader.readAsText(file);
+  }
+
   const onYesCallback = () => {
     if (onYes === 'delete')
       doDelete(formikValues.id);
@@ -993,7 +1019,46 @@ export const AggregationProfilesChange = (props) => {
         toggle={() => setAreYouSureModal(!areYouSureModal)}
         addview={publicView ? !publicView : addview}
         publicview={publicView}
-        submitperm={write_perm}>
+        submitperm={write_perm}
+        extra_button={
+          !addview &&
+            <ButtonDropdown className='mr-2' isOpen={dropdownOpen} toggle={ () => setDropdownOpen(!dropdownOpen) }>
+              <DropdownToggle caret color='info'>JSON</DropdownToggle>
+              <DropdownMenu>
+                <DropdownItem
+                  onClick={() => {
+                    let valueSave = JSON.parse(JSON.stringify(formikRef.current.values));
+                    removeDummyGroup(valueSave);
+                    removeIsNewFlag(valueSave);
+                    const jsonContent = {
+                      endpoint_group: valueSave.endpoint_group,
+                      metric_operation: valueSave.metric_operation,
+                      profile_operation: valueSave.profile_operation,
+                      metric_profile: valueSave.metric_profile,
+                      groups: valueSave.groups
+                    }
+                    let filename = `${profile_name}.json`
+                    downloadFile(jsonContent, filename)
+                  }}
+                >
+                  Export
+                </DropdownItem>
+                <DropdownItem
+                  onClick={() => {hiddenFileInput.current.click()}}
+                >
+                  Import
+                </DropdownItem>
+              </DropdownMenu>
+              <input
+                type='file'
+                data-testid='file_input'
+                ref={hiddenFileInput}
+                onChange={(e) => { handleFileChosen(e.target.files[0]) }}
+                style={{display: 'none'}}
+              />
+            </ButtonDropdown>
+        }
+      >
         <Formik
           initialValues = {{
             id: aggregationProfile.profile.id,
@@ -1014,6 +1079,7 @@ export const AggregationProfilesChange = (props) => {
           validationSchema={AggregationProfilesSchema}
           validateOnBlur={true}
           validateOnChange={false}
+          innerRef={formikRef}
         >
           {props => (
             <Form>
