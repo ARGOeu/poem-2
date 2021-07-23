@@ -350,7 +350,7 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, addview=fa
             </Col>
           </Row>
           <Row>
-            <Col md={5} data-testid='metric_operation'>
+            <Col md={5} data-testid='metric_operation_col'>
               {
                 historyview ?
                   <Field
@@ -391,7 +391,7 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, addview=fa
             <Col md={12}>
               <Label for='aggregationOperation'>Aggregation operation:</Label>
             </Col>
-            <Col md={5} data-testid='profile_operation'>
+            <Col md={5} data-testid='profile_operation_col'>
               {
                 historyview ?
                   <Field
@@ -432,7 +432,7 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, addview=fa
             <Col md={12}>
               <Label for='aggregationEndpointGroup'>Endpoint group:</Label>
             </Col>
-            <Col md={5} data-testid='endpoint_group'>
+            <Col md={5} data-testid='endpoint_group_col'>
               {
                 historyview ?
                   <Field

@@ -240,6 +240,7 @@ export const CustomReactSelect = ({...props}) => {
 export const DropDown = ({field, data=[], prefix="", class_name="", isnew=false, errors=undefined}) =>
   <Field component="select"
     name={prefix ? `${prefix}.${field.name}` : field.name}
+    data-testid={prefix ? `${prefix}.${field.name}` : field.name}
     required={true}
     className={`form-control ${class_name} ${isnew ? 'border-success' : `${errors && errors[field.name] ? 'border-danger' : ''}`}`}
   >
