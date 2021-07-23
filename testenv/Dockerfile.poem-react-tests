@@ -54,11 +54,12 @@ RUN yum -y install ca-policy-egi-core; \
 ADD hostcert.pem hostkey.pem /etc/grid-security/
 WORKDIR /home/user
 COPY \
-	secret_key \
-	poem.conf \
+    secret_key \
+    poem.conf \
     poem-install.sh \
     entrypoint.sh \
-	/home/user/
+    execute-backends-tests.sh \
+    /home/user/
 COPY apache/poem-apache.ini /etc/supervisord.d/
 COPY apache/poem.conf /opt/rh/httpd24/root/etc/httpd/conf.d/
 RUN sed -r -i 's/(^SSLCertificate.*)/# \1/' /opt/rh/httpd24/root/etc/httpd/conf.d/ssl.conf; \
@@ -67,4 +68,4 @@ RUN echo "user ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers
 USER user
 ENTRYPOINT ["/home/user/entrypoint.sh"]
 
-# vim ft: dockerfile
+# vim: ft=dockerfile
