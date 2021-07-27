@@ -29,6 +29,7 @@ import { faPlus, faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
 import ReactDiffViewer from 'react-diff-viewer';
 import { useQuery, queryCache } from 'react-query';
 import PapaParse from 'papaparse';
+import { downloadCSV } from './Helpers';
 
 import './MetricProfiles.css';
 
@@ -933,11 +934,9 @@ export const MetricProfilesComponent = (props) => {
                     viewServices.forEach((service) => {
                       csvContent.push({service: service.service, metric: service.metric})
                     })
-                    const link = document.createElement('a');
-                    link.setAttribute('href', encodeURI(`data:text/csv;charset=utf8,\ufeff${PapaParse.unparse(csvContent)}`));
-                    link.setAttribute('download', `${profile_name}.csv`);
-                    link.click();
-                    link.remove();
+                    const content = PapaParse.unparse(csvContent);
+                    let filename = `${profile_name}.csv`;
+                    downloadCSV(content, filename)
                   }}
                   disabled={addview}
                 >
@@ -951,6 +950,7 @@ export const MetricProfilesComponent = (props) => {
               </DropdownMenu>
               <input
                 type='file'
+                data-testid='file_input'
                 ref={hiddenFileInput}
                 onChange={(e) => {
                   PapaParse.parse(e.target.files[0], {
