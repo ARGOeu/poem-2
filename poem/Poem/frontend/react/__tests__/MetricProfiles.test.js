@@ -151,6 +151,8 @@ const mockBackendMetricProfile2 = {
 const mockMetrics = [
   "argo.AMS-Check",
   "argo.AMSPublisher-Check",
+  "ch.cern.HTCondorCE-JobState",
+  "ch.cern.HTCondorCE-JobSubmit",
   "ch.cern.LFC-Ping",
   "ch.cern.LFC-Read",
   "ch.cern.LFC-Write",
@@ -168,7 +170,8 @@ const mockServiceTypes = [
   "argo.webui",
   "Central-LFC",
   "egi.AppDB",
-  "eu.argo.ams"
+  "eu.argo.ams",
+  "org.opensciencegrid.htcondorce"
 ];
 
 const mockMetricProfileVersions = [
@@ -656,6 +659,66 @@ describe('Tests for metric profiles changeview', () => {
     expect(row1[1].value).toBe('ch.cern.HTCondorCE-JobState');
     expect(row2[0].value).toBe('org.opensciencegrid.htcondorce');
     expect(row2[1].value).toBe('ch.cern.HTCondorCE-JobSubmit');
+
+    expect(screen.queryByTestId('error-msg')).not.toBeInTheDocument();
+  })
+
+  test('Test import csv with nonexisting metrics', async () => {
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change metric profile');
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /csv/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /import/i }));
+
+    const csv = 'service,metric\r\norg.opensciencegrid.htcondorce,ch.cern.HTCondorCE-CertValidity\r\norg.opensciencegrid.htcondorce,ch.cern.HTCondorCE-JobSubmit\r\n';
+
+    const content = new Blob([csv], { type: 'text/csv;charset=UTF-8' });
+    const file = new File([content], 'profile.csv', { type: 'text/csv;charset=UTF-8' });
+    const input = screen.getByTestId('file_input');
+
+    await waitFor(() => {
+      useEvent.upload(input, file);
+    })
+
+    expect(input.files[0]).toStrictEqual(file)
+    expect(input.files.item(0)).toStrictEqual(file)
+    expect(input.files).toHaveLength(1)
+
+    await waitFor(() => {
+      fireEvent.load(screen.getByTestId('file_input'))
+    })
+
+    const nameField = screen.getByTestId('name');
+    const descriptionField = screen.getByLabelText(/description/i);
+    const groupField = screen.getByTestId('groupname');
+
+    expect(nameField.value).toBe('ARGO_MON');
+    expect(nameField).toBeDisabled();
+    expect(descriptionField.value).toBe('Central ARGO-MON profile');
+    expect(descriptionField).toBeEnabled();
+    expect(groupField.value).toBe('ARGO');
+    expect(groupField).toBeEnabled();
+
+    const metricInstances = within(screen.getByRole('table'));
+    const rows = metricInstances.getAllByRole('row');
+    expect(rows).toHaveLength(4);
+
+    const row1 = within(rows[2]).getAllByRole('textbox');
+    const row2 = within(rows[3]).getAllByRole('textbox');
+
+    expect(metricInstances.getAllByTestId(/remove-/i)).toHaveLength(2);
+    expect(metricInstances.getAllByTestId(/insert-/i)).toHaveLength(2);
+
+    expect(row1[0].value).toBe('org.opensciencegrid.htcondorce');
+    expect(row1[1].value).toBe('ch.cern.HTCondorCE-CertValidity');
+    expect(row2[0].value).toBe('org.opensciencegrid.htcondorce');
+    expect(row2[1].value).toBe('ch.cern.HTCondorCE-JobSubmit');
+
+    expect(screen.getByTestId('error-msg')).toBeInTheDocument();
+    expect(screen.getByTestId('error-msg').textContent).toBe('Must be one of predefined metrics')
   })
 
   test('Test export csv successfully', async () => {

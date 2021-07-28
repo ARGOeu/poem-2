@@ -330,6 +330,7 @@ export const MetricProfilesComponent = (props) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const querykey = `metricprofiles_${addview ? 'addview' : `${profile_name}_${publicView ? 'publicview' : 'changeview'}`}`;
   const hiddenFileInput = React.useRef(null);
+  const formikRef = React.useRef();
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
     `session_userdetails`, async () => {
@@ -963,6 +964,13 @@ export const MetricProfilesComponent = (props) => {
                           return 'service' in obj && 'metric' in obj
                         }
                       )
+                      imported.forEach(item => {
+                        if (!viewServices.some(service => {
+                          return service.service === item.service && service.metric == item.metric
+                        }))
+                          item.isNew = true
+                      })
+
                       setViewServices(ensureAlignedIndexes(imported).sort(sortServices));
                       setListServices(ensureAlignedIndexes(imported).sort(sortServices));
                     }
@@ -989,6 +997,7 @@ export const MetricProfilesComponent = (props) => {
           enableReinitialize={true}
           validateOnBlur={false}
           validate={MetricProfileTupleValidate}
+          innerRef={formikRef}
         >
           {props => (
             <Form>
