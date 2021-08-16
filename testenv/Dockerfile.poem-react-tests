@@ -61,6 +61,7 @@ COPY \
     poem-install.sh \
     entrypoint.sh \
     execute-backend-tests.sh \
+    execute-frontend-tests.sh \
     /home/user/
 COPY apache/poem-apache.ini /etc/supervisord.d/
 COPY apache/poem.conf /opt/rh/httpd24/root/etc/httpd/conf.d/
