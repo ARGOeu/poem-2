@@ -1,7 +1,7 @@
 FROM centos:7
 MAINTAINER dvrcic@srce.hr
 ADD https://repository.egi.eu/sw/production/cas/1/current/repo-files/EGI-trustanchors.repo /etc/yum.repos.d/
-RUN groupadd jenkins -g 1000 && jenkinsadd -u 1000 -g 1000 jenkins -m -d /home/jenkins
+RUN groupadd jenkins -g 1000 && useradd -u 1000 -g 1000 jenkins -m -d /home/jenkins
 RUN passwd -d root
 RUN sed -i -r 's/bash/zsh/' /etc/passwd; sed -i -r 's/^tsflags/# tsflags/' /etc/yum.conf
 RUN curl -sL https://rpm.nodesource.com/setup_12.x | bash -

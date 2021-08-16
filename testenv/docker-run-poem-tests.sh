@@ -8,7 +8,7 @@ docker run \
 -v /dev/log:/dev/log \
 -v /etc/localtime:/etc/localtime \
 -v $HOME:/mnt/ \
--v $HOME/.ssh:/home/user/.ssh/ \
+-v $HOME/.ssh:/home/jenkins/.ssh/ \
 -v /tmp/.X11-unix:/tmp/.X11-unix \
 -v /home/daniel/my_work/srce/git.poem-react/poem-react/:/home/user/poem-react-source \
 -h docker-centos7 \
