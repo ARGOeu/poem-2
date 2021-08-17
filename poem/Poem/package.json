@@ -16,8 +16,8 @@
       "\\.(css|less)$": "<rootDir>/frontend/react/__mocks__/fileMock.js"
     },
     "coverageReporters": [
-      "lcov",
-      "text"
+      "cobertura",
+      "text-summary"
     ]
   },
   "repository": {

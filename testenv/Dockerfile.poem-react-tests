@@ -68,7 +68,7 @@ COPY apache/poem.conf /opt/rh/httpd24/root/etc/httpd/conf.d/
 RUN sed -r -i 's/(^SSLCertificate.*)/# \1/' /opt/rh/httpd24/root/etc/httpd/conf.d/ssl.conf; \
     sed -r -i 's/(^SSLCACertificate.*)/# \1/' /opt/rh/httpd24/root/etc/httpd/conf.d/ssl.conf
 RUN echo "jenkins ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers
-USER jenkins 
+USER jenkins
 ENTRYPOINT ["/home/jenkins/entrypoint.sh"]
 
 # vim: ft=dockerfile
