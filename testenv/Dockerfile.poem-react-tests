@@ -1,6 +1,5 @@
 FROM centos:7
 MAINTAINER dvrcic@srce.hr
-ADD https://repository.egi.eu/sw/production/cas/1/current/repo-files/EGI-trustanchors.repo /etc/yum.repos.d/
 RUN groupadd jenkins -g 1000 && useradd -u 1000 -g 1000 jenkins -m -d /home/jenkins
 RUN passwd -d root
 RUN curl -sL https://rpm.nodesource.com/setup_12.x | bash -
@@ -8,7 +7,6 @@ RUN yum -y makecache; yum -y update; yum clean all
 RUN yum -y install epel-release && \
     yum -y install \
       ack \
-      ca-certificates \
       coreutils \
       git \
       htop \
@@ -18,11 +16,10 @@ RUN yum -y install epel-release && \
       sudo \
       which \
       wget
-RUN yum -y makecache
 RUN yum -y install \
       centos-release-scl \
       scl-utils \
-      supervisor \
+      supervisor
 RUN yum -y makecache && yum -y install \
       httpd24-mod_ssl \
       rh-python36-mod_wsgi \
