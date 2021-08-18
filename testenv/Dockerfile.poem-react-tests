@@ -3,7 +3,6 @@ MAINTAINER dvrcic@srce.hr
 ADD https://repository.egi.eu/sw/production/cas/1/current/repo-files/EGI-trustanchors.repo /etc/yum.repos.d/
 RUN groupadd jenkins -g 1000 && useradd -u 1000 -g 1000 jenkins -m -d /home/jenkins
 RUN passwd -d root
-RUN sed -i -r 's/bash/zsh/' /etc/passwd; sed -i -r 's/^tsflags/# tsflags/' /etc/yum.conf
 RUN curl -sL https://rpm.nodesource.com/setup_12.x | bash -
 RUN yum -y makecache; yum -y update; yum clean all
 RUN yum -y install epel-release && \
@@ -14,26 +13,16 @@ RUN yum -y install epel-release && \
       git \
       htop \
       make \
-      net-tools \
       nodejs \
-      nmap \
       psmisc \
       sudo \
-      telnet \
-      unzip \
-      vim \
-      wget \
       which \
-      zsh
+      wget
 RUN yum -y makecache
 RUN yum -y install \
       centos-release-scl \
-      cronie \
-      crontabs \
       scl-utils \
       supervisor \
-      xmlsec1 \
-      xmlsec1-openssl
 RUN yum -y makecache && yum -y install \
       httpd24-mod_ssl \
       rh-python36-mod_wsgi \
@@ -47,12 +36,6 @@ RUN scl enable rh-python36 'source /etc/profile.d/venv_poem.sh; \
     mkdir -p $WORKON_HOME; \
     mkvirtualenv poem'
 WORKDIR /home/jenkins
-ADD https://cacerts.digicert.com/TERENAeScienceSSLCA3.crt.pem /etc/pki/tls/certs/
-RUN yum -y install ca-policy-egi-core; \
-    rm -rf /etc/pki/ca-trust/source/anchors/*; \
-    cp /etc/pki/tls/certs/TERENAeScienceSSLCA3.crt.pem /etc/pki/ca-trust/source/anchors; \
-    cp /etc/grid-security/certificates/*.pem /etc/pki/ca-trust/source/anchors; \
-    update-ca-trust
 ADD hostcert.pem hostkey.pem /etc/grid-security/
 WORKDIR /home/jenkins
 COPY \
@@ -65,8 +48,6 @@ COPY \
     /home/jenkins/
 COPY apache/poem-apache.ini /etc/supervisord.d/
 COPY apache/poem.conf /opt/rh/httpd24/root/etc/httpd/conf.d/
-RUN sed -r -i 's/(^SSLCertificate.*)/# \1/' /opt/rh/httpd24/root/etc/httpd/conf.d/ssl.conf; \
-    sed -r -i 's/(^SSLCACertificate.*)/# \1/' /opt/rh/httpd24/root/etc/httpd/conf.d/ssl.conf
 RUN echo "jenkins ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers
 USER jenkins
 ENTRYPOINT ["/home/jenkins/entrypoint.sh"]

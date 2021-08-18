@@ -5,4 +5,4 @@ RUNASROOT="su -m -s /bin/bash root -c"
 
 $RUNASROOT "supervisord"
 . $VENV/bin/activate
-/bin/zsh -c $*
+/bin/bash -c $*
