@@ -8,37 +8,37 @@ pipeline {
     }
     stages {
         stage ('Test Backend') {
-					script
-					{
-							testBuildBadge.setStatus('running')
-							testBuildBadge.setColor('blue')
+          script
+          {
+              testBuildBadge.setStatus('running')
+              testBuildBadge.setColor('blue')
 
-							try
-							{
-									echo 'Create docker containers...'
-									sh '''
-											cd $WORKSPACE/$PROJECT_DIR/testenv/
-											docker-compose up -d --build
+              try
+              {
+                  echo 'Create docker containers...'
+                  sh '''
+                      cd $WORKSPACE/$PROJECT_DIR/testenv/
+                      docker-compose up -d --build
                       return 0
-									'''
+                  '''
 
-									testBuildBadge.setStatus('passing')
-									testBuildBadge.setColor('brightgreen')
-							}
-							catch (Exception err)
-							{
-									testBuildBadge.setStatus('failing')
-									testBuildBadge.setColor('red')
-							}
-					}
+                  testBuildBadge.setStatus('passing')
+                  testBuildBadge.setColor('brightgreen')
+              }
+              catch (Exception err)
+              {
+                  testBuildBadge.setStatus('failing')
+                  testBuildBadge.setColor('red')
+              }
+          }
     }
     post {
         always {
-					sh '''
-						cd $WORKSPACE/$PROJECT_DIR/testenv/
+          sh '''
+            cd $WORKSPACE/$PROJECT_DIR/testenv/
             docker-compose down
-					'''
-					cleanWs()
+          '''
+          cleanWs()
         }
     }
 }
