@@ -37,14 +37,10 @@ pipeline {
 
 							return 0
 						'''
-
-						testBuildBadge.setStatus('passing')
-						testBuildBadge.setColor('brightgreen')
 					}
 					catch (Exception err)
 					{
-						testBuildBadge.setStatus('failing')
-						testBuildBadge.setColor('red')
+						echo 'Failed...'
 					}
 				}
 			}
