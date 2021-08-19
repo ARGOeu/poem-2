@@ -31,6 +31,7 @@ pipeline {
                   testBuildBadge.setColor('red')
               }
           }
+      }
     }
     post {
         always {
