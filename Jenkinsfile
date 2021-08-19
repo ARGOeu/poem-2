@@ -36,7 +36,7 @@ pipeline {
         post {
 			always {
 				sh '''
-				  cd $WORKSPACE/$PROJECT_DIR
+				  cd $WORKSPACE/$PROJECT_DIR/testenv
 				  docker-compose down
 				'''
 				cleanWs()
