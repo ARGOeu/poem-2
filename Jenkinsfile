@@ -34,6 +34,7 @@ pipeline {
 
 							return 0
 						'''
+						cobertura coberturaReportFile: 'coverage-backend.xml'
 					}
 					catch (Exception err)
 					{
