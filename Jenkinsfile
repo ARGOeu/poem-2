@@ -39,6 +39,7 @@ pipeline {
 					catch (Exception err)
 					{
 						echo 'Failed...'
+                        echo err.toString()
 					}
 				}
 			}
