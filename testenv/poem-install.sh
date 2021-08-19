@@ -6,8 +6,8 @@ workon poem
 
 # build and install wheel
 cd /mnt/poem-source
-make clean
-make wheel-devel
+sudo make clean
+sudo make wheel-devel
 sudo pip3 install dist/*.whl
 sudo pip3 install -r requirements.txt
 sudo pip3 install -r requirements_tests.txt
