@@ -23,8 +23,8 @@ pipeline {
 								containers_running=$(docker ps -f name=poem-react-tests -f status=running -q)
 								if [ ! -z "$containers_running" ]
 								then
-                                    docker exec -t -i poem-react-tests /home/jenkins/poem-install.sh
-									docker exec -t -i poem-react-tests /home/jenkins/execute-backend-tests.sh
+                                    docker exec -i poem-react-tests /home/jenkins/poem-install.sh
+									docker exec -i poem-react-tests /home/jenkins/execute-backend-tests.sh
 									echo "running"
 									break
 								else
@@ -44,7 +44,7 @@ pipeline {
         post {
 			always {
 				sh '''
-				  cd $WORKSPACE/$PROJECT_DIR/testenv
+				  cd $WORKSPACE/$PROJECT_DIR/testenv/
 				  docker-compose down
 				'''
 				cleanWs()
