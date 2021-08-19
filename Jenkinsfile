@@ -19,6 +19,7 @@ pipeline {
 							docker-compose up -d
 							while (( 1 ))
 							do
+								sleep 5
 								containers_running=$(docker ps -f name=poem-react-tests -f status=running -q)
 								if [ ! -z "$containers_running" ]
 								then
@@ -29,7 +30,6 @@ pipeline {
 								else
 									echo "not running"
 								fi
-								sleep 2
 							done
 
 							return 0
