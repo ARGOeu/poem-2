@@ -11,9 +11,6 @@ pipeline {
 			steps {
 				script
 				{
-					testBuildBadge.setStatus('running')
-					testBuildBadge.setColor('blue')
-
 					try
 					{
 						echo 'Create docker containers...'
