@@ -33,9 +33,8 @@ RUN scl enable rh-python36 'source /etc/profile.d/venv_poem.sh; \
     mkdir -p $WORKON_HOME; \
     mkvirtualenv poem'
 WORKDIR /home/jenkins
-WORKDIR /home/jenkins
 COPY \
-    secret_key \
+    fake-secret \
     poem.conf \
     poem-install.sh \
     entrypoint.sh \
