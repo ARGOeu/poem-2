@@ -14,6 +14,7 @@ pipeline {
 					try
 					{
 						echo 'Create docker containers...'
+						echo 'Executing backend tests...'
 						sh '''
 							cd $WORKSPACE/$PROJECT_DIR/testenv/
 							docker-compose up -d
@@ -33,6 +34,7 @@ pipeline {
 							done
 							exit 0
 						'''
+						echo 'Gathering results...'
 						cobertura coberturaReportFile: './coverage-backend.xml'
 					}
 					catch (Exception err)
