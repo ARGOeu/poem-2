@@ -33,7 +33,7 @@ pipeline {
 							done
 							exit 0
 						'''
-						cobertura coberturaReportFile: '$WORKSPACE/$PROJECT_DIR/coverage-backend.xml'
+						cobertura coberturaReportFile: './coverage-backend.xml'
 					}
 					catch (Exception err)
 					{
