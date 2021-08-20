@@ -31,7 +31,7 @@ pipeline {
 									echo "not running"
 								fi
 							done
-							return 0
+							exit 0
 						'''
 						cobertura coberturaReportFile: '$WORKSPACE/$PROJECT_DIR/coverage-backend.xml'
 					}
