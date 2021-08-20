@@ -13,5 +13,5 @@ sudo pip3 install -r requirements.txt
 sudo pip3 install -r requirements_tests.txt
 
 # prerequisites
-sudo cp -f /home/jenkins/secret_key $VIRTUAL_ENV/etc/poem/secret_key
+sudo cp -f /home/jenkins/fake-secret $VIRTUAL_ENV/etc/poem/fake-secret
 sudo cp -f /home/jenkins/poem.conf $VIRTUAL_ENV/etc/poem/poem.conf
