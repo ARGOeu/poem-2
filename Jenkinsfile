@@ -31,8 +31,9 @@ pipeline {
 									echo "not running"
 								fi
 							done
+							return 0
 						'''
-						cobertura coberturaReportFile: 'coverage-backend.xml'
+						cobertura coberturaReportFile: '$WORKSPACE/$PROJECT_DIR/coverage-backend.xml'
 					}
 					catch (Exception err)
 					{
