@@ -31,8 +31,6 @@ pipeline {
 									echo "not running"
 								fi
 							done
-
-							return 0
 						'''
 						cobertura coberturaReportFile: 'coverage-backend.xml'
 					}
