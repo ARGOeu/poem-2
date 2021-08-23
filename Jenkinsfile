@@ -110,20 +110,19 @@ pipeline {
             }
         }
         stage ('Teardown containers') {
-            post {
-                always {
+            steps {
+                script {
                     sh '''
                       cd $WORKSPACE/$PROJECT_DIR/testenv/
                       docker-compose down
                     '''
+                }
+            }
+            post {
+                always {
                     cleanWs()
                 }
             }
-        }
-    }
-    post {
-        always {
-            cleanWs()
         }
     }
 }
