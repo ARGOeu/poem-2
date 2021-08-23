@@ -74,6 +74,7 @@ pipeline {
                     }
                 }
             }
+        }
         stage ('Execute frontend tests') {
             steps {
                 script
@@ -107,6 +108,7 @@ pipeline {
                     }
                 }
             }
+        }
         post {
             always {
                 sh '''
