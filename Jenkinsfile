@@ -7,7 +7,7 @@ pipeline {
         PROJECT_DIR="poem-react"
     }
     stages {
-        stage ('Test Backend') {
+        stage ('Prepare containers') {
             steps {
                 script
                 {
@@ -25,6 +25,37 @@ pipeline {
                                 if [ ! -z "$containers_running" ]
                                 then
                                     docker exec -i poem-react-tests /home/jenkins/poem-install.sh
+                                    break
+                                else
+                                    echo "not running"
+                                fi
+                            done
+                            exit 0
+                        '''
+                    }
+                    catch (Exception err)
+                    {
+                        echo 'Failed preparation of containers...'
+                        echo err.toString()
+                    }
+                }
+
+            }
+        }
+        stage ('Execute backend tests') {
+            steps {
+                script
+                {
+                    try
+                    {
+                        echo 'Executing backend tests...'
+                        sh '''
+                            while (( 1 ))
+                            do
+                                sleep 5
+                                containers_running=$(docker ps -f name=poem-react-tests -f status=running -q)
+                                if [ ! -z "$containers_running" ]
+                                then
                                     docker exec -i poem-react-tests /home/jenkins/execute-backend-tests.sh
                                     echo "running"
                                     break
@@ -32,7 +63,6 @@ pipeline {
                                     echo "not running"
                                 fi
                             done
-                            find /var/lib/jenkins -name coverage-backend.xml
                             exit 0
                         '''
                         echo 'Gathering results...'
