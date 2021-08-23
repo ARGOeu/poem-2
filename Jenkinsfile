@@ -109,16 +109,17 @@ pipeline {
                 }
             }
         }
-        post {
-            always {
-                sh '''
-                  cd $WORKSPACE/$PROJECT_DIR/testenv/
-                  docker-compose down
-                '''
-                cleanWs()
+        stage ('Teardown containers') {
+            post {
+                always {
+                    sh '''
+                      cd $WORKSPACE/$PROJECT_DIR/testenv/
+                      docker-compose down
+                    '''
+                    cleanWs()
+                }
             }
         }
-      }
     }
     post {
         always {
