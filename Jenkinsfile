@@ -1,63 +1,64 @@
 pipeline {
     agent any
     options {
-		checkoutToSubdirectory('poem-react')
+        checkoutToSubdirectory('poem-react')
     }
     environment {
-		PROJECT_DIR="poem-react"
+        PROJECT_DIR="poem-react"
     }
     stages {
-		stage ('Test Backend') {
-			steps {
-				script
-				{
-					try
-					{
-						echo 'Create docker containers...'
-						echo 'Executing backend tests...'
-						sh '''
-							cd $WORKSPACE/$PROJECT_DIR/testenv/
-							docker-compose up -d
-							while (( 1 ))
-							do
-								sleep 5
-								containers_running=$(docker ps -f name=poem-react-tests -f status=running -q)
-								if [ ! -z "$containers_running" ]
-								then
+        stage ('Test Backend') {
+            steps {
+                script
+                {
+                    try
+                    {
+                        echo 'Create docker containers...'
+                        echo 'Executing backend tests...'
+                        sh '''
+                            cd $WORKSPACE/$PROJECT_DIR/testenv/
+                            docker-compose up -d
+                            while (( 1 ))
+                            do
+                                sleep 5
+                                containers_running=$(docker ps -f name=poem-react-tests -f status=running -q)
+                                if [ ! -z "$containers_running" ]
+                                then
                                     docker exec -i poem-react-tests /home/jenkins/poem-install.sh
-									docker exec -i poem-react-tests /home/jenkins/execute-backend-tests.sh
-									echo "running"
-									break
-								else
-									echo "not running"
-								fi
-							done
-							exit 0
-						'''
-						echo 'Gathering results...'
-						cobertura coberturaReportFile: './coverage-backend.xml'
-					}
-					catch (Exception err)
-					{
-						echo 'Failed...'
+                                    docker exec -i poem-react-tests /home/jenkins/execute-backend-tests.sh
+                                    echo "running"
+                                    break
+                                else
+                                    echo "not running"
+                                fi
+                            done
+                            find /var/lib/jenkins -name coverage-backend.xml
+                            exit 0
+                        '''
+                        echo 'Gathering results...'
+                        cobertura coberturaReportFile: 'poem-react/coverage-backend.xml'
+                    }
+                    catch (Exception err)
+                    {
+                        echo 'Failed...'
                         echo err.toString()
-					}
-				}
-			}
+                    }
+                }
+            }
         post {
-			always {
-				sh '''
-				  cd $WORKSPACE/$PROJECT_DIR/testenv/
-				  docker-compose down
-				'''
-				cleanWs()
-			}
+            always {
+                sh '''
+                  cd $WORKSPACE/$PROJECT_DIR/testenv/
+                  docker-compose down
+                '''
+                cleanWs()
+            }
         }
       }
     }
     post {
-		always {
-			cleanWs()
-		}
+        always {
+            cleanWs()
+        }
     }
 }
