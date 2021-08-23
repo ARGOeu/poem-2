@@ -15,3 +15,6 @@ sudo pip3 install -r requirements_tests.txt
 # prerequisites
 sudo cp -f /home/jenkins/fake-secret $VIRTUAL_ENV/etc/poem/fake-secret
 sudo cp -f /home/jenkins/poem.conf $VIRTUAL_ENV/etc/poem/poem.conf
+cd $VIRTUAL_ENV/lib/python3.6/site-packages/Poem
+sudo rm package-lock.json
+sudo npm i
