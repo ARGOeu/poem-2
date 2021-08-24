@@ -67,7 +67,7 @@ pipeline {
                                     exit 0
                                 '''
                                 echo 'Gathering results...'
-                                cobertura coberturaReportFile: 'poem-react/coverage-backend.xml'
+                                publishCoverage adapters: [coberturaAdapter('poem-react/coverage-backend.xml')]
                             }
                             catch (Exception err)
                             {
@@ -101,7 +101,7 @@ pipeline {
                                     exit 0
                                 '''
                                 echo 'Gathering results...'
-                                cobertura coberturaReportFile: 'poem-react/coverage-frontend/cobertura-coverage.xml'
+                                publishCoverage adapters: [coberturaAdapter('poem-react/coverage-frontend/cobertura-coverage.xml')]
                             }
                             catch (Exception err)
                             {
