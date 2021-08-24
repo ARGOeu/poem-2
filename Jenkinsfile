@@ -66,8 +66,6 @@ pipeline {
                                     done
                                     exit 0
                                 '''
-                                echo 'Gathering results...'
-                                publishCoverage adapters: [coberturaAdapter('poem-react/coverage-backend.xml')]
                             }
                             catch (Exception err)
                             {
@@ -100,8 +98,6 @@ pipeline {
                                     done
                                     exit 0
                                 '''
-                                echo 'Gathering results...'
-                                publishCoverage adapters: [coberturaAdapter('poem-react/coverage-frontend/cobertura-coverage.xml')]
                             }
                             catch (Exception err)
                             {
@@ -111,6 +107,11 @@ pipeline {
                         }
                     }
                 }
+            }
+        }
+        stage ('Generating reports') {
+            steps {
+                publishCoverage adapters: [coberturaAdapter(path: 'poem-react/coverage.xml, poem-react/cobertura-coverage.xml')]
             }
         }
         stage ('Teardown containers') {
