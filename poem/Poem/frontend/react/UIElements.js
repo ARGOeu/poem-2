@@ -940,7 +940,7 @@ export const BaseArgoView = ({resourcename='', location=undefined,
 
 
 export const FancyErrorMessage = (msg) => (
-  <div style={{color: '#FF0000', fontSize: 'small'}}>{msg}</div>
+  <div data-testid='error-msg' style={{color: '#FF0000', fontSize: 'small'}}>{msg}</div>
 )
 
 

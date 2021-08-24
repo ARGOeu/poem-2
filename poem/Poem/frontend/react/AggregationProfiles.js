@@ -39,7 +39,7 @@ import {
 } from 'reactstrap';
 import { useQuery, queryCache } from 'react-query';
 import * as Yup from 'yup';
-import { downloadFile } from './Helpers';
+import { downloadJSON } from './Helpers';
 
 import ReactDiffViewer from 'react-diff-viewer';
 
@@ -1038,7 +1038,7 @@ export const AggregationProfilesChange = (props) => {
                       groups: valueSave.groups
                     }
                     let filename = `${profile_name}.json`
-                    downloadFile(jsonContent, filename)
+                    downloadJSON(jsonContent, filename)
                   }}
                 >
                   Export

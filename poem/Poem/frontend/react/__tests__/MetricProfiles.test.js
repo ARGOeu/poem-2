@@ -12,6 +12,7 @@ import {
   MetricProfileVersionDetails
 } from '../MetricProfiles';
 import { NotificationManager } from 'react-notifications'
+import useEvent from '@testing-library/user-event';
 
 
 jest.mock('../DataManager', () => {
@@ -150,6 +151,8 @@ const mockBackendMetricProfile2 = {
 const mockMetrics = [
   "argo.AMS-Check",
   "argo.AMSPublisher-Check",
+  "ch.cern.HTCondorCE-JobState",
+  "ch.cern.HTCondorCE-JobSubmit",
   "ch.cern.LFC-Ping",
   "ch.cern.LFC-Read",
   "ch.cern.LFC-Write",
@@ -167,7 +170,8 @@ const mockServiceTypes = [
   "argo.webui",
   "Central-LFC",
   "egi.AppDB",
-  "eu.argo.ams"
+  "eu.argo.ams",
+  "org.opensciencegrid.htcondorce"
 ];
 
 const mockMetricProfileVersions = [
@@ -600,6 +604,189 @@ describe('Tests for metric profiles changeview', () => {
     expect(metricInstances.queryAllByTestId(/remove-/i)).toHaveLength(0);
     expect(metricInstances.queryAllByTestId(/insert-/i)).toHaveLength(0);
     expect(newRows[2].textContent).toBe('1Central-LFCch.cern.LFC-Write');
+  })
+
+  test('Test import csv successfully', async () => {
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change metric profile');
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /csv/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /import/i }));
+
+    const csv = 'service,metric\r\norg.opensciencegrid.htcondorce,ch.cern.HTCondorCE-JobState\r\norg.opensciencegrid.htcondorce,ch.cern.HTCondorCE-JobSubmit\r\n';
+
+    const content = new Blob([csv], { type: 'text/csv;charset=UTF-8' });
+    const file = new File([content], 'profile.csv', { type: 'text/csv;charset=UTF-8' });
+    const input = screen.getByTestId('file_input');
+
+    await waitFor(() => {
+      useEvent.upload(input, file);
+    })
+
+    expect(input.files[0]).toStrictEqual(file)
+    expect(input.files.item(0)).toStrictEqual(file)
+    expect(input.files).toHaveLength(1)
+
+    await waitFor(() => {
+      fireEvent.load(screen.getByTestId('file_input'))
+    })
+
+    const nameField = screen.getByTestId('name');
+    const descriptionField = screen.getByLabelText(/description/i);
+    const groupField = screen.getByTestId('groupname');
+
+    expect(nameField.value).toBe('ARGO_MON');
+    expect(nameField).toBeDisabled();
+    expect(descriptionField.value).toBe('Central ARGO-MON profile');
+    expect(descriptionField).toBeEnabled();
+    expect(groupField.value).toBe('ARGO');
+    expect(groupField).toBeEnabled();
+
+    const metricInstances = within(screen.getByRole('table'));
+    const rows = metricInstances.getAllByRole('row');
+    expect(rows).toHaveLength(4);
+
+    const row1 = within(rows[2]).getAllByRole('textbox');
+    const row2 = within(rows[3]).getAllByRole('textbox');
+
+    expect(metricInstances.getAllByTestId(/remove-/i)).toHaveLength(2);
+    expect(metricInstances.getAllByTestId(/insert-/i)).toHaveLength(2);
+
+    expect(row1[0].value).toBe('org.opensciencegrid.htcondorce');
+    expect(row1[1].value).toBe('ch.cern.HTCondorCE-JobState');
+    expect(row2[0].value).toBe('org.opensciencegrid.htcondorce');
+    expect(row2[1].value).toBe('ch.cern.HTCondorCE-JobSubmit');
+
+    expect(screen.queryByTestId('error-msg')).not.toBeInTheDocument();
+  })
+
+  test('Test import csv with nonexisting metrics', async () => {
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change metric profile');
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /csv/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /import/i }));
+
+    const csv = 'service,metric\r\norg.opensciencegrid.htcondorce,ch.cern.HTCondorCE-CertValidity\r\norg.opensciencegrid.htcondorce,ch.cern.HTCondorCE-JobSubmit\r\n';
+
+    const content = new Blob([csv], { type: 'text/csv;charset=UTF-8' });
+    const file = new File([content], 'profile.csv', { type: 'text/csv;charset=UTF-8' });
+    const input = screen.getByTestId('file_input');
+
+    await waitFor(() => {
+      useEvent.upload(input, file);
+    })
+
+    expect(input.files[0]).toStrictEqual(file)
+    expect(input.files.item(0)).toStrictEqual(file)
+    expect(input.files).toHaveLength(1)
+
+    await waitFor(() => {
+      fireEvent.load(screen.getByTestId('file_input'))
+    })
+
+    const nameField = screen.getByTestId('name');
+    const descriptionField = screen.getByLabelText(/description/i);
+    const groupField = screen.getByTestId('groupname');
+
+    expect(nameField.value).toBe('ARGO_MON');
+    expect(nameField).toBeDisabled();
+    expect(descriptionField.value).toBe('Central ARGO-MON profile');
+    expect(descriptionField).toBeEnabled();
+    expect(groupField.value).toBe('ARGO');
+    expect(groupField).toBeEnabled();
+
+    const metricInstances = within(screen.getByRole('table'));
+    const rows = metricInstances.getAllByRole('row');
+    expect(rows).toHaveLength(4);
+
+    const row1 = within(rows[2]).getAllByRole('textbox');
+    const row2 = within(rows[3]).getAllByRole('textbox');
+
+    expect(metricInstances.getAllByTestId(/remove-/i)).toHaveLength(2);
+    expect(metricInstances.getAllByTestId(/insert-/i)).toHaveLength(2);
+
+    expect(row1[0].value).toBe('org.opensciencegrid.htcondorce');
+    expect(row1[1].value).toBe('ch.cern.HTCondorCE-CertValidity');
+    expect(row2[0].value).toBe('org.opensciencegrid.htcondorce');
+    expect(row2[1].value).toBe('ch.cern.HTCondorCE-JobSubmit');
+
+    expect(screen.getByTestId('error-msg')).toBeInTheDocument();
+    expect(screen.getByTestId('error-msg').textContent).toBe('Must be one of predefined metrics')
+  })
+
+  test('Test export csv successfully', async () => {
+    const helpers = require('../Helpers');
+    jest.spyOn(helpers, 'downloadCSV').mockReturnValueOnce(null);
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change metric profile');
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /csv/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /export/i }));
+
+    const content = 'service,metric\r\nargo.mon,eu.egi.CertValidity\r\nargo.mon,org.nagios.NagiosWebInterface\r\nargo.webui,org.nagios.ARGOWeb-AR\r\nargo.webui,org.nagios.ARGOWeb-Status\r\nCentral-LFC,ch.cern.LFC-Ping\r\nCentral-LFC,ch.cern.LFC-Read\r\nCentral-LFC,ch.cern.LFC-Write';
+
+    expect(helpers.downloadCSV).toHaveBeenCalledTimes(1);
+    expect(helpers.downloadCSV).toHaveBeenCalledWith(content, 'ARGO_MON.csv');
+  })
+
+  test('Test export csv when form has been changed', async () => {
+    const helpers = require('../Helpers');
+    jest.spyOn(helpers, 'downloadCSV').mockReturnValueOnce(null);
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change metric profile');
+    })
+
+    const metricInstances = within(screen.getByRole('table'));
+
+    await waitFor(() => {
+      fireEvent.click(metricInstances.getByTestId('remove-6'))
+    })
+
+    await waitFor(() => {
+      fireEvent.click(metricInstances.getByTestId('remove-5'))
+    })
+
+
+    await waitFor(() => {
+      fireEvent.click(metricInstances.getByTestId('remove-4'))
+    })
+
+    await waitFor(() => {
+      fireEvent.click(metricInstances.getByTestId('insert-3'))
+    })
+
+    const rows = metricInstances.getAllByRole('row');
+    const row4 = within(rows[6]).getAllByRole('textbox');
+
+    await waitFor(() => {
+      fireEvent.change(row4[0], { target: { value: 'org.openstack.nova' } });
+    })
+
+    await waitFor(() => {
+      fireEvent.change(row4[1], { target: { value: 'eu.egi.cloud.InfoProvider' } });
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /csv/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /export/i }));
+
+    const content = 'service,metric\r\nargo.mon,eu.egi.CertValidity\r\nargo.mon,org.nagios.NagiosWebInterface\r\nargo.webui,org.nagios.ARGOWeb-AR\r\nargo.webui,org.nagios.ARGOWeb-Status\r\norg.openstack.nova,eu.egi.cloud.InfoProvider';
+
+    expect(helpers.downloadCSV).toHaveBeenCalledTimes(1);
+    expect(helpers.downloadCSV).toHaveBeenCalledWith(content, 'ARGO_MON.csv')
   })
 
   test('Test error changing metric profile on web api with error message', async () => {
@@ -1231,6 +1418,109 @@ describe('Tests for metric profiles changeview', () => {
     expect(NotificationManager.success).toHaveBeenCalledWith(
       'Metric profile successfully changed', 'Changed', 2000
     )
+  })
+
+  test('Test import csv, make some changes and save profile', async() => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+    mockChangeMetricProfile.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change metric profile');
+    })
+
+    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
+
+    const csv = 'service,metric\r\norg.opensciencegrid.htcondorce,ch.cern.HTCondorCE-JobState\r\norg.opensciencegrid.htcondorce,ch.cern.HTCondorCE-JobSubmit\r\n';
+
+    const content = new Blob([csv], { type: 'text/csv;charset=UTF-8' });
+    const file = new File([content], 'profile.csv', { type: 'text/csv;charset=UTF-8' });
+    const input = screen.getByTestId('file_input');
+
+    await waitFor(() => {
+      useEvent.upload(input, file);
+    })
+
+    expect(input.files[0]).toStrictEqual(file)
+    expect(input.files.item(0)).toStrictEqual(file)
+    expect(input.files).toHaveLength(1)
+
+    await waitFor(() => {
+      fireEvent.load(screen.getByTestId('file_input'))
+    })
+
+    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
+
+    const metricInstances = within(screen.getByRole('table'));
+    var rows = metricInstances.getAllByRole('row');
+
+    await waitFor(() => {
+      fireEvent.click(metricInstances.getByTestId('insert-0'));
+    })
+
+    rows = metricInstances.getAllByRole('row');
+
+    const row1 = within(rows[3]).getAllByRole('textbox');
+    await waitFor(() => {
+      fireEvent.change(row1[0], { target: { value: 'eu.argo.ams' } });
+    })
+
+    await waitFor(() => {
+      fireEvent.change(row1[1], { target: { value: 'argo.AMS-Check' } });
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeMetricProfile).toHaveBeenCalledWith({
+        id: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
+        description: 'New central ARGO_MON profile.',
+        name: 'ARGO_MON',
+        services: [
+          {
+            service: 'org.opensciencegrid.htcondorce',
+            metrics: [
+              'ch.cern.HTCondorCE-JobState',
+              'ch.cern.HTCondorCE-JobSubmit'
+            ]
+          },
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check'
+            ]
+          }
+        ]
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/metricprofiles/',
+        {
+          name: 'ARGO_MON',
+          apiid: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
+          groupname: 'TEST',
+          description: 'New central ARGO_MON profile.',
+          services: [
+            { service: 'org.opensciencegrid.htcondorce', metric: 'ch.cern.HTCondorCE-JobState' },
+            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
+            { service: 'org.opensciencegrid.htcondorce', metric: 'ch.cern.HTCondorCE-JobSubmit' }
+          ]
+        }
+      )
+    })
   })
 
   test('Test successfully deleting metric profile', async () => {

@@ -815,7 +815,7 @@ describe('Tests for aggregation profiles changeview', () => {
 
   test('Test export json successfully', async () => {
     const helpers = require('../Helpers');
-    jest.spyOn(helpers, 'downloadFile').mockReturnValueOnce(null);
+    jest.spyOn(helpers, 'downloadJSON').mockReturnValueOnce(null);
 
     renderChangeView();
 
@@ -887,13 +887,13 @@ describe('Tests for aggregation profiles changeview', () => {
       ]
     };
 
-    expect(helpers.downloadFile).toHaveBeenCalledTimes(1);
-    expect(helpers.downloadFile).toHaveBeenCalledWith(content, 'TEST_PROFILE.json');
+    expect(helpers.downloadJSON).toHaveBeenCalledTimes(1);
+    expect(helpers.downloadJSON).toHaveBeenCalledWith(content, 'TEST_PROFILE.json');
   });
 
   test('Test export json when form has been changed', async () => {
     const helpers = require('../Helpers');
-    jest.spyOn(helpers, 'downloadFile').mockReturnValueOnce(null);
+    jest.spyOn(helpers, 'downloadJSON').mockReturnValueOnce(null);
 
     renderChangeView();
 
@@ -976,8 +976,8 @@ describe('Tests for aggregation profiles changeview', () => {
       metric_profile: 'FEDCLOUD'
     };
 
-    expect(helpers.downloadFile).toHaveBeenCalledTimes(1);
-    expect(helpers.downloadFile).toHaveBeenCalledWith(content, 'TEST_PROFILE.json');
+    expect(helpers.downloadJSON).toHaveBeenCalledTimes(1);
+    expect(helpers.downloadJSON).toHaveBeenCalledWith(content, 'TEST_PROFILE.json');
   })
 
   test('Test error changing aggregation profile on web api with error message', async () => {
