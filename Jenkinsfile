@@ -101,7 +101,7 @@ pipeline {
                                     exit 0
                                 '''
                                 echo 'Gathering results...'
-                                cobertura coberturaReportFile: 'poem-react/coverage-frontend/coverage-final.xml'
+                                cobertura coberturaReportFile: 'poem-react/coverage-frontend/cobertura-coverage.xml'
                             }
                             catch (Exception err)
                             {
