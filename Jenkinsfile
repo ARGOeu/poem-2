@@ -89,14 +89,16 @@ pipeline {
                                         containers_running=$(docker ps -f name=poem-react-tests -f status=running -q)
                                         if [ ! -z "$containers_running" ]
                                         then
-                                            docker exec -i poem-react-tests /home/jenkins/execute-frontend-tests.sh
                                             echo "running"
-                                            break
+                                            docker exec -i poem-react-tests /home/jenkins/execute-frontend-tests.sh
+                                            exit 0
                                         else
                                             echo "not running"
                                         fi
                                     done
-                                    exit 0
+                                    exit 1
+                                    whoami
+                                    ls -ald /mnt/poem-source/Jenkinsfile
                                 '''
                             }
                             catch (Exception err)
