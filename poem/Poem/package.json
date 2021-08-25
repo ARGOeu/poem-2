@@ -77,7 +77,7 @@
     "formik": "^2.2.5",
     "lodash": "^4.17.21",
     "papaparse": "^5.3.0",
-    "react": "^16.11.0",
+    "react": "^16.13.0",
     "react-autosuggest": "^10.1.0",
     "react-dom": "^16.11.0",
     "react-helmet": "^6.1.0",
