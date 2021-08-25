@@ -24,7 +24,7 @@ pipeline {
                                 if [ ! -z "$containers_running" ]
                                 then
                                     docker exec -i poem-react-tests /home/jenkins/poem-install.sh
-                                    break
+                                    exit $?
                                 else
                                     echo "not running"
                                 fi
@@ -57,9 +57,9 @@ pipeline {
                                         containers_running=$(docker ps -f name=poem-react-tests -f status=running -q)
                                         if [ ! -z "$containers_running" ]
                                         then
-                                            docker exec -i poem-react-tests /home/jenkins/execute-backend-tests.sh
                                             echo "running"
-                                            break
+                                            docker exec -i poem-react-tests /home/jenkins/execute-backend-tests.sh
+                                            exit $?
                                         else
                                             echo "not running"
                                         fi
@@ -91,14 +91,11 @@ pipeline {
                                         then
                                             echo "running"
                                             docker exec -i poem-react-tests /home/jenkins/execute-frontend-tests.sh
-                                            exit 0
+                                            exit $?
                                         else
                                             echo "not running"
                                         fi
                                     done
-                                    exit 1
-                                    whoami
-                                    ls -ald /mnt/poem-source/Jenkinsfile
                                 '''
                             }
                             catch (Exception err)
