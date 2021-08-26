@@ -101,7 +101,7 @@ def build_metricconfigs():
 
 
 def get_metrics_from_profile(profile):
-    token = MyAPIKey.objects.get(name='WEB-API')
+    token = MyAPIKey.objects.get(name='WEB-API-RO')
 
     headers = {'Accept': 'application/json', 'x-api-key': token.token}
     response = requests.get(
