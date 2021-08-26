@@ -101,12 +101,12 @@ pipeline {
 						echo err.toString()
 					}
 				}
+				junit 'poem-react/junit-frontend.xml'
 			}
-			junit 'poem-react/junit-frontend.xml'
 		}
         stage ('Generating reports') {
             steps {
-                publishCoverage adapters: [coberturaAdapter(path: 'poem-react/coverage-backend.xml', path: 'poem-react/cobertura-coverage.xml')]
+                publishCoverage adapters: [coberturaAdapter(path: 'poem-react/coverage-backend.xml, poem-react/cobertura-coverage.xml')]
             }
         }
         stage ('Teardown containers') {
