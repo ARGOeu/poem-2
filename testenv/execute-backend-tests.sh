@@ -9,5 +9,6 @@ retcode="$?"
 
 sudo coverage xml
 sudo mv -f coverage.xml /mnt/poem-source/coverage-backend.xml
+sudo mv -f TEST-api*.xml /mnt/poem-source/
 
 exit $retcode
