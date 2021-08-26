@@ -71,6 +71,7 @@ pipeline {
                                 echo err.toString()
                             }
                         }
+						junit 'poem-react/TEST-api*.xml'
                     }
                 }
                 stage ('Execute frontend tests') {
