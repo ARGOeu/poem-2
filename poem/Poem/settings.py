@@ -216,3 +216,5 @@ WEBPACK_LOADER = {
         'STATS_FILE': os.path.join(APP_PATH, 'webpack-stats.json')
     }
 }
+
+TEST_RUNNER = 'xmlrunner.extra.djangotestrunner.XMLTestRunner'
