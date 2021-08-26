@@ -29,7 +29,6 @@ pipeline {
                                     echo "not running"
                                 fi
                             done
-                            exit 0
                         '''
                     }
                     catch (Exception err)
@@ -64,7 +63,6 @@ pipeline {
                                             echo "not running"
                                         fi
                                     done
-                                    exit 0
                                 '''
                             }
                             catch (Exception err)
@@ -110,7 +108,7 @@ pipeline {
         }
         stage ('Generating reports') {
             steps {
-                publishCoverage adapters: [coberturaAdapter(path: 'poem-react/coverage.xml, poem-react/cobertura-coverage.xml')]
+                publishCoverage adapters: [coberturaAdapter(path: 'poem-react/coverage.xml')]
             }
         }
         stage ('Teardown containers') {
