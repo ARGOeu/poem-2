@@ -69,7 +69,7 @@ pipeline {
                             }
                             catch (Exception err)
                             {
-                                echo 'Failed...'
+                                echo 'Backend tests failed...'
                                 echo err.toString()
                             }
                         }
@@ -100,7 +100,7 @@ pipeline {
                             }
                             catch (Exception err)
                             {
-                                echo 'Failed...'
+                                echo 'Frontend tests failed...'
                                 echo err.toString()
                             }
                         }
