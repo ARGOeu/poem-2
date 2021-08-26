@@ -4,7 +4,7 @@
 source /etc/profile.d/venv_poem.sh
 workon poem
 
-sudo coverage run /home/pyvenv/poem/lib/python3.6/site-packages/Poem/manage.py test api
+sudo coverage run /home/pyvenv/poem/lib/python3.6/site-packages/Poem/manage.py test api --parallel
 retcode="$?"
 
 sudo coverage xml
