@@ -103,6 +103,7 @@ pipeline {
                                 echo err.toString()
                             }
                         }
+						junit 'poem-react/junit-frontend.xml'
                     }
                 }
             }
