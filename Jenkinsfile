@@ -109,7 +109,7 @@ pipeline {
         }
         stage ('Generating reports') {
             steps {
-                publishCoverage adapters: [coberturaAdapter(path: 'poem-react/coverage-backend.xml, poem-react/cobertura-coverage.xml')]
+                publishCoverage adapters: [coberturaAdapter(path: 'poem-react/coverage-backend.xml, poem-react/cobertura-coverage.xml', mergeToOneReport: true)]
             }
         }
         stage ('Teardown containers') {
