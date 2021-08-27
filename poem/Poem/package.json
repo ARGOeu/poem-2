@@ -16,7 +16,6 @@
       "\\.(css|less)$": "<rootDir>/frontend/react/__mocks__/fileMock.js"
     },
     "coverageReporters": [
-      "jest-junit",
       "cobertura",
       "text-summary"
     ]
