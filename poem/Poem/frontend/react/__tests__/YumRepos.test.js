@@ -5,7 +5,7 @@ import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { YumRepoComponent, YumRepoList } from '../YumRepos';
 import { Backend } from '../DataManager';
-import { queryCache } from 'react-query';
+import { QueryClientProvider, QueryClient } from 'react-query';
 import { NotificationManager } from 'react-notifications';
 
 
@@ -15,10 +15,12 @@ jest.mock('../DataManager', () => {
   }
 })
 
+const queryClient = new QueryClient();
+
 
 beforeEach(() => {
   jest.clearAllMocks();
-  queryCache.clear();
+  queryClient.clear();
 })
 
 
@@ -67,11 +69,13 @@ function renderListView(tenant=false) {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          render={ props => <YumRepoList {...props} /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            render={ props => <YumRepoList {...props} /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -84,24 +88,28 @@ function renderChangeView(tenant=false) {
   if (tenant)
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            path='/ui/administration/yumrepos/:name'
-            render={ props => <YumRepoComponent {...props} disabled={true} /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/administration/yumrepos/:name'
+              render={ props => <YumRepoComponent {...props} disabled={true} /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 
   else
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            path='/ui/yumrepos/:name'
-            render={ props => <YumRepoComponent {...props} /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/yumrepos/:name'
+              render={ props => <YumRepoComponent {...props} /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 }
@@ -113,12 +121,14 @@ function renderAddView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/yumrepos/add'
-          render={ props => <YumRepoComponent {...props} addview={true} /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/yumrepos/add'
+            render={ props => <YumRepoComponent {...props} addview={true} /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -130,12 +140,14 @@ function renderCloneView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/yumrepos/:name/clone'
-          render={ props => <YumRepoComponent {...props} cloneview={true} /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/yumrepos/:name/clone'
+            render={ props => <YumRepoComponent {...props} cloneview={true} /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }

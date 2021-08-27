@@ -41,22 +41,22 @@ export const YumRepoList = (props) => {
 
   const backend = new Backend();
 
-  const { data: listRepos, error: errorListRepos, isLoading: loadingListRepos } = useQuery(
-    'yumrepos_listview', async () => {
+  const { data: repos, error: errorRepos, status: statusRepos } = useQuery(
+    'yumrepos', async () => {
       let repos = await backend.fetchData('/api/v2/internal/yumrepos');
       return repos;
     }
   );
 
-  const { data: listTags, error: errorListTags, isLoading: loadingListTags } = useQuery(
-    'yumrepos_listview_tags', async () => {
+  const { data: tags, error: errorTags, status: statusTags } = useQuery(
+    'ostags', async () => {
       let tags = await backend.fetchData('/api/v2/internal/ostags');
       return tags;
     }
   );
 
-  const { data: isTenantSchema, isLoading: loadingIsTenantSchema } = useQuery(
-    'session_istenantschema', async () => {
+  const { data: isTenantSchema, status: statusIsTenantSchema } = useQuery(
+    'istenantschema', async () => {
       let schema = await backend.isTenantSchema();
       return schema;
     }
@@ -90,20 +90,20 @@ export const YumRepoList = (props) => {
           {row.value}
         </div>,
       Filter: SelectColumnFilter,
-      filterList: listTags
+      filterList: tags
     }
-  ], [isTenantSchema, listTags]);
+  ], [isTenantSchema, tags]);
 
-  if (loadingListRepos || loadingListTags || loadingIsTenantSchema)
+  if (statusRepos === 'loading' || statusTags === 'loading' || statusIsTenantSchema === 'loading')
     return (<LoadingAnim/>);
 
-  else if (errorListRepos)
-    return (<ErrorComponent error={errorListRepos}/>);
+  else if (statusRepos === 'error')
+    return (<ErrorComponent error={errorRepos}/>);
 
-  else if (errorListTags)
-    return (<ErrorComponent error={errorListTags}/>);
+  else if (statusTags === 'error')
+    return (<ErrorComponent error={errorTags}/>);
 
-  else if (!loadingListRepos && !loadingListTags && !loadingIsTenantSchema && listRepos) {
+  else if (repos && tags) {
     return (
       <BaseArgoView
         resourcename='YUM repo'
@@ -112,7 +112,7 @@ export const YumRepoList = (props) => {
         addnew={!isTenantSchema}
       >
         <BaseArgoTable
-          data={listRepos}
+          data={repos}
           columns={columns}
           className='-highlight'
           page_size={20}
@@ -143,9 +143,8 @@ export const YumRepoComponent = (props) => {
 
   const backend = new Backend();
 
-  const { data: repo, error: errorRepo, isLoading: loadingRepo } = useQuery(
-    `yumrepo_${name}_${tag}_${cloneview ? 'cloneview' : 'changeview'}`,
-    async () => {
+  const { data: repo, error: errorRepo, status: statusRepo } = useQuery(
+    ['yumrepo', name, tag], async () => {
       if (!addview) {
         let repo = await backend.fetchData(`/api/v2/internal/yumrepos/${name}/${tag}`);
 
@@ -155,8 +154,8 @@ export const YumRepoComponent = (props) => {
     { enabled: !addview }
   );
 
-  const { data: tags, error: errorTags, isLoading: loadingTags } = useQuery(
-    'yumrepo_changeview_tags', async () => {
+  const { data: tags, error: errorTags, status: statusTags } = useQuery(
+    'ostags', async () => {
       let tags = await backend.fetchData('/api/v2/internal/ostags');
       return tags;
     }
@@ -269,16 +268,16 @@ export const YumRepoComponent = (props) => {
     }
   }
 
-  if (loadingRepo || loadingTags)
+  if (statusRepo === 'loading' || statusTags === 'loading')
     return (<LoadingAnim/>);
 
-  else if (errorRepo)
+  else if (statusRepo === 'error')
     return (<ErrorComponent error={errorRepo}/>);
 
-  else if (errorTags)
+  else if (statusTags === 'error')
     return (<ErrorComponent error={errorTags}/>);
 
-  else if (!loadingRepo && !loadingTags && tags) {
+  else if (tags && statusRepo !== 'loading' && statusRepo !== 'error') {
     return (
       <BaseArgoView
         resourcename={`${disabled ? 'YUM repo details' : 'YUM repo'}`}
