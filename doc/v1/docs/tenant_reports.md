@@ -10,7 +10,7 @@ The table lists report name and short description.
 
 ## Reports details
 
-By clicking the report's name, user can access reports details page (shown in the image below). 
+By clicking the report's name, user can access reports change page (shown in the image below). 
 
 ![Tenant Reports Details](figures/tenant_reports_details.png)
 

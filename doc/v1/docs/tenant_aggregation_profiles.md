@@ -28,6 +28,14 @@ There is a validation which checks if service flavours mentioned in aggregation 
 
 Same as for other resources, only users with appropriate permission may modify aggregation profile. That is, users that have group of aggregation the profile belongs to assigned to them, or users with superuser permission.
 
+### Import/Export JSON
+
+There is a feature of importing and exporting aggregation profile data in a JSON file. Data being exported (or imported) includes sections **Operations, endpoint group and metric profile** and **Service flavor groups**.
+
+When exporting data, user clicks on **JSON** button, and selects *Export*. The file is saved as JSON with the name of the aggregation profile being exported (in this case, the name of the file would be *sla_test.json*).
+
+On the other hand, when importing data, user clics on **JSON** button and selects *Import*. The data in the sections *Operations, endpoint group and metric profile* and *Service flavour groups* are then overridden by the data in the file being imported.
+
 ### Aggregation profile history
 
 By clicking **History** button, user can see the changes made to the profile, the time they were made, and by whom they were made.
