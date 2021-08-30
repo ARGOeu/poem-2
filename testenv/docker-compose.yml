@@ -15,6 +15,9 @@ services:
       - /dev/log:/dev/log
       - /etc/localtime:/etc/localtime:ro
       - ../:/mnt/poem-source:rw
+      - ./execute-backend-tests.sh:/home/jenkins/execute-backend-tests.sh
+      - ./execute-frontend-tests.sh:/home/jenkins/execute-frontend-tests.sh
+      - ./poem-install.sh:/home/jenkins/poem-install.sh
   db-poem-tests:
     container_name: poem-react-tests-postgres10
     image: postgres:10
