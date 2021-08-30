@@ -20,6 +20,9 @@
       "text-summary"
     ]
   },
+  "jest-junit": {
+    "suiteName": "Frontend tests"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ARGOeu/poem-2.git"

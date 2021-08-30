@@ -218,3 +218,4 @@ WEBPACK_LOADER = {
 }
 
 TEST_RUNNER = 'xmlrunner.extra.djangotestrunner.XMLTestRunner'
+TEST_OUTPUT_FILE_NAME = 'junit-backend.xml'
