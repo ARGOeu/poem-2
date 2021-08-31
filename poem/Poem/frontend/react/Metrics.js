@@ -328,7 +328,7 @@ export const ListOfMetrics = (props) => {
       return metrics;
     },
     {
-      enabled: userDetails
+      enabled: userDetails ? true : false
     }
   );
 
