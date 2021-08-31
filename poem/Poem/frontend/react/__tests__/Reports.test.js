@@ -518,19 +518,21 @@ function renderChangeView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/reports/:name'
-          render={ props => <ReportsChange
-            {...props}
-            webapitoken='token'
-            webapireports={webapireports}
-            webapimetric='https://mock.metric.com'
-            webapiaggregation='https://mock.aggr.com'
-            webapioperations='https://mock.operations.com'
-          /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/reports/:name'
+            render={ props => <ReportsChange
+              {...props}
+              webapitoken='token'
+              webapireports={webapireports}
+              webapimetric='https://mock.metric.com'
+              webapiaggregation='https://mock.aggr.com'
+              webapioperations='https://mock.operations.com'
+            /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -542,20 +544,22 @@ function renderAddView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/reports/add'
-          usergroups={['TEST', 'ARGO']}
-          render={ props => <ReportsAdd
-            {...props}
-            webapitoken='token'
-            webapireports={webapireports}
-            webapimetric='https://mock.metric.com'
-            webapiaggregation='https://mock.aggr.com'
-            webapioperations='https://mock.operations.com'
-          /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/reports/add'
+            usergroups={['TEST', 'ARGO']}
+            render={ props => <ReportsAdd
+              {...props}
+              webapitoken='token'
+              webapireports={webapireports}
+              webapimetric='https://mock.metric.com'
+              webapiaggregation='https://mock.aggr.com'
+              webapioperations='https://mock.operations.com'
+            /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
