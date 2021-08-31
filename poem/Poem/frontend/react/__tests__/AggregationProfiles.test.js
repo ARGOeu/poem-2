@@ -9,7 +9,7 @@ import {
   AggregationProfilesList,
   AggregationProfileVersionDetails
  } from '../AggregationProfiles';
-import { queryCache } from 'react-query';
+import { QueryClientProvider, QueryClient } from 'react-query';
 import { NotificationManager } from 'react-notifications';
 import useEvent from '@testing-library/user-event';
 
@@ -28,10 +28,12 @@ const mockDeleteAggregation = jest.fn();
 const mockAddAggregation = jest.fn();
 const mockAddObject = jest.fn();
 
+const queryClient = new QueryClient();
+
 
 beforeEach(() => {
   jest.clearAllMocks();
-  queryCache.clear()
+  queryClient.clear()
 })
 
 
@@ -333,20 +335,24 @@ function renderListView(publicView=false) {
   if (publicView)
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            render={ props => <AggregationProfilesList {...props} publicView={true} /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              render={ props => <AggregationProfilesList {...props} publicView={true} /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 
   else
     return {
       ...render(
-        <Router history={history}>
-          <Route component={AggregationProfilesList} />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route component={AggregationProfilesList} />
+          </Router>
+        </QueryClientProvider>
       )
     }
 }
@@ -359,35 +365,39 @@ function renderChangeView(publicView=false) {
   if (publicView)
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            path='/ui/public_aggregationprofiles/:name'
-            render={ props => <AggregationProfilesChange
-              {...props}
-              webapimetric='https://mock.metrics.com'
-              webapiaggregation='https://mock.aggregations.com'
-              webapitoken='token'
-              tenantname='TENANT'
-              publicView={true}
-            /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/public_aggregationprofiles/:name'
+              render={ props => <AggregationProfilesChange
+                {...props}
+                webapimetric='https://mock.metrics.com'
+                webapiaggregation='https://mock.aggregations.com'
+                webapitoken='token'
+                tenantname='TENANT'
+                publicView={true}
+              /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 
   else
     return {
       ...render(
-        <Router history={history}>
-          <Route exact path="/ui/aggregationprofiles/:name"
-            render={props => <AggregationProfilesChange
-              {...props}
-              webapiaggregation='https://mock.aggregations.com'
-              webapimetric='https://mock.metrics.com'
-              webapitoken='token'
-              tenantname='TENANT' /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route exact path="/ui/aggregationprofiles/:name"
+              render={props => <AggregationProfilesChange
+                {...props}
+                webapiaggregation='https://mock.aggregations.com'
+                webapimetric='https://mock.metrics.com'
+                webapitoken='token'
+                tenantname='TENANT' /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 }
@@ -399,19 +409,21 @@ function renderAddview() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/aggregationprofiles/add'
-          render={ props => <AggregationProfilesChange
-            {...props}
-            webapiaggregation='https://mock.aggregations.com'
-            webapimetric='https://mock.metrics.com'
-            webapitoken='token'
-            tenantname='TENANT'
-            addview={true}
-          /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/aggregationprofiles/add'
+            render={ props => <AggregationProfilesChange
+              {...props}
+              webapiaggregation='https://mock.aggregations.com'
+              webapimetric='https://mock.metrics.com'
+              webapitoken='token'
+              tenantname='TENANT'
+              addview={true}
+            /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }

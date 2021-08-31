@@ -1196,7 +1196,7 @@ export const AggregationProfilesList = (props) => {
       return fetched
     },
     {
-      enabled: !publicView ? userDetails : true
+      enabled: !publicView ? userDetails ? true : false : true
     }
   );
 
