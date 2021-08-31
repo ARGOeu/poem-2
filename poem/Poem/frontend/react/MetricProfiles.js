@@ -27,7 +27,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
 import ReactDiffViewer from 'react-diff-viewer';
-import { useQuery, queryCache } from 'react-query';
+import { useQuery, useQueryClient, useMutation } from 'react-query';
 import PapaParse from 'papaparse';
 import { downloadCSV } from './Helpers';
 
@@ -309,11 +309,15 @@ export const MetricProfilesComponent = (props) => {
   const location = props.location;
   const cloneview = props.cloneview;
   const publicView = props.publicView;
+
   const backend = new Backend();
   const webapi = new WebApi({
     token: props.webapitoken,
     metricProfiles: props.webapimetric
   })
+
+  const queryClient = useQueryClient();
+  const changeMetricProfile = useMutation(values => webapi.changeMetricProfile(values));
 
   const [listServices, setListServices] = useState(undefined);
   const [viewServices, setViewServices] = useState(undefined);
@@ -386,7 +390,7 @@ export const MetricProfilesComponent = (props) => {
       }
   },
     {
-      enabled: !publicView ? userDetails : true
+      enabled: !publicView ? userDetails ? true : false : true
     }
   )
 
@@ -663,14 +667,6 @@ export const MetricProfilesComponent = (props) => {
     return services
   }
 
-  const updateCacheKey = (formValues, services) => {
-    let staleMetricProfile = queryCache.getQueryData(querykey)
-    staleMetricProfile.profile.services = services
-    staleMetricProfile.profile.name = formValues.name
-    staleMetricProfile.profile.description = formValues.description
-    queryCache.setQueryData(querykey, staleMetricProfile)
-  }
-
   const doChange = async ({formValues, servicesList}) => {
     let services = [];
     let dataToSend = new Object()
@@ -686,7 +682,7 @@ export const MetricProfilesComponent = (props) => {
         description: formValues.description,
         services
       };
-      let response = await webapi.changeMetricProfile(dataToSend);
+      let response = await changeMetricProfile.mutateAsync(dataToSend);
       if (!response.ok) {
         let change_msg = '';
         try {
@@ -713,12 +709,12 @@ export const MetricProfilesComponent = (props) => {
           }
         );
         if (r.ok) {
+          queryClient.invalidateQueries(querykey);
           NotifyOk({
             msg: 'Metric profile successfully changed',
             title: 'Changed',
             callback: () => history.push('/ui/metricprofiles')
           });
-          updateCacheKey(formValues, services)
         }
         else {
           let change_msg = '';

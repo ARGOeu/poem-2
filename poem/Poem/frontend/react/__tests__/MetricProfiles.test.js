@@ -256,35 +256,39 @@ function renderChangeView(publicView=false) {
   if (publicView)
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            path='/ui/public_metricprofiles/:name'
-            render={ props => <MetricProfilesChange
-              {...props}
-              webapimetric='https://mock.metrics.com'
-              webapitoken='token'
-              tenantname='TENANT'
-              publicView={true}
-            /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/public_metricprofiles/:name'
+              render={ props => <MetricProfilesChange
+                {...props}
+                webapimetric='https://mock.metrics.com'
+                webapitoken='token'
+                tenantname='TENANT'
+                publicView={true}
+              /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 
   else
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            path='/ui/metricprofiles/:name'
-            render={props => <MetricProfilesChange
-              {...props}
-              webapimetric='https://mock.metrics.com'
-              webapitoken='token'
-              tenantname='TENANT'
-            /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/metricprofiles/:name'
+              render={props => <MetricProfilesChange
+                {...props}
+                webapimetric='https://mock.metrics.com'
+                webapitoken='token'
+                tenantname='TENANT'
+              /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 }
@@ -296,18 +300,20 @@ function renderAddView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/metricprofiles/add'
-          render={props => <MetricProfilesChange
-            {...props}
-            webapimetric='https://mock.metrics.com'
-            webapitoken='token'
-            tenantname='TENANT'
-            addview={true}
-          /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/metricprofiles/add'
+            render={props => <MetricProfilesChange
+              {...props}
+              webapimetric='https://mock.metrics.com'
+              webapitoken='token'
+              tenantname='TENANT'
+              addview={true}
+            /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -319,17 +325,19 @@ function renderCloneView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path="/ui/metricprofiles/:name/clone"
-          render={props => <MetricProfilesClone
-            {...props}
-            webapimetric='https://mock.metrics.com'
-            webapitoken='token'
-            tenantname='TENANT'
-          /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path="/ui/metricprofiles/:name/clone"
+            render={props => <MetricProfilesClone
+              {...props}
+              webapimetric='https://mock.metrics.com'
+              webapitoken='token'
+              tenantname='TENANT'
+            /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -341,12 +349,14 @@ function renderVersionDetailsView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/metricprofiles/:name/history/:version'
-          render={ props => <MetricProfileVersionDetails {...props} /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/metricprofiles/:name/history/:version'
+            render={ props => <MetricProfileVersionDetails {...props} /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
