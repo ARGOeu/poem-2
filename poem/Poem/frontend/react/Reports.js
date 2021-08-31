@@ -82,7 +82,7 @@ export const ReportsList = (props) => {
       return reports;
     },
     {
-      enabled: userDetails
+      enabled: !!userDetails
     }
   );
 
