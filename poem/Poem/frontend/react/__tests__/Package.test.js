@@ -1,11 +1,11 @@
 import React from 'react';
 import '@testing-library/jest-dom/extend-expect';
-import { render, screen, waitFor, fireEvent, wait } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { PackageComponent, PackageList } from '../Package';
 import { Backend } from '../DataManager';
-import { queryCache } from 'react-query';
+import { QueryClient, QueryClientProvider } from 'react-query';
 import { NotificationManager } from 'react-notifications';
 
 
@@ -24,10 +24,12 @@ global.fetch = jest.fn(() => {
   })
 })
 
+const queryClient = new QueryClient();
+
 beforeEach(() => {
   jest.clearAllMocks();
   fetch.mockClear();
-  queryCache.clear();
+  queryClient.clear();
 })
 
 const mockChangeObject = jest.fn();
@@ -176,11 +178,13 @@ function renderListView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          render={ props => <PackageList {...props} /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            render={ props => <PackageList {...props} /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -192,11 +196,13 @@ function renderTenantListView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          render={ props => <PackageList {...props} /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            render={ props => <PackageList {...props} /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -208,12 +214,14 @@ function renderChangeView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/packages/:nameversion'
-          render={ props => <PackageComponent {...props} /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/packages/:nameversion'
+            render={ props => <PackageComponent {...props} /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -225,12 +233,14 @@ function renderTenantChangeView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/administration/packages/:nameversion'
-          render={ props => <PackageComponent {...props} disabled={true} /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/administration/packages/:nameversion'
+            render={ props => <PackageComponent {...props} disabled={true} /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -242,12 +252,14 @@ function renderAddView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/packages/add'
-          render={ props => <PackageComponent {...props} addview={true} /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/packages/add'
+            render={ props => <PackageComponent {...props} addview={true} /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -259,12 +271,14 @@ function renderCloneView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/packages/:nameversion/clone'
-          render={ props => <PackageComponent {...props} cloneview={true} /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/packages/:nameversion/clone'
+            render={ props => <PackageComponent {...props} cloneview={true} /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
