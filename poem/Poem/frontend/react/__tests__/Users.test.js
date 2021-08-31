@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
-import { queryCache } from 'react-query';
+import { QueryClient, QueryClientProvider } from 'react-query';
 import { ChangePassword, UserChange, UsersList } from '../Users';
 import { Backend } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
@@ -21,11 +21,13 @@ const mockChangeObject = jest.fn();
 const mockDeleteObject = jest.fn();
 const mockAddObject = jest.fn();
 
+const queryClient = new QueryClient();
+
 
 beforeEach(() => {
   jest.clearAllMocks();
   fetch.mockClear();
-  queryCache.clear();
+  queryClient.clear();
 })
 
 
@@ -110,9 +112,11 @@ function renderListView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route path='/ui/administration/users' component={UsersList}/>
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route path='/ui/administration/users' component={UsersList}/>
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -124,12 +128,14 @@ function renderChangeView(username='Alan_Ford') {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/administration/users/:user_name'
-          render={ props => <UserChange {...props} /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/administration/users/:user_name'
+            render={ props => <UserChange {...props} /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -141,12 +147,14 @@ function renderAddView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/administration/users/add'
-          render={ props => <UserChange {...props} addview={true} /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/administration/users/add'
+            render={ props => <UserChange {...props} addview={true} /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -158,12 +166,14 @@ function renderTenantChangeView(username='Alan_Ford') {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/administration/users/:user_name'
-          render={ props => <UserChange {...props} isTenantSchema={true} /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/administration/users/:user_name'
+            render={ props => <UserChange {...props} isTenantSchema={true} /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -175,12 +185,14 @@ function renderTenantAddview() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/administration/users/add'
-          render={ props => <UserChange {...props} addview={true} isTenantSchema={true} /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/administration/users/add'
+            render={ props => <UserChange {...props} addview={true} isTenantSchema={true} /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -192,12 +204,14 @@ function renderChangePassword() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/administration/users/:user_name/change_password'
-          render={ props => <ChangePassword {...props} /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/administration/users/:user_name/change_password'
+            render={ props => <ChangePassword {...props} /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -2211,5 +2225,4 @@ describe('Tests for changing password', () => {
       expect.any(Function)
     )
   })
-
 })

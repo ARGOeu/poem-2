@@ -389,7 +389,7 @@ export const UserChange = (props) => {
         return user;
       }
     },
-    { enabled: !addview && userDetails}
+    { enabled: !addview && !!userDetails }
   );
 
   const { data: userProfile, error: errorUserProfile, isLoading: loadingUserProfile } = useQuery(
@@ -400,7 +400,7 @@ export const UserChange = (props) => {
         return userprofile;
       }
     },
-    { enabled: !addview && isTenantSchema}
+    { enabled: !addview && isTenantSchema }
   );
 
   const { data: userGroups, error: errorUserGroups, isLoading: loadingUserGroups } = useQuery(
@@ -411,7 +411,7 @@ export const UserChange = (props) => {
         return usergroups;
       }
     },
-    { enabled: isTenantSchema && !addview}
+    { enabled: isTenantSchema && !addview }
   );
 
   const { data: allGroups, error: errorAllGroups, isLoading: loadingAllGroups } = useQuery(
@@ -422,7 +422,7 @@ export const UserChange = (props) => {
         return allgroups;
       }
     },
-    { enabled: isTenantSchema}
+    { enabled: isTenantSchema }
   );
 
   const [areYouSureModal, setAreYouSureModal] = useState(false);
