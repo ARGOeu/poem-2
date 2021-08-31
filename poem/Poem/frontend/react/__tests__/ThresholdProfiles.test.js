@@ -180,35 +180,39 @@ function renderChangeView(publicView=false) {
   if (publicView)
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            path='/ui/public_thresholdsprofiles/:name'
-            render={ props => <ThresholdsProfilesChange
-              {...props}
-              webapithresholds='https://mock.thresholds.com'
-              webapitoken='token'
-              tenantname='TENANT'
-              publicView={true}
-            /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/public_thresholdsprofiles/:name'
+              render={ props => <ThresholdsProfilesChange
+                {...props}
+                webapithresholds='https://mock.thresholds.com'
+                webapitoken='token'
+                tenantname='TENANT'
+                publicView={true}
+              /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 
   else
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            path='/ui/thresholdsprofiles/:name'
-            render={ props => <ThresholdsProfilesChange
-              {...props}
-              webapithresholds='https://mock.thresholds.com'
-              webapitoken='token'
-              tenantname='TENANT'
-            /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/thresholdsprofiles/:name'
+              render={ props => <ThresholdsProfilesChange
+                {...props}
+                webapithresholds='https://mock.thresholds.com'
+                webapitoken='token'
+                tenantname='TENANT'
+              /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 }
@@ -220,18 +224,20 @@ function renderAddView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/thresholdsprofiles/add'
-          render={ props => <ThresholdsProfilesChange
-            {...props}
-            webapithresholds='https://mock.thresholds.com'
-            webapitoken='token'
-            tenantname='TENANT'
-            addview={true}
-          /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/thresholdsprofiles/add'
+            render={ props => <ThresholdsProfilesChange
+              {...props}
+              webapithresholds='https://mock.thresholds.com'
+              webapitoken='token'
+              tenantname='TENANT'
+              addview={true}
+            /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -243,12 +249,14 @@ function renderVersionDetailsView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/thresholdsprofiles/:name/history/:version'
-          render={ props =>  <ThresholdsProfileVersionDetail {...props} />}
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/thresholdsprofiles/:name/history/:version'
+            render={ props =>  <ThresholdsProfileVersionDetail {...props} />}
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
