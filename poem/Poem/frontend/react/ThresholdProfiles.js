@@ -915,7 +915,7 @@ export const ThresholdsProfilesList = (props) => {
       return profiles;
     },
     {
-      enabled: !publicView ? userDetails : true
+      enabled: !publicView ? !!userDetails : true
     }
   )
 
