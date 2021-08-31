@@ -1241,7 +1241,7 @@ export const MetricChange = (props) => {
       return metric;
     },
     {
-      enabled: !publicView ? session : true
+      enabled: !publicView ? !!session : true
     }
   );
 
@@ -1258,7 +1258,7 @@ export const MetricChange = (props) => {
 
       return probe;
     },
-    { enabled: metric }
+    { enabled: !!metric }
   );
 
   function togglePopOver() {
