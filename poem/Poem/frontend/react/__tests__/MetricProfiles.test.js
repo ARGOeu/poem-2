@@ -4,7 +4,7 @@ import '@testing-library/jest-dom/extend-expect';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { Backend, WebApi } from '../DataManager';
-import { queryCache } from 'react-query';
+import { QueryClient, QueryClientProvider } from 'react-query';
 import {
   MetricProfilesChange,
   MetricProfilesList,
@@ -30,9 +30,12 @@ const mockAddObject = jest.fn();
 const mockAddMetricProfile = jest.fn();
 
 
+const queryClient = new QueryClient();
+
+
 beforeEach(() => {
   jest.clearAllMocks();
-  queryCache.clear();
+  queryClient.clear();
 })
 
 
@@ -222,21 +225,25 @@ function renderListView(publicView=false) {
   if (publicView)
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            path='/ui/public_metricprofiles'
-            render={ props => <MetricProfilesList publicView={true} {...props} /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/public_metricprofiles'
+              render={ props => <MetricProfilesList publicView={true} {...props} /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 
   else
     return {
       ...render(
-        <Router history={history}>
-          <Route path='/ui/metricprofiles' component={MetricProfilesList} />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route path='/ui/metricprofiles' component={MetricProfilesList} />
+          </Router>
+        </QueryClientProvider>
       )
     }
 }

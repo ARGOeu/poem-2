@@ -1156,7 +1156,7 @@ export const MetricProfilesList = (props) => {
       return fetched
     },
     {
-      enabled: !publicView ? userDetails : true
+      enabled: !publicView ? userDetails ? true : false : true
     }
   );
 
