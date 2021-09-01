@@ -116,15 +116,19 @@ pipeline {
         }
         stage ('Teardown containers') {
             steps {
-                script {
+				script
+				{
+					sh '''
+						echo "Stopping containers..."
+					'''
+				}
+            }
+            post {
+                always {
                     sh '''
                       cd $WORKSPACE/$PROJECT_DIR/testenv/
                       docker-compose down
                     '''
-                }
-            }
-            post {
-                always {
                     cleanWs()
                 }
             }
