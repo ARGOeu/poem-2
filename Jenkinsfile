@@ -17,7 +17,8 @@ pipeline {
                         sh '''
                             cd $WORKSPACE/$PROJECT_DIR/testenv/
                             docker-compose up -d
-                            while (( 1 ))
+                            let i=1
+                            while (( $i <= 5 ))
                             do
                                 sleep 5
                                 container_web_running=$(docker ps -f name=poem-react-tests-webapp -f status=running -q)
@@ -29,6 +30,7 @@ pipeline {
                                 else
                                     echo "not running"
                                 fi
+                                (( i++ ))
                             done
                         '''
                     }
@@ -72,7 +74,7 @@ pipeline {
                                 echo err.toString()
                             }
                         }
-						junit 'poem-react/junit-backend.xml'
+                        junit 'poem-react/junit-backend.xml'
                     }
                 }
                 stage ('Execute frontend tests') {
@@ -104,7 +106,7 @@ pipeline {
                                 echo err.toString()
                             }
                         }
-						junit 'poem-react/junit-frontend.xml'
+                        junit 'poem-react/junit-frontend.xml'
                     }
                 }
             }
@@ -116,12 +118,12 @@ pipeline {
         }
         stage ('Teardown containers') {
             steps {
-				script
-				{
-					sh '''
-						echo "Stopping containers..."
-					'''
-				}
+                script
+                {
+                    sh '''
+                        echo "Stopping containers..."
+                    '''
+                }
             }
             post {
                 always {
