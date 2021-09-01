@@ -20,10 +20,11 @@ pipeline {
                             while (( 1 ))
                             do
                                 sleep 5
-                                containers_running=$(docker ps -f name=poem-react-tests -f status=running -q)
-                                if [ ! -z "$containers_running" ]
+                                container_web_running=$(docker ps -f name=poem-react-tests-webapp -f status=running -q)
+                                container_db_running=$(docker ps -f name=poem-react-tests-postgres10 -f status=running -q)
+                                if [[ ! -z "$container_web_running" && ! -z "$container_db_running" ]]
                                 then
-                                    docker exec -i poem-react-tests /home/jenkins/poem-install.sh
+                                    docker exec -i poem-react-tests-webapp /home/jenkins/poem-install.sh
                                     exit $?
                                 else
                                     echo "not running"
@@ -57,7 +58,7 @@ pipeline {
                                         if [ ! -z "$containers_running" ]
                                         then
                                             echo "running"
-                                            docker exec -i poem-react-tests /home/jenkins/execute-backend-tests.sh
+                                            docker exec -i poem-react-tests-webapp /home/jenkins/execute-backend-tests.sh
                                             exit $?
                                         else
                                             echo "not running"
@@ -89,7 +90,7 @@ pipeline {
                                         if [ ! -z "$containers_running" ]
                                         then
                                             echo "running"
-                                            docker exec -i poem-react-tests /home/jenkins/execute-frontend-tests.sh
+                                            docker exec -i poem-react-tests-webapp /home/jenkins/execute-frontend-tests.sh
                                             exit $?
                                         else
                                             echo "not running"

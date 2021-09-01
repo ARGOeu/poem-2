@@ -5,7 +5,7 @@ services:
       context: .
       dockerfile: Dockerfile.poem-react-tests
     image: argo.registry:5000/epel-7-poem
-    container_name: poem-react-tests
+    container_name: poem-react-tests-webapp
     hostname: poem-react-test
     tty: true
     stdin_open: true
