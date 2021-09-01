@@ -32,6 +32,7 @@ pipeline {
                                 fi
                                 (( i++ ))
                             done
+                            exit 1
                         '''
                     }
                     catch (Exception err)
