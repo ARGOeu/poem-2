@@ -16,7 +16,7 @@ pipeline {
                         echo 'Prepare containers...'
                         sh '''
                             cd $WORKSPACE/$PROJECT_DIR/testenv/
-                            docker-compose up -d --no-build
+                            docker-compose up -d
                             while (( 1 ))
                             do
                                 sleep 5
