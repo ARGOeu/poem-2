@@ -64,7 +64,7 @@ const ChangePasswordSchema = Yup.object().shape({
 
 
 import './Users.css';
-import { useQuery } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
 
 
 const CommonUser = ({add, ...props}) =>
@@ -257,7 +257,7 @@ export const UsersList = (props) => {
     const backend = new Backend();
 
     const { data: listUsers, error: error, isLoading: loading } = useQuery(
-      'users_listview', async () => {
+      'user', async () => {
         let json = await backend.fetchData('/api/v2/internal/users');
         return json;
       }
@@ -367,12 +367,13 @@ export const UserChange = (props) => {
   const isTenantSchema = props.isTenantSchema;
   const location = props.location;
   const history = props.history;
-  const querykey = `user_${addview ? 'addview' : `${user_name}_changeview`}`;
+
+  const queryClient = useQueryClient();
 
   const backend = new Backend();
 
-  const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
-    'session_userdetails', async () => {
+  const { data: userDetails, error: errorUserDetails, status: statusUserDetails } = useQuery(
+    'userdetails', async () => {
       let arg = isTenantSchema ? true : false;
       let session = await backend.isActiveSession(arg);
 
@@ -381,20 +382,23 @@ export const UserChange = (props) => {
     }
   );
 
-  const { data: user, error: errorUser, isLoading: loadingUser } = useQuery(
-    `${querykey}`, async () => {
-      if (!addview) {
-        let user = await backend.fetchData(`/api/v2/internal/users/${user_name}`);
+  const { data: user, error: errorUser, status: statusUser } = useQuery(
+    ['user', user_name], async () => {
+      let user = await backend.fetchData(`/api/v2/internal/users/${user_name}`);
 
-        return user;
-      }
+      return user;
     },
-    { enabled: !addview && !!userDetails }
+    {
+      enabled: !addview && !!userDetails,
+      initialData: () => {
+        return queryClient.getQueryData('user')?.find(usr => usr.name === user_name)
+      }
+    }
   );
 
-  const { data: userProfile, error: errorUserProfile, isLoading: loadingUserProfile } = useQuery(
-    `${querykey}_userprofile`, async () => {
-      if (isTenantSchema && !addview) {
+  const { data: userProfile, error: errorUserProfile, status: statusUserProfile } = useQuery(
+    ['userprofile', user_name], async () => {
+      if (isTenantSchema) {
         let userprofile = await backend.fetchData(`/api/v2/internal/userprofile/${user_name}`);
 
         return userprofile;
@@ -403,9 +407,9 @@ export const UserChange = (props) => {
     { enabled: !addview && isTenantSchema }
   );
 
-  const { data: userGroups, error: errorUserGroups, isLoading: loadingUserGroups } = useQuery(
-    `${querykey}_usergroups`, async () => {
-      if (isTenantSchema && !addview) {
+  const { data: userGroups, error: errorUserGroups, status: statusUserGroups } = useQuery(
+    ['usergroups', user_name], async () => {
+      if (isTenantSchema) {
         let usergroups = await backend.fetchResult(`/api/v2/internal/usergroups/${user_name}`);
 
         return usergroups;
@@ -414,10 +418,10 @@ export const UserChange = (props) => {
     { enabled: isTenantSchema && !addview }
   );
 
-  const { data: allGroups, error: errorAllGroups, isLoading: loadingAllGroups } = useQuery(
-    'user_listview_allgroups', async () => {
+  const { data: allGroups, error: errorAllGroups, status: statusAllGroups } = useQuery(
+    'usergroups', async () => {
       if (isTenantSchema) {
-       let allgroups = await backend.fetchResult('/api/v2/internal/usergroups');
+        let allgroups = await backend.fetchResult('/api/v2/internal/usergroups');
 
         return allgroups;
       }
@@ -609,22 +613,22 @@ export const UserChange = (props) => {
     }
   }
 
-  if (loadingUser || loadingUserProfile || loadingUserGroups || loadingAllGroups || loadingUserDetails)
+  if (statusUser === 'loading' || statusUserProfile === 'loading' || statusUserGroups === 'loading' || statusAllGroups === 'loading' || statusUserDetails === 'loading')
     return(<LoadingAnim />)
 
-  else if (errorUser)
+  else if (statusUser === 'error')
     return (<ErrorComponent error={errorUser}/>);
 
-  else if (errorUserProfile)
+  else if (statusUserProfile === 'error')
     return (<ErrorComponent error={errorUserProfile}/>);
 
-  else if (errorUserGroups)
+  else if (statusUserGroups === 'error')
     return (<ErrorComponent error={errorUserGroups}/>);
 
-  else if (errorAllGroups)
+  else if (statusAllGroups === 'error')
     return (<ErrorComponent error={errorAllGroups}/>);
 
-  else if (errorUserDetails)
+  else if (statusUserDetails === 'error')
     return (<ErrorComponent error={errorUserDetails}/>);
 
   else {
