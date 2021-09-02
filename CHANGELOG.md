@@ -1,5 +1,27 @@
 # Changelog
 
+## [3.3.10] - 2021-09-02
+
+### Added
+
+* ARGO-2718 Create tests for reports 
+* ARGO-3096 Delete tenant feature 
+* ARGO-3171 Include tests for reports related API views
+* ARGO-3177 Selective enablement of Reports WEB-API CRUD
+* ARGO-3242 Use read-only token in repos internal API 
+
+### Changed
+
+* ARGO-3094 Use django-tenants for PostgreSQL tenant schemas
+* ARGO-3221 Tag multiple values as comma separated strings 
+* ARGO-3230 Update POEM documentation 
+* ARGO-3242 Use read-only token in repos internal API
+
+### Fixed
+
+* ARGO-3242 Use read-only token in repos internal API 
+* ARGO-3243 Bump outdated libs versions 
+
 ## [3.3.9] - 2021-06-10
 
 ### Added
