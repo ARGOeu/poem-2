@@ -55,6 +55,8 @@ When exporting, user clicks **Export** in **CSV** dropdown button, and file is s
 
 When importing, user clicks **Import** in **CSV** dropdown button, and selects the file (s)he wants to import. Metric instances are then overridden with values from imported .csv file.
 
+When the metrics have been imported, they are also validated, and the user is informed if the metric is not present in the tenant's POEM database. If that is the case, user should import the missing metrics as described in [metric template page](tenant_metric_templates.md).
+
 ### Metric profile history
 
 By clicking the **History** button, the user can see all the changes made to the profile, when they were made and by whom (image below).

@@ -11,11 +11,12 @@ from Poem.tenants.models import Tenant
 from Poem.users.models import CustUser
 from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
+from django_tenants.test.cases import TenantTestCase
+from django_tenants.test.client import TenantRequestFactory
+from django_tenants.utils import get_public_schema_name, schema_context, \
+    get_tenant_domain_model
 from rest_framework import status
 from rest_framework.test import force_authenticate
-from tenant_schemas.test.cases import TenantTestCase
-from tenant_schemas.test.client import TenantRequestFactory
-from tenant_schemas.utils import get_public_schema_name, schema_context
 
 from .utils_test import mocked_func, encode_data, mocked_inline_metric_for_db, \
     MockResponse
@@ -2164,10 +2165,13 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         self.regular_user = CustUser.objects.create_user(username='test')
 
         with schema_context(get_public_schema_name()):
-            Tenant.objects.create(
-                name='public', domain_url='public',
-                schema_name=get_public_schema_name()
+            tenant = Tenant.objects.create(
+                name='public', schema_name=get_public_schema_name()
             )
+            get_tenant_domain_model().objects.create(
+                domain='public', tenant=tenant, is_primary=True
+            )
+
 
         self.mtype1 = poem_models.MetricType.objects.create(name='Active')
         self.mtype2 = poem_models.MetricType.objects.create(name='Passive')

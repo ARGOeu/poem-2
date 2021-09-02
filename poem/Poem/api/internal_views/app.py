@@ -13,7 +13,7 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from tenant_schemas.utils import get_public_schema_name
+from django_tenants.utils import get_public_schema_name
 
 
 class ListGroupsForUser(APIView):
@@ -108,6 +108,7 @@ class GetConfigOptions(APIView):
         options.update(version=version)
         options.update(webapireports=dict(
             main=settings.WEBAPI_REPORTS,
+            crud=settings.WEBAPI_REPORTSCRUD,
             tags=settings.WEBAPI_REPORTSTAGS,
             topologygroups=settings.WEBAPI_REPORTSTOPOLOGYGROUPS,
             topologyendpoints=settings.WEBAPI_REPORTSTOPOLOGYENDPOINTS,

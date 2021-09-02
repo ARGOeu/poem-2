@@ -15,7 +15,7 @@ from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from tenant_schemas.utils import get_public_schema_name, schema_context
+from django_tenants.utils import get_public_schema_name, schema_context
 
 from .utils import error_response
 

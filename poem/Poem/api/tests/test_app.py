@@ -6,10 +6,10 @@ from Poem.api import views_internal as views
 from Poem.api.models import MyAPIKey
 from Poem.poem import models as poem_models
 from Poem.users.models import CustUser
+from django_tenants.test.cases import TenantTestCase
+from django_tenants.test.client import TenantRequestFactory
+from django_tenants.utils import get_public_schema_name
 from rest_framework.test import force_authenticate
-from tenant_schemas.test.cases import TenantTestCase
-from tenant_schemas.test.client import TenantRequestFactory
-from tenant_schemas.utils import get_public_schema_name
 
 
 class ListGroupsForUserAPIViewTests(TenantTestCase):
@@ -181,7 +181,8 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
                 WEBAPI_REPORTS='https://reports.com',
                 WEBAPI_REPORTSTAGS='https://reports-tags.com',
                 WEBAPI_REPORTSTOPOLOGYGROUPS='https://topology-groups.com',
-                WEBAPI_REPORTSTOPOLOGYENDPOINTS='https://endpoints.com'
+                WEBAPI_REPORTSTOPOLOGYENDPOINTS='https://endpoints.com',
+                WEBAPI_REPORTSCRUD=True
         ):
             request = self.factory.get(self.url)
             response = self.view(request)
@@ -199,6 +200,7 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
                         ).version,
                         'webapireports': {
                             'main': 'https://reports.com',
+                            'crud': True,
                             'tags': 'https://reports-tags.com',
                             'topologygroups': 'https://topology-groups.com',
                             'topologyendpoints': 'https://endpoints.com'

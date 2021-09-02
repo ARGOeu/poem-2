@@ -4,9 +4,14 @@ import '@testing-library/jest-dom/extend-expect';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { Backend, WebApi } from '../DataManager';
-import { AggregationProfilesChange, AggregationProfilesList, AggregationProfileVersionDetails } from '../AggregationProfiles';
+import {
+  AggregationProfilesChange,
+  AggregationProfilesList,
+  AggregationProfileVersionDetails
+ } from '../AggregationProfiles';
 import { queryCache } from 'react-query';
 import { NotificationManager } from 'react-notifications';
+import useEvent from '@testing-library/user-event';
 
 
 jest.mock('../DataManager', () => {
@@ -528,9 +533,9 @@ describe('Tests for aggregation profiles changeview', () => {
 
     const nameField = screen.getByTestId('name');
     const groupField = screen.getByTestId('groupname');
-    const metricOperation = screen.getByTestId('metric_operation').firstChild;
-    const aggrOperation = screen.getByTestId('profile_operation').firstChild;
-    const endpointGroup = screen.getByTestId('endpoint_group').firstChild;
+    const metricOperation = screen.getByTestId('metric_operation_col').firstChild;
+    const aggrOperation = screen.getByTestId('profile_operation_col').firstChild;
+    const endpointGroup = screen.getByTestId('endpoint_group_col').firstChild;
     const metricProfileRow = within(screen.getByTestId('metric_profile_row'));
     const metricProfileField = metricProfileRow.getByRole('combobox');
 
@@ -612,6 +617,7 @@ describe('Tests for aggregation profiles changeview', () => {
     expect(screen.getByRole('button', { name: /history/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /history/i }).closest('a')).toHaveAttribute('href', '/ui/aggregationprofiles/TEST_PROFILE/history')
     expect(screen.getByRole('button', { name: 'Add new group' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /json/i })).toBeInTheDocument();
 
     expect(screen.getByRole('alert')).toBeInTheDocument();
   })
@@ -629,9 +635,9 @@ describe('Tests for aggregation profiles changeview', () => {
 
     const nameField = screen.getByTestId('name');
     const groupField = screen.getByTestId('groupname');
-    const metricOperation = screen.getByTestId('metric_operation').firstChild;
-    const aggrOperation = screen.getByTestId('profile_operation').firstChild;
-    const endpointGroup = screen.getByTestId('endpoint_group').firstChild;
+    const metricOperation = screen.getByTestId('metric_operation_col').firstChild;
+    const aggrOperation = screen.getByTestId('profile_operation_col').firstChild;
+    const endpointGroup = screen.getByTestId('endpoint_group_col').firstChild;
     const metricProfileRow = within(screen.getByTestId('metric_profile_row'));
     const metricProfileField = metricProfileRow.getByRole('textbox');
 
@@ -707,8 +713,271 @@ describe('Tests for aggregation profiles changeview', () => {
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Add new group' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /json/i })).not.toBeInTheDocument();
 
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  })
+
+  test('Test import json successfully', async () => {
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change aggregation profile');
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /json/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /import/i }));
+
+    const content = new Blob([JSON.stringify({
+      profile_operation: 'OR',
+      endpoint_group: 'sites',
+      metric_operation: 'OR',
+      groups: [
+        {
+          services: [
+            {
+              operation: 'OR',
+              name: 'ARC-CE'
+            },
+            {
+              operation: 'AND',
+              name: 'GRAM5'
+            },
+            {
+              operation: 'OR',
+              name: 'org.opensciencegrid.htcondorce'
+            }
+          ],
+          operation: 'OR',
+          name: 'compute'
+        }
+      ],
+      metric_profile: 'FEDCLOUD'
+    })], { type: 'application/json' });
+
+    const file = new File([content], 'profile.json', { type: 'application/json' });
+    const input = screen.getByTestId('file_input');
+    await waitFor(() => {
+      useEvent.upload(input, file);
+    })
+
+    expect(input.files[0]).toStrictEqual(file)
+    expect(input.files.item(0)).toStrictEqual(file)
+    expect(input.files).toHaveLength(1)
+
+    await waitFor(() => {
+      fireEvent.load(screen.getByTestId('file_input'))
+    })
+
+    const nameField = screen.getByTestId('name');
+    const groupField = screen.getByTestId('groupname');
+    const metricOperation = screen.getByTestId('metric_operation_col').firstChild;
+    const aggrOperation = screen.getByTestId('profile_operation_col').firstChild;
+    const endpointGroup = screen.getByTestId('endpoint_group_col').firstChild;
+    const metricProfileRow = within(screen.getByTestId('metric_profile_row'));
+    const metricProfileField = metricProfileRow.getByRole('combobox');
+
+    expect(nameField.value).toBe('TEST_PROFILE');
+    expect(nameField).toBeDisabled();
+    expect(groupField.value).toBe('EGI');
+    expect(groupField).toBeEnabled();
+
+    expect(metricOperation.value).toBe('OR');
+    expect(metricOperation).toBeEnabled();
+    expect(aggrOperation.value).toBe('OR');
+    expect(aggrOperation).toBeEnabled();
+    expect(endpointGroup.value).toBe('sites');
+    expect(endpointGroup).toBeEnabled();
+    expect(metricProfileField.value).toBe('FEDCLOUD');
+    expect(metricProfileField).toBeEnabled();
+
+    expect(screen.getAllByTestId(/card/i)).toHaveLength(1);
+    const card0 = within(screen.getByTestId('card-0'));
+
+    expect(screen.getAllByTestId(/group-operation/i)).toHaveLength(1);
+    expect(screen.getByTestId('group-operation-0').firstChild.value).toBe('OR');
+
+    expect(card0.getByPlaceholderText(/service group/i).value).toBe('compute')
+    const serviceFields0 = card0.getAllByRole('textbox')
+    expect(serviceFields0).toHaveLength(4);
+    // the first serviceFields0 element is the title of the group
+    expect(serviceFields0[1].value).toBe('ARC-CE');
+    expect(serviceFields0[2].value).toBe('GRAM5');
+    expect(serviceFields0[3].value).toBe('org.opensciencegrid.htcondorce');
+    expect(card0.getAllByTestId(/operation-/i)).toHaveLength(3);
+    expect(card0.getByTestId('operation-0').firstChild.value).toBe('OR');
+    expect(card0.getByTestId('operation-1').firstChild.value).toBe('AND');
+    expect(card0.getByTestId('operation-2').firstChild.value).toBe('OR');
+    expect(card0.getAllByTestId(/remove/i)).toHaveLength(4);
+    expect(card0.getAllByTestId(/insert/i)).toHaveLength(3);
+    expect(card0.getByTestId('operation').firstChild.value).toBe('OR');
+  })
+
+  test('Test export json successfully', async () => {
+    const helpers = require('../Helpers');
+    jest.spyOn(helpers, 'downloadJSON').mockReturnValueOnce(null);
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change aggregation profile');
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /json/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /export/i }));
+
+    const content = {
+      endpoint_group: 'servicegroups',
+      metric_operation: 'AND',
+      profile_operation: 'AND',
+      metric_profile: 'ARGO_MON_CRITICAL',
+      groups: [
+        {
+          name: "compute",
+          operation: "OR",
+          services: [
+            {
+              name: "ARC-CE",
+              operation: "OR"
+            },
+            {
+              name: "GRAM5",
+              operation: "OR"
+            },
+            {
+              name: "QCG.Computing",
+              operation: "OR"
+            },
+            {
+              name: "org.opensciencegrid.htcondorce",
+              operation: "OR"
+            }
+          ]
+        },
+        {
+          name: "storage",
+          operation: "OR",
+          services: [
+            {
+              name: "SRM",
+              operation: "OR"
+            }
+          ]
+        },
+        {
+          name: "information",
+          operation: "OR",
+          services: [
+            {
+              name: "Site-BDII",
+              operation: "OR"
+            }
+          ]
+        },
+        {
+          name: "cloud",
+          operation: "OR",
+          services: [
+            {
+              name: "org.openstack.nova",
+              operation: "OR"
+            }
+          ]
+        }
+      ]
+    };
+
+    expect(helpers.downloadJSON).toHaveBeenCalledTimes(1);
+    expect(helpers.downloadJSON).toHaveBeenCalledWith(content, 'TEST_PROFILE.json');
+  });
+
+  test('Test export json when form has been changed', async () => {
+    const helpers = require('../Helpers');
+    jest.spyOn(helpers, 'downloadJSON').mockReturnValueOnce(null);
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change aggregation profile');
+    })
+
+    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
+
+    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'OR' } });
+    fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'OR' } });
+    fireEvent.change(screen.getByTestId('endpoint_group_col').firstChild, { target: { value: 'sites' } });
+    fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'FEDCLOUD' } })
+
+    const card0 = within(screen.getByTestId('card-0'));
+    const card1 = within(screen.getByTestId('card-1'));
+
+    fireEvent.click(card0.getByTestId('remove-2'));
+    fireEvent.change(card0.getByTestId('operation-1').firstChild, { target: { value: 'AND' } })
+
+    fireEvent.click(card1.getByTestId('insert-0'));
+    const serviceFields = within(screen.getByTestId('card-1')).getAllByRole('textbox');
+    fireEvent.change(serviceFields[2], { target: { value: 'webdav' } });
+
+    fireEvent.change(within(screen.getByTestId('card-3')).getByTestId('operation').firstChild, { target: { value: 'AND' } })
+
+    fireEvent.click(within(screen.getByTestId('card-2')).getByTestId('remove-group'));
+
+    fireEvent.click(screen.getByRole('button', { name: /json/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /export/i }));
+
+    const content = {
+      profile_operation: 'OR',
+      endpoint_group: 'sites',
+      metric_operation: 'OR',
+      groups: [
+        {
+          services: [
+            {
+              operation: 'OR',
+              name: 'ARC-CE'
+            },
+            {
+              operation: 'AND',
+              name: 'GRAM5'
+            },
+            {
+              operation: 'OR',
+              name: 'org.opensciencegrid.htcondorce'
+            }
+          ],
+          operation: 'OR',
+          name: 'compute'
+        },
+        {
+          services: [
+            {
+              operation: 'OR',
+              name: 'SRM'
+            },
+            {
+              operation: 'OR',
+              name: 'webdav'
+            }
+          ],
+          operation: 'OR',
+          name: 'storage'
+        },
+        {
+          services: [
+            {
+              operation: 'OR',
+              name: 'org.openstack.nova'
+            }
+          ],
+          operation: 'AND',
+          name: 'cloud'
+        }
+      ],
+      metric_profile: 'FEDCLOUD'
+    };
+
+    expect(helpers.downloadJSON).toHaveBeenCalledTimes(1);
+    expect(helpers.downloadJSON).toHaveBeenCalledWith(content, 'TEST_PROFILE.json');
   })
 
   test('Test error changing aggregation profile on web api with error message', async () => {
@@ -739,9 +1008,9 @@ describe('Tests for aggregation profiles changeview', () => {
 
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
 
-    fireEvent.change(screen.getByTestId('metric_operation').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(screen.getByTestId('profile_operation').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(screen.getByTestId('endpoint_group').firstChild, { target: { value: 'sites' } });
+    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'OR' } });
+    fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'OR' } });
+    fireEvent.change(screen.getByTestId('endpoint_group_col').firstChild, { target: { value: 'sites' } });
     fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'FEDCLOUD' } })
 
     const card0 = within(screen.getByTestId('card-0'));
@@ -852,9 +1121,9 @@ describe('Tests for aggregation profiles changeview', () => {
 
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
 
-    fireEvent.change(screen.getByTestId('metric_operation').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(screen.getByTestId('profile_operation').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(screen.getByTestId('endpoint_group').firstChild, { target: { value: 'sites' } });
+    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'OR' } });
+    fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'OR' } });
+    fireEvent.change(screen.getByTestId('endpoint_group_col').firstChild, { target: { value: 'sites' } });
     fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'FEDCLOUD' } })
 
     const card0 = within(screen.getByTestId('card-0'));
@@ -972,9 +1241,9 @@ describe('Tests for aggregation profiles changeview', () => {
 
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
 
-    fireEvent.change(screen.getByTestId('metric_operation').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(screen.getByTestId('profile_operation').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(screen.getByTestId('endpoint_group').firstChild, { target: { value: 'sites' } });
+    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'OR' } });
+    fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'OR' } });
+    fireEvent.change(screen.getByTestId('endpoint_group_col').firstChild, { target: { value: 'sites' } });
     fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'FEDCLOUD' } })
 
     const card0 = within(screen.getByTestId('card-0'));
@@ -1143,9 +1412,9 @@ describe('Tests for aggregation profiles changeview', () => {
 
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
 
-    fireEvent.change(screen.getByTestId('metric_operation').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(screen.getByTestId('profile_operation').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(screen.getByTestId('endpoint_group').firstChild, { target: { value: 'sites' } });
+    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'OR' } });
+    fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'OR' } });
+    fireEvent.change(screen.getByTestId('endpoint_group_col').firstChild, { target: { value: 'sites' } });
     fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'FEDCLOUD' } })
 
     const card0 = within(screen.getByTestId('card-0'));
@@ -1314,9 +1583,9 @@ describe('Tests for aggregation profiles changeview', () => {
 
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
 
-    fireEvent.change(screen.getByTestId('metric_operation').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(screen.getByTestId('profile_operation').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(screen.getByTestId('endpoint_group').firstChild, { target: { value: 'sites' } });
+    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'OR' } });
+    fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'OR' } });
+    fireEvent.change(screen.getByTestId('endpoint_group_col').firstChild, { target: { value: 'sites' } });
     fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'FEDCLOUD' } })
 
     const card0 = within(screen.getByTestId('card-0'));
@@ -1452,6 +1721,189 @@ describe('Tests for aggregation profiles changeview', () => {
                   operation: 'OR'
                 }
               ],
+            }
+          ])
+        }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Aggregation profile successfully changed', 'Changed', 2000
+    )
+  })
+
+  test('Test import json, make some changes and save profile', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+    mockChangeAggregation.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change aggregation profile');
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /json/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /import/i }));
+
+    const content = new Blob([JSON.stringify({
+      profile_operation: 'OR',
+      endpoint_group: 'sites',
+      metric_operation: 'OR',
+      groups: [
+        {
+          services: [
+            {
+              operation: 'OR',
+              name: 'ARC-CE'
+            },
+            {
+              operation: 'AND',
+              name: 'GRAM5'
+            },
+            {
+              operation: 'OR',
+              name: 'org.opensciencegrid.htcondorce'
+            }
+          ],
+          operation: 'OR',
+          name: 'compute'
+        }
+      ],
+      metric_profile: 'FEDCLOUD'
+    })], { type: 'application/json' });
+
+    const file = new File([content], 'profile.json', { type: 'application/json' });
+    const input = screen.getByTestId('file_input');
+    await waitFor(() => {
+      useEvent.upload(input, file);
+    })
+
+    expect(input.files[0]).toStrictEqual(file)
+    expect(input.files.item(0)).toStrictEqual(file)
+    expect(input.files).toHaveLength(1)
+
+    await waitFor(() => {
+      fireEvent.load(screen.getByTestId('file_input'))
+    })
+
+    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'AND' } });
+
+    const card0 = within(screen.getByTestId('card-0'));
+    fireEvent.click(card0.getByTestId('insert-2'));
+    fireEvent.change(within(screen.getByTestId('card-0')).getAllByRole('textbox')[4], { target: { value: 'webdav' } })
+    fireEvent.change(within(screen.getByTestId('card-0')).getByTestId('operation-3').firstChild, { target: { value: 'OR' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /add new group/i }));
+
+    const card1 = within(screen.getByTestId('card-1'));
+    fireEvent.change(card1.getByPlaceholderText(/service group/i), { target: { value: 'cloud' } })
+    fireEvent.change(card1.getAllByRole('textbox')[1], { target: { value: 'org.openstack.nova' } })
+    fireEvent.change(card1.getByTestId('operation').firstChild, { target: { value: 'OR' } })
+    fireEvent.change(card1.getByTestId('operation-0').firstChild, { target: { value: 'OR' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeAggregation).toHaveBeenCalledWith({
+        profile_operation: 'OR',
+        endpoint_group: 'sites',
+        groupname: 'EGI',
+        name: 'TEST_PROFILE',
+        metric_operation: 'AND',
+        namespace: 'TENANT',
+        groups: [
+          {
+            services: [
+              {
+                operation: 'OR',
+                name: 'ARC-CE'
+              },
+              {
+                operation: 'AND',
+                name: 'GRAM5'
+              },
+              {
+                operation: 'OR',
+                name: 'org.opensciencegrid.htcondorce'
+              },
+              {
+                operation: 'OR',
+                name: 'webdav'
+              }
+            ],
+            operation: 'OR',
+            name: 'compute'
+          },
+          {
+            services: [
+              {
+                operation: 'OR',
+                name: 'org.openstack.nova'
+              }
+            ],
+            operation: 'OR',
+            name: 'cloud'
+          }
+        ],
+        metric_profile: {
+          name: 'FEDCLOUD',
+          id: '56785678-oooo-kkkk-aaaa-aaeekkccnnee'
+        },
+        id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee'
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/aggregations/',
+        {
+          name: 'TEST_PROFILE',
+          apiid: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+          groupname: 'EGI',
+          endpoint_group: 'sites',
+          metric_operation: 'AND',
+          profile_operation: 'OR',
+          metric_profile: 'FEDCLOUD',
+          groups: JSON.stringify([
+            {
+              services: [
+                {
+                  operation: 'OR',
+                  name: 'ARC-CE'
+                },
+                {
+                  operation: 'AND',
+                  name: 'GRAM5'
+                },
+                {
+                  operation: 'OR',
+                  name: 'org.opensciencegrid.htcondorce'
+                },
+                {
+                  name: 'webdav',
+                  operation: 'OR'
+                }
+              ],
+              operation: 'OR',
+              name: 'compute'
+            },
+            {
+              name: 'cloud',
+              operation: 'OR',
+              services: [
+                {
+                  name: 'org.openstack.nova',
+                  operation: 'OR',
+                }
+              ]
             }
           ])
         }
@@ -1705,9 +2157,9 @@ describe('Tests for aggregation profile addview', () => {
 
     const nameField = screen.getByTestId('name');
     const groupField = screen.getByTestId('groupname');
-    const metricOperation = screen.getByTestId('metric_operation').firstChild;
-    const aggrOperation = screen.getByTestId('profile_operation').firstChild;
-    const endpointGroup = screen.getByTestId('endpoint_group').firstChild;
+    const metricOperation = screen.getByTestId('metric_operation_col').firstChild;
+    const aggrOperation = screen.getByTestId('profile_operation_col').firstChild;
+    const endpointGroup = screen.getByTestId('endpoint_group_col').firstChild;
     const metricProfileRow = within(screen.getByTestId('metric_profile_row'));
     const metricProfileField = metricProfileRow.getByRole('combobox');
 
@@ -1731,6 +2183,7 @@ describe('Tests for aggregation profile addview', () => {
     expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /json/i })).not.toBeInTheDocument();
   })
 
   test('Test successfully adding an aggregation profile', async () => {
@@ -1766,9 +2219,9 @@ describe('Tests for aggregation profile addview', () => {
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
 
-    fireEvent.change(screen.getByTestId('metric_operation').firstChild, { target: { value: 'AND' } });
-    fireEvent.change(screen.getByTestId('profile_operation').firstChild, { target: { value: 'AND' } })
-    fireEvent.change(screen.getByTestId('endpoint_group').firstChild, { target: { value: 'servicegroups' } });
+    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'AND' } });
+    fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'AND' } })
+    fireEvent.change(screen.getByTestId('endpoint_group_col').firstChild, { target: { value: 'servicegroups' } });
     fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'ARGO_MON_CRITICAL' } })
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
@@ -1913,9 +2366,9 @@ describe('Tests for aggregation profile addview', () => {
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
 
-    fireEvent.change(screen.getByTestId('metric_operation').firstChild, { target: { value: 'AND' } });
-    fireEvent.change(screen.getByTestId('profile_operation').firstChild, { target: { value: 'AND' } })
-    fireEvent.change(screen.getByTestId('endpoint_group').firstChild, { target: { value: 'servicegroups' } });
+    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'AND' } });
+    fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'AND' } })
+    fireEvent.change(screen.getByTestId('endpoint_group_col').firstChild, { target: { value: 'servicegroups' } });
     fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'ARGO_MON_CRITICAL' } })
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
@@ -2014,9 +2467,9 @@ describe('Tests for aggregation profile addview', () => {
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
 
-    fireEvent.change(screen.getByTestId('metric_operation').firstChild, { target: { value: 'AND' } });
-    fireEvent.change(screen.getByTestId('profile_operation').firstChild, { target: { value: 'AND' } })
-    fireEvent.change(screen.getByTestId('endpoint_group').firstChild, { target: { value: 'servicegroups' } });
+    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'AND' } });
+    fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'AND' } })
+    fireEvent.change(screen.getByTestId('endpoint_group_col').firstChild, { target: { value: 'servicegroups' } });
     fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'ARGO_MON_CRITICAL' } })
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
@@ -2138,9 +2591,9 @@ describe('Tests for aggregation profile addview', () => {
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
 
-    fireEvent.change(screen.getByTestId('metric_operation').firstChild, { target: { value: 'AND' } });
-    fireEvent.change(screen.getByTestId('profile_operation').firstChild, { target: { value: 'AND' } })
-    fireEvent.change(screen.getByTestId('endpoint_group').firstChild, { target: { value: 'servicegroups' } });
+    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'AND' } });
+    fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'AND' } })
+    fireEvent.change(screen.getByTestId('endpoint_group_col').firstChild, { target: { value: 'servicegroups' } });
     fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'ARGO_MON_CRITICAL' } })
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
@@ -2295,9 +2748,9 @@ describe('Tests for aggregation profile addview', () => {
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
 
-    fireEvent.change(screen.getByTestId('metric_operation').firstChild, { target: { value: 'AND' } });
-    fireEvent.change(screen.getByTestId('profile_operation').firstChild, { target: { value: 'AND' } })
-    fireEvent.change(screen.getByTestId('endpoint_group').firstChild, { target: { value: 'servicegroups' } });
+    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'AND' } });
+    fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'AND' } })
+    fireEvent.change(screen.getByTestId('endpoint_group_col').firstChild, { target: { value: 'servicegroups' } });
     fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'ARGO_MON_CRITICAL' } })
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
@@ -2441,9 +2894,9 @@ describe('Test for aggregation profile version detail page', () => {
 
     const nameField = screen.getByTestId('name');
     const groupField = screen.getByTestId('groupname');
-    const metricOperation = screen.getByTestId('metric_operation').firstChild;
-    const aggrOperation = screen.getByTestId('profile_operation').firstChild;
-    const endpointGroup = screen.getByTestId('endpoint_group').firstChild;
+    const metricOperation = screen.getByTestId('metric_operation_col').firstChild;
+    const aggrOperation = screen.getByTestId('profile_operation_col').firstChild;
+    const endpointGroup = screen.getByTestId('endpoint_group_col').firstChild;
     const metricProfileRow = within(screen.getByTestId('metric_profile_row'));
     const metricProfileField = metricProfileRow.getByRole('textbox');
 

@@ -18,9 +18,9 @@ from django.core import serializers
 from django.core.management import call_command
 from django.db import connection
 from django.test.testcases import TransactionTestCase
-from tenant_schemas.test.cases import TenantTestCase
-from tenant_schemas.utils import get_tenant_model, get_public_schema_name, \
-    schema_context
+from django_tenants.test.cases import TenantTestCase
+from django_tenants.utils import get_tenant_model, get_public_schema_name, \
+    schema_context, get_tenant_domain_model
 
 from .utils_test import mocked_func, mocked_web_api_metric_profile, \
     mocked_web_api_metric_profile_put, mocked_web_api_metric_profiles, \
@@ -30,19 +30,23 @@ from .utils_test import mocked_func, mocked_web_api_metric_profile, \
 ALLOWED_TEST_DOMAIN = '.test.com'
 
 
-def mock_db(tenant_schema, tenant2=False):
-    for schema in [tenant_schema, get_public_schema_name()]:
+def mock_db(tenant, tenant2=False):
+    for schema in [tenant.schema_name, get_public_schema_name()]:
         with schema_context(schema):
             if schema == get_public_schema_name():
-                Tenant.objects.create(
-                    name='public', domain_url='public',
-                    schema_name=get_public_schema_name()
+                tenant1 = Tenant.objects.create(
+                    name='public', schema_name=get_public_schema_name()
                 )
+                get_tenant_domain_model().objects.create(
+                    domain='public', tenant=tenant1, is_primary=True
+                )
+
                 if tenant2:
-                    tenant2 = Tenant(
-                        name='test2', domain_url='test2', schema_name='test2'
-                    )
+                    tenant2 = Tenant(name='test2', schema_name='test2')
                     tenant2.save(verbosity=0)
+                    get_tenant_domain_model().objects.create(
+                        domain='test2', tenant=tenant2, is_primary=True
+                    )
 
     user = CustUser.objects.create_user(username='testuser')
 
@@ -859,7 +863,7 @@ def mock_db(tenant_schema, tenant2=False):
     mt10_history1.tags.add(mtag1, mtag2)
 
     group = poem_models.GroupOfMetrics.objects.create(
-        name=tenant_schema.upper()
+        name=tenant.name.upper()
     )
     ct = ContentType.objects.get_for_model(poem_models.Metric)
 
@@ -1019,7 +1023,9 @@ def mock_db(tenant_schema, tenant2=False):
 
     if tenant2:
         with schema_context('test2'):
-            group1 = poem_models.GroupOfMetrics.objects.create(name='TEST2')
+            group1 = poem_models.GroupOfMetrics.objects.create(
+                name=Tenant.objects.get(schema_name='test2').name.upper()
+            )
             m_active1 = poem_models.MetricType.objects.create(name='Active')
             m_passive1 = poem_models.MetricType.objects.create(name='Passive')
 
@@ -2148,14 +2154,15 @@ class ImportMetricsTests(TransactionTestCase):
         self.sync_shared()
         self.add_allowed_test_domain()
         tenant_domain = 'tenant.test.com'
-        self.tenant = get_tenant_model()(domain_url=tenant_domain,
-                                         schema_name='test',
-                                         name='Test')
+        self.tenant = get_tenant_model()(schema_name='test', name='Test')
         self.tenant.save(verbosity=0)
+        get_tenant_domain_model().objects.create(
+            domain=tenant_domain, tenant=self.tenant, is_primary=True
+        )
 
         connection.set_tenant(self.tenant)
 
-        mock_db(self.tenant.schema_name)
+        mock_db(self.tenant)
 
         self.user = CustUser.objects.get(username='testuser')
 
@@ -2168,7 +2175,9 @@ class ImportMetricsTests(TransactionTestCase):
             name='Passive'
         )
 
-        self.group = poem_models.GroupOfMetrics.objects.get(name='TEST')
+        self.group = poem_models.GroupOfMetrics.objects.get(
+            name=self.tenant.name.upper()
+        )
         self.ct = ContentType.objects.get_for_model(poem_models.Metric)
 
         self.mtag1 = admin_models.MetricTags.objects.get(name='test_tag1')
@@ -2645,7 +2654,9 @@ class ImportMetricsTests(TransactionTestCase):
 
 class UpdateMetricsTests(TenantTestCase):
     def setUp(self):
-        mock_db(self.tenant.schema_name, tenant2=True)
+        self.tenant.name = 'TEST'
+        self.tenant.save()
+        mock_db(self.tenant, tenant2=True)
 
         self.mt_active = admin_models.MetricTemplateType.objects.get(
             name='Active'
@@ -3249,9 +3260,11 @@ class UpdateMetricsTests(TenantTestCase):
 class MetricsInProfilesTests(TenantTestCase):
     def setUp(self):
         with schema_context(get_public_schema_name()):
-            Tenant.objects.create(
-                name='public', domain_url='public',
-                schema_name=get_public_schema_name()
+            tenant = Tenant.objects.create(
+                name='public', schema_name=get_public_schema_name()
+            )
+            get_tenant_domain_model().objects.create(
+                domain='public', tenant=tenant, is_primary=True
             )
 
     @patch('Poem.helpers.metrics_helpers.requests.put')

@@ -34,7 +34,7 @@ do
               usage
             else
               su -m -s /bin/sh $RUNASUSER -c \
-              "poem-manage delete_tenant --name $name"
+              "poem-manage poem_delete_tenant --name $name"
               exit 0
             fi
             ;;
@@ -59,18 +59,18 @@ then
     "poem-manage create_tenant --name $name"
 else
     su -m -s /bin/sh $RUNASUSER -c \
-    "poem-manage create_tenant --name $name --hostname $hostname"
+    "poem-manage poem_create_tenant --name $name --hostname $hostname"
 fi
 
 schema=$(echo "$name" | tr '[:upper:]' '[:lower:]')
 
 su -m -s /bin/sh $RUNASUSER -c \
-"poem-manage tenant_command --schema $schema poem_superuser"
+"poem-manage tenant_command poem_superuser --schema=$schema "
 
 if [[ $name != 'all' ]]
 then
     su -m -s /bin/sh $RUNASUSER -c \
-    "poem-manage tenant_command --schema=$schema loaddata initial_data.json "
+    "poem-manage tenant_command loaddata initial_data.json --schema=$schema"
     su -m -s /bin/sh $RUNASUSER -c \
-    "poem-manage tenant_command --schema=$schema import_internal_metrics"
+    "poem-manage tenant_command import_internal_metrics --schema=$schema"
 fi

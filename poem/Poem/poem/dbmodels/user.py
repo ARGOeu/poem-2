@@ -10,7 +10,7 @@ from Poem.poem.dbmodels.metricprofiles import GroupOfMetricProfiles
 from Poem.poem.dbmodels.thresholdsprofiles import GroupOfThresholdsProfiles
 from Poem.poem.dbmodels.reports import GroupOfReports
 
-from tenant_schemas.utils import get_public_schema_name
+from django_tenants.utils import get_public_schema_name
 
 
 class UserProfile(models.Model):

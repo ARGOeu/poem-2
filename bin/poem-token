@@ -41,8 +41,8 @@ done
 if [ -z "$token" ]
 then
     su -m -s /bin/sh $RUNASUSER -c \
-    "poem-manage tenant_command --schema $schema api_token --tenant $tenant"
+    "poem-manage tenant_command api_token --tenant $tenant --schema=$schema"
 else
     su -m -s /bin/sh $RUNASUSER -c \
-    "poem-manage tenant_command --schema $schema api_token --tenant $tenant --token $token"
+    "poem-manage tenant_command api_token --tenant $tenant --token $token --schema=$schema"
 fi

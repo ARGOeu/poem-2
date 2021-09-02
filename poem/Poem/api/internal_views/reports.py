@@ -1,18 +1,15 @@
-from django.conf import settings
-from django.contrib.contenttypes.models import ContentType
-
 from Poem.api import serializers
+from Poem.api.internal_views.users import get_groups_for_user
 from Poem.api.internal_views.utils import sync_webapi
-from Poem.api.internal_views.users import get_all_groups, get_groups_for_user
 from Poem.api.views import NotFound
-from Poem.helpers.history_helpers import create_profile_history
 from Poem.poem import models as poem_models
-
+from Poem.users.models import CustUser
+from django.conf import settings
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from Poem.users.models import CustUser
+
 from .utils import error_response
 
 
@@ -27,35 +24,49 @@ class ListReports(APIView):
 
     def _check_onchange_groupperm(self, groupname, user):
         groups = user_groups(user)
-        if (not user.is_superuser and
-            groupname not in groups['reports']):
+        if not user.is_superuser and groupname not in groups['reports']:
             return False
         return True
 
     def post(self, request):
         user = request.user
 
-        if not self._check_onchange_groupperm(request.data['groupname'], user):
+        if not user.is_superuser and \
+                len(user_groups(user)['reports']) == 0:
             return error_response(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='You do not have permission to add '
-                        'report.'
+                detail='You do not have permission to add reports.'
             )
 
         serializer = serializers.ReportsSerializer(data=request.data)
-
         if serializer.is_valid():
-            serializer.save()
+            try:
+                groupreports = poem_models.GroupOfReports.objects.get(
+                    name=request.data['groupname']
+                )
 
-            groupreports = poem_models.GroupOfReports.objects.get(
-                name=request.data['groupname']
-            )
-            report = poem_models.Reports.objects.get(
-                apiid=request.data['apiid']
-            )
-            groupreports.reports.add(report)
+                if not self._check_onchange_groupperm(
+                        request.data['groupname'], user
+                ):
+                    return error_response(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail='You do not have permission to assign reports '
+                               'to the given group.'
+                    )
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+                serializer.save()
+                report = poem_models.Reports.objects.get(
+                    apiid=request.data['apiid']
+                )
+                groupreports.reports.add(report)
+
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+            except poem_models.GroupOfReports.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='Group of reports not found.'
+                )
 
         else:
             details = []
@@ -91,37 +102,85 @@ class ListReports(APIView):
     def put(self, request):
         user = request.user
 
-        if not self._check_onchange_groupperm(request.data['groupname'], user):
+        if not user.is_superuser and \
+                len(user_groups(user)['reports']) == 0:
             return error_response(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='You do not have permission to change'
-                        'report.'
+                detail='You do not have permission to change reports.'
             )
 
-        if request.data['apiid']:
-            report = poem_models.Reports.objects.get(
-                apiid=request.data['apiid']
+        try:
+            if request.data['apiid']:
+                report = poem_models.Reports.objects.get(
+                    apiid=request.data['apiid']
+                )
+                old_groupreport = None
+                if report.groupname:
+                    if not self._check_onchange_groupperm(
+                            report.groupname, user
+                    ):
+                        return error_response(
+                            status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail='You do not have permission to change '
+                                   'reports in this group.'
+                        )
+
+                    old_groupreport = poem_models.GroupOfReports.objects.get(
+                        name=report.groupname
+                    )
+
+                groupreport = poem_models.GroupOfReports.objects.get(
+                    name=request.data['groupname']
+                )
+
+                if not self._check_onchange_groupperm(
+                        request.data['groupname'], user
+                ):
+                    return error_response(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail='You do not have permission to assign reports '
+                               'to the given group.'
+                    )
+
+                report.name = request.data['name']
+                report.description = request.data['description']
+                report.groupname = request.data['groupname']
+                report.save()
+
+                if old_groupreport and old_groupreport != groupreport:
+                    old_groupreport.reports.remove(report)
+
+                groupreport.reports.add(report)
+
+                return Response(status=status.HTTP_201_CREATED)
+
+            else:
+                return Response(
+                    {'detail': 'Apiid field undefined!'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        except poem_models.GroupOfReports.DoesNotExist:
+            return error_response(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='Given group of reports does not exist.'
             )
-            report.name = request.data['name']
-            report.description = request.data['description']
-            report.groupname = request.data['groupname']
-            report.save()
 
-            groupreport = poem_models.GroupOfReports.objects.get(
-                name=request.data['groupname']
-            )
-            groupreport.reports.add(report)
-
-            return Response(status=status.HTTP_201_CREATED)
-
-        else:
-            return Response(
-                {'detail': 'Apiid field undefined!'},
-                status=status.HTTP_400_BAD_REQUEST
+        except KeyError as e:
+            return error_response(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='Missing data key: {}'.format(e.args[0])
             )
 
     def delete(self, request, report_name=None):
         user = request.user
+
+        if not user.is_superuser and \
+                len(user_groups(user)['reports']) == 0:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to delete reports.'
+            )
 
         if report_name:
             try:
@@ -130,11 +189,11 @@ class ListReports(APIView):
                 )
 
                 if (not user.is_superuser and report.groupname not in
-                    user_groups(user)['reports']):
+                        user_groups(user)['reports']):
                     return error_response(
                         status_code=status.HTTP_401_UNAUTHORIZED,
-                        detail='You do not have permission to delete'
-                                'report.'
+                        detail='You do not have permission to delete '
+                               'reports assigned to this group.'
                     )
 
                 report.delete()
