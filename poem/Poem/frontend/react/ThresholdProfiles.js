@@ -1438,67 +1438,62 @@ function arraysEqual(arr1, arr2) {
 }
 
 
+const fetchThresholdsProfilesVersions = async (name) => {
+  const backend = new Backend();
+
+  return await backend.fetchData(`/api/v2/internal/tenantversion/thresholdsprofile/${name}`);
+}
+
+
 export const ThresholdsProfileVersionCompare = (props) => {
   const version1 = props.match.params.id1;
   const version2 = props.match.params.id2;
   const name = props.match.params.name;
 
-  const [loading, setLoading] = useState(false);
-  const [profile1, setProfile1] = useState(undefined);
-  const [profile2, setProfile2] = useState(undefined);
-  const [error, setError] = useState(null);
+  const { data: versions, error: error, status: status } = useQuery(
+    ['thresholdsprofile', 'version', name], () => fetchThresholdsProfilesVersions(name)
+  )
 
-  useEffect(() => {
-    const backend = new Backend();
-    setLoading(true);
-    fetchVersions();
-
-    async function fetchVersions() {
-      try {
-        let json = await backend.fetchData(`/api/v2/internal/tenantversion/thresholdsprofile/${name}`);
-
-        json.forEach((e) => {
-          if (e.version == version1)
-            setProfile1(e.fields);
-
-          else if (e.version == version2)
-            setProfile2(e.fields);
-        });
-      } catch(err) {
-        setError(err);
-      }
-      setLoading(false);
-    }
-  }, [name, version1, version2]);
-
-  if (loading)
+  if (status === 'loading')
     return (<LoadingAnim/>);
 
-  else if (error)
+  else if (status === 'error')
     return (<ErrorComponent error={error}/>);
 
-  else if (!loading && profile1 && profile2) {
-    return (
-      <React.Fragment>
-        <div className='d-flex align-items-center justify-content-between'>
-          <h2 className='ml-3 mt-1 mb-4'>{`Compare ${name} versions`}</h2>
-        </div>
-        {
-          (profile1.name !== profile2.name) &&
-            <DiffElement title='name' item1={profile1.name} item2={profile2.name}/>
-        }
-        {
-          (profile1.groupname !== profile2.groupname) &&
-            <DiffElement title='group name' item1={profile1.groupname} item2={profile2.groupname}/>
-        }
-        {
-          (!arraysEqual(profile1.rules, profile2.rules)) &&
-            <ListDiffElement title='rules' item1={profile1.rules} item2={profile2.rules}/>
-        }
-      </React.Fragment>
-    );
-  } else
-    return null;
+  else if (versions) {
+    var profile1 = undefined;
+    var profile2 = undefined;
+
+    versions.forEach(e => {
+      if (e.version == version1)
+        profile1 = e.fields;
+
+      else if (e.version == version2)
+        profile2 = e.fields;
+    })
+
+    if (profile1 && profile2)
+      return (
+        <React.Fragment>
+          <div className='d-flex align-items-center justify-content-between'>
+            <h2 className='ml-3 mt-1 mb-4'>{`Compare ${name} versions`}</h2>
+          </div>
+          {
+            (profile1.name !== profile2.name) &&
+              <DiffElement title='name' item1={profile1.name} item2={profile2.name}/>
+          }
+          {
+            (profile1.groupname !== profile2.groupname) &&
+              <DiffElement title='group name' item1={profile1.groupname} item2={profile2.groupname}/>
+          }
+          {
+            (!arraysEqual(profile1.rules, profile2.rules)) &&
+              <ListDiffElement title='rules' item1={profile1.rules} item2={profile2.rules}/>
+          }
+        </React.Fragment>
+      );
+    } else
+      return null;
 };
 
 
