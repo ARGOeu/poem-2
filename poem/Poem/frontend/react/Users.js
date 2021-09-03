@@ -26,9 +26,9 @@ import {
   InputGroupAddon
 } from "reactstrap";
 import * as Yup from 'yup';
-
 import './Users.css';
 import { useQuery, useQueryClient } from 'react-query';
+import { fetchUserGroups } from './QueryFunctions';
 
 const UserSchema = Yup.object().shape({
   username: Yup.string()
@@ -435,13 +435,7 @@ export const UserChange = (props) => {
   );
 
   const { data: allGroups, error: errorAllGroups, status: statusAllGroups } = useQuery(
-    'usergroups', async () => {
-      if (isTenantSchema) {
-        let allgroups = await backend.fetchResult('/api/v2/internal/usergroups');
-
-        return allgroups;
-      }
-    },
+    'usergroups', () => fetchUserGroups(isTenantSchema),
     { enabled: isTenantSchema }
   );
 

@@ -6,6 +6,10 @@ import { GroupList, GroupChange } from '../GroupElements';
 import { render, waitFor, screen, fireEvent, within } from '@testing-library/react';
 import { Backend } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
+import { QueryClient, QueryClientProvider } from 'react-query';
+
+
+const queryClient = new QueryClient();
 
 
 function renderListView(
@@ -17,9 +21,11 @@ function renderListView(
 
   return {
     ...render(
-      <Router history={history}>
-        <Route render={props => <GroupList {...props} group={group} id={id} name={name} />} />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route render={props => <GroupList {...props} group={group} id={id} name={name} />} />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -86,9 +92,12 @@ const mockChangeObject = jest.fn();
 const mockDeleteObject = jest.fn();
 const mockAddObject = jest.fn();
 
+
 beforeEach(() => {
   jest.clearAllMocks();
+  queryClient.clear();
 })
+
 
 describe('Tests for groups listviews', () => {
   test('Render group of metrics listview', async () => {
@@ -203,6 +212,7 @@ describe('Tests for groups listviews', () => {
     expect(screen.getByRole('button', {name: 'Add'})).toBeTruthy()
   })
 })
+
 
 describe('Tests for group elements changeview', () => {
   jest.spyOn(NotificationManager, 'success');
