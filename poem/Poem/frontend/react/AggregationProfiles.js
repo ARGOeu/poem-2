@@ -39,7 +39,7 @@ import {
 } from 'reactstrap';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import * as Yup from 'yup';
-import { downloadJSON } from './Helpers';
+import { downloadJSON } from './FileDownload';
 
 import ReactDiffViewer from 'react-diff-viewer';
 

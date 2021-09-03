@@ -29,7 +29,7 @@ import { faPlus, faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
 import ReactDiffViewer from 'react-diff-viewer';
 import { useQuery, useQueryClient, useMutation } from 'react-query';
 import PapaParse from 'papaparse';
-import { downloadCSV } from './Helpers';
+import { downloadCSV } from './FileDownload';
 
 import './MetricProfiles.css';
 

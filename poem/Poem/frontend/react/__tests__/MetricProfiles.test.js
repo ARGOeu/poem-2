@@ -739,7 +739,7 @@ describe('Tests for metric profiles changeview', () => {
   })
 
   test('Test export csv successfully', async () => {
-    const helpers = require('../Helpers');
+    const helpers = require('../FileDownload');
     jest.spyOn(helpers, 'downloadCSV').mockReturnValueOnce(null);
 
     renderChangeView();
@@ -758,7 +758,7 @@ describe('Tests for metric profiles changeview', () => {
   })
 
   test('Test export csv when form has been changed', async () => {
-    const helpers = require('../Helpers');
+    const helpers = require('../FileDownload');
     jest.spyOn(helpers, 'downloadCSV').mockReturnValueOnce(null);
 
     renderChangeView();

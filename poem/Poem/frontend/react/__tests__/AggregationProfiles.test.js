@@ -826,7 +826,7 @@ describe('Tests for aggregation profiles changeview', () => {
   })
 
   test('Test export json successfully', async () => {
-    const helpers = require('../Helpers');
+    const helpers = require('../FileDownload');
     jest.spyOn(helpers, 'downloadJSON').mockReturnValueOnce(null);
 
     renderChangeView();
@@ -904,7 +904,7 @@ describe('Tests for aggregation profiles changeview', () => {
   });
 
   test('Test export json when form has been changed', async () => {
-    const helpers = require('../Helpers');
+    const helpers = require('../FileDownload');
     jest.spyOn(helpers, 'downloadJSON').mockReturnValueOnce(null);
 
     renderChangeView();
