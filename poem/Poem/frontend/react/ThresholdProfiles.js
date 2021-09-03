@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Backend, WebApi } from './DataManager';
 import {
@@ -1501,65 +1501,53 @@ export const ThresholdsProfileVersionDetail = (props) => {
   const name = props.match.params.name;
   const version = props.match.params.version;
 
-  const [profile, setProfile] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const { data: versions, error: error, status: status } = useQuery(
+    ['thresholdsprofile', 'version', name], () => fetchThresholdsProfilesVersions(name)
+  )
 
-  useEffect(() => {
-    const backend = new Backend();
-    setLoading(true);
-    fetchProfile();
-
-    async function fetchProfile() {
-      try {
-        let json = await backend.fetchData(`/api/v2/internal/tenantversion/thresholdsprofile/${name}`);
-        json.forEach((e) => {
-          if (e.version == version)
-            setProfile({
-              name: e.fields.name,
-              groupname: e.fields.groupname,
-              rules: thresholdsToValues(e.fields.rules),
-              date_created: e.date_created
-            });
-        });
-      } catch(err) {
-        setError(err);
-      }
-
-      setLoading(false);
-    }
-  }, [name, version]);
-
-  if (loading)
+  if (status === 'loading')
     return (<LoadingAnim/>);
 
-  else if (error)
+  else if (status === 'error')
     return (<ErrorComponent error={error}/>);
 
-  else if (!loading && profile) {
-    return (
-      <BaseArgoView
-        resourcename={`${name} (${profile.date_created})`}
-        infoview={true}
-      >
-        <Formik
-          initialValues = {{
-            name: profile.name,
-            groupname: profile.groupname,
-            rules: profile.rules
-          }}
+  else if (versions) {
+    var profile = undefined;
+
+    versions.forEach((e) => {
+      if (e.version == version)
+        profile = {
+          name: e.fields.name,
+          groupname: e.fields.groupname,
+          rules: thresholdsToValues(e.fields.rules),
+          date_created: e.date_created
+        }
+    })
+
+    if (profile)
+      return (
+        <BaseArgoView
+          resourcename={`${name} (${profile.date_created})`}
+          infoview={true}
         >
-          {props => (
-            <Form>
-              <ThresholdsProfilesForm
-                {...props}
-                historyview={true}
-              />
-            </Form>
-          )}
-        </Formik>
-      </BaseArgoView>
-    );
-  } else
-    return null;
+          <Formik
+            initialValues = {{
+              name: profile.name,
+              groupname: profile.groupname,
+              rules: profile.rules
+            }}
+          >
+            {props => (
+              <Form>
+                <ThresholdsProfilesForm
+                  {...props}
+                  historyview={true}
+                />
+              </Form>
+            )}
+          </Formik>
+        </BaseArgoView>
+      );
+    } else
+      return null;
 };
