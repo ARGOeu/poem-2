@@ -2,6 +2,7 @@ pipeline {
     agent any
     options {
         checkoutToSubdirectory('poem-react')
+        skipStagesAfterUnstable()
     }
     environment {
         PROJECT_DIR="poem-react"
@@ -117,24 +118,15 @@ pipeline {
                 publishCoverage adapters: [coberturaAdapter(path: 'poem-react/coverage-backend.xml, poem-react/cobertura-coverage.xml', mergeToOneReport: true)]
             }
         }
-        stage ('Teardown containers') {
-            steps {
-                script
-                {
-                    sh '''
-                        echo "Stopping containers..."
-                    '''
-                }
-            }
-            post {
-                always {
-                    sh '''
-                      cd $WORKSPACE/$PROJECT_DIR/testenv/
-                      docker-compose down
-                    '''
-                    cleanWs()
-                }
-            }
+    }
+    post {
+        always {
+            echo 'Teardown containers...'
+            sh '''
+              cd $WORKSPACE/$PROJECT_DIR/testenv/
+              docker-compose down
+            '''
+            cleanWs()
         }
     }
 }
