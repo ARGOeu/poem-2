@@ -40,6 +40,7 @@ pipeline {
                     {
                         echo 'Failed preparation of containers...'
                         echo err.toString()
+                        sh 'exit 1'
                     }
                 }
 
@@ -68,12 +69,14 @@ pipeline {
                                             echo "not running"
                                         fi
                                     done
+                                    exit 1
                                 '''
                             }
                             catch (Exception err)
                             {
                                 echo 'Backend tests failed...'
                                 echo err.toString()
+                                sh 'exit 1'
                             }
                         }
                         junit 'poem-react/junit-backend.xml'
@@ -100,12 +103,14 @@ pipeline {
                                             echo "not running"
                                         fi
                                     done
+                                    exit 1
                                 '''
                             }
                             catch (Exception err)
                             {
                                 echo 'Frontend tests failed...'
                                 echo err.toString()
+                                sh 'exit 1'
                             }
                         }
                         junit 'poem-react/junit-frontend.xml'
