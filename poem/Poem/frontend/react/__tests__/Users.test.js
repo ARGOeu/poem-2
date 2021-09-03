@@ -114,7 +114,10 @@ function renderListView() {
     ...render(
       <QueryClientProvider client={queryClient}>
         <Router history={history}>
-          <Route path='/ui/administration/users' component={UsersList}/>
+          <Route path='/ui/administration/users'
+            render={ props =>
+              <UsersList {...props} isTenantSchema={true} /> }
+          />
         </Router>
       </QueryClientProvider>
     )
@@ -258,7 +261,6 @@ describe('Test users listview', () => {
     expect(screen.getByRole('button', { name: /add/i })).toBeInTheDocument();
   })
 })
-
 
 const mockFetchData = jest.fn();
 

@@ -54,6 +54,7 @@ import { TenantList, TenantChange } from './Tenants';
 import { OperationsProfilesList, OperationsProfileDetails } from './OperationsProfiles';
 import { CookiePolicy } from './CookiePolicy';
 import { QueryClientProvider, QueryClient } from 'react-query';
+import { ReactQueryDevtools } from 'react-query/devtools';
 
 
 const NavigationBarWithRouter = withRouter(NavigationBar);
@@ -236,7 +237,12 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
     />
     <Route exact path="/ui/cookiepolicies/" component={CookiePolicy} />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration" component={TenantAdministration} />
-    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/users" component={UsersList} />
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/users"
+      render={ props => <UsersList
+        {...props}
+        isTenantSchema={true}
+      /> }
+    />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/users/add"
       render={props => <UserChange
         {...props}
@@ -618,6 +624,7 @@ const App = () => {
     if (isTenantSchema)
       return (
         <QueryClientProvider client={queryClient}>
+          <ReactQueryDevtools />
           <BrowserRouter>
             <Switch>
               <Route
@@ -820,6 +827,7 @@ const App = () => {
     else
       return (
         <QueryClientProvider client={queryClient}>
+          <ReactQueryDevtools />
           <BrowserRouter>
             <Switch>
               <Route
@@ -933,6 +941,7 @@ const App = () => {
 
     return (
       <QueryClientProvider client={queryClient}>
+        <ReactQueryDevtools />
         <BrowserRouter>
           <Container fluid>
             <DocumentTitleWithRouter />

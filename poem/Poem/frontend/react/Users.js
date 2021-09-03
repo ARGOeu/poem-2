@@ -27,6 +27,9 @@ import {
 } from "reactstrap";
 import * as Yup from 'yup';
 
+import './Users.css';
+import { useQuery, useQueryClient } from 'react-query';
+
 const UserSchema = Yup.object().shape({
   username: Yup.string()
     .max(30, 'Username must be 30 characters or fewer.')
@@ -61,10 +64,6 @@ const ChangePasswordSchema = Yup.object().shape({
     .required('Required')
     .oneOf([Yup.ref('password'), null], 'Passwords do not match!')
 })
-
-
-import './Users.css';
-import { useQuery, useQueryClient } from 'react-query';
 
 
 const CommonUser = ({add, ...props}) =>
@@ -252,9 +251,26 @@ const CommonUser = ({add, ...props}) =>
   </>;
 
 
+
+const fetchUser = async (username) => {
+  const backend = new Backend();
+  return await backend.fetchData(`/api/v2/internal/users/${username}`)
+}
+
+
+const fetchUserProfile = async (isTenantSchema, username) => {
+  const backend = new Backend();
+  if (isTenantSchema)
+    return await backend.fetchData(`/api/v2/internal/userprofile/${username}`)
+}
+
+
 export const UsersList = (props) => {
     const location = props.location;
     const backend = new Backend();
+    const isTenantSchema = props.isTenantSchema;
+
+    const queryClient = useQueryClient();
 
     const { data: listUsers, error: error, isLoading: loading } = useQuery(
       'user', async () => {
@@ -274,7 +290,17 @@ export const UsersList = (props) => {
       accessor: 'username',
       column_width: '26%',
       Cell: e =>
-        <Link to={`/ui/administration/users/${e.value}`}>
+        <Link
+          to={`/ui/administration/users/${e.value}`}
+          onMouseEnter={ async () => {
+            await queryClient.prefetchQuery(
+              ['user', e.value], () => fetchUser(e.value)
+            );
+            await queryClient.prefetchQuery(
+              ['userprofile', e.value], () => fetchUserProfile(isTenantSchema, e.value)
+            )
+          }}
+        >
           {e.value}
         </Link>
     },
@@ -383,11 +409,7 @@ export const UserChange = (props) => {
   );
 
   const { data: user, error: errorUser, status: statusUser } = useQuery(
-    ['user', user_name], async () => {
-      let user = await backend.fetchData(`/api/v2/internal/users/${user_name}`);
-
-      return user;
-    },
+    ['user', user_name], () => fetchUser(user_name),
     {
       enabled: !addview && !!userDetails,
       initialData: () => {
@@ -397,13 +419,7 @@ export const UserChange = (props) => {
   );
 
   const { data: userProfile, error: errorUserProfile, status: statusUserProfile } = useQuery(
-    ['userprofile', user_name], async () => {
-      if (isTenantSchema) {
-        let userprofile = await backend.fetchData(`/api/v2/internal/userprofile/${user_name}`);
-
-        return userprofile;
-      }
-    },
+    ['userprofile', user_name], () => fetchUserProfile(isTenantSchema, user_name),
     { enabled: !addview && isTenantSchema }
   );
 
@@ -1009,7 +1025,7 @@ export const ChangePassword = (props) => {
   const backend = new Backend();
 
   const { data: userDetails, isLoading: loading} = useQuery(
-    'session_userdetails', async () => {
+    'userdetails', async () => {
       let session = await backend.isActiveSession(false);
       if (session.active)
         return session.userdetails;
