@@ -24,7 +24,7 @@ import {
   InputGroupAddon
 } from 'reactstrap';
 import * as Yup from 'yup';
-import { useQuery } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
 import { fetchYumRepos, fetchOStags } from './QueryFunctions';
 
 
@@ -130,22 +130,24 @@ export const YumRepoComponent = (props) => {
 
   const backend = new Backend();
 
+  const queryClient = useQueryClient();
+
   const { data: repo, error: errorRepo, status: statusRepo } = useQuery(
     ['yumrepo', name, tag], async () => {
       if (!addview) {
-        let repo = await backend.fetchData(`/api/v2/internal/yumrepos/${name}/${tag}`);
-
-        return repo;
+        return await backend.fetchData(`/api/v2/internal/yumrepos/${name}/${tag}`);
       }
     },
-    { enabled: !addview }
+    {
+      enabled: !addview,
+      initialData: () => {
+        return queryClient.getQueryData('yumrepo')?.find(repo => repo.name === name && repo.tag === tag)
+      }
+    }
   );
 
   const { data: tags, error: errorTags, status: statusTags } = useQuery(
-    'ostags', async () => {
-      let tags = await backend.fetchData('/api/v2/internal/ostags');
-      return tags;
-    }
+    'ostags', () => fetchOStags()
   );
 
   const [areYouSureModal, setAreYouSureModal] = useState(false);
