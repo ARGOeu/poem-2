@@ -195,7 +195,13 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
     <Route exact path="/ui/aggregationprofiles/:name/history/:version"
       render={props => <AggregationProfileVersionDetails {...props}/>}
     />
-    <Route exact path="/ui/thresholdsprofiles" component={ThresholdsProfilesList} />
+    <Route exact path="/ui/thresholdsprofiles"
+      render={ props => <ThresholdsProfilesList
+        {...props}
+        webapithresholds={webApiThresholds}
+        webapitoken={token}
+      /> }
+    />
     <AddRoute usergroups={userGroups.thresholdsprofiles} exact path="/ui/thresholdsprofiles/add"
       render={props => <ThresholdsProfilesChange
         {...props}
@@ -370,7 +376,13 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         title='thresholds profiles'
       />}
     />
-    <Route exact path="/ui/thresholdsprofiles" component={ThresholdsProfilesList} />
+    <Route exact path="/ui/thresholdsprofiles"
+      render={ props => <ThresholdsProfilesList
+        {...props}
+        webapithresholds={webApiThresholds}
+        webapitoken={token}
+      /> }
+    />
     <AddRoute usergroups={userGroups.thresholdsprofiles} exact path="/ui/thresholdsprofiles/add"
       render={props => <ThresholdsProfilesChange
         {...props}
@@ -768,7 +780,12 @@ const App = () => {
               <Route exact path="/ui/public_thresholdsprofiles"
                 render={props =>
                   <PublicPage tenantName={tenantName}>
-                    <ThresholdsProfilesList publicView={true} {...props} />
+                    <ThresholdsProfilesList
+                      {...props}
+                      publicView={true}
+                      webapithresholds={webApiThresholds}
+                      webapitoken={token}
+                    />
                   </PublicPage>
                 }
               />

@@ -31,3 +31,9 @@ export const fetchUserDetails = async (isTenantSchema) => {
   if (session.active)
     return session.userdetails;
 }
+
+
+export const fetchAllMetrics = async (publicView) => {
+  const backend = new Backend();
+  return await backend.fetchListOfNames(`/api/v2/internal/${publicView ? 'public_' : ''}metricsall`);
+};

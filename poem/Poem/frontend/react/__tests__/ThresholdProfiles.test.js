@@ -153,7 +153,12 @@ function renderListView(publicView=false) {
         <QueryClientProvider client={queryClient}>
           <Router history={history}>
             <Route
-              render={ props => <ThresholdsProfilesList {...props} publicView={true} /> }
+              render={ props => <ThresholdsProfilesList
+                {...props}
+                webapithresholds='https://mock.thresholds.com'
+                webapitoken='token'
+                publicView={true}
+              /> }
             />
           </Router>
         </QueryClientProvider>
@@ -165,7 +170,13 @@ function renderListView(publicView=false) {
       ...render(
         <QueryClientProvider client={queryClient}>
           <Router history={history}>
-            <Route component={ThresholdsProfilesList} />
+            <Route
+              render={ props => <ThresholdsProfilesList
+                {...props}
+                webapithresholds='https://mock.thresholds.com'
+                webapitoken='token'
+              /> }
+            />
           </Router>
         </QueryClientProvider>
       )
@@ -348,7 +359,12 @@ describe('Tests for threshols profile changeview', () => {
       return {
         fetchData: () => Promise.resolve(mockBackendProfile),
         fetchListOfNames: () => Promise.resolve(['argo.AMS-Check', 'argo.AMSPublisher-Check', 'argo.POEM-API-MON', 'argo.API-Status-Check']),
-        isActiveSession: () => Promise.resolve(mockActiveSession),
+        isActiveSession: (path) => {
+          switch (path) {
+            case true:
+              return Promise.resolve(mockActiveSession)
+          }
+        },
         changeObject: mockChangeObject,
         deleteObject: mockDeleteObject
       }
@@ -1282,7 +1298,12 @@ describe('Tests for thresholds profiles addview', () => {
     Backend.mockImplementation(() => {
       return {
         fetchListOfNames: () => Promise.resolve(['argo.AMS-Check', 'argo.AMSPublisher-Check', 'argo.POEM-API-MON', 'argo.API-Status-Check']),
-        isActiveSession: () => Promise.resolve(mockActiveSession),
+        isActiveSession: (path) => {
+          switch (path) {
+            case true:
+              return Promise.resolve(mockActiveSession)
+          }
+        },
         addObject: mockAddObject
       }
     })
