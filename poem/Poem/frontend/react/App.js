@@ -343,7 +343,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/apikey/:name"
       render={props => <APIKeyChange {...props} />}
     />
-    <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/yumrepos/' component={YumRepoList}/>
+    <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/yumrepos/' render={ props => <YumRepoList {...props} isTenantSchema={true} /> }/>
     <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/yumrepos/:name'
       render={props => <YumRepoComponent {...props} disabled={true}/>}
     />

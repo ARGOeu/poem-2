@@ -8,3 +8,15 @@ export const fetchUserGroups = async (isTenantSchema) => {
     return allgroups;
   }
 }
+
+
+export const fetchYumRepos = async () => {
+  const backend = new Backend()
+  return await backend.fetchData('/api/v2/internal/yumrepos')
+}
+
+
+export const fetchOStags = async () => {
+  const backend = new Backend();
+  return await backend.fetchData('/api/v2/internal/ostags');
+}

@@ -25,6 +25,7 @@ import {
 } from 'reactstrap';
 import * as Yup from 'yup';
 import { useQuery } from 'react-query';
+import { fetchYumRepos, fetchOStags } from './QueryFunctions';
 
 
 const RepoSchema = Yup.object().shape({
@@ -38,28 +39,14 @@ const RepoSchema = Yup.object().shape({
 
 export const YumRepoList = (props) => {
   const location = props.location;
-
-  const backend = new Backend();
+  const isTenantSchema = props.isTenantSchema;
 
   const { data: repos, error: errorRepos, status: statusRepos } = useQuery(
-    'yumrepos', async () => {
-      let repos = await backend.fetchData('/api/v2/internal/yumrepos');
-      return repos;
-    }
+    'yumrepo', () => fetchYumRepos()
   );
 
   const { data: tags, error: errorTags, status: statusTags } = useQuery(
-    'ostags', async () => {
-      let tags = await backend.fetchData('/api/v2/internal/ostags');
-      return tags;
-    }
-  );
-
-  const { data: isTenantSchema, status: statusIsTenantSchema } = useQuery(
-    'istenantschema', async () => {
-      let schema = await backend.isTenantSchema();
-      return schema;
-    }
+    'ostags', async () => fetchOStags()
   );
 
   const columns = React.useMemo(() => [
@@ -94,7 +81,7 @@ export const YumRepoList = (props) => {
     }
   ], [isTenantSchema, tags]);
 
-  if (statusRepos === 'loading' || statusTags === 'loading' || statusIsTenantSchema === 'loading')
+  if (statusRepos === 'loading' || statusTags === 'loading')
     return (<LoadingAnim/>);
 
   else if (statusRepos === 'error')

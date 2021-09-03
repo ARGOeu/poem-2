@@ -67,17 +67,31 @@ function renderListView(tenant=false) {
   const route = `/ui/${tenant ? 'administration/' : ''}yumrepos`;
   const history = createMemoryHistory({ initialEntries: [route] });
 
-  return {
-    ...render(
-      <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            render={ props => <YumRepoList {...props} /> }
-          />
-        </Router>
-      </QueryClientProvider>
-    )
-  }
+  if (tenant)
+    return {
+      ...render(
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              render={ props => <YumRepoList {...props} isTenantSchema={true} /> }
+            />
+          </Router>
+        </QueryClientProvider>
+      )
+    }
+
+  else
+    return {
+      ...render(
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              render={ props => <YumRepoList {...props} /> }
+            />
+          </Router>
+        </QueryClientProvider>
+      )
+    }
 }
 
 
@@ -165,8 +179,7 @@ describe('Test list of YUM repos on SuperAdmin POEM', () => {
             case '/api/v2/internal/ostags':
               return Promise.resolve(['CentOS 6', 'CentOS 7'])
           }
-        },
-        isTenantSchema: () => Promise.resolve(false)
+        }
       }
     })
   })
@@ -241,14 +254,13 @@ describe('Test list of YUM repos on tenant POEM', () => {
             case '/api/v2/internal/ostags':
               return Promise.resolve(['CentOS 6', 'CentOS 7'])
           }
-        },
-        isTenantSchema: () => Promise.resolve(true)
+        }
       }
     })
   })
 
   test('Test that page renders properly', async () => {
-    renderListView();
+    renderListView(true);
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
 
@@ -279,7 +291,7 @@ describe('Test list of YUM repos on tenant POEM', () => {
   })
 
   test('Test filter repos', async () => {
-    renderListView();
+    renderListView(true);
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /repo/i })).toBeInTheDocument()
