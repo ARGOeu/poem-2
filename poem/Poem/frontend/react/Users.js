@@ -29,6 +29,8 @@ import * as Yup from 'yup';
 import './Users.css';
 import { useQuery, useQueryClient } from 'react-query';
 import { fetchUserGroups } from './QueryFunctions';
+import { fetchUserDetails } from './QueryFunctions';
+
 
 const UserSchema = Yup.object().shape({
   username: Yup.string()
@@ -415,13 +417,7 @@ export const UserChange = (props) => {
   const backend = new Backend();
 
   const { data: userDetails, error: errorUserDetails, status: statusUserDetails } = useQuery(
-    'userdetails', async () => {
-      let arg = isTenantSchema ? true : false;
-      let session = await backend.isActiveSession(arg);
-
-      if (session.active)
-        return session.userdetails;
-    }
+    'userdetails', () => fetchUserDetails(isTenantSchema)
   );
 
   const { data: user, error: errorUser, status: statusUser } = useQuery(
@@ -1029,11 +1025,7 @@ export const ChangePassword = (props) => {
   const backend = new Backend();
 
   const { data: userDetails, isLoading: loading} = useQuery(
-    'userdetails', async () => {
-      let session = await backend.isActiveSession(false);
-      if (session.active)
-        return session.userdetails;
-    }
+    'userdetails', () => fetchUserDetails(false)
   );
 
   const [areYouSureModal, setAreYouSureModal] = useState(false);

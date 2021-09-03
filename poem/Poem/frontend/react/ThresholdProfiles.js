@@ -40,6 +40,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faPlus, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import ReactDiffViewer from 'react-diff-viewer';
 import { useQuery, useQueryClient } from 'react-query';
+import { fetchUserDetails } from './QueryFunctions';
 
 
 const ThresholdsAutocomplete = ({lists=[], index, onSelect, ...props}) => {
@@ -895,21 +896,18 @@ const ThresholdsProfilesForm = ({
 
 export const ThresholdsProfilesList = (props) => {
   const location = props.location;
-  const backend = new Backend();
   const publicView = props.publicView
+
+  const backend = new Backend();
 
   const apiUrl = `/api/v2/internal/${publicView ? 'public_' : ''}thresholdsprofiles`;
 
-  const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails} = useQuery(
-    `session_userdetails`, async () => {
-      let sessionActive = await backend.isActiveSession();
-      if (sessionActive.active)
-        return sessionActive.userdetails;
-    }
+  const { data: userDetails, error: errorUserDetails, status: statusUserDetails } = useQuery(
+    'userdetails', () => fetchUserDetails(true)
   );
 
-  const { data: listThresholdsProfiles, error: errorListThresholdsProfiles, isLoading: loadingListThresholdsProfiles } = useQuery(
-    'thresholdsprofiles_listview', async () => {
+  const { data: thresholdsProfiles, error: errorThresholdsProfiles, status: statusThresholdsProfiles } = useQuery(
+    `${publicView ? 'public_' : ''}thresholdsprofile`, async () => {
       let profiles = await backend.fetchData(apiUrl);
 
       return profiles;
@@ -951,16 +949,16 @@ export const ThresholdsProfilesList = (props) => {
     }
   ], [publicView]);
 
-  if (loadingUserDetails || loadingListThresholdsProfiles)
+  if (statusUserDetails === 'loading' || statusThresholdsProfiles === 'loading')
     return (<LoadingAnim/>);
 
-  else if (errorListThresholdsProfiles)
-    return (<ErrorComponent error={errorListThresholdsProfiles}/>);
+  else if (statusThresholdsProfiles === 'error')
+    return (<ErrorComponent error={errorThresholdsProfiles}/>);
 
-  else if (errorUserDetails)
+  else if (statusUserDetails === 'error')
     return (<ErrorComponent error={errorUserDetails}/>);
 
-  else if (!loadingUserDetails && !loadingListThresholdsProfiles && listThresholdsProfiles) {
+  else if (thresholdsProfiles) {
     return (
       <BaseArgoView
         resourcename='thresholds profile'
@@ -971,7 +969,7 @@ export const ThresholdsProfilesList = (props) => {
         publicview={publicView}
       >
         <ProfilesListTable
-          data={listThresholdsProfiles}
+          data={thresholdsProfiles}
           columns={columns}
           type='thresholds'
         />

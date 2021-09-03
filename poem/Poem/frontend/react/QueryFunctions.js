@@ -20,3 +20,14 @@ export const fetchOStags = async () => {
   const backend = new Backend();
   return await backend.fetchData('/api/v2/internal/ostags');
 }
+
+
+export const fetchUserDetails = async (isTenantSchema) => {
+  const backend = new Backend();
+
+  let arg = isTenantSchema ? true : false;
+  let session = await backend.isActiveSession(arg);
+
+  if (session.active)
+    return session.userdetails;
+}
