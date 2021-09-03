@@ -265,6 +265,16 @@ const fetchUserProfile = async (isTenantSchema, username) => {
 }
 
 
+const fetchGroupsForUser = async (isTenantSchema, username) => {
+  const backend = new Backend();
+  if (isTenantSchema) {
+    let usergroups = await backend.fetchResult(`/api/v2/internal/usergroups/${username}`);
+
+    return usergroups;
+  }
+}
+
+
 export const UsersList = (props) => {
     const location = props.location;
     const backend = new Backend();
@@ -298,7 +308,13 @@ export const UsersList = (props) => {
             );
             await queryClient.prefetchQuery(
               ['userprofile', e.value], () => fetchUserProfile(isTenantSchema, e.value)
-            )
+            );
+            await queryClient.prefetchQuery(
+              ['usergroups', e.value], () => fetchGroupsForUser(isTenantSchema, e.value)
+            );
+            await queryClient.prefetchQuery(
+              'usergroups', () => fetchUserGroups(isTenantSchema)
+            );
           }}
         >
           {e.value}
@@ -424,13 +440,7 @@ export const UserChange = (props) => {
   );
 
   const { data: userGroups, error: errorUserGroups, status: statusUserGroups } = useQuery(
-    ['usergroups', user_name], async () => {
-      if (isTenantSchema) {
-        let usergroups = await backend.fetchResult(`/api/v2/internal/usergroups/${user_name}`);
-
-        return usergroups;
-      }
-    },
+    ['usergroups', user_name], () => fetchGroupsForUser(isTenantSchema, user_name),
     { enabled: isTenantSchema && !addview }
   );
 
