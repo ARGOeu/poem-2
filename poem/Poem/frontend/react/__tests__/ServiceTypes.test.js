@@ -5,6 +5,7 @@ import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { ServiceTypesList } from '../ServiceTypes';
 import { Backend } from '../DataManager';
+import { QueryClient, QueryClientProvider } from 'react-query';
 
 
 jest.mock('../DataManager', () => {
@@ -14,8 +15,11 @@ jest.mock('../DataManager', () => {
 })
 
 
+const queryClient = new QueryClient();
+
 beforeEach(() => {
   jest.clearAllMocks();
+  queryClient.clear();
 })
 
 
@@ -54,23 +58,27 @@ function renderView(publicView=undefined) {
   if (publicView)
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            render={ props => <ServiceTypesList {...props} publicView={true} /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              render={ props => <ServiceTypesList {...props} publicView={true} /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 
   else
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            path='/ui/servicetypes/'
-            component={ServiceTypesList}
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/servicetypes/'
+              component={ServiceTypesList}
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 }

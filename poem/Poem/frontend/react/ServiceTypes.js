@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { useQuery } from 'react-query';
 import { Backend } from './DataManager';
 import {
   LoadingAnim,
@@ -12,26 +13,14 @@ import {
 
 export const ServiceTypesList = (props) => {
   const publicView = props.publicView;
-  const backend = new Backend();
-  const [loading, setLoading] = useState(false);
-  const [serviceTypesDescriptions, setServiceTypesDescriptions] = useState([]);
-  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    try {
-      const fetchData = async () => {
-        setLoading(true);
-        let json = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}servicetypesdesc`);
-        setServiceTypesDescriptions(json);
-        setLoading(false);
-      }
-      fetchData();
+  const backend = new Backend();
+
+  const { data: serviceTypesDescriptions, error, status } = useQuery(
+    `${publicView ? 'public_' : ''}servicetypedesc`, async () => {
+      return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}servicetypesdesc`);
     }
-    catch (err) {
-      setError(err)
-      setLoading(false)
-    }
-  }, [])
+  )
 
   const columns = React.useMemo(
     () => [
@@ -52,16 +41,16 @@ export const ServiceTypesList = (props) => {
         column_width: '78%',
         Filter: DefaultColumnFilter
       }
-    ]
+    ], []
   )
 
-  if (loading)
+  if (status === 'loading')
     return (<LoadingAnim/>);
 
-  else if (error)
+  else if (status === 'error')
     return (<ErrorComponent error={error}/>);
 
-  else if (!loading && serviceTypesDescriptions) {
+  else if (serviceTypesDescriptions) {
     return (
       <BaseArgoView
         resourcename='Services types'
