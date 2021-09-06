@@ -22,6 +22,7 @@ const queryClient = new QueryClient();
 
 beforeEach(() => {
   jest.clearAllMocks();
+  queryClient.clear();
 })
 
 

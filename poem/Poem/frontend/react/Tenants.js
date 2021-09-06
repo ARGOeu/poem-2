@@ -19,7 +19,7 @@ import {
 } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faIdBadge } from '@fortawesome/free-solid-svg-icons';
-import { useQuery } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
 
 
 export const TenantList = (props) => {
@@ -111,9 +111,6 @@ export const TenantList = (props) => {
 
 
 export const TenantChange = (props) => {
-  const [tenant, setTenant] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [areYouSureModal, setAreYouSureModal] = useState(false);
   const [modalTitle, setModalTitle] = useState(undefined);
   const [modalMsg, setModalMsg] = useState(undefined);
@@ -124,22 +121,18 @@ export const TenantChange = (props) => {
 
   const backend = new Backend();
 
-  useEffect(() => {
-    const backend = new Backend();
-    setLoading(true);
-    async function fetchData() {
-      try {
-        let json = await backend.fetchData(
-          `/api/v2/internal/tenants/${name.trim().split(' ').join('_')}`
-        );
-        setTenant(json)
-      } catch(err) {
-        setError(err);
+  const queryClient = useQueryClient();
+
+  const { data: tenant, error, status } = useQuery(
+    ['tenant', name], async () => {
+      return await backend.fetchData(`/api/v2/internal/tenants/${name.trim().split(' ').join('_')}`);
+    },
+    {
+      initialData: () => {
+        return queryClient.getQueryData('tenant')?.find(ten => ten.name === name)
       }
-      setLoading(false);
     }
-    fetchData();
-  }, [name]);
+  )
 
   function toggleAreYouSure() {
     setAreYouSureModal(!areYouSureModal);
@@ -168,13 +161,13 @@ export const TenantChange = (props) => {
     }
   }
 
-  if (loading)
+  if (status === 'loading')
     return (<LoadingAnim/>);
 
-  else if (error)
+  else if (status === 'error')
     return (<ErrorComponent error={error}/>);
 
-  else if (!loading && tenant) {
+  else if (tenant) {
     return (
       <BaseArgoView
         resourcename='Tenant details'
