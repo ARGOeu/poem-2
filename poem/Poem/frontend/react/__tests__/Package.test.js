@@ -199,7 +199,7 @@ function renderTenantListView() {
       <QueryClientProvider client={queryClient}>
         <Router history={history}>
           <Route
-            render={ props => <PackageList {...props} /> }
+            render={ props => <PackageList {...props} isTenantSchema={true} /> }
           />
         </Router>
       </QueryClientProvider>

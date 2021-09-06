@@ -27,6 +27,7 @@ import {
 } from 'reactstrap';
 import { Formik, Form, Field } from 'formik';
 import { useQuery, useQueryClient } from 'react-query';
+import { fetchPackages, fetchYumRepos } from './QueryFunctions';
 
 
 const packageValidate = (values) => {
@@ -57,30 +58,18 @@ const packageValidate = (values) => {
 
 export const PackageList = (props) => {
   const location = props.location;
-  const backend = new Backend();
+  const isTenantSchema = props.isTenantSchema;
 
-  const { data: listPackages, error: errorListPackages, isLoading: loadingListPackages } = useQuery(
-    'package_listview', async () => {
-      let pkgs = await backend.fetchData('/api/v2/internal/packages');
-      return pkgs;
-    }
+  const { data: packages, error: errorPackages, status: statusPackages } = useQuery(
+    'package', () => fetchPackages()
   );
 
-  const { data: listRepos, error: errorListRepos, isLoading: loadingListRepos } = useQuery(
-    'package_listview_repos', async () => {
-      let repos = await backend.fetchData('/api/v2/internal/yumrepos');
-      let list_repos = [];
-      repos.forEach(repo => list_repos.push(`${repo.name} (${repo.tag})`));
-      return list_repos;
-    }
+  const { data: repos, error: errorRepos, status: statusRepos } = useQuery(
+    'yumrepo', () => fetchYumRepos()
   );
 
-  const { data: isTenantSchema, isLoading: loadingIsTenantSchema } = useQuery(
-    'session_istenantschema', async () => {
-      let schema = await backend.isTenantSchema();
-      return schema;
-    }
-  );
+  if (repos)
+    var listRepos = repos.map(repo => `${repo.name} (${repo.tag})`)
 
   const columns = React.useMemo(() => [
     {
@@ -118,16 +107,16 @@ export const PackageList = (props) => {
     }
   ], [isTenantSchema, listRepos]);
 
-  if (loadingListPackages || loadingListRepos || loadingIsTenantSchema)
+  if (statusPackages === 'loading' || statusRepos === 'loading')
     return (<LoadingAnim/>);
 
-  else if (errorListPackages)
-    return (<ErrorComponent error={errorListPackages}/>);
+  else if (statusPackages === 'error')
+    return (<ErrorComponent error={errorPackages}/>);
 
-  else if (errorListRepos)
-    return (<ErrorComponent error={errorListRepos}/>);
+  else if (statusRepos === 'error')
+    return (<ErrorComponent error={errorRepos}/>);
 
-  else if (!loadingListPackages && !loadingListRepos && !loadingIsTenantSchema && listPackages) {
+  else if (packages) {
     return (
       <BaseArgoView
         resourcename='package'
@@ -136,7 +125,7 @@ export const PackageList = (props) => {
         addnew={!isTenantSchema}
       >
         <BaseArgoTable
-          data={listPackages}
+          data={packages}
           columns={columns}
           page_size={30}
           resourcename='packages'
