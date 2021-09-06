@@ -1245,56 +1245,33 @@ const ListDiffElement = ({title, item1, item2}) => {
 };
 
 
+const fetchMetricProfileVersions = async (name) => {
+  const backend = new Backend();
+
+  return await backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${name}`);
+}
+
+
 export const MetricProfileVersionCompare = (props) => {
   const version1 = props.match.params.id1;
   const version2 = props.match.params.id2;
   const name = props.match.params.name;
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [metricProfileVersion1, setMetricProfileVersion1] = useState(undefined)
-  const [metricProfileVersion2, setMetricProfileVersion2] = useState(undefined)
 
-  useEffect(() => {
-    const backend = new Backend();
-    const fetchDataAndSet = async () => {
-      let json = await backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${name}`);
-      json.forEach((e)=> {
-        if (e.version === version1)
-          setMetricProfileVersion1({
-            name: e.fields.name,
-            groupname: e.fields.groupname,
-            description: e.fields.description,
-            date_created: e.date_created,
-            metricinstances: e.fields.metricinstances,
-          })
-        else if (e.version === version2)
-          setMetricProfileVersion2({
-            name: e.fields.name,
-            groupname: e.fields.groupname,
-            description: e.fields.description,
-            date_created: e.date_created,
-            metricinstances: e.fields.metricinstances,
-          })
-      })
-      setLoading(false);
-    }
-    setLoading(true);
-    try {
-      fetchDataAndSet();
-    }
-    catch (err) {
-      setError(err)
-      setLoading(false);
-    }
-  }, [name, version1, version2])
+  const { data: metricProfileVersions, error, status } = useQuery(
+    ['metricprofile', 'versions', name], () => fetchMetricProfileVersions(name)
+  )
 
-  if (loading)
+  if (status === 'loading')
     return (<LoadingAnim/>);
 
-  if (error)
+  if (status === 'error')
     return (<ErrorComponent error={error}/>);
 
-  else if (!loading && metricProfileVersion1 && metricProfileVersion2) {
+
+  else if (metricProfileVersions) {
+    const metricProfileVersion1 = metricProfileVersions.find(ver => ver.version === version1).fields;
+    const metricProfileVersion2 = metricProfileVersions.find(ver => ver.version === version2).fields;
+
     const { name: name1, description: description1, metricinstances:
       metricinstances1, groupname: groupname1 } = metricProfileVersion1
     const { name: name2, description: description2, metricinstances:
