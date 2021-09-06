@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useContext } from 'react';
+import React, { useState, useMemo, useContext } from 'react';
 import {Link} from 'react-router-dom';
 import {Backend, WebApi} from './DataManager';
 import Autosuggest from 'react-autosuggest';
@@ -1308,44 +1308,22 @@ export const MetricProfileVersionCompare = (props) => {
 export const MetricProfileVersionDetails = (props) => {
   const name = props.match.params.name;
   const version = props.match.params.version;
-  const [metricProfileVersion, setMetricProfileVersion] = useState(undefined)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
 
+  const { data: metricProfileVersions, error, status } = useQuery(
+    ['metricprofile', 'versions', name], () => fetchMetricProfileVersions(name)
+  )
 
-  useEffect(() => {
-    const backend = new Backend();
-    const fetchDataAndSet = async () => {
-      let json = await backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${name}`);
-      json.forEach((e)=> {
-        if (e.version === version)
-          setMetricProfileVersion({
-            name: e.fields.name,
-            groupname: e.fields.groupname,
-            description: e.fields.description,
-            date_created: e.date_created,
-            metricinstances: e.fields.metricinstances,
-          })
-      })
-      setLoading(false);
-    }
-    setLoading(true);
-    try {
-      fetchDataAndSet();
-    }
-    catch (err) {
-      setError(err)
-      setLoading(false);
-    }
-  }, [name, version])
-
-  if (loading)
+  if (status === 'loading')
     return (<LoadingAnim/>);
 
-  else if (error)
+  else if (status === 'error')
     return (<ErrorComponent error={error}/>);
 
-  else if (!loading && metricProfileVersion) {
+  else if (metricProfileVersions) {
+    const instance = metricProfileVersions.find(ver => ver.version === version);
+    const metricProfileVersion = instance.fields;
+    metricProfileVersion.date_created = instance.date_created;
+
     return (
       <BaseArgoView
         resourcename={`${metricProfileVersion.name} (${metricProfileVersion.date_created})`}
