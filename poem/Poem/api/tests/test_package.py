@@ -61,11 +61,11 @@ class ListPackagesAPIViewTests(TenantTestCase):
         )
         self.package2.repos.add(self.repo2)
 
-        package3 = admin_models.Package.objects.create(
+        self.package3 = admin_models.Package.objects.create(
             name='nagios-plugins-fedcloud',
             version='0.5.0'
         )
-        package3.repos.add(self.repo2)
+        self.package3.repos.add(self.repo2)
 
         self.package4 = admin_models.Package.objects.create(
             name='nagios-plugins-http',
@@ -179,24 +179,28 @@ class ListPackagesAPIViewTests(TenantTestCase):
                 response.data,
                 [
                     {
+                        'id': self.package1.id,
                         'name': 'nagios-plugins-argo',
                         'version': '0.1.11',
                         'use_present_version': False,
                         'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
                     },
                     {
+                        'id': self.package3.id,
                         'name': 'nagios-plugins-fedcloud',
                         'version': '0.5.0',
                         'use_present_version': False,
                         'repos': ['repo-2 (CentOS 7)']
                     },
                     {
+                        'id': self.package2.id,
                         'name': 'nagios-plugins-globus',
                         'version': '0.1.5',
                         'use_present_version': False,
                         'repos': ['repo-2 (CentOS 7)']
                     },
                     {
+                        'id': self.package4.id,
                         'name': 'nagios-plugins-http',
                         'version': 'present',
                         'use_present_version': True,
@@ -213,6 +217,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
             response.data,
             [
                 {
+                    'id': self.package1.id,
                     'name': 'nagios-plugins-argo',
                     'version': '0.1.11',
                     'use_present_version': False,
@@ -2585,23 +2590,23 @@ class ListPackagesVersionsTests(TenantTestCase):
             name='repo-2', tag=tag2
         )
 
-        package1 = admin_models.Package.objects.create(
+        self.package1 = admin_models.Package.objects.create(
             name='nagios-plugins-argo',
             version='0.1.7'
         )
-        package1.repos.add(repo1, repo2)
+        self.package1.repos.add(repo1, repo2)
 
-        package2 = admin_models.Package.objects.create(
+        self.package2 = admin_models.Package.objects.create(
             name='nagios-plugins-argo',
             version='0.1.11'
         )
-        package2.repos.add(repo1, repo2)
+        self.package2.repos.add(repo1, repo2)
 
-        package3 = admin_models.Package.objects.create(
+        self.package3 = admin_models.Package.objects.create(
             name='nagios-plugins-argo',
             version='0.1.12'
         )
-        package3.repos.add(repo1, repo2)
+        self.package3.repos.add(repo1, repo2)
 
         package4 = admin_models.Package.objects.create(
             name='nagios-plugins-fedcloud',
@@ -2629,18 +2634,21 @@ class ListPackagesVersionsTests(TenantTestCase):
             response.data,
             [
                 {
+                    'id': self.package3.id,
                     'name': 'nagios-plugins-argo',
                     'version': '0.1.12',
                     'use_present_version': False,
                     'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
                 },
                 {
+                    'id': self.package2.id,
                     'name': 'nagios-plugins-argo',
                     'version': '0.1.11',
                     'use_present_version': False,
                     'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
                 },
                 {
+                    'id': self.package1.id,
                     'name': 'nagios-plugins-argo',
                     'version': '0.1.7',
                     'use_present_version': False,

@@ -27,7 +27,7 @@ import {
 } from 'reactstrap';
 import { Formik, Form, Field } from 'formik';
 import { useQuery, useQueryClient } from 'react-query';
-import { fetchPackages, fetchYumRepos } from './QueryFunctions';
+import { fetchPackages, fetchProbeVersions, fetchYumRepos } from './QueryFunctions';
 
 
 const packageValidate = (values) => {
@@ -145,14 +145,13 @@ export const PackageComponent = (props) => {
   const disabled = props.disabled;
   const location = props.location;
   const history = props.history;
-  const querykey = `package_${nameversion}_${cloneview ? 'cloneview' : 'changeview'}`;
 
   const backend = new Backend();
 
   const queryClient = useQueryClient();
 
-  const { data: pkg, error: errorPkg, isLoading: loadingPkg } = useQuery(
-    `${querykey}`, async () => {
+  const { data: pkg, error: errorPkg, status: statusPkg } = useQuery(
+    ['package', nameversion], async () => {
       let pkg = await backend.fetchData(`/api/v2/internal/packages/${nameversion}`);
       let [repo6, repo7] = splitRepos(pkg.repos);
       pkg.initial_version = pkg.version;
@@ -160,44 +159,40 @@ export const PackageComponent = (props) => {
       pkg.repo_7 = repo7;
       return pkg;
     },
-    { enabled: !addview }
-  );
-
-  const { data: repos, error: errorRepos, isLoading: loadingRepos } = useQuery(
-    'package_component_repos', async () => {
-      let repos = await backend.fetchData('/api/v2/internal/yumrepos');
-      let list_repos_6 = [];
-      let list_repos_7 = [];
-
-      repos.forEach(e => {
-        if (e.tag === 'CentOS 6')
-          list_repos_6.push(e.name + ' (' + e.tag + ')');
-        else if (e.tag === 'CentOS 7')
-          list_repos_7.push(e.name + ' (' + e.tag + ')');
-      });
-
-      return {repo6: list_repos_6, repo7: list_repos_7};
+    {
+      enabled: !addview,
+      initialData: () => {
+        let pkgs = queryClient.getQueryData('package');
+        if (pkgs) {
+          let pkg = pkgs.find(pkg => nameversion == `${pkg.name}-${pkg.version}`)
+          let [repo6, repo7] = splitRepos(pkg.repos);
+          pkg.initial_version = pkg.version;
+          pkg.repo_6 = repo6;
+          pkg.repo_7 = repo7;
+          return pkg;
+        }
+      }
     }
   );
 
-  const { data: probes, error: errorProbes, isLoading: loadingProbes } = useQuery(
-    'package_component_probes', async () => {
-      let prb = await backend.fetchData('/api/v2/internal/version/probe');
-      return prb;
-    },
+  const { data: repos, error: errorRepos, status: statusRepos } = useQuery(
+    'yumrepo', () => fetchYumRepos()
+  );
+
+  const { data: probes, error: errorProbes, status: statusProbes } = useQuery(
+    ['version', 'probe'], () => fetchProbeVersions(),
     { enabled: !addview}
   );
 
-  const { data: packageVersions, error: errorPackageVersions, isLoading: loadingPackageVersions } = useQuery(
-    'package_component_versions', async () => {
-      let pkg_versions = [];
-
+  const { data: packageVersions, error: errorPackageVersions, status: statusPackageVersions } = useQuery(
+    ['package', 'versions', nameversion], async () => {
+      let pkg_versions = []
       if (!addview)
         pkg_versions = await backend.fetchData(`/api/v2/internal/packageversions/${pkg.name}`);
 
-      return pkg_versions;
+      return pkg_versions
     },
-    { enabled: !!pkg}
+    { enabled: !!pkg }
   );
 
   const [disabledButton, setDisabledButton] = useState(true);
@@ -225,22 +220,17 @@ export const PackageComponent = (props) => {
     return [repo6, repo7];
   }
 
-  function onVersionSelect(value) {
+  function onVersionSelect(props, value) {
     let initial_version = pkg.initial_version;
     packageVersions.forEach(pkgv => {
       if (pkgv.version === value) {
         let [repo6, repo7] = splitRepos(pkgv.repos);
-        let updated_pkg = {
-          id: pkgv.id,
-          name: pkgv.name,
-          version: pkgv.version,
-          initial_version: initial_version,
-          use_present_version: pkgv.use_present_version,
-          repo_6: repo6,
-          repo_7: repo7
-        };
+        props.setFieldValue('name', pkgv.name);
+        props.setFieldValue('version', pkgv.version);
+        props.setFieldValue('repo_6', repo6);
+        props.setFieldValue('repo_7', repo7);
+        props.setFieldValue('present_version', pkgv.use_present_version);
 
-        queryClient.setQueryData(`${querykey}`, () => updated_pkg);
         setDisabledButton(value === initial_version);
       }
     });
@@ -434,22 +424,33 @@ export const PackageComponent = (props) => {
     }
   }
 
-  if (loadingPkg || loadingRepos || loadingProbes || loadingPackageVersions)
+  if (statusPkg === 'loading' || statusRepos === 'loading' || statusProbes === 'loading' || statusPackageVersions === 'loading')
     return (<LoadingAnim/>);
 
-  else if (errorPkg)
+  else if (statusPkg === 'error')
     return (<ErrorComponent error={errorPkg}/>);
 
-  else if (errorRepos)
+  else if (statusRepos === 'error')
     return (<ErrorComponent error={errorRepos}/>);
 
-  else if (errorProbes)
+  else if (statusProbes === 'error')
     return (<ErrorComponent error={errorProbes}/>);
 
-  else if (errorPackageVersions)
+  else if (statusPackageVersions === 'error')
     return (<ErrorComponent error={errorPackageVersions}/>);
 
-  else if (!loadingPkg && !loadingRepos && !loadingProbes && !loadingPackageVersions && repos) {
+  else if (repos) {
+    var listRepos6 = [];
+    var listRepos7 = [];
+
+    repos.forEach(e => {
+      if (e.tag === 'CentOS 6')
+        listRepos6.push(`${e.name} (${e.tag})`)
+
+      else if (e.tag === 'CentOS 7')
+        listRepos7.push(`${e.name} (${e.tag})`)
+    })
+
     var listProbes = [];
     let presentVersion = false;
     if (pkg) {
@@ -538,7 +539,7 @@ export const PackageComponent = (props) => {
                                 className='form-control custom-select'
                                 id='version'
                                 data-testid='version'
-                                onChange={e => onVersionSelect(e.target.value)}
+                                onChange={e => onVersionSelect(props, e.target.value)}
                               >
                                 {
                                   packageVersions.map((version, i) =>
@@ -583,7 +584,7 @@ export const PackageComponent = (props) => {
               <FormGroup>
                 <ParagraphTitle title='YUM repo'/>
                 {
-                  (props.errors.repo_6 || props.errors.repo_7) &&
+                  (!disabled && (props.errors.repo_6 || props.errors.repo_7)) &&
                     <Alert color='danger'>
                       <center>
                         You must provide at least one repo!
@@ -608,7 +609,7 @@ export const PackageComponent = (props) => {
                       :
                         <AutocompleteField
                           {...props}
-                          lists={repos.repo6}
+                          lists={listRepos6}
                           icon='yumrepos'
                           field='repo_6'
                           onselect_handler={!addview ? (_, newValue) => props.setFieldValue('repo_6', newValue) : undefined}
@@ -639,7 +640,7 @@ export const PackageComponent = (props) => {
                       :
                         <AutocompleteField
                           {...props}
-                          lists={repos.repo7}
+                          lists={listRepos7}
                           icon='yumrepos'
                           field='repo_7'
                           onselect_handler={!addview ? (_, newValue) => props.setFieldValue('repo_7', newValue) : undefined}

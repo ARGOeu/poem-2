@@ -43,3 +43,9 @@ export const fetchPackages = async () => {
   const backend = new Backend();
   return await backend.fetchData('/api/v2/internal/packages')
 }
+
+
+export const fetchProbeVersions = async () => {
+  const backend = new Backend();
+  return await backend.fetchData('/api/v2/internal/version/probe');
+}

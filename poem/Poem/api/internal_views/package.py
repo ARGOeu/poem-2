@@ -29,6 +29,7 @@ def get_packages_for_api(packages):
             repos.append('{} ({})'.format(repo.name, repo.tag.name))
 
         results.append({
+            'id': package.id,
             'name': package.name,
             'version': package.version,
             'use_present_version': package.use_present_version,
