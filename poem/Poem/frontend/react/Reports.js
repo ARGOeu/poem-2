@@ -227,7 +227,7 @@ const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, addview, push
   }
 
   const isMultiValuesTags = (data) => {
-    if (data.length === 2) {
+    if (data.length === 2 || data.length === 1) {
       if (data[0].value === 'yes' ||
         data[0].value === 'no')
       return false
