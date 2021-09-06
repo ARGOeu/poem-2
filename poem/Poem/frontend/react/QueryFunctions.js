@@ -49,3 +49,8 @@ export const fetchProbeVersions = async () => {
   const backend = new Backend();
   return await backend.fetchData('/api/v2/internal/version/probe');
 }
+
+
+export const fetchOperationsProfiles = async (webapi) => {
+  return await webapi.fetchOperationsProfiles();
+}

@@ -19,6 +19,7 @@ import {
 } from 'reactstrap';
 import { Formik, Form, Field } from 'formik';
 import { useQuery } from 'react-query';
+import { fetchOperationsProfiles } from './QueryFunctions';
 
 
 export const OperationsProfilesList = (props) => {
@@ -29,12 +30,8 @@ export const OperationsProfilesList = (props) => {
     operationsProfiles: props.webapioperations
   });
 
-  const { data: listProfiles, error: error, isLoading: loading } = useQuery(
-    'operationsprofiles_listview', async () => {
-      let profiles = await webapi.fetchOperationsProfiles();
-
-      return profiles;
-    }
+  const { data: profiles, error, status } = useQuery(
+    `${publicView ? 'public_' : ''}operationsprofile`, () => fetchOperationsProfiles(webapi)
   );
 
   const columns = React.useMemo(() => [
@@ -59,13 +56,13 @@ export const OperationsProfilesList = (props) => {
     }
   ], [publicView]);
 
-  if (loading)
+  if (status === 'loading')
     return (<LoadingAnim/>);
 
-  else if (error)
+  else if (status === 'error')
     return (<ErrorComponent error={error}/>);
 
-  else if (!loading && listProfiles)
+  else if (profiles)
     return (
       <BaseArgoView
         resourcename='operations profile'
@@ -74,7 +71,7 @@ export const OperationsProfilesList = (props) => {
         addnew={false}
       >
         <ProfilesListTable
-          data={listProfiles}
+          data={profiles}
           columns={columns}
           type='operations'
         />
