@@ -30,6 +30,7 @@ import ReactDiffViewer from 'react-diff-viewer';
 import { useQuery, useQueryClient, useMutation } from 'react-query';
 import PapaParse from 'papaparse';
 import { downloadCSV } from './FileDownload';
+import { fetchUserDetails } from './QueryFunctions';
 
 import './MetricProfiles.css';
 
@@ -1131,28 +1132,16 @@ export const MetricProfilesList = (props) => {
   const backend = new Backend();
   const publicView = props.publicView
 
-  let apiUrl = null;
-  if (publicView)
-    apiUrl = '/api/v2/internal/public_metricprofiles'
-  else
-    apiUrl = '/api/v2/internal/metricprofiles'
-
-  const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
-    `session_userdetails`, async () => {
-      const sessionActive = await backend.isActiveSession()
-      if (sessionActive.active) {
-        return sessionActive.userdetails
-      }
-    }
+  const { data: userDetails, error: errorUserDetails, status: statusUserDetails } = useQuery(
+    'userdetails', () => fetchUserDetails(true)
   );
 
-  const { data: listMetricProfiles, error: errorListMetricProfiles, isLoading: loadingListMetricProfiles} = useQuery(
-    `metricprofiles_listview`, async () => {
-      const fetched = await backend.fetchData(apiUrl)
-      return fetched
+  const { data: metricProfiles, error: errorMetricProfiles, status: statusMetricProfiles} = useQuery(
+    `${publicView ? 'public_' : ''}metricprofile`, async () => {
+      return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metricprofiles`)
     },
     {
-      enabled: !publicView ? userDetails ? true : false : true
+      enabled: !publicView ? !!userDetails : true
     }
   );
 
@@ -1188,16 +1177,16 @@ export const MetricProfilesList = (props) => {
     }
   ], [publicView])
 
-  if (loadingUserDetails || loadingListMetricProfiles)
+  if (statusUserDetails === 'loading' || statusMetricProfiles === 'loading')
     return (<LoadingAnim />)
 
-  else if (errorListMetricProfiles)
-    return (<ErrorComponent error={errorListMetricProfiles}/>);
+  else if (statusMetricProfiles === 'error')
+    return (<ErrorComponent error={errorMetricProfiles}/>);
 
-  else if (errorUserDetails)
+  else if (statusUserDetails === 'error')
     return (<ErrorComponent error={errorUserDetails}/>);
 
-  else if (!loadingUserDetails && !loadingUserDetails && listMetricProfiles) {
+  else if (metricProfiles) {
     return (
       <BaseArgoView
         resourcename='metric profile'
@@ -1207,7 +1196,7 @@ export const MetricProfilesList = (props) => {
         addperm={publicView ? false : userDetails.is_superuser || userDetails.groups.metricprofiles.length > 0}
         publicview={publicView}>
         <ProfilesListTable
-          data={listMetricProfiles}
+          data={metricProfiles}
           columns={columns}
           type='metric'
         />
