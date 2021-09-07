@@ -136,7 +136,13 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
     <Route exact path="/ui/metrics/:name/history/compare/:id1/:id2" render={props => <CompareMetrics {...props} type='metric'/>}/>
     <Route exact path="/ui/metrics/:name/history/:version" render={props => <MetricVersionDetails {...props}/>}/>
     <Route exact path="/ui/metrics/:name" render={props => <MetricChange {...props}/>}/>
-    <Route exact path="/ui/metricprofiles" component={MetricProfilesList} />
+    <Route exact path="/ui/metricprofiles"
+      render={ props => <MetricProfilesList
+        {...props}
+        webapimetric={webApiMetric}
+        webapitoken={token}
+      /> }
+    />
     <AddRoute usergroups={userGroups.metricprofiles} exact path="/ui/metricprofiles/add"
       render={props => <MetricProfilesChange
         {...props}
@@ -743,7 +749,12 @@ const App = () => {
               <Route exact path="/ui/public_metricprofiles"
                 render={props =>
                   <PublicPage tenantName={tenantName}>
-                    <MetricProfilesList publicView={true} {...props} />
+                    <MetricProfilesList
+                      {...props}
+                      webapimetric={webApiMetric}
+                      webapitoken={token}
+                      publicView={true}
+                    />
                   </PublicPage>
                 }
               />
