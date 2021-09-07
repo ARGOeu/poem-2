@@ -39,7 +39,7 @@ import * as Yup from 'yup';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faPlus, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import ReactDiffViewer from 'react-diff-viewer';
-import { useQuery, queryCache } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
 
 
 const ThresholdsAutocomplete = ({lists=[], index, onSelect, ...props}) => {
@@ -915,7 +915,7 @@ export const ThresholdsProfilesList = (props) => {
       return profiles;
     },
     {
-      enabled: !publicView ? userDetails : true
+      enabled: !publicView ? !!userDetails : true
     }
   )
 
@@ -996,6 +996,7 @@ export const ThresholdsProfilesChange = (props) => {
     thresholdsProfiles: props.webapithresholds
   });
 
+  const queryClient = useQueryClient();
 
   const { data: userDetails, isLoading: loadingUserDetails } = useQuery(
     'session_userdetails', async () => {
@@ -1019,7 +1020,7 @@ export const ThresholdsProfilesChange = (props) => {
         return tp;
       }
     },
-    { enabled: !publicView ? !addview && userDetails : true }
+    { enabled: !publicView ? !addview && !!userDetails : true }
   );
 
   const { data: allMetrics, error: errorAllMetrics, isLoading: loadingAllMetrics } = useQuery(
@@ -1061,7 +1062,7 @@ export const ThresholdsProfilesChange = (props) => {
       thresholds_rules[index].metric = value;
       modifiedThresholdsProfile.rules = thresholds_rules;
 
-      queryCache.setQueryData(`${querykey}`, () => modifiedThresholdsProfile);
+      queryClient.setQueryData(`${querykey}`, () => modifiedThresholdsProfile);
     }
   }
 

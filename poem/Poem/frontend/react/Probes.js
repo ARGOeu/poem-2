@@ -431,7 +431,7 @@ export const ProbeComponent = (props) => {
       let metrics = await backend.fetchData(`${apiMetricsForProbes}/${probe.name}(${probe.version})`);
       return metrics;
     },
-    { enabled: probe }
+    { enabled: !!probe }
   );
 
   const { data: listPackages, error: listPackagesError, isLoading: listPackagesLoading } = useQuery(

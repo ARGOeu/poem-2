@@ -37,7 +37,7 @@ import {
   DropdownMenu,
   DropdownItem
 } from 'reactstrap';
-import { useQuery, queryCache } from 'react-query';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
 import * as Yup from 'yup';
 import { downloadJSON } from './Helpers';
 
@@ -591,6 +591,9 @@ export const AggregationProfilesChange = (props) => {
     aggregationProfiles: props.webapiaggregation}
   )
 
+  const queryClient = useQueryClient();
+  const changeAggregation = useMutation(values => webapi.changeAggregation(values));
+
   const logic_operations = ["OR", "AND"];
   const endpoint_groups = ["servicegroups", "sites"];
 
@@ -656,7 +659,7 @@ export const AggregationProfilesChange = (props) => {
     }
     },
     {
-      enabled: !publicView ? userDetails : true
+      enabled: !publicView ? userDetails ? true : false : true
     }
   )
 
@@ -746,15 +749,6 @@ export const AggregationProfilesChange = (props) => {
     setFormikValues(values)
   }
 
-  const updateCacheKey = (values) => {
-    let staleAggregationProfile = queryCache.getQueryData(querykey)
-    staleAggregationProfile.profile.groups = values.groups
-    staleAggregationProfile.profile.metric_profile = values.metric_profile
-    staleAggregationProfile.profile.profile_operation = values.profile_operation
-    staleAggregationProfile.profile.endpoint_group = values.endpoint_group
-    queryCache.setQueryData(querykey, staleAggregationProfile)
-  }
-
   const doChange = async (values) => {
     let valueSend = JSON.parse(JSON.stringify(values));
     removeDummyGroup(valueSend)
@@ -770,7 +764,7 @@ export const AggregationProfilesChange = (props) => {
     valueSend.metric_profile = match_profile[0]
 
     if (!addview) {
-      let response = await webapi.changeAggregation(valueSend);
+      let response = await changeAggregation.mutateAsync(valueSend);
       if (!response.ok) {
         let change_msg = '';
         try {
@@ -800,12 +794,12 @@ export const AggregationProfilesChange = (props) => {
           }
         )
         if (r_internal.ok) {
+          queryClient.invalidateQueries(querykey);
           NotifyOk({
             msg: 'Aggregation profile successfully changed',
             title: 'Changed',
             callback: () => history.push('/ui/aggregationprofiles')
           })
-          updateCacheKey(valueSend)
         }
         else {
           let change_msg = '';
@@ -1196,7 +1190,7 @@ export const AggregationProfilesList = (props) => {
       return fetched
     },
     {
-      enabled: !publicView ? userDetails : true
+      enabled: !publicView ? userDetails ? true : false : true
     }
   );
 

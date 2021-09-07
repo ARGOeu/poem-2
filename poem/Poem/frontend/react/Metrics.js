@@ -40,7 +40,7 @@ import { faInfoCircle, faMinus, faPlus, faCaretDown } from '@fortawesome/free-so
 import ReactDiffViewer from 'react-diff-viewer';
 import CreatableSelect from 'react-select/creatable';
 import { components } from 'react-select';
-import { useQuery, queryCache } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
 
 
 function validateConfig(value) {
@@ -309,6 +309,8 @@ export const ListOfMetrics = (props) => {
 
   const backend = new Backend();
 
+  const queryClient = useQueryClient();
+
   const { data: userDetails, error: userDetailsError, isLoading: userDetailsLoading } = useQuery(
     `${queryKey}_userdetails`, async () => {
       let userdetails = { username: 'Anonymous' };
@@ -328,7 +330,7 @@ export const ListOfMetrics = (props) => {
       return metrics;
     },
     {
-      enabled: userDetails
+      enabled: userDetails ? true : false
     }
   );
 
@@ -419,18 +421,16 @@ export const ListOfMetrics = (props) => {
   }
 
   async function bulkDeleteMetrics(mt) {
-    //let refreshed_metrics = listMetrics;
     let response = await backend.bulkDeleteMetrics({'metrictemplates': mt});
     if (response.ok) {
       let json = await response.json();
-      //refreshed_metrics = refreshed_metrics.filter(m => !mt.includes(m.name));
       if ('info' in json)
         NotifyOk({msg: json.info, title: 'Deleted'});
 
       if ('warning' in json)
         NotifyWarn({msg: json.warning, title: 'Deleted'});
 
-      queryCache.setQueryData(`${queryKey}`, (oldData) => oldData.filter(met => !mt.includes(met.name)));
+      queryClient.invalidateQueries(queryKey);
       setSelectAll(0);
 
     } else
@@ -1241,7 +1241,7 @@ export const MetricChange = (props) => {
       return metric;
     },
     {
-      enabled: !publicView ? session : true
+      enabled: !publicView ? !!session : true
     }
   );
 
@@ -1258,7 +1258,7 @@ export const MetricChange = (props) => {
 
       return probe;
     },
-    { enabled: metric }
+    { enabled: !!metric }
   );
 
   function togglePopOver() {

@@ -124,7 +124,7 @@ export const MetricTemplateComponent = (props) => {
         return metrictemplate;
       }
     },
-    { enabled: allProbeVersions && !addview, }
+    { enabled: !!allProbeVersions && !addview, }
   );
 
   function togglePopOver() {

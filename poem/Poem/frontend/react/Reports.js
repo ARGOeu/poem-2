@@ -82,7 +82,7 @@ export const ReportsList = (props) => {
       return reports;
     },
     {
-      enabled: userDetails
+      enabled: !!userDetails
     }
   );
 
@@ -491,8 +491,10 @@ export const ReportsComponent = (props) => {
   const addview = props.addview
   const location = props.location;
   const history = props.history;
+
   const backend = new Backend();
   const crud = props.webapireports ? props.webapireports.crud : undefined
+
   const [areYouSureModal, setAreYouSureModal] = useState(false)
   const [modalMsg, setModalMsg] = useState(undefined);
   const [modalTitle, setModalTitle] = useState(undefined);
@@ -591,7 +593,7 @@ export const ReportsComponent = (props) => {
       }
     },
     {
-      enabled: userDetails,
+      enabled: !!userDetails,
     }
   );
 
@@ -600,7 +602,7 @@ export const ReportsComponent = (props) => {
       return await webapi.fetchMetricProfiles();
     },
     {
-      enabled: userDetails
+      enabled: !!userDetails
     }
   );
 
@@ -609,7 +611,7 @@ export const ReportsComponent = (props) => {
       return await webapi.fetchAggregationProfiles();
     },
     {
-      enabled: userDetails
+      enabled: !!userDetails
     }
   );
 
@@ -618,7 +620,7 @@ export const ReportsComponent = (props) => {
       return await webapi.fetchOperationsProfiles();
     },
     {
-      enabled: userDetails
+      enabled: !!userDetails
     }
   );
 
@@ -653,7 +655,7 @@ export const ReportsComponent = (props) => {
         return new Array()
     },
     {
-      enabled: report
+      enabled: !!report
     }
   );
 
@@ -688,7 +690,7 @@ export const ReportsComponent = (props) => {
         return new Object()
     },
     {
-      enabled: report
+      enabled: !!report
     }
   );
 

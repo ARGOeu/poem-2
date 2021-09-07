@@ -5,7 +5,7 @@ import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { ProbeComponent, ProbeList, ProbeVersionDetails } from '../Probes';
 import { Backend } from '../DataManager';
-import { queryCache } from 'react-query';
+import { QueryClientProvider, QueryClient } from 'react-query';
 import { NotificationManager } from 'react-notifications';
 
 
@@ -18,10 +18,12 @@ jest.mock('../DataManager', () => {
 const mockChangeObject = jest.fn();
 const mockAddObject = jest.fn();
 
+const queryClient = new QueryClient();
+
 
 beforeEach(() => {
   jest.clearAllMocks();
-  queryCache.clear();
+  queryClient.clear();
 })
 
 
@@ -153,22 +155,26 @@ function renderListView(publicView=false) {
   if (publicView)
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            render={ props => <ProbeList {...props} publicView={true} /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              render={ props => <ProbeList {...props} publicView={true} /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 
   else
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            render={ props => <ProbeList {...props} /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              render={ props => <ProbeList {...props} /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 }
@@ -181,23 +187,27 @@ function renderChangeView(publicView=false) {
   if (publicView)
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            path='/ui/public_probes/:name'
-            render={ props => <ProbeComponent {...props} publicView={true} /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/public_probes/:name'
+              render={ props => <ProbeComponent {...props} publicView={true} /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
   else
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            path='/ui/probes/:name'
-            render = { props => <ProbeComponent {...props} /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/probes/:name'
+              render = { props => <ProbeComponent {...props} /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 }
@@ -209,12 +219,14 @@ function renderAddView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/probes/add'
-          render = { props => <ProbeComponent {...props} addview={true} /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/probes/add'
+            render = { props => <ProbeComponent {...props} addview={true} /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -226,12 +238,14 @@ function renderCloneView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/probes/:name/clone'
-          render = { props => <ProbeComponent {...props} cloneview={true} /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/probes/:name/clone'
+            render = { props => <ProbeComponent {...props} cloneview={true} /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -244,23 +258,27 @@ function renderVersionDetailsView(publicView=false) {
   if (publicView)
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            path='/ui/public_probes/:name/history/:version'
-            render={ props => <ProbeVersionDetails {...props} publicView={true} /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/public_probes/:name/history/:version'
+              render={ props => <ProbeVersionDetails {...props} publicView={true} /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
   else
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            path='/ui/probes/:name/history/:version'
-            render = { props => <ProbeVersionDetails {...props} /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/probes/:name/history/:version'
+              render = { props => <ProbeVersionDetails {...props} /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 }
@@ -1526,5 +1544,4 @@ describe('Test probe version details view', () => {
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
   })
-
 })

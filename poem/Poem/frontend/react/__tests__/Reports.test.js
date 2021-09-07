@@ -5,7 +5,7 @@ import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { Backend, WebApi } from '../DataManager';
 import { ReportsList, ReportsChange, ReportsAdd } from '../Reports';
-import { queryCache } from 'react-query';
+import { QueryClient, QueryClientProvider } from 'react-query';
 import { NotificationManager } from 'react-notifications';
 import selectEvent from 'react-select-event';
 
@@ -26,10 +26,12 @@ const mockDeleteReport = jest.fn();
 const mockAddObject = jest.fn();
 const mockAddReport = jest.fn();
 
+const queryClient = new QueryClient();
+
 
 beforeEach(() => {
   jest.clearAllMocks();
-  queryCache.clear();
+  queryClient.clear();
 })
 
 
@@ -493,16 +495,18 @@ function renderListView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/reports'
-          render={ props => <ReportsList
-            {...props}
-            webapitoken='token'
-            webapireports={webapireports}
-          /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/reports'
+            render={ props => <ReportsList
+              {...props}
+              webapitoken='token'
+              webapireports={webapireports}
+            /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -514,19 +518,21 @@ function renderChangeView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/reports/:name'
-          render={ props => <ReportsChange
-            {...props}
-            webapitoken='token'
-            webapireports={webapireports}
-            webapimetric='https://mock.metric.com'
-            webapiaggregation='https://mock.aggr.com'
-            webapioperations='https://mock.operations.com'
-          /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/reports/:name'
+            render={ props => <ReportsChange
+              {...props}
+              webapitoken='token'
+              webapireports={webapireports}
+              webapimetric='https://mock.metric.com'
+              webapiaggregation='https://mock.aggr.com'
+              webapioperations='https://mock.operations.com'
+            /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -538,20 +544,22 @@ function renderAddView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/reports/add'
-          usergroups={['TEST', 'ARGO']}
-          render={ props => <ReportsAdd
-            {...props}
-            webapitoken='token'
-            webapireports={webapireports}
-            webapimetric='https://mock.metric.com'
-            webapiaggregation='https://mock.aggr.com'
-            webapioperations='https://mock.operations.com'
-          /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/reports/add'
+            usergroups={['TEST', 'ARGO']}
+            render={ props => <ReportsAdd
+              {...props}
+              webapitoken='token'
+              webapireports={webapireports}
+              webapimetric='https://mock.metric.com'
+              webapiaggregation='https://mock.aggr.com'
+              webapioperations='https://mock.operations.com'
+            /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -589,6 +597,7 @@ describe('Tests for reports listview', () => {
     expect(screen.getByRole('button', { name: /add/i }).closest('a')).toHaveAttribute('href', '/ui/reports/add');
   })
 })
+
 
 describe('Tests for reports changeview', () => {
   jest.spyOn(NotificationManager, 'success');

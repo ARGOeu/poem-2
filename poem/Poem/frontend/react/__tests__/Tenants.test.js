@@ -6,6 +6,7 @@ import { Route, Router } from 'react-router-dom';
 import { TenantChange, TenantList } from '../Tenants';
 import { Backend } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
+import { QueryClient, QueryClientProvider } from 'react-query';
 
 
 jest.mock('../DataManager', () => {
@@ -15,6 +16,8 @@ jest.mock('../DataManager', () => {
 })
 
 const mockDeleteObject = jest.fn();
+
+const queryClient = new QueryClient();
 
 
 beforeEach(() => {
@@ -56,9 +59,11 @@ function renderTenantList() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route path='/ui/tenants' component={TenantList} />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route path='/ui/tenants' component={TenantList} />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -70,12 +75,14 @@ function renderTenantChangeView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/tenants/:name'
-          render={ props => <TenantChange {...props} /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/tenants/:name'
+            render={ props => <TenantChange {...props} /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }

@@ -4,7 +4,7 @@ import '@testing-library/jest-dom/extend-expect';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { Backend, WebApi } from '../DataManager';
-import { queryCache } from 'react-query';
+import { QueryClient, QueryClientProvider } from 'react-query';
 import {
   MetricProfilesChange,
   MetricProfilesList,
@@ -30,9 +30,12 @@ const mockAddObject = jest.fn();
 const mockAddMetricProfile = jest.fn();
 
 
+const queryClient = new QueryClient();
+
+
 beforeEach(() => {
   jest.clearAllMocks();
-  queryCache.clear();
+  queryClient.clear();
 })
 
 
@@ -222,21 +225,25 @@ function renderListView(publicView=false) {
   if (publicView)
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            path='/ui/public_metricprofiles'
-            render={ props => <MetricProfilesList publicView={true} {...props} /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/public_metricprofiles'
+              render={ props => <MetricProfilesList publicView={true} {...props} /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 
   else
     return {
       ...render(
-        <Router history={history}>
-          <Route path='/ui/metricprofiles' component={MetricProfilesList} />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route path='/ui/metricprofiles' component={MetricProfilesList} />
+          </Router>
+        </QueryClientProvider>
       )
     }
 }
@@ -249,35 +256,39 @@ function renderChangeView(publicView=false) {
   if (publicView)
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            path='/ui/public_metricprofiles/:name'
-            render={ props => <MetricProfilesChange
-              {...props}
-              webapimetric='https://mock.metrics.com'
-              webapitoken='token'
-              tenantname='TENANT'
-              publicView={true}
-            /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/public_metricprofiles/:name'
+              render={ props => <MetricProfilesChange
+                {...props}
+                webapimetric='https://mock.metrics.com'
+                webapitoken='token'
+                tenantname='TENANT'
+                publicView={true}
+              /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 
   else
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            path='/ui/metricprofiles/:name'
-            render={props => <MetricProfilesChange
-              {...props}
-              webapimetric='https://mock.metrics.com'
-              webapitoken='token'
-              tenantname='TENANT'
-            /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/metricprofiles/:name'
+              render={props => <MetricProfilesChange
+                {...props}
+                webapimetric='https://mock.metrics.com'
+                webapitoken='token'
+                tenantname='TENANT'
+              /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 }
@@ -289,18 +300,20 @@ function renderAddView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/metricprofiles/add'
-          render={props => <MetricProfilesChange
-            {...props}
-            webapimetric='https://mock.metrics.com'
-            webapitoken='token'
-            tenantname='TENANT'
-            addview={true}
-          /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/metricprofiles/add'
+            render={props => <MetricProfilesChange
+              {...props}
+              webapimetric='https://mock.metrics.com'
+              webapitoken='token'
+              tenantname='TENANT'
+              addview={true}
+            /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -312,17 +325,19 @@ function renderCloneView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path="/ui/metricprofiles/:name/clone"
-          render={props => <MetricProfilesClone
-            {...props}
-            webapimetric='https://mock.metrics.com'
-            webapitoken='token'
-            tenantname='TENANT'
-          /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path="/ui/metricprofiles/:name/clone"
+            render={props => <MetricProfilesClone
+              {...props}
+              webapimetric='https://mock.metrics.com'
+              webapitoken='token'
+              tenantname='TENANT'
+            /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -334,12 +349,14 @@ function renderVersionDetailsView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/metricprofiles/:name/history/:version'
-          render={ props => <MetricProfileVersionDetails {...props} /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/metricprofiles/:name/history/:version'
+            render={ props => <MetricProfileVersionDetails {...props} /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }

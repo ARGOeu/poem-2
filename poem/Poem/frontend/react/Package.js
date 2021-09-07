@@ -26,7 +26,7 @@ import {
   Alert
 } from 'reactstrap';
 import { Formik, Form, Field } from 'formik';
-import { queryCache, useQuery } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
 
 
 const packageValidate = (values) => {
@@ -160,6 +160,8 @@ export const PackageComponent = (props) => {
 
   const backend = new Backend();
 
+  const queryClient = useQueryClient();
+
   const { data: pkg, error: errorPkg, isLoading: loadingPkg } = useQuery(
     `${querykey}`, async () => {
       let pkg = await backend.fetchData(`/api/v2/internal/packages/${nameversion}`);
@@ -206,7 +208,7 @@ export const PackageComponent = (props) => {
 
       return pkg_versions;
     },
-    { enabled: pkg}
+    { enabled: !!pkg}
   );
 
   const [disabledButton, setDisabledButton] = useState(true);
@@ -249,7 +251,7 @@ export const PackageComponent = (props) => {
           repo_7: repo7
         };
 
-        queryCache.setQueryData(`${querykey}`, () => updated_pkg);
+        queryClient.setQueryData(`${querykey}`, () => updated_pkg);
         setDisabledButton(value === initial_version);
       }
     });

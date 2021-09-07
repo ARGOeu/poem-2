@@ -6,7 +6,7 @@ import { Route, Router } from 'react-router-dom';
 import { ListOfMetrics } from '../Metrics';
 import { Backend } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
-import { queryCache } from 'react-query'
+import { QueryClientProvider, QueryClient } from 'react-query'
 import { MetricTemplateComponent, MetricTemplateVersionDetails } from '../MetricTemplates';
 import selectEvent from 'react-select-event';
 
@@ -24,10 +24,12 @@ const mockImportMetrics = jest.fn();
 const mockChangeObject = jest.fn();
 const mockAddObject = jest.fn();
 
+const queryClient = new QueryClient();
+
 
 beforeEach(() => {
   jest.clearAllMocks();
-  queryCache.clear();
+  queryClient.clear();
 })
 
 
@@ -555,21 +557,25 @@ function renderListView(publicView=undefined) {
   if (publicView)
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            render={props => <ListOfMetrics {...props} type='metrictemplates' publicView={true} />}
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              render={props => <ListOfMetrics {...props} type='metrictemplates' publicView={true} />}
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
   else
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            render = { props => <ListOfMetrics {...props} type='metrictemplates' /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              render = { props => <ListOfMetrics {...props} type='metrictemplates' /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 }
@@ -580,11 +586,13 @@ function renderTenantListView() {
 
   return {
     ...render(
-      <Router history={history} >
-        <Route
-          render={props => <ListOfMetrics {...props} type='metrictemplates' />}
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history} >
+          <Route
+            render={props => <ListOfMetrics {...props} type='metrictemplates' />}
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -599,24 +607,28 @@ function renderChangeView(options = {}) {
   if (publicView)
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            path='/ui/public_metrictemplates/:name'
-            render={ props => <MetricTemplateComponent {...props} publicView={true} /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/public_metrictemplates/:name'
+              render={ props => <MetricTemplateComponent {...props} publicView={true} /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 
   else
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            path='/ui/metrictemplates/:name'
-            render={ props => <MetricTemplateComponent {...props} /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/metrictemplates/:name'
+              render={ props => <MetricTemplateComponent {...props} /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 }
@@ -628,12 +640,14 @@ function renderAddView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/metrictemplates/add'
-          render = { props => <MetricTemplateComponent {...props} addview={true} /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/metrictemplates/add'
+            render = { props => <MetricTemplateComponent {...props} addview={true} /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -645,12 +659,14 @@ function renderCloneView(options = {passive: false}) {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/metrictemplates/:name/clone'
-          render={ props => <MetricTemplateComponent {...props} cloneview={true} /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/metrictemplates/:name/clone'
+            render={ props => <MetricTemplateComponent {...props} cloneview={true} /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -662,12 +678,14 @@ function renderTenantChangeView(options = { passive: false }) {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/administration/metrictemplates/:name'
-          render={ props => <MetricTemplateComponent {...props} tenantview={true} /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/administration/metrictemplates/:name'
+            render={ props => <MetricTemplateComponent {...props} tenantview={true} /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -679,12 +697,14 @@ function renderVersionDetailsView(options = { passive: false }) {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/metrictemplates/:name/history/:version'
-          render={ props => <MetricTemplateVersionDetails {...props} /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/metrictemplates/:name/history/:version'
+            render={ props => <MetricTemplateVersionDetails {...props} /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -1160,6 +1180,7 @@ describe('Test list of metric templates on SuperPOEM if empty list', () => {
   })
 })
 
+
 describe('Test list of metric templates on tenant POEM', () => {
   jest.spyOn(NotificationManager, 'success');
   jest.spyOn(NotificationManager, 'error');
@@ -1611,6 +1632,7 @@ describe('Test list of metric templates on tenant POEM', () => {
     expect(screen.getByTestId('checkbox-argo.POEM-API-MON').checked).toBeTruthy();
   })
 })
+
 
 describe('Test metric template changeview on SuperPOEM', () => {
   jest.spyOn(NotificationManager, 'success');
@@ -3718,6 +3740,7 @@ describe('Test metric template detail view on tenant POEM', () => {
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
   })
 })
+
 
 describe('Test metric template version detail view', () => {
   beforeAll(() => {
