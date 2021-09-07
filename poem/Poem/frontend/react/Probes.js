@@ -25,7 +25,8 @@ import {
   InputGroupAddon } from 'reactstrap';
 import { Formik, Form, Field, useFormikContext, useField } from 'formik';
 import * as Yup from 'yup';
-import { useQuery } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
+import { fetchPackages } from './QueryFunctions';
 
 
 const ProbeSchema = Yup.object().shape({
@@ -299,12 +300,27 @@ const ProbeForm = ({
   </>
 
 
+const fetchProbe = async (publicView, name) => {
+  const backend = new Backend();
+
+  return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}probes/${name}`);
+}
+
+
+const fetchMetrics = async (publicView, name, version) => {
+  const backend = new Backend();
+
+  return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metricsforprobes/${name}(${version})`);
+}
+
+
 export const ProbeList = (props) => {
   const location = props.location;
   const publicView = props.publicView;
   const isTenantSchema = props.isTenantSchema;
 
   const backend = new Backend();
+  const queryClient = useQueryClient();
 
   const { data: probes, error, isLoading: loading } = useQuery(
     `${publicView ? 'public_' : ''}probe`, async () => {
@@ -324,7 +340,20 @@ export const ProbeList = (props) => {
       column_width: '20%',
       accessor: 'name',
       Cell: e =>
-        <Link to={`/ui/${publicView ? 'public_' : ''}probes/${e.value}`}>
+        <Link
+          to={`/ui/${publicView ? 'public_' : ''}probes/${e.value}`}
+          onMouseEnter={ async () => {
+            await queryClient.prefetchQuery(
+              [`${publicView ? 'public_' : ''}probe`, e.value], () => fetchProbe(publicView, e.value)
+            );
+            await queryClient.prefetchQuery(
+              [`${publicView ? 'public_' : ''}probe`, 'metrics', e.value], () => fetchMetrics(publicView, e.value, e.original.version)
+            );
+            await queryClient.prefetchQuery(
+              `${publicView ? 'public_' : ''}package`, () => fetchPackages(publicView)
+            )
+          } }
+        >
           {e.value}
         </Link>,
       Filter: DefaultColumnFilter
@@ -353,7 +382,7 @@ export const ProbeList = (props) => {
       accessor: 'description',
       Filter: DefaultColumnFilter
     }
-  ], [publicView]);
+  ], [publicView, queryClient]);
 
   if (loading)
     return (<LoadingAnim/>);
@@ -390,12 +419,10 @@ export const ProbeComponent = (props) => {
   const location = props.location;
   const history = props.history;
   const publicView = props.publicView;
-  const backend = new Backend();
-  const querykey = `probe_${addview ? `addview` : `${name}_${cloneview ? 'cloneview' : `${publicView ? 'publicview' : 'changeview'}`}`}`;
+  const isTenantSchema = props.isTenantSchema;
 
-  const apiListPackages = `/api/v2/internal/${publicView ? 'public_' : ''}packages`;
-  const apiProbeName = `/api/v2/internal/${publicView ? 'public_' : ''}probes`;
-  const apiMetricsForProbes = `/api/v2/internal/${publicView ? 'public_' : ''}metricsforprobes`;
+  const backend = new Backend();
+  const queryClient = useQueryClient();
 
   const [areYouSureModal, setAreYouSureModal] = useState(false);
   const [modalFlag, setModalFlag] = useState(undefined);
@@ -404,37 +431,22 @@ export const ProbeComponent = (props) => {
   const [formValues, setFormValues] = useState(undefined);
 
   const { data: probe, error: probeError, isLoading: probeLoading } = useQuery(
-    `${querykey}_probe`, async () => {
-      if (!addview) {
-        let prb = await backend.fetchData(`${apiProbeName}/${name}`);
-        return prb;
+    [`${publicView ? 'public_' : ''}probe`, name], () => fetchProbe(publicView, name),
+    {
+      enabled: !addview,
+      initialData: () => {
+        return queryClient.getQueryData(`${publicView ? 'public_' : ''}probe`)?.find(prb => prb.name === name)
       }
-    },
-    {enabled: !addview}
-  );
-
-  const { data: isTenantSchema, isLoading: isTenantSchemaLoading } = useQuery(
-    `${querykey}_schema`, async () => {
-      let schema = await backend.isTenantSchema();
-      return schema;
     }
   );
 
-  const { data: metricTemplateList, error: metricTemplateListError, isLoading: metricTemplateListLoading } = useQuery(
-    `${querykey}_metrictemplates`, async () => {
-      let metrics = await backend.fetchData(`${apiMetricsForProbes}/${probe.name}(${probe.version})`);
-      return metrics;
-    },
+  const { data: metricTemplates, error: metricTemplatesError, isLoading: metricTemplatesLoading } = useQuery(
+    [`${publicView ? 'public_' : ''}probe`, 'metrics', name], () => fetchMetrics(publicView, probe.name, probe.version),
     { enabled: !!probe }
   );
 
-  const { data: listPackages, error: listPackagesError, isLoading: listPackagesLoading } = useQuery(
-    `${querykey}_packages`, async () => {
-      let pkgs = await backend.fetchData(apiListPackages);
-      let list_packages = [];
-      pkgs.forEach(pkg => list_packages.push(`${pkg.name} (${pkg.version})`));
-      return list_packages;
-    }
+  const { data: packages, error: packagesError, isLoading: packagesLoading } = useQuery(
+    `${publicView ? 'public_' : ''}package`, () => fetchPackages(publicView)
   );
 
   function toggleAreYouSure() {
@@ -551,19 +563,21 @@ export const ProbeComponent = (props) => {
     }
   }
 
-  if (probeLoading || isTenantSchemaLoading || metricTemplateListLoading || listPackagesLoading)
+  if (probeLoading || metricTemplatesLoading || packagesLoading)
     return(<LoadingAnim/>)
 
   else if (probeError)
     return (<ErrorComponent error={probeError.message}/>);
 
-  else if (metricTemplateListError)
-    return (<ErrorComponent error={metricTemplateListError.message}/>);
+  else if (metricTemplatesError)
+    return (<ErrorComponent error={metricTemplatesError.message}/>);
 
-  else if (listPackagesError)
-    return (<ErrorComponent error={listPackagesError}/>);
+  else if (packagesError)
+    return (<ErrorComponent error={packagesError.error}/>);
 
   else {
+    var listPackages = [];
+    packages.forEach(pkg => listPackages.push(`${pkg.name} (${pkg.version})`))
     if (!isTenantSchema) {
       return (
         <BaseArgoView
@@ -612,7 +626,7 @@ export const ProbeComponent = (props) => {
                   cloneview={cloneview}
                   publicView={publicView}
                   list_packages={listPackages}
-                  metrictemplatelist={metricTemplateList}
+                  metrictemplatelist={metricTemplates}
                 />
                 {
                   !publicView &&
@@ -672,7 +686,7 @@ export const ProbeComponent = (props) => {
                 {...props}
                 isTenantSchema={true}
                 publicView={publicView}
-                metrictemplatelist={metricTemplateList}
+                metrictemplatelist={metricTemplates}
               />
             )}
           </Formik>

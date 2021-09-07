@@ -132,7 +132,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         probeview={true}
       />}
     />
-    <Route exact path="/ui/probes/:name" render={props => <ProbeComponent {...props}/>}/>
+    <Route exact path="/ui/probes/:name" render={props => <ProbeComponent {...props} isTenantSchema={true} />}/>
     <Route exact path="/ui/metrics" render={props => <ListOfMetrics {...props} type='metrics'/>} />
     <Route exact path="/ui/metrics/:name/history" render={props => <HistoryComponent {...props} object='metric'/>}/>
     <Route exact path="/ui/metrics/:name/history/compare/:id1/:id2" render={props => <CompareMetrics {...props} type='metric'/>}/>
@@ -669,7 +669,7 @@ const App = () => {
                 exact path="/ui/public_probes/:name"
                 render={props =>
                   <PublicPage tenantName={tenantName}>
-                    <ProbeComponent publicView={true} {...props}/>
+                    <ProbeComponent publicView={true} isTenantSchema={true} {...props}/>
                   </PublicPage>
                 }
               />

@@ -39,9 +39,9 @@ export const fetchAllMetrics = async (publicView) => {
 };
 
 
-export const fetchPackages = async () => {
+export const fetchPackages = async (publicView=false) => {
   const backend = new Backend();
-  return await backend.fetchData('/api/v2/internal/packages')
+  return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}packages`)
 }
 
 
