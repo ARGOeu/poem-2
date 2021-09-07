@@ -776,31 +776,9 @@ export const ProbeVersionDetails = (props) => {
   const version = props.match.params.version;
   const publicView = props.publicView;
 
-  const apiUrl = `/api/v2/internal/${publicView ? 'public_' : ''}version/probe`;
-
-  const [probe, setProbe] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const backend = new Backend();
-    setLoading(true);
-
-    async function fetchProbeVersion() {
-      try {
-        let json = await backend.fetchData(`${apiUrl}/${name}`);
-        json.forEach((e) => {
-          if (e.version === version)
-            setProbe(e.fields);
-        });
-      } catch(err) {
-        setError(err);
-      }
-      setLoading(false);
-    }
-
-    fetchProbeVersion();
-  }, [apiUrl, name, version]);
+  const { data: versions, error, isLoading: loading } = useQuery(
+    [`${publicView ? 'public_' : ''}version`, 'probe', name], () => fetchProbeVersion(publicView, name)
+  )
 
   if (loading)
     return (<LoadingAnim/>);
@@ -808,7 +786,13 @@ export const ProbeVersionDetails = (props) => {
   else if (error)
     return (<ErrorComponent error={error}/>);
 
-  else if (!loading && name) {
+  else if (versions) {
+    var probe = undefined;
+    versions.forEach(ver => {
+      if (ver.version === version)
+        probe = ver.fields;
+    })
+
     return (
       <BaseArgoView
         resourcename={`${name} (${version})`}
