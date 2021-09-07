@@ -26,7 +26,7 @@ import {
 import { Formik, Form, Field, useFormikContext, useField } from 'formik';
 import * as Yup from 'yup';
 import { useQuery, useQueryClient } from 'react-query';
-import { fetchPackages } from './QueryFunctions';
+import { fetchPackages, fetchProbeVersion } from './QueryFunctions';
 
 
 const ProbeSchema = Yup.object().shape({
@@ -703,34 +703,9 @@ export const ProbeVersionCompare = (props) => {
   const name = props.match.params.name;
   const publicView = props.publicView;
 
-  const [loading, setLoading] = useState(false);
-  const [probe1, setProbe1] = useState({});
-  const [probe2, setProbe2] = useState({});
-  const [error, setError] = useState(null);
-
-
-  useEffect(() => {
-    const backend = new Backend();
-    setLoading(true);
-
-    async function fetchVersions() {
-      try {
-        let json = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}version/probe/${name}`);
-
-        json.forEach((e) => {
-          if (e.version == version1)
-            setProbe1(e.fields);
-          else if (e.version === version2)
-            setProbe2(e.fields);
-        });
-      } catch(err) {
-        setError(err);
-      }
-      setLoading(false);
-    }
-
-    fetchVersions();
-  }, [name, publicView, version1, version2]);
+  const { data: versions, error, isLoading: loading } = useQuery(
+    [`${publicView ? 'public_' : ''}version`, 'probe', name], () => fetchProbeVersion(publicView, name)
+  )
 
   if (loading)
     return (<LoadingAnim/>);
@@ -738,7 +713,18 @@ export const ProbeVersionCompare = (props) => {
   else if (error)
     return (<ErrorComponent error={error}/>);
 
-  else if (!loading && probe1 && probe2) {
+  else if (versions) {
+    var probe1 = undefined;
+    var probe2 = undefined;
+
+    versions.forEach(ver => {
+      if (ver.version == version1)
+        probe1 = ver.fields;
+
+      if (ver.version == version2)
+        probe2 = ver.fields;
+    })
+
     return (
       <React.Fragment>
         <div className="d-flex align-items-center justify-content-between">

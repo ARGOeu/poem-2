@@ -54,3 +54,9 @@ export const fetchProbeVersions = async () => {
 export const fetchOperationsProfiles = async (webapi) => {
   return await webapi.fetchOperationsProfiles();
 }
+
+
+export const fetchProbeVersion = async (publicView, name) => {
+  const backend = new Backend();
+  return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}version/probe/${name}`);
+}
