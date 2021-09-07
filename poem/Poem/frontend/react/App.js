@@ -119,7 +119,9 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
   <Switch>
     <Route exact path="/ui/login" render={props => <RedirectAfterLogin isSuperUser={isSuperUser} {...props}/>}/>
     <Route exact path="/ui/home" component={Home} />
-    <Route exact path="/ui/probes" component={ProbeList} />
+    <Route exact path="/ui/probes"
+      render={ props => <ProbeList {...props} isTenantSchema={true} /> }
+    />
     <Route exact path="/ui/probes/:name/history" render={props => <HistoryComponent object='probe' {...props}/>}/>
     <Route exact path="/ui/probes/:name/history/compare/:id1/:id2" render={props => <ProbeVersionCompare {...props}/>}/>
     <Route exact path="/ui/probes/:name/history/:version" render={props => <ProbeVersionDetails {...props}/>}/>
@@ -659,7 +661,7 @@ const App = () => {
                 exact path="/ui/public_probes"
                 render={props =>
                   <PublicPage tenantName={tenantName}>
-                    <ProbeList publicView={true} {...props} />
+                    <ProbeList publicView={true} isTenantSchema={true} {...props} />
                   </PublicPage>
                 }
               />

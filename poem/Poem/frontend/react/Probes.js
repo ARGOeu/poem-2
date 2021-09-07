@@ -302,20 +302,14 @@ const ProbeForm = ({
 export const ProbeList = (props) => {
   const location = props.location;
   const publicView = props.publicView;
+  const isTenantSchema = props.isTenantSchema;
 
   const backend = new Backend();
 
-  const { data: listProbes, error: listProbesError, isLoading: listProbesLoading } = useQuery(
-    'probe_listview', async () => {
+  const { data: probes, error, isLoading: loading } = useQuery(
+    `${publicView ? 'public_' : ''}probe`, async () => {
       let probes = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}probes`);
       return probes;
-    }
-  );
-
-  const { data: isTenantSchema, isLoading: isTenantSchemaLoading } = useQuery(
-    'probe_listview_schema', async () => {
-      let schema = backend.isTenantSchema();
-      return schema;
     }
   );
 
@@ -361,13 +355,13 @@ export const ProbeList = (props) => {
     }
   ], [publicView]);
 
-  if (listProbesLoading || isTenantSchemaLoading)
+  if (loading)
     return (<LoadingAnim/>);
 
-  else if (listProbesError)
-    return (<ErrorComponent error={listProbesError.message}/>);
+  else if (error)
+    return (<ErrorComponent error={error.message}/>);
 
-  else if (!listProbesLoading && !isTenantSchemaLoading && listProbes) {
+  else if (!loading && probes) {
     return (
       <BaseArgoView
         resourcename='probe'
@@ -376,7 +370,7 @@ export const ProbeList = (props) => {
         addnew={!isTenantSchema && !publicView}
       >
         <BaseArgoTable
-          data={listProbes}
+          data={probes}
           columns={columns}
           page_size={50}
           resourcename='probes'
