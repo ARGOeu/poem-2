@@ -704,7 +704,7 @@ export const ProbeVersionCompare = (props) => {
   const publicView = props.publicView;
 
   const { data: versions, error, isLoading: loading } = useQuery(
-    [`${publicView ? 'public_' : ''}version`, 'probe', name], () => fetchProbeVersion(publicView, name)
+    [`${publicView ? 'public_' : ''}probe`, 'version', name], () => fetchProbeVersion(publicView, name)
   )
 
   if (loading)
@@ -777,7 +777,7 @@ export const ProbeVersionDetails = (props) => {
   const publicView = props.publicView;
 
   const { data: versions, error, isLoading: loading } = useQuery(
-    [`${publicView ? 'public_' : ''}version`, 'probe', name], () => fetchProbeVersion(publicView, name)
+    [`${publicView ? 'public_' : ''}probe`, 'version', name], () => fetchProbeVersion(publicView, name)
   )
 
   if (loading)

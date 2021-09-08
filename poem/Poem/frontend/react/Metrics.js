@@ -1212,7 +1212,7 @@ export const MetricChange = (props) => {
   const metricProbeVersion = metric?.probeversion.split(' ')[0];
 
   const { data: probes, error: probesError, isLoading: probesLoading } = useQuery(
-    [`${publicView ? 'public_' : ''}version`, 'probe', metricProbeVersion],
+    [`${publicView ? 'public_' : ''}probe`, 'version', metricProbeVersion],
     () => fetchProbeVersion(publicView, metricProbeVersion),
     { enabled: !!metricProbeVersion }
   );
@@ -1428,7 +1428,7 @@ export const MetricVersionDetails = (props) => {
   const metricProbeVersion = metrics?.find(met => met.version === version).fields.probeversion.split(' ')[0];
 
   const { data: probes, error: errorProbes, isLoading: loadingProbes } = useQuery(
-    ['version', 'probe', metricProbeVersion], () => fetchProbeVersion(false, metricProbeVersion),
+    ['probe', 'version', metricProbeVersion], () => fetchProbeVersion(false, metricProbeVersion),
     { enabled: !!metricProbeVersion }
   )
 

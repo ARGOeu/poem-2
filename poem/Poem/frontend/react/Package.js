@@ -180,7 +180,7 @@ export const PackageComponent = (props) => {
   );
 
   const { data: probes, error: errorProbes, status: statusProbes } = useQuery(
-    ['version', 'probe'], () => fetchProbeVersions(),
+    ['probe', 'version'], () => fetchProbeVersions(),
     { enabled: !addview}
   );
 
