@@ -45,6 +45,7 @@ import ReactDiffViewer from 'react-diff-viewer';
 
 import "react-notifications/lib/notifications.css";
 import './AggregationProfiles.css';
+import { fetchUserDetails } from './QueryFunctions';
 
 
 const AggregationProfilesChangeContext = React.createContext();
@@ -1167,27 +1168,13 @@ export const AggregationProfilesList = (props) => {
   const backend = new Backend();
   const publicView = props.publicView
 
-  let apiUrl = null;
-  if (publicView)
-    apiUrl = '/api/v2/internal/public_aggregations'
-  else
-    apiUrl = '/api/v2/internal/aggregations'
-
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
-    `session_userdetails`, async () => {
-      const sessionActive = await backend.isActiveSession()
-      if (sessionActive.active) {
-        return sessionActive.userdetails
-      }
-    }
+    'userdetails', () => fetchUserDetails(true)
   );
 
-  const { data: listAggregationProfiles, error: errorListAggregationProfiles,
-    isLoading: loadingListAggregationProfiles} = useQuery(
-    `aggregations_listview`, async () => {
-      const fetched = await backend.fetchData(apiUrl)
-
-      return fetched
+  const { data: aggregations, error: errorAggregations, isLoading: loadingAggregations } = useQuery(
+    `${publicView ? 'public_' : ''}aggregationprofile`, async () => {
+      return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}aggregations`)
     },
     {
       enabled: !publicView ? userDetails ? true : false : true
@@ -1223,18 +1210,18 @@ export const AggregationProfilesList = (props) => {
         </div>,
       column_width: '8%'
     }
-  ])
+  ], [publicView])
 
-  if (loadingUserDetails || loadingListAggregationProfiles)
+  if (loadingUserDetails || loadingAggregations)
     return (<LoadingAnim />)
 
-  else if (errorListAggregationProfiles)
-    return (<ErrorComponent error={errorListAggregationProfiles}/>);
+  else if (errorAggregations)
+    return (<ErrorComponent error={errorAggregations}/>);
 
   else if (errorUserDetails)
     return (<ErrorComponent error={errorUserDetails}/>);
 
-  else if (!loadingUserDetails && !loadingUserDetails && listAggregationProfiles) {
+  else if (!loadingUserDetails && aggregations) {
     return (
       <BaseArgoView
         resourcename='aggregation profile'
@@ -1244,7 +1231,7 @@ export const AggregationProfilesList = (props) => {
         addperm={publicView ? false : userDetails.is_superuser || userDetails.groups.aggregations.length > 0}
         publicview={publicView}>
         <ProfilesListTable
-          data={listAggregationProfiles}
+          data={aggregations}
           columns={columns}
           type='aggregation'
         />
