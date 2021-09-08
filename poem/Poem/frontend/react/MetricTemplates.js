@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { MetricForm} from './Metrics';
 import { Backend } from './DataManager';
 import {
@@ -13,7 +13,7 @@ import { Formik, Form } from 'formik';
 import { Button } from 'reactstrap';
 import * as Yup from 'yup';
 import { useQuery, useQueryClient } from 'react-query';
-import { fetchMetricTags, fetchMetricTemplates, fetchMetricTemplateTypes, fetchProbeVersions } from './QueryFunctions';
+import { fetchMetricTags, fetchMetricTemplates, fetchMetricTemplateTypes, fetchMetricTemplateVersion, fetchProbeVersion, fetchProbeVersions } from './QueryFunctions';
 
 
 const MetricTemplateSchema = Yup.object().shape({
@@ -374,47 +374,39 @@ export const MetricTemplateVersionDetails = (props) => {
   const version = props.match.params.version;
   const publicView = props.publicView;
 
-  const [metricTemplate, setMetricTemplate] = useState(null);
-  const [probe, setProbe] = useState({'package': ''});
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const { data: mts, error: errorMts, isLoading: loadingMts } = useQuery(
+    [`${publicView ? 'public_' : ''}metrictemplate`, 'version', name],
+    () => fetchMetricTemplateVersion(publicView, name)
+  )
 
-  useEffect(() => {
-    const backend = new Backend();
-    setLoading(true);
+  const mtProbe = mts?.find(met => met.version === version).fields.probeversion.split(' ')[0];
 
-    async function fetchData() {
-      try {
-        let json = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}version/metrictemplate/${name}`);
-        json.forEach(async (e) => {
-          if (e.version == version) {
-            let probes = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}version/probe/${e.fields.probeversion.split(' ')[0]}`);
-            probes.forEach(prb => {
-              if (prb.object_repr === e.fields.probeversion)
-                setProbe(prb.fields);
-            });
-            let mt = e.fields;
-            mt.date_created = e.date_created;
-            setMetricTemplate(mt);
-          }
-        });
-      } catch(err) {
-        setError(err);
-      }
+  const { data: probes, error: errorProbes, isLoading: loadingProbes } = useQuery(
+    [`${publicView ? 'public_' : ''}probe`, 'version', mtProbe],
+    () => fetchProbeVersion(publicView, mtProbe),
+    { enabled: !!mtProbe }
+  )
 
-      setLoading(false);
-    }
-
-    fetchData();
-  }, [publicView, name, version]);
-
-  if (loading)
+  if (loadingMts || loadingProbes)
     return (<LoadingAnim/>);
 
-  else if (error)
-    return (<ErrorComponent error={error}/>);
+  else if (errorMts)
+    return (<ErrorComponent error={errorMts}/>);
 
-  else if (!loading && metricTemplate) {
+  else if (errorProbes)
+    return (<ErrorComponent error={errorProbes} />)
+
+  else if (mts) {
+    const mtVer = mts.find(met => met.version == version);
+    const metricTemplate = {
+      ...mtVer.fields,
+      date_created: mtVer.date_created
+    };
+    const probe = probes ?
+      probes.find(prb => prb.object_repr === mtVer.fields.probeversion).fields
+    :
+      { package : '' };
+
     return (
       <BaseArgoView
         resourcename={`${name} ${metricTemplate.probeversion && `[${metricTemplate.probeversion}]`}`}
