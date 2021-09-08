@@ -288,7 +288,7 @@ function renderListView(publicView=false) {
         <QueryClientProvider client={queryClient}>
           <Router history={history}>
             <Route
-              render={props => <ListOfMetrics {...props} type='metrics' publicView={true} />}
+              render={props => <ListOfMetrics {...props} type='metrics' isTenantSchema={true} publicView={true} />}
             />
           </Router>
         </QueryClientProvider>
@@ -299,7 +299,7 @@ function renderListView(publicView=false) {
       ...render(
         <QueryClientProvider client={queryClient}>
           <Router history={history}>
-            <Route render={props => <ListOfMetrics {...props} type='metrics' />} />
+            <Route render={props => <ListOfMetrics {...props} type='metrics' isTenantSchema={true} />} />
           </Router>
         </QueryClientProvider>
       )
@@ -408,7 +408,6 @@ describe('Tests for metrics listview', () => {
           }
         },
         fetchResult: () => Promise.resolve(mockUserGroups),
-        isTenantSchema: () => Promise.resolve(true),
         isActiveSession: () => Promise.resolve(mockActiveSession)
       }
     })

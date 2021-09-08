@@ -1,11 +1,15 @@
 import { Backend } from "./DataManager";
 
-export const fetchUserGroups = async (isTenantSchema) => {
+export const fetchUserGroups = async (isTenantSchema, publicView=false, group=undefined) => {
   const backend = new Backend();
   if (isTenantSchema) {
-    let allgroups = await backend.fetchResult('/api/v2/internal/usergroups');
+    let allgroups = await backend.fetchResult(`/api/v2/internal/${publicView ? 'public_' : ''}usergroups`);
 
-    return allgroups;
+    if (group)
+      return allgroups[group];
+
+    else
+      return allgroups;
   }
 }
 
@@ -16,9 +20,9 @@ export const fetchYumRepos = async () => {
 }
 
 
-export const fetchOStags = async () => {
+export const fetchOStags = async (publicView=false) => {
   const backend = new Backend();
-  return await backend.fetchData('/api/v2/internal/ostags');
+  return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}ostags`);
 }
 
 
@@ -59,4 +63,25 @@ export const fetchOperationsProfiles = async (webapi) => {
 export const fetchProbeVersion = async (publicView, name) => {
   const backend = new Backend();
   return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}version/probe/${name}`);
+}
+
+
+export const fetchMetricTemplates = async (publicView) => {
+  const backend = new Backend();
+
+  return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metrictemplates`);
+}
+
+
+export const fetchMetricTemplateTypes = async (publicView) => {
+  const backend = new Backend();
+
+  return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}mttypes`);
+}
+
+
+export const fetchMetricTags = async (publicView) => {
+  const backend = new Backend();
+
+  return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metrictags`);
 }

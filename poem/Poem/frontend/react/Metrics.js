@@ -41,6 +41,7 @@ import ReactDiffViewer from 'react-diff-viewer';
 import CreatableSelect from 'react-select/creatable';
 import { components } from 'react-select';
 import { useQuery, useQueryClient } from 'react-query';
+import { fetchMetricTags, fetchMetricTemplates, fetchMetricTemplateTypes, fetchOStags, fetchUserDetails, fetchUserGroups } from './QueryFunctions';
 
 
 function validateConfig(value) {
@@ -293,11 +294,25 @@ export const ProbeVersionLink = ({probeversion, publicView=false}) => (
 )
 
 
+const fetchMetrics = async (publicView) => {
+  const backend = new Backend();
+
+  return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metric`);
+}
+
+
+const fetchMetricTypes = async (publicView) => {
+  const backend = new Backend();
+
+  return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}mtypes`);
+}
+
+
 export const ListOfMetrics = (props) => {
   const location = props.location;
   const type = props.type;
   const publicView = props.publicView;
-  const queryKey = `${type}_${publicView ? 'public_' : ''}_listview`;
+  const isTenantSchema = props.isTenantSchema;
 
   const [selected, setSelected] = useState({});
   const [selectAll, setSelectAll] = useState(0);
@@ -312,59 +327,28 @@ export const ListOfMetrics = (props) => {
   const queryClient = useQueryClient();
 
   const { data: userDetails, error: userDetailsError, isLoading: userDetailsLoading } = useQuery(
-    `${queryKey}_userdetails`, async () => {
-      let userdetails = { username: 'Anonymous' };
-      let schema = backend.isTenantSchema();
-      if (!publicView) {
-        let sessionActive = await backend.isActiveSession(schema);
-        if (sessionActive.active)
-          userdetails = sessionActive.userdetails;
-      }
-      return userdetails;
-    }
+    'userdetails', () => fetchUserDetails(isTenantSchema),
+    { enabled: !publicView }
   );
 
-  const { data: listMetrics, error: listMetricsError, isLoading: listMetricsLoading } = useQuery(
-    `${queryKey}`, async () => {
-      let metrics =await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}${type === 'metrics' ? 'metric' : type}`);
-      return metrics;
-    },
-    {
-      enabled: userDetails ? true : false
-    }
+  const { data: metrics, error: metricsError, isLoading: metricsLoading } = useQuery(
+    `${publicView ? 'public_' : ''}${type === 'metrics' ? 'metric' : 'metrictemplate'}`,
+    () => type === 'metrics' ? fetchMetrics(publicView) : fetchMetricTemplates(publicView),
+    { enabled: publicView || !!userDetails }
   );
 
-  const { data: listTypes, error: listTypesError, isLoading: listTypesLoading } = useQuery(
-    `${queryKey}_mtypes`, async () => {
-      let types = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}mt${type=='metrictemplates' ? 't' : ''}ypes`);
-      return types;
-    },
+  const { data: types, error: typesError, isLoading: typesLoading } = useQuery(
+    `${publicView ? 'public_' : ''}${type}types`,
+    () => type === 'metrics' ? fetchMetricTypes(publicView) : fetchMetricTemplateTypes(publicView)
   );
 
-  const { data: listTags, error: listTagsError, isLoading: listTagsLoading } = useQuery(
-    `${queryKey}_tags`, async () => {
-      let tags = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metrictags`);
-      return tags;
-    }
+  const { data: tags, error: tagsError, isLoading: tagsLoading } = useQuery(
+    `${publicView ? 'public_' : ''}metrictags`, () => fetchMetricTags(publicView)
   );
 
-  const { data: listOSGroups, error: listOSGroupsError, isLoading: listOSGroupsLoading } = useQuery(
-    `${queryKey}_osgroups`, async () => {
-      if (type === 'metrics') {
-        let groups = await backend.fetchResult(`/api/v2/internal/${publicView ? 'public_' : ''}usergroups`);
-        return groups['metrics'];
-      } else {
-        let ostags = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}ostags`);
-        return ostags;
-      }
-    }
-  );
-
-  const { data: isTenantSchema, isLoading: isTenantSchemaLoading } = useQuery(
-    `${queryKey}_schema`, async () => {
-      let schema = backend.isTenantSchema();
-      return schema;
-    }
+  var { data: OSGroups, error: OSGroupsError, isLoading: OSGroupsLoading } = useQuery(
+    `${publicView ? 'public_' : ''}${type === 'metrics' ? 'usergroups' : 'ostags'}`,
+    () =>  type === 'metrics' ? fetchUserGroups(isTenantSchema, publicView, 'metrics') : fetchOStags(publicView)
   );
 
   function toggleAreYouSure() {
@@ -430,7 +414,7 @@ export const ListOfMetrics = (props) => {
       if ('warning' in json)
         NotifyWarn({msg: json.warning, title: 'Deleted'});
 
-      queryClient.invalidateQueries(queryKey);
+      queryClient.invalidateQueries('metrictemplate');
       setSelectAll(0);
 
     } else
@@ -507,7 +491,7 @@ export const ListOfMetrics = (props) => {
           <div style={{textAlign: 'center'}}>
             {row.value}
           </div>,
-        filterList: listTypes,
+        filterList: types,
         Filter: SelectColumnFilter
       },
       {
@@ -527,7 +511,7 @@ export const ListOfMetrics = (props) => {
                 )
             }
           </div>,
-        filterList: listTags,
+        filterList: tags,
         Filter: SelectColumnFilter
       }
     ];
@@ -597,7 +581,7 @@ export const ListOfMetrics = (props) => {
             <div style={{textAlign: 'center'}}>
               {row.value}
             </div>,
-          filterList: listOSGroups,
+          filterList: OSGroups,
           Filter: SelectColumnFilter
         }
       );
@@ -614,7 +598,7 @@ export const ListOfMetrics = (props) => {
               <div style={{textAlign: 'center'}}>
                 {row.value.join(', ')}
               </div>,
-            filterList: listOSGroups,
+            filterList: OSGroups,
             Filter: SelectColumnFilter
           }
         );
@@ -622,28 +606,29 @@ export const ListOfMetrics = (props) => {
     }
 
     return columns;
-  }, [isTenantSchema, listOSGroups, listTags, listTypes, metriclink, publicView, selectAll, selected, type, userDetails])
+  }, [isTenantSchema, OSGroups, tags, types, metriclink, publicView, selectAll, selected, type, userDetails, disabled])
 
-  if (listMetricsLoading || listTypesLoading || listTagsLoading || listOSGroupsLoading || isTenantSchemaLoading || userDetailsLoading)
+  if (metricsLoading || typesLoading || tagsLoading || OSGroupsLoading || userDetailsLoading)
     return (<LoadingAnim />);
 
-  else if (listMetricsError)
-    return (<ErrorComponent error={listMetricsError.message}/>);
+  else if (metricsError)
+    return (<ErrorComponent error={metricsError.message}/>);
 
-  else if (listTypesError)
-    return (<ErrorComponent error={listTypesError.message}/>);
+  else if (typesError)
+    return (<ErrorComponent error={typesError.message}/>);
 
-  else if (listTagsError)
-    return (<ErrorComponent error={listTagsError.message}/>);
+  else if (tagsError)
+    return (<ErrorComponent error={tagsError.message}/>);
 
-  else if (listOSGroupsError)
-    return (<ErrorComponent error={listOSGroupsError.message}/>);
+  else if (OSGroupsError)
+    return (<ErrorComponent error={OSGroupsError.message}/>);
 
   else if (userDetailsError)
     return (<ErrorComponent error={userDetailsError.message}/>);
 
-  else if (!listMetricsLoading && !listTypesLoading && !listTagsLoading && !listOSGroupsLoading && !isTenantSchemaLoading && !userDetailsLoading && listMetrics) {
+  else if (metrics && types && tags && OSGroups) {
     if (type === 'metrics') {
+      OSGroups = OSGroups['metrics'];
       return (
         <BaseArgoView
           resourcename='metric'
@@ -652,7 +637,7 @@ export const ListOfMetrics = (props) => {
           addnew={false}
         >
           <BaseArgoTable
-            data={listMetrics}
+            data={metrics}
             columns={memoized_columns}
             page_size={50}
             resourcename='metrics'
@@ -678,7 +663,7 @@ export const ListOfMetrics = (props) => {
             </div>
             <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
               <BaseArgoTable
-                data={listMetrics}
+                data={metrics}
                 columns={memoized_columns}
                 page_size={50}
                 resourcename='metric templates'
@@ -718,7 +703,7 @@ export const ListOfMetrics = (props) => {
             </div>
             <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
               <BaseArgoTable
-                data={listMetrics}
+                data={metrics}
                 columns={memoized_columns}
                 page_size={50}
                 resourcename='metric templates'

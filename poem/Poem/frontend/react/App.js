@@ -133,7 +133,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
       />}
     />
     <Route exact path="/ui/probes/:name" render={props => <ProbeComponent {...props} isTenantSchema={true} />}/>
-    <Route exact path="/ui/metrics" render={props => <ListOfMetrics {...props} type='metrics'/>} />
+    <Route exact path="/ui/metrics" render={props => <ListOfMetrics {...props} type='metrics' isTenantSchema={true} />} />
     <Route exact path="/ui/metrics/:name/history" render={props => <HistoryComponent {...props} object='metric'/>}/>
     <Route exact path="/ui/metrics/:name/history/compare/:id1/:id2" render={props => <CompareMetrics {...props} type='metric'/>}/>
     <Route exact path="/ui/metrics/:name/history/:version" render={props => <MetricVersionDetails {...props}/>}/>
@@ -344,7 +344,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/apikey/add"
       render={props => <APIKeyChange {...props} addview={true}/>}
     />
-    <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/metrictemplates/' render={props => <ListOfMetrics type='metrictemplates' {...props} /> } />
+    <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/metrictemplates/' render={props => <ListOfMetrics type='metrictemplates' isTenantSchema={true} {...props} /> } />
     <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/metrictemplates/:name'
       render={props => <MetricTemplateComponent
         {...props}
@@ -698,7 +698,7 @@ const App = () => {
                 exact path="/ui/public_metrictemplates"
                 render={props =>
                   <PublicPage tenantName={tenantName}>
-                    <ListOfMetrics type='metrictemplates' publicView={true} {...props}/>
+                    <ListOfMetrics type='metrictemplates' isTenantSchema={true} publicView={true} {...props}/>
                   </PublicPage>
                 }
               />
@@ -737,7 +737,7 @@ const App = () => {
               <Route exact path="/ui/public_metrics"
                 render={props =>
                   <PublicPage tenantName={tenantName}>
-                    <ListOfMetrics type='metrics' publicView={true} {...props}/>
+                    <ListOfMetrics type='metrics' publicView={true} isTenantSchema={true} {...props}/>
                   </PublicPage>
                 }
               />
