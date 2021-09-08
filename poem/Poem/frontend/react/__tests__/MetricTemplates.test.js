@@ -589,7 +589,7 @@ function renderTenantListView() {
       <QueryClientProvider client={queryClient}>
         <Router history={history} >
           <Route
-            render={props => <ListOfMetrics {...props} type='metrictemplates' />}
+            render={props => <ListOfMetrics {...props} type='metrictemplates' isTenantSchema={true} />}
           />
         </Router>
       </QueryClientProvider>

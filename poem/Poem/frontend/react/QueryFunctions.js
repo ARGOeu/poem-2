@@ -49,9 +49,9 @@ export const fetchPackages = async (publicView=false) => {
 }
 
 
-export const fetchProbeVersions = async () => {
+export const fetchProbeVersions = async (publicView=false) => {
   const backend = new Backend();
-  return await backend.fetchData('/api/v2/internal/version/probe');
+  return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}version/probe`);
 }
 
 
