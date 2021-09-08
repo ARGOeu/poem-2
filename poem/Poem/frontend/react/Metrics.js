@@ -1430,51 +1430,46 @@ export const MetricChange = (props) => {
 };
 
 
+const fetchMetricVersions = async (name) => {
+  const backend = new Backend();
+
+  return await backend.fetchData(`/api/v2/internal/tenantversion/metric/${name}`);
+}
+
+
 export const MetricVersionDetails = (props) => {
   const name = props.match.params.name;
   const version = props.match.params.version;
 
-  const [loading, setLoading] = useState(false);
-  const [metric, setMetric] = useState(null);
-  const [probe, setProbe] = useState({'package': ''})
-  const [error, setError] = useState(null);
+  const { data: metrics, error: errorMetric, isLoading: loadingMetric } = useQuery(
+    ['tenantversion', 'metric', name], () => fetchMetricVersions(name)
+  )
 
-  useEffect(() => {
-    const backend = new Backend();
-    setLoading(true);
+  const metricProbeVersion = metrics?.find(met => met.version === version).fields.probeversion.split(' ')[0];
 
-    async function fetchData() {
-      try {
-        let json = await backend.fetchData(`/api/v2/internal/tenantversion/metric/${name}`);
-        json.forEach(async (e) => {
-          if (e.version == version) {
-            let probes = await backend.fetchData(`/api/v2/internal/version/probe/${e.fields.probeversion.split(' ')[0]}`);
-            probes.forEach(prb => {
-              if (prb.object_repr === e.fields.probeversion)
-                setProbe(prb.fields);
-            });
-            let m = e.fields;
-            m.date_created = e.date_created;
-            setMetric(m);
-          }
-        });
-      } catch(err) {
-        setError(err)
-      }
+  const { data: probes, error: errorProbes, isLoading: loadingProbes } = useQuery(
+    ['version', 'probe', metricProbeVersion], () => fetchProbeVersion(false, metricProbeVersion),
+    { enabled: !!metricProbeVersion }
+  )
 
-      setLoading(false);
-    }
-
-    fetchData();
-  }, [name, version]);
-
-  if (loading)
+  if (loadingMetric || loadingProbes)
     return (<LoadingAnim/>);
 
-  else if (error)
-    return (<ErrorComponent error={error}/>);
+  else if (errorMetric)
+    return (<ErrorComponent error={errorMetric}/>);
 
-  else if (!loading && metric) {
+  else if (errorProbes)
+    return (<ErrorComponent error={errorProbes} />);
+
+  else if (metrics) {
+    const metricVersion = metrics.find(met => met.version === version);
+    const metric = {
+      ...metricVersion.fields,
+      date_created: metricVersion.date_created
+    }
+
+    const probe = probes ? probes.find(prb => prb.object_repr === metric.probeversion).fields : {};
+
     return (
       <BaseArgoView
         resourcename={`${name} (${metric.date_created})`}

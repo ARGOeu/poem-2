@@ -193,7 +193,7 @@ const mockMetricVersion = [
       mtype: 'Active',
       tags: ['test_tag1', 'test_tag2'],
       group: 'ARGOTEST',
-      probeversion: 'ams-probe(0.1.13)',
+      probeversion: 'ams-probe (0.1.13)',
       description: 'Description of argo.AMS-Check-new',
       parent: 'new-parent',
       probeexecutable: 'ams-probe-2',
