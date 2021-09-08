@@ -41,7 +41,7 @@ import ReactDiffViewer from 'react-diff-viewer';
 import CreatableSelect from 'react-select/creatable';
 import { components } from 'react-select';
 import { useQuery, useQueryClient } from 'react-query';
-import { fetchMetricTags, fetchMetricTemplates, fetchMetricTemplateTypes, fetchOStags, fetchUserDetails, fetchUserGroups } from './QueryFunctions';
+import { fetchMetricTags, fetchMetricTemplates, fetchMetricTemplateTypes, fetchOStags, fetchProbeVersion, fetchUserDetails, fetchUserGroups } from './QueryFunctions';
 
 
 function validateConfig(value) {
@@ -1202,9 +1202,9 @@ export const MetricChange = (props) => {
   const location = props.location;
   const history = props.history;
   const publicView = props.publicView;
-  const querykey = `metric_${name}_${publicView ? 'publicview' : 'changeview'}`;
 
   const backend = new Backend();
+  const queryClient = useQueryClient();
 
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [areYouSureModal, setAreYouSureModal] = useState(false);
@@ -1213,37 +1213,28 @@ export const MetricChange = (props) => {
   const [modalFlag, setModalFlag] = useState(undefined);
   const [formValues, setFormValues] = useState(undefined);
 
-  const { data: session, error: sessionError, isLoading: sessionLoading } = useQuery(
-    `${querykey}_session`, async () => {
-      let session = await backend.isActiveSession();
-      return session;
-    }
-  );
+  const { data: userDetails, error: userDetailsError, isLoading: userDetailsLoading } = useQuery(
+    'userdetails', () => fetchUserDetails(true), { enabled: !publicView }
+  )
 
   const { data: metric, error: metricError, isLoading: metricLoading } = useQuery(
-    `${querykey}_metric`, async () => {
-      let metric = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metric/${name}`);
-      return metric;
+    [`${publicView ? 'public_' : ''}metric`, name], async () => {
+      return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metric/${name}`);
     },
     {
-      enabled: !publicView ? !!session : true
+      enabled: !publicView ? !!userDetails : true,
+      initialData: () => {
+        return queryClient.getQueryData(`${publicView ? 'public_' : ''}metric`)?.find(met => met.name === name)
+      }
     }
   );
 
-  const { data: probe, error: probeError, isLoading: probeLoading } = useQuery(
-    `${querykey}_probe`, async () => {
-      let probe = {};
-      let probes = [];
-      if (metric.probeversion)
-        probes = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}version/probe/${metric.probeversion.split(' ')[0]}`);
-        probes.forEach((prb) => {
-          if (prb.object_repr === metric.probeversion)
-            probe = prb.fields;
-        });
+  const metricProbeVersion = metric?.probeversion.split(' ')[0];
 
-      return probe;
-    },
-    { enabled: !!metric }
+  const { data: probes, error: probesError, isLoading: probesLoading } = useQuery(
+    [`${publicView ? 'public_' : ''}version`, 'probe', metricProbeVersion],
+    () => fetchProbeVersion(publicView, metricProbeVersion),
+    { enabled: !!metricProbeVersion }
   );
 
   function togglePopOver() {
@@ -1326,34 +1317,36 @@ export const MetricChange = (props) => {
     }
   }
 
-  if (metricLoading || sessionLoading || probeLoading)
+  if (metricLoading || userDetailsLoading || probesLoading)
     return (<LoadingAnim/>);
 
   else if (metricError)
     return (<ErrorComponent error={metricError}/>);
 
-  else if (sessionError)
-    return (<ErrorComponent error={sessionError}/>);
+  else if (userDetailsError)
+    return (<ErrorComponent error={userDetailsError}/>);
 
-  else if (probeError)
-    return (<ErrorComponent error={probeError}/>);
+  else if (probesError)
+    return (<ErrorComponent error={probesError}/>);
 
   else {
     const writePerm = publicView ?
       false
     :
-      session.active ?
-        session.userdetails.is_superuser || session.userdetails.groups.metrics.indexOf(metric.group) >= 0
+      userDetails ?
+        userDetails.is_superuser || userDetails.groups.metrics.indexOf(metric.group) >= 0
       :
         false;
 
-    const groups = session && session.active ?
-      session.userdetails.groups.metrics.indexOf(metric.group) < 0 ?
-        [...session.userdetails.groups.metrics, metric.group]
+    const groups = userDetails ?
+      userDetails.groups.metrics.indexOf(metric.group) < 0 ?
+        [...userDetails.groups.metrics, metric.group]
       :
-        session.userdetails.groups.metrics
+        userDetails.groups.metrics
     :
       [metric.group];
+
+    const probe = probes ? probes.find(prb => prb.object_repr === metric.probeversion).fields : {};
 
     return (
       <BaseArgoView
