@@ -85,3 +85,10 @@ export const fetchMetricTags = async (publicView) => {
 
   return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metrictags`);
 }
+
+
+export const fetchMetricTemplateVersion = async (publicView, name) => {
+  const backend = new Backend();
+
+  return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}version/metrictemplate/${name}`)
+}

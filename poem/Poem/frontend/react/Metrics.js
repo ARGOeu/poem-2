@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
 import {
@@ -41,7 +41,7 @@ import ReactDiffViewer from 'react-diff-viewer';
 import CreatableSelect from 'react-select/creatable';
 import { components } from 'react-select';
 import { useQuery, useQueryClient } from 'react-query';
-import { fetchMetricTags, fetchMetricTemplates, fetchMetricTemplateTypes, fetchOStags, fetchProbeVersion, fetchUserDetails, fetchUserGroups } from './QueryFunctions';
+import { fetchMetricTags, fetchMetricTemplates, fetchMetricTemplateTypes, fetchMetricTemplateVersion, fetchOStags, fetchProbeVersion, fetchUserDetails, fetchUserGroups } from './QueryFunctions';
 
 
 function validateConfig(value) {
@@ -1091,36 +1091,13 @@ export const CompareMetrics = (props) => {
   const publicView = props.publicView;
   const type = props.type;
 
-  const [loading, setLoading] = useState(false);
-  const [metric1, setMetric1] = useState(undefined);
-  const [metric2, setMetric2] = useState(undefined);
-  const [error, setError] = useState(undefined);
-
-
-  useEffect(() => {
-    setLoading(true);
-    const backend = new Backend();
-
-    async function fetchData() {
-      try {
-        let url = `/api/v2/internal/${publicView ? 'public_' : ''}${type === 'metric' ? 'tenant' : ''}version/${type}/${name}`;
-        let json = await backend.fetchData(url);
-
-        json.forEach((e) => {
-          if (e.version == version1)
-            setMetric1(e.fields);
-
-          if (e.version == version2)
-            setMetric2(e.fields);
-        });
-      } catch(err) {
-        setError(err)
-      }
-      setLoading(false);
-    }
-
-    fetchData();
-  }, [name, type, publicView, version1, version2]);
+  const { data: metrics, error, isLoading: loading } = useQuery(
+    [type, `${type === 'metric' ? 'tenant' : ''}version`, name],
+    () => type === 'metric' ?
+        fetchMetricVersions(publicView, name)
+      :
+        fetchMetricTemplateVersion(publicView, name)
+  )
 
   if (loading)
     return (<LoadingAnim/>);
@@ -1128,7 +1105,10 @@ export const CompareMetrics = (props) => {
   else if (error)
     return (<ErrorComponent error={error}/>);
 
-  else if (!loading && metric1 && metric2) {
+  else if (metrics) {
+    const metric1 = metrics.find(met => met.version == version1).fields;
+    const metric2 = metrics.find(met => met.version == version2).fields;
+
     return (
       <React.Fragment>
         <div className='d-flex align-items-center justify-content-between'>
@@ -1430,10 +1410,10 @@ export const MetricChange = (props) => {
 };
 
 
-const fetchMetricVersions = async (name) => {
+const fetchMetricVersions = async (publicView, name) => {
   const backend = new Backend();
 
-  return await backend.fetchData(`/api/v2/internal/tenantversion/metric/${name}`);
+  return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}tenantversion/metric/${name}`);
 }
 
 
@@ -1442,7 +1422,7 @@ export const MetricVersionDetails = (props) => {
   const version = props.match.params.version;
 
   const { data: metrics, error: errorMetric, isLoading: loadingMetric } = useQuery(
-    ['tenantversion', 'metric', name], () => fetchMetricVersions(name)
+    ['metric', 'tenantversion', name], () => fetchMetricVersions(false, name)
   )
 
   const metricProbeVersion = metrics?.find(met => met.version === version).fields.probeversion.split(' ')[0];
