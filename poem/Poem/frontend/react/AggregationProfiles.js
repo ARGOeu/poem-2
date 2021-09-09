@@ -1279,51 +1279,20 @@ const ListDiffElement = ({title, item1, item2}) => {
 };
 
 
+const fetchAggregationProfileVersions = async (name) => {
+  const backend = new Backend();
+  return await backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${name}`);
+}
+
+
 export const AggregationProfileVersionCompare = (props) => {
   const version1 = props.match.params.id1;
   const version2 = props.match.params.id2;
   const name = props.match.params.name;
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [aggregationProfileVersion1, setAggregationProfileVersion1] = useState(undefined)
-  const [aggregationProfileVersion2, setAggregationProfileVersion2] = useState(undefined)
 
-  useEffect(() => {
-    const backend = new Backend();
-    const fetchDataAndSet = async () => {
-      let json = await backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${name}`);
-      json.forEach((e) => {
-        if (e.version == version1)
-          setAggregationProfileVersion1({
-            name: e.fields.name,
-            groupname: e.fields.groupname,
-            metric_operation: e.fields.metric_operation,
-            profile_operation: e.fields.profile_operation,
-            endpoint_group: e.fields.endpoint_group,
-            metric_profile: e.fields.metric_profile,
-            groups: e.fields.groups,
-          })
-        else if (e.version == version2)
-          setAggregationProfileVersion2({
-            name: e.fields.name,
-            groupname: e.fields.groupname,
-            metric_operation: e.fields.metric_operation,
-            profile_operation: e.fields.profile_operation,
-            endpoint_group: e.fields.endpoint_group,
-            metric_profile: e.fields.metric_profile,
-            groups: e.fields.groups,
-          })
-        })
-      setLoading(false);
-    }
-    try {
-      fetchDataAndSet();
-    }
-    catch(err) {
-      setError(error);
-      setLoading(false);
-    }
-  }, [error, name, version1, version2])
+  const { data: versions, error, isLoading: loading } = useQuery(
+    ['aggregationprofile', 'tenantversion', name], () => fetchAggregationProfileVersions(name)
+  )
 
   if (loading)
     return (<LoadingAnim/>);
@@ -1333,12 +1302,16 @@ export const AggregationProfileVersionCompare = (props) => {
       <ErrorComponent error={error}/>
     )
 
-  else if (!loading && aggregationProfileVersion1 && aggregationProfileVersion2) {
+  else if (versions) {
+    const aggregationProfileVersion1 = versions.find(ver => ver.version == version1).fields;
+    const aggregationProfileVersion2 = versions.find(ver => ver.version == version2).fields;
+
     const {
       name: name1, groupname: groupname1, metric_operation: metric_operation1,
       profile_operation: profile_operation1, endpoint_group: endpoint_group1,
       metric_profile: metric_profile1, groups: groups1
     } = aggregationProfileVersion1
+
     const {
       name: name2, groupname: groupname2, metric_operation: metric_operation2,
       profile_operation: profile_operation2, endpoint_group: endpoint_group2,
