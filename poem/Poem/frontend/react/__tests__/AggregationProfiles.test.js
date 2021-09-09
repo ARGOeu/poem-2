@@ -448,12 +448,14 @@ function renderVersionDetailsView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/aggregationprofiles/:name/history/:version'
-          render={ props => <AggregationProfileVersionDetails {...props} />}
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/aggregationprofiles/:name/history/:version'
+            render={ props => <AggregationProfileVersionDetails {...props} />}
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }

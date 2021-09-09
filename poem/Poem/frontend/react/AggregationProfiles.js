@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useContext } from 'react';
+import React, { useState, useMemo, useContext } from 'react';
 import {Link} from 'react-router-dom';
 import {
   LoadingAnim,
@@ -1361,38 +1361,10 @@ export const AggregationProfileVersionCompare = (props) => {
 export const AggregationProfileVersionDetails = (props) => {
   const name = props.match.params.name;
   const version = props.match.params.version;
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [aggregationProfileDetails, setAggregationProfileDetails] = useState(undefined)
 
-  useEffect(() => {
-    const backend = new Backend();
-    const fetchDataAndSet = async () => {
-      let json = await backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${name}`);
-      json.forEach((e) => {
-        if (e.version == version)
-          setAggregationProfileDetails({
-            name: e.fields.name,
-            groupname: e.fields.groupname,
-            metric_operation: e.fields.metric_operation,
-            profile_operation: e.fields.profile_operation,
-            endpoint_group: e.fields.endpoint_group,
-            metric_profile: e.fields.metric_profile,
-            groups: e.fields.groups,
-            date_created: e.date_created,
-          })
-      })
-      setLoading(false);
-    }
-    setLoading(true);
-    try {
-      fetchDataAndSet()
-    }
-    catch(err) {
-      setError(error);
-      setLoading(false);
-    }
-  }, [error, name, version])
+  const { data: versions, error, isLoading: loading } = useQuery(
+    ['aggregationprofile', 'tenantversion', name], () => fetchAggregationProfileVersions(name)
+  )
 
   if (loading)
     return (<LoadingAnim/>);
@@ -1400,7 +1372,13 @@ export const AggregationProfileVersionDetails = (props) => {
   else if (error)
     return (<ErrorComponent error={error}/>)
 
-  else if (!loading && aggregationProfileDetails) {
+  else if (versions) {
+    const properVersion = versions.find(ver => ver.version == version);
+
+    const aggregationProfileDetails = {
+      ...properVersion.fields,
+      date_created: properVersion.date_created
+    };
 
     return (
       <BaseArgoView
