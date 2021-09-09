@@ -4,7 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.poem-react-tests
-    image: poem-reacts-tests-webapp 
+    image: poem-react-tests-webapp
     container_name: poem-react-tests-webapp
     hostname: poem-react-test
     tty: true
@@ -19,5 +19,7 @@ services:
       - ./execute-frontend-tests.sh:/home/jenkins/execute-frontend-tests.sh
       - ./poem-install.sh:/home/jenkins/poem-install.sh
   db-poem-tests:
+    environment:
+      - POSTGRES_PASSWORD=postgres
     container_name: poem-react-tests-postgres10
     image: postgres:10
