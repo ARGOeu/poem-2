@@ -962,35 +962,18 @@ export const AggregationProfilesChange = (props) => {
     return (<ErrorComponent error={errorMetricProfiles} />)
 
   else if (!loadingUserDetails && metricProfiles) {
-    const emptyProfile = {
-      id: '',
-      name: '',
-      metric_operation: '',
-      profile_operation: '',
-      endpoint_group: '',
-      metric_profile: { name: '' },
-      groups: []
-    }
-    const aggregationProfile = {
-      profile: !addview ? webApiAP : emptyProfile,
-      groupname: !addview ? backendAP.groupname : '',
-      listMetricProfiles: metricProfiles,
-      listidmetricprofiles: extractListOfMetricsProfiles(metricProfiles),
-      listservices: !addview ? extractListOfServices(webApiAP.metric_profile, metricProfiles) : []
-    }
-
-    let isServiceMissing = checkIfServiceMissingInMetricProfile(aggregationProfile.listservices, aggregationProfile.profile.groups)
-    let write_perm = undefined
-
     if (!listServices && !publicView && !addview)
-      setListServices(aggregationProfile.listservices)
+      setListServices(!addview ? extractListOfServices(webApiAP.metric_profile, metricProfiles) : [])
+
+    let isServiceMissing = checkIfServiceMissingInMetricProfile(listServices, !addview ? webApiAP.groups : [])
+    let write_perm = undefined
 
     if (publicView) {
       write_perm = false
     }
     else if (!addview) {
       write_perm = userDetails.is_superuser ||
-            userDetails.groups.aggregations.indexOf(aggregationProfile.groupname) >= 0;
+            userDetails.groups.aggregations.indexOf(backendAP.groupname) >= 0;
     }
     else {
       write_perm = userDetails.is_superuser ||
@@ -1049,19 +1032,19 @@ export const AggregationProfilesChange = (props) => {
       >
         <Formik
           initialValues = {{
-            id: aggregationProfile.profile.id,
-            name: aggregationProfile.profile.name,
-            groupname: aggregationProfile.groupname,
-            metric_operation: aggregationProfile.profile.metric_operation,
-            profile_operation: aggregationProfile.profile.profile_operation,
-            metric_profile: correctMetricProfileName(aggregationProfile.profile.metric_profile.id, aggregationProfile.listidmetricprofiles),
-            endpoint_group: aggregationProfile.profile.endpoint_group,
+            id: webApiAP ? webApiAP.id : '',
+            name: webApiAP ? webApiAP.name : '',
+            groupname: backendAP ? backendAP.groupname: '',
+            metric_operation: webApiAP ? webApiAP.metric_operation : '',
+            profile_operation: webApiAP ? webApiAP.profile_operation : '',
+            metric_profile: webApiAP ? correctMetricProfileName(webApiAP.metric_profile.id, extractListOfMetricsProfiles(metricProfiles)) : { name: '' },
+            endpoint_group: webApiAP ? webApiAP.endpoint_group : '',
             groups: !publicView ?
               insertDummyGroup(
-                insertEmptyServiceForNoServices(aggregationProfile.profile.groups)
+                insertEmptyServiceForNoServices(webApiAP ? webApiAP.groups : [])
               )
             :
-              aggregationProfile.profile.groups
+              webApiAP.groups
           }}
           onSubmit={(values, actions) => onSubmitHandle(values, actions)}
           validationSchema={AggregationProfilesSchema}
@@ -1095,7 +1078,7 @@ export const AggregationProfilesChange = (props) => {
                 list_user_groups={!publicView ? userDetails.groups.aggregations : []}
                 logic_operations={logic_operations}
                 endpoint_groups={endpoint_groups}
-                list_id_metric_profiles={aggregationProfile.listidmetricprofiles}
+                list_id_metric_profiles={extractListOfMetricsProfiles(metricProfiles)}
                 write_perm={write_perm}
                 historyview={publicView}
                 addview={addview}

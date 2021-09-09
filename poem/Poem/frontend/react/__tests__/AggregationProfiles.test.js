@@ -338,7 +338,13 @@ function renderListView(publicView=false) {
         <QueryClientProvider client={queryClient}>
           <Router history={history}>
             <Route
-              render={ props => <AggregationProfilesList {...props} publicView={true} /> }
+              render={ props => <AggregationProfilesList
+                {...props}
+                publicView={true}
+                webapimetric='https://mock.metrics.com'
+                webapiaggregation='https://mock.aggregations.com'
+                webapitoken='token'
+              /> }
             />
           </Router>
         </QueryClientProvider>
@@ -350,7 +356,14 @@ function renderListView(publicView=false) {
       ...render(
         <QueryClientProvider client={queryClient}>
           <Router history={history}>
-            <Route component={AggregationProfilesList} />
+            <Route
+              render={ props => <AggregationProfilesList
+                {...props}
+                webapimetric='https://mock.metrics.com'
+                webapiaggregation='https://mock.aggregations.com'
+                webapitoken='token'
+              /> }
+            />
           </Router>
         </QueryClientProvider>
       )
