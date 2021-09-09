@@ -8,13 +8,20 @@
     "build-devel": "webpack --config webpack.config.js --progress --colors --mode development",
     "build-prod": "webpack --config webpack.config.js --progress --colors --mode production",
     "watch": "webpack --config webpack.config.js --watch --mode development",
-    "test": "jest"
+    "test": "jest --ci --max-workers=1 --reporters=default --reporters=jest-junit --coverage --coverageDirectory coverage"
   },
   "jest": {
     "moduleNameMapper": {
       "\\.(jpg|ico|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/frontend/react/__mocks__/fileMock.js",
       "\\.(css|less)$": "<rootDir>/frontend/react/__mocks__/fileMock.js"
-    }
+    },
+    "coverageReporters": [
+      "cobertura",
+      "text-summary"
+    ]
+  },
+  "jest-junit": {
+    "suiteName": "Frontend tests"
   },
   "repository": {
     "type": "git",
@@ -52,6 +59,7 @@
     "file-loader": "^3.0.1",
     "install": "^0.11.0",
     "jest": "^26.6.3",
+    "jest-junit": "^12.2.0",
     "jsctags": "git+https://github.com/ramitos/jsctags.git",
     "jshint": "^2.10.2",
     "postcss-loader": "^3.0.0",

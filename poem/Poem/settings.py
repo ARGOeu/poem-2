@@ -216,3 +216,6 @@ WEBPACK_LOADER = {
         'STATS_FILE': os.path.join(APP_PATH, 'webpack-stats.json')
     }
 }
+
+TEST_RUNNER = 'xmlrunner.extra.djangotestrunner.XMLTestRunner'
+TEST_OUTPUT_FILE_NAME = 'junit-backend.xml'
