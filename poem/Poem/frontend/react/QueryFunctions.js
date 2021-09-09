@@ -92,3 +92,8 @@ export const fetchMetricTemplateVersion = async (publicView, name) => {
 
   return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}version/metrictemplate/${name}`)
 }
+
+
+export const fetchMetricProfiles = async (webapi) => {
+  return await webapi.fetchMetricProfiles();
+}

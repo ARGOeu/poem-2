@@ -176,7 +176,14 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
     <Route exact path="/ui/metricprofiles/:name/history/:version"
       render={props => <MetricProfileVersionDetails {...props}/>}
     />
-    <Route exact path="/ui/aggregationprofiles" component={AggregationProfilesList} />
+    <Route exact path="/ui/aggregationprofiles"
+      render={ props => <AggregationProfilesList
+        {...props}
+        webapiaggregation={webApiAggregation}
+        webapimetric={webApiMetric}
+        webapitoken={token}
+      /> }
+    />
     <AddRoute usergroups={userGroups.aggregations} exact path="/ui/aggregationprofiles/add"
       render={props => <AggregationProfilesChange
         {...props}
@@ -775,7 +782,13 @@ const App = () => {
               <Route exact path="/ui/public_aggregationprofiles"
                 render={props =>
                   <PublicPage tenantName={tenantName}>
-                    <AggregationProfilesList publicView={true} {...props} />
+                    <AggregationProfilesList
+                      {...props}
+                      publicView={true}
+                      webapimetric={webApiMetric}
+                      webapiaggregation={webApiAggregation}
+                      webapitoken={token}
+                    />
                   </PublicPage>
                 }
               />
