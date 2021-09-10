@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Backend, WebApi } from './DataManager';
 
-import { useQuery } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
 import {
   BaseArgoTable,
   BaseArgoView,
@@ -33,7 +33,7 @@ import {
 } from 'reactstrap';
 import { CustomReactSelect } from './UIElements';
 import * as Yup from 'yup';
-import { fetchUserDetails } from './QueryFunctions';
+import { fetchMetricProfiles, fetchOperationsProfiles, fetchUserDetails } from './QueryFunctions';
 
 
 const ReportsSchema = Yup.object().shape({
@@ -54,28 +54,56 @@ export const ReportsAdd = (props) => <ReportsComponent addview={true} {...props}
 export const ReportsChange = (props) => <ReportsComponent {...props}/>;
 
 
+const fetchReports = async () => {
+  const backend = new Backend();
+
+  // TODO: add public API endpoints
+  return await backend.fetchData('/api/v2/internal/reports');
+}
+
+
+const fetchReport = async (webapi, name) => {
+  return await webapi.fetchReport(name);
+}
+
+
+const fetchAggregationProfiles = async (webapi) => {
+  return await webapi.fetchAggregationProfiles();
+}
+
+
+const fetchTopologyTags = async (webapi) => {
+  return await webapi.fetchReportsTopologyTags();
+}
+
+
+const fetchTopologyGroups = async (webapi) => {
+  return await webapi.fetchReportsTopologyGroups();
+}
+
+const getCrud = (props) => {
+  return props.webapireports ? props.webapireports.crud : undefined;
+}
+
 export const ReportsList = (props) => {
   const location = props.location;
-  const backend = new Backend();
+  const queryClient = useQueryClient();
+
+  const webapi = new WebApi({
+    token: props.webapitoken,
+    reportsConfigurations: props.webapireports,
+    metricProfiles: props.webapimetric,
+    aggregationProfiles: props.webapiaggregation,
+    operationsProfiles: props.webapioperations
+  });
+  const crud = getCrud(props);
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
     'userdetails', () => fetchUserDetails(true)
   );
 
   const { data: reports, error: errorReports, isLoading: loadingReports } = useQuery(
-    'report', async () => {
-      // TODO: add public API endpoints
-      let json = await backend.fetchData('/api/v2/internal/reports');
-      let reports = [];
-      json.forEach(e => reports.push({
-        'name': e.name,
-        'description': e.description,
-        'disabled': e.disabled,
-        'group': e.groupname
-      }))
-
-      return reports;
-    },
+    ['report', 'backend'],  () => fetchReports(),
     { enabled: !!userDetails }
   );
 
@@ -90,7 +118,31 @@ export const ReportsList = (props) => {
         Header: 'Name',
         id: 'name',
         accessor: e =>
-          <Link to={`/ui/reports/${e.name}`}>
+          <Link
+            to={`/ui/reports/${e.name}`}
+            onMouseEnter={ async () => {
+              await queryClient.prefetchQuery(
+                ['report', 'webapi', e.name], () => fetchReport(webapi, e.name)
+              );
+              await queryClient.prefetchQuery(
+                ['metricprofile', 'webapi'], () => fetchMetricProfiles(webapi)
+              );
+              await queryClient.prefetchQuery(
+                ['aggregationprofile', 'webapi'], () => fetchAggregationProfiles(webapi)
+              );
+              await queryClient.prefetchQuery(
+                'operationsprofile', () => fetchOperationsProfiles(webapi)
+              );
+              if (crud) {
+                await queryClient.prefetchQuery(
+                  'topologytags', () => fetchTopologyTags(webapi)
+                );
+                await queryClient.prefetchQuery(
+                  'topologygroups', () => fetchTopologyGroups(webapi)
+                );
+              }
+            } }
+          >
             {e.name}
           </Link>,
         column_width: '20%'
@@ -102,7 +154,7 @@ export const ReportsList = (props) => {
       },
       {
         Header: 'Group',
-        accessor: 'group',
+        accessor: 'groupname',
         className: 'text-center',
         Cell: row =>
           <div style={{textAlign: 'center'}}>
@@ -489,7 +541,8 @@ export const ReportsComponent = (props) => {
   const history = props.history;
 
   const backend = new Backend();
-  const crud = props.webapireports ? props.webapireports.crud : undefined
+  const queryClient = useQueryClient();
+  const crud = getCrud(props);
 
   const [areYouSureModal, setAreYouSureModal] = useState(false)
   const [modalMsg, setModalMsg] = useState(undefined);
@@ -497,20 +550,14 @@ export const ReportsComponent = (props) => {
   const [onYes, setOnYes] = useState('')
   const [formikValues, setFormikValues] = useState({})
   const topologyTypes = ['Sites', 'ServiceGroups']
-  let apiUrl = '/api/v2/internal/reports'
+
   const [tagsState, setTagsState] = useState(new Object({
     'groups': undefined,
     'endpoints': undefined
   }))
-  const [groupsTags, setGroupsTags] = useState(undefined)
-  const [endpointsTags, setEndpointsTags] = useState(undefined)
-  const [entitiesState, setEntitiesState] = useState(undefined)
-
-  let querykey = undefined;
-  if (addview)
-    querykey = `report_addview`;
-  else
-    querykey = `report_${report_name}_changeview`;
+  const [groupsTags, setGroupsTags] = useState(new Array())
+  const [endpointsTags, setEndpointsTags] = useState(new Array())
+  const [entitiesState, setEntitiesState] = useState(new Array())
 
   const webapi = new WebApi({
     token: props.webapitoken,
@@ -521,28 +568,33 @@ export const ReportsComponent = (props) => {
   });
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
-    `session_userdetails`, async () => {
-      const sessionActive = await backend.isActiveSession()
-      if (sessionActive.active) {
-        return sessionActive.userdetails
-      }
-    }
+    'userdetails', () => fetchUserDetails(true)
   );
 
-  const { data: report, error: reportError, isLoading: reportLoading } = useQuery(
-    `${querykey}_report`, async () => {
-      if (!addview) {
-        let backendReport = await backend.fetchData(`${apiUrl}/${report_name}`)
-        let report = await webapi.fetchReport(report_name);
-        report['groupname'] = backendReport.groupname
+  const { data: backendReport, error: errorBackendReport, isLoading: loadingBackendReport } = useQuery(
+    ['report', 'backend', report_name], async () => {
+      return await backend.fetchData(`/api/v2/internal/reports/${report_name}`)
+    },
+    {
+      enabled: !!userDetails && !addview,
+      initialData: () => {
+        return queryClient.getQueryData(['reports', 'backend'])?.find(rep => rep.name === report_name)
+      }
+    }
+  )
 
+  const { data: webApiReport, error: errorWebApiReport, isLoading: loadingWebApiReport } = useQuery(
+    ['report', 'webapi', report_name], () => fetchReport(webapi, report_name),
+    {
+      enabled: !!userDetails && !addview,
+      onSuccess: (data) => {
         let groupstags = formatFromReportTags([
           'argo.group.filter.tags', 'argo.group.filter.tags.array'],
-          report['filter_tags'])
+          data['filter_tags'])
         let endpointstags = formatFromReportTags([
           'argo.endpoint.filter.tags', 'argo.endpoint.filter.tags.array'],
-          report['filter_tags'])
-        let entities = formatFromReportEntities('argo.group.filter.fields', report['filter_tags'])
+          data['filter_tags'])
+        let entities = formatFromReportEntities('argo.group.filter.fields', data['filter_tags'])
         let preselectedtags = JSON.parse(JSON.stringify(tagsState))
         preselectedtags['groups'] = new Object()
         preselectedtags['endpoints'] = new Object()
@@ -558,66 +610,33 @@ export const ReportsComponent = (props) => {
         setGroupsTags(groupstags)
         setEndpointsTags(endpointstags)
         setEntitiesState(entities)
-
-        return report;
       }
-      else {
-        setGroupsTags(new Array())
-        setEndpointsTags(new Array())
-        setEntitiesState(new Array())
-
-        return {
-            tenant: '',
-            disabled: false,
-            info: {
-                name: '',
-                description: '',
-                created: '',
-                updated: ''
-            },
-            thresholds: {
-              uptime: '',
-              unknown: '',
-              downtime: '',
-              availability: '',
-              reliability: ''
-            },
-            topology_schema: {},
-            profiles: [],
-            filter_tags: []
-        }
-      }
-    },
-    {
-      enabled: !!userDetails,
     }
-  );
+  )
 
   const { data: listMetricProfiles, error: listMetricProfilesError, isLoading: listMetricProfilesLoading } = useQuery(
-    `${querykey}_metricprofiles`, async () => {
-      return await webapi.fetchMetricProfiles();
-    },
-    {
-      enabled: !!userDetails
-    }
+    ['metricprofile', 'webapi'],  () => fetchMetricProfiles(webapi),
+    { enabled: !!userDetails }
   );
 
   const { data: listAggregationProfiles, error: listAggregationProfilesError, isLoading: listAggregationProfilesLoading } = useQuery(
-    `${querykey}_aggregationprofiles`, async () => {
-      return await webapi.fetchAggregationProfiles();
-    },
-    {
-      enabled: !!userDetails
-    }
+    ['aggregationprofile', 'webapi'], () => fetchAggregationProfiles(webapi),
+    { enabled: !!userDetails }
   );
 
   const { data: listOperationsProfiles, error: listOperationsProfilesError, isLoading: listOperationsProfilesLoading } = useQuery(
-    `${querykey}_operationsprofiles`, async () => {
-      return await webapi.fetchOperationsProfiles();
-    },
-    {
-      enabled: !!userDetails
-    }
+    'operationsprofile', () => fetchOperationsProfiles(webapi),
+    { enabled: !!userDetails }
+  );
+
+  const { data: topologyTags, error: topologyTagsError, isLoading: loadingTopologyTags } = useQuery(
+    'topologytags', () => fetchTopologyTags(webapi),
+    { enabled: !!userDetails && crud }
+  );
+
+  const { data: topologyGroups, error: topologyGroupsErrors, isLoading: loadingTopologyGroups } = useQuery(
+    'topologygroups', () => fetchTopologyGroups(webapi),
+    { enabled: !!userDetails && crud }
   );
 
   const sortStr = (a, b) => {
@@ -640,55 +659,6 @@ export const ReportsComponent = (props) => {
 
     return tmp;
   }
-
-  const { data: topologyTags, error: topologyTagsError, isLoading: isLoadingTopologyTags} = useQuery(
-    `${querykey}_topologytags`, async () => {
-      if (crud) {
-        let tags = await webapi.fetchReportsTopologyTags();
-        return tags
-      }
-      else
-        return new Array()
-    },
-    {
-      enabled: !!report
-    }
-  );
-
-  const { data: topologyGroups, error: topologyGroupsErrors, isLoading: topologyGroupsErrorsIsLoading } = useQuery(
-    `${querykey}_topologygroups`, async () => {
-      if (crud) {
-        let groups = await webapi.fetchReportsTopologyGroups();
-        let ngis = new Set()
-        let sites = new Set()
-        let projects = new Set()
-        let servicegroups = new Set()
-
-        for (var entity of groups) {
-          if (entity['type'].toLowerCase() === 'project') {
-            projects.add(entity['group'])
-            servicegroups.add(entity['subgroup'])
-          }
-          else if (entity['type'].toLowerCase() === 'ngi') {
-            ngis.add(entity['group'])
-            sites.add(entity['subgroup'])
-          }
-        }
-
-        return new Object({
-          'ngis': Array.from(ngis).sort(sortStr),
-          'sites': Array.from(sites).sort(sortStr),
-          'projects': Array.from(projects).sort(sortStr),
-          'servicegroups': Array.from(servicegroups).sort(sortStr)
-        })
-      }
-      else
-        return new Object()
-    },
-    {
-      enabled: !!report
-    }
-  );
 
   const whichTopologyType = (schema) => {
     if (!addview) {
@@ -1010,7 +980,7 @@ export const ReportsComponent = (props) => {
       }
     }
     else {
-      dataToSend.id = report.id
+      dataToSend.id = webApiReport.id
       let response = await webapi.changeReport(dataToSend, dataToSend.id);
       if (!response.ok) {
         let change_msg = '';
@@ -1066,11 +1036,17 @@ export const ReportsComponent = (props) => {
       doChange(formikValues)
   }
 
-  if (reportLoading || listMetricProfilesLoading || listAggregationProfilesLoading || listOperationsProfilesLoading)
+  if (loadingUserDetails || loadingBackendReport || loadingWebApiReport || listMetricProfilesLoading || listAggregationProfilesLoading || listOperationsProfilesLoading || loadingTopologyTags || loadingTopologyGroups)
     return (<LoadingAnim/>);
 
-  else if (reportError)
-    return (<ErrorComponent error={reportError}/>);
+  else if (errorUserDetails)
+    return (<ErrorComponent error={errorUserDetails}/>);
+
+  else if (errorBackendReport)
+    return (<ErrorComponent error={errorBackendReport} />)
+
+  else if (errorWebApiReport)
+    return (<ErrorComponent error={errorWebApiReport} />)
 
   else if (listMetricProfilesError)
     return (<ErrorComponent error={listMetricProfilesError}/>);
@@ -1081,29 +1057,64 @@ export const ReportsComponent = (props) => {
   else if (listOperationsProfilesError)
     return (<ErrorComponent error={listOperationsProfilesError}/>);
 
-  else if (report && userDetails && topologyTags !== undefined &&
-    topologyGroups !== undefined && groupsTags !== undefined && endpointsTags
-    !== undefined && entitiesState !== undefined && crud !== undefined) {
+  else if (topologyTagsError)
+    return (<ErrorComponent error={topologyTagsError} />)
+
+  else if (topologyGroupsErrors)
+    return (<ErrorComponent error={topologyGroupsErrors} />)
+
+  else if (userDetails && listMetricProfiles && listAggregationProfiles && listOperationsProfiles) {
+    const topoTags = topologyTags ? topologyTags : new Array();
+    var topoGroups = new Object();
+
+    if (topologyGroups) {
+      let ngis = new Set()
+      let sites = new Set()
+      let projects = new Set()
+      let servicegroups = new Set()
+
+      for (var entity of topologyGroups) {
+        if (entity['type'].toLowerCase() === 'project') {
+          projects.add(entity['group'])
+          servicegroups.add(entity['subgroup'])
+        }
+
+        else if (entity['type'].toLowerCase() === 'ngi') {
+          ngis.add(entity['group'])
+          sites.add(entity['subgroup'])
+        }
+      }
+
+      topoGroups = new Object({
+        'ngis': Array.from(ngis).sort(sortStr),
+        'sites': Array.from(sites).sort(sortStr),
+        'projects': Array.from(projects).sort(sortStr),
+        'servicegroups': Array.from(servicegroups).sort(sortStr)
+      })
+    }
+
     let metricProfile = '';
     let aggregationProfile = '';
     let operationsProfile = '';
 
-    report.profiles.forEach(profile => {
-      if (profile.type === 'metric')
-        metricProfile = profile.name;
+    if (webApiReport) {
+      webApiReport.profiles.forEach(profile => {
+        if (profile.type === 'metric')
+          metricProfile = profile.name;
 
-      if (profile.type === 'aggregation')
-        aggregationProfile = profile.name;
+        if (profile.type === 'aggregation')
+          aggregationProfile = profile.name;
 
-      if (profile.type === 'operations')
-        operationsProfile = profile.name;
-    })
+        if (profile.type === 'operations')
+          operationsProfile = profile.name;
+      })
+    }
 
     let write_perm = undefined;
     let grouplist = undefined;
     if (!addview) {
       write_perm = userDetails.is_superuser ||
-            userDetails.groups.reports.indexOf(report.groupname) >= 0;
+            userDetails.groups.reports.indexOf(backendReport.groupname) >= 0;
     }
     else {
       write_perm = userDetails.is_superuser ||
@@ -1112,7 +1123,7 @@ export const ReportsComponent = (props) => {
     if (write_perm)
       grouplist = userDetails.groups.reports
     else
-      grouplist = [report.groupname]
+      grouplist = [backendReport.groupname]
 
     return (
       <BaseArgoView
@@ -1128,20 +1139,20 @@ export const ReportsComponent = (props) => {
         <Formik
           validationSchema={ReportsSchema}
           initialValues = {{
-            id: report.id,
-            disabled: report.disabled,
-            name: report.info.name,
-            description: report.info.description,
+            id: webApiReport ? webApiReport.id : '',
+            disabled: webApiReport ? webApiReport.disabled : false,
+            name: webApiReport ? webApiReport.info.name : '',
+            description: webApiReport ? webApiReport.info.description : '',
             metricProfile: metricProfile,
             aggregationProfile: aggregationProfile,
             operationsProfile: operationsProfile,
-            availabilityThreshold: report.thresholds.availability,
-            reliabilityThreshold: report.thresholds.reliability,
-            uptimeThreshold: report.thresholds.uptime,
-            unknownThreshold: report.thresholds.unknown,
-            downtimeThreshold: report.thresholds.downtime,
-            topologyType: whichTopologyType(report.topology_schema),
-            groupname: report.groupname,
+            availabilityThreshold: webApiReport ? webApiReport.thresholds.availability : '',
+            reliabilityThreshold: webApiReport ? webApiReport.thresholds.reliability : '',
+            uptimeThreshold: webApiReport ? webApiReport.thresholds.uptime : '',
+            unknownThreshold: webApiReport ? webApiReport.thresholds.unknown : '',
+            downtimeThreshold: webApiReport ? webApiReport.thresholds.downtime : '',
+            topologyType: whichTopologyType(webApiReport ? webApiReport.topology_schema : {}),
+            groupname: backendReport ? backendReport.groupname : '',
             groups: groupsTags,
             endpoints: endpointsTags,
             entities: entitiesState
@@ -1322,7 +1333,7 @@ export const ReportsComponent = (props) => {
                                 part="groups"
                                 tagsState={tagsState}
                                 setTagsState={setTagsState}
-                                tagsAll={topologyTags}
+                                tagsAll={topoTags}
                                 {...props}/>
                             )}
                           />
@@ -1336,7 +1347,7 @@ export const ReportsComponent = (props) => {
                             name="entities"
                             render={props => (
                               <TopologyEntityFields
-                                topoGroups={topologyGroups}
+                                topoGroups={topoGroups}
                                 addview={addview}
                                 {...props}
                               />
@@ -1361,7 +1372,7 @@ export const ReportsComponent = (props) => {
                                 part="endpoints"
                                 tagsState={tagsState}
                                 setTagsState={setTagsState}
-                                tagsAll={topologyTags}
+                                tagsAll={topoTags}
                                 addview={addview}
                                 {...propsLocal}/>
                             )}

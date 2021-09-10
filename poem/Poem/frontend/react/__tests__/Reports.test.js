@@ -503,6 +503,9 @@ function renderListView() {
               {...props}
               webapitoken='token'
               webapireports={webapireports}
+              webapimetric='https://mock.metric.com'
+              webapiaggregation='https://mock.aggr.com'
+              webapioperations='https://mock.operations.com'
             /> }
           />
         </Router>
