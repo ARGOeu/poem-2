@@ -33,6 +33,7 @@ import {
 } from 'reactstrap';
 import { CustomReactSelect } from './UIElements';
 import * as Yup from 'yup';
+import { fetchUserDetails } from './QueryFunctions';
 
 
 const ReportsSchema = Yup.object().shape({
@@ -56,21 +57,15 @@ export const ReportsChange = (props) => <ReportsComponent {...props}/>;
 export const ReportsList = (props) => {
   const location = props.location;
   const backend = new Backend();
-  // TODO: add public API endpoints
-  let apiUrl = '/api/v2/internal/reports'
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
-    `session_userdetails`, async () => {
-      const sessionActive = await backend.isActiveSession()
-      if (sessionActive.active) {
-        return sessionActive.userdetails
-      }
-    }
+    'userdetails', () => fetchUserDetails(true)
   );
 
-  const { data: listReports, error: error, isLoading: loading } = useQuery(
-    'reports_listview', async () => {
-      let json = await backend.fetchData(apiUrl);
+  const { data: reports, error: errorReports, isLoading: loadingReports } = useQuery(
+    'report', async () => {
+      // TODO: add public API endpoints
+      let json = await backend.fetchData('/api/v2/internal/reports');
       let reports = [];
       json.forEach(e => reports.push({
         'name': e.name,
@@ -81,9 +76,7 @@ export const ReportsList = (props) => {
 
       return reports;
     },
-    {
-      enabled: !!userDetails
-    }
+    { enabled: !!userDetails }
   );
 
   const columns = React.useMemo(
@@ -120,13 +113,16 @@ export const ReportsList = (props) => {
     ], []
   );
 
-  if (loading)
+  if (loadingReports || loadingUserDetails)
     return (<LoadingAnim/>);
 
-  else if (error)
-    return (<ErrorComponent error={error}/>);
+  else if (errorReports)
+    return (<ErrorComponent error={errorReports}/>);
 
-  else if (!loadingUserDetails && listReports) {
+  else if (errorUserDetails)
+    return (<ErrorComponent error={errorUserDetails} />)
+
+  else if (!loadingUserDetails && reports) {
     return (
       <BaseArgoView
         resourcename='report'
@@ -136,7 +132,7 @@ export const ReportsList = (props) => {
         addperm={userDetails.is_superuser || userDetails.groups.reports.length > 0}
       >
         <BaseArgoTable
-          data={listReports}
+          data={reports}
           columns={columns}
           resourcename='reports'
           page_size={10}
