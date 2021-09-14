@@ -5,7 +5,7 @@ import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { YumRepoComponent, YumRepoList } from '../YumRepos';
 import { Backend } from '../DataManager';
-import { QueryClientProvider, QueryClient } from 'react-query';
+import { QueryClientProvider, QueryClient, setLogger } from 'react-query';
 import { NotificationManager } from 'react-notifications';
 
 
@@ -16,6 +16,12 @@ jest.mock('../DataManager', () => {
 })
 
 const queryClient = new QueryClient();
+// turning off logging, because we do not want react-query to write logs to console in tests
+setLogger({
+  log: () => {},
+  warn: () => {},
+  error: () => {}
+})
 
 
 beforeEach(() => {
@@ -372,10 +378,6 @@ describe('Tests for YUM repos changeview on SuperAdmin POEM', () => {
   })
 
   test('Test successfully changing repo', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-
     renderChangeView();
 
     await waitFor(() => {
@@ -417,13 +419,9 @@ describe('Tests for YUM repos changeview on SuperAdmin POEM', () => {
   })
 
   test('Test error changing repo with error message', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'YUM repo with this name and tag already exists.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockChangeObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST; YUM repo with this name and tag already exists.')
+    } )
 
     renderChangeView();
 
@@ -460,21 +458,21 @@ describe('Tests for YUM repos changeview on SuperAdmin POEM', () => {
       )
     })
 
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>YUM repo with this name and tag already exists.</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Error: 400 BAD REQUEST',
-      0,
-      expect.any(Function)
-    )
+    await waitFor(() => {
+      expect(NotificationManager.error).toHaveBeenCalledWith(
+        <div>
+          <p>400 BAD REQUEST; YUM repo with this name and tag already exists.</p>
+          <p>Click to dismiss.</p>
+        </div>,
+        'Error',
+        0,
+        expect.any(Function)
+      )
+    })
   })
 
   test('Test error changing repo without error message', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockChangeObject.mockImplementationOnce( () => { throw Error() } )
 
     renderChangeView();
 
@@ -511,22 +509,20 @@ describe('Tests for YUM repos changeview on SuperAdmin POEM', () => {
       )
     })
 
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>Error changing YUM repo</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Error: 500 SERVER ERROR',
-      0,
-      expect.any(Function)
-    )
+    await waitFor(() => {
+      expect(NotificationManager.error).toHaveBeenCalledWith(
+        <div>
+          <p>Error changing YUM repo</p>
+          <p>Click to dismiss.</p>
+        </div>,
+        'Error',
+        0,
+        expect.any(Function)
+      )
+    })
   })
 
   test('Test successfully deleting repo', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 204, statusText: 'NO CONTENT' })
-    )
-
     renderChangeView();
 
     await waitFor(() => {
@@ -551,13 +547,9 @@ describe('Tests for YUM repos changeview on SuperAdmin POEM', () => {
   })
 
   test('Test error deleting YUM repo with error message', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'YUM repo not found.' }),
-        status: 404,
-        statusText: 'NOT FOUND'
-      })
-    )
+    mockDeleteObject.mockImplementationOnce( () => {
+      throw Error('404 NOT FOUND; YUM repo not found.')
+    } )
 
     renderChangeView();
 
@@ -577,21 +569,21 @@ describe('Tests for YUM repos changeview on SuperAdmin POEM', () => {
       )
     })
 
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>YUM repo not found.</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Error: 404 NOT FOUND',
-      0,
-      expect.any(Function)
-    )
+    await waitFor(() => {
+      expect(NotificationManager.error).toHaveBeenCalledWith(
+        <div>
+          <p>404 NOT FOUND; YUM repo not found.</p>
+          <p>Click to dismiss.</p>
+        </div>,
+        'Error',
+        0,
+        expect.any(Function)
+      )
+    })
   })
 
   test('Test error deleting YUM repo without error message', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockDeleteObject.mockImplementationOnce( () => { throw Error() } );
 
     renderChangeView();
 
@@ -616,7 +608,7 @@ describe('Tests for YUM repos changeview on SuperAdmin POEM', () => {
         <p>Error deleting YUM repo</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 500 SERVER ERROR',
+      'Error',
       0,
       expect.any(Function)
     )
@@ -679,7 +671,8 @@ describe('Tests for YUM repo addview', () => {
     Backend.mockImplementation(() => {
       return {
         fetchData: () => Promise.resolve(['CentOS 6', 'CentOS 7']),
-        addObject: mockAddObject
+        addObject: mockAddObject,
+        deleteObject: mockDeleteObject
       }
     })
   })
@@ -713,10 +706,6 @@ describe('Tests for YUM repo addview', () => {
   })
 
   test('Test successfully adding new YUM repo', async() => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 201, statusText: 'CREATED' })
-    )
-
     renderAddView();
 
     await waitFor(() => {
@@ -752,13 +741,9 @@ describe('Tests for YUM repo addview', () => {
   })
 
   test('Test error adding new YUM repo with error message', async() => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'YUM repo with this name and tag already exists.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockAddObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST; YUM repo with this name and tag already exists.')
+    } )
 
     renderAddView();
 
@@ -789,21 +774,21 @@ describe('Tests for YUM repo addview', () => {
       )
     })
 
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>YUM repo with this name and tag already exists.</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Error: 400 BAD REQUEST',
-      0,
-      expect.any(Function)
-    )
+    await waitFor(() => {
+      expect(NotificationManager.error).toHaveBeenCalledWith(
+        <div>
+          <p>400 BAD REQUEST; YUM repo with this name and tag already exists.</p>
+          <p>Click to dismiss.</p>
+        </div>,
+        'Error',
+        0,
+        expect.any(Function)
+      )
+    })
   })
 
   test('Test error adding new YUM repo without error message', async() => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockAddObject.mockImplementationOnce( () => { throw Error() } )
 
     renderAddView();
 
@@ -834,15 +819,17 @@ describe('Tests for YUM repo addview', () => {
       )
     })
 
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>Error adding YUM repo</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Error: 500 SERVER ERROR',
-      0,
-      expect.any(Function)
-    )
+    await waitFor(() => {
+      expect(NotificationManager.error).toHaveBeenCalledWith(
+        <div>
+          <p>Error adding YUM repo</p>
+          <p>Click to dismiss.</p>
+        </div>,
+        'Error',
+        0,
+        expect.any(Function)
+      )
+    })
   })
 })
 
@@ -863,7 +850,8 @@ describe('Tests for YUM repo cloneview', () => {
               return Promise.resolve(['CentOS 6', 'CentOS 7'])
           }
         },
-        addObject: mockAddObject
+        addObject: mockAddObject,
+        deleteObject: mockDeleteObject
       }
     })
   })
@@ -900,10 +888,6 @@ describe('Tests for YUM repo cloneview', () => {
   })
 
   test('Test successfully cloning new YUM repo', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 201, statusText: 'CREATED' })
-    )
-
     renderCloneView();
 
     await waitFor(() => {
@@ -944,13 +928,9 @@ describe('Tests for YUM repo cloneview', () => {
   })
 
   test('Test error cloning new YUM repo with error message', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'YUM repo with this name and tag already exists.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockAddObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST; YUM repo with this name and tag already exists.')
+    } )
 
     renderCloneView();
 
@@ -988,19 +968,17 @@ describe('Tests for YUM repo cloneview', () => {
 
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>YUM repo with this name and tag already exists.</p>
+        <p>400 BAD REQUEST; YUM repo with this name and tag already exists.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 400 BAD REQUEST',
+      'Error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error cloning new YUM repo without error message', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockAddObject.mockImplementationOnce( () => { throw Error() } );
 
     renderCloneView();
 
@@ -1036,14 +1014,16 @@ describe('Tests for YUM repo cloneview', () => {
       )
     })
 
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>Error adding YUM repo</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Error: 500 SERVER ERROR',
-      0,
-      expect.any(Function)
-    )
+    await waitFor(() => {
+      expect(NotificationManager.error).toHaveBeenCalledWith(
+        <div>
+          <p>Error adding YUM repo</p>
+          <p>Click to dismiss.</p>
+        </div>,
+        'Error',
+        0,
+        expect.any(Function)
+      )
+    })
   })
 })
