@@ -121,16 +121,66 @@ export class Backend {
       throw Error(error_msg);
   }
 
-  changeObject(url, data) {
-    return this.send(url, 'PUT', data);
+  async changeObject(url, data) {
+    let error_msg = '';
+    try {
+      const response = await this.send(url, 'PUT', data);
+      if (!response.ok) {
+        try {
+          let json = await response.json();
+          error_msg = `${response.status} ${response.statusText}; in PUT ${url}; ${json.detail}`;
+        } catch (err2) {
+          error_msg = `${response.status} ${response.statusText}; in PUT ${url}; ${err2}`;
+        }
+      }
+    } catch (err1) {
+      error_msg = `${err1}; in PUT ${url}`
+    }
+
+    if (error_msg)
+      throw Error(error_msg)
   }
 
-  addObject(url, data) {
-    return this.send(url, 'POST', data);
+  async addObject(url, data) {
+    let error_msg = '';
+    try {
+      const response = this.send(url, 'POST', data);
+
+      if (!response.ok) {
+        try {
+          let json = await response.json();
+          error_msg = `${response.status} ${response.statusText}; in POST ${url}; ${json.detail}`;
+        } catch (err1) {
+          error_msg = `${response.status} ${response.statusText}; in POST ${url}; ${err1}`;
+        }
+      }
+    } catch (err2) {
+      error_msg = `${err2}; in POST ${url}`;
+    }
+
+    if (error_msg)
+      throw Error(error_msg)
   }
 
-  deleteObject(url) {
-    return this.send(url, 'DELETE');
+  async deleteObject(url) {
+    let error_msg = '';
+    try {
+      const response =  this.send(url, 'DELETE');
+
+      if (!response.ok) {
+        try {
+          let json = await response.json();
+          error_msg = `${response.status} ${response.statusText}; in DELETE ${url}; ${json.detail}`;
+        } catch (err1) {
+          error_msg = `${response.status} ${response.statusText}; in DELETE ${url}; ${err1}`;
+        }
+      }
+    } catch (err2) {
+      error_msg = `${err2}; in DELETE ${url}`;
+    }
+
+    if (error_msg)
+      throw Error(error_msg)
   }
 
   importMetrics(data) {
