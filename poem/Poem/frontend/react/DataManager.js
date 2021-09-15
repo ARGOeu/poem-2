@@ -132,6 +132,8 @@ export class Backend {
         } catch (err2) {
           error_msg = `${response.status} ${response.statusText}; in PUT ${url}; ${err2}`;
         }
+      } else {
+        return response;
       }
     } catch (err1) {
       error_msg = `${err1}; in PUT ${url}`

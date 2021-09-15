@@ -26,7 +26,7 @@ import {
   Alert
 } from 'reactstrap';
 import { Formik, Form, Field } from 'formik';
-import { useQuery, useQueryClient } from 'react-query';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { fetchPackages, fetchProbeVersions, fetchYumRepos } from './QueryFunctions';
 
 
@@ -148,6 +148,11 @@ export const PackageComponent = (props) => {
 
   const backend = new Backend();
 
+  const changePackage = useMutation( values => backend.changeObject('/api/v2/internal/packages/', values) );
+  const addPackage = useMutation( values => backend.addObject('/api/v2/internal/packages/', values) );
+  const deletePackage = useMutation( () => backend.deleteObject(`/api/v2/internal/packages/${nameversion}`));
+  const updateMetricsMutation = useMutation( values => backend.changeObject('/api/v2/internal/updatemetricsversions/', values) );
+
   const queryClient = useQueryClient();
 
   const { data: pkg, error: errorPkg, status: statusPkg } = useQuery(
@@ -249,85 +254,59 @@ export const PackageComponent = (props) => {
 
   async function onTenantSubmitHandle(values) {
     try {
-      let response = await fetch(
+      let json = await backend.fetchData(
         `/api/v2/internal/updatemetricsversions/${values.name}-${values.version}`,
       )
 
-      if (response.ok) {
-        let json = await response.json();
-        let msgs = [];
-        if ('updated' in json)
-          msgs.push(json['updated']);
+      let msgs = [];
+      if ('updated' in json)
+        msgs.push(json['updated']);
 
-        if ('deleted' in json)
-          msgs.push(json['deleted']);
+      if ('deleted' in json)
+        msgs.push(json['deleted']);
 
-        if ('warning' in json)
-          msgs.push(json['warning']);
+      if ('warning' in json)
+        msgs.push(json['warning']);
 
-        let title = 'Update metrics';
+      let title = 'Update metrics';
 
-        msgs.push('ARE YOU SURE you want to update metrics?')
+      msgs.push('ARE YOU SURE you want to update metrics?')
 
-        setModalMsg(<div>{msgs.map((msg, i) => <p key={i}>{msg}</p>)}</div>);
-        setModalTitle(title);
-        setFormValues(values);
-        setModalFlag('update');
-        toggleAreYouSure();
-      } else {
-        let error_msg = '';
-        try {
-          let json = await response.json()
-          error_msg = `${response.status} ${response.statusText} ${json.detail}`;
-        } catch(err1) {
-          error_msg = `${response.status} ${response.statusText}`;
-        }
-        NotifyError({
-          title: 'Error',
-          msg: error_msg
-        });
-      }
-    } catch(err) {
-      NotifyError({
-        title: 'Error',
-        msg: `Error fetching metrics data: ${err}`
-      });
+      setModalMsg(<div>{msgs.map((msg, i) => <p key={i}>{msg}</p>)}</div>);
+      setModalTitle(title);
+      setFormValues(values);
+      setModalFlag('update');
+      toggleAreYouSure();
+    } catch(error) {
+      NotifyError({ title: 'Error', msg: error.message })
     }
   }
 
   async function updateMetrics() {
-    let response = await backend.changeObject(
-      '/api/v2/internal/updatemetricsversions/',
-      {
-        name: formValues.name,
-        version: formValues.version
-      }
-    );
-    if (!response.ok) {
-      let err_msg = '';
-      try {
-        let json = await response.json();
-        err_msg = json.detail;
-      } catch(err) {
-        err_msg = 'Error updating metrics';
-      }
-      NotifyError({
-        title: `Error: ${response.status} ${response.statusText}`,
-        msg: err_msg
-      });
-    } else {
-      let json = await response.json();
-      if ('updated' in json)
-        NotifyOk({
-          msg: json.updated,
-          title: 'Updated',
-          callback: () => history.push('/ui/administration/packages')
-        });
-      if ('warning' in json)
-        NotifyWarn({msg: json.warning, title: 'Warning'});
+    const sendValues = new Object({
+      name: formValues.name,
+      version: formValues.version
+    })
+    try {
+      await updateMetricsMutation.mutateAsync(sendValues, {
+        onSuccess: async (data) => {
+          queryClient.invalidateQueries('metric');
+          let json = await data.json();
+          if ('updated' in json)
+            NotifyOk({
+              msg: json.updated,
+              title: 'Updated',
+              callback: () => history.push('/ui/administration/packages')
+            });
+          if ('warning' in json)
+            NotifyWarn({msg: json.warning, title: 'Warning'});
 
-      if ('deleted' in json)
-        NotifyWarn({msg: json.deleted, title: 'Deleted'});
+          if ('deleted' in json)
+            NotifyWarn({msg: json.deleted, title: 'Deleted'});
+        }
+      })
+    } catch(error) {
+      NotifyError({ title: 'Error', msg: error.message })
     }
   }
 
@@ -339,88 +318,75 @@ export const PackageComponent = (props) => {
     if (formValues.repo_7)
       repos.push(formValues.repo_7);
 
+    const sendValues = new Object({
+      name: formValues.name,
+      version: formValues.version,
+      use_present_version: formValues.present_version,
+      repos: repos
+    })
+
     if (addview || cloneview) {
-      let response = await backend.addObject(
-        '/api/v2/internal/packages/',
-        {
-          name: formValues.name,
-          version: formValues.version,
-          use_present_version: formValues.present_version,
-          repos: repos
-        }
-      );
-      if (!response.ok) {
-        let add_msg = '';
-        try {
-          let json = await response.json();
-          add_msg = json.detail;
-        } catch(err) {
-          add_msg = 'Error adding package';
-        }
+      try {
+        await addPackage.mutateAsync(sendValues, {
+          onSuccess: () => {
+            queryClient.invalidateQueries('package');
+            NotifyOk({
+              msg: 'Package successfully added',
+              title: 'Added',
+              callback: () => history.push('/ui/package')
+            })
+          }
+        })
+      } catch(error) {
         NotifyError({
-          title: `Error: ${response.status} ${response.statusText}`,
-          msg: add_msg
-        });
-      } else {
-        NotifyOk({
-          msg: 'Package successfully added',
-          title: 'Added',
-          callback: () => history.push('/ui/packages')
-        });
+          title: 'Error',
+          msg: error.message ? error.message : 'Error adding package'
+        })
       }
     } else {
-      let response = await backend.changeObject(
-        '/api/v2/internal/packages/',
-        {
-          id: formValues.id,
-          name: formValues.name,
-          version: formValues.version,
-          use_present_version: formValues.present_version,
-          repos: repos
-        }
-      );
-      if (!response.ok) {
-        let change_msg = '';
-        try {
-          let json = await response.json();
-          change_msg = json.detail;
-        } catch(err) {
-          change_msg = 'Error changing package';
-        }
+      const sendValues = new Object({
+        id: formValues.id,
+        name: formValues.name,
+        version: formValues.version,
+        use_present_version: formValues.present_version,
+        repos: repos
+      })
+      try{
+        await changePackage.mutateAsync(sendValues, {
+          onSuccess: () => {
+            NotifyOk({
+              msg: 'Package successfully changed',
+              title: 'Changed',
+              callback: () => history.push('/ui/package')
+            })
+          }
+        })
+      } catch(error) {
         NotifyError({
-          title: `Error: ${response.status} ${response.statusText}`,
-          msg: change_msg
-        });
-      } else {
-        NotifyOk({
-          msg: 'Package successfully changed',
-          title: 'Changed',
-          callback: () => history.push('/ui/packages')
-        });
+          title: 'Error',
+          msg: error.message ? error.message : 'Error changing package'
+        })
       }
     }
   }
 
   async function doDelete() {
-    let response = await backend.deleteObject(`/api/v2/internal/packages/${nameversion}`);
-    if (!response.ok) {
-      let msg = '';
-      try {
-        let json = await response.json();
-        msg = json.detail;
-      } catch(err) {
-        msg = 'Error deleting package';
-      }
+    try {
+      await deletePackage.mutateAsync(undefined, {
+        onSuccess: () => {
+          queryClient.invalidateQueries('package');
+          NotifyOk({
+            msg: 'Package successfully deleted',
+            title: 'Deleted',
+            callback: () => history.push('/ui/packages')
+          })
+        }
+      })
+    } catch(error) {
       NotifyError({
-        title: `Error: ${response.status} ${response.statusText}`,
-        msg: msg
-      });
-    } else {
-      NotifyOk({
-        msg: 'Package successfully deleted',
-        title: 'Deleted',
-        callback: () => history.push('/ui/packages')
-      });
+        title: 'Error',
+        msg: error.message ? error.message : 'Error deleting package'
+      })
     }
   }
 
