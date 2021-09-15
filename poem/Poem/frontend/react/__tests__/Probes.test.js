@@ -5,7 +5,7 @@ import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { ProbeComponent, ProbeList, ProbeVersionDetails } from '../Probes';
 import { Backend } from '../DataManager';
-import { QueryClientProvider, QueryClient } from 'react-query';
+import { QueryClientProvider, QueryClient, setLogger } from 'react-query';
 import { NotificationManager } from 'react-notifications';
 
 
@@ -17,9 +17,15 @@ jest.mock('../DataManager', () => {
 
 const mockChangeObject = jest.fn();
 const mockAddObject = jest.fn();
+const mockDeleteObject = jest.fn();
 
 const queryClient = new QueryClient();
 
+setLogger({
+  log: () => {},
+  warn: () => {},
+  error: () => {}
+})
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -574,7 +580,8 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
               return Promise.resolve(mockPackages)
           }
         },
-        changeObject: mockChangeObject
+        changeObject: mockChangeObject,
+        deleteObject: mockDeleteObject
       }
     })
   })
@@ -666,10 +673,6 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
   })
 
   test('Test change probe and save', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-
     renderChangeView({});
 
     await waitFor(() => {
@@ -718,10 +721,6 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
   })
 
   test('Test change probe without metric template update and save', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-
     renderChangeView({});
 
     await waitFor(() => {
@@ -768,13 +767,9 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
   })
 
   test('Test error in saving probe with error message', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'Probe with this name already exists.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockChangeObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST; Probe with this name already exists.')
+    } )
 
     renderChangeView({});
 
@@ -818,19 +813,17 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
 
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>Probe with this name already exists.</p>
+        <p>400 BAD REQUEST; Probe with this name already exists.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 400 BAD REQUEST',
+      'Error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error in saving probe without error message', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockChangeObject.mockImplementationOnce( () => { throw Error() } );
 
     renderChangeView({});
 
@@ -877,7 +870,97 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
         <p>Error changing probe</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 500 SERVER ERROR',
+      'Error',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test successfully deleting probe', async () => {
+    renderChangeView({});
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change probe/i })).toBeInTheDocument();
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'delete' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        '/api/v2/internal/probes/ams-probe'
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Probe successfully deleted', 'Deleted', 2000
+    )
+  })
+
+  test('Test error deleting probe with error message', async () => {
+    mockDeleteObject.mockImplementationOnce(() => {
+      throw Error('404 NOT FOUND; Probe not found.')
+    })
+
+    renderChangeView({});
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change probe/i })).toBeInTheDocument();
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'delete' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        '/api/v2/internal/probes/ams-probe'
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>404 NOT FOUND; Probe not found.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error deleting probe without error message', async () => {
+    mockDeleteObject.mockImplementationOnce(() => { throw Error() });
+
+    renderChangeView({});
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change probe/i })).toBeInTheDocument();
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'delete' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        '/api/v2/internal/probes/ams-probe'
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error deleting probe.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error',
       0,
       expect.any(Function)
     )
@@ -1022,10 +1105,6 @@ describe('Test probe addview', () => {
   })
 
   test('Test adding a new probe and saving', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 201, statusText: 'CREATED' })
-    )
-
     renderAddView();
 
     await waitFor(() => {
@@ -1075,14 +1154,10 @@ describe('Test probe addview', () => {
     )
   })
 
-  test('Test error adding a new probe with message', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'Probe with this name already exists.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+  test('Test error adding a new probe with error message', async () => {
+    mockAddObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST; Probe with this name already exists.')
+    } )
 
     renderAddView();
 
@@ -1130,19 +1205,17 @@ describe('Test probe addview', () => {
 
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>Probe with this name already exists.</p>
+        <p>400 BAD REQUEST; Probe with this name already exists.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 400 BAD REQUEST',
+      'Error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error adding a new probe without message', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockAddObject.mockImplementationOnce( () => { throw Error() } );
 
     renderAddView();
 
@@ -1193,7 +1266,7 @@ describe('Test probe addview', () => {
         <p>Error adding probe</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 500 SERVER ERROR',
+      'Error',
       0,
       expect.any(Function)
     )
@@ -1277,10 +1350,6 @@ describe('Test probe cloneview', () => {
   })
 
   test('Test save cloned probe', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-
     renderCloneView();
 
     await waitFor(() => {
@@ -1326,13 +1395,9 @@ describe('Test probe cloneview', () => {
   })
 
   test('Test error in saving cloned probe with error message', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'Probe with this name already exists.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockAddObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST; Probe with this name already exists.')
+    } )
 
     renderCloneView();
 
@@ -1375,19 +1440,17 @@ describe('Test probe cloneview', () => {
 
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>Probe with this name already exists.</p>
+        <p>400 BAD REQUEST; Probe with this name already exists.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 400 BAD REQUEST',
+      'Error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error in saving cloned probe without error message', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockAddObject.mockImplementationOnce( () => { throw Error() } );
 
     renderCloneView();
 
@@ -1433,7 +1496,7 @@ describe('Test probe cloneview', () => {
         <p>Error adding probe</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 500 SERVER ERROR',
+      'Error',
       0,
       expect.any(Function)
     )

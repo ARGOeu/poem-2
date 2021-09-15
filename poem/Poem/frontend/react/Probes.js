@@ -25,7 +25,7 @@ import {
   InputGroupAddon } from 'reactstrap';
 import { Formik, Form, Field, useFormikContext, useField } from 'formik';
 import * as Yup from 'yup';
-import { useQuery, useQueryClient } from 'react-query';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { fetchPackages, fetchProbeVersion } from './QueryFunctions';
 
 
@@ -424,6 +424,10 @@ export const ProbeComponent = (props) => {
   const backend = new Backend();
   const queryClient = useQueryClient();
 
+  const addMutation = useMutation(values => backend.addObject('/api/v2/internal/probes/', values));
+  const changeMutation = useMutation(values => backend.changeObject('/api/v2/internal/probes/', values));
+  const deleteMutation = useMutation(() => backend.deleteObject(`/api/v2/internal/probes/${name}`));
+
   const [areYouSureModal, setAreYouSureModal] = useState(false);
   const [modalFlag, setModalFlag] = useState(undefined);
   const [modalTitle, setModalTitle] = useState(undefined);
@@ -465,6 +469,15 @@ export const ProbeComponent = (props) => {
   }
 
   async function doChange() {
+    const baseSendValues = new Object({
+      name: formValues.name,
+      package: formValues.pkg,
+      repository: formValues.repository,
+      docurl: formValues.docurl,
+      description: formValues.description,
+      comment: formValues.comment
+    });
+
     if (addview || cloneview) {
       let cloned_from = undefined;
       if (cloneview) {
@@ -473,93 +486,63 @@ export const ProbeComponent = (props) => {
         cloned_from = '';
       }
 
-      let response = await backend.addObject(
-        '/api/v2/internal/probes/',
-        {
-          name: formValues.name,
-          package: formValues.pkg,
-          repository: formValues.repository,
-          docurl: formValues.docurl,
-          description: formValues.description,
-          comment: formValues.comment,
-          cloned_from: cloned_from
-        }
-      );
-      if (!response.ok) {
-        let add_msg = '';
-        try {
-          let json = await response.json();
-          add_msg = json.detail;
-        } catch(err) {
-          add_msg = 'Error adding probe';
-        }
+      try {
+        await addMutation.mutateAsync( { ...baseSendValues, cloned_from: cloned_from }, {
+          onSuccess: () => {
+            queryClient.invalidateQueries(`${publicView ? 'public_' : ''}probe`);
+            NotifyOk({
+              msg: 'Probe successfully added',
+              title: 'Added',
+              callback: () => history.push('/ui/probes')
+            })
+          }
+        })
+      } catch(error) {
         NotifyError({
-          title: `Error: ${response.status} ${response.statusText}`,
-          msg: add_msg
-        });
-      } else {
-        NotifyOk({
-          msg: 'Probe successfully added',
-          title: 'Added',
-          callback: () => history.push('/ui/probes')
-        });
+          title: 'Error',
+          msg: error.message ? error.message : 'Error adding probe'
+        })
       }
     } else {
-      let response = await backend.changeObject(
-        '/api/v2/internal/probes/',
-        {
-          id: formValues.id,
-          name: formValues.name,
-          package: formValues.pkg,
-          repository: formValues.repository,
-          docurl: formValues.docurl,
-          description: formValues.description,
-          comment: formValues.comment,
-          update_metrics: formValues.update_metrics
-        }
-      );
-      if (!response.ok) {
-        let change_msg = '';
-        try {
-          let json = await response.json();
-          change_msg = json.detail;
-        } catch(err) {
-          change_msg = 'Error changing probe';
-        }
+      try {
+        await changeMutation.mutateAsync(
+          { ...baseSendValues, id: formValues.id, update_metrics: formValues.update_metrics }, {
+            onSuccess: () => {
+              queryClient.invalidateQueries(`${publicView ? 'public_' : ''}probe`);
+              NotifyOk({
+                msg: 'Probe successfully changed',
+                title: 'Changed',
+                callback: () => history.push('/ui/probes')
+              })
+            }
+          }
+        )
+      } catch(error) {
         NotifyError({
-          title: `Error: ${response.status} ${response.statusText}`,
-          msg: change_msg
-        });
-      } else {
-        NotifyOk({
-          msg: 'Probe successfully changed',
-          title: 'Changed',
-          callback: () => history.push('/ui/probes')
-        });
+          title: 'Error',
+          msg: error.message ? error.message : 'Error changing probe'
+        })
       }
     }
   }
 
   async function doDelete() {
-    let response = await backend.deleteObject(`/api/v2/internal/probes/${name}`);
-    if (!response.ok) {
-      let msg = '';
-      try {
-        let json = await response.json();
-        msg = json.detail;
-      } catch(err) {
-        msg = 'Error deleting probe';
-      }
+    try {
+      await deleteMutation.mutateAsync(undefined, {
+        onSuccess: () => {
+          queryClient.invalidateQueries(`${publicView ? 'public_' : ''}probe`);
+          NotifyOk({
+            msg: 'Probe successfully deleted',
+            title: 'Deleted',
+            callback: () => history.push('/ui/probes')
+          })
+        }
+      })
+    } catch(error) {
       NotifyError({
-        title: `Error: ${response.status} ${response.statusText}`,
-        msg: msg
-      });
-    } else {
-      NotifyOk({
-        msg: 'Probe successfully deleted',
-        title: 'Deleted',
-        callback: () => history.push('/ui/probes')
-      });
+        title: 'Error',
+        msg: error.message ? error.message : 'Error deleting probe.'
+      })
     }
   }
 
