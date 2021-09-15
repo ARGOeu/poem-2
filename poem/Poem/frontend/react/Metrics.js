@@ -40,7 +40,7 @@ import { faInfoCircle, faMinus, faPlus, faCaretDown } from '@fortawesome/free-so
 import ReactDiffViewer from 'react-diff-viewer';
 import CreatableSelect from 'react-select/creatable';
 import { components } from 'react-select';
-import { useQuery, useQueryClient } from 'react-query';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { fetchMetricTags, fetchMetricTemplates, fetchMetricTemplateTypes, fetchMetricTemplateVersion, fetchOStags, fetchProbeVersion, fetchUserDetails, fetchUserGroups } from './QueryFunctions';
 
 
@@ -1186,6 +1186,9 @@ export const MetricChange = (props) => {
   const backend = new Backend();
   const queryClient = useQueryClient();
 
+  const mutation = useMutation(async (values) => await backend.changeObject('/api/v2/internal/metric/', values));
+  const deleteMutation = useMutation(async () => await backend.deleteObject(`/api/v2/internal/metric/${name}`));
+
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [areYouSureModal, setAreYouSureModal] = useState(false);
   const [modalTitle, setModalTitle] = useState(undefined);
@@ -1234,67 +1237,55 @@ export const MetricChange = (props) => {
   }
 
   async function doChange() {
-    let response = await backend.changeObject(
-      '/api/v2/internal/metric/',
-      {
-        name: formValues.name,
-        mtype: formValues.type,
-        group: formValues.group,
-        description: formValues.description,
-        parent: formValues.parent,
-        probeversion: formValues.probeversion,
-        probeexecutable: formValues.probeexecutable,
-        config: formValues.config,
-        attribute: formValues.attributes,
-        dependancy: formValues.dependency,
-        flags: formValues.flags,
-        files: formValues.files,
-        parameter: formValues.parameter,
-        fileparameter: formValues.file_parameters
+    const sendValues = new Object({
+      name: formValues.name,
+      mtype: formValues.type,
+      group: formValues.group,
+      description: formValues.description,
+      parent: formValues.parent,
+      probeversion: formValues.probeversion,
+      probeexecutable: formValues.probeexecutable,
+      config: formValues.config,
+      attribute: formValues.attributes,
+      dependancy: formValues.dependency,
+      flags: formValues.flags,
+      files: formValues.files,
+      parameter: formValues.parameter,
+      fileparameter: formValues.file_parameters
+    })
+    mutation.mutate(sendValues, {
+      onSuccess: () => {
+        NotifyOk({
+          msg: 'Metric successfully changed',
+          title: 'Changed',
+          callback: () => history.push('/ui/metrics')
+        })
+      },
+      onError: (error) => {
+        NotifyError({
+          title: 'Error',
+          msg: error.message ? error.message : 'Error changing metric'
+        })
       }
-    );
-    if (response.ok) {
-      NotifyOk({
-        msg: 'Metric successfully changed',
-        title: 'Changed',
-        callback: () => history.push('/ui/metrics')
-      })
-    } else {
-      let change_msg = '';
-      try {
-        let json = await response.json();
-        change_msg = json.detail;
-      } catch(err) {
-        change_msg = 'Error changing metric';
-      }
-      NotifyError({
-        title: `Error: ${response.status} ${response.statusText}`,
-        msg: change_msg
-      });
-    }
+    })
   }
 
   async function doDelete() {
-    let response = await backend.deleteObject(`/api/v2/internal/metric/${name}`);
-    if (response.ok) {
-      NotifyOk({
-        msg: 'Metric successfully deleted',
-        title: 'Deleted',
-        callback: () => history.push('/ui/metrics')
-      });
-    } else {
-      let msg = '';
-      try {
-        let json = await response.json();
-        msg = json.detail;
-      } catch(err) {
-        msg = 'Error deleting metric';
+    deleteMutation.mutate(undefined, {
+      onSuccess: () => {
+        NotifyOk({
+          msg: 'Metric successfully deleted',
+          title: 'Deleted',
+          callback: () => history.push('/ui/metrics')
+        })
+      },
+      onError: (error) => {
+        NotifyError({
+          title: 'Error',
+          msg: error.message ? error.message : 'Error deleting metric'
+        })
       }
-      NotifyError({
-        title: `Error: ${response.status} ${response.statusText}`,
-        msg: msg
-      });
-    }
+    })
   }
 
   if (metricLoading || userDetailsLoading || probesLoading)
