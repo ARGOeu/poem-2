@@ -424,9 +424,9 @@ export const ProbeComponent = (props) => {
   const backend = new Backend();
   const queryClient = useQueryClient();
 
-  const addMutation = useMutation(values => backend.addObject('/api/v2/internal/probes/', values));
-  const changeMutation = useMutation(values => backend.changeObject('/api/v2/internal/probes/', values));
-  const deleteMutation = useMutation(() => backend.deleteObject(`/api/v2/internal/probes/${name}`));
+  const addMutation = useMutation(async (values) => await backend.addObject('/api/v2/internal/probes/', values));
+  const changeMutation = useMutation(async (values) => await backend.changeObject('/api/v2/internal/probes/', values));
+  const deleteMutation = useMutation(async () => await backend.deleteObject(`/api/v2/internal/probes/${name}`));
 
   const [areYouSureModal, setAreYouSureModal] = useState(false);
   const [modalFlag, setModalFlag] = useState(undefined);
@@ -468,7 +468,7 @@ export const ProbeComponent = (props) => {
     toggleAreYouSure();
   }
 
-  async function doChange() {
+  function doChange() {
     const baseSendValues = new Object({
       name: formValues.name,
       package: formValues.pkg,
@@ -486,64 +486,64 @@ export const ProbeComponent = (props) => {
         cloned_from = '';
       }
 
-      try {
-        await addMutation.mutateAsync( { ...baseSendValues, cloned_from: cloned_from }, {
-          onSuccess: () => {
-            queryClient.invalidateQueries(`${publicView ? 'public_' : ''}probe`);
-            NotifyOk({
-              msg: 'Probe successfully added',
-              title: 'Added',
-              callback: () => history.push('/ui/probes')
-            })
-          }
-        })
-      } catch(error) {
-        NotifyError({
-          title: 'Error',
-          msg: error.message ? error.message : 'Error adding probe'
-        })
-      }
-    } else {
-      try {
-        await changeMutation.mutateAsync(
-          { ...baseSendValues, id: formValues.id, update_metrics: formValues.update_metrics }, {
-            onSuccess: () => {
-              queryClient.invalidateQueries(`${publicView ? 'public_' : ''}probe`);
-              NotifyOk({
-                msg: 'Probe successfully changed',
-                title: 'Changed',
-                callback: () => history.push('/ui/probes')
-              })
-            }
-          }
-        )
-      } catch(error) {
-        NotifyError({
-          title: 'Error',
-          msg: error.message ? error.message : 'Error changing probe'
-        })
-      }
-    }
-  }
-
-  async function doDelete() {
-    try {
-      await deleteMutation.mutateAsync(undefined, {
+      addMutation.mutate( { ...baseSendValues, cloned_from: cloned_from }, {
         onSuccess: () => {
-          queryClient.invalidateQueries(`${publicView ? 'public_' : ''}probe`);
+          queryClient.invalidateQueries('public_probe');
+          queryClient.invalidateQueries('probe');
           NotifyOk({
-            msg: 'Probe successfully deleted',
-            title: 'Deleted',
+            msg: 'Probe successfully added',
+            title: 'Added',
             callback: () => history.push('/ui/probes')
+          })
+        },
+        onError: (error) => {
+          NotifyError({
+            title: 'Error',
+            msg: error.message ? error.message : 'Error adding probe'
           })
         }
       })
-    } catch(error) {
-      NotifyError({
-        title: 'Error',
-        msg: error.message ? error.message : 'Error deleting probe.'
-      })
+    } else {
+      changeMutation.mutate(
+        { ...baseSendValues, id: formValues.id, update_metrics: formValues.update_metrics }, {
+          onSuccess: () => {
+            queryClient.invalidateQueries('public_probe');
+            queryClient.invalidateQueries('probe');
+            NotifyOk({
+              msg: 'Probe successfully changed',
+              title: 'Changed',
+              callback: () => history.push('/ui/probes')
+            })
+          },
+          onError: (error) => {
+            NotifyError({
+              title: 'Error',
+              msg: error.message ? error.message : 'Error changing probe'
+            })
+          }
+        }
+      )
     }
+  }
+
+  function doDelete() {
+    deleteMutation.mutate(undefined, {
+      onSuccess: () => {
+        queryClient.invalidateQueries('public_probe');
+        queryClient.invalidateQueries('probe');
+        NotifyOk({
+          msg: 'Probe successfully deleted',
+          title: 'Deleted',
+          callback: () => history.push('/ui/probes')
+        })
+      },
+      onError: (error) => {
+        NotifyError({
+          title: 'Error',
+          msg: error.message ? error.message : 'Error deleting probe.'
+        })
+      }
+    })
   }
 
   if (probeLoading || metricTemplatesLoading || packagesLoading)
