@@ -6,7 +6,7 @@ import { Route, Router } from 'react-router-dom';
 import { ListOfMetrics } from '../Metrics';
 import { Backend } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
-import { QueryClientProvider, QueryClient } from 'react-query'
+import { QueryClientProvider, QueryClient, setLogger } from 'react-query'
 import { MetricTemplateComponent, MetricTemplateVersionDetails } from '../MetricTemplates';
 import selectEvent from 'react-select-event';
 
@@ -26,6 +26,11 @@ const mockAddObject = jest.fn();
 
 const queryClient = new QueryClient();
 
+setLogger({
+  log: () => {},
+  warn: () => {},
+  error: () => {}
+})
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -861,11 +866,7 @@ describe('Test list of metric templates on SuperPOEM', () => {
   test('Test bulk delete metric templates', async () => {
     mockBulkDeleteMetrics.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          info: 'Metric templates argo.AMS-Check, org.apel.APEL-Pub successfully deleted.'
-        }),
-        status: 200,
-        ok: true,
+        info: 'Metric templates argo.AMS-Check, org.apel.APEL-Pub successfully deleted.'
       })
     )
 
@@ -900,11 +901,7 @@ describe('Test list of metric templates on SuperPOEM', () => {
   test('Test bulk delete select all filtered metric templates', async () => {
     mockBulkDeleteMetrics.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          info: 'Metric templates argo.AMS-Check, argo.AMS-Publisher successfully deleted.'
-        }),
-        status: 200,
-        ok: true,
+        info: 'Metric templates argo.AMS-Check, argo.AMS-Publisher successfully deleted.'
       })
     )
 
@@ -956,12 +953,8 @@ describe('Test list of metric templates on SuperPOEM', () => {
   test('Test bulk delete metric template with info and warning', async () => {
     mockBulkDeleteMetrics.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          info: 'Metric template argo.AMS-Check successfully deleted.',
-          warning: 'Metric template org.apel.APEL-Pub not deleted: something went wrong'
-        }),
-        status: 200,
-        ok: true,
+        info: 'Metric template argo.AMS-Check successfully deleted.',
+        warning: 'Metric template org.apel.APEL-Pub not deleted: something went wrong'
       })
     )
 
@@ -1003,12 +996,8 @@ describe('Test list of metric templates on SuperPOEM', () => {
   test('Test bulk delete metric template with warning only', async () => {
     mockBulkDeleteMetrics.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          warning: 'Metric template argo.AMS-Check, org.apel.APEL-Pub not deleted: something went wrong'
-        }),
-        status: 200,
-        ok: true,
-      })
+        warning: 'Metric template argo.AMS-Check, org.apel.APEL-Pub not deleted: something went wrong'
+      }),
     )
 
     renderListView();
@@ -1043,9 +1032,9 @@ describe('Test list of metric templates on SuperPOEM', () => {
   })
 
   test('Test bulk delete metric template with error', async () => {
-    mockBulkDeleteMetrics.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockBulkDeleteMetrics.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: There has been an error.')
+    } )
 
     renderListView();
 
@@ -1072,10 +1061,10 @@ describe('Test list of metric templates on SuperPOEM', () => {
     expect(NotificationManager.warning).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>Error deleting metric templates</p>
+        <p>400 BAD REQUEST: There has been an error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 500 SERVER ERROR',
+      'Error deleting metric templates',
       0,
       expect.any(Function)
     )
@@ -1305,11 +1294,7 @@ describe('Test list of metric templates on tenant POEM', () => {
   test('Test import metric templates', async () => {
     mockImportMetrics.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          imported: 'argo.AMS-Check, org.apel.APEL-Pub have been successfully imported.'
-        }),
-        status: 200,
-        ok: true
+        imported: 'argo.AMS-Check, org.apel.APEL-Pub have been successfully imported.'
       })
     )
 
@@ -1368,11 +1353,7 @@ describe('Test list of metric templates on tenant POEM', () => {
   test('Test importing of metric templates if warn message', async () => {
     mockImportMetrics.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          warn: 'argo.AMS-Check, org.apel.APEL-Pub have been imported with older probe version. If you wish to use more recent probe version, you should update package version you use.'
-        }),
-        status: 200,
-        ok: true
+        warn: 'argo.AMS-Check, org.apel.APEL-Pub have been imported with older probe version. If you wish to use more recent probe version, you should update package version you use.'
       })
     )
 
@@ -1412,11 +1393,7 @@ describe('Test list of metric templates on tenant POEM', () => {
   test('Test importing of metric templates if err message', async () => {
     mockImportMetrics.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          err: 'argo.AMS-Check, org.apel.APEL-Pub have not been imported since they already exist in the database.'
-        }),
-        status: 200,
-        ok: true
+        err: 'argo.AMS-Check, org.apel.APEL-Pub have not been imported since they already exist in the database.'
       })
     )
 
@@ -1454,11 +1431,7 @@ describe('Test list of metric templates on tenant POEM', () => {
   test('Test importing of metric templates if unavailable message', async () => {
     mockImportMetrics.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          unavailable: 'argo.AMS-Check, org.apel.APEL-Pub have not been imported, since they are not available for the package version you use. If you wish to use the metric, you should change the package version, and try to import again.'
-        }),
-        status: 200,
-        ok: true
+        unavailable: 'argo.AMS-Check, org.apel.APEL-Pub have not been imported, since they are not available for the package version you use. If you wish to use the metric, you should change the package version, and try to import again.'
       })
     )
 
@@ -1496,13 +1469,9 @@ describe('Test list of metric templates on tenant POEM', () => {
   test('Test importing of metric templates if mixed messages', async () => {
     mockImportMetrics.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          imported: 'argo.AMS-Check has been successfully imported.',
-          warn: 'argo.POEM-API-MON has been imported with older probe version. If you wish to use more recent probe version, you should update package version you use.',
-          err: 'org.apel.APEL-Pub has not been imported since it already exists in the database.'
-        }),
-        status: 200,
-        ok: true
+        imported: 'argo.AMS-Check has been successfully imported.',
+        warn: 'argo.POEM-API-MON has been imported with older probe version. If you wish to use more recent probe version, you should update package version you use.',
+        err: 'org.apel.APEL-Pub has not been imported since it already exists in the database.'
       })
     )
 
@@ -1556,11 +1525,7 @@ describe('Test list of metric templates on tenant POEM', () => {
   test('Test select all when importing metric templates', async () => {
     mockImportMetrics.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          imported: 'argo.AMS-Check, argo.POEM-API-MON, org.apel.APEL-Pub have been successfully imported.'
-        }),
-        status: 200,
-        ok: true
+        imported: 'argo.AMS-Check, argo.POEM-API-MON, org.apel.APEL-Pub have been successfully imported.'
       })
     )
 
@@ -1597,11 +1562,7 @@ describe('Test list of metric templates on tenant POEM', () => {
   test('Test select all when importing metric templates if filtered', async () => {
     mockImportMetrics.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          imported: 'argo.AMS-Check, argo.POEM-API-MON have been successfully imported.'
-        }),
-        status: 200,
-        ok: true
+        imported: 'argo.AMS-Check, argo.POEM-API-MON have been successfully imported.'
       })
     )
 

@@ -63,7 +63,7 @@ export class Backend {
       else {
         try {
           let json = await response.json();
-          error_msg = `${response.status} ${response.statusText}; in fetch ${url}; ${json.detail}`;
+          error_msg = `${response.status} ${response.statusText}; in fetch ${url}: ${json.detail}`;
         } catch(err1) {
           error_msg = `${response.status} ${response.statusText}; in fetch ${url}`;
         }
@@ -87,7 +87,7 @@ export class Backend {
       } else {
         try {
           let json = await response.json();
-          error_msg = `${response.status} ${response.statusText}; in fetch ${url}; ${json.detail}`;
+          error_msg = `${response.status} ${response.statusText}; in fetch ${url}: ${json.detail}`;
         } catch(err1) {
           error_msg = `${response.status} ${response.statusText}; in fetch ${url}`;
         }
@@ -109,7 +109,7 @@ export class Backend {
       } else {
         try {
           let json = await response.json();
-          error_msg = `${response.status} ${response.statusText}; in fetch ${url}; ${json.detail}`;
+          error_msg = `${response.status} ${response.statusText}; in fetch ${url}: ${json.detail}`;
         } catch(err1) {
           error_msg = `${response.status} ${response.statusText}; in fetch ${url}`;
         }
@@ -128,9 +128,9 @@ export class Backend {
       if (!response.ok) {
         try {
           let json = await response.json();
-          error_msg = `${response.status} ${response.statusText}; in PUT ${url}; ${json.detail}`;
+          error_msg = `${response.status} ${response.statusText}; in PUT ${url}: ${json.detail}`;
         } catch (err2) {
-          error_msg = `${response.status} ${response.statusText}; in PUT ${url}; ${err2}`;
+          error_msg = `${response.status} ${response.statusText}; in PUT ${url}: ${err2}`;
         }
       } else {
         return response;
@@ -146,14 +146,14 @@ export class Backend {
   async addObject(url, data) {
     let error_msg = '';
     try {
-      const response = this.send(url, 'POST', data);
+      const response = await this.send(url, 'POST', data);
 
       if (!response.ok) {
         try {
           let json = await response.json();
-          error_msg = `${response.status} ${response.statusText}; in POST ${url}; ${json.detail}`;
+          error_msg = `${response.status} ${response.statusText}; in POST ${url}: ${json.detail}`;
         } catch (err1) {
-          error_msg = `${response.status} ${response.statusText}; in POST ${url}; ${err1}`;
+          error_msg = `${response.status} ${response.statusText}; in POST ${url}: ${err1}`;
         }
       }
     } catch (err2) {
@@ -167,14 +167,14 @@ export class Backend {
   async deleteObject(url) {
     let error_msg = '';
     try {
-      const response =  this.send(url, 'DELETE');
+      const response =  await this.send(url, 'DELETE');
 
       if (!response.ok) {
         try {
           let json = await response.json();
-          error_msg = `${response.status} ${response.statusText}; in DELETE ${url}; ${json.detail}`;
+          error_msg = `${response.status} ${response.statusText}; in DELETE ${url}: ${json.detail}`;
         } catch (err1) {
-          error_msg = `${response.status} ${response.statusText}; in DELETE ${url}; ${err1}`;
+          error_msg = `${response.status} ${response.statusText}; in DELETE ${url}: ${err1}`;
         }
       }
     } catch (err2) {
@@ -185,20 +185,53 @@ export class Backend {
       throw Error(error_msg)
   }
 
-  importMetrics(data) {
-    return this.send(
-      '/api/v2/internal/importmetrics/',
-      'POST',
-      data
-    )
+  async importMetrics(data) {
+    let error_msg = '';
+    const url = '/api/v2/internal/importmetrics/';
+    try {
+      const response = await this.send(url, 'POST', data)
+
+      if (response.ok) {
+        return await response.json();
+      } else {
+        try {
+          let json = await response.json();
+          error_msg = `${response.status} ${response.statusText}; in POST ${url}: ${json.detail}`;
+        } catch(err1) {
+          error_msg = `${response.status} ${response.statusText}; in POST ${url}: ${err1}`;
+        }
+      }
+    } catch(err2) {
+      error_msg = `${err2}; in POST ${url}`;
+    }
+
+    if (error_msg)
+      throw Error(error_msg)
   }
 
-  bulkDeleteMetrics(data) {
-    return this.send(
-      '/api/v2/internal/deletetemplates/',
-      'POST',
-      data
-    );
+  async bulkDeleteMetrics(data) {
+    let error_msg = '';
+    const url = '/api/v2/internal/deletetemplates/';
+    try {
+      const response = await this.send(url, 'POST', data);
+
+      if (response.ok) {
+        let json = await response.json()
+        return json
+      } else {
+        try {
+          let json = await response.json();
+          error_msg = `${response.status} ${response.statusText}; in POST ${url}: ${json.detail}`
+        } catch(err1) {
+          error_msg = `${response.status} ${response.statusText}; in POST ${url}: ${err1}`;
+        }
+      }
+    } catch(err2) {
+      error_msg = `${err2}; in POST ${url}`;
+    }
+
+    if (error_msg)
+      throw Error(error_msg)
   }
 
   send(url, method, values=undefined) {
