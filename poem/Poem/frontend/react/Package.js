@@ -148,10 +148,10 @@ export const PackageComponent = (props) => {
 
   const backend = new Backend();
 
-  const changePackage = useMutation( values => backend.changeObject('/api/v2/internal/packages/', values) );
-  const addPackage = useMutation( values => backend.addObject('/api/v2/internal/packages/', values) );
-  const deletePackage = useMutation( () => backend.deleteObject(`/api/v2/internal/packages/${nameversion}`));
-  const updateMetricsMutation = useMutation( values => backend.changeObject('/api/v2/internal/updatemetricsversions/', values) );
+  const changePackage = useMutation( async (values) => await backend.changeObject('/api/v2/internal/packages/', values) );
+  const addPackage = useMutation( async (values) => await backend.addObject('/api/v2/internal/packages/', values) );
+  const deletePackage = useMutation( async () => await backend.deleteObject(`/api/v2/internal/packages/${nameversion}`));
+  const updateMetricsMutation = useMutation( async (values) => await backend.changeObject('/api/v2/internal/updatemetricsversions/', values) );
 
   const queryClient = useQueryClient();
 
@@ -167,14 +167,16 @@ export const PackageComponent = (props) => {
     {
       enabled: !addview,
       initialData: () => {
-        let pkgs = queryClient.getQueryData('package');
-        if (pkgs) {
-          let pkg = pkgs.find(pkg => nameversion == `${pkg.name}-${pkg.version}`)
-          let [repo6, repo7] = splitRepos(pkg.repos);
-          pkg.initial_version = pkg.version;
-          pkg.repo_6 = repo6;
-          pkg.repo_7 = repo7;
-          return pkg;
+        if (!addview) {
+          let pkgs = queryClient.getQueryData('package');
+          if (pkgs) {
+            let pkg = pkgs.find(pkg => nameversion == `${pkg.name}-${pkg.version}`)
+            let [repo6, repo7] = splitRepos(pkg.repos);
+            pkg.initial_version = pkg.version;
+            pkg.repo_6 = repo6;
+            pkg.repo_7 = repo7;
+            return pkg;
+          }
         }
       }
     }
@@ -282,35 +284,32 @@ export const PackageComponent = (props) => {
     }
   }
 
-  async function updateMetrics() {
+  function updateMetrics() {
     const sendValues = new Object({
       name: formValues.name,
       version: formValues.version
     })
-    try {
-      await updateMetricsMutation.mutateAsync(sendValues, {
-        onSuccess: async (data) => {
-          queryClient.invalidateQueries('metric');
-          let json = await data.json();
-          if ('updated' in json)
-            NotifyOk({
-              msg: json.updated,
-              title: 'Updated',
-              callback: () => history.push('/ui/administration/packages')
-            });
-          if ('warning' in json)
-            NotifyWarn({msg: json.warning, title: 'Warning'});
+    updateMetricsMutation.mutate(sendValues, {
+      onSuccess: async (data) => {
+        queryClient.invalidateQueries('metric');
+        let json = await data.json();
+        if ('updated' in json)
+          NotifyOk({
+            msg: json.updated,
+            title: 'Updated',
+            callback: () => history.push('/ui/administration/packages')
+          });
+        if ('warning' in json)
+          NotifyWarn({msg: json.warning, title: 'Warning'});
 
-          if ('deleted' in json)
-            NotifyWarn({msg: json.deleted, title: 'Deleted'});
-        }
-      })
-    } catch(error) {
-      NotifyError({ title: 'Error', msg: error.message })
-    }
+        if ('deleted' in json)
+          NotifyWarn({msg: json.deleted, title: 'Deleted'});
+      },
+      onError: (error) => NotifyError({ title: 'Error', msg: error.message })
+    })
   }
 
-  async function doChange() {
+  function doChange() {
     let repos = [];
     if (formValues.repo_6)
       repos.push(formValues.repo_6);
@@ -326,68 +325,58 @@ export const PackageComponent = (props) => {
     })
 
     if (addview || cloneview) {
-      try {
-        await addPackage.mutateAsync(sendValues, {
-          onSuccess: () => {
-            queryClient.invalidateQueries('package');
-            NotifyOk({
-              msg: 'Package successfully added',
-              title: 'Added',
-              callback: () => history.push('/ui/package')
-            })
-          }
-        })
-      } catch(error) {
-        NotifyError({
-          title: 'Error',
-          msg: error.message ? error.message : 'Error adding package'
-        })
-      }
-    } else {
-      const sendValues = new Object({
-        id: formValues.id,
-        name: formValues.name,
-        version: formValues.version,
-        use_present_version: formValues.present_version,
-        repos: repos
-      })
-      try{
-        await changePackage.mutateAsync(sendValues, {
-          onSuccess: () => {
-            NotifyOk({
-              msg: 'Package successfully changed',
-              title: 'Changed',
-              callback: () => history.push('/ui/package')
-            })
-          }
-        })
-      } catch(error) {
-        NotifyError({
-          title: 'Error',
-          msg: error.message ? error.message : 'Error changing package'
-        })
-      }
-    }
-  }
-
-  async function doDelete() {
-    try {
-      await deletePackage.mutateAsync(undefined, {
+      addPackage.mutate(sendValues, {
         onSuccess: () => {
           queryClient.invalidateQueries('package');
           NotifyOk({
-            msg: 'Package successfully deleted',
-            title: 'Deleted',
+            msg: 'Package successfully added',
+            title: 'Added',
             callback: () => history.push('/ui/packages')
+          })
+        },
+        onError: (error) => {
+          NotifyError({
+            title: 'Error',
+            msg: error.message ? error.message : 'Error adding package'
           })
         }
       })
-    } catch(error) {
-      NotifyError({
-        title: 'Error',
-        msg: error.message ? error.message : 'Error deleting package'
+    } else {
+      changePackage.mutate({ ...sendValues, id: formValues.id }, {
+        onSuccess: () => {
+          NotifyOk({
+            msg: 'Package successfully changed',
+            title: 'Changed',
+            callback: () => history.push('/ui/packages')
+          })
+        },
+        onError: (error) => {
+          NotifyError({
+            title: 'Error',
+            msg: error.message ? error.message : 'Error changing package'
+          })
+        }
       })
     }
+  }
+
+  function doDelete() {
+    deletePackage.mutate(undefined, {
+      onSuccess: () => {
+        queryClient.invalidateQueries('package');
+        NotifyOk({
+          msg: 'Package successfully deleted',
+          title: 'Deleted',
+          callback: () => history.push('/ui/packages')
+        })
+      },
+      onError: (error) => {
+        NotifyError({
+          title: 'Error',
+          msg: error.message ? error.message : 'Error deleting package'
+        })
+      }
+    })
   }
 
   if (statusPkg === 'loading' || statusRepos === 'loading' || statusProbes === 'loading' || statusPackageVersions === 'loading')
