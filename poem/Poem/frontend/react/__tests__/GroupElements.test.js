@@ -36,16 +36,18 @@ function renderChangeView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route path='/ui/administration/group/:name' render={
-          props => <GroupChange
-            {...props}
-            group='metrics'
-            id='groupofmetrics'
-            title='metrics'
-          />}
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route path='/ui/administration/group/:name' render={
+            props => <GroupChange
+              {...props}
+              group='metrics'
+              id='groupofmetrics'
+              title='metrics'
+            />}
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -56,17 +58,19 @@ function renderAddView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route render={
-          props => <GroupChange
-            {...props}
-            group='metrics'
-            id='groupofmetrics'
-            title='metrics'
-            addview={true}
-          />}
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route render={
+            props => <GroupChange
+              {...props}
+              group='metrics'
+              id='groupofmetrics'
+              title='metrics'
+              addview={true}
+            />}
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }

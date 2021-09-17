@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Backend } from './DataManager';
 import {
   LoadingAnim,
@@ -82,18 +82,13 @@ export const GroupList = (props) => {
 
 
 export const GroupChange = (props) => {
-  const [name, setName] = useState('');
-  var [items, setItems] = useState([]);
   const [searchItem, setSearchItem] = useState('');
-  var [freeItems, setFreeItems] = useState([]);
   const [newItems, setNewItems] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [areYouSureModal, setAreYouSureModal] = useState(undefined);
   const [modalTitle, setModalTitle] = useState(undefined);
   const [modalMsg, setModalMsg] = useState(undefined);
   const [modalFlag, setModalFlag] = useState(undefined);
-  const [error, setError] = useState(null);
-  const [formName, setFormName] = useState('');
+  const [formValues, setFormValues] = useState(undefined);
 
   const groupname = props.match.params.name;
   const group = props.group;
@@ -106,6 +101,19 @@ export const GroupChange = (props) => {
 
   const backend = new Backend();
 
+  const { data: items, error: errorItems, isLoading: loadingItems } = useQuery(
+    [`${group}group`, groupname], async () => {
+      return await backend.fetchResult(`/api/v2/internal/${group}group/${groupname}`);
+    },
+    { enabled: !addview }
+  )
+
+  const { data: freeItems, error: errorFreeItems, isLoading: loadingFreeItems } = useQuery(
+    `${group}group`, async () => {
+      return await backend.fetchResult(`/api/v2/internal/${group}group`);
+    }
+  )
+
   function toggleAreYouSure() {
     setAreYouSureModal(!areYouSureModal);
   }
@@ -114,7 +122,7 @@ export const GroupChange = (props) => {
     setModalMsg(`Are you sure you want to ${addview ? 'add' : 'change'} group of ${title}?`);
     setModalTitle(`${addview ? 'Add' : 'Change'} group of ${title}`);
     setModalFlag('submit');
-    setFormName(values.name);
+    setFormValues(values);
     toggleAreYouSure();
   }
 
@@ -129,7 +137,7 @@ export const GroupChange = (props) => {
     if (!addview) {
       let response = await backend.changeObject(
         `/api/v2/internal/${group}group/`,
-        {name: formName, items: items}
+        {name: formValues.name, items: formValues.items}
       );
 
       if (response.ok)
@@ -155,7 +163,7 @@ export const GroupChange = (props) => {
     } else {
       let response = await backend.addObject(
         `/api/v2/internal/${group}group/`,
-        {name: formName, items: items}
+        {name: formValues.name, items: formValues.items}
       );
 
       if (response.ok)
@@ -182,7 +190,7 @@ export const GroupChange = (props) => {
   }
 
   async function doDelete() {
-    let response = await backend.deleteObject(`/api/v2/internal/${group}group/${name}`);
+    let response = await backend.deleteObject(`/api/v2/internal/${group}group/${groupname}`);
 
     if (response.ok)
       NotifyOk({
@@ -206,43 +214,16 @@ export const GroupChange = (props) => {
     }
   }
 
-  useEffect(() => {
-    setLoading(true);
-
-    async function fetchItems() {
-      try {
-        let nogroupitems_response = await backend.fetchResult(`/api/v2/internal/${group}group`);
-        let nogroupitems = [];
-        nogroupitems_response.forEach(e => nogroupitems.push({value: e, label: e}));
-
-        if (!addview) {
-          let groupitems = await backend.fetchResult(`/api/v2/internal/${group}group/${groupname}`);
-          setName(groupname);
-          setItems(groupitems);
-        }
-        setFreeItems(nogroupitems);
-      } catch(err) {
-        setError(err);
-      }
-      setLoading(false);
-    }
-
-    fetchItems();
-  }, []);
-
-  var filteredItems = items;
-  if (searchItem)
-    filteredItems = filteredItems.filter(filteredRow =>
-      filteredRow.toLowerCase().includes(searchItem.toLowerCase())
-    );
-
-  if (loading)
+  if (loadingItems || loadingFreeItems)
     return (<LoadingAnim/>);
 
-  else if (error)
-    return (<ErrorComponent error={error}/>);
+  else if (errorItems)
+    return (<ErrorComponent error={errorItems} />);
 
-  else if (!loading) {
+  else if (errorFreeItems)
+    return(<ErrorComponent error={errorFreeItems} />)
+
+  else if (freeItems) {
     return (
       <BaseArgoView
         resourcename={`group of ${title}`}
@@ -266,12 +247,13 @@ export const GroupChange = (props) => {
       >
         <Formik
           initialValues = {{
-            name: name,
-            items: items
+            name: !addview ? groupname : '',
+            items: items ? items : [],
+            freeItems: freeItems.map(itm => new Object({ value: itm, label: itm })),
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
         >
-          {() => (
+          {(props) => (
             <Form>
               <FormGroup>
                 <Row>
@@ -303,15 +285,15 @@ export const GroupChange = (props) => {
                       onChange={e => setNewItems(e)}
                       openMenuOnClick={true}
                       value={newItems}
-                      options={freeItems}
+                      options={props.values.freeItems}
                     />
                   </Col>
                   <Col md={2}>
                     <Button
                       color='success'
                       onClick={() => {
-                        let itms = items;
-                        let fitms = freeItems;
+                        let itms = props.values.items;
+                        let fitms = props.values.freeItems;
                         for (let i = 0; i < fitms.length; i++) {
                           if (newItems.includes(fitms[i])) {
                             fitms.splice(i, 1);
@@ -319,8 +301,8 @@ export const GroupChange = (props) => {
                           }
                         }
                         newItems.forEach(i => itms.push(i.value));
-                        setItems(itms.sort());
-                        setFreeItems(fitms);
+                        props.setFieldValue('items', itms.sort());
+                        props.setFieldValue('freeItems', fitms)
                         setNewItems([]);
                       }}
                     >
@@ -354,41 +336,43 @@ export const GroupChange = (props) => {
                       <td>{''}</td>
                     </tr>
                     {
-                      filteredItems.map((item, index) =>
-                        <React.Fragment key={index}>
-                          <tr key={index}>
-                            <td className='align-middle text-center'>
-                              {index + 1}
-                            </td>
-                            <td>{item}</td>
-                            <td className='align-middle pl-3'>
-                              <Button
-                                size='sm'
-                                color='light'
-                                type='button'
-                                onClick={() => {
-                                  let updatedItems = items.filter(updatedRow => updatedRow !== item);
-                                  let fitms = freeItems;
-                                  fitms.push({value: item, label: item});
-                                  let sorted_fitms = fitms.sort((a, b) => {
-                                    let comparison = 0
-                                    if (a.value.toLowerCase() > b.value.toLowerCase())
-                                      comparison = 1;
+                      props.values.items.filter(
+                        filteredRow => filteredRow.toLowerCase().includes(searchItem.toLowerCase())
+                        ).map((item, index) =>
+                          <React.Fragment key={index}>
+                            <tr key={index}>
+                              <td className='align-middle text-center'>
+                                {index + 1}
+                              </td>
+                              <td>{item}</td>
+                              <td className='align-middle pl-3'>
+                                <Button
+                                  size='sm'
+                                  color='light'
+                                  type='button'
+                                  onClick={() => {
+                                    let updatedItems = props.values.items.filter(updatedRow => updatedRow !== item);
+                                    let fitms = props.values.freeItems;
+                                    fitms.push({value: item, label: item});
+                                    let sorted_fitms = fitms.sort((a, b) => {
+                                      let comparison = 0
+                                      if (a.value.toLowerCase() > b.value.toLowerCase())
+                                        comparison = 1;
 
-                                    else if (a.value.toLowerCase() < b.value.toLowerCase())
-                                      comparison = -1;
+                                      else if (a.value.toLowerCase() < b.value.toLowerCase())
+                                        comparison = -1;
 
-                                    return comparison;
-                                  });
-                                  setItems(updatedItems);
-                                  setFreeItems(sorted_fitms);
-                                }}
-                              >
-                                <FontAwesomeIcon icon={faTimes}/>
-                              </Button>
-                            </td>
-                          </tr>
-                        </React.Fragment>
+                                      return comparison;
+                                    });
+                                    props.setFieldValue('items', updatedItems);
+                                    props.setFieldValue('freeItems', sorted_fitms);
+                                  }}
+                                >
+                                  <FontAwesomeIcon icon={faTimes}/>
+                                </Button>
+                              </td>
+                            </tr>
+                          </React.Fragment>
                       )
                     }
                   </tbody>
