@@ -27,7 +27,7 @@ import {
 } from "reactstrap";
 import * as Yup from 'yup';
 import './Users.css';
-import { useQuery, useQueryClient } from 'react-query';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { fetchUserGroups } from './QueryFunctions';
 import { fetchUserDetails } from './QueryFunctions';
 
@@ -377,7 +377,7 @@ export const UsersList = (props) => {
           }
         </div>
     }
-  ], []);
+  ], [isTenantSchema, queryClient]);
 
   if (loading)
     return (<LoadingAnim />);
@@ -416,6 +416,12 @@ export const UserChange = (props) => {
 
   const backend = new Backend();
 
+  const changeUserMutation = useMutation(async(values) => backend.changeObject('/api/v2/internal/users/', values));
+  const changeUserProfileMutation = useMutation(async(values) => backend.changeObject('/api/v2/internal/userprofile/', values));
+  const addUserMutation = useMutation(async(values) => backend.addObject('/api/v2/internal/users/', values));
+  const addUserProfileMutation = useMutation(async(values) => backend.addObject('/api/v2/internal/userprofile/', values));
+  const deleteMutation = useMutation(async () => await backend.deleteObject(`/api/v2/internal/users/${user_name}`));
+
   const { data: userDetails, error: errorUserDetails, status: statusUserDetails } = useQuery(
     'userdetails', () => fetchUserDetails(isTenantSchema)
   );
@@ -425,7 +431,8 @@ export const UserChange = (props) => {
     {
       enabled: !addview && !!userDetails,
       initialData: () => {
-        return queryClient.getQueryData('user')?.find(usr => usr.name === user_name)
+        if (!addview)
+          return queryClient.getQueryData('user')?.find(usr => usr.name === user_name)
       }
     }
   );
@@ -466,167 +473,122 @@ export const UserChange = (props) => {
     toggleAreYouSure();
   }
 
-  async function doChange() {
+  function doChange() {
+    const sendValues = new Object({
+      username: formValues.username,
+      first_name: formValues.first_name,
+      last_name: formValues.last_name,
+      email: formValues.email,
+      is_superuser: formValues.is_superuser,
+      is_active: formValues.is_active
+    });
+
+    const sendValues2 = new Object({
+      username: formValues.username,
+      displayname: formValues.displayname,
+      subject: formValues.subject,
+      egiid: formValues.egiid,
+      groupsofaggregations: formValues.groupsofaggregations,
+      groupsofmetrics: formValues.groupsofmetrics,
+      groupsofmetricprofiles: formValues.groupsofmetricprofiles,
+      groupsofthresholdsprofiles: formValues.groupsofthresholdsprofiles,
+      groupsofreports: formValues.groupsofreports
+    })
+
     if (!addview) {
-      let response = await backend.changeObject(
-        '/api/v2/internal/users/',
-        {
-          pk: formValues.pk,
-          username: formValues.username,
-          first_name: formValues.first_name,
-          last_name: formValues.last_name,
-          email: formValues.email,
-          is_superuser: formValues.is_superuser,
-          is_active: formValues.is_active
-        }
-      );
-      if (!response.ok) {
-        let change_msg = '';
-        try {
-          let json = await response.json();
-          change_msg = json.detail;
-        } catch(err) {
-          change_msg = 'Error changing user';
-        }
-        NotifyError({
-          title: `Error: ${response.status} ${response.statusText}`,
-          msg: change_msg
-        });
-      } else {
-        if (isTenantSchema) {
-          let profile_response = await backend.changeObject(
-            '/api/v2/internal/userprofile/',
-            {
-              username: formValues.username,
-              displayname: formValues.displayname,
-              subject: formValues.subject,
-              egiid: formValues.egiid,
-              groupsofaggregations: formValues.groupsofaggregations,
-              groupsofmetrics: formValues.groupsofmetrics,
-              groupsofmetricprofiles: formValues.groupsofmetricprofiles,
-              groupsofthresholdsprofiles: formValues.groupsofthresholdsprofiles,
-              groupsofreports: formValues.groupsofreports
-            }
-          );
-          if (profile_response.ok) {
+      changeUserMutation.mutate({ ...sendValues, pk: formValues.pk }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries('user');
+          if (isTenantSchema) {
+            changeUserProfileMutation.mutate(sendValues2, {
+              onSuccess: () => {
+                queryClient.invalidateQueries('userprofile');
+                NotifyOk({
+                  msg: 'User successfully changed',
+                  title: 'Changed',
+                  callback: () => history.push('/ui/administration/users')
+                })
+              },
+              onError: (error) => {
+                NotifyError({
+                  title: 'Error',
+                  msg: error.message ? error.message : 'Error changing user profile'
+                })
+              }
+            })
+          } else {
             NotifyOk({
               msg: 'User successfully changed',
               title: 'Changed',
               callback: () => history.push('/ui/administration/users')
             })
-          } else {
-            let change_msg = '';
-            try {
-              let json = await profile_response.json();
-              change_msg = json.detail;
-            } catch(err) {
-              change_msg = 'Error changing user profile'
-            }
-            NotifyError({
-              title: `Error: ${profile_response.status} ${profile_response.statusText}`,
-              msg: change_msg
-            });
           }
-        } else {
-          NotifyOk({
-            msg: 'User successfully changed',
-            title: 'Changed',
-            callback: () => history.push('/ui/administration/users')
-          });
+        },
+        onError: (error) => {
+          NotifyError({
+            title: 'Error',
+            msg: error.message ? error.message : 'Error changing user'
+          })
         }
-      }
+      })
     } else {
-      let response = await backend.addObject(
-        '/api/v2/internal/users/',
-        {
-          username: formValues.username,
-          password: formValues.password,
-          first_name: formValues.first_name,
-          last_name: formValues.last_name,
-          email: formValues.email,
-          is_superuser: formValues.is_superuser,
-          is_active: formValues.is_active
-        }
-      );
-      if (!response.ok) {
-        let add_msg = '';
-        try {
-          let json = await response.json();
-          add_msg = json.detail;
-        } catch(err) {
-          add_msg = 'Error adding user';
-        }
-        NotifyError({
-          title: `Error: ${response.status} ${response.statusText}`,
-          msg: add_msg
-        });
-      } else {
-        if (isTenantSchema) {
-          let profile_response = await backend.addObject(
-            '/api/v2/internal/userprofile/',
-            {
-              username: formValues.username,
-              displayname: formValues.displayname,
-              subject: formValues.subject,
-              egiid: formValues.egiid,
-              groupsofaggregations: formValues.groupsofaggregations,
-              groupsofmetrics: formValues.groupsofmetrics,
-              groupsofmetricprofiles: formValues.groupsofmetricprofiles,
-              groupsofthresholdsprofiles: formValues.groupsofthresholdsprofiles,
-              groupsofreports: formValues.groupsofreports
-            }
-          );
-          if (profile_response.ok) {
+      addUserMutation.mutate({ ...sendValues, password: formValues.password }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries('user');
+          if (isTenantSchema) {
+            addUserProfileMutation.mutate(sendValues2, {
+              onSuccess: () => {
+                queryClient.invalidateQueries('userprofile');
+                NotifyOk({
+                  msg: 'User successfully added',
+                  title: 'Added',
+                  callback: () => history.push('/ui/administration/users')
+                })
+              },
+              onError: (error) => {
+                NotifyError({
+                  title: 'Error',
+                  msg: error.message ? error.message : 'Error adding user profile'
+                })
+              }
+            })
+          } else {
             NotifyOk({
               msg: 'User successfully added',
               title: 'Added',
               callback: () => history.push('/ui/administration/users')
             })
-          } else {
-            let add_msg = '';
-            try {
-              let json = await profile_response.json();
-              add_msg = json.detail;
-            } catch(err) {
-              add_msg = 'Error adding user profile';
-            }
-            NotifyError({
-              title: `Error: ${profile_response.status} ${profile_response.statusText}`,
-              msg: add_msg
-            });
           }
-        } else {
-          NotifyOk({
-            msg: 'User successfully added',
-            title: 'Added',
-            callback: () => history.push('/ui/administration/users')
-          });
+        },
+        onError: (error) => {
+          NotifyError({
+            title: 'Error',
+            msg: error.message ? error.message : 'Error adding user'
+          })
         }
-      }
+      })
     }
   }
 
-  async function doDelete() {
-    let response = await backend.deleteObject(`/api/v2/internal/users/${user_name}`);
-    if (response.ok) {
-      NotifyOk({
-        msg: 'User successfully deleted',
-        title: 'Deleted',
-        callback: () => history.push('/ui/administration/users')
-      })
-    } else {
-      let msg = '';
-      try {
-        let json = await response.json();
-        msg = json.detail;
-      } catch(err) {
-        msg = 'Error deleting user';
+  function doDelete() {
+    deleteMutation.mutate(undefined, {
+      onSuccess: () => {
+        queryClient.invalidateQueries('user');
+        if (isTenantSchema)
+          queryClient.invalidateQueries('userprofile');
+        NotifyOk({
+          msg: 'User successfully deleted',
+          title: 'Deleted',
+          callback: () => history.push('/ui/administration/users')
+        })
+      },
+      onError: (error) => {
+        NotifyError({
+          title: 'Error',
+          msg: error.message ? error.message : 'Error deleting user'
+        })
       }
-      NotifyError({
-        title: `Error: ${response.status} ${response.statusText}`,
-        msg: msg
-      });
-    }
+    })
   }
 
   if (statusUser === 'loading' || statusUserProfile === 'loading' || statusUserGroups === 'loading' || statusAllGroups === 'loading' || statusUserDetails === 'loading')
