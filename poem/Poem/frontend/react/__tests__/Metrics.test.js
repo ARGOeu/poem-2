@@ -193,7 +193,7 @@ const mockMetricVersion = [
       mtype: 'Active',
       tags: ['test_tag1', 'test_tag2'],
       group: 'ARGOTEST',
-      probeversion: 'ams-probe(0.1.13)',
+      probeversion: 'ams-probe (0.1.13)',
       description: 'Description of argo.AMS-Check-new',
       parent: 'new-parent',
       probeexecutable: 'ams-probe-2',
@@ -288,7 +288,7 @@ function renderListView(publicView=false) {
         <QueryClientProvider client={queryClient}>
           <Router history={history}>
             <Route
-              render={props => <ListOfMetrics {...props} type='metrics' publicView={true} />}
+              render={props => <ListOfMetrics {...props} type='metrics' isTenantSchema={true} publicView={true} />}
             />
           </Router>
         </QueryClientProvider>
@@ -299,7 +299,7 @@ function renderListView(publicView=false) {
       ...render(
         <QueryClientProvider client={queryClient}>
           <Router history={history}>
-            <Route render={props => <ListOfMetrics {...props} type='metrics' />} />
+            <Route render={props => <ListOfMetrics {...props} type='metrics' isTenantSchema={true} />} />
           </Router>
         </QueryClientProvider>
       )
@@ -408,7 +408,6 @@ describe('Tests for metrics listview', () => {
           }
         },
         fetchResult: () => Promise.resolve(mockUserGroups),
-        isTenantSchema: () => Promise.resolve(true),
         isActiveSession: () => Promise.resolve(mockActiveSession)
       }
     })

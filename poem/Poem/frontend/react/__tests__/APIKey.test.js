@@ -6,6 +6,11 @@ import { Route, Router } from 'react-router-dom';
 import { APIKeyChange, APIKeyList } from '../APIKey';
 import { Backend } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
+import { QueryClient, QueryClientProvider } from 'react-query';
+
+
+const queryClient = new QueryClient();
+
 
 function renderWithRouterMatch(
   ui,
@@ -17,9 +22,11 @@ function renderWithRouterMatch(
 ) {
   return {
     ...render(
-      <Router history={history}>
-        <Route path={path} component={ui} />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route path={path} component={ui} />
+        </Router>
+      </QueryClientProvider>
     )
   };
 }
@@ -29,9 +36,11 @@ function renderAddview() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route render={props => <APIKeyChange {...props} addview={true} />} />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route render={props => <APIKeyChange {...props} addview={true} />} />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -74,6 +83,7 @@ Object.assign(navigator, {
 
 afterEach(() => {
   jest.clearAllMocks();
+  queryClient.clear();
 })
 
 describe("Tests for API keys listview", () => {

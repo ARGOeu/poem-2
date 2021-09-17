@@ -26,6 +26,11 @@ import {
   InputGroupAddon
 } from "reactstrap";
 import * as Yup from 'yup';
+import './Users.css';
+import { useQuery, useQueryClient } from 'react-query';
+import { fetchUserGroups } from './QueryFunctions';
+import { fetchUserDetails } from './QueryFunctions';
+
 
 const UserSchema = Yup.object().shape({
   username: Yup.string()
@@ -61,10 +66,6 @@ const ChangePasswordSchema = Yup.object().shape({
     .required('Required')
     .oneOf([Yup.ref('password'), null], 'Passwords do not match!')
 })
-
-
-import './Users.css';
-import { useQuery } from 'react-query';
 
 
 const CommonUser = ({add, ...props}) =>
@@ -252,12 +253,39 @@ const CommonUser = ({add, ...props}) =>
   </>;
 
 
+
+const fetchUser = async (username) => {
+  const backend = new Backend();
+  return await backend.fetchData(`/api/v2/internal/users/${username}`)
+}
+
+
+const fetchUserProfile = async (isTenantSchema, username) => {
+  const backend = new Backend();
+  if (isTenantSchema)
+    return await backend.fetchData(`/api/v2/internal/userprofile/${username}`)
+}
+
+
+const fetchGroupsForUser = async (isTenantSchema, username) => {
+  const backend = new Backend();
+  if (isTenantSchema) {
+    let usergroups = await backend.fetchResult(`/api/v2/internal/usergroups/${username}`);
+
+    return usergroups;
+  }
+}
+
+
 export const UsersList = (props) => {
     const location = props.location;
     const backend = new Backend();
+    const isTenantSchema = props.isTenantSchema;
+
+    const queryClient = useQueryClient();
 
     const { data: listUsers, error: error, isLoading: loading } = useQuery(
-      'users_listview', async () => {
+      'user', async () => {
         let json = await backend.fetchData('/api/v2/internal/users');
         return json;
       }
@@ -274,7 +302,23 @@ export const UsersList = (props) => {
       accessor: 'username',
       column_width: '26%',
       Cell: e =>
-        <Link to={`/ui/administration/users/${e.value}`}>
+        <Link
+          to={`/ui/administration/users/${e.value}`}
+          onMouseEnter={ async () => {
+            await queryClient.prefetchQuery(
+              ['user', e.value], () => fetchUser(e.value)
+            );
+            await queryClient.prefetchQuery(
+              ['userprofile', e.value], () => fetchUserProfile(isTenantSchema, e.value)
+            );
+            await queryClient.prefetchQuery(
+              ['usergroups', e.value], () => fetchGroupsForUser(isTenantSchema, e.value)
+            );
+            await queryClient.prefetchQuery(
+              'usergroups', () => fetchUserGroups(isTenantSchema)
+            );
+          }}
+        >
           {e.value}
         </Link>
     },
@@ -367,61 +411,37 @@ export const UserChange = (props) => {
   const isTenantSchema = props.isTenantSchema;
   const location = props.location;
   const history = props.history;
-  const querykey = `user_${addview ? 'addview' : `${user_name}_changeview`}`;
+
+  const queryClient = useQueryClient();
 
   const backend = new Backend();
 
-  const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
-    'session_userdetails', async () => {
-      let arg = isTenantSchema ? true : false;
-      let session = await backend.isActiveSession(arg);
+  const { data: userDetails, error: errorUserDetails, status: statusUserDetails } = useQuery(
+    'userdetails', () => fetchUserDetails(isTenantSchema)
+  );
 
-      if (session.active)
-        return session.userdetails;
+  const { data: user, error: errorUser, status: statusUser } = useQuery(
+    ['user', user_name], () => fetchUser(user_name),
+    {
+      enabled: !addview && !!userDetails,
+      initialData: () => {
+        return queryClient.getQueryData('user')?.find(usr => usr.name === user_name)
+      }
     }
   );
 
-  const { data: user, error: errorUser, isLoading: loadingUser } = useQuery(
-    `${querykey}`, async () => {
-      if (!addview) {
-        let user = await backend.fetchData(`/api/v2/internal/users/${user_name}`);
-
-        return user;
-      }
-    },
-    { enabled: !addview && !!userDetails }
-  );
-
-  const { data: userProfile, error: errorUserProfile, isLoading: loadingUserProfile } = useQuery(
-    `${querykey}_userprofile`, async () => {
-      if (isTenantSchema && !addview) {
-        let userprofile = await backend.fetchData(`/api/v2/internal/userprofile/${user_name}`);
-
-        return userprofile;
-      }
-    },
+  const { data: userProfile, error: errorUserProfile, status: statusUserProfile } = useQuery(
+    ['userprofile', user_name], () => fetchUserProfile(isTenantSchema, user_name),
     { enabled: !addview && isTenantSchema }
   );
 
-  const { data: userGroups, error: errorUserGroups, isLoading: loadingUserGroups } = useQuery(
-    `${querykey}_usergroups`, async () => {
-      if (isTenantSchema && !addview) {
-        let usergroups = await backend.fetchResult(`/api/v2/internal/usergroups/${user_name}`);
-
-        return usergroups;
-      }
-    },
+  const { data: userGroups, error: errorUserGroups, status: statusUserGroups } = useQuery(
+    ['usergroups', user_name], () => fetchGroupsForUser(isTenantSchema, user_name),
     { enabled: isTenantSchema && !addview }
   );
 
-  const { data: allGroups, error: errorAllGroups, isLoading: loadingAllGroups } = useQuery(
-    'user_listview_allgroups', async () => {
-      if (isTenantSchema) {
-       let allgroups = await backend.fetchResult('/api/v2/internal/usergroups');
-
-        return allgroups;
-      }
-    },
+  const { data: allGroups, error: errorAllGroups, status: statusAllGroups } = useQuery(
+    'usergroups', () => fetchUserGroups(isTenantSchema),
     { enabled: isTenantSchema }
   );
 
@@ -609,22 +629,22 @@ export const UserChange = (props) => {
     }
   }
 
-  if (loadingUser || loadingUserProfile || loadingUserGroups || loadingAllGroups || loadingUserDetails)
+  if (statusUser === 'loading' || statusUserProfile === 'loading' || statusUserGroups === 'loading' || statusAllGroups === 'loading' || statusUserDetails === 'loading')
     return(<LoadingAnim />)
 
-  else if (errorUser)
+  else if (statusUser === 'error')
     return (<ErrorComponent error={errorUser}/>);
 
-  else if (errorUserProfile)
+  else if (statusUserProfile === 'error')
     return (<ErrorComponent error={errorUserProfile}/>);
 
-  else if (errorUserGroups)
+  else if (statusUserGroups === 'error')
     return (<ErrorComponent error={errorUserGroups}/>);
 
-  else if (errorAllGroups)
+  else if (statusAllGroups === 'error')
     return (<ErrorComponent error={errorAllGroups}/>);
 
-  else if (errorUserDetails)
+  else if (statusUserDetails === 'error')
     return (<ErrorComponent error={errorUserDetails}/>);
 
   else {
@@ -1005,11 +1025,7 @@ export const ChangePassword = (props) => {
   const backend = new Backend();
 
   const { data: userDetails, isLoading: loading} = useQuery(
-    'session_userdetails', async () => {
-      let session = await backend.isActiveSession(false);
-      if (session.active)
-        return session.userdetails;
-    }
+    'userdetails', () => fetchUserDetails(false)
   );
 
   const [areYouSureModal, setAreYouSureModal] = useState(false);

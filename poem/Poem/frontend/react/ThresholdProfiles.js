@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Backend, WebApi } from './DataManager';
 import {
@@ -40,6 +40,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faPlus, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import ReactDiffViewer from 'react-diff-viewer';
 import { useQuery, useQueryClient } from 'react-query';
+import { fetchUserDetails, fetchAllMetrics } from './QueryFunctions';
 
 
 const ThresholdsAutocomplete = ({lists=[], index, onSelect, ...props}) => {
@@ -893,23 +894,45 @@ const ThresholdsProfilesForm = ({
 )
 
 
+const fetchThresholdsProfile = async ({ addview=false, publicView, name, webapitoken, webapithresholds }) => {
+  const backend = new Backend();
+  const webapi = new WebApi({
+    token: webapitoken,
+    thresholdsProfiles: webapithresholds
+  })
+
+  if (!addview) {
+    let json = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}thresholdsprofiles/${name}`);
+    let thresholdsprofile = await webapi.fetchThresholdsProfile(json.apiid);
+    let tp = {
+      'apiid': thresholdsprofile.id,
+      'name': thresholdsprofile.name,
+      'groupname': json['groupname'],
+      'rules': thresholdsToValues(thresholdsprofile.rules)
+    };
+    return tp;
+  }
+}
+
+
 export const ThresholdsProfilesList = (props) => {
   const location = props.location;
+  const publicView = props.publicView;
+  const webapitoken = props.webapitoken;
+  const webapithresholds = props.webapithresholds;
+
   const backend = new Backend();
-  const publicView = props.publicView
+
+  const queryClient = useQueryClient();
 
   const apiUrl = `/api/v2/internal/${publicView ? 'public_' : ''}thresholdsprofiles`;
 
-  const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails} = useQuery(
-    `session_userdetails`, async () => {
-      let sessionActive = await backend.isActiveSession();
-      if (sessionActive.active)
-        return sessionActive.userdetails;
-    }
+  const { data: userDetails, error: errorUserDetails, status: statusUserDetails } = useQuery(
+    'userdetails', () => fetchUserDetails(true)
   );
 
-  const { data: listThresholdsProfiles, error: errorListThresholdsProfiles, isLoading: loadingListThresholdsProfiles } = useQuery(
-    'thresholdsprofiles_listview', async () => {
+  const { data: thresholdsProfiles, error: errorThresholdsProfiles, status: statusThresholdsProfiles } = useQuery(
+    `${publicView ? 'public_' : ''}thresholdsprofile`, async () => {
       let profiles = await backend.fetchData(apiUrl);
 
       return profiles;
@@ -929,7 +952,23 @@ export const ThresholdsProfilesList = (props) => {
       Header: 'Name',
       id: 'name',
       accessor: e =>
-        <Link to={`/ui/${publicView ? 'public_' : ''}thresholdsprofiles/${e.name}`}>
+        <Link
+          to={`/ui/${publicView ? 'public_' : ''}thresholdsprofiles/${e.name}`}
+          onMouseEnter={ async () => {
+            await queryClient.prefetchQuery(
+              [`${publicView ? 'public_' : ''}thresholdsprofile`, e.name],
+              () => fetchThresholdsProfile({
+                publicView: publicView,
+                name: e.name,
+                webapitoken: webapitoken,
+                webapithresholds: webapithresholds
+              })
+            );
+            await queryClient.prefetchQuery(
+              'metricsall', () => fetchAllMetrics(publicView)
+            )
+          } }
+        >
           {e.name}
         </Link>,
       column_width: '20%'
@@ -949,18 +988,18 @@ export const ThresholdsProfilesList = (props) => {
           {row.value}
         </div>
     }
-  ], [publicView]);
+  ], [publicView, queryClient, webapithresholds, webapitoken]);
 
-  if (loadingUserDetails || loadingListThresholdsProfiles)
+  if (statusUserDetails === 'loading' || statusThresholdsProfiles === 'loading')
     return (<LoadingAnim/>);
 
-  else if (errorListThresholdsProfiles)
-    return (<ErrorComponent error={errorListThresholdsProfiles}/>);
+  else if (statusThresholdsProfiles === 'error')
+    return (<ErrorComponent error={errorThresholdsProfiles}/>);
 
-  else if (errorUserDetails)
+  else if (statusUserDetails === 'error')
     return (<ErrorComponent error={errorUserDetails}/>);
 
-  else if (!loadingUserDetails && !loadingListThresholdsProfiles && listThresholdsProfiles) {
+  else if (thresholdsProfiles) {
     return (
       <BaseArgoView
         resourcename='thresholds profile'
@@ -971,7 +1010,7 @@ export const ThresholdsProfilesList = (props) => {
         publicview={publicView}
       >
         <ProfilesListTable
-          data={listThresholdsProfiles}
+          data={thresholdsProfiles}
           columns={columns}
           type='thresholds'
         />
@@ -988,46 +1027,35 @@ export const ThresholdsProfilesChange = (props) => {
   const history = props.history;
   const location = props.location;
   const publicView = props.publicView;
-  const querykey =`thresholdsprofile_${name}_${publicView ? 'publicview' : 'changeview'}`;
+  const querykey = [`${publicView ? 'public_' : ''}thresholdsprofile`, name];
+  const webapitoken = props.webapitoken
+  const webapithresholds = props.webapithresholds;
 
   const backend = new Backend();
   const webapi = new WebApi({
-    token: props.webapitoken,
-    thresholdsProfiles: props.webapithresholds
+    token: webapitoken,
+    thresholdsProfiles: webapithresholds
   });
 
   const queryClient = useQueryClient();
 
   const { data: userDetails, isLoading: loadingUserDetails } = useQuery(
-    'session_userdetails', async () => {
-      let sessionActive = await backend.isActiveSession();
-      if (sessionActive.active)
-        return sessionActive.userdetails;
-    }
+    'userdetails', () => fetchUserDetails(true)
   );
 
-  const { data: thresholdsProfile, error: errorThresholdsProfile, isLoading: loadingThresholdsProfile } = useQuery(
-    `${querykey}`, async () => {
-      if (!addview) {
-        let json = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}thresholdsprofiles/${name}`);
-        let thresholdsprofile = await webapi.fetchThresholdsProfile(json.apiid);
-        let tp = {
-          'apiid': thresholdsprofile.id,
-          'name': thresholdsprofile.name,
-          'groupname': json['groupname'],
-          'rules': thresholdsToValues(thresholdsprofile.rules)
-        };
-        return tp;
-      }
-    },
+  const { data: thresholdsProfile, error: errorThresholdsProfile, status: statusThresholdsProfile } = useQuery(
+    querykey, () => fetchThresholdsProfile({
+      addview: addview,
+      publicView: publicView,
+      name: name,
+      webapitoken: webapitoken,
+      webapithresholds: webapithresholds
+    }),
     { enabled: !publicView ? !addview && !!userDetails : true }
   );
 
-  const { data: allMetrics, error: errorAllMetrics, isLoading: loadingAllMetrics } = useQuery(
-    `thresholdsprofile_${publicView ? 'public_' : ''}_allmetrics`, async () => {
-      let metrics = await backend.fetchListOfNames(`/api/v2/internal/${publicView ? 'public_' : ''}metricsall`);
-      return metrics;
-    }
+  const { data: allMetrics, error: errorAllMetrics, status: statusAllMetrics } = useQuery(
+    'metricsall', () => fetchAllMetrics(publicView)
   );
 
   const [areYouSureModal, setAreYouSureModal] = useState(false);
@@ -1062,7 +1090,7 @@ export const ThresholdsProfilesChange = (props) => {
       thresholds_rules[index].metric = value;
       modifiedThresholdsProfile.rules = thresholds_rules;
 
-      queryClient.setQueryData(`${querykey}`, () => modifiedThresholdsProfile);
+      queryClient.setQueryData(querykey, () => modifiedThresholdsProfile);
     }
   }
 
@@ -1242,16 +1270,16 @@ export const ThresholdsProfilesChange = (props) => {
     }
   }
 
-  if (loadingThresholdsProfile || loadingUserDetails || loadingAllMetrics)
+  if (statusThresholdsProfile === 'loading' || loadingUserDetails || statusAllMetrics === 'loading')
     return (<LoadingAnim/>);
 
-  else if (errorThresholdsProfile)
+  else if (statusThresholdsProfile === 'error')
     return (<ErrorComponent error={errorThresholdsProfile}/>);
 
-  else if (errorAllMetrics)
+  else if (statusAllMetrics === 'error')
     return (<ErrorComponent error={errorAllMetrics}/>);
 
-  else if (!loadingThresholdsProfile && !loadingUserDetails && !loadingAllMetrics && allMetrics) {
+  else if (allMetrics) {
     let write_perm = userDetails ?
       addview ?
         userDetails.is_superuser || userDetails.groups.thresholdsprofiles.length > 0
@@ -1410,67 +1438,62 @@ function arraysEqual(arr1, arr2) {
 }
 
 
+const fetchThresholdsProfilesVersions = async (name) => {
+  const backend = new Backend();
+
+  return await backend.fetchData(`/api/v2/internal/tenantversion/thresholdsprofile/${name}`);
+}
+
+
 export const ThresholdsProfileVersionCompare = (props) => {
   const version1 = props.match.params.id1;
   const version2 = props.match.params.id2;
   const name = props.match.params.name;
 
-  const [loading, setLoading] = useState(false);
-  const [profile1, setProfile1] = useState(undefined);
-  const [profile2, setProfile2] = useState(undefined);
-  const [error, setError] = useState(null);
+  const { data: versions, error: error, status: status } = useQuery(
+    ['thresholdsprofile', 'version', name], () => fetchThresholdsProfilesVersions(name)
+  )
 
-  useEffect(() => {
-    const backend = new Backend();
-    setLoading(true);
-    fetchVersions();
-
-    async function fetchVersions() {
-      try {
-        let json = await backend.fetchData(`/api/v2/internal/tenantversion/thresholdsprofile/${name}`);
-
-        json.forEach((e) => {
-          if (e.version == version1)
-            setProfile1(e.fields);
-
-          else if (e.version == version2)
-            setProfile2(e.fields);
-        });
-      } catch(err) {
-        setError(err);
-      }
-      setLoading(false);
-    }
-  }, [name, version1, version2]);
-
-  if (loading)
+  if (status === 'loading')
     return (<LoadingAnim/>);
 
-  else if (error)
+  else if (status === 'error')
     return (<ErrorComponent error={error}/>);
 
-  else if (!loading && profile1 && profile2) {
-    return (
-      <React.Fragment>
-        <div className='d-flex align-items-center justify-content-between'>
-          <h2 className='ml-3 mt-1 mb-4'>{`Compare ${name} versions`}</h2>
-        </div>
-        {
-          (profile1.name !== profile2.name) &&
-            <DiffElement title='name' item1={profile1.name} item2={profile2.name}/>
-        }
-        {
-          (profile1.groupname !== profile2.groupname) &&
-            <DiffElement title='group name' item1={profile1.groupname} item2={profile2.groupname}/>
-        }
-        {
-          (!arraysEqual(profile1.rules, profile2.rules)) &&
-            <ListDiffElement title='rules' item1={profile1.rules} item2={profile2.rules}/>
-        }
-      </React.Fragment>
-    );
-  } else
-    return null;
+  else if (versions) {
+    var profile1 = undefined;
+    var profile2 = undefined;
+
+    versions.forEach(e => {
+      if (e.version == version1)
+        profile1 = e.fields;
+
+      else if (e.version == version2)
+        profile2 = e.fields;
+    })
+
+    if (profile1 && profile2)
+      return (
+        <React.Fragment>
+          <div className='d-flex align-items-center justify-content-between'>
+            <h2 className='ml-3 mt-1 mb-4'>{`Compare ${name} versions`}</h2>
+          </div>
+          {
+            (profile1.name !== profile2.name) &&
+              <DiffElement title='name' item1={profile1.name} item2={profile2.name}/>
+          }
+          {
+            (profile1.groupname !== profile2.groupname) &&
+              <DiffElement title='group name' item1={profile1.groupname} item2={profile2.groupname}/>
+          }
+          {
+            (!arraysEqual(profile1.rules, profile2.rules)) &&
+              <ListDiffElement title='rules' item1={profile1.rules} item2={profile2.rules}/>
+          }
+        </React.Fragment>
+      );
+    } else
+      return null;
 };
 
 
@@ -1478,65 +1501,53 @@ export const ThresholdsProfileVersionDetail = (props) => {
   const name = props.match.params.name;
   const version = props.match.params.version;
 
-  const [profile, setProfile] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const { data: versions, error: error, status: status } = useQuery(
+    ['thresholdsprofile', 'version', name], () => fetchThresholdsProfilesVersions(name)
+  )
 
-  useEffect(() => {
-    const backend = new Backend();
-    setLoading(true);
-    fetchProfile();
-
-    async function fetchProfile() {
-      try {
-        let json = await backend.fetchData(`/api/v2/internal/tenantversion/thresholdsprofile/${name}`);
-        json.forEach((e) => {
-          if (e.version == version)
-            setProfile({
-              name: e.fields.name,
-              groupname: e.fields.groupname,
-              rules: thresholdsToValues(e.fields.rules),
-              date_created: e.date_created
-            });
-        });
-      } catch(err) {
-        setError(err);
-      }
-
-      setLoading(false);
-    }
-  }, [name, version]);
-
-  if (loading)
+  if (status === 'loading')
     return (<LoadingAnim/>);
 
-  else if (error)
+  else if (status === 'error')
     return (<ErrorComponent error={error}/>);
 
-  else if (!loading && profile) {
-    return (
-      <BaseArgoView
-        resourcename={`${name} (${profile.date_created})`}
-        infoview={true}
-      >
-        <Formik
-          initialValues = {{
-            name: profile.name,
-            groupname: profile.groupname,
-            rules: profile.rules
-          }}
+  else if (versions) {
+    var profile = undefined;
+
+    versions.forEach((e) => {
+      if (e.version == version)
+        profile = {
+          name: e.fields.name,
+          groupname: e.fields.groupname,
+          rules: thresholdsToValues(e.fields.rules),
+          date_created: e.date_created
+        }
+    })
+
+    if (profile)
+      return (
+        <BaseArgoView
+          resourcename={`${name} (${profile.date_created})`}
+          infoview={true}
         >
-          {props => (
-            <Form>
-              <ThresholdsProfilesForm
-                {...props}
-                historyview={true}
-              />
-            </Form>
-          )}
-        </Formik>
-      </BaseArgoView>
-    );
-  } else
-    return null;
+          <Formik
+            initialValues = {{
+              name: profile.name,
+              groupname: profile.groupname,
+              rules: profile.rules
+            }}
+          >
+            {props => (
+              <Form>
+                <ThresholdsProfilesForm
+                  {...props}
+                  historyview={true}
+                />
+              </Form>
+            )}
+          </Formik>
+        </BaseArgoView>
+      );
+    } else
+      return null;
 };

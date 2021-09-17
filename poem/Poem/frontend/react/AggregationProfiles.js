@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useContext } from 'react';
+import React, { useState, useMemo, useContext } from 'react';
 import {Link} from 'react-router-dom';
 import {
   LoadingAnim,
@@ -39,12 +39,13 @@ import {
 } from 'reactstrap';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import * as Yup from 'yup';
-import { downloadJSON } from './Helpers';
+import { downloadJSON } from './FileDownload';
 
 import ReactDiffViewer from 'react-diff-viewer';
 
 import "react-notifications/lib/notifications.css";
 import './AggregationProfiles.css';
+import { fetchMetricProfiles, fetchUserDetails } from './QueryFunctions';
 
 
 const AggregationProfilesChangeContext = React.createContext();
@@ -564,6 +565,11 @@ const GroupsDisabledForm = ( props ) => (
 )
 
 
+const fetchAP = async (webapi, apiid) => {
+  return await webapi.fetchAggregationProfile(apiid);
+}
+
+
 export const AggregationProfilesChange = (props) => {
   const tenant_name = props.tenantname;
   const profile_name = props.match.params.name;
@@ -580,7 +586,6 @@ export const AggregationProfilesChange = (props) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   // TODO: useFormik hook with formik 2.x
   const [formikValues, setFormikValues] = useState({})
-  const querykey = `aggregationprofiles_${addview ? 'addview' : `${profile_name}_${publicView ? 'publicview' : 'changeview'}`}`;
   const hiddenFileInput = React.useRef(null);
   const formikRef = React.useRef();
 
@@ -598,69 +603,37 @@ export const AggregationProfilesChange = (props) => {
   const endpoint_groups = ["servicegroups", "sites"];
 
   const { data: userDetails, isLoading: loadingUserDetails } = useQuery(
-    `session_userdetails`, async () => {
-      if (!publicView) {
-        const sessionActive = await backend.isActiveSession()
-        if (sessionActive.active) {
-          return sessionActive.userdetails
-        }
-      }
-    }
+    'userdetails', () => fetchUserDetails(true),
+    { enabled: !publicView }
   );
 
-  const { data: aggregationProfile, error: errorAggregationProfile, isLoading: loadingAggregationProfile } = useQuery(querykey, async () => {
-    let backendAggregationProfile = new Object({
-      id: '',
-      name: '',
-      metric_operation: '',
-      profile_operation: '',
-      endpoint_group: '',
-      metric_profile: {
-          name: ''
-      },
-      groups: []
-    })
-    if (!addview)
-      backendAggregationProfile = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}aggregations/${profile_name}`);
-
-    if (publicView) {
-      let metricProfiles = await webapi.fetchMetricProfiles();
-      let aggregationProfile = await webapi.fetchAggregationProfile(backendAggregationProfile.apiid);
-      return {
-        profile: aggregationProfile,
-        groupname: backendAggregationProfile.groupname,
-        listmetricprofiles: metricProfiles,
-        listidmetricprofiles: extractListOfMetricsProfiles(metricProfiles),
-        listservices: extractListOfServices(aggregationProfile.metric_profile, metricProfiles),
-        listusergroups: []
-      }
-    }
-    else {
-      let metricProfiles = await webapi.fetchMetricProfiles();
-      if (!addview) {
-        let aggregationProfile = await webapi.fetchAggregationProfile(backendAggregationProfile.apiid);
-        return {
-          profile: aggregationProfile,
-          groupname: backendAggregationProfile.groupname,
-          listidmetricprofiles: extractListOfMetricsProfiles(metricProfiles),
-          listservices: extractListOfServices(aggregationProfile.metric_profile, metricProfiles),
-          listmetricprofiles: metricProfiles
-        }
-      }
-      else {
-        return {
-          profile: backendAggregationProfile,
-          groupname: backendAggregationProfile.groupname,
-          listidmetricprofiles: extractListOfMetricsProfiles(metricProfiles),
-          listServices: [],
-          listmetricprofiles: metricProfiles
-        }
-      }
-    }
+  const { data: backendAP, error: errorBackendAP, isLoading: loadingBackendAP } = useQuery(
+    [`${publicView ? 'public_' : ''}aggregationprofile`, 'backend', profile_name],
+    async () => {
+      return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}aggregations/${profile_name}`);
     },
     {
-      enabled: !publicView ? userDetails ? true : false : true
+      enabled: !addview && (!publicView ? !!userDetails : true),
+      initialData: () => {
+        return queryClient.getQueryData(
+          [`${publicView ? 'public_' : ''}aggregationprofile`, 'backend']
+        )?.find(
+          profile => profile.name === profile_name
+        )
+      }
     }
+  )
+
+  const { data: webApiAP, error: errorWebApiAP, isLoading: loadingWebApiAP } = useQuery(
+    [`${publicView ? 'public_' : ''}aggregationprofile`, 'webapi', profile_name],
+    () => fetchAP(webapi, backendAP.apiid),
+    { enabled: !!backendAP }
+  )
+
+  const { data: metricProfiles, error: errorMetricProfiles, isLoading: loadingMetricProfiles } = useQuery(
+    [`${publicView ? 'public_' : ''}metricprofile`, 'webapi'],
+    () => fetchMetricProfiles(webapi),
+    { enabled: !publicView ? !!userDetails : true }
   )
 
   const correctMetricProfileName = (metricProfileId, listMetricProfilesWebApi) => {
@@ -758,7 +731,7 @@ export const AggregationProfilesChange = (props) => {
     if (!addview)
       valueSend.name = profile_name;
 
-    let match_profile = aggregationProfile.listidmetricprofiles.filter((e) =>
+    let match_profile = extractListOfMetricsProfiles(metricProfiles).filter((e) =>
       valueSend.metric_profile === e.name)
 
     valueSend.metric_profile = match_profile[0]
@@ -794,7 +767,7 @@ export const AggregationProfilesChange = (props) => {
           }
         )
         if (r_internal.ok) {
-          queryClient.invalidateQueries(querykey);
+          queryClient.invalidateQueries('aggregationprofile');
           NotifyOk({
             msg: 'Aggregation profile successfully changed',
             title: 'Changed',
@@ -976,27 +949,31 @@ export const AggregationProfilesChange = (props) => {
       doChange(formikValues);
   }
 
-  if (loadingAggregationProfile)
+  if (loadingUserDetails || loadingBackendAP || loadingWebApiAP || loadingMetricProfiles)
     return (<LoadingAnim />)
 
-  else if (errorAggregationProfile)
-    return (
-      <ErrorComponent error={errorAggregationProfile}/>
-    )
+  else if (errorBackendAP)
+    return (<ErrorComponent error={errorBackendAP}/>)
 
-  else if (!loadingAggregationProfile && !loadingUserDetails && aggregationProfile) {
-    let isServiceMissing = checkIfServiceMissingInMetricProfile(aggregationProfile.listservices, aggregationProfile.profile.groups)
-    let write_perm = undefined
+  else if (errorWebApiAP)
+      return (<ErrorComponent error={errorWebApiAP} />)
 
+  else if (errorMetricProfiles)
+    return (<ErrorComponent error={errorMetricProfiles} />)
+
+  else if (!loadingUserDetails && metricProfiles) {
     if (!listServices && !publicView && !addview)
-      setListServices(aggregationProfile.listservices)
+      setListServices(!addview ? extractListOfServices(webApiAP.metric_profile, metricProfiles) : [])
+
+    let isServiceMissing = checkIfServiceMissingInMetricProfile(listServices, !addview ? webApiAP.groups : [])
+    let write_perm = undefined
 
     if (publicView) {
       write_perm = false
     }
     else if (!addview) {
       write_perm = userDetails.is_superuser ||
-            userDetails.groups.aggregations.indexOf(aggregationProfile.groupname) >= 0;
+            userDetails.groups.aggregations.indexOf(backendAP.groupname) >= 0;
     }
     else {
       write_perm = userDetails.is_superuser ||
@@ -1055,19 +1032,19 @@ export const AggregationProfilesChange = (props) => {
       >
         <Formik
           initialValues = {{
-            id: aggregationProfile.profile.id,
-            name: aggregationProfile.profile.name,
-            groupname: aggregationProfile.groupname,
-            metric_operation: aggregationProfile.profile.metric_operation,
-            profile_operation: aggregationProfile.profile.profile_operation,
-            metric_profile: correctMetricProfileName(aggregationProfile.profile.metric_profile.id, aggregationProfile.listidmetricprofiles),
-            endpoint_group: aggregationProfile.profile.endpoint_group,
+            id: webApiAP ? webApiAP.id : '',
+            name: webApiAP ? webApiAP.name : '',
+            groupname: backendAP ? backendAP.groupname: '',
+            metric_operation: webApiAP ? webApiAP.metric_operation : '',
+            profile_operation: webApiAP ? webApiAP.profile_operation : '',
+            metric_profile: webApiAP ? correctMetricProfileName(webApiAP.metric_profile.id, extractListOfMetricsProfiles(metricProfiles)) : { name: '' },
+            endpoint_group: webApiAP ? webApiAP.endpoint_group : '',
             groups: !publicView ?
               insertDummyGroup(
-                insertEmptyServiceForNoServices(aggregationProfile.profile.groups)
+                insertEmptyServiceForNoServices(webApiAP ? webApiAP.groups : [])
               )
             :
-              aggregationProfile.profile.groups
+              webApiAP.groups
           }}
           onSubmit={(values, actions) => onSubmitHandle(values, actions)}
           validationSchema={AggregationProfilesSchema}
@@ -1083,7 +1060,7 @@ export const AggregationProfilesChange = (props) => {
                     name: current.values.metric_profile
                   }
                   setListServices(extractListOfServices(selected_profile,
-                    aggregationProfile.listmetricprofiles))
+                    metricProfiles))
                 }
               }}
               />
@@ -1101,7 +1078,7 @@ export const AggregationProfilesChange = (props) => {
                 list_user_groups={!publicView ? userDetails.groups.aggregations : []}
                 logic_operations={logic_operations}
                 endpoint_groups={endpoint_groups}
-                list_id_metric_profiles={aggregationProfile.listidmetricprofiles}
+                list_id_metric_profiles={extractListOfMetricsProfiles(metricProfiles)}
                 write_perm={write_perm}
                 historyview={publicView}
                 addview={addview}
@@ -1164,33 +1141,26 @@ export const AggregationProfilesChange = (props) => {
 
 export const AggregationProfilesList = (props) => {
   const location = props.location;
-  const backend = new Backend();
   const publicView = props.publicView
 
-  let apiUrl = null;
-  if (publicView)
-    apiUrl = '/api/v2/internal/public_aggregations'
-  else
-    apiUrl = '/api/v2/internal/aggregations'
+  const backend = new Backend();
+  const webapi = new WebApi({
+    token: props.webapitoken,
+    metricProfiles: props.webapimetric,
+    aggregationProfiles: props.webapiaggregation
+  })
+  const queryClient = useQueryClient();
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
-    `session_userdetails`, async () => {
-      const sessionActive = await backend.isActiveSession()
-      if (sessionActive.active) {
-        return sessionActive.userdetails
-      }
-    }
+    'userdetails', () => fetchUserDetails(true)
   );
 
-  const { data: listAggregationProfiles, error: errorListAggregationProfiles,
-    isLoading: loadingListAggregationProfiles} = useQuery(
-    `aggregations_listview`, async () => {
-      const fetched = await backend.fetchData(apiUrl)
-
-      return fetched
+  const { data: aggregations, error: errorAggregations, isLoading: loadingAggregations } = useQuery(
+    [`${publicView ? 'public_' : ''}aggregationprofile`, 'backend'], async () => {
+      return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}aggregations`)
     },
     {
-      enabled: !publicView ? userDetails ? true : false : true
+      enabled: !publicView ? !!userDetails : true
     }
   );
 
@@ -1204,7 +1174,19 @@ export const AggregationProfilesList = (props) => {
       Header: 'Name',
       id: 'name',
       accessor: e =>
-        <Link to={`/ui/${publicView ? 'public_' : ''}aggregationprofiles/` + e.name}>
+        <Link
+          to={`/ui/${publicView ? 'public_' : ''}aggregationprofiles/` + e.name}
+          onMouseEnter={ async () => {
+            await queryClient.prefetchQuery(
+              [`${publicView ? 'public_' : ''}aggregationprofile`, 'webapi', e.name],
+              () => fetchAP(webapi, e.apiid)
+            );
+            await queryClient.prefetchQuery(
+              [`${publicView ? 'public_' : ''}metricprofile`, 'webapi'],
+              () => fetchMetricProfiles(webapi)
+            );
+          } }
+        >
           {e.name}
         </Link>,
       column_width: '20%'
@@ -1223,18 +1205,18 @@ export const AggregationProfilesList = (props) => {
         </div>,
       column_width: '8%'
     }
-  ])
+  ], [])
 
-  if (loadingUserDetails || loadingListAggregationProfiles)
+  if (loadingUserDetails || loadingAggregations)
     return (<LoadingAnim />)
 
-  else if (errorListAggregationProfiles)
-    return (<ErrorComponent error={errorListAggregationProfiles}/>);
+  else if (errorAggregations)
+    return (<ErrorComponent error={errorAggregations}/>);
 
   else if (errorUserDetails)
     return (<ErrorComponent error={errorUserDetails}/>);
 
-  else if (!loadingUserDetails && !loadingUserDetails && listAggregationProfiles) {
+  else if (!loadingUserDetails && aggregations) {
     return (
       <BaseArgoView
         resourcename='aggregation profile'
@@ -1244,7 +1226,7 @@ export const AggregationProfilesList = (props) => {
         addperm={publicView ? false : userDetails.is_superuser || userDetails.groups.aggregations.length > 0}
         publicview={publicView}>
         <ProfilesListTable
-          data={listAggregationProfiles}
+          data={aggregations}
           columns={columns}
           type='aggregation'
         />
@@ -1297,51 +1279,20 @@ const ListDiffElement = ({title, item1, item2}) => {
 };
 
 
+const fetchAggregationProfileVersions = async (name) => {
+  const backend = new Backend();
+  return await backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${name}`);
+}
+
+
 export const AggregationProfileVersionCompare = (props) => {
   const version1 = props.match.params.id1;
   const version2 = props.match.params.id2;
   const name = props.match.params.name;
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [aggregationProfileVersion1, setAggregationProfileVersion1] = useState(undefined)
-  const [aggregationProfileVersion2, setAggregationProfileVersion2] = useState(undefined)
 
-  useEffect(() => {
-    const backend = new Backend();
-    const fetchDataAndSet = async () => {
-      let json = await backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${name}`);
-      json.forEach((e) => {
-        if (e.version == version1)
-          setAggregationProfileVersion1({
-            name: e.fields.name,
-            groupname: e.fields.groupname,
-            metric_operation: e.fields.metric_operation,
-            profile_operation: e.fields.profile_operation,
-            endpoint_group: e.fields.endpoint_group,
-            metric_profile: e.fields.metric_profile,
-            groups: e.fields.groups,
-          })
-        else if (e.version == version2)
-          setAggregationProfileVersion2({
-            name: e.fields.name,
-            groupname: e.fields.groupname,
-            metric_operation: e.fields.metric_operation,
-            profile_operation: e.fields.profile_operation,
-            endpoint_group: e.fields.endpoint_group,
-            metric_profile: e.fields.metric_profile,
-            groups: e.fields.groups,
-          })
-        })
-      setLoading(false);
-    }
-    try {
-      fetchDataAndSet();
-    }
-    catch(err) {
-      setError(error);
-      setLoading(false);
-    }
-  }, [error, name, version1, version2])
+  const { data: versions, error, isLoading: loading } = useQuery(
+    ['aggregationprofile', 'tenantversion', name], () => fetchAggregationProfileVersions(name)
+  )
 
   if (loading)
     return (<LoadingAnim/>);
@@ -1351,12 +1302,16 @@ export const AggregationProfileVersionCompare = (props) => {
       <ErrorComponent error={error}/>
     )
 
-  else if (!loading && aggregationProfileVersion1 && aggregationProfileVersion2) {
+  else if (versions) {
+    const aggregationProfileVersion1 = versions.find(ver => ver.version == version1).fields;
+    const aggregationProfileVersion2 = versions.find(ver => ver.version == version2).fields;
+
     const {
       name: name1, groupname: groupname1, metric_operation: metric_operation1,
       profile_operation: profile_operation1, endpoint_group: endpoint_group1,
       metric_profile: metric_profile1, groups: groups1
     } = aggregationProfileVersion1
+
     const {
       name: name2, groupname: groupname2, metric_operation: metric_operation2,
       profile_operation: profile_operation2, endpoint_group: endpoint_group2,
@@ -1406,38 +1361,10 @@ export const AggregationProfileVersionCompare = (props) => {
 export const AggregationProfileVersionDetails = (props) => {
   const name = props.match.params.name;
   const version = props.match.params.version;
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [aggregationProfileDetails, setAggregationProfileDetails] = useState(undefined)
 
-  useEffect(() => {
-    const backend = new Backend();
-    const fetchDataAndSet = async () => {
-      let json = await backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${name}`);
-      json.forEach((e) => {
-        if (e.version == version)
-          setAggregationProfileDetails({
-            name: e.fields.name,
-            groupname: e.fields.groupname,
-            metric_operation: e.fields.metric_operation,
-            profile_operation: e.fields.profile_operation,
-            endpoint_group: e.fields.endpoint_group,
-            metric_profile: e.fields.metric_profile,
-            groups: e.fields.groups,
-            date_created: e.date_created,
-          })
-      })
-      setLoading(false);
-    }
-    setLoading(true);
-    try {
-      fetchDataAndSet()
-    }
-    catch(err) {
-      setError(error);
-      setLoading(false);
-    }
-  }, [error, name, version])
+  const { data: versions, error, isLoading: loading } = useQuery(
+    ['aggregationprofile', 'tenantversion', name], () => fetchAggregationProfileVersions(name)
+  )
 
   if (loading)
     return (<LoadingAnim/>);
@@ -1445,7 +1372,13 @@ export const AggregationProfileVersionDetails = (props) => {
   else if (error)
     return (<ErrorComponent error={error}/>)
 
-  else if (!loading && aggregationProfileDetails) {
+  else if (versions) {
+    const properVersion = versions.find(ver => ver.version == version);
+
+    const aggregationProfileDetails = {
+      ...properVersion.fields,
+      date_created: properVersion.date_created
+    };
 
     return (
       <BaseArgoView

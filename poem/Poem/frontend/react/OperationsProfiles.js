@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { WebApi } from './DataManager';
 import { Link } from 'react-router-dom';
 import {
@@ -18,7 +18,8 @@ import {
   Table
 } from 'reactstrap';
 import { Formik, Form, Field } from 'formik';
-import { useQuery } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
+import { fetchOperationsProfiles } from './QueryFunctions';
 
 
 export const OperationsProfilesList = (props) => {
@@ -29,12 +30,8 @@ export const OperationsProfilesList = (props) => {
     operationsProfiles: props.webapioperations
   });
 
-  const { data: listProfiles, error: error, isLoading: loading } = useQuery(
-    'operationsprofiles_listview', async () => {
-      let profiles = await webapi.fetchOperationsProfiles();
-
-      return profiles;
-    }
+  const { data: profiles, error, status } = useQuery(
+    `${publicView ? 'public_' : ''}operationsprofile`, () => fetchOperationsProfiles(webapi)
   );
 
   const columns = React.useMemo(() => [
@@ -59,13 +56,13 @@ export const OperationsProfilesList = (props) => {
     }
   ], [publicView]);
 
-  if (loading)
+  if (status === 'loading')
     return (<LoadingAnim/>);
 
-  else if (error)
+  else if (status === 'error')
     return (<ErrorComponent error={error}/>);
 
-  else if (!loading && listProfiles)
+  else if (profiles)
     return (
       <BaseArgoView
         resourcename='operations profile'
@@ -74,7 +71,7 @@ export const OperationsProfilesList = (props) => {
         addnew={false}
       >
         <ProfilesListTable
-          data={listProfiles}
+          data={profiles}
           columns={columns}
           type='operations'
         />
@@ -87,41 +84,36 @@ export const OperationsProfilesList = (props) => {
 
 
 export const OperationsProfileDetails = (props) => {
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
   const name = props.match.params.name;
   const token = props.webapitoken;
   const webapioperations = props.webapioperations;
+  const publicView = props.publicView;
 
-  useEffect(() => {
-    const webapi = new WebApi({
-      token: token,
-      operationsProfiles: webapioperations
-    });
+  const webapi = new WebApi({
+    token: token,
+    operationsProfiles: webapioperations
+  });
 
-    setLoading(true);
+  const queryClient = useQueryClient();
 
-    async function fetchData() {
-      try {
-          let json = await webapi.fetchOperationProfile(name);
-          setProfile(json);
-      } catch(err) {
-        setError(err);
+  const { data: profile, error, status } = useQuery(
+    [`${publicView ? 'public_' : ''}operationsprofile`, name], async () => {
+      return await webapi.fetchOperationProfile(name);
+    },
+    {
+      initialData: () => {
+        return queryClient.getQueryData('operationsprofile')?.find(profile => profile.name === name)
       }
-      setLoading(false);
     }
-    fetchData();
-  }, [name, token, webapioperations]);
+  )
 
-  if (loading)
+  if (status === 'loading')
     return (<LoadingAnim/>);
 
-  else if (error)
+  else if (status === 'error')
     return (<ErrorComponent error={error}/>);
 
-  else if (!loading && profile)
+  else if (profile)
     return (
       <BaseArgoView
         resourcename='Operations profile details'

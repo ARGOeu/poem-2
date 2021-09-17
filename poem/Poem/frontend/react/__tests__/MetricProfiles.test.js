@@ -229,7 +229,12 @@ function renderListView(publicView=false) {
           <Router history={history}>
             <Route
               path='/ui/public_metricprofiles'
-              render={ props => <MetricProfilesList publicView={true} {...props} /> }
+              render={ props => <MetricProfilesList
+                {...props}
+                webapimetric='https://mock.metrics.com'
+                webapitoken='token'
+                publicView={true}
+              /> }
             />
           </Router>
         </QueryClientProvider>
@@ -241,7 +246,13 @@ function renderListView(publicView=false) {
       ...render(
         <QueryClientProvider client={queryClient}>
           <Router history={history}>
-            <Route path='/ui/metricprofiles' component={MetricProfilesList} />
+            <Route path='/ui/metricprofiles'
+              render={ props => <MetricProfilesList
+                {...props}
+                webapimetric='https://mock.metrics.com'
+                webapitoken='token'
+              /> }
+            />
           </Router>
         </QueryClientProvider>
       )
@@ -739,7 +750,7 @@ describe('Tests for metric profiles changeview', () => {
   })
 
   test('Test export csv successfully', async () => {
-    const helpers = require('../Helpers');
+    const helpers = require('../FileDownload');
     jest.spyOn(helpers, 'downloadCSV').mockReturnValueOnce(null);
 
     renderChangeView();
@@ -758,7 +769,7 @@ describe('Tests for metric profiles changeview', () => {
   })
 
   test('Test export csv when form has been changed', async () => {
-    const helpers = require('../Helpers');
+    const helpers = require('../FileDownload');
     jest.spyOn(helpers, 'downloadCSV').mockReturnValueOnce(null);
 
     renderChangeView();

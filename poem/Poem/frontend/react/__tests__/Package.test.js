@@ -39,24 +39,28 @@ const mockAddObject = jest.fn();
 
 const mockListPackages = [
   {
+    'id': '5',
     'name': 'nagios-plugins-argo',
     'version': '0.1.11',
     'use_present_version': false,
     'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
   },
   {
+    'id': '4',
     'name': 'nagios-plugins-fedcloud',
     'version': '0.5.0',
     'use_present_version': false,
     'repos': ['repo-2 (CentOS 7)']
   },
   {
+    'id': '1',
     'name': 'nagios-plugins-globus',
     'version': '0.1.5',
     'use_present_version': false,
     'repos': ['repo-2 (CentOS 7)']
   },
   {
+    'id': '2',
     'name': 'nagios-plugins-http',
     'version': 'present',
     'use_present_version': true,
@@ -152,18 +156,21 @@ const mockProbeVersions = [
 
 const mockPackageVersions = [
   {
+    'id': '7',
     'name': 'nagios-plugins-argo-new',
     'version': '0.1.12',
     'use_present_version': false,
     'repos': ['repo-2 (CentOS 7)']
   },
   {
+    'id': '9',
     'name': 'nagios-plugins-argo',
     'version': '0.1.11',
     'use_present_version': false,
     'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
   },
   {
+    'id': '12',
     'name': 'nagios-plugins-argo',
     'version': '0.1.7',
     'use_present_version': false,
@@ -199,7 +206,7 @@ function renderTenantListView() {
       <QueryClientProvider client={queryClient}>
         <Router history={history}>
           <Route
-            render={ props => <PackageList {...props} /> }
+            render={ props => <PackageList {...props} isTenantSchema={true} /> }
           />
         </Router>
       </QueryClientProvider>

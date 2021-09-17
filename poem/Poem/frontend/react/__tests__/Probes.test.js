@@ -148,7 +148,7 @@ const mockProbeVersions = [
 ];
 
 
-function renderListView(publicView=false) {
+function renderListView({ publicView=false, isTenantSchema=false }) {
   const route = `/ui/${publicView ? 'public_' : ''}probes`;
   const history = createMemoryHistory({ initialEntries: [route] });
 
@@ -158,7 +158,7 @@ function renderListView(publicView=false) {
         <QueryClientProvider client={queryClient}>
           <Router history={history}>
             <Route
-              render={ props => <ProbeList {...props} publicView={true} /> }
+              render={ props => <ProbeList {...props} publicView={true} isTenantSchema={isTenantSchema} /> }
             />
           </Router>
         </QueryClientProvider>
@@ -171,7 +171,7 @@ function renderListView(publicView=false) {
         <QueryClientProvider client={queryClient}>
           <Router history={history}>
             <Route
-              render={ props => <ProbeList {...props} /> }
+              render={ props => <ProbeList {...props} isTenantSchema={isTenantSchema} /> }
             />
           </Router>
         </QueryClientProvider>
@@ -180,7 +180,7 @@ function renderListView(publicView=false) {
 }
 
 
-function renderChangeView(publicView=false) {
+function renderChangeView({ publicView=false, isTenantSchema=false }) {
   const route = `/ui/${publicView ? 'public_' : ''}probes/ams-probe`;
   const history = createMemoryHistory({ initialEntries: [route] });
 
@@ -191,7 +191,7 @@ function renderChangeView(publicView=false) {
           <Router history={history}>
             <Route
               path='/ui/public_probes/:name'
-              render={ props => <ProbeComponent {...props} publicView={true} /> }
+              render={ props => <ProbeComponent {...props} publicView={true} isTenantSchema={isTenantSchema} /> }
             />
           </Router>
         </QueryClientProvider>
@@ -204,7 +204,7 @@ function renderChangeView(publicView=false) {
           <Router history={history}>
             <Route
               path='/ui/probes/:name'
-              render = { props => <ProbeComponent {...props} /> }
+              render = { props => <ProbeComponent {...props} isTenantSchema={isTenantSchema} /> }
             />
           </Router>
         </QueryClientProvider>
@@ -296,14 +296,13 @@ describe('Test list of probes on SuperAdmin POEM', () => {
             case '/api/v2/internal/public_probes':
               return Promise.resolve(mockListProbes);
           }
-        },
-        isTenantSchema: () => Promise.resolve(false)
+        }
       }
     })
   })
 
   test('Test that listview renders properly', async () => {
-    renderListView();
+    renderListView({});
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
 
@@ -334,7 +333,7 @@ describe('Test list of probes on SuperAdmin POEM', () => {
   })
 
   test('Test that public listview renders properly', async () => {
-    renderListView(true);
+    renderListView({ publicView: true });
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
 
@@ -365,7 +364,7 @@ describe('Test list of probes on SuperAdmin POEM', () => {
   })
 
   test('Test filter list of probes', async () => {
-    renderListView();
+    renderListView({});
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe to change')
@@ -390,7 +389,7 @@ describe('Test list of probes on SuperAdmin POEM', () => {
   })
 
   test('Test filter public list of probes', async () => {
-    renderListView(true);
+    renderListView({ publicView: true });
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe for details')
@@ -428,14 +427,13 @@ describe('Test list of probes on tenant POEM', () => {
             case '/api/v2/internal/public_probes':
               return Promise.resolve(mockListProbes);
           }
-        },
-        isTenantSchema: () => Promise.resolve(true)
+        }
       }
     })
   })
 
   test('Test that listview renders properly', async () => {
-    renderListView();
+    renderListView({ isTenantSchema: true });
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
 
@@ -466,7 +464,7 @@ describe('Test list of probes on tenant POEM', () => {
   })
 
   test('Test that public listview renders properly', async () => {
-    renderListView(true);
+    renderListView({ publicView: true, isTenantSchema: true });
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
 
@@ -497,7 +495,7 @@ describe('Test list of probes on tenant POEM', () => {
   })
 
   test('Test filter list of probes', async () => {
-    renderListView();
+    renderListView({ isTenantSchema: true });
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe for details')
@@ -522,7 +520,7 @@ describe('Test list of probes on tenant POEM', () => {
   })
 
   test('Test filter public list of probes', async () => {
-    renderListView(true);
+    renderListView({ publicView: true, isTenantSchema: true });
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe for details')
@@ -576,14 +574,13 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
               return Promise.resolve(mockPackages)
           }
         },
-        isTenantSchema: () => Promise.resolve(false),
         changeObject: mockChangeObject
       }
     })
   })
 
   test('Test that page renders properly', async () => {
-    renderChangeView();
+    renderChangeView({});
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
 
@@ -626,7 +623,7 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
   })
 
   test('Test that public page renders properly', async () => {
-    renderChangeView(true);
+    renderChangeView({ publicView: true });
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
 
@@ -673,7 +670,7 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
     )
 
-    renderChangeView();
+    renderChangeView({});
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /change probe/i }).textContent).toBe('Change probe')
@@ -725,7 +722,7 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
     )
 
-    renderChangeView();
+    renderChangeView({});
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /change probe/i }).textContent).toBe('Change probe')
@@ -779,7 +776,7 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
       })
     )
 
-    renderChangeView();
+    renderChangeView({});
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /change probe/i }).textContent).toBe('Change probe')
@@ -835,7 +832,7 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
       Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
     )
 
-    renderChangeView();
+    renderChangeView({});
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /change probe/i }).textContent).toBe('Change probe')
@@ -912,14 +909,13 @@ describe('Test probe changeview on tenant POEM', () => {
             case '/api/v2/internal/public_packages':
               return Promise.resolve(mockPackages)
           }
-        },
-        isTenantSchema: () => Promise.resolve(true)
+        }
       }
     })
   })
 
   test('Test that page renders properly', async () => {
-    renderChangeView();
+    renderChangeView({ isTenantSchema: true });
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
 
@@ -978,7 +974,6 @@ describe('Test probe addview', () => {
               return Promise.resolve(mockPackages)
           }
         },
-        isTenantSchema: () => Promise.resolve(false),
         addObject: mockAddObject
       }
     })

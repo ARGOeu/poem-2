@@ -23,32 +23,19 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
 import Select from 'react-select';
+import { fetchUserGroups } from './QueryFunctions';
+import { useQuery } from 'react-query';
 
 
 export const GroupList = (props) => {
-  const [loading, setLoading] = useState(false);
-  const [listGroups, setListGroups] = useState(null);
-  const [error, setError] = useState(null);
-
   const location = props.location;
   const name = props.name;
   const id = props.id;
   const group = props.group;
 
-  useEffect(() => {
-    setLoading(true);
-    const backend = new Backend();
-    async function fetchData() {
-      try {
-        let json = await backend.fetchResult('/api/v2/internal/usergroups');
-        setListGroups(json[group]);
-      } catch(err) {
-        setError(err);
-      }
-      setLoading(false);
-    }
-    fetchData();
-  }, [group]);
+  const { data: groups, error: error, status: status} = useQuery(
+    'usergroups', () => fetchUserGroups(true)
+  )
 
   const columns = React.useMemo(
     () => [
@@ -68,20 +55,20 @@ export const GroupList = (props) => {
     ], [name, id]
   );
 
-  if (loading)
+  if (status === 'loading')
     return (<LoadingAnim/>);
 
-  else if (error)
+  else if (status === 'error')
     return (<ErrorComponent error={error}/>);
 
-  else if (!loading && listGroups)
+  else if (groups)
     return (
       <BaseArgoView
         resourcename={name}
         location={location}
         listview={true}>
         <BaseArgoTable
-          data={listGroups}
+          data={groups[group]}
           columns={columns}
           page_size={10}
           resourcename='groups'

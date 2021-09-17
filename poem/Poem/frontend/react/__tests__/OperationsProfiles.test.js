@@ -316,33 +316,37 @@ function renderDetailsView(publicView=undefined) {
   if (publicView)
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            path='/ui/public_operationsprofiles/:name'
-            render={ props => <OperationsProfileDetails
-              {...props}
-              publicView={true}
-              webapioperations={'https://mock.operations.com'}
-              webapitoken={'token'}
-            /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/public_operationsprofiles/:name'
+              render={ props => <OperationsProfileDetails
+                {...props}
+                publicView={true}
+                webapioperations={'https://mock.operations.com'}
+                webapitoken={'token'}
+              /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 
   else
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            path='/ui/operationsprofiles/:name'
-            render={ props => <OperationsProfileDetails
-              {...props}
-              webapioperations={'https://mock.operations.com'}
-              webapitoken={'token'}
-            /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/operationsprofiles/:name'
+              render={ props => <OperationsProfileDetails
+                {...props}
+                webapioperations={'https://mock.operations.com'}
+                webapitoken={'token'}
+              /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 }
