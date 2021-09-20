@@ -6,11 +6,16 @@ import { Route, Router } from 'react-router-dom';
 import { APIKeyChange, APIKeyList } from '../APIKey';
 import { Backend } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { QueryClient, QueryClientProvider, setLogger } from 'react-query';
 
 
 const queryClient = new QueryClient();
 
+setLogger({
+  log: () => {},
+  warn: () => {},
+  error: () => {}
+})
 
 function renderWithRouterMatch(
   ui,
@@ -140,6 +145,8 @@ describe('Tests for API key change', () => {
   jest.spyOn(navigator.clipboard, "writeText");
   jest.spyOn(NotificationManager, "success");
   jest.spyOn(NotificationManager, "error");
+  jest.spyOn(queryClient, 'invalidateQueries');
+
   beforeAll(() => {
     const mockAPIKey = {
       id: 1,
@@ -187,8 +194,6 @@ describe('Tests for API key change', () => {
   })
 
   it('Test change API key name and save', async () => {
-    mockChangeObject.mockReturnValue(Promise.resolve({ok: true, status_code: 200}));
-
     renderWithRouterMatch(APIKeyChange)
 
     await waitFor(() => {
@@ -206,12 +211,11 @@ describe('Tests for API key change', () => {
         {id: 1, revoked: false, name: 'NEW_NAME'}
       )
     })
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('apikey');
     expect(NotificationManager.success).toHaveBeenCalledWith('API key successfully changed', 'Changed', 2000)
   })
 
   it('Test revoke API key and save', async () => {
-    mockChangeObject.mockReturnValue(Promise.resolve({ok: true, status: 200}));
-
     renderWithRouterMatch(APIKeyChange)
 
     await waitFor(() => {
@@ -229,17 +233,14 @@ describe('Tests for API key change', () => {
         {id: 1, revoked: true, name: 'FIRST_TOKEN'}
       )
     })
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('apikey');
     expect(NotificationManager.success).toHaveBeenCalledWith('API key successfully changed', 'Changed', 2000)
   })
 
   it('Test change API key with backend error message', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({detail: 'API key with this name already exists'}),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockChangeObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: API key with this name already exists')
+    } );
 
     renderWithRouterMatch(APIKeyChange)
 
@@ -258,24 +259,20 @@ describe('Tests for API key change', () => {
         {id: 1, revoked: false, name: 'SECOND_TOKEN'}
       )
     })
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('apikey');
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>API key with this name already exists</p>
+        <p>400 BAD REQUEST: API key with this name already exists</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 400 BAD REQUEST',
+      'Error',
       0,
       expect.any(Function)
     )
   })
 
   it('Test change API key with backend error without message', async () => {
-    mockChangeObject.mockReturnValue(
-      Promise.resolve({
-        status: 500,
-        statusText: 'SERVER ERROR'
-      })
-    )
+    mockChangeObject.mockImplementationOnce( () => { throw Error() } );
 
     renderWithRouterMatch(APIKeyChange)
 
@@ -294,22 +291,19 @@ describe('Tests for API key change', () => {
         {id: 1, revoked: false, name: 'SECOND_TOKEN'}
       )
     })
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('apikey');
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Error changing API key</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 500 SERVER ERROR',
+      'Error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test API key deletion', async () => {
-    mockDeleteObject.mockReturnValue(
-      Promise.resolve({ok: true, status_code: 204})
-    );
-
     renderWithRouterMatch(APIKeyChange, {
       path: '/ui/administration/apikey/:name',
       route: '/ui/administration/apikey/FIRST_TOKEN'
@@ -328,6 +322,8 @@ describe('Tests for API key change', () => {
         '/api/v2/internal/apikeys/FIRST_TOKEN'
       )
     })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('apikey');
     expect(NotificationManager.success).toHaveBeenCalledWith('API key successfully deleted', 'Deleted', 2000)
   })
 })
@@ -335,6 +331,15 @@ describe('Tests for API key change', () => {
 describe('Tests for API key addview', () => {
   jest.spyOn(NotificationManager, "success");
   jest.spyOn(NotificationManager, "error");
+  jest.spyOn(queryClient, 'invalidateQueries');
+
+  beforeAll(() => {
+    Backend.mockImplementation(() => {
+      return {
+        addObject: mockAddObject
+      }
+    })
+  })
 
   it ('Test that addview renders properly', () => {
     renderAddview()
@@ -351,14 +356,6 @@ describe('Tests for API key addview', () => {
   })
 
   it ('Test adding new API key', async () => {
-    mockAddObject.mockReturnValue(Promise.resolve({ok: true, status_code: 200}));
-
-    Backend.mockImplementation(() => {
-      return {
-        addObject: mockAddObject
-      }
-    })
-
     renderAddview()
 
     fireEvent.change(screen.getByRole('textbox', {name: /name/i}), {target: {value: 'APIKEY'}});
@@ -374,18 +371,11 @@ describe('Tests for API key addview', () => {
         {name: 'APIKEY', token: ''}
       )
     })
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('apikey');
     expect(NotificationManager.success).toHaveBeenCalledWith('API key successfully added', 'Added', 2000)
   })
 
   it ('Test adding new API key with predefined token', async () => {
-    mockAddObject.mockReturnValue(Promise.resolve({ok: true, status_code: 200}));
-
-    Backend.mockImplementation(() => {
-      return {
-        addObject: mockAddObject
-      }
-    })
-
     renderAddview()
 
     fireEvent.change(screen.getByRole('textbox', {name: /name/i}), {target: {value: 'APIKEY'}});
@@ -402,23 +392,14 @@ describe('Tests for API key addview', () => {
         {name: 'APIKEY', token: 'token123'}
       )
     })
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('apikey');
     expect(NotificationManager.success).toHaveBeenCalledWith('API key successfully added', 'Added', 2000)
   })
 
   it('Test add API key with backend error message', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({detail: 'API key with this name already exists'}),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
-
-    Backend.mockImplementation(() => {
-      return {
-        addObject: mockAddObject
-      }
-    })
+    mockAddObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: API key with this name already exists')
+    } );
 
     renderAddview()
 
@@ -436,30 +417,21 @@ describe('Tests for API key addview', () => {
         {name: 'APIKEY', token: 'token123'}
       )
     })
+
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('apikey');
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>API key with this name already exists</p>
+        <p>400 BAD REQUEST: API key with this name already exists</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 400 BAD REQUEST',
+      'Error',
       0,
       expect.any(Function)
     )
   })
 
   it('Test add API key with backend error without message', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({
-        status: 500,
-        statusText: 'SERVER ERROR'
-      })
-    )
-
-    Backend.mockImplementation(() => {
-      return {
-        addObject: mockAddObject
-      }
-    })
+    mockAddObject.mockImplementationOnce( () => { throw Error() } );
 
     renderAddview()
 
@@ -477,12 +449,14 @@ describe('Tests for API key addview', () => {
         {name: 'APIKEY', token: 'token123'}
       )
     })
+
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('apikey');
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Error adding API key</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 500 SERVER ERROR',
+      'Error',
       0,
       expect.any(Function)
     )
