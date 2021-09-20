@@ -24,7 +24,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
 import Select from 'react-select';
 import { fetchUserGroups } from './QueryFunctions';
-import { useQuery } from 'react-query';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
 
 
 export const GroupList = (props) => {
@@ -99,7 +99,13 @@ export const GroupChange = (props) => {
   const location = props.location;
   const history = props.history;
 
+  const queryClient = useQueryClient();
+
   const backend = new Backend();
+
+  const changeMutation = useMutation(async (values) => await backend.changeObject(`/api/v2/internal/${group}group/`, values));
+  const addMutation = useMutation(async (values) => await backend.addObject(`/api/v2/internal/${group}group/`, values));
+  const deleteMutation = useMutation(async () => await backend.deleteObject(`/api/v2/internal/${group}group/${groupname}`));
 
   const { data: items, error: errorItems, isLoading: loadingItems } = useQuery(
     [`${group}group`, groupname], async () => {
@@ -133,85 +139,71 @@ export const GroupChange = (props) => {
     toggleAreYouSure();
   }
 
-  async function doChange() {
+  function doChange() {
+    const sendValues = new Object({
+      name: formValues.name,
+      items: formValues.items
+    })
     if (!addview) {
-      let response = await backend.changeObject(
-        `/api/v2/internal/${group}group/`,
-        {name: formValues.name, items: formValues.items}
-      );
-
-      if (response.ok)
-        NotifyOk({
-          msg: `Group of ${title} successfully changed`,
-          title: 'Changed',
-          callback: () => history.push(`/ui/administration/${id}`)
-        });
-
-      else {
-        let change_msg = '';
-        try {
-          let json = await response.json();
-          change_msg = json.detail;
-        } catch(err) {
-          change_msg = `Error changing group of ${title}`;
+      changeMutation.mutate(sendValues, {
+        onSuccess: () => {
+          queryClient.invalidateQueries(`${group}group`);
+          queryClient.invalidateQueries('metric');
+          queryClient.invalidateQueries('public_metric');
+          NotifyOk({
+            msg: `Group of ${title} successfully changed`,
+            title: 'Changed',
+            callback: () => history.push(`/ui/administration/${id}`)
+          });
+        },
+        onError: (error) => {
+          NotifyError({
+            title: 'Error',
+            msg: error.message ? error.message : `Error changing group of ${title}`
+          })
         }
-        NotifyError({
-          title: `Error: ${response.status} ${response.statusText}`,
-          msg: change_msg
-        });
-      }
+      })
     } else {
-      let response = await backend.addObject(
-        `/api/v2/internal/${group}group/`,
-        {name: formValues.name, items: formValues.items}
-      );
-
-      if (response.ok)
-        NotifyOk({
-          msg: `Group of ${title} successfully added`,
-          title: 'Added',
-          callback: () => history.push(`/ui/administration/${id}`)
-        });
-
-      else {
-        let add_msg = '';
-        try {
-          let json = await response.json();
-          add_msg = json.detail;
-        } catch(err) {
-          add_msg = `Error adding group of ${title}`;
+      addMutation.mutate(sendValues, {
+        onSuccess: () => {
+          queryClient.invalidateQueries(`${group}group`);
+          queryClient.invalidateQueries('metric');
+          queryClient.invalidateQueries('public_metric');
+          NotifyOk({
+            msg: `Group of ${title} successfully added`,
+            title: 'Added',
+            callback: () => history.push(`/ui/administration/${id}`)
+          });
+        },
+        onError: (error) => {
+          NotifyError({
+            title: 'Error',
+            msg: error.message ? error.message : `Error adding group of ${title}`
+          })
         }
-        NotifyError({
-          title: `Error: ${response.status} ${response.statusText}`,
-          msg: add_msg
-        });
-      }
+      })
     }
   }
 
-  async function doDelete() {
-    let response = await backend.deleteObject(`/api/v2/internal/${group}group/${groupname}`);
-
-    if (response.ok)
-      NotifyOk({
-        msg: `Group of ${title} successfully deleted`,
-        title: 'Deleted',
-        callback: () => history.push(`/ui/administration/${id}`)
-      });
-
-    else {
-      let msg = '';
-      try {
-        let json = await response.json();
-        msg = json.detail;
-      } catch(err) {
-        msg = `Error deleting group of ${title}`;
+  function doDelete() {
+    deleteMutation.mutate(undefined, {
+      onSuccess: () => {
+        queryClient.invalidateQueries(`${group}group`)
+        queryClient.invalidateQueries('metric');
+        queryClient.invalidateQueries('public_metric');
+        NotifyOk({
+          msg: `Group of ${title} successfully deleted`,
+          title: 'Deleted',
+          callback: () => history.push(`/ui/administration/${id}`)
+        });
+      },
+      onError: (error) => {
+        NotifyError({
+          title: 'Error',
+          msg: error.message ? error.message : `Error deleting group of ${title}`
+        })
       }
-      NotifyError({
-        title: `Error: ${response.status} ${response.statusText}`,
-        msg: msg
-      });
-    }
+    })
   }
 
   if (loadingItems || loadingFreeItems)
