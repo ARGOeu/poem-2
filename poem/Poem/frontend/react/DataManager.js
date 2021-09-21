@@ -42,14 +42,15 @@ export class Backend {
   }
 
   async fetchConfigOptions() {
+    const url = '/api/v2/internal/config_options';
     try {
-      let response = await fetch('/api/v2/internal/config_options');
+      let response = await fetch(url);
       if (response.ok) {
         let json = await response.json();
         return json;
       }
     } catch(err) {
-      throw Error(`Something went wrong: ${err}`)
+      throw Error(`${err} in fetch ${url}`)
     }
   }
 
@@ -63,13 +64,13 @@ export class Backend {
       else {
         try {
           let json = await response.json();
-          error_msg = `${response.status} ${response.statusText}; in fetch ${url}: ${json.detail}`;
+          error_msg = `${response.status} ${response.statusText} in fetch ${url}${json.detail ? `: ${json.detail}` : ''}`;
         } catch(err1) {
-          error_msg = `${response.status} ${response.statusText}; in fetch ${url}`;
+          error_msg = `${response.status} ${response.statusText} in fetch ${url}`;
         }
       }
     } catch (err) {
-      error_msg = `${err}; in fetch ${url}`;
+      error_msg = `${err} in fetch ${url}`;
     }
     if (error_msg)
       throw Error(error_msg);
@@ -87,13 +88,13 @@ export class Backend {
       } else {
         try {
           let json = await response.json();
-          error_msg = `${response.status} ${response.statusText}; in fetch ${url}: ${json.detail}`;
+          error_msg = `${response.status} ${response.statusText} in fetch ${url}${json.detail ? `: ${json.detail}` : ''}`;
         } catch(err1) {
-          error_msg = `${response.status} ${response.statusText}; in fetch ${url}`;
+          error_msg = `${response.status} ${response.statusText} in fetch ${url}`;
         }
       }
     } catch(err) {
-      error_msg = `${err}; in fetch ${url}`;
+      error_msg = `${err} in fetch ${url}`;
     }
     if (error_msg)
       throw Error(error_msg);
@@ -109,13 +110,13 @@ export class Backend {
       } else {
         try {
           let json = await response.json();
-          error_msg = `${response.status} ${response.statusText}; in fetch ${url}: ${json.detail}`;
+          error_msg = `${response.status} ${response.statusText} in fetch ${url}${json.detail ? `: ${json.detail}` : ''}`;
         } catch(err1) {
-          error_msg = `${response.status} ${response.statusText}; in fetch ${url}`;
+          error_msg = `${response.status} ${response.statusText} in fetch ${url}`;
         }
       }
     } catch(err) {
-      error_msg = `${err}; in fetch ${url}`;
+      error_msg = `${err} in fetch ${url}`;
     }
     if (error_msg)
       throw Error(error_msg);
@@ -128,15 +129,15 @@ export class Backend {
       if (!response.ok) {
         try {
           let json = await response.json();
-          error_msg = `${response.status} ${response.statusText}; in PUT ${url}: ${json.detail}`;
+          error_msg = `${response.status} ${response.statusText} in PUT ${url}${json.detail ? `: ${json.detail}` : ''}`;
         } catch (err2) {
-          error_msg = `${response.status} ${response.statusText}; in PUT ${url}: ${err2}`;
+          error_msg = `${response.status} ${response.statusText} in PUT ${url}`;
         }
       } else {
         return response;
       }
     } catch (err1) {
-      error_msg = `${err1}; in PUT ${url}`
+      error_msg = `${err1} in PUT ${url}`
     }
 
     if (error_msg)
@@ -151,13 +152,13 @@ export class Backend {
       if (!response.ok) {
         try {
           let json = await response.json();
-          error_msg = `${response.status} ${response.statusText}; in POST ${url}: ${json.detail}`;
+          error_msg = `${response.status} ${response.statusText} in POST ${url}${json.detail ? `: ${json.detail}` : ''}`;
         } catch (err1) {
-          error_msg = `${response.status} ${response.statusText}; in POST ${url}: ${err1}`;
+          error_msg = `${response.status} ${response.statusText} in POST ${url}`;
         }
       }
     } catch (err2) {
-      error_msg = `${err2}; in POST ${url}`;
+      error_msg = `${err2} in POST ${url}`;
     }
 
     if (error_msg)
@@ -172,13 +173,13 @@ export class Backend {
       if (!response.ok) {
         try {
           let json = await response.json();
-          error_msg = `${response.status} ${response.statusText}; in DELETE ${url}: ${json.detail}`;
+          error_msg = `${response.status} ${response.statusText} in DELETE ${url}${json.detail ? `: ${json.detail}` : ''}`;
         } catch (err1) {
-          error_msg = `${response.status} ${response.statusText}; in DELETE ${url}: ${err1}`;
+          error_msg = `${response.status} ${response.statusText} in DELETE ${url}`;
         }
       }
     } catch (err2) {
-      error_msg = `${err2}; in DELETE ${url}`;
+      error_msg = `${err2} in DELETE ${url}`;
     }
 
     if (error_msg)
@@ -196,13 +197,13 @@ export class Backend {
       } else {
         try {
           let json = await response.json();
-          error_msg = `${response.status} ${response.statusText}; in POST ${url}: ${json.detail}`;
+          error_msg = `${response.status} ${response.statusText} in POST ${url}${json.detail ? `: ${json.detail}` : ''}`;
         } catch(err1) {
-          error_msg = `${response.status} ${response.statusText}; in POST ${url}: ${err1}`;
+          error_msg = `${response.status} ${response.statusText} in POST ${url}`;
         }
       }
     } catch(err2) {
-      error_msg = `${err2}; in POST ${url}`;
+      error_msg = `${err2} in POST ${url}`;
     }
 
     if (error_msg)
@@ -221,13 +222,13 @@ export class Backend {
       } else {
         try {
           let json = await response.json();
-          error_msg = `${response.status} ${response.statusText}; in POST ${url}: ${json.detail}`
+          error_msg = `${response.status} ${response.statusText} in POST ${url}${json.detail ? `: ${json.detail}` : ''}`
         } catch(err1) {
-          error_msg = `${response.status} ${response.statusText}; in POST ${url}: ${err1}`;
+          error_msg = `${response.status} ${response.statusText} in POST ${url}`;
         }
       }
     } catch(err2) {
-      error_msg = `${err2}; in POST ${url}`;
+      error_msg = `${err2} in POST ${url}`;
     }
 
     if (error_msg)
