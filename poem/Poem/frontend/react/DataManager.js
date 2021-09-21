@@ -290,13 +290,13 @@ export class WebApi {
       } else {
         try {
           let json = await response.json();
-          err_msg = `${response.status} ${response.statusText}; in fetch ${url}; ${json.status.details}`;
+          err_msg = `${response.status} ${response.statusText} in fetch ${url}${json.status.details ? `: ${json.status.details}` : ''}`;
         } catch(err) {
-          err_msg = `${response.status} ${response.statusText}; in fetch ${url}`;
+          err_msg = `${response.status} ${response.statusText} in fetch ${url}`;
         }
       }
     } catch(err) {
-      err_msg = `${err}; in fetch ${url}`;
+      err_msg = `${err} in fetch ${url}`;
     }
     if (err_msg)
       throw Error(err_msg);
@@ -429,34 +429,117 @@ export class WebApi {
         try {
           let json = await response.json();
           if (json.status.details)
-            err_msg = `${response.status} ${response.statusText}; in fetch ${url}; ${json.status.details}`;
+            err_msg = `${response.status} ${response.statusText} in fetch ${url}: ${json.status.details}`;
 
           else if (json.errors[0].details)
-            err_msg = `${response.status} ${response.statusText}; in fetch ${url}; ${json.errors[0].details}`;
+            err_msg = `${response.status} ${response.statusText} in fetch ${url}: ${json.errors[0].details}`;
 
           else
-            err_msg = `${response.status} ${response.statusText}; in fetch ${url}`;
+            err_msg = `${response.status} ${response.statusText} in fetch ${url}`;
         } catch(err1) {
-          err_msg = `${response.status} ${response.statusText}; in fetch ${url}`;
+          err_msg = `${response.status} ${response.statusText} in fetch ${url}`;
         }
       }
     } catch(err) {
-      err_msg = `${err}; in fetch ${url}`;
+      err_msg = `${err} in fetch ${url}`;
     }
     if (err_msg)
       throw Error(err_msg);
   }
 
-  changeProfile(url, data) {
-    return this.send(`${url}/${data.id}`, 'PUT', data);
+  async changeProfile(url, data) {
+    let err_mesg = '';
+
+    try {
+      const response = await this.send(`${url}/${data.id}`, 'PUT', data);
+
+      if (response.ok) {
+        let json = await response.json()
+        return json
+      } else {
+        try {
+          let json = await response.json();
+          if (json.status.details)
+            err_mesg = `${response.status} ${response.statusText} in PUT ${url}: ${json.status.details}`;
+
+          else if (json.errors[0].details)
+            err_mesg = `${response.status} ${response.statusText} in PUT ${url}: ${json.errors[0].details}`;
+
+          else
+            err_mesg = `${response.status} ${response.statusText} in PUT ${url}`;
+        } catch (err1) {
+          err_mesg =`${response.status} ${response.statusText} in PUT ${url}`;
+        }
+      }
+    } catch (err2) {
+      err_mesg = `${err2} in PUT ${url}`;
+    }
+
+    if (err_mesg)
+      throw Error(err_mesg)
   }
 
-  addProfile(url, data) {
-    return this.send(url, 'POST', data);
+  async addProfile(url, data) {
+    let err_mesg = '';
+
+    try {
+      const response = await this.send(url, 'POST', data);
+
+      if (response.ok) {
+        let json = await response.json()
+        return json
+      } else {
+        try {
+          let json = await response.json();
+          if (json.status.details)
+            err_mesg = `${response.status} ${response.statusText} in POST ${url}: ${json.status.details}`;
+
+          else if (json.errors[0].details)
+            err_mesg = `${response.status} ${response.statusText} in POST ${url}: ${json.errors[0].details}`;
+
+          else
+            err_mesg = `${response.status} ${response.statusText} in POST ${url}`;
+        } catch (err1) {
+          err_mesg =`${response.status} ${response.statusText} in POST ${url}`;
+        }
+      }
+    } catch (err2) {
+      err_mesg = `${err2} in POST ${url}`;
+    }
+
+    if (err_mesg)
+      throw Error(err_mesg)
   }
 
-  deleteProfile(url) {
-    return this.send(url, 'DELETE');
+  async deleteProfile(url) {
+    let err_msg = '';
+
+    try {
+      const response = await this.send(url, 'DELETE');
+
+      if (response.ok) {
+        return response;
+      } else {
+        try {
+          let json = await response.json();
+          if (json.status.details)
+            err_msg = `${response.status} ${response.statusText} in DELETE ${url}: ${json.status.details}`;
+
+          else if (json.errors[0].details)
+            err_msg = `${response.status} ${response.statusText} in DELETE ${url}: ${json.errors[0].details}`;
+
+          else
+            err_msg = `${response.status} ${response.statusText} in DELETE ${url}`;
+        } catch (err1) {
+          err_msg = `${response.status} ${response.statusText} in DELETE ${url}`;
+        }
+      }
+    } catch(err2) {
+      err_msg = `${err2} in DELETE ${url}`
+    }
+
+    if (err_msg)
+      throw Error(err_msg)
   }
 
   send(url, method, values=null) {

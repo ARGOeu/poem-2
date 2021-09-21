@@ -1,6 +1,6 @@
 import { waitFor } from '@testing-library/dom';
 import '@testing-library/jest-dom/extend-expect';
-import { Backend } from '../DataManager';
+import { Backend, WebApi } from '../DataManager';
 
 // eslint-disable-next-line no-undef
 global.fetch = jest.fn();
@@ -169,6 +169,7 @@ const mockResult = {
 }
 
 const mockSendValues = {
+  id: 'oKo1paFohth8iSie',
   key1: 'value1',
   key2: 'value2',
   key3: {
@@ -186,6 +187,472 @@ const mockImportMetrics = {
 const mockBulkDeleteMTs = {
   info: 'Metric templates argo.AMS-Check, test.AMS-Check successfully deleted.'
 }
+
+const mockMetricProfiles = {
+  status: {
+    message: 'Success',
+    code: '200'
+  },
+  data: [
+    {
+      id: 'chi6ahPhoh5ioTha',
+      date: '2021-02-03',
+      name: 'PROFILE1',
+      description: 'Description for PROFILE1',
+      services: [
+        {
+          service: 'org.opensciencegrid.htcondorce',
+          metrics: [
+            'ch.cern.HTCondorCE-JobState',
+            'ch.cern.HTCondorCE-JobSubmit'
+          ]
+        }
+      ]
+    },
+    {
+      id: 'aa7eiy5Ahvegiree',
+      date: '2021-01-26',
+      name: 'PROFILE2',
+      description: 'Description for PROFILE2',
+      services: [
+        {
+          service: 'argo.mon',
+          metrics: [
+            'eu.egi.CertValidity',
+            'org.nagios.NagiosWebInterface'
+          ]
+        },
+        {
+          service: 'argo.webui',
+          metrics: [
+            'org.nagios.ARGOWeb-AR',
+            'org.nagios.ARGOWeb-Status'
+          ]
+        }
+      ]
+    }
+  ]
+};
+
+const mockMetricProfile = {
+  status: {
+    message: 'Success',
+    code: '200'
+  },
+  data: [
+    {
+      id: 'chi6ahPhoh5ioTha',
+      date: '2021-02-03',
+      name: 'PROFILE1',
+      description: 'Description for PROFILE1',
+      services: [
+        {
+          service: 'org.opensciencegrid.htcondorce',
+          metrics: [
+            'ch.cern.HTCondorCE-JobState',
+            'ch.cern.HTCondorCE-JobSubmit'
+          ]
+        }
+      ]
+    }
+  ]
+};
+
+const mockOperationsProfiles = [
+  {
+   "id": "1111-2222-3333-4444-5555",
+   "date": "2015-01-01",
+   "name": "egi_ops",
+   "available_states": [
+    "OK",
+    "WARNING",
+    "UNKNOWN",
+    "MISSING",
+    "CRITICAL",
+    "DOWNTIME"
+   ],
+   "defaults": {
+    "down": "DOWNTIME",
+    "missing": "MISSING",
+    "unknown": "UNKNOWN"
+   },
+   "operations": [
+    {
+     "name": "AND",
+     "truth_table": [
+      {
+       "a": "OK",
+       "b": "OK",
+       "x": "OK"
+      },
+      {
+       "a": "OK",
+       "b": "WARNING",
+       "x": "WARNING"
+      },
+      {
+       "a": "OK",
+       "b": "UNKNOWN",
+       "x": "UNKNOWN"
+      },
+      {
+       "a": "OK",
+       "b": "MISSING",
+       "x": "MISSING"
+      },
+      {
+       "a": "OK",
+       "b": "CRITICAL",
+       "x": "CRITICAL"
+      },
+      {
+       "a": "OK",
+       "b": "DOWNTIME",
+       "x": "DOWNTIME"
+      },
+      {
+       "a": "WARNING",
+       "b": "WARNING",
+       "x": "WARNING"
+      },
+      {
+       "a": "WARNING",
+       "b": "UNKNOWN",
+       "x": "UNKNOWN"
+      },
+      {
+       "a": "WARNING",
+       "b": "MISSING",
+       "x": "MISSING"
+      },
+      {
+       "a": "WARNING",
+       "b": "CRITICAL",
+       "x": "CRITICAL"
+      },
+      {
+       "a": "WARNING",
+       "b": "DOWNTIME",
+       "x": "DOWNTIME"
+      },
+      {
+       "a": "UNKNOWN",
+       "b": "UNKNOWN",
+       "x": "UNKNOWN"
+      },
+      {
+       "a": "UNKNOWN",
+       "b": "MISSING",
+       "x": "MISSING"
+      },
+      {
+       "a": "UNKNOWN",
+       "b": "CRITICAL",
+       "x": "CRITICAL"
+      },
+      {
+       "a": "UNKNOWN",
+       "b": "DOWNTIME",
+       "x": "DOWNTIME"
+      },
+      {
+       "a": "MISSING",
+       "b": "MISSING",
+       "x": "MISSING"
+      },
+      {
+       "a": "MISSING",
+       "b": "CRITICAL",
+       "x": "CRITICAL"
+      },
+      {
+       "a": "MISSING",
+       "b": "DOWNTIME",
+       "x": "DOWNTIME"
+      },
+      {
+       "a": "CRITICAL",
+       "b": "CRITICAL",
+       "x": "CRITICAL"
+      },
+      {
+       "a": "CRITICAL",
+       "b": "DOWNTIME",
+       "x": "CRITICAL"
+      },
+      {
+       "a": "DOWNTIME",
+       "b": "DOWNTIME",
+       "x": "DOWNTIME"
+      }
+     ]
+    },
+    {
+     "name": "OR",
+     "truth_table": [
+      {
+       "a": "OK",
+       "b": "OK",
+       "x": "OK"
+      },
+      {
+       "a": "OK",
+       "b": "WARNING",
+       "x": "OK"
+      },
+      {
+       "a": "OK",
+       "b": "UNKNOWN",
+       "x": "OK"
+      },
+      {
+       "a": "OK",
+       "b": "MISSING",
+       "x": "OK"
+      },
+      {
+       "a": "OK",
+       "b": "CRITICAL",
+       "x": "OK"
+      },
+      {
+       "a": "OK",
+       "b": "DOWNTIME",
+       "x": "OK"
+      },
+      {
+       "a": "WARNING",
+       "b": "WARNING",
+       "x": "WARNING"
+      },
+      {
+       "a": "WARNING",
+       "b": "UNKNOWN",
+       "x": "WARNING"
+      },
+      {
+       "a": "WARNING",
+       "b": "MISSING",
+       "x": "WARNING"
+      },
+      {
+       "a": "WARNING",
+       "b": "CRITICAL",
+       "x": "WARNING"
+      },
+      {
+       "a": "WARNING",
+       "b": "DOWNTIME",
+       "x": "WARNING"
+      },
+      {
+       "a": "UNKNOWN",
+       "b": "UNKNOWN",
+       "x": "UNKNOWN"
+      },
+      {
+       "a": "UNKNOWN",
+       "b": "MISSING",
+       "x": "UNKNOWN"
+      },
+      {
+       "a": "UNKNOWN",
+       "b": "CRITICAL",
+       "x": "CRITICAL"
+      },
+      {
+       "a": "UNKNOWN",
+       "b": "DOWNTIME",
+       "x": "UNKNOWN"
+      },
+      {
+       "a": "MISSING",
+       "b": "MISSING",
+       "x": "MISSING"
+      },
+      {
+       "a": "MISSING",
+       "b": "CRITICAL",
+       "x": "CRITICAL"
+      },
+      {
+       "a": "MISSING",
+       "b": "DOWNTIME",
+       "x": "DOWNTIME"
+      },
+      {
+       "a": "CRITICAL",
+       "b": "CRITICAL",
+       "x": "CRITICAL"
+      },
+      {
+       "a": "CRITICAL",
+       "b": "DOWNTIME",
+       "x": "CRITICAL"
+      },
+      {
+       "a": "DOWNTIME",
+       "b": "DOWNTIME",
+       "x": "DOWNTIME"
+      }
+     ]
+    }
+   ]
+  }
+];
+
+const mockReports = [
+  {
+    id: "yee9chel-5o4u-l4j4-410b-eipi3ohrah5i",
+    tenant: "EGI",
+    disabled: false,
+    info: {
+      name: "Critical",
+      description: "Critical report",
+      created: "2018-07-10 14:23:00",
+      updated: "2021-05-21 13:56:22"
+    },
+    thresholds: {
+      availability: 80,
+      reliability: 85,
+      uptime: 0.8,
+      unknown: 0.1,
+      downtime: 0.1
+    },
+    topology_schema: {
+      group: {
+        type: "NGI",
+        group: {
+          type: "SITES"
+        }
+      }
+    },
+    profiles: [
+      {
+        id: "iethai8e-5nv4-urd2-6frc-eequ1saifoon",
+        name: "ARGO_MON_CRITICAL",
+        type: "metric"
+      },
+      {
+        id: "goo4nohb-lc8y-l5bj-v991-ohzah8xethie",
+        name: "critical",
+        type: "aggregation"
+      },
+      {
+        id: "gahjohf1-xx39-e0c9-p0rj-choh6ahziz9e",
+        name: "egi_ops",
+        type: "operations"
+      }
+    ],
+    filter_tags: [
+      {
+        name: "certification",
+        value: "Certified",
+        context: "argo.group.filter.tags"
+      },
+      {
+        name: "infrastructure",
+        value: "Production",
+        context: "argo.group.filter.tags"
+      },
+      {
+        name: "scope",
+        value: "EGI*",
+        context: "argo.group.filter.tags"
+      },
+      {
+        name: "production",
+        value: "1",
+        context: "argo.endpoint.filter.tags"
+      },
+      {
+        name: "monitored",
+        value: "1",
+        context: "argo.endpoint.filter.tags"
+      },
+      {
+        name: "scope",
+        value: "EGI*",
+        context: "argo.endpoint.filter.tags"
+      }
+    ]
+  },
+  {
+    id: "Feeyi0ieBiezooth",
+    tenant: "EGI",
+    disabled: false,
+    info: {
+      name: "Report2",
+      description: "Critical report",
+      created: "2018-07-10 14:23:00",
+      updated: "2021-05-21 13:56:22"
+    },
+    thresholds: {
+      availability: 80,
+      reliability: 85,
+      uptime: 0.8,
+      unknown: 0.1,
+      downtime: 0.1
+    },
+    topology_schema: {
+      group: {
+        type: "NGI",
+        group: {
+          type: "SITES"
+        }
+      }
+    },
+    profiles: [
+      {
+        id: "iethai8e-5nv4-urd2-6frc-eequ1saifoon",
+        name: "ARGO_MON_CRITICAL",
+        type: "metric"
+      },
+      {
+        id: "goo4nohb-lc8y-l5bj-v991-ohzah8xethie",
+        name: "critical",
+        type: "aggregation"
+      },
+      {
+        id: "gahjohf1-xx39-e0c9-p0rj-choh6ahziz9e",
+        name: "egi_ops",
+        type: "operations"
+      }
+    ],
+    filter_tags: [
+      {
+        name: "certification",
+        value: "Certified",
+        context: "argo.group.filter.tags"
+      },
+      {
+        name: "infrastructure",
+        value: "Production",
+        context: "argo.group.filter.tags"
+      },
+      {
+        name: "scope",
+        value: "EGI*",
+        context: "argo.group.filter.tags"
+      },
+      {
+        name: "production",
+        value: "1",
+        context: "argo.endpoint.filter.tags"
+      },
+      {
+        name: "monitored",
+        value: "1",
+        context: "argo.endpoint.filter.tags"
+      },
+      {
+        name: "scope",
+        value: "EGI*",
+        context: "argo.endpoint.filter.tags"
+      }
+    ]
+  }
+];
 
 
 describe('Tests for backend', () => {
@@ -1082,4 +1549,874 @@ describe('Tests for backend', () => {
 
     expect(spy).toHaveBeenCalledWith('/api/v2/internal/deletetemplates/', 'POST', metrics);
   })
+})
+
+
+describe('Tests for WebApi', () => {
+  test('Test fetch profiles', async () => {
+    fetch.mockReturnValueOnce(
+        Promise.resolve({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: () => Promise.resolve(mockMetricProfiles)
+      })
+    )
+
+    const webapi = new WebApi({ token: 'reimohl4thub0Zai' });
+
+    const response = await webapi.fetchProfiles('/some/mock/url');
+
+    expect(response).toBe(mockMetricProfiles['data']);
+    expect(fetch).toBeCalledWith(
+      '/some/mock/url', { headers: { 'Accept': 'application/json', 'x-api-key': 'reimohl4thub0Zai' } }
+      )
+  })
+
+  test('Test error fetching profiles with json error', async () => {
+    fetch.mockReturnValueOnce(
+        Promise.resolve({
+        status: 400,
+        statusText: 'BAD REQUEST',
+        json: () => Promise.resolve({ status: { details: 'There has been an error' } })
+      })
+    )
+
+    const webapi = new WebApi({ token: 'reimohl4thub0Zai' });
+
+    try {
+      await webapi.fetchProfiles('/some/mock/url');
+    } catch (err) {
+      expect(err.message).toBe('400 BAD REQUEST in fetch /some/mock/url: There has been an error');
+    }
+
+    expect(fetch).toBeCalledWith(
+      '/some/mock/url', { headers: { 'Accept': 'application/json', 'x-api-key': 'reimohl4thub0Zai' } }
+      )
+  })
+
+  test('Test error fetching profiles with an invalid json error', async () => {
+    fetch.mockReturnValueOnce(
+        Promise.resolve({
+        status: 400,
+        statusText: 'BAD REQUEST',
+        json: () => Promise.resolve({  details: 'There has been an error' } )
+      })
+    )
+
+    const webapi = new WebApi({ token: 'reimohl4thub0Zai' });
+
+    try {
+      await webapi.fetchProfiles('/some/mock/url');
+    } catch (err) {
+      expect(err.message).toBe('400 BAD REQUEST in fetch /some/mock/url');
+    }
+
+    expect(fetch).toBeCalledWith(
+      '/some/mock/url', { headers: { 'Accept': 'application/json', 'x-api-key': 'reimohl4thub0Zai' } }
+      )
+  })
+
+  test('Test error fetching profiles without json error', async () => {
+    fetch.mockReturnValueOnce(
+        Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    )
+
+    const webapi = new WebApi({ token: 'reimohl4thub0Zai' });
+
+    try {
+      await webapi.fetchProfiles('/some/mock/url');
+    } catch (err) {
+      expect(err.message).toBe('500 SERVER ERROR in fetch /some/mock/url');
+    }
+
+    expect(fetch).toBeCalledWith(
+      '/some/mock/url', { headers: { 'Accept': 'application/json', 'x-api-key': 'reimohl4thub0Zai' } }
+      )
+  })
+
+  test('Test error fetching profiles with fetch error', async () => {
+    fetch.mockImplementationOnce( () => {
+      throw Error('There has been an error')
+    } )
+
+    const webapi = new WebApi({ token: 'reimohl4thub0Zai' });
+
+    try {
+      await webapi.fetchProfiles('/some/mock/url');
+    } catch (err) {
+      expect(err.message).toBe('Error: There has been an error in fetch /some/mock/url');
+    }
+
+    expect(fetch).toBeCalledWith(
+      '/some/mock/url', { headers: { 'Accept': 'application/json', 'x-api-key': 'reimohl4thub0Zai' } }
+      )
+  })
+
+  test('Test fetch metric profiles', async () => {
+    const webapi = new WebApi({ token: 'reimohl4thub0Zai', metricProfiles: 'mock.metricprofile.url' });
+
+    let spy = jest.spyOn(webapi, 'fetchProfiles').mockReturnValueOnce(
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: () => Promise.resolve(mockMetricProfiles)
+      })
+    )
+
+    await webapi.fetchMetricProfiles();
+
+    expect(spy).toHaveBeenCalledWith('mock.metricprofile.url')
+  })
+
+  test('Test fetch aggregation profiles', async () => {
+    const webapi = new WebApi({ token: 'reimohl4thub0Zai', aggregationProfiles: 'mock.aggregation.url' });
+
+    let spy = jest.spyOn(webapi, 'fetchProfiles').mockReturnValueOnce(
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: () => Promise.resolve(mockMetricProfiles)
+      })
+    )
+
+    await webapi.fetchAggregationProfiles();
+
+    expect(spy).toHaveBeenCalledWith('mock.aggregation.url')
+  })
+
+  test('Test fetch operations profiles', async () => {
+    const webapi = new WebApi({ token: 'reimohl4thub0Zai', operationsProfiles: 'mock.operationsprofiles.url' });
+
+    let spy = jest.spyOn(webapi, 'fetchProfiles').mockReturnValueOnce(
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: () => Promise.resolve(mockMetricProfiles)
+      })
+    )
+
+    await webapi.fetchOperationsProfiles();
+
+    expect(spy).toHaveBeenCalledWith('mock.operationsprofiles.url')
+  })
+
+  test('Test fetch reports', async () => {
+    const webapi = new WebApi({
+      token: 'reimohl4thub0Zai',
+      reportsConfigurations: {
+        main: 'mock.reports.url',
+        crud: true,
+        tags: 'mock.reports-tags.url',
+        topologygroups: 'mock.reports-topology-groups.url',
+        topologyendpoints: 'mock.reports-topology-endpoints.url'
+      }
+    })
+
+    let spy = jest.spyOn(webapi, 'fetchProfiles').mockReturnValueOnce(
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: () => Promise.resolve(mockMetricProfiles)
+      })
+    )
+
+    await webapi.fetchReports();
+
+    expect(spy).toHaveBeenCalledWith('mock.reports.url')
+  })
+
+  test('Test fetch topology endpoints', async () => {
+    const webapi = new WebApi({
+      token: 'reimohl4thub0Zai',
+      reportsConfigurations: {
+        main: 'mock.reports.url',
+        crud: true,
+        tags: 'mock.reports-tags.url',
+        topologygroups: 'mock.reports-topology-groups.url',
+        topologyendpoints: 'mock.reports-topology-endpoints.url'
+      }
+    })
+
+    let spy = jest.spyOn(webapi, 'fetchProfiles').mockReturnValueOnce(
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: () => Promise.resolve(mockMetricProfiles)
+      })
+    )
+
+    await webapi.fetchReportsTopologyEndpoints();
+
+    expect(spy).toHaveBeenCalledWith('mock.reports-topology-endpoints.url')
+  })
+
+  test('Test fetch topology groups', async () => {
+    const webapi = new WebApi({
+      token: 'reimohl4thub0Zai',
+      reportsConfigurations: {
+        main: 'mock.reports.url',
+        crud: true,
+        tags: 'mock.reports-tags.url',
+        topologygroups: 'mock.reports-topology-groups.url',
+        topologyendpoints: 'mock.reports-topology-endpoints.url'
+      }
+    })
+
+    let spy = jest.spyOn(webapi, 'fetchProfiles').mockReturnValueOnce(
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: () => Promise.resolve(mockMetricProfiles)
+      })
+    )
+
+    await webapi.fetchReportsTopologyGroups();
+
+    expect(spy).toHaveBeenCalledWith('mock.reports-topology-groups.url')
+  })
+
+  test('Test fetch topology tags', async () => {
+    const webapi = new WebApi({
+      token: 'reimohl4thub0Zai',
+      reportsConfigurations: {
+        main: 'mock.reports.url',
+        crud: true,
+        tags: 'mock.reports-tags.url',
+        topologygroups: 'mock.reports-topology-groups.url',
+        topologyendpoints: 'mock.reports-topology-endpoints.url'
+      }
+    })
+
+    let spy = jest.spyOn(webapi, 'fetchProfiles').mockReturnValueOnce(
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: () => Promise.resolve(mockMetricProfiles)
+      })
+    )
+
+    await webapi.fetchReportsTopologyTags();
+
+    expect(spy).toHaveBeenCalledWith('mock.reports-tags.url')
+  })
+
+  test('Test successfully fetch a profile', async () => {
+    fetch.mockReturnValueOnce(
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: () => Promise.resolve(mockMetricProfile)
+      })
+    )
+
+    const webapi = new WebApi({ token: 'reimohl4thub0Zai' });
+
+    const response = await webapi.fetchProfile('/some/mock/url/chi6ahPhoh5ioTha');
+
+    expect(response).toBe(mockMetricProfile['data'][0]);
+    expect(fetch).toBeCalledWith(
+      '/some/mock/url/chi6ahPhoh5ioTha', { headers: { 'Accept': 'application/json', 'x-api-key': 'reimohl4thub0Zai' } }
+      )
+  })
+
+  test('Test error fetching a profile with json error', async () => {
+    fetch.mockReturnValueOnce(
+      Promise.resolve({
+        status: 400,
+        statusText: 'BAD REQUEST',
+        json: () => Promise.resolve({ status: { details: 'There has been an error' } })
+      })
+    )
+
+    const webapi = new WebApi({ token: 'reimohl4thub0Zai' });
+
+    try {
+      await webapi.fetchProfile('/some/mock/url/chi6ahPhoh5ioTha');
+    } catch(err) {
+      expect(err.message).toBe('400 BAD REQUEST in fetch /some/mock/url/chi6ahPhoh5ioTha: There has been an error');
+    }
+
+    expect(fetch).toBeCalledWith(
+      '/some/mock/url/chi6ahPhoh5ioTha', { headers: { 'Accept': 'application/json', 'x-api-key': 'reimohl4thub0Zai' } }
+      )
+  })
+
+  test('Test error fetching a profile with an invalid json error', async () => {
+    fetch.mockReturnValueOnce(
+      Promise.resolve({
+        status: 400,
+        statusText: 'BAD REQUEST',
+        json: () => Promise.resolve({ details: 'There has been an error' } )
+      })
+    )
+
+    const webapi = new WebApi({ token: 'reimohl4thub0Zai' });
+
+    try {
+      await webapi.fetchProfile('/some/mock/url/chi6ahPhoh5ioTha');
+    } catch(err) {
+      expect(err.message).toBe('400 BAD REQUEST in fetch /some/mock/url/chi6ahPhoh5ioTha');
+    }
+
+    expect(fetch).toBeCalledWith(
+      '/some/mock/url/chi6ahPhoh5ioTha', { headers: { 'Accept': 'application/json', 'x-api-key': 'reimohl4thub0Zai' } }
+      )
+  })
+
+  test('Test error fetching a profile without json error', async () => {
+    fetch.mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    )
+
+    const webapi = new WebApi({ token: 'reimohl4thub0Zai' });
+
+    try {
+      await webapi.fetchProfile('/some/mock/url/chi6ahPhoh5ioTha');
+    } catch(err) {
+      expect(err.message).toBe('500 SERVER ERROR in fetch /some/mock/url/chi6ahPhoh5ioTha');
+    }
+
+    expect(fetch).toBeCalledWith(
+      '/some/mock/url/chi6ahPhoh5ioTha', { headers: { 'Accept': 'application/json', 'x-api-key': 'reimohl4thub0Zai' } }
+      )
+  })
+
+  test('Test error fetching a profile with error in fetch', async () => {
+    fetch.mockImplementationOnce( () => { throw Error('There has been an error') })
+
+    const webapi = new WebApi({ token: 'reimohl4thub0Zai' });
+
+    try {
+      await webapi.fetchProfile('/some/mock/url/chi6ahPhoh5ioTha');
+    } catch(err) {
+      expect(err.message).toBe('Error: There has been an error in fetch /some/mock/url/chi6ahPhoh5ioTha');
+    }
+
+    expect(fetch).toBeCalledWith(
+      '/some/mock/url/chi6ahPhoh5ioTha', { headers: { 'Accept': 'application/json', 'x-api-key': 'reimohl4thub0Zai' } }
+      )
+  })
+
+  test('Test fetch metric profile', async () => {
+    const webapi = new WebApi({ token: 'reimohl4thub0Zai', metricProfiles: 'mock.metricprofiles.url' });
+
+    let spy = jest.spyOn(webapi, 'fetchProfile').mockReturnValueOnce(
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        statusText: 'OK'
+      })
+    );
+
+    await webapi.fetchMetricProfile('ziyaiph3Quaethea');
+
+    expect(spy).toHaveBeenCalledWith('mock.metricprofiles.url/ziyaiph3Quaethea')
+  })
+
+  test('Test fetch operations profile', async () => {
+    const webapi = new WebApi({ token: 'reimohl4thub0Zai', metricProfiles: 'mock.metricprofiles.url' });
+
+    let spy = jest.spyOn(webapi, 'fetchOperationsProfiles').mockReturnValueOnce(
+      Promise.resolve(mockOperationsProfiles)
+    );
+
+    const response = await webapi.fetchOperationProfile('egi_ops')
+
+    expect(response).toBe(mockOperationsProfiles[0]);
+
+    expect(spy).toHaveBeenCalledTimes(1);
+  })
+
+  test('Test fetch operations profile if empty', async () => {
+    const webapi = new WebApi({ token: 'reimohl4thub0Zai', metricProfiles: 'mock.metricprofiles.url' });
+
+    let spy = jest.spyOn(webapi, 'fetchOperationsProfiles').mockReturnValueOnce(
+      Promise.resolve([])
+    );
+
+    const response = await webapi.fetchOperationProfile('egi_ops')
+
+    expect(response).toStrictEqual({});
+
+    expect(spy).toHaveBeenCalledTimes(1);
+  })
+
+  test('Test fetch report', async () => {
+    const webapi = new WebApi({
+      token: 'reimohl4thub0Zai',
+      reportsConfigurations: {
+        main: 'mock.reports.url',
+        crud: true,
+        tags: 'mock.reports-tags.url',
+        topologygroups: 'mock.reports-topology-groups.url',
+        topologyendpoints: 'mock.reports-topology-endpoints.url'
+      }
+    })
+
+    let spy = jest.spyOn(webapi, 'fetchReports').mockReturnValueOnce(
+      Promise.resolve(mockReports)
+    )
+
+    const response = await webapi.fetchReport('Critical');
+
+    expect(response).toBe(mockReports[0]);
+
+    expect(spy).toHaveBeenCalledTimes(1);
+  })
+
+  test('Test fetch report if empty', async () => {
+    const webapi = new WebApi({
+      token: 'reimohl4thub0Zai',
+      reportsConfigurations: {
+        main: 'mock.reports.url',
+        crud: true,
+        tags: 'mock.reports-tags.url',
+        topologygroups: 'mock.reports-topology-groups.url',
+        topologyendpoints: 'mock.reports-topology-endpoints.url'
+      }
+    })
+
+    let spy = jest.spyOn(webapi, 'fetchReports').mockReturnValueOnce(
+      Promise.resolve([])
+    )
+
+    const response = await webapi.fetchReport('Critical');
+
+    expect(response).toStrictEqual({});
+
+    expect(spy).toHaveBeenCalledTimes(1);
+  })
+
+  test('Test fetch aggregation profile', async () => {
+    const webapi = new WebApi({ token: 'reimohl4thub0Zai', aggregationProfiles: 'mock.aggregations.url' });
+
+    let spy = jest.spyOn(webapi, 'fetchProfile').mockReturnValueOnce(
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        statusText: 'OK'
+      })
+    );
+
+    await webapi.fetchAggregationProfile('ziyaiph3Quaethea');
+
+    expect(spy).toHaveBeenCalledWith('mock.aggregations.url/ziyaiph3Quaethea')
+  })
+
+  test('Test fetch thresholdsprofile profile', async () => {
+    const webapi = new WebApi({ token: 'reimohl4thub0Zai', thresholdsProfiles: 'mock.thresholds.url' });
+
+    let spy = jest.spyOn(webapi, 'fetchProfile').mockReturnValueOnce(
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        statusText: 'OK'
+      })
+    );
+
+    await webapi.fetchThresholdsProfile('ziyaiph3Quaethea');
+
+    expect(spy).toHaveBeenCalledWith('mock.thresholds.url/ziyaiph3Quaethea')
+  })
+
+  test('Test successfully change profile', async () => {
+    const webapi = new WebApi({ token: 'Voh2jaRu' })
+
+    let spy = jest.spyOn(webapi, 'send').mockReturnValueOnce(
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: () => Promise.resolve({ ok: 'ok' })
+      })
+    );
+
+    const response = await webapi.changeProfile('some.mock.url', mockSendValues);
+
+    expect(response).toStrictEqual({ ok: 'ok' })
+    expect(spy).toHaveBeenCalledWith('some.mock.url/oKo1paFohth8iSie', 'PUT', mockSendValues)
+  })
+
+  test('Test error change profile with json error', async () => {
+    const webapi = new WebApi({ token: 'Voh2jaRu' })
+
+    let spy = jest.spyOn(webapi, 'send').mockReturnValueOnce(
+      Promise.resolve({
+        status: 400,
+        statusText: 'BAD REQUEST',
+        json: () => Promise.resolve({ status: { details: 'not ok' } })
+      })
+    );
+
+    try {
+      await webapi.changeProfile('some.mock.url', mockSendValues);
+    } catch(err) {
+      expect(err.message).toBe('400 BAD REQUEST in PUT some.mock.url: not ok');
+    }
+
+    expect(spy).toHaveBeenCalledWith('some.mock.url/oKo1paFohth8iSie', 'PUT', mockSendValues)
+  })
+
+  test('Test error change profile with an invalid json error', async () => {
+    const webapi = new WebApi({ token: 'Voh2jaRu' })
+
+    let spy = jest.spyOn(webapi, 'send').mockReturnValueOnce(
+      Promise.resolve({
+        status: 400,
+        statusText: 'BAD REQUEST',
+        json: () => Promise.resolve({ details: 'not ok' } )
+      })
+    );
+
+    try {
+      await webapi.changeProfile('some.mock.url', mockSendValues);
+    } catch(err) {
+      expect(err.message).toBe('400 BAD REQUEST in PUT some.mock.url');
+    }
+
+    expect(spy).toHaveBeenCalledWith('some.mock.url/oKo1paFohth8iSie', 'PUT', mockSendValues)
+  })
+
+  test('Test error change profile without json error', async () => {
+    const webapi = new WebApi({ token: 'Voh2jaRu' })
+
+    let spy = jest.spyOn(webapi, 'send').mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    );
+
+    try {
+      await webapi.changeProfile('some.mock.url', mockSendValues);
+    } catch(err) {
+      expect(err.message).toBe('500 SERVER ERROR in PUT some.mock.url');
+    }
+
+    expect(spy).toHaveBeenCalledWith('some.mock.url/oKo1paFohth8iSie', 'PUT', mockSendValues)
+  })
+
+  test('Test error change profile with error in fetch', async () => {
+    const webapi = new WebApi({ token: 'Voh2jaRu' })
+
+    let spy = jest.spyOn(webapi, 'send').mockImplementationOnce( () => {
+      throw Error('There has been an error')
+    } );
+
+    try {
+      await webapi.changeProfile('some.mock.url', mockSendValues);
+    } catch(err) {
+      expect(err.message).toBe('Error: There has been an error in PUT some.mock.url');
+    }
+
+    expect(spy).toHaveBeenCalledWith('some.mock.url/oKo1paFohth8iSie', 'PUT', mockSendValues)
+  })
+
+  test('Test change aggregation profile', async () => {
+    const webapi = new WebApi({ token: 'Voh2jaRu', aggregationProfiles: 'mock.aggregations.url' })
+
+    let spy = jest.spyOn(webapi, 'changeProfile').mockReturnValueOnce(
+      Promise.resolve({ ok: 'ok' })
+    )
+
+    const response = await webapi.changeAggregation(mockData);
+
+    expect(response).toStrictEqual({ ok: 'ok' });
+    expect(spy).toHaveBeenCalledWith('mock.aggregations.url', mockData)
+  })
+
+  test('Test change metric profile', async () => {
+    const webapi = new WebApi({ token: 'Voh2jaRu', metricProfiles: 'mock.metricprofiles.url' })
+
+    let spy = jest.spyOn(webapi, 'changeProfile').mockReturnValueOnce(
+      Promise.resolve({ ok: 'ok' })
+    )
+
+    const response = await webapi.changeMetricProfile(mockData);
+
+    expect(response).toStrictEqual({ ok: 'ok' });
+    expect(spy).toHaveBeenCalledWith('mock.metricprofiles.url', mockData)
+  })
+
+  test('Test change thresholds profile', async () => {
+    const webapi = new WebApi({ token: 'Voh2jaRu', thresholdsProfiles: 'mock.thresholds.url' })
+
+    let spy = jest.spyOn(webapi, 'changeProfile').mockReturnValueOnce(
+      Promise.resolve({ ok: 'ok' })
+    )
+
+    const response = await webapi.changeThresholdsProfile(mockData);
+
+    expect(response).toStrictEqual({ ok: 'ok' });
+    expect(spy).toHaveBeenCalledWith('mock.thresholds.url', mockData)
+  })
+
+  test('Test change report', async () => {
+    const webapi = new WebApi({
+      token: 'reimohl4thub0Zai',
+      reportsConfigurations: {
+        main: 'mock.reports.url',
+        crud: true,
+        tags: 'mock.reports-tags.url',
+        topologygroups: 'mock.reports-topology-groups.url',
+        topologyendpoints: 'mock.reports-topology-endpoints.url'
+      }
+    })
+
+    let spy = jest.spyOn(webapi, 'changeProfile').mockReturnValueOnce(
+      Promise.resolve({ ok: 'ok' })
+    )
+
+    const response = await webapi.changeReport(mockData);
+
+    expect(response).toStrictEqual({ ok: 'ok' });
+    expect(spy).toHaveBeenCalledWith('mock.reports.url', mockData)
+  })
+
+  test('Test succesfully add profile', async () => {
+    const webapi = new WebApi({ token: 'Voh2jaRu' })
+
+    let spy = jest.spyOn(webapi, 'send').mockReturnValueOnce(
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: () => Promise.resolve({ ok: 'ok' })
+      })
+    );
+
+    const response = await webapi.addProfile('some.mock.url', mockSendValues);
+
+    expect(response).toStrictEqual({ ok: 'ok' })
+    expect(spy).toHaveBeenCalledWith('some.mock.url', 'POST', mockSendValues)
+  })
+
+  test('Test error adding profile with json error', async () => {
+    const webapi = new WebApi({ token: 'Voh2jaRu' })
+
+    let spy = jest.spyOn(webapi, 'send').mockReturnValueOnce(
+      Promise.resolve({
+        status: 400,
+        statusText: 'BAD REQUEST',
+        json: () => Promise.resolve({ status: { details: 'not ok' } })
+      })
+    );
+
+    try {
+      await webapi.addProfile('some.mock.url', mockSendValues);
+    } catch(err) {
+      expect(err.message).toBe('400 BAD REQUEST in POST some.mock.url: not ok');
+    }
+
+    expect(spy).toHaveBeenCalledWith('some.mock.url', 'POST', mockSendValues)
+  })
+
+  test('Test error adding profile with an invalid json error', async () => {
+    const webapi = new WebApi({ token: 'Voh2jaRu' })
+
+    let spy = jest.spyOn(webapi, 'send').mockReturnValueOnce(
+      Promise.resolve({
+        status: 400,
+        statusText: 'BAD REQUEST',
+        json: () => Promise.resolve( { details: 'not ok' } )
+      })
+    );
+
+    try {
+      await webapi.addProfile('some.mock.url', mockSendValues);
+    } catch(err) {
+      expect(err.message).toBe('400 BAD REQUEST in POST some.mock.url');
+    }
+
+    expect(spy).toHaveBeenCalledWith('some.mock.url', 'POST', mockSendValues)
+  })
+
+  test('Test error adding profile without json error', async () => {
+    const webapi = new WebApi({ token: 'Voh2jaRu' })
+
+    let spy = jest.spyOn(webapi, 'send').mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    );
+
+    try {
+      await webapi.addProfile('some.mock.url', mockSendValues);
+    } catch(err) {
+      expect(err.message).toBe('500 SERVER ERROR in POST some.mock.url');
+    }
+
+    expect(spy).toHaveBeenCalledWith('some.mock.url', 'POST', mockSendValues)
+  })
+
+  test('Test error adding profile with error in fetch', async () => {
+    const webapi = new WebApi({ token: 'Voh2jaRu' })
+
+    let spy = jest.spyOn(webapi, 'send').mockImplementationOnce( () => {
+      throw Error('There has been an error')
+    } );
+
+    try {
+      await webapi.addProfile('some.mock.url', mockSendValues);
+    } catch(err) {
+      expect(err.message).toBe('Error: There has been an error in POST some.mock.url');
+    }
+
+    expect(spy).toHaveBeenCalledWith('some.mock.url', 'POST', mockSendValues)
+  })
+
+  test('Test add metric profile', async () => {
+    const webapi = new WebApi({ token: 'Voh2jaRu', metricProfiles: 'mock.metricprofiles.url' })
+
+    let spy = jest.spyOn(webapi, 'addProfile').mockReturnValueOnce(
+      Promise.resolve({ ok: 'ok' })
+    )
+
+    const response = await webapi.addMetricProfile(mockSendValues)
+
+    expect(response).toStrictEqual({ ok: 'ok' })
+    expect(spy).toHaveBeenCalledWith('mock.metricprofiles.url', mockSendValues)
+  })
+
+  test('Test add aggregation profile', async () => {
+    const webapi = new WebApi({ token: 'Voh2jaRu', aggregationProfiles: 'mock.aggregations.url' })
+
+    let spy = jest.spyOn(webapi, 'addProfile').mockReturnValueOnce(
+      Promise.resolve({ ok: 'ok' })
+    )
+
+    const response = await webapi.addAggregation(mockSendValues)
+
+    expect(response).toStrictEqual({ ok: 'ok' })
+    expect(spy).toHaveBeenCalledWith('mock.aggregations.url', mockSendValues)
+  })
+
+  test('Test add thresholds profile', async () => {
+    const webapi = new WebApi({ token: 'Voh2jaRu', thresholdsProfiles: 'mock.thresholds.url' })
+
+    let spy = jest.spyOn(webapi, 'addProfile').mockReturnValueOnce(
+      Promise.resolve({ ok: 'ok' })
+    )
+
+    const response = await webapi.addThresholdsProfile(mockSendValues)
+
+    expect(response).toStrictEqual({ ok: 'ok' })
+    expect(spy).toHaveBeenCalledWith('mock.thresholds.url', mockSendValues)
+  })
+
+  test('Test add report', async () => {
+    const webapi = new WebApi({
+      token: 'reimohl4thub0Zai',
+      reportsConfigurations: {
+        main: 'mock.reports.url',
+        crud: true,
+        tags: 'mock.reports-tags.url',
+        topologygroups: 'mock.reports-topology-groups.url',
+        topologyendpoints: 'mock.reports-topology-endpoints.url'
+      }
+    })
+
+    let spy = jest.spyOn(webapi, 'addProfile').mockReturnValueOnce(
+      Promise.resolve({ ok: 'ok' })
+    )
+
+    const response = await webapi.addReport(mockSendValues)
+
+    expect(response).toStrictEqual({ ok: 'ok' })
+    expect(spy).toHaveBeenCalledWith('mock.reports.url', mockSendValues)
+  })
+
+  test('Test successfully delete a profile', async () => {
+    const webapi = new WebApi({ token: 'Voh2jaRu' })
+
+    let spy = jest.spyOn(webapi, 'send').mockReturnValueOnce(
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        statusText: 'OK'
+      })
+    );
+
+    const response = await webapi.deleteProfile('some.mock.url');
+
+    expect(response).toStrictEqual({ ok: true, status: 200, statusText: 'OK' });
+    expect(spy).toHaveBeenCalledWith('some.mock.url', 'DELETE');
+  })
+
+  test('Test error deleting a profile with json error', async () => {
+    const webapi = new WebApi({ token: 'Voh2jaRu' })
+
+    let spy = jest.spyOn(webapi, 'send').mockReturnValueOnce(
+      Promise.resolve({
+        status: 400,
+        statusText: 'BAD REQUEST',
+        json: () => Promise.resolve({ status: { details: 'not ok' } })
+      })
+    );
+
+    try {
+      await webapi.deleteProfile('some.mock.url');
+    } catch(err) {
+      expect(err.message).toBe('400 BAD REQUEST in DELETE some.mock.url: not ok')
+    }
+
+    expect(spy).toHaveBeenCalledWith('some.mock.url', 'DELETE');
+  })
+
+  test('Test error deleting a profile with an invalid json error', async () => {
+    const webapi = new WebApi({ token: 'Voh2jaRu' })
+
+    let spy = jest.spyOn(webapi, 'send').mockReturnValueOnce(
+      Promise.resolve({
+        status: 400,
+        statusText: 'BAD REQUEST',
+        json: () => Promise.resolve({ details: 'not ok'  })
+      })
+    );
+
+    try {
+      await webapi.deleteProfile('some.mock.url');
+    } catch(err) {
+      expect(err.message).toBe('400 BAD REQUEST in DELETE some.mock.url')
+    }
+
+    expect(spy).toHaveBeenCalledWith('some.mock.url', 'DELETE');
+  })
+
+  test('Test error deleting a profile without json error', async () => {
+    const webapi = new WebApi({ token: 'Voh2jaRu' })
+
+    let spy = jest.spyOn(webapi, 'send').mockReturnValueOnce(
+      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    );
+
+    try {
+      await webapi.deleteProfile('some.mock.url');
+    } catch(err) {
+      expect(err.message).toBe('500 SERVER ERROR in DELETE some.mock.url')
+    }
+
+    expect(spy).toHaveBeenCalledWith('some.mock.url', 'DELETE');
+  })
+
+  test('Test error deleting a profile with error in fetch', async () => {
+    const webapi = new WebApi({ token: 'Voh2jaRu' })
+
+    let spy = jest.spyOn(webapi, 'send').mockImplementationOnce(() => {
+      throw Error('There has been an error')
+    })
+
+    try {
+      await webapi.deleteProfile('some.mock.url');
+    } catch(err) {
+      expect(err.message).toBe('Error: There has been an error in DELETE some.mock.url')
+    }
+
+    expect(spy).toHaveBeenCalledWith('some.mock.url', 'DELETE');
+  })
+
 })
