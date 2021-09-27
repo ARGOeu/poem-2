@@ -20,18 +20,15 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faIdBadge } from '@fortawesome/free-solid-svg-icons';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
+import { fetchTenants } from './QueryFunctions';
 
 
 export const TenantList = (props) => {
   const location = props.location;
   const history = props.history;
 
-  const backend = new Backend();
-
   const { data: tenants, error, status } = useQuery(
-    'tenant', async () => {
-      return await backend.fetchData('/api/v2/internal/tenants');
-    }
+    'tenant', () => fetchTenants()
   );
 
   if (status === 'loading')

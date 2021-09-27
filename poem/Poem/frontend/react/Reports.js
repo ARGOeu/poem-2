@@ -33,7 +33,12 @@ import {
 } from 'reactstrap';
 import { CustomReactSelect } from './UIElements';
 import * as Yup from 'yup';
-import { fetchMetricProfiles, fetchOperationsProfiles, fetchUserDetails } from './QueryFunctions';
+import {
+  fetchMetricProfiles,
+  fetchOperationsProfiles,
+  fetchUserDetails,
+  fetchReports
+} from './QueryFunctions';
 
 
 const ReportsSchema = Yup.object().shape({
@@ -52,14 +57,6 @@ const ReportsSchema = Yup.object().shape({
 
 export const ReportsAdd = (props) => <ReportsComponent addview={true} {...props}/>;
 export const ReportsChange = (props) => <ReportsComponent {...props}/>;
-
-
-const fetchReports = async () => {
-  const backend = new Backend();
-
-  // TODO: add public API endpoints
-  return await backend.fetchData('/api/v2/internal/reports');
-}
 
 
 const fetchReport = async (webapi, name) => {

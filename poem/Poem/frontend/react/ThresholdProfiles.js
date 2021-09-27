@@ -40,7 +40,11 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faPlus, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import ReactDiffViewer from 'react-diff-viewer';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
-import { fetchUserDetails, fetchAllMetrics } from './QueryFunctions';
+import {
+  fetchUserDetails,
+  fetchAllMetrics,
+  fetchThresholdsProfiles
+} from './QueryFunctions';
 
 
 const ThresholdsAutocomplete = ({lists=[], index, ...props}) => {
@@ -920,22 +924,15 @@ export const ThresholdsProfilesList = (props) => {
   const webapitoken = props.webapitoken;
   const webapithresholds = props.webapithresholds;
 
-  const backend = new Backend();
-
   const queryClient = useQueryClient();
-
-  const apiUrl = `/api/v2/internal/${publicView ? 'public_' : ''}thresholdsprofiles`;
 
   const { data: userDetails, error: errorUserDetails, status: statusUserDetails } = useQuery(
     'userdetails', () => fetchUserDetails(true)
   );
 
   const { data: thresholdsProfiles, error: errorThresholdsProfiles, status: statusThresholdsProfiles } = useQuery(
-    `${publicView ? 'public_' : ''}thresholdsprofile`, async () => {
-      let profiles = await backend.fetchData(apiUrl);
-
-      return profiles;
-    },
+    `${publicView ? 'public_' : ''}thresholdsprofile`,
+    () => fetchThresholdsProfiles(publicView),
     {
       enabled: !publicView ? !!userDetails : true
     }

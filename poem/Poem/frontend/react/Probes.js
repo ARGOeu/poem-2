@@ -26,7 +26,7 @@ import {
 import { Formik, Form, Field, useFormikContext, useField } from 'formik';
 import * as Yup from 'yup';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
-import { fetchPackages, fetchProbeVersion } from './QueryFunctions';
+import { fetchPackages, fetchProbes, fetchProbeVersion } from './QueryFunctions';
 
 
 const ProbeSchema = Yup.object().shape({
@@ -319,14 +319,10 @@ export const ProbeList = (props) => {
   const publicView = props.publicView;
   const isTenantSchema = props.isTenantSchema;
 
-  const backend = new Backend();
   const queryClient = useQueryClient();
 
   const { data: probes, error, isLoading: loading } = useQuery(
-    `${publicView ? 'public_' : ''}probe`, async () => {
-      let probes = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}probes`);
-      return probes;
-    }
+    `${publicView ? 'public_' : ''}probe`, () => fetchProbes(publicView)
   );
 
   const columns = React.useMemo(() => [

@@ -26,6 +26,7 @@ import {
 } from 'reactstrap';
 import { faClipboard } from '@fortawesome/free-solid-svg-icons';
 import { useQuery, useQueryClient, useMutation } from 'react-query';
+import { fetchAPIKeys } from './QueryFunctions';
 
 
 const fetchAPIKey = async(name) => {
@@ -38,13 +39,10 @@ const fetchAPIKey = async(name) => {
 export const APIKeyList = (props) => {
   const location = props.location;
 
-  const backend = new Backend();
   const queryClient = useQueryClient();
 
   const { data: keys, error: error, status: status } = useQuery(
-    'apikey', async () => {
-      return await backend.fetchData('/api/v2/internal/apikeys');
-    }
+    'apikey', () => fetchAPIKeys()
   )
 
   const columns = React.useMemo(

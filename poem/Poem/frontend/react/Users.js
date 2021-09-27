@@ -28,7 +28,7 @@ import {
 import * as Yup from 'yup';
 import './Users.css';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
-import { fetchUserGroups } from './QueryFunctions';
+import { fetchUserGroups, fetchUsers } from './QueryFunctions';
 import { fetchUserDetails } from './QueryFunctions';
 
 
@@ -279,16 +279,12 @@ const fetchGroupsForUser = async (isTenantSchema, username) => {
 
 export const UsersList = (props) => {
     const location = props.location;
-    const backend = new Backend();
     const isTenantSchema = props.isTenantSchema;
 
     const queryClient = useQueryClient();
 
     const { data: listUsers, error: error, isLoading: loading } = useQuery(
-      'user', async () => {
-        let json = await backend.fetchData('/api/v2/internal/users');
-        return json;
-      }
+      'user', () => fetchUsers()
     );
 
   const columns = React.useMemo(() => [

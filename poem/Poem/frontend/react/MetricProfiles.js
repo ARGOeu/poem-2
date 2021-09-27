@@ -30,7 +30,11 @@ import ReactDiffViewer from 'react-diff-viewer';
 import { useQuery, useQueryClient, useMutation } from 'react-query';
 import PapaParse from 'papaparse';
 import { downloadCSV } from './FileDownload';
-import { fetchAllMetrics, fetchUserDetails } from './QueryFunctions';
+import {
+  fetchAllMetrics,
+  fetchUserDetails,
+  fetchBackendMetricProfiles
+} from './QueryFunctions';
 
 import './MetricProfiles.css';
 
@@ -1108,7 +1112,6 @@ export const MetricProfilesList = (props) => {
   const location = props.location;
   const publicView = props.publicView
 
-  const backend = new Backend();
   const webapi = new WebApi({
     token: props.webapitoken,
     metricProfiles: props.webapimetric
@@ -1120,12 +1123,9 @@ export const MetricProfilesList = (props) => {
   );
 
   const { data: metricProfiles, error: errorMetricProfiles, status: statusMetricProfiles} = useQuery(
-    `${publicView ? 'public_' : ''}metricprofile`, async () => {
-      return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metricprofiles`)
-    },
-    {
-      enabled: !publicView ? !!userDetails : true
-    }
+    `${publicView ? 'public_' : ''}metricprofile`,
+    () => fetchBackendMetricProfiles(publicView),
+    { enabled: !publicView ? !!userDetails : true }
   );
 
   const columns = useMemo(() => [
