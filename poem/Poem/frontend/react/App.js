@@ -669,6 +669,42 @@ const App = () => {
     setWebApiReports(options && options.result.webapireports);
     setTenantName(options && options.result.tenant_name);
     setPublicView(true);
+    queryClient.prefetchQuery(
+      'public_probe', () => fetchProbes(publicView)
+    );
+    queryClient.prefetchQuery(
+      'public_metrictemplate', () => fetchMetricTemplates(publicView)
+    );
+    queryClient.prefetchQuery(
+      'public_metric', () => fetchMetrics(publicView)
+    );
+    queryClient.prefetchQuery(
+      'public_metricstypes', () => fetchMetricTypes(publicView)
+    );
+    queryClient.prefetchQuery(
+      'public_metrictemplatestypes', () => fetchMetricTemplateTypes(publicView)
+    );
+    queryClient.prefetchQuery(
+      'public_metrictags', () => fetchMetricTags(publicView)
+    );
+    queryClient.prefetchQuery(
+      ['public_metric', 'usergroups'], () => fetchUserGroups(isTenantSchema, publicView, 'metrics')
+    );
+    queryClient.prefetchQuery(
+      'public_ostags', () => fetchOStags(publicView)
+    );
+    queryClient.prefetchQuery(
+      'public_metricprofile', () => fetchBackendMetricProfiles(publicView)
+    );
+    queryClient.prefetchQuery(
+      ['public_aggregationprofile', 'backend'], () => fetchAggregationProfiles(publicView)
+    );
+    queryClient.prefetchQuery(
+      'public_thresholdsprofile', () => fetchThresholdsProfiles(publicView)
+    );
+    queryClient.prefetchQuery(
+      'public_operationsprofile', () => fetchOperationsProfiles(new WebApi({ token: token, operationsProfiles: webApiOperations }))
+    );
   }
 
   function isPublicUrl () {
