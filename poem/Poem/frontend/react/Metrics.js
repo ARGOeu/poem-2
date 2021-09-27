@@ -51,7 +51,8 @@ import {
   fetchUserDetails,
   fetchUserGroups,
   fetchMetrics,
-  fetchMetricTypes
+  fetchMetricTypes,
+  fetchProbeVersions
 } from './QueryFunctions';
 
 
@@ -469,7 +470,33 @@ export const ListOfMetrics = (props) => {
         accessor: 'name',
         column_width: '39%',
         Cell: row =>
-          <Link to={`${metriclink}${row.value}`}>
+          <Link
+            to={`${metriclink}${row.value}`}
+            onMouseEnter={ async () => {
+              if (type === 'metrics') {
+                if (row.original.probeversion) {
+                  const metricProbeVersion = row.original.probeversion.split(' ')[0];
+                  await queryClient.prefetchQuery(
+                    [`${publicView ? 'public_' : ''}probe`, 'version', metricProbeVersion],
+                    () => fetchProbeVersion(publicView, metricProbeVersion)
+                  )
+                }
+              } else {
+                await queryClient.prefetchQuery(
+                  `${publicView ? 'public_' : ''}metrictemplatestypes`,
+                  () => fetchMetricTemplateTypes(publicView)
+                );
+                await queryClient.prefetchQuery(
+                  `${publicView ? 'public_' : ''}metrictags`,
+                  () => fetchMetricTags(publicView)
+                );
+                await queryClient.prefetchQuery(
+                  [`${publicView ? 'public_' : ''}probe`, 'version'],
+                  () => fetchProbeVersions(publicView)
+                );
+              }
+            } }
+          >
             {row.value}
           </Link>,
         Filter: DefaultColumnFilter
