@@ -41,7 +41,19 @@ import ReactDiffViewer from 'react-diff-viewer';
 import CreatableSelect from 'react-select/creatable';
 import { components } from 'react-select';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
-import { fetchMetricTags, fetchMetricTemplates, fetchMetricTemplateTypes, fetchMetricTemplateVersion, fetchOStags, fetchProbeVersion, fetchUserDetails, fetchUserGroups } from './QueryFunctions';
+import {
+  fetchMetricTags,
+  fetchMetricTemplates,
+  fetchMetricTemplateTypes,
+  fetchMetricTemplateVersion,
+  fetchOStags,
+  fetchProbeVersion,
+  fetchUserDetails,
+  fetchUserGroups,
+  fetchMetrics,
+  fetchMetricTypes,
+  fetchProbeVersions
+} from './QueryFunctions';
 
 
 function validateConfig(value) {
@@ -294,20 +306,6 @@ export const ProbeVersionLink = ({probeversion, publicView=false}) => (
 )
 
 
-const fetchMetrics = async (publicView) => {
-  const backend = new Backend();
-
-  return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metric`);
-}
-
-
-const fetchMetricTypes = async (publicView) => {
-  const backend = new Backend();
-
-  return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}mtypes`);
-}
-
-
 export const ListOfMetrics = (props) => {
   const location = props.location;
   const type = props.type;
@@ -350,7 +348,7 @@ export const ListOfMetrics = (props) => {
   );
 
   var { data: OSGroups, error: OSGroupsError, isLoading: OSGroupsLoading } = useQuery(
-    `${publicView ? 'public_' : ''}${type === 'metrics' ? 'usergroups' : 'ostags'}`,
+    type === 'metrics' ? [`${publicView ? 'public_' : ''}metric`, 'usergroups'] : `${publicView ? 'public_' : ''}ostags`,
     () =>  type === 'metrics' ? fetchUserGroups(isTenantSchema, publicView, 'metrics') : fetchOStags(publicView)
   );
 
@@ -472,7 +470,33 @@ export const ListOfMetrics = (props) => {
         accessor: 'name',
         column_width: '39%',
         Cell: row =>
-          <Link to={`${metriclink}${row.value}`}>
+          <Link
+            to={`${metriclink}${row.value}`}
+            onMouseEnter={ async () => {
+              if (type === 'metrics') {
+                if (row.original.probeversion) {
+                  const metricProbeVersion = row.original.probeversion.split(' ')[0];
+                  await queryClient.prefetchQuery(
+                    [`${publicView ? 'public_' : ''}probe`, 'version', metricProbeVersion],
+                    () => fetchProbeVersion(publicView, metricProbeVersion)
+                  )
+                }
+              } else {
+                await queryClient.prefetchQuery(
+                  `${publicView ? 'public_' : ''}metrictemplatestypes`,
+                  () => fetchMetricTemplateTypes(publicView)
+                );
+                await queryClient.prefetchQuery(
+                  `${publicView ? 'public_' : ''}metrictags`,
+                  () => fetchMetricTags(publicView)
+                );
+                await queryClient.prefetchQuery(
+                  [`${publicView ? 'public_' : ''}probe`, 'version'],
+                  () => fetchProbeVersions(publicView)
+                );
+              }
+            } }
+          >
             {row.value}
           </Link>,
         Filter: DefaultColumnFilter

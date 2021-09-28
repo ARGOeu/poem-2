@@ -45,7 +45,7 @@ import ReactDiffViewer from 'react-diff-viewer';
 
 import "react-notifications/lib/notifications.css";
 import './AggregationProfiles.css';
-import { fetchMetricProfiles, fetchUserDetails } from './QueryFunctions';
+import { fetchAggregationProfiles, fetchMetricProfiles, fetchUserDetails } from './QueryFunctions';
 
 
 const AggregationProfilesChangeContext = React.createContext();
@@ -1109,7 +1109,6 @@ export const AggregationProfilesList = (props) => {
   const location = props.location;
   const publicView = props.publicView
 
-  const backend = new Backend();
   const webapi = new WebApi({
     token: props.webapitoken,
     metricProfiles: props.webapimetric,
@@ -1122,12 +1121,9 @@ export const AggregationProfilesList = (props) => {
   );
 
   const { data: aggregations, error: errorAggregations, isLoading: loadingAggregations } = useQuery(
-    [`${publicView ? 'public_' : ''}aggregationprofile`, 'backend'], async () => {
-      return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}aggregations`)
-    },
-    {
-      enabled: !publicView ? !!userDetails : true
-    }
+    [`${publicView ? 'public_' : ''}aggregationprofile`, 'backend'],
+    () => fetchAggregationProfiles(publicView),
+    { enabled: !publicView ? !!userDetails : true }
   );
 
   const columns = useMemo(() => [

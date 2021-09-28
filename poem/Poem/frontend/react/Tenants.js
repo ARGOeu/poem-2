@@ -20,18 +20,15 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faIdBadge } from '@fortawesome/free-solid-svg-icons';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
+import { fetchTenants } from './QueryFunctions';
 
 
 export const TenantList = (props) => {
   const location = props.location;
   const history = props.history;
 
-  const backend = new Backend();
-
   const { data: tenants, error, status } = useQuery(
-    'tenant', async () => {
-      return await backend.fetchData('/api/v2/internal/tenants');
-    }
+    'tenant', () => fetchTenants()
   );
 
   if (status === 'loading')
@@ -47,7 +44,7 @@ export const TenantList = (props) => {
       for (let j = 0; j < 3; j++) {
         if ((i + j) < tenants.length)
           cards.push(
-            <Card data-testid={`${tenants[i + j].name}-card`} className='mr-3' key={j + 1} tag='a' onClick={() => history.push(`/ui/tenants/${tenants[i + j].name}`)} style={{cursor: 'pointer'}}>
+            <Card data-testid={`${tenants[i + j].name}-card`} className='mr-3' key={j + 1} tag='a' onClick={() => history.push(`/ui/tenants/${tenants[i + j].name}`)} style={{cursor: 'pointer', color: 'black'}}>
               <CardTitle className='text-center'>
                 <h3>{tenants[i + j].name}</h3>
               </CardTitle>

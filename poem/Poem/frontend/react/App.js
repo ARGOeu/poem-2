@@ -43,7 +43,7 @@ import { Route, Switch, BrowserRouter, Redirect, withRouter } from 'react-router
 import { Container, Row, Col } from 'reactstrap';
 import { NavigationBar, NavigationAbout, CustomBreadcrumb, NavigationLinks, Footer, PublicPage, HistoryComponent, DocumentTitle} from './UIElements';
 import { NotificationContainer } from 'react-notifications';
-import { Backend } from './DataManager';
+import { Backend, WebApi } from './DataManager';
 import { YumRepoList, YumRepoComponent } from './YumRepos';
 import { ThresholdsProfilesList, ThresholdsProfilesChange, ThresholdsProfileVersionCompare, ThresholdsProfileVersionDetail } from './ThresholdProfiles';
 
@@ -53,8 +53,9 @@ import { ServiceTypesList } from './ServiceTypes';
 import { TenantList, TenantChange } from './Tenants';
 import { OperationsProfilesList, OperationsProfileDetails } from './OperationsProfiles';
 import { CookiePolicy } from './CookiePolicy';
-import { QueryClientProvider, QueryClient } from 'react-query';
+import { QueryClient, QueryClientProvider } from 'react-query';
 import { ReactQueryDevtools } from 'react-query/devtools';
+import { fetchAggregationProfiles, fetchAPIKeys, fetchBackendMetricProfiles, fetchMetrics, fetchMetricTags, fetchMetricTemplates, fetchMetricTemplateTypes, fetchMetricTypes, fetchOperationsProfiles, fetchOStags, fetchPackages, fetchProbes, fetchReports, fetchTenants, fetchThresholdsProfiles, fetchUserGroups, fetchUsers, fetchYumRepos } from './QueryFunctions';
 
 
 const NavigationBarWithRouter = withRouter(NavigationBar);
@@ -64,7 +65,6 @@ const CustomBreadcrumbWithRouter = withRouter(CustomBreadcrumb);
 const DocumentTitleWithRouter = withRouter(DocumentTitle);
 
 const queryClient = new QueryClient();
-
 
 const SuperUserRoute = ({isSuperUser, ...props}) => (
   isSuperUser ?
@@ -564,7 +564,7 @@ const App = () => {
     })
 
     let isTenantSchema = await backend.isTenantSchema();
-    let initialState = await initalizeState(isTenantSchema, response);
+    await initalizeState(isTenantSchema, response);
   }
 
   function onLogout() {
@@ -578,25 +578,79 @@ const App = () => {
 
   async function initalizeState(poemType, response) {
     let options = await backend.fetchConfigOptions();
-    if (poemType) {
       setIsTenantSchema(poemType);
       setIsSessionActive(response.active);
       setUserDetails(response.userdetails);
+      setVersion(options && options.result.version);
+      setPublicView(false);
+      queryClient.prefetchQuery(
+        'user', () => fetchUsers()
+      );
+      queryClient.prefetchQuery(
+        'yumrepo', () => fetchYumRepos()
+      );
+      queryClient.prefetchQuery(
+        'ostags', () => fetchOStags()
+      );
+      queryClient.prefetchQuery(
+        'package', () => fetchPackages()
+      );
+      queryClient.prefetchQuery(
+        'metrictemplate', () => fetchMetricTemplates(publicView)
+      );
+      queryClient.prefetchQuery(
+        'metrictemplatestypes', () => fetchMetricTemplateTypes(publicView)
+      );
+      queryClient.prefetchQuery(
+        'metrictags', () => fetchMetricTags(publicView)
+      );
+      queryClient.prefetchQuery(
+        'apikey', () => fetchAPIKeys()
+      );
+      queryClient.prefetchQuery(
+        'probe', () => fetchProbes(publicView)
+      );
+    if (poemType) {
       setToken(response.userdetails.token);
       setWebApiMetric(options && options.result.webapimetric);
       setWebApiAggregation(options && options.result.webapiaggregation);
       setWebApiThresholds(options && options.result.webapithresholds);
       setWebApiOperations(options && options.result.webapioperations);
-      setVersion(options && options.result.version);
       setWebApiReports(options && options.result.webapireports);
       setTenantName(options && options.result.tenant_name);
-      setPublicView(false);
+      queryClient.prefetchQuery(
+        'metric', () => fetchMetrics(false)
+      );
+      queryClient.prefetchQuery(
+        'metricstypes', () => fetchMetricTypes(false)
+      );
+      queryClient.prefetchQuery(
+        ['metric', 'usergroups'], () => fetchUserGroups(true, false, 'metrics')
+      )
+      queryClient.prefetchQuery(
+        'report', () => fetchReports()
+      );
+      queryClient.prefetchQuery(
+        'metricprofile', () => fetchBackendMetricProfiles()
+      );
+      queryClient.prefetchQuery(
+        ['aggregationprofile', 'backend'], () => fetchAggregationProfiles()
+      );
+      queryClient.prefetchQuery(
+        'thresholdsprofile', () => fetchThresholdsProfiles()
+      );
+      queryClient.prefetchQuery(
+        'operationsprofile', () => fetchOperationsProfiles(
+          new WebApi({ token: token, operationsProfiles: webApiOperations })
+        )
+      );
+      queryClient.prefetchQuery(
+        'usergroups', () => fetchUserGroups(true)
+      );
     } else {
-      setIsTenantSchema(poemType);
-      setIsSessionActive(response.active);
-      setUserDetails(response.userdetails);
-      setVersion(options && options.result.version);
-      setPublicView(false);
+      queryClient.prefetchQuery(
+        'tenant', () => fetchTenants()
+      );
     }
   }
 
@@ -615,6 +669,42 @@ const App = () => {
     setWebApiReports(options && options.result.webapireports);
     setTenantName(options && options.result.tenant_name);
     setPublicView(true);
+    queryClient.prefetchQuery(
+      'public_probe', () => fetchProbes(publicView)
+    );
+    queryClient.prefetchQuery(
+      'public_metrictemplate', () => fetchMetricTemplates(publicView)
+    );
+    queryClient.prefetchQuery(
+      'public_metric', () => fetchMetrics(publicView)
+    );
+    queryClient.prefetchQuery(
+      'public_metricstypes', () => fetchMetricTypes(publicView)
+    );
+    queryClient.prefetchQuery(
+      'public_metrictemplatestypes', () => fetchMetricTemplateTypes(publicView)
+    );
+    queryClient.prefetchQuery(
+      'public_metrictags', () => fetchMetricTags(publicView)
+    );
+    queryClient.prefetchQuery(
+      ['public_metric', 'usergroups'], () => fetchUserGroups(isTenantSchema, publicView, 'metrics')
+    );
+    queryClient.prefetchQuery(
+      'public_ostags', () => fetchOStags(publicView)
+    );
+    queryClient.prefetchQuery(
+      'public_metricprofile', () => fetchBackendMetricProfiles(publicView)
+    );
+    queryClient.prefetchQuery(
+      ['public_aggregationprofile', 'backend'], () => fetchAggregationProfiles(publicView)
+    );
+    queryClient.prefetchQuery(
+      'public_thresholdsprofile', () => fetchThresholdsProfiles(publicView)
+    );
+    queryClient.prefetchQuery(
+      'public_operationsprofile', () => fetchOperationsProfiles(new WebApi({ token: token, operationsProfiles: webApiOperations }))
+    );
   }
 
   function isPublicUrl () {
@@ -661,7 +751,7 @@ const App = () => {
             <Switch>
               <Route
                 exact path="/ui/public_home"
-                render={props =>
+                render={() =>
                   <PublicPage tenantName={tenantName}>
                     <PublicHome/>
                   </PublicPage>
@@ -971,17 +1061,19 @@ const App = () => {
   }
   else if (!publicView && !isSessionActive) {
     return (
-      <BrowserRouter>
-        <Switch>
-          <Route
-            path="/ui/"
-            render={props =>
-              <Login onLogin={onLogin} {...props} />
-            }
-          />
-          <Route component={NotFound} />
-        </Switch>
-      </BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <Switch>
+            <Route
+              path="/ui/"
+              render={props =>
+                <Login onLogin={onLogin} {...props} />
+              }
+            />
+            <Route component={NotFound} />
+          </Switch>
+        </BrowserRouter>
+      </QueryClientProvider>
     )
   }
   else if (isSessionActive && userDetails &&
@@ -1044,10 +1136,12 @@ const App = () => {
   }
   else if (isTenantSchema === null && isSessionActive) {
     return (
-      <React.Fragment>
-        <h1>Something went wrong</h1>
-        <p>Cannot obtain schema.</p>
-      </React.Fragment>
+      <QueryClientProvider client={queryClient}>
+        <React.Fragment>
+          <h1>Something went wrong</h1>
+          <p>Cannot obtain schema.</p>
+        </React.Fragment>
+      </QueryClientProvider>
     )
   }
   else
