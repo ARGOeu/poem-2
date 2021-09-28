@@ -6,7 +6,7 @@ import { Route, Router } from 'react-router-dom';
 import { ListOfMetrics } from '../Metrics';
 import { Backend } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
-import { QueryClientProvider, QueryClient } from 'react-query'
+import { QueryClientProvider, QueryClient, setLogger } from 'react-query'
 import { MetricTemplateComponent, MetricTemplateVersionDetails } from '../MetricTemplates';
 import selectEvent from 'react-select-event';
 
@@ -26,6 +26,11 @@ const mockAddObject = jest.fn();
 
 const queryClient = new QueryClient();
 
+setLogger({
+  log: () => {},
+  warn: () => {},
+  error: () => {}
+})
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -550,6 +555,7 @@ const passiveMetricTemplateVersions = [
   }
 ]
 
+
 function renderListView(publicView=undefined) {
   const route = `/ui/${publicView ? 'public_' : ''}metrictemplates`;
   const history = createMemoryHistory({ initialEntries: [route] });
@@ -580,6 +586,7 @@ function renderListView(publicView=undefined) {
     }
 }
 
+
 function renderTenantListView() {
   const route = '/ui/administration/metrictemplates';
   const history = createMemoryHistory({ initialEntries: [route] });
@@ -596,6 +603,7 @@ function renderTenantListView() {
     )
   }
 }
+
 
 function renderChangeView(options = {}) {
   const passive = options.passive ? options.passive : false;
@@ -861,11 +869,7 @@ describe('Test list of metric templates on SuperPOEM', () => {
   test('Test bulk delete metric templates', async () => {
     mockBulkDeleteMetrics.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          info: 'Metric templates argo.AMS-Check, org.apel.APEL-Pub successfully deleted.'
-        }),
-        status: 200,
-        ok: true,
+        info: 'Metric templates argo.AMS-Check, org.apel.APEL-Pub successfully deleted.'
       })
     )
 
@@ -900,11 +904,7 @@ describe('Test list of metric templates on SuperPOEM', () => {
   test('Test bulk delete select all filtered metric templates', async () => {
     mockBulkDeleteMetrics.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          info: 'Metric templates argo.AMS-Check, argo.AMS-Publisher successfully deleted.'
-        }),
-        status: 200,
-        ok: true,
+        info: 'Metric templates argo.AMS-Check, argo.AMS-Publisher successfully deleted.'
       })
     )
 
@@ -956,12 +956,8 @@ describe('Test list of metric templates on SuperPOEM', () => {
   test('Test bulk delete metric template with info and warning', async () => {
     mockBulkDeleteMetrics.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          info: 'Metric template argo.AMS-Check successfully deleted.',
-          warning: 'Metric template org.apel.APEL-Pub not deleted: something went wrong'
-        }),
-        status: 200,
-        ok: true,
+        info: 'Metric template argo.AMS-Check successfully deleted.',
+        warning: 'Metric template org.apel.APEL-Pub not deleted: something went wrong'
       })
     )
 
@@ -1003,12 +999,8 @@ describe('Test list of metric templates on SuperPOEM', () => {
   test('Test bulk delete metric template with warning only', async () => {
     mockBulkDeleteMetrics.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          warning: 'Metric template argo.AMS-Check, org.apel.APEL-Pub not deleted: something went wrong'
-        }),
-        status: 200,
-        ok: true,
-      })
+        warning: 'Metric template argo.AMS-Check, org.apel.APEL-Pub not deleted: something went wrong'
+      }),
     )
 
     renderListView();
@@ -1043,9 +1035,9 @@ describe('Test list of metric templates on SuperPOEM', () => {
   })
 
   test('Test bulk delete metric template with error', async () => {
-    mockBulkDeleteMetrics.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockBulkDeleteMetrics.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: There has been an error.')
+    } )
 
     renderListView();
 
@@ -1072,10 +1064,10 @@ describe('Test list of metric templates on SuperPOEM', () => {
     expect(NotificationManager.warning).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>Error deleting metric templates</p>
+        <p>400 BAD REQUEST: There has been an error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 500 SERVER ERROR',
+      'Error deleting metric templates',
       0,
       expect.any(Function)
     )
@@ -1305,11 +1297,7 @@ describe('Test list of metric templates on tenant POEM', () => {
   test('Test import metric templates', async () => {
     mockImportMetrics.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          imported: 'argo.AMS-Check, org.apel.APEL-Pub have been successfully imported.'
-        }),
-        status: 200,
-        ok: true
+        imported: 'argo.AMS-Check, org.apel.APEL-Pub have been successfully imported.'
       })
     )
 
@@ -1368,11 +1356,7 @@ describe('Test list of metric templates on tenant POEM', () => {
   test('Test importing of metric templates if warn message', async () => {
     mockImportMetrics.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          warn: 'argo.AMS-Check, org.apel.APEL-Pub have been imported with older probe version. If you wish to use more recent probe version, you should update package version you use.'
-        }),
-        status: 200,
-        ok: true
+        warn: 'argo.AMS-Check, org.apel.APEL-Pub have been imported with older probe version. If you wish to use more recent probe version, you should update package version you use.'
       })
     )
 
@@ -1412,11 +1396,7 @@ describe('Test list of metric templates on tenant POEM', () => {
   test('Test importing of metric templates if err message', async () => {
     mockImportMetrics.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          err: 'argo.AMS-Check, org.apel.APEL-Pub have not been imported since they already exist in the database.'
-        }),
-        status: 200,
-        ok: true
+        err: 'argo.AMS-Check, org.apel.APEL-Pub have not been imported since they already exist in the database.'
       })
     )
 
@@ -1454,11 +1434,7 @@ describe('Test list of metric templates on tenant POEM', () => {
   test('Test importing of metric templates if unavailable message', async () => {
     mockImportMetrics.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          unavailable: 'argo.AMS-Check, org.apel.APEL-Pub have not been imported, since they are not available for the package version you use. If you wish to use the metric, you should change the package version, and try to import again.'
-        }),
-        status: 200,
-        ok: true
+        unavailable: 'argo.AMS-Check, org.apel.APEL-Pub have not been imported, since they are not available for the package version you use. If you wish to use the metric, you should change the package version, and try to import again.'
       })
     )
 
@@ -1496,13 +1472,9 @@ describe('Test list of metric templates on tenant POEM', () => {
   test('Test importing of metric templates if mixed messages', async () => {
     mockImportMetrics.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          imported: 'argo.AMS-Check has been successfully imported.',
-          warn: 'argo.POEM-API-MON has been imported with older probe version. If you wish to use more recent probe version, you should update package version you use.',
-          err: 'org.apel.APEL-Pub has not been imported since it already exists in the database.'
-        }),
-        status: 200,
-        ok: true
+        imported: 'argo.AMS-Check has been successfully imported.',
+        warn: 'argo.POEM-API-MON has been imported with older probe version. If you wish to use more recent probe version, you should update package version you use.',
+        err: 'org.apel.APEL-Pub has not been imported since it already exists in the database.'
       })
     )
 
@@ -1556,11 +1528,7 @@ describe('Test list of metric templates on tenant POEM', () => {
   test('Test select all when importing metric templates', async () => {
     mockImportMetrics.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          imported: 'argo.AMS-Check, argo.POEM-API-MON, org.apel.APEL-Pub have been successfully imported.'
-        }),
-        status: 200,
-        ok: true
+        imported: 'argo.AMS-Check, argo.POEM-API-MON, org.apel.APEL-Pub have been successfully imported.'
       })
     )
 
@@ -1597,11 +1565,7 @@ describe('Test list of metric templates on tenant POEM', () => {
   test('Test select all when importing metric templates if filtered', async () => {
     mockImportMetrics.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          imported: 'argo.AMS-Check, argo.POEM-API-MON have been successfully imported.'
-        }),
-        status: 200,
-        ok: true
+        imported: 'argo.AMS-Check, argo.POEM-API-MON have been successfully imported.'
       })
     )
 
@@ -1637,6 +1601,8 @@ describe('Test list of metric templates on tenant POEM', () => {
 describe('Test metric template changeview on SuperPOEM', () => {
   jest.spyOn(NotificationManager, 'success');
   jest.spyOn(NotificationManager, 'error');
+  jest.spyOn(NotificationManager, 'warning');
+  jest.spyOn(queryClient, 'invalidateQueries');
 
   beforeAll(() => {
     Backend.mockImplementation(() => {
@@ -1884,10 +1850,6 @@ describe('Test metric template changeview on SuperPOEM', () => {
   })
 
   test('Test change metric template and save', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-
     renderChangeView();
 
     await waitFor(() => {
@@ -1983,19 +1945,17 @@ describe('Test metric template changeview on SuperPOEM', () => {
         }
       )
     })
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metrictemplate');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metrictemplate');
     expect(NotificationManager.success).toHaveBeenCalledWith(
       'Metric template successfully changed', 'Changed', 2000
     )
   })
 
   test('Test error in saving metric template with error message', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'You should choose existing probe version!' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockChangeObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST; You should choose existing probe version.')
+    } )
 
     renderChangeView();
 
@@ -2049,21 +2009,91 @@ describe('Test metric template changeview on SuperPOEM', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('metrictemplate');
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('public_metrictemplate');
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>You should choose existing probe version!</p>
+        <p>400 BAD REQUEST; You should choose existing probe version.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 400 BAD REQUEST',
+      'Error',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error in saving metric template with teapot', async () => {
+    mockChangeObject.mockImplementationOnce( () => {
+      throw Error('418 IM A TEAPOT; Update metric profile manually.')
+    } )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template')
+    })
+
+    const probeField = screen.getByTestId('autocomplete-probeversion')
+    const packageField = screen.getByTestId('package');
+
+    fireEvent.change(probeField, { target: { value: 'ams-probe-new' } });
+    expect(packageField.value).toBe('');
+    expect(packageField).toBeDisabled();
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/metrictemplates/',
+        {
+          'id': '1',
+          'name': 'argo.AMS-Check',
+          'mtype': 'Active',
+          'tags': ['test_tag1', 'test_tag2'],
+          'description': 'Some description of argo.AMS-Check metric template.',
+          'probeversion': 'ams-probe-new',
+          'parent': '',
+          'probeexecutable': 'ams-probe',
+          'config': [
+            { key: 'maxCheckAttempts', value: '4' },
+            { key: 'timeout', value: '70' },
+            { key: 'path', value: '/usr/libexec/argo-monitoring/' },
+            { key: 'interval', value: '5' },
+            { key: 'retryInterval', value: '3' }
+          ],
+          'attribute': [
+            { key: 'argo.ams_TOKEN', value: '--token' }
+          ],
+          'dependency': [{ key: '', value: '' }],
+          'parameter': [{ key: '--project', value: 'EGI' }],
+          'flags': [
+            { key: 'OBSESS', value: '1' }
+          ],
+          'files': [{ key: '', value: '' }],
+          'fileparameter': [{ key: '', value: '' }]
+        }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metrictemplate');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metrictemplate');
+    expect(NotificationManager.warning).toHaveBeenCalledWith(
+      <div>
+        <p>418 IM A TEAPOT; Update metric profile manually.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Warning',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error in saving metric template without error message', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockChangeObject.mockImplementationOnce( () => {throw Error() } );
 
     renderChangeView();
 
@@ -2117,12 +2147,14 @@ describe('Test metric template changeview on SuperPOEM', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('metrictemplate');
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('public_metrictemplate');
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Error changing metric template</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 500 SERVER ERROR',
+      'Error',
       0,
       expect.any(Function)
     )
@@ -2557,10 +2589,6 @@ describe('Test metric template changeview on SuperPOEM', () => {
   })
 
   test('Test changing active/passive metric template and save', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-
     renderChangeView();
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
@@ -2612,6 +2640,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
         }
       )
     })
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metrictemplate');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metrictemplate');
     expect(NotificationManager.success).toHaveBeenCalledWith(
       'Metric template successfully changed', 'Changed', 2000
     )
@@ -2622,6 +2652,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
 describe('Test metric template addview on SuperPOEM', () => {
   jest.spyOn(NotificationManager, 'success');
   jest.spyOn(NotificationManager, 'error');
+  jest.spyOn(queryClient, 'invalidateQueries');
 
   beforeAll(() => {
     Backend.mockImplementation(() => {
@@ -2731,10 +2762,6 @@ describe('Test metric template addview on SuperPOEM', () => {
   })
 
   test('Test add active metric template and save', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 201, statusText: 'CREATED' })
-    )
-
     renderAddView();
 
     await waitFor(() => {
@@ -2825,16 +2852,14 @@ describe('Test metric template addview on SuperPOEM', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metrictemplate');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metrictemplate');
     expect(NotificationManager.success).toHaveBeenCalledWith(
       'Metric template successfully added', 'Added', 2000
     )
   })
 
   test('Test add passive metric template and save', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 201, statusText: 'CREATED' })
-    )
-
     renderAddView();
 
     await waitFor(() => {
@@ -2941,19 +2966,17 @@ describe('Test metric template addview on SuperPOEM', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metrictemplate');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metrictemplate');
     expect(NotificationManager.success).toHaveBeenCalledWith(
       'Metric template successfully added', 'Added', 2000
     )
   })
 
   test('Test error in saving metric template with error message', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'Metric template with this name already exists' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockAddObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST; Metric template with this name already exists')
+    } )
 
     renderAddView();
 
@@ -3041,21 +3064,21 @@ describe('Test metric template addview on SuperPOEM', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('metrictemplate');
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('public_metrictemplate');
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>Metric template with this name already exists</p>
+        <p>400 BAD REQUEST; Metric template with this name already exists</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 400 BAD REQUEST',
+      'Error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error in saving metric template without error message', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockAddObject.mockImplementationOnce( () => { throw Error() } );
 
     renderAddView();
 
@@ -3143,12 +3166,14 @@ describe('Test metric template addview on SuperPOEM', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('metrictemplate');
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('public_metrictemplate');
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Error adding metric template</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 500 SERVER ERROR',
+      'Error',
       0,
       expect.any(Function)
     )
@@ -3159,6 +3184,7 @@ describe('Test metric template addview on SuperPOEM', () => {
 describe('Test metric template cloneview on SuperPOEM', () => {
   jest.spyOn(NotificationManager, 'success');
   jest.spyOn(NotificationManager, 'error');
+  jest.spyOn(queryClient, 'invalidateQueries');
 
   beforeAll(() => {
     Backend.mockImplementation(() => {
@@ -3210,10 +3236,6 @@ describe('Test metric template cloneview on SuperPOEM', () => {
   })
 
   test('Test clone active metric template and save', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 201, statusText: 'CREATED' })
-    )
-
     renderCloneView();
 
     await waitFor(() => {
@@ -3336,16 +3358,14 @@ describe('Test metric template cloneview on SuperPOEM', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metrictemplate');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metrictemplate');
     expect(NotificationManager.success).toHaveBeenCalledWith(
       'Metric template successfully added', 'Added', 2000
     )
   })
 
   test('Test clone passive metric template and save', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 201, statusText: 'CREATED' })
-    )
-
     renderCloneView({ passive: true });
 
     await waitFor(() => {
@@ -3458,19 +3478,17 @@ describe('Test metric template cloneview on SuperPOEM', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metrictemplate');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metrictemplate');
     expect(NotificationManager.success).toHaveBeenCalledWith(
       'Metric template successfully added', 'Added', 2000
     )
   })
 
   test('Test error in saving cloned metric template with error message', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'Metric template with this name already exists' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockAddObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST; Metric template with this name already exists')
+    } )
 
     renderCloneView();
 
@@ -3522,21 +3540,21 @@ describe('Test metric template cloneview on SuperPOEM', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('metrictemplate');
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('public_metrictemplate');
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>Metric template with this name already exists</p>
+        <p>400 BAD REQUEST; Metric template with this name already exists</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 400 BAD REQUEST',
+      'Error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error in saving metric template without error message', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockAddObject.mockImplementationOnce( () => { throw Error() } );
 
     renderCloneView();
 
@@ -3588,12 +3606,14 @@ describe('Test metric template cloneview on SuperPOEM', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('metrictemplate');
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('public_metrictemplate');
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Error adding metric template</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 500 SERVER ERROR',
+      'Error',
       0,
       expect.any(Function)
     )

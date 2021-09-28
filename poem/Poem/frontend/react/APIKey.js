@@ -25,13 +25,21 @@ import {
   InputGroupAddon,
 } from 'reactstrap';
 import { faClipboard } from '@fortawesome/free-solid-svg-icons';
-import { useQuery, useQueryClient } from 'react-query';
+import { useQuery, useQueryClient, useMutation } from 'react-query';
+
+
+const fetchAPIKey = async(name) => {
+  const backend = new Backend();
+
+  return await backend.fetchData(`/api/v2/internal/apikeys/${name}`);
+}
 
 
 export const APIKeyList = (props) => {
   const location = props.location;
 
   const backend = new Backend();
+  const queryClient = useQueryClient();
 
   const { data: keys, error: error, status: status } = useQuery(
     'apikey', async () => {
@@ -50,7 +58,14 @@ export const APIKeyList = (props) => {
         Header: 'Name',
         id: 'name',
         accessor: e =>
-          <Link to={'/ui/administration/apikey/' + e.name}>
+          <Link
+            to={'/ui/administration/apikey/' + e.name}
+            onMouseEnter={ async () => {
+              await queryClient.prefetchQuery(
+                ['apikey', e.name], () => fetchAPIKey(e.name)
+              );
+            } }
+          >
             {e.name}
           </Link>,
         column_width: '73%'
@@ -81,7 +96,7 @@ export const APIKeyList = (props) => {
               <FontAwesomeIcon icon={faTimesCircle} style={{color: "#CC0000"}}/>,
         column_width: '5%'
       }
-    ], []
+    ], [queryClient]
   );
 
   if (status === 'loading')
@@ -121,6 +136,10 @@ export const APIKeyChange = (props) => {
 
   const queryClient = useQueryClient();
 
+  const changeMutation = useMutation(async (values) => backend.changeObject('/api/v2/internal/apikeys/', values));
+  const addMutation = useMutation(async (values) => backend.addObject('/api/v2/internal/apikeys/', values));
+  const deleteMutation = useMutation(async () => await backend.deleteObject(`/api/v2/internal/apikeys/${name}`));
+
   const [areYouSureModal, setAreYouSureModal] = useState(false)
   const [modalTitle, setModalTitle] = useState(undefined)
   const [modalMsg, setModalMsg] = useState(undefined)
@@ -129,74 +148,47 @@ export const APIKeyChange = (props) => {
   const refToken = useRef(null);
 
   const { data: key, error: error, status: status } = useQuery(
-    ['apikey', name], async () => {
-      return await backend.fetchData(`/api/v2/internal/apikeys/${name}`);
-    },
-    {
-      enabled: !addview,
-      initialData: () => {
-        return queryClient.getQueryData('apikey')?.find(key => key.name === name)
-      }
-    }
+    ['apikey', name], () => fetchAPIKey(name),
+    { enabled: !addview }
   )
 
-  const doChange = async (values) => {
+  const doChange = (values) => {
     if (!addview) {
-      let response = await backend.changeObject(
-        '/api/v2/internal/apikeys/',
-        {
-          id: key.id,
-          revoked: values.revoked,
-          name: values.name,
+      changeMutation.mutate(
+        { id: key.id, revoked: values.revoked, name: values.name }, {
+          onSuccess: () => {
+            queryClient.invalidateQueries('apikey');
+            NotifyOk({
+              msg: 'API key successfully changed',
+              title: 'Changed',
+              callback: () => history.push('/ui/administration/apikey')
+            });
+          },
+          onError: (error) => {
+            NotifyError({
+              title: 'Error',
+              msg: error.message ? error.message : 'Error changing API key'
+            })
+          }
         }
-      );
-      if (response.ok) {
-        NotifyOk({
-          msg: 'API key successfully changed',
-          title: 'Changed',
-          callback: () => history.push('/ui/administration/apikey')
-        });
-      } else {
-        let change_msg = '';
-        try {
-          let json = await response.json();
-          change_msg = `${json.detail ? json.detail : 'Error changing API key'}`;
-        } catch(err) {
-          change_msg = 'Error changing API key';
-        }
-
-        NotifyError({
-          title: `Error: ${response.status} ${response.statusText}`,
-          msg: change_msg
-        });
-      }
+      )
     } else {
-      let response = await backend.addObject(
-        '/api/v2/internal/apikeys/',
-        {
-          name: values.name,
-          token: values.token
+      addMutation.mutate({ name: values.name, token: values.token }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries('apikey');
+          NotifyOk({
+            msg: 'API key successfully added',
+            title: 'Added',
+            callback: () => history.push('/ui/administration/apikey')
+          })
+        },
+        onError: (error) => {
+          NotifyError({
+            title: 'Error',
+            msg: error.message ? error.message : 'Error adding API key'
+          })
         }
-      );
-      if (response.ok) {
-        NotifyOk({
-          msg: 'API key successfully added',
-          title: 'Added',
-          callback: () => history.push('/ui/administration/apikey')
-        })
-      } else {
-        let add_msg = '';
-        try {
-          let json = await response.json();
-          add_msg = `${json.detail ? json.detail : 'Error adding API key'}`;
-        } catch(err) {
-          add_msg = 'Error adding API key';
-        }
-        NotifyError({
-          title: `Error: ${response.status} ${response.statusText}`,
-          msg: add_msg
-        });
-      }
+      })
     }
   };
 
@@ -211,27 +203,23 @@ export const APIKeyChange = (props) => {
     setFormikValues(values)
   }
 
-  const doDelete = async () => {
-    let response = await backend.deleteObject(`/api/v2/internal/apikeys/${name}`);
-    if (response.ok) {
-      NotifyOk({
-        msg: 'API key successfully deleted',
-        title: 'Deleted',
-        callback: () => history.push('/ui/administration/apikey')
-      })
-    } else {
-      let msg = '';
-      try {
-        let json = await response.json();
-        msg = `${json.detail ? json.detail : 'Error deleting API key'}`;
-      } catch(error) {
-        msg = 'Error deleting API key';
+  const doDelete = () => {
+    deleteMutation.mutate(undefined, {
+      onSuccess: () => {
+        queryClient.invalidateQueries('apikey');
+        NotifyOk({
+          msg: 'API key successfully deleted',
+          title: 'Deleted',
+          callback: () => history.push('/ui/administration/apikey')
+        })
+      },
+      onError: (error) => {
+        NotifyError({
+          title: 'Error',
+          msg: error.message ? error.message : 'Error deleting API key'
+        })
       }
-      NotifyError({
-        title: `Error: ${response.status} ${response.statusText}`,
-        msg: msg
-      });
-    }
+    })
   }
 
   const onYesCallback = () => {

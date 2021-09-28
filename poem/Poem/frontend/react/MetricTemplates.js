@@ -12,7 +12,7 @@ import {
 import { Formik, Form } from 'formik';
 import { Button } from 'reactstrap';
 import * as Yup from 'yup';
-import { useQuery, useQueryClient } from 'react-query';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { fetchMetricTags, fetchMetricTemplates, fetchMetricTemplateTypes, fetchMetricTemplateVersion, fetchProbeVersion, fetchProbeVersions } from './QueryFunctions';
 
 
@@ -51,6 +51,10 @@ export const MetricTemplateComponent = (props) => {
   const backend = new Backend();
   const queryClient = useQueryClient();
 
+  const addMutation = useMutation(async (values) => await backend.addObject('/api/v2/internal/metrictemplates/', values));
+  const changeMutation = useMutation(async (values) => await backend.changeObject('/api/v2/internal/metrictemplates/', values));
+  const deleteMutation = useMutation(async () => await backend.deleteObject(`/api/v2/internal/metrictemplates/${name}`));
+
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [areYouSureModal, setAreYouSureModal] = useState(false);
   const [modalFlag, setModalFlag] = useState(undefined);
@@ -79,7 +83,7 @@ export const MetricTemplateComponent = (props) => {
   );
 
   const {data: metricTemplate, error: metricTemplateError, isLoading: metricTemplateLoading } = useQuery(
-    [`${publicView ? 'public_' : ''}_metrictemplate`, name], async () => {
+    [`${publicView ? 'public_' : ''}metrictemplate`, name], async () => {
       return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metrictemplates/${name}`);
     },
     {
@@ -116,16 +120,29 @@ export const MetricTemplateComponent = (props) => {
     toggleAreYouSure();
   }
 
-  async function doChange() {
+  function doChange() {
     function onlyUnique(value, index, self) {
       return self.indexOf(value) == index;
     }
 
-    let tagNames = [];
-    formValues.tags.forEach(tag => tagNames.push(tag.value));
-    let unique = tagNames.filter( onlyUnique );
-
     const empty_field = [{ key: '', value: '' }];
+
+    const sendValues = new Object({
+      name: formValues.name,
+      probeversion: formValues.type === 'Active' ? formValues.probeversion : '',
+      mtype: formValues.type,
+      tags: formValues.tags.map(tag => tag.value).filter( onlyUnique ),
+      description: formValues.description,
+      probeexecutable: formValues.type === 'Active' ? formValues.probeexecutable : '',
+      parent: formValues.parent,
+      config: formValues.type === 'Active' ? formValues.config : empty_field,
+      attribute: formValues.type === 'Active' ? formValues.attributes : empty_field,
+      dependency: formValues.type === 'Active' ? formValues.dependency : empty_field,
+      parameter: formValues.type === 'Active' ? formValues.parameter : empty_field,
+      flags: formValues.flags,
+      files: formValues.type === 'Active' ? formValues.file_attributes : empty_field,
+      fileparameter: formValues.type === 'Active' ? formValues.file_parameters : empty_field
+    })
 
     if (addview || cloneview) {
       let cloned_from = undefined;
@@ -135,118 +152,71 @@ export const MetricTemplateComponent = (props) => {
         cloned_from = '';
       }
 
-      let response = await backend.addObject(
-        '/api/v2/internal/metrictemplates/',
-        {
-          cloned_from: cloned_from,
-          name: formValues.name,
-          probeversion: formValues.type === 'Active' ? formValues.probeversion : '',
-          mtype: formValues.type,
-          tags: unique,
-          description: formValues.description,
-          probeexecutable: formValues.type === 'Active' ? formValues.probeexecutable : '',
-          parent: formValues.parent,
-          config: formValues.type === 'Active' ? formValues.config : empty_field,
-          attribute: formValues.type === 'Active' ? formValues.attributes : empty_field,
-          dependency: formValues.type === 'Active' ? formValues.dependency : empty_field,
-          parameter: formValues.type === 'Active' ? formValues.parameter : empty_field,
-          flags: formValues.flags,
-          files: formValues.type === 'Active' ? formValues.file_attributes : empty_field,
-          fileparameter: formValues.type === 'Active' ? formValues.file_parameters : empty_field
-        }
-      );
-
-      if (!response.ok) {
-        let add_msg = '';
-        try {
-          let json = await response.json();
-          add_msg = json.detail;
-        } catch(err) {
-          add_msg = 'Error adding metric template';
-        }
-        NotifyError({
-          title: `Error: ${response.status} ${response.statusText}`,
-          msg: add_msg
-        });
-      } else {
-        NotifyOk({
-          msg: 'Metric template successfully added',
-          title: 'Added',
-          callback: () => history.push('/ui/metrictemplates')
-        });
-      }
-    } else {
-      let response = await backend.changeObject(
-        '/api/v2/internal/metrictemplates/',
-        {
-          id: formValues.id,
-          name: formValues.name,
-          probeversion: formValues.type === 'Active' ? formValues.probeversion : '',
-          mtype: formValues.type,
-          tags: unique,
-          description: formValues.description,
-          probeexecutable: formValues.type === 'Active' ? formValues.probeexecutable : '',
-          parent: formValues.parent,
-          config: formValues.type === 'Active' ? formValues.config : empty_field,
-          attribute: formValues.type === 'Active' ? formValues.attributes : empty_field,
-          dependency: formValues.type === 'Active' ? formValues.dependency : empty_field,
-          parameter: formValues.type === 'Active' ? formValues.parameter : empty_field,
-          flags: formValues.flags,
-          files: formValues.type === 'Active' ? formValues.file_attributes : empty_field,
-          fileparameter: formValues.type === 'Active' ? formValues.file_parameters : empty_field
-
-        }
-      );
-
-      if (!response.ok) {
-        let change_msg = '';
-        try {
-          let json = await response.json();
-          change_msg = json.detail;
-        } catch(err) {
-          change_msg = 'Error changing metric template';
-        }
-        (response.status == '418') ?
-          NotifyWarn({
-            title: `Warning: ${response.status} ${response.statusText}`,
-            msg: change_msg
+      addMutation.mutate({ ...sendValues, cloned_from: cloned_from }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries('public_metrictemplate');
+          queryClient.invalidateQueries('metrictemplate');
+          NotifyOk({
+            msg: 'Metric template successfully added',
+            title: 'Added',
+            callback: () => history.push('/ui/metrictemplates')
           })
-        :
+        },
+        onError: (error) => {
           NotifyError({
-            title: `Error: ${response.status} ${response.statusText}`,
-            msg: change_msg
+            msg: error.message ? error.message : 'Error adding metric template',
+            title: 'Error'
           })
-      } else {
-        NotifyOk({
-          msg: 'Metric template successfully changed',
-          title: 'Changed',
-          callback: () => history.push('/ui/metrictemplates')
-        });
-      }
+        }
+      })
+    } else {
+      changeMutation.mutate({ ...sendValues, id: formValues.id }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries('public_metrictemplate');
+          queryClient.invalidateQueries('metrictemplate');
+          NotifyOk({
+            msg: 'Metric template successfully changed',
+            title: 'Changed',
+            callback: () => history.push('/ui/metrictemplates')
+          })
+        },
+        onError: (error) => {
+          if (error.message && error.message.includes('418')) {
+            queryClient.invalidateQueries('metrictemplate');
+            queryClient.invalidateQueries('public_metrictemplate');
+            NotifyWarn({
+              title: 'Warning',
+              msg: error.message
+            })
+          }
+          else
+            NotifyError({
+              title: 'Error',
+              msg: error.message ? error.message : 'Error changing metric template'
+            })
+        }
+      })
     }
   }
 
-  async function doDelete() {
-    let response = await backend.deleteObject(`/api/v2/internal/metrictemplates/${name}`);
-    if (response.ok)
-      NotifyOk({
-        msg: 'Metric template successfully deleted',
-        title: 'Deleted',
-        callback: () => history.push('/ui/metrictemplates')
-      });
-    else {
-      let msg = '';
-      try {
-        let json = await response.json();
-        msg = json.detail;
-      } catch(err) {
-        msg = 'Error deleting metric template';
+  function doDelete() {
+    deleteMutation.mutate(undefined, {
+      onSuccess: () => {
+        queryClient.invalidateQueries('metrictemplate');
+        queryClient.invalidateQueries('public_metrictemplate');
+        NotifyOk({
+          msg: 'Metric template successfully deleted',
+          title: 'Deleted',
+          callback: () => history.push('/ui/metrictemplates')
+        });
+      },
+      onError: (error) => {
+        NotifyError({
+          title: 'Error',
+          msg: error.message ? error.message : 'Error deleting metric template'
+        });
       }
-      NotifyError({
-        title: `Error: ${response.status} ${response.statusText}`,
-        msg: msg
-      });
-    }
+    })
   }
 
   if ((metricTemplateLoading) || typesLoading || tagsLoading || probeVersionsLoading || metricTemplatesLoading)
@@ -268,13 +238,6 @@ export const MetricTemplateComponent = (props) => {
     return (<ErrorComponent error={metricTemplatesError.message}/>);
 
   else {
-    var tagsMT = [];
-    if (metricTemplate)
-      metricTemplate.tags.forEach(tag => tagsMT.push({ value: tag, label: tag }));
-
-    var allTags = [];
-    tags.forEach(tag => allTags.push({ value: tag, label: tag }))
-
     return (
       <BaseArgoView
         resourcename={(tenantview || publicView) ? 'Metric template details' : 'metric template'}
@@ -316,7 +279,7 @@ export const MetricTemplateComponent = (props) => {
             flags: metricTemplate && metricTemplate.flags.length > 0 ? metricTemplate.flags : emptyEntry,
             file_attributes: metricTemplate && metricTemplate.files.length > 0 ? metricTemplate.files : emptyEntry,
             file_parameters: metricTemplate && metricTemplate.fileparameter.length > 0 ? metricTemplate.fileparameter : emptyEntry,
-            tags: tagsMT,
+            tags: metricTemplate ? metricTemplate.tags.map(item => new Object({ value: item, label: item })) : [],
             probe: metricTemplate && metricTemplate.probeversion  ? probeVersions.find(prv => prv.object_repr === metricTemplate.probeversion).fields : {'package': ''}
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
@@ -334,7 +297,7 @@ export const MetricTemplateComponent = (props) => {
                 popoverOpen={popoverOpen}
                 togglePopOver={togglePopOver}
                 types={types}
-                alltags={allTags}
+                alltags={tags.map(tag => new Object({ value: tag, label: tag }))}
                 probeversions={probeVersions}
                 metrictemplatelist={metricTemplates.map(met => met.name)}
               />

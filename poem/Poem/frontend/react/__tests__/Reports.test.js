@@ -5,7 +5,7 @@ import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { Backend, WebApi } from '../DataManager';
 import { ReportsList, ReportsChange, ReportsAdd } from '../Reports';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { QueryClient, QueryClientProvider, setLogger } from 'react-query';
 import { NotificationManager } from 'react-notifications';
 import selectEvent from 'react-select-event';
 
@@ -27,6 +27,12 @@ const mockAddObject = jest.fn();
 const mockAddReport = jest.fn();
 
 const queryClient = new QueryClient();
+
+setLogger({
+  log: () => {},
+  warn: () => {},
+  error: () => {}
+})
 
 
 beforeEach(() => {
@@ -709,7 +715,7 @@ describe('Tests for reports changeview', () => {
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
     )
     mockChangeReport.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 201, statusText: 'OK' })
+      Promise.resolve({ ok: 'ok' })
     )
 
     renderChangeView();
@@ -805,7 +811,7 @@ describe('Tests for reports changeview', () => {
             }
           }
         }
-      }, 'yee9chel-5o4u-l4j4-410b-eipi3ohrah5i')
+      })
     })
 
     await waitFor(() => {
@@ -820,30 +826,16 @@ describe('Tests for reports changeview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report');
     expect(NotificationManager.success).toHaveBeenCalledWith(
       'Report successfully changed', 'Changed', 2000
     )
   })
 
   test('Test error changing report on web api with error message', async () => {
-    mockChangeReport.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({
-          code: '406',
-          message: 'Content Not acceptable',
-          errors: [
-            {
-              message: 'Content Not acceptable',
-              code: '406',
-              details: 'There has been an error.'
-            }
-          ],
-          details: 'There has been an error.'
-        }),
-        status: 406,
-        statusText: 'Content Not acceptable'
-      })
-    )
+    mockChangeReport.mockImplementationOnce( () => {
+      throw Error('406 Content Not acceptable: There has been an error.')
+    } );
 
     renderChangeView();
 
@@ -938,28 +930,27 @@ describe('Tests for reports changeview', () => {
             }
           }
         }
-      }, 'yee9chel-5o4u-l4j4-410b-eipi3ohrah5i')
+      })
     })
 
     await waitFor(() => {
       expect(mockChangeObject).not.toHaveBeenCalled();
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been an error.</p>
+        <p>406 Content Not acceptable: There has been an error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Web API error: 406 Content Not acceptable',
+      'Web API error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error changing report on web api without error message', async () => {
-    mockChangeReport.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    );
+    mockChangeReport.mockImplementationOnce( () => { throw Error() } );
 
     renderChangeView();
 
@@ -1054,34 +1045,31 @@ describe('Tests for reports changeview', () => {
             }
           }
         }
-      }, 'yee9chel-5o4u-l4j4-410b-eipi3ohrah5i')
+      })
     })
 
     await waitFor(() => {
       expect(mockChangeObject).not.toHaveBeenCalled();
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Web API error changing report</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Web API error: 500 SERVER ERROR',
+      'Web API error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error changing report on internal API with error message', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'There has been an error.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockChangeObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: There has been an error.')
+    } );
     mockChangeReport.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 201, statusText: 'OK' })
+      Promise.resolve({ ok: 'ok' })
     )
 
     renderChangeView();
@@ -1177,7 +1165,7 @@ describe('Tests for reports changeview', () => {
             }
           }
         }
-      }, 'yee9chel-5o4u-l4j4-410b-eipi3ohrah5i')
+      })
     })
 
     await waitFor(() => {
@@ -1192,24 +1180,21 @@ describe('Tests for reports changeview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been an error.</p>
+        <p>400 BAD REQUEST: There has been an error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Internal API error: 400 BAD REQUEST',
+      'Internal API error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error changing report on internal API without error message', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
-    mockChangeReport.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 201, statusText: 'OK' })
-    )
+    mockChangeObject.mockImplementationOnce( () => { throw Error() } );
+    mockChangeReport.mockReturnValueOnce( Promise.resolve({ ok: 'ok' }) );
 
     renderChangeView();
 
@@ -1304,7 +1289,7 @@ describe('Tests for reports changeview', () => {
             }
           }
         }
-      }, 'yee9chel-5o4u-l4j4-410b-eipi3ohrah5i')
+      })
     })
 
     await waitFor(() => {
@@ -1319,24 +1304,20 @@ describe('Tests for reports changeview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Internal API error changing report</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Internal API error: 500 SERVER ERROR',
+      'Internal API error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test successfully deleting report', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 204, statusText: 'NO CONTENT' })
-    )
-    mockDeleteReport.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
+    mockDeleteReport.mockReturnValueOnce( Promise.resolve({ ok: 'ok' }) );
 
     renderChangeView();
 
@@ -1360,30 +1341,16 @@ describe('Tests for reports changeview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report');
     expect(NotificationManager.success).toHaveBeenCalledWith(
       'Report successfully deleted', 'Deleted', 2000
     )
   })
 
   test('Test error deleting report on web api with error message', async () => {
-    mockDeleteReport.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({
-          code: '406',
-          message: 'Content Not acceptable',
-          errors: [
-            {
-              message: 'Content Not acceptable',
-              code: '406',
-              details: 'There has been an error.'
-            }
-          ],
-          details: 'There has been an error.'
-        }),
-        status: 406,
-        statusText: 'Content Not acceptable'
-      })
-    )
+    mockDeleteReport.mockImplementationOnce( () => {
+      throw Error('406 Content Not acceptable: There has been an error.')
+    } );
 
     renderChangeView();
 
@@ -1405,21 +1372,20 @@ describe('Tests for reports changeview', () => {
       expect(mockDeleteObject).not.toHaveBeenCalled();
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been an error.</p>
+        <p>406 Content Not acceptable: There has been an error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Web API error: 406 Content Not acceptable',
+      'Web API error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error deleting report on web api without error message', async () => {
-    mockDeleteReport.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockDeleteReport.mockImplementationOnce( () => { throw Error() } );
 
     renderChangeView();
 
@@ -1441,28 +1407,23 @@ describe('Tests for reports changeview', () => {
       expect(mockDeleteObject).not.toHaveBeenCalled();
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Web API error deleting report</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Web API error: 500 SERVER ERROR',
+      'Web API error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error deleting report on internal backend with error message', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'There has been an error.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
-    mockDeleteReport.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
+    mockDeleteObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: There has been an error.')
+    } );
+    mockDeleteReport.mockReturnValueOnce( Promise.resolve({ ok: 'ok' }) );
 
     renderChangeView();
 
@@ -1486,24 +1447,21 @@ describe('Tests for reports changeview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been an error.</p>
+        <p>400 BAD REQUEST: There has been an error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Internal API error: 400 BAD REQUEST',
+      'Internal API error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error deleting report on internal backend without error message', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
-    mockDeleteReport.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
+    mockDeleteObject.mockImplementationOnce( () => { throw Error() } );
+    mockDeleteReport.mockReturnValueOnce( Promise.resolve({ ok: 'ok' }) );
 
     renderChangeView();
 
@@ -1527,12 +1485,13 @@ describe('Tests for reports changeview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Internal API error deleting report</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Internal API error: 500 SERVER ERROR',
+      'Internal API error',
       0,
       expect.any(Function)
     )
@@ -1543,6 +1502,7 @@ describe('Tests for reports changeview', () => {
 describe('Tests for reports addview', () => {
   jest.spyOn(NotificationManager, 'success');
   jest.spyOn(NotificationManager, 'error');
+  jest.spyOn(queryClient, 'invalidateQueries');
 
   beforeAll(() => {
     WebApi.mockImplementation(() => {
@@ -1636,25 +1596,17 @@ describe('Tests for reports addview', () => {
   test('Test successfully adding a report', async () => {
     mockAddReport.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          status: {
-            message: 'Report Created',
-            code: "200"
-          },
-          data: {
-            id: 'Ohs2duRu-tU6N-mF3Q-jV8F-Wiush8ieR7me',
-            links: {
-              self: 'string'
-            }
+        status: {
+          message: 'Report Created',
+          code: "200"
+        },
+        data: {
+          id: 'Ohs2duRu-tU6N-mF3Q-jV8F-Wiush8ieR7me',
+          links: {
+            self: 'string'
           }
-        }),
-        ok: true,
-        status: 200,
-        statusText: 'Report Created'
+        }
       })
-    )
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 201, statusText: 'CREATED' })
     )
 
     renderAddView();
@@ -1762,30 +1714,16 @@ describe('Tests for reports addview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report');
     expect(NotificationManager.success).toHaveBeenCalledWith(
       'Report successfully added', 'Added', 2000
     )
   })
 
   test('Test error adding a report in web api with error message', async () => {
-    mockAddReport.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({
-          code: '406',
-          message: 'Content Not acceptable',
-          errors: [
-            {
-              message: 'Content Not acceptable',
-              code: '406',
-              details: 'There has been an error.'
-            }
-          ],
-          details: 'There has been an error.'
-        }),
-        status: 406,
-        statusText: 'Content Not acceptable'
-      })
-    )
+    mockAddReport.mockImplementationOnce( () => {
+      throw Error('406 Content Not acceptable: There has been an error.')
+    } );
 
     renderAddView();
 
@@ -1884,21 +1822,20 @@ describe('Tests for reports addview', () => {
       expect(mockAddObject).not.toHaveBeenCalled();
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been an error.</p>
+        <p>406 Content Not acceptable: There has been an error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Web API error: 406 Content Not acceptable',
+      'Web API error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error adding a report in web api without error message', async () => {
-    mockAddReport.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockAddReport.mockImplementationOnce( () => { throw Error() } );
 
     renderAddView();
 
@@ -1997,12 +1934,13 @@ describe('Tests for reports addview', () => {
       expect(mockAddObject).not.toHaveBeenCalled();
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Web API error adding report</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Web API error: 500 SERVER ERROR',
+      'Web API error',
       0,
       expect.any(Function)
     )
@@ -2011,30 +1949,21 @@ describe('Tests for reports addview', () => {
   test('Test error adding a report in internal api with error message', async () => {
     mockAddReport.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          status: {
-            message: 'Report Created',
-            code: "200"
-          },
-          data: {
-            id: 'Ohs2duRu-tU6N-mF3Q-jV8F-Wiush8ieR7me',
-            links: {
-              self: 'string'
-            }
+        status: {
+          message: 'Report Created',
+          code: "200"
+        },
+        data: {
+          id: 'Ohs2duRu-tU6N-mF3Q-jV8F-Wiush8ieR7me',
+          links: {
+            self: 'string'
           }
-        }),
-        ok: true,
-        status: 200,
-        statusText: 'Report Created'
+        }
       })
     )
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'There has been an error.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockAddObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: There has been an error.')
+    } );
 
     renderAddView();
 
@@ -2141,12 +2070,13 @@ describe('Tests for reports addview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been an error.</p>
+        <p>400 BAD REQUEST: There has been an error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Internal API error: 400 BAD REQUEST',
+      'Internal API error',
       0,
       expect.any(Function)
     )
@@ -2155,26 +2085,19 @@ describe('Tests for reports addview', () => {
   test('Test error adding a report in internal api without error message', async () => {
     mockAddReport.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          status: {
-            message: 'Report Created',
-            code: "200"
-          },
-          data: {
-            id: 'Ohs2duRu-tU6N-mF3Q-jV8F-Wiush8ieR7me',
-            links: {
-              self: 'string'
-            }
+        status: {
+          message: 'Report Created',
+          code: "200"
+        },
+        data: {
+          id: 'Ohs2duRu-tU6N-mF3Q-jV8F-Wiush8ieR7me',
+          links: {
+            self: 'string'
           }
-        }),
-        ok: true,
-        status: 200,
-        statusText: 'Report Created'
+        }
       })
     )
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockAddObject.mockImplementationOnce( () => { throw Error() } );
 
     renderAddView();
 
@@ -2281,12 +2204,13 @@ describe('Tests for reports addview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Internal API error adding report</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Internal API error: 500 SERVER ERROR',
+      'Internal API error',
       0,
       expect.any(Function)
     )

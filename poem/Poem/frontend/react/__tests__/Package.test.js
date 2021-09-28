@@ -5,7 +5,7 @@ import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { PackageComponent, PackageList } from '../Package';
 import { Backend } from '../DataManager';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { QueryClient, QueryClientProvider, setLogger } from 'react-query';
 import { NotificationManager } from 'react-notifications';
 
 
@@ -15,26 +15,22 @@ jest.mock('../DataManager', () => {
   }
 })
 
-global.fetch = jest.fn(() => {
-  return Promise.resolve({
-    ok: true,
-    status: 200,
-    statusText: 'OK',
-    json: () => Promise.resolve({ updated: 'Metrics argo.AMS-Check and argo.AMSPublisher-Check will be updated.' })
-  })
-})
-
 const queryClient = new QueryClient();
+setLogger({
+  log: () => {},
+  warn: () => {},
+  error: () => {}
+})
 
 beforeEach(() => {
   jest.clearAllMocks();
-  fetch.mockClear();
   queryClient.clear();
 })
 
 const mockChangeObject = jest.fn();
 const mockDeleteObject = jest.fn();
 const mockAddObject = jest.fn();
+const mockFetchData = jest.fn()
 
 
 const mockListPackages = [
@@ -177,6 +173,17 @@ const mockPackageVersions = [
     'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
   }
 ]
+
+const mockUpdateOk = {
+  'updated': 'Metrics argo.AMS-Check and argo.AMSPublisher-Check will be updated.'
+}
+
+const mockUpdateWithWarn = {
+  updated: 'Metric argo.AMS-Check will be updated.',
+  deleted: 'Metric argo.AMSPublisher-Check will be deleted, since its probe is not part of the chosen package.',
+  warning: 'Metric template history instance of test.AMS-Check has not been found.'
+
+}
 
 
 function renderListView() {
@@ -578,10 +585,6 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
   })
 
   test('Test successfully changing package with present version', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-
     renderChangeView();
 
     await waitFor(() => {
@@ -629,13 +632,9 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
   })
 
   test('Test error changing package with error message', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'Package with this name and version already exists.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockChangeObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST; Package with this name and version already exists.')
+    } )
 
     renderChangeView();
 
@@ -674,19 +673,17 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
 
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>Package with this name and version already exists.</p>
+        <p>400 BAD REQUEST; Package with this name and version already exists.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 400 BAD REQUEST',
+      'Error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error changing package without error message', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockChangeObject.mockImplementationOnce( () => { throw Error() } );
 
     renderChangeView();
 
@@ -728,17 +725,13 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
         <p>Error changing package</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 500 SERVER ERROR',
+      'Error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test successfully deleting package', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 204, statusText: 'NO CONTENT' })
-    )
-
     renderChangeView();
 
     await waitFor(() => {
@@ -769,13 +762,9 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
   })
 
   test('Test error deleting package with error message', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'You cannot delete package with associated probes!' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockDeleteObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST; You cannot delete package with associated probes.')
+    } )
 
     renderChangeView();
 
@@ -803,19 +792,17 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
 
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>You cannot delete package with associated probes!</p>
+        <p>400 BAD REQUEST; You cannot delete package with associated probes.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 400 BAD REQUEST',
+      'Error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error deleting package without error message', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockDeleteObject.mockImplementationOnce( () => { throw Error() } );
 
     renderChangeView();
 
@@ -846,7 +833,7 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
         <p>Error deleting package</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 500 SERVER ERROR',
+      'Error',
       0,
       expect.any(Function)
     )
@@ -861,27 +848,28 @@ describe('Tests for package changeview on tenant POEM', () => {
   beforeAll(() => {
     Backend.mockImplementation(() => {
       return {
-        fetchData: (path) => {
-          switch (path) {
-            case '/api/v2/internal/packages/nagios-plugins-argo-0.1.11':
-              return Promise.resolve(mockPackage)
-
-            case '/api/v2/internal/yumrepos':
-              return Promise.resolve(mockYUMRepos)
-
-            case '/api/v2/internal/version/probe':
-              return Promise.resolve(mockProbeVersions)
-
-            case '/api/v2/internal/packageversions/nagios-plugins-argo':
-              return Promise.resolve(mockPackageVersions)
-          }
-        },
+        fetchData: mockFetchData,
         changeObject: mockChangeObject
       }
     })
   })
 
   test('Test that page renders properly', async() => {
+    mockFetchData.mockImplementation((path) => {
+      switch (path) {
+        case '/api/v2/internal/packages/nagios-plugins-argo-0.1.11':
+          return Promise.resolve(mockPackage)
+
+        case '/api/v2/internal/yumrepos':
+          return Promise.resolve(mockYUMRepos)
+
+        case '/api/v2/internal/version/probe':
+          return Promise.resolve(mockProbeVersions)
+
+        case '/api/v2/internal/packageversions/nagios-plugins-argo':
+          return Promise.resolve(mockPackageVersions)
+      }
+    })
     renderTenantChangeView();
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
@@ -921,9 +909,27 @@ describe('Tests for package changeview on tenant POEM', () => {
   })
 
   test('Test changing package version', async () => {
+    mockFetchData.mockImplementation((path) => {
+      switch (path) {
+        case '/api/v2/internal/packages/nagios-plugins-argo-0.1.11':
+          return Promise.resolve(mockPackage)
+
+        case '/api/v2/internal/yumrepos':
+          return Promise.resolve(mockYUMRepos)
+
+        case '/api/v2/internal/version/probe':
+          return Promise.resolve(mockProbeVersions)
+
+        case '/api/v2/internal/packageversions/nagios-plugins-argo':
+          return Promise.resolve(mockPackageVersions)
+
+        case '/api/v2/internal/updatemetricsversions/nagios-plugins-argo-new-0.1.12':
+          return Promise.resolve(mockUpdateOk)
+      }
+    })
+
     mockChangeObject.mockReturnValueOnce(
       Promise.resolve({
-        ok: true,
         status: 200,
         statusText: 'OK',
         json: () => Promise.resolve({ updated: 'Metrics argo.AMS-Check and argo.AMSPublisher-Check have been successfully updated.' })
@@ -974,9 +980,13 @@ describe('Tests for package changeview on tenant POEM', () => {
     expect(repo7Field.value).toBe('repo-2 (CentOS 7)');
     expect(repo7Field).toBeDisabled();
 
+    expect(mockFetchData).not.toHaveBeenCalledWith(
+      '/api/v2/internal/updatemetricsversions/nagios-plugins-argo-new-0.1.12'
+    )
+
     fireEvent.click(screen.getByRole('button', { name: /update/i }));
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith(
+      expect(mockFetchData).toHaveBeenCalledWith(
         '/api/v2/internal/updatemetricsversions/nagios-plugins-argo-new-0.1.12'
       )
     })
@@ -1002,17 +1012,23 @@ describe('Tests for package changeview on tenant POEM', () => {
   })
 
   test('Test changing package version with warnings', async () => {
-    fetch.mockImplementationOnce(() => {
-      return Promise.resolve({
-        ok: true,
-        status: 200,
-        statusText: 'OK',
-        json: () => Promise.resolve({
-          updated: 'Metric argo.AMS-Check will be updated.',
-          deleted: 'Metric argo.AMSPublisher-Check will be deleted, since its probe is not part of the chosen package.',
-          warning: 'Metric template history instance of test.AMS-Check has not been found.'
-        })
-      })
+    mockFetchData.mockImplementation((path) => {
+      switch (path) {
+        case '/api/v2/internal/packages/nagios-plugins-argo-0.1.11':
+          return Promise.resolve(mockPackage)
+
+        case '/api/v2/internal/yumrepos':
+          return Promise.resolve(mockYUMRepos)
+
+        case '/api/v2/internal/version/probe':
+          return Promise.resolve(mockProbeVersions)
+
+        case '/api/v2/internal/packageversions/nagios-plugins-argo':
+          return Promise.resolve(mockPackageVersions)
+
+        case '/api/v2/internal/updatemetricsversions/nagios-plugins-argo-new-0.1.12':
+          return Promise.resolve(mockUpdateWithWarn)
+      }
     })
 
     mockChangeObject.mockReturnValueOnce(
@@ -1071,10 +1087,13 @@ describe('Tests for package changeview on tenant POEM', () => {
     expect(repo6Field).toBeDisabled();
     expect(repo7Field.value).toBe('repo-2 (CentOS 7)');
     expect(repo7Field).toBeDisabled();
+    expect(mockFetchData).not.toHaveBeenCalledWith(
+      '/api/v2/internal/updatemetricsversions/nagios-plugins-argo-new-0.1.12'
+    )
 
     fireEvent.click(screen.getByRole('button', { name: /update/i }));
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith(
+      expect(mockFetchData).toHaveBeenCalledWith(
         '/api/v2/internal/updatemetricsversions/nagios-plugins-argo-new-0.1.12'
       )
     })
@@ -1120,8 +1139,23 @@ describe('Tests for package changeview on tenant POEM', () => {
   })
 
   test('Test changing package version with error', async () => {
-    fetch.mockImplementationOnce(() => {
-      return Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
+    mockFetchData.mockImplementation((path) => {
+      switch (path) {
+        case '/api/v2/internal/packages/nagios-plugins-argo-0.1.11':
+          return Promise.resolve(mockPackage)
+
+        case '/api/v2/internal/yumrepos':
+          return Promise.resolve(mockYUMRepos)
+
+        case '/api/v2/internal/version/probe':
+          return Promise.resolve(mockProbeVersions)
+
+        case '/api/v2/internal/packageversions/nagios-plugins-argo':
+          return Promise.resolve(mockPackageVersions)
+
+        case '/api/v2/internal/updatemetricsversions/nagios-plugins-argo-new-0.1.12':
+          throw Error('500 SERVER ERROR')
+      }
     })
 
     renderTenantChangeView();
@@ -1167,10 +1201,13 @@ describe('Tests for package changeview on tenant POEM', () => {
     expect(repo6Field).toBeDisabled();
     expect(repo7Field.value).toBe('repo-2 (CentOS 7)');
     expect(repo7Field).toBeDisabled();
+    expect(mockFetchData).not.toHaveBeenCalledWith(
+      '/api/v2/internal/updatemetricsversions/nagios-plugins-argo-new-0.1.12'
+    )
 
     fireEvent.click(screen.getByRole('button', { name: /update/i }));
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith(
+      expect(mockFetchData).toHaveBeenCalledWith(
         '/api/v2/internal/updatemetricsversions/nagios-plugins-argo-new-0.1.12'
       )
     })
@@ -1242,10 +1279,6 @@ describe('Tests for package addview', () => {
   })
 
   test('Test adding successfully new package', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 201, statusText: 'CREATED' })
-    )
-
     renderAddView();
 
     await waitFor(() => {
@@ -1286,10 +1319,6 @@ describe('Tests for package addview', () => {
   })
 
   test('Test adding successfully new package with present version', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 201, statusText: 'CREATED' })
-    )
-
     renderAddView();
 
     await waitFor(() => {
@@ -1330,13 +1359,9 @@ describe('Tests for package addview', () => {
   })
 
   test('Test error adding new package with error message', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'There has been an error.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockAddObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST; There has been an error.')
+    } )
 
     renderAddView();
 
@@ -1374,19 +1399,17 @@ describe('Tests for package addview', () => {
 
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been an error.</p>
+        <p>400 BAD REQUEST; There has been an error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 400 BAD REQUEST',
+      'Error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error adding new package without error message', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockAddObject.mockImplementationOnce( () => { throw Error() } );
 
     renderAddView();
 
@@ -1427,7 +1450,7 @@ describe('Tests for package addview', () => {
         <p>Error adding package</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 500 SERVER ERROR',
+      'Error',
       0,
       expect.any(Function)
     )
@@ -1494,10 +1517,6 @@ describe('Tests for package cloneview', () => {
   })
 
   test('Test cloning successfully new package', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 201, statusText: 'CREATED' })
-    )
-
     renderCloneView();
 
     await waitFor(() => {
@@ -1536,10 +1555,6 @@ describe('Tests for package cloneview', () => {
   })
 
   test('Test adding successfully new package with present version', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 201, statusText: 'CREATED' })
-    )
-
     renderCloneView();
 
     await waitFor(() => {
@@ -1578,13 +1593,9 @@ describe('Tests for package cloneview', () => {
   })
 
   test('Test error cloning package with error message', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'There has been an error.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockAddObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST; There has been an error.')
+    } )
 
     renderCloneView();
 
@@ -1618,19 +1629,17 @@ describe('Tests for package cloneview', () => {
 
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been an error.</p>
+        <p>400 BAD REQUEST; There has been an error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 400 BAD REQUEST',
+      'Error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error cloning package without error message', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockAddObject.mockImplementationOnce( () => { throw Error() } );
 
     renderCloneView();
 
@@ -1667,7 +1676,7 @@ describe('Tests for package cloneview', () => {
         <p>Error adding package</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 500 SERVER ERROR',
+      'Error',
       0,
       expect.any(Function)
     )

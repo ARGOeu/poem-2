@@ -330,7 +330,13 @@ export const MetricProfilesComponent = (props) => {
   })
 
   const queryClient = useQueryClient();
-  const changeMetricProfile = useMutation(values => webapi.changeMetricProfile(values));
+  const webapiChangeMutation = useMutation(async (values) => await webapi.changeMetricProfile(values));
+  const backendChangeMutation = useMutation(async (values) => await backend.changeObject('/api/v2/internal/metricprofiles/', values));
+  const webapiAddMutation = useMutation(async (values) => await webapi.addMetricProfile(values));
+  const backendAddMutation = useMutation(async (values) => await backend.addObject('/api/v2/internal/metricprofiles/', values));
+  const webapiDeleteMutation = useMutation(async (idProfile) => await webapi.deleteMetricProfile(idProfile));
+  const backendDeleteMutation = useMutation(async (idProfile) => await backend.deleteObject(`/api/v2/internal/metricprofiles/${idProfile}`));
+
 
   const [listServices, setListServices] = useState(undefined);
   const [viewServices, setViewServices] = useState(undefined);
@@ -487,44 +493,34 @@ export const MetricProfilesComponent = (props) => {
     setListServices(tmp_list_services);
   }
 
-  const doDelete = async (idProfile) => {
-    let response = await webapi.deleteMetricProfile(idProfile);
-    if (!response.ok) {
-      let msg = '';
-      try {
-        let json = await response.json();
-        let msg_list = [];
-        json.errors.forEach(e => msg_list.push(e.details));
-        msg = msg_list.join(' ');
-      } catch(err) {
-        msg = 'Web API error deleting metric profile';
-      }
-      NotifyError({
-        title: `Web API error: ${response.status} ${response.statusText}`,
-        msg: msg
-      });
-    } else {
-      let r_internal = await backend.deleteObject(`/api/v2/internal/metricprofiles/${idProfile}`);
-      if (r_internal.ok)
-        NotifyOk({
-          msg: 'Metric profile successfully deleted',
-          title: 'Deleted',
-          callback: () => history.push('/ui/metricprofiles')
-        });
-      else {
-        let msg = '';
-        try {
-          let json = await r_internal.json();
-          msg = json.detail;
-        } catch(err) {
-          msg = 'Internal API error deleting metric profile';
-        }
+  const doDelete = (idProfile) => {
+    webapiDeleteMutation.mutate(idProfile, {
+      onSuccess: () => {
+        backendDeleteMutation.mutate(idProfile, {
+          onSuccess: () => {
+            queryClient.invalidateQueries('metricprofile');
+            queryClient.invalidateQueries('public_metricprofile');
+            NotifyOk({
+              msg: 'Metric profile successfully deleted',
+              title: 'Deleted',
+              callback: () => history.push('/ui/metricprofiles')
+            });
+          },
+          onError: (error) => {
+            NotifyError({
+              title: 'Internal API error',
+              msg: error.message ? error.message : 'Internal API error deleting metric profile'
+            })
+          }
+        })
+      },
+      onError: (error) => {
         NotifyError({
-          title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
-          msg: msg
-        });
+          title: 'Web API error',
+          msg: error.message ? error.message : 'Web API error deleting metric profile'
+        })
       }
-    }
+    })
   }
 
   const onRemove = async (element, group, name, description) => {
@@ -654,7 +650,7 @@ export const MetricProfilesComponent = (props) => {
     return services
   }
 
-  const doChange = async ({formValues, servicesList}) => {
+  const doChange = ({formValues, servicesList}) => {
     let services = [];
     let dataToSend = new Object()
     const backend_services = [];
@@ -669,54 +665,39 @@ export const MetricProfilesComponent = (props) => {
         description: formValues.description,
         services
       };
-      let response = await changeMetricProfile.mutateAsync(dataToSend);
-      if (!response.ok) {
-        let change_msg = '';
-        try {
-          let json = await response.json();
-          let msg_list = [];
-          json.errors.forEach(e => msg_list.push(e.details));
-          change_msg = msg_list.join(' ');
-        } catch(err) {
-          change_msg = 'Web API error changing metric profile';
-        }
-        NotifyError({
-          title: `Web API error: ${response.status} ${response.statusText}`,
-          msg: change_msg
-        });
-      } else {
-        let r = await backend.changeObject(
-          '/api/v2/internal/metricprofiles/',
-          {
+      webapiChangeMutation.mutate(dataToSend, {
+        onSuccess: () => {
+          backendChangeMutation.mutate({
             apiid: dataToSend.id,
             name: profile_name,
             description: dataToSend.description,
             groupname: formValues.groupname,
             services: backend_services
-          }
-        );
-        if (r.ok) {
-          queryClient.invalidateQueries('metricprofile');
-          NotifyOk({
-            msg: 'Metric profile successfully changed',
-            title: 'Changed',
-            callback: () => history.push('/ui/metricprofiles')
-          });
-        }
-        else {
-          let change_msg = '';
-          try {
-            let json = await r.json();
-            change_msg = json.detail;
-          } catch(err) {
-            change_msg = 'Internal API error changing metric profile';
-          }
+          }, {
+            onSuccess: () => {
+              queryClient.invalidateQueries('metricprofile');
+              queryClient.invalidateQueries('public_metricprofile');
+              NotifyOk({
+                msg: 'Metric profile successfully changed',
+                title: 'Changed',
+                callback: () => history.push('/ui/metricprofiles')
+              });
+            },
+            onError: (error) => {
+              NotifyError({
+                title: 'Internal API error',
+                msg: error.message ? error.message : 'Internal API error changing metric profile'
+              })
+            }
+          })
+        },
+        onError: (error) => {
           NotifyError({
-            title: `Internal API error: ${r.status} ${r.statusText}`,
-            msg: change_msg
-          });
+            title: 'Web API error',
+            msg: error.message ? error.message : 'Web API error changing metric profile'
+          })
         }
-      }
+      })
     } else {
       services = groupMetricsByServices(servicesList);
       dataToSend = {
@@ -724,53 +705,39 @@ export const MetricProfilesComponent = (props) => {
         description: formValues.description,
         services
       }
-      let response = await webapi.addMetricProfile(dataToSend);
-      if (!response.ok) {
-        let add_msg = '';
-        try {
-          let json = await response.json();
-          let msg_list = [];
-          json.errors.forEach(e => msg_list.push(e.details));
-          add_msg = msg_list.join(' ');
-        } catch(err) {
-          add_msg = 'Web API error adding metric profile';
-        }
-        NotifyError({
-          title: `Web API error: ${response.status} ${response.statusText}`,
-          msg: add_msg
-        });
-      } else {
-        let r_json = await response.json();
-        let r_internal = await backend.addObject(
-          '/api/v2/internal/metricprofiles/',
-          {
-            apiid: r_json.data.id,
+      webapiAddMutation.mutate(dataToSend, {
+        onSuccess: (data) => {
+          backendAddMutation.mutate({
+            apiid: data.data.id,
             name: dataToSend.name,
             groupname: formValues.groupname,
             description: formValues.description,
             services: backend_services
-          }
-        );
-        if (r_internal.ok)
-          NotifyOk({
-            msg: 'Metric profile successfully added',
-            title: 'Added',
-            callback: () => history.push('/ui/metricprofiles')
-          });
-        else {
-          let add_msg = '';
-          try {
-            let json = await r_internal.json();
-            add_msg = json.detail;
-          } catch(err) {
-            add_msg = 'Internal API error adding metric profile';
-          }
+          }, {
+            onSuccess: () => {
+              queryClient.invalidateQueries('metricprofile');
+              queryClient.invalidateQueries('public_metricprofile');
+              NotifyOk({
+                msg: 'Metric profile successfully added',
+                title: 'Added',
+                callback: () => history.push('/ui/metricprofiles')
+              });
+            },
+            onError: (error) => {
+              NotifyError({
+                title: 'Internal API error',
+                msg: error.message ? error.message : 'Internal API error adding metric profile'
+              })
+            }
+          })
+        },
+        onError: (error) => {
           NotifyError({
-            title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
-            msg: add_msg
-          });
+            title: 'Web API error',
+            msg: error.message ? error.message : 'Web API error adding metric profile'
+          })
         }
-      }
+      })
     }
   }
 

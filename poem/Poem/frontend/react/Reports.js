@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Backend, WebApi } from './DataManager';
 
-import { useQuery, useQueryClient } from 'react-query';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
 import {
   BaseArgoTable,
   BaseArgoView,
@@ -567,6 +567,13 @@ export const ReportsComponent = (props) => {
     operationsProfiles: props.webapioperations
   });
 
+  const webapiAddMutation = useMutation(async (values) => await webapi.addReport(values));
+  const backendAddMutation = useMutation(async (values) => await backend.addObject('/api/v2/internal/reports/', values));
+  const webapiChangeMutation = useMutation(async (values) => await webapi.changeReport(values));
+  const backendChangeMutation = useMutation(async (values) => await backend.changeObject('/api/v2/internal/reports/', values));
+  const webapiDeleteMutation = useMutation(async (idReport) => await webapi.deleteReport(idReport));
+  const backendDeleteMutation = useMutation(async (idReport) => await backend.deleteObject(`/api/v2/internal/reports/${idReport}`));
+
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
     'userdetails', () => fetchUserDetails(true)
   );
@@ -859,47 +866,36 @@ export const ReportsComponent = (props) => {
       new Object({})
   }
 
-  const doDelete = async (idReport) => {
-    let response = await webapi.deleteReport(idReport);
-    if (!response.ok) {
-      let msg = '';
-      try {
-        let json = await response.json();
-        let msg_list = [];
-        json.errors.forEach(e => msg_list.push(e.details));
-        msg = msg_list.join(' ');
-      } catch(err) {
-        msg = 'Web API error deleting report';
-      }
-      NotifyError({
-        title: `Web API error: ${response.status} ${response.statusText}`,
-        msg: msg
-      });
-    } else {
-      let r_internal = await backend.deleteObject(`/api/v2/internal/reports/${idReport}`);
-      if (r_internal.ok)
-        NotifyOk({
-          msg: 'Report successfully deleted',
-          title: 'Deleted',
-          callback: () => history.push('/ui/reports')
-        });
-      else {
-        let msg = '';
-        try {
-          let json = await r_internal.json();
-          msg = json.detail;
-        } catch(err) {
-          msg = 'Internal API error deleting report';
-        }
+  const doDelete = (idReport) => {
+    webapiDeleteMutation.mutate(idReport, {
+      onSuccess: () => {
+        backendDeleteMutation.mutate(idReport, {
+          onSuccess: () => {
+            queryClient.invalidateQueries('report');
+            NotifyOk({
+              msg: 'Report successfully deleted',
+              title: 'Deleted',
+              callback: () => history.push('/ui/reports')
+            });
+          },
+          onError: (error) => {
+            NotifyError({
+              title: 'Internal API error',
+              msg: error.message ? error.message : 'Internal API error deleting report'
+            })
+          }
+        })
+      },
+      onError: (error) => {
         NotifyError({
-          title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
-          msg: msg
-        });
+          title: 'Web API error',
+          msg: error.message ? error.message : 'Web API error deleting report'
+        })
       }
-    }
+    })
   }
 
-  const doChange = async (formValues) => {
+  const doChange = (formValues) => {
     let dataToSend = new Object()
     dataToSend.info = {
       name: formValues.name,
@@ -932,100 +928,69 @@ export const ReportsComponent = (props) => {
     dataToSend['topology_schema'] = formatTopologySchema(formValues.topologyType)
 
     if (addview) {
-      let response = await webapi.addReport(dataToSend);
-      if (!response.ok) {
-        let add_msg = '';
-        try {
-          let json = await response.json();
-          let msg_list = [];
-          json.errors.forEach(e => msg_list.push(e.details));
-          add_msg = msg_list.join(' ');
-        } catch(err) {
-          add_msg = 'Web API error adding report';
-        }
-        NotifyError({
-          title: `Web API error: ${response.status} ${response.statusText}`,
-          msg: add_msg
-        });
-      } else {
-        let r_json = await response.json();
-        let r_internal = await backend.addObject(
-          '/api/v2/internal/reports/',
-          {
-            apiid: r_json.data.id,
+      webapiAddMutation.mutate(dataToSend, {
+        onSuccess: (data) => {
+          backendAddMutation.mutate({
+            apiid: data.data.id,
             name: dataToSend.info.name,
             groupname: formValues.groupname,
             description: formValues.description,
-          }
-        );
-        if (r_internal.ok)
-          NotifyOk({
-            msg: 'Report successfully added',
-            title: 'Added',
-            callback: () => history.push('/ui/reports')
-          });
-        else {
-          let add_msg = '';
-          try {
-            let json = await r_internal.json();
-            add_msg = json.detail;
-          } catch(err) {
-            add_msg = 'Internal API error adding report';
-          }
+          }, {
+            onSuccess: () => {
+              queryClient.invalidateQueries('report');
+              NotifyOk({
+                msg: 'Report successfully added',
+                title: 'Added',
+                callback: () => history.push('/ui/reports')
+              });
+            },
+            onError: (error) => {
+              NotifyError({
+                title: 'Internal API error',
+                msg: error.message ? error.message : 'Internal API error adding report'
+              })
+            }
+          })
+        },
+        onError: (error) => {
           NotifyError({
-            title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
-            msg: add_msg
-          });
+            title: 'Web API error',
+            msg: error.message ? error.message : 'Web API error adding report'
+          })
         }
-      }
+      })
     }
     else {
       dataToSend.id = webApiReport.id
-      let response = await webapi.changeReport(dataToSend, dataToSend.id);
-      if (!response.ok) {
-        let change_msg = '';
-        try {
-          let json = await response.json();
-          let msg_list = [];
-          json.errors.forEach(e => msg_list.push(e.details));
-          change_msg = msg_list.join(' ');
-        } catch(err) {
-          change_msg = 'Web API error changing report';
-        }
-        NotifyError({
-          title: `Web API error: ${response.status} ${response.statusText}`,
-          msg: change_msg
-        });
-      } else {
-        let r_internal = await backend.changeObject(
-          '/api/v2/internal/reports/',
-          {
+      webapiChangeMutation.mutate(dataToSend, {
+        onSuccess: () => {
+          backendChangeMutation.mutate({
             apiid: dataToSend.id,
             name: dataToSend.info.name,
             groupname: formValues.groupname,
             description: formValues.description,
-          }
-        );
-        if (r_internal.ok)
-          NotifyOk({
-            msg: 'Report successfully changed',
-            title: 'Changed',
-            callback: () => history.push('/ui/reports')
-          });
-        else {
-          let add_msg = '';
-          try {
-            let json = await r_internal.json();
-            add_msg = json.detail;
-          } catch(err) {
-            add_msg = 'Internal API error changing report';
-          }
+          }, {
+            onSuccess: () => {
+              queryClient.invalidateQueries('report');
+              NotifyOk({
+                msg: 'Report successfully changed',
+                title: 'Changed',
+                callback: () => history.push('/ui/reports')
+              });
+            },
+            onError: (error) => NotifyError({
+              title: 'Internal API error',
+              msg: error.message ? error.message : 'Internal API error changing report'
+            })
+          })
+        },
+        onError: (error) => {
           NotifyError({
-            title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
-            msg: add_msg
-          });
+            title: 'Web API error',
+            msg: error.message ? error.message : 'Web API error changing report'
+          })
         }
-      }
+      })
     }
   }
 

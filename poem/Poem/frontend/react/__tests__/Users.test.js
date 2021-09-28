@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { QueryClient, QueryClientProvider, setLogger } from 'react-query';
 import { ChangePassword, UserChange, UsersList } from '../Users';
 import { Backend } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
@@ -15,6 +15,7 @@ jest.mock('../DataManager', () => {
   }
 })
 
+// eslint-disable-next-line no-undef
 global.fetch = jest.fn();
 
 const mockChangeObject = jest.fn();
@@ -23,6 +24,11 @@ const mockAddObject = jest.fn();
 
 const queryClient = new QueryClient();
 
+setLogger({
+  log: () => {},
+  warn: () => {},
+  error: () => {}
+})
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -267,6 +273,7 @@ const mockFetchData = jest.fn();
 describe('Test user changeview on SuperAdmin POEM', () => {
   jest.spyOn(NotificationManager, 'success');
   jest.spyOn(NotificationManager, 'error');
+  jest.spyOn(queryClient, 'invalidateQueries');
 
   beforeAll(() => {
     Backend.mockImplementation(() => {
@@ -371,10 +378,6 @@ describe('Test user changeview on SuperAdmin POEM', () => {
   })
 
   test('Test successfully changing and saving user', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-
     renderChangeView();
 
     await waitFor(() => {
@@ -407,6 +410,8 @@ describe('Test user changeview on SuperAdmin POEM', () => {
         }
       )
 
+      expect(queryClient.invalidateQueries).toHaveBeenCalledWith('user');
+      expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('userprofile');
       expect(NotificationManager.success).toHaveBeenCalledWith(
         'User successfully changed', 'Changed', 2000
       )
@@ -433,13 +438,9 @@ describe('Test user changeview on SuperAdmin POEM', () => {
   })
 
   test('Test error changing and saving user with error message', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'User with this username already exists.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockChangeObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: User with this username already exists.')
+    } );
 
     renderChangeView();
 
@@ -473,12 +474,14 @@ describe('Test user changeview on SuperAdmin POEM', () => {
         }
       )
 
+      expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('user');
+      expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('userprofile');
       expect(NotificationManager.error).toHaveBeenCalledWith(
         <div>
-          <p>User with this username already exists.</p>
+          <p>400 BAD REQUEST: User with this username already exists.</p>
           <p>Click to dismiss.</p>
         </div>,
-        'Error: 400 BAD REQUEST',
+        'Error',
         0,
         expect.any(Function)
       )
@@ -486,9 +489,7 @@ describe('Test user changeview on SuperAdmin POEM', () => {
   })
 
   test('Test error changing and saving user without error message', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockChangeObject.mockImplementationOnce( () => { throw Error() } );
 
     renderChangeView();
 
@@ -522,12 +523,14 @@ describe('Test user changeview on SuperAdmin POEM', () => {
         }
       )
 
+      expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('user');
+      expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('userprofile');
       expect(NotificationManager.error).toHaveBeenCalledWith(
         <div>
           <p>Error changing user</p>
           <p>Click to dismiss.</p>
         </div>,
-        'Error: 500 SERVER ERROR',
+        'Error',
         0,
         expect.any(Function)
       )
@@ -535,10 +538,6 @@ describe('Test user changeview on SuperAdmin POEM', () => {
   })
 
   test('Test successfully deleting user', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 204, statusText: 'NO CONTENT' })
-    );
-
     renderChangeView();
 
     await waitFor(() => {
@@ -557,19 +556,17 @@ describe('Test user changeview on SuperAdmin POEM', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('user');
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('userprofile');
     expect(NotificationManager.success).toHaveBeenCalledWith(
       'User successfully deleted', 'Deleted', 2000
     )
   })
 
   test('Test error deleting user with error message', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'There has been an error.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    );
+    mockDeleteObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: There has been an error.')
+    } );
 
     renderChangeView();
 
@@ -589,21 +586,21 @@ describe('Test user changeview on SuperAdmin POEM', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('user');
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('userprofile');
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been an error.</p>
+        <p>400 BAD REQUEST: There has been an error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 400 BAD REQUEST',
+      'Error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error deleting user without error message', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    );
+    mockDeleteObject.mockImplementationOnce( () => { throw Error() } );
 
     renderChangeView();
 
@@ -623,12 +620,14 @@ describe('Test user changeview on SuperAdmin POEM', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('user');
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('userprofile');
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Error deleting user</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 500 SERVER ERROR',
+      'Error',
       0,
       expect.any(Function)
     )
@@ -691,10 +690,6 @@ describe('Tests for user addview on SuperAdmin POEM', () => {
   })
 
   test('Test successfully adding user', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-
     renderAddView();
 
     await waitFor(() => {
@@ -728,6 +723,8 @@ describe('Tests for user addview on SuperAdmin POEM', () => {
         }
       )
 
+      expect(queryClient.invalidateQueries).toHaveBeenCalledWith('user');
+      expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('userprofile');
       expect(NotificationManager.success).toHaveBeenCalledWith(
         'User successfully added', 'Added', 2000
       )
@@ -751,13 +748,9 @@ describe('Tests for user addview on SuperAdmin POEM', () => {
   })
 
   test('Test error adding user with error message', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'User with this username already exists.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockAddObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: User with this username already exists.')
+    } );
 
     renderAddView();
 
@@ -792,12 +785,14 @@ describe('Tests for user addview on SuperAdmin POEM', () => {
         }
       )
 
+      expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('user');
+      expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('userprofile');
       expect(NotificationManager.error).toHaveBeenCalledWith(
         <div>
-          <p>User with this username already exists.</p>
+          <p>400 BAD REQUEST: User with this username already exists.</p>
           <p>Click to dismiss.</p>
         </div>,
-        'Error: 400 BAD REQUEST',
+        'Error',
         0,
         expect.any(Function)
       )
@@ -805,9 +800,7 @@ describe('Tests for user addview on SuperAdmin POEM', () => {
   })
 
   test('Test error adding user without error message', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockAddObject.mockImplementationOnce( () => { throw Error() } );
 
     renderAddView();
 
@@ -842,12 +835,14 @@ describe('Tests for user addview on SuperAdmin POEM', () => {
         }
       )
 
+      expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('user');
+      expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('userprofile');
       expect(NotificationManager.error).toHaveBeenCalledWith(
         <div>
           <p>Error adding user</p>
           <p>Click to dismiss.</p>
         </div>,
-        'Error: 500 SERVER ERROR',
+        'Error',
         0,
         expect.any(Function)
       )
@@ -971,12 +966,6 @@ describe('Tests for user changeview on tenant POEM', () => {
   })
 
   test('Test successfully changing and saving user', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    ).mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-
     renderTenantChangeView();
 
     await waitFor(() => {
@@ -1038,6 +1027,8 @@ describe('Tests for user changeview on tenant POEM', () => {
       ])
     })
 
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('user');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('userprofile');
     expect(NotificationManager.success).toHaveBeenCalledWith(
       'User successfully changed', 'Changed', 2000
     )
@@ -1063,13 +1054,9 @@ describe('Tests for user changeview on tenant POEM', () => {
   })
 
   test('Test error changing user with error message', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'User with this username already exists.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockChangeObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: User with this username already exists.')
+    } );
 
     renderTenantChangeView();
 
@@ -1117,12 +1104,14 @@ describe('Tests for user changeview on tenant POEM', () => {
       }
     )
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('user');
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('userprofile');
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>User with this username already exists.</p>
+        <p>400 BAD REQUEST: User with this username already exists.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 400 BAD REQUEST',
+      'Error',
       0,
       expect.any(Function)
     )
@@ -1131,13 +1120,9 @@ describe('Tests for user changeview on tenant POEM', () => {
   test('Test error changing user profile with error message', async () => {
     mockChangeObject.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    ).mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'You cannot change this userprofile.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    ).mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: You cannot change this userprofile.')
+    } );
 
     renderTenantChangeView();
 
@@ -1201,21 +1186,21 @@ describe('Tests for user changeview on tenant POEM', () => {
       ]
     ])
 
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('user');
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('userprofile');
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>You cannot change this userprofile.</p>
+        <p>400 BAD REQUEST: You cannot change this userprofile.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 400 BAD REQUEST',
+      'Error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error changing user without error message', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockChangeObject.mockImplementationOnce( () => { throw Error() } );
 
     renderTenantChangeView();
 
@@ -1263,12 +1248,14 @@ describe('Tests for user changeview on tenant POEM', () => {
       }
     )
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('user');
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('userprofile');
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Error changing user</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 500 SERVER ERROR',
+      'Error',
       0,
       expect.any(Function)
     )
@@ -1277,9 +1264,7 @@ describe('Tests for user changeview on tenant POEM', () => {
   test('Test error changing userprofile without error message', async () => {
     mockChangeObject.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    ).mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    ).mockImplementationOnce( () => { throw Error() } );
 
     renderTenantChangeView();
 
@@ -1343,22 +1328,20 @@ describe('Tests for user changeview on tenant POEM', () => {
       ]
     ])
 
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('user');
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('userprofile');
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Error changing user profile</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 500 SERVER ERROR',
+      'Error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test successfully deleting user', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 204, statusText: 'NO CONTENT' })
-    )
-
     renderTenantChangeView();
 
     await waitFor(() => {
@@ -1377,19 +1360,17 @@ describe('Tests for user changeview on tenant POEM', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('user');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('userprofile');
     expect(NotificationManager.success).toHaveBeenCalledWith(
       'User successfully deleted', 'Deleted', 2000
     )
   })
 
   test('Test error deleting user with error message', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'There has been an error.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockDeleteObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: There has been an error.')
+    } );
 
     renderTenantChangeView();
 
@@ -1409,21 +1390,21 @@ describe('Tests for user changeview on tenant POEM', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('user');
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('userprofile');
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been an error.</p>
+        <p>400 BAD REQUEST: There has been an error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 400 BAD REQUEST',
+      'Error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error deleting user without error message', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockDeleteObject.mockImplementationOnce( () => { throw Error() } );
 
     renderTenantChangeView();
 
@@ -1443,12 +1424,14 @@ describe('Tests for user changeview on tenant POEM', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('user');
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('userprofile');
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Error deleting user</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 500 SERVER ERROR',
+      'Error',
       0,
       expect.any(Function)
     )
@@ -1558,12 +1541,6 @@ describe('Tests for user addview on tenant POEM', () => {
   })
 
   test('Test successfully saving user', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    ).mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-
     renderTenantAddview();
 
     await waitFor(() => {
@@ -1658,13 +1635,9 @@ describe('Tests for user addview on tenant POEM', () => {
   })
 
   test('Test error saving user with error message', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'User with this username already exists.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockAddObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: User with this username already exists.')
+    } );
 
     renderTenantAddview();
 
@@ -1728,19 +1701,17 @@ describe('Tests for user addview on tenant POEM', () => {
 
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>User with this username already exists.</p>
+        <p>400 BAD REQUEST: User with this username already exists.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 400 BAD REQUEST',
+      'Error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error saving user without error message', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockAddObject.mockImplementationOnce( () => { throw Error() } );
 
     renderTenantAddview();
 
@@ -1807,7 +1778,7 @@ describe('Tests for user addview on tenant POEM', () => {
         <p>Error adding user</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 500 SERVER ERROR',
+      'Error',
       0,
       expect.any(Function)
     )
@@ -1816,13 +1787,9 @@ describe('Tests for user addview on tenant POEM', () => {
   test('Test error saving user profile with error message', async () => {
     mockAddObject.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    ).mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'There has been an error.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    ).mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: There has been an error.')
+    } );
 
     renderTenantAddview();
 
@@ -1903,10 +1870,10 @@ describe('Tests for user addview on tenant POEM', () => {
 
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been an error.</p>
+        <p>400 BAD REQUEST: There has been an error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 400 BAD REQUEST',
+      'Error',
       0,
       expect.any(Function)
     )
@@ -1915,9 +1882,7 @@ describe('Tests for user addview on tenant POEM', () => {
   test('Test error saving user profile without error message', async () => {
     mockAddObject.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    ).mockReturnValueOnce(
-      Promise.resolve({status: 500, statusText: 'SERVER ERROR' })
-    )
+    ).mockImplementationOnce( () => { throw Error() } );
 
     renderTenantAddview();
 
@@ -2001,7 +1966,7 @@ describe('Tests for user addview on tenant POEM', () => {
         <p>Error adding user profile</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 500 SERVER ERROR',
+      'Error',
       0,
       expect.any(Function)
     )

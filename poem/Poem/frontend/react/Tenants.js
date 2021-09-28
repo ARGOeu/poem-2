@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Backend } from './DataManager';
 import { LoadingAnim, ErrorComponent, BaseArgoView, ParagraphTitle, NotifyError, NotifyOk } from './UIElements';
 import { Formik, Form, Field } from 'formik';
@@ -19,7 +19,7 @@ import {
 } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faIdBadge } from '@fortawesome/free-solid-svg-icons';
-import { useQuery, useQueryClient } from 'react-query';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
 
 
 export const TenantList = (props) => {
@@ -122,6 +122,9 @@ export const TenantChange = (props) => {
   const backend = new Backend();
 
   const queryClient = useQueryClient();
+  const deleteMutation = useMutation(
+    () => backend.deleteObject(`/api/v2/internal/tenants/${name.trim().split(' ').join('_')}`)
+  );
 
   const { data: tenant, error, status } = useQuery(
     ['tenant', name], async () => {
@@ -139,25 +142,21 @@ export const TenantChange = (props) => {
   }
 
   async function doDelete() {
-    let response = await backend.deleteObject(`/api/v2/internal/tenants/${name.trim().split(' ').join('_')}`);
-    if (!response.ok) {
-      let msg = '';
-      try {
-        let json = await response.json();
-        msg = json.detail;
-      } catch (err) {
-        msg = 'Error deleting tenant.';
-      }
-      NotifyError({
-        title: `Error: ${response.status} ${response.statusText}`,
-        msg: msg
+    try {
+      await deleteMutation.mutateAsync(undefined, {
+        onSuccess: () => {
+          queryClient.invalidateQueries('tenant');
+          NotifyOk({
+            msg: 'Tenant successfully deleted',
+            title: 'Deleted',
+            callback: () => history.push('/ui/tenants')
+          })
+        }
       })
-    } else {
-      NotifyOk({
-        msg: 'Tenant successfully deleted',
-        title: 'Deleted',
-        callback: () => history.push('/ui/tenants')
-      });
+    } catch(error) {
+      NotifyError({
+        title: 'Error', msg: error.message ? error.message : 'Error deleting tenant.'
+      })
     }
   }
 

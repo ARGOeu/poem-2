@@ -6,7 +6,7 @@ import { Route, Router } from 'react-router-dom';
 import { CompareMetrics, ListOfMetrics, MetricChange, MetricVersionDetails } from '../Metrics';
 import { Backend } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
-import { QueryClientProvider, QueryClient } from 'react-query';
+import { QueryClientProvider, QueryClient, setLogger } from 'react-query';
 
 
 const mockListOfMetrics = [
@@ -272,6 +272,11 @@ jest.mock('../DataManager', () => {
 
 const queryClient = new QueryClient();
 
+setLogger({
+  log: () => {},
+  warn: () => {},
+  error: () => {}
+})
 
 beforeEach(() => {
   jest.clearAllMocks()
@@ -1006,10 +1011,6 @@ describe('Tests for metric change', () => {
   })
 
   test('Test successfully changing metric', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-
     renderChangeView();
 
     await waitFor(() => {
@@ -1066,13 +1067,9 @@ describe('Tests for metric change', () => {
   })
 
   test('Test error in saving metric with error message', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'There has been an error.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockChangeObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST; There has been an error.')
+    } )
 
     renderChangeView();
 
@@ -1126,19 +1123,17 @@ describe('Tests for metric change', () => {
     })
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been an error.</p>
+        <p>400 BAD REQUEST; There has been an error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 400 BAD REQUEST',
+      'Error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error in saving metric without error message', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockChangeObject.mockImplementationOnce( () => { throw Error() } );
 
     renderChangeView();
 
@@ -1196,17 +1191,13 @@ describe('Tests for metric change', () => {
         <p>Error changing metric</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 500 SERVER ERROR',
+      'Error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test successfully deleting metric', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-
     renderChangeView();
 
     await waitFor(() => {
@@ -1231,13 +1222,9 @@ describe('Tests for metric change', () => {
   })
 
   test('Test error in deleting metric with error message', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'There has been an error.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockDeleteObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: There has been an error.')
+    } );
 
     renderChangeView();
 
@@ -1259,19 +1246,17 @@ describe('Tests for metric change', () => {
     })
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been an error.</p>
+        <p>400 BAD REQUEST: There has been an error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 400 BAD REQUEST',
+      'Error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error in deleting metric without error message', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockDeleteObject.mockImplementationOnce( () => { throw Error() } );
 
     renderChangeView();
 
@@ -1296,7 +1281,7 @@ describe('Tests for metric change', () => {
         <p>Error deleting metric</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 500 SERVER ERROR',
+      'Error',
       0,
       expect.any(Function)
     )

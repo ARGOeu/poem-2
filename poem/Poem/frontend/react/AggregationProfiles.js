@@ -597,7 +597,12 @@ export const AggregationProfilesChange = (props) => {
   )
 
   const queryClient = useQueryClient();
-  const changeAggregation = useMutation(values => webapi.changeAggregation(values));
+  const webapiChangeMutation = useMutation(async (values) => await webapi.changeAggregation(values));
+  const backendChangeMutation = useMutation(async (values) => await backend.changeObject('/api/v2/internal/aggregations/', values));
+  const webapiAddMutation = useMutation(async (values) => await webapi.addAggregation(values));
+  const backendAddMutation = useMutation(async (values) => await backend.addObject('/api/v2/internal/aggregations/', values));
+  const webapiDeleteMutation = useMutation(async (idProfile) => await webapi.deleteAggregation(idProfile));
+  const backendDeleteMutation = useMutation(async (idProfile) => await backend.deleteObject(`/api/v2/internal/aggregations/${idProfile}`));
 
   const logic_operations = ["OR", "AND"];
   const endpoint_groups = ["servicegroups", "sites"];
@@ -722,7 +727,7 @@ export const AggregationProfilesChange = (props) => {
     setFormikValues(values)
   }
 
-  const doChange = async (values) => {
+  const doChange = (values) => {
     let valueSend = JSON.parse(JSON.stringify(values));
     removeDummyGroup(valueSend)
     removeIsNewFlag(valueSend)
@@ -737,25 +742,9 @@ export const AggregationProfilesChange = (props) => {
     valueSend.metric_profile = match_profile[0]
 
     if (!addview) {
-      let response = await changeAggregation.mutateAsync(valueSend);
-      if (!response.ok) {
-        let change_msg = '';
-        try {
-          let json = await response.json();
-          let msg_list = [];
-          json.errors.forEach(e => msg_list.push(e.details));
-          change_msg = msg_list.join(' ');
-        } catch(err) {
-          change_msg = 'Web API error changing aggregation profile';
-        }
-        NotifyError({
-          title: `Web API error: ${response.status} ${response.statusText}`,
-          msg: change_msg
-        });
-      } else {
-        let r_internal = await backend.changeObject(
-          '/api/v2/internal/aggregations/',
-          {
+      webapiChangeMutation.mutate(valueSend, {
+        onSuccess: () => {
+          backendChangeMutation.mutate({
             apiid: valueSend.id,
             name: valueSend.name,
             groupname: valueSend.groupname,
@@ -764,52 +753,36 @@ export const AggregationProfilesChange = (props) => {
             profile_operation: valueSend.profile_operation,
             metric_profile: valueSend.metric_profile.name,
             groups: JSON.stringify(valueSend.groups)
-          }
-        )
-        if (r_internal.ok) {
-          queryClient.invalidateQueries('aggregationprofile');
-          NotifyOk({
-            msg: 'Aggregation profile successfully changed',
-            title: 'Changed',
-            callback: () => history.push('/ui/aggregationprofiles')
+          }, {
+            onSuccess: () => {
+              queryClient.invalidateQueries('aggregationprofile');
+              queryClient.invalidateQueries('public_aggregationprofile');
+              NotifyOk({
+                msg: 'Aggregation profile successfully changed',
+                title: 'Changed',
+                callback: () => history.push('/ui/aggregationprofiles')
+              });
+            },
+            onError: (error) => {
+              NotifyError({
+                title: 'Internal API error',
+                msg: error.message ? error.message : 'Internal API error changing aggregation profile'
+              })
+            }
+          })
+        },
+        onError: (error) => {
+          NotifyError({
+            title: 'Web API error',
+            msg: error.message ? error.message : 'Web API error changing aggregation profile'
           })
         }
-        else {
-          let change_msg = '';
-          try {
-            let json = await r_internal.json();
-            change_msg = json.detail;
-          } catch(err) {
-            change_msg = 'Internal API error changing aggregation profile';
-          }
-          NotifyError({
-            title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
-            msg: change_msg
-          });
-        }
-      }
+      })
     } else {
-      let response = await webapi.addAggregation(valueSend);
-      if (!response.ok) {
-        let add_msg = '';
-        try {
-          let json = await response.json();
-          let msg_list = [];
-          json.errors.forEach(e => msg_list.push(e.details));
-          add_msg = msg_list.join(' ');
-        } catch(err) {
-          add_msg = `Web API error adding aggregation profile`;
-        }
-        NotifyError({
-          title: `Web API error: ${response.status} ${response.statusText}`,
-          msg: add_msg
-        });
-      } else {
-        let r = await response.json();
-        let r_internal = await backend.addObject(
-          '/api/v2/internal/aggregations/',
-          {
-            apiid: r.data.id,
+      webapiAddMutation.mutate(valueSend, {
+        onSuccess: (data) => {
+          backendAddMutation.mutate({
+            apiid: data.data.id,
             name: valueSend.name,
             groupname: valueSend.groupname,
             endpoint_group: valueSend.endpoint_group,
@@ -817,69 +790,62 @@ export const AggregationProfilesChange = (props) => {
             profile_operation: valueSend.profile_operation,
             metric_profile: values.metric_profile,
             groups: JSON.stringify(valueSend.groups)
-          }
-        );
-        if (r_internal.ok)
-          NotifyOk({
-            msg: 'Aggregation profile successfully added',
-            title: 'Added',
-            callback: () => history.push('/ui/aggregationprofiles')
+          }, {
+            onSuccess: () => {
+              queryClient.invalidateQueries('aggregationprofile');
+              queryClient.invalidateQueries('public_aggregationprofile');
+              NotifyOk({
+                msg: 'Aggregation profile successfully added',
+                title: 'Added',
+                callback: () => history.push('/ui/aggregationprofiles')
+              })
+            },
+            onError: (error) => {
+              NotifyError({
+                title: 'Internal API error',
+                msg: error.message ? error.message : 'Internal API error adding aggregation profile'
+              })
+            }
           })
-        else {
-          let add_msg = '';
-          try {
-            let json = await r_internal.json();
-            add_msg = json.detail;
-          } catch(err) {
-            add_msg = 'Internal API error adding aggregation profile';
-          }
+        },
+        onError: (error) => {
           NotifyError({
-            title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
-            msg: add_msg
-          });
+            title: 'Web API error',
+            msg: error.message ? error.message : 'Web API error adding aggregation profile'
+          })
         }
-      }
+      })
     }
   }
 
-  const doDelete = async (idProfile) => {
-    let response = await webapi.deleteAggregation(idProfile);
-    if (!response.ok) {
-      let msg = '';
-      try {
-        let json = await response.json();
-        let msg_list = [];
-        json.errors.forEach(e => msg_list.push(e.details));
-        msg = msg_list.join(' ');
-      } catch(err) {
-        msg = 'Web API error deleting aggregation profile';
-      }
-      NotifyError({
-        title: `Web API error: ${response.status} ${response.statusText}`,
-        msg: msg
-      });
-    } else {
-      let r = await backend.deleteObject(`/api/v2/internal/aggregations/${idProfile}`);
-      if (r.ok)
-        NotifyOk({
-          msg: 'Aggregation profile successfully deleted',
-          title: 'Deleted',
-          callback: () => history.push('/ui/aggregationprofiles')
-        });
-      else {
-        let msg = '';
-        try {
-          let json = await r.json();
-          msg = json.detail;
-        } catch(err) {
-          msg = 'Internal API error deleting aggregation profile';
-        }
+  const doDelete = (idProfile) => {
+    webapiDeleteMutation.mutate(idProfile, {
+      onSuccess: () => {
+        backendDeleteMutation.mutate(idProfile, {
+          onSuccess: () => {
+            queryClient.invalidateQueries('aggregationprofile');
+            queryClient.invalidateQueries('public_aggregationprofile');
+            NotifyOk({
+              msg: 'Aggregation profile successfully deleted',
+              title: 'Deleted',
+              callback: () => history.push('/ui/aggregationprofiles')
+            });
+          },
+          onError: (error) => {
+            NotifyError({
+              title: 'Internal API error',
+              msg: error.message ? error.message : 'Internal API error deleting aggregation profile'
+            })
+          }
+        })
+      },
+      onError: (error) => {
         NotifyError({
-          title: `Internal API error: ${r.status} ${r.statusText}`,
-          msg: msg
-        });
+          title: 'Web API error',
+          msg: error.message ? error.message : 'Web API error deleting aggregation profile'
+        })
       }
-    }
+    })
   }
 
   const insertDummyGroup = (groups) => {

@@ -24,7 +24,7 @@ import {
   InputGroupAddon
 } from 'reactstrap';
 import * as Yup from 'yup';
-import { useQuery, useQueryClient } from 'react-query';
+import { useQuery, useQueryClient, useMutation } from 'react-query';
 import { fetchYumRepos, fetchOStags } from './QueryFunctions';
 
 
@@ -131,6 +131,9 @@ export const YumRepoComponent = (props) => {
   const backend = new Backend();
 
   const queryClient = useQueryClient();
+  const changeMutation = useMutation(async (values) => await backend.changeObject('/api/v2/internal/yumrepos/', values));
+  const addMutation = useMutation(async (values) => await backend.addObject('/api/v2/internal/yumrepos/', values));
+  const deleteMutation = useMutation(async () => await backend.deleteObject(`/api/v2/internal/yumrepos/${name}/${tag}`))
 
   const { data: repo, error: errorRepo, status: statusRepo } = useQuery(
     ['yumrepo', name, tag], async () => {
@@ -171,90 +174,72 @@ export const YumRepoComponent = (props) => {
     toggleAreYouSure();
   }
 
-  async function doChange() {
+  function doChange() {
+    const sendValues = new Object({
+      name: formValues.name,
+      tag: formValues.tag,
+      content: formValues.content,
+      description: formValues.description
+    })
+
     if (addview || cloneview) {
-      let response = await backend.addObject(
-        '/api/v2/internal/yumrepos/',
-        {
-          name: formValues.name,
-          tag: formValues.tag,
-          content: formValues.content,
-          description: formValues.description
+      addMutation.mutate(sendValues, {
+        onSuccess: () => {
+          queryClient.invalidateQueries('yumrepo');
+          NotifyOk({
+            msg: 'YUM repo successfully added',
+            title: 'Added',
+            callback: () => history.push('/ui/yumrepos')
+          })
+        },
+        onError: (error) => {
+          NotifyError({
+            title: 'Error',
+            msg: error.message ? error.message : 'Error adding YUM repo'
+          })
         }
-      );
-      if (!response.ok) {
-        let add_msg = '';
-        try {
-          let json = await response.json();
-          add_msg = json.detail;
-        } catch(err) {
-          add_msg = 'Error adding YUM repo';
-        }
-        NotifyError({
-          title: `Error: ${response.status} ${response.statusText}`,
-          msg: add_msg
-        });
-      } else {
-        NotifyOk({
-          msg: 'YUM repo successfully added',
-          title: 'Added',
-          callback: () => history.push('/ui/yumrepos')
-        });
-      }
+      });
     } else {
-      let response = await backend.changeObject(
-        '/api/v2/internal/yumrepos/',
-        {
+      const sendValuesChange = new Object({
+          ...sendValues,
           id: formValues.id,
-          name: formValues.name,
-          tag: formValues.tag,
-          content: formValues.content,
-          description: formValues.description
+      })
+      changeMutation.mutate(sendValuesChange, {
+        onSuccess: () => {
+          queryClient.invalidateQueries('yumrepo');
+          NotifyOk({
+            msg: 'YUM repo successfully changed',
+            title: 'Changed',
+            callback: () => history.push('/ui/yumrepos')
+          })
+        },
+        onError: (error) => {
+          NotifyError({
+            title: 'Error',
+            msg: error.message ? error.message : 'Error changing YUM repo'
+          })
         }
-      );
-      if (!response.ok) {
-        let change_msg = '';
-        try {
-          let json = await response.json();
-          change_msg = json.detail;
-        } catch(err) {
-          change_msg = 'Error changing YUM repo';
-        }
-        NotifyError({
-          title: `Error: ${response.status} ${response.statusText}`,
-          msg: change_msg
-        });
-      } else {
-        NotifyOk({
-          msg: 'YUM repo successfully changed',
-          title: 'Changed',
-          callback: () => history.push('/ui/yumrepos')
-        });
-      }
+      })
     }
   }
 
-  async function doDelete() {
-    let response = await backend.deleteObject(`/api/v2/internal/yumrepos/${name}/${tag}`);
-    if (!response.ok) {
-      let msg = '';
-      try {
-        let json = await response.json();
-        msg = json.detail;
-      } catch(err) {
-        msg = 'Error deleting YUM repo';
+  function doDelete() {
+    deleteMutation.mutate(undefined, {
+      onSuccess: () => {
+        queryClient.invalidateQueries('yumrepo');
+        NotifyOk({
+          msg: 'YUM repo successfully deleted',
+          title: 'Deleted',
+          callback: () => history.push('/ui/yumrepos')
+        })
+      },
+      onError: (error) => {
+        NotifyError({
+          title: 'Error',
+          msg: error.message ? error.message : 'Error deleting YUM repo'
+        })
       }
-      NotifyError({
-        title: `Error: ${response.status} ${response.statusText}`,
-        msg: msg
-      });
-    } else {
-      NotifyOk({
-        msg: 'YUM repo successfully deleted',
-        title: 'Deleted',
-        callback: () => history.push('/ui/yumrepos')
-      });
-    }
+    })
   }
 
   if (statusRepo === 'loading' || statusTags === 'loading')

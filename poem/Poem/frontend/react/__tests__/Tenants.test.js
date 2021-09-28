@@ -6,7 +6,7 @@ import { Route, Router } from 'react-router-dom';
 import { TenantChange, TenantList } from '../Tenants';
 import { Backend } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { QueryClient, QueryClientProvider, setLogger } from 'react-query';
 
 
 jest.mock('../DataManager', () => {
@@ -19,6 +19,11 @@ const mockDeleteObject = jest.fn();
 
 const queryClient = new QueryClient();
 
+setLogger({
+  log: () => {},
+  warn: () => {},
+  error: () => {}
+})
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -177,10 +182,6 @@ describe('Test tenants changeview', () => {
   })
 
   test('Test deleting tenant', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 204, statusText: 'NO CONTENT' })
-    )
-
     renderTenantChangeView();
 
     await waitFor(() => {
@@ -205,13 +206,9 @@ describe('Test tenants changeview', () => {
   })
 
   test('Test error deleting tenant with error message', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'You do not have permission to delete tenants.' }),
-        status: 401,
-        statusText: 'UNAUTHORIZED'
-      })
-    )
+    mockDeleteObject.mockImplementationOnce( () => {
+      throw Error('401 UNAUTHORIZED; You do not have permission to delete tenants.')
+    } )
 
     renderTenantChangeView();
 
@@ -233,19 +230,17 @@ describe('Test tenants changeview', () => {
 
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>You do not have permission to delete tenants.</p>
+        <p>401 UNAUTHORIZED; You do not have permission to delete tenants.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 401 UNAUTHORIZED',
+      'Error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error deleting tenant without error message', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockDeleteObject.mockImplementationOnce( () => { throw Error() } )
 
     renderTenantChangeView();
 
@@ -270,7 +265,7 @@ describe('Test tenants changeview', () => {
         <p>Error deleting tenant.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 500 SERVER ERROR',
+      'Error',
       0,
       expect.any(Function)
     )
