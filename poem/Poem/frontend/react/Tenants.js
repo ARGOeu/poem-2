@@ -44,7 +44,7 @@ export const TenantList = (props) => {
       for (let j = 0; j < 3; j++) {
         if ((i + j) < tenants.length)
           cards.push(
-            <Card data-testid={`${tenants[i + j].name}-card`} className='mr-3' key={j + 1} tag='a' onClick={() => history.push(`/ui/tenants/${tenants[i + j].name}`)} style={{cursor: 'pointer'}}>
+            <Card data-testid={`${tenants[i + j].name}-card`} className='mr-3' key={j + 1} tag='a' onClick={() => history.push(`/ui/tenants/${tenants[i + j].name}`)} style={{cursor: 'pointer', color: 'black'}}>
               <CardTitle className='text-center'>
                 <h3>{tenants[i + j].name}</h3>
               </CardTitle>
