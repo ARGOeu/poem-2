@@ -343,7 +343,7 @@ export const ProbeList = (props) => {
               [`${publicView ? 'public_' : ''}probe`, e.value], () => fetchProbe(publicView, e.value)
             );
             await queryClient.prefetchQuery(
-              [`${publicView ? 'public_' : ''}probe`, 'metrics', e.value], () => fetchMetrics(publicView, e.value, e.original.version)
+              [`${publicView ? 'public_' : ''}probe`, 'metrics', e.value], () => fetchMetrics(publicView, e.value, e.row.original.version)
             );
             await queryClient.prefetchQuery(
               `${publicView ? 'public_' : ''}package`, () => fetchPackages(publicView)
@@ -542,7 +542,10 @@ export const ProbeComponent = (props) => {
     })
   }
 
-  if (probeLoading || metricTemplatesLoading || packagesLoading)
+  const loading = probeLoading || metricTemplatesLoading || packagesLoading;
+  const error = probeError || metricTemplatesError || packagesError;
+
+  if (loading)
     return(<LoadingAnim/>)
 
   else if (probeError)
@@ -554,7 +557,7 @@ export const ProbeComponent = (props) => {
   else if (packagesError)
     return (<ErrorComponent error={packagesError.error}/>);
 
-  else {
+  else if (!error && !loading) {
     var listPackages = [];
     packages.forEach(pkg => listPackages.push(`${pkg.name} (${pkg.version})`))
     if (!isTenantSchema) {
@@ -672,7 +675,8 @@ export const ProbeComponent = (props) => {
         </BaseArgoView>
       );
     }
-  }
+  } else
+    return null;
 };
 
 
