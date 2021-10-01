@@ -674,7 +674,7 @@ export const NavigationAbout = ({ location, poemVersion, tenantName='egi' }) => 
           className="text-dark font-italic text-monospace"
         >
           <FontAwesomeIcon icon={faCrosshairs} size="1x" color="green" fixedWidth/>{' '}
-          { poemVersion }
+          <small> { poemVersion } </small>
         </NavLink>
       </Nav>
     </React.Fragment>
