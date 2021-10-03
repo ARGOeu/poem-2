@@ -616,7 +616,7 @@ export const NavigationLinks = ({location, isTenantSchema, userDetails}) => {
 }
 
 
-export const NavigationAbout = ({ location, poemVersion, tenantName='egi' }) => {
+export const NavigationAbout = ({ location, poemVersion, termsLink, policiesLink, tenantName='egi' }) => {
   return (
     <React.Fragment>
       <div className="bg-white border-left border-right pl-3 mt-0 pt-5 text-uppercase">
@@ -643,7 +643,7 @@ export const NavigationAbout = ({ location, poemVersion, tenantName='egi' }) => 
         </NavLink>
         <NavLink
           tag="a"
-          href='https://ui.argo.grnet.gr/egi/termsofUse'
+          href={termsLink}
           className="text-dark"
           target="_blank" rel="noopener noreferrer"
         >
@@ -661,7 +661,7 @@ export const NavigationAbout = ({ location, poemVersion, tenantName='egi' }) => 
         </NavLink>
         <NavLink
           tag="a"
-          href={PolicyLinks.get(tenantName.toLowerCase())}
+          href={policiesLink}
           className='text-dark'
           target='_blank' rel='noopener noreferrer'
         >

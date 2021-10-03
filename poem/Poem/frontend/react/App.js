@@ -553,6 +553,8 @@ const App = () => {
   const [webApiReports, setWebApiReports] = useState(undefined);
   const [publicView, setPublicView] = useState(undefined);
   const [tenantName, setTenantName] = useState(undefined);
+  const [privacyLink, setPrivacyLink] = useState(undefined);
+  const [termsLink, setTermsLink] = useState(undefined);
   const [token, setToken] = useState(undefined);
   const [version, setVersion] = useState(undefined);
   const [isTenantSchema, setIsTenantSchema] = useState(null);
@@ -582,6 +584,8 @@ const App = () => {
       setIsSessionActive(response.active);
       setUserDetails(response.userdetails);
       setVersion(options && options.result.version);
+      setPrivacyLink(options && options.result.privacy);
+      setTermsLink(options && options.result.terms);
       setPublicView(false);
       queryClient.prefetchQuery(
         'user', () => fetchUsers()
@@ -1104,7 +1108,8 @@ const App = () => {
               <Col sm={{size: 2}} md={{size: 2}} id="sidebar-col" className="d-flex flex-column">
                 <NavigationLinksWithRouter isTenantSchema={isTenantSchema} userDetails={userDetails}/>
                 <div id="sidebar-grow" className="flex-grow-1 border-left border-right mb-0 pb-5"/>
-                <NavigationAboutWithRouter poemVersion={version} tenantName={tenantName}/>
+                <NavigationAboutWithRouter poemVersion={version} tenantName={tenantName} 
+                  termsLink={termsLink} privacyLink={privacyLink}/>
               </Col>
               <Col>
                 <CustomBreadcrumbWithRouter />
