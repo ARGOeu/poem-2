@@ -59,10 +59,10 @@ try:
     for section in all_sections:
         if section.startswith('GENERAL_') and not '_ALL' in section:
             tenant_name = section.split('_')[1]
-            LINKS_TERMS_PRIVACY[tenant_name] = dict()
+            LINKS_TERMS_PRIVACY[tenant_name.lower()] = dict()
             terms = config.get(section, 'TermsOfUse')
             privacy = config.get(section, 'PrivacyPolicies')
-            LINKS_TERMS_PRIVACY[tenant_name].update({"privacy": privacy, "terms": terms})
+            LINKS_TERMS_PRIVACY[tenant_name.lower()].update({"privacy": privacy, "terms": terms})
 
 except NoSectionError as e:
     print(e)
