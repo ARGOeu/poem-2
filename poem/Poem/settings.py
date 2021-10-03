@@ -54,6 +54,15 @@ try:
     WEBAPI_REPORTSTOPOLOGYGROUPS = config.get('WEBAPI', 'ReportsTopologyGroups')
     WEBAPI_REPORTSTOPOLOGYENDPOINTS = config.get('WEBAPI', 'ReportsTopologyEndpoints')
 
+    LINKS_TERMS_PRIVACY = dict()
+    all_sections = config.sections()
+    for section in all_sections:
+        if section.startswith('GENERAL_') and not '_ALL' in section:
+            tenant_name = section.split('_')[1]
+            LINKS_TERMS_PRIVACY[tenant_name] = dict()
+            terms = config.get(section, 'TermsOfUse')
+            privacy = config.get(section, 'PrivacyPolicies')
+            LINKS_TERMS_PRIVACY[tenant_name].update({"privacy": privacy, "terms": terms})
 
 except NoSectionError as e:
     print(e)
