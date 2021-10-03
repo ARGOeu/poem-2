@@ -41,6 +41,8 @@ Email =
 Namespace = hr.cro-ngi.TEST
 SamlLoginString = Login using EGI CHECK-IN
 SamlServiceName = ARGO POEM EGI-CheckIN
+TermsOfUse = https://ui.argo.grnet.gr/egi/termsofUse
+PrivacyPolicies = https://argo.egi.eu/egi/policies
 
 [SUPERUSER_EGI]
 Name =
