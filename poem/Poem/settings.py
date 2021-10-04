@@ -1,6 +1,6 @@
 # Django settings
 import os
-from configparser import ConfigParser, NoSectionError
+from configparser import ConfigParser, NoSectionError, NoOptionError
 from django.core.exceptions import ImproperlyConfigured
 
 VENV = '/home/pyvenv/poem'
@@ -64,18 +64,16 @@ try:
             privacy = config.get(section, 'PrivacyPolicies')
             LINKS_TERMS_PRIVACY[tenant_name.lower()].update({"privacy": privacy, "terms": terms})
 
-except NoSectionError as e:
-    print(e)
+except (NoSectionError, ImproperlyConfigured, NoOptionError) as e:
+    print('ERROR: Configuration error - {}'.format(e))
     raise SystemExit(1)
 
-except ImproperlyConfigured as e:
-    print(e)
-    raise SystemExit(1)
 
 if ',' in ALLOWED_HOSTS:
     ALLOWED_HOSTS = [h.strip() for h in ALLOWED_HOSTS.split(',')]
 else:
     ALLOWED_HOSTS = [ALLOWED_HOSTS]
+
 
 # Make this unique, and don't share it with anybody.
 try:

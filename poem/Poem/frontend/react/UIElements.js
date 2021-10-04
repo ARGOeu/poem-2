@@ -616,7 +616,7 @@ export const NavigationLinks = ({location, isTenantSchema, userDetails}) => {
 }
 
 
-export const NavigationAbout = ({ location, poemVersion, termsLink, policyLink }) => {
+export const NavigationAbout = ({ location, poemVersion, termsLink, privacyLink }) => {
   return (
     <React.Fragment>
       <div className="bg-white border-left border-right pl-3 mt-0 pt-5 text-uppercase">
@@ -661,7 +661,7 @@ export const NavigationAbout = ({ location, poemVersion, termsLink, policyLink }
         </NavLink>
         <NavLink
           tag="a"
-          href={policyLink}
+          href={privacyLink}
           className='text-dark'
           target='_blank' rel='noopener noreferrer'
         >
