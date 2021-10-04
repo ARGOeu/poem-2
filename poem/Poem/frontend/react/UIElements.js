@@ -723,7 +723,7 @@ export const Footer = ({ termsLink, privacyLink, loginPage=false, publicPage=fal
   if (!loginPage) {
     return (
       <div id="argo-footer" className="border rounded">
-        <InnerFooter border={true} publicPage={publicPage} tenantName={tenantName}/>
+        <InnerFooter border={true} publicPage={publicPage}/>
       </div>
     )
   }
@@ -789,7 +789,7 @@ export const NotifyInfo = ({msg='', title=''}) => {
 };
 
 
-export const PublicPage = ({tenantName=undefined, children}) => {
+export const PublicPage = ({children}) => {
   let userDetails = {
     username: 'Anonymous'
   }
@@ -820,10 +820,7 @@ export const PublicPage = ({tenantName=undefined, children}) => {
       <Row>
         <Col>
           {
-            tenantName ?
-              <Footer loginPage={false} publicPage={true} tenantName={tenantName}/>
-            :
-              <Footer loginPage={false} publicPage={true}/>
+            <Footer loginPage={false} publicPage={true}/>
           }
         </Col>
       </Row>
