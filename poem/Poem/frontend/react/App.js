@@ -584,8 +584,8 @@ const App = () => {
       setIsSessionActive(response.active);
       setUserDetails(response.userdetails);
       setVersion(options && options.result.version);
-      setPrivacyLink(options && options.result.privacy);
-      setTermsLink(options && options.result.terms);
+      setPrivacyLink(options && options.result.terms_privacy_links.privacy);
+      setTermsLink(options && options.result.terms_privacy_links.terms);
       setPublicView(false);
       queryClient.prefetchQuery(
         'user', () => fetchUsers()
@@ -1080,7 +1080,7 @@ const App = () => {
       </QueryClientProvider>
     )
   }
-  else if (isSessionActive && userDetails &&
+  else if (isSessionActive && userDetails && privacyLink && termsLink &&
     isTenantSchema !== null) {
 
     return (
@@ -1108,7 +1108,7 @@ const App = () => {
               <Col sm={{size: 2}} md={{size: 2}} id="sidebar-col" className="d-flex flex-column">
                 <NavigationLinksWithRouter isTenantSchema={isTenantSchema} userDetails={userDetails}/>
                 <div id="sidebar-grow" className="flex-grow-1 border-left border-right mb-0 pb-5"/>
-                <NavigationAboutWithRouter poemVersion={version} tenantName={tenantName} 
+                <NavigationAboutWithRouter poemVersion={version} tenantName={tenantName}
                   termsLink={termsLink} privacyLink={privacyLink}/>
               </Col>
               <Col>

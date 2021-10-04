@@ -616,7 +616,7 @@ export const NavigationLinks = ({location, isTenantSchema, userDetails}) => {
 }
 
 
-export const NavigationAbout = ({ location, poemVersion, termsLink, policiesLink, tenantName='egi' }) => {
+export const NavigationAbout = ({ location, poemVersion, termsLink, policiesLink }) => {
   return (
     <React.Fragment>
       <div className="bg-white border-left border-right pl-3 mt-0 pt-5 text-uppercase">
