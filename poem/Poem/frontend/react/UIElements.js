@@ -78,8 +78,6 @@ import { Helmet } from 'react-helmet';
 import Select, { components } from 'react-select';
 
 
-
-
 var list_pages = ['administration', 'probes',
                   'metrics', 'reports', 'servicetypes', 'metricprofiles', 'aggregationprofiles',
                   'thresholdsprofiles', 'operationsprofiles'];
@@ -117,12 +115,6 @@ link_title.set('tenants', 'Tenants');
 link_title.set('thresholdsprofiles', 'Thresholds profiles');
 link_title.set('users', 'Users');
 link_title.set('yumrepos', 'YUM repos');
-
-var PolicyLinks = new Map();
-PolicyLinks.set('egi', 'https://argo.egi.eu/egi/policies');
-PolicyLinks.set('eudat', 'https://avail.eudat.eu/eudat/policies');
-PolicyLinks.set('sdc', 'https://monitoring.seadatanet.org/sdc/policies');
-PolicyLinks.set('ni4os', 'https://argo.ni4os.eu/ni4os/policies');
 
 
 export const Icon = props =>
@@ -682,7 +674,7 @@ export const NavigationAbout = ({ location, poemVersion, termsLink, privacyLink 
 }
 
 
-const InnerFooter = ({ border=false, publicPage=false, tenantName='egi' }) =>
+const InnerFooter = ({ termsLink, privacyLink, border=false, publicPage=false}) =>
 {
   const [modal, setModal] = useState(false);
   const toggle = () => setModal(!modal);
@@ -710,9 +702,9 @@ const InnerFooter = ({ border=false, publicPage=false, tenantName='egi' }) =>
         publicPage &&
         <div className="text-center mb-0 pt-0">
           <small>
-            <a href="https://ui.argo.grnet.gr/egi/termsofUse" target="_blank" rel="noopener noreferrer" title="Terms">Terms</a>, &nbsp;
+            <a href={termsLink} target="_blank" rel="noopener noreferrer" title="Terms">Terms</a>, &nbsp;
             <a href='#' title="Cookie Policies" onClick={toggle}>Cookie Policies</a>, &nbsp;
-            <a title='Privacy Policy' href={tenantName ? PolicyLinks.get(tenantName.toLowerCase()) : PolicyLinks.get('egi')} target='_blank' rel='noopener noreferrer'>Privacy Policy</a>
+            <a title='Privacy Policy' href={privacyLink} target='_blank' rel='noopener noreferrer'>Privacy Policy</a>
           </small>
           <Modal isOpen={modal} toggle={toggle} size="lg">
             <ModalBody className="p-0">
@@ -726,7 +718,7 @@ const InnerFooter = ({ border=false, publicPage=false, tenantName='egi' }) =>
 }
 
 
-export const Footer = ({ loginPage=false, publicPage=false, tenantName='egi' }) =>
+export const Footer = ({ termsLink, privacyLink, loginPage=false, publicPage=false}) =>
 {
   if (!loginPage) {
     return (
@@ -738,7 +730,7 @@ export const Footer = ({ loginPage=false, publicPage=false, tenantName='egi' }) 
   else {
     return (
       <div id="argo-loginfooter">
-        <InnerFooter publicPage={true} tenantName={tenantName}/>
+        <InnerFooter publicPage={true} termsLink={termsLink} privacyLink={privacyLink}/>
       </div>
     )
   }

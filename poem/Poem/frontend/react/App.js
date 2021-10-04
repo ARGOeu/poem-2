@@ -1131,7 +1131,7 @@ const App = () => {
             </Row>
             <Row>
               <Col>
-                <Footer loginPage={false} tenantName={tenantName}/>
+                <Footer loginPage={false} termsLink={termsLink} privacyLink={privacyLink}/>
               </Col>
             </Row>
           </Container>
