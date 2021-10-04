@@ -718,12 +718,14 @@ const InnerFooter = ({ termsLink, privacyLink, border=false, publicPage=false}) 
 }
 
 
-export const Footer = ({ termsLink, privacyLink, loginPage=false, publicPage=false}) =>
+export const Footer = ({ termsLink="https://ui.argo.grnet.gr/egi/termsofUse",
+  privacyLink="https://argo.egi.eu/egi/policies", loginPage=false,
+  publicPage=false}) =>
 {
   if (!loginPage) {
     return (
       <div id="argo-footer" className="border rounded">
-        <InnerFooter border={true} publicPage={publicPage}/>
+        <InnerFooter border={true} publicPage={publicPage} termsLink={termsLink} privacyLink={privacyLink}/>
       </div>
     )
   }
