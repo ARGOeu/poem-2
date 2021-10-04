@@ -182,7 +182,13 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
                 WEBAPI_REPORTSTAGS='https://reports-tags.com',
                 WEBAPI_REPORTSTOPOLOGYGROUPS='https://topology-groups.com',
                 WEBAPI_REPORTSTOPOLOGYENDPOINTS='https://endpoints.com',
-                WEBAPI_REPORTSCRUD=True
+                WEBAPI_REPORTSCRUD=True,
+                LINKS_TERMS_PRIVACY={
+                    'tenant': {
+                        'terms': 'https://terms.of.use.com',
+                        'privacy': 'https://privacy.policies.com'
+                    }
+                }
         ):
             request = self.factory.get(self.url)
             response = self.view(request)
@@ -205,7 +211,11 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
                             'topologygroups': 'https://topology-groups.com',
                             'topologyendpoints': 'https://endpoints.com'
                         },
-                        'tenant_name': 'tenant'
+                        'tenant_name': 'tenant',
+                        'terms_privacy_links': {
+                            'terms': 'https://terms.of.use.com',
+                            'privacy': 'https://privacy.policies.com'
+                        }
                     }
                 }
             )
