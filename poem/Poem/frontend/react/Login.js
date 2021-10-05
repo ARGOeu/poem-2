@@ -23,20 +23,11 @@ const Login = (props) => {
   const [samlIdpString, setSamlIdpString] = useState(null);
   const [loginFailedVisible, setLoginFailedVisible] = useState(false);
   const [isTenantSchema, setIsTenantSchema] = useState(null);
-  const [tenantName, setTenantName] = useState(null);
+  const [tenantName, setTenantName] = useState('all');
   const [loading, setLoading] = useState(false);
 
   const backend = new Backend();
   const AppOnLogin = props.onLogin;
-
-  async function fetchSamlButtonString() {
-    try {
-      let json = await backend.fetchConfigOptions();
-      return json;
-    } catch(err) {
-      alert(err)
-    }
-  }
 
   useEffect(() => {
     _isMounted = true;
@@ -44,12 +35,12 @@ const Login = (props) => {
 
     async function fetchData() {
       let response = await backend.isTenantSchema();
+      let options = await backend.fetchConfigOptions();
       if (response) {
-        let json = await fetchSamlButtonString();
         if (_isMounted) {
           setIsTenantSchema(response);
-          setSamlIdpString(json.result.saml_login_string);
-          setTenantName(json.result.tenant_name);
+          setSamlIdpString(options.result.saml_login_string);
+          setTenantName(options.result.tenant_name);
         }
       } else
         if (_isMounted)
