@@ -57,7 +57,7 @@ try:
     LINKS_TERMS_PRIVACY = dict()
     all_sections = config.sections()
     for section in all_sections:
-        if section.startswith('GENERAL_') and not '_ALL' in section:
+        if section.startswith('GENERAL_'):
             tenant_name = section.split('_')[1]
             LINKS_TERMS_PRIVACY[tenant_name.lower()] = dict()
             terms = config.get(section, 'TermsOfUse')
