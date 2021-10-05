@@ -8,7 +8,7 @@
     "build-devel": "webpack --config webpack.config.js --progress --colors --mode development",
     "build-prod": "webpack --config webpack.config.js --progress --colors --mode production",
     "watch": "webpack --config webpack.config.js --watch --mode development",
-    "test": "jest --ci --max-workers=1 --reporters=default --reporters=jest-junit --coverage --coverageDirectory coverage"
+    "test": "jest --ci --max-workers=6 --reporters=default --reporters=jest-junit --coverage --coverageDirectory coverage"
   },
   "jest": {
     "moduleNameMapper": {
