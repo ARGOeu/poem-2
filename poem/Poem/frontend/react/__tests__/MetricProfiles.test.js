@@ -22,6 +22,8 @@ jest.mock('../DataManager', () => {
   }
 })
 
+jest.setTimeout(20000);
+
 const mockChangeObject = jest.fn();
 const mockChangeMetricProfile = jest.fn();
 const mockDeleteObject = jest.fn();
