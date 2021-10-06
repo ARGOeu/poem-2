@@ -212,7 +212,7 @@ class ListThresholdsProfiles(APIView):
                 detail='Group of thresholds profiles does not exist.'
             )
 
-    def delete(self, request, apiid=None):
+    def delete(self, request, name=None):
         try:
             userprofile = poem_models.UserProfile.objects.get(user=request.user)
             groups = userprofile.groupsofthresholdsprofiles.all()
@@ -225,8 +225,8 @@ class ListThresholdsProfiles(APIView):
                 )
 
             else:
-                if apiid:
-                    tp = poem_models.ThresholdsProfiles.objects.get(apiid=apiid)
+                if name:
+                    tp = poem_models.ThresholdsProfiles.objects.get(apiid=name)
 
                     delete_perm = request.user.is_superuser
                     if tp.groupname:
