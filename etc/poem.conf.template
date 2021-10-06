@@ -31,6 +31,8 @@ ReportsCrud = True
 
 [GENERAL_ALL]
 PublicPage = tenant.com
+TermsOfUse = https://ui.argo.grnet.gr/egi/termsofUse/
+PrivacyPolicies = https://argo.egi.eu/egi/policies/
 
 [SUPERUSER_ALL]
 Name =
