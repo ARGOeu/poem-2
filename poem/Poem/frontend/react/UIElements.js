@@ -718,9 +718,7 @@ const InnerFooter = ({ termsLink, privacyLink, border=false, publicPage=false}) 
 }
 
 
-export const Footer = ({ termsLink="https://ui.argo.grnet.gr/egi/termsofUse",
-  privacyLink="https://argo.egi.eu/egi/policies", loginPage=false,
-  publicPage=false}) =>
+export const Footer = ({ termsLink, privacyLink, loginPage=false, publicPage=false}) =>
 {
   if (!loginPage) {
     return (
@@ -791,7 +789,7 @@ export const NotifyInfo = ({msg='', title=''}) => {
 };
 
 
-export const PublicPage = ({children}) => {
+export const PublicPage = ({privacyLink, termsLink, children}) => {
   let userDetails = {
     username: 'Anonymous'
   }
@@ -822,7 +820,7 @@ export const PublicPage = ({children}) => {
       <Row>
         <Col>
           {
-            <Footer loginPage={false} publicPage={true}/>
+            <Footer privacyLink={privacyLink} termsLink={termsLink} loginPage={false} publicPage={true}/>
           }
         </Col>
       </Row>

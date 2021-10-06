@@ -23,8 +23,9 @@ const Login = (props) => {
   const [samlIdpString, setSamlIdpString] = useState(null);
   const [loginFailedVisible, setLoginFailedVisible] = useState(false);
   const [isTenantSchema, setIsTenantSchema] = useState(null);
-  const [tenantName, setTenantName] = useState('all');
   const [loading, setLoading] = useState(false);
+  const [privacyLink, setPrivacyLink] = useState(undefined);
+  const [termsLink, setTermsLink] = useState(undefined);
 
   const backend = new Backend();
   const AppOnLogin = props.onLogin;
@@ -36,11 +37,14 @@ const Login = (props) => {
     async function fetchData() {
       let response = await backend.isTenantSchema();
       let options = await backend.fetchConfigOptions();
+
+      setPrivacyLink(options && options.result.terms_privacy_links.privacy);
+      setTermsLink(options && options.result.terms_privacy_links.terms);
+
       if (response) {
         if (_isMounted) {
           setIsTenantSchema(response);
           setSamlIdpString(options.result.saml_login_string);
-          setTenantName(options.result.tenant_name);
         }
       } else
         if (_isMounted)
@@ -130,7 +134,7 @@ const Login = (props) => {
                 </Formik>
               </CardBody>
               <CardFooter id="argo-loginfooter">
-                <Footer loginPage={true} tenantName={tenantName}/>
+                <Footer privacyLink={privacyLink} termsLink={termsLink} loginPage={true}/>
               </CardFooter>
             </Card>
           </Col>
