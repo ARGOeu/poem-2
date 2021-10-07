@@ -59,7 +59,8 @@ describe('Test for login page on SuperAdmin POEM', () => {
   beforeAll(() => {
     Backend.mockImplementation(() => {
       return {
-        isTenantSchema: () => Promise.resolve(false)
+        isTenantSchema: () => Promise.resolve(false),
+        fetchConfigOptions: () => Promise.resolve(mockConfigOptions)
       }
     })
   })
