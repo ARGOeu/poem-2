@@ -101,6 +101,8 @@ class GetConfigOptions(APIView):
         if tenant != 'all':
             options.update(saml_login_string=saml_login_string(tenant))
 
+        options.update(terms_privacy_links=settings.LINKS_TERMS_PRIVACY[tenant])
+
         options.update(webapimetric=settings.WEBAPI_METRIC)
         options.update(webapiaggregation=settings.WEBAPI_AGGREGATION)
         options.update(webapithresholds=settings.WEBAPI_THRESHOLDS)

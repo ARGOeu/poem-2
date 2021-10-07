@@ -553,6 +553,8 @@ const App = () => {
   const [webApiReports, setWebApiReports] = useState(undefined);
   const [publicView, setPublicView] = useState(undefined);
   const [tenantName, setTenantName] = useState(undefined);
+  const [privacyLink, setPrivacyLink] = useState(undefined);
+  const [termsLink, setTermsLink] = useState(undefined);
   const [token, setToken] = useState(undefined);
   const [version, setVersion] = useState(undefined);
   const [isTenantSchema, setIsTenantSchema] = useState(null);
@@ -582,6 +584,8 @@ const App = () => {
       setIsSessionActive(response.active);
       setUserDetails(response.userdetails);
       setVersion(options && options.result.version);
+      setPrivacyLink(options && options.result.terms_privacy_links.privacy);
+      setTermsLink(options && options.result.terms_privacy_links.terms);
       setPublicView(false);
       queryClient.prefetchQuery(
         'user', () => fetchUsers()
@@ -667,6 +671,8 @@ const App = () => {
     setWebApiThresholds(options && options.result.webapithresholds);
     setWebApiOperations(options && options.result.webapioperations);
     setWebApiReports(options && options.result.webapireports);
+    setPrivacyLink(options && options.result.terms_privacy_links.privacy);
+    setTermsLink(options && options.result.terms_privacy_links.terms);
     setTenantName(options && options.result.tenant_name);
     setPublicView(true);
     queryClient.prefetchQuery(
@@ -742,7 +748,7 @@ const App = () => {
     }
   }, [])
 
-  if (publicView && isTenantSchema !== undefined) {
+  if (publicView && privacyLink && termsLink && isTenantSchema !== undefined) {
     if (isTenantSchema)
       return (
         <QueryClientProvider client={queryClient}>
@@ -752,7 +758,7 @@ const App = () => {
               <Route
                 exact path="/ui/public_home"
                 render={() =>
-                  <PublicPage tenantName={tenantName}>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <PublicHome/>
                   </PublicPage>
                 }
@@ -760,36 +766,36 @@ const App = () => {
               <Route
                 exact path="/ui/public_probes"
                 render={props =>
-                  <PublicPage tenantName={tenantName}>
-                    <ProbeList publicView={true} isTenantSchema={true} {...props} />
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
+                    <ProbeList publicView={true} isTenantSchema={true} {...props}/>
                   </PublicPage>
                 }
               />
               <Route
                 exact path="/ui/public_probes/:name"
                 render={props =>
-                  <PublicPage tenantName={tenantName}>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <ProbeComponent publicView={true} isTenantSchema={true} {...props}/>
                   </PublicPage>
                 }
               />
               <Route exact path="/ui/public_probes/:name/history"
                 render={props =>
-                  <PublicPage tenantName={tenantName}>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <HistoryComponent object='probe' publicView={true} {...props}/>
                   </PublicPage>
                 }
               />
               <Route exact path="/ui/public_probes/:name/history/compare/:id1/:id2"
                 render={props =>
-                  <PublicPage tenantName={tenantName}>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <ProbeVersionCompare publicView={true} {...props}/>
                   </PublicPage>
                 }
               />
               <Route exact path="/ui/public_probes/:name/history/:version"
                 render={props =>
-                  <PublicPage tenantName={tenantName}>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <ProbeVersionDetails publicView={true} {...props}/>
                   </PublicPage>
                 }
@@ -797,7 +803,7 @@ const App = () => {
               <Route
                 exact path="/ui/public_metrictemplates"
                 render={props =>
-                  <PublicPage tenantName={tenantName}>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <ListOfMetrics type='metrictemplates' isTenantSchema={true} publicView={true} {...props}/>
                   </PublicPage>
                 }
@@ -805,7 +811,7 @@ const App = () => {
               <Route
                 exact path="/ui/public_metrictemplates/:name"
                 render={props =>
-                  <PublicPage tenantName={tenantName}>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <MetricTemplateComponent publicView={true} tenantView={true} {...props}/>
                   </PublicPage>
                 }
@@ -813,7 +819,7 @@ const App = () => {
               <Route
                 exact path="/ui/public_metrictemplates/:name/history"
                 render={props =>
-                  <PublicPage tenantName={tenantName}>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <HistoryComponent publicView={true} object='metrictemplate' {...props}/>
                   </PublicPage>
                 }
@@ -821,7 +827,7 @@ const App = () => {
               <Route
                 exact path="/ui/public_metrictemplates/:name/history/compare/:id1/:id2"
                 render={props =>
-                  <PublicPage tenantName={tenantName}>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <CompareMetrics publicView={true} {...props} type='metrictemplate'/>
                   </PublicPage>
                 }
@@ -829,28 +835,28 @@ const App = () => {
               <Route
                 exact path="/ui/public_metrictemplates/:name/history/:version"
                 render={props =>
-                  <PublicPage tenantName={tenantName}>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <MetricTemplateVersionDetails publicView={true} {...props}/>
                   </PublicPage>
                 }
               />
               <Route exact path="/ui/public_metrics"
                 render={props =>
-                  <PublicPage tenantName={tenantName}>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <ListOfMetrics type='metrics' publicView={true} isTenantSchema={true} {...props}/>
                   </PublicPage>
                 }
               />
               <Route exact path="/ui/public_metrics/:name"
                 render={props =>
-                  <PublicPage tenantName={tenantName}>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <MetricChange publicView={true} {...props}/>
                   </PublicPage>
                 }
               />
               <Route exact path="/ui/public_metricprofiles"
                 render={props =>
-                  <PublicPage tenantName={tenantName}>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <MetricProfilesList
                       {...props}
                       webapimetric={webApiMetric}
@@ -862,7 +868,7 @@ const App = () => {
               />
               <Route exact path="/ui/public_metricprofiles/:name"
                 render={props =>
-                  <PublicPage tenantName={tenantName}>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <MetricProfilesChange {...props}
                       webapimetric={webApiMetric}
                       webapitoken={token}
@@ -874,7 +880,7 @@ const App = () => {
               />
               <Route exact path="/ui/public_aggregationprofiles"
                 render={props =>
-                  <PublicPage tenantName={tenantName}>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <AggregationProfilesList
                       {...props}
                       publicView={true}
@@ -887,7 +893,7 @@ const App = () => {
               />
               <Route exact path="/ui/public_aggregationprofiles/:name"
                 render={props =>
-                  <PublicPage tenantName={tenantName}>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <AggregationProfilesChange {...props}
                       webapimetric={webApiMetric}
                       webapiaggregation={webApiAggregation}
@@ -900,7 +906,7 @@ const App = () => {
               />
               <Route exact path="/ui/public_thresholdsprofiles"
                 render={props =>
-                  <PublicPage tenantName={tenantName}>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <ThresholdsProfilesList
                       {...props}
                       publicView={true}
@@ -912,7 +918,7 @@ const App = () => {
               />
               <Route exact path="/ui/public_thresholdsprofiles/:name"
                 render={props =>
-                  <PublicPage tenantName={tenantName}>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <ThresholdsProfilesChange {...props}
                       webapithresholds={webApiThresholds}
                       webapiaggregation={webApiAggregation}
@@ -925,7 +931,7 @@ const App = () => {
               />
               <Route exact path="/ui/public_operationsprofiles"
                 render={props =>
-                  <PublicPage tenantName={tenantName}>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <OperationsProfilesList
                       {...props}
                       publicView={true}
@@ -937,7 +943,7 @@ const App = () => {
               />
               <Route exact path="/ui/public_operationsprofiles/:name"
                 render={props =>
-                  <PublicPage tenantName={tenantName}>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <OperationsProfileDetails
                       {...props}
                       publicView={true}
@@ -949,7 +955,7 @@ const App = () => {
               />
               <Route exact path="/ui/public_servicetypes"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <ServiceTypesList
                       {...props}
                       publicView={true}
@@ -971,7 +977,7 @@ const App = () => {
               <Route
                 exact path="/ui/public_home"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <PublicHome isSuperAdmin={true} {...props}/>
                   </PublicPage>
                 }
@@ -979,7 +985,7 @@ const App = () => {
               <Route
                 exact path="/ui/public_probes"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <ProbeList publicView={true} {...props} />
                   </PublicPage>
                 }
@@ -987,28 +993,28 @@ const App = () => {
               <Route
                 exact path="/ui/public_probes/:name"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <ProbeComponent publicView={true} {...props}/>
                   </PublicPage>
                 }
               />
               <Route exact path="/ui/public_probes/:name/history"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <HistoryComponent object='probe' publicView={true} {...props}/>
                   </PublicPage>
                 }
               />
               <Route exact path="/ui/public_probes/:name/history/compare/:id1/:id2"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <ProbeVersionCompare publicView={true} {...props}/>
                   </PublicPage>
                 }
               />
               <Route exact path="/ui/public_probes/:name/history/:version"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <ProbeVersionDetails publicView={true} {...props}/>
                   </PublicPage>
                 }
@@ -1016,7 +1022,7 @@ const App = () => {
               <Route
                 exact path="/ui/public_metrictemplates"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <ListOfMetrics type='metrictemplates' publicView={true} {...props}/>
                   </PublicPage>
                 }
@@ -1024,7 +1030,7 @@ const App = () => {
               <Route
                 exact path="/ui/public_metrictemplates/:name"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <MetricTemplateComponent publicView={true} {...props}/>
                   </PublicPage>
                 }
@@ -1032,7 +1038,7 @@ const App = () => {
               <Route
                 exact path="/ui/public_metrictemplates/:name/history"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <HistoryComponent publicView={true} object='metrictemplate' {...props}/>
                   </PublicPage>
                 }
@@ -1040,7 +1046,7 @@ const App = () => {
               <Route
                 exact path="/ui/public_metrictemplates/:name/history/compare/:id1/:id2"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <CompareMetrics publicView={true} {...props} type='metrictemplate'/>
                   </PublicPage>
                 }
@@ -1048,7 +1054,7 @@ const App = () => {
               <Route
                 exact path="/ui/public_metrictemplates/:name/history/:version"
                 render={props =>
-                  <PublicPage>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <MetricTemplateVersionDetails publicView={true} {...props}/>
                   </PublicPage>
                 }
@@ -1076,7 +1082,7 @@ const App = () => {
       </QueryClientProvider>
     )
   }
-  else if (isSessionActive && userDetails &&
+  else if (isSessionActive && userDetails && privacyLink && termsLink &&
     isTenantSchema !== null) {
 
     return (
@@ -1104,7 +1110,8 @@ const App = () => {
               <Col sm={{size: 2}} md={{size: 2}} id="sidebar-col" className="d-flex flex-column">
                 <NavigationLinksWithRouter isTenantSchema={isTenantSchema} userDetails={userDetails}/>
                 <div id="sidebar-grow" className="flex-grow-1 border-left border-right mb-0 pb-5"/>
-                <NavigationAboutWithRouter poemVersion={version} tenantName={tenantName}/>
+                <NavigationAboutWithRouter poemVersion={version} tenantName={tenantName}
+                  termsLink={termsLink} privacyLink={privacyLink}/>
               </Col>
               <Col>
                 <CustomBreadcrumbWithRouter />
@@ -1126,7 +1133,7 @@ const App = () => {
             </Row>
             <Row>
               <Col>
-                <Footer loginPage={false} tenantName={tenantName}/>
+                <Footer loginPage={false} termsLink={termsLink} privacyLink={privacyLink}/>
               </Col>
             </Row>
           </Container>

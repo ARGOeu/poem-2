@@ -4,6 +4,14 @@
 source /etc/profile.d/venv_poem.sh
 workon poem
 
+# remove previous installation if there's one
+pip3 show poem
+is_installed=$(echo $?)
+
+if [[ $is_installed -eq 0 ]]; then
+    sudo pip3 uninstall -y poem
+fi
+
 # build and install wheel
 cd /mnt/poem-source
 sudo make clean

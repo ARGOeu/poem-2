@@ -29,7 +29,11 @@ const mockConfigOptions = {
     webapioperations: 'https://operations.com',
     version: '2.3.0',
     webapireports: 'https://reports.com',
-    tenant_name: 'MOCK_TENANT'
+    tenant_name: 'MOCK_TENANT',
+    terms_privacy_links: {
+      'terms': 'https://ui.argo.grnet.gr/egi/termsofUse',
+      'privacy': 'https://argo.egi.eu/egi/policies'
+    }
   }
 };
 
@@ -55,7 +59,8 @@ describe('Test for login page on SuperAdmin POEM', () => {
   beforeAll(() => {
     Backend.mockImplementation(() => {
       return {
-        isTenantSchema: () => Promise.resolve(false)
+        isTenantSchema: () => Promise.resolve(false),
+        fetchConfigOptions: () => Promise.resolve(mockConfigOptions)
       }
     })
   })
