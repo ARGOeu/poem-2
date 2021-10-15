@@ -193,7 +193,6 @@ Configuration is centered around one file `VENV/etc/poem/poem.conf` that is spli
 
 * `Debug` serves for the debugging purposes and tells Django to be verbosive and list the stack calls in case of errors
 * `Timezone` timezone
-* `ReportsCRUD` enables the polling of the WEB-API method related to ARGO Reports handling
 
 ### DATABASE
 
@@ -234,6 +233,25 @@ Part of the REST API is protected by token so for tenants that consume those API
 % workon poem
 % poem-token -t EGI -s egi
 ```
+
+### WEBAPI
+
+    [WEBAPI]
+    MetricProfile = https://api.devel.argo.grnet.gr/api/v2/metric_profiles
+    AggregationProfile = https://api.devel.argo.grnet.gr/api/v2/aggregation_profiles
+    ThresholdsProfile = https://api.devel.argo.grnet.gr/api/v2/thresholds_profiles
+    OperationsProfile = https://api.devel.argo.grnet.gr/api/v2/operations_profiles
+    Reports = https://api.devel.argo.grnet.gr/api/v2/reports
+    ReportsTopologyTags = https://api.devel.argo.grnet.gr/api/v2/topology/tags
+    ReportsTopologyGroups = https://api.devel.argo.grnet.gr/api/v2/topology/groups
+    ReportsTopologyEndpoints = https://api.devel.argo.grnet.gr/api/v2/topology/endpoints
+    ReportsCRUD = True
+
+This section lists WEB-API methods for the resources that are not stored in
+POEM's PostgreSQL DB, but instead are consumed from ARGO WEB-API services. POEM
+actively polls the PI methods and is doing the full round of CRUD operations on
+them. `ReportsCRUD` enables the polling of the WEB-API method related to ARGO
+Reports handling.
 
 ### GENERAL_<tenant_name>
 
