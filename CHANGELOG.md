@@ -1,5 +1,23 @@
 # Changelog
 
+## [3.3.11] - 2021-10-15
+
+### Added
+
+* ARGO-3296 Prefetch data to speed up the page loading
+* ARGO-3357 Vary POEM terms and privacy policy links for different tenants
+
+### Changed
+
+* ARGO-3285 Handle binary tag value when second value is not presented in bucket
+* ARGO-3261 Refactor components just to work with react-query 3.* 
+* ARGO-3262 Improve query functions in all the components
+* ARGO-3263 Refactor components to use 'useMutation' hook
+
+### Fixed
+
+* ARGO-3358 Fix error that is sometimes returned in specific probe page
+
 ## [3.3.10] - 2021-09-02
 
 ### Added
