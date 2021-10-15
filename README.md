@@ -193,6 +193,7 @@ Configuration is centered around one file `VENV/etc/poem/poem.conf` that is spli
 
 * `Debug` serves for the debugging purposes and tells Django to be verbosive and list the stack calls in case of errors
 * `Timezone` timezone
+* `ReportsCRUD` enables the polling of the WEB-API method related to ARGO Reports handling
 
 ### DATABASE
 
@@ -240,10 +241,15 @@ Part of the REST API is protected by token so for tenants that consume those API
     Namespace = hr.cro-ngi.TEST
     SamlLoginString = Log in using EGI CHECK-IN
     SamlServiceName = ARGO POEM EGI-CheckIN
+    TermsOfUse = https://ui.argo.grnet.gr/egi/termsofUse/ALL
+    PrivacyPolicies = https://argo.egi.eu/egi/policies/ALL
+
 
 * `Namespace` defines the identifier that will be prepended to every Profile
 * `SamlLoginString` defines the text presented on the SAML2 button of login page
 * `SamlServiceName` defines service name in SAML2 configuration
+* `TermsOfUse` represents tenant URL reference to Terms of Use on ARGO UI service
+* `PrivacyPolicies` represents tenant URL reference to Privacy policies on ARGO UI service
 
 ### SUPERUSER_<tenant_name>
 
@@ -302,6 +308,9 @@ AllowedHosts = poem.devel.argo.grnet.gr
 
 [GENERAL_ALL]
 PublicPage = poem.devel.argo.grnet.gr
+TermsOfUse = https://ui.argo.grnet.gr/egi/termsofUse/ALL
+PrivacyPolicies = https://argo.egi.eu/egi/policies/ALL
+
 
 [SUPERUSER_ALL]
 Name = <username>
