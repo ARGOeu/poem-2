@@ -9,13 +9,15 @@
 
 ### Changed
 
-* ARGO-3285 Handle binary tag value when second value is not presented in bucket
 * ARGO-3261 Refactor components just to work with react-query 3.* 
 * ARGO-3262 Improve query functions in all the components
 * ARGO-3263 Refactor components to use 'useMutation' hook
+* ARGO-3285 Handle binary tag value when second value is not presented in bucket
 
 ### Fixed
 
+* ARGO-3260 Fix parallel run of React tests
+* ARGO-3330 500 status issue when trying to delete a threshold profile 
 * ARGO-3358 Fix error that is sometimes returned in specific probe page
 
 ## [3.3.10] - 2021-09-02
