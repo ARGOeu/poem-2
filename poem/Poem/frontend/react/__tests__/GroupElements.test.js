@@ -6,7 +6,17 @@ import { GroupList, GroupChange } from '../GroupElements';
 import { render, waitFor, screen, fireEvent, within } from '@testing-library/react';
 import { Backend } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
+import { QueryClient, QueryClientProvider, setLogger } from 'react-query';
 
+
+const queryClient = new QueryClient();
+
+
+setLogger({
+  log: () => {},
+  warn: () => {},
+  error: () => {}
+})
 
 function renderListView(
   group = 'metrics',
@@ -17,9 +27,11 @@ function renderListView(
 
   return {
     ...render(
-      <Router history={history}>
-        <Route render={props => <GroupList {...props} group={group} id={id} name={name} />} />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route render={props => <GroupList {...props} group={group} id={id} name={name} />} />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -30,16 +42,18 @@ function renderChangeView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route path='/ui/administration/group/:name' render={
-          props => <GroupChange
-            {...props}
-            group='metrics'
-            id='groupofmetrics'
-            title='metrics'
-          />}
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route path='/ui/administration/group/:name' render={
+            props => <GroupChange
+              {...props}
+              group='metrics'
+              id='groupofmetrics'
+              title='metrics'
+            />}
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -50,17 +64,19 @@ function renderAddView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route render={
-          props => <GroupChange
-            {...props}
-            group='metrics'
-            id='groupofmetrics'
-            title='metrics'
-            addview={true}
-          />}
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route render={
+            props => <GroupChange
+              {...props}
+              group='metrics'
+              id='groupofmetrics'
+              title='metrics'
+              addview={true}
+            />}
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -86,9 +102,12 @@ const mockChangeObject = jest.fn();
 const mockDeleteObject = jest.fn();
 const mockAddObject = jest.fn();
 
+
 beforeEach(() => {
   jest.clearAllMocks();
+  queryClient.clear();
 })
+
 
 describe('Tests for groups listviews', () => {
   test('Render group of metrics listview', async () => {
@@ -204,9 +223,11 @@ describe('Tests for groups listviews', () => {
   })
 })
 
+
 describe('Tests for group elements changeview', () => {
   jest.spyOn(NotificationManager, 'success');
   jest.spyOn(NotificationManager, 'error');
+  jest.spyOn(queryClient, 'invalidateQueries');
   beforeAll(() => {
     const mockMetricGroup = [
       'argo.AMS-Check',
@@ -309,10 +330,6 @@ describe('Tests for group elements changeview', () => {
   })
 
   test('Test remove item from group and save', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200 })
-    )
-
     renderChangeView();
 
     await waitFor(() => {
@@ -335,6 +352,9 @@ describe('Tests for group elements changeview', () => {
         { name: 'TestGroup', items: ['argo.AMSPublisher-Check', 'org.nagios.AmsDirSize', 'org.nagios.CertLifetime'] }
       )
     })
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metric');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metric');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metricsgroup');
     expect(NotificationManager.success).toHaveBeenCalledWith(
       'Group of metrics successfully changed',
       'Changed',
@@ -343,12 +363,9 @@ describe('Tests for group elements changeview', () => {
   })
 
   test('Test failed saving of group with error message', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'There is something wrong with your group.' }),
-        status: 400,
-        statusText: 'BAD REQUEST' })
-    )
+    mockChangeObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: There is something wrong with your group.')
+    } );
 
     renderChangeView();
 
@@ -371,23 +388,23 @@ describe('Tests for group elements changeview', () => {
         { name: 'TestGroup', items: ['argo.AMS-Check', 'argo.AMSPublisher-Check', 'org.nagios.AmsDirSize', 'org.nagios.CertLifetime'] }
       )
     })
+
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('metric');
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('public_metric');
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('metricsgroup');
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There is something wrong with your group.</p>
+        <p>400 BAD REQUEST: There is something wrong with your group.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 400 BAD REQUEST',
+      'Error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test failed saving of group without error message', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({
-        status: 500,
-        statusText: 'SERVER ERROR' })
-    )
+    mockChangeObject.mockImplementationOnce( () => { throw Error() } );
 
     renderChangeView();
 
@@ -409,22 +426,21 @@ describe('Tests for group elements changeview', () => {
         { name: 'TestGroup', items: ['argo.AMS-Check', 'argo.AMSPublisher-Check', 'org.nagios.AmsDirSize', 'org.nagios.CertLifetime'] }
       )
     })
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('metric');
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('public_metric');
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('metricsgroup');
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Error changing group of metrics</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 500 SERVER ERROR',
+      'Error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test add item to group and save', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200 })
-    )
-
     renderChangeView();
 
     await waitFor(() => {
@@ -453,6 +469,9 @@ describe('Tests for group elements changeview', () => {
         { name: 'TestGroup', items: ['argo.AMS-Check', 'argo.AMSPublisher-Check', 'org.nagios.AmsDirSize', 'org.nagios.CertLifetime', 'test.AMS-Check'] }
       )
     })
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metric');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metric');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metricsgroup');
     expect(NotificationManager.success).toHaveBeenCalledWith(
       'Group of metrics successfully changed',
       'Changed',
@@ -461,10 +480,6 @@ describe('Tests for group elements changeview', () => {
   })
 
   test('Test delete a group', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status_code: 204 })
-    );
-
     renderChangeView();
 
     await waitFor(() => {
@@ -477,6 +492,12 @@ describe('Tests for group elements changeview', () => {
       expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
     })
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metricsgroup');
+    })
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metric');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metric');
 
     await waitFor(() => {
       expect(mockDeleteObject).toHaveBeenCalledWith(
@@ -485,10 +506,10 @@ describe('Tests for group elements changeview', () => {
     })
   })
 
-  test('Test delete group with error', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+  test('Test error deleting group of metrics with error', async () => {
+    mockDeleteObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: There has been an error.')
+    } )
 
     renderChangeView();
 
@@ -509,17 +530,57 @@ describe('Tests for group elements changeview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('metric');
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('public_metric');
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('metricsgroup');
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>400 BAD REQUEST: There has been an error.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error deleting group of metrics without error', async () => {
+    mockDeleteObject.mockImplementationOnce( () => { throw Error() } );
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        '/api/v2/internal/metricsgroup/TestGroup'
+      )
+    })
+
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('metric');
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('public_metric');
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('metricsgroup');
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Error deleting group of metrics</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 500 SERVER ERROR',
+      'Error',
       0,
       expect.any(Function)
     )
   })
 })
+
 
 describe('Tests for groups addviews', () => {
   jest.spyOn(NotificationManager, 'success');
@@ -565,8 +626,6 @@ describe('Tests for groups addviews', () => {
   })
 
   test('Test creating new group', async () => {
-    mockAddObject.mockReturnValueOnce(Promise.resolve({ ok: true, status: 200 }));
-
     renderAddView();
 
     await waitFor(() => {
@@ -588,20 +647,21 @@ describe('Tests for groups addviews', () => {
     expect(screen.getByRole('dialog', { title: /add/i }).textContent).toContain('Add group of metrics');
 
     fireEvent.click(screen.getByRole('button', { name: /yes/i }))
-    expect(mockAddObject).toHaveBeenCalledTimes(1);
     await waitFor(() => {
-      expect(mockAddObject).toHaveBeenCalledWith(
-        '/api/v2/internal/metricsgroup/',
-        { name: 'NewGroup', items: ['test.AMS-Check'] }
-      )
+      expect(mockAddObject).toHaveBeenCalledTimes(1);
     })
+    expect(mockAddObject).toHaveBeenCalledWith(
+      '/api/v2/internal/metricsgroup/',
+      { name: 'NewGroup', items: ['test.AMS-Check'] }
+    )
 
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metric');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metric');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metricsgroup');
     expect(NotificationManager.success).toHaveBeenCalledWith('Group of metrics successfully added', 'Added', 2000)
   })
 
   test('Test creating new groups without assigned resources', async () => {
-    mockAddObject.mockReturnValueOnce(Promise.resolve({ ok: true, status: 200 }));
-
     renderAddView();
 
     await waitFor(() => {
@@ -617,24 +677,23 @@ describe('Tests for groups addviews', () => {
     expect(screen.getByRole('dialog', { title: /add/i }).textContent).toContain('Add group of metrics');
 
     fireEvent.click(screen.getByRole('button', { name: /yes/i }))
-    expect(mockAddObject).toHaveBeenCalledTimes(1);
     await waitFor(() => {
-      expect(mockAddObject).toHaveBeenCalledWith(
-        '/api/v2/internal/metricsgroup/',
-        { name: 'NewGroup', items: [] }
-      )
+      expect(mockAddObject).toHaveBeenCalledTimes(1);
     })
+    expect(mockAddObject).toHaveBeenCalledWith(
+      '/api/v2/internal/metricsgroup/',
+      { name: 'NewGroup', items: [] }
+    )
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metric');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metric');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metricsgroup');
     expect(NotificationManager.success).toHaveBeenCalledWith('Group of metrics successfully added', 'Added', 2000)
   })
 
   test('Test error adding new group with message', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'Group of metrics with this name already exists.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    );
+    mockAddObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: Group of metrics with this name already exists.')
+    } );
 
     renderAddView();
 
@@ -652,31 +711,29 @@ describe('Tests for groups addviews', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /yes/i }))
 
-    expect(mockAddObject).toHaveBeenCalledTimes(1);
     await waitFor(() => {
-      expect(mockAddObject).toHaveBeenCalledWith(
-        '/api/v2/internal/metricsgroup/',
-        { name: 'NewGroup', items: [] }
-      )
+      expect(mockAddObject).toHaveBeenCalledTimes(1);
     })
+    expect(mockAddObject).toHaveBeenCalledWith(
+      '/api/v2/internal/metricsgroup/',
+      { name: 'NewGroup', items: [] }
+    )
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('metric');
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('public_metric');
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('metricsgroup');
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>Group of metrics with this name already exists.</p>
+        <p>400 BAD REQUEST: Group of metrics with this name already exists.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 400 BAD REQUEST',
+      'Error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error adding new group without message', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({
-        status: 500,
-        statusText: 'SERVER ERROR'
-      })
-    );
+    mockAddObject.mockImplementationOnce( () => { throw Error() } );
 
     renderAddView();
 
@@ -694,19 +751,22 @@ describe('Tests for groups addviews', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /yes/i }))
 
-    expect(mockAddObject).toHaveBeenCalledTimes(1);
     await waitFor(() => {
-      expect(mockAddObject).toHaveBeenCalledWith(
-        '/api/v2/internal/metricsgroup/',
-        { name: 'NewGroup', items: [] }
-      )
+      expect(mockAddObject).toHaveBeenCalledTimes(1);
     })
+    expect(mockAddObject).toHaveBeenCalledWith(
+      '/api/v2/internal/metricsgroup/',
+      { name: 'NewGroup', items: [] }
+    )
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('metric');
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('public_metric');
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('metricsgroup');
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Error adding group of metrics</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 500 SERVER ERROR',
+      'Error',
       0,
       expect.any(Function)
     )

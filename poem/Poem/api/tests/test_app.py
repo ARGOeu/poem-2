@@ -171,7 +171,7 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
     @patch('Poem.api.internal_views.app.saml_login_string',
            return_value='Log in using B2ACCESS')
     @patch('Poem.api.internal_views.app.tenant_from_request',
-           return_value='Tenant')
+           return_value='tenant')
     def test_get_config_options(self, *args):
         with self.settings(
                 WEBAPI_METRIC='https://metric.profile.com',
@@ -182,7 +182,13 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
                 WEBAPI_REPORTSTAGS='https://reports-tags.com',
                 WEBAPI_REPORTSTOPOLOGYGROUPS='https://topology-groups.com',
                 WEBAPI_REPORTSTOPOLOGYENDPOINTS='https://endpoints.com',
-                WEBAPI_REPORTSCRUD=True
+                WEBAPI_REPORTSCRUD=True,
+                LINKS_TERMS_PRIVACY={
+                    'tenant': {
+                        'terms': 'https://terms.of.use.com',
+                        'privacy': 'https://privacy.policies.com'
+                    }
+                }
         ):
             request = self.factory.get(self.url)
             response = self.view(request)
@@ -205,7 +211,11 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
                             'topologygroups': 'https://topology-groups.com',
                             'topologyendpoints': 'https://endpoints.com'
                         },
-                        'tenant_name': 'Tenant'
+                        'tenant_name': 'tenant',
+                        'terms_privacy_links': {
+                            'terms': 'https://terms.of.use.com',
+                            'privacy': 'https://privacy.policies.com'
+                        }
                     }
                 }
             )

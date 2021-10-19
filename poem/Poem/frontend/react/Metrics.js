@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
 import {
@@ -40,7 +40,20 @@ import { faInfoCircle, faMinus, faPlus, faCaretDown } from '@fortawesome/free-so
 import ReactDiffViewer from 'react-diff-viewer';
 import CreatableSelect from 'react-select/creatable';
 import { components } from 'react-select';
-import { useQuery, queryCache } from 'react-query';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
+import {
+  fetchMetricTags,
+  fetchMetricTemplates,
+  fetchMetricTemplateTypes,
+  fetchMetricTemplateVersion,
+  fetchOStags,
+  fetchProbeVersion,
+  fetchUserDetails,
+  fetchUserGroups,
+  fetchMetrics,
+  fetchMetricTypes,
+  fetchProbeVersions
+} from './QueryFunctions';
 
 
 function validateConfig(value) {
@@ -297,7 +310,7 @@ export const ListOfMetrics = (props) => {
   const location = props.location;
   const type = props.type;
   const publicView = props.publicView;
-  const queryKey = `${type}_${publicView ? 'public_' : ''}_listview`;
+  const isTenantSchema = props.isTenantSchema;
 
   const [selected, setSelected] = useState({});
   const [selectAll, setSelectAll] = useState(0);
@@ -309,60 +322,34 @@ export const ListOfMetrics = (props) => {
 
   const backend = new Backend();
 
+  const queryClient = useQueryClient();
+
+  const mutationDelete = useMutation(async (values) => await backend.bulkDeleteMetrics(values));
+  const mutationImport = useMutation(async (values) => await backend.importMetrics(values));
+
   const { data: userDetails, error: userDetailsError, isLoading: userDetailsLoading } = useQuery(
-    `${queryKey}_userdetails`, async () => {
-      let userdetails = { username: 'Anonymous' };
-      let schema = backend.isTenantSchema();
-      if (!publicView) {
-        let sessionActive = await backend.isActiveSession(schema);
-        if (sessionActive.active)
-          userdetails = sessionActive.userdetails;
-      }
-      return userdetails;
-    }
+    'userdetails', () => fetchUserDetails(isTenantSchema),
+    { enabled: !publicView }
   );
 
-  const { data: listMetrics, error: listMetricsError, isLoading: listMetricsLoading } = useQuery(
-    `${queryKey}`, async () => {
-      let metrics =await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}${type === 'metrics' ? 'metric' : type}`);
-      return metrics;
-    },
-    {
-      enabled: userDetails
-    }
+  const { data: metrics, error: metricsError, isLoading: metricsLoading } = useQuery(
+    `${publicView ? 'public_' : ''}${type === 'metrics' ? 'metric' : 'metrictemplate'}`,
+    () => type === 'metrics' ? fetchMetrics(publicView) : fetchMetricTemplates(publicView),
+    { enabled: publicView || !!userDetails }
   );
 
-  const { data: listTypes, error: listTypesError, isLoading: listTypesLoading } = useQuery(
-    `${queryKey}_mtypes`, async () => {
-      let types = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}mt${type=='metrictemplates' ? 't' : ''}ypes`);
-      return types;
-    },
+  const { data: types, error: typesError, isLoading: typesLoading } = useQuery(
+    `${publicView ? 'public_' : ''}${type}types`,
+    () => type === 'metrics' ? fetchMetricTypes(publicView) : fetchMetricTemplateTypes(publicView)
   );
 
-  const { data: listTags, error: listTagsError, isLoading: listTagsLoading } = useQuery(
-    `${queryKey}_tags`, async () => {
-      let tags = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metrictags`);
-      return tags;
-    }
+  const { data: tags, error: tagsError, isLoading: tagsLoading } = useQuery(
+    `${publicView ? 'public_' : ''}metrictags`, () => fetchMetricTags(publicView)
   );
 
-  const { data: listOSGroups, error: listOSGroupsError, isLoading: listOSGroupsLoading } = useQuery(
-    `${queryKey}_osgroups`, async () => {
-      if (type === 'metrics') {
-        let groups = await backend.fetchResult(`/api/v2/internal/${publicView ? 'public_' : ''}usergroups`);
-        return groups['metrics'];
-      } else {
-        let ostags = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}ostags`);
-        return ostags;
-      }
-    }
-  );
-
-  const { data: isTenantSchema, isLoading: isTenantSchemaLoading } = useQuery(
-    `${queryKey}_schema`, async () => {
-      let schema = backend.isTenantSchema();
-      return schema;
-    }
+  var { data: OSGroups, error: OSGroupsError, isLoading: OSGroupsLoading } = useQuery(
+    type === 'metrics' ? [`${publicView ? 'public_' : ''}metric`, 'usergroups'] : `${publicView ? 'public_' : ''}ostags`,
+    () =>  type === 'metrics' ? fetchUserGroups(isTenantSchema, publicView, 'metrics') : fetchOStags(publicView)
   );
 
   function toggleAreYouSure() {
@@ -390,27 +377,35 @@ export const ListOfMetrics = (props) => {
     // get only those metrics whose value is true
     let mt = Object.keys(selectedMetrics).filter(key => selectedMetrics[key]);
     if (mt.length > 0) {
-      let response = await backend.importMetrics({'metrictemplates': mt});
-      let json = await response.json();
-      let dis = ''
-      if ('imported' in json)
-        NotifyOk({msg: json.imported, title: 'Imported'})
-        dis += json.imported
+      mutationImport.mutate({ 'metrictemplates': mt }, {
+        onSuccess: (data) => {
+          let dis = '';
+          if ('imported' in data) {
+            NotifyOk({ msg: data.imported, title: 'Imported' });
+            dis += data.imported;
+          }
 
-      if ('warn' in json)
-        NotifyInfo({msg: json.warn, title: 'Imported with older probe version'});
-        dis += json.warn
+          if ('warn' in data) {
+            NotifyInfo({ msg: data.warn, title: 'Imported with older probe version' });
+            dis += data.warn;
+          }
 
-      if ('err' in json)
-        NotifyWarn({msg: json.err, title: 'Not imported'});
+          if ('err' in data)
+            NotifyWarn({ msg: data.err, title: 'Not imported' });
 
-      if ('unavailable' in json)
-        NotifyError({msg: json.unavailable, title: 'Unavailable'});
+          if ('unavailable' in data)
+            NotifyError({ msg: data.unavailable, title: 'Unavailable' })
 
-      setDisabled(dis);
-      setSelected({});
-      setSelectAll(0);
+          if ('imported' in data || 'warn' in data) {
+            queryClient.invalidateQueries('metric');
+            queryClient.invalidateQueries('public_metric');
+          }
 
+          setDisabled(dis);
+          setSelected({});
+          setSelectAll(0);
+        }
+      })
     } else {
       NotifyError({
         msg: 'No metric templates were selected!',
@@ -419,25 +414,25 @@ export const ListOfMetrics = (props) => {
   }
 
   async function bulkDeleteMetrics(mt) {
-    //let refreshed_metrics = listMetrics;
-    let response = await backend.bulkDeleteMetrics({'metrictemplates': mt});
-    if (response.ok) {
-      let json = await response.json();
-      //refreshed_metrics = refreshed_metrics.filter(m => !mt.includes(m.name));
-      if ('info' in json)
-        NotifyOk({msg: json.info, title: 'Deleted'});
+    mutationDelete.mutate({ 'metrictemplates': mt }, {
+      onSuccess: (data) => {
+        if ('info' in data)
+          NotifyOk({ msg: data.info, title: 'Deleted' })
 
-      if ('warning' in json)
-        NotifyWarn({msg: json.warning, title: 'Deleted'});
+        if ('warning' in data)
+          NotifyWarn({ msg: data.warning, title: 'Deleted' })
 
-      queryCache.setQueryData(`${queryKey}`, (oldData) => oldData.filter(met => !mt.includes(met.name)));
-      setSelectAll(0);
-
-    } else
-      NotifyError({
-        msg: `Error deleting metric template${mt.length > 0 ? 's' : ''}`,
-        title: `Error: ${response.status} ${response.statusText}`
-      });
+        setSelectAll(0);
+        queryClient.invalidateQueries('metrictemplate');
+        queryClient.invalidateQueries('public_metrictemplate');
+      },
+      onError: (error) => {
+        NotifyError({
+          msg: error.message,
+          title: `Error deleting metric template${mt.length > 0 ? 's' : ''}`
+        })
+      }
+    })
   }
 
   let metriclink = `/ui/${(type === 'metrictemplates' && isTenantSchema && !publicView) ? 'administration/' : ''}${publicView ? 'public_' : ''}${type}/`;
@@ -475,7 +470,33 @@ export const ListOfMetrics = (props) => {
         accessor: 'name',
         column_width: '39%',
         Cell: row =>
-          <Link to={`${metriclink}${row.value}`}>
+          <Link
+            to={`${metriclink}${row.value}`}
+            onMouseEnter={ async () => {
+              if (type === 'metrics') {
+                if (row.original.probeversion) {
+                  const metricProbeVersion = row.original.probeversion.split(' ')[0];
+                  await queryClient.prefetchQuery(
+                    [`${publicView ? 'public_' : ''}probe`, 'version', metricProbeVersion],
+                    () => fetchProbeVersion(publicView, metricProbeVersion)
+                  )
+                }
+              } else {
+                await queryClient.prefetchQuery(
+                  `${publicView ? 'public_' : ''}metrictemplatestypes`,
+                  () => fetchMetricTemplateTypes(publicView)
+                );
+                await queryClient.prefetchQuery(
+                  `${publicView ? 'public_' : ''}metrictags`,
+                  () => fetchMetricTags(publicView)
+                );
+                await queryClient.prefetchQuery(
+                  [`${publicView ? 'public_' : ''}probe`, 'version'],
+                  () => fetchProbeVersions(publicView)
+                );
+              }
+            } }
+          >
             {row.value}
           </Link>,
         Filter: DefaultColumnFilter
@@ -507,7 +528,7 @@ export const ListOfMetrics = (props) => {
           <div style={{textAlign: 'center'}}>
             {row.value}
           </div>,
-        filterList: listTypes,
+        filterList: types,
         Filter: SelectColumnFilter
       },
       {
@@ -527,7 +548,7 @@ export const ListOfMetrics = (props) => {
                 )
             }
           </div>,
-        filterList: listTags,
+        filterList: tags,
         Filter: SelectColumnFilter
       }
     ];
@@ -597,7 +618,7 @@ export const ListOfMetrics = (props) => {
             <div style={{textAlign: 'center'}}>
               {row.value}
             </div>,
-          filterList: listOSGroups,
+          filterList: OSGroups,
           Filter: SelectColumnFilter
         }
       );
@@ -614,7 +635,7 @@ export const ListOfMetrics = (props) => {
               <div style={{textAlign: 'center'}}>
                 {row.value.join(', ')}
               </div>,
-            filterList: listOSGroups,
+            filterList: OSGroups,
             Filter: SelectColumnFilter
           }
         );
@@ -622,28 +643,29 @@ export const ListOfMetrics = (props) => {
     }
 
     return columns;
-  }, [isTenantSchema, listOSGroups, listTags, listTypes, metriclink, publicView, selectAll, selected, type, userDetails])
+  }, [isTenantSchema, OSGroups, tags, types, metriclink, publicView, selectAll, selected, type, userDetails, disabled])
 
-  if (listMetricsLoading || listTypesLoading || listTagsLoading || listOSGroupsLoading || isTenantSchemaLoading || userDetailsLoading)
+  if (metricsLoading || typesLoading || tagsLoading || OSGroupsLoading || userDetailsLoading)
     return (<LoadingAnim />);
 
-  else if (listMetricsError)
-    return (<ErrorComponent error={listMetricsError.message}/>);
+  else if (metricsError)
+    return (<ErrorComponent error={metricsError.message}/>);
 
-  else if (listTypesError)
-    return (<ErrorComponent error={listTypesError.message}/>);
+  else if (typesError)
+    return (<ErrorComponent error={typesError.message}/>);
 
-  else if (listTagsError)
-    return (<ErrorComponent error={listTagsError.message}/>);
+  else if (tagsError)
+    return (<ErrorComponent error={tagsError.message}/>);
 
-  else if (listOSGroupsError)
-    return (<ErrorComponent error={listOSGroupsError.message}/>);
+  else if (OSGroupsError)
+    return (<ErrorComponent error={OSGroupsError.message}/>);
 
   else if (userDetailsError)
     return (<ErrorComponent error={userDetailsError.message}/>);
 
-  else if (!listMetricsLoading && !listTypesLoading && !listTagsLoading && !listOSGroupsLoading && !isTenantSchemaLoading && !userDetailsLoading && listMetrics) {
+  else if (metrics && types && tags && OSGroups) {
     if (type === 'metrics') {
+      OSGroups = OSGroups['metrics'];
       return (
         <BaseArgoView
           resourcename='metric'
@@ -652,7 +674,7 @@ export const ListOfMetrics = (props) => {
           addnew={false}
         >
           <BaseArgoTable
-            data={listMetrics}
+            data={metrics}
             columns={memoized_columns}
             page_size={50}
             resourcename='metrics'
@@ -678,7 +700,7 @@ export const ListOfMetrics = (props) => {
             </div>
             <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
               <BaseArgoTable
-                data={listMetrics}
+                data={metrics}
                 columns={memoized_columns}
                 page_size={50}
                 resourcename='metric templates'
@@ -718,7 +740,7 @@ export const ListOfMetrics = (props) => {
             </div>
             <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
               <BaseArgoTable
-                data={listMetrics}
+                data={metrics}
                 columns={memoized_columns}
                 page_size={50}
                 resourcename='metric templates'
@@ -1106,36 +1128,13 @@ export const CompareMetrics = (props) => {
   const publicView = props.publicView;
   const type = props.type;
 
-  const [loading, setLoading] = useState(false);
-  const [metric1, setMetric1] = useState(undefined);
-  const [metric2, setMetric2] = useState(undefined);
-  const [error, setError] = useState(undefined);
-
-
-  useEffect(() => {
-    setLoading(true);
-    const backend = new Backend();
-
-    async function fetchData() {
-      try {
-        let url = `/api/v2/internal/${publicView ? 'public_' : ''}${type === 'metric' ? 'tenant' : ''}version/${type}/${name}`;
-        let json = await backend.fetchData(url);
-
-        json.forEach((e) => {
-          if (e.version == version1)
-            setMetric1(e.fields);
-
-          if (e.version == version2)
-            setMetric2(e.fields);
-        });
-      } catch(err) {
-        setError(err)
-      }
-      setLoading(false);
-    }
-
-    fetchData();
-  }, [name, type, publicView, version1, version2]);
+  const { data: metrics, error, isLoading: loading } = useQuery(
+    [type, `${type === 'metric' ? 'tenant' : ''}version`, name],
+    () => type === 'metric' ?
+        fetchMetricVersions(publicView, name)
+      :
+        fetchMetricTemplateVersion(publicView, name)
+  )
 
   if (loading)
     return (<LoadingAnim/>);
@@ -1143,7 +1142,10 @@ export const CompareMetrics = (props) => {
   else if (error)
     return (<ErrorComponent error={error}/>);
 
-  else if (!loading && metric1 && metric2) {
+  else if (metrics) {
+    const metric1 = metrics.find(met => met.version == version1).fields;
+    const metric2 = metrics.find(met => met.version == version2).fields;
+
     return (
       <React.Fragment>
         <div className='d-flex align-items-center justify-content-between'>
@@ -1217,9 +1219,12 @@ export const MetricChange = (props) => {
   const location = props.location;
   const history = props.history;
   const publicView = props.publicView;
-  const querykey = `metric_${name}_${publicView ? 'publicview' : 'changeview'}`;
 
   const backend = new Backend();
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation(async (values) => await backend.changeObject('/api/v2/internal/metric/', values));
+  const deleteMutation = useMutation(async () => await backend.deleteObject(`/api/v2/internal/metric/${name}`));
 
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [areYouSureModal, setAreYouSureModal] = useState(false);
@@ -1228,37 +1233,28 @@ export const MetricChange = (props) => {
   const [modalFlag, setModalFlag] = useState(undefined);
   const [formValues, setFormValues] = useState(undefined);
 
-  const { data: session, error: sessionError, isLoading: sessionLoading } = useQuery(
-    `${querykey}_session`, async () => {
-      let session = await backend.isActiveSession();
-      return session;
-    }
-  );
+  const { data: userDetails, error: userDetailsError, isLoading: userDetailsLoading } = useQuery(
+    'userdetails', () => fetchUserDetails(true), { enabled: !publicView }
+  )
 
   const { data: metric, error: metricError, isLoading: metricLoading } = useQuery(
-    `${querykey}_metric`, async () => {
-      let metric = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metric/${name}`);
-      return metric;
+    [`${publicView ? 'public_' : ''}metric`, name], async () => {
+      return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metric/${name}`);
     },
     {
-      enabled: !publicView ? session : true
+      enabled: !publicView ? !!userDetails : true,
+      initialData: () => {
+        return queryClient.getQueryData(`${publicView ? 'public_' : ''}metric`)?.find(met => met.name === name)
+      }
     }
   );
 
-  const { data: probe, error: probeError, isLoading: probeLoading } = useQuery(
-    `${querykey}_probe`, async () => {
-      let probe = {};
-      let probes = [];
-      if (metric.probeversion)
-        probes = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}version/probe/${metric.probeversion.split(' ')[0]}`);
-        probes.forEach((prb) => {
-          if (prb.object_repr === metric.probeversion)
-            probe = prb.fields;
-        });
+  const metricProbeVersion = metric?.probeversion.split(' ')[0];
 
-      return probe;
-    },
-    { enabled: metric }
+  const { data: probes, error: probesError, isLoading: probesLoading } = useQuery(
+    [`${publicView ? 'public_' : ''}probe`, 'version', metricProbeVersion],
+    () => fetchProbeVersion(publicView, metricProbeVersion),
+    { enabled: !!metricProbeVersion }
   );
 
   function togglePopOver() {
@@ -1278,97 +1274,87 @@ export const MetricChange = (props) => {
   }
 
   async function doChange() {
-    let response = await backend.changeObject(
-      '/api/v2/internal/metric/',
-      {
-        name: formValues.name,
-        mtype: formValues.type,
-        group: formValues.group,
-        description: formValues.description,
-        parent: formValues.parent,
-        probeversion: formValues.probeversion,
-        probeexecutable: formValues.probeexecutable,
-        config: formValues.config,
-        attribute: formValues.attributes,
-        dependancy: formValues.dependency,
-        flags: formValues.flags,
-        files: formValues.files,
-        parameter: formValues.parameter,
-        fileparameter: formValues.file_parameters
+    const sendValues = new Object({
+      name: formValues.name,
+      mtype: formValues.type,
+      group: formValues.group,
+      description: formValues.description,
+      parent: formValues.parent,
+      probeversion: formValues.probeversion,
+      probeexecutable: formValues.probeexecutable,
+      config: formValues.config,
+      attribute: formValues.attributes,
+      dependancy: formValues.dependency,
+      flags: formValues.flags,
+      files: formValues.files,
+      parameter: formValues.parameter,
+      fileparameter: formValues.file_parameters
+    })
+    mutation.mutate(sendValues, {
+      onSuccess: () => {
+        NotifyOk({
+          msg: 'Metric successfully changed',
+          title: 'Changed',
+          callback: () => history.push('/ui/metrics')
+        })
+      },
+      onError: (error) => {
+        NotifyError({
+          title: 'Error',
+          msg: error.message ? error.message : 'Error changing metric'
+        })
       }
-    );
-    if (response.ok) {
-      NotifyOk({
-        msg: 'Metric successfully changed',
-        title: 'Changed',
-        callback: () => history.push('/ui/metrics')
-      })
-    } else {
-      let change_msg = '';
-      try {
-        let json = await response.json();
-        change_msg = json.detail;
-      } catch(err) {
-        change_msg = 'Error changing metric';
-      }
-      NotifyError({
-        title: `Error: ${response.status} ${response.statusText}`,
-        msg: change_msg
-      });
-    }
+    })
   }
 
   async function doDelete() {
-    let response = await backend.deleteObject(`/api/v2/internal/metric/${name}`);
-    if (response.ok) {
-      NotifyOk({
-        msg: 'Metric successfully deleted',
-        title: 'Deleted',
-        callback: () => history.push('/ui/metrics')
-      });
-    } else {
-      let msg = '';
-      try {
-        let json = await response.json();
-        msg = json.detail;
-      } catch(err) {
-        msg = 'Error deleting metric';
+    deleteMutation.mutate(undefined, {
+      onSuccess: () => {
+        NotifyOk({
+          msg: 'Metric successfully deleted',
+          title: 'Deleted',
+          callback: () => history.push('/ui/metrics')
+        })
+      },
+      onError: (error) => {
+        NotifyError({
+          title: 'Error',
+          msg: error.message ? error.message : 'Error deleting metric'
+        })
       }
-      NotifyError({
-        title: `Error: ${response.status} ${response.statusText}`,
-        msg: msg
-      });
-    }
+    })
   }
 
-  if (metricLoading || sessionLoading || probeLoading)
+  if (metricLoading || userDetailsLoading || probesLoading)
     return (<LoadingAnim/>);
 
   else if (metricError)
     return (<ErrorComponent error={metricError}/>);
 
-  else if (sessionError)
-    return (<ErrorComponent error={sessionError}/>);
+  else if (userDetailsError)
+    return (<ErrorComponent error={userDetailsError}/>);
 
-  else if (probeError)
-    return (<ErrorComponent error={probeError}/>);
+  else if (probesError)
+    return (<ErrorComponent error={probesError}/>);
 
   else {
     const writePerm = publicView ?
       false
     :
-      session.active ?
-        session.userdetails.is_superuser || session.userdetails.groups.metrics.indexOf(metric.group) >= 0
+      userDetails ?
+        userDetails.is_superuser || userDetails.groups.metrics.indexOf(metric.group) >= 0
       :
         false;
 
-    const groups = session && session.active ?
-      session.userdetails.groups.metrics.indexOf(metric.group) < 0 ?
-        [...session.userdetails.groups.metrics, metric.group]
+    const groups = userDetails ?
+      userDetails.groups.metrics.indexOf(metric.group) < 0 ?
+        [...userDetails.groups.metrics, metric.group]
       :
-        session.userdetails.groups.metrics
+        userDetails.groups.metrics
     :
       [metric.group];
+
+    const probe = probes ? probes.find(prb => prb.object_repr === metric.probeversion).fields : {};
 
     return (
       <BaseArgoView
@@ -1452,51 +1438,46 @@ export const MetricChange = (props) => {
 };
 
 
+const fetchMetricVersions = async (publicView, name) => {
+  const backend = new Backend();
+
+  return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}tenantversion/metric/${name}`);
+}
+
+
 export const MetricVersionDetails = (props) => {
   const name = props.match.params.name;
   const version = props.match.params.version;
 
-  const [loading, setLoading] = useState(false);
-  const [metric, setMetric] = useState(null);
-  const [probe, setProbe] = useState({'package': ''})
-  const [error, setError] = useState(null);
+  const { data: metrics, error: errorMetric, isLoading: loadingMetric } = useQuery(
+    ['metric', 'tenantversion', name], () => fetchMetricVersions(false, name)
+  )
 
-  useEffect(() => {
-    const backend = new Backend();
-    setLoading(true);
+  const metricProbeVersion = metrics?.find(met => met.version === version).fields.probeversion.split(' ')[0];
 
-    async function fetchData() {
-      try {
-        let json = await backend.fetchData(`/api/v2/internal/tenantversion/metric/${name}`);
-        json.forEach(async (e) => {
-          if (e.version == version) {
-            let probes = await backend.fetchData(`/api/v2/internal/version/probe/${e.fields.probeversion.split(' ')[0]}`);
-            probes.forEach(prb => {
-              if (prb.object_repr === e.fields.probeversion)
-                setProbe(prb.fields);
-            });
-            let m = e.fields;
-            m.date_created = e.date_created;
-            setMetric(m);
-          }
-        });
-      } catch(err) {
-        setError(err)
-      }
+  const { data: probes, error: errorProbes, isLoading: loadingProbes } = useQuery(
+    ['probe', 'version', metricProbeVersion], () => fetchProbeVersion(false, metricProbeVersion),
+    { enabled: !!metricProbeVersion }
+  )
 
-      setLoading(false);
-    }
-
-    fetchData();
-  }, [name, version]);
-
-  if (loading)
+  if (loadingMetric || loadingProbes)
     return (<LoadingAnim/>);
 
-  else if (error)
-    return (<ErrorComponent error={error}/>);
+  else if (errorMetric)
+    return (<ErrorComponent error={errorMetric}/>);
 
-  else if (!loading && metric) {
+  else if (errorProbes)
+    return (<ErrorComponent error={errorProbes} />);
+
+  else if (metrics) {
+    const metricVersion = metrics.find(met => met.version === version);
+    const metric = {
+      ...metricVersion.fields,
+      date_created: metricVersion.date_created
+    }
+
+    const probe = probes ? probes.find(prb => prb.object_repr === metric.probeversion).fields : {};
+
     return (
       <BaseArgoView
         resourcename={`${name} (${metric.date_created})`}

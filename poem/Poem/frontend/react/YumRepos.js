@@ -24,7 +24,8 @@ import {
   InputGroupAddon
 } from 'reactstrap';
 import * as Yup from 'yup';
-import { useQuery } from 'react-query';
+import { useQuery, useQueryClient, useMutation } from 'react-query';
+import { fetchYumRepos, fetchOStags } from './QueryFunctions';
 
 
 const RepoSchema = Yup.object().shape({
@@ -38,28 +39,14 @@ const RepoSchema = Yup.object().shape({
 
 export const YumRepoList = (props) => {
   const location = props.location;
+  const isTenantSchema = props.isTenantSchema;
 
-  const backend = new Backend();
-
-  const { data: listRepos, error: errorListRepos, isLoading: loadingListRepos } = useQuery(
-    'yumrepos_listview', async () => {
-      let repos = await backend.fetchData('/api/v2/internal/yumrepos');
-      return repos;
-    }
+  const { data: repos, error: errorRepos, status: statusRepos } = useQuery(
+    'yumrepo', () => fetchYumRepos()
   );
 
-  const { data: listTags, error: errorListTags, isLoading: loadingListTags } = useQuery(
-    'yumrepos_listview_tags', async () => {
-      let tags = await backend.fetchData('/api/v2/internal/ostags');
-      return tags;
-    }
-  );
-
-  const { data: isTenantSchema, isLoading: loadingIsTenantSchema } = useQuery(
-    'session_istenantschema', async () => {
-      let schema = await backend.isTenantSchema();
-      return schema;
-    }
+  const { data: tags, error: errorTags, status: statusTags } = useQuery(
+    'ostags', async () => fetchOStags()
   );
 
   const columns = React.useMemo(() => [
@@ -90,20 +77,20 @@ export const YumRepoList = (props) => {
           {row.value}
         </div>,
       Filter: SelectColumnFilter,
-      filterList: listTags
+      filterList: tags
     }
-  ], [isTenantSchema, listTags]);
+  ], [isTenantSchema, tags]);
 
-  if (loadingListRepos || loadingListTags || loadingIsTenantSchema)
+  if (statusRepos === 'loading' || statusTags === 'loading')
     return (<LoadingAnim/>);
 
-  else if (errorListRepos)
-    return (<ErrorComponent error={errorListRepos}/>);
+  else if (statusRepos === 'error')
+    return (<ErrorComponent error={errorRepos}/>);
 
-  else if (errorListTags)
-    return (<ErrorComponent error={errorListTags}/>);
+  else if (statusTags === 'error')
+    return (<ErrorComponent error={errorTags}/>);
 
-  else if (!loadingListRepos && !loadingListTags && !loadingIsTenantSchema && listRepos) {
+  else if (repos && tags) {
     return (
       <BaseArgoView
         resourcename='YUM repo'
@@ -112,7 +99,7 @@ export const YumRepoList = (props) => {
         addnew={!isTenantSchema}
       >
         <BaseArgoTable
-          data={listRepos}
+          data={repos}
           columns={columns}
           className='-highlight'
           page_size={20}
@@ -143,23 +130,27 @@ export const YumRepoComponent = (props) => {
 
   const backend = new Backend();
 
-  const { data: repo, error: errorRepo, isLoading: loadingRepo } = useQuery(
-    `yumrepo_${name}_${tag}_${cloneview ? 'cloneview' : 'changeview'}`,
-    async () => {
-      if (!addview) {
-        let repo = await backend.fetchData(`/api/v2/internal/yumrepos/${name}/${tag}`);
+  const queryClient = useQueryClient();
+  const changeMutation = useMutation(async (values) => await backend.changeObject('/api/v2/internal/yumrepos/', values));
+  const addMutation = useMutation(async (values) => await backend.addObject('/api/v2/internal/yumrepos/', values));
+  const deleteMutation = useMutation(async () => await backend.deleteObject(`/api/v2/internal/yumrepos/${name}/${tag}`))
 
-        return repo;
+  const { data: repo, error: errorRepo, status: statusRepo } = useQuery(
+    ['yumrepo', name, tag], async () => {
+      if (!addview) {
+        return await backend.fetchData(`/api/v2/internal/yumrepos/${name}/${tag}`);
       }
     },
-    { enabled: !addview }
+    {
+      enabled: !addview,
+      initialData: () => {
+        return queryClient.getQueryData('yumrepo')?.find(repo => repo.name === name && repo.tag === tag)
+      }
+    }
   );
 
-  const { data: tags, error: errorTags, isLoading: loadingTags } = useQuery(
-    'yumrepo_changeview_tags', async () => {
-      let tags = await backend.fetchData('/api/v2/internal/ostags');
-      return tags;
-    }
+  const { data: tags, error: errorTags, status: statusTags } = useQuery(
+    'ostags', () => fetchOStags()
   );
 
   const [areYouSureModal, setAreYouSureModal] = useState(false);
@@ -183,102 +174,84 @@ export const YumRepoComponent = (props) => {
     toggleAreYouSure();
   }
 
-  async function doChange() {
+  function doChange() {
+    const sendValues = new Object({
+      name: formValues.name,
+      tag: formValues.tag,
+      content: formValues.content,
+      description: formValues.description
+    })
+
     if (addview || cloneview) {
-      let response = await backend.addObject(
-        '/api/v2/internal/yumrepos/',
-        {
-          name: formValues.name,
-          tag: formValues.tag,
-          content: formValues.content,
-          description: formValues.description
+      addMutation.mutate(sendValues, {
+        onSuccess: () => {
+          queryClient.invalidateQueries('yumrepo');
+          NotifyOk({
+            msg: 'YUM repo successfully added',
+            title: 'Added',
+            callback: () => history.push('/ui/yumrepos')
+          })
+        },
+        onError: (error) => {
+          NotifyError({
+            title: 'Error',
+            msg: error.message ? error.message : 'Error adding YUM repo'
+          })
         }
-      );
-      if (!response.ok) {
-        let add_msg = '';
-        try {
-          let json = await response.json();
-          add_msg = json.detail;
-        } catch(err) {
-          add_msg = 'Error adding YUM repo';
-        }
-        NotifyError({
-          title: `Error: ${response.status} ${response.statusText}`,
-          msg: add_msg
-        });
-      } else {
-        NotifyOk({
-          msg: 'YUM repo successfully added',
-          title: 'Added',
-          callback: () => history.push('/ui/yumrepos')
-        });
-      }
+      });
     } else {
-      let response = await backend.changeObject(
-        '/api/v2/internal/yumrepos/',
-        {
+      const sendValuesChange = new Object({
+          ...sendValues,
           id: formValues.id,
-          name: formValues.name,
-          tag: formValues.tag,
-          content: formValues.content,
-          description: formValues.description
+      })
+      changeMutation.mutate(sendValuesChange, {
+        onSuccess: () => {
+          queryClient.invalidateQueries('yumrepo');
+          NotifyOk({
+            msg: 'YUM repo successfully changed',
+            title: 'Changed',
+            callback: () => history.push('/ui/yumrepos')
+          })
+        },
+        onError: (error) => {
+          NotifyError({
+            title: 'Error',
+            msg: error.message ? error.message : 'Error changing YUM repo'
+          })
         }
-      );
-      if (!response.ok) {
-        let change_msg = '';
-        try {
-          let json = await response.json();
-          change_msg = json.detail;
-        } catch(err) {
-          change_msg = 'Error changing YUM repo';
-        }
-        NotifyError({
-          title: `Error: ${response.status} ${response.statusText}`,
-          msg: change_msg
-        });
-      } else {
+      })
+    }
+  }
+
+  function doDelete() {
+    deleteMutation.mutate(undefined, {
+      onSuccess: () => {
+        queryClient.invalidateQueries('yumrepo');
         NotifyOk({
-          msg: 'YUM repo successfully changed',
-          title: 'Changed',
+          msg: 'YUM repo successfully deleted',
+          title: 'Deleted',
           callback: () => history.push('/ui/yumrepos')
-        });
+        })
+      },
+      onError: (error) => {
+        NotifyError({
+          title: 'Error',
+          msg: error.message ? error.message : 'Error deleting YUM repo'
+        })
       }
-    }
+    })
   }
 
-  async function doDelete() {
-    let response = await backend.deleteObject(`/api/v2/internal/yumrepos/${name}/${tag}`);
-    if (!response.ok) {
-      let msg = '';
-      try {
-        let json = await response.json();
-        msg = json.detail;
-      } catch(err) {
-        msg = 'Error deleting YUM repo';
-      }
-      NotifyError({
-        title: `Error: ${response.status} ${response.statusText}`,
-        msg: msg
-      });
-    } else {
-      NotifyOk({
-        msg: 'YUM repo successfully deleted',
-        title: 'Deleted',
-        callback: () => history.push('/ui/yumrepos')
-      });
-    }
-  }
-
-  if (loadingRepo || loadingTags)
+  if (statusRepo === 'loading' || statusTags === 'loading')
     return (<LoadingAnim/>);
 
-  else if (errorRepo)
+  else if (statusRepo === 'error')
     return (<ErrorComponent error={errorRepo}/>);
 
-  else if (errorTags)
+  else if (statusTags === 'error')
     return (<ErrorComponent error={errorTags}/>);
 
-  else if (!loadingRepo && !loadingTags && tags) {
+  else if (tags && statusRepo !== 'loading' && statusRepo !== 'error') {
     return (
       <BaseArgoView
         resourcename={`${disabled ? 'YUM repo details' : 'YUM repo'}`}

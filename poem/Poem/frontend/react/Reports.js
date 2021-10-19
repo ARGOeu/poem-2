@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Backend, WebApi } from './DataManager';
 
-import { useQuery } from 'react-query';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
 import {
   BaseArgoTable,
   BaseArgoView,
@@ -33,6 +33,12 @@ import {
 } from 'reactstrap';
 import { CustomReactSelect } from './UIElements';
 import * as Yup from 'yup';
+import {
+  fetchMetricProfiles,
+  fetchOperationsProfiles,
+  fetchUserDetails,
+  fetchReports
+} from './QueryFunctions';
 
 
 const ReportsSchema = Yup.object().shape({
@@ -53,37 +59,49 @@ export const ReportsAdd = (props) => <ReportsComponent addview={true} {...props}
 export const ReportsChange = (props) => <ReportsComponent {...props}/>;
 
 
+const fetchReport = async (webapi, name) => {
+  return await webapi.fetchReport(name);
+}
+
+
+const fetchAggregationProfiles = async (webapi) => {
+  return await webapi.fetchAggregationProfiles();
+}
+
+
+const fetchTopologyTags = async (webapi) => {
+  return await webapi.fetchReportsTopologyTags();
+}
+
+
+const fetchTopologyGroups = async (webapi) => {
+  return await webapi.fetchReportsTopologyGroups();
+}
+
+const getCrud = (props) => {
+  return props.webapireports ? props.webapireports.crud : undefined;
+}
+
 export const ReportsList = (props) => {
   const location = props.location;
-  const backend = new Backend();
-  // TODO: add public API endpoints
-  let apiUrl = '/api/v2/internal/reports'
+  const queryClient = useQueryClient();
+
+  const webapi = new WebApi({
+    token: props.webapitoken,
+    reportsConfigurations: props.webapireports,
+    metricProfiles: props.webapimetric,
+    aggregationProfiles: props.webapiaggregation,
+    operationsProfiles: props.webapioperations
+  });
+  const crud = getCrud(props);
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
-    `session_userdetails`, async () => {
-      const sessionActive = await backend.isActiveSession()
-      if (sessionActive.active) {
-        return sessionActive.userdetails
-      }
-    }
+    'userdetails', () => fetchUserDetails(true)
   );
 
-  const { data: listReports, error: error, isLoading: loading } = useQuery(
-    'reports_listview', async () => {
-      let json = await backend.fetchData(apiUrl);
-      let reports = [];
-      json.forEach(e => reports.push({
-        'name': e.name,
-        'description': e.description,
-        'disabled': e.disabled,
-        'group': e.groupname
-      }))
-
-      return reports;
-    },
-    {
-      enabled: userDetails
-    }
+  const { data: reports, error: errorReports, isLoading: loadingReports } = useQuery(
+    ['report', 'backend'],  () => fetchReports(),
+    { enabled: !!userDetails }
   );
 
   const columns = React.useMemo(
@@ -97,7 +115,31 @@ export const ReportsList = (props) => {
         Header: 'Name',
         id: 'name',
         accessor: e =>
-          <Link to={`/ui/reports/${e.name}`}>
+          <Link
+            to={`/ui/reports/${e.name}`}
+            onMouseEnter={ async () => {
+              await queryClient.prefetchQuery(
+                ['report', 'webapi', e.name], () => fetchReport(webapi, e.name)
+              );
+              await queryClient.prefetchQuery(
+                ['metricprofile', 'webapi'], () => fetchMetricProfiles(webapi)
+              );
+              await queryClient.prefetchQuery(
+                ['aggregationprofile', 'webapi'], () => fetchAggregationProfiles(webapi)
+              );
+              await queryClient.prefetchQuery(
+                'operationsprofile', () => fetchOperationsProfiles(webapi)
+              );
+              if (crud) {
+                await queryClient.prefetchQuery(
+                  'topologytags', () => fetchTopologyTags(webapi)
+                );
+                await queryClient.prefetchQuery(
+                  'topologygroups', () => fetchTopologyGroups(webapi)
+                );
+              }
+            } }
+          >
             {e.name}
           </Link>,
         column_width: '20%'
@@ -109,7 +151,7 @@ export const ReportsList = (props) => {
       },
       {
         Header: 'Group',
-        accessor: 'group',
+        accessor: 'groupname',
         className: 'text-center',
         Cell: row =>
           <div style={{textAlign: 'center'}}>
@@ -120,13 +162,16 @@ export const ReportsList = (props) => {
     ], []
   );
 
-  if (loading)
+  if (loadingReports || loadingUserDetails)
     return (<LoadingAnim/>);
 
-  else if (error)
-    return (<ErrorComponent error={error}/>);
+  else if (errorReports)
+    return (<ErrorComponent error={errorReports}/>);
 
-  else if (!loadingUserDetails && listReports) {
+  else if (errorUserDetails)
+    return (<ErrorComponent error={errorUserDetails} />)
+
+  else if (!loadingUserDetails && reports) {
     return (
       <BaseArgoView
         resourcename='report'
@@ -136,7 +181,7 @@ export const ReportsList = (props) => {
         addperm={userDetails.is_superuser || userDetails.groups.reports.length > 0}
       >
         <BaseArgoTable
-          data={listReports}
+          data={reports}
           columns={columns}
           resourcename='reports'
           page_size={10}
@@ -227,7 +272,7 @@ const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, addview, push
   }
 
   const isMultiValuesTags = (data) => {
-    if (data.length === 2) {
+    if (data.length === 2 || data.length === 1) {
       if (data[0].value === 'yes' ||
         data[0].value === 'no')
       return false
@@ -491,28 +536,25 @@ export const ReportsComponent = (props) => {
   const addview = props.addview
   const location = props.location;
   const history = props.history;
+
   const backend = new Backend();
-  const crud = props.webapireports ? props.webapireports.crud : undefined
+  const queryClient = useQueryClient();
+  const crud = getCrud(props);
+
   const [areYouSureModal, setAreYouSureModal] = useState(false)
   const [modalMsg, setModalMsg] = useState(undefined);
   const [modalTitle, setModalTitle] = useState(undefined);
   const [onYes, setOnYes] = useState('')
   const [formikValues, setFormikValues] = useState({})
   const topologyTypes = ['Sites', 'ServiceGroups']
-  let apiUrl = '/api/v2/internal/reports'
+
   const [tagsState, setTagsState] = useState(new Object({
     'groups': undefined,
     'endpoints': undefined
   }))
-  const [groupsTags, setGroupsTags] = useState(undefined)
-  const [endpointsTags, setEndpointsTags] = useState(undefined)
-  const [entitiesState, setEntitiesState] = useState(undefined)
-
-  let querykey = undefined;
-  if (addview)
-    querykey = `report_addview`;
-  else
-    querykey = `report_${report_name}_changeview`;
+  const [groupsTags, setGroupsTags] = useState(new Array())
+  const [endpointsTags, setEndpointsTags] = useState(new Array())
+  const [entitiesState, setEntitiesState] = useState(new Array())
 
   const webapi = new WebApi({
     token: props.webapitoken,
@@ -522,29 +564,41 @@ export const ReportsComponent = (props) => {
     operationsProfiles: props.webapioperations
   });
 
+  const webapiAddMutation = useMutation(async (values) => await webapi.addReport(values));
+  const backendAddMutation = useMutation(async (values) => await backend.addObject('/api/v2/internal/reports/', values));
+  const webapiChangeMutation = useMutation(async (values) => await webapi.changeReport(values));
+  const backendChangeMutation = useMutation(async (values) => await backend.changeObject('/api/v2/internal/reports/', values));
+  const webapiDeleteMutation = useMutation(async (idReport) => await webapi.deleteReport(idReport));
+  const backendDeleteMutation = useMutation(async (idReport) => await backend.deleteObject(`/api/v2/internal/reports/${idReport}`));
+
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
-    `session_userdetails`, async () => {
-      const sessionActive = await backend.isActiveSession()
-      if (sessionActive.active) {
-        return sessionActive.userdetails
-      }
-    }
+    'userdetails', () => fetchUserDetails(true)
   );
 
-  const { data: report, error: reportError, isLoading: reportLoading } = useQuery(
-    `${querykey}_report`, async () => {
-      if (!addview) {
-        let backendReport = await backend.fetchData(`${apiUrl}/${report_name}`)
-        let report = await webapi.fetchReport(report_name);
-        report['groupname'] = backendReport.groupname
+  const { data: backendReport, error: errorBackendReport, isLoading: loadingBackendReport } = useQuery(
+    ['report', 'backend', report_name], async () => {
+      return await backend.fetchData(`/api/v2/internal/reports/${report_name}`)
+    },
+    {
+      enabled: !!userDetails && !addview,
+      initialData: () => {
+        return queryClient.getQueryData(['reports', 'backend'])?.find(rep => rep.name === report_name)
+      }
+    }
+  )
 
+  const { data: webApiReport, error: errorWebApiReport, isLoading: loadingWebApiReport } = useQuery(
+    ['report', 'webapi', report_name], () => fetchReport(webapi, report_name),
+    {
+      enabled: !!userDetails && !addview,
+      onSuccess: (data) => {
         let groupstags = formatFromReportTags([
           'argo.group.filter.tags', 'argo.group.filter.tags.array'],
-          report['filter_tags'])
+          data['filter_tags'])
         let endpointstags = formatFromReportTags([
           'argo.endpoint.filter.tags', 'argo.endpoint.filter.tags.array'],
-          report['filter_tags'])
-        let entities = formatFromReportEntities('argo.group.filter.fields', report['filter_tags'])
+          data['filter_tags'])
+        let entities = formatFromReportEntities('argo.group.filter.fields', data['filter_tags'])
         let preselectedtags = JSON.parse(JSON.stringify(tagsState))
         preselectedtags['groups'] = new Object()
         preselectedtags['endpoints'] = new Object()
@@ -560,66 +614,33 @@ export const ReportsComponent = (props) => {
         setGroupsTags(groupstags)
         setEndpointsTags(endpointstags)
         setEntitiesState(entities)
-
-        return report;
       }
-      else {
-        setGroupsTags(new Array())
-        setEndpointsTags(new Array())
-        setEntitiesState(new Array())
-
-        return {
-            tenant: '',
-            disabled: false,
-            info: {
-                name: '',
-                description: '',
-                created: '',
-                updated: ''
-            },
-            thresholds: {
-              uptime: '',
-              unknown: '',
-              downtime: '',
-              availability: '',
-              reliability: ''
-            },
-            topology_schema: {},
-            profiles: [],
-            filter_tags: []
-        }
-      }
-    },
-    {
-      enabled: userDetails,
     }
-  );
+  )
 
   const { data: listMetricProfiles, error: listMetricProfilesError, isLoading: listMetricProfilesLoading } = useQuery(
-    `${querykey}_metricprofiles`, async () => {
-      return await webapi.fetchMetricProfiles();
-    },
-    {
-      enabled: userDetails
-    }
+    ['metricprofile', 'webapi'],  () => fetchMetricProfiles(webapi),
+    { enabled: !!userDetails }
   );
 
   const { data: listAggregationProfiles, error: listAggregationProfilesError, isLoading: listAggregationProfilesLoading } = useQuery(
-    `${querykey}_aggregationprofiles`, async () => {
-      return await webapi.fetchAggregationProfiles();
-    },
-    {
-      enabled: userDetails
-    }
+    ['aggregationprofile', 'webapi'], () => fetchAggregationProfiles(webapi),
+    { enabled: !!userDetails }
   );
 
   const { data: listOperationsProfiles, error: listOperationsProfilesError, isLoading: listOperationsProfilesLoading } = useQuery(
-    `${querykey}_operationsprofiles`, async () => {
-      return await webapi.fetchOperationsProfiles();
-    },
-    {
-      enabled: userDetails
-    }
+    'operationsprofile', () => fetchOperationsProfiles(webapi),
+    { enabled: !!userDetails }
+  );
+
+  const { data: topologyTags, error: topologyTagsError, isLoading: loadingTopologyTags } = useQuery(
+    'topologytags', () => fetchTopologyTags(webapi),
+    { enabled: !!userDetails && crud }
+  );
+
+  const { data: topologyGroups, error: topologyGroupsErrors, isLoading: loadingTopologyGroups } = useQuery(
+    'topologygroups', () => fetchTopologyGroups(webapi),
+    { enabled: !!userDetails && crud }
   );
 
   const sortStr = (a, b) => {
@@ -642,55 +663,6 @@ export const ReportsComponent = (props) => {
 
     return tmp;
   }
-
-  const { data: topologyTags, error: topologyTagsError, isLoading: isLoadingTopologyTags} = useQuery(
-    `${querykey}_topologytags`, async () => {
-      if (crud) {
-        let tags = await webapi.fetchReportsTopologyTags();
-        return tags
-      }
-      else
-        return new Array()
-    },
-    {
-      enabled: report
-    }
-  );
-
-  const { data: topologyGroups, error: topologyGroupsErrors, isLoading: topologyGroupsErrorsIsLoading } = useQuery(
-    `${querykey}_topologygroups`, async () => {
-      if (crud) {
-        let groups = await webapi.fetchReportsTopologyGroups();
-        let ngis = new Set()
-        let sites = new Set()
-        let projects = new Set()
-        let servicegroups = new Set()
-
-        for (var entity of groups) {
-          if (entity['type'].toLowerCase() === 'project') {
-            projects.add(entity['group'])
-            servicegroups.add(entity['subgroup'])
-          }
-          else if (entity['type'].toLowerCase() === 'ngi') {
-            ngis.add(entity['group'])
-            sites.add(entity['subgroup'])
-          }
-        }
-
-        return new Object({
-          'ngis': Array.from(ngis).sort(sortStr),
-          'sites': Array.from(sites).sort(sortStr),
-          'projects': Array.from(projects).sort(sortStr),
-          'servicegroups': Array.from(servicegroups).sort(sortStr)
-        })
-      }
-      else
-        return new Object()
-    },
-    {
-      enabled: report
-    }
-  );
 
   const whichTopologyType = (schema) => {
     if (!addview) {
@@ -891,47 +863,36 @@ export const ReportsComponent = (props) => {
       new Object({})
   }
 
-  const doDelete = async (idReport) => {
-    let response = await webapi.deleteReport(idReport);
-    if (!response.ok) {
-      let msg = '';
-      try {
-        let json = await response.json();
-        let msg_list = [];
-        json.errors.forEach(e => msg_list.push(e.details));
-        msg = msg_list.join(' ');
-      } catch(err) {
-        msg = 'Web API error deleting report';
-      }
-      NotifyError({
-        title: `Web API error: ${response.status} ${response.statusText}`,
-        msg: msg
-      });
-    } else {
-      let r_internal = await backend.deleteObject(`/api/v2/internal/reports/${idReport}`);
-      if (r_internal.ok)
-        NotifyOk({
-          msg: 'Report successfully deleted',
-          title: 'Deleted',
-          callback: () => history.push('/ui/reports')
-        });
-      else {
-        let msg = '';
-        try {
-          let json = await r_internal.json();
-          msg = json.detail;
-        } catch(err) {
-          msg = 'Internal API error deleting report';
-        }
+  const doDelete = (idReport) => {
+    webapiDeleteMutation.mutate(idReport, {
+      onSuccess: () => {
+        backendDeleteMutation.mutate(idReport, {
+          onSuccess: () => {
+            queryClient.invalidateQueries('report');
+            NotifyOk({
+              msg: 'Report successfully deleted',
+              title: 'Deleted',
+              callback: () => history.push('/ui/reports')
+            });
+          },
+          onError: (error) => {
+            NotifyError({
+              title: 'Internal API error',
+              msg: error.message ? error.message : 'Internal API error deleting report'
+            })
+          }
+        })
+      },
+      onError: (error) => {
         NotifyError({
-          title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
-          msg: msg
-        });
+          title: 'Web API error',
+          msg: error.message ? error.message : 'Web API error deleting report'
+        })
       }
-    }
+    })
   }
 
-  const doChange = async (formValues) => {
+  const doChange = (formValues) => {
     let dataToSend = new Object()
     dataToSend.info = {
       name: formValues.name,
@@ -964,100 +925,69 @@ export const ReportsComponent = (props) => {
     dataToSend['topology_schema'] = formatTopologySchema(formValues.topologyType)
 
     if (addview) {
-      let response = await webapi.addReport(dataToSend);
-      if (!response.ok) {
-        let add_msg = '';
-        try {
-          let json = await response.json();
-          let msg_list = [];
-          json.errors.forEach(e => msg_list.push(e.details));
-          add_msg = msg_list.join(' ');
-        } catch(err) {
-          add_msg = 'Web API error adding report';
-        }
-        NotifyError({
-          title: `Web API error: ${response.status} ${response.statusText}`,
-          msg: add_msg
-        });
-      } else {
-        let r_json = await response.json();
-        let r_internal = await backend.addObject(
-          '/api/v2/internal/reports/',
-          {
-            apiid: r_json.data.id,
+      webapiAddMutation.mutate(dataToSend, {
+        onSuccess: (data) => {
+          backendAddMutation.mutate({
+            apiid: data.data.id,
             name: dataToSend.info.name,
             groupname: formValues.groupname,
             description: formValues.description,
-          }
-        );
-        if (r_internal.ok)
-          NotifyOk({
-            msg: 'Report successfully added',
-            title: 'Added',
-            callback: () => history.push('/ui/reports')
-          });
-        else {
-          let add_msg = '';
-          try {
-            let json = await r_internal.json();
-            add_msg = json.detail;
-          } catch(err) {
-            add_msg = 'Internal API error adding report';
-          }
+          }, {
+            onSuccess: () => {
+              queryClient.invalidateQueries('report');
+              NotifyOk({
+                msg: 'Report successfully added',
+                title: 'Added',
+                callback: () => history.push('/ui/reports')
+              });
+            },
+            onError: (error) => {
+              NotifyError({
+                title: 'Internal API error',
+                msg: error.message ? error.message : 'Internal API error adding report'
+              })
+            }
+          })
+        },
+        onError: (error) => {
           NotifyError({
-            title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
-            msg: add_msg
-          });
+            title: 'Web API error',
+            msg: error.message ? error.message : 'Web API error adding report'
+          })
         }
-      }
+      })
     }
     else {
-      dataToSend.id = report.id
-      let response = await webapi.changeReport(dataToSend, dataToSend.id);
-      if (!response.ok) {
-        let change_msg = '';
-        try {
-          let json = await response.json();
-          let msg_list = [];
-          json.errors.forEach(e => msg_list.push(e.details));
-          change_msg = msg_list.join(' ');
-        } catch(err) {
-          change_msg = 'Web API error changing report';
-        }
-        NotifyError({
-          title: `Web API error: ${response.status} ${response.statusText}`,
-          msg: change_msg
-        });
-      } else {
-        let r_internal = await backend.changeObject(
-          '/api/v2/internal/reports/',
-          {
+      dataToSend.id = webApiReport.id
+      webapiChangeMutation.mutate(dataToSend, {
+        onSuccess: () => {
+          backendChangeMutation.mutate({
             apiid: dataToSend.id,
             name: dataToSend.info.name,
             groupname: formValues.groupname,
             description: formValues.description,
-          }
-        );
-        if (r_internal.ok)
-          NotifyOk({
-            msg: 'Report successfully changed',
-            title: 'Changed',
-            callback: () => history.push('/ui/reports')
-          });
-        else {
-          let add_msg = '';
-          try {
-            let json = await r_internal.json();
-            add_msg = json.detail;
-          } catch(err) {
-            add_msg = 'Internal API error changing report';
-          }
+          }, {
+            onSuccess: () => {
+              queryClient.invalidateQueries('report');
+              NotifyOk({
+                msg: 'Report successfully changed',
+                title: 'Changed',
+                callback: () => history.push('/ui/reports')
+              });
+            },
+            onError: (error) => NotifyError({
+              title: 'Internal API error',
+              msg: error.message ? error.message : 'Internal API error changing report'
+            })
+          })
+        },
+        onError: (error) => {
           NotifyError({
-            title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
-            msg: add_msg
-          });
+            title: 'Web API error',
+            msg: error.message ? error.message : 'Web API error changing report'
+          })
         }
-      }
+      })
     }
   }
 
@@ -1068,11 +998,17 @@ export const ReportsComponent = (props) => {
       doChange(formikValues)
   }
 
-  if (reportLoading || listMetricProfilesLoading || listAggregationProfilesLoading || listOperationsProfilesLoading)
+  if (loadingUserDetails || loadingBackendReport || loadingWebApiReport || listMetricProfilesLoading || listAggregationProfilesLoading || listOperationsProfilesLoading || loadingTopologyTags || loadingTopologyGroups)
     return (<LoadingAnim/>);
 
-  else if (reportError)
-    return (<ErrorComponent error={reportError}/>);
+  else if (errorUserDetails)
+    return (<ErrorComponent error={errorUserDetails}/>);
+
+  else if (errorBackendReport)
+    return (<ErrorComponent error={errorBackendReport} />)
+
+  else if (errorWebApiReport)
+    return (<ErrorComponent error={errorWebApiReport} />)
 
   else if (listMetricProfilesError)
     return (<ErrorComponent error={listMetricProfilesError}/>);
@@ -1083,29 +1019,64 @@ export const ReportsComponent = (props) => {
   else if (listOperationsProfilesError)
     return (<ErrorComponent error={listOperationsProfilesError}/>);
 
-  else if (report && userDetails && topologyTags !== undefined &&
-    topologyGroups !== undefined && groupsTags !== undefined && endpointsTags
-    !== undefined && entitiesState !== undefined && crud !== undefined) {
+  else if (topologyTagsError)
+    return (<ErrorComponent error={topologyTagsError} />)
+
+  else if (topologyGroupsErrors)
+    return (<ErrorComponent error={topologyGroupsErrors} />)
+
+  else if (userDetails && listMetricProfiles && listAggregationProfiles && listOperationsProfiles) {
+    const topoTags = topologyTags ? topologyTags : new Array();
+    var topoGroups = new Object();
+
+    if (topologyGroups) {
+      let ngis = new Set()
+      let sites = new Set()
+      let projects = new Set()
+      let servicegroups = new Set()
+
+      for (var entity of topologyGroups) {
+        if (entity['type'].toLowerCase() === 'project') {
+          projects.add(entity['group'])
+          servicegroups.add(entity['subgroup'])
+        }
+
+        else if (entity['type'].toLowerCase() === 'ngi') {
+          ngis.add(entity['group'])
+          sites.add(entity['subgroup'])
+        }
+      }
+
+      topoGroups = new Object({
+        'ngis': Array.from(ngis).sort(sortStr),
+        'sites': Array.from(sites).sort(sortStr),
+        'projects': Array.from(projects).sort(sortStr),
+        'servicegroups': Array.from(servicegroups).sort(sortStr)
+      })
+    }
+
     let metricProfile = '';
     let aggregationProfile = '';
     let operationsProfile = '';
 
-    report.profiles.forEach(profile => {
-      if (profile.type === 'metric')
-        metricProfile = profile.name;
+    if (webApiReport) {
+      webApiReport.profiles.forEach(profile => {
+        if (profile.type === 'metric')
+          metricProfile = profile.name;
 
-      if (profile.type === 'aggregation')
-        aggregationProfile = profile.name;
+        if (profile.type === 'aggregation')
+          aggregationProfile = profile.name;
 
-      if (profile.type === 'operations')
-        operationsProfile = profile.name;
-    })
+        if (profile.type === 'operations')
+          operationsProfile = profile.name;
+      })
+    }
 
     let write_perm = undefined;
     let grouplist = undefined;
     if (!addview) {
       write_perm = userDetails.is_superuser ||
-            userDetails.groups.reports.indexOf(report.groupname) >= 0;
+            userDetails.groups.reports.indexOf(backendReport.groupname) >= 0;
     }
     else {
       write_perm = userDetails.is_superuser ||
@@ -1114,7 +1085,7 @@ export const ReportsComponent = (props) => {
     if (write_perm)
       grouplist = userDetails.groups.reports
     else
-      grouplist = [report.groupname]
+      grouplist = [backendReport.groupname]
 
     return (
       <BaseArgoView
@@ -1130,20 +1101,20 @@ export const ReportsComponent = (props) => {
         <Formik
           validationSchema={ReportsSchema}
           initialValues = {{
-            id: report.id,
-            disabled: report.disabled,
-            name: report.info.name,
-            description: report.info.description,
+            id: webApiReport ? webApiReport.id : '',
+            disabled: webApiReport ? webApiReport.disabled : false,
+            name: webApiReport ? webApiReport.info.name : '',
+            description: webApiReport ? webApiReport.info.description : '',
             metricProfile: metricProfile,
             aggregationProfile: aggregationProfile,
             operationsProfile: operationsProfile,
-            availabilityThreshold: report.thresholds.availability,
-            reliabilityThreshold: report.thresholds.reliability,
-            uptimeThreshold: report.thresholds.uptime,
-            unknownThreshold: report.thresholds.unknown,
-            downtimeThreshold: report.thresholds.downtime,
-            topologyType: whichTopologyType(report.topology_schema),
-            groupname: report.groupname,
+            availabilityThreshold: webApiReport ? webApiReport.thresholds.availability : '',
+            reliabilityThreshold: webApiReport ? webApiReport.thresholds.reliability : '',
+            uptimeThreshold: webApiReport ? webApiReport.thresholds.uptime : '',
+            unknownThreshold: webApiReport ? webApiReport.thresholds.unknown : '',
+            downtimeThreshold: webApiReport ? webApiReport.thresholds.downtime : '',
+            topologyType: whichTopologyType(webApiReport ? webApiReport.topology_schema : {}),
+            groupname: backendReport ? backendReport.groupname : '',
             groups: groupsTags,
             endpoints: endpointsTags,
             entities: entitiesState
@@ -1324,7 +1295,7 @@ export const ReportsComponent = (props) => {
                                 part="groups"
                                 tagsState={tagsState}
                                 setTagsState={setTagsState}
-                                tagsAll={topologyTags}
+                                tagsAll={topoTags}
                                 {...props}/>
                             )}
                           />
@@ -1338,7 +1309,7 @@ export const ReportsComponent = (props) => {
                             name="entities"
                             render={props => (
                               <TopologyEntityFields
-                                topoGroups={topologyGroups}
+                                topoGroups={topoGroups}
                                 addview={addview}
                                 {...props}
                               />
@@ -1363,7 +1334,7 @@ export const ReportsComponent = (props) => {
                                 part="endpoints"
                                 tagsState={tagsState}
                                 setTagsState={setTagsState}
-                                tagsAll={topologyTags}
+                                tagsAll={topoTags}
                                 addview={addview}
                                 {...propsLocal}/>
                             )}

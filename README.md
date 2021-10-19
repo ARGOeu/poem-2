@@ -234,16 +234,40 @@ Part of the REST API is protected by token so for tenants that consume those API
 % poem-token -t EGI -s egi
 ```
 
+### WEBAPI
+
+    [WEBAPI]
+    MetricProfile = https://api.devel.argo.grnet.gr/api/v2/metric_profiles
+    AggregationProfile = https://api.devel.argo.grnet.gr/api/v2/aggregation_profiles
+    ThresholdsProfile = https://api.devel.argo.grnet.gr/api/v2/thresholds_profiles
+    OperationsProfile = https://api.devel.argo.grnet.gr/api/v2/operations_profiles
+    Reports = https://api.devel.argo.grnet.gr/api/v2/reports
+    ReportsTopologyTags = https://api.devel.argo.grnet.gr/api/v2/topology/tags
+    ReportsTopologyGroups = https://api.devel.argo.grnet.gr/api/v2/topology/groups
+    ReportsTopologyEndpoints = https://api.devel.argo.grnet.gr/api/v2/topology/endpoints
+    ReportsCRUD = True
+
+This section lists WEB-API methods for the resources that are not stored in
+POEM's PostgreSQL DB, but instead are consumed from ARGO WEB-API services. POEM
+actively polls the PI methods and is doing the full round of CRUD operations on
+them. `ReportsCRUD` enables the polling of the WEB-API method related to ARGO
+Reports handling.
+
 ### GENERAL_<tenant_name>
 
     [GENERAL_EGI]
     Namespace = hr.cro-ngi.TEST
     SamlLoginString = Log in using EGI CHECK-IN
     SamlServiceName = ARGO POEM EGI-CheckIN
+    TermsOfUse = https://ui.argo.grnet.gr/egi/termsofUse/ALL
+    PrivacyPolicies = https://argo.egi.eu/egi/policies/ALL
+
 
 * `Namespace` defines the identifier that will be prepended to every Profile
 * `SamlLoginString` defines the text presented on the SAML2 button of login page
 * `SamlServiceName` defines service name in SAML2 configuration
+* `TermsOfUse` represents tenant URL reference to Terms of Use on ARGO UI service
+* `PrivacyPolicies` represents tenant URL reference to Privacy policies on ARGO UI service
 
 ### SUPERUSER_<tenant_name>
 
@@ -302,6 +326,9 @@ AllowedHosts = poem.devel.argo.grnet.gr
 
 [GENERAL_ALL]
 PublicPage = poem.devel.argo.grnet.gr
+TermsOfUse = https://ui.argo.grnet.gr/egi/termsofUse/ALL
+PrivacyPolicies = https://argo.egi.eu/egi/policies/ALL
+
 
 [SUPERUSER_ALL]
 Name = <username>

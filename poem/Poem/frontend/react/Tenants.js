@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Backend } from './DataManager';
 import { LoadingAnim, ErrorComponent, BaseArgoView, ParagraphTitle, NotifyError, NotifyOk } from './UIElements';
 import { Formik, Form, Field } from 'formik';
@@ -19,59 +19,55 @@ import {
 } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faIdBadge } from '@fortawesome/free-solid-svg-icons';
-import { useQuery } from 'react-query';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
+import { fetchTenants } from './QueryFunctions';
 
 
 export const TenantList = (props) => {
   const location = props.location;
   const history = props.history;
 
-  const backend = new Backend();
-
-  const { data: listTenants, error: error, isLoading: loading } = useQuery(
-    'tenant_listview', async () => {
-      let json = await backend.fetchData('/api/v2/internal/tenants');
-      return json;
-    }
+  const { data: tenants, error, status } = useQuery(
+    'tenant', () => fetchTenants()
   );
 
-  if (loading)
+  if (status === 'loading')
     return (<LoadingAnim/>);
 
-  else if (error)
+  else if (status === 'error')
     return (<ErrorComponent error={error}/>);
 
-  else if (!loading && listTenants) {
+  else if (tenants) {
     let groups = [];
-    for (let i = 0; i < listTenants.length; i = i + 3) {
+    for (let i = 0; i < tenants.length; i = i + 3) {
       let cards = []
       for (let j = 0; j < 3; j++) {
-        if ((i + j) < listTenants.length)
+        if ((i + j) < tenants.length)
           cards.push(
-            <Card data-testid={`${listTenants[i + j].name}-card`} className='mr-3' key={j + 1} tag='a' onClick={() => history.push(`/ui/tenants/${listTenants[i + j].name}`)} style={{cursor: 'pointer'}}>
+            <Card data-testid={`${tenants[i + j].name}-card`} className='mr-3' key={j + 1} tag='a' onClick={() => history.push(`/ui/tenants/${tenants[i + j].name}`)} style={{cursor: 'pointer', color: 'black'}}>
               <CardTitle className='text-center'>
-                <h3>{listTenants[i + j].name}</h3>
+                <h3>{tenants[i + j].name}</h3>
               </CardTitle>
               <CardSubtitle className='mb-4 mt-3 text-center'>
                 <FontAwesomeIcon icon={faIdBadge} size='5x'/>
               </CardSubtitle>
               <CardFooter>
-                <CardText data-testid={`${listTenants[i + j].name}-schema`} className='mb-1'>
-                  <b>Schema name:</b> {listTenants[i + j].schema_name}
+                <CardText data-testid={`${tenants[i + j].name}-schema`} className='mb-1'>
+                  <b>Schema name:</b> {tenants[i + j].schema_name}
                 </CardText>
-                <CardText data-testid={`${listTenants[i + j].name}-poem`}>
-                  <b>POEM url:</b> {listTenants[i + j].domain_url}
+                <CardText data-testid={`${tenants[i + j].name}-poem`}>
+                  <b>POEM url:</b> {tenants[i + j].domain_url}
                 </CardText>
                 <div className='mb-1'>
-                  <Badge color='info' className='mr-2' data-testid={`${listTenants[i + j].name}-metrics`}>
-                    {`Metric${listTenants[i + j].schema_name == 'public' ? ' templates ' : 's '
+                  <Badge color='info' className='mr-2' data-testid={`${tenants[i + j].name}-metrics`}>
+                    {`Metric${tenants[i + j].schema_name == 'public' ? ' templates ' : 's '
                     }`}
-                    <Badge style={{fontSize: '10pt'}} color='light'>{listTenants[i + j].nr_metrics}</Badge>
+                    <Badge style={{fontSize: '10pt'}} color='light'>{tenants[i + j].nr_metrics}</Badge>
                   </Badge>
                 </div>
                 <div>
-                  <Badge color='success' data-testid={`${listTenants[i + j].name}-probes`}>
-                    Probes <Badge style={{fontSize: '10pt'}} color='light'>{listTenants[i + j].nr_probes}</Badge>
+                  <Badge color='success' data-testid={`${tenants[i + j].name}-probes`}>
+                    Probes <Badge style={{fontSize: '10pt'}} color='light'>{tenants[i + j].nr_probes}</Badge>
                   </Badge>
                 </div>
               </CardFooter>
@@ -112,9 +108,6 @@ export const TenantList = (props) => {
 
 
 export const TenantChange = (props) => {
-  const [tenant, setTenant] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [areYouSureModal, setAreYouSureModal] = useState(false);
   const [modalTitle, setModalTitle] = useState(undefined);
   const [modalMsg, setModalMsg] = useState(undefined);
@@ -125,57 +118,52 @@ export const TenantChange = (props) => {
 
   const backend = new Backend();
 
-  useEffect(() => {
-    const backend = new Backend();
-    setLoading(true);
-    async function fetchData() {
-      try {
-        let json = await backend.fetchData(
-          `/api/v2/internal/tenants/${name.trim().split(' ').join('_')}`
-        );
-        setTenant(json)
-      } catch(err) {
-        setError(err);
+  const queryClient = useQueryClient();
+  const deleteMutation = useMutation(
+    () => backend.deleteObject(`/api/v2/internal/tenants/${name.trim().split(' ').join('_')}`)
+  );
+
+  const { data: tenant, error, status } = useQuery(
+    ['tenant', name], async () => {
+      return await backend.fetchData(`/api/v2/internal/tenants/${name.trim().split(' ').join('_')}`);
+    },
+    {
+      initialData: () => {
+        return queryClient.getQueryData('tenant')?.find(ten => ten.name === name)
       }
-      setLoading(false);
     }
-    fetchData();
-  }, [name]);
+  )
 
   function toggleAreYouSure() {
     setAreYouSureModal(!areYouSureModal);
   }
 
   async function doDelete() {
-    let response = await backend.deleteObject(`/api/v2/internal/tenants/${name.trim().split(' ').join('_')}`);
-    if (!response.ok) {
-      let msg = '';
-      try {
-        let json = await response.json();
-        msg = json.detail;
-      } catch (err) {
-        msg = 'Error deleting tenant.';
-      }
-      NotifyError({
-        title: `Error: ${response.status} ${response.statusText}`,
-        msg: msg
+    try {
+      await deleteMutation.mutateAsync(undefined, {
+        onSuccess: () => {
+          queryClient.invalidateQueries('tenant');
+          NotifyOk({
+            msg: 'Tenant successfully deleted',
+            title: 'Deleted',
+            callback: () => history.push('/ui/tenants')
+          })
+        }
       })
-    } else {
-      NotifyOk({
-        msg: 'Tenant successfully deleted',
-        title: 'Deleted',
-        callback: () => history.push('/ui/tenants')
-      });
+    } catch(error) {
+      NotifyError({
+        title: 'Error', msg: error.message ? error.message : 'Error deleting tenant.'
+      })
     }
   }
 
-  if (loading)
+  if (status === 'loading')
     return (<LoadingAnim/>);
 
-  else if (error)
+  else if (status === 'error')
     return (<ErrorComponent error={error}/>);
 
-  else if (!loading && tenant) {
+  else if (tenant) {
     return (
       <BaseArgoView
         resourcename='Tenant details'

@@ -6,6 +6,7 @@ import { Route, Router } from 'react-router-dom';
 import { CompareMetrics, ListOfMetrics, MetricChange, MetricVersionDetails } from '../Metrics';
 import { Backend } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
+import { QueryClientProvider, QueryClient, setLogger } from 'react-query';
 
 
 const mockListOfMetrics = [
@@ -192,7 +193,7 @@ const mockMetricVersion = [
       mtype: 'Active',
       tags: ['test_tag1', 'test_tag2'],
       group: 'ARGOTEST',
-      probeversion: 'ams-probe(0.1.13)',
+      probeversion: 'ams-probe (0.1.13)',
       description: 'Description of argo.AMS-Check-new',
       parent: 'new-parent',
       probeexecutable: 'ams-probe-2',
@@ -269,9 +270,17 @@ jest.mock('../DataManager', () => {
   }
 })
 
+const queryClient = new QueryClient();
+
+setLogger({
+  log: () => {},
+  warn: () => {},
+  error: () => {}
+})
 
 beforeEach(() => {
   jest.clearAllMocks()
+  queryClient.clear();
 })
 
 
@@ -281,19 +290,23 @@ function renderListView(publicView=false) {
   if (publicView)
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            render={props => <ListOfMetrics {...props} type='metrics' publicView={true} />}
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              render={props => <ListOfMetrics {...props} type='metrics' isTenantSchema={true} publicView={true} />}
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
   else
     return {
       ...render(
-        <Router history={history}>
-          <Route render={props => <ListOfMetrics {...props} type='metrics' />} />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route render={props => <ListOfMetrics {...props} type='metrics' isTenantSchema={true} />} />
+          </Router>
+        </QueryClientProvider>
       )
     }
 }
@@ -310,23 +323,27 @@ function renderChangeView(options = {}) {
   if (publicView)
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            path='/ui/public_metrics/:name'
-            render={props => <MetricChange {...props} publicView={true} />}
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/public_metrics/:name'
+              render={props => <MetricChange {...props} publicView={true} />}
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
   else
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            path='/ui/metrics/:name'
-            render={ props => <MetricChange {...props} /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/metrics/:name'
+              render={ props => <MetricChange {...props} /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 }
@@ -338,12 +355,14 @@ function renderVersionDetailsView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/metrics/:name/history/:version'
-          render={ props => <MetricVersionDetails {...props} />}
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/metrics/:name/history/:version'
+            render={ props => <MetricVersionDetails {...props} />}
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -355,12 +374,14 @@ function renderCompareView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/metrics/:name/history/compare/:id1/:id2'
-          render={ props => <CompareMetrics {...props} type='metric' /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/metrics/:name/history/compare/:id1/:id2'
+            render={ props => <CompareMetrics {...props} type='metric' /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -392,7 +413,6 @@ describe('Tests for metrics listview', () => {
           }
         },
         fetchResult: () => Promise.resolve(mockUserGroups),
-        isTenantSchema: () => Promise.resolve(true),
         isActiveSession: () => Promise.resolve(mockActiveSession)
       }
     })
@@ -462,52 +482,6 @@ describe('Tests for metrics listview', () => {
     expect(screen.getByRole('link', { name: /ams-publisher-probe/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-publisher-probe/history/0.1.12')
   })
 
-  test('Render empty table properly', async () => {
-    Backend.mockImplementationOnce(() => {
-      return {
-        fetchData: (path) => {
-          switch (path) {
-            case '/api/v2/internal/mtypes':
-              return Promise.resolve(['Active', 'Passive'])
-
-            case '/api/v2/internal/metrictags':
-              return Promise.resolve(['test_tag1', 'test_tag2', 'internal'])
-
-            case '/api/v2/internal/metric':
-              return Promise.resolve([])
-          }
-        }
-      }
-    })
-
-    renderListView();
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric for details')
-    })
-    expect(screen.getAllByRole('columnheader')).toHaveLength(12);
-    expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: /name/i }).textContent).toBe('Name');
-    expect(screen.getByRole('columnheader', { name: /probe/i }).textContent).toBe('Probe version');
-    expect(screen.getByRole('columnheader', { name: /type/i }).textContent).toBe('Type');
-    expect(screen.getByRole('columnheader', { name: /group/i }).textContent).toBe('Group');
-    expect(screen.getByRole('columnheader', { name: /tag/i }).textContent).toBe('Tag');
-    expect(screen.getAllByPlaceholderText('Search')).toHaveLength(2);
-    expect(screen.getAllByRole('columnheader', { name: 'Show all' })).toHaveLength(3);
-    expect(screen.getAllByRole('option', { name: 'Show all' })).toHaveLength(3);
-    expect(screen.getByRole('option', { name: /active/i })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: /passive/i })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: /egi/i })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: /argotest/i })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: /internal/i })).toBeInTheDocument();
-    expect(screen.getAllByRole('option', { name: /test_tag/i })).toHaveLength(2);
-    expect(screen.getAllByRole('row')).toHaveLength(52);
-    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(49);
-    expect(screen.getByRole('row', { name: /no/i }).textContent).toBe('No metrics');
-    expect(screen.queryByText(/add/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/import/i)).not.toBeInTheDocument();
-  })
-
   test('Test render public listview', async () => {
     renderListView(true);
 
@@ -568,6 +542,55 @@ describe('Tests for metrics listview', () => {
     expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('1argo.AMS-Publisherams-publisher-probe (0.1.12)ActiveEGIinternal')
     expect(screen.getByRole('link', { name: /argo.ams-publisher/i }).closest('a')).toHaveAttribute('href', '/ui/public_metrics/argo.AMS-Publisher');
     expect(screen.getByRole('link', { name: /ams-publisher-probe/i }).closest('a')).toHaveAttribute('href', '/ui/public_probes/ams-publisher-probe/history/0.1.12')
+  })
+
+  test('Render empty table properly', async () => {
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: (path) => {
+          switch (path) {
+            case '/api/v2/internal/mtypes':
+              return Promise.resolve(['Active', 'Passive'])
+
+            case '/api/v2/internal/metrictags':
+              return Promise.resolve(['test_tag1', 'test_tag2', 'internal'])
+
+            case '/api/v2/internal/metric':
+              return Promise.resolve([])
+          }
+        },
+        fetchResult: () => Promise.resolve(mockUserGroups),
+        isTenantSchema: () => Promise.resolve(true),
+        isActiveSession: () => Promise.resolve(mockActiveSession)
+      }
+    })
+
+    renderListView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric for details')
+    })
+    expect(screen.getAllByRole('columnheader')).toHaveLength(12);
+    expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /name/i }).textContent).toBe('Name');
+    expect(screen.getByRole('columnheader', { name: /probe/i }).textContent).toBe('Probe version');
+    expect(screen.getByRole('columnheader', { name: /type/i }).textContent).toBe('Type');
+    expect(screen.getByRole('columnheader', { name: /group/i }).textContent).toBe('Group');
+    expect(screen.getByRole('columnheader', { name: /tag/i }).textContent).toBe('Tag');
+    expect(screen.getAllByPlaceholderText('Search')).toHaveLength(2);
+    expect(screen.getAllByRole('columnheader', { name: 'Show all' })).toHaveLength(3);
+    expect(screen.getAllByRole('option', { name: 'Show all' })).toHaveLength(3);
+    expect(screen.getByRole('option', { name: /active/i })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /passive/i })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /egi/i })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /argotest/i })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /internal/i })).toBeInTheDocument();
+    expect(screen.getAllByRole('option', { name: /test_tag/i })).toHaveLength(2);
+    expect(screen.getAllByRole('row')).toHaveLength(52);
+    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(49);
+    expect(screen.getByRole('row', { name: /no/i }).textContent).toBe('No metrics');
+    expect(screen.queryByText(/add/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/import/i)).not.toBeInTheDocument();
   })
 })
 
@@ -988,10 +1011,6 @@ describe('Tests for metric change', () => {
   })
 
   test('Test successfully changing metric', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-
     renderChangeView();
 
     await waitFor(() => {
@@ -1048,13 +1067,9 @@ describe('Tests for metric change', () => {
   })
 
   test('Test error in saving metric with error message', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'There has been an error.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockChangeObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST; There has been an error.')
+    } )
 
     renderChangeView();
 
@@ -1108,19 +1123,17 @@ describe('Tests for metric change', () => {
     })
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been an error.</p>
+        <p>400 BAD REQUEST; There has been an error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 400 BAD REQUEST',
+      'Error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error in saving metric without error message', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockChangeObject.mockImplementationOnce( () => { throw Error() } );
 
     renderChangeView();
 
@@ -1178,17 +1191,13 @@ describe('Tests for metric change', () => {
         <p>Error changing metric</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 500 SERVER ERROR',
+      'Error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test successfully deleting metric', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-
     renderChangeView();
 
     await waitFor(() => {
@@ -1213,13 +1222,9 @@ describe('Tests for metric change', () => {
   })
 
   test('Test error in deleting metric with error message', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'There has been an error.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockDeleteObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: There has been an error.')
+    } );
 
     renderChangeView();
 
@@ -1241,19 +1246,17 @@ describe('Tests for metric change', () => {
     })
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been an error.</p>
+        <p>400 BAD REQUEST: There has been an error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 400 BAD REQUEST',
+      'Error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error in deleting metric without error message', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockDeleteObject.mockImplementationOnce( () => { throw Error() } );
 
     renderChangeView();
 
@@ -1278,7 +1281,7 @@ describe('Tests for metric change', () => {
         <p>Error deleting metric</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 500 SERVER ERROR',
+      'Error',
       0,
       expect.any(Function)
     )

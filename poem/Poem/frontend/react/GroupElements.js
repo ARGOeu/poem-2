@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Backend } from './DataManager';
 import {
   LoadingAnim,
@@ -23,32 +23,19 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
 import Select from 'react-select';
+import { fetchUserGroups } from './QueryFunctions';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
 
 
 export const GroupList = (props) => {
-  const [loading, setLoading] = useState(false);
-  const [listGroups, setListGroups] = useState(null);
-  const [error, setError] = useState(null);
-
   const location = props.location;
   const name = props.name;
   const id = props.id;
   const group = props.group;
 
-  useEffect(() => {
-    setLoading(true);
-    const backend = new Backend();
-    async function fetchData() {
-      try {
-        let json = await backend.fetchResult('/api/v2/internal/usergroups');
-        setListGroups(json[group]);
-      } catch(err) {
-        setError(err);
-      }
-      setLoading(false);
-    }
-    fetchData();
-  }, [group]);
+  const { data: groups, error: error, status: status} = useQuery(
+    'usergroups', () => fetchUserGroups(true)
+  )
 
   const columns = React.useMemo(
     () => [
@@ -68,20 +55,20 @@ export const GroupList = (props) => {
     ], [name, id]
   );
 
-  if (loading)
+  if (status === 'loading')
     return (<LoadingAnim/>);
 
-  else if (error)
+  else if (status === 'error')
     return (<ErrorComponent error={error}/>);
 
-  else if (!loading && listGroups)
+  else if (groups)
     return (
       <BaseArgoView
         resourcename={name}
         location={location}
         listview={true}>
         <BaseArgoTable
-          data={listGroups}
+          data={groups[group]}
           columns={columns}
           page_size={10}
           resourcename='groups'
@@ -95,18 +82,13 @@ export const GroupList = (props) => {
 
 
 export const GroupChange = (props) => {
-  const [name, setName] = useState('');
-  var [items, setItems] = useState([]);
   const [searchItem, setSearchItem] = useState('');
-  var [freeItems, setFreeItems] = useState([]);
   const [newItems, setNewItems] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [areYouSureModal, setAreYouSureModal] = useState(undefined);
   const [modalTitle, setModalTitle] = useState(undefined);
   const [modalMsg, setModalMsg] = useState(undefined);
   const [modalFlag, setModalFlag] = useState(undefined);
-  const [error, setError] = useState(null);
-  const [formName, setFormName] = useState('');
+  const [formValues, setFormValues] = useState(undefined);
 
   const groupname = props.match.params.name;
   const group = props.group;
@@ -117,7 +99,26 @@ export const GroupChange = (props) => {
   const location = props.location;
   const history = props.history;
 
+  const queryClient = useQueryClient();
+
   const backend = new Backend();
+
+  const changeMutation = useMutation(async (values) => await backend.changeObject(`/api/v2/internal/${group}group/`, values));
+  const addMutation = useMutation(async (values) => await backend.addObject(`/api/v2/internal/${group}group/`, values));
+  const deleteMutation = useMutation(async () => await backend.deleteObject(`/api/v2/internal/${group}group/${groupname}`));
+
+  const { data: items, error: errorItems, isLoading: loadingItems } = useQuery(
+    [`${group}group`, groupname], async () => {
+      return await backend.fetchResult(`/api/v2/internal/${group}group/${groupname}`);
+    },
+    { enabled: !addview }
+  )
+
+  const { data: freeItems, error: errorFreeItems, isLoading: loadingFreeItems } = useQuery(
+    `${group}group`, async () => {
+      return await backend.fetchResult(`/api/v2/internal/${group}group`);
+    }
+  )
 
   function toggleAreYouSure() {
     setAreYouSureModal(!areYouSureModal);
@@ -127,7 +128,7 @@ export const GroupChange = (props) => {
     setModalMsg(`Are you sure you want to ${addview ? 'add' : 'change'} group of ${title}?`);
     setModalTitle(`${addview ? 'Add' : 'Change'} group of ${title}`);
     setModalFlag('submit');
-    setFormName(values.name);
+    setFormValues(values);
     toggleAreYouSure();
   }
 
@@ -138,124 +139,83 @@ export const GroupChange = (props) => {
     toggleAreYouSure();
   }
 
-  async function doChange() {
+  function doChange() {
+    const sendValues = new Object({
+      name: formValues.name,
+      items: formValues.items
+    })
     if (!addview) {
-      let response = await backend.changeObject(
-        `/api/v2/internal/${group}group/`,
-        {name: formName, items: items}
-      );
-
-      if (response.ok)
-        NotifyOk({
-          msg: `Group of ${title} successfully changed`,
-          title: 'Changed',
-          callback: () => history.push(`/ui/administration/${id}`)
-        });
-
-      else {
-        let change_msg = '';
-        try {
-          let json = await response.json();
-          change_msg = json.detail;
-        } catch(err) {
-          change_msg = `Error changing group of ${title}`;
+      changeMutation.mutate(sendValues, {
+        onSuccess: () => {
+          queryClient.invalidateQueries(`${group}group`);
+          queryClient.invalidateQueries('metric');
+          queryClient.invalidateQueries('public_metric');
+          NotifyOk({
+            msg: `Group of ${title} successfully changed`,
+            title: 'Changed',
+            callback: () => history.push(`/ui/administration/${id}`)
+          });
+        },
+        onError: (error) => {
+          NotifyError({
+            title: 'Error',
+            msg: error.message ? error.message : `Error changing group of ${title}`
+          })
         }
-        NotifyError({
-          title: `Error: ${response.status} ${response.statusText}`,
-          msg: change_msg
-        });
-      }
+      })
     } else {
-      let response = await backend.addObject(
-        `/api/v2/internal/${group}group/`,
-        {name: formName, items: items}
-      );
+      addMutation.mutate(sendValues, {
+        onSuccess: () => {
+          queryClient.invalidateQueries(`${group}group`);
+          queryClient.invalidateQueries('metric');
+          queryClient.invalidateQueries('public_metric');
+          NotifyOk({
+            msg: `Group of ${title} successfully added`,
+            title: 'Added',
+            callback: () => history.push(`/ui/administration/${id}`)
+          });
+        },
+        onError: (error) => {
+          NotifyError({
+            title: 'Error',
+            msg: error.message ? error.message : `Error adding group of ${title}`
+          })
+        }
+      })
+    }
+  }
 
-      if (response.ok)
+  function doDelete() {
+    deleteMutation.mutate(undefined, {
+      onSuccess: () => {
+        queryClient.invalidateQueries(`${group}group`)
+        queryClient.invalidateQueries('metric');
+        queryClient.invalidateQueries('public_metric');
         NotifyOk({
-          msg: `Group of ${title} successfully added`,
-          title: 'Added',
+          msg: `Group of ${title} successfully deleted`,
+          title: 'Deleted',
           callback: () => history.push(`/ui/administration/${id}`)
         });
-
-      else {
-        let add_msg = '';
-        try {
-          let json = await response.json();
-          add_msg = json.detail;
-        } catch(err) {
-          add_msg = `Error adding group of ${title}`;
-        }
+      },
+      onError: (error) => {
         NotifyError({
-          title: `Error: ${response.status} ${response.statusText}`,
-          msg: add_msg
-        });
+          title: 'Error',
+          msg: error.message ? error.message : `Error deleting group of ${title}`
+        })
       }
-    }
+    })
   }
 
-  async function doDelete() {
-    let response = await backend.deleteObject(`/api/v2/internal/${group}group/${name}`);
-
-    if (response.ok)
-      NotifyOk({
-        msg: `Group of ${title} successfully deleted`,
-        title: 'Deleted',
-        callback: () => history.push(`/ui/administration/${id}`)
-      });
-
-    else {
-      let msg = '';
-      try {
-        let json = await response.json();
-        msg = json.detail;
-      } catch(err) {
-        msg = `Error deleting group of ${title}`;
-      }
-      NotifyError({
-        title: `Error: ${response.status} ${response.statusText}`,
-        msg: msg
-      });
-    }
-  }
-
-  useEffect(() => {
-    setLoading(true);
-
-    async function fetchItems() {
-      try {
-        let nogroupitems_response = await backend.fetchResult(`/api/v2/internal/${group}group`);
-        let nogroupitems = [];
-        nogroupitems_response.forEach(e => nogroupitems.push({value: e, label: e}));
-
-        if (!addview) {
-          let groupitems = await backend.fetchResult(`/api/v2/internal/${group}group/${groupname}`);
-          setName(groupname);
-          setItems(groupitems);
-        }
-        setFreeItems(nogroupitems);
-      } catch(err) {
-        setError(err);
-      }
-      setLoading(false);
-    }
-
-    fetchItems();
-  }, []);
-
-  var filteredItems = items;
-  if (searchItem)
-    filteredItems = filteredItems.filter(filteredRow =>
-      filteredRow.toLowerCase().includes(searchItem.toLowerCase())
-    );
-
-  if (loading)
+  if (loadingItems || loadingFreeItems)
     return (<LoadingAnim/>);
 
-  else if (error)
-    return (<ErrorComponent error={error}/>);
+  else if (errorItems)
+    return (<ErrorComponent error={errorItems} />);
 
-  else if (!loading) {
+  else if (errorFreeItems)
+    return(<ErrorComponent error={errorFreeItems} />)
+
+  else if (freeItems) {
     return (
       <BaseArgoView
         resourcename={`group of ${title}`}
@@ -279,12 +239,13 @@ export const GroupChange = (props) => {
       >
         <Formik
           initialValues = {{
-            name: name,
-            items: items
+            name: !addview ? groupname : '',
+            items: items ? items : [],
+            freeItems: freeItems.map(itm => new Object({ value: itm, label: itm })),
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
         >
-          {() => (
+          {(props) => (
             <Form>
               <FormGroup>
                 <Row>
@@ -316,15 +277,15 @@ export const GroupChange = (props) => {
                       onChange={e => setNewItems(e)}
                       openMenuOnClick={true}
                       value={newItems}
-                      options={freeItems}
+                      options={props.values.freeItems}
                     />
                   </Col>
                   <Col md={2}>
                     <Button
                       color='success'
                       onClick={() => {
-                        let itms = items;
-                        let fitms = freeItems;
+                        let itms = props.values.items;
+                        let fitms = props.values.freeItems;
                         for (let i = 0; i < fitms.length; i++) {
                           if (newItems.includes(fitms[i])) {
                             fitms.splice(i, 1);
@@ -332,8 +293,8 @@ export const GroupChange = (props) => {
                           }
                         }
                         newItems.forEach(i => itms.push(i.value));
-                        setItems(itms.sort());
-                        setFreeItems(fitms);
+                        props.setFieldValue('items', itms.sort());
+                        props.setFieldValue('freeItems', fitms)
                         setNewItems([]);
                       }}
                     >
@@ -367,41 +328,43 @@ export const GroupChange = (props) => {
                       <td>{''}</td>
                     </tr>
                     {
-                      filteredItems.map((item, index) =>
-                        <React.Fragment key={index}>
-                          <tr key={index}>
-                            <td className='align-middle text-center'>
-                              {index + 1}
-                            </td>
-                            <td>{item}</td>
-                            <td className='align-middle pl-3'>
-                              <Button
-                                size='sm'
-                                color='light'
-                                type='button'
-                                onClick={() => {
-                                  let updatedItems = items.filter(updatedRow => updatedRow !== item);
-                                  let fitms = freeItems;
-                                  fitms.push({value: item, label: item});
-                                  let sorted_fitms = fitms.sort((a, b) => {
-                                    let comparison = 0
-                                    if (a.value.toLowerCase() > b.value.toLowerCase())
-                                      comparison = 1;
+                      props.values.items.filter(
+                        filteredRow => filteredRow.toLowerCase().includes(searchItem.toLowerCase())
+                        ).map((item, index) =>
+                          <React.Fragment key={index}>
+                            <tr key={index}>
+                              <td className='align-middle text-center'>
+                                {index + 1}
+                              </td>
+                              <td>{item}</td>
+                              <td className='align-middle pl-3'>
+                                <Button
+                                  size='sm'
+                                  color='light'
+                                  type='button'
+                                  onClick={() => {
+                                    let updatedItems = props.values.items.filter(updatedRow => updatedRow !== item);
+                                    let fitms = props.values.freeItems;
+                                    fitms.push({value: item, label: item});
+                                    let sorted_fitms = fitms.sort((a, b) => {
+                                      let comparison = 0
+                                      if (a.value.toLowerCase() > b.value.toLowerCase())
+                                        comparison = 1;
 
-                                    else if (a.value.toLowerCase() < b.value.toLowerCase())
-                                      comparison = -1;
+                                      else if (a.value.toLowerCase() < b.value.toLowerCase())
+                                        comparison = -1;
 
-                                    return comparison;
-                                  });
-                                  setItems(updatedItems);
-                                  setFreeItems(sorted_fitms);
-                                }}
-                              >
-                                <FontAwesomeIcon icon={faTimes}/>
-                              </Button>
-                            </td>
-                          </tr>
-                        </React.Fragment>
+                                      return comparison;
+                                    });
+                                    props.setFieldValue('items', updatedItems);
+                                    props.setFieldValue('freeItems', sorted_fitms);
+                                  }}
+                                >
+                                  <FontAwesomeIcon icon={faTimes}/>
+                                </Button>
+                              </td>
+                            </tr>
+                          </React.Fragment>
                       )
                     }
                   </tbody>

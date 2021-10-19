@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useContext } from 'react';
+import React, { useState, useMemo, useContext } from 'react';
 import {Link} from 'react-router-dom';
 import {Backend, WebApi} from './DataManager';
 import Autosuggest from 'react-autosuggest';
@@ -27,9 +27,14 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
 import ReactDiffViewer from 'react-diff-viewer';
-import { useQuery, queryCache } from 'react-query';
+import { useQuery, useQueryClient, useMutation } from 'react-query';
 import PapaParse from 'papaparse';
-import { downloadCSV } from './Helpers';
+import { downloadCSV } from './FileDownload';
+import {
+  fetchAllMetrics,
+  fetchUserDetails,
+  fetchBackendMetricProfiles
+} from './QueryFunctions';
 
 import './MetricProfiles.css';
 
@@ -302,6 +307,18 @@ const ServicesList = () => {
 }
 
 
+const fetchMetricProfile = async (webapi, apiid) => {
+  return await webapi.fetchMetricProfile(apiid);
+}
+
+
+const fetchServiceFlavours = async () => {
+  const backend = new Backend();
+
+  return await backend.fetchListOfNames('/api/v2/internal/serviceflavoursall');
+}
+
+
 export const MetricProfilesComponent = (props) => {
   const profile_name = props.match.params.name;
   const addview = props.addview
@@ -309,11 +326,21 @@ export const MetricProfilesComponent = (props) => {
   const location = props.location;
   const cloneview = props.cloneview;
   const publicView = props.publicView;
+
   const backend = new Backend();
   const webapi = new WebApi({
     token: props.webapitoken,
     metricProfiles: props.webapimetric
   })
+
+  const queryClient = useQueryClient();
+  const webapiChangeMutation = useMutation(async (values) => await webapi.changeMetricProfile(values));
+  const backendChangeMutation = useMutation(async (values) => await backend.changeObject('/api/v2/internal/metricprofiles/', values));
+  const webapiAddMutation = useMutation(async (values) => await webapi.addMetricProfile(values));
+  const backendAddMutation = useMutation(async (values) => await backend.addObject('/api/v2/internal/metricprofiles/', values));
+  const webapiDeleteMutation = useMutation(async (idProfile) => await webapi.deleteMetricProfile(idProfile));
+  const backendDeleteMutation = useMutation(async (idProfile) => await backend.deleteObject(`/api/v2/internal/metricprofiles/${idProfile}`));
+
 
   const [listServices, setListServices] = useState(undefined);
   const [viewServices, setViewServices] = useState(undefined);
@@ -328,66 +355,40 @@ export const MetricProfilesComponent = (props) => {
   const [searchServiceFlavour, setSearchServiceFlavour] = useState("");
   const [formikValues, setFormikValues] = useState({})
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const querykey = `metricprofiles_${addview ? 'addview' : `${profile_name}_${publicView ? 'publicview' : 'changeview'}`}`;
   const hiddenFileInput = React.useRef(null);
   const formikRef = React.useRef();
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
-    `session_userdetails`, async () => {
-      if (!publicView) {
-        const sessionActive = await backend.isActiveSession()
-        if (sessionActive.active) {
-          return sessionActive.userdetails
-        }
-      }
-    }
+    'userdetails', () => fetchUserDetails(true),
+    { enabled: !publicView }
   );
 
-  const { data: metricProfile, error: errorMetricProfile, isLoading:
-    loadingMetricProfile } = useQuery(querykey, async () => {
-      let backendMetricProfile = new Object({
-        id: '',
-        name: '',
-        services: undefined,
-      })
-      if (!addview) {
-        backendMetricProfile = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metricprofiles/${profile_name}`);
-      }
-
-      if (publicView) {
-        let metricProfile = await webapi.fetchMetricProfile(backendMetricProfile.apiid);
-        return {
-          profile: metricProfile,
-          groupname: backendMetricProfile.groupname,
-          serviceflavoursall: [],
-          metricsall: [],
-        }
-      }
-      else {
-        let metricsAll = await backend.fetchListOfNames('/api/v2/internal/metricsall');
-        let serviceFlavoursAll = await backend.fetchListOfNames('/api/v2/internal/serviceflavoursall');
-        if (!addview || cloneview) {
-          let metricProfile = await webapi.fetchMetricProfile(backendMetricProfile.apiid);
-          return {
-            profile: metricProfile,
-            groupname: backendMetricProfile.groupname,
-            serviceflavoursall: serviceFlavoursAll,
-            metricsall: metricsAll
-          }
-        }
-        else {
-          return {
-            profile: backendMetricProfile,
-            groupname: '',
-            metricsall: metricsAll,
-            serviceflavoursall: serviceFlavoursAll
-          }
-        }
-      }
-  },
+  const { data: backendMP, error: errorBackendMP, isLoading: loadingBackendMP } = useQuery(
+    [`${publicView ? 'public_' : ''}metricprofile`, 'backend', profile_name], async () => {
+      return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metricprofiles/${profile_name}`);
+    },
     {
-      enabled: !publicView ? userDetails : true
+      enabled: (publicView || !addview),
+      initialData: () => {
+        return queryClient.getQueryData(`${publicView ? 'public_' : ''}metricprofile`)?.find(mpr => mpr.name === profile_name)
+      }
     }
+  )
+
+  const { data: webApiMP, error: errorWebApiMP, isLoading: loadingWebApiMP } = useQuery(
+    [`${publicView ? 'public_' : ''}metricprofile`, 'webapi', profile_name],
+    () => fetchMetricProfile(webapi, backendMP.apiid),
+    { enabled: !!backendMP }
+  )
+
+  const { data: metricsAll, error: errorMetricsAll, isLoading: loadingMetricsAll } = useQuery(
+    'metricsall', () => fetchAllMetrics(),
+    { enabled: !publicView }
+  )
+
+  const { data: serviceFlavoursAll, error: errorServiceFlavoursAll, isLoading: loadingServiceFlavoursAll } = useQuery(
+    'serviceflavoursall', () => fetchServiceFlavours(),
+    { enabled: !publicView }
   )
 
   const onInsert = async (element, i, group, name, description) => {
@@ -496,44 +497,34 @@ export const MetricProfilesComponent = (props) => {
     setListServices(tmp_list_services);
   }
 
-  const doDelete = async (idProfile) => {
-    let response = await webapi.deleteMetricProfile(idProfile);
-    if (!response.ok) {
-      let msg = '';
-      try {
-        let json = await response.json();
-        let msg_list = [];
-        json.errors.forEach(e => msg_list.push(e.details));
-        msg = msg_list.join(' ');
-      } catch(err) {
-        msg = 'Web API error deleting metric profile';
-      }
-      NotifyError({
-        title: `Web API error: ${response.status} ${response.statusText}`,
-        msg: msg
-      });
-    } else {
-      let r_internal = await backend.deleteObject(`/api/v2/internal/metricprofiles/${idProfile}`);
-      if (r_internal.ok)
-        NotifyOk({
-          msg: 'Metric profile successfully deleted',
-          title: 'Deleted',
-          callback: () => history.push('/ui/metricprofiles')
-        });
-      else {
-        let msg = '';
-        try {
-          let json = await r_internal.json();
-          msg = json.detail;
-        } catch(err) {
-          msg = 'Internal API error deleting metric profile';
-        }
+  const doDelete = (idProfile) => {
+    webapiDeleteMutation.mutate(idProfile, {
+      onSuccess: () => {
+        backendDeleteMutation.mutate(idProfile, {
+          onSuccess: () => {
+            queryClient.invalidateQueries('metricprofile');
+            queryClient.invalidateQueries('public_metricprofile');
+            NotifyOk({
+              msg: 'Metric profile successfully deleted',
+              title: 'Deleted',
+              callback: () => history.push('/ui/metricprofiles')
+            });
+          },
+          onError: (error) => {
+            NotifyError({
+              title: 'Internal API error',
+              msg: error.message ? error.message : 'Internal API error deleting metric profile'
+            })
+          }
+        })
+      },
+      onError: (error) => {
         NotifyError({
-          title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
-          msg: msg
-        });
+          title: 'Web API error',
+          msg: error.message ? error.message : 'Web API error deleting metric profile'
+        })
       }
-    }
+    })
   }
 
   const onRemove = async (element, group, name, description) => {
@@ -663,22 +654,14 @@ export const MetricProfilesComponent = (props) => {
     return services
   }
 
-  const updateCacheKey = (formValues, services) => {
-    let staleMetricProfile = queryCache.getQueryData(querykey)
-    staleMetricProfile.profile.services = services
-    staleMetricProfile.profile.name = formValues.name
-    staleMetricProfile.profile.description = formValues.description
-    queryCache.setQueryData(querykey, staleMetricProfile)
-  }
-
-  const doChange = async ({formValues, servicesList}) => {
+  const doChange = ({formValues, servicesList}) => {
     let services = [];
     let dataToSend = new Object()
     const backend_services = [];
     formValues.view_services.forEach((service) => backend_services.push({ service: service.service, metric: service.metric }));
 
     if (!addview && !cloneview) {
-      const { id } = metricProfile.profile
+      const { id } = webApiMP
       services = groupMetricsByServices(servicesList);
       dataToSend = {
         id,
@@ -686,54 +669,39 @@ export const MetricProfilesComponent = (props) => {
         description: formValues.description,
         services
       };
-      let response = await webapi.changeMetricProfile(dataToSend);
-      if (!response.ok) {
-        let change_msg = '';
-        try {
-          let json = await response.json();
-          let msg_list = [];
-          json.errors.forEach(e => msg_list.push(e.details));
-          change_msg = msg_list.join(' ');
-        } catch(err) {
-          change_msg = 'Web API error changing metric profile';
-        }
-        NotifyError({
-          title: `Web API error: ${response.status} ${response.statusText}`,
-          msg: change_msg
-        });
-      } else {
-        let r = await backend.changeObject(
-          '/api/v2/internal/metricprofiles/',
-          {
+      webapiChangeMutation.mutate(dataToSend, {
+        onSuccess: () => {
+          backendChangeMutation.mutate({
             apiid: dataToSend.id,
             name: profile_name,
             description: dataToSend.description,
             groupname: formValues.groupname,
             services: backend_services
-          }
-        );
-        if (r.ok) {
-          NotifyOk({
-            msg: 'Metric profile successfully changed',
-            title: 'Changed',
-            callback: () => history.push('/ui/metricprofiles')
-          });
-          updateCacheKey(formValues, services)
-        }
-        else {
-          let change_msg = '';
-          try {
-            let json = await r.json();
-            change_msg = json.detail;
-          } catch(err) {
-            change_msg = 'Internal API error changing metric profile';
-          }
+          }, {
+            onSuccess: () => {
+              queryClient.invalidateQueries('metricprofile');
+              queryClient.invalidateQueries('public_metricprofile');
+              NotifyOk({
+                msg: 'Metric profile successfully changed',
+                title: 'Changed',
+                callback: () => history.push('/ui/metricprofiles')
+              });
+            },
+            onError: (error) => {
+              NotifyError({
+                title: 'Internal API error',
+                msg: error.message ? error.message : 'Internal API error changing metric profile'
+              })
+            }
+          })
+        },
+        onError: (error) => {
           NotifyError({
-            title: `Internal API error: ${r.status} ${r.statusText}`,
-            msg: change_msg
-          });
+            title: 'Web API error',
+            msg: error.message ? error.message : 'Web API error changing metric profile'
+          })
         }
-      }
+      })
     } else {
       services = groupMetricsByServices(servicesList);
       dataToSend = {
@@ -741,53 +709,39 @@ export const MetricProfilesComponent = (props) => {
         description: formValues.description,
         services
       }
-      let response = await webapi.addMetricProfile(dataToSend);
-      if (!response.ok) {
-        let add_msg = '';
-        try {
-          let json = await response.json();
-          let msg_list = [];
-          json.errors.forEach(e => msg_list.push(e.details));
-          add_msg = msg_list.join(' ');
-        } catch(err) {
-          add_msg = 'Web API error adding metric profile';
-        }
-        NotifyError({
-          title: `Web API error: ${response.status} ${response.statusText}`,
-          msg: add_msg
-        });
-      } else {
-        let r_json = await response.json();
-        let r_internal = await backend.addObject(
-          '/api/v2/internal/metricprofiles/',
-          {
-            apiid: r_json.data.id,
+      webapiAddMutation.mutate(dataToSend, {
+        onSuccess: (data) => {
+          backendAddMutation.mutate({
+            apiid: data.data.id,
             name: dataToSend.name,
             groupname: formValues.groupname,
             description: formValues.description,
             services: backend_services
-          }
-        );
-        if (r_internal.ok)
-          NotifyOk({
-            msg: 'Metric profile successfully added',
-            title: 'Added',
-            callback: () => history.push('/ui/metricprofiles')
-          });
-        else {
-          let add_msg = '';
-          try {
-            let json = await r_internal.json();
-            add_msg = json.detail;
-          } catch(err) {
-            add_msg = 'Internal API error adding metric profile';
-          }
+          }, {
+            onSuccess: () => {
+              queryClient.invalidateQueries('metricprofile');
+              queryClient.invalidateQueries('public_metricprofile');
+              NotifyOk({
+                msg: 'Metric profile successfully added',
+                title: 'Added',
+                callback: () => history.push('/ui/metricprofiles')
+              });
+            },
+            onError: (error) => {
+              NotifyError({
+                title: 'Internal API error',
+                msg: error.message ? error.message : 'Internal API error adding metric profile'
+              })
+            }
+          })
+        },
+        onError: (error) => {
           NotifyError({
-            title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
-            msg: add_msg
-          });
+            title: 'Web API error',
+            msg: error.message ? error.message : 'Web API error adding metric profile'
+          })
         }
-      }
+      })
     }
   }
 
@@ -856,47 +810,71 @@ export const MetricProfilesComponent = (props) => {
       );
   }
 
-  if (loadingMetricProfile || loadingUserDetails)
+  if (loadingUserDetails || loadingBackendMP || loadingWebApiMP || loadingMetricsAll || loadingServiceFlavoursAll)
     return (<LoadingAnim />)
-
-  else if (errorMetricProfile)
-    return (<ErrorComponent error={errorMetricProfile}/>);
 
   else if (errorUserDetails)
     return (<ErrorComponent error={errorUserDetails}/>);
 
-  else if (!loadingMetricProfile && !loadingUserDetails && metricProfile)
+  else if (errorBackendMP)
+    return (<ErrorComponent error={errorBackendMP}/>);
+
+  else if (errorWebApiMP)
+    return (<ErrorComponent error={errorWebApiMP} />)
+
+  else if (errorMetricsAll)
+    return (<ErrorComponent error={errorMetricsAll} />)
+
+  else if (errorServiceFlavoursAll)
+    return (<ErrorComponent error={errorServiceFlavoursAll} />)
+
+  else if (!loadingUserDetails && !loadingBackendMP && !loadingWebApiMP && !loadingMetricsAll && !loadingServiceFlavoursAll)
   {
     let write_perm = undefined
 
-    if (publicView && !addview && !cloneview && !listServices && !viewServices) {
-      setMetricProfileName(metricProfile.profile.name);
-      setMetricProfileDescription(metricProfile.profile.description);
-      setGroupname(metricProfile.groupname);
-      setViewServices(flattenServices(metricProfile.profile.services).sort(sortServices));
-      setListServices(flattenServices(metricProfile.profile.services).sort(sortServices));
+    var metricProfile = {
+      profile: {
+        name: '',
+        description: '',
+        services: [],
+      },
+      groupname: '',
+      services: undefined
     }
-    else if (!addview && !cloneview && !listServices && !viewServices) {
-      setMetricProfileName(metricProfile.profile.name);
-      setMetricProfileDescription(metricProfile.profile.description);
-      setGroupname(metricProfile.groupname);
-      setViewServices(ensureAlignedIndexes(flattenServices(metricProfile.profile.services).sort(sortServices)));
-      setListServices(ensureAlignedIndexes(flattenServices(metricProfile.profile.services).sort(sortServices)));
-    }
-    else if (addview && !cloneview && !viewServices && !listServices) {
-      setMetricProfileName('');
-      setMetricProfileDescription('');
-      setGroupname('')
-      setViewServices([{service: '', metric: '', index: 0, isNew: true}]);
-      setListServices([{service: '', metric: '', index: 0, isNew: true}]);
-    }
-    else if (cloneview && !viewServices && !listServices) {
-      setMetricProfileName('Cloned ' + metricProfile.profile.name);
-      metricProfile.profile.id = ''
-      setMetricProfileDescription(metricProfile.profile.description);
-      setGroupname(metricProfile.groupname)
-      setViewServices(ensureAlignedIndexes(flattenServices(metricProfile.profile.services).sort(sortServices)));
-      setListServices(ensureAlignedIndexes(flattenServices(metricProfile.profile.services).sort(sortServices)));
+
+    if (backendMP && webApiMP) {
+      metricProfile.profile = webApiMP;
+      metricProfile.groupname = backendMP.groupname;
+      if (publicView && !addview && !cloneview && !listServices && !viewServices) {
+        setMetricProfileName(metricProfile.profile.name);
+        setMetricProfileDescription(metricProfile.profile.description);
+        setGroupname(metricProfile.groupname);
+        setViewServices(flattenServices(metricProfile.profile.services).sort(sortServices));
+        setListServices(flattenServices(metricProfile.profile.services).sort(sortServices));
+      }
+      else if (!addview && !cloneview && !listServices && !viewServices) {
+        setMetricProfileName(metricProfile.profile.name);
+        setMetricProfileDescription(metricProfile.profile.description);
+        setGroupname(metricProfile.groupname);
+        setViewServices(ensureAlignedIndexes(flattenServices(metricProfile.profile.services).sort(sortServices)));
+        setListServices(ensureAlignedIndexes(flattenServices(metricProfile.profile.services).sort(sortServices)));
+      }
+      else if (cloneview && !viewServices && !listServices) {
+        setMetricProfileName('Cloned ' + metricProfile.profile.name);
+        metricProfile.profile.id = ''
+        setMetricProfileDescription(metricProfile.profile.description);
+        setGroupname(metricProfile.groupname)
+        setViewServices(ensureAlignedIndexes(flattenServices(metricProfile.profile.services).sort(sortServices)));
+        setListServices(ensureAlignedIndexes(flattenServices(metricProfile.profile.services).sort(sortServices)));
+      }
+    } else {
+      if (addview && !cloneview && !viewServices && !listServices) {
+        setMetricProfileName('');
+        setMetricProfileDescription('');
+        setGroupname('')
+        setViewServices([{service: '', metric: '', index: 0, isNew: true}]);
+        setListServices([{service: '', metric: '', index: 0, isNew: true}]);
+      }
     }
 
     if (publicView) {
@@ -990,8 +968,8 @@ export const MetricProfilesComponent = (props) => {
             view_services: viewServices,
             search_metric: searchMetric,
             search_serviceflavour: searchServiceFlavour,
-            metrics_all: metricProfile.metricsall,
-            services_all: metricProfile.serviceflavoursall
+            metrics_all: metricsAll,
+            services_all: serviceFlavoursAll
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
           enableReinitialize={true}
@@ -1021,8 +999,8 @@ export const MetricProfilesComponent = (props) => {
                     name="view_services"
                     render={props => (
                       <MetricProfilesComponentContext.Provider value={{
-                        serviceflavours_all: metricProfile.serviceflavoursall,
-                        metrics_all: metricProfile.metricsall,
+                        serviceflavours_all: serviceFlavoursAll,
+                        metrics_all: metricsAll,
                         search_handler: handleSearch,
                         remove_handler: onRemove,
                         insert_handler: onInsert,
@@ -1132,32 +1110,22 @@ export const MetricProfilesComponent = (props) => {
 
 export const MetricProfilesList = (props) => {
   const location = props.location;
-  const backend = new Backend();
   const publicView = props.publicView
 
-  let apiUrl = null;
-  if (publicView)
-    apiUrl = '/api/v2/internal/public_metricprofiles'
-  else
-    apiUrl = '/api/v2/internal/metricprofiles'
+  const webapi = new WebApi({
+    token: props.webapitoken,
+    metricProfiles: props.webapimetric
+  })
+  const queryClient = useQueryClient();
 
-  const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
-    `session_userdetails`, async () => {
-      const sessionActive = await backend.isActiveSession()
-      if (sessionActive.active) {
-        return sessionActive.userdetails
-      }
-    }
+  const { data: userDetails, error: errorUserDetails, status: statusUserDetails } = useQuery(
+    'userdetails', () => fetchUserDetails(true)
   );
 
-  const { data: listMetricProfiles, error: errorListMetricProfiles, isLoading: loadingListMetricProfiles} = useQuery(
-    `metricprofiles_listview`, async () => {
-      const fetched = await backend.fetchData(apiUrl)
-      return fetched
-    },
-    {
-      enabled: !publicView ? userDetails : true
-    }
+  const { data: metricProfiles, error: errorMetricProfiles, status: statusMetricProfiles} = useQuery(
+    `${publicView ? 'public_' : ''}metricprofile`,
+    () => fetchBackendMetricProfiles(publicView),
+    { enabled: !publicView ? !!userDetails : true }
   );
 
   const columns = useMemo(() => [
@@ -1170,7 +1138,24 @@ export const MetricProfilesList = (props) => {
       Header: 'Name',
       id: 'name',
       accessor: e =>
-        <Link to={`/ui/${publicView ? 'public_' : ''}metricprofiles/` + e.name}>
+        <Link
+          to={`/ui/${publicView ? 'public_' : ''}metricprofiles/` + e.name}
+          onMouseEnter={ async () => {
+            await queryClient.prefetchQuery(
+              [`${publicView ? 'public_' : ''}metricprofile`, 'webapi', e.name],
+              () => fetchMetricProfile(webapi, e.apiid)
+            );
+            if (!publicView) {
+              await queryClient.prefetchQuery(
+                'metricsall', () => fetchAllMetrics()
+              );
+
+              await queryClient.prefetchQuery(
+                'serviceflavoursall', () => fetchServiceFlavours()
+              );
+            }
+          } }
+        >
           {e.name}
         </Link>,
       column_width: '20%'
@@ -1190,18 +1175,18 @@ export const MetricProfilesList = (props) => {
         </div>,
       column_width: '8%'
     }
-  ], [publicView])
+  ], [])
 
-  if (loadingUserDetails || loadingListMetricProfiles)
+  if (statusUserDetails === 'loading' || statusMetricProfiles === 'loading')
     return (<LoadingAnim />)
 
-  else if (errorListMetricProfiles)
-    return (<ErrorComponent error={errorListMetricProfiles}/>);
+  else if (statusMetricProfiles === 'error')
+    return (<ErrorComponent error={errorMetricProfiles}/>);
 
-  else if (errorUserDetails)
+  else if (statusUserDetails === 'error')
     return (<ErrorComponent error={errorUserDetails}/>);
 
-  else if (!loadingUserDetails && !loadingUserDetails && listMetricProfiles) {
+  else if (metricProfiles) {
     return (
       <BaseArgoView
         resourcename='metric profile'
@@ -1211,7 +1196,7 @@ export const MetricProfilesList = (props) => {
         addperm={publicView ? false : userDetails.is_superuser || userDetails.groups.metricprofiles.length > 0}
         publicview={publicView}>
         <ProfilesListTable
-          data={listMetricProfiles}
+          data={metricProfiles}
           columns={columns}
           type='metric'
         />
@@ -1249,56 +1234,33 @@ const ListDiffElement = ({title, item1, item2}) => {
 };
 
 
+const fetchMetricProfileVersions = async (name) => {
+  const backend = new Backend();
+
+  return await backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${name}`);
+}
+
+
 export const MetricProfileVersionCompare = (props) => {
   const version1 = props.match.params.id1;
   const version2 = props.match.params.id2;
   const name = props.match.params.name;
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [metricProfileVersion1, setMetricProfileVersion1] = useState(undefined)
-  const [metricProfileVersion2, setMetricProfileVersion2] = useState(undefined)
 
-  useEffect(() => {
-    const backend = new Backend();
-    const fetchDataAndSet = async () => {
-      let json = await backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${name}`);
-      json.forEach((e)=> {
-        if (e.version === version1)
-          setMetricProfileVersion1({
-            name: e.fields.name,
-            groupname: e.fields.groupname,
-            description: e.fields.description,
-            date_created: e.date_created,
-            metricinstances: e.fields.metricinstances,
-          })
-        else if (e.version === version2)
-          setMetricProfileVersion2({
-            name: e.fields.name,
-            groupname: e.fields.groupname,
-            description: e.fields.description,
-            date_created: e.date_created,
-            metricinstances: e.fields.metricinstances,
-          })
-      })
-      setLoading(false);
-    }
-    setLoading(true);
-    try {
-      fetchDataAndSet();
-    }
-    catch (err) {
-      setError(err)
-      setLoading(false);
-    }
-  }, [name, version1, version2])
+  const { data: metricProfileVersions, error, status } = useQuery(
+    ['metricprofile', 'versions', name], () => fetchMetricProfileVersions(name)
+  )
 
-  if (loading)
+  if (status === 'loading')
     return (<LoadingAnim/>);
 
-  if (error)
+  if (status === 'error')
     return (<ErrorComponent error={error}/>);
 
-  else if (!loading && metricProfileVersion1 && metricProfileVersion2) {
+
+  else if (metricProfileVersions) {
+    const metricProfileVersion1 = metricProfileVersions.find(ver => ver.version === version1).fields;
+    const metricProfileVersion2 = metricProfileVersions.find(ver => ver.version === version2).fields;
+
     const { name: name1, description: description1, metricinstances:
       metricinstances1, groupname: groupname1 } = metricProfileVersion1
     const { name: name2, description: description2, metricinstances:
@@ -1335,44 +1297,22 @@ export const MetricProfileVersionCompare = (props) => {
 export const MetricProfileVersionDetails = (props) => {
   const name = props.match.params.name;
   const version = props.match.params.version;
-  const [metricProfileVersion, setMetricProfileVersion] = useState(undefined)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
 
+  const { data: metricProfileVersions, error, status } = useQuery(
+    ['metricprofile', 'versions', name], () => fetchMetricProfileVersions(name)
+  )
 
-  useEffect(() => {
-    const backend = new Backend();
-    const fetchDataAndSet = async () => {
-      let json = await backend.fetchData(`/api/v2/internal/tenantversion/metricprofile/${name}`);
-      json.forEach((e)=> {
-        if (e.version === version)
-          setMetricProfileVersion({
-            name: e.fields.name,
-            groupname: e.fields.groupname,
-            description: e.fields.description,
-            date_created: e.date_created,
-            metricinstances: e.fields.metricinstances,
-          })
-      })
-      setLoading(false);
-    }
-    setLoading(true);
-    try {
-      fetchDataAndSet();
-    }
-    catch (err) {
-      setError(err)
-      setLoading(false);
-    }
-  }, [name, version])
-
-  if (loading)
+  if (status === 'loading')
     return (<LoadingAnim/>);
 
-  else if (error)
+  else if (status === 'error')
     return (<ErrorComponent error={error}/>);
 
-  else if (!loading && metricProfileVersion) {
+  else if (metricProfileVersions) {
+    const instance = metricProfileVersions.find(ver => ver.version === version);
+    const metricProfileVersion = instance.fields;
+    metricProfileVersion.date_created = instance.date_created;
+
     return (
       <BaseArgoView
         resourcename={`${metricProfileVersion.name} (${metricProfileVersion.date_created})`}

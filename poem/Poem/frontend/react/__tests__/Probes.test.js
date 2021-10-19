@@ -5,7 +5,7 @@ import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { ProbeComponent, ProbeList, ProbeVersionDetails } from '../Probes';
 import { Backend } from '../DataManager';
-import { queryCache } from 'react-query';
+import { QueryClientProvider, QueryClient, setLogger } from 'react-query';
 import { NotificationManager } from 'react-notifications';
 
 
@@ -17,11 +17,19 @@ jest.mock('../DataManager', () => {
 
 const mockChangeObject = jest.fn();
 const mockAddObject = jest.fn();
+const mockDeleteObject = jest.fn();
 
+const queryClient = new QueryClient();
+
+setLogger({
+  log: () => {},
+  warn: () => {},
+  error: () => {}
+})
 
 beforeEach(() => {
   jest.clearAllMocks();
-  queryCache.clear();
+  queryClient.clear();
 })
 
 
@@ -146,58 +154,66 @@ const mockProbeVersions = [
 ];
 
 
-function renderListView(publicView=false) {
+function renderListView({ publicView=false, isTenantSchema=false }) {
   const route = `/ui/${publicView ? 'public_' : ''}probes`;
   const history = createMemoryHistory({ initialEntries: [route] });
 
   if (publicView)
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            render={ props => <ProbeList {...props} publicView={true} /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              render={ props => <ProbeList {...props} publicView={true} isTenantSchema={isTenantSchema} /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 
   else
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            render={ props => <ProbeList {...props} /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              render={ props => <ProbeList {...props} isTenantSchema={isTenantSchema} /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 }
 
 
-function renderChangeView(publicView=false) {
+function renderChangeView({ publicView=false, isTenantSchema=false }) {
   const route = `/ui/${publicView ? 'public_' : ''}probes/ams-probe`;
   const history = createMemoryHistory({ initialEntries: [route] });
 
   if (publicView)
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            path='/ui/public_probes/:name'
-            render={ props => <ProbeComponent {...props} publicView={true} /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/public_probes/:name'
+              render={ props => <ProbeComponent {...props} publicView={true} isTenantSchema={isTenantSchema} /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
   else
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            path='/ui/probes/:name'
-            render = { props => <ProbeComponent {...props} /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/probes/:name'
+              render = { props => <ProbeComponent {...props} isTenantSchema={isTenantSchema} /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 }
@@ -209,12 +225,14 @@ function renderAddView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/probes/add'
-          render = { props => <ProbeComponent {...props} addview={true} /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/probes/add'
+            render = { props => <ProbeComponent {...props} addview={true} /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -226,12 +244,14 @@ function renderCloneView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/probes/:name/clone'
-          render = { props => <ProbeComponent {...props} cloneview={true} /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/probes/:name/clone'
+            render = { props => <ProbeComponent {...props} cloneview={true} /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -244,23 +264,27 @@ function renderVersionDetailsView(publicView=false) {
   if (publicView)
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            path='/ui/public_probes/:name/history/:version'
-            render={ props => <ProbeVersionDetails {...props} publicView={true} /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/public_probes/:name/history/:version'
+              render={ props => <ProbeVersionDetails {...props} publicView={true} /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
   else
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            path='/ui/probes/:name/history/:version'
-            render = { props => <ProbeVersionDetails {...props} /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/probes/:name/history/:version'
+              render = { props => <ProbeVersionDetails {...props} /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 }
@@ -278,14 +302,13 @@ describe('Test list of probes on SuperAdmin POEM', () => {
             case '/api/v2/internal/public_probes':
               return Promise.resolve(mockListProbes);
           }
-        },
-        isTenantSchema: () => Promise.resolve(false)
+        }
       }
     })
   })
 
   test('Test that listview renders properly', async () => {
-    renderListView();
+    renderListView({});
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
 
@@ -316,7 +339,7 @@ describe('Test list of probes on SuperAdmin POEM', () => {
   })
 
   test('Test that public listview renders properly', async () => {
-    renderListView(true);
+    renderListView({ publicView: true });
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
 
@@ -347,7 +370,7 @@ describe('Test list of probes on SuperAdmin POEM', () => {
   })
 
   test('Test filter list of probes', async () => {
-    renderListView();
+    renderListView({});
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe to change')
@@ -372,7 +395,7 @@ describe('Test list of probes on SuperAdmin POEM', () => {
   })
 
   test('Test filter public list of probes', async () => {
-    renderListView(true);
+    renderListView({ publicView: true });
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe for details')
@@ -410,14 +433,13 @@ describe('Test list of probes on tenant POEM', () => {
             case '/api/v2/internal/public_probes':
               return Promise.resolve(mockListProbes);
           }
-        },
-        isTenantSchema: () => Promise.resolve(true)
+        }
       }
     })
   })
 
   test('Test that listview renders properly', async () => {
-    renderListView();
+    renderListView({ isTenantSchema: true });
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
 
@@ -448,7 +470,7 @@ describe('Test list of probes on tenant POEM', () => {
   })
 
   test('Test that public listview renders properly', async () => {
-    renderListView(true);
+    renderListView({ publicView: true, isTenantSchema: true });
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
 
@@ -479,7 +501,7 @@ describe('Test list of probes on tenant POEM', () => {
   })
 
   test('Test filter list of probes', async () => {
-    renderListView();
+    renderListView({ isTenantSchema: true });
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe for details')
@@ -504,7 +526,7 @@ describe('Test list of probes on tenant POEM', () => {
   })
 
   test('Test filter public list of probes', async () => {
-    renderListView(true);
+    renderListView({ publicView: true, isTenantSchema: true });
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe for details')
@@ -558,14 +580,14 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
               return Promise.resolve(mockPackages)
           }
         },
-        isTenantSchema: () => Promise.resolve(false),
-        changeObject: mockChangeObject
+        changeObject: mockChangeObject,
+        deleteObject: mockDeleteObject
       }
     })
   })
 
   test('Test that page renders properly', async () => {
-    renderChangeView();
+    renderChangeView({});
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
 
@@ -608,7 +630,7 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
   })
 
   test('Test that public page renders properly', async () => {
-    renderChangeView(true);
+    renderChangeView({ publicView: true });
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
 
@@ -651,11 +673,7 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
   })
 
   test('Test change probe and save', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-
-    renderChangeView();
+    renderChangeView({});
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /change probe/i }).textContent).toBe('Change probe')
@@ -703,11 +721,7 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
   })
 
   test('Test change probe without metric template update and save', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-
-    renderChangeView();
+    renderChangeView({});
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /change probe/i }).textContent).toBe('Change probe')
@@ -753,15 +767,11 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
   })
 
   test('Test error in saving probe with error message', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'Probe with this name already exists.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockChangeObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST; Probe with this name already exists.')
+    } )
 
-    renderChangeView();
+    renderChangeView({});
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /change probe/i }).textContent).toBe('Change probe')
@@ -803,21 +813,19 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
 
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>Probe with this name already exists.</p>
+        <p>400 BAD REQUEST; Probe with this name already exists.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 400 BAD REQUEST',
+      'Error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error in saving probe without error message', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockChangeObject.mockImplementationOnce( () => { throw Error() } );
 
-    renderChangeView();
+    renderChangeView({});
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /change probe/i }).textContent).toBe('Change probe')
@@ -862,7 +870,97 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
         <p>Error changing probe</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 500 SERVER ERROR',
+      'Error',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test successfully deleting probe', async () => {
+    renderChangeView({});
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change probe/i })).toBeInTheDocument();
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'delete' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        '/api/v2/internal/probes/ams-probe'
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Probe successfully deleted', 'Deleted', 2000
+    )
+  })
+
+  test('Test error deleting probe with error message', async () => {
+    mockDeleteObject.mockImplementationOnce(() => {
+      throw Error('404 NOT FOUND; Probe not found.')
+    })
+
+    renderChangeView({});
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change probe/i })).toBeInTheDocument();
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'delete' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        '/api/v2/internal/probes/ams-probe'
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>404 NOT FOUND; Probe not found.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error deleting probe without error message', async () => {
+    mockDeleteObject.mockImplementationOnce(() => { throw Error() });
+
+    renderChangeView({});
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change probe/i })).toBeInTheDocument();
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: 'delete' })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        '/api/v2/internal/probes/ams-probe'
+      )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error deleting probe.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error',
       0,
       expect.any(Function)
     )
@@ -894,14 +992,13 @@ describe('Test probe changeview on tenant POEM', () => {
             case '/api/v2/internal/public_packages':
               return Promise.resolve(mockPackages)
           }
-        },
-        isTenantSchema: () => Promise.resolve(true)
+        }
       }
     })
   })
 
   test('Test that page renders properly', async () => {
-    renderChangeView();
+    renderChangeView({ isTenantSchema: true });
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
 
@@ -960,7 +1057,6 @@ describe('Test probe addview', () => {
               return Promise.resolve(mockPackages)
           }
         },
-        isTenantSchema: () => Promise.resolve(false),
         addObject: mockAddObject
       }
     })
@@ -1009,10 +1105,6 @@ describe('Test probe addview', () => {
   })
 
   test('Test adding a new probe and saving', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 201, statusText: 'CREATED' })
-    )
-
     renderAddView();
 
     await waitFor(() => {
@@ -1062,14 +1154,10 @@ describe('Test probe addview', () => {
     )
   })
 
-  test('Test error adding a new probe with message', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'Probe with this name already exists.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+  test('Test error adding a new probe with error message', async () => {
+    mockAddObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST; Probe with this name already exists.')
+    } )
 
     renderAddView();
 
@@ -1117,19 +1205,17 @@ describe('Test probe addview', () => {
 
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>Probe with this name already exists.</p>
+        <p>400 BAD REQUEST; Probe with this name already exists.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 400 BAD REQUEST',
+      'Error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error adding a new probe without message', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockAddObject.mockImplementationOnce( () => { throw Error() } );
 
     renderAddView();
 
@@ -1180,7 +1266,7 @@ describe('Test probe addview', () => {
         <p>Error adding probe</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 500 SERVER ERROR',
+      'Error',
       0,
       expect.any(Function)
     )
@@ -1264,10 +1350,6 @@ describe('Test probe cloneview', () => {
   })
 
   test('Test save cloned probe', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-
     renderCloneView();
 
     await waitFor(() => {
@@ -1313,13 +1395,9 @@ describe('Test probe cloneview', () => {
   })
 
   test('Test error in saving cloned probe with error message', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'Probe with this name already exists.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockAddObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST; Probe with this name already exists.')
+    } )
 
     renderCloneView();
 
@@ -1362,19 +1440,17 @@ describe('Test probe cloneview', () => {
 
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>Probe with this name already exists.</p>
+        <p>400 BAD REQUEST; Probe with this name already exists.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 400 BAD REQUEST',
+      'Error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error in saving cloned probe without error message', async () => {
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockAddObject.mockImplementationOnce( () => { throw Error() } );
 
     renderCloneView();
 
@@ -1420,7 +1496,7 @@ describe('Test probe cloneview', () => {
         <p>Error adding probe</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Error: 500 SERVER ERROR',
+      'Error',
       0,
       expect.any(Function)
     )
@@ -1526,5 +1602,4 @@ describe('Test probe version details view', () => {
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
   })
-
 })

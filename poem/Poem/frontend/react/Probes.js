@@ -25,7 +25,8 @@ import {
   InputGroupAddon } from 'reactstrap';
 import { Formik, Form, Field, useFormikContext, useField } from 'formik';
 import * as Yup from 'yup';
-import { useQuery } from 'react-query';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
+import { fetchPackages, fetchProbes, fetchProbeVersion } from './QueryFunctions';
 
 
 const ProbeSchema = Yup.object().shape({
@@ -299,24 +300,29 @@ const ProbeForm = ({
   </>
 
 
+const fetchProbe = async (publicView, name) => {
+  const backend = new Backend();
+
+  return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}probes/${name}`);
+}
+
+
+const fetchMetrics = async (publicView, name, version) => {
+  const backend = new Backend();
+
+  return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metricsforprobes/${name}(${version})`);
+}
+
+
 export const ProbeList = (props) => {
   const location = props.location;
   const publicView = props.publicView;
+  const isTenantSchema = props.isTenantSchema;
 
-  const backend = new Backend();
+  const queryClient = useQueryClient();
 
-  const { data: listProbes, error: listProbesError, isLoading: listProbesLoading } = useQuery(
-    'probe_listview', async () => {
-      let probes = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}probes`);
-      return probes;
-    }
-  );
-
-  const { data: isTenantSchema, isLoading: isTenantSchemaLoading } = useQuery(
-    'probe_listview_schema', async () => {
-      let schema = backend.isTenantSchema();
-      return schema;
-    }
+  const { data: probes, error, isLoading: loading } = useQuery(
+    `${publicView ? 'public_' : ''}probe`, () => fetchProbes(publicView)
   );
 
   const columns = React.useMemo(() => [
@@ -330,7 +336,20 @@ export const ProbeList = (props) => {
       column_width: '20%',
       accessor: 'name',
       Cell: e =>
-        <Link to={`/ui/${publicView ? 'public_' : ''}probes/${e.value}`}>
+        <Link
+          to={`/ui/${publicView ? 'public_' : ''}probes/${e.value}`}
+          onMouseEnter={ async () => {
+            await queryClient.prefetchQuery(
+              [`${publicView ? 'public_' : ''}probe`, e.value], () => fetchProbe(publicView, e.value)
+            );
+            await queryClient.prefetchQuery(
+              [`${publicView ? 'public_' : ''}probe`, 'metrics', e.value], () => fetchMetrics(publicView, e.value, e.row.original.version)
+            );
+            await queryClient.prefetchQuery(
+              `${publicView ? 'public_' : ''}package`, () => fetchPackages(publicView)
+            )
+          } }
+        >
           {e.value}
         </Link>,
       Filter: DefaultColumnFilter
@@ -359,15 +378,15 @@ export const ProbeList = (props) => {
       accessor: 'description',
       Filter: DefaultColumnFilter
     }
-  ], [publicView]);
+  ], [publicView, queryClient]);
 
-  if (listProbesLoading || isTenantSchemaLoading)
+  if (loading)
     return (<LoadingAnim/>);
 
-  else if (listProbesError)
-    return (<ErrorComponent error={listProbesError.message}/>);
+  else if (error)
+    return (<ErrorComponent error={error.message}/>);
 
-  else if (!listProbesLoading && !isTenantSchemaLoading && listProbes) {
+  else if (!loading && probes) {
     return (
       <BaseArgoView
         resourcename='probe'
@@ -376,7 +395,7 @@ export const ProbeList = (props) => {
         addnew={!isTenantSchema && !publicView}
       >
         <BaseArgoTable
-          data={listProbes}
+          data={probes}
           columns={columns}
           page_size={50}
           resourcename='probes'
@@ -396,12 +415,14 @@ export const ProbeComponent = (props) => {
   const location = props.location;
   const history = props.history;
   const publicView = props.publicView;
-  const backend = new Backend();
-  const querykey = `probe_${addview ? `addview` : `${name}_${cloneview ? 'cloneview' : `${publicView ? 'publicview' : 'changeview'}`}`}`;
+  const isTenantSchema = props.isTenantSchema;
 
-  const apiListPackages = `/api/v2/internal/${publicView ? 'public_' : ''}packages`;
-  const apiProbeName = `/api/v2/internal/${publicView ? 'public_' : ''}probes`;
-  const apiMetricsForProbes = `/api/v2/internal/${publicView ? 'public_' : ''}metricsforprobes`;
+  const backend = new Backend();
+  const queryClient = useQueryClient();
+
+  const addMutation = useMutation(async (values) => await backend.addObject('/api/v2/internal/probes/', values));
+  const changeMutation = useMutation(async (values) => await backend.changeObject('/api/v2/internal/probes/', values));
+  const deleteMutation = useMutation(async () => await backend.deleteObject(`/api/v2/internal/probes/${name}`));
 
   const [areYouSureModal, setAreYouSureModal] = useState(false);
   const [modalFlag, setModalFlag] = useState(undefined);
@@ -410,37 +431,22 @@ export const ProbeComponent = (props) => {
   const [formValues, setFormValues] = useState(undefined);
 
   const { data: probe, error: probeError, isLoading: probeLoading } = useQuery(
-    `${querykey}_probe`, async () => {
-      if (!addview) {
-        let prb = await backend.fetchData(`${apiProbeName}/${name}`);
-        return prb;
+    [`${publicView ? 'public_' : ''}probe`, name], () => fetchProbe(publicView, name),
+    {
+      enabled: !addview,
+      initialData: () => {
+        return queryClient.getQueryData(`${publicView ? 'public_' : ''}probe`)?.find(prb => prb.name === name)
       }
-    },
-    {enabled: !addview}
-  );
-
-  const { data: isTenantSchema, isLoading: isTenantSchemaLoading } = useQuery(
-    `${querykey}_schema`, async () => {
-      let schema = await backend.isTenantSchema();
-      return schema;
     }
   );
 
-  const { data: metricTemplateList, error: metricTemplateListError, isLoading: metricTemplateListLoading } = useQuery(
-    `${querykey}_metrictemplates`, async () => {
-      let metrics = await backend.fetchData(`${apiMetricsForProbes}/${probe.name}(${probe.version})`);
-      return metrics;
-    },
-    { enabled: probe }
+  const { data: metricTemplates, error: metricTemplatesError, isLoading: metricTemplatesLoading } = useQuery(
+    [`${publicView ? 'public_' : ''}probe`, 'metrics', name], () => fetchMetrics(publicView, probe.name, probe.version),
+    { enabled: !!probe }
   );
 
-  const { data: listPackages, error: listPackagesError, isLoading: listPackagesLoading } = useQuery(
-    `${querykey}_packages`, async () => {
-      let pkgs = await backend.fetchData(apiListPackages);
-      let list_packages = [];
-      pkgs.forEach(pkg => list_packages.push(`${pkg.name} (${pkg.version})`));
-      return list_packages;
-    }
+  const { data: packages, error: packagesError, isLoading: packagesLoading } = useQuery(
+    `${publicView ? 'public_' : ''}package`, () => fetchPackages(publicView)
   );
 
   function toggleAreYouSure() {
@@ -458,7 +464,16 @@ export const ProbeComponent = (props) => {
     toggleAreYouSure();
   }
 
-  async function doChange() {
+  function doChange() {
+    const baseSendValues = new Object({
+      name: formValues.name,
+      package: formValues.pkg,
+      repository: formValues.repository,
+      docurl: formValues.docurl,
+      description: formValues.description,
+      comment: formValues.comment
+    });
+
     if (addview || cloneview) {
       let cloned_from = undefined;
       if (cloneview) {
@@ -467,109 +482,84 @@ export const ProbeComponent = (props) => {
         cloned_from = '';
       }
 
-      let response = await backend.addObject(
-        '/api/v2/internal/probes/',
-        {
-          name: formValues.name,
-          package: formValues.pkg,
-          repository: formValues.repository,
-          docurl: formValues.docurl,
-          description: formValues.description,
-          comment: formValues.comment,
-          cloned_from: cloned_from
+      addMutation.mutate( { ...baseSendValues, cloned_from: cloned_from }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries('public_probe');
+          queryClient.invalidateQueries('probe');
+          NotifyOk({
+            msg: 'Probe successfully added',
+            title: 'Added',
+            callback: () => history.push('/ui/probes')
+          })
+        },
+        onError: (error) => {
+          NotifyError({
+            title: 'Error',
+            msg: error.message ? error.message : 'Error adding probe'
+          })
         }
-      );
-      if (!response.ok) {
-        let add_msg = '';
-        try {
-          let json = await response.json();
-          add_msg = json.detail;
-        } catch(err) {
-          add_msg = 'Error adding probe';
-        }
-        NotifyError({
-          title: `Error: ${response.status} ${response.statusText}`,
-          msg: add_msg
-        });
-      } else {
-        NotifyOk({
-          msg: 'Probe successfully added',
-          title: 'Added',
-          callback: () => history.push('/ui/probes')
-        });
-      }
+      })
     } else {
-      let response = await backend.changeObject(
-        '/api/v2/internal/probes/',
-        {
-          id: formValues.id,
-          name: formValues.name,
-          package: formValues.pkg,
-          repository: formValues.repository,
-          docurl: formValues.docurl,
-          description: formValues.description,
-          comment: formValues.comment,
-          update_metrics: formValues.update_metrics
+      changeMutation.mutate(
+        { ...baseSendValues, id: formValues.id, update_metrics: formValues.update_metrics }, {
+          onSuccess: () => {
+            queryClient.invalidateQueries('public_probe');
+            queryClient.invalidateQueries('probe');
+            NotifyOk({
+              msg: 'Probe successfully changed',
+              title: 'Changed',
+              callback: () => history.push('/ui/probes')
+            })
+          },
+          onError: (error) => {
+            NotifyError({
+              title: 'Error',
+              msg: error.message ? error.message : 'Error changing probe'
+            })
+          }
         }
-      );
-      if (!response.ok) {
-        let change_msg = '';
-        try {
-          let json = await response.json();
-          change_msg = json.detail;
-        } catch(err) {
-          change_msg = 'Error changing probe';
-        }
-        NotifyError({
-          title: `Error: ${response.status} ${response.statusText}`,
-          msg: change_msg
-        });
-      } else {
-        NotifyOk({
-          msg: 'Probe successfully changed',
-          title: 'Changed',
-          callback: () => history.push('/ui/probes')
-        });
-      }
+      )
     }
   }
 
-  async function doDelete() {
-    let response = await backend.deleteObject(`/api/v2/internal/probes/${name}`);
-    if (!response.ok) {
-      let msg = '';
-      try {
-        let json = await response.json();
-        msg = json.detail;
-      } catch(err) {
-        msg = 'Error deleting probe';
+  function doDelete() {
+    deleteMutation.mutate(undefined, {
+      onSuccess: () => {
+        queryClient.invalidateQueries('public_probe');
+        queryClient.invalidateQueries('probe');
+        NotifyOk({
+          msg: 'Probe successfully deleted',
+          title: 'Deleted',
+          callback: () => history.push('/ui/probes')
+        })
+      },
+      onError: (error) => {
+        NotifyError({
+          title: 'Error',
+          msg: error.message ? error.message : 'Error deleting probe.'
+        })
       }
-      NotifyError({
-        title: `Error: ${response.status} ${response.statusText}`,
-        msg: msg
-      });
-    } else {
-      NotifyOk({
-        msg: 'Probe successfully deleted',
-        title: 'Deleted',
-        callback: () => history.push('/ui/probes')
-      });
-    }
+    })
   }
 
-  if (probeLoading || isTenantSchemaLoading || metricTemplateListLoading || listPackagesLoading)
+  const loading = probeLoading || metricTemplatesLoading || packagesLoading;
+  const error = probeError || metricTemplatesError || packagesError;
+
+  if (loading)
     return(<LoadingAnim/>)
 
   else if (probeError)
     return (<ErrorComponent error={probeError.message}/>);
 
-  else if (metricTemplateListError)
-    return (<ErrorComponent error={metricTemplateListError.message}/>);
+  else if (metricTemplatesError)
+    return (<ErrorComponent error={metricTemplatesError.message}/>);
 
-  else if (listPackagesError)
-    return (<ErrorComponent error={listPackagesError}/>);
+  else if (packagesError)
+    return (<ErrorComponent error={packagesError.error}/>);
 
-  else {
+  else if (!error && !loading) {
+    var listPackages = [];
+    packages.forEach(pkg => listPackages.push(`${pkg.name} (${pkg.version})`))
     if (!isTenantSchema) {
       return (
         <BaseArgoView
@@ -618,7 +608,7 @@ export const ProbeComponent = (props) => {
                   cloneview={cloneview}
                   publicView={publicView}
                   list_packages={listPackages}
-                  metrictemplatelist={metricTemplateList}
+                  metrictemplatelist={metricTemplates}
                 />
                 {
                   !publicView &&
@@ -678,14 +668,15 @@ export const ProbeComponent = (props) => {
                 {...props}
                 isTenantSchema={true}
                 publicView={publicView}
-                metrictemplatelist={metricTemplateList}
+                metrictemplatelist={metricTemplates}
               />
             )}
           </Formik>
         </BaseArgoView>
       );
     }
-  }
+  } else
+    return null;
 };
 
 
@@ -695,34 +686,9 @@ export const ProbeVersionCompare = (props) => {
   const name = props.match.params.name;
   const publicView = props.publicView;
 
-  const [loading, setLoading] = useState(false);
-  const [probe1, setProbe1] = useState({});
-  const [probe2, setProbe2] = useState({});
-  const [error, setError] = useState(null);
-
-
-  useEffect(() => {
-    const backend = new Backend();
-    setLoading(true);
-
-    async function fetchVersions() {
-      try {
-        let json = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}version/probe/${name}`);
-
-        json.forEach((e) => {
-          if (e.version == version1)
-            setProbe1(e.fields);
-          else if (e.version === version2)
-            setProbe2(e.fields);
-        });
-      } catch(err) {
-        setError(err);
-      }
-      setLoading(false);
-    }
-
-    fetchVersions();
-  }, [name, publicView, version1, version2]);
+  const { data: versions, error, isLoading: loading } = useQuery(
+    [`${publicView ? 'public_' : ''}probe`, 'version', name], () => fetchProbeVersion(publicView, name)
+  )
 
   if (loading)
     return (<LoadingAnim/>);
@@ -730,7 +696,18 @@ export const ProbeVersionCompare = (props) => {
   else if (error)
     return (<ErrorComponent error={error}/>);
 
-  else if (!loading && probe1 && probe2) {
+  else if (versions) {
+    var probe1 = undefined;
+    var probe2 = undefined;
+
+    versions.forEach(ver => {
+      if (ver.version == version1)
+        probe1 = ver.fields;
+
+      if (ver.version == version2)
+        probe2 = ver.fields;
+    })
+
     return (
       <React.Fragment>
         <div className="d-flex align-items-center justify-content-between">
@@ -782,31 +759,9 @@ export const ProbeVersionDetails = (props) => {
   const version = props.match.params.version;
   const publicView = props.publicView;
 
-  const apiUrl = `/api/v2/internal/${publicView ? 'public_' : ''}version/probe`;
-
-  const [probe, setProbe] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const backend = new Backend();
-    setLoading(true);
-
-    async function fetchProbeVersion() {
-      try {
-        let json = await backend.fetchData(`${apiUrl}/${name}`);
-        json.forEach((e) => {
-          if (e.version === version)
-            setProbe(e.fields);
-        });
-      } catch(err) {
-        setError(err);
-      }
-      setLoading(false);
-    }
-
-    fetchProbeVersion();
-  }, [apiUrl, name, version]);
+  const { data: versions, error, isLoading: loading } = useQuery(
+    [`${publicView ? 'public_' : ''}probe`, 'version', name], () => fetchProbeVersion(publicView, name)
+  )
 
   if (loading)
     return (<LoadingAnim/>);
@@ -814,7 +769,13 @@ export const ProbeVersionDetails = (props) => {
   else if (error)
     return (<ErrorComponent error={error}/>);
 
-  else if (!loading && name) {
+  else if (versions) {
+    var probe = undefined;
+    versions.forEach(ver => {
+      if (ver.version === version)
+        probe = ver.fields;
+    })
+
     return (
       <BaseArgoView
         resourcename={`${name} (${version})`}

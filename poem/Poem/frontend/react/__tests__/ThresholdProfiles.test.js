@@ -5,7 +5,7 @@ import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { ThresholdsProfilesChange, ThresholdsProfilesList, ThresholdsProfileVersionDetail } from '../ThresholdProfiles';
 import { Backend, WebApi } from '../DataManager';
-import { queryCache } from 'react-query';
+import { QueryClient, QueryClientProvider, setLogger } from 'react-query';
 import { NotificationManager } from 'react-notifications';
 
 
@@ -25,10 +25,18 @@ const mockDeleteThresholdsProfile = jest.fn();
 const mockAddObject = jest.fn();
 const mockAddThresholdsProfile = jest.fn();
 
+const queryClient = new QueryClient();
+
+setLogger({
+  log: () => {},
+  warn: () => {},
+  error: () => {}
+})
+
 
 beforeEach(() => {
   jest.clearAllMocks();
-  queryCache.clear();
+  queryClient.clear();
 })
 
 
@@ -148,20 +156,35 @@ function renderListView(publicView=false) {
   if (publicView)
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            render={ props => <ThresholdsProfilesList {...props} publicView={true} /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              render={ props => <ThresholdsProfilesList
+                {...props}
+                webapithresholds='https://mock.thresholds.com'
+                webapitoken='token'
+                publicView={true}
+              /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 
   else
     return {
       ...render(
-        <Router history={history}>
-          <Route component={ThresholdsProfilesList} />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              render={ props => <ThresholdsProfilesList
+                {...props}
+                webapithresholds='https://mock.thresholds.com'
+                webapitoken='token'
+              /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 }
@@ -174,35 +197,39 @@ function renderChangeView(publicView=false) {
   if (publicView)
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            path='/ui/public_thresholdsprofiles/:name'
-            render={ props => <ThresholdsProfilesChange
-              {...props}
-              webapithresholds='https://mock.thresholds.com'
-              webapitoken='token'
-              tenantname='TENANT'
-              publicView={true}
-            /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/public_thresholdsprofiles/:name'
+              render={ props => <ThresholdsProfilesChange
+                {...props}
+                webapithresholds='https://mock.thresholds.com'
+                webapitoken='token'
+                tenantname='TENANT'
+                publicView={true}
+              /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 
   else
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            path='/ui/thresholdsprofiles/:name'
-            render={ props => <ThresholdsProfilesChange
-              {...props}
-              webapithresholds='https://mock.thresholds.com'
-              webapitoken='token'
-              tenantname='TENANT'
-            /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/thresholdsprofiles/:name'
+              render={ props => <ThresholdsProfilesChange
+                {...props}
+                webapithresholds='https://mock.thresholds.com'
+                webapitoken='token'
+                tenantname='TENANT'
+              /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 }
@@ -214,18 +241,20 @@ function renderAddView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/thresholdsprofiles/add'
-          render={ props => <ThresholdsProfilesChange
-            {...props}
-            webapithresholds='https://mock.thresholds.com'
-            webapitoken='token'
-            tenantname='TENANT'
-            addview={true}
-          /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/thresholdsprofiles/add'
+            render={ props => <ThresholdsProfilesChange
+              {...props}
+              webapithresholds='https://mock.thresholds.com'
+              webapitoken='token'
+              tenantname='TENANT'
+              addview={true}
+            /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -237,12 +266,14 @@ function renderVersionDetailsView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/thresholdsprofiles/:name/history/:version'
-          render={ props =>  <ThresholdsProfileVersionDetail {...props} />}
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/thresholdsprofiles/:name/history/:version'
+            render={ props =>  <ThresholdsProfileVersionDetail {...props} />}
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -321,6 +352,7 @@ describe('Tests for thresholds profiles listview', () => {
 describe('Tests for threshols profile changeview', () => {
   jest.spyOn(NotificationManager, 'success');
   jest.spyOn(NotificationManager, 'error');
+  jest.spyOn(queryClient, 'invalidateQueries');
 
   beforeAll(() => {
     WebApi.mockImplementation(() => {
@@ -334,7 +366,12 @@ describe('Tests for threshols profile changeview', () => {
       return {
         fetchData: () => Promise.resolve(mockBackendProfile),
         fetchListOfNames: () => Promise.resolve(['argo.AMS-Check', 'argo.AMSPublisher-Check', 'argo.POEM-API-MON', 'argo.API-Status-Check']),
-        isActiveSession: () => Promise.resolve(mockActiveSession),
+        isActiveSession: (path) => {
+          switch (path) {
+            case true:
+              return Promise.resolve(mockActiveSession)
+          }
+        },
         changeObject: mockChangeObject,
         deleteObject: mockDeleteObject
       }
@@ -579,7 +616,7 @@ describe('Tests for threshols profile changeview', () => {
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
     )
     mockChangeThresholdsProfile.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+      Promise.resolve({ ok: 'ok' })
     )
 
     renderChangeView();
@@ -662,30 +699,17 @@ describe('Tests for threshols profile changeview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('thresholdsprofile');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_thresholdsprofile');
     expect(NotificationManager.success).toHaveBeenCalledWith(
       'Thresholds profile successfully changed', 'Changed', 2000
     )
   })
 
   test('Test error changing thresholds profile on web api with error message', async () => {
-    mockChangeThresholdsProfile.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({
-          code: '406',
-          message: 'Content Not acceptable',
-          errors: [
-            {
-              message: 'Content Not acceptable',
-              code: '406',
-              details: 'There has been an error.'
-            }
-          ],
-          details: 'There has been an error.'
-        }),
-        status: 406,
-        statusText: 'Content Not acceptable'
-      })
-    )
+    mockChangeThresholdsProfile.mockImplementationOnce( () => {
+      throw Error('406 Content Not acceptable: There has been an error.')
+    } );
 
     renderChangeView();
 
@@ -747,22 +771,20 @@ describe('Tests for threshols profile changeview', () => {
       expect(mockChangeObject).not.toHaveBeenCalled()
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been an error.</p>
+        <p>406 Content Not acceptable: There has been an error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Web API error: 406 Content Not acceptable',
+      'Web API error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error changing thresholds profile on web api without error message', async () => {
-    mockChangeThresholdsProfile.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR'
-      })
-    )
+    mockChangeThresholdsProfile.mockImplementationOnce( () => { throw Error() } );
 
     renderChangeView();
 
@@ -824,12 +846,13 @@ describe('Tests for threshols profile changeview', () => {
       expect(mockChangeObject).not.toHaveBeenCalled()
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Web API error changing thresholds profile</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Web API error: 500 SERVER ERROR',
+      'Web API error',
       0,
       expect.any(Function)
     )
@@ -837,15 +860,11 @@ describe('Tests for threshols profile changeview', () => {
 
   test('Test error changing thresholds profile on internal backend with error message', async () => {
     mockChangeThresholdsProfile.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+      Promise.resolve({ ok: 'ok' })
     )
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'There has been an error.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockChangeObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: There has been an error.')
+    } );
 
     renderChangeView();
 
@@ -929,10 +948,10 @@ describe('Tests for threshols profile changeview', () => {
 
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been an error.</p>
+        <p>400 BAD REQUEST: There has been an error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Internal API error: 400 BAD REQUEST',
+      'Internal API error',
       0,
       expect.any(Function)
     )
@@ -940,11 +959,9 @@ describe('Tests for threshols profile changeview', () => {
 
   test('Test error changing thresholds profile on internal backend without error message', async () => {
     mockChangeThresholdsProfile.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+      Promise.resolve({ ok: 'ok' })
     )
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockChangeObject.mockImplementationOnce( () => { throw Error() } );
 
     renderChangeView();
 
@@ -1026,21 +1043,19 @@ describe('Tests for threshols profile changeview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Internal API error changing thresholds profile</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Internal API error: 500 SERVER ERROR',
+      'Internal API error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test successfully deleting thresholds profile', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 204, statusText: 'NO CONTENT' })
-    )
     mockDeleteThresholdsProfile.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
     )
@@ -1069,30 +1084,17 @@ describe('Tests for threshols profile changeview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('thresholdsprofile');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_thresholdsprofile');
     expect(NotificationManager.success).toHaveBeenCalledWith(
       'Thresholds profile successfully deleted', 'Deleted', 2000
     )
   })
 
   test('Test error deleting thresholds profile on web api with error message', async () => {
-    mockDeleteThresholdsProfile.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({
-          code: '406',
-          message: 'Content Not acceptable',
-          errors: [
-            {
-              message: 'Content Not acceptable',
-              code: '406',
-              details: 'There has been an error.'
-            }
-          ],
-          details: 'There has been an error.'
-        }),
-        status: 406,
-        statusText: 'Content Not acceptable'
-      })
-    )
+    mockDeleteThresholdsProfile.mockImplementationOnce( () => {
+      throw Error('406 Content Not acceptable: There has been an error.')
+    } );
 
     renderChangeView();
 
@@ -1116,19 +1118,20 @@ describe('Tests for threshols profile changeview', () => {
       expect(mockDeleteObject).not.toHaveBeenCalled()
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been an error.</p>
+        <p>406 Content Not acceptable: There has been an error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Web API error: 406 Content Not acceptable',
+      'Web API error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error deleting thresholds profile on web api without error message', async () => {
-    mockDeleteThresholdsProfile.mockReturnValueOnce({ status: 500, statusText: 'SERVER ERROR' })
+    mockDeleteThresholdsProfile.mockImplementationOnce( () => { throw Error() } );
 
     renderChangeView();
 
@@ -1152,25 +1155,22 @@ describe('Tests for threshols profile changeview', () => {
       expect(mockDeleteObject).not.toHaveBeenCalled()
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Web API error deleting thresholds profile</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Web API error: 500 SERVER ERROR',
+      'Web API error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error deleting thresholds profile on internal api with error message', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'There has been an error.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockDeleteObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: There has been an error.')
+    } );
     mockDeleteThresholdsProfile.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
     )
@@ -1199,21 +1199,20 @@ describe('Tests for threshols profile changeview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been an error.</p>
+        <p>400 BAD REQUEST: There has been an error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Internal API error: 400 BAD REQUEST',
+      'Internal API error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error deleting thresholds profile on internal api without error message', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockDeleteObject.mockImplementationOnce( () => { throw Error() } );
     mockDeleteThresholdsProfile.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
     )
@@ -1242,12 +1241,13 @@ describe('Tests for threshols profile changeview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Internal API error deleting thresholds profile</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Internal API error: 500 SERVER ERROR',
+      'Internal API error',
       0,
       expect.any(Function)
     )
@@ -1258,6 +1258,7 @@ describe('Tests for threshols profile changeview', () => {
 describe('Tests for thresholds profiles addview', () => {
   jest.spyOn(NotificationManager, 'success');
   jest.spyOn(NotificationManager, 'error');
+  jest.spyOn(queryClient, 'invalidateQueries');
 
   beforeAll(() => {
     WebApi.mockImplementation(() => {
@@ -1268,7 +1269,12 @@ describe('Tests for thresholds profiles addview', () => {
     Backend.mockImplementation(() => {
       return {
         fetchListOfNames: () => Promise.resolve(['argo.AMS-Check', 'argo.AMSPublisher-Check', 'argo.POEM-API-MON', 'argo.API-Status-Check']),
-        isActiveSession: () => Promise.resolve(mockActiveSession),
+        isActiveSession: (path) => {
+          switch (path) {
+            case true:
+              return Promise.resolve(mockActiveSession)
+          }
+        },
         addObject: mockAddObject
       }
     })
@@ -1304,25 +1310,17 @@ describe('Tests for thresholds profiles addview', () => {
   test('Test successfully adding thresholds profile', async () => {
     mockAddThresholdsProfile.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          status: {
-            message: 'Thresholds profile Created',
-            code: "200"
-          },
-          data: {
-            id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
-            links: {
-              self: 'string'
-            }
+        status: {
+          message: 'Thresholds profile Created',
+          code: "200"
+        },
+        data: {
+          id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+          links: {
+            self: 'string'
           }
-        }),
-        ok: true,
-        status: 200,
-        statusText: 'Thresholds profile Created'
+        }
       })
-    )
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 201, statusText: 'CREATED' })
     )
 
     renderAddView();
@@ -1418,30 +1416,17 @@ describe('Tests for thresholds profiles addview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('thresholdsprofile');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_thresholdsprofile');
     expect(NotificationManager.success).toHaveBeenCalledWith(
       'Thresholds profile successfully added', 'Added', 2000
     )
   })
 
   test('Test error adding thresholds profile in web api with error message', async () => {
-    mockAddThresholdsProfile.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({
-          code: '406',
-          message: 'Content Not acceptable',
-          errors: [
-            {
-              message: 'Content Not acceptable',
-              code: '406',
-              details: 'There has been an error.'
-            }
-          ],
-          details: 'There has been an error.'
-        }),
-        status: 406,
-        statusText: 'Content Not acceptable'
-      })
-    )
+    mockAddThresholdsProfile.mockImplementationOnce( () => {
+      throw Error('406 Content Not acceptable: There has been an error.')
+    } );
 
     renderAddView();
 
@@ -1516,21 +1501,20 @@ describe('Tests for thresholds profiles addview', () => {
       expect(mockAddObject).not.toHaveBeenCalled()
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been an error.</p>
+        <p>406 Content Not acceptable: There has been an error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Web API error: 406 Content Not acceptable',
+      'Web API error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error adding thresholds profile in web api without error message', async () => {
-    mockAddThresholdsProfile.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockAddThresholdsProfile.mockImplementationOnce( () => { throw Error() } );
 
     renderAddView();
 
@@ -1605,12 +1589,13 @@ describe('Tests for thresholds profiles addview', () => {
       expect(mockAddObject).not.toHaveBeenCalled()
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Web API error adding thresholds profile</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Web API error: 500 SERVER ERROR',
+      'Web API error',
       0,
       expect.any(Function)
     )
@@ -1619,30 +1604,21 @@ describe('Tests for thresholds profiles addview', () => {
   test('Test error adding thresholds profile in internal api with error message', async () => {
     mockAddThresholdsProfile.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          status: {
-            message: 'Thresholds profile Created',
-            code: "200"
-          },
-          data: {
-            id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
-            links: {
-              self: 'string'
-            }
+        status: {
+          message: 'Thresholds profile Created',
+          code: "200"
+        },
+        data: {
+          id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+          links: {
+            self: 'string'
           }
-        }),
-        ok: true,
-        status: 200,
-        statusText: 'Thresholds profile Created'
+        }
       })
     )
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'There has been an error.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockAddObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: There has been an error.')
+    } );
 
     renderAddView();
 
@@ -1737,12 +1713,13 @@ describe('Tests for thresholds profiles addview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been an error.</p>
+        <p>400 BAD REQUEST: There has been an error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Internal API error: 400 BAD REQUEST',
+      'Internal API error',
       0,
       expect.any(Function)
     )
@@ -1751,26 +1728,19 @@ describe('Tests for thresholds profiles addview', () => {
   test('Test error adding thresholds profile in internal api without error message', async () => {
     mockAddThresholdsProfile.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          status: {
-            message: 'Thresholds profile Created',
-            code: "200"
-          },
-          data: {
-            id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
-            links: {
-              self: 'string'
-            }
+        status: {
+          message: 'Thresholds profile Created',
+          code: "200"
+        },
+        data: {
+          id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+          links: {
+            self: 'string'
           }
-        }),
-        ok: true,
-        status: 200,
-        statusText: 'Thresholds profile Created'
+        }
       })
     )
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockAddObject.mockImplementationOnce( () => { throw Error() } );
 
     renderAddView();
 
@@ -1865,12 +1835,13 @@ describe('Tests for thresholds profiles addview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Internal API error adding thresholds profile</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Internal API error: 500 SERVER ERROR',
+      'Internal API error',
       0,
       expect.any(Function)
     )

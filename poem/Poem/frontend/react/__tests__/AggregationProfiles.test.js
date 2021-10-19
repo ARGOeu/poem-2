@@ -9,7 +9,7 @@ import {
   AggregationProfilesList,
   AggregationProfileVersionDetails
  } from '../AggregationProfiles';
-import { queryCache } from 'react-query';
+import { QueryClientProvider, QueryClient, setLogger } from 'react-query';
 import { NotificationManager } from 'react-notifications';
 import useEvent from '@testing-library/user-event';
 
@@ -21,6 +21,8 @@ jest.mock('../DataManager', () => {
   }
 })
 
+jest.setTimeout(20000);
+
 const mockChangeObject = jest.fn();
 const mockChangeAggregation = jest.fn();
 const mockDeleteObject = jest.fn();
@@ -28,10 +30,18 @@ const mockDeleteAggregation = jest.fn();
 const mockAddAggregation = jest.fn();
 const mockAddObject = jest.fn();
 
+const queryClient = new QueryClient();
+
+setLogger({
+  log: () => {},
+  warn: () => {},
+  error: () => {}
+})
+
 
 beforeEach(() => {
   jest.clearAllMocks();
-  queryCache.clear()
+  queryClient.clear()
 })
 
 
@@ -333,20 +343,37 @@ function renderListView(publicView=false) {
   if (publicView)
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            render={ props => <AggregationProfilesList {...props} publicView={true} /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              render={ props => <AggregationProfilesList
+                {...props}
+                publicView={true}
+                webapimetric='https://mock.metrics.com'
+                webapiaggregation='https://mock.aggregations.com'
+                webapitoken='token'
+              /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 
   else
     return {
       ...render(
-        <Router history={history}>
-          <Route component={AggregationProfilesList} />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              render={ props => <AggregationProfilesList
+                {...props}
+                webapimetric='https://mock.metrics.com'
+                webapiaggregation='https://mock.aggregations.com'
+                webapitoken='token'
+              /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 }
@@ -359,35 +386,39 @@ function renderChangeView(publicView=false) {
   if (publicView)
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            path='/ui/public_aggregationprofiles/:name'
-            render={ props => <AggregationProfilesChange
-              {...props}
-              webapimetric='https://mock.metrics.com'
-              webapiaggregation='https://mock.aggregations.com'
-              webapitoken='token'
-              tenantname='TENANT'
-              publicView={true}
-            /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/public_aggregationprofiles/:name'
+              render={ props => <AggregationProfilesChange
+                {...props}
+                webapimetric='https://mock.metrics.com'
+                webapiaggregation='https://mock.aggregations.com'
+                webapitoken='token'
+                tenantname='TENANT'
+                publicView={true}
+              /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 
   else
     return {
       ...render(
-        <Router history={history}>
-          <Route exact path="/ui/aggregationprofiles/:name"
-            render={props => <AggregationProfilesChange
-              {...props}
-              webapiaggregation='https://mock.aggregations.com'
-              webapimetric='https://mock.metrics.com'
-              webapitoken='token'
-              tenantname='TENANT' /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route exact path="/ui/aggregationprofiles/:name"
+              render={props => <AggregationProfilesChange
+                {...props}
+                webapiaggregation='https://mock.aggregations.com'
+                webapimetric='https://mock.metrics.com'
+                webapitoken='token'
+                tenantname='TENANT' /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 }
@@ -399,19 +430,21 @@ function renderAddview() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/aggregationprofiles/add'
-          render={ props => <AggregationProfilesChange
-            {...props}
-            webapiaggregation='https://mock.aggregations.com'
-            webapimetric='https://mock.metrics.com'
-            webapitoken='token'
-            tenantname='TENANT'
-            addview={true}
-          /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/aggregationprofiles/add'
+            render={ props => <AggregationProfilesChange
+              {...props}
+              webapiaggregation='https://mock.aggregations.com'
+              webapimetric='https://mock.metrics.com'
+              webapitoken='token'
+              tenantname='TENANT'
+              addview={true}
+            /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -423,12 +456,14 @@ function renderVersionDetailsView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/aggregationprofiles/:name/history/:version'
-          render={ props => <AggregationProfileVersionDetails {...props} />}
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/aggregationprofiles/:name/history/:version'
+            render={ props => <AggregationProfileVersionDetails {...props} />}
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -500,6 +535,7 @@ describe('Tests for aggregation profiles listview', () => {
 describe('Tests for aggregation profiles changeview', () => {
   jest.spyOn(NotificationManager, 'success');
   jest.spyOn(NotificationManager, 'error');
+  jest.spyOn(queryClient, 'invalidateQueries');
 
   beforeAll(() => {
     WebApi.mockImplementation(() => {
@@ -814,7 +850,7 @@ describe('Tests for aggregation profiles changeview', () => {
   })
 
   test('Test export json successfully', async () => {
-    const helpers = require('../Helpers');
+    const helpers = require('../FileDownload');
     jest.spyOn(helpers, 'downloadJSON').mockReturnValueOnce(null);
 
     renderChangeView();
@@ -892,7 +928,7 @@ describe('Tests for aggregation profiles changeview', () => {
   });
 
   test('Test export json when form has been changed', async () => {
-    const helpers = require('../Helpers');
+    const helpers = require('../FileDownload');
     jest.spyOn(helpers, 'downloadJSON').mockReturnValueOnce(null);
 
     renderChangeView();
@@ -981,24 +1017,9 @@ describe('Tests for aggregation profiles changeview', () => {
   })
 
   test('Test error changing aggregation profile on web api with error message', async () => {
-    mockChangeAggregation.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({
-          code: '406',
-          message: 'Content Not acceptable',
-          errors: [
-            {
-              message: 'Content Not acceptable',
-              code: '406',
-              details: 'There has been an error.'
-            }
-          ],
-          details: 'There has been an error.'
-        }),
-        status: 406,
-        statusText: 'Content Not acceptable'
-      })
-    )
+    mockChangeAggregation.mockImplementationOnce( () => {
+      throw Error('406 Content Not acceptable: There has been an error.')
+    } );
 
     renderChangeView();
 
@@ -1097,21 +1118,20 @@ describe('Tests for aggregation profiles changeview', () => {
       expect(mockChangeObject).not.toHaveBeenCalled();
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been an error.</p>
+        <p>406 Content Not acceptable: There has been an error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Web API error: 406 Content Not acceptable',
+      'Web API error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error changing aggregation profile on web api without error message', async () => {
-    mockChangeAggregation.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockChangeAggregation.mockImplementationOnce( () => { throw Error() } );
 
     renderChangeView();
 
@@ -1210,27 +1230,24 @@ describe('Tests for aggregation profiles changeview', () => {
       expect(mockChangeObject).not.toHaveBeenCalled();
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Web API error changing aggregation profile</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Web API error: 500 SERVER ERROR',
+      'Web API error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error changing aggregation profile on internal API with error message', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'There has been an error.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockChangeObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: There has been an error.')
+    } );
     mockChangeAggregation.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+      Promise.resolve({ ok: 'ok' })
     )
 
     renderChangeView();
@@ -1385,24 +1402,21 @@ describe('Tests for aggregation profiles changeview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been an error.</p>
+        <p>400 BAD REQUEST: There has been an error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Internal API error: 400 BAD REQUEST',
+      'Internal API error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error changing aggregation profile on internal API without error message', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
-    mockChangeAggregation.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
+    mockChangeObject.mockImplementationOnce( () => { throw Error() } );
+    mockChangeAggregation.mockReturnValueOnce( Promise.resolve({ ok: 'ok' }) );
 
     renderChangeView();
 
@@ -1556,24 +1570,20 @@ describe('Tests for aggregation profiles changeview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Internal API error changing aggregation profile</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Internal API error: 500 SERVER ERROR',
+      'Internal API error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test change aggregation profile and save', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-    mockChangeAggregation.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
+    mockChangeAggregation.mockReturnValueOnce( Promise.resolve({ ok: 'ok' }) );
 
     renderChangeView();
 
@@ -1727,18 +1737,15 @@ describe('Tests for aggregation profiles changeview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('aggregationprofile');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_aggregationprofile');
     expect(NotificationManager.success).toHaveBeenCalledWith(
       'Aggregation profile successfully changed', 'Changed', 2000
     )
   })
 
   test('Test import json, make some changes and save profile', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-    mockChangeAggregation.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
+    mockChangeAggregation.mockReturnValueOnce( Promise.resolve({ ok: 'ok' }) );
 
     renderChangeView();
 
@@ -1910,15 +1917,14 @@ describe('Tests for aggregation profiles changeview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('aggregationprofile');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_aggregationprofile');
     expect(NotificationManager.success).toHaveBeenCalledWith(
       'Aggregation profile successfully changed', 'Changed', 2000
     )
   })
 
   test('Test successfully deleting aggregation profile', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 204, statusText: 'NO CONTENT' })
-    )
     mockDeleteAggregation.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
     )
@@ -1945,30 +1951,17 @@ describe('Tests for aggregation profiles changeview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('aggregationprofile');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_aggregationprofile');
     expect(NotificationManager.success).toHaveBeenCalledWith(
       'Aggregation profile successfully deleted', 'Deleted', 2000
     )
   })
 
   test('Test error deleting aggregation profile on web api with error message', async () => {
-    mockDeleteAggregation.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({
-          code: '406',
-          message: 'Content Not acceptable',
-          errors: [
-            {
-              message: 'Content Not acceptable',
-              code: '406',
-              details: 'There has been an error.'
-            }
-          ],
-          details: 'There has been an error.'
-        }),
-        status: 406,
-        statusText: 'Content Not acceptable'
-      })
-    )
+    mockDeleteAggregation.mockImplementationOnce( () => {
+      throw Error('406 Content Not acceptable: There has been an error.')
+    } );
 
     renderChangeView();
 
@@ -1990,21 +1983,20 @@ describe('Tests for aggregation profiles changeview', () => {
       expect(mockDeleteObject).not.toHaveBeenCalled();
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been an error.</p>
+        <p>406 Content Not acceptable: There has been an error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Web API error: 406 Content Not acceptable',
+      'Web API error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error deleting aggregation profile on web api without error message', async () => {
-    mockDeleteAggregation.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockDeleteAggregation.mockImplementationOnce( () => { throw Error() } );
 
     renderChangeView();
 
@@ -2026,25 +2018,22 @@ describe('Tests for aggregation profiles changeview', () => {
       expect(mockDeleteObject).not.toHaveBeenCalled();
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Web API error deleting aggregation profile</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Web API error: 500 SERVER ERROR',
+      'Web API error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error deleting aggregation profile on internal backend with error message', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'There has been an error.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockDeleteObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: There has been an error.')
+    } );
     mockDeleteAggregation.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
     )
@@ -2071,21 +2060,20 @@ describe('Tests for aggregation profiles changeview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been an error.</p>
+        <p>400 BAD REQUEST: There has been an error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Internal API error: 400 BAD REQUEST',
+      'Internal API error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error deleting aggregation profile on internal backend without error message', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockDeleteObject.mockImplementationOnce( () => { throw Error() } );
     mockDeleteAggregation.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
     )
@@ -2112,12 +2100,13 @@ describe('Tests for aggregation profiles changeview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Internal API error deleting aggregation profile</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Internal API error: 500 SERVER ERROR',
+      'Internal API error',
       0,
       expect.any(Function)
     )
@@ -2128,6 +2117,7 @@ describe('Tests for aggregation profiles changeview', () => {
 describe('Tests for aggregation profile addview', () => {
   jest.spyOn(NotificationManager, 'success');
   jest.spyOn(NotificationManager, 'error');
+  jest.spyOn(queryClient, 'invalidateQueries');
 
   beforeAll(() => {
     WebApi.mockImplementation(() => {
@@ -2189,25 +2179,17 @@ describe('Tests for aggregation profile addview', () => {
   test('Test successfully adding an aggregation profile', async () => {
     mockAddAggregation.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          status: {
-            message: 'Aggregation profile Created',
-            code: "200"
-          },
-          data: {
-            id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
-            links: {
-              self: 'string'
-            }
+        status: {
+          message: 'Aggregation profile Created',
+          code: "200"
+        },
+        data: {
+          id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+          links: {
+            self: 'string'
           }
-        }),
-        ok: true,
-        status: 200,
-        statusText: 'Aggregation profile Created'
+        }
       })
-    )
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 201, statusText: 'CREATED' })
     )
 
     renderAddview();
@@ -2332,30 +2314,17 @@ describe('Tests for aggregation profile addview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('aggregationprofile');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_aggregationprofile');
     expect(NotificationManager.success).toHaveBeenCalledWith(
       'Aggregation profile successfully added', 'Added', 2000
     )
   })
 
   test('Test error adding aggregation profile in web api with error message', async () => {
-    mockAddAggregation.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({
-          code: '406',
-          message: 'Content Not acceptable',
-          errors: [
-            {
-              message: 'Content Not acceptable',
-              code: '406',
-              details: 'There has been an error.'
-            }
-          ],
-          details: 'There has been an error.'
-        }),
-        status: 406,
-        statusText: 'Content Not acceptable'
-      })
-    )
+    mockAddAggregation.mockImplementationOnce( () => {
+      throw Error('406 Content Not acceptable: There has been an error.')
+    } );
 
     renderAddview();
 
@@ -2442,21 +2411,20 @@ describe('Tests for aggregation profile addview', () => {
       expect(mockAddObject).not.toHaveBeenCalled();
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been an error.</p>
+        <p>406 Content Not acceptable: There has been an error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Web API error: 406 Content Not acceptable',
+      'Web API error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error adding aggregation profile in web api without error message', async () => {
-    mockAddAggregation.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockAddAggregation.mockImplementationOnce( () => { throw Error() } );
 
     renderAddview();
 
@@ -2543,12 +2511,13 @@ describe('Tests for aggregation profile addview', () => {
       expect(mockAddObject).not.toHaveBeenCalled();
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Web API error adding aggregation profile</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Web API error: 500 SERVER ERROR',
+      'Web API error',
       0,
       expect.any(Function)
     )
@@ -2557,30 +2526,21 @@ describe('Tests for aggregation profile addview', () => {
   test('Test error adding an aggregation profile in internal api with error message', async () => {
     mockAddAggregation.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          status: {
-            message: 'Aggregation profile Created',
-            code: "200"
-          },
-          data: {
-            id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
-            links: {
-              self: 'string'
-            }
+        status: {
+          message: 'Aggregation profile Created',
+          code: "200"
+        },
+        data: {
+          id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+          links: {
+            self: 'string'
           }
-        }),
-        ok: true,
-        status: 200,
-        statusText: 'Aggregation profile Created'
+        }
       })
     )
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'There has been an error.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockAddObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: There has been an error.')
+    } );
 
     renderAddview();
 
@@ -2704,12 +2664,13 @@ describe('Tests for aggregation profile addview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been an error.</p>
+        <p>400 BAD REQUEST: There has been an error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Internal API error: 400 BAD REQUEST',
+      'Internal API error',
       0,
       expect.any(Function)
     )
@@ -2718,26 +2679,19 @@ describe('Tests for aggregation profile addview', () => {
   test('Test error adding an aggregation profile in internal api without error message', async () => {
     mockAddAggregation.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          status: {
-            message: 'Aggregation profile Created',
-            code: "200"
-          },
-          data: {
-            id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
-            links: {
-              self: 'string'
-            }
+        status: {
+          message: 'Aggregation profile Created',
+          code: "200"
+        },
+        data: {
+          id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+          links: {
+            self: 'string'
           }
-        }),
-        ok: true,
-        status: 200,
-        statusText: 'Aggregation profile Created'
+        }
       })
     )
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockAddObject.mockImplementationOnce( () => { throw Error() } );
 
     renderAddview();
 
@@ -2861,12 +2815,13 @@ describe('Tests for aggregation profile addview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Internal API error adding aggregation profile</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Internal API error: 500 SERVER ERROR',
+      'Internal API error',
       0,
       expect.any(Function)
     )

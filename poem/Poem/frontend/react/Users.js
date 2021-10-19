@@ -26,6 +26,11 @@ import {
   InputGroupAddon
 } from "reactstrap";
 import * as Yup from 'yup';
+import './Users.css';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
+import { fetchUserGroups, fetchUsers } from './QueryFunctions';
+import { fetchUserDetails } from './QueryFunctions';
+
 
 const UserSchema = Yup.object().shape({
   username: Yup.string()
@@ -61,10 +66,6 @@ const ChangePasswordSchema = Yup.object().shape({
     .required('Required')
     .oneOf([Yup.ref('password'), null], 'Passwords do not match!')
 })
-
-
-import './Users.css';
-import { useQuery } from 'react-query';
 
 
 const CommonUser = ({add, ...props}) =>
@@ -252,15 +253,38 @@ const CommonUser = ({add, ...props}) =>
   </>;
 
 
+
+const fetchUser = async (username) => {
+  const backend = new Backend();
+  return await backend.fetchData(`/api/v2/internal/users/${username}`)
+}
+
+
+const fetchUserProfile = async (isTenantSchema, username) => {
+  const backend = new Backend();
+  if (isTenantSchema)
+    return await backend.fetchData(`/api/v2/internal/userprofile/${username}`)
+}
+
+
+const fetchGroupsForUser = async (isTenantSchema, username) => {
+  const backend = new Backend();
+  if (isTenantSchema) {
+    let usergroups = await backend.fetchResult(`/api/v2/internal/usergroups/${username}`);
+
+    return usergroups;
+  }
+}
+
+
 export const UsersList = (props) => {
     const location = props.location;
-    const backend = new Backend();
+    const isTenantSchema = props.isTenantSchema;
+
+    const queryClient = useQueryClient();
 
     const { data: listUsers, error: error, isLoading: loading } = useQuery(
-      'users_listview', async () => {
-        let json = await backend.fetchData('/api/v2/internal/users');
-        return json;
-      }
+      'user', () => fetchUsers()
     );
 
   const columns = React.useMemo(() => [
@@ -274,7 +298,23 @@ export const UsersList = (props) => {
       accessor: 'username',
       column_width: '26%',
       Cell: e =>
-        <Link to={`/ui/administration/users/${e.value}`}>
+        <Link
+          to={`/ui/administration/users/${e.value}`}
+          onMouseEnter={ async () => {
+            await queryClient.prefetchQuery(
+              ['user', e.value], () => fetchUser(e.value)
+            );
+            await queryClient.prefetchQuery(
+              ['userprofile', e.value], () => fetchUserProfile(isTenantSchema, e.value)
+            );
+            await queryClient.prefetchQuery(
+              ['usergroups', e.value], () => fetchGroupsForUser(isTenantSchema, e.value)
+            );
+            await queryClient.prefetchQuery(
+              'usergroups', () => fetchUserGroups(isTenantSchema)
+            );
+          }}
+        >
           {e.value}
         </Link>
     },
@@ -333,7 +373,7 @@ export const UsersList = (props) => {
           }
         </div>
     }
-  ], []);
+  ], [isTenantSchema, queryClient]);
 
   if (loading)
     return (<LoadingAnim />);
@@ -367,62 +407,45 @@ export const UserChange = (props) => {
   const isTenantSchema = props.isTenantSchema;
   const location = props.location;
   const history = props.history;
-  const querykey = `user_${addview ? 'addview' : `${user_name}_changeview`}`;
+
+  const queryClient = useQueryClient();
 
   const backend = new Backend();
 
-  const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
-    'session_userdetails', async () => {
-      let arg = isTenantSchema ? true : false;
-      let session = await backend.isActiveSession(arg);
+  const changeUserMutation = useMutation(async(values) => backend.changeObject('/api/v2/internal/users/', values));
+  const changeUserProfileMutation = useMutation(async(values) => backend.changeObject('/api/v2/internal/userprofile/', values));
+  const addUserMutation = useMutation(async(values) => backend.addObject('/api/v2/internal/users/', values));
+  const addUserProfileMutation = useMutation(async(values) => backend.addObject('/api/v2/internal/userprofile/', values));
+  const deleteMutation = useMutation(async () => await backend.deleteObject(`/api/v2/internal/users/${user_name}`));
 
-      if (session.active)
-        return session.userdetails;
+  const { data: userDetails, error: errorUserDetails, status: statusUserDetails } = useQuery(
+    'userdetails', () => fetchUserDetails(isTenantSchema)
+  );
+
+  const { data: user, error: errorUser, status: statusUser } = useQuery(
+    ['user', user_name], () => fetchUser(user_name),
+    {
+      enabled: !addview && !!userDetails,
+      initialData: () => {
+        if (!addview)
+          return queryClient.getQueryData('user')?.find(usr => usr.name === user_name)
+      }
     }
   );
 
-  const { data: user, error: errorUser, isLoading: loadingUser } = useQuery(
-    `${querykey}`, async () => {
-      if (!addview) {
-        let user = await backend.fetchData(`/api/v2/internal/users/${user_name}`);
-
-        return user;
-      }
-    },
-    { enabled: !addview && userDetails}
+  const { data: userProfile, error: errorUserProfile, status: statusUserProfile } = useQuery(
+    ['userprofile', user_name], () => fetchUserProfile(isTenantSchema, user_name),
+    { enabled: !addview && isTenantSchema }
   );
 
-  const { data: userProfile, error: errorUserProfile, isLoading: loadingUserProfile } = useQuery(
-    `${querykey}_userprofile`, async () => {
-      if (isTenantSchema && !addview) {
-        let userprofile = await backend.fetchData(`/api/v2/internal/userprofile/${user_name}`);
-
-        return userprofile;
-      }
-    },
-    { enabled: !addview && isTenantSchema}
+  const { data: userGroups, error: errorUserGroups, status: statusUserGroups } = useQuery(
+    ['usergroups', user_name], () => fetchGroupsForUser(isTenantSchema, user_name),
+    { enabled: isTenantSchema && !addview }
   );
 
-  const { data: userGroups, error: errorUserGroups, isLoading: loadingUserGroups } = useQuery(
-    `${querykey}_usergroups`, async () => {
-      if (isTenantSchema && !addview) {
-        let usergroups = await backend.fetchResult(`/api/v2/internal/usergroups/${user_name}`);
-
-        return usergroups;
-      }
-    },
-    { enabled: isTenantSchema && !addview}
-  );
-
-  const { data: allGroups, error: errorAllGroups, isLoading: loadingAllGroups } = useQuery(
-    'user_listview_allgroups', async () => {
-      if (isTenantSchema) {
-       let allgroups = await backend.fetchResult('/api/v2/internal/usergroups');
-
-        return allgroups;
-      }
-    },
-    { enabled: isTenantSchema}
+  const { data: allGroups, error: errorAllGroups, status: statusAllGroups } = useQuery(
+    'usergroups', () => fetchUserGroups(isTenantSchema),
+    { enabled: isTenantSchema }
   );
 
   const [areYouSureModal, setAreYouSureModal] = useState(false);
@@ -446,185 +469,140 @@ export const UserChange = (props) => {
     toggleAreYouSure();
   }
 
-  async function doChange() {
+  function doChange() {
+    const sendValues = new Object({
+      username: formValues.username,
+      first_name: formValues.first_name,
+      last_name: formValues.last_name,
+      email: formValues.email,
+      is_superuser: formValues.is_superuser,
+      is_active: formValues.is_active
+    });
+
+    const sendValues2 = new Object({
+      username: formValues.username,
+      displayname: formValues.displayname,
+      subject: formValues.subject,
+      egiid: formValues.egiid,
+      groupsofaggregations: formValues.groupsofaggregations,
+      groupsofmetrics: formValues.groupsofmetrics,
+      groupsofmetricprofiles: formValues.groupsofmetricprofiles,
+      groupsofthresholdsprofiles: formValues.groupsofthresholdsprofiles,
+      groupsofreports: formValues.groupsofreports
+    })
+
     if (!addview) {
-      let response = await backend.changeObject(
-        '/api/v2/internal/users/',
-        {
-          pk: formValues.pk,
-          username: formValues.username,
-          first_name: formValues.first_name,
-          last_name: formValues.last_name,
-          email: formValues.email,
-          is_superuser: formValues.is_superuser,
-          is_active: formValues.is_active
-        }
-      );
-      if (!response.ok) {
-        let change_msg = '';
-        try {
-          let json = await response.json();
-          change_msg = json.detail;
-        } catch(err) {
-          change_msg = 'Error changing user';
-        }
-        NotifyError({
-          title: `Error: ${response.status} ${response.statusText}`,
-          msg: change_msg
-        });
-      } else {
-        if (isTenantSchema) {
-          let profile_response = await backend.changeObject(
-            '/api/v2/internal/userprofile/',
-            {
-              username: formValues.username,
-              displayname: formValues.displayname,
-              subject: formValues.subject,
-              egiid: formValues.egiid,
-              groupsofaggregations: formValues.groupsofaggregations,
-              groupsofmetrics: formValues.groupsofmetrics,
-              groupsofmetricprofiles: formValues.groupsofmetricprofiles,
-              groupsofthresholdsprofiles: formValues.groupsofthresholdsprofiles,
-              groupsofreports: formValues.groupsofreports
-            }
-          );
-          if (profile_response.ok) {
+      changeUserMutation.mutate({ ...sendValues, pk: formValues.pk }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries('user');
+          if (isTenantSchema) {
+            changeUserProfileMutation.mutate(sendValues2, {
+              onSuccess: () => {
+                queryClient.invalidateQueries('userprofile');
+                NotifyOk({
+                  msg: 'User successfully changed',
+                  title: 'Changed',
+                  callback: () => history.push('/ui/administration/users')
+                })
+              },
+              onError: (error) => {
+                NotifyError({
+                  title: 'Error',
+                  msg: error.message ? error.message : 'Error changing user profile'
+                })
+              }
+            })
+          } else {
             NotifyOk({
               msg: 'User successfully changed',
               title: 'Changed',
               callback: () => history.push('/ui/administration/users')
             })
-          } else {
-            let change_msg = '';
-            try {
-              let json = await profile_response.json();
-              change_msg = json.detail;
-            } catch(err) {
-              change_msg = 'Error changing user profile'
-            }
-            NotifyError({
-              title: `Error: ${profile_response.status} ${profile_response.statusText}`,
-              msg: change_msg
-            });
           }
-        } else {
-          NotifyOk({
-            msg: 'User successfully changed',
-            title: 'Changed',
-            callback: () => history.push('/ui/administration/users')
-          });
+        },
+        onError: (error) => {
+          NotifyError({
+            title: 'Error',
+            msg: error.message ? error.message : 'Error changing user'
+          })
         }
-      }
+      })
     } else {
-      let response = await backend.addObject(
-        '/api/v2/internal/users/',
-        {
-          username: formValues.username,
-          password: formValues.password,
-          first_name: formValues.first_name,
-          last_name: formValues.last_name,
-          email: formValues.email,
-          is_superuser: formValues.is_superuser,
-          is_active: formValues.is_active
-        }
-      );
-      if (!response.ok) {
-        let add_msg = '';
-        try {
-          let json = await response.json();
-          add_msg = json.detail;
-        } catch(err) {
-          add_msg = 'Error adding user';
-        }
-        NotifyError({
-          title: `Error: ${response.status} ${response.statusText}`,
-          msg: add_msg
-        });
-      } else {
-        if (isTenantSchema) {
-          let profile_response = await backend.addObject(
-            '/api/v2/internal/userprofile/',
-            {
-              username: formValues.username,
-              displayname: formValues.displayname,
-              subject: formValues.subject,
-              egiid: formValues.egiid,
-              groupsofaggregations: formValues.groupsofaggregations,
-              groupsofmetrics: formValues.groupsofmetrics,
-              groupsofmetricprofiles: formValues.groupsofmetricprofiles,
-              groupsofthresholdsprofiles: formValues.groupsofthresholdsprofiles,
-              groupsofreports: formValues.groupsofreports
-            }
-          );
-          if (profile_response.ok) {
+      addUserMutation.mutate({ ...sendValues, password: formValues.password }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries('user');
+          if (isTenantSchema) {
+            addUserProfileMutation.mutate(sendValues2, {
+              onSuccess: () => {
+                queryClient.invalidateQueries('userprofile');
+                NotifyOk({
+                  msg: 'User successfully added',
+                  title: 'Added',
+                  callback: () => history.push('/ui/administration/users')
+                })
+              },
+              onError: (error) => {
+                NotifyError({
+                  title: 'Error',
+                  msg: error.message ? error.message : 'Error adding user profile'
+                })
+              }
+            })
+          } else {
             NotifyOk({
               msg: 'User successfully added',
               title: 'Added',
               callback: () => history.push('/ui/administration/users')
             })
-          } else {
-            let add_msg = '';
-            try {
-              let json = await profile_response.json();
-              add_msg = json.detail;
-            } catch(err) {
-              add_msg = 'Error adding user profile';
-            }
-            NotifyError({
-              title: `Error: ${profile_response.status} ${profile_response.statusText}`,
-              msg: add_msg
-            });
           }
-        } else {
-          NotifyOk({
-            msg: 'User successfully added',
-            title: 'Added',
-            callback: () => history.push('/ui/administration/users')
-          });
+        },
+        onError: (error) => {
+          NotifyError({
+            title: 'Error',
+            msg: error.message ? error.message : 'Error adding user'
+          })
         }
-      }
-    }
-  }
-
-  async function doDelete() {
-    let response = await backend.deleteObject(`/api/v2/internal/users/${user_name}`);
-    if (response.ok) {
-      NotifyOk({
-        msg: 'User successfully deleted',
-        title: 'Deleted',
-        callback: () => history.push('/ui/administration/users')
       })
-    } else {
-      let msg = '';
-      try {
-        let json = await response.json();
-        msg = json.detail;
-      } catch(err) {
-        msg = 'Error deleting user';
-      }
-      NotifyError({
-        title: `Error: ${response.status} ${response.statusText}`,
-        msg: msg
-      });
     }
   }
 
-  if (loadingUser || loadingUserProfile || loadingUserGroups || loadingAllGroups || loadingUserDetails)
+  function doDelete() {
+    deleteMutation.mutate(undefined, {
+      onSuccess: () => {
+        queryClient.invalidateQueries('user');
+        if (isTenantSchema)
+          queryClient.invalidateQueries('userprofile');
+        NotifyOk({
+          msg: 'User successfully deleted',
+          title: 'Deleted',
+          callback: () => history.push('/ui/administration/users')
+        })
+      },
+      onError: (error) => {
+        NotifyError({
+          title: 'Error',
+          msg: error.message ? error.message : 'Error deleting user'
+        })
+      }
+    })
+  }
+
+  if (statusUser === 'loading' || statusUserProfile === 'loading' || statusUserGroups === 'loading' || statusAllGroups === 'loading' || statusUserDetails === 'loading')
     return(<LoadingAnim />)
 
-  else if (errorUser)
+  else if (statusUser === 'error')
     return (<ErrorComponent error={errorUser}/>);
 
-  else if (errorUserProfile)
+  else if (statusUserProfile === 'error')
     return (<ErrorComponent error={errorUserProfile}/>);
 
-  else if (errorUserGroups)
+  else if (statusUserGroups === 'error')
     return (<ErrorComponent error={errorUserGroups}/>);
 
-  else if (errorAllGroups)
+  else if (statusAllGroups === 'error')
     return (<ErrorComponent error={errorAllGroups}/>);
 
-  else if (errorUserDetails)
+  else if (statusUserDetails === 'error')
     return (<ErrorComponent error={errorUserDetails}/>);
 
   else {
@@ -1005,11 +983,7 @@ export const ChangePassword = (props) => {
   const backend = new Backend();
 
   const { data: userDetails, isLoading: loading} = useQuery(
-    'session_userdetails', async () => {
-      let session = await backend.isActiveSession(false);
-      if (session.active)
-        return session.userdetails;
-    }
+    'userdetails', () => fetchUserDetails(false)
   );
 
   const [areYouSureModal, setAreYouSureModal] = useState(false);

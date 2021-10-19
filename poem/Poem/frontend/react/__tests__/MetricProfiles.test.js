@@ -4,7 +4,7 @@ import '@testing-library/jest-dom/extend-expect';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { Backend, WebApi } from '../DataManager';
-import { queryCache } from 'react-query';
+import { QueryClient, QueryClientProvider, setLogger } from 'react-query';
 import {
   MetricProfilesChange,
   MetricProfilesList,
@@ -22,6 +22,8 @@ jest.mock('../DataManager', () => {
   }
 })
 
+jest.setTimeout(20000);
+
 const mockChangeObject = jest.fn();
 const mockChangeMetricProfile = jest.fn();
 const mockDeleteObject = jest.fn();
@@ -30,9 +32,18 @@ const mockAddObject = jest.fn();
 const mockAddMetricProfile = jest.fn();
 
 
+const queryClient = new QueryClient();
+
+setLogger({
+  log: () => {},
+  warn: () => {},
+  error: () => {}
+})
+
+
 beforeEach(() => {
   jest.clearAllMocks();
-  queryCache.clear();
+  queryClient.clear();
 })
 
 
@@ -222,21 +233,36 @@ function renderListView(publicView=false) {
   if (publicView)
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            path='/ui/public_metricprofiles'
-            render={ props => <MetricProfilesList publicView={true} {...props} /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/public_metricprofiles'
+              render={ props => <MetricProfilesList
+                {...props}
+                webapimetric='https://mock.metrics.com'
+                webapitoken='token'
+                publicView={true}
+              /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 
   else
     return {
       ...render(
-        <Router history={history}>
-          <Route path='/ui/metricprofiles' component={MetricProfilesList} />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route path='/ui/metricprofiles'
+              render={ props => <MetricProfilesList
+                {...props}
+                webapimetric='https://mock.metrics.com'
+                webapitoken='token'
+              /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 }
@@ -249,35 +275,39 @@ function renderChangeView(publicView=false) {
   if (publicView)
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            path='/ui/public_metricprofiles/:name'
-            render={ props => <MetricProfilesChange
-              {...props}
-              webapimetric='https://mock.metrics.com'
-              webapitoken='token'
-              tenantname='TENANT'
-              publicView={true}
-            /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/public_metricprofiles/:name'
+              render={ props => <MetricProfilesChange
+                {...props}
+                webapimetric='https://mock.metrics.com'
+                webapitoken='token'
+                tenantname='TENANT'
+                publicView={true}
+              /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 
   else
     return {
       ...render(
-        <Router history={history}>
-          <Route
-            path='/ui/metricprofiles/:name'
-            render={props => <MetricProfilesChange
-              {...props}
-              webapimetric='https://mock.metrics.com'
-              webapitoken='token'
-              tenantname='TENANT'
-            /> }
-          />
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/metricprofiles/:name'
+              render={props => <MetricProfilesChange
+                {...props}
+                webapimetric='https://mock.metrics.com'
+                webapitoken='token'
+                tenantname='TENANT'
+              /> }
+            />
+          </Router>
+        </QueryClientProvider>
       )
     }
 }
@@ -289,18 +319,20 @@ function renderAddView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/metricprofiles/add'
-          render={props => <MetricProfilesChange
-            {...props}
-            webapimetric='https://mock.metrics.com'
-            webapitoken='token'
-            tenantname='TENANT'
-            addview={true}
-          /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/metricprofiles/add'
+            render={props => <MetricProfilesChange
+              {...props}
+              webapimetric='https://mock.metrics.com'
+              webapitoken='token'
+              tenantname='TENANT'
+              addview={true}
+            /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -312,17 +344,19 @@ function renderCloneView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path="/ui/metricprofiles/:name/clone"
-          render={props => <MetricProfilesClone
-            {...props}
-            webapimetric='https://mock.metrics.com'
-            webapitoken='token'
-            tenantname='TENANT'
-          /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path="/ui/metricprofiles/:name/clone"
+            render={props => <MetricProfilesClone
+              {...props}
+              webapimetric='https://mock.metrics.com'
+              webapitoken='token'
+              tenantname='TENANT'
+            /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -334,12 +368,14 @@ function renderVersionDetailsView() {
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/metricprofiles/:name/history/:version'
-          render={ props => <MetricProfileVersionDetails {...props} /> }
-        />
-      </Router>
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/metricprofiles/:name/history/:version'
+            render={ props => <MetricProfileVersionDetails {...props} /> }
+          />
+        </Router>
+      </QueryClientProvider>
     )
   }
 }
@@ -411,6 +447,7 @@ describe('Tests for metric profiles listview', () => {
 describe('Tests for metric profiles changeview', () => {
   jest.spyOn(NotificationManager, 'success');
   jest.spyOn(NotificationManager, 'error');
+  jest.spyOn(queryClient, 'invalidateQueries');
 
   beforeAll(() => {
     WebApi.mockImplementation(() => {
@@ -722,7 +759,7 @@ describe('Tests for metric profiles changeview', () => {
   })
 
   test('Test export csv successfully', async () => {
-    const helpers = require('../Helpers');
+    const helpers = require('../FileDownload');
     jest.spyOn(helpers, 'downloadCSV').mockReturnValueOnce(null);
 
     renderChangeView();
@@ -741,7 +778,7 @@ describe('Tests for metric profiles changeview', () => {
   })
 
   test('Test export csv when form has been changed', async () => {
-    const helpers = require('../Helpers');
+    const helpers = require('../FileDownload');
     jest.spyOn(helpers, 'downloadCSV').mockReturnValueOnce(null);
 
     renderChangeView();
@@ -790,24 +827,9 @@ describe('Tests for metric profiles changeview', () => {
   })
 
   test('Test error changing metric profile on web api with error message', async () => {
-    mockChangeMetricProfile.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({
-          code: '406',
-          message: 'Content Not acceptable',
-          errors: [
-            {
-              message: 'Content Not acceptable',
-              code: '406',
-              details: 'There has been an error.'
-            }
-          ],
-          details: 'There has been an error.'
-        }),
-        status: 406,
-        statusText: 'Content Not acceptable'
-      })
-    )
+    mockChangeMetricProfile.mockImplementationOnce( () => {
+      throw Error('406 Content Not acceptable: There has been an error.')
+    } );
 
     renderChangeView();
 
@@ -904,21 +926,20 @@ describe('Tests for metric profiles changeview', () => {
       expect(mockChangeObject).not.toHaveBeenCalled()
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been an error.</p>
+        <p>406 Content Not acceptable: There has been an error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Web API error: 406 Content Not acceptable',
+      'Web API error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error changing metric profile on web api without error message', async () => {
-    mockChangeMetricProfile.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockChangeMetricProfile.mockImplementationOnce( () => { throw Error() } );
 
     renderChangeView();
 
@@ -1015,12 +1036,13 @@ describe('Tests for metric profiles changeview', () => {
       expect(mockChangeObject).not.toHaveBeenCalled()
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Web API error changing metric profile</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Web API error: 500 SERVER ERROR',
+      'Web API error',
       0,
       expect.any(Function)
     )
@@ -1028,15 +1050,11 @@ describe('Tests for metric profiles changeview', () => {
 
   test('Test error changing metric profile on internal api with error message', async () => {
     mockChangeMetricProfile.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+      Promise.resolve({ ok: 'ok' })
     )
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'There has been error in the backend.' }),
-        status: '400',
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockChangeObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: There has been error in the backend.')
+    } );
 
     renderChangeView();
 
@@ -1151,12 +1169,13 @@ describe('Tests for metric profiles changeview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been error in the backend.</p>
+        <p>400 BAD REQUEST: There has been error in the backend.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Internal API error: 400 BAD REQUEST',
+      'Internal API error',
       0,
       expect.any(Function)
     )
@@ -1164,11 +1183,9 @@ describe('Tests for metric profiles changeview', () => {
 
   test('Test error changing metric profile on internal api without error message', async () => {
     mockChangeMetricProfile.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+      Promise.resolve({ ok: 'ok' })
     )
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ status: '500', statusText: 'SERVER ERROR' })
-    )
+    mockChangeObject.mockImplementationOnce( () => { throw Error() } );
 
     renderChangeView();
 
@@ -1283,12 +1300,13 @@ describe('Tests for metric profiles changeview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Internal API error changing metric profile</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Internal API error: 500 SERVER ERROR',
+      'Internal API error',
       0,
       expect.any(Function)
     )
@@ -1299,7 +1317,7 @@ describe('Tests for metric profiles changeview', () => {
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
     )
     mockChangeMetricProfile.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+      Promise.resolve({ ok: 'ok' })
     )
 
     renderChangeView();
@@ -1415,6 +1433,8 @@ describe('Tests for metric profiles changeview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metricprofile');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metricprofile');
     expect(NotificationManager.success).toHaveBeenCalledWith(
       'Metric profile successfully changed', 'Changed', 2000
     )
@@ -1425,7 +1445,7 @@ describe('Tests for metric profiles changeview', () => {
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
     )
     mockChangeMetricProfile.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+      Promise.resolve({ ok: 'ok' })
     )
 
     renderChangeView();
@@ -1521,12 +1541,12 @@ describe('Tests for metric profiles changeview', () => {
         }
       )
     })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metricprofile');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metricprofile');
   })
 
   test('Test successfully deleting metric profile', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 204, statusText: 'NO CONTENT' })
-    )
     mockDeleteMetricProfile.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
     )
@@ -1553,30 +1573,17 @@ describe('Tests for metric profiles changeview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metricprofile');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metricprofile');
     expect(NotificationManager.success).toHaveBeenCalledWith(
       'Metric profile successfully deleted', 'Deleted', 2000
     )
   })
 
   test('Test error deleting metric profile on web api with error message', async () => {
-    mockDeleteMetricProfile.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({
-          code: '406',
-          message: 'Content Not acceptable',
-          errors: [
-            {
-              message: 'Content Not acceptable',
-              code: '406',
-              details: 'There has been an error.'
-            }
-          ],
-          details: 'There has been an error.'
-        }),
-        status: 406,
-        statusText: 'Content Not acceptable'
-      })
-    )
+    mockDeleteMetricProfile.mockImplementationOnce( () => {
+      throw Error('406 Content Not acceptable: There has been an error.')
+    } );
 
     renderChangeView();
 
@@ -1598,21 +1605,20 @@ describe('Tests for metric profiles changeview', () => {
       expect(mockDeleteObject).not.toHaveBeenCalled()
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been an error.</p>
+        <p>406 Content Not acceptable: There has been an error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Web API error: 406 Content Not acceptable',
+      'Web API error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error deleting metric profile on web api without error message', async () => {
-    mockDeleteMetricProfile.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockDeleteMetricProfile.mockImplementationOnce( () => { throw Error() } );
 
     renderChangeView();
 
@@ -1634,25 +1640,22 @@ describe('Tests for metric profiles changeview', () => {
       expect(mockDeleteObject).not.toHaveBeenCalled()
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Web API error deleting metric profile</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Web API error: 500 SERVER ERROR',
+      'Web API error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error deleting metric profile on internal backend with error message', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'There has been an internal error.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockDeleteObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: There has been an internal error.')
+    } );
     mockDeleteMetricProfile.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
     )
@@ -1679,21 +1682,20 @@ describe('Tests for metric profiles changeview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been an internal error.</p>
+        <p>400 BAD REQUEST: There has been an internal error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Internal API error: 400 BAD REQUEST',
+      'Internal API error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error deleting metric profile on internal backend without error message', async () => {
-    mockDeleteObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockDeleteObject.mockImplementationOnce( () => { throw Error() } );
     mockDeleteMetricProfile.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
     )
@@ -1720,12 +1722,13 @@ describe('Tests for metric profiles changeview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Internal API error deleting metric profile</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Internal API error: 500 SERVER ERROR',
+      'Internal API error',
       0,
       expect.any(Function)
     )
@@ -1736,6 +1739,7 @@ describe('Tests for metric profiles changeview', () => {
 describe('Tests for metric profile addview', () => {
   jest.spyOn(NotificationManager, 'success');
   jest.spyOn(NotificationManager, 'error');
+  jest.spyOn(queryClient, 'invalidateQueries');
 
   beforeAll(() => {
     WebApi.mockImplementation(() => {
@@ -1791,25 +1795,17 @@ describe('Tests for metric profile addview', () => {
   test('Test successfully adding a metric profile', async () => {
     mockAddMetricProfile.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          status: {
-            message: 'Metric profile Created',
-            code: '200'
-          },
-          data: {
-            id: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
-            links: {
-              self: 'string'
-            }
+        status: {
+          message: 'Metric profile Created',
+          code: '200'
+        },
+        data: {
+          id: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
+          links: {
+            self: 'string'
           }
-        }),
-        ok: true,
-        status: 200,
-        statusText: 'Metric profile Created'
+        }
       })
-    )
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 201, statusText: 'CREATED' })
     )
 
     renderAddView();
@@ -1917,30 +1913,17 @@ describe('Tests for metric profile addview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metricprofile');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metricprofile');
     expect(NotificationManager.success).toHaveBeenCalledWith(
       'Metric profile successfully added', 'Added', 2000
     )
   })
 
   test('Test error adding a metric profile in web api with error message', async () => {
-    mockAddMetricProfile.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({
-          code: '406',
-          message: 'Content Not acceptable',
-          errors: [
-            {
-              message: 'Content Not acceptable',
-              code: '406',
-              details: 'There has been an error.'
-            }
-          ],
-          details: 'There has been an error.'
-        }),
-        status: 406,
-        statusText: 'Content Not acceptable'
-      })
-    )
+    mockAddMetricProfile.mockImplementationOnce( () => {
+      throw Error('406 Content Not acceptable: There has been an error.')
+    } );
 
     renderAddView();
 
@@ -2034,21 +2017,20 @@ describe('Tests for metric profile addview', () => {
       expect(mockAddObject).not.toHaveBeenCalled()
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been an error.</p>
+        <p>406 Content Not acceptable: There has been an error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Web API error: 406 Content Not acceptable',
+      'Web API error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error adding a metric profile in web api without error message', async () => {
-    mockAddMetricProfile.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockAddMetricProfile.mockImplementationOnce( () => { throw Error() } );
 
     renderAddView();
 
@@ -2142,12 +2124,13 @@ describe('Tests for metric profile addview', () => {
       expect(mockAddObject).not.toHaveBeenCalled()
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Web API error adding metric profile</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Web API error: 500 SERVER ERROR',
+      'Web API error',
       0,
       expect.any(Function)
     )
@@ -2156,30 +2139,21 @@ describe('Tests for metric profile addview', () => {
   test('Test error adding a metric profile in backend with error message', async () => {
     mockAddMetricProfile.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          status: {
-            message: 'Metric profile Created',
-            code: '200'
-          },
-          data: {
-            id: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
-            links: {
-              self: 'string'
-            }
+        status: {
+          message: 'Metric profile Created',
+          code: '200'
+        },
+        data: {
+          id: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
+          links: {
+            self: 'string'
           }
-        }),
-        ok: true,
-        status: 200,
-        statusText: 'Metric profile Created'
+        }
       })
     )
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'There has been an internal error.' }),
-        status: 400,
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockAddObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: There has been an internal error.')
+    } );
 
     renderAddView();
 
@@ -2286,12 +2260,13 @@ describe('Tests for metric profile addview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been an internal error.</p>
+        <p>400 BAD REQUEST: There has been an internal error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Internal API error: 400 BAD REQUEST',
+      'Internal API error',
       0,
       expect.any(Function)
     )
@@ -2300,26 +2275,19 @@ describe('Tests for metric profile addview', () => {
   test('Test error adding a metric profile in backend without error message', async () => {
     mockAddMetricProfile.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          status: {
-            message: 'Metric profile Created',
-            code: '200'
-          },
-          data: {
-            id: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
-            links: {
-              self: 'string'
-            }
+        status: {
+          message: 'Metric profile Created',
+          code: '200'
+        },
+        data: {
+          id: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
+          links: {
+            self: 'string'
           }
-        }),
-        ok: true,
-        status: 200,
-        statusText: 'Metric profile Created'
+        }
       })
     )
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockAddObject.mockImplementationOnce( () => { throw Error() } );
 
     renderAddView();
 
@@ -2426,12 +2394,13 @@ describe('Tests for metric profile addview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Internal API error adding metric profile</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Internal API error: 500 SERVER ERROR',
+      'Internal API error',
       0,
       expect.any(Function)
     )
@@ -2442,6 +2411,7 @@ describe('Tests for metric profile addview', () => {
 describe('Tests for metric profile cloneview', () => {
   jest.spyOn(NotificationManager, 'success');
   jest.spyOn(NotificationManager, 'error');
+  jest.spyOn(queryClient, 'invalidateQueries');
 
   beforeAll(() => {
     WebApi.mockImplementation(() => {
@@ -2527,25 +2497,17 @@ describe('Tests for metric profile cloneview', () => {
   test('Test successfully cloning a metric profile', async () => {
     mockAddMetricProfile.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          status: {
-            message: 'Metric profile Created',
-            code: '200'
-          },
-          data: {
-            id: 'hithai1j-zn0i-sj7d-p3pz-gothoorie2ei',
-            links: {
-              self: 'string'
-            }
+        status: {
+          message: 'Metric profile Created',
+          code: '200'
+        },
+        data: {
+          id: 'hithai1j-zn0i-sj7d-p3pz-gothoorie2ei',
+          links: {
+            self: 'string'
           }
-        }),
-        ok: true,
-        status: 200,
-        statusText: 'Metric profile Created'
+        }
       })
-    )
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 201, statusText: 'CREATED' })
     )
 
     renderCloneView();
@@ -2661,30 +2623,17 @@ describe('Tests for metric profile cloneview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metricprofile');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metricprofile');
     expect(NotificationManager.success).toHaveBeenCalledWith(
       'Metric profile successfully added', 'Added', 2000
     )
   })
 
   test('Test error cloning metric profile on web api with error message', async () => {
-    mockAddMetricProfile.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({
-          code: '406',
-          message: 'Content Not acceptable',
-          errors: [
-            {
-              message: 'Content Not acceptable',
-              code: '406',
-              details: 'There has been an error.'
-            }
-          ],
-          details: 'There has been an error.'
-        }),
-        status: 406,
-        statusText: 'Content Not acceptable'
-      })
-    )
+    mockAddMetricProfile.mockImplementationOnce( () => {
+      throw Error('406 Content Not acceptable: There has been an error.')
+    } );
 
     renderCloneView();
 
@@ -2781,21 +2730,20 @@ describe('Tests for metric profile cloneview', () => {
       expect(mockAddObject).not.toHaveBeenCalled()
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been an error.</p>
+        <p>406 Content Not acceptable: There has been an error.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Web API error: 406 Content Not acceptable',
+      'Web API error',
       0,
       expect.any(Function)
     )
   })
 
   test('Test error cloning metric profile on web api without error message', async () => {
-    mockAddMetricProfile.mockReturnValueOnce(
-      Promise.resolve({ status: 500, statusText: 'SERVER ERROR' })
-    )
+    mockAddMetricProfile.mockImplementationOnce( () => { throw Error() } );
 
     renderCloneView();
 
@@ -2892,12 +2840,13 @@ describe('Tests for metric profile cloneview', () => {
       expect(mockAddObject).not.toHaveBeenCalled()
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Web API error adding metric profile</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Web API error: 500 SERVER ERROR',
+      'Web API error',
       0,
       expect.any(Function)
     )
@@ -2906,30 +2855,21 @@ describe('Tests for metric profile cloneview', () => {
   test('Test error cloning metric profile on internal api with error message', async () => {
     mockAddMetricProfile.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          status: {
-            message: 'Metric profile Created',
-            code: '200'
-          },
-          data: {
-            id: 'hithai1j-zn0i-sj7d-p3pz-gothoorie2ei',
-            links: {
-              self: 'string'
-            }
+        status: {
+          message: 'Metric profile Created',
+          code: '200'
+        },
+        data: {
+          id: 'hithai1j-zn0i-sj7d-p3pz-gothoorie2ei',
+          links: {
+            self: 'string'
           }
-        }),
-        ok: true,
-        status: 200,
-        statusText: 'Metric profile Created'
+        }
       })
     )
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({
-        json: () => Promise.resolve({ detail: 'There has been error in the backend.' }),
-        status: '400',
-        statusText: 'BAD REQUEST'
-      })
-    )
+    mockAddObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: There has been error in the backend.')
+    } );
 
     renderCloneView();
 
@@ -3044,12 +2984,13 @@ describe('Tests for metric profile cloneview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>There has been error in the backend.</p>
+        <p>400 BAD REQUEST: There has been error in the backend.</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Internal API error: 400 BAD REQUEST',
+      'Internal API error',
       0,
       expect.any(Function)
     )
@@ -3058,26 +2999,19 @@ describe('Tests for metric profile cloneview', () => {
   test('Test error cloning metric profile on internal api without error message', async () => {
     mockAddMetricProfile.mockReturnValueOnce(
       Promise.resolve({
-        json: () => Promise.resolve({
-          status: {
-            message: 'Metric profile Created',
-            code: '200'
-          },
-          data: {
-            id: 'hithai1j-zn0i-sj7d-p3pz-gothoorie2ei',
-            links: {
-              self: 'string'
-            }
+        status: {
+          message: 'Metric profile Created',
+          code: '200'
+        },
+        data: {
+          id: 'hithai1j-zn0i-sj7d-p3pz-gothoorie2ei',
+          links: {
+            self: 'string'
           }
-        }),
-        ok: true,
-        status: 200,
-        statusText: 'Metric profile Created'
+        }
       })
     )
-    mockAddObject.mockReturnValueOnce(
-      Promise.resolve({ status: '500', statusText: 'SERVER ERROR' })
-    )
+    mockAddObject.mockImplementationOnce( () => { throw Error() } );
 
     renderCloneView();
 
@@ -3192,12 +3126,13 @@ describe('Tests for metric profile cloneview', () => {
       )
     })
 
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Internal API error adding metric profile</p>
         <p>Click to dismiss.</p>
       </div>,
-      'Internal API error: 500 SERVER ERROR',
+      'Internal API error',
       0,
       expect.any(Function)
     )

@@ -1,6 +1,6 @@
 # Django settings
 import os
-from configparser import ConfigParser, NoSectionError
+from configparser import ConfigParser, NoSectionError, NoOptionError
 from django.core.exceptions import ImproperlyConfigured
 
 VENV = '/home/pyvenv/poem'
@@ -54,19 +54,26 @@ try:
     WEBAPI_REPORTSTOPOLOGYGROUPS = config.get('WEBAPI', 'ReportsTopologyGroups')
     WEBAPI_REPORTSTOPOLOGYENDPOINTS = config.get('WEBAPI', 'ReportsTopologyEndpoints')
 
+    LINKS_TERMS_PRIVACY = dict()
+    all_sections = config.sections()
+    for section in all_sections:
+        if section.startswith('GENERAL_'):
+            tenant_name = section.split('_')[1]
+            LINKS_TERMS_PRIVACY[tenant_name.lower()] = dict()
+            terms = config.get(section, 'TermsOfUse')
+            privacy = config.get(section, 'PrivacyPolicies')
+            LINKS_TERMS_PRIVACY[tenant_name.lower()].update({"privacy": privacy, "terms": terms})
 
-except NoSectionError as e:
-    print(e)
+except (NoSectionError, ImproperlyConfigured, NoOptionError) as e:
+    print('ERROR: Configuration error - {}'.format(e))
     raise SystemExit(1)
 
-except ImproperlyConfigured as e:
-    print(e)
-    raise SystemExit(1)
 
 if ',' in ALLOWED_HOSTS:
     ALLOWED_HOSTS = [h.strip() for h in ALLOWED_HOSTS.split(',')]
 else:
     ALLOWED_HOSTS = [ALLOWED_HOSTS]
+
 
 # Make this unique, and don't share it with anybody.
 try:
@@ -216,3 +223,6 @@ WEBPACK_LOADER = {
         'STATS_FILE': os.path.join(APP_PATH, 'webpack-stats.json')
     }
 }
+
+TEST_RUNNER = 'xmlrunner.extra.djangotestrunner.XMLTestRunner'
+TEST_OUTPUT_FILE_NAME = 'junit-backend.xml'

@@ -26,7 +26,8 @@ import {
   Alert
 } from 'reactstrap';
 import { Formik, Form, Field } from 'formik';
-import { queryCache, useQuery } from 'react-query';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
+import { fetchPackages, fetchProbeVersions, fetchYumRepos } from './QueryFunctions';
 
 
 const packageValidate = (values) => {
@@ -57,30 +58,18 @@ const packageValidate = (values) => {
 
 export const PackageList = (props) => {
   const location = props.location;
-  const backend = new Backend();
+  const isTenantSchema = props.isTenantSchema;
 
-  const { data: listPackages, error: errorListPackages, isLoading: loadingListPackages } = useQuery(
-    'package_listview', async () => {
-      let pkgs = await backend.fetchData('/api/v2/internal/packages');
-      return pkgs;
-    }
+  const { data: packages, error: errorPackages, status: statusPackages } = useQuery(
+    'package', () => fetchPackages()
   );
 
-  const { data: listRepos, error: errorListRepos, isLoading: loadingListRepos } = useQuery(
-    'package_listview_repos', async () => {
-      let repos = await backend.fetchData('/api/v2/internal/yumrepos');
-      let list_repos = [];
-      repos.forEach(repo => list_repos.push(`${repo.name} (${repo.tag})`));
-      return list_repos;
-    }
+  const { data: repos, error: errorRepos, status: statusRepos } = useQuery(
+    'yumrepo', () => fetchYumRepos()
   );
 
-  const { data: isTenantSchema, isLoading: loadingIsTenantSchema } = useQuery(
-    'session_istenantschema', async () => {
-      let schema = await backend.isTenantSchema();
-      return schema;
-    }
-  );
+  if (repos)
+    var listRepos = repos.map(repo => `${repo.name} (${repo.tag})`)
 
   const columns = React.useMemo(() => [
     {
@@ -118,16 +107,16 @@ export const PackageList = (props) => {
     }
   ], [isTenantSchema, listRepos]);
 
-  if (loadingListPackages || loadingListRepos || loadingIsTenantSchema)
+  if (statusPackages === 'loading' || statusRepos === 'loading')
     return (<LoadingAnim/>);
 
-  else if (errorListPackages)
-    return (<ErrorComponent error={errorListPackages}/>);
+  else if (statusPackages === 'error')
+    return (<ErrorComponent error={errorPackages}/>);
 
-  else if (errorListRepos)
-    return (<ErrorComponent error={errorListRepos}/>);
+  else if (statusRepos === 'error')
+    return (<ErrorComponent error={errorRepos}/>);
 
-  else if (!loadingListPackages && !loadingListRepos && !loadingIsTenantSchema && listPackages) {
+  else if (packages) {
     return (
       <BaseArgoView
         resourcename='package'
@@ -136,7 +125,7 @@ export const PackageList = (props) => {
         addnew={!isTenantSchema}
       >
         <BaseArgoTable
-          data={listPackages}
+          data={packages}
           columns={columns}
           page_size={30}
           resourcename='packages'
@@ -156,12 +145,18 @@ export const PackageComponent = (props) => {
   const disabled = props.disabled;
   const location = props.location;
   const history = props.history;
-  const querykey = `package_${nameversion}_${cloneview ? 'cloneview' : 'changeview'}`;
 
   const backend = new Backend();
 
-  const { data: pkg, error: errorPkg, isLoading: loadingPkg } = useQuery(
-    `${querykey}`, async () => {
+  const changePackage = useMutation( async (values) => await backend.changeObject('/api/v2/internal/packages/', values) );
+  const addPackage = useMutation( async (values) => await backend.addObject('/api/v2/internal/packages/', values) );
+  const deletePackage = useMutation( async () => await backend.deleteObject(`/api/v2/internal/packages/${nameversion}`));
+  const updateMetricsMutation = useMutation( async (values) => await backend.changeObject('/api/v2/internal/updatemetricsversions/', values) );
+
+  const queryClient = useQueryClient();
+
+  const { data: pkg, error: errorPkg, status: statusPkg } = useQuery(
+    ['package', nameversion], async () => {
       let pkg = await backend.fetchData(`/api/v2/internal/packages/${nameversion}`);
       let [repo6, repo7] = splitRepos(pkg.repos);
       pkg.initial_version = pkg.version;
@@ -169,44 +164,42 @@ export const PackageComponent = (props) => {
       pkg.repo_7 = repo7;
       return pkg;
     },
-    { enabled: !addview }
-  );
-
-  const { data: repos, error: errorRepos, isLoading: loadingRepos } = useQuery(
-    'package_component_repos', async () => {
-      let repos = await backend.fetchData('/api/v2/internal/yumrepos');
-      let list_repos_6 = [];
-      let list_repos_7 = [];
-
-      repos.forEach(e => {
-        if (e.tag === 'CentOS 6')
-          list_repos_6.push(e.name + ' (' + e.tag + ')');
-        else if (e.tag === 'CentOS 7')
-          list_repos_7.push(e.name + ' (' + e.tag + ')');
-      });
-
-      return {repo6: list_repos_6, repo7: list_repos_7};
+    {
+      enabled: !addview,
+      initialData: () => {
+        if (!addview) {
+          let pkgs = queryClient.getQueryData('package');
+          if (pkgs) {
+            let pkg = pkgs.find(pkg => nameversion == `${pkg.name}-${pkg.version}`)
+            let [repo6, repo7] = splitRepos(pkg.repos);
+            pkg.initial_version = pkg.version;
+            pkg.repo_6 = repo6;
+            pkg.repo_7 = repo7;
+            return pkg;
+          }
+        }
+      }
     }
   );
 
-  const { data: probes, error: errorProbes, isLoading: loadingProbes } = useQuery(
-    'package_component_probes', async () => {
-      let prb = await backend.fetchData('/api/v2/internal/version/probe');
-      return prb;
-    },
+  const { data: repos, error: errorRepos, status: statusRepos } = useQuery(
+    'yumrepo', () => fetchYumRepos()
+  );
+
+  const { data: probes, error: errorProbes, status: statusProbes } = useQuery(
+    ['probe', 'version'], () => fetchProbeVersions(),
     { enabled: !addview}
   );
 
-  const { data: packageVersions, error: errorPackageVersions, isLoading: loadingPackageVersions } = useQuery(
-    'package_component_versions', async () => {
-      let pkg_versions = [];
-
+  const { data: packageVersions, error: errorPackageVersions, status: statusPackageVersions } = useQuery(
+    ['package', 'versions', nameversion], async () => {
+      let pkg_versions = []
       if (!addview)
         pkg_versions = await backend.fetchData(`/api/v2/internal/packageversions/${pkg.name}`);
 
-      return pkg_versions;
+      return pkg_versions
     },
-    { enabled: pkg}
+    { enabled: !!pkg }
   );
 
   const [disabledButton, setDisabledButton] = useState(true);
@@ -234,22 +227,17 @@ export const PackageComponent = (props) => {
     return [repo6, repo7];
   }
 
-  function onVersionSelect(value) {
+  function onVersionSelect(props, value) {
     let initial_version = pkg.initial_version;
     packageVersions.forEach(pkgv => {
       if (pkgv.version === value) {
         let [repo6, repo7] = splitRepos(pkgv.repos);
-        let updated_pkg = {
-          id: pkgv.id,
-          name: pkgv.name,
-          version: pkgv.version,
-          initial_version: initial_version,
-          use_present_version: pkgv.use_present_version,
-          repo_6: repo6,
-          repo_7: repo7
-        };
+        props.setFieldValue('name', pkgv.name);
+        props.setFieldValue('version', pkgv.version);
+        props.setFieldValue('repo_6', repo6);
+        props.setFieldValue('repo_7', repo7);
+        props.setFieldValue('present_version', pkgv.use_present_version);
 
-        queryCache.setQueryData(`${querykey}`, () => updated_pkg);
         setDisabledButton(value === initial_version);
       }
     });
@@ -268,89 +256,60 @@ export const PackageComponent = (props) => {
 
   async function onTenantSubmitHandle(values) {
     try {
-      let response = await fetch(
+      let json = await backend.fetchData(
         `/api/v2/internal/updatemetricsversions/${values.name}-${values.version}`,
       )
 
-      if (response.ok) {
-        let json = await response.json();
-        let msgs = [];
-        if ('updated' in json)
-          msgs.push(json['updated']);
-
-        if ('deleted' in json)
-          msgs.push(json['deleted']);
-
-        if ('warning' in json)
-          msgs.push(json['warning']);
-
-        let title = 'Update metrics';
-
-        msgs.push('ARE YOU SURE you want to update metrics?')
-
-        setModalMsg(<div>{msgs.map((msg, i) => <p key={i}>{msg}</p>)}</div>);
-        setModalTitle(title);
-        setFormValues(values);
-        setModalFlag('update');
-        toggleAreYouSure();
-      } else {
-        let error_msg = '';
-        try {
-          let json = await response.json()
-          error_msg = `${response.status} ${response.statusText} ${json.detail}`;
-        } catch(err1) {
-          error_msg = `${response.status} ${response.statusText}`;
-        }
-        NotifyError({
-          title: 'Error',
-          msg: error_msg
-        });
-      }
-    } catch(err) {
-      NotifyError({
-        title: 'Error',
-        msg: `Error fetching metrics data: ${err}`
-      });
-    }
-  }
-
-  async function updateMetrics() {
-    let response = await backend.changeObject(
-      '/api/v2/internal/updatemetricsversions/',
-      {
-        name: formValues.name,
-        version: formValues.version
-      }
-    );
-    if (!response.ok) {
-      let err_msg = '';
-      try {
-        let json = await response.json();
-        err_msg = json.detail;
-      } catch(err) {
-        err_msg = 'Error updating metrics';
-      }
-      NotifyError({
-        title: `Error: ${response.status} ${response.statusText}`,
-        msg: err_msg
-      });
-    } else {
-      let json = await response.json();
+      let msgs = [];
       if ('updated' in json)
-        NotifyOk({
-          msg: json.updated,
-          title: 'Updated',
-          callback: () => history.push('/ui/administration/packages')
-        });
-      if ('warning' in json)
-        NotifyWarn({msg: json.warning, title: 'Warning'});
+        msgs.push(json['updated']);
 
       if ('deleted' in json)
-        NotifyWarn({msg: json.deleted, title: 'Deleted'});
+        msgs.push(json['deleted']);
+
+      if ('warning' in json)
+        msgs.push(json['warning']);
+
+      let title = 'Update metrics';
+
+      msgs.push('ARE YOU SURE you want to update metrics?')
+
+      setModalMsg(<div>{msgs.map((msg, i) => <p key={i}>{msg}</p>)}</div>);
+      setModalTitle(title);
+      setFormValues(values);
+      setModalFlag('update');
+      toggleAreYouSure();
+    } catch(error) {
+      NotifyError({ title: 'Error', msg: error.message })
     }
   }
 
-  async function doChange() {
+  function updateMetrics() {
+    const sendValues = new Object({
+      name: formValues.name,
+      version: formValues.version
+    })
+    updateMetricsMutation.mutate(sendValues, {
+      onSuccess: async (data) => {
+        queryClient.invalidateQueries('metric');
+        let json = await data.json();
+        if ('updated' in json)
+          NotifyOk({
+            msg: json.updated,
+            title: 'Updated',
+            callback: () => history.push('/ui/administration/packages')
+          });
+        if ('warning' in json)
+          NotifyWarn({msg: json.warning, title: 'Warning'});
+
+        if ('deleted' in json)
+          NotifyWarn({msg: json.deleted, title: 'Deleted'});
+      },
+      onError: (error) => NotifyError({ title: 'Error', msg: error.message })
+    })
+  }
+
+  function doChange() {
     let repos = [];
     if (formValues.repo_6)
       repos.push(formValues.repo_6);
@@ -358,107 +317,95 @@ export const PackageComponent = (props) => {
     if (formValues.repo_7)
       repos.push(formValues.repo_7);
 
+    const sendValues = new Object({
+      name: formValues.name,
+      version: formValues.version,
+      use_present_version: formValues.present_version,
+      repos: repos
+    })
+
     if (addview || cloneview) {
-      let response = await backend.addObject(
-        '/api/v2/internal/packages/',
-        {
-          name: formValues.name,
-          version: formValues.version,
-          use_present_version: formValues.present_version,
-          repos: repos
+      addPackage.mutate(sendValues, {
+        onSuccess: () => {
+          queryClient.invalidateQueries('package');
+          NotifyOk({
+            msg: 'Package successfully added',
+            title: 'Added',
+            callback: () => history.push('/ui/packages')
+          })
+        },
+        onError: (error) => {
+          NotifyError({
+            title: 'Error',
+            msg: error.message ? error.message : 'Error adding package'
+          })
         }
-      );
-      if (!response.ok) {
-        let add_msg = '';
-        try {
-          let json = await response.json();
-          add_msg = json.detail;
-        } catch(err) {
-          add_msg = 'Error adding package';
-        }
-        NotifyError({
-          title: `Error: ${response.status} ${response.statusText}`,
-          msg: add_msg
-        });
-      } else {
-        NotifyOk({
-          msg: 'Package successfully added',
-          title: 'Added',
-          callback: () => history.push('/ui/packages')
-        });
-      }
+      })
     } else {
-      let response = await backend.changeObject(
-        '/api/v2/internal/packages/',
-        {
-          id: formValues.id,
-          name: formValues.name,
-          version: formValues.version,
-          use_present_version: formValues.present_version,
-          repos: repos
+      changePackage.mutate({ ...sendValues, id: formValues.id }, {
+        onSuccess: () => {
+          NotifyOk({
+            msg: 'Package successfully changed',
+            title: 'Changed',
+            callback: () => history.push('/ui/packages')
+          })
+        },
+        onError: (error) => {
+          NotifyError({
+            title: 'Error',
+            msg: error.message ? error.message : 'Error changing package'
+          })
         }
-      );
-      if (!response.ok) {
-        let change_msg = '';
-        try {
-          let json = await response.json();
-          change_msg = json.detail;
-        } catch(err) {
-          change_msg = 'Error changing package';
-        }
-        NotifyError({
-          title: `Error: ${response.status} ${response.statusText}`,
-          msg: change_msg
-        });
-      } else {
-        NotifyOk({
-          msg: 'Package successfully changed',
-          title: 'Changed',
-          callback: () => history.push('/ui/packages')
-        });
-      }
+      })
     }
   }
 
-  async function doDelete() {
-    let response = await backend.deleteObject(`/api/v2/internal/packages/${nameversion}`);
-    if (!response.ok) {
-      let msg = '';
-      try {
-        let json = await response.json();
-        msg = json.detail;
-      } catch(err) {
-        msg = 'Error deleting package';
+  function doDelete() {
+    deletePackage.mutate(undefined, {
+      onSuccess: () => {
+        queryClient.invalidateQueries('package');
+        NotifyOk({
+          msg: 'Package successfully deleted',
+          title: 'Deleted',
+          callback: () => history.push('/ui/packages')
+        })
+      },
+      onError: (error) => {
+        NotifyError({
+          title: 'Error',
+          msg: error.message ? error.message : 'Error deleting package'
+        })
       }
-      NotifyError({
-        title: `Error: ${response.status} ${response.statusText}`,
-        msg: msg
-      });
-    } else {
-      NotifyOk({
-        msg: 'Package successfully deleted',
-        title: 'Deleted',
-        callback: () => history.push('/ui/packages')
-      });
-    }
+    })
   }
 
-  if (loadingPkg || loadingRepos || loadingProbes || loadingPackageVersions)
+  if (statusPkg === 'loading' || statusRepos === 'loading' || statusProbes === 'loading' || statusPackageVersions === 'loading')
     return (<LoadingAnim/>);
 
-  else if (errorPkg)
+  else if (statusPkg === 'error')
     return (<ErrorComponent error={errorPkg}/>);
 
-  else if (errorRepos)
+  else if (statusRepos === 'error')
     return (<ErrorComponent error={errorRepos}/>);
 
-  else if (errorProbes)
+  else if (statusProbes === 'error')
     return (<ErrorComponent error={errorProbes}/>);
 
-  else if (errorPackageVersions)
+  else if (statusPackageVersions === 'error')
     return (<ErrorComponent error={errorPackageVersions}/>);
 
-  else if (!loadingPkg && !loadingRepos && !loadingProbes && !loadingPackageVersions && repos) {
+  else if (repos) {
+    var listRepos6 = [];
+    var listRepos7 = [];
+
+    repos.forEach(e => {
+      if (e.tag === 'CentOS 6')
+        listRepos6.push(`${e.name} (${e.tag})`)
+
+      else if (e.tag === 'CentOS 7')
+        listRepos7.push(`${e.name} (${e.tag})`)
+    })
+
     var listProbes = [];
     let presentVersion = false;
     if (pkg) {
@@ -547,7 +494,7 @@ export const PackageComponent = (props) => {
                                 className='form-control custom-select'
                                 id='version'
                                 data-testid='version'
-                                onChange={e => onVersionSelect(e.target.value)}
+                                onChange={e => onVersionSelect(props, e.target.value)}
                               >
                                 {
                                   packageVersions.map((version, i) =>
@@ -592,7 +539,7 @@ export const PackageComponent = (props) => {
               <FormGroup>
                 <ParagraphTitle title='YUM repo'/>
                 {
-                  (props.errors.repo_6 || props.errors.repo_7) &&
+                  (!disabled && (props.errors.repo_6 || props.errors.repo_7)) &&
                     <Alert color='danger'>
                       <center>
                         You must provide at least one repo!
@@ -617,7 +564,7 @@ export const PackageComponent = (props) => {
                       :
                         <AutocompleteField
                           {...props}
-                          lists={repos.repo6}
+                          lists={listRepos6}
                           icon='yumrepos'
                           field='repo_6'
                           onselect_handler={!addview ? (_, newValue) => props.setFieldValue('repo_6', newValue) : undefined}
@@ -648,7 +595,7 @@ export const PackageComponent = (props) => {
                       :
                         <AutocompleteField
                           {...props}
-                          lists={repos.repo7}
+                          lists={listRepos7}
                           icon='yumrepos'
                           field='repo_7'
                           onselect_handler={!addview ? (_, newValue) => props.setFieldValue('repo_7', newValue) : undefined}

@@ -78,8 +78,6 @@ import { Helmet } from 'react-helmet';
 import Select, { components } from 'react-select';
 
 
-
-
 var list_pages = ['administration', 'probes',
                   'metrics', 'reports', 'servicetypes', 'metricprofiles', 'aggregationprofiles',
                   'thresholdsprofiles', 'operationsprofiles'];
@@ -117,12 +115,6 @@ link_title.set('tenants', 'Tenants');
 link_title.set('thresholdsprofiles', 'Thresholds profiles');
 link_title.set('users', 'Users');
 link_title.set('yumrepos', 'YUM repos');
-
-var PolicyLinks = new Map();
-PolicyLinks.set('egi', 'https://argo.egi.eu/egi/policies');
-PolicyLinks.set('eudat', 'https://avail.eudat.eu/eudat/policies');
-PolicyLinks.set('sdc', 'https://monitoring.seadatanet.org/sdc/policies');
-PolicyLinks.set('ni4os', 'https://argo.ni4os.eu/ni4os/policies');
 
 
 export const Icon = props =>
@@ -616,7 +608,7 @@ export const NavigationLinks = ({location, isTenantSchema, userDetails}) => {
 }
 
 
-export const NavigationAbout = ({ location, poemVersion, tenantName='egi' }) => {
+export const NavigationAbout = ({ location, poemVersion, termsLink, privacyLink }) => {
   return (
     <React.Fragment>
       <div className="bg-white border-left border-right pl-3 mt-0 pt-5 text-uppercase">
@@ -643,7 +635,7 @@ export const NavigationAbout = ({ location, poemVersion, tenantName='egi' }) => 
         </NavLink>
         <NavLink
           tag="a"
-          href='https://ui.argo.grnet.gr/egi/termsofUse'
+          href={termsLink}
           className="text-dark"
           target="_blank" rel="noopener noreferrer"
         >
@@ -661,7 +653,7 @@ export const NavigationAbout = ({ location, poemVersion, tenantName='egi' }) => 
         </NavLink>
         <NavLink
           tag="a"
-          href={PolicyLinks.get(tenantName.toLowerCase())}
+          href={privacyLink}
           className='text-dark'
           target='_blank' rel='noopener noreferrer'
         >
@@ -674,7 +666,7 @@ export const NavigationAbout = ({ location, poemVersion, tenantName='egi' }) => 
           className="text-dark font-italic text-monospace"
         >
           <FontAwesomeIcon icon={faCrosshairs} size="1x" color="green" fixedWidth/>{' '}
-          { poemVersion }
+          <small> { poemVersion } </small>
         </NavLink>
       </Nav>
     </React.Fragment>
@@ -682,7 +674,7 @@ export const NavigationAbout = ({ location, poemVersion, tenantName='egi' }) => 
 }
 
 
-const InnerFooter = ({ border=false, publicPage=false, tenantName='egi' }) =>
+const InnerFooter = ({ termsLink, privacyLink, border=false, publicPage=false}) =>
 {
   const [modal, setModal] = useState(false);
   const toggle = () => setModal(!modal);
@@ -710,9 +702,9 @@ const InnerFooter = ({ border=false, publicPage=false, tenantName='egi' }) =>
         publicPage &&
         <div className="text-center mb-0 pt-0">
           <small>
-            <a href="https://ui.argo.grnet.gr/egi/termsofUse" target="_blank" rel="noopener noreferrer" title="Terms">Terms</a>, &nbsp;
+            <a href={termsLink} target="_blank" rel="noopener noreferrer" title="Terms">Terms</a>, &nbsp;
             <a href='#' title="Cookie Policies" onClick={toggle}>Cookie Policies</a>, &nbsp;
-            <a title='Privacy Policy' href={tenantName ? PolicyLinks.get(tenantName.toLowerCase()) : PolicyLinks.get('egi')} target='_blank' rel='noopener noreferrer'>Privacy Policy</a>
+            <a title='Privacy Policy' href={privacyLink} target='_blank' rel='noopener noreferrer'>Privacy Policy</a>
           </small>
           <Modal isOpen={modal} toggle={toggle} size="lg">
             <ModalBody className="p-0">
@@ -726,19 +718,19 @@ const InnerFooter = ({ border=false, publicPage=false, tenantName='egi' }) =>
 }
 
 
-export const Footer = ({ loginPage=false, publicPage=false, tenantName='egi' }) =>
+export const Footer = ({ termsLink, privacyLink, loginPage=false, publicPage=false}) =>
 {
   if (!loginPage) {
     return (
       <div id="argo-footer" className="border rounded">
-        <InnerFooter border={true} publicPage={publicPage} tenantName={tenantName}/>
+        <InnerFooter border={true} publicPage={publicPage} termsLink={termsLink} privacyLink={privacyLink}/>
       </div>
     )
   }
   else {
     return (
       <div id="argo-loginfooter">
-        <InnerFooter publicPage={true} tenantName={tenantName}/>
+        <InnerFooter publicPage={true} termsLink={termsLink} privacyLink={privacyLink}/>
       </div>
     )
   }
@@ -797,7 +789,7 @@ export const NotifyInfo = ({msg='', title=''}) => {
 };
 
 
-export const PublicPage = ({tenantName=undefined, children}) => {
+export const PublicPage = ({privacyLink, termsLink, children}) => {
   let userDetails = {
     username: 'Anonymous'
   }
@@ -828,10 +820,7 @@ export const PublicPage = ({tenantName=undefined, children}) => {
       <Row>
         <Col>
           {
-            tenantName ?
-              <Footer loginPage={false} publicPage={true} tenantName={tenantName}/>
-            :
-              <Footer loginPage={false} publicPage={true}/>
+            <Footer privacyLink={privacyLink} termsLink={termsLink} loginPage={false} publicPage={true}/>
           }
         </Col>
       </Row>

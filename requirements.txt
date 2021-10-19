@@ -26,7 +26,6 @@ ndg-httpsclient==0.5.1
 ordered-set==3.1.1
 packaging==20.3
 pipenv==2020.11.15
-poem @ file:///home/user/poem-2-devel/dist/poem-3.3.5.dev20201111-py3-none-any.whl
 psycopg2-binary==2.8.4
 pyasn1==0.4.8
 pycparser==2.20
