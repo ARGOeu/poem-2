@@ -687,15 +687,15 @@ export const ListOfMetrics = (props) => {
         return (
           <>
             <div className="d-flex align-items-center justify-content-between">
-              <h2 className="ml-3 mt-1 mb-4">{`Select metric template${userDetails.is_superuser ? '(s) to import' : ' for details'}`}</h2>
+              <h2 className="ml-3 mt-1 mb-4">{`Select metric template${(userDetails && userDetails.is_superuser) ? '(s) to import' : ' for details'}`}</h2>
               {
-                userDetails.is_superuser &&
+                (userDetails && userDetails.is_superuser) &&
                   <Button
-                  className='btn btn-secondary'
-                  onClick={() => importMetrics()}
-                    >
-                      Import
-                    </Button>
+                    className='btn btn-secondary'
+                    onClick={() => importMetrics()}
+                  >
+                    Import
+                  </Button>
               }
             </div>
             <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
