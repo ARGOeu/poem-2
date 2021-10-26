@@ -412,7 +412,7 @@ const EntitySelect = ({field, entitiesOptions, onChangeHandler, entitiesInitials
         isMulti
         onChange={(e) => onChangeHandler(e)}
         options={entitiesOptions}
-        defaultValue={entitiesInitials}
+        value={entitiesInitials}
       />
     )
   }
@@ -555,6 +555,12 @@ export const ReportsComponent = (props) => {
   const [groupsTags, setGroupsTags] = useState(new Array())
   const [endpointsTags, setEndpointsTags] = useState(new Array())
   const [entitiesState, setEntitiesState] = useState(new Array())
+  const [topologyGroups, setTopologyGroups] = useState(new Object({
+    'ngis': new Array(),
+    'sites': new Array(),
+    'projects': new Array(),
+    'servicegroups': new Array()
+  }))
 
   const webapi = new WebApi({
     token: props.webapitoken,
@@ -638,9 +644,38 @@ export const ReportsComponent = (props) => {
     { enabled: !!userDetails && crud }
   );
 
-  const { data: topologyGroups, error: topologyGroupsErrors, isLoading: loadingTopologyGroups } = useQuery(
+  const { error: topologyGroupsErrors, isLoading: loadingTopologyGroups } = useQuery(
     'topologygroups', () => fetchTopologyGroups(webapi),
-    { enabled: !!userDetails && crud }
+    {
+      enabled: !!userDetails && crud,
+      onSuccess: (data) => {
+        let ngis = new Set()
+        let sites = new Set()
+        let projects = new Set()
+        let servicegroups = new Set()
+
+        if (data) {
+          for (var entity of data) {
+            if (entity['type'].toLowerCase() === 'project') {
+              projects.add(entity['group'])
+              servicegroups.add(entity['subgroup'])
+            }
+
+            else if (entity['type'].toLowerCase() === 'ngi') {
+              ngis.add(entity['group'])
+              sites.add(entity['subgroup'])
+            }
+          }
+        }
+
+        setTopologyGroups(new Object({
+          'ngis': Array.from(ngis).sort(sortStr),
+          'sites': Array.from(sites).sort(sortStr),
+          'projects': Array.from(projects).sort(sortStr),
+          'servicegroups': Array.from(servicegroups).sort(sortStr)
+        }))
+      }
+    }
   );
 
   const sortStr = (a, b) => {
@@ -1026,35 +1061,6 @@ export const ReportsComponent = (props) => {
     return (<ErrorComponent error={topologyGroupsErrors} />)
 
   else if (userDetails && listMetricProfiles && listAggregationProfiles && listOperationsProfiles) {
-    const topoTags = topologyTags ? topologyTags : new Array();
-    var topoGroups = new Object();
-
-    if (topologyGroups) {
-      let ngis = new Set()
-      let sites = new Set()
-      let projects = new Set()
-      let servicegroups = new Set()
-
-      for (var entity of topologyGroups) {
-        if (entity['type'].toLowerCase() === 'project') {
-          projects.add(entity['group'])
-          servicegroups.add(entity['subgroup'])
-        }
-
-        else if (entity['type'].toLowerCase() === 'ngi') {
-          ngis.add(entity['group'])
-          sites.add(entity['subgroup'])
-        }
-      }
-
-      topoGroups = new Object({
-        'ngis': Array.from(ngis).sort(sortStr),
-        'sites': Array.from(sites).sort(sortStr),
-        'projects': Array.from(projects).sort(sortStr),
-        'servicegroups': Array.from(servicegroups).sort(sortStr)
-      })
-    }
-
     let metricProfile = '';
     let aggregationProfile = '';
     let operationsProfile = '';
@@ -1295,7 +1301,7 @@ export const ReportsComponent = (props) => {
                                 part="groups"
                                 tagsState={tagsState}
                                 setTagsState={setTagsState}
-                                tagsAll={topoTags}
+                                tagsAll={topologyTags ? topologyTags : new Array()}
                                 {...props}/>
                             )}
                           />
@@ -1309,7 +1315,7 @@ export const ReportsComponent = (props) => {
                             name="entities"
                             render={props => (
                               <TopologyEntityFields
-                                topoGroups={topoGroups}
+                                topoGroups={topologyGroups}
                                 addview={addview}
                                 {...props}
                               />
@@ -1334,7 +1340,7 @@ export const ReportsComponent = (props) => {
                                 part="endpoints"
                                 tagsState={tagsState}
                                 setTagsState={setTagsState}
-                                tagsAll={topoTags}
+                                tagsAll={topologyTags ? topologyTags : new Array()}
                                 addview={addview}
                                 {...propsLocal}/>
                             )}

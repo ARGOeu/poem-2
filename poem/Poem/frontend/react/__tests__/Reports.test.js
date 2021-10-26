@@ -151,6 +151,16 @@ const mockReport = {
       name: "scope",
       value: "EGI*",
       context: "argo.endpoint.filter.tags"
+    },
+    {
+      name: "NGI",
+      value: "iris.ac.uk",
+      context: "argo.group.filter.fields"
+    },
+    {
+      name: "SITES",
+      value: "dirac-durham",
+      context: "argo.group.filter.fields"
     }
   ]
 };
@@ -611,6 +621,7 @@ describe('Tests for reports listview', () => {
 describe('Tests for reports changeview', () => {
   jest.spyOn(NotificationManager, 'success');
   jest.spyOn(NotificationManager, 'error');
+  jest.spyOn(queryClient, 'invalidateQueries');
 
   beforeAll(() => {
     WebApi.mockImplementation(() => {
@@ -677,14 +688,47 @@ describe('Tests for reports changeview', () => {
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
 
+    expect(card_groups.queryByText('monitored')).not.toBeInTheDocument();
     expect(card_groups.getByText('certification')).toBeInTheDocument();
     expect(card_groups.getByText('Certified')).toBeInTheDocument();
+    selectEvent.openMenu(card_groups.getByText('certification'));
+    expect(card_groups.getByText('monitored')).toBeInTheDocument();
     expect(card_groups.getByText('infrastructure')).toBeInTheDocument();
     expect(card_groups.getByText('Production')).toBeInTheDocument();
     expect(card_groups.getByText('scope')).toBeInTheDocument();
     expect(card_groups.getByText('EGI*')).toBeInTheDocument();
+    selectEvent.openMenu(card_groups.getByText('Certified'));
+    expect(card_groups.getByText('Candidate')).toBeInTheDocument();
+    expect(card_groups.getByText('Closed')).toBeInTheDocument();
+    expect(card_groups.getByText('Suspended')).toBeInTheDocument();
+    expect(card_groups.getByText('Uncertified')).toBeInTheDocument();
+    selectEvent.openMenu(card_groups.getByText('Production'));
+    expect(card_groups.getByText('PPS')).toBeInTheDocument();
+    expect(card_groups.getByText('Test')).toBeInTheDocument();
+    selectEvent.openMenu(card_groups.getByText('EGI*'));
+    expect(card_groups.getByText('EOSC-hub')).toBeInTheDocument();
+    expect(card_groups.getByText('EOSCCore')).toBeInTheDocument();
+    expect(card_groups.getByText('FedCloud')).toBeInTheDocument();
     expect(card_groups.getAllByTestId(/remove/i)).toHaveLength(3);
     expect(card_groups.getByRole('button', { name: /add new/i })).toBeInTheDocument();
+    expect(card_groups.queryByText('Russia')).not.toBeInTheDocument();
+    expect(card_groups.queryByText('RU-SARFTI')).not.toBeInTheDocument();
+    expect(card_groups.queryByText('IRISOPS-IAM')).not.toBeInTheDocument();
+    expect(card_groups.queryByText('DAVETESTSG')).not.toBeInTheDocument();
+    expect(card_groups.queryByText('NGI_AEGIS_SERVICES')).not.toBeInTheDocument();
+    expect(card_groups.queryByText('NGI_ARMGRID_SERVICES')).not.toBeInTheDocument();
+    expect(card_groups.getByText('iris.ac.uk')).toBeInTheDocument();
+    selectEvent.openMenu(card_groups.getByText('iris.ac.uk'))
+    expect(card_groups.getByText('Russia')).toBeInTheDocument();
+    expect(card_groups.queryByText('RU-SARFTI')).not.toBeInTheDocument();
+    expect(card_groups.queryByText('IRISOPS-IAM')).not.toBeInTheDocument();
+    expect(card_groups.getByText('dirac-durham')).toBeInTheDocument();
+    selectEvent.openMenu(card_groups.getByText('dirac-durham'));
+    expect(card_groups.getByText('RU-SARFTI')).toBeInTheDocument();
+    expect(card_groups.getByText('IRISOPS-IAM')).toBeInTheDocument();
+    expect(card_groups.queryByText('DAVETESTSG')).not.toBeInTheDocument();
+    expect(card_groups.queryByText('NGI_AEGIS_SERVICES')).not.toBeInTheDocument();
+    expect(card_groups.queryByText('NGI_ARMGRID_SERVICES')).not.toBeInTheDocument();
 
     expect(card_endpoints.getByText('production')).toBeInTheDocument();
     expect(card_endpoints.getByText('monitored')).toBeInTheDocument();
@@ -736,6 +780,8 @@ describe('Tests for reports changeview', () => {
     fireEvent.click(card_groups.getByTestId(/remove-2/i));
 
     fireEvent.click(card_endpoints.getByTestId(/remove-0/i));
+
+    await selectEvent.select(card_groups.getByText('dirac-durham'), 'IRISOPS-IAM');
 
     fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '70' } });
     fireEvent.change(screen.getByLabelText(/reliability/i), { target: { value: '80' } });
@@ -801,6 +847,21 @@ describe('Tests for reports changeview', () => {
             context: 'argo.endpoint.filter.tags.array',
             name: 'scope',
             value: 'EGI*'
+          },
+          {
+            name: "NGI",
+            value: "iris.ac.uk",
+            context: "argo.group.filter.fields"
+          },
+          {
+            name: "SITES",
+            value: "dirac-durham",
+            context: "argo.group.filter.fields"
+          },
+          {
+            name: "SITES",
+            value: "IRISOPS-IAM",
+            context: "argo.group.filter.fields"
           }
         ],
         topology_schema: {
@@ -856,6 +917,8 @@ describe('Tests for reports changeview', () => {
 
     fireEvent.click(card_endpoints.getByTestId(/remove-0/i));
 
+    await selectEvent.select(card_groups.getByText('dirac-durham'), 'IRISOPS-IAM');
+
     fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '70' } });
     fireEvent.change(screen.getByLabelText(/reliability/i), { target: { value: '80' } });
     fireEvent.change(screen.getByLabelText(/uptime/i), { target: { value: '1.0' } });
@@ -920,6 +983,21 @@ describe('Tests for reports changeview', () => {
             context: 'argo.endpoint.filter.tags.array',
             name: 'scope',
             value: 'EGI*'
+          },
+          {
+            name: "NGI",
+            value: "iris.ac.uk",
+            context: "argo.group.filter.fields"
+          },
+          {
+            name: "SITES",
+            value: "dirac-durham",
+            context: "argo.group.filter.fields"
+          },
+          {
+            name: "SITES",
+            value: "IRISOPS-IAM",
+            context: "argo.group.filter.fields"
           }
         ],
         topology_schema: {
@@ -971,6 +1049,8 @@ describe('Tests for reports changeview', () => {
 
     fireEvent.click(card_endpoints.getByTestId(/remove-0/i));
 
+    await selectEvent.select(card_groups.getByText('dirac-durham'), 'IRISOPS-IAM');
+
     fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '70' } });
     fireEvent.change(screen.getByLabelText(/reliability/i), { target: { value: '80' } });
     fireEvent.change(screen.getByLabelText(/uptime/i), { target: { value: '1.0' } });
@@ -1035,6 +1115,21 @@ describe('Tests for reports changeview', () => {
             context: 'argo.endpoint.filter.tags.array',
             name: 'scope',
             value: 'EGI*'
+          },
+          {
+            name: "NGI",
+            value: "iris.ac.uk",
+            context: "argo.group.filter.fields"
+          },
+          {
+            name: "SITES",
+            value: "dirac-durham",
+            context: "argo.group.filter.fields"
+          },
+          {
+            name: "SITES",
+            value: "IRISOPS-IAM",
+            context: "argo.group.filter.fields"
           }
         ],
         topology_schema: {
@@ -1091,6 +1186,8 @@ describe('Tests for reports changeview', () => {
 
     fireEvent.click(card_endpoints.getByTestId(/remove-0/i));
 
+    await selectEvent.select(card_groups.getByText('dirac-durham'), 'IRISOPS-IAM');
+
     fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '70' } });
     fireEvent.change(screen.getByLabelText(/reliability/i), { target: { value: '80' } });
     fireEvent.change(screen.getByLabelText(/uptime/i), { target: { value: '1.0' } });
@@ -1155,6 +1252,21 @@ describe('Tests for reports changeview', () => {
             context: 'argo.endpoint.filter.tags.array',
             name: 'scope',
             value: 'EGI*'
+          },
+          {
+            name: "NGI",
+            value: "iris.ac.uk",
+            context: "argo.group.filter.fields"
+          },
+          {
+            name: "SITES",
+            value: "dirac-durham",
+            context: "argo.group.filter.fields"
+          },
+          {
+            name: "SITES",
+            value: "IRISOPS-IAM",
+            context: "argo.group.filter.fields"
           }
         ],
         topology_schema: {
@@ -1215,6 +1327,8 @@ describe('Tests for reports changeview', () => {
 
     fireEvent.click(card_endpoints.getByTestId(/remove-0/i));
 
+    await selectEvent.select(card_groups.getByText('dirac-durham'), 'IRISOPS-IAM');
+
     fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '70' } });
     fireEvent.change(screen.getByLabelText(/reliability/i), { target: { value: '80' } });
     fireEvent.change(screen.getByLabelText(/uptime/i), { target: { value: '1.0' } });
@@ -1279,6 +1393,21 @@ describe('Tests for reports changeview', () => {
             context: 'argo.endpoint.filter.tags.array',
             name: 'scope',
             value: 'EGI*'
+          },
+          {
+            name: "NGI",
+            value: "iris.ac.uk",
+            context: "argo.group.filter.fields"
+          },
+          {
+            name: "SITES",
+            value: "dirac-durham",
+            context: "argo.group.filter.fields"
+          },
+          {
+            name: "SITES",
+            value: "IRISOPS-IAM",
+            context: "argo.group.filter.fields"
           }
         ],
         topology_schema: {
