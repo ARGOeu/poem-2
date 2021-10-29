@@ -676,37 +676,37 @@ const App = () => {
     setTenantName(options && options.result.tenant_name);
     setPublicView(true);
     queryClient.prefetchQuery(
-      'public_probe', () => fetchProbes(publicView)
+      'public_probe', () => fetchProbes(true)
     );
     queryClient.prefetchQuery(
-      'public_metrictemplate', () => fetchMetricTemplates(publicView)
+      'public_metrictemplate', () => fetchMetricTemplates(true)
     );
     queryClient.prefetchQuery(
-      'public_metric', () => fetchMetrics(publicView)
+      'public_metric', () => fetchMetrics(true)
     );
     queryClient.prefetchQuery(
-      'public_metricstypes', () => fetchMetricTypes(publicView)
+      'public_metricstypes', () => fetchMetricTypes(true)
     );
     queryClient.prefetchQuery(
-      'public_metrictemplatestypes', () => fetchMetricTemplateTypes(publicView)
+      'public_metrictemplatestypes', () => fetchMetricTemplateTypes(true)
     );
     queryClient.prefetchQuery(
-      'public_metrictags', () => fetchMetricTags(publicView)
+      'public_metrictags', () => fetchMetricTags(true)
     );
     queryClient.prefetchQuery(
-      ['public_metric', 'usergroups'], () => fetchUserGroups(isTenantSchema, publicView, 'metrics')
+      ['public_metric', 'usergroups'], () => fetchUserGroups(isTenantSchema, true, 'metrics')
     );
     queryClient.prefetchQuery(
-      'public_ostags', () => fetchOStags(publicView)
+      'public_ostags', () => fetchOStags(true)
     );
     queryClient.prefetchQuery(
-      'public_metricprofile', () => fetchBackendMetricProfiles(publicView)
+      'public_metricprofile', () => fetchBackendMetricProfiles(true)
     );
     queryClient.prefetchQuery(
-      ['public_aggregationprofile', 'backend'], () => fetchAggregationProfiles(publicView)
+      ['public_aggregationprofile', 'backend'], () => fetchAggregationProfiles(true)
     );
     queryClient.prefetchQuery(
-      'public_thresholdsprofile', () => fetchThresholdsProfiles(publicView)
+      'public_thresholdsprofile', () => fetchThresholdsProfiles(true)
     );
     queryClient.prefetchQuery(
       'public_operationsprofile', () => fetchOperationsProfiles(new WebApi({ token: token, operationsProfiles: webApiOperations }))
