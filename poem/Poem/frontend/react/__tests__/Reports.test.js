@@ -161,6 +161,11 @@ const mockReport = {
       name: "SITES",
       value: "dirac-durham",
       context: "argo.group.filter.fields"
+    },
+    {
+      name: "info_ext_GLUE2ComputingShareMappingQueue",
+      value: "condor",
+      context: "argo.group.filter.tags.array"
     }
   ]
 };
@@ -422,6 +427,21 @@ const mockReportsTopologyTags = [
           "EOSC-hub",
           "EOSCCore",
           "FedCloud"
+        ]
+      },
+      {
+        name: "info_ext_GLUE2ComputingShareMappingQueue",
+        values: [
+          "condor",
+          "condor_q2d",
+          "eddie"
+        ]
+      },
+      {
+        name: "info_ext_GLUE2EndpointImplementationName",
+        values: [
+          "ARC-CE",
+          "nordugrid-arc"
         ]
       }
     ]
@@ -709,8 +729,9 @@ describe('Tests for reports changeview', () => {
     expect(card_groups.getByText('EOSC-hub')).toBeInTheDocument();
     expect(card_groups.getByText('EOSCCore')).toBeInTheDocument();
     expect(card_groups.getByText('FedCloud')).toBeInTheDocument();
-    expect(card_groups.getAllByTestId(/remove/i)).toHaveLength(3);
-    expect(card_groups.getByRole('button', { name: /add new/i })).toBeInTheDocument();
+    expect(card_groups.getAllByTestId(/remove/i)).toHaveLength(4);
+    expect(card_groups.queryByRole('button', { name: /add new tag/i })).toBeInTheDocument();
+    expect(card_groups.queryByRole('button', { name: /add new extension/i })).toBeInTheDocument();
     expect(card_groups.queryByText('Russia')).not.toBeInTheDocument();
     expect(card_groups.queryByText('RU-SARFTI')).not.toBeInTheDocument();
     expect(card_groups.queryByText('IRISOPS-IAM')).not.toBeInTheDocument();
@@ -729,14 +750,32 @@ describe('Tests for reports changeview', () => {
     expect(card_groups.queryByText('DAVETESTSG')).not.toBeInTheDocument();
     expect(card_groups.queryByText('NGI_AEGIS_SERVICES')).not.toBeInTheDocument();
     expect(card_groups.queryByText('NGI_ARMGRID_SERVICES')).not.toBeInTheDocument();
+    expect(card_groups.getByText('GLUE2ComputingShareMappingQueue')).toBeInTheDocument();
+    expect(card_groups.getByText('condor')).toBeInTheDocument();
+    expect(card_groups.queryByText('condor_q2d')).not.toBeInTheDocument();
+    expect(card_groups.queryByText('eddie')).not.toBeInTheDocument();
+    expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument();
+    expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument();
+    expect(card_groups.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument();
+    selectEvent.openMenu(card_groups.getByText('GLUE2ComputingShareMappingQueue'));
+    expect(card_groups.getByText('GLUE2EndpointImplementationName')).toBeInTheDocument();
+    selectEvent.openMenu(card_groups.getByText('condor'));
+    expect(card_groups.getByText('condor_q2d')).toBeInTheDocument();
+    expect(card_groups.getByText('eddie')).toBeInTheDocument();
+    expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument();
+    expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument();
 
     expect(card_endpoints.getByText('production')).toBeInTheDocument();
     expect(card_endpoints.getByText('monitored')).toBeInTheDocument();
     expect(card_endpoints.getByText('scope')).toBeInTheDocument();
     expect(card_endpoints.getAllByText('yes')).toHaveLength(2);
     expect(card_endpoints.getByText('EGI*')).toBeInTheDocument();
-    expect(card_groups.getAllByTestId(/remove/i)).toHaveLength(3);
-    expect(card_groups.getByRole('button', { name: /add new/i })).toBeInTheDocument();
+    expect(card_endpoints.getAllByTestId(/remove/i)).toHaveLength(3);
+    expect(card_endpoints.getByRole('button', { name: /add new tag/i })).toBeInTheDocument();
+    expect(card_endpoints.getByRole('button', { name: /add new extension/i })).toBeInTheDocument();
+    expect(card_endpoints.queryByText('GLUE2ComputingShareMappingQueue')).not.toBeInTheDocument();
+    expect(card_endpoints.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument();
+    expect(card_endpoints.queryAllByDisplayValue(/search/i)).toHaveLength(0);
 
     expect(availabilityThresholdField.value).toBe('80');
     expect(availabilityThresholdField).toBeEnabled();
@@ -1700,11 +1739,13 @@ describe('Tests for reports addview', () => {
 
     expect(card_groups.getAllByRole('textbox')).toHaveLength(2);
     expect(card_groups.queryAllByTestId(/remove/i)).toHaveLength(0);
-    expect(card_groups.getByRole('button', { name: /add new/i })).toBeInTheDocument();
+    expect(card_groups.getByRole('button', { name: /add new tag/i })).toBeInTheDocument();
+    expect(card_groups.getByRole('button', { name: /add new extension/i })).toBeInTheDocument();
     expect(card_groups.getAllByText(/search/i)).toHaveLength(2);
 
     expect(card_endpoints.queryAllByRole('textbox')).toHaveLength(0);
-    expect(card_endpoints.getByRole('button', { name: /add new/i })).toBeInTheDocument();
+    expect(card_endpoints.getByRole('button', { name: /add new tag/i })).toBeInTheDocument();
+    expect(card_endpoints.getByRole('button', { name: /add new extension/i })).toBeInTheDocument();
 
     expect(availabilityThresholdField.value).toBe('');
     expect(availabilityThresholdField).toBeEnabled();
