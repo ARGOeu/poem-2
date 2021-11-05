@@ -362,7 +362,7 @@ const TopologyTagList = ({ part, fieldName, tagsState, setTagsState, tagsAll, ad
               <Col md={1} className="pl-2 pt-1">
                 <Button size="sm" color="danger"
                   type="button"
-                  data-testid={`remove-${index}`}
+                  data-testid={`remove${fieldName.toLowerCase().endsWith('tags') ? 'Tag' : 'Extension'}-${index}`}
                   onClick={() => {
                     let newState = JSON.parse(JSON.stringify(tagsState))
                     let renumNewState = JSON.parse(JSON.stringify(tagsState))
@@ -718,29 +718,27 @@ export const ReportsComponent = (props) => {
     setFormikValues(formValues)
   }
 
-  const formatToReportTags = (tagsContext, formikTags) => {
-    let tags = new Array()
-
-    for (let tag of formikTags) {
+  const formatToReportTags = (tagsContext, formikTags, formikExtensions) => {
+    const formatTag = (tag, prefix='') => {
       let tmpTag = new Object()
       if (tag.value.indexOf(' ') !== -1) {
         if (tag.value.indexOf(',') !== -1)
           tag.value = tag.value.replace(',', '')
         let values = tag.value.replace(/ /g, ', ')
         tmpTag = new Object({
-          name: tag.name,
+          name: `${prefix}${tag.name}`,
           value: values,
           context: tagsContext.replace(".filter.tags", ".filter.tags.array")
         })
-        tags = [...tags, tmpTag]
       }
       else if (tag.value.indexOf(' ') === -1
+        && tag.value.toLowerCase() !== 'yes'
+        && tag.value.toLowerCase() !== 'no'
         && tag.value.toLowerCase() !== '1'
         && tag.value.toLowerCase() !== '0') {
-        tmpTag['name'] = tag.name
+        tmpTag['name'] = `${prefix}${tag.name}`
         tmpTag['value'] = tag.value
         tmpTag['context'] = tagsContext.replace(".filter.tags", ".filter.tags.array")
-        tags.push(tmpTag)
       }
       else {
         let tmpTagValue = tag.value
@@ -748,12 +746,22 @@ export const ReportsComponent = (props) => {
           tmpTagValue = '1'
         else if (tag.value === 'no')
           tmpTagValue = '0'
-        tmpTag['name'] = tag.name
+        tmpTag['name'] = `${prefix}${tag.name}`
         tmpTag['value'] = tmpTagValue
         tmpTag['context'] = tagsContext
-        tags.push(tmpTag)
       }
+      return tmpTag
     }
+
+    let tags = new Array()
+
+    for (let tag of formikTags) {
+      tags.push(formatTag(tag))
+    }
+
+    for (let tag of formikExtensions)
+      tags.push(formatTag(tag, 'info_ext_'))
+
     return tags
   }
 
@@ -951,8 +959,8 @@ export const ReportsComponent = (props) => {
     dataToSend['profiles'].push(extractedMetricProfile)
     dataToSend['profiles'].push(extractedAggregationProfile)
     dataToSend['profiles'].push(extractedOperationProfile)
-    let groupTagsFormatted = formatToReportTags('argo.group.filter.tags', formValues.groups)
-    let endpointTagsFormatted = formatToReportTags('argo.endpoint.filter.tags', formValues.endpoints)
+    let groupTagsFormatted = formatToReportTags('argo.group.filter.tags', formValues.groupsTags, formikValues.groupsExtensions)
+    let endpointTagsFormatted = formatToReportTags('argo.endpoint.filter.tags', formValues.endpointsTags, formikValues.endpointsExtensions)
     let groupEntitiesFormatted = formatToReportEntities('argo.group.filter.fields', formValues.entities)
     dataToSend['filter_tags'] = [...groupTagsFormatted,
       ...endpointTagsFormatted, ...groupEntitiesFormatted]
