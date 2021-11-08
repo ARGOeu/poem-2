@@ -359,7 +359,7 @@ const ThresholdsProfilesForm = ({
                         <Row className='mt-2'>
                           <Col md={12}>
                             <InputGroup>
-                              <InputGroupAddon addonType='prepend'>Endpoint group</InputGroupAddon>
+                              <InputGroupAddon addonType='prepend'>Group</InputGroupAddon>
                               <Field
                                 name={`rules.${index}.endpoint_group`}
                                 data-testid={`rules.${index}.endpoint_group`}
