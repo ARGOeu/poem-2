@@ -2230,7 +2230,7 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText(/GLUE2ComputingShareMappingQueue/i)).not.toBeInTheDocument()
     expect(card_groups.queryByText(/GLUE2EndpointImplementationName/i)).not.toBeInTheDocument()
     await selectEvent.select(selectTagName1, 'certification')
-    selectEvent.openMenu(selectTagValue1)
+    await selectEvent.openMenu(selectTagValue1)
     expect(card_groups.getByText('Candidate')).toBeInTheDocument()
     expect(card_groups.getByText('Certified')).toBeInTheDocument()
     expect(card_groups.getByText('Closed')).toBeInTheDocument()
@@ -2256,7 +2256,7 @@ describe('Tests for reports addview', () => {
     const selectTagName2 = card_groups.getAllByText(/select/i)[0]
     const selectTagValue2 = card_groups.getAllByText(/select/i)[1]
     await selectEvent.select(selectTagName2, 'monitored')
-    selectEvent.openMenu(selectTagValue2)
+    await selectEvent.openMenu(selectTagValue2)
     expect(card_groups.getByText('yes')).toBeInTheDocument()
     expect(card_groups.getByText('no')).toBeInTheDocument()
     expect(card_groups.queryByText('EGI')).not.toBeInTheDocument()
@@ -2280,7 +2280,7 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('GLUE2EndpointID')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument()
     await selectEvent.select(selectTagName3, 'monitored')
-    selectEvent.openMenu(selectTagValue3)
+    await selectEvent.openMenu(selectTagValue3)
     expect(card_endpoints.getByText('yes')).toBeInTheDocument()
     expect(card_endpoints.getByText('no')).toBeInTheDocument()
     expect(card_endpoints.queryByText('EGI')).not.toBeInTheDocument()
