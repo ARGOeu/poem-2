@@ -2220,17 +2220,15 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText('scope')).not.toBeInTheDocument()
     expect(card_groups.queryByText(/GLUE2ComputingShareMappingQueue/)).not.toBeInTheDocument()
     expect(card_groups.queryByText(/GLUE2EndpointImplementationName/i)).not.toBeInTheDocument()
-    const selectTagName1 = card_groups.getAllByText(/select/i)[0]
-    const selectTagValue1 = card_groups.getAllByText(/select/i)[1]
-    selectEvent.openMenu(selectTagName1)
+    selectEvent.openMenu(card_groups.getAllByText(/select/i)[0])
     expect(card_groups.getByText('certification')).toBeInTheDocument()
     expect(card_groups.getByText('infrastructure')).toBeInTheDocument()
     expect(card_groups.getByText('monitored')).toBeInTheDocument()
     expect(card_groups.getByText('scope')).toBeInTheDocument()
     expect(card_groups.queryByText(/GLUE2ComputingShareMappingQueue/i)).not.toBeInTheDocument()
     expect(card_groups.queryByText(/GLUE2EndpointImplementationName/i)).not.toBeInTheDocument()
-    await selectEvent.select(selectTagName1, 'certification')
-    await selectEvent.openMenu(selectTagValue1)
+    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'certification')
+    await selectEvent.openMenu(card_groups.getAllByText(/select/i)[0])
     expect(card_groups.getByText('Candidate')).toBeInTheDocument()
     expect(card_groups.getByText('Certified')).toBeInTheDocument()
     expect(card_groups.getByText('Closed')).toBeInTheDocument()
@@ -2250,13 +2248,11 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText('eddie')).not.toBeInTheDocument()
     expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument()
     expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument()
-    await selectEvent.select(selectTagValue1, 'Certified')
+    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'Certified')
 
     fireEvent.click(card_groups.getByText(/add new tag/i))
-    const selectTagName2 = card_groups.getAllByText(/select/i)[0]
-    const selectTagValue2 = card_groups.getAllByText(/select/i)[1]
-    await selectEvent.select(selectTagName2, 'monitored')
-    await selectEvent.openMenu(selectTagValue2)
+    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'monitored')
+    await selectEvent.openMenu(card_groups.getAllByText(/select/i)[0])
     expect(card_groups.getByText('yes')).toBeInTheDocument()
     expect(card_groups.getByText('no')).toBeInTheDocument()
     expect(card_groups.queryByText('EGI')).not.toBeInTheDocument()
@@ -2268,19 +2264,17 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText('eddie')).not.toBeInTheDocument()
     expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument()
     expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument()
-    await selectEvent.select(selectTagValue2, 'no')
+    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'no')
 
     fireEvent.click(card_endpoints.getByRole('button', { name: /add new tag/i }));
-    const selectTagName3 = card_endpoints.getAllByText(/select/i)[0]
-    const selectTagValue3 = card_endpoints.getAllByText(/select/i)[1]
-    selectEvent.openMenu(selectTagName3)
+    selectEvent.openMenu(card_endpoints.getAllByText(/select/i)[0])
     expect(card_endpoints.getByText('monitored')).toBeInTheDocument()
     expect(card_endpoints.getByText('production')).toBeInTheDocument()
     expect(card_endpoints.getByText('scope')).toBeInTheDocument()
     expect(card_endpoints.queryByText('GLUE2EndpointID')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument()
-    await selectEvent.select(selectTagName3, 'monitored')
-    await selectEvent.openMenu(selectTagValue3)
+    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'monitored')
+    await selectEvent.openMenu(card_endpoints.getAllByText(/select/i)[0])
     expect(card_endpoints.getByText('yes')).toBeInTheDocument()
     expect(card_endpoints.getByText('no')).toBeInTheDocument()
     expect(card_endpoints.queryByText('EGI')).not.toBeInTheDocument()
@@ -2295,22 +2289,20 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('t3-mw1.ph.ed.ac.uk')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
-    await selectEvent.select(selectTagValue3, 'yes')
+    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'yes')
 
     fireEvent.click(card_endpoints.getByRole('button', { name: /add new extension/i }))
-    const selectExtensionName = card_endpoints.getAllByText(/select/i)[0]
-    const selectExtensionValue = card_endpoints.getAllByText(/select/i)[1]
-    selectEvent.openMenu(selectExtensionName)
+    selectEvent.openMenu(card_endpoints.getAllByText(/select/i)[0])
     expect(card_endpoints.getByText('GLUE2EndpointID')).toBeInTheDocument()
     expect(card_endpoints.getByText('GLUE2EndpointImplementationName')).toBeInTheDocument()
-    await selectEvent.select(selectExtensionName, 'GLUE2EndpointID')
-    selectEvent.openMenu(selectExtensionValue)
+    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'GLUE2EndpointID')
+    selectEvent.openMenu(card_endpoints.getAllByText(/select/i)[0])
     expect(card_endpoints.getByText('ce1.gridpp.ecdf.ed.ac.uk')).toBeInTheDocument()
     expect(card_endpoints.getByText('svr009.gla.scotgrid.ac.uk')).toBeInTheDocument()
     expect(card_endpoints.getByText('t3-mw1.ph.ed.ac.uk')).toBeInTheDocument()
     expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
-    await selectEvent.select(selectExtensionValue, ['ce1.gridpp.ecdf.ed.ac.uk', 'svr009.gla.scotgrid.ac.uk'])
+    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], ['ce1.gridpp.ecdf.ed.ac.uk', 'svr009.gla.scotgrid.ac.uk'])
 
     fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '80' } });
     fireEvent.change(screen.getByLabelText(/reliability/i), { target: { value: '85' } });
