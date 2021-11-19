@@ -12,7 +12,7 @@ import {
   ErrorComponent,
   ParagraphTitle,
   ProfilesListTable,
-  _AutocompleteField
+  CustomReactSelect
 } from './UIElements';
 import {
   Formik,
@@ -46,28 +46,6 @@ import {
   fetchThresholdsProfiles
 } from './QueryFunctions';
 
-
-const ThresholdsAutocomplete = ({lists=[], index, ...props}) => {
-  let err = undefined;
-  if (
-    props.errors.rules &&
-    props.errors.rules.length > index &&
-    props.errors.rules[index] &&
-    props.errors.rules[index].metric
-  )
-    err = props.errors.rules[index].metric
-  return (
-    <_AutocompleteField
-      lists={lists}
-      field={`rules[${index}].metric`}
-      icon='metrics'
-      label='Metric'
-      val={props.values.rules[index].metric}
-      err={err}
-      setFieldValue={props.setFieldValue}
-    />
-  )
-}
 
 const ThresholdsSchema = Yup.object().shape({
   name: Yup.string().required('Required'),
@@ -262,6 +240,36 @@ function thresholdsToValues(rules) {
 }
 
 
+const MetricSelect = ({ field, metricOptions, onChangeHandler, metricInitial }) => {
+  if (metricInitial)
+    return (
+      <CustomReactSelect
+        name={field.name}
+        label={'Metric'}
+        closeMenuOnSelect={true}
+        isMulti={false}
+        isClearable={false}
+        onChange={ e => onChangeHandler(e) }
+        options={metricOptions}
+        value={{value: metricInitial, label: metricInitial}}
+      />
+    )
+
+  else
+    return (
+      <CustomReactSelect
+        name={field.name}
+        label={'Metric'}
+        closeMenuOnSelect={true}
+        isMulti={false}
+        isClearable={false}
+        onChange={ e => onChangeHandler(e) }
+        options={metricOptions}
+      />
+    )
+}
+
+
 const ThresholdsProfilesForm = ({
   historyview=false,
   groups_list=undefined,
@@ -335,11 +343,25 @@ const ThresholdsProfilesForm = ({
                                   />
                                 </InputGroup>
                               :
+                                <Field
+                                  id={`rules.${index}.metric`}
+                                  name={`rules.${index}.metric`}
+                                  component={MetricSelect}
+                                  metricOptions={metrics_list.map((metric) => new Object({
+                                    label: metric, value: metric
+                                  }))}
+                                  onChangeHandler={(e) => {
+                                    props.setFieldValue(`rules[${index}]metric`, e.value)
+                                  }}
+                                  metricInitial={!addview ? props.values.rules[index].metric : ''}
+                                />
+                                /*
                                 <ThresholdsAutocomplete
                                   {...props}
                                   lists={metrics_list}
                                   index={index}
                                 />
+                                */
                             }
                           </Col>
                         </Row>
@@ -443,29 +465,29 @@ const ThresholdsProfilesForm = ({
                                               </td>
                                               <td>
                                                 {
-                                                historyview ?
-                                                  props.values.rules[index].thresholds[i].label
-                                                :
-                                                  <Field
-                                                    type='text'
-                                                    className={`form-control ${
-                                                      (
-                                                        props.errors.rules &&
-                                                        props.errors.rules.length > index &&
-                                                        props.errors.rules[index] &&
-                                                        props.errors.rules[index].thresholds &&
-                                                        props.errors.rules[index].thresholds.length > i &&
-                                                        props.errors.rules[index].thresholds[i] &&
-                                                        props.errors.rules[index].thresholds[i].label
-                                                      ) &&
-                                                        'border-danger'
-                                                    }`
-                                                    }
-                                                    name={`rules[${index}].thresholds[${i}].label`}
-                                                    id={`values.rules.${index}.thresholds.${i}.label`}
-                                                    data-testid={`values.rules.${index}.thresholds.${i}.label`}
-                                                  />
-                                              }
+                                                  historyview ?
+                                                    props.values.rules[index].thresholds[i].label
+                                                  :
+                                                    <Field
+                                                      type='text'
+                                                      className={`form-control ${
+                                                        (
+                                                          props.errors.rules &&
+                                                          props.errors.rules.length > index &&
+                                                          props.errors.rules[index] &&
+                                                          props.errors.rules[index].thresholds &&
+                                                          props.errors.rules[index].thresholds.length > i &&
+                                                          props.errors.rules[index].thresholds[i] &&
+                                                          props.errors.rules[index].thresholds[i].label
+                                                        ) &&
+                                                          'border-danger'
+                                                      }`
+                                                      }
+                                                      name={`rules[${index}].thresholds[${i}].label`}
+                                                      id={`values.rules.${index}.thresholds.${i}.label`}
+                                                      data-testid={`values.rules.${index}.thresholds.${i}.label`}
+                                                    />
+                                                }
                                                 {
                                                 (
                                                   props.errors.rules &&
@@ -477,32 +499,32 @@ const ThresholdsProfilesForm = ({
                                                   props.errors.rules[index].thresholds[i].label
                                                 ) &&
                                                   FancyErrorMessage(props.errors.rules[index].thresholds[i].label)
-                                              }
+                                                }
                                               </td>
                                               <td>
                                                 {
-                                                historyview ?
-                                                  props.values.rules[index].thresholds[i].value
-                                                :
-                                                  <Field
-                                                    type='text'
-                                                    className={`form-control ${
-                                                      (
-                                                        props.errors.rules &&
-                                                        props.errors.rules.length > index &&
-                                                        props.errors.rules[index] &&
-                                                        props.errors.rules[index].thresholds &&
-                                                        props.errors.rules[index].thresholds.length > i &&
-                                                        props.errors.rules[index].thresholds[i] &&
-                                                        props.errors.rules[index].thresholds[i].value
-                                                      ) &&
-                                                        'border-danger'
-                                                    }`}
-                                                    name={`rules.${index}.thresholds.${i}.value`}
-                                                    id={`values.rules.${index}.thresholds.${i}.value`}
-                                                    data-testid={`values.rules.${index}.thresholds.${i}.value`}
-                                                  />
-                                              }
+                                                  historyview ?
+                                                    props.values.rules[index].thresholds[i].value
+                                                  :
+                                                    <Field
+                                                      type='text'
+                                                      className={`form-control ${
+                                                        (
+                                                          props.errors.rules &&
+                                                          props.errors.rules.length > index &&
+                                                          props.errors.rules[index] &&
+                                                          props.errors.rules[index].thresholds &&
+                                                          props.errors.rules[index].thresholds.length > i &&
+                                                          props.errors.rules[index].thresholds[i] &&
+                                                          props.errors.rules[index].thresholds[i].value
+                                                        ) &&
+                                                          'border-danger'
+                                                      }`}
+                                                      name={`rules.${index}.thresholds.${i}.value`}
+                                                      id={`values.rules.${index}.thresholds.${i}.value`}
+                                                      data-testid={`values.rules.${index}.thresholds.${i}.value`}
+                                                    />
+                                                }
                                                 {
                                                 (
                                                   props.errors.rules &&
@@ -514,57 +536,57 @@ const ThresholdsProfilesForm = ({
                                                   props.errors.rules[index].thresholds[i].value
                                                 ) &&
                                                   FancyErrorMessage(props.errors.rules[index].thresholds[i].value)
-                                              }
+                                                }
                                               </td>
                                               <td style={{width: '6%'}}>
                                                 {
-                                                historyview ?
-                                                  props.values.rules[index].thresholds[i].uom
-                                                :
-                                                  <Field
-                                                    component='select'
-                                                    className='form-control custom-select'
-                                                    name={`rules.${index}.thresholds.${i}.uom`}
-                                                    id={`values.rules.${index}.thresholds.${i}.uom`}
-                                                    data-testid={`values.rules.${index}.thresholds.${i}.uom`}
-                                                  >
-                                                    <option key='option-0' value=''></option>
-                                                    <option key='option-1' value='s'>s</option>
-                                                    <option key='option-2' value='us'>us</option>
-                                                    <option key='option-3' value='ms'>ms</option>
-                                                    <option key='option-4' value='B'>B</option>
-                                                    <option key='option-5' value='KB'>KB</option>
-                                                    <option key='option-6' value='MB'>MB</option>
-                                                    <option key='option-7' value='TB'>TB</option>
-                                                    <option key='option-8' value='%'>%</option>
-                                                    <option key='option-9' value='c'>c</option>
-                                                  </Field>
-                                              }
+                                                  historyview ?
+                                                    props.values.rules[index].thresholds[i].uom
+                                                  :
+                                                    <Field
+                                                      component='select'
+                                                      className='form-control custom-select'
+                                                      name={`rules.${index}.thresholds.${i}.uom`}
+                                                      id={`values.rules.${index}.thresholds.${i}.uom`}
+                                                      data-testid={`values.rules.${index}.thresholds.${i}.uom`}
+                                                    >
+                                                      <option key='option-0' value=''></option>
+                                                      <option key='option-1' value='s'>s</option>
+                                                      <option key='option-2' value='us'>us</option>
+                                                      <option key='option-3' value='ms'>ms</option>
+                                                      <option key='option-4' value='B'>B</option>
+                                                      <option key='option-5' value='KB'>KB</option>
+                                                      <option key='option-6' value='MB'>MB</option>
+                                                      <option key='option-7' value='TB'>TB</option>
+                                                      <option key='option-8' value='%'>%</option>
+                                                      <option key='option-9' value='c'>c</option>
+                                                    </Field>
+                                                }
                                               </td>
                                               <td>
                                                 {
-                                                historyview ?
-                                                  props.values.rules[index].thresholds[i].warn1
-                                                :
-                                                  <Field
-                                                    type='text'
-                                                    className={`form-control ${
-                                                      (
-                                                        props.errors.rules &&
-                                                        props.errors.rules.length > index &&
-                                                        props.errors.rules[index] &&
-                                                        props.errors.rules[index].thresholds &&
-                                                        props.errors.rules[index].thresholds.length > i &&
-                                                        props.errors.rules[index].thresholds[i] &&
-                                                        props.errors.rules[index].thresholds[i].warn1
-                                                      ) &&
-                                                        'border-danger'
-                                                    }`}
-                                                    name={`rules.${index}.thresholds.${i}.warn1`}
-                                                    id={`values.rules.${index}.thresholds.${i}.warn1`}
-                                                    data-testid={`values.rules.${index}.thresholds.${i}.warn1`}
-                                                  />
-                                              }
+                                                  historyview ?
+                                                    props.values.rules[index].thresholds[i].warn1
+                                                  :
+                                                    <Field
+                                                      type='text'
+                                                      className={`form-control ${
+                                                        (
+                                                          props.errors.rules &&
+                                                          props.errors.rules.length > index &&
+                                                          props.errors.rules[index] &&
+                                                          props.errors.rules[index].thresholds &&
+                                                          props.errors.rules[index].thresholds.length > i &&
+                                                          props.errors.rules[index].thresholds[i] &&
+                                                          props.errors.rules[index].thresholds[i].warn1
+                                                        ) &&
+                                                          'border-danger'
+                                                      }`}
+                                                      name={`rules.${index}.thresholds.${i}.warn1`}
+                                                      id={`values.rules.${index}.thresholds.${i}.warn1`}
+                                                      data-testid={`values.rules.${index}.thresholds.${i}.warn1`}
+                                                    />
+                                                }
                                                 {
                                                 (
                                                   props.errors.rules &&
@@ -576,35 +598,35 @@ const ThresholdsProfilesForm = ({
                                                   props.errors.rules[index].thresholds[i].warn1
                                                 ) &&
                                                   FancyErrorMessage(props.errors.rules[index].thresholds[i].warn1)
-                                              }
+                                                }
                                               </td>
                                               <td>
-                                              :
+                                                :
                                               </td>
                                               <td>
                                                 {
-                                                historyview ?
-                                                  props.values.rules[index].thresholds[i].warn2
-                                                :
-                                                  <Field
-                                                    type='text'
-                                                    className={`form-control ${
-                                                      (
-                                                        props.errors.rules &&
-                                                        props.errors.rules.length > index &&
-                                                        props.errors.rules[index] &&
-                                                        props.errors.rules[index].thresholds &&
-                                                        props.errors.rules[index].thresholds.length > i &&
-                                                        props.errors.rules[index].thresholds[i] &&
-                                                        props.errors.rules[index].thresholds[i].warn2
-                                                      ) &&
-                                                        'border-danger'
-                                                    }`}
-                                                    name={`rules.${index}.thresholds.${i}.warn2`}
-                                                    id={`values.rules.${index}.thresholds.${i}.warn2`}
-                                                    data-testid={`values.rules.${index}.thresholds.${i}.warn2`}
-                                                  />
-                                              }
+                                                  historyview ?
+                                                    props.values.rules[index].thresholds[i].warn2
+                                                  :
+                                                    <Field
+                                                      type='text'
+                                                      className={`form-control ${
+                                                        (
+                                                          props.errors.rules &&
+                                                          props.errors.rules.length > index &&
+                                                          props.errors.rules[index] &&
+                                                          props.errors.rules[index].thresholds &&
+                                                          props.errors.rules[index].thresholds.length > i &&
+                                                          props.errors.rules[index].thresholds[i] &&
+                                                          props.errors.rules[index].thresholds[i].warn2
+                                                        ) &&
+                                                          'border-danger'
+                                                      }`}
+                                                      name={`rules.${index}.thresholds.${i}.warn2`}
+                                                      id={`values.rules.${index}.thresholds.${i}.warn2`}
+                                                      data-testid={`values.rules.${index}.thresholds.${i}.warn2`}
+                                                    />
+                                                }
                                                 {
                                                 (
                                                   props.errors.rules &&
@@ -616,32 +638,32 @@ const ThresholdsProfilesForm = ({
                                                   props.errors.rules[index].thresholds[i].warn2
                                                 ) &&
                                                   FancyErrorMessage(props.errors.rules[index].thresholds[i].warn2)
-                                              }
+                                                }
                                               </td>
                                               <td>
                                                 {
-                                                historyview ?
-                                                  props.values.rules[index].thresholds[i].crit1
-                                                :
-                                                  <Field
-                                                    type='text'
-                                                    className={`form-control ${
-                                                      (
-                                                        props.errors.rules &&
-                                                        props.errors.rules.length > index &&
-                                                        props.errors.rules[index] &&
-                                                        props.errors.rules[index].thresholds &&
-                                                        props.errors.rules[index].thresholds.length > i &&
-                                                        props.errors.rules[index].thresholds[i] &&
-                                                        props.errors.rules[index].thresholds[i].crit1
-                                                      ) &&
-                                                        'border-danger'
-                                                    }`}
-                                                    name={`rules.${index}.thresholds.${i}.crit1`}
-                                                    id={`values.rules.${index}.thresholds.${i}.crit1`}
-                                                    data-testid={`values.rules.${index}.thresholds.${i}.crit1`}
-                                                  />
-                                              }
+                                                  historyview ?
+                                                    props.values.rules[index].thresholds[i].crit1
+                                                  :
+                                                    <Field
+                                                      type='text'
+                                                      className={`form-control ${
+                                                        (
+                                                          props.errors.rules &&
+                                                          props.errors.rules.length > index &&
+                                                          props.errors.rules[index] &&
+                                                          props.errors.rules[index].thresholds &&
+                                                          props.errors.rules[index].thresholds.length > i &&
+                                                          props.errors.rules[index].thresholds[i] &&
+                                                          props.errors.rules[index].thresholds[i].crit1
+                                                        ) &&
+                                                          'border-danger'
+                                                      }`}
+                                                      name={`rules.${index}.thresholds.${i}.crit1`}
+                                                      id={`values.rules.${index}.thresholds.${i}.crit1`}
+                                                      data-testid={`values.rules.${index}.thresholds.${i}.crit1`}
+                                                    />
+                                                }
                                                 {
                                                 (
                                                   props.errors.rules &&
@@ -653,35 +675,35 @@ const ThresholdsProfilesForm = ({
                                                   props.errors.rules[index].thresholds[i].crit1
                                                 ) &&
                                                   FancyErrorMessage(props.errors.rules[index].thresholds[i].crit1)
-                                              }
+                                                }
                                               </td>
                                               <td>
-                                              :
+                                                :
                                               </td>
                                               <td>
                                                 {
-                                                historyview ?
-                                                  props.values.rules[index].thresholds[i].crit2
-                                                :
-                                                  <Field
-                                                    type='text'
-                                                    className={`form-control ${
-                                                      (
-                                                        props.errors.rules &&
-                                                        props.errors.rules.length > index &&
-                                                        props.errors.rules[index] &&
-                                                        props.errors.rules[index].thresholds &&
-                                                        props.errors.rules[index].thresholds.length > i &&
-                                                        props.errors.rules[index].thresholds[i] &&
-                                                        props.errors.rules[index].thresholds[i].crit2
-                                                      ) &&
-                                                        'border-danger'
-                                                    }`}
-                                                    name={`rules.${index}.thresholds.${i}.crit2`}
-                                                    id={`values.rules.${index}.thresholds.${i}.crit2`}
-                                                    data-testid={`values.rules.${index}.thresholds.${i}.crit2`}
-                                                  />
-                                              }
+                                                  historyview ?
+                                                    props.values.rules[index].thresholds[i].crit2
+                                                  :
+                                                    <Field
+                                                      type='text'
+                                                      className={`form-control ${
+                                                        (
+                                                          props.errors.rules &&
+                                                          props.errors.rules.length > index &&
+                                                          props.errors.rules[index] &&
+                                                          props.errors.rules[index].thresholds &&
+                                                          props.errors.rules[index].thresholds.length > i &&
+                                                          props.errors.rules[index].thresholds[i] &&
+                                                          props.errors.rules[index].thresholds[i].crit2
+                                                        ) &&
+                                                          'border-danger'
+                                                      }`}
+                                                      name={`rules.${index}.thresholds.${i}.crit2`}
+                                                      id={`values.rules.${index}.thresholds.${i}.crit2`}
+                                                      data-testid={`values.rules.${index}.thresholds.${i}.crit2`}
+                                                    />
+                                                }
                                                 {
                                                 (
                                                   props.errors.rules &&
@@ -693,32 +715,32 @@ const ThresholdsProfilesForm = ({
                                                   props.errors.rules[index].thresholds[i].crit2
                                                 ) &&
                                                   FancyErrorMessage(props.errors.rules[index].thresholds[i].crit2)
-                                              }
+                                                }
                                               </td>
                                               <td>
                                                 {
-                                                historyview ?
-                                                  props.values.rules[index].thresholds[i].min
-                                                :
-                                                  <Field
-                                                    type='text'
-                                                    className={`form-control ${
-                                                      (
-                                                        props.errors.rules &&
-                                                        props.errors.rules.length > index &&
-                                                        props.errors.rules[index] &&
-                                                        props.errors.rules[index].thresholds &&
-                                                        props.errors.rules[index].thresholds.length > i &&
-                                                        props.errors.rules[index].thresholds[i] &&
-                                                        props.errors.rules[index].thresholds[i].min
-                                                      ) &&
-                                                        'border-danger'
-                                                    }`}
-                                                    name={`rules.${index}.thresholds.${i}.min`}
-                                                    id={`values.rules.${index}.thresholds.${i}.min`}
-                                                    data-testid={`values.rules.${index}.thresholds.${i}.min`}
-                                                  />
-                                              }
+                                                  historyview ?
+                                                    props.values.rules[index].thresholds[i].min
+                                                  :
+                                                    <Field
+                                                      type='text'
+                                                      className={`form-control ${
+                                                        (
+                                                          props.errors.rules &&
+                                                          props.errors.rules.length > index &&
+                                                          props.errors.rules[index] &&
+                                                          props.errors.rules[index].thresholds &&
+                                                          props.errors.rules[index].thresholds.length > i &&
+                                                          props.errors.rules[index].thresholds[i] &&
+                                                          props.errors.rules[index].thresholds[i].min
+                                                        ) &&
+                                                          'border-danger'
+                                                      }`}
+                                                      name={`rules.${index}.thresholds.${i}.min`}
+                                                      id={`values.rules.${index}.thresholds.${i}.min`}
+                                                      data-testid={`values.rules.${index}.thresholds.${i}.min`}
+                                                    />
+                                                }
                                                 {
                                                 (
                                                   props.errors.rules &&
@@ -730,32 +752,32 @@ const ThresholdsProfilesForm = ({
                                                   props.errors.rules[index].thresholds[i].min
                                                 ) &&
                                                   FancyErrorMessage(props.errors.rules[index].thresholds[i].min)
-                                              }
+                                                }
                                               </td>
                                               <td>
                                                 {
-                                                historyview ?
-                                                  props.values.rules[index].thresholds[i].max
-                                                :
-                                                  <Field
-                                                    type='text'
-                                                    className={`form-control ${
-                                                      (
-                                                        props.errors.rules &&
-                                                        props.errors.rules.length > index &&
-                                                        props.errors.rules[index] &&
-                                                        props.errors.rules[index].thresholds &&
-                                                        props.errors.rules[index].thresholds.length > i &&
-                                                        props.errors.rules[index].thresholds[i] &&
-                                                        props.errors.rules[index].thresholds[i].max
-                                                      ) &&
-                                                        'border-danger'
-                                                    }`}
-                                                    name={`rules.${index}.thresholds.${i}.max`}
-                                                    id={`values.rules.${index}.thresholds.${i}.max`}
-                                                    data-testid={`values.rules.${index}.thresholds.${i}.max`}
-                                                  />
-                                              }
+                                                  historyview ?
+                                                    props.values.rules[index].thresholds[i].max
+                                                  :
+                                                    <Field
+                                                      type='text'
+                                                      className={`form-control ${
+                                                        (
+                                                          props.errors.rules &&
+                                                          props.errors.rules.length > index &&
+                                                          props.errors.rules[index] &&
+                                                          props.errors.rules[index].thresholds &&
+                                                          props.errors.rules[index].thresholds.length > i &&
+                                                          props.errors.rules[index].thresholds[i] &&
+                                                          props.errors.rules[index].thresholds[i].max
+                                                        ) &&
+                                                          'border-danger'
+                                                      }`}
+                                                      name={`rules.${index}.thresholds.${i}.max`}
+                                                      id={`values.rules.${index}.thresholds.${i}.max`}
+                                                      data-testid={`values.rules.${index}.thresholds.${i}.max`}
+                                                    />
+                                                }
                                                 {
                                                 (
                                                   props.errors.rules &&
@@ -767,56 +789,56 @@ const ThresholdsProfilesForm = ({
                                                   props.errors.rules[index].thresholds[i].max
                                                 ) &&
                                                   FancyErrorMessage(props.errors.rules[index].thresholds[i].max)
-                                              }
+                                                }
                                               </td>
                                               {
-                                              !historyview &&
-                                                <td className='align-middle d-flex justify-content-center align-items-center'>
-                                                  <Button
-                                                    size='sm'
-                                                    color='light'
-                                                    type='button'
-                                                    data-testid={`values.rules.${index}.thresholds.${i}.remove`}
-                                                    onClick={() => {
-                                                      thresholdHelpers.remove(i);
-                                                      if (props.values.rules[index].thresholds.length === 1) {
-                                                        thresholdHelpers.push({
-                                                          label: '',
-                                                          value: '',
-                                                          uom: '',
-                                                          warn1: '',
-                                                          warn2: '',
-                                                          crit1: '',
-                                                          crit2: '',
-                                                          min: '',
-                                                          max: ''
-                                                        });
-                                                      }
-                                                    }}
-                                                  >
-                                                    <FontAwesomeIcon icon={faTimes}/>
-                                                  </Button>
-                                                  <Button
-                                                    size='sm'
-                                                    color='light'
-                                                    type='button'
-                                                    data-testid={`values.rules.${index}.thresholds.${i}.add`}
-                                                    onClick={() => thresholdHelpers.push({
-                                                      label: '',
-                                                      value: '',
-                                                      uom: '',
-                                                      warn1: '',
-                                                      warn2: '',
-                                                      crit1: '',
-                                                      crit2: '',
-                                                      min: '',
-                                                      max: ''
-                                                    })}
-                                                  >
-                                                    <FontAwesomeIcon icon={faPlus}/>
-                                                  </Button>
-                                                </td>
-                                            }
+                                                !historyview &&
+                                                  <td className='align-middle d-flex justify-content-center align-items-center'>
+                                                    <Button
+                                                      size='sm'
+                                                      color='light'
+                                                      type='button'
+                                                      data-testid={`values.rules.${index}.thresholds.${i}.remove`}
+                                                      onClick={() => {
+                                                        thresholdHelpers.remove(i);
+                                                        if (props.values.rules[index].thresholds.length === 1) {
+                                                          thresholdHelpers.push({
+                                                            label: '',
+                                                            value: '',
+                                                            uom: '',
+                                                            warn1: '',
+                                                            warn2: '',
+                                                            crit1: '',
+                                                            crit2: '',
+                                                            min: '',
+                                                            max: ''
+                                                          });
+                                                        }
+                                                      }}
+                                                    >
+                                                      <FontAwesomeIcon icon={faTimes}/>
+                                                    </Button>
+                                                    <Button
+                                                      size='sm'
+                                                      color='light'
+                                                      type='button'
+                                                      data-testid={`values.rules.${index}.thresholds.${i}.add`}
+                                                      onClick={() => thresholdHelpers.push({
+                                                        label: '',
+                                                        value: '',
+                                                        uom: '',
+                                                        warn1: '',
+                                                        warn2: '',
+                                                        crit1: '',
+                                                        crit2: '',
+                                                        min: '',
+                                                        max: ''
+                                                      })}
+                                                    >
+                                                      <FontAwesomeIcon icon={faPlus}/>
+                                                    </Button>
+                                                  </td>
+                                              }
                                             </tr>
                                         )
                                         :

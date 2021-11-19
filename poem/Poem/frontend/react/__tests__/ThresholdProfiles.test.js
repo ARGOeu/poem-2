@@ -7,6 +7,7 @@ import { ThresholdsProfilesChange, ThresholdsProfilesList, ThresholdsProfileVers
 import { Backend, WebApi } from '../DataManager';
 import { QueryClient, QueryClientProvider, setLogger } from 'react-query';
 import { NotificationManager } from 'react-notifications';
+import selectEvent from 'react-select-event';
 
 
 jest.mock('../DataManager', () => {
@@ -390,28 +391,27 @@ describe('Tests for threshols profile changeview', () => {
     const nameField = screen.getByTestId('name');
     const groupField = screen.getByTestId('groupname');
 
-    expect(screen.getByTestId('rules.0')).toBeInTheDocument();
-    expect(screen.getByTestId('rules.0.remove')).toBeInTheDocument();
-    expect(screen.getByTestId('rules.1')).toBeInTheDocument();
-    expect(screen.getByTestId('rules.1.remove')).toBeInTheDocument();
-    expect(screen.queryByTestId('rules.2')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('rules.2.remove')).not.toBeInTheDocument();
-
-    const metric1 = screen.getByTestId('autocomplete-rules[0].metric');
-    const host1 = screen.getByTestId('rules.0.host');
-    const endpoint1 = screen.getByTestId('rules.0.endpoint_group');
-    const table1 = within(screen.getByTestId('rules.0.thresholds'));
-    const metric2 = screen.getByTestId('autocomplete-rules[1].metric');
-    const host2 = screen.getByTestId('rules.1.host');
-    const endpoint2 = screen.getByTestId('rules.1.endpoint_group');
-    const table2 = within(screen.getByTestId('rules.1.thresholds'));
-
     expect(nameField.value).toBe('TEST_PROFILE');
     expect(nameField).toBeDisabled();
     expect(groupField.value).toBe('TEST');
     expect(groupField).toBeEnabled();
 
-    expect(metric1.value).toBe('argo.AMS-Check');
+    const rule1 = within(screen.getByTestId('rules.0'))
+    expect(screen.getByTestId('rules.0.remove')).toBeInTheDocument();
+    const rule2 = within(screen.getByTestId('rules.1'));
+    expect(screen.getByTestId('rules.1.remove')).toBeInTheDocument();
+    expect(screen.queryByTestId('rules.2')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('rules.2.remove')).not.toBeInTheDocument();
+
+    const metric1 = rule1.getByText('argo.AMS-Check');
+    const host1 = rule1.getByTestId('rules.0.host');
+    const endpoint1 = rule1.getByTestId('rules.0.endpoint_group');
+    const table1 = within(screen.getByTestId('rules.0.thresholds'));
+    const metric2 = rule2.getByText('argo.API-Status-Check');
+    const host2 = rule2.getByTestId('rules.1.host');
+    const endpoint2 = rule2.getByTestId('rules.1.endpoint_group');
+    const table2 = within(screen.getByTestId('rules.1.thresholds'));
+
     expect(metric1).toBeEnabled();
     expect(host1.value).toBe('host.foo.bar');
     expect(host1).toBeEnabled();
@@ -478,7 +478,6 @@ describe('Tests for threshols profile changeview', () => {
     expect(screen.getByTestId('values.rules.0.thresholds.3.remove')).toBeInTheDocument();
     expect(screen.getByTestId('values.rules.0.thresholds.3.add')).toBeInTheDocument();
 
-    expect(metric2.value).toBe('argo.API-Status-Check');
     expect(metric2).toBeEnabled();
     expect(host2.value).toBe('host.foo.baz');
     expect(host2).toBeEnabled();
@@ -627,9 +626,10 @@ describe('Tests for threshols profile changeview', () => {
 
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TESTa' } })
 
+    await selectEvent.select(screen.getByText('argo.AMS-Check'), 'argo.AMSPublisher-Check')
+
     fireEvent.change(screen.getByTestId('rules.0.endpoint_group'), { target: { value: 'Group 1a' } });
     fireEvent.change(screen.getByTestId('rules.0.host'), { target: { value: 'host.foo-bar.baz' } });
-    fireEvent.change(screen.getByTestId('autocomplete-rules[0].metric'), { target: { value: 'argo.AMSPublisher-Check' } });
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn1'), { target: { value: '1' } });
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn2'), { target: { value: '15' } });
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit1'), { target: { value: '10' } });
@@ -641,8 +641,9 @@ describe('Tests for threshols profile changeview', () => {
     fireEvent.click(screen.getByTestId('rules.1.remove'));
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new rule' }));
+    const newRule = within(screen.getByTestId('rules.1'))
+    await selectEvent.select(newRule.getAllByText(/select/i)[0], 'argo.POEM-API-MON')
     fireEvent.change(screen.getByTestId('rules.1.endpoint_group'), { target: { value: 'Group 2a' } });
-    fireEvent.change(screen.getByTestId('autocomplete-rules[1].metric'), { target: { value: 'argo.POEM-API-MON' } });
     fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.label'), { target: { value: 'entries' } });
     fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.value'), { target: { value: '2' } });
     fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.uom'), { target: { value: 'B' } });
@@ -719,9 +720,10 @@ describe('Tests for threshols profile changeview', () => {
 
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TESTa' } })
 
+    await selectEvent.select(screen.getByText('argo.AMS-Check'), 'argo.AMSPublisher-Check')
+
     fireEvent.change(screen.getByTestId('rules.0.endpoint_group'), { target: { value: 'Group 1a' } });
     fireEvent.change(screen.getByTestId('rules.0.host'), { target: { value: 'host.foo-bar.baz' } });
-    fireEvent.change(screen.getByTestId('autocomplete-rules[0].metric'), { target: { value: 'argo.AMSPublisher-Check' } });
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn1'), { target: { value: '1' } });
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn2'), { target: { value: '15' } });
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit1'), { target: { value: '10' } });
@@ -733,8 +735,9 @@ describe('Tests for threshols profile changeview', () => {
     fireEvent.click(screen.getByTestId('rules.1.remove'));
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new rule' }));
+    const newRule = within(screen.getByTestId('rules.1'))
+    await selectEvent.select(newRule.getAllByText(/select/i)[0], 'argo.POEM-API-MON')
     fireEvent.change(screen.getByTestId('rules.1.endpoint_group'), { target: { value: 'Group 2a' } });
-    fireEvent.change(screen.getByTestId('autocomplete-rules[1].metric'), { target: { value: 'argo.POEM-API-MON' } });
     fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.label'), { target: { value: 'entries' } });
     fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.value'), { target: { value: '2' } });
     fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.uom'), { target: { value: 'B' } });
@@ -794,9 +797,10 @@ describe('Tests for threshols profile changeview', () => {
 
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TESTa' } })
 
+    await selectEvent.select(screen.getByText('argo.AMS-Check'), 'argo.AMSPublisher-Check')
+
     fireEvent.change(screen.getByTestId('rules.0.endpoint_group'), { target: { value: 'Group 1a' } });
     fireEvent.change(screen.getByTestId('rules.0.host'), { target: { value: 'host.foo-bar.baz' } });
-    fireEvent.change(screen.getByTestId('autocomplete-rules[0].metric'), { target: { value: 'argo.AMSPublisher-Check' } });
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn1'), { target: { value: '1' } });
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn2'), { target: { value: '15' } });
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit1'), { target: { value: '10' } });
@@ -808,8 +812,9 @@ describe('Tests for threshols profile changeview', () => {
     fireEvent.click(screen.getByTestId('rules.1.remove'));
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new rule' }));
+    const newRule = within(screen.getByTestId('rules.1'))
+    await selectEvent.select(newRule.getAllByText(/select/i)[0], 'argo.POEM-API-MON')
     fireEvent.change(screen.getByTestId('rules.1.endpoint_group'), { target: { value: 'Group 2a' } });
-    fireEvent.change(screen.getByTestId('autocomplete-rules[1].metric'), { target: { value: 'argo.POEM-API-MON' } });
     fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.label'), { target: { value: 'entries' } });
     fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.value'), { target: { value: '2' } });
     fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.uom'), { target: { value: 'B' } });
@@ -874,9 +879,10 @@ describe('Tests for threshols profile changeview', () => {
 
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TESTa' } })
 
+    await selectEvent.select(screen.getByText('argo.AMS-Check'), 'argo.AMSPublisher-Check')
+
     fireEvent.change(screen.getByTestId('rules.0.endpoint_group'), { target: { value: 'Group 1a' } });
     fireEvent.change(screen.getByTestId('rules.0.host'), { target: { value: 'host.foo-bar.baz' } });
-    fireEvent.change(screen.getByTestId('autocomplete-rules[0].metric'), { target: { value: 'argo.AMSPublisher-Check' } });
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn1'), { target: { value: '1' } });
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn2'), { target: { value: '15' } });
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit1'), { target: { value: '10' } });
@@ -888,8 +894,9 @@ describe('Tests for threshols profile changeview', () => {
     fireEvent.click(screen.getByTestId('rules.1.remove'));
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new rule' }));
+    const newRule = within(screen.getByTestId('rules.1'))
+    await selectEvent.select(newRule.getAllByText(/select/i)[0], 'argo.POEM-API-MON')
     fireEvent.change(screen.getByTestId('rules.1.endpoint_group'), { target: { value: 'Group 2a' } });
-    fireEvent.change(screen.getByTestId('autocomplete-rules[1].metric'), { target: { value: 'argo.POEM-API-MON' } });
     fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.label'), { target: { value: 'entries' } });
     fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.value'), { target: { value: '2' } });
     fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.uom'), { target: { value: 'B' } });
@@ -971,9 +978,10 @@ describe('Tests for threshols profile changeview', () => {
 
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TESTa' } })
 
+    await selectEvent.select(screen.getByText('argo.AMS-Check'), 'argo.AMSPublisher-Check')
+
     fireEvent.change(screen.getByTestId('rules.0.endpoint_group'), { target: { value: 'Group 1a' } });
     fireEvent.change(screen.getByTestId('rules.0.host'), { target: { value: 'host.foo-bar.baz' } });
-    fireEvent.change(screen.getByTestId('autocomplete-rules[0].metric'), { target: { value: 'argo.AMSPublisher-Check' } });
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn1'), { target: { value: '1' } });
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn2'), { target: { value: '15' } });
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit1'), { target: { value: '10' } });
@@ -985,8 +993,9 @@ describe('Tests for threshols profile changeview', () => {
     fireEvent.click(screen.getByTestId('rules.1.remove'));
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new rule' }));
+    const newRule = within(screen.getByTestId('rules.1'))
+    await selectEvent.select(newRule.getAllByText(/select/i)[0], 'argo.POEM-API-MON')
     fireEvent.change(screen.getByTestId('rules.1.endpoint_group'), { target: { value: 'Group 2a' } });
-    fireEvent.change(screen.getByTestId('autocomplete-rules[1].metric'), { target: { value: 'argo.POEM-API-MON' } });
     fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.label'), { target: { value: 'entries' } });
     fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.value'), { target: { value: '2' } });
     fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.uom'), { target: { value: 'B' } });
@@ -1334,9 +1343,11 @@ describe('Tests for thresholds profiles addview', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Add a rule' }));
 
+    const rule1 = within(screen.getByTestId('rules.0'))
+
     fireEvent.change(screen.getByTestId('rules.0.endpoint_group'), { target: { value: 'Group 1a' } });
     fireEvent.change(screen.getByTestId('rules.0.host'), { target: { value: 'host.foo-bar.baz' } });
-    fireEvent.change(screen.getByTestId('autocomplete-rules[0].metric'), { target: { value: 'argo.AMSPublisher-Check' } });
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'argo.AMSPublisher-Check')
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.label'), { target: { value: 'freshness' } });
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.value'), { target: { value: '1' } });
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.uom'), { target: { value: 's' } });
@@ -1353,8 +1364,9 @@ describe('Tests for thresholds profiles addview', () => {
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.crit1'), { target: { value: '2' } });
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new rule' }));
+    const rule2 = within(screen.getByTestId('rules.1'))
     fireEvent.change(screen.getByTestId('rules.1.endpoint_group'), { target: { value: 'Group 2a' } });
-    fireEvent.change(screen.getByTestId('autocomplete-rules[1].metric'), { target: { value: 'argo.POEM-API-MON' } });
+    await selectEvent.select(rule2.getAllByText(/select/i)[0], 'argo.POEM-API-MON')
     fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.label'), { target: { value: 'test' } });
     fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.value'), { target: { value: '2' } });
     fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.uom'), { target: { value: 'TB' } });
@@ -1439,9 +1451,11 @@ describe('Tests for thresholds profiles addview', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Add a rule' }));
 
+    const rule1 = within(screen.getByTestId('rules.0'))
+
     fireEvent.change(screen.getByTestId('rules.0.endpoint_group'), { target: { value: 'Group 1a' } });
     fireEvent.change(screen.getByTestId('rules.0.host'), { target: { value: 'host.foo-bar.baz' } });
-    fireEvent.change(screen.getByTestId('autocomplete-rules[0].metric'), { target: { value: 'argo.AMSPublisher-Check' } });
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'argo.AMSPublisher-Check')
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.label'), { target: { value: 'freshness' } });
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.value'), { target: { value: '1' } });
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.uom'), { target: { value: 's' } });
@@ -1458,8 +1472,9 @@ describe('Tests for thresholds profiles addview', () => {
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.crit1'), { target: { value: '2' } });
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new rule' }));
+    const rule2 = within(screen.getByTestId('rules.1'))
     fireEvent.change(screen.getByTestId('rules.1.endpoint_group'), { target: { value: 'Group 2a' } });
-    fireEvent.change(screen.getByTestId('autocomplete-rules[1].metric'), { target: { value: 'argo.POEM-API-MON' } });
+    await selectEvent.select(rule2.getAllByText(/select/i)[0], 'argo.POEM-API-MON')
     fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.label'), { target: { value: 'test' } });
     fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.value'), { target: { value: '2' } });
     fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.uom'), { target: { value: 'TB' } });
@@ -1527,9 +1542,11 @@ describe('Tests for thresholds profiles addview', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Add a rule' }));
 
+    const rule1 = within(screen.getByTestId('rules.0'))
+
     fireEvent.change(screen.getByTestId('rules.0.endpoint_group'), { target: { value: 'Group 1a' } });
     fireEvent.change(screen.getByTestId('rules.0.host'), { target: { value: 'host.foo-bar.baz' } });
-    fireEvent.change(screen.getByTestId('autocomplete-rules[0].metric'), { target: { value: 'argo.AMSPublisher-Check' } });
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'argo.AMSPublisher-Check')
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.label'), { target: { value: 'freshness' } });
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.value'), { target: { value: '1' } });
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.uom'), { target: { value: 's' } });
@@ -1546,8 +1563,9 @@ describe('Tests for thresholds profiles addview', () => {
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.crit1'), { target: { value: '2' } });
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new rule' }));
+    const rule2 = within(screen.getByTestId('rules.1'))
     fireEvent.change(screen.getByTestId('rules.1.endpoint_group'), { target: { value: 'Group 2a' } });
-    fireEvent.change(screen.getByTestId('autocomplete-rules[1].metric'), { target: { value: 'argo.POEM-API-MON' } });
+    await selectEvent.select(rule2.getAllByText(/select/i)[0], 'argo.POEM-API-MON')
     fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.label'), { target: { value: 'test' } });
     fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.value'), { target: { value: '2' } });
     fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.uom'), { target: { value: 'TB' } });
@@ -1631,9 +1649,11 @@ describe('Tests for thresholds profiles addview', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Add a rule' }));
 
+    const rule1 = within(screen.getByTestId('rules.0'))
+
     fireEvent.change(screen.getByTestId('rules.0.endpoint_group'), { target: { value: 'Group 1a' } });
     fireEvent.change(screen.getByTestId('rules.0.host'), { target: { value: 'host.foo-bar.baz' } });
-    fireEvent.change(screen.getByTestId('autocomplete-rules[0].metric'), { target: { value: 'argo.AMSPublisher-Check' } });
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'argo.AMSPublisher-Check')
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.label'), { target: { value: 'freshness' } });
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.value'), { target: { value: '1' } });
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.uom'), { target: { value: 's' } });
@@ -1650,8 +1670,9 @@ describe('Tests for thresholds profiles addview', () => {
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.crit1'), { target: { value: '2' } });
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new rule' }));
+    const rule2 = within(screen.getByTestId('rules.1'))
     fireEvent.change(screen.getByTestId('rules.1.endpoint_group'), { target: { value: 'Group 2a' } });
-    fireEvent.change(screen.getByTestId('autocomplete-rules[1].metric'), { target: { value: 'argo.POEM-API-MON' } });
+    await selectEvent.select(rule2.getAllByText(/select/i)[0], 'argo.POEM-API-MON')
     fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.label'), { target: { value: 'test' } });
     fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.value'), { target: { value: '2' } });
     fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.uom'), { target: { value: 'TB' } });
@@ -1753,9 +1774,11 @@ describe('Tests for thresholds profiles addview', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Add a rule' }));
 
+    const rule1 = within(screen.getByTestId('rules.0'))
+
     fireEvent.change(screen.getByTestId('rules.0.endpoint_group'), { target: { value: 'Group 1a' } });
     fireEvent.change(screen.getByTestId('rules.0.host'), { target: { value: 'host.foo-bar.baz' } });
-    fireEvent.change(screen.getByTestId('autocomplete-rules[0].metric'), { target: { value: 'argo.AMSPublisher-Check' } });
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'argo.AMSPublisher-Check')
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.label'), { target: { value: 'freshness' } });
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.value'), { target: { value: '1' } });
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.uom'), { target: { value: 's' } });
@@ -1772,8 +1795,9 @@ describe('Tests for thresholds profiles addview', () => {
     fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.crit1'), { target: { value: '2' } });
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new rule' }));
+    const rule2 = within(screen.getByTestId('rules.1'))
     fireEvent.change(screen.getByTestId('rules.1.endpoint_group'), { target: { value: 'Group 2a' } });
-    fireEvent.change(screen.getByTestId('autocomplete-rules[1].metric'), { target: { value: 'argo.POEM-API-MON' } });
+    await selectEvent.select(rule2.getAllByText(/select/i)[0], 'argo.POEM-API-MON')
     fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.label'), { target: { value: 'test' } });
     fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.value'), { target: { value: '2' } });
     fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.uom'), { target: { value: 'TB' } });
