@@ -250,7 +250,7 @@ const CustomSelect = ({ field, label, options, onChangeHandler, initialValue }) 
         label={label}
         closeMenuOnSelect={true}
         isMulti={false}
-        isClearable={false}
+        isClearable={true}
         onChange={ e => onChangeHandler(e) }
         options={options}
         value={{value: initialValue, label: initialValue}}
@@ -264,7 +264,7 @@ const CustomSelect = ({ field, label, options, onChangeHandler, initialValue }) 
         label={label}
         closeMenuOnSelect={true}
         isMulti={false}
-        isClearable={false}
+        isClearable={true}
         onChange={ e => onChangeHandler(e) }
         options={options}
       />
@@ -397,7 +397,11 @@ const ThresholdsProfilesForm = ({
                                     label: group, value: group
                                   }))}
                                   onChangeHandler={(e) => {
-                                    props.setFieldValue(`rules[${index}]endpoint_group`, e.value)
+                                    if (e)
+                                      props.setFieldValue(`rules[${index}]endpoint_group`, e.value)
+
+                                    else
+                                      props.setFieldValue(`rules[${index}]endpoint_group`, '')
                                   }}
                                   label={'Group'}
                                   initialValue={!addview ? props.values.rules[index].endpoint_group : undefined}
