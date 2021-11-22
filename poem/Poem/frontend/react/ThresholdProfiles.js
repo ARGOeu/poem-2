@@ -1009,6 +1009,12 @@ export const ThresholdsProfilesList = (props) => {
             await queryClient.prefetchQuery(
               'metricsall', () => fetchAllMetrics(publicView)
             )
+            await queryClient.prefetchQuery(
+              'metricprofile', () => fetchMetricProfiles(webapi)
+            )
+            await queryClient.prefetchQuery(
+              'topologyendpoints', () => fetchTopologyEndpoints(webapi)
+            )
           } }
         >
           {e.name}
