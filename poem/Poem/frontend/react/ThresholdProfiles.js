@@ -248,7 +248,7 @@ const CustomSelect = ({ field, label, options, onChangeHandler, initialValue }) 
         label={label}
         closeMenuOnSelect={true}
         isMulti={false}
-        isClearable={true}
+        isClearable={ label.toLowerCase() !== 'metric' }
         onChange={ e => onChangeHandler(e) }
         options={options}
         value={{value: initialValue, label: initialValue}}
@@ -262,7 +262,7 @@ const CustomSelect = ({ field, label, options, onChangeHandler, initialValue }) 
         label={label}
         closeMenuOnSelect={true}
         isMulti={false}
-        isClearable={true}
+        isClearable={ label.toLowerCase() !== 'metric' }
         onChange={ e => onChangeHandler(e) }
         options={options}
       />
