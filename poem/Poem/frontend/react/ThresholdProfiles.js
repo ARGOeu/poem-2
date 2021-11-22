@@ -1010,7 +1010,7 @@ export const ThresholdsProfilesList = (props) => {
               'metricsall', () => fetchAllMetrics(publicView)
             )
             await queryClient.prefetchQuery(
-              'metricprofile', () => fetchMetricProfiles(webapi)
+              ['metricprofile', 'webapi'], () => fetchMetricProfiles(webapi)
             )
             await queryClient.prefetchQuery(
               'topologyendpoints', () => fetchTopologyEndpoints(webapi)
@@ -1130,7 +1130,7 @@ export const ThresholdsProfilesChange = (props) => {
   )
 
   const { data: metricProfiles, error: errorMetricProfiles, isLoading: loadingMetricProfiles } = useQuery(
-    'metricprofile', () => fetchMetricProfiles(webapi),
+    ['metricprofile', 'webapi'], () => fetchMetricProfiles(webapi),
     { enabled: !publicView }
   )
 

@@ -647,7 +647,7 @@ const App = () => {
         'report', () => fetchReports()
       );
       queryClient.prefetchQuery(
-        'metricprofile', () => fetchBackendMetricProfiles()
+        ['metricprofile', 'backend'], () => fetchBackendMetricProfiles()
       );
       queryClient.prefetchQuery(
         ['aggregationprofile', 'backend'], () => fetchAggregationProfiles()
