@@ -24,8 +24,6 @@ import {
   FormGroup,
   Row,
   Col,
-  InputGroup,
-  InputGroupAddon,
   Card,
   CardHeader,
   CardBody,
@@ -357,6 +355,7 @@ const ThresholdsProfilesForm = ({
                                   onChangeHandler={(e) => {
                                     props.setFieldValue(`rules[${index}]metric`, e.value)
                                   }}
+                                  label='Metric'
                                   initialValue={!addview ? props.values.rules[index].metric : ''}
                                 />
                             }
@@ -364,15 +363,13 @@ const ThresholdsProfilesForm = ({
                         </Row>
                         <Row className='mt-2'>
                           <Col md={12}>
-                            <InputGroup>
-                              <InputGroupAddon addonType='prepend'>Host</InputGroupAddon>
-                              <Field
-                                name={`rules.${index}.host`}
-                                data-testid={`rules.${index}.host`}
-                                className='form-control'
-                                disabled={historyview}
-                              />
-                            </InputGroup>
+                            <Label for={`rules.${index}.host`}>Host</Label>
+                            <Field
+                              name={`rules.${index}.host`}
+                              data-testid={`rules.${index}.host`}
+                              className='form-control'
+                              disabled={historyview}
+                            />
                           </Col>
                         </Row>
                         <Row className='mt-2'>
