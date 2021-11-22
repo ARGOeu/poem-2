@@ -33,7 +33,8 @@ import {
   Button,
   Popover,
   PopoverBody,
-  PopoverHeader
+  PopoverHeader,
+  Label
 } from 'reactstrap';
 import * as Yup from 'yup';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -43,7 +44,8 @@ import { useMutation, useQuery, useQueryClient } from 'react-query';
 import {
   fetchUserDetails,
   fetchAllMetrics,
-  fetchThresholdsProfiles
+  fetchThresholdsProfiles,
+  fetchMetricProfiles
 } from './QueryFunctions';
 
 
@@ -240,18 +242,18 @@ function thresholdsToValues(rules) {
 }
 
 
-const MetricSelect = ({ field, metricOptions, onChangeHandler, metricInitial }) => {
-  if (metricInitial)
+const CustomSelect = ({ field, label, options, onChangeHandler, initialValue }) => {
+  if (initialValue)
     return (
       <CustomReactSelect
         name={field.name}
-        label={'Metric'}
+        label={label}
         closeMenuOnSelect={true}
         isMulti={false}
         isClearable={false}
         onChange={ e => onChangeHandler(e) }
-        options={metricOptions}
-        value={{value: metricInitial, label: metricInitial}}
+        options={options}
+        value={{value: initialValue, label: initialValue}}
       />
     )
 
@@ -259,12 +261,12 @@ const MetricSelect = ({ field, metricOptions, onChangeHandler, metricInitial }) 
     return (
       <CustomReactSelect
         name={field.name}
-        label={'Metric'}
+        label={label}
         closeMenuOnSelect={true}
         isMulti={false}
         isClearable={false}
         onChange={ e => onChangeHandler(e) }
-        options={metricOptions}
+        options={options}
       />
     )
 }
@@ -280,6 +282,7 @@ const ThresholdsProfilesForm = ({
   popoverCriticalOpen,
   toggleWarningPopOver,
   toggleCriticalPopOver,
+  getEndpointGroups,
   ...props
 }) => (
   <>
@@ -333,35 +336,29 @@ const ThresholdsProfilesForm = ({
                           <Col md={12}>
                             {
                               historyview ?
-                                <InputGroup>
-                                  <InputGroupAddon addonType='prepend'>Metric</InputGroupAddon>
+                                <>
+                                  <Label for={`rules.${index}.metric`}>Metric</Label>
                                   <Field
+                                    id={`rules.${index}.metric`}
                                     name={`rules.${index}.metric`}
                                     data-testid={`rules.${index}.metric`}
                                     className='form-control'
                                     disabled={true}
                                   />
-                                </InputGroup>
+                                </>
                               :
                                 <Field
                                   id={`rules.${index}.metric`}
                                   name={`rules.${index}.metric`}
-                                  component={MetricSelect}
-                                  metricOptions={metrics_list.map((metric) => new Object({
+                                  component={CustomSelect}
+                                  options={metrics_list.map((metric) => new Object({
                                     label: metric, value: metric
                                   }))}
                                   onChangeHandler={(e) => {
                                     props.setFieldValue(`rules[${index}]metric`, e.value)
                                   }}
-                                  metricInitial={!addview ? props.values.rules[index].metric : ''}
+                                  initialValue={!addview ? props.values.rules[index].metric : ''}
                                 />
-                                /*
-                                <ThresholdsAutocomplete
-                                  {...props}
-                                  lists={metrics_list}
-                                  index={index}
-                                />
-                                */
                             }
                           </Col>
                         </Row>
@@ -380,15 +377,32 @@ const ThresholdsProfilesForm = ({
                         </Row>
                         <Row className='mt-2'>
                           <Col md={12}>
-                            <InputGroup>
-                              <InputGroupAddon addonType='prepend'>Group</InputGroupAddon>
-                              <Field
-                                name={`rules.${index}.endpoint_group`}
-                                data-testid={`rules.${index}.endpoint_group`}
-                                className='form-control'
-                                disabled={historyview}
-                              />
-                            </InputGroup>
+                            {
+                              historyview ?
+                                <>
+                                  <Label for={`rules.${index}.endpoint_group`}>Group</Label>
+                                  <Field
+                                    id={`rules.${index}.endpoint_group`}
+                                    name={`rules.${index}.endpoint_group`}
+                                    data-testid={`rules.${index}.endpoint_group`}
+                                    className='form-control'
+                                    disabled={true}
+                                  />
+                                </>
+                              :
+                                <Field
+                                  name={`rules.${index}.endpoint_group`}
+                                  component={CustomSelect}
+                                  options={getEndpointGroups(props.values.rules[index].metric).map((group) => new Object({
+                                    label: group, value: group
+                                  }))}
+                                  onChangeHandler={(e) => {
+                                    props.setFieldValue(`rules[${index}]endpoint_group`, e.value)
+                                  }}
+                                  label={'Group'}
+                                  initialValue={!addview ? props.values.rules[index].endpoint_group : undefined}
+                                />
+                            }
                           </Col>
                         </Row>
                       </CardBody>
@@ -919,12 +933,8 @@ const ThresholdsProfilesForm = ({
 )
 
 
-const fetchThresholdsProfile = async ({ addview=false, publicView, name, webapitoken, webapithresholds }) => {
+const fetchThresholdsProfile = async ({ addview=false, publicView, name, webapi }) => {
   const backend = new Backend();
-  const webapi = new WebApi({
-    token: webapitoken,
-    thresholdsProfiles: webapithresholds
-  })
 
   if (!addview) {
     let json = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}thresholdsprofiles/${name}`);
@@ -940,11 +950,25 @@ const fetchThresholdsProfile = async ({ addview=false, publicView, name, webapit
 }
 
 
+const fetchTopologyEndpoints = async ( webapi ) => {
+  return await webapi.fetchReportsTopologyEndpoints()
+}
+
+
 export const ThresholdsProfilesList = (props) => {
   const location = props.location;
   const publicView = props.publicView;
   const webapitoken = props.webapitoken;
   const webapithresholds = props.webapithresholds;
+  const webapimetric = props.webapimetric;
+  const webapireports = props.webapireports;
+
+  const webapi = new WebApi({
+    token: webapitoken,
+    thresholdsProfiles: webapithresholds,
+    metricProfiles: webapimetric,
+    reportsConfigurations: webapireports
+  })
 
   const queryClient = useQueryClient();
 
@@ -978,8 +1002,7 @@ export const ThresholdsProfilesList = (props) => {
               () => fetchThresholdsProfile({
                 publicView: publicView,
                 name: e.name,
-                webapitoken: webapitoken,
-                webapithresholds: webapithresholds
+                webapi: webapi
               })
             );
             await queryClient.prefetchQuery(
@@ -1047,11 +1070,15 @@ export const ThresholdsProfilesChange = (props) => {
   const publicView = props.publicView;
   const webapitoken = props.webapitoken
   const webapithresholds = props.webapithresholds;
+  const webapimetric = props.webapimetric;
+  const webapireports = props.webapireports;
 
   const backend = new Backend();
   const webapi = new WebApi({
     token: webapitoken,
-    thresholdsProfiles: webapithresholds
+    thresholdsProfiles: webapithresholds,
+    metricProfiles: webapimetric,
+    reportsConfigurations: webapireports
   });
 
   const queryClient = useQueryClient();
@@ -1063,25 +1090,6 @@ export const ThresholdsProfilesChange = (props) => {
   const webapiDeleteMutation = useMutation(async () => await webapi.deleteThresholdsProfile(profileId));
   const backendDeleteMutation = useMutation(async () => await backend.deleteObject(`/api/v2/internal/thresholdsprofiles/${profileId}`));
 
-  const { data: userDetails, isLoading: loadingUserDetails } = useQuery(
-    'userdetails', () => fetchUserDetails(true)
-  );
-
-  const { data: thresholdsProfile, error: errorThresholdsProfile, status: statusThresholdsProfile } = useQuery(
-    [`${publicView ? 'public_' : ''}thresholdsprofile`, name], () => fetchThresholdsProfile({
-      addview: addview,
-      publicView: publicView,
-      name: name,
-      webapitoken: webapitoken,
-      webapithresholds: webapithresholds
-    }),
-    { enabled: !publicView ? !addview && !!userDetails : true }
-  );
-
-  const { data: allMetrics, error: errorAllMetrics, status: statusAllMetrics } = useQuery(
-    'metricsall', () => fetchAllMetrics(publicView)
-  );
-
   const [areYouSureModal, setAreYouSureModal] = useState(false);
   const [modalMsg, setModalMsg] = useState(undefined);
   const [modalTitle, setModalTitle] = useState(undefined);
@@ -1090,6 +1098,34 @@ export const ThresholdsProfilesChange = (props) => {
   const [profileId, setProfileId] = useState(undefined);
   const [popoverWarningOpen, setPopoverWarningOpen] = useState(false);
   const [popoverCriticalOpen, setPopoverCriticalOpen] = useState(false);
+
+  const { data: userDetails, isLoading: loadingUserDetails } = useQuery(
+    'userdetails', () => fetchUserDetails(true)
+  );
+
+  const { data: thresholdsProfile, error: errorThresholdsProfile, isLoading: loadingThresholdsProfile } = useQuery(
+    [`${publicView ? 'public_' : ''}thresholdsprofile`, name], () => fetchThresholdsProfile({
+      addview: addview,
+      publicView: publicView,
+      name: name,
+      webapi: webapi
+    }),
+    { enabled: !publicView ? !addview && !!userDetails : true }
+  );
+
+  const { data: allMetrics, error: errorAllMetrics, isLoading: loadingAllMetrics } = useQuery(
+    'metricsall', () => fetchAllMetrics(publicView)
+  );
+
+  const { data: topologyEndpoints, error: errorTopologyEndpoints, isLoading: loadingTopologyEndpoints } = useQuery(
+    'topologyendpoints', () => fetchTopologyEndpoints(webapi),
+    { enabled: !publicView }
+  )
+
+  const { data: metricProfiles, error: errorMetricProfiles, isLoading: loadingMetricProfiles } = useQuery(
+    'metricprofile', () => fetchMetricProfiles(webapi),
+    { enabled: !publicView }
+  )
 
   function toggleAreYouSure() {
     setAreYouSureModal(!areYouSureModal);
@@ -1121,6 +1157,28 @@ export const ThresholdsProfilesChange = (props) => {
       rule.thresholds = th;
     }));
     return rules;
+  }
+
+  function getEndpointGroups(metric) {
+    function onlyUnique(value, index, self) {
+      return self.indexOf(value) === index
+    }
+
+    let servicetypes = new Array();
+    metricProfiles.forEach(profile => {
+      profile.services.forEach(service => {
+        if (service.metrics.includes(metric))
+          servicetypes.push(service.service)
+      })
+    })
+
+    let endpoints = new Array();
+    topologyEndpoints.forEach(endpoint => {
+      if (servicetypes.includes(endpoint.service))
+        endpoints.push(endpoint.group)
+    })
+
+    return endpoints.filter(onlyUnique).sort()
   }
 
   function onSubmitHandle(values) {
@@ -1239,14 +1297,20 @@ export const ThresholdsProfilesChange = (props) => {
     })
   }
 
-  if (statusThresholdsProfile === 'loading' || loadingUserDetails || statusAllMetrics === 'loading')
+  if (loadingThresholdsProfile || loadingUserDetails || loadingAllMetrics || loadingMetricProfiles || loadingTopologyEndpoints )
     return (<LoadingAnim/>);
 
-  else if (statusThresholdsProfile === 'error')
+  else if (errorThresholdsProfile)
     return (<ErrorComponent error={errorThresholdsProfile}/>);
 
-  else if (statusAllMetrics === 'error')
+  else if (errorAllMetrics)
     return (<ErrorComponent error={errorAllMetrics}/>);
+
+  else if (errorMetricProfiles)
+    return (<ErrorComponent error={errorMetricProfiles} />)
+
+  else if (errorTopologyEndpoints)
+    return ( <ErrorComponent error={errorTopologyEndpoints} /> )
 
   else if (allMetrics) {
     let write_perm = userDetails ?
@@ -1303,13 +1367,13 @@ export const ThresholdsProfilesChange = (props) => {
                 groups_list={groups_list}
                 metrics_list={allMetrics}
                 write_perm={write_perm}
-                //onSelect={onSelect}
                 popoverWarningOpen={popoverWarningOpen}
                 popoverCriticalOpen={popoverCriticalOpen}
                 toggleWarningPopOver={toggleWarningPopOver}
                 toggleCriticalPopOver={toggleCriticalPopOver}
                 historyview={publicView}
                 addview={addview}
+                getEndpointGroups={getEndpointGroups}
               />
               {
                 (write_perm && !publicView) &&

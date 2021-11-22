@@ -214,6 +214,8 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
       render={ props => <ThresholdsProfilesList
         {...props}
         webapithresholds={webApiThresholds}
+        webapimetric={webApiMetric}
+        webapireports={webApiReports}
         webapitoken={token}
       /> }
     />
@@ -221,6 +223,8 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
       render={props => <ThresholdsProfilesChange
         {...props}
         webapithresholds={webApiThresholds}
+        webapimetric={webApiMetric}
+        webapireports={webApiReports}
         webapitoken={token}
         tenantname={tenantName}
         addview={true}/>}
@@ -229,6 +233,8 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
       render={props => <ThresholdsProfilesChange
         {...props}
         webapithresholds={webApiThresholds}
+        webapimetric={webApiMetric}
+        webapireports={webApiReports}
         webapitoken={token}
         tenantname={tenantName}/>}
     />
@@ -397,6 +403,8 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
       render={ props => <ThresholdsProfilesList
         {...props}
         webapithresholds={webApiThresholds}
+        webapimetric={webApiMetric}
+        webapireports={webApiReports}
         webapitoken={token}
       /> }
     />
@@ -404,6 +412,8 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
       render={props => <ThresholdsProfilesChange
         {...props}
         webapithresholds={webApiThresholds}
+        webapimetric={webApiMetric}
+        webapireports={webApiReports}
         webapitoken={token}
         tenantname={tenantName}
         addview={true}/>}
@@ -412,6 +422,8 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
       render={props => <ThresholdsProfilesChange
         {...props}
         webapithresholds={webApiThresholds}
+        webapimetric={webApiMetric}
+        webapireports={webApiReports}
         webapitoken={token}
         tenantname={tenantName}/>}
     />
@@ -911,6 +923,8 @@ const App = () => {
                       {...props}
                       publicView={true}
                       webapithresholds={webApiThresholds}
+                      webapimetric={webApiMetric}
+                      webapireports={webApiReports}
                       webapitoken={token}
                     />
                   </PublicPage>
@@ -921,7 +935,8 @@ const App = () => {
                   <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <ThresholdsProfilesChange {...props}
                       webapithresholds={webApiThresholds}
-                      webapiaggregation={webApiAggregation}
+                      webapimetric={webApiMetric}
+                      webapireports={webApiReports}
                       webapitoken={token}
                       tenantname={tenantName}
                       publicView={true}
