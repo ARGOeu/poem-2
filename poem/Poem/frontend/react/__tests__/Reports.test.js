@@ -2214,21 +2214,49 @@ describe('Tests for reports addview', () => {
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
 
     fireEvent.click(card_groups.getByRole('button', { name: /add new tag/i }));
+
+    const tag1 = card_groups.getAllByText(/select/i)[0]
+    const value1 = card_groups.getAllByText(/select/i)[1]
+
     expect(card_groups.queryByText('certification')).not.toBeInTheDocument()
     expect(card_groups.queryByText('infrastructure')).not.toBeInTheDocument()
     expect(card_groups.queryByText('monitored')).not.toBeInTheDocument()
     expect(card_groups.queryByText('scope')).not.toBeInTheDocument()
     expect(card_groups.queryByText(/GLUE2ComputingShareMappingQueue/)).not.toBeInTheDocument()
     expect(card_groups.queryByText(/GLUE2EndpointImplementationName/i)).not.toBeInTheDocument()
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'certification')
-    selectEvent.openMenu(card_groups.getByText('certification'))
+
+    selectEvent.openMenu(tag1)
+
+    expect(card_groups.getByText('certification')).toBeInTheDocument()
     expect(card_groups.getByText('infrastructure')).toBeInTheDocument()
     expect(card_groups.getByText('monitored')).toBeInTheDocument()
     expect(card_groups.getByText('scope')).toBeInTheDocument()
     expect(card_groups.queryByText(/GLUE2ComputingShareMappingQueue/i)).not.toBeInTheDocument()
     expect(card_groups.queryByText(/GLUE2EndpointImplementationName/i)).not.toBeInTheDocument()
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'Certified')
-    await selectEvent.openMenu(card_groups.getByText('Certified'))
+
+    await selectEvent.select(tag1, 'certification')
+
+    expect(card_groups.queryByText('Candidate')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Closed')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Suspended')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Uncertified')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('PPS')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Production')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Test')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('yes')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('no')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EGI')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSC-hub')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSCCore')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('FedCloud')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('condor')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('condor_q2d')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('eddie')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(value1)
+
     expect(card_groups.getByText('Candidate')).toBeInTheDocument()
     expect(card_groups.getByText('Closed')).toBeInTheDocument()
     expect(card_groups.getByText('Suspended')).toBeInTheDocument()
@@ -2248,11 +2276,17 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument()
     expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument()
 
+    await selectEvent.select(value1, 'Certified')
+
     fireEvent.click(card_groups.getByText(/add new tag/i))
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'monitored')
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'no')
-    selectEvent.openMenu(card_groups.getByText('no'))
-    expect(card_groups.getByText('yes')).toBeInTheDocument()
+
+    const tag2 = card_groups.getAllByText(/select/i)[0]
+    const value2 = card_groups.getAllByText(/select/i)[1]
+
+    await selectEvent.select(tag2, 'monitored')
+
+    expect(card_groups.queryByText('yes')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('no')).not.toBeInTheDocument()
     expect(card_groups.queryByText('EGI')).not.toBeInTheDocument()
     expect(card_groups.queryByText('EOSC-hub')).not.toBeInTheDocument()
     expect(card_groups.queryByText('EOSCCore')).not.toBeInTheDocument()
@@ -2263,15 +2297,61 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument()
     expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument()
 
+    selectEvent.openMenu(value2)
+
+    expect(card_groups.getByText('yes')).toBeInTheDocument()
+    expect(card_groups.getByText('no')).toBeInTheDocument()
+    expect(card_groups.queryByText('EGI')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSC-hub')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSCCore')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('FedCloud')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('condor')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('condor_q2d')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('eddie')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+
+    await selectEvent.select(value2, 'no')
+
     fireEvent.click(card_endpoints.getByRole('button', { name: /add new tag/i }));
-    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'monitored')
-    selectEvent.openMenu(card_endpoints.getByText('monitored'))
+
+    const tag3 = card_endpoints.getAllByText(/select/i)[0]
+    const value3 = card_endpoints.getAllByText(/select/i)[1]
+
+    expect(card_endpoints.queryByText('monitored')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('production')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('scope')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('GLUE2EndpointID')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(tag3)
+
+    expect(card_endpoints.getByText('monitored')).toBeInTheDocument()
     expect(card_endpoints.getByText('production')).toBeInTheDocument()
     expect(card_endpoints.getByText('scope')).toBeInTheDocument()
     expect(card_endpoints.queryByText('GLUE2EndpointID')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument()
-    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'yes')
-    selectEvent.openMenu(card_endpoints.getByText('yes'))
+
+    await selectEvent.select(tag3, 'monitored')
+
+    expect(card_endpoints.queryByText('yes')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('no')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('EGI')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('EOSC-hub')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('EOSCCore')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('FedCloud')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('condor')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('condor_q2d')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('eddie')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ce1.gridpp.ecdf.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('svr009.gla.scotgrid.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('t3-mw1.ph.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(value3)
+
+    expect(card_endpoints.getByText('yes')).toBeInTheDocument()
     expect(card_endpoints.getByText('no')).toBeInTheDocument()
     expect(card_endpoints.queryByText('EGI')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('EOSC-hub')).not.toBeInTheDocument()
@@ -2286,16 +2366,35 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
 
+    await selectEvent.select(value3, 'yes')
+
     fireEvent.click(card_endpoints.getByRole('button', { name: /add new extension/i }))
-    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'GLUE2EndpointID')
-    selectEvent.openMenu(card_endpoints.getByText('GLUE2EndpointID'))
+
+    const extension1 = card_endpoints.getAllByText(/select/i)[0]
+    const extvalue1 = card_endpoints.getAllByText(/select/i)[1]
+
+    selectEvent.openMenu(extension1)
+
+    expect(card_endpoints.getByText('GLUE2EndpointID')).toBeInTheDocument()
     expect(card_endpoints.getByText('GLUE2EndpointImplementationName')).toBeInTheDocument()
-    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], ['ce1.gridpp.ecdf.ed.ac.uk', 'svr009.gla.scotgrid.ac.uk'])
-    selectEvent.openMenu(card_endpoints.getByText('svr009.gla.scotgrid.ac.uk'))
+
+    await selectEvent.select(extension1, 'GLUE2EndpointID')
+
+    expect(card_endpoints.queryByText('ce1.gridpp.ecdf.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('svr009.gla.scotgrid.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('t3-mw1.ph.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(extvalue1)
+
     expect(card_endpoints.getByText('ce1.gridpp.ecdf.ed.ac.uk')).toBeInTheDocument()
+    expect(card_endpoints.getByText('svr009.gla.scotgrid.ac.uk')).toBeInTheDocument()
     expect(card_endpoints.getByText('t3-mw1.ph.ed.ac.uk')).toBeInTheDocument()
     expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+
+    await selectEvent.select(extvalue1, ['ce1.gridpp.ecdf.ed.ac.uk', 'svr009.gla.scotgrid.ac.uk'])
 
     fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '80' } });
     fireEvent.change(screen.getByLabelText(/reliability/i), { target: { value: '85' } });
@@ -2416,21 +2515,49 @@ describe('Tests for reports addview', () => {
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
 
     fireEvent.click(card_groups.getByRole('button', { name: /add new tag/i }));
+
+    const tag1 = card_groups.getAllByText(/select/i)[0]
+    const value1 = card_groups.getAllByText(/select/i)[1]
+
     expect(card_groups.queryByText('certification')).not.toBeInTheDocument()
     expect(card_groups.queryByText('infrastructure')).not.toBeInTheDocument()
     expect(card_groups.queryByText('monitored')).not.toBeInTheDocument()
     expect(card_groups.queryByText('scope')).not.toBeInTheDocument()
     expect(card_groups.queryByText(/GLUE2ComputingShareMappingQueue/)).not.toBeInTheDocument()
     expect(card_groups.queryByText(/GLUE2EndpointImplementationName/i)).not.toBeInTheDocument()
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'certification')
-    selectEvent.openMenu(card_groups.getByText('certification'))
+
+    selectEvent.openMenu(tag1)
+
+    expect(card_groups.getByText('certification')).toBeInTheDocument()
     expect(card_groups.getByText('infrastructure')).toBeInTheDocument()
     expect(card_groups.getByText('monitored')).toBeInTheDocument()
     expect(card_groups.getByText('scope')).toBeInTheDocument()
     expect(card_groups.queryByText(/GLUE2ComputingShareMappingQueue/i)).not.toBeInTheDocument()
     expect(card_groups.queryByText(/GLUE2EndpointImplementationName/i)).not.toBeInTheDocument()
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'Certified')
-    await selectEvent.openMenu(card_groups.getByText('Certified'))
+
+    await selectEvent.select(tag1, 'certification')
+
+    expect(card_groups.queryByText('Candidate')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Closed')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Suspended')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Uncertified')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('PPS')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Production')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Test')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('yes')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('no')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EGI')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSC-hub')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSCCore')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('FedCloud')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('condor')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('condor_q2d')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('eddie')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(value1)
+
     expect(card_groups.getByText('Candidate')).toBeInTheDocument()
     expect(card_groups.getByText('Closed')).toBeInTheDocument()
     expect(card_groups.getByText('Suspended')).toBeInTheDocument()
@@ -2450,11 +2577,17 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument()
     expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument()
 
+    await selectEvent.select(value1, 'Certified')
+
     fireEvent.click(card_groups.getByText(/add new tag/i))
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'monitored')
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'no')
-    selectEvent.openMenu(card_groups.getByText('no'))
-    expect(card_groups.getByText('yes')).toBeInTheDocument()
+
+    const tag2 = card_groups.getAllByText(/select/i)[0]
+    const value2 = card_groups.getAllByText(/select/i)[1]
+
+    await selectEvent.select(tag2, 'monitored')
+
+    expect(card_groups.queryByText('yes')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('no')).not.toBeInTheDocument()
     expect(card_groups.queryByText('EGI')).not.toBeInTheDocument()
     expect(card_groups.queryByText('EOSC-hub')).not.toBeInTheDocument()
     expect(card_groups.queryByText('EOSCCore')).not.toBeInTheDocument()
@@ -2465,15 +2598,61 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument()
     expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument()
 
+    selectEvent.openMenu(value2)
+
+    expect(card_groups.getByText('yes')).toBeInTheDocument()
+    expect(card_groups.getByText('no')).toBeInTheDocument()
+    expect(card_groups.queryByText('EGI')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSC-hub')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSCCore')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('FedCloud')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('condor')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('condor_q2d')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('eddie')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+
+    await selectEvent.select(value2, 'no')
+
     fireEvent.click(card_endpoints.getByRole('button', { name: /add new tag/i }));
-    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'monitored')
-    selectEvent.openMenu(card_endpoints.getByText('monitored'))
+
+    const tag3 = card_endpoints.getAllByText(/select/i)[0]
+    const value3 = card_endpoints.getAllByText(/select/i)[1]
+
+    expect(card_endpoints.queryByText('monitored')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('production')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('scope')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('GLUE2EndpointID')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(tag3)
+
+    expect(card_endpoints.getByText('monitored')).toBeInTheDocument()
     expect(card_endpoints.getByText('production')).toBeInTheDocument()
     expect(card_endpoints.getByText('scope')).toBeInTheDocument()
     expect(card_endpoints.queryByText('GLUE2EndpointID')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument()
-    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'yes')
-    selectEvent.openMenu(card_endpoints.getByText('yes'))
+
+    await selectEvent.select(tag3, 'monitored')
+
+    expect(card_endpoints.queryByText('yes')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('no')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('EGI')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('EOSC-hub')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('EOSCCore')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('FedCloud')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('condor')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('condor_q2d')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('eddie')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ce1.gridpp.ecdf.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('svr009.gla.scotgrid.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('t3-mw1.ph.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(value3)
+
+    expect(card_endpoints.getByText('yes')).toBeInTheDocument()
     expect(card_endpoints.getByText('no')).toBeInTheDocument()
     expect(card_endpoints.queryByText('EGI')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('EOSC-hub')).not.toBeInTheDocument()
@@ -2488,16 +2667,35 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
 
+    await selectEvent.select(value3, 'yes')
+
     fireEvent.click(card_endpoints.getByRole('button', { name: /add new extension/i }))
-    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'GLUE2EndpointID')
-    selectEvent.openMenu(card_endpoints.getByText('GLUE2EndpointID'))
+
+    const extension1 = card_endpoints.getAllByText(/select/i)[0]
+    const extvalue1 = card_endpoints.getAllByText(/select/i)[1]
+
+    selectEvent.openMenu(extension1)
+
+    expect(card_endpoints.getByText('GLUE2EndpointID')).toBeInTheDocument()
     expect(card_endpoints.getByText('GLUE2EndpointImplementationName')).toBeInTheDocument()
-    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], ['ce1.gridpp.ecdf.ed.ac.uk', 'svr009.gla.scotgrid.ac.uk'])
-    selectEvent.openMenu(card_endpoints.getByText('svr009.gla.scotgrid.ac.uk'))
+
+    await selectEvent.select(extension1, 'GLUE2EndpointID')
+
+    expect(card_endpoints.queryByText('ce1.gridpp.ecdf.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('svr009.gla.scotgrid.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('t3-mw1.ph.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(extvalue1)
+
     expect(card_endpoints.getByText('ce1.gridpp.ecdf.ed.ac.uk')).toBeInTheDocument()
+    expect(card_endpoints.getByText('svr009.gla.scotgrid.ac.uk')).toBeInTheDocument()
     expect(card_endpoints.getByText('t3-mw1.ph.ed.ac.uk')).toBeInTheDocument()
     expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+
+    await selectEvent.select(extvalue1, ['ce1.gridpp.ecdf.ed.ac.uk', 'svr009.gla.scotgrid.ac.uk'])
 
     fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '80' } });
     fireEvent.change(screen.getByLabelText(/reliability/i), { target: { value: '85' } });
@@ -2614,21 +2812,49 @@ describe('Tests for reports addview', () => {
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
 
     fireEvent.click(card_groups.getByRole('button', { name: /add new tag/i }));
+
+    const tag1 = card_groups.getAllByText(/select/i)[0]
+    const value1 = card_groups.getAllByText(/select/i)[1]
+
     expect(card_groups.queryByText('certification')).not.toBeInTheDocument()
     expect(card_groups.queryByText('infrastructure')).not.toBeInTheDocument()
     expect(card_groups.queryByText('monitored')).not.toBeInTheDocument()
     expect(card_groups.queryByText('scope')).not.toBeInTheDocument()
     expect(card_groups.queryByText(/GLUE2ComputingShareMappingQueue/)).not.toBeInTheDocument()
     expect(card_groups.queryByText(/GLUE2EndpointImplementationName/i)).not.toBeInTheDocument()
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'certification')
-    selectEvent.openMenu(card_groups.getByText('certification'))
+
+    selectEvent.openMenu(tag1)
+
+    expect(card_groups.getByText('certification')).toBeInTheDocument()
     expect(card_groups.getByText('infrastructure')).toBeInTheDocument()
     expect(card_groups.getByText('monitored')).toBeInTheDocument()
     expect(card_groups.getByText('scope')).toBeInTheDocument()
     expect(card_groups.queryByText(/GLUE2ComputingShareMappingQueue/i)).not.toBeInTheDocument()
     expect(card_groups.queryByText(/GLUE2EndpointImplementationName/i)).not.toBeInTheDocument()
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'Certified')
-    await selectEvent.openMenu(card_groups.getByText('Certified'))
+
+    await selectEvent.select(tag1, 'certification')
+
+    expect(card_groups.queryByText('Candidate')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Closed')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Suspended')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Uncertified')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('PPS')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Production')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Test')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('yes')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('no')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EGI')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSC-hub')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSCCore')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('FedCloud')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('condor')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('condor_q2d')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('eddie')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(value1)
+
     expect(card_groups.getByText('Candidate')).toBeInTheDocument()
     expect(card_groups.getByText('Closed')).toBeInTheDocument()
     expect(card_groups.getByText('Suspended')).toBeInTheDocument()
@@ -2648,11 +2874,17 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument()
     expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument()
 
+    await selectEvent.select(value1, 'Certified')
+
     fireEvent.click(card_groups.getByText(/add new tag/i))
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'monitored')
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'no')
-    selectEvent.openMenu(card_groups.getByText('no'))
-    expect(card_groups.getByText('yes')).toBeInTheDocument()
+
+    const tag2 = card_groups.getAllByText(/select/i)[0]
+    const value2 = card_groups.getAllByText(/select/i)[1]
+
+    await selectEvent.select(tag2, 'monitored')
+
+    expect(card_groups.queryByText('yes')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('no')).not.toBeInTheDocument()
     expect(card_groups.queryByText('EGI')).not.toBeInTheDocument()
     expect(card_groups.queryByText('EOSC-hub')).not.toBeInTheDocument()
     expect(card_groups.queryByText('EOSCCore')).not.toBeInTheDocument()
@@ -2663,15 +2895,61 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument()
     expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument()
 
+    selectEvent.openMenu(value2)
+
+    expect(card_groups.getByText('yes')).toBeInTheDocument()
+    expect(card_groups.getByText('no')).toBeInTheDocument()
+    expect(card_groups.queryByText('EGI')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSC-hub')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSCCore')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('FedCloud')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('condor')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('condor_q2d')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('eddie')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+
+    await selectEvent.select(value2, 'no')
+
     fireEvent.click(card_endpoints.getByRole('button', { name: /add new tag/i }));
-    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'monitored')
-    selectEvent.openMenu(card_endpoints.getByText('monitored'))
+
+    const tag3 = card_endpoints.getAllByText(/select/i)[0]
+    const value3 = card_endpoints.getAllByText(/select/i)[1]
+
+    expect(card_endpoints.queryByText('monitored')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('production')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('scope')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('GLUE2EndpointID')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(tag3)
+
+    expect(card_endpoints.getByText('monitored')).toBeInTheDocument()
     expect(card_endpoints.getByText('production')).toBeInTheDocument()
     expect(card_endpoints.getByText('scope')).toBeInTheDocument()
     expect(card_endpoints.queryByText('GLUE2EndpointID')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument()
-    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'yes')
-    selectEvent.openMenu(card_endpoints.getByText('yes'))
+
+    await selectEvent.select(tag3, 'monitored')
+
+    expect(card_endpoints.queryByText('yes')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('no')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('EGI')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('EOSC-hub')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('EOSCCore')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('FedCloud')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('condor')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('condor_q2d')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('eddie')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ce1.gridpp.ecdf.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('svr009.gla.scotgrid.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('t3-mw1.ph.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(value3)
+
+    expect(card_endpoints.getByText('yes')).toBeInTheDocument()
     expect(card_endpoints.getByText('no')).toBeInTheDocument()
     expect(card_endpoints.queryByText('EGI')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('EOSC-hub')).not.toBeInTheDocument()
@@ -2686,16 +2964,35 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
 
+    await selectEvent.select(value3, 'yes')
+
     fireEvent.click(card_endpoints.getByRole('button', { name: /add new extension/i }))
-    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'GLUE2EndpointID')
-    selectEvent.openMenu(card_endpoints.getByText('GLUE2EndpointID'))
+
+    const extension1 = card_endpoints.getAllByText(/select/i)[0]
+    const extvalue1 = card_endpoints.getAllByText(/select/i)[1]
+
+    selectEvent.openMenu(extension1)
+
+    expect(card_endpoints.getByText('GLUE2EndpointID')).toBeInTheDocument()
     expect(card_endpoints.getByText('GLUE2EndpointImplementationName')).toBeInTheDocument()
-    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], ['ce1.gridpp.ecdf.ed.ac.uk', 'svr009.gla.scotgrid.ac.uk'])
-    selectEvent.openMenu(card_endpoints.getByText('svr009.gla.scotgrid.ac.uk'))
+
+    await selectEvent.select(extension1, 'GLUE2EndpointID')
+
+    expect(card_endpoints.queryByText('ce1.gridpp.ecdf.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('svr009.gla.scotgrid.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('t3-mw1.ph.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(extvalue1)
+
     expect(card_endpoints.getByText('ce1.gridpp.ecdf.ed.ac.uk')).toBeInTheDocument()
+    expect(card_endpoints.getByText('svr009.gla.scotgrid.ac.uk')).toBeInTheDocument()
     expect(card_endpoints.getByText('t3-mw1.ph.ed.ac.uk')).toBeInTheDocument()
     expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+
+    await selectEvent.select(extvalue1, ['ce1.gridpp.ecdf.ed.ac.uk', 'svr009.gla.scotgrid.ac.uk'])
 
     fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '80' } });
     fireEvent.change(screen.getByLabelText(/reliability/i), { target: { value: '85' } });
@@ -2828,21 +3125,49 @@ describe('Tests for reports addview', () => {
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
 
     fireEvent.click(card_groups.getByRole('button', { name: /add new tag/i }));
+
+    const tag1 = card_groups.getAllByText(/select/i)[0]
+    const value1 = card_groups.getAllByText(/select/i)[1]
+
     expect(card_groups.queryByText('certification')).not.toBeInTheDocument()
     expect(card_groups.queryByText('infrastructure')).not.toBeInTheDocument()
     expect(card_groups.queryByText('monitored')).not.toBeInTheDocument()
     expect(card_groups.queryByText('scope')).not.toBeInTheDocument()
     expect(card_groups.queryByText(/GLUE2ComputingShareMappingQueue/)).not.toBeInTheDocument()
     expect(card_groups.queryByText(/GLUE2EndpointImplementationName/i)).not.toBeInTheDocument()
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'certification')
-    selectEvent.openMenu(card_groups.getByText('certification'))
+
+    selectEvent.openMenu(tag1)
+
+    expect(card_groups.getByText('certification')).toBeInTheDocument()
     expect(card_groups.getByText('infrastructure')).toBeInTheDocument()
     expect(card_groups.getByText('monitored')).toBeInTheDocument()
     expect(card_groups.getByText('scope')).toBeInTheDocument()
     expect(card_groups.queryByText(/GLUE2ComputingShareMappingQueue/i)).not.toBeInTheDocument()
     expect(card_groups.queryByText(/GLUE2EndpointImplementationName/i)).not.toBeInTheDocument()
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'Certified')
-    await selectEvent.openMenu(card_groups.getByText('Certified'))
+
+    await selectEvent.select(tag1, 'certification')
+
+    expect(card_groups.queryByText('Candidate')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Closed')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Suspended')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Uncertified')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('PPS')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Production')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Test')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('yes')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('no')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EGI')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSC-hub')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSCCore')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('FedCloud')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('condor')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('condor_q2d')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('eddie')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(value1)
+
     expect(card_groups.getByText('Candidate')).toBeInTheDocument()
     expect(card_groups.getByText('Closed')).toBeInTheDocument()
     expect(card_groups.getByText('Suspended')).toBeInTheDocument()
@@ -2862,11 +3187,17 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument()
     expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument()
 
+    await selectEvent.select(value1, 'Certified')
+
     fireEvent.click(card_groups.getByText(/add new tag/i))
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'monitored')
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'no')
-    selectEvent.openMenu(card_groups.getByText('no'))
-    expect(card_groups.getByText('yes')).toBeInTheDocument()
+
+    const tag2 = card_groups.getAllByText(/select/i)[0]
+    const value2 = card_groups.getAllByText(/select/i)[1]
+
+    await selectEvent.select(tag2, 'monitored')
+
+    expect(card_groups.queryByText('yes')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('no')).not.toBeInTheDocument()
     expect(card_groups.queryByText('EGI')).not.toBeInTheDocument()
     expect(card_groups.queryByText('EOSC-hub')).not.toBeInTheDocument()
     expect(card_groups.queryByText('EOSCCore')).not.toBeInTheDocument()
@@ -2877,15 +3208,61 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument()
     expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument()
 
+    selectEvent.openMenu(value2)
+
+    expect(card_groups.getByText('yes')).toBeInTheDocument()
+    expect(card_groups.getByText('no')).toBeInTheDocument()
+    expect(card_groups.queryByText('EGI')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSC-hub')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSCCore')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('FedCloud')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('condor')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('condor_q2d')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('eddie')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+
+    await selectEvent.select(value2, 'no')
+
     fireEvent.click(card_endpoints.getByRole('button', { name: /add new tag/i }));
-    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'monitored')
-    selectEvent.openMenu(card_endpoints.getByText('monitored'))
+
+    const tag3 = card_endpoints.getAllByText(/select/i)[0]
+    const value3 = card_endpoints.getAllByText(/select/i)[1]
+
+    expect(card_endpoints.queryByText('monitored')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('production')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('scope')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('GLUE2EndpointID')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(tag3)
+
+    expect(card_endpoints.getByText('monitored')).toBeInTheDocument()
     expect(card_endpoints.getByText('production')).toBeInTheDocument()
     expect(card_endpoints.getByText('scope')).toBeInTheDocument()
     expect(card_endpoints.queryByText('GLUE2EndpointID')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument()
-    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'yes')
-    selectEvent.openMenu(card_endpoints.getByText('yes'))
+
+    await selectEvent.select(tag3, 'monitored')
+
+    expect(card_endpoints.queryByText('yes')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('no')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('EGI')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('EOSC-hub')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('EOSCCore')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('FedCloud')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('condor')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('condor_q2d')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('eddie')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ce1.gridpp.ecdf.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('svr009.gla.scotgrid.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('t3-mw1.ph.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(value3)
+
+    expect(card_endpoints.getByText('yes')).toBeInTheDocument()
     expect(card_endpoints.getByText('no')).toBeInTheDocument()
     expect(card_endpoints.queryByText('EGI')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('EOSC-hub')).not.toBeInTheDocument()
@@ -2900,16 +3277,35 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
 
+    await selectEvent.select(value3, 'yes')
+
     fireEvent.click(card_endpoints.getByRole('button', { name: /add new extension/i }))
-    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'GLUE2EndpointID')
-    selectEvent.openMenu(card_endpoints.getByText('GLUE2EndpointID'))
+
+    const extension1 = card_endpoints.getAllByText(/select/i)[0]
+    const extvalue1 = card_endpoints.getAllByText(/select/i)[1]
+
+    selectEvent.openMenu(extension1)
+
+    expect(card_endpoints.getByText('GLUE2EndpointID')).toBeInTheDocument()
     expect(card_endpoints.getByText('GLUE2EndpointImplementationName')).toBeInTheDocument()
-    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], ['ce1.gridpp.ecdf.ed.ac.uk', 'svr009.gla.scotgrid.ac.uk'])
-    selectEvent.openMenu(card_endpoints.getByText('svr009.gla.scotgrid.ac.uk'))
+
+    await selectEvent.select(extension1, 'GLUE2EndpointID')
+
+    expect(card_endpoints.queryByText('ce1.gridpp.ecdf.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('svr009.gla.scotgrid.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('t3-mw1.ph.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(extvalue1)
+
     expect(card_endpoints.getByText('ce1.gridpp.ecdf.ed.ac.uk')).toBeInTheDocument()
+    expect(card_endpoints.getByText('svr009.gla.scotgrid.ac.uk')).toBeInTheDocument()
     expect(card_endpoints.getByText('t3-mw1.ph.ed.ac.uk')).toBeInTheDocument()
     expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+
+    await selectEvent.select(extvalue1, ['ce1.gridpp.ecdf.ed.ac.uk', 'svr009.gla.scotgrid.ac.uk'])
 
     fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '80' } });
     fireEvent.change(screen.getByLabelText(/reliability/i), { target: { value: '85' } });
@@ -3048,21 +3444,49 @@ describe('Tests for reports addview', () => {
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
 
     fireEvent.click(card_groups.getByRole('button', { name: /add new tag/i }));
+
+    const tag1 = card_groups.getAllByText(/select/i)[0]
+    const value1 = card_groups.getAllByText(/select/i)[1]
+
     expect(card_groups.queryByText('certification')).not.toBeInTheDocument()
     expect(card_groups.queryByText('infrastructure')).not.toBeInTheDocument()
     expect(card_groups.queryByText('monitored')).not.toBeInTheDocument()
     expect(card_groups.queryByText('scope')).not.toBeInTheDocument()
     expect(card_groups.queryByText(/GLUE2ComputingShareMappingQueue/)).not.toBeInTheDocument()
     expect(card_groups.queryByText(/GLUE2EndpointImplementationName/i)).not.toBeInTheDocument()
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'certification')
-    selectEvent.openMenu(card_groups.getByText('certification'))
+
+    selectEvent.openMenu(tag1)
+
+    expect(card_groups.getByText('certification')).toBeInTheDocument()
     expect(card_groups.getByText('infrastructure')).toBeInTheDocument()
     expect(card_groups.getByText('monitored')).toBeInTheDocument()
     expect(card_groups.getByText('scope')).toBeInTheDocument()
     expect(card_groups.queryByText(/GLUE2ComputingShareMappingQueue/i)).not.toBeInTheDocument()
     expect(card_groups.queryByText(/GLUE2EndpointImplementationName/i)).not.toBeInTheDocument()
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'Certified')
-    await selectEvent.openMenu(card_groups.getByText('Certified'))
+
+    await selectEvent.select(tag1, 'certification')
+
+    expect(card_groups.queryByText('Candidate')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Closed')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Suspended')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Uncertified')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('PPS')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Production')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Test')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('yes')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('no')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EGI')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSC-hub')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSCCore')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('FedCloud')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('condor')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('condor_q2d')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('eddie')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(value1)
+
     expect(card_groups.getByText('Candidate')).toBeInTheDocument()
     expect(card_groups.getByText('Closed')).toBeInTheDocument()
     expect(card_groups.getByText('Suspended')).toBeInTheDocument()
@@ -3082,11 +3506,17 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument()
     expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument()
 
+    await selectEvent.select(value1, 'Certified')
+
     fireEvent.click(card_groups.getByText(/add new tag/i))
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'monitored')
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'no')
-    selectEvent.openMenu(card_groups.getByText('no'))
-    expect(card_groups.getByText('yes')).toBeInTheDocument()
+
+    const tag2 = card_groups.getAllByText(/select/i)[0]
+    const value2 = card_groups.getAllByText(/select/i)[1]
+
+    await selectEvent.select(tag2, 'monitored')
+
+    expect(card_groups.queryByText('yes')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('no')).not.toBeInTheDocument()
     expect(card_groups.queryByText('EGI')).not.toBeInTheDocument()
     expect(card_groups.queryByText('EOSC-hub')).not.toBeInTheDocument()
     expect(card_groups.queryByText('EOSCCore')).not.toBeInTheDocument()
@@ -3097,15 +3527,61 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument()
     expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument()
 
+    selectEvent.openMenu(value2)
+
+    expect(card_groups.getByText('yes')).toBeInTheDocument()
+    expect(card_groups.getByText('no')).toBeInTheDocument()
+    expect(card_groups.queryByText('EGI')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSC-hub')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSCCore')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('FedCloud')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('condor')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('condor_q2d')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('eddie')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+
+    await selectEvent.select(value2, 'no')
+
     fireEvent.click(card_endpoints.getByRole('button', { name: /add new tag/i }));
-    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'monitored')
-    selectEvent.openMenu(card_endpoints.getByText('monitored'))
+
+    const tag3 = card_endpoints.getAllByText(/select/i)[0]
+    const value3 = card_endpoints.getAllByText(/select/i)[1]
+
+    expect(card_endpoints.queryByText('monitored')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('production')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('scope')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('GLUE2EndpointID')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(tag3)
+
+    expect(card_endpoints.getByText('monitored')).toBeInTheDocument()
     expect(card_endpoints.getByText('production')).toBeInTheDocument()
     expect(card_endpoints.getByText('scope')).toBeInTheDocument()
     expect(card_endpoints.queryByText('GLUE2EndpointID')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument()
-    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'yes')
-    selectEvent.openMenu(card_endpoints.getByText('yes'))
+
+    await selectEvent.select(tag3, 'monitored')
+
+    expect(card_endpoints.queryByText('yes')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('no')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('EGI')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('EOSC-hub')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('EOSCCore')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('FedCloud')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('condor')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('condor_q2d')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('eddie')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ce1.gridpp.ecdf.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('svr009.gla.scotgrid.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('t3-mw1.ph.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(value3)
+
+    expect(card_endpoints.getByText('yes')).toBeInTheDocument()
     expect(card_endpoints.getByText('no')).toBeInTheDocument()
     expect(card_endpoints.queryByText('EGI')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('EOSC-hub')).not.toBeInTheDocument()
@@ -3120,16 +3596,35 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
 
+    await selectEvent.select(value3, 'yes')
+
     fireEvent.click(card_endpoints.getByRole('button', { name: /add new extension/i }))
-    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'GLUE2EndpointID')
-    selectEvent.openMenu(card_endpoints.getByText('GLUE2EndpointID'))
+
+    const extension1 = card_endpoints.getAllByText(/select/i)[0]
+    const extvalue1 = card_endpoints.getAllByText(/select/i)[1]
+
+    selectEvent.openMenu(extension1)
+
+    expect(card_endpoints.getByText('GLUE2EndpointID')).toBeInTheDocument()
     expect(card_endpoints.getByText('GLUE2EndpointImplementationName')).toBeInTheDocument()
-    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], ['ce1.gridpp.ecdf.ed.ac.uk', 'svr009.gla.scotgrid.ac.uk'])
-    selectEvent.openMenu(card_endpoints.getByText('svr009.gla.scotgrid.ac.uk'))
+
+    await selectEvent.select(extension1, 'GLUE2EndpointID')
+
+    expect(card_endpoints.queryByText('ce1.gridpp.ecdf.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('svr009.gla.scotgrid.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('t3-mw1.ph.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(extvalue1)
+
     expect(card_endpoints.getByText('ce1.gridpp.ecdf.ed.ac.uk')).toBeInTheDocument()
+    expect(card_endpoints.getByText('svr009.gla.scotgrid.ac.uk')).toBeInTheDocument()
     expect(card_endpoints.getByText('t3-mw1.ph.ed.ac.uk')).toBeInTheDocument()
     expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+
+    await selectEvent.select(extvalue1, ['ce1.gridpp.ecdf.ed.ac.uk', 'svr009.gla.scotgrid.ac.uk'])
 
     fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '80' } });
     fireEvent.change(screen.getByLabelText(/reliability/i), { target: { value: '85' } });
