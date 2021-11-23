@@ -280,7 +280,7 @@ const ThresholdsProfilesForm = ({
   popoverCriticalOpen,
   toggleWarningPopOver,
   toggleCriticalPopOver,
-  getEndpointGroups,
+  getEndpoints,
   ...props
 }) => (
   <>
@@ -363,13 +363,35 @@ const ThresholdsProfilesForm = ({
                         </Row>
                         <Row className='mt-2'>
                           <Col md={12}>
-                            <Label for={`rules.${index}.host`}>Host</Label>
-                            <Field
-                              name={`rules.${index}.host`}
-                              data-testid={`rules.${index}.host`}
-                              className='form-control'
-                              disabled={historyview}
-                            />
+                            {
+                              historyview ?
+                                <>
+                                  <Label for={`rules.${index}.host`}>Host</Label>
+                                  <Field
+                                    name={`rules.${index}.host`}
+                                    data-testid={`rules.${index}.host`}
+                                    className='form-control'
+                                    disabled={true}
+                                  />
+                                </>
+                              :
+                                <Field
+                                  name={`rules.${index}.host`}
+                                  component={CustomSelect}
+                                  options={ getEndpoints(props.values.rules[index].metric, 'hostname').map((hostname) => new Object({
+                                    label: hostname, value: hostname
+                                  })) }
+                                  onChangeHandler={ (e) => {
+                                    if (e)
+                                      props.setFieldValue(`rules[${index}]host`, e.value)
+
+                                    else
+                                      props.setFieldValue(`rules[${index}]host`, '')
+                                  } }
+                                  label='Host'
+                                  initialValue={ !addview ? props.values.rules[index].host : undefined }
+                                />
+                            }
                           </Col>
                         </Row>
                         <Row className='mt-2'>
@@ -390,7 +412,7 @@ const ThresholdsProfilesForm = ({
                                 <Field
                                   name={`rules.${index}.endpoint_group`}
                                   component={CustomSelect}
-                                  options={getEndpointGroups(props.values.rules[index].metric).map((group) => new Object({
+                                  options={getEndpoints(props.values.rules[index].metric, 'group').map((group) => new Object({
                                     label: group, value: group
                                   }))}
                                   onChangeHandler={(e) => {
@@ -1166,7 +1188,7 @@ export const ThresholdsProfilesChange = (props) => {
     return rules;
   }
 
-  function getEndpointGroups(metric) {
+  function getEndpoints(metric, key) {
     function onlyUnique(value, index, self) {
       return self.indexOf(value) === index
     }
@@ -1182,7 +1204,7 @@ export const ThresholdsProfilesChange = (props) => {
     let endpoints = new Array();
     topologyEndpoints.forEach(endpoint => {
       if (servicetypes.includes(endpoint.service))
-        endpoints.push(endpoint.group)
+        endpoints.push(endpoint[key])
     })
 
     return endpoints.filter(onlyUnique).sort()
@@ -1380,7 +1402,7 @@ export const ThresholdsProfilesChange = (props) => {
                 toggleCriticalPopOver={toggleCriticalPopOver}
                 historyview={publicView}
                 addview={addview}
-                getEndpointGroups={getEndpointGroups}
+                getEndpoints={getEndpoints}
               />
               {
                 (write_perm && !publicView) &&
