@@ -602,7 +602,6 @@ function renderAddView() {
         <Router history={history}>
           <Route
             path='/ui/reports/add'
-            usergroups={['TEST', 'ARGO']}
             render={ props => <ReportsAdd
               {...props}
               webapitoken='token'
