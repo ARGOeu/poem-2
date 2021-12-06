@@ -241,32 +241,23 @@ function thresholdsToValues(rules) {
 
 
 const CustomSelect = ({ field, label, options, onChangeHandler, initialValue }) => {
-  if (initialValue)
-    return (
-      <CustomReactSelect
-        name={field.name}
-        label={label}
-        closeMenuOnSelect={true}
-        isMulti={false}
-        isClearable={ label.toLowerCase() !== 'metric' }
-        onChange={ e => onChangeHandler(e) }
-        options={options}
-        value={{value: initialValue, label: initialValue}}
-      />
-    )
+  let value = null
+  if (initialValue) {
+    value = { value: initialValue, label: initialValue }
+  }
 
-  else
-    return (
-      <CustomReactSelect
-        name={field.name}
-        label={label}
-        closeMenuOnSelect={true}
-        isMulti={false}
-        isClearable={ label.toLowerCase() !== 'metric' }
-        onChange={ e => onChangeHandler(e) }
-        options={options}
-      />
-    )
+  return (
+    <CustomReactSelect
+      name={field.name}
+      label={label}
+      closeMenuOnSelect={true}
+      isMulti={false}
+      isClearable={ label.toLowerCase() !== 'metric' }
+      onChange={ e => onChangeHandler(e) }
+      options={ options }
+      value={ value }
+    />
+  )
 }
 
 
@@ -354,6 +345,8 @@ const ThresholdsProfilesForm = ({
                                   }))}
                                   onChangeHandler={(e) => {
                                     props.setFieldValue(`rules[${index}]metric`, e.value)
+                                    props.setFieldValue(`rules[${index}]host`, null)
+                                    props.setFieldValue(`rules[${index}]endpoint_group`, null)
                                   }}
                                   label='Metric'
                                   initialValue={!addview ? props.values.rules[index].metric : ''}

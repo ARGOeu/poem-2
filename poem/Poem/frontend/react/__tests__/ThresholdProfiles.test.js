@@ -896,11 +896,10 @@ describe('Tests for threshols profile changeview', () => {
 
     const rule1 = within(screen.getByTestId('rules.0'))
     const metric1 = rule1.getByText('org.nagios.ARGOWeb-Status')
-    const host1 = rule1.getByText('argo.egi.eu')
-    const endpoint1 = rule1.getAllByText(/select/i)[0]
 
     await selectEvent.select(metric1, 'argo.AMS-Check')
 
+    expect(rule1.queryByText('argo.egi.eu')).not.toBeInTheDocument();
     expect(rule1.queryByText('msg.argo.grnet.gr')).not.toBeInTheDocument();
     expect(rule1.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
     expect(rule1.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -912,8 +911,11 @@ describe('Tests for threshols profile changeview', () => {
     expect(rule1.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
     expect(rule1.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
+    const host1 = rule1.getAllByText(/select/i)[0]
+
     selectEvent.openMenu(host1)
 
+    expect(rule1.queryByText('argo.egi.eu')).not.toBeInTheDocument();
     expect(rule1.getByText('msg.argo.grnet.gr')).toBeInTheDocument();
     expect(rule1.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
     expect(rule1.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -934,6 +936,8 @@ describe('Tests for threshols profile changeview', () => {
     expect(rule1.queryByText('EOSC_Exchange_Monitoring')).not.toBeInTheDocument();
     expect(rule1.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
     expect(rule1.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
+
+    const endpoint1 = rule1.getAllByText(/select/i)[0]
 
     selectEvent.openMenu(endpoint1)
     expect(rule1.getByText('GRIDOPS-MSG')).toBeInTheDocument();
@@ -1113,11 +1117,10 @@ describe('Tests for threshols profile changeview', () => {
 
     const rule1 = within(screen.getByTestId('rules.0'))
     const metric1 = rule1.getByText('org.nagios.ARGOWeb-Status')
-    const host1 = rule1.getByText('argo.egi.eu')
-    const endpoint1 = rule1.getAllByText(/select/i)[0]
 
     await selectEvent.select(metric1, 'argo.AMS-Check')
 
+    expect(rule1.queryByText('argo.egi.eu')).not.toBeInTheDocument();
     expect(rule1.queryByText('msg.argo.grnet.gr')).not.toBeInTheDocument();
     expect(rule1.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
     expect(rule1.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -1129,8 +1132,11 @@ describe('Tests for threshols profile changeview', () => {
     expect(rule1.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
     expect(rule1.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
+    const host1 = rule1.getAllByText(/select/i)[0]
+
     selectEvent.openMenu(host1)
 
+    expect(rule1.queryByText('argo.egi.eu')).not.toBeInTheDocument();
     expect(rule1.getByText('msg.argo.grnet.gr')).toBeInTheDocument();
     expect(rule1.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
     expect(rule1.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -1151,6 +1157,8 @@ describe('Tests for threshols profile changeview', () => {
     expect(rule1.queryByText('EOSC_Exchange_Monitoring')).not.toBeInTheDocument();
     expect(rule1.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
     expect(rule1.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
+
+    const endpoint1 = rule1.getAllByText(/select/i)[0]
 
     selectEvent.openMenu(endpoint1)
     expect(rule1.getByText('GRIDOPS-MSG')).toBeInTheDocument();
@@ -1313,11 +1321,10 @@ describe('Tests for threshols profile changeview', () => {
 
     const rule1 = within(screen.getByTestId('rules.0'))
     const metric1 = rule1.getByText('org.nagios.ARGOWeb-Status')
-    const host1 = rule1.getByText('argo.egi.eu')
-    const endpoint1 = rule1.getAllByText(/select/i)[0]
 
     await selectEvent.select(metric1, 'argo.AMS-Check')
 
+    expect(rule1.queryByText('argo.egi.eu')).not.toBeInTheDocument();
     expect(rule1.queryByText('msg.argo.grnet.gr')).not.toBeInTheDocument();
     expect(rule1.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
     expect(rule1.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -1329,8 +1336,11 @@ describe('Tests for threshols profile changeview', () => {
     expect(rule1.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
     expect(rule1.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
+    const host1 = rule1.getAllByText(/select/i)[0]
+
     selectEvent.openMenu(host1)
 
+    expect(rule1.queryByText('argo.egi.eu')).not.toBeInTheDocument();
     expect(rule1.getByText('msg.argo.grnet.gr')).toBeInTheDocument();
     expect(rule1.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
     expect(rule1.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -1351,6 +1361,8 @@ describe('Tests for threshols profile changeview', () => {
     expect(rule1.queryByText('EOSC_Exchange_Monitoring')).not.toBeInTheDocument();
     expect(rule1.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
     expect(rule1.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
+
+    const endpoint1 = rule1.getAllByText(/select/i)[0]
 
     selectEvent.openMenu(endpoint1)
     expect(rule1.getByText('GRIDOPS-MSG')).toBeInTheDocument();
@@ -1518,11 +1530,10 @@ describe('Tests for threshols profile changeview', () => {
 
     const rule1 = within(screen.getByTestId('rules.0'))
     const metric1 = rule1.getByText('org.nagios.ARGOWeb-Status')
-    const host1 = rule1.getByText('argo.egi.eu')
-    const endpoint1 = rule1.getAllByText(/select/i)[0]
 
     await selectEvent.select(metric1, 'argo.AMS-Check')
 
+    expect(rule1.queryByText('argo.egi.eu')).not.toBeInTheDocument();
     expect(rule1.queryByText('msg.argo.grnet.gr')).not.toBeInTheDocument();
     expect(rule1.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
     expect(rule1.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -1534,8 +1545,11 @@ describe('Tests for threshols profile changeview', () => {
     expect(rule1.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
     expect(rule1.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
+    const host1 = rule1.getAllByText(/select/i)[0]
+
     selectEvent.openMenu(host1)
 
+    expect(rule1.queryByText('argo.egi.eu')).not.toBeInTheDocument();
     expect(rule1.getByText('msg.argo.grnet.gr')).toBeInTheDocument();
     expect(rule1.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
     expect(rule1.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -1556,6 +1570,8 @@ describe('Tests for threshols profile changeview', () => {
     expect(rule1.queryByText('EOSC_Exchange_Monitoring')).not.toBeInTheDocument();
     expect(rule1.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
     expect(rule1.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
+
+    const endpoint1 = rule1.getAllByText(/select/i)[0]
 
     selectEvent.openMenu(endpoint1)
     expect(rule1.getByText('GRIDOPS-MSG')).toBeInTheDocument();
@@ -1740,11 +1756,10 @@ describe('Tests for threshols profile changeview', () => {
 
     const rule1 = within(screen.getByTestId('rules.0'))
     const metric1 = rule1.getByText('org.nagios.ARGOWeb-Status')
-    const host1 = rule1.getByText('argo.egi.eu')
-    const endpoint1 = rule1.getAllByText(/select/i)[0]
 
     await selectEvent.select(metric1, 'argo.AMS-Check')
 
+    expect(rule1.queryByText('argo.egi.eu')).not.toBeInTheDocument();
     expect(rule1.queryByText('msg.argo.grnet.gr')).not.toBeInTheDocument();
     expect(rule1.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
     expect(rule1.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -1756,8 +1771,11 @@ describe('Tests for threshols profile changeview', () => {
     expect(rule1.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
     expect(rule1.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
+    const host1 = rule1.getAllByText(/select/i)[0]
+
     selectEvent.openMenu(host1)
 
+    expect(rule1.queryByText('argo.egi.eu')).not.toBeInTheDocument();
     expect(rule1.getByText('msg.argo.grnet.gr')).toBeInTheDocument();
     expect(rule1.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
     expect(rule1.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -1778,6 +1796,8 @@ describe('Tests for threshols profile changeview', () => {
     expect(rule1.queryByText('EOSC_Exchange_Monitoring')).not.toBeInTheDocument();
     expect(rule1.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
     expect(rule1.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
+
+    const endpoint1 = rule1.getAllByText(/select/i)[0]
 
     selectEvent.openMenu(endpoint1)
     expect(rule1.getByText('GRIDOPS-MSG')).toBeInTheDocument();
