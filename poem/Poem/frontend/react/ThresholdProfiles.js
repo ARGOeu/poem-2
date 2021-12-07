@@ -1169,6 +1169,8 @@ export const ThresholdsProfilesChange = (props) => {
         delete rule.endpoint_group;
       rule.thresholds.forEach((thresh => {
         let thresholds_string = undefined;
+        if (!thresh.value)
+          thresh.value = '0'
         thresholds_string = thresh.label + '=' + thresh.value + thresh.uom + ';' + thresh.warn1 + ':' + thresh.warn2 + ';' + thresh.crit1 + ':' + thresh.crit2;
         if (thresh.min && thresh.max)
           thresholds_string = thresholds_string + ';' + thresh.min + ';' + thresh.max;
