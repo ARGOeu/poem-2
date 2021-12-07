@@ -59,8 +59,7 @@ const ThresholdsSchema = Yup.object().shape({
             .matches(/^[a-zA-Z][A-Za-z0-9]*$/, 'Label can contain alphanumeric characters, but must always begin with a letter.')
             .required('Required'),
           value: Yup.string()
-            .matches(/^([-](?=\.?\d))?(\d+)?(\.\d+)?$/, 'Must be a number.')
-            .required('Required'),
+            .matches(/^([-](?=\.?\d))?(\d+)?(\.\d+)?$/, 'Must be a number.'),
           warn1: Yup.string()
             .matches(/^[@]?(~|[-](?=\.?\d))?(\d+)?(\.\d+)?$/, 'Must be a number.')
             .required('Required'),
