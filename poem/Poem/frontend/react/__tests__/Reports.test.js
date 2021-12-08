@@ -872,6 +872,7 @@ describe('Tests for reports changeview', () => {
 
     fireEvent.change(screen.getByTestId('metricProfile'), { target: { value: 'OPS_MONITOR_RHEL7' } });
     fireEvent.change(screen.getByTestId('aggregationProfile'), { target: { value: 'ops-mon-critical' } });
+    fireEvent.change(screen.getByTestId('thresholdsProfile'), { target: { value: 'TEST_PROFILE' } })
 
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
@@ -989,6 +990,11 @@ describe('Tests for reports changeview', () => {
             id: 'gahjohf1-xx39-e0c9-p0rj-choh6ahziz9e',
             name: 'egi_ops',
             type: 'operations'
+          },
+          {
+            id: 'Iesh4Eis-Z6JC-xWK8-O5KG-nae4eephoLah',
+            name: 'TEST_PROFILE',
+            type: 'thresholds'
           }
         ],
         filter_tags: [
@@ -2256,6 +2262,7 @@ describe('Tests for reports addview', () => {
     fireEvent.change(screen.getByTestId('metricProfile'), { target: { value: 'OPS_MONITOR_RHEL7' } });
     fireEvent.change(screen.getByTestId('aggregationProfile'), { target: { value: 'ops-mon-critical' } });
     fireEvent.change(screen.getByTestId('operationsProfile'), { target: { value: 'egi_ops' } })
+    fireEvent.change(screen.getByTestId('thresholdsProfile'), { target: { value: 'TEST_PROFILE' } })
 
     fireEvent.change(screen.getByTestId('topologyType'), { target: { value: 'Sites' } })
 
@@ -2396,6 +2403,11 @@ describe('Tests for reports addview', () => {
             id: 'gahjohf1-xx39-e0c9-p0rj-choh6ahziz9e',
             name: 'egi_ops',
             type: 'operations'
+          },
+          {
+            id: 'Iesh4Eis-Z6JC-xWK8-O5KG-nae4eephoLah',
+            name: 'TEST_PROFILE',
+            type: 'thresholds'
           }
         ],
         filter_tags: [

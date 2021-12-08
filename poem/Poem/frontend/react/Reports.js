@@ -904,6 +904,13 @@ export const ReportsComponent = (props) => {
       profile = profile[0]
     }
 
+    if (profiletype === 'thresholds') {
+      profile = listThresholdsProfiles.filter(
+        profile => profile.name === name
+      )
+      profile = profile[0]
+    }
+
     if (profile) {
       return new Object({
         id: profile.id,
@@ -965,10 +972,14 @@ export const ReportsComponent = (props) => {
       formValues.aggregationProfile)
     let extractedOperationProfile = extractProfileMetadata('operations',
       formValues.operationsProfile)
+    let extractedThresholdsProfile = extractProfileMetadata(
+      'thresholds', formValues.thresholdsProfile
+    )
     dataToSend.profiles = new Array()
     dataToSend['profiles'].push(extractedMetricProfile)
     dataToSend['profiles'].push(extractedAggregationProfile)
     dataToSend['profiles'].push(extractedOperationProfile)
+    dataToSend['profiles'].push(extractedThresholdsProfile)
     let groupTagsFormatted = formatToReportTags('argo.group.filter.tags', formValues.groupsTags, formikValues.groupsExtensions)
     let endpointTagsFormatted = formatToReportTags('argo.endpoint.filter.tags', formValues.endpointsTags, formikValues.endpointsExtensions)
     let groupEntitiesFormatted = formatToReportEntities('argo.group.filter.fields', formValues.entities)
