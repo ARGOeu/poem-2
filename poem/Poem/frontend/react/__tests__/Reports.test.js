@@ -363,6 +363,48 @@ const mockOperationsProfiles = [
 ];
 
 
+const mockThresholdsProfiles = [
+  {
+    "id": "Iesh4Eis-Z6JC-xWK8-O5KG-nae4eephoLah",
+    "date": "2021-12-07",
+    "name": "TEST_PROFILE",
+    "rules": [
+     {
+      "host": "alice09.spbu.ru",
+      "metric": "argo.CE-Check",
+      "thresholds": "freshness=1s;0:10;9:;0;25 entries=2B;0:;2:"
+     },
+     {
+      "metric": "argo.API-Check",
+      "thresholds": "test0=0KB;0:;2:;0;25"
+     }
+    ]
+   },
+   {
+    "id": "aH9se5aJ-MP2e-3oIF-GQU2-ShoobeeK3ohs",
+    "date": "2021-11-04",
+    "name": "test-thresholds",
+    "rules": [
+     {
+      "host": "msg-devel.argo.grnet.gr",
+      "metric": "org.nagios.ARGOWeb-Status",
+      "thresholds": "time=1s;0:0.5;0.5:1;0;10"
+     },
+     {
+      "endpoint_group": "prague_cesnet_lcg2",
+      "metric": "org.nagios.BDII-Check",
+      "thresholds": "time=1s;0.1:0.2;0.2:0.5;0;10"
+     },
+     {
+      "endpoint_group": "UNI-FREIBURG",
+      "metric": "org.nagios.GridFTP-Check",
+      "thresholds": "time=1s;0.001:0.2;0.2:0.5;0;10"
+     }
+    ]
+   }
+]
+
+
 const mockReportsTopologyTags = [
   {
     name: "endpoints",
@@ -664,6 +706,7 @@ describe('Tests for reports changeview', () => {
         fetchMetricProfiles: () => Promise.resolve(mockMetricProfiles),
         fetchAggregationProfiles: () => Promise.resolve(mockAggregationProfiles),
         fetchOperationsProfiles: () => Promise.resolve(mockOperationsProfiles),
+        fetchThresholdsProfiles: () => Promise.resolve(mockThresholdsProfiles),
         fetchReportsTopologyTags: () => Promise.resolve(mockReportsTopologyTags),
         fetchReportsTopologyGroups: () => Promise.resolve(mockReportsTopologyGroups),
         changeReport: mockChangeReport,
@@ -694,6 +737,7 @@ describe('Tests for reports changeview', () => {
     const metricProfileField = screen.getByTestId('metricProfile')
     const aggrProfileField = screen.getByTestId('aggregationProfile');
     const operationsProfileField = screen.getByTestId('operationsProfile')
+    const thresholdsProfileField = screen.getByTestId('thresholdsProfile')
     const topologyTypeField = screen.getByTestId('topologyType');
     const availabilityThresholdField = screen.getByLabelText(/availability/i);
     const reliabilityThresholdField = screen.getByLabelText(/reliability/i);
@@ -715,6 +759,8 @@ describe('Tests for reports changeview', () => {
     expect(aggrProfileField).toBeEnabled();
     expect(operationsProfileField.value).toBe('egi_ops');
     expect(operationsProfileField).toBeEnabled();
+    expect(thresholdsProfileField.value).toBe('');
+    expect(thresholdsProfileField).toBeEnabled();
 
     expect(topologyTypeField.value).toBe('Sites');
 
@@ -2092,6 +2138,7 @@ describe('Tests for reports addview', () => {
         fetchMetricProfiles: () => Promise.resolve(mockMetricProfiles),
         fetchAggregationProfiles: () => Promise.resolve(mockAggregationProfiles),
         fetchOperationsProfiles: () => Promise.resolve(mockOperationsProfiles),
+        fetchThresholdsProfiles: () => Promise.resolve(mockThresholdsProfiles),
         fetchReportsTopologyTags: () => Promise.resolve(mockReportsTopologyTags),
         fetchReportsTopologyGroups: () => Promise.resolve(mockReportsTopologyGroups),
         addReport: mockAddReport
@@ -2123,6 +2170,7 @@ describe('Tests for reports addview', () => {
     const metricProfileField = screen.getByTestId('metricProfile')
     const aggrProfileField = screen.getByTestId('aggregationProfile');
     const operationsProfileField = screen.getByTestId('operationsProfile')
+    const thresholdsProfileField = screen.getByTestId('thresholdsProfile')
     const topologyTypeField = screen.getByTestId('topologyType');
     const availabilityThresholdField = screen.getByLabelText(/availability/i);
     const reliabilityThresholdField = screen.getByLabelText(/reliability/i);
@@ -2144,6 +2192,8 @@ describe('Tests for reports addview', () => {
     expect(aggrProfileField).toBeEnabled();
     expect(operationsProfileField.value).toBe('');
     expect(operationsProfileField).toBeEnabled();
+    expect(thresholdsProfileField.value).toBe('')
+    expect(thresholdsProfileField).toBeEnabled()
 
     expect(topologyTypeField.value).toBe('');
 

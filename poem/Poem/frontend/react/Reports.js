@@ -68,6 +68,10 @@ const fetchAggregationProfiles = async (webapi) => {
   return await webapi.fetchAggregationProfiles();
 }
 
+const fetchThresholdsProfiles = async (webapi) => {
+  return await webapi.fetchThresholdsProfiles()
+}
+
 
 const fetchTopologyTags = async (webapi) => {
   return await webapi.fetchReportsTopologyTags();
@@ -569,7 +573,8 @@ export const ReportsComponent = (props) => {
     reportsConfigurations: props.webapireports,
     metricProfiles: props.webapimetric,
     aggregationProfiles: props.webapiaggregation,
-    operationsProfiles: props.webapioperations
+    operationsProfiles: props.webapioperations,
+    thresholdsProfiles: props.webapithresholds
   });
 
   const webapiAddMutation = useMutation(async (values) => await webapi.addReport(values));
@@ -656,6 +661,11 @@ export const ReportsComponent = (props) => {
     'operationsprofile', () => fetchOperationsProfiles(webapi),
     { enabled: !!userDetails }
   );
+
+  const { data: listThresholdsProfiles, error: listThresholdsProfilesError, isLoading: listThresholdsProfilesLoading } = useQuery(
+    ['thresholdsprofile', 'webapi'], () => fetchThresholdsProfiles(webapi),
+    { enabled: !!userDetails }
+  )
 
   const { data: topologyTags, error: topologyTagsError, isLoading: loadingTopologyTags } = useQuery(
     'topologytags', () => fetchTopologyTags(webapi),
@@ -1040,7 +1050,7 @@ export const ReportsComponent = (props) => {
       doChange(formikValues)
   }
 
-  if (loadingUserDetails || loadingBackendReport || loadingWebApiReport || listMetricProfilesLoading || listAggregationProfilesLoading || listOperationsProfilesLoading || loadingTopologyTags || loadingTopologyGroups)
+  if (loadingUserDetails || loadingBackendReport || loadingWebApiReport || listMetricProfilesLoading || listAggregationProfilesLoading || listOperationsProfilesLoading || listThresholdsProfilesLoading || loadingTopologyTags || loadingTopologyGroups)
     return (<LoadingAnim/>);
 
   else if (errorUserDetails)
@@ -1061,6 +1071,9 @@ export const ReportsComponent = (props) => {
   else if (listOperationsProfilesError)
     return (<ErrorComponent error={listOperationsProfilesError}/>);
 
+  else if (listThresholdsProfilesError)
+    return (<ErrorComponent error={listThresholdsProfilesError} />)
+
   else if (topologyTagsError)
     return (<ErrorComponent error={topologyTagsError} />)
 
@@ -1071,6 +1084,7 @@ export const ReportsComponent = (props) => {
     let metricProfile = '';
     let aggregationProfile = '';
     let operationsProfile = '';
+    let thresholdsProfile = '';
 
     if (webApiReport) {
       webApiReport.profiles.forEach(profile => {
@@ -1082,6 +1096,9 @@ export const ReportsComponent = (props) => {
 
         if (profile.type === 'operations')
           operationsProfile = profile.name;
+
+        if (profile.type == 'thresholds')
+          thresholdsProfile = profile.name;
       })
     }
 
@@ -1182,6 +1199,7 @@ export const ReportsComponent = (props) => {
             metricProfile: metricProfile,
             aggregationProfile: aggregationProfile,
             operationsProfile: operationsProfile,
+            thresholdsProfile: thresholdsProfile,
             availabilityThreshold: webApiReport ? webApiReport.thresholds.availability : '',
             reliabilityThreshold: webApiReport ? webApiReport.thresholds.reliability : '',
             uptimeThreshold: webApiReport ? webApiReport.thresholds.uptime : '',
@@ -1329,6 +1347,25 @@ export const ReportsComponent = (props) => {
                     {
                       props.errors && props.errors.operationsProfile &&
                         FancyErrorMessage(props.errors.operationsProfile)
+                    }
+                  </Col>
+                </Row>
+                <Row className='mt-4'>
+                  <Col md={4}>
+                    <Label for='thresholdsProfile'>Thresholds profile:</Label>
+                    <Field
+                      name='thresholdsProfile'
+                      id='thresholdsProfile'
+                      component={DropDown}
+                      data={insertSelectPlaceholder(
+                        extractProfileNames(listThresholdsProfiles),
+                        'Select'
+                      )}
+                      class_name='custom-select'
+                    />
+                    {
+                      props.errors && props.errors.thresholdsProfile &&
+                        FancyErrorMessage(props.errors.thresholdsProfile)
                     }
                   </Col>
                 </Row>

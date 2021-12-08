@@ -314,6 +314,10 @@ export class WebApi {
     return this.fetchProfiles(this.operationsprofiles);
   }
 
+  async fetchThresholdsProfiles() {
+    return this.fetchProfiles(this.thresholdsprofiles)
+  }
+
   async fetchReports() {
     return this.fetchProfiles(this.reports['main']);
   }
