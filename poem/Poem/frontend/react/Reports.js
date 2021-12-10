@@ -96,7 +96,8 @@ export const ReportsList = (props) => {
     reportsConfigurations: props.webapireports,
     metricProfiles: props.webapimetric,
     aggregationProfiles: props.webapiaggregation,
-    operationsProfiles: props.webapioperations
+    operationsProfiles: props.webapioperations,
+    thresholdsProfiles: props.webapithresholds
   });
   const crud = getCrud(props);
 
@@ -135,6 +136,9 @@ export const ReportsList = (props) => {
               await queryClient.prefetchQuery(
                 'operationsprofile', () => fetchOperationsProfiles(webapi)
               );
+              await queryClient.prefetchQuery(
+                ['thresholdsprofile', 'webapi'], () => fetchThresholdsProfiles(webapi)
+              )
               if (crud) {
                 await queryClient.prefetchQuery(
                   'topologytags', () => fetchTopologyTags(webapi)

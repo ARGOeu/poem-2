@@ -599,6 +599,7 @@ function renderListView() {
               webapimetric='https://mock.metric.com'
               webapiaggregation='https://mock.aggr.com'
               webapioperations='https://mock.operations.com'
+              webapithresholds='https://mock.thresholds.com'
             /> }
           />
         </Router>
@@ -625,6 +626,7 @@ function renderChangeView() {
               webapimetric='https://mock.metric.com'
               webapiaggregation='https://mock.aggr.com'
               webapioperations='https://mock.operations.com'
+              webapithresholds='https://mock.thresholds.com'
             /> }
           />
         </Router>
@@ -651,6 +653,7 @@ function renderAddView() {
               webapimetric='https://mock.metric.com'
               webapiaggregation='https://mock.aggr.com'
               webapioperations='https://mock.operations.com'
+              webapithresholds='https://mock.thresholds.com'
             /> }
           />
         </Router>
