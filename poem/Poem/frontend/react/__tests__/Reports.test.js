@@ -582,30 +582,54 @@ const webapireports = {
 };
 
 
-function renderListView() {
-  const route = '/ui/reports';
+function renderListView(publicView=false) {
+  const route = `/ui/${publicView ? 'public_' : ''}reports`;
   const history = createMemoryHistory({ initialEntries: [route] });
 
-  return {
-    ...render(
-      <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/reports'
-            render={ props => <ReportsList
-              {...props}
-              webapitoken='token'
-              webapireports={webapireports}
-              webapimetric='https://mock.metric.com'
-              webapiaggregation='https://mock.aggr.com'
-              webapioperations='https://mock.operations.com'
-              webapithresholds='https://mock.thresholds.com'
-            /> }
-          />
-        </Router>
-      </QueryClientProvider>
-    )
-  }
+  if (publicView)
+    return {
+      ...render(
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/public_reports'
+              render={ props => <ReportsList
+                {...props}
+                publicView={true}
+                webapitoken='public_token'
+                webapireports={webapireports}
+                webapimetric='https://mock.metric.com'
+                webapiaggregation='https://mock.aggr.com'
+                webapioperations='https://mock.operations.com'
+                webapithresholds='https://mock.thresholds.com'
+              /> }
+            />
+          </Router>
+        </QueryClientProvider>
+      )
+    }
+
+  else
+    return {
+      ...render(
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/reports'
+              render={ props => <ReportsList
+                {...props}
+                webapitoken='token'
+                webapireports={webapireports}
+                webapimetric='https://mock.metric.com'
+                webapiaggregation='https://mock.aggr.com'
+                webapioperations='https://mock.operations.com'
+                webapithresholds='https://mock.thresholds.com'
+              /> }
+            />
+          </Router>
+        </QueryClientProvider>
+      )
+    }
 }
 
 
@@ -693,6 +717,32 @@ describe('Tests for reports listview', () => {
 
     expect(screen.getByRole('button', { name: /add/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /add/i }).closest('a')).toHaveAttribute('href', '/ui/reports/add');
+  })
+
+  test('Test that public page renders properly', async () => {
+    renderListView(true)
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Select report for details')
+    })
+
+    expect(screen.getAllByRole('columnheader')).toHaveLength(4);
+    expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Name' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Description' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Group' })).toBeInTheDocument();
+
+    expect(screen.getAllByRole('row')).toHaveLength(11);
+    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(8);
+    expect(screen.getByRole('row', { name: /critical/i }).textContent).toBe('1CriticalCritical reportARGO');
+    expect(screen.getByRole('link', { name: /critical/i }).closest('a')).toHaveAttribute('href', '/ui/public_reports/Critical');
+    expect(screen.getByRole('row', { name: /ops/i }).textContent).toBe('2ops-monitor');
+    expect(screen.getByRole('link', { name: /ops/i }).closest('a')).toHaveAttribute('href', '/ui/public_reports/ops-monitor');
+
+    expect(screen.queryByRole('button', { name: /add/i })).not.toBeInTheDocument();
+
   })
 })
 

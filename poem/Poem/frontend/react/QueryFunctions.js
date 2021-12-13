@@ -130,11 +130,10 @@ export const fetchTenants = async () => {
 }
 
 
-export const fetchReports = async () => {
+export const fetchReports = async (publicView=false) => {
   const backend = new Backend();
 
-  // TODO: add public API endpoints
-  return await backend.fetchData('/api/v2/internal/reports');
+  return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}reports`);
 }
 
 

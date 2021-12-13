@@ -89,6 +89,8 @@ const getCrud = (props) => {
 
 export const ReportsList = (props) => {
   const location = props.location;
+  const publicView = props.publicView;
+
   const queryClient = useQueryClient();
 
   const webapi = new WebApi({
@@ -106,8 +108,8 @@ export const ReportsList = (props) => {
   );
 
   const { data: reports, error: errorReports, isLoading: loadingReports } = useQuery(
-    ['report', 'backend'],  () => fetchReports(),
-    { enabled: !!userDetails }
+    [`${publicView ? 'public_' : ''}report`, 'backend'],  () => fetchReports(publicView),
+    { enabled: !publicView ? !!userDetails : true }
   );
 
   const columns = React.useMemo(
@@ -122,22 +124,22 @@ export const ReportsList = (props) => {
         id: 'name',
         accessor: e =>
           <Link
-            to={`/ui/reports/${e.name}`}
+            to={`/ui/${publicView ? 'public_' : ''}reports/${e.name}`}
             onMouseEnter={ async () => {
               await queryClient.prefetchQuery(
-                ['report', 'webapi', e.name], () => fetchReport(webapi, e.name)
+                [`${publicView ? 'public_' : ''}report`, 'webapi', e.name], () => fetchReport(webapi, e.name)
               );
               await queryClient.prefetchQuery(
-                ['metricprofile', 'webapi'], () => fetchMetricProfiles(webapi)
+                [`${publicView ? 'public_' : ''}metricprofile`, 'webapi'], () => fetchMetricProfiles(webapi)
               );
               await queryClient.prefetchQuery(
-                ['aggregationprofile', 'webapi'], () => fetchAggregationProfiles(webapi)
+                [`${publicView ? 'public_' : ''}aggregationprofile`, 'webapi'], () => fetchAggregationProfiles(webapi)
               );
               await queryClient.prefetchQuery(
-                'operationsprofile', () => fetchOperationsProfiles(webapi)
+                `${publicView ? 'public_' : ''}operationsprofile`, () => fetchOperationsProfiles(webapi)
               );
               await queryClient.prefetchQuery(
-                ['thresholdsprofile', 'webapi'], () => fetchThresholdsProfiles(webapi)
+                [`${publicView ? 'public_' : ''}thresholdsprofile`, 'webapi'], () => fetchThresholdsProfiles(webapi)
               )
               if (crud) {
                 await queryClient.prefetchQuery(
@@ -186,8 +188,8 @@ export const ReportsList = (props) => {
         resourcename='report'
         location={location}
         listview={true}
-        addnew={true}
-        addperm={userDetails.is_superuser || userDetails.groups.reports.length > 0}
+        addnew={!publicView}
+        addperm={publicView ? false : userDetails.is_superuser || userDetails.groups.reports.length > 0}
       >
         <BaseArgoTable
           data={reports}
