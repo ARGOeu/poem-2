@@ -218,6 +218,18 @@ export const CustomReactSelect = ({...props}) => {
     </components.DropdownIndicator>
   )
 
+  if (props.label)
+    return (
+      <>
+        <label id='aria-label' htmlFor='select'>{`${props.label}`}</label>
+        <Select
+          {...props}
+          inputId='select'
+          components={{IndicatorSeparator: null, DropdownIndicator}}
+          styles={customStyles}
+        />
+      </>
+    )
 
   return (
     <Select
