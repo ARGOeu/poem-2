@@ -461,6 +461,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
           webapimetric={webApiMetric}
           webapiaggregation={webApiAggregation}
           webapioperations={webApiOperations}
+          webapithresholds={webApiThresholds}
         />
       }
     />
@@ -474,6 +475,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         webapimetric={webApiMetric}
         webapiaggregation={webApiAggregation}
         webapioperations={webApiOperations}
+        webapithresholds={webApiThresholds}
       />}
     />
     <Route
@@ -485,6 +487,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         webapimetric={webApiMetric}
         webapiaggregation={webApiAggregation}
         webapioperations={webApiOperations}
+        webapithresholds={webApiThresholds}
       />}
     />
     <Route

@@ -363,6 +363,48 @@ const mockOperationsProfiles = [
 ];
 
 
+const mockThresholdsProfiles = [
+  {
+    "id": "Iesh4Eis-Z6JC-xWK8-O5KG-nae4eephoLah",
+    "date": "2021-12-07",
+    "name": "TEST_PROFILE",
+    "rules": [
+     {
+      "host": "alice09.spbu.ru",
+      "metric": "argo.CE-Check",
+      "thresholds": "freshness=1s;0:10;9:;0;25 entries=2B;0:;2:"
+     },
+     {
+      "metric": "argo.API-Check",
+      "thresholds": "test0=0KB;0:;2:;0;25"
+     }
+    ]
+   },
+   {
+    "id": "aH9se5aJ-MP2e-3oIF-GQU2-ShoobeeK3ohs",
+    "date": "2021-11-04",
+    "name": "test-thresholds",
+    "rules": [
+     {
+      "host": "msg-devel.argo.grnet.gr",
+      "metric": "org.nagios.ARGOWeb-Status",
+      "thresholds": "time=1s;0:0.5;0.5:1;0;10"
+     },
+     {
+      "endpoint_group": "prague_cesnet_lcg2",
+      "metric": "org.nagios.BDII-Check",
+      "thresholds": "time=1s;0.1:0.2;0.2:0.5;0;10"
+     },
+     {
+      "endpoint_group": "UNI-FREIBURG",
+      "metric": "org.nagios.GridFTP-Check",
+      "thresholds": "time=1s;0.001:0.2;0.2:0.5;0;10"
+     }
+    ]
+   }
+]
+
+
 const mockReportsTopologyTags = [
   {
     name: "endpoints",
@@ -557,6 +599,7 @@ function renderListView() {
               webapimetric='https://mock.metric.com'
               webapiaggregation='https://mock.aggr.com'
               webapioperations='https://mock.operations.com'
+              webapithresholds='https://mock.thresholds.com'
             /> }
           />
         </Router>
@@ -583,6 +626,7 @@ function renderChangeView() {
               webapimetric='https://mock.metric.com'
               webapiaggregation='https://mock.aggr.com'
               webapioperations='https://mock.operations.com'
+              webapithresholds='https://mock.thresholds.com'
             /> }
           />
         </Router>
@@ -609,6 +653,7 @@ function renderAddView() {
               webapimetric='https://mock.metric.com'
               webapiaggregation='https://mock.aggr.com'
               webapioperations='https://mock.operations.com'
+              webapithresholds='https://mock.thresholds.com'
             /> }
           />
         </Router>
@@ -664,6 +709,7 @@ describe('Tests for reports changeview', () => {
         fetchMetricProfiles: () => Promise.resolve(mockMetricProfiles),
         fetchAggregationProfiles: () => Promise.resolve(mockAggregationProfiles),
         fetchOperationsProfiles: () => Promise.resolve(mockOperationsProfiles),
+        fetchThresholdsProfiles: () => Promise.resolve(mockThresholdsProfiles),
         fetchReportsTopologyTags: () => Promise.resolve(mockReportsTopologyTags),
         fetchReportsTopologyGroups: () => Promise.resolve(mockReportsTopologyGroups),
         changeReport: mockChangeReport,
@@ -691,9 +737,6 @@ describe('Tests for reports changeview', () => {
     const disabledField = screen.getByLabelText(/disabled/i);
     const descriptionField = screen.getByLabelText(/description/i);
     const groupField = screen.getByTestId('groupname');
-    const metricProfileField = screen.getByTestId('metricProfile')
-    const aggrProfileField = screen.getByTestId('aggregationProfile');
-    const operationsProfileField = screen.getByTestId('operationsProfile')
     const topologyTypeField = screen.getByTestId('topologyType');
     const availabilityThresholdField = screen.getByLabelText(/availability/i);
     const reliabilityThresholdField = screen.getByLabelText(/reliability/i);
@@ -709,12 +752,44 @@ describe('Tests for reports changeview', () => {
     expect(groupField.value).toBe('ARGO')
     expect(groupField).toBeEnabled();
 
-    expect(metricProfileField.value).toBe('ARGO_MON_CRITICAL');
-    expect(metricProfileField).toBeEnabled();
-    expect(aggrProfileField.value).toBe('critical');
-    expect(aggrProfileField).toBeEnabled();
-    expect(operationsProfileField.value).toBe('egi_ops');
-    expect(operationsProfileField).toBeEnabled();
+    const metricProfileField = screen.getByText('ARGO_MON_CRITICAL')
+    const aggrProfileField = screen.getByText('critical')
+    const operationsProfileField = screen.getByText('egi_ops')
+    const thresholdsProfileField = screen.getAllByText(/select/i)[1]
+
+    expect(metricProfileField).toBeInTheDocument()
+    expect(metricProfileField).toBeEnabled()
+
+    expect(screen.queryByText('FEDCLOUD')).not.toBeInTheDocument()
+    expect(screen.queryByText('OPS_MONITOR_RHEL7')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(metricProfileField)
+
+    expect(screen.getByText('FEDCLOUD')).toBeInTheDocument()
+    expect(screen.getByText('OPS_MONITOR_RHEL7')).toBeInTheDocument()
+
+    expect(aggrProfileField).toBeInTheDocument()
+    expect(aggrProfileField).toBeEnabled()
+
+    expect(screen.queryByText('ops-mon-critical')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(aggrProfileField)
+
+    expect(screen.getByText('ops-mon-critical')).toBeInTheDocument()
+
+    expect(operationsProfileField).toBeInTheDocument()
+    expect(operationsProfileField).toBeEnabled()
+
+    expect(thresholdsProfileField).toBeInTheDocument()
+    expect(thresholdsProfileField).toBeEnabled()
+
+    expect(screen.queryByText('TEST_PROFILE')).not.toBeInTheDocument()
+    expect(screen.queryByText('test-thresholds')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(thresholdsProfileField)
+
+    expect(screen.getByText('TEST_PROFILE')).toBeInTheDocument()
+    expect(screen.getByText('test-thresholds')).toBeInTheDocument()
 
     expect(topologyTypeField.value).toBe('Sites');
 
@@ -824,8 +899,9 @@ describe('Tests for reports changeview', () => {
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'More elaborate description of the critical report.' } })
 
-    fireEvent.change(screen.getByTestId('metricProfile'), { target: { value: 'OPS_MONITOR_RHEL7' } });
-    fireEvent.change(screen.getByTestId('aggregationProfile'), { target: { value: 'ops-mon-critical' } });
+    await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'OPS_MONITOR_RHEL7')
+    await selectEvent.select(screen.getByText('critical'), 'ops-mon-critical')
+    await selectEvent.select(screen.getAllByText(/select/i)[1], 'TEST_PROFILE')
 
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
@@ -943,6 +1019,11 @@ describe('Tests for reports changeview', () => {
             id: 'gahjohf1-xx39-e0c9-p0rj-choh6ahziz9e',
             name: 'egi_ops',
             type: 'operations'
+          },
+          {
+            id: 'Iesh4Eis-Z6JC-xWK8-O5KG-nae4eephoLah',
+            name: 'TEST_PROFILE',
+            type: 'thresholds'
           }
         ],
         filter_tags: [
@@ -1040,8 +1121,8 @@ describe('Tests for reports changeview', () => {
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'More elaborate description of the critical report.' } })
 
-    fireEvent.change(screen.getByTestId('metricProfile'), { target: { value: 'OPS_MONITOR_RHEL7' } });
-    fireEvent.change(screen.getByTestId('aggregationProfile'), { target: { value: 'ops-mon-critical' } });
+    await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'OPS_MONITOR_RHEL7')
+    await selectEvent.select(screen.getByText('critical'), 'ops-mon-critical')
 
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
@@ -1252,8 +1333,8 @@ describe('Tests for reports changeview', () => {
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'More elaborate description of the critical report.' } })
 
-    fireEvent.change(screen.getByTestId('metricProfile'), { target: { value: 'OPS_MONITOR_RHEL7' } });
-    fireEvent.change(screen.getByTestId('aggregationProfile'), { target: { value: 'ops-mon-critical' } });
+    await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'OPS_MONITOR_RHEL7')
+    await selectEvent.select(screen.getByText('critical'), 'ops-mon-critical')
 
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
@@ -1469,8 +1550,8 @@ describe('Tests for reports changeview', () => {
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'More elaborate description of the critical report.' } })
 
-    fireEvent.change(screen.getByTestId('metricProfile'), { target: { value: 'OPS_MONITOR_RHEL7' } });
-    fireEvent.change(screen.getByTestId('aggregationProfile'), { target: { value: 'ops-mon-critical' } });
+    await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'OPS_MONITOR_RHEL7')
+    await selectEvent.select(screen.getByText('critical'), 'ops-mon-critical')
 
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
@@ -1690,8 +1771,8 @@ describe('Tests for reports changeview', () => {
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'More elaborate description of the critical report.' } })
 
-    fireEvent.change(screen.getByTestId('metricProfile'), { target: { value: 'OPS_MONITOR_RHEL7' } });
-    fireEvent.change(screen.getByTestId('aggregationProfile'), { target: { value: 'ops-mon-critical' } });
+    await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'OPS_MONITOR_RHEL7')
+    await selectEvent.select(screen.getByText('critical'), 'ops-mon-critical')
 
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
@@ -2092,6 +2173,7 @@ describe('Tests for reports addview', () => {
         fetchMetricProfiles: () => Promise.resolve(mockMetricProfiles),
         fetchAggregationProfiles: () => Promise.resolve(mockAggregationProfiles),
         fetchOperationsProfiles: () => Promise.resolve(mockOperationsProfiles),
+        fetchThresholdsProfiles: () => Promise.resolve(mockThresholdsProfiles),
         fetchReportsTopologyTags: () => Promise.resolve(mockReportsTopologyTags),
         fetchReportsTopologyGroups: () => Promise.resolve(mockReportsTopologyGroups),
         addReport: mockAddReport
@@ -2120,9 +2202,10 @@ describe('Tests for reports addview', () => {
     const disabledField = screen.getByLabelText(/disabled/i);
     const descriptionField = screen.getByLabelText(/description/i);
     const groupField = screen.getByTestId('groupname');
-    const metricProfileField = screen.getByTestId('metricProfile')
-    const aggrProfileField = screen.getByTestId('aggregationProfile');
-    const operationsProfileField = screen.getByTestId('operationsProfile')
+    const metricProfileField = screen.getByLabelText('Metric profile:')
+    const aggrProfileField = screen.getByLabelText('Aggregation profile:');
+    const operationsProfileField = screen.getByLabelText('Operations profile:')
+    const thresholdsProfileField = screen.getByLabelText('Thresholds profile:')
     const topologyTypeField = screen.getByTestId('topologyType');
     const availabilityThresholdField = screen.getByLabelText(/availability/i);
     const reliabilityThresholdField = screen.getByLabelText(/reliability/i);
@@ -2138,12 +2221,19 @@ describe('Tests for reports addview', () => {
     expect(groupField.value).toBe('');
     expect(groupField).toBeEnabled();
 
-    expect(metricProfileField.value).toBe('');
     expect(metricProfileField).toBeEnabled();
-    expect(aggrProfileField.value).toBe('');
     expect(aggrProfileField).toBeEnabled();
-    expect(operationsProfileField.value).toBe('');
     expect(operationsProfileField).toBeEnabled();
+    expect(thresholdsProfileField).toBeEnabled()
+
+    expect(screen.queryByText('ARGO_MON_CRITICAL')).not.toBeInTheDocument()
+    expect(screen.queryByText('FEDCLOUD')).not.toBeInTheDocument()
+    expect(screen.queryByText('OPS_MONITOR_RHEL7')).not.toBeInTheDocument()
+    expect(screen.queryByText('critical')).not.toBeInTheDocument()
+    expect(screen.queryByText('ops-mon-critical')).not.toBeInTheDocument()
+    expect(screen.queryByText('TEST_PROFILE')).not.toBeInTheDocument()
+    expect(screen.queryByText('test-thresholds')).not.toBeInTheDocument()
+    expect(screen.queryByText('egi_ops')).not.toBeInTheDocument()
 
     expect(topologyTypeField.value).toBe('');
 
@@ -2203,9 +2293,15 @@ describe('Tests for reports addview', () => {
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'A/R report for Operations services.' } });
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
 
-    fireEvent.change(screen.getByTestId('metricProfile'), { target: { value: 'OPS_MONITOR_RHEL7' } });
-    fireEvent.change(screen.getByTestId('aggregationProfile'), { target: { value: 'ops-mon-critical' } });
-    fireEvent.change(screen.getByTestId('operationsProfile'), { target: { value: 'egi_ops' } })
+    const metricProfile = screen.getAllByText(/select/i)[1]
+    const aggregationProfile = screen.getAllByText(/select/i)[2]
+    const operationsProfile = screen.getAllByText(/select/i)[3]
+    const thresholdsProfile = screen.getAllByText(/select/i)[4]
+
+    await selectEvent.select(metricProfile, 'OPS_MONITOR_RHEL7')
+    await selectEvent.select(aggregationProfile, 'ops-mon-critical')
+    await selectEvent.select(operationsProfile, 'egi_ops')
+    await selectEvent.select(thresholdsProfile, 'TEST_PROFILE')
 
     fireEvent.change(screen.getByTestId('topologyType'), { target: { value: 'Sites' } })
 
@@ -2346,6 +2442,11 @@ describe('Tests for reports addview', () => {
             id: 'gahjohf1-xx39-e0c9-p0rj-choh6ahziz9e',
             name: 'egi_ops',
             type: 'operations'
+          },
+          {
+            id: 'Iesh4Eis-Z6JC-xWK8-O5KG-nae4eephoLah',
+            name: 'TEST_PROFILE',
+            type: 'thresholds'
           }
         ],
         filter_tags: [
@@ -2394,6 +2495,7 @@ describe('Tests for reports addview', () => {
     )
   })
 
+
   test('Test error adding a report in web api with error message', async () => {
     mockAddReport.mockImplementationOnce( () => {
       throw Error('406 Content Not acceptable: There has been an error.')
@@ -2409,9 +2511,13 @@ describe('Tests for reports addview', () => {
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'A/R report for Operations services.' } });
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
 
-    fireEvent.change(screen.getByTestId('metricProfile'), { target: { value: 'OPS_MONITOR_RHEL7' } });
-    fireEvent.change(screen.getByTestId('aggregationProfile'), { target: { value: 'ops-mon-critical' } });
-    fireEvent.change(screen.getByTestId('operationsProfile'), { target: { value: 'egi_ops' } })
+    const metricProfile = screen.getAllByText(/select/i)[1]
+    const aggregationProfile = screen.getAllByText(/select/i)[2]
+    const operationsProfile = screen.getAllByText(/select/i)[3]
+
+    await selectEvent.select(metricProfile, 'OPS_MONITOR_RHEL7')
+    await selectEvent.select(aggregationProfile, 'ops-mon-critical')
+    await selectEvent.select(operationsProfile, 'egi_ops')
 
     fireEvent.change(screen.getByTestId('topologyType'), { target: { value: 'Sites' } })
 
@@ -2611,9 +2717,13 @@ describe('Tests for reports addview', () => {
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'A/R report for Operations services.' } });
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
 
-    fireEvent.change(screen.getByTestId('metricProfile'), { target: { value: 'OPS_MONITOR_RHEL7' } });
-    fireEvent.change(screen.getByTestId('aggregationProfile'), { target: { value: 'ops-mon-critical' } });
-    fireEvent.change(screen.getByTestId('operationsProfile'), { target: { value: 'egi_ops' } })
+    const metricProfile = screen.getAllByText(/select/i)[1]
+    const aggregationProfile = screen.getAllByText(/select/i)[2]
+    const operationsProfile = screen.getAllByText(/select/i)[3]
+
+    await selectEvent.select(metricProfile, 'OPS_MONITOR_RHEL7')
+    await selectEvent.select(aggregationProfile, 'ops-mon-critical')
+    await selectEvent.select(operationsProfile, 'egi_ops')
 
     fireEvent.change(screen.getByTestId('topologyType'), { target: { value: 'Sites' } })
 
@@ -2829,9 +2939,13 @@ describe('Tests for reports addview', () => {
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'A/R report for Operations services.' } });
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
 
-    fireEvent.change(screen.getByTestId('metricProfile'), { target: { value: 'OPS_MONITOR_RHEL7' } });
-    fireEvent.change(screen.getByTestId('aggregationProfile'), { target: { value: 'ops-mon-critical' } });
-    fireEvent.change(screen.getByTestId('operationsProfile'), { target: { value: 'egi_ops' } })
+    const metricProfile = screen.getAllByText(/select/i)[1]
+    const aggregationProfile = screen.getAllByText(/select/i)[2]
+    const operationsProfile = screen.getAllByText(/select/i)[3]
+
+    await selectEvent.select(metricProfile, 'OPS_MONITOR_RHEL7')
+    await selectEvent.select(aggregationProfile, 'ops-mon-critical')
+    await selectEvent.select(operationsProfile, 'egi_ops')
 
     fireEvent.change(screen.getByTestId('topologyType'), { target: { value: 'Sites' } })
 
@@ -3053,9 +3167,13 @@ describe('Tests for reports addview', () => {
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'A/R report for Operations services.' } });
     fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
 
-    fireEvent.change(screen.getByTestId('metricProfile'), { target: { value: 'OPS_MONITOR_RHEL7' } });
-    fireEvent.change(screen.getByTestId('aggregationProfile'), { target: { value: 'ops-mon-critical' } });
-    fireEvent.change(screen.getByTestId('operationsProfile'), { target: { value: 'egi_ops' } })
+    const metricProfile = screen.getAllByText(/select/i)[1]
+    const aggregationProfile = screen.getAllByText(/select/i)[2]
+    const operationsProfile = screen.getAllByText(/select/i)[3]
+
+    await selectEvent.select(metricProfile, 'OPS_MONITOR_RHEL7')
+    await selectEvent.select(aggregationProfile, 'ops-mon-critical')
+    await selectEvent.select(operationsProfile, 'egi_ops')
 
     fireEvent.change(screen.getByTestId('topologyType'), { target: { value: 'Sites' } })
 

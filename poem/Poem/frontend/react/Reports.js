@@ -12,6 +12,8 @@ import {
   NotifyError,
   NotifyOk,
   ParagraphTitle,
+  CustomReactSelect,
+  CustomErrorMessage
  } from './UIElements';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -31,7 +33,6 @@ import {
   FormText,
   Label
 } from 'reactstrap';
-import { CustomReactSelect } from './UIElements';
 import * as Yup from 'yup';
 import {
   fetchMetricProfiles,
@@ -68,6 +69,10 @@ const fetchAggregationProfiles = async (webapi) => {
   return await webapi.fetchAggregationProfiles();
 }
 
+const fetchThresholdsProfiles = async (webapi) => {
+  return await webapi.fetchThresholdsProfiles()
+}
+
 
 const fetchTopologyTags = async (webapi) => {
   return await webapi.fetchReportsTopologyTags();
@@ -91,7 +96,8 @@ export const ReportsList = (props) => {
     reportsConfigurations: props.webapireports,
     metricProfiles: props.webapimetric,
     aggregationProfiles: props.webapiaggregation,
-    operationsProfiles: props.webapioperations
+    operationsProfiles: props.webapioperations,
+    thresholdsProfiles: props.webapithresholds
   });
   const crud = getCrud(props);
 
@@ -130,6 +136,9 @@ export const ReportsList = (props) => {
               await queryClient.prefetchQuery(
                 'operationsprofile', () => fetchOperationsProfiles(webapi)
               );
+              await queryClient.prefetchQuery(
+                ['thresholdsprofile', 'webapi'], () => fetchThresholdsProfiles(webapi)
+              )
               if (crud) {
                 await queryClient.prefetchQuery(
                   'topologytags', () => fetchTopologyTags(webapi)
@@ -531,6 +540,25 @@ const TopologyEntityFields = ({topoGroups, addview, form}) => {
 }
 
 
+const ProfileSelect = ({ field, label, options, onChangeHandler, initVal }) => {
+  let value = null
+  if (initVal)
+    value = { value: initVal, label: initVal }
+
+  return (
+    <CustomReactSelect
+      name={ field.name }
+      label={ label }
+      closeMenuOnSelect={ true }
+      isClearable={ field.name === 'thresholdsProfile' }
+      onChange={ e => onChangeHandler(e) }
+      options={ options }
+      value={ value }
+    />
+  )
+}
+
+
 export const ReportsComponent = (props) => {
   const report_name = props.match.params.name;
   const addview = props.addview
@@ -569,7 +597,8 @@ export const ReportsComponent = (props) => {
     reportsConfigurations: props.webapireports,
     metricProfiles: props.webapimetric,
     aggregationProfiles: props.webapiaggregation,
-    operationsProfiles: props.webapioperations
+    operationsProfiles: props.webapioperations,
+    thresholdsProfiles: props.webapithresholds
   });
 
   const webapiAddMutation = useMutation(async (values) => await webapi.addReport(values));
@@ -656,6 +685,11 @@ export const ReportsComponent = (props) => {
     'operationsprofile', () => fetchOperationsProfiles(webapi),
     { enabled: !!userDetails }
   );
+
+  const { data: listThresholdsProfiles, error: listThresholdsProfilesError, isLoading: listThresholdsProfilesLoading } = useQuery(
+    ['thresholdsprofile', 'webapi'], () => fetchThresholdsProfiles(webapi),
+    { enabled: !!userDetails }
+  )
 
   const { data: topologyTags, error: topologyTagsError, isLoading: loadingTopologyTags } = useQuery(
     'topologytags', () => fetchTopologyTags(webapi),
@@ -894,6 +928,13 @@ export const ReportsComponent = (props) => {
       profile = profile[0]
     }
 
+    if (profiletype === 'thresholds') {
+      profile = listThresholdsProfiles.filter(
+        profile => profile.name === name
+      )
+      profile = profile[0]
+    }
+
     if (profile) {
       return new Object({
         id: profile.id,
@@ -955,10 +996,15 @@ export const ReportsComponent = (props) => {
       formValues.aggregationProfile)
     let extractedOperationProfile = extractProfileMetadata('operations',
       formValues.operationsProfile)
+    let extractedThresholdsProfile = extractProfileMetadata(
+      'thresholds', formValues.thresholdsProfile
+    )
     dataToSend.profiles = new Array()
     dataToSend['profiles'].push(extractedMetricProfile)
     dataToSend['profiles'].push(extractedAggregationProfile)
     dataToSend['profiles'].push(extractedOperationProfile)
+    if (extractedThresholdsProfile)
+      dataToSend['profiles'].push(extractedThresholdsProfile)
     let groupTagsFormatted = formatToReportTags('argo.group.filter.tags', formValues.groupsTags, formikValues.groupsExtensions)
     let endpointTagsFormatted = formatToReportTags('argo.endpoint.filter.tags', formValues.endpointsTags, formikValues.endpointsExtensions)
     let groupEntitiesFormatted = formatToReportEntities('argo.group.filter.fields', formValues.entities)
@@ -1040,7 +1086,7 @@ export const ReportsComponent = (props) => {
       doChange(formikValues)
   }
 
-  if (loadingUserDetails || loadingBackendReport || loadingWebApiReport || listMetricProfilesLoading || listAggregationProfilesLoading || listOperationsProfilesLoading || loadingTopologyTags || loadingTopologyGroups)
+  if (loadingUserDetails || loadingBackendReport || loadingWebApiReport || listMetricProfilesLoading || listAggregationProfilesLoading || listOperationsProfilesLoading || listThresholdsProfilesLoading || loadingTopologyTags || loadingTopologyGroups)
     return (<LoadingAnim/>);
 
   else if (errorUserDetails)
@@ -1061,16 +1107,20 @@ export const ReportsComponent = (props) => {
   else if (listOperationsProfilesError)
     return (<ErrorComponent error={listOperationsProfilesError}/>);
 
+  else if (listThresholdsProfilesError)
+    return (<ErrorComponent error={listThresholdsProfilesError} />)
+
   else if (topologyTagsError)
     return (<ErrorComponent error={topologyTagsError} />)
 
   else if (topologyGroupsErrors)
     return (<ErrorComponent error={topologyGroupsErrors} />)
 
-  else if (userDetails && listMetricProfiles && listAggregationProfiles && listOperationsProfiles) {
+  else if (userDetails && listMetricProfiles && listAggregationProfiles && listThresholdsProfiles && listOperationsProfiles) {
     let metricProfile = '';
     let aggregationProfile = '';
     let operationsProfile = '';
+    let thresholdsProfile = '';
 
     if (webApiReport) {
       webApiReport.profiles.forEach(profile => {
@@ -1082,6 +1132,9 @@ export const ReportsComponent = (props) => {
 
         if (profile.type === 'operations')
           operationsProfile = profile.name;
+
+        if (profile.type == 'thresholds')
+          thresholdsProfile = profile.name;
       })
     }
 
@@ -1182,6 +1235,7 @@ export const ReportsComponent = (props) => {
             metricProfile: metricProfile,
             aggregationProfile: aggregationProfile,
             operationsProfile: operationsProfile,
+            thresholdsProfile: thresholdsProfile,
             availabilityThreshold: webApiReport ? webApiReport.thresholds.availability : '',
             reliabilityThreshold: webApiReport ? webApiReport.thresholds.reliability : '',
             uptimeThreshold: webApiReport ? webApiReport.thresholds.uptime : '',
@@ -1281,55 +1335,80 @@ export const ReportsComponent = (props) => {
                 <ParagraphTitle title='Profiles'/>
                 <Row className='mt-2'>
                   <Col md={4}>
-                    <Label to='metricProfile'>Metric profile:</Label>
                     <Field
                       id='metricProfile'
                       name='metricProfile'
-                      component={DropDown}
-                      data={insertSelectPlaceholder(extractProfileNames(
-                        listMetricProfiles),
-                        'Select')}
+                      component={ProfileSelect}
+                      options={
+                        extractProfileNames(listMetricProfiles).map((profile) => new Object({
+                          label: profile, value: profile
+                        }))
+                      }
+                      onChangeHandler={(e) => props.setFieldValue('metricProfile', e.value)}
+                      label='Metric profile:'
+                      initVal={ !addview ? props.values.metricProfile : null }
                       required={true}
-                      class_name='custom-select'
                     />
-                    {
-                      props.errors && props.errors.metricProfile &&
-                        FancyErrorMessage(props.errors.metricProfile)
-                    }
+                    <CustomErrorMessage name='metricProfile' />
                   </Col>
                   <Col md={4}>
-                    <Label to='aggregationProfile'>Aggregation profile:</Label>
                     <Field
                       id='aggregationProfile'
                       name='aggregationProfile'
-                      component={DropDown}
-                      data={insertSelectPlaceholder(
-                        extractProfileNames(listAggregationProfiles).sort(sortStr),
-                        'Select')}
+                      component={ProfileSelect}
+                      options={
+                        extractProfileNames(listAggregationProfiles).map((profile) => new Object({
+                          label: profile, value: profile
+                        }))
+                      }
+                      onChangeHandler={ (e) => props.setFieldValue('aggregationProfile', e.value) }
+                      label='Aggregation profile:'
+                      initVal={ !addview ? props.values.aggregationProfile : null }
                       required={true}
-                      class_name='custom-select'
                     />
-                    {
-                      props.errors && props.errors.aggregationProfile &&
-                        FancyErrorMessage(props.errors.aggregationProfile)
-                    }
+                    <CustomErrorMessage name='aggregationProfile' />
                   </Col>
                   <Col md={4}>
-                    <Label to='operationsProfile'>Operations profile:</Label>
                     <Field
                       name='operationsProfile'
                       id='operationsProfile'
-                      component={DropDown}
-                      data={insertSelectPlaceholder(
-                        extractProfileNames(listOperationsProfiles),
-                        'Select')}
+                      component={ProfileSelect}
+                      options={
+                        extractProfileNames(listOperationsProfiles).map((profile) => new Object({
+                          label: profile, value: profile
+                        }))
+                      }
+                      onChangeHandler={ (e) =>
+                        props.setFieldValue('operationsProfile', e.value)
+                      }
+                      label='Operations profile:'
+                      initVal={ !addview ? props.values.operationsProfile : null }
                       required={true}
-                      class_name='custom-select'
                     />
-                    {
-                      props.errors && props.errors.operationsProfile &&
-                        FancyErrorMessage(props.errors.operationsProfile)
-                    }
+                    <CustomErrorMessage name='operationsProfile' />
+                  </Col>
+                </Row>
+                <Row className='mt-4'>
+                  <Col md={4}>
+                    <Field
+                      name='thresholdsProfile'
+                      id='thresholdsProfile'
+                      component={ProfileSelect}
+                      options={
+                        extractProfileNames(listThresholdsProfiles).map((profile) => new Object({
+                          label: profile, value: profile
+                        }))
+                      }
+                      onChangeHandler={ (e) => {
+                        if (e)
+                          props.setFieldValue('thresholdsProfile', e.value)
+                        else
+                          props.setFieldValue('thresholdsProfile', null)
+                      }}
+                      label='Thresholds profile:'
+                      initVal={ !addview ? props.values.thresholdsProfile : null }
+                    />
+                    <CustomErrorMessage name='thresholdsProfile' />
                   </Col>
                 </Row>
               </FormGroup>
