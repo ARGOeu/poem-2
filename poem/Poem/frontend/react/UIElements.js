@@ -103,6 +103,7 @@ link_title.set('probes', 'Probes');
 link_title.set('public_aggregationprofiles', 'Public aggregation profiles');
 link_title.set('public_metricprofiles', 'Public metric profiles');
 link_title.set('public_metrics', 'Public metrics');
+link_title.set('public_reports', 'Public reports');
 link_title.set('public_metrictemplates', 'Public metric templates');
 link_title.set('public_operationsprofiles', 'Public operations profiles');
 link_title.set('cookiepolicies', 'Cookie policies');
