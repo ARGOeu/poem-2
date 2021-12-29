@@ -1102,6 +1102,112 @@ describe('Tests for threshols profile changeview', () => {
     )
   })
 
+  test('Test change thresholds profile with empty threshold value and save', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+    mockChangeThresholdsProfile.mockReturnValueOnce(
+      Promise.resolve({ ok: 'ok' })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change thresholds profile');
+    })
+
+    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TESTa' } })
+
+    const rule1 = within(screen.getByTestId('rules.0'))
+    const metric1 = rule1.getByText('org.nagios.ARGOWeb-Status')
+
+    await selectEvent.select(metric1, 'argo.AMS-Check')
+
+    const host1 = rule1.getAllByText(/select/i)[0]
+    await selectEvent.select(host1, 'msg.argo.grnet.gr')
+
+    const endpoint1 = rule1.getAllByText(/select/i)[0]
+    await selectEvent.select(endpoint1, 'GRIDOPS-MSG')
+
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn1'), { target: { value: '1' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn2'), { target: { value: '15' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit1'), { target: { value: '10' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit2'), { target: { value: '20' } });
+    fireEvent.click(screen.getByTestId('values.rules.0.thresholds.1.remove'))
+
+    fireEvent.click(screen.getByTestId('rules.2.remove'))
+    fireEvent.click(screen.getByTestId('rules.1.remove'));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add new rule' }));
+
+    const newRule = within(screen.getByTestId('rules.1'))
+    const metric2 = newRule.getAllByText(/select/i)[0]
+    const host2 = newRule.getAllByText(/select/i)[1]
+
+    await selectEvent.select(metric2, 'org.bdii.Entries')
+    await selectEvent.select(host2, 'bdii.grid.cesnet.cz')
+
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.label'), { target: { value: 'entries' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.warn1'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.crit1'), { target: { value: '2' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeThresholdsProfile).toHaveBeenCalledWith({
+        id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+        name: 'TEST_PROFILE',
+        rules: [
+          {
+            endpoint_group: 'GRIDOPS-MSG',
+            host: 'msg.argo.grnet.gr',
+            metric: 'argo.AMS-Check',
+            thresholds: 'time=1s;1:15;10:20;0;10'
+          },
+          {
+            metric: 'org.bdii.Entries',
+            host: 'bdii.grid.cesnet.cz',
+            thresholds: 'entries=0;0:;2:'
+          }
+        ]
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/thresholdsprofiles/',
+        {
+          apiid: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+          name: 'TEST_PROFILE',
+          groupname: 'TESTa',
+          rules: [
+            {
+              endpoint_group: 'GRIDOPS-MSG',
+              host: 'msg.argo.grnet.gr',
+              metric: 'argo.AMS-Check',
+              thresholds: 'time=1s;1:15;10:20;0;10'
+            },
+            {
+              metric: 'org.bdii.Entries',
+              host: 'bdii.grid.cesnet.cz',
+              thresholds: 'entries=0;0:;2:'
+            }
+          ]
+        }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('thresholdsprofile');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_thresholdsprofile');
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Thresholds profile successfully changed', 'Changed', 2000
+    )
+  })
+
   test('Test error changing thresholds profile on web api with error message', async () => {
     mockChangeThresholdsProfile.mockImplementationOnce( () => {
       throw Error('406 Content Not acceptable: There has been an error.')
@@ -2455,6 +2561,131 @@ describe('Tests for thresholds profiles addview', () => {
             host: 'msg.argo.grnet.gr',
             metric: 'argo.AMS-Check',
             thresholds: 'freshness=1s;1:15;10:20'
+          },
+          {
+            endpoint_group: 'BUDAPEST',
+            metric: 'ch.cern.HTCondorCE-JobState',
+            thresholds: 'test=2TB;2:8;3:8;0;10'
+          }
+          ]
+        }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('thresholdsprofile');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_thresholdsprofile');
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Thresholds profile successfully added', 'Added', 2000
+    )
+  })
+
+  test('Test successfully adding thresholds profile with threshold without value', async () => {
+    mockAddThresholdsProfile.mockReturnValueOnce(
+      Promise.resolve({
+        status: {
+          message: 'Thresholds profile Created',
+          code: "200"
+        },
+        data: {
+          id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+          links: {
+            self: 'string'
+          }
+        }
+      })
+    )
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Add thresholds profile');
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'TEST_PROFILE2' } });
+    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add a rule' }));
+
+    const rule1 = within(screen.getByTestId('rules.0'))
+
+    const metric1 = rule1.getAllByText(/select/i)[0]
+    const host1 = rule1.getAllByText(/select/i)[1]
+    const endpoint1 = rule1.getAllByText(/select/i)[2]
+
+    await selectEvent.select(metric1, 'argo.AMS-Check')
+    await selectEvent.select(host1, 'msg.argo.grnet.gr')
+    await selectEvent.select(endpoint1, 'EOSC_Messaging')
+
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.label'), { target: { value: 'freshness' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.value'), { target: { value: '1' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.uom'), { target: { value: 's' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn1'), { target: { value: '1' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn2'), { target: { value: '15' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit1'), { target: { value: '10' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit2'), { target: { value: '20' } });
+
+    fireEvent.click(screen.getByTestId('values.rules.0.thresholds.0.add'));
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.label'), { target: { value: 'entries' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.warn1'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.crit1'), { target: { value: '2' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add new rule' }));
+    const rule2 = within(screen.getByTestId('rules.1'))
+
+    const metric2 = rule2.getAllByText(/select/i)[0]
+    const endpoint2 = rule2.getAllByText(/select/i)[2]
+
+    await selectEvent.select(metric2, 'ch.cern.HTCondorCE-JobState')
+    await selectEvent.select(endpoint2, 'BUDAPEST')
+
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.label'), { target: { value: 'test' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.value'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.uom'), { target: { value: 'TB' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.warn1'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.warn2'), { target: { value: '8' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.crit1'), { target: { value: '3' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.crit2'), { target: { value: '8' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.min'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.max'), { target: { value: '10' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddThresholdsProfile).toHaveBeenCalledWith({
+        name: 'TEST_PROFILE2',
+        rules: [
+          {
+            endpoint_group: 'EOSC_Messaging',
+            host: 'msg.argo.grnet.gr',
+            metric: 'argo.AMS-Check',
+            thresholds: 'freshness=1s;1:15;10:20 entries=0;0:;2:'
+          },
+          {
+            endpoint_group: 'BUDAPEST',
+            metric: 'ch.cern.HTCondorCE-JobState',
+            thresholds: 'test=2TB;2:8;3:8;0;10'
+          }
+        ]
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/thresholdsprofiles/',
+        {
+          apiid: '00000000-oooo-kkkk-aaaa-aaeekkccnnee',
+          name: 'TEST_PROFILE2',
+          groupname: 'TEST',
+          rules: [
+          {
+            endpoint_group: 'EOSC_Messaging',
+            host: 'msg.argo.grnet.gr',
+            metric: 'argo.AMS-Check',
+            thresholds: 'freshness=1s;1:15;10:20 entries=0;0:;2:'
           },
           {
             endpoint_group: 'BUDAPEST',

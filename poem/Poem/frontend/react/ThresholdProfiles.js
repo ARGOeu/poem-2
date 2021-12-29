@@ -59,8 +59,7 @@ const ThresholdsSchema = Yup.object().shape({
             .matches(/^[a-zA-Z][A-Za-z0-9]*$/, 'Label can contain alphanumeric characters, but must always begin with a letter.')
             .required('Required'),
           value: Yup.string()
-            .matches(/^([-](?=\.?\d))?(\d+)?(\.\d+)?$/, 'Must be a number.')
-            .required('Required'),
+            .matches(/^([-](?=\.?\d))?(\d+)?(\.\d+)?$/, 'Must be a number.'),
           warn1: Yup.string()
             .matches(/^[@]?(~|[-](?=\.?\d))?(\d+)?(\.\d+)?$/, 'Must be a number.')
             .required('Required'),
@@ -1170,6 +1169,8 @@ export const ThresholdsProfilesChange = (props) => {
         delete rule.endpoint_group;
       rule.thresholds.forEach((thresh => {
         let thresholds_string = undefined;
+        if (!thresh.value)
+          thresh.value = '0'
         thresholds_string = thresh.label + '=' + thresh.value + thresh.uom + ';' + thresh.warn1 + ':' + thresh.warn2 + ';' + thresh.crit1 + ':' + thresh.crit2;
         if (thresh.min && thresh.max)
           thresholds_string = thresholds_string + ';' + thresh.min + ';' + thresh.max;
