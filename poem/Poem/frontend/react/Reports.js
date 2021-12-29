@@ -749,32 +749,32 @@ export const ReportsComponent = (props) => {
 
   const { data: listMetricProfiles, error: listMetricProfilesError, isLoading: listMetricProfilesLoading } = useQuery(
     ['metricprofile', 'webapi'],  () => fetchMetricProfiles(webapi),
-    { enabled: !!userDetails }
+    { enabled: !publicView && !!userDetails }
   );
 
   const { data: listAggregationProfiles, error: listAggregationProfilesError, isLoading: listAggregationProfilesLoading } = useQuery(
     ['aggregationprofile', 'webapi'], () => fetchAggregationProfiles(webapi),
-    { enabled: !!userDetails }
+    { enabled: !publicView && !!userDetails }
   );
 
   const { data: listOperationsProfiles, error: listOperationsProfilesError, isLoading: listOperationsProfilesLoading } = useQuery(
     'operationsprofile', () => fetchOperationsProfiles(webapi),
-    { enabled: !!userDetails }
+    { enabled: !publicView && !!userDetails }
   );
 
   const { data: listThresholdsProfiles, error: listThresholdsProfilesError, isLoading: listThresholdsProfilesLoading } = useQuery(
     ['thresholdsprofile', 'webapi'], () => fetchThresholdsProfiles(webapi),
-    { enabled: !!userDetails }
+    { enabled: !publicView && !!userDetails }
   )
 
   const { data: topologyTags, error: topologyTagsError, isLoading: loadingTopologyTags } = useQuery(
     'topologytags', () => fetchTopologyTags(webapi),
-    { enabled: !!userDetails && crud }
+    { enabled: !publicView && !!userDetails && crud }
   );
 
   const { data: topologyGroups, error: topologyGroupsErrors, isLoading: loadingTopologyGroups } = useQuery(
     'topologygroups', () => fetchTopologyGroups(webapi),
-    { enabled: !!userDetails && crud }
+    { enabled: !publicView && !!userDetails && crud }
   );
 
   const sortStr = (a, b) => {
@@ -1162,7 +1162,10 @@ export const ReportsComponent = (props) => {
       doChange(formikValues)
   }
 
-  const loading = loadingUserDetails || loadingBackendReport || loadingWebApiReport || listMetricProfilesLoading || listAggregationProfilesLoading || listOperationsProfilesLoading || listThresholdsProfilesLoading || loadingTopologyTags || loadingTopologyGroups
+  const loading = publicView ?
+    loadingBackendReport || loadingWebApiReport
+  :
+    loadingUserDetails || loadingBackendReport || loadingWebApiReport || listMetricProfilesLoading || listAggregationProfilesLoading || listOperationsProfilesLoading || listThresholdsProfilesLoading || loadingTopologyTags || loadingTopologyGroups
 
   if (loading)
     return (<LoadingAnim/>);
