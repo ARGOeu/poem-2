@@ -328,100 +328,123 @@ const TopologyTagList = ({ part, fieldName, tagsState, setTagsState, tagsAll, ad
   return (
     <React.Fragment>
       {
-        form.values[fieldName].map((tags, index) => (
-          <React.Fragment key={index}>
-            <Row key={index} className="no-gutters">
-              <Col md={4}>
-                {
-                  publicView ?
-                    <Field
-                      name={`${fieldName}.${index}.name`}
-                      data-testid={`${fieldName}.${index}.name`}
-                      className='form-control'
-                      disabled={true}
-                    />
-                  :
-                    <Field
-                      name={`${fieldName}.${index}.name`}
-                      data-testid={`${fieldName}.${index}.name`}
-                      component={TagSelect}
-                      tagOptions={extractTags(part, true).map((e) => new Object({
-                        'label': e.name,
-                        'value': e.name
-                      }))}
-                      onChangeHandler={(e) => {
-                        form.setFieldValue(`${fieldName}.${index}.name`, e.value)
-                        recordSelectedTagKeys(index, e.value)
-                      }}
-                      isMulti={false}
-                      closeMenuOnSelect={true}
-                      tagInitials={!addview ? tagsInitValues('name', tags) : undefined}
-                    />
-                }
-              </Col>
-              <Col md={7}>
-                {
-                  publicView ?
-                    <Field
-                      name={`${fieldName}.${index}.value`}
-                      data-testid={`${fieldName}.${index}.value`}
-                      className='form-control'
-                      disabled={true}
-                      value={isMultiValuesTags(tagsInitValues('value', tags, true)) ? form.values[fieldName][index].value.replace(new RegExp(' ', 'g'), ', ')  : form.values[fieldName][index].value }
-                    />
-                  :
-                    <Field
-                      name={`${fieldName}.${index}.value`}
-                      data-testid={`${fieldName}.${index}.value`}
-                      component={TagSelect}
-                      tagOptions={publicView ? null : extractValuesTags(index, true)}
-                      onChangeHandler={(e) => {
-                        if (Array.isArray(e)) {
-                          let joinedValues = ''
-                          e.forEach((e) => {
-                            joinedValues += e.value + ' '
-                          })
-                          form.setFieldValue(`${fieldName}.${index}.value`, joinedValues.trim())
-                        }
-                        else
-                          form.setFieldValue(`${fieldName}.${index}.value`, e.value.trim())
-                      }}
-                      isMulti={isMultiValuesTags(extractValuesTags(index))}
-                      closeMenuOnSelect={publicView ? true : !isMultiValuesTags(extractValuesTags(index))}
-                      tagInitials={!addview ? tagsInitValues('value', tags, true) : undefined}
-                    />
-                }
-              </Col>
-              <Col md={1} className="pl-2 pt-1">
-                {
-                  !publicView &&
-                    <Button size="sm" color="danger"
-                      type="button"
-                      data-testid={`remove${fieldName.toLowerCase().endsWith('tags') ? 'Tag' : 'Extension'}-${index}`}
-                      onClick={() => {
-                        let newState = JSON.parse(JSON.stringify(tagsState))
-                        let renumNewState = JSON.parse(JSON.stringify(tagsState))
+        form.values[fieldName].length === 0 && publicView ?
+          <Row className="no-gutters">
+            <Col md={4}>
+              <Field
+                name={`${fieldName}.0.name`}
+                data-testid={`${fieldName}.0.name`}
+                className='form-control'
+                disabled={true}
+                value=''
+              />
+            </Col>
+            <Col md={7}>
+              <Field
+                name={`${fieldName}.0.value`}
+                data-testid={`${fieldName}.0.value`}
+                className='form-control'
+                disabled={true}
+                value=''
+              />
+            </Col>
+          </Row>
+        :
+          form.values[fieldName].map((tags, index) => (
+            <React.Fragment key={index}>
+              <Row key={index} className="no-gutters">
+                <Col md={4}>
+                  {
+                    publicView ?
+                      <Field
+                        name={`${fieldName}.${index}.name`}
+                        data-testid={`${fieldName}.${index}.name`}
+                        className='form-control'
+                        disabled={true}
+                        value={form.values[fieldName].length > 0 ? form.values[fieldName][index].name : ''}
+                      />
+                    :
+                      <Field
+                        name={`${fieldName}.${index}.name`}
+                        data-testid={`${fieldName}.${index}.name`}
+                        component={TagSelect}
+                        tagOptions={extractTags(part, true).map((e) => new Object({
+                          'label': e.name,
+                          'value': e.name
+                        }))}
+                        onChangeHandler={(e) => {
+                          form.setFieldValue(`${fieldName}.${index}.name`, e.value)
+                          recordSelectedTagKeys(index, e.value)
+                        }}
+                        isMulti={false}
+                        closeMenuOnSelect={true}
+                        tagInitials={!addview ? tagsInitValues('name', tags) : undefined}
+                      />
+                  }
+                </Col>
+                <Col md={7}>
+                  {
+                    publicView ?
+                      <Field
+                        name={`${fieldName}.${index}.value`}
+                        data-testid={`${fieldName}.${index}.value`}
+                        className='form-control'
+                        disabled={true}
+                        value={isMultiValuesTags(tagsInitValues('value', tags, true)) ? form.values[fieldName][index].value.replace(new RegExp(' ', 'g'), ', ')  : form.values[fieldName].length > 0 ? form.values[fieldName][index].value : '' }
+                      />
+                    :
+                      <Field
+                        name={`${fieldName}.${index}.value`}
+                        data-testid={`${fieldName}.${index}.value`}
+                        component={TagSelect}
+                        tagOptions={extractValuesTags(index, true)}
+                        onChangeHandler={(e) => {
+                          if (Array.isArray(e)) {
+                            let joinedValues = ''
+                            e.forEach((e) => {
+                              joinedValues += e.value + ' '
+                            })
+                            form.setFieldValue(`${fieldName}.${index}.value`, joinedValues.trim())
+                          }
+                          else
+                            form.setFieldValue(`${fieldName}.${index}.value`, e.value.trim())
+                        }}
+                        isMulti={isMultiValuesTags(extractValuesTags(index))}
+                        closeMenuOnSelect={!isMultiValuesTags(extractValuesTags(index))}
+                        tagInitials={!addview ? tagsInitValues('value', tags, true) : undefined}
+                      />
+                  }
+                </Col>
+                <Col md={1} className="pl-2 pt-1">
+                  {
+                    !publicView &&
+                      <Button size="sm" color="danger"
+                        type="button"
+                        data-testid={`remove${fieldName.toLowerCase().endsWith('tags') ? 'Tag' : 'Extension'}-${index}`}
+                        onClick={() => {
+                          let newState = JSON.parse(JSON.stringify(tagsState))
+                          let renumNewState = JSON.parse(JSON.stringify(tagsState))
 
-                        delete newState[part][index]
-                        delete renumNewState[part]
-                        renumNewState[part] = new Object()
+                          delete newState[part][index]
+                          delete renumNewState[part]
+                          renumNewState[part] = new Object()
 
-                        let i = 0
-                        for (var tag in newState[part]) {
-                          renumNewState[part][i] = newState[part][tag]
-                          i += 1
-                        }
+                          let i = 0
+                          for (var tag in newState[part]) {
+                            renumNewState[part][i] = newState[part][tag]
+                            i += 1
+                          }
 
-                        remove(index)
-                        setTagsState(renumNewState)
-                      }}>
-                      <FontAwesomeIcon icon={faTimes}/>
-                    </Button>
-                }
-              </Col>
-            </Row>
-          </React.Fragment>
-        ))
+                          remove(index)
+                          setTagsState(renumNewState)
+                        }}>
+                        <FontAwesomeIcon icon={faTimes}/>
+                      </Button>
+                  }
+                </Col>
+              </Row>
+            </React.Fragment>
+          ))
       }
       <Row>
         <Col className="pt-4 d-flex justify-content-center">
