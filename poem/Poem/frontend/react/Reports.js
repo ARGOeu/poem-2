@@ -1254,7 +1254,7 @@ export const ReportsComponent = (props) => {
               })
             )
 
-          else
+          else if (!item['name'].startsWith('info_') && !item['name'].startsWith('vo_'))
             tmpTags.push(item)
         }
         allTags.push(
