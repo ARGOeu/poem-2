@@ -103,6 +103,7 @@ link_title.set('probes', 'Probes');
 link_title.set('public_aggregationprofiles', 'Public aggregation profiles');
 link_title.set('public_metricprofiles', 'Public metric profiles');
 link_title.set('public_metrics', 'Public metrics');
+link_title.set('public_reports', 'Public reports');
 link_title.set('public_metrictemplates', 'Public metric templates');
 link_title.set('public_operationsprofiles', 'Public operations profiles');
 link_title.set('cookiepolicies', 'Cookie policies');
@@ -161,7 +162,7 @@ export const CustomReactSelect = ({...props}) => {
     control: (provided,  state) => ({
       ...provided,
       margin: 0,
-      backgroundColor: '#fff',
+      backgroundColor: props.isDisabled ? '#e9ecef' : '#fff',
       overflow: 'visible',
       borderRadius: '.25rem',
       fontWeight: 400,
@@ -194,29 +195,36 @@ export const CustomReactSelect = ({...props}) => {
       },
       ':focus': {
         outline: '5px auto -webkit-focus-ring-color',
-      }
-    })
+      },
+    }),
+    multiValue: (provided) => props.isDisabled ? { ...provided, backgroundColor: '#c4ccd4' } : provided,
+    multiValueRemove: (provided) => props.isDisabled ? { ...provided, display: 'none' } : provided
   }
-  const DropdownIndicator = ({ ...props }) => (
-    <components.DropdownIndicator {...props}>
-      <svg
-        height='10'
-        width='10'
-        viewBox='0 0 4 5'
-        aria-hidden="true"
-        focusable="false"
-        style={{
-          display: 'inline-block',
-          fill: 'currentColor',
-          lineHeight: 1,
-          stroke: 'currentColor',
-          strokeWidth: 0,
-        }}
-      >
-        <path fill='#343a40' d='M2 0L0 2h4zm0 5L0 3h4z'/>
-      </svg>
-    </components.DropdownIndicator>
-  )
+  const DropdownIndicator = ({ ...props }) => {
+    if (props.isDisabled)
+      return null
+
+    else return (
+      <components.DropdownIndicator {...props}>
+        <svg
+          height='10'
+          width='10'
+          viewBox='0 0 4 5'
+          aria-hidden="true"
+          focusable="false"
+          style={{
+            display: 'inline-block',
+            fill: 'currentColor',
+            lineHeight: 1,
+            stroke: 'currentColor',
+            strokeWidth: 0,
+          }}
+        >
+          <path fill='#343a40' d='M2 0L0 2h4zm0 5L0 3h4z'/>
+        </svg>
+      </components.DropdownIndicator>
+    )
+  }
 
   if (props.label)
     return (

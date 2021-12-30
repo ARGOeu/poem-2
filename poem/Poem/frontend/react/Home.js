@@ -63,6 +63,9 @@ export const PublicHome = (props) => {
                         <Icon i='metrics'/> <a href={`https://${tenants[i + j].domain_url}/ui/public_metrics`}>Metrics</a>
                       </Row>
                       <Row className='p-1 align-items-center'>
+                        <Icon i='reports'/> <a href={`https://${tenants[i + j].domain_url}/ui/public_reports`}>Reports</a>
+                      </Row>
+                      <Row className='p-1 align-items-center'>
                         <Icon i='metricprofiles'/> <a href={`https://${tenants[i + j].domain_url}/ui/public_metricprofiles`}>Metric profiles</a>
                       </Row>
                       <Row className='p-1 align-items-center'>
@@ -137,6 +140,9 @@ export const PublicHome = (props) => {
           <CardBody>
             <Row className='p-1 align-items-center'>
               <Icon i='metrics'/> <Link to={'/ui/public_metrics'}>Metrics</Link>
+            </Row>
+            <Row className='p-1 align-items-center'>
+              <Icon i='reports'/> <Link to={'/ui/public_reports'}>Reports</Link>
             </Row>
             <Row className='p-1 align-items-center'>
               <Icon i='servicetypes'/> <Link to={'/ui/public_servicetypes'}>Service types</Link>

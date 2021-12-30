@@ -869,6 +869,40 @@ const App = () => {
                   </PublicPage>
                 }
               />
+              <Route
+                exact path="/ui/public_reports"
+                render={props =>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
+                    <ReportsList
+                      {...props}
+                      publicView={true}
+                      webapitoken={token}
+                      webapireports={webApiReports}
+                      webapimetric={webApiMetric}
+                      webapiaggregation={webApiAggregation}
+                      webapioperations={webApiOperations}
+                      webapithresholds={webApiThresholds}
+                    />
+                  </PublicPage>
+                }
+              />
+              <Route
+                exact path="/ui/public_reports/:name"
+                render={props =>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
+                    <ReportsChange
+                      {...props}
+                      publicView={true}
+                      webapitoken={token}
+                      webapireports={webApiReports}
+                      webapimetric={webApiMetric}
+                      webapiaggregation={webApiAggregation}
+                      webapioperations={webApiOperations}
+                      webapithresholds={webApiThresholds}
+                    />
+                  </PublicPage>
+                }
+              />
               <Route exact path="/ui/public_metricprofiles"
                 render={props =>
                   <PublicPage privacyLink={privacyLink} termsLink={termsLink}>

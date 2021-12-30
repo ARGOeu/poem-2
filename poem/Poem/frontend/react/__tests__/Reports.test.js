@@ -163,6 +163,11 @@ const mockReport = {
       context: "argo.group.filter.fields"
     },
     {
+      name: "SITES",
+      value: "IRISOPS-IAM",
+      context: "argo.group.filter.fields"
+    },
+    {
       name: "info_ext_GLUE2ComputingShareMappingQueue",
       value: "condor",
       context: "argo.group.filter.tags.array"
@@ -582,57 +587,105 @@ const webapireports = {
 };
 
 
-function renderListView() {
-  const route = '/ui/reports';
+function renderListView(publicView=false) {
+  const route = `/ui/${publicView ? 'public_' : ''}reports`;
   const history = createMemoryHistory({ initialEntries: [route] });
 
-  return {
-    ...render(
-      <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/reports'
-            render={ props => <ReportsList
-              {...props}
-              webapitoken='token'
-              webapireports={webapireports}
-              webapimetric='https://mock.metric.com'
-              webapiaggregation='https://mock.aggr.com'
-              webapioperations='https://mock.operations.com'
-              webapithresholds='https://mock.thresholds.com'
-            /> }
-          />
-        </Router>
-      </QueryClientProvider>
-    )
-  }
+  if (publicView)
+    return {
+      ...render(
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/public_reports'
+              render={ props => <ReportsList
+                {...props}
+                publicView={true}
+                webapitoken='public_token'
+                webapireports={webapireports}
+                webapimetric='https://mock.metric.com'
+                webapiaggregation='https://mock.aggr.com'
+                webapioperations='https://mock.operations.com'
+                webapithresholds='https://mock.thresholds.com'
+              /> }
+            />
+          </Router>
+        </QueryClientProvider>
+      )
+    }
+
+  else
+    return {
+      ...render(
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/reports'
+              render={ props => <ReportsList
+                {...props}
+                webapitoken='token'
+                webapireports={webapireports}
+                webapimetric='https://mock.metric.com'
+                webapiaggregation='https://mock.aggr.com'
+                webapioperations='https://mock.operations.com'
+                webapithresholds='https://mock.thresholds.com'
+              /> }
+            />
+          </Router>
+        </QueryClientProvider>
+      )
+    }
 }
 
 
-function renderChangeView() {
-  const route = '/ui/reports/Critical';
+function renderChangeView(publicView=false) {
+  const route = `/ui/${publicView ? 'public_' : ''}reports/Critical`;
   const history = createMemoryHistory({ initialEntries: [route] });
 
-  return {
-    ...render(
-      <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/reports/:name'
-            render={ props => <ReportsChange
-              {...props}
-              webapitoken='token'
-              webapireports={webapireports}
-              webapimetric='https://mock.metric.com'
-              webapiaggregation='https://mock.aggr.com'
-              webapioperations='https://mock.operations.com'
-              webapithresholds='https://mock.thresholds.com'
-            /> }
-          />
-        </Router>
-      </QueryClientProvider>
-    )
-  }
+  if (publicView)
+    return {
+      ...render(
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/public_reports/:name'
+              render={ props => <ReportsChange
+                {...props}
+                webapitoken='public_token'
+                webapireports={webapireports}
+                webapimetric='https://mock.metric.com'
+                webapiaggregation='https://mock.aggr.com'
+                webapioperations='https://mock.operations.com'
+                webapithresholds='https://mock.thresholds.com'
+                publicView={true}
+              /> }
+            />
+          </Router>
+        </QueryClientProvider>
+      )
+    }
+
+  else
+    return {
+      ...render(
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/reports/:name'
+              render={ props => <ReportsChange
+                {...props}
+                webapitoken='token'
+                webapireports={webapireports}
+                webapimetric='https://mock.metric.com'
+                webapiaggregation='https://mock.aggr.com'
+                webapioperations='https://mock.operations.com'
+                webapithresholds='https://mock.thresholds.com'
+              /> }
+            />
+          </Router>
+        </QueryClientProvider>
+      )
+    }
 }
 
 
@@ -693,6 +746,32 @@ describe('Tests for reports listview', () => {
 
     expect(screen.getByRole('button', { name: /add/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /add/i }).closest('a')).toHaveAttribute('href', '/ui/reports/add');
+  })
+
+  test('Test that public page renders properly', async () => {
+    renderListView(true)
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Select report for details')
+    })
+
+    expect(screen.getAllByRole('columnheader')).toHaveLength(4);
+    expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Name' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Description' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Group' })).toBeInTheDocument();
+
+    expect(screen.getAllByRole('row')).toHaveLength(11);
+    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(8);
+    expect(screen.getByRole('row', { name: /critical/i }).textContent).toBe('1CriticalCritical reportARGO');
+    expect(screen.getByRole('link', { name: /critical/i }).closest('a')).toHaveAttribute('href', '/ui/public_reports/Critical');
+    expect(screen.getByRole('row', { name: /ops/i }).textContent).toBe('2ops-monitor');
+    expect(screen.getByRole('link', { name: /ops/i }).closest('a')).toHaveAttribute('href', '/ui/public_reports/ops-monitor');
+
+    expect(screen.queryByRole('button', { name: /add/i })).not.toBeInTheDocument();
+
   })
 })
 
@@ -823,7 +902,6 @@ describe('Tests for reports changeview', () => {
     expect(card_groups.queryByRole('button', { name: /add new extension/i })).toBeInTheDocument();
     expect(card_groups.queryByText('Russia')).not.toBeInTheDocument();
     expect(card_groups.queryByText('RU-SARFTI')).not.toBeInTheDocument();
-    expect(card_groups.queryByText('IRISOPS-IAM')).not.toBeInTheDocument();
     expect(card_groups.queryByText('DAVETESTSG')).not.toBeInTheDocument();
     expect(card_groups.queryByText('NGI_AEGIS_SERVICES')).not.toBeInTheDocument();
     expect(card_groups.queryByText('NGI_ARMGRID_SERVICES')).not.toBeInTheDocument();
@@ -831,11 +909,10 @@ describe('Tests for reports changeview', () => {
     selectEvent.openMenu(card_groups.getByText('iris.ac.uk'))
     expect(card_groups.getByText('Russia')).toBeInTheDocument();
     expect(card_groups.queryByText('RU-SARFTI')).not.toBeInTheDocument();
-    expect(card_groups.queryByText('IRISOPS-IAM')).not.toBeInTheDocument();
     expect(card_groups.getByText('dirac-durham')).toBeInTheDocument();
+    expect(card_groups.getByText('IRISOPS-IAM')).toBeInTheDocument();
     selectEvent.openMenu(card_groups.getByText('dirac-durham'));
     expect(card_groups.getByText('RU-SARFTI')).toBeInTheDocument();
-    expect(card_groups.getByText('IRISOPS-IAM')).toBeInTheDocument();
     expect(card_groups.queryByText('DAVETESTSG')).not.toBeInTheDocument();
     expect(card_groups.queryByText('NGI_AEGIS_SERVICES')).not.toBeInTheDocument();
     expect(card_groups.queryByText('NGI_ARMGRID_SERVICES')).not.toBeInTheDocument();
@@ -879,6 +956,111 @@ describe('Tests for reports changeview', () => {
 
     expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
+  })
+
+  test('Test that public page renders properly', async () => {
+    renderChangeView(true);
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /details/i }).textContent).toBe('Report details');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const disabledField = screen.getByLabelText(/disabled/i);
+    const descriptionField = screen.getByLabelText(/description/i);
+    const groupField = screen.getByTestId('groupname');
+    const metricProfileField = screen.getByLabelText('Metric profile:')
+    const aggrProfileField = screen.getByLabelText('Aggregation profile:')
+    const operationsProfileField = screen.getByLabelText('Operations profile:')
+    const thresholdsProfileField = screen.getByLabelText('Thresholds profile:')
+    const topologyTypeField = screen.getByLabelText('Topology type:');
+    const availabilityThresholdField = screen.getByLabelText(/availability/i);
+    const reliabilityThresholdField = screen.getByLabelText(/reliability/i);
+    const uptimeThresholdField = screen.getByLabelText(/uptime/i);
+    const unknownThresholdField = screen.getByLabelText(/unknown/i);
+    const downtimeThresholdField = screen.getByLabelText(/downtime/i);
+
+    expect(nameField.value).toBe('Critical');
+    expect(nameField).toBeDisabled();
+    expect(disabledField.checked).toBeFalsy();
+    expect(disabledField).toBeDisabled();
+    expect(descriptionField.value).toBe('Critical report');
+    expect(descriptionField).toBeDisabled();
+    expect(groupField.value).toBe('ARGO')
+    expect(groupField).toBeDisabled();
+
+    expect(metricProfileField.value).toBe('ARGO_MON_CRITICAL')
+    expect(metricProfileField).toBeDisabled()
+
+    expect(aggrProfileField.value).toBe('critical')
+    expect(aggrProfileField).toBeDisabled()
+
+    expect(operationsProfileField.value).toBe('egi_ops')
+    expect(operationsProfileField).toBeDisabled()
+
+    expect(thresholdsProfileField.value).toBe('')
+    expect(thresholdsProfileField).toBeDisabled()
+
+    expect(topologyTypeField.value).toBe('Sites');
+    expect(topologyTypeField).toBeDisabled()
+
+    expect(screen.getAllByTestId(/card/i)).toHaveLength(2);
+    const card_groups = within(screen.getByTestId('card-group-of-groups'));
+    const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
+
+    const tag1name = card_groups.getByTestId('groupsTags.0.name')
+    const tag1value = card_groups.getByTestId('groupsTags.0.value')
+    const tag2name = card_groups.getByTestId('groupsTags.1.name')
+    const tag2value = card_groups.getByTestId('groupsTags.1.value')
+    const tag3name = card_groups.getByTestId('groupsTags.2.name')
+    const tag3value = card_groups.getByTestId('groupsTags.2.value')
+
+    expect(tag1name.value).toBe('certification')
+    expect(tag1name).toBeDisabled()
+    expect(tag1value.value).toBe('Certified')
+    expect(tag1value).toBeDisabled()
+    expect(tag2name.value).toBe('infrastructure')
+    expect(tag2name).toBeDisabled()
+    expect(tag2value.value).toBe('Production')
+    expect(tag2value).toBeDisabled()
+    expect(tag3name.value).toBe('scope')
+    expect(tag3name).toBeDisabled()
+    expect(tag3value.value).toBe('EGI*')
+    expect(tag3value).toBeDisabled()
+    expect(card_groups.queryByTestId(/remove/i)).not.toBeInTheDocument()
+
+    expect(card_groups.queryByRole('button', { name: /add new tag/i })).not.toBeInTheDocument();
+    expect(card_groups.queryByRole('button', { name: /add new extension/i })).not.toBeInTheDocument();
+    expect(card_groups.getByTestId('groupsExtensions.0.name').value).toBe('GLUE2ComputingShareMappingQueue')
+    expect(card_groups.getByTestId('groupsExtensions.0.value').value).toBe('condor')
+    expect(card_groups.getByLabelText('NGIs:').value).toBe('iris.ac.uk')
+    expect(card_groups.getByLabelText('Sites:').value).toBe('dirac-durham, IRISOPS-IAM')
+
+    expect(card_endpoints.getByTestId('endpointsTags.0.name').value).toBe('production')
+    expect(card_endpoints.getByTestId('endpointsTags.0.value').value).toBe('yes')
+    expect(card_endpoints.getByTestId('endpointsTags.1.name').value).toBe('monitored')
+    expect(card_endpoints.getByTestId('endpointsTags.1.value').value).toBe('yes')
+    expect(card_endpoints.getByTestId('endpointsTags.2.name').value).toBe('scope')
+    expect(card_endpoints.getByTestId('endpointsTags.2.value').value).toBe('EGI*')
+
+    expect(card_endpoints.queryByTestId(/remove/i)).not.toBeInTheDocument();
+    expect(card_endpoints.queryByRole('button', { name: /add new tag/i })).not.toBeInTheDocument();
+    expect(card_endpoints.queryByRole('button', { name: /add new extension/i })).not.toBeInTheDocument();
+
+    expect(availabilityThresholdField.value).toBe('80');
+    expect(availabilityThresholdField).toBeDisabled();
+    expect(reliabilityThresholdField.value).toBe('85');
+    expect(reliabilityThresholdField).toBeDisabled();
+    expect(uptimeThresholdField.value).toBe('0.8');
+    expect(uptimeThresholdField).toBeDisabled();
+    expect(unknownThresholdField.value).toBe('0.1');
+    expect(unknownThresholdField).toBeDisabled();
+    expect(downtimeThresholdField.value).toBe('0.1');
+    expect(downtimeThresholdField).toBeDisabled();
+
+    expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
   })
 
@@ -939,7 +1121,7 @@ describe('Tests for reports changeview', () => {
     expect(card_groups.getByText('nordugrid-arc')).toBeInTheDocument()
     await selectEvent.select(selectExtensionValue, 'ARC-CE')
 
-    await selectEvent.select(card_groups.getByText('dirac-durham'), 'IRISOPS-IAM');
+    await selectEvent.select(card_groups.getByText('dirac-durham'), 'RU-SARFTI');
 
     fireEvent.click(card_endpoints.getByTestId(/removeTag-0/i));
     fireEvent.click(card_endpoints.getByText(/add new extension/i))
@@ -1076,6 +1258,11 @@ describe('Tests for reports changeview', () => {
             name: "SITES",
             value: "IRISOPS-IAM",
             context: "argo.group.filter.fields"
+          },
+          {
+            name: "SITES",
+            value: "RU-SARFTI",
+            context: "argo.group.filter.fields"
           }
         ],
         topology_schema: {
@@ -1160,7 +1347,7 @@ describe('Tests for reports changeview', () => {
     expect(card_groups.getByText('nordugrid-arc')).toBeInTheDocument()
     await selectEvent.select(selectExtensionValue, 'ARC-CE')
 
-    await selectEvent.select(card_groups.getByText('dirac-durham'), 'IRISOPS-IAM');
+    await selectEvent.select(card_groups.getByText('dirac-durham'), 'RU-SARFTI');
 
     fireEvent.click(card_endpoints.getByTestId(/removeTag-0/i));
     fireEvent.click(card_endpoints.getByText(/add new extension/i))
@@ -1291,6 +1478,11 @@ describe('Tests for reports changeview', () => {
           {
             name: "SITES",
             value: "IRISOPS-IAM",
+            context: "argo.group.filter.fields"
+          },
+          {
+            name: "SITES",
+            value: "RU-SARFTI",
             context: "argo.group.filter.fields"
           }
         ],
@@ -1372,7 +1564,7 @@ describe('Tests for reports changeview', () => {
     expect(card_groups.getByText('nordugrid-arc')).toBeInTheDocument()
     await selectEvent.select(selectExtensionValue, 'ARC-CE')
 
-    await selectEvent.select(card_groups.getByText('dirac-durham'), 'IRISOPS-IAM');
+    await selectEvent.select(card_groups.getByText('dirac-durham'), 'RU-SARFTI');
 
     fireEvent.click(card_endpoints.getByTestId(/removeTag-0/i));
     fireEvent.click(card_endpoints.getByText(/add new extension/i))
@@ -1503,6 +1695,11 @@ describe('Tests for reports changeview', () => {
           {
             name: "SITES",
             value: "IRISOPS-IAM",
+            context: "argo.group.filter.fields"
+          },
+          {
+            name: "SITES",
+            value: "RU-SARFTI",
             context: "argo.group.filter.fields"
           }
         ],
@@ -1589,7 +1786,7 @@ describe('Tests for reports changeview', () => {
     expect(card_groups.getByText('nordugrid-arc')).toBeInTheDocument()
     await selectEvent.select(selectExtensionValue, 'ARC-CE')
 
-    await selectEvent.select(card_groups.getByText('dirac-durham'), 'IRISOPS-IAM');
+    await selectEvent.select(card_groups.getByText('dirac-durham'), 'RU-SARFTI');
 
     fireEvent.click(card_endpoints.getByTestId(/removeTag-0/i));
     fireEvent.click(card_endpoints.getByText(/add new extension/i))
@@ -1720,6 +1917,11 @@ describe('Tests for reports changeview', () => {
           {
             name: "SITES",
             value: "IRISOPS-IAM",
+            context: "argo.group.filter.fields"
+          },
+          {
+            name: "SITES",
+            value: "RU-SARFTI",
             context: "argo.group.filter.fields"
           }
         ],
@@ -1810,7 +2012,7 @@ describe('Tests for reports changeview', () => {
     expect(card_groups.getByText('nordugrid-arc')).toBeInTheDocument()
     await selectEvent.select(selectExtensionValue, 'ARC-CE')
 
-    await selectEvent.select(card_groups.getByText('dirac-durham'), 'IRISOPS-IAM');
+    await selectEvent.select(card_groups.getByText('dirac-durham'), 'RU-SARFTI');
 
     fireEvent.click(card_endpoints.getByTestId(/removeTag-0/i));
     fireEvent.click(card_endpoints.getByText(/add new extension/i))
@@ -1941,6 +2143,11 @@ describe('Tests for reports changeview', () => {
           {
             name: "SITES",
             value: "IRISOPS-IAM",
+            context: "argo.group.filter.fields"
+          },
+          {
+            name: "SITES",
+            value: "RU-SARFTI",
             context: "argo.group.filter.fields"
           }
         ],
