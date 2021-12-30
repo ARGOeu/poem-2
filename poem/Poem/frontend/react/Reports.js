@@ -361,7 +361,7 @@ const TopologyTagList = ({ part, fieldName, tagsState, setTagsState, tagsAll, ad
                         data-testid={`${fieldName}.${index}.name`}
                         className='form-control'
                         disabled={true}
-                        value={form.values[fieldName].length > 0 ? form.values[fieldName][index].name : ''}
+                        value={form.values[fieldName][index].name}
                       />
                     :
                       <Field
@@ -390,7 +390,7 @@ const TopologyTagList = ({ part, fieldName, tagsState, setTagsState, tagsAll, ad
                         data-testid={`${fieldName}.${index}.value`}
                         className='form-control'
                         disabled={true}
-                        value={isMultiValuesTags(tagsInitValues('value', tags, true)) ? form.values[fieldName][index].value.replace(new RegExp(' ', 'g'), ', ')  : form.values[fieldName].length > 0 ? form.values[fieldName][index].value : '' }
+                        value={preProcessTagValue(tags.value.replace(new RegExp(' ', 'g'), ', '))}
                       />
                     :
                       <Field

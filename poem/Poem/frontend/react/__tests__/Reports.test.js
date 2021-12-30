@@ -1038,9 +1038,9 @@ describe('Tests for reports changeview', () => {
     expect(card_groups.getByLabelText('Sites:').value).toBe('dirac-durham, IRISOPS-IAM')
 
     expect(card_endpoints.getByTestId('endpointsTags.0.name').value).toBe('production')
-    expect(card_endpoints.getByTestId('endpointsTags.0.value').value).toBe('1')
+    expect(card_endpoints.getByTestId('endpointsTags.0.value').value).toBe('yes')
     expect(card_endpoints.getByTestId('endpointsTags.1.name').value).toBe('monitored')
-    expect(card_endpoints.getByTestId('endpointsTags.1.value').value).toBe('1')
+    expect(card_endpoints.getByTestId('endpointsTags.1.value').value).toBe('yes')
     expect(card_endpoints.getByTestId('endpointsTags.2.name').value).toBe('scope')
     expect(card_endpoints.getByTestId('endpointsTags.2.value').value).toBe('EGI*')
 
