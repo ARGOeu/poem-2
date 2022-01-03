@@ -23,7 +23,7 @@ import {
   FormText,
   Button,
   InputGroup,
-  InputGroupAddon
+  InputGroupText
 } from "reactstrap";
 import * as Yup from 'yup';
 import './Users.css';
@@ -76,7 +76,7 @@ const CommonUser = ({add, ...props}) =>
           <Row>
             <Col md={6}>
               <InputGroup>
-                <InputGroupAddon addonType='prepend'>Username</InputGroupAddon>
+                <InputGroupText>Username</InputGroupText>
                 <Field
                   type="text"
                   name="username"
@@ -91,7 +91,7 @@ const CommonUser = ({add, ...props}) =>
           <Row>
             <Col md={6}>
               <InputGroup>
-                <InputGroupAddon addonType='prepend'>Password</InputGroupAddon>
+                <InputGroupText>Password</InputGroupText>
                 <Field
                   type="password"
                   name="password"
@@ -106,7 +106,7 @@ const CommonUser = ({add, ...props}) =>
           <Row>
             <Col md={6}>
               <InputGroup>
-                <InputGroupAddon addonType='prepend'>Confirm password</InputGroupAddon>
+                <InputGroupText>Confirm password</InputGroupText>
                 <Field
                   type='password'
                   name='confirm_password'
@@ -124,7 +124,7 @@ const CommonUser = ({add, ...props}) =>
           <Row>
             <Col md={6}>
               <InputGroup>
-                <InputGroupAddon addonType='prepend'>Username</InputGroupAddon>
+                <InputGroupText>Username</InputGroupText>
                 <Field
                   type="text"
                   name='username'
@@ -143,7 +143,7 @@ const CommonUser = ({add, ...props}) =>
       <Row>
         <Col md={6}>
           <InputGroup>
-            <InputGroupAddon addonType="prepend">First name</InputGroupAddon>
+            <InputGroupText>First name</InputGroupText>
             <Field
               type="text"
               name="first_name"
@@ -157,7 +157,7 @@ const CommonUser = ({add, ...props}) =>
       <Row>
         <Col md={6}>
           <InputGroup>
-            <InputGroupAddon addonType="prepend">Last name</InputGroupAddon>
+            <InputGroupText>Last name</InputGroupText>
             <Field
               type="text"
               name="last_name"
@@ -171,7 +171,7 @@ const CommonUser = ({add, ...props}) =>
       <Row>
         <Col md={6}>
           <InputGroup>
-            <InputGroupAddon addonType="prepend">Email</InputGroupAddon>
+            <InputGroupText>Email</InputGroupText>
             <Field
               type="text"
               name="email"
@@ -189,7 +189,7 @@ const CommonUser = ({add, ...props}) =>
             <Row>
               <Col md={6}>
                 <InputGroup>
-                  <InputGroupAddon addonType='prepend'>Last login</InputGroupAddon>
+                  <InputGroupText>Last login</InputGroupText>
                   <Field
                     type='text'
                     name='last_login'
@@ -203,7 +203,7 @@ const CommonUser = ({add, ...props}) =>
             <Row>
               <Col md={6}>
                 <InputGroup>
-                  <InputGroupAddon addonType='prepend'>Date joined</InputGroupAddon>
+                  <InputGroupText>Date joined</InputGroupText>
                   <Field
                     type='text'
                     name='date_joined'
@@ -807,7 +807,7 @@ export const UserChange = (props) => {
                         <Row>
                           <Col md={12}>
                             <InputGroup>
-                              <InputGroupAddon addonType='prepend'>distinguishedName</InputGroupAddon>
+                              <InputGroupText>distinguishedName</InputGroupText>
                               <Field
                                 type="text"
                                 name="subject"
@@ -824,7 +824,7 @@ export const UserChange = (props) => {
                         <Row>
                           <Col md={8}>
                             <InputGroup>
-                              <InputGroupAddon addonType="prepend">eduPersonUniqueId</InputGroupAddon>
+                              <InputGroupText>eduPersonUniqueId</InputGroupText>
                               <Field
                                 type="text"
                                 name="egiid"
@@ -841,7 +841,7 @@ export const UserChange = (props) => {
                         <Row>
                           <Col md={6}>
                             <InputGroup>
-                              <InputGroupAddon addonType="prepend">displayName</InputGroupAddon>
+                              <InputGroupText>displayName</InputGroupText>
                               <Field
                                 type="text"
                                 name="displayname"
@@ -1079,7 +1079,7 @@ export const ChangePassword = (props) => {
               <Row>
                 <Col md={6}>
                   <InputGroup>
-                    <InputGroupAddon addonType='prepend'>New password</InputGroupAddon>
+                    <InputGroupText>New password</InputGroupText>
                     <Field
                       type="password"
                       name="password"
@@ -1094,7 +1094,7 @@ export const ChangePassword = (props) => {
               <Row>
                 <Col md={6}>
                   <InputGroup>
-                    <InputGroupAddon addonType='prepend'>Confirm password</InputGroupAddon>
+                    <InputGroupText>Confirm password</InputGroupText>
                     <Field
                       type='password'
                       name='confirm_password'

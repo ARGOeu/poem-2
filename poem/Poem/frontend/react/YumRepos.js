@@ -21,7 +21,7 @@ import {
   Col,
   Button,
   InputGroup,
-  InputGroupAddon
+  InputGroupText
 } from 'reactstrap';
 import * as Yup from 'yup';
 import { useQuery, useQueryClient, useMutation } from 'react-query';
@@ -294,7 +294,7 @@ export const YumRepoComponent = (props) => {
                 <Row>
                   <Col md={6}>
                     <InputGroup>
-                      <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
+                      <InputGroupText>Name</InputGroupText>
                       <Field
                         type='text'
                         name='name'
@@ -311,7 +311,7 @@ export const YumRepoComponent = (props) => {
                   </Col>
                   <Col md={2}>
                     <InputGroup>
-                      <InputGroupAddon addonType='prepend'>Tag</InputGroupAddon>
+                      <InputGroupText>Tag</InputGroupText>
                       {
                         disabled ?
                           <Field

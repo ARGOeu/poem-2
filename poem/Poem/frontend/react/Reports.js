@@ -28,7 +28,7 @@ import {
   CardHeader,
   CardTitle,
   InputGroup,
-  InputGroupAddon,
+  InputGroupText,
   FormText,
   Label
 } from 'reactstrap';
@@ -1344,7 +1344,7 @@ export const ReportsComponent = (props) => {
                 <Row className='align-items-center'>
                   <Col md={6}>
                     <InputGroup>
-                      <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
+                      <InputGroupText>Name</InputGroupText>
                       <Field
                         type='text'
                         name='name'
@@ -1392,7 +1392,7 @@ export const ReportsComponent = (props) => {
                 <Row className='mt-4'>
                   <Col md={3}>
                     <InputGroup>
-                      <InputGroupAddon addonType='prepend'>Group</InputGroupAddon>
+                      <InputGroupText>Group</InputGroupText>
                       {
                         publicView ?
                           <Field

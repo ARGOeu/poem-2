@@ -22,7 +22,8 @@ import {
   Col,
   Button,
   InputGroup,
-  InputGroupAddon } from 'reactstrap';
+  InputGroupText
+} from 'reactstrap';
 import { Formik, Form, Field, useFormikContext, useField } from 'formik';
 import * as Yup from 'yup';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
@@ -96,7 +97,7 @@ const ProbeForm = ({
       <Row>
         <Col md={6}>
           <InputGroup>
-            <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
+            <InputGroupText>Name</InputGroupText>
             <Field
               type='text'
               data-testid='name'
@@ -113,7 +114,7 @@ const ProbeForm = ({
         </Col>
         <Col md={2}>
           <InputGroup>
-            <InputGroupAddon addonType='prepend'>Version</InputGroupAddon>
+            <InputGroupText>Version</InputGroupText>
             <VersionField
               type='text'
               data-testid='version'
@@ -148,7 +149,7 @@ const ProbeForm = ({
           {
             (isTenantSchema || isHistory || publicView) ?
               <InputGroup>
-                <InputGroupAddon addonType='prepend'>Package</InputGroupAddon>
+                <InputGroupText>Package</InputGroupText>
                 <Field
                   type='text'
                   name='pkg'
@@ -179,7 +180,7 @@ const ProbeForm = ({
       <Row className='mt-4 mb-3 align-items-top'>
         <Col md={8}>
           <InputGroup>
-            <InputGroupAddon addonType='prepend'>Repository</InputGroupAddon>
+            <InputGroupText>Repository</InputGroupText>
             {
               (isTenantSchema || isHistory || publicView) ?
                 <Field
@@ -206,7 +207,7 @@ const ProbeForm = ({
       <Row className='mb-3 align-items-top'>
         <Col md={8}>
           <InputGroup>
-            <InputGroupAddon addonType='prepend'>Documentation</InputGroupAddon>
+            <InputGroupText>Documentation</InputGroupText>
             {
               (isTenantSchema || isHistory || publicView) ?
                 <Field

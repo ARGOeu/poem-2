@@ -31,7 +31,7 @@ import {
   PopoverBody,
   PopoverHeader,
   InputGroup,
-  InputGroupAddon,
+  InputGroupText,
   ButtonToolbar,
   Badge
 } from 'reactstrap';
@@ -796,7 +796,7 @@ export const MetricForm =
           <Row className='mb-3'>
             <Col md={6}>
               <InputGroup>
-                <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
+                <InputGroupText>Name</InputGroupText>
                 <Field
                   type='text'
                   name='name'
@@ -813,7 +813,7 @@ export const MetricForm =
             </Col>
             <Col md={4} className='mt-1'>
               <InputGroup>
-                <InputGroupAddon addonType='prepend'>Type</InputGroupAddon>
+                <InputGroupText>Type</InputGroupText>
                 {
                   (isTenantSchema || isHistory || publicView) ?
                     <Field
@@ -889,7 +889,7 @@ export const MetricForm =
               {
                 props.values.type === 'Passive' ?
                   <InputGroup>
-                    <InputGroupAddon addonType='prepend'>Probe</InputGroupAddon>
+                    <InputGroupText>Probe</InputGroupText>
                     <input
                       type='text'
                       className='form-control'
@@ -901,7 +901,7 @@ export const MetricForm =
                 :
                   (isHistory || isTenantSchema || publicView) ?
                     <InputGroup>
-                      <InputGroupAddon addonType='prepend'>Probe</InputGroupAddon>
+                      <InputGroupText>Probe</InputGroupText>
                       <Field
                         type='text'
                         name='probeversion'
@@ -961,7 +961,7 @@ export const MetricForm =
             </Col>
             <Col md={4} className='mt-1'>
               <InputGroup>
-                <InputGroupAddon addonType='prepend'>Package</InputGroupAddon>
+                <InputGroupText>Package</InputGroupText>
                 <Field
                   type='text'
                   className='form-control'
@@ -1036,7 +1036,7 @@ export const MetricForm =
               <Row className='mb-4'>
                 <Col md={3}>
                   <InputGroup>
-                    <InputGroupAddon addonType='prepend'>Group</InputGroupAddon>
+                    <InputGroupText>Group</InputGroupText>
                     {
                       (isHistory || publicView) ?
                         <Field

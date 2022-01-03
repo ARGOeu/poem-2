@@ -7,7 +7,7 @@ import {
   Row,
   Col,
   InputGroup,
-  InputGroupAddon,
+  InputGroupText,
   Card,
   CardText,
   CardGroup,
@@ -195,7 +195,7 @@ export const TenantChange = (props) => {
                 <Row>
                   <Col md={6}>
                     <InputGroup>
-                      <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
+                      <InputGroupText>Name</InputGroupText>
                       <Field
                         type='text'
                         name='name'
@@ -213,7 +213,7 @@ export const TenantChange = (props) => {
                 <Row>
                   <Col md={6}>
                     <InputGroup>
-                      <InputGroupAddon addonType='prepend'>Schema</InputGroupAddon>
+                      <InputGroupText>Schema</InputGroupText>
                       <Field
                         type='text'
                         name='schema'
@@ -228,7 +228,7 @@ export const TenantChange = (props) => {
                 <Row>
                   <Col md={6}>
                     <InputGroup>
-                      <InputGroupAddon addonType='prepend'>POEM URL</InputGroupAddon>
+                      <InputGroupText>POEM URL</InputGroupText>
                       <Field
                         type='text'
                         name='url'
@@ -243,7 +243,7 @@ export const TenantChange = (props) => {
                 <Row>
                   <Col md={6}>
                     <InputGroup>
-                      <InputGroupAddon addonType='prepend'>Created on</InputGroupAddon>
+                      <InputGroupText>Created on</InputGroupText>
                       <Field
                         type='text'
                         name='created_on'

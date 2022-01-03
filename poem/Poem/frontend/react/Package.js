@@ -22,7 +22,7 @@ import {
   Col,
   Button,
   InputGroup,
-  InputGroupAddon,
+  InputGroupText,
   Alert
 } from 'reactstrap';
 import { Formik, Form, Field } from 'formik';
@@ -466,7 +466,7 @@ export const PackageComponent = (props) => {
                 <Row className='align-items-center'>
                   <Col md={6}>
                     <InputGroup>
-                      <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
+                      <InputGroupText>Name</InputGroupText>
                       <Field
                         type='text'
                         name='name'
@@ -485,7 +485,7 @@ export const PackageComponent = (props) => {
                     <Row>
                       <Col md={12}>
                         <InputGroup>
-                          <InputGroupAddon addonType='prepend'>Version</InputGroupAddon>
+                          <InputGroupText>Version</InputGroupText>
                           {
                             disabled ?
                               <Field
@@ -551,7 +551,7 @@ export const PackageComponent = (props) => {
                     {
                       disabled ?
                         <InputGroup>
-                          <InputGroupAddon addonType='prepend'>CentOS 6 repo</InputGroupAddon>
+                          <InputGroupText>CentOS 6 repo</InputGroupText>
                           <Field
                             type='text'
                             className='form-control'
@@ -582,7 +582,7 @@ export const PackageComponent = (props) => {
                     {
                       disabled ?
                         <InputGroup>
-                          <InputGroupAddon addonType='prepend'>CentOS 7 repo</InputGroupAddon>
+                          <InputGroupText>CentOS 7 repo</InputGroupText>
                           <Field
                             type='text'
                             className='form-control'

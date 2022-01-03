@@ -19,7 +19,8 @@ import {
   Col,
   Button,
   InputGroup,
-  InputGroupAddon} from 'reactstrap';
+  InputGroupText
+} from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
 import Select from 'react-select';
@@ -251,7 +252,7 @@ export const GroupChange = (props) => {
                 <Row>
                   <Col md={6}>
                     <InputGroup>
-                      <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
+                      <InputGroupText>Name</InputGroupText>
                       <Field
                         type='text'
                         name='name'

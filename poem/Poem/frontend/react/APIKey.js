@@ -22,7 +22,7 @@ import {
   FormText,
   Button,
   InputGroup,
-  InputGroupAddon,
+  InputGroupText
 } from 'reactstrap';
 import { faClipboard } from '@fortawesome/free-solid-svg-icons';
 import { useQuery, useQueryClient, useMutation } from 'react-query';
@@ -305,7 +305,7 @@ export const APIKeyChange = (props) => {
                 <Row className="no-gutters">
                   <Col sm={6}>
                     <InputGroup>
-                      <InputGroupAddon addonType='prepend'>Token</InputGroupAddon>
+                      <InputGroupText>Token</InputGroupText>
                       <Field
                         type='text'
                         name='token'
