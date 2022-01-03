@@ -34,9 +34,9 @@ import {
   Table,
   Pagination,
   PaginationItem,
-  PaginationLink,
+  PaginationLink
 } from 'reactstrap';
-import {Link} from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import ArgoLogo from './argologo_color.svg';
 import ArgoLogoAnim from './argologo_anim.svg';
 import EULogo from './eu.png';
@@ -66,7 +66,8 @@ import {
   faTasks,
   faUser,
   faWrench,
-  faNewspaper} from '@fortawesome/free-solid-svg-icons';
+  faNewspaper
+} from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
 import { ErrorMessage, Field } from 'formik';
 import { Backend } from './DataManager';
@@ -1357,11 +1358,9 @@ export const DefaultColumnFilter = ({column: { filterValue, setFilter }}) => {
         value={filterValue || ''}
         onChange={e => {setFilter(e.target.value || undefined)}}
       />
-      <div className="input-group-append">
-        <span className="input-group-text" id="basic-addon">
-          <FontAwesomeIcon icon={faSearch}/>
-        </span>
-      </div>
+      <span className="input-group-text" id="basic-addon">
+        <FontAwesomeIcon icon={faSearch}/>
+      </span>
     </div>
   )
 };
@@ -1372,7 +1371,7 @@ export const SelectColumnFilter = ({column: { filterValue, setFilter, filterList
 
   return (
     <select
-      className='form-control custom-select'
+      className='form-control form-select'
       style={{width: '100%'}}
       value={filterValue}
       onChange={e => setFilter(e.target.value || undefined)}
@@ -1482,59 +1481,55 @@ export function BaseArgoTable({ columns, data, resourcename, page_size, filter=f
 
   return (
     <>
-      <Row>
-        <Col>
-          <Table className='table table-bordered table-hover'>
-            <thead className='table-active align-middle text-center'>
-              {
-                headerGroups.map((headerGroup, thi) => (
-                  <React.Fragment key={thi}>
-                    <tr>
-                      {
-                        headerGroup.headers.map((column, tri) => {
+      <Table className='table table-bordered table-hover'>
+        <thead className='table-active align-middle text-center'>
+          {
+            headerGroups.map((headerGroup, thi) => (
+              <React.Fragment key={thi}>
+                <tr>
+                  {
+                    headerGroup.headers.map((column, tri) => {
+                      return (
+                        <th style={{width: column.column_width}} className='p-1 m-1' key={tri}>
+                          {column.render('Header')}
+                        </th>
+                      )
+                    })
+                  }
+                </tr>
+                {
+                  filter &&
+                    <tr className='p-0 m-0'>
+                      {headerGroup.headers.map((column, tri) => {
+                        if (tri === 0) {
+                          if (selectable)
+                            return (
+                              <th className="p-1 m-1 align-middle" key={tri + 11}>
+                                {column.render('Filter')}
+                              </th>
+                            )
+                          else
+                            return(
+                              <th className="p-1 m-1 align-middle" key={tri + 11}>
+                                <FontAwesomeIcon icon={faSearch}/>
+                              </th>
+                            )
+                        } else {
                           return (
-                            <th style={{width: column.column_width}} className='p-1 m-1' key={tri}>
-                              {column.render('Header')}
+                            <th className="p-1 m-1" key={tri + 11}>
+                              {column.canFilter ? column.render('Filter') : null}
                             </th>
                           )
-                        })
-                      }
+                        }
+                      })}
                     </tr>
-                    {
-                      filter &&
-                        <tr className='p-0 m-0'>
-                          {headerGroup.headers.map((column, tri) => {
-                            if (tri === 0) {
-                              if (selectable)
-                                return (
-                                  <th className="p-1 m-1 align-middle" key={tri + 11}>
-                                    {column.render('Filter')}
-                                  </th>
-                                )
-                              else
-                                return(
-                                  <th className="p-1 m-1 align-middle" key={tri + 11}>
-                                    <FontAwesomeIcon icon={faSearch}/>
-                                  </th>
-                                )
-                            } else {
-                              return (
-                                <th className="p-1 m-1" key={tri + 11}>
-                                  {column.canFilter ? column.render('Filter') : null}
-                                </th>
-                              )
-                            }
-                          })}
-                        </tr>
-                    }
-                  </React.Fragment>
-                ))
-              }
-            </thead>
-            {table_body}
-          </Table>
-        </Col>
-      </Row>
+                }
+              </React.Fragment>
+            ))
+          }
+        </thead>
+        {table_body}
+      </Table>
       <Row>
         <Col className='d-flex justify-content-center'>
           <Pagination>
