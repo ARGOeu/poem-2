@@ -1555,7 +1555,7 @@ export function BaseArgoTable({ columns, data, resourcename, page_size, filter=f
             <PaginationItem className='pl-2'>
               <select
                 style={{width: '180px'}}
-                className='custom-select text-primary'
+                className='form-select text-primary'
                 value={pageSize}
                 onChange={e => setPageSize(Number(e.target.value))}
               >
