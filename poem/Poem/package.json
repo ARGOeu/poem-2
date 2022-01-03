@@ -68,7 +68,7 @@
     "react-router-dom": "^5.1.2",
     "react-select-event": "^5.1.0",
     "react-table": "^7.5.0",
-    "reactstrap": "^8.1.1",
+    "reactstrap": "^9.0.1",
     "style-loader": "^0.23.1",
     "url-loader": "^1.1.2",
     "webpack": "^4.46.0",
