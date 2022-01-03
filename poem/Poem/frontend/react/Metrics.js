@@ -17,7 +17,8 @@ import {
   DefaultColumnFilter,
   SelectColumnFilter,
   BaseArgoTable,
-  CustomErrorMessage
+  CustomErrorMessage,
+  CustomReactSelect
  } from './UIElements';
 import { Formik, Form, Field, FieldArray } from 'formik';
 import {
@@ -828,7 +829,7 @@ export const MetricForm =
                     <Field
                       component='select'
                       name='type'
-                      className='form-control custom-select'
+                      className='form-control form-select'
                       id='mtype'
                       data-testid='mtype'
                       onChange={e => {
@@ -1047,18 +1048,18 @@ export const MetricForm =
                           disabled={true}
                         />
                       :
-                        <Field
-                          component='select'
-                          name='group'
-                          data-testid='group'
-                          className='form-control custom-select'
-                        >
-                          {
-                            groups.map((name, i) =>
-                              <option key={i} value={name}>{name}</option>
-                            )
-                          }
-                        </Field>
+                        <div className='react-select form-control p-0'>
+                          <CustomReactSelect
+                            name='group'
+                            closeMenuOnSelect={ true }
+                            isMulti={ false }
+                            isClearable={ false }
+                            inputgroup={ true }
+                            options={ groups.map((name) => new Object({ label: name, value: name })) }
+                            value={ props.values.group ? { label: props.values.group, value: props.values.group } : undefined }
+                            onChange={ e => props.setFieldValue('group', e.value) }
+                          />
+                        </div>
                     }
                   </InputGroup>
                   <FormText color='muted'>
