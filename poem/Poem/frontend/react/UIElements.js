@@ -162,10 +162,10 @@ export const CustomReactSelect = ({...props}) => {
   const customStyles = {
     control: (provided,  state) => ({
       ...provided,
-      margin: 0,
+      margin: props.inputgroup ? '-1px' : 0,
       backgroundColor: props.isDisabled ? '#e9ecef' : '#fff',
       overflow: 'visible',
-      borderRadius: '.25rem',
+      borderRadius: props.inputgroup ? '0 .25rem .25rem 0' : '.25rem',
       fontWeight: 400,
       backgroundClip: 'padding-box',
       textShadow: 'none',
