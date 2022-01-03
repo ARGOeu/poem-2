@@ -711,20 +711,20 @@ const InnerFooter = ({ termsLink, privacyLink, border=false, publicPage=false}) 
       <p className={`text-center ${publicPage ? 'mb-0' : 'mb-0 pb-1'}`}>
         <small>
           <strong>ARGO POEM</strong> is a service jointly developed and maintained by &nbsp;
-          <a href="http://www.cnrs.fr/" title="Centre national de la recherche scientifique" style={{textDecoration: 'none'}}>CNRS</a>, &nbsp;
-          <a href="https://grnet.gr/" title="Greek Research and Technology Network" style={{textDecoration: 'none'}}>GRNET</a> and &nbsp;
-          <a href="http://www.srce.unizg.hr/" title="University computing centre" style={{textDecoration: 'none'}}>SRCE</a>&nbsp;
-          co-funded by <a href="https://www.eosc-hub.eu" title="EOSC-Hub" style={{textDecoration: 'none'}}>EOSC-Hub</a> and &nbsp;
-          <a href="http://www.egi.eu/" title="EGI.eu" style={{textDecoration: 'none'}}>EGI.eu</a>
+          <a href="http://www.cnrs.fr/" title="Centre national de la recherche scientifique">CNRS</a>, &nbsp;
+          <a href="https://grnet.gr/" title="Greek Research and Technology Network">GRNET</a> and &nbsp;
+          <a href="http://www.srce.unizg.hr/" title="University computing centre">SRCE</a>&nbsp;
+          co-funded by <a href="https://www.eosc-hub.eu" title="EOSC-Hub">EOSC-Hub</a> and &nbsp;
+          <a href="http://www.egi.eu/" title="EGI.eu">EGI.eu</a>
         </small>
       </p>
       {
         publicPage &&
         <div className="text-center mb-0 pt-0">
           <small>
-            <a href={termsLink} target="_blank" rel="noopener noreferrer" title="Terms" style={{textDecoration: 'none'}}>Terms</a>, &nbsp;
-            <a href='#' title="Cookie Policies" onClick={toggle} style={{textDecoration: 'none'}}>Cookie Policies</a>, &nbsp;
-            <a title='Privacy Policy' href={privacyLink} target='_blank' rel='noopener noreferrer' style={{textDecoration: 'none'}}>Privacy Policy</a>
+            <a href={termsLink} target="_blank" rel="noopener noreferrer" title="Terms">Terms</a>, &nbsp;
+            <a href='#' title="Cookie Policies" onClick={toggle}>Cookie Policies</a>, &nbsp;
+            <a title='Privacy Policy' href={privacyLink} target='_blank' rel='noopener noreferrer'>Privacy Policy</a>
           </small>
           <Modal isOpen={modal} toggle={toggle} size="lg">
             <ModalBody className="p-0">
