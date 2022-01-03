@@ -271,11 +271,9 @@ export const DropDown = ({field, data=[], prefix="", class_name="", isnew=false,
 export const SearchField = ({field, ...rest}) =>
   <div className="input-group">
     <input type="text" placeholder="Search" {...field} {...rest}/>
-    <div className="input-group-append">
-      <span className="input-group-text" id="basic-addon">
-        <FontAwesomeIcon icon={faSearch}/>
-      </span>
-    </div>
+    <span className="input-group-text" id="basic-addon">
+      <FontAwesomeIcon icon={faSearch}/>
+    </span>
   </div>
 
 
