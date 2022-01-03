@@ -16,7 +16,7 @@ import {
   FormGroup,
   FormText,
   InputGroup,
-  InputGroupAddon,
+  InputGroupText,
   Label,
   Modal,
   ModalBody,
@@ -1131,8 +1131,8 @@ export const HistoryComponent = (props) => {
                           `${compareUrl}/compare/${compare1}/${compare2}`,
                       )
                       }
-                    >
-                      Compare
+                  >
+                    Compare
                   </Button>
                 </th>
                 }
@@ -1252,7 +1252,7 @@ export const ProfileMainInfo = ({errors, grouplist=undefined, description=undefi
       <Row>
         <Col md={6}>
           <InputGroup>
-            <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
+            <InputGroupText>Name</InputGroupText>
             <Field
             type='text'
             name='name'
@@ -1261,10 +1261,7 @@ export const ProfileMainInfo = ({errors, grouplist=undefined, description=undefi
             disabled={!addview}
           />
           </InputGroup>
-          {
-          errors.name &&
-            FancyErrorMessage(errors.name)
-        }
+          <CustomErrorMessage name='name' />
           <FormText color='text-muted'>
             {`Name of ${profiletype} profile`}
           </FormText>
@@ -1291,36 +1288,33 @@ export const ProfileMainInfo = ({errors, grouplist=undefined, description=undefi
       <Row className='mt-4'>
         <Col md={3}>
           <InputGroup>
-            <InputGroupAddon addonType='prepend'>Group</InputGroupAddon>
+            <InputGroupText>Group</InputGroupText>
             {
-            fieldsdisable ?
-              <Field
-                type='text'
-                name='groupname'
-                data-testid='groupname'
-                className='form-control'
-                disabled={true}
-              />
-            :
-              <Field
-                name='groupname'
-                data-testid='groupname'
-                component='select'
-                className={`form-control custom-select ${errors.groupname && 'border-danger'}`}
-              >
-                <option key={0} value='' hidden color='text-muted'>Select group</option>
-                {
-                  grouplist.map((group, i) =>
-                    <option key={i + 1} value={group}>{group}</option>
-                  )
-                }
-              </Field>
+              fieldsdisable ?
+                <Field
+                  type='text'
+                  name='groupname'
+                  data-testid='groupname'
+                  className='form-control'
+                  disabled={true}
+                />
+              :
+                <Field
+                  name='groupname'
+                  data-testid='groupname'
+                  component='select'
+                  className={`form-control custom-select ${errors.groupname && 'border-danger'}`}
+                >
+                  <option key={0} value='' hidden color='text-muted'>Select group</option>
+                  {
+                    grouplist.map((group, i) =>
+                      <option key={i + 1} value={group}>{group}</option>
+                    )
+                  }
+                </Field>
           }
           </InputGroup>
-          {
-          errors.groupname &&
-            FancyErrorMessage(errors.groupname)
-        }
+          <CustomErrorMessage name='groupname' />
           <FormText color='muted'>
             {`${profiletype.charAt(0).toUpperCase() + profiletype.slice(1)} profile is member of given group.`}
           </FormText>
