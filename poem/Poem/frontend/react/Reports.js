@@ -1403,19 +1403,25 @@ export const ReportsComponent = (props) => {
                             disabled={true}
                           />
                         :
-                          <Field
-                            name='groupname'
-                            data-testid='groupname'
-                            component='select'
-                            className={`form-control custom-select`}
-                          >
-                            <option key={0} value='' hidden color='text-muted'>Select group</option>
-                            {
-                              grouplist.map((group, i) =>
-                                <option key={i + 1} value={group}>{group}</option>
-                              )
-                            }
-                          </Field>
+                          <div className='react-select form-control p-0'>
+                            <CustomReactSelect
+                              name='groupname'
+                              closeMenuOnSelect={ true }
+                              isMulti={ false }
+                              isClearable= { false }
+                              options={
+                                grouplist.map((group) => new Object({
+                                  label: group, value: group
+                                }))
+                               }
+                               value={
+                                 props.values.groupname ?
+                                  { label: props.values.groupname, value: props.values.groupname }
+                                  : undefined
+                               }
+                               onChange={ e => props.setFieldValue('groupname', e.value) }
+                            />
+                          </div>
                       }
                     </InputGroup>
                     <CustomErrorMessage name='groupname' />

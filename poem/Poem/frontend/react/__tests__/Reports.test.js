@@ -849,7 +849,7 @@ describe('Tests for reports changeview', () => {
     const nameField = screen.getByTestId('name');
     const disabledField = screen.getByLabelText(/disabled/i);
     const descriptionField = screen.getByLabelText(/description/i);
-    const groupField = screen.getByTestId('groupname');
+    const groupField = screen.getByText('ARGO');
     const topologyTypeField = screen.getByTestId('topologyType');
     const availabilityThresholdField = screen.getByLabelText(/availability/i);
     const reliabilityThresholdField = screen.getByLabelText(/reliability/i);
@@ -862,13 +862,16 @@ describe('Tests for reports changeview', () => {
     expect(disabledField.checked).toBeFalsy();
     expect(descriptionField.value).toBe('Critical report');
     expect(descriptionField).toBeEnabled();
-    expect(groupField.value).toBe('ARGO')
     expect(groupField).toBeEnabled();
+
+    expect(screen.queryByText('TEST')).not.toBeInTheDocument()
+    selectEvent.openMenu(groupField)
+    expect(screen.getByText('TEST')).toBeInTheDocument()
 
     const metricProfileField = screen.getByText('ARGO_MON_CRITICAL')
     const aggrProfileField = screen.getByText('critical')
     const operationsProfileField = screen.getByText('egi_ops')
-    const thresholdsProfileField = screen.getAllByText(/select/i)[1]
+    const thresholdsProfileField = screen.getAllByText(/select/i)[0]
 
     expect(metricProfileField).toBeInTheDocument()
     expect(metricProfileField).toBeEnabled()
@@ -1171,12 +1174,13 @@ describe('Tests for reports changeview', () => {
       expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
     })
 
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
+    await selectEvent.select(screen.getByText('ARGO'), 'TEST')
+
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'More elaborate description of the critical report.' } })
 
     await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'OPS_MONITOR_RHEL7')
     await selectEvent.select(screen.getByText('critical'), 'ops-mon-critical')
-    await selectEvent.select(screen.getAllByText(/select/i)[1], 'TEST_PROFILE')
+    await selectEvent.select(screen.getAllByText(/select/i)[0], 'TEST_PROFILE')
 
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
@@ -1418,7 +1422,8 @@ describe('Tests for reports changeview', () => {
       expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
     })
 
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
+    await selectEvent.select(screen.getByText('ARGO'), 'TEST')
+
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'More elaborate description of the critical report.' } })
 
     await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'OPS_MONITOR_RHEL7')
@@ -1655,7 +1660,8 @@ describe('Tests for reports changeview', () => {
       expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
     })
 
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
+    await selectEvent.select(screen.getByText('ARGO'), 'TEST')
+
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'More elaborate description of the critical report.' } })
 
     await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'OPS_MONITOR_RHEL7')
@@ -1897,7 +1903,8 @@ describe('Tests for reports changeview', () => {
       expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
     })
 
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
+    await selectEvent.select(screen.getByText('ARGO'), 'TEST')
+
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'More elaborate description of the critical report.' } })
 
     await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'OPS_MONITOR_RHEL7')
@@ -2143,7 +2150,8 @@ describe('Tests for reports changeview', () => {
       expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
     })
 
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
+    await selectEvent.select(screen.getByText('ARGO'), 'TEST')
+
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'More elaborate description of the critical report.' } })
 
     await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'OPS_MONITOR_RHEL7')
@@ -2601,7 +2609,7 @@ describe('Tests for reports addview', () => {
     const nameField = screen.getByTestId('name');
     const disabledField = screen.getByLabelText(/disabled/i);
     const descriptionField = screen.getByLabelText(/description/i);
-    const groupField = screen.getByTestId('groupname');
+    const groupField = screen.getAllByText(/select/i)[0];
 
     const metricProfileField = screen.getAllByText(/select/i)[1]
     const aggrProfileField = screen.getAllByText(/select/i)[2]
@@ -2621,13 +2629,19 @@ describe('Tests for reports addview', () => {
     expect(disabledField.checked).toBeFalsy();
     expect(descriptionField.value).toBe('');
     expect(descriptionField).toBeEnabled();
-    expect(groupField.value).toBe('');
     expect(groupField).toBeEnabled();
 
     expect(metricProfileField).toBeEnabled();
     expect(aggrProfileField).toBeEnabled();
     expect(operationsProfileField).toBeEnabled();
     expect(thresholdsProfileField).toBeEnabled()
+
+    expect(screen.queryByText('ARGO')).not.toBeInTheDocument()
+    expect(screen.queryByText('TEST')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(groupField)
+    expect(screen.getByText('ARGO')).toBeInTheDocument()
+    expect(screen.getByText('TEST')).toBeInTheDocument()
 
     expect(screen.queryByText('ARGO_MON_CRITICAL')).not.toBeInTheDocument()
     expect(screen.queryByText('FEDCLOUD')).not.toBeInTheDocument()
@@ -2713,12 +2727,14 @@ describe('Tests for reports addview', () => {
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'OPS-MONITOR' } });
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'A/R report for Operations services.' } });
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
 
+    const groupField = screen.getAllByText(/select/i)[0]
     const metricProfile = screen.getAllByText(/select/i)[1]
     const aggregationProfile = screen.getAllByText(/select/i)[2]
     const operationsProfile = screen.getAllByText(/select/i)[3]
     const thresholdsProfile = screen.getAllByText(/select/i)[4]
+
+    await selectEvent.select(groupField, 'ARGO')
 
     await selectEvent.select(metricProfile, 'OPS_MONITOR_RHEL7')
     await selectEvent.select(aggregationProfile, 'ops-mon-critical')
@@ -2953,12 +2969,13 @@ describe('Tests for reports addview', () => {
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'OPS-MONITOR' } });
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'A/R report for Operations services.' } });
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
 
+    const groupField = screen.getAllByText(/select/i)[0]
     const metricProfile = screen.getAllByText(/select/i)[1]
     const aggregationProfile = screen.getAllByText(/select/i)[2]
     const operationsProfile = screen.getAllByText(/select/i)[3]
 
+    await selectEvent.select(groupField, 'ARGO')
     await selectEvent.select(metricProfile, 'OPS_MONITOR_RHEL7')
     await selectEvent.select(aggregationProfile, 'ops-mon-critical')
     await selectEvent.select(operationsProfile, 'egi_ops')
@@ -3092,12 +3109,13 @@ describe('Tests for reports addview', () => {
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'OPS-MONITOR' } });
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'A/R report for Operations services.' } });
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
 
+    const groupField = screen.getAllByText(/select/i)[0]
     const metricProfile = screen.getAllByText(/select/i)[1]
     const aggregationProfile = screen.getAllByText(/select/i)[2]
     const operationsProfile = screen.getAllByText(/select/i)[3]
 
+    await selectEvent.select(groupField, 'ARGO')
     await selectEvent.select(metricProfile, 'OPS_MONITOR_RHEL7')
     await selectEvent.select(aggregationProfile, 'ops-mon-critical')
     await selectEvent.select(operationsProfile, 'egi_ops')
@@ -3247,12 +3265,13 @@ describe('Tests for reports addview', () => {
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'OPS-MONITOR' } });
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'A/R report for Operations services.' } });
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
 
+    const groupField = screen.getAllByText(/select/i)[0]
     const metricProfile = screen.getAllByText(/select/i)[1]
     const aggregationProfile = screen.getAllByText(/select/i)[2]
     const operationsProfile = screen.getAllByText(/select/i)[3]
 
+    await selectEvent.select(groupField, 'ARGO')
     await selectEvent.select(metricProfile, 'OPS_MONITOR_RHEL7')
     await selectEvent.select(aggregationProfile, 'ops-mon-critical')
     await selectEvent.select(operationsProfile, 'egi_ops')
@@ -3408,12 +3427,13 @@ describe('Tests for reports addview', () => {
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'OPS-MONITOR' } });
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'A/R report for Operations services.' } });
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
 
+    const groupField = screen.getAllByText(/select/i)[0]
     const metricProfile = screen.getAllByText(/select/i)[1]
     const aggregationProfile = screen.getAllByText(/select/i)[2]
     const operationsProfile = screen.getAllByText(/select/i)[3]
 
+    await selectEvent.select(groupField, 'ARGO')
     await selectEvent.select(metricProfile, 'OPS_MONITOR_RHEL7')
     await selectEvent.select(aggregationProfile, 'ops-mon-critical')
     await selectEvent.select(operationsProfile, 'egi_ops')
