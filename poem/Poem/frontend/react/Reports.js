@@ -30,7 +30,8 @@ import {
   InputGroup,
   InputGroupText,
   FormText,
-  Label
+  Label,
+  Input
 } from 'reactstrap';
 import * as Yup from 'yup';
 import {
@@ -1359,18 +1360,24 @@ export const ReportsComponent = (props) => {
                     </FormText>
                   </Col>
                   <Col md={2}>
-                    <label>
-                      <Field
-                        type='checkbox'
-                        name='disabled'
-                        className='mr-1'
-                        disabled={publicView}
-                      />
-                      Disabled
-                    </label>
-                    <FormText color='muted'>
-                      Mark report as disabled.
-                    </FormText>
+                    <Row>
+                      <FormGroup check inline>
+                        <Input
+                          type='checkbox'
+                          id='disabled'
+                          name='disabled'
+                          disabled={publicView}
+                          onChange={e => props.setFieldValue('disabled', e.target.checked)}
+                          checked={props.values.disabled}
+                        />
+                        <Label check for='disabled'>Disabled</Label>
+                      </FormGroup>
+                    </Row>
+                    <Row>
+                      <FormText color='muted'>
+                        Mark report as disabled.
+                      </FormText>
+                    </Row>
                   </Col>
                 </Row>
                 <Row className='mt-3'>
