@@ -918,14 +918,20 @@ export const BaseArgoView = ({resourcename='', location=undefined,
                   <React.Fragment>
                     <h2 className="ml-3 mt-1 mb-4">{`Change ${resourcename}`}</h2>
                     <ButtonToolbar>
-                      { extra_button }
+                      <div className='p-1'>
+                        { extra_button }
+                      </div>
                       {
                           clone && !publicview &&
-                            <Link className="btn btn-secondary mr-2" to={location.pathname + "/clone"} role="button">Clone</Link>
+                            <div className='p-1'>
+                              <Link className="btn btn-secondary mr-2" to={location.pathname + "/clone"} role="button">Clone</Link>
+                            </div>
                       }
                       {
                           history && !publicview &&
-                            <Link className="btn btn-secondary" to={location.pathname + "/history"} role="button">History</Link>
+                            <div className='p-1'>
+                              <Link className="btn btn-secondary" to={location.pathname + "/history"} role="button">History</Link>
+                            </div>
                       }
                     </ButtonToolbar>
                   </React.Fragment>
