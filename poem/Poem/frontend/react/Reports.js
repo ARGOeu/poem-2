@@ -1406,9 +1406,7 @@ export const ReportsComponent = (props) => {
                           <div className='react-select form-control p-0'>
                             <CustomReactSelect
                               name='groupname'
-                              closeMenuOnSelect={ true }
-                              isMulti={ false }
-                              isClearable= { false }
+                              inputgroup={ true }
                               options={
                                 grouplist.map((group) => new Object({
                                   label: group, value: group
