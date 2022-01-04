@@ -326,13 +326,14 @@ const Service = ({service, operation, groupindex, groupnew, index, isnew,
 }
 
 
-const AggregationProfilesForm = ({ values, errors, historyview=false, addview=false, write_perm=false,
+const AggregationProfilesForm = ({ values, errors, setFieldValue, historyview=false, addview=false, write_perm=false,
   list_user_groups, logic_operations, endpoint_groups, list_id_metric_profiles }) =>
 (
   <>
     <ProfileMainInfo
       values={values}
       errors={errors}
+      setFieldValue={setFieldValue}
       fieldsdisable={historyview}
       grouplist={
         historyview ?

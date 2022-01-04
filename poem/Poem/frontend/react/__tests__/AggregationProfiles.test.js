@@ -12,6 +12,7 @@ import {
 import { QueryClientProvider, QueryClient, setLogger } from 'react-query';
 import { NotificationManager } from 'react-notifications';
 import useEvent from '@testing-library/user-event';
+import selectEvent from 'react-select-event';
 
 
 jest.mock('../DataManager', () => {
@@ -335,7 +336,6 @@ const mockAggregationVersions = [
 ];
 
 
-
 function renderListView(publicView=false) {
   const route = `/ui/${publicView ? 'public_' : ''}aggregationprofiles`;
   const history = createMemoryHistory({ initialEntries: [route] });
@@ -568,7 +568,7 @@ describe('Tests for aggregation profiles changeview', () => {
     })
 
     const nameField = screen.getByTestId('name');
-    const groupField = screen.getByTestId('groupname');
+    const groupField = screen.getByText('EGI');
     const metricOperation = screen.getByTestId('metric_operation_col').firstChild;
     const aggrOperation = screen.getByTestId('profile_operation_col').firstChild;
     const endpointGroup = screen.getByTestId('endpoint_group_col').firstChild;
@@ -577,8 +577,11 @@ describe('Tests for aggregation profiles changeview', () => {
 
     expect(nameField.value).toBe('TEST_PROFILE');
     expect(nameField).toBeDisabled();
-    expect(groupField.value).toBe('EGI');
     expect(groupField).toBeEnabled();
+
+    expect(screen.queryByText('ARGO')).not.toBeInTheDocument()
+    selectEvent.openMenu(groupField)
+    expect(screen.getByText('ARGO')).toBeInTheDocument()
 
     expect(metricOperation.value).toBe('AND');
     expect(metricOperation).toBeEnabled();
@@ -806,7 +809,7 @@ describe('Tests for aggregation profiles changeview', () => {
     })
 
     const nameField = screen.getByTestId('name');
-    const groupField = screen.getByTestId('groupname');
+    const groupField = screen.getByText('EGI');
     const metricOperation = screen.getByTestId('metric_operation_col').firstChild;
     const aggrOperation = screen.getByTestId('profile_operation_col').firstChild;
     const endpointGroup = screen.getByTestId('endpoint_group_col').firstChild;
@@ -815,7 +818,6 @@ describe('Tests for aggregation profiles changeview', () => {
 
     expect(nameField.value).toBe('TEST_PROFILE');
     expect(nameField).toBeDisabled();
-    expect(groupField.value).toBe('EGI');
     expect(groupField).toBeEnabled();
 
     expect(metricOperation.value).toBe('OR');
@@ -937,7 +939,7 @@ describe('Tests for aggregation profiles changeview', () => {
       expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change aggregation profile');
     })
 
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
+    await selectEvent.select(screen.getByText('EGI'), 'ARGO')
 
     fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'OR' } });
     fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'OR' } });
@@ -1027,7 +1029,7 @@ describe('Tests for aggregation profiles changeview', () => {
       expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change aggregation profile');
     })
 
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
+    await selectEvent.select(screen.getByText('EGI'), 'ARGO')
 
     fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'OR' } });
     fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'OR' } });
@@ -1139,7 +1141,7 @@ describe('Tests for aggregation profiles changeview', () => {
       expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change aggregation profile');
     })
 
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
+    await selectEvent.select(screen.getByText('EGI'), 'ARGO')
 
     fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'OR' } });
     fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'OR' } });
@@ -1256,7 +1258,7 @@ describe('Tests for aggregation profiles changeview', () => {
       expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change aggregation profile');
     })
 
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
+    await selectEvent.select(screen.getByText('EGI'), 'ARGO')
 
     fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'OR' } });
     fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'OR' } });
@@ -1424,7 +1426,7 @@ describe('Tests for aggregation profiles changeview', () => {
       expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change aggregation profile');
     })
 
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
+    await selectEvent.select(screen.getByText('EGI'), 'ARGO')
 
     fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'OR' } });
     fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'OR' } });
@@ -1591,7 +1593,7 @@ describe('Tests for aggregation profiles changeview', () => {
       expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change aggregation profile');
     })
 
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
+    await selectEvent.select(screen.getByText('EGI'), 'ARGO')
 
     fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'OR' } });
     fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'OR' } });
@@ -2146,7 +2148,7 @@ describe('Tests for aggregation profile addview', () => {
     })
 
     const nameField = screen.getByTestId('name');
-    const groupField = screen.getByTestId('groupname');
+    const groupField = screen.getAllByText(/select/i)[0];
     const metricOperation = screen.getByTestId('metric_operation_col').firstChild;
     const aggrOperation = screen.getByTestId('profile_operation_col').firstChild;
     const endpointGroup = screen.getByTestId('endpoint_group_col').firstChild;
@@ -2155,8 +2157,13 @@ describe('Tests for aggregation profile addview', () => {
 
     expect(nameField.value).toBe('');
     expect(nameField).toBeEnabled();
-    expect(groupField.value).toBe('');
     expect(groupField).toBeEnabled();
+
+    expect(screen.queryByText('EGI')).not.toBeInTheDocument()
+    expect(screen.queryByText('ARGO')).not.toBeInTheDocument()
+    selectEvent.openMenu(groupField)
+    expect(screen.getByText('EGI')).toBeInTheDocument()
+    expect(screen.getByText('ARGO')).toBeInTheDocument()
 
     expect(metricOperation.value).toBe('');
     expect(metricOperation).toBeEnabled();
@@ -2199,7 +2206,8 @@ describe('Tests for aggregation profile addview', () => {
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
+
+    await selectEvent.select(screen.getAllByText(/select/i)[0], 'ARGO')
 
     fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'AND' } });
     fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'AND' } })
@@ -2333,7 +2341,8 @@ describe('Tests for aggregation profile addview', () => {
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
+
+    await selectEvent.select(screen.getAllByText(/select/i)[0], 'ARGO')
 
     fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'AND' } });
     fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'AND' } })
@@ -2433,7 +2442,8 @@ describe('Tests for aggregation profile addview', () => {
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
+
+    await selectEvent.select(screen.getAllByText(/select/i)[0], 'ARGO')
 
     fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'AND' } });
     fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'AND' } })
@@ -2549,7 +2559,8 @@ describe('Tests for aggregation profile addview', () => {
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
+
+    await selectEvent.select(screen.getAllByText(/select/i)[0], 'ARGO')
 
     fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'AND' } });
     fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'AND' } })
@@ -2700,7 +2711,8 @@ describe('Tests for aggregation profile addview', () => {
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } });
+
+    await selectEvent.select(screen.getAllByText(/select/i)[0], 'ARGO')
 
     fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'AND' } });
     fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'AND' } })

@@ -1245,7 +1245,7 @@ export const DiffElement = ({title, item1, item2}) => {
 };
 
 
-export const ProfileMainInfo = ({errors, grouplist=undefined, description=undefined,
+export const ProfileMainInfo = ({errors, values, setFieldValue, grouplist=undefined, description=undefined,
   fieldsdisable=false, profiletype=undefined, addview=false }) => (
     <FormGroup>
       <Row>
@@ -1253,12 +1253,12 @@ export const ProfileMainInfo = ({errors, grouplist=undefined, description=undefi
           <InputGroup>
             <InputGroupText>Name</InputGroupText>
             <Field
-            type='text'
-            name='name'
-            data-testid='name'
-            className={`form-control form-control-lg ${errors.name && 'border-danger'}`}
-            disabled={!addview}
-          />
+              type='text'
+              name='name'
+              data-testid='name'
+              className={`form-control form-control-lg ${errors.name && 'border-danger'}`}
+              disabled={!addview}
+            />
           </InputGroup>
           <CustomErrorMessage name='name' />
           <FormText color='text-muted'>
@@ -1267,22 +1267,22 @@ export const ProfileMainInfo = ({errors, grouplist=undefined, description=undefi
         </Col>
       </Row>
       {
-      description &&
-        <Row className='mt-3'>
-          <Col md={10}>
-            <Label for="profileDescription">Description:</Label>
-            <Field
-              id="profileDescription"
-              className="form-control"
-              component="textarea"
-              rows={4}
-              name={description}
-              disabled={fieldsdisable}/>
-            <FormText color='muted'>
-              Free text description outlining the purpose of this profile.
-            </FormText>
-          </Col>
-        </Row>
+        description &&
+          <Row className='mt-3'>
+            <Col md={10}>
+              <Label for="profileDescription">Description:</Label>
+              <Field
+                id="profileDescription"
+                className="form-control"
+                component="textarea"
+                rows={4}
+                name={description}
+                disabled={fieldsdisable}/>
+              <FormText color='muted'>
+                Free text description outlining the purpose of this profile.
+              </FormText>
+            </Col>
+          </Row>
     }
       <Row className='mt-4'>
         <Col md={3}>
@@ -1298,19 +1298,23 @@ export const ProfileMainInfo = ({errors, grouplist=undefined, description=undefi
                   disabled={true}
                 />
               :
-                <Field
-                  name='groupname'
-                  data-testid='groupname'
-                  component='select'
-                  className={`form-control custom-select ${errors.groupname && 'border-danger'}`}
-                >
-                  <option key={0} value='' hidden color='text-muted'>Select group</option>
-                  {
-                    grouplist.map((group, i) =>
-                      <option key={i + 1} value={group}>{group}</option>
-                    )
-                  }
-                </Field>
+                <div className='react-select form-control p-0'>
+                  <CustomReactSelect
+                    name='groupname'
+                    inputgroup={ true }
+                    options={
+                      grouplist.map((group) => new Object({
+                        label: group, value: group
+                      }))
+                    }
+                    value={
+                      values.groupname ?
+                        { label: values.groupname, value: values.groupname }
+                      : undefined
+                    }
+                    onChange={ e => setFieldValue('groupname', e.value) }
+                  />
+                </div>
           }
           </InputGroup>
           <CustomErrorMessage name='groupname' />

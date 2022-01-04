@@ -13,6 +13,7 @@ import {
 } from '../MetricProfiles';
 import { NotificationManager } from 'react-notifications'
 import useEvent from '@testing-library/user-event';
+import selectEvent from 'react-select-event';
 
 
 jest.mock('../DataManager', () => {
@@ -487,14 +488,18 @@ describe('Tests for metric profiles changeview', () => {
 
     const nameField = screen.getByTestId('name');
     const descriptionField = screen.getByLabelText(/description/i);
-    const groupField = screen.getByTestId('groupname');
+    const groupField = screen.getByText('ARGO');
 
     expect(nameField.value).toBe('ARGO_MON');
     expect(nameField).toBeDisabled();
     expect(descriptionField.value).toBe('Central ARGO-MON profile');
     expect(descriptionField).toBeEnabled();
-    expect(groupField.value).toBe('ARGO');
     expect(groupField).toBeEnabled();
+
+    expect(screen.queryByText('TEST')).not.toBeInTheDocument()
+    selectEvent.openMenu(groupField)
+
+    expect(screen.getByText('TEST')).toBeInTheDocument()
 
     const metricInstances = within(screen.getByRole('table'));
     const rows = metricInstances.getAllByRole('row');
@@ -673,13 +678,16 @@ describe('Tests for metric profiles changeview', () => {
 
     const nameField = screen.getByTestId('name');
     const descriptionField = screen.getByLabelText(/description/i);
-    const groupField = screen.getByTestId('groupname');
+    const groupField = screen.getByText('ARGO');
+
+    expect(screen.queryByText('TEST')).not.toBeInTheDocument()
+    selectEvent.openMenu(groupField)
+    expect(screen.getByText('TEST')).toBeInTheDocument()
 
     expect(nameField.value).toBe('ARGO_MON');
     expect(nameField).toBeDisabled();
     expect(descriptionField.value).toBe('Central ARGO-MON profile');
     expect(descriptionField).toBeEnabled();
-    expect(groupField.value).toBe('ARGO');
     expect(groupField).toBeEnabled();
 
     const metricInstances = within(screen.getByRole('table'));
@@ -730,13 +738,16 @@ describe('Tests for metric profiles changeview', () => {
 
     const nameField = screen.getByTestId('name');
     const descriptionField = screen.getByLabelText(/description/i);
-    const groupField = screen.getByTestId('groupname');
+    const groupField = screen.getByText('ARGO');
+
+    expect(screen.queryByText('TEST')).not.toBeInTheDocument()
+    selectEvent.openMenu(groupField)
+    expect(screen.getByText('TEST')).toBeInTheDocument()
 
     expect(nameField.value).toBe('ARGO_MON');
     expect(nameField).toBeDisabled();
     expect(descriptionField.value).toBe('Central ARGO-MON profile');
     expect(descriptionField).toBeEnabled();
-    expect(groupField.value).toBe('ARGO');
     expect(groupField).toBeEnabled();
 
     const metricInstances = within(screen.getByRole('table'));
@@ -837,7 +848,8 @@ describe('Tests for metric profiles changeview', () => {
       expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change metric profile');
     })
 
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
+    await selectEvent.select(screen.getByText('ARGO'), 'TEST')
+
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
     const metricInstances = within(screen.getByRole('table'));
@@ -947,7 +959,7 @@ describe('Tests for metric profiles changeview', () => {
       expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change metric profile');
     })
 
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
+    await selectEvent.select(screen.getByText('ARGO'), 'TEST')
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
     const metricInstances = within(screen.getByRole('table'));
@@ -1062,7 +1074,7 @@ describe('Tests for metric profiles changeview', () => {
       expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change metric profile');
     })
 
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
+    await selectEvent.select(screen.getByText('ARGO'), 'TEST')
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
     const metricInstances = within(screen.getByRole('table'));
@@ -1193,7 +1205,7 @@ describe('Tests for metric profiles changeview', () => {
       expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change metric profile');
     })
 
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
+    await selectEvent.select(screen.getByText('ARGO'), 'TEST')
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
     const metricInstances = within(screen.getByRole('table'));
@@ -1326,7 +1338,7 @@ describe('Tests for metric profiles changeview', () => {
       expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change metric profile');
     })
 
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
+    await selectEvent.select(screen.getByText('ARGO'), 'TEST')
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
     const metricInstances = within(screen.getByRole('table'));
@@ -1454,7 +1466,7 @@ describe('Tests for metric profiles changeview', () => {
       expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change metric profile');
     })
 
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
+    await selectEvent.select(screen.getByText('ARGO'), 'TEST')
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
     const csv = 'service,metric\r\norg.opensciencegrid.htcondorce,ch.cern.HTCondorCE-JobState\r\norg.opensciencegrid.htcondorce,ch.cern.HTCondorCE-JobSubmit\r\n';
@@ -1475,7 +1487,8 @@ describe('Tests for metric profiles changeview', () => {
       fireEvent.load(screen.getByTestId('file_input'))
     })
 
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
+    await selectEvent.select(screen.getByText('ARGO'), 'TEST')
+
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
     const metricInstances = within(screen.getByRole('table'));
@@ -1773,14 +1786,18 @@ describe('Tests for metric profile addview', () => {
 
     const nameField = screen.getByTestId('name');
     const descriptionField = screen.getByLabelText(/description/i);
-    const groupField = screen.getByTestId('groupname');
+    const groupField = screen.getByText(/select/i);
 
     expect(nameField.value).toBe('');
     expect(nameField).toBeEnabled();
     expect(descriptionField.value).toBe('');
     expect(descriptionField).toBeEnabled();
-    expect(groupField.value).toBe('');
-    expect(groupField).toBeEnabled();
+
+    expect(screen.queryByText('ARGO')).not.toBeInTheDocument()
+    expect(screen.queryByText('TEST')).not.toBeInTheDocument()
+    selectEvent.openMenu(groupField)
+    expect(screen.getByText('ARGO')).toBeInTheDocument()
+    expect(screen.getByText('TEST')).toBeInTheDocument()
 
     const metricInstances = within(screen.getByRole('table'));
     expect(metricInstances.getAllByRole('row')).toHaveLength(3);
@@ -1815,8 +1832,9 @@ describe('Tests for metric profile addview', () => {
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } })
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
+
+    await selectEvent.select(screen.getByText(/select/i), 'ARGO')
 
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
@@ -1932,8 +1950,9 @@ describe('Tests for metric profile addview', () => {
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } })
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
+
+    await selectEvent.select(screen.getByText(/select/i), 'ARGO')
 
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
@@ -2039,8 +2058,9 @@ describe('Tests for metric profile addview', () => {
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } })
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
+
+    await selectEvent.select(screen.getByText(/select/i), 'ARGO')
 
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
@@ -2162,8 +2182,9 @@ describe('Tests for metric profile addview', () => {
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } })
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
+
+    await selectEvent.select(screen.getByText(/select/i), 'ARGO')
 
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
@@ -2296,8 +2317,9 @@ describe('Tests for metric profile addview', () => {
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'ARGO' } })
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
+
+    await selectEvent.select(screen.getByText(/select/i), 'ARGO')
 
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
@@ -2449,14 +2471,17 @@ describe('Tests for metric profile cloneview', () => {
 
     const nameField = screen.getByTestId('name');
     const descriptionField = screen.getByLabelText(/description/i);
-    const groupField = screen.getByTestId('groupname');
+    const groupField = screen.getByText('ARGO');
 
     expect(nameField.value).toBe('Cloned ARGO_MON2');
     expect(nameField).toBeEnabled();
     expect(descriptionField.value).toBe('Central ARGO-MON profile');
     expect(descriptionField).toBeEnabled();
-    expect(groupField.value).toBe('ARGO');
     expect(groupField).toBeEnabled();
+
+    expect(screen.queryByText('TEST')).not.toBeInTheDocument()
+    selectEvent.openMenu(groupField)
+    expect(screen.getByText('TEST')).toBeInTheDocument()
 
     const metricInstances = within(screen.getByRole('table'));
     const rows = metricInstances.getAllByRole('row');
@@ -2517,8 +2542,9 @@ describe('Tests for metric profile cloneview', () => {
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'ARGO_MON' } });
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
+
+    await selectEvent.select(screen.getByText('ARGO'), 'TEST')
 
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
@@ -2642,8 +2668,9 @@ describe('Tests for metric profile cloneview', () => {
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'ARGO_MON' } });
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
+
+    await selectEvent.select(screen.getByText('ARGO'), 'TEST')
 
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
@@ -2752,8 +2779,9 @@ describe('Tests for metric profile cloneview', () => {
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'ARGO_MON' } })
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
+
+    await selectEvent.select(screen.getByText('ARGO'), 'TEST')
 
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
@@ -2878,8 +2906,9 @@ describe('Tests for metric profile cloneview', () => {
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'ARGO_MON' } });
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
+
+    await selectEvent.select(screen.getByText('ARGO'), 'TEST')
 
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
@@ -3020,8 +3049,9 @@ describe('Tests for metric profile cloneview', () => {
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'ARGO_MON' } });
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
+
+    await selectEvent.select(screen.getByText('ARGO'), 'TEST')
 
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');

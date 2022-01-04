@@ -275,8 +275,7 @@ const ThresholdsProfilesForm = ({
 }) => (
   <>
     <ProfileMainInfo
-      values={props.values}
-      errors={props.errors}
+      {...props}
       grouplist={
         write_perm ?
           groups_list

@@ -641,12 +641,15 @@ describe('Tests for threshols profile changeview', () => {
     })
 
     const nameField = screen.getByTestId('name');
-    const groupField = screen.getByTestId('groupname');
+    const groupField = screen.getByText('TEST');
 
     expect(nameField.value).toBe('TEST_PROFILE');
     expect(nameField).toBeDisabled();
-    expect(groupField.value).toBe('TEST');
     expect(groupField).toBeEnabled();
+
+    expect(screen.queryByText('TESTa')).not.toBeInTheDocument()
+    selectEvent.openMenu(groupField)
+    expect(screen.getByText('TESTa')).toBeInTheDocument()
 
     const rule1 = within(screen.getByTestId('rules.0'))
     expect(screen.getByTestId('rules.0.remove')).toBeInTheDocument();
@@ -892,7 +895,7 @@ describe('Tests for threshols profile changeview', () => {
       expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change thresholds profile');
     })
 
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TESTa' } })
+    await selectEvent.select(screen.getByText('TEST'), 'TESTa')
 
     const rule1 = within(screen.getByTestId('rules.0'))
     const metric1 = rule1.getByText('org.nagios.ARGOWeb-Status')
@@ -1116,7 +1119,7 @@ describe('Tests for threshols profile changeview', () => {
       expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change thresholds profile');
     })
 
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TESTa' } })
+    await selectEvent.select(screen.getByText('TEST'), 'TESTa')
 
     const rule1 = within(screen.getByTestId('rules.0'))
     const metric1 = rule1.getByText('org.nagios.ARGOWeb-Status')
@@ -1219,7 +1222,7 @@ describe('Tests for threshols profile changeview', () => {
       expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change thresholds profile');
     })
 
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TESTa' } })
+    await selectEvent.select(screen.getByText('TEST'), 'TESTa')
 
     const rule1 = within(screen.getByTestId('rules.0'))
     const metric1 = rule1.getByText('org.nagios.ARGOWeb-Status')
@@ -1423,7 +1426,7 @@ describe('Tests for threshols profile changeview', () => {
       expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change thresholds profile');
     })
 
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TESTa' } })
+    await selectEvent.select(screen.getByText('TEST'), 'TESTa')
 
     const rule1 = within(screen.getByTestId('rules.0'))
     const metric1 = rule1.getByText('org.nagios.ARGOWeb-Status')
@@ -1632,7 +1635,7 @@ describe('Tests for threshols profile changeview', () => {
       expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change thresholds profile');
     })
 
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TESTa' } })
+    await selectEvent.select(screen.getByText('TEST'), 'TESTa')
 
     const rule1 = within(screen.getByTestId('rules.0'))
     const metric1 = rule1.getByText('org.nagios.ARGOWeb-Status')
@@ -1858,7 +1861,7 @@ describe('Tests for threshols profile changeview', () => {
       expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change thresholds profile');
     })
 
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TESTa' } })
+    await selectEvent.select(screen.getByText('TEST'), 'TESTa')
 
     const rule1 = within(screen.getByTestId('rules.0'))
     const metric1 = rule1.getByText('org.nagios.ARGOWeb-Status')
@@ -2310,12 +2313,16 @@ describe('Tests for thresholds profiles addview', () => {
     })
 
     const nameField = screen.getByTestId('name');
-    const groupField = screen.getByTestId('groupname');
+    const groupField = screen.getByText(/select/i);
 
     expect(nameField.value).toBe('');
     expect(nameField).toBeEnabled();
-    expect(groupField.value).toBe('');
-    expect(groupField).toBeEnabled();
+
+    expect(screen.queryByText('TEST')).not.toBeInTheDocument()
+    expect(screen.queryByText('TESTa')).not.toBeInTheDocument()
+    selectEvent.openMenu(groupField)
+    expect(screen.getByText('TEST')).toBeInTheDocument()
+    expect(screen.getByText('TESTa')).toBeInTheDocument()
 
     expect(screen.queryByTestId('rules.0')).not.toBeInTheDocument();
     expect(screen.queryByTestId('rules.0.remove')).not.toBeInTheDocument();
@@ -2350,7 +2357,8 @@ describe('Tests for thresholds profiles addview', () => {
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'TEST_PROFILE2' } });
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
+
+    await selectEvent.select(screen.getByText(/select/i), 'TEST')
 
     fireEvent.click(screen.getByRole('button', { name: 'Add a rule' }));
 
@@ -2602,7 +2610,8 @@ describe('Tests for thresholds profiles addview', () => {
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'TEST_PROFILE2' } });
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
+
+    await selectEvent.select(screen.getByText(/select/i), 'TEST')
 
     fireEvent.click(screen.getByRole('button', { name: 'Add a rule' }));
 
@@ -2716,7 +2725,8 @@ describe('Tests for thresholds profiles addview', () => {
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'TEST_PROFILE2' } });
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
+
+    await selectEvent.select(screen.getByText(/select/i), 'TEST')
 
     fireEvent.click(screen.getByRole('button', { name: 'Add a rule' }));
 
@@ -2940,7 +2950,8 @@ describe('Tests for thresholds profiles addview', () => {
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'TEST_PROFILE2' } });
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
+
+    await selectEvent.select(screen.getByText(/select/i), 'TEST')
 
     fireEvent.click(screen.getByRole('button', { name: 'Add a rule' }));
 
@@ -3180,7 +3191,8 @@ describe('Tests for thresholds profiles addview', () => {
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'TEST_PROFILE2' } });
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
+
+    await selectEvent.select(screen.getByText(/select/i), 'TEST')
 
     fireEvent.click(screen.getByRole('button', { name: 'Add a rule' }));
 
@@ -3438,7 +3450,8 @@ describe('Tests for thresholds profiles addview', () => {
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'TEST_PROFILE2' } });
-    fireEvent.change(screen.getByTestId('groupname'), { target: { value: 'TEST' } });
+
+    await selectEvent.select(screen.getByText(/select/i), 'TEST')
 
     fireEvent.click(screen.getByRole('button', { name: 'Add a rule' }));
 

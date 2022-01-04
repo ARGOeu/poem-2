@@ -66,7 +66,7 @@ const MetricProfileAutocompleteField = ({suggestions, service, index, icon, tupl
   return (
     <Autosuggest
       inputProps={{
-        className: `"form-control custom-select " ${service.isNew ? "border border-success" : service[tupleType + 'Changed'] ? "border border-danger" : ""}`,
+        className: `"form-control form-select " ${service.isNew ? "border border-success" : service[tupleType + 'Changed'] ? "border border-danger" : ""}`,
         placeholder: '',
         onChange: (_, {newValue}) => changeFieldValue(newValue),
         value: service[tupleType]
