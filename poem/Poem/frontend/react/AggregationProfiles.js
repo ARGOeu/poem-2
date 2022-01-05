@@ -89,7 +89,7 @@ const AggregationProfileAutocompleteField = ({service, index, isNew, groupNew, g
   return (
     <Autosuggest
       inputProps={{
-        className: `"form-control custom-select " ${isNew && !groupNew ? "border-success" : ""} ${isMissing ? "border-primary": ""}`,
+        className: `"form-control form-select " ${isNew && !groupNew ? "border-success" : ""} ${isMissing ? "border-primary": ""}`,
         placeholder: '',
         onChange: (_, {newValue}) => context.formikBag.form.setFieldValue(`groups.${groupIndex}.services.${index}.name`, newValue),
         value: service.name
@@ -165,7 +165,7 @@ const Group = ({operation, services, groupindex, isnew, last}) => {
         <Col sm={{size: 8}} md={{size: 5}} className="mt-4 mb-2">
           <Card className={isnew ? "border-success" : ""} data-testid={`card-${groupindex}`}>
             <CardHeader className="p-1" color="primary">
-              <Row className="d-flex align-items-center no-gutters">
+              <Row className="d-flex align-items-center g-0">
                 <Col sm={{size: 10}} md={{size: 11}}>
                   <Field
                     name={`groups.${groupindex}.name`}
@@ -176,7 +176,7 @@ const Group = ({operation, services, groupindex, isnew, last}) => {
                       context.formikBag.form.errors.groups[groupindex].name ? "form-control border-danger" : "form-control"}`}
                   />
                 </Col>
-                <Col sm={{size: 2}} md={{size: 1}} className="pl-1">
+                <Col sm={{size: 2}} md={{size: 1}} className="ps-1">
                   <Button size="sm" color="danger"
                     data-testid='remove-group'
                     type="button"
@@ -198,13 +198,15 @@ const Group = ({operation, services, groupindex, isnew, last}) => {
               />
             </CardBody>
             <CardFooter className="p-1 d-flex justify-content-center" data-testid='operation'>
-              <DropDown
-                field={{name: "operation", value: operation}}
-                data={insertSelectPlaceholder(context.list_operations, 'Select')}
-                prefix={`groups.${groupindex}`}
-                class_name="custom-select col-2"
-                errors={context.formikBag.form.errors && context.formikBag.form.errors.groups && context.formikBag.form.errors.groups[groupindex]}
-              />
+              <div className='col-2'>
+                <DropDown
+                  field={{name: "operation", value: operation}}
+                  data={insertSelectPlaceholder(context.list_operations, 'Select')}
+                  prefix={`groups.${groupindex}`}
+                  class_name="form-select form-control"
+                  errors={context.formikBag.form.errors && context.formikBag.form.errors.groups && context.formikBag.form.errors.groups[groupindex]}
+                />
+              </div>
             </CardFooter>
           </Card>
         </Col>
@@ -213,6 +215,7 @@ const Group = ({operation, services, groupindex, isnew, last}) => {
             <DropDown
               field={{name: 'profile_operation', value: context.formikBag.form.values.profile_operation}}
               data={insertSelectPlaceholder(context.list_operations, 'Select')}
+              class_name='form-select'
             />
           </div>
         </Col>
@@ -266,7 +269,7 @@ const Service = ({service, operation, groupindex, groupnew, index, isnew,
 
   return (
     <React.Fragment>
-      <Row className="d-flex align-items-center service pt-1 pb-1 no-gutters" key={index}>
+      <Row className="d-flex align-items-center service pt-1 pb-1 g-0" key={index}>
         <Col md={8}>
           <AggregationProfileAutocompleteField
             service={service}
@@ -284,12 +287,12 @@ const Service = ({service, operation, groupindex, groupnew, index, isnew,
               field={{name: "operation", value: operation}}
               data={insertSelectPlaceholder(context.list_operations, 'Select')}
               prefix={`groups.${groupindex}.services.${index}`}
-              class_name="custom-select service-operation"
+              class_name="form-select service-operation"
               isnew={isnew && !groupnew}
           />
           </div>
         </Col>
-        <Col md={2} className="pl-2">
+        <Col md={2} className="ps-2">
           <Button size="sm" color="light"
             type="button"
             data-testid={`remove-${index}`}
