@@ -171,7 +171,7 @@ export const CustomReactSelect = ({...props}) => {
       textShadow: 'none',
       textAlign: 'start',
       textIndent: 0,
-      borderColor: state.selectProps.menuIsOpen ? '#66afe9' : '#ced4da',
+      borderColor: props.error ? '#FF0000' : state.selectProps.menuIsOpen ? '#66afe9' : '#ced4da',
       transition: 'border-color .15s ease-in-out, box-shadow .15s ease-in-out',
       boxShadow: state.selectProps.menuIsOpen ? '0 0 0 .2rem rgba(0, 123, 255, .25)' : 'none',
       ':focus': {
@@ -960,6 +960,11 @@ export const FancyErrorMessage = (msg) => (
 
 export const CustomErrorMessage = ({...props}) => (
   <ErrorMessage {...props} render={msg => <div style={{color: '#FF0000', fontSize: 'small'}} data-testid='error-msg'>{msg}</div>} />
+)
+
+
+export const CustomError = (props) => (
+  <div data-testid='error-msg' style={{color: '#FF0000', fontSize: 'small'}}>{props.error}</div>
 )
 
 

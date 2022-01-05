@@ -11,7 +11,7 @@ import {
   NotifyOk,
   ParagraphTitle,
   CustomReactSelect,
-  CustomErrorMessage
+  CustomError
  } from './UIElements';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -606,7 +606,7 @@ const TopologyEntityFields = ({topoGroups, addview, publicView, form}) => {
 }
 
 
-const ProfileSelect = ({ field, label, options, onChangeHandler, initVal }) => {
+const ProfileSelect = ({ field, error, label, options, onChangeHandler, initVal }) => {
   let value = null
   if (initVal)
     value = { value: initVal, label: initVal }
@@ -615,6 +615,7 @@ const ProfileSelect = ({ field, label, options, onChangeHandler, initVal }) => {
     <CustomReactSelect
       name={ field.name }
       label={ label }
+      error={ error }
       closeMenuOnSelect={ true }
       isClearable={ field.name === 'thresholdsProfile' }
       onChange={ e => onChangeHandler(e) }
@@ -1341,11 +1342,11 @@ export const ReportsComponent = (props) => {
                         type='text'
                         name='name'
                         data-testid='name'
-                        className='form-control form-control-lg'
+                        className={`form-control form-control-lg ${props.errors.name && 'border-danger'}`}
                         disabled={publicView}
                       />
                     </InputGroup>
-                    <CustomErrorMessage name='name' />
+                    <CustomError error={props.errors.name} />
                     <FormText color='muted'>
                       Report name
                     </FormText>
@@ -1405,6 +1406,7 @@ export const ReportsComponent = (props) => {
                             <CustomReactSelect
                               name='groupname'
                               inputgroup={ true }
+                              error={props.errors.groupname}
                               options={
                                 grouplist.map((group) => new Object({
                                   label: group, value: group
@@ -1420,7 +1422,7 @@ export const ReportsComponent = (props) => {
                           </div>
                       }
                     </InputGroup>
-                    <CustomErrorMessage name='groupname' />
+                    <CustomError error={props.errors.groupname} />
                     <FormText color='muted'>
                       Report is member of given group
                     </FormText>
@@ -1448,6 +1450,7 @@ export const ReportsComponent = (props) => {
                           id='metricProfile'
                           name='metricProfile'
                           component={ProfileSelect}
+                          error={props.errors.metricProfile}
                           options={
                             extractProfileNames(listMetricProfiles).map((profile) => new Object({
                               label: profile, value: profile
@@ -1459,7 +1462,7 @@ export const ReportsComponent = (props) => {
                           required={true}
                         />
                     }
-                    <CustomErrorMessage name='metricProfile' />
+                    <CustomError error={props.errors.metricProfile} />
                   </Col>
                   <Col md={4}>
                     {
@@ -1479,6 +1482,7 @@ export const ReportsComponent = (props) => {
                           id='aggregationProfile'
                           name='aggregationProfile'
                           component={ProfileSelect}
+                          error={props.errors.aggregationProfile}
                           options={
                             extractProfileNames(listAggregationProfiles).map((profile) => new Object({
                               label: profile, value: profile
@@ -1490,7 +1494,7 @@ export const ReportsComponent = (props) => {
                           required={true}
                         />
                     }
-                    <CustomErrorMessage name='aggregationProfile' />
+                    <CustomError error={props.errors.aggregationProfile} />
                   </Col>
                   <Col md={4}>
                     {
@@ -1510,6 +1514,7 @@ export const ReportsComponent = (props) => {
                           name='operationsProfile'
                           id='operationsProfile'
                           component={ProfileSelect}
+                          error={props.errors.operationsProfile}
                           options={
                             extractProfileNames(listOperationsProfiles).map((profile) => new Object({
                               label: profile, value: profile
@@ -1523,7 +1528,7 @@ export const ReportsComponent = (props) => {
                           required={true}
                         />
                     }
-                    <CustomErrorMessage name='operationsProfile' />
+                    <CustomError error={props.errors.operationsProfile} />
                   </Col>
                 </Row>
                 <Row className='mt-4'>
@@ -1560,7 +1565,6 @@ export const ReportsComponent = (props) => {
                           initVal={ !addview ? props.values.thresholdsProfile : null }
                         />
                     }
-                    <CustomErrorMessage name='thresholdsProfile' />
                   </Col>
                 </Row>
               </FormGroup>
@@ -1586,6 +1590,7 @@ export const ReportsComponent = (props) => {
                           <CustomReactSelect
                             id='topologyType'
                             name='topologyType'
+                            error={props.errors.topologyType}
                             label='Topology type:'
                             onChange={ e => props.setFieldValue('topologyType', e.value) }
                             options={
@@ -1600,7 +1605,7 @@ export const ReportsComponent = (props) => {
                             }
                           />
                       }
-                      <CustomErrorMessage name='topologyType' />
+                      <CustomError error={props.errors.topologyType} />
                     </Col>
                   </Row>
                   <Row>
@@ -1724,50 +1729,50 @@ export const ReportsComponent = (props) => {
                     <Field
                       id='availabilityThreshold'
                       name='availabilityThreshold'
-                      className='form-control'
+                      className={`form-control ${props.errors.availabilityThreshold && 'border-danger'}`}
                       disabled={publicView}
                     />
-                    <CustomErrorMessage name='availabilityThreshold' />
+                    <CustomError error={props.errors.availabilityThreshold} />
                   </Col>
                   <Col md={2} className='mr-4'>
                     <Label for='reliabilityThreshold'>Reliability:</Label>
                     <Field
                       id='reliabilityThreshold'
                       name='reliabilityThreshold'
-                      className='form-control'
+                      className={`form-control ${props.errors.reliabilityThreshold && 'border-danger'}`}
                       disabled={publicView}
                     />
-                    <CustomErrorMessage name='reliabilityThreshold' />
+                    <CustomError error={props.errors.reliabilityThreshold} />
                   </Col>
                   <Col md={2} className='mr-4'>
                     <Label for='uptimeThreshold'>Uptime:</Label>
                     <Field
                       id='uptimeThreshold'
                       name='uptimeThreshold'
-                      className='form-control'
+                      className={`form-control ${props.errors.uptimeThreshold && 'border-danger'}`}
                       disabled={publicView}
                     />
-                    <CustomErrorMessage name='uptimeThreshold' />
+                    <CustomError error={props.errors.uptimeThreshold} />
                   </Col>
                   <Col md={2} className='mr-4'>
                     <Label for='unknownThreshold'>Unknown:</Label>
                     <Field
                       id='unknownThreshold'
                       name='unknownThreshold'
-                      className='form-control'
+                      className={`form-control ${props.errors.unknownThreshold && 'border-danger'}`}
                       disabled={publicView}
                     />
-                    <CustomErrorMessage name='unknownThreshold' />
+                    <CustomError error={props.errors.unknownThreshold} />
                   </Col>
                   <Col md={2} className='mr-4'>
                     <Label for='downtimeThreshold'>Downtime:</Label>
                     <Field
                       id='downtimeThreshold'
                       name='downtimeThreshold'
-                      className='form-control'
+                      className={`form-control ${props.errors.downtimeThreshold && 'border-danger'}`}
                       disabled={publicView}
                     />
-                    <CustomErrorMessage name='downtimeThreshold' />
+                    <CustomError error={props.errors.downtimeThreshold} />
                   </Col>
                 </Row>
               </FormGroup>
