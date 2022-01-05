@@ -743,7 +743,7 @@ describe('Tests for user addview on SuperAdmin POEM', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
 
-    expect(await screen.findAllByTestId('error-msg')).toHaveLength(3);
+    expect(await screen.findAllByTestId('error-msg')).toHaveLength(4);
     expect(mockAddObject).not.toHaveBeenCalled();
   })
 

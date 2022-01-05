@@ -10,7 +10,8 @@ import {
   ErrorComponent,
   ParagraphTitle,
   BaseArgoTable,
-  CustomErrorMessage
+  CustomErrorMessage,
+  CustomError
 } from './UIElements';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
@@ -23,7 +24,8 @@ import {
   FormText,
   Button,
   InputGroup,
-  InputGroupText
+  InputGroupText,
+  Input
 } from "reactstrap";
 import * as Yup from 'yup';
 import './Users.css';
@@ -81,11 +83,11 @@ const CommonUser = ({add, ...props}) =>
                   type="text"
                   name="username"
                   data-testid="username"
-                  className={`form-control ${props.errors.username && props.touched.username && 'border-danger'}`}
+                  className={`form-control ${props.errors.username && 'border-danger'}`}
                   id="userUsername"
                 />
               </InputGroup>
-              <CustomErrorMessage name='username' />
+              <CustomError error={props.errors.username} />
             </Col>
           </Row>
           <Row>
@@ -96,11 +98,11 @@ const CommonUser = ({add, ...props}) =>
                   type="password"
                   name="password"
                   data-testid="password"
-                  className={`form-control ${props.errors.password && props.touched.password && 'border-danger'}`}
+                  className={`form-control ${props.errors.password && 'border-danger'}`}
                   id="password"
                 />
               </InputGroup>
-              <CustomErrorMessage name='password' />
+              <CustomError error={props.errors.password} />
             </Col>
           </Row>
           <Row>
@@ -111,11 +113,11 @@ const CommonUser = ({add, ...props}) =>
                   type='password'
                   name='confirm_password'
                   data-testid='confirm_password'
-                  className={`form-control ${props.errors.confirm_password && props.touched.confirm_password && 'border-danger'}`}
+                  className={`form-control ${props.errors.confirm_password && 'border-danger'}`}
                   id='confirm_password'
                 />
               </InputGroup>
-              <CustomErrorMessage name='confirm_password' />
+              <CustomError error={props.errors.confirm_password} />
             </Col>
           </Row>
         </FormGroup>
@@ -129,11 +131,11 @@ const CommonUser = ({add, ...props}) =>
                   type="text"
                   name='username'
                   data-testid='username'
-                  className={`form-control ${props.errors.username && props.touched.username && 'border-danger'}`}
+                  className={`form-control ${props.errors.username && 'border-danger'}`}
                   id='userUsername'
                 />
               </InputGroup>
-              <CustomErrorMessage name='username' />
+              <CustomError error={props.errors.username} />
             </Col>
           </Row>
         </FormGroup>
@@ -176,11 +178,11 @@ const CommonUser = ({add, ...props}) =>
               type="text"
               name="email"
               data-testid="email"
-              className={`form-control ${props.errors.email && props.touched.email && 'border-danger'}`}
+              className={`form-control ${props.errors.email && 'border-danger'}`}
               id="userEmail"
             />
           </InputGroup>
-          <CustomErrorMessage name='email' />
+          <CustomError error={props.errors.email} />
         </Col>
       </Row>
       {
@@ -221,32 +223,44 @@ const CommonUser = ({add, ...props}) =>
       <ParagraphTitle title='permissions'/>
       <Row>
         <Col md={6}>
-          <label>
-            <Field
-              type="checkbox"
-              name="is_superuser"
-              className="mr-1"
-            />
-            Superuser status
-          </label>
-          <FormText color="muted">
-            Designates that this user has all permissions without explicitly assigning them.
-          </FormText>
+          <Row>
+            <FormGroup check inline className='ms-3'>
+              <Input
+                type='checkbox'
+                id='is_superuser'
+                name='is_superuser'
+                onChange={e => props.setFieldValue('is_superuser', e.target.checked)}
+                checked={props.values.is_superuser}
+              />
+              <Label check for='is_superuser'>Superuser status</Label>
+            </FormGroup>
+          </Row>
+          <Row>
+            <FormText color="muted">
+              Designates that this user has all permissions without explicitly assigning them.
+            </FormText>
+          </Row>
         </Col>
       </Row>
       <Row>
         <Col md={6}>
-          <label>
-            <Field
-              type="checkbox"
-              name="is_active"
-              className="mr-1"
-            />
-            Active
-          </label>
-          <FormText color="muted">
-            Designates whether this user should be treated as active. Unselect this instead of deleting accounts.
-          </FormText>
+          <Row>
+            <FormGroup check inline className='ms-3'>
+              <Input
+                type='checkbox'
+                id='is_active'
+                name='is_active'
+                onChange={e => props.setFieldValue('is_active', e.target.checked)}
+                checked={props.values.is_active}
+              />
+              <Label check for='is_active'>Active</Label>
+            </FormGroup>
+          </Row>
+          <Row className='mt-0'>
+            <FormText color="muted">
+              Designates whether this user should be treated as active. Unselect this instead of deleting accounts.
+            </FormText>
+          </Row>
         </Col>
       </Row>
     </FormGroup>
