@@ -6,7 +6,6 @@ import {
   LoadingAnim,
   BaseArgoView,
   SearchField,
-  FancyErrorMessage,
   NotifyOk,
   Icon,
   DiffElement,
@@ -14,7 +13,8 @@ import {
   NotifyError,
   ErrorComponent,
   ParagraphTitle,
-  ProfilesListTable
+  ProfilesListTable,
+  CustomError
 } from './UIElements';
 import { Formik, Field, FieldArray, Form } from 'formik';
 import {
@@ -235,7 +235,7 @@ const ServicesList = () => {
                       context.formikBag.form.errors.view_services &&
                       context.formikBag.form.errors.view_services[index]
                       ? context.formikBag.form.errors.view_services[index].service
-                        ? FancyErrorMessage(context.formikBag.form.errors.view_services[index].service)
+                        ? <CustomError error={context.formikBag.form.errors.view_services[index].service} />
                         : null
                       : null
                   }
@@ -252,7 +252,7 @@ const ServicesList = () => {
                   {
                     context.formikBag.form.errors && context.formikBag.form.errors.view_services && context.formikBag.form.errors.view_services[index]
                       ? context.formikBag.form.errors.view_services[index].metric
-                        ? FancyErrorMessage(context.formikBag.form.errors.view_services[index].metric)
+                        ? <CustomError error={context.formikBag.form.errors.view_services[index].metric} />
                         : null
                       : null
                   }
@@ -291,7 +291,7 @@ const ServicesList = () => {
                       <tr key={index + context.formikBag.form.values.view_services.length}>
                         <td className="bg-light"></td>
                         <td colSpan="2" className="bg-light text-center">
-                          {FancyErrorMessage(context.formikBag.form.errors.view_services[index].dup)}
+                          <CustomError error={context.formikBag.form.errors.view_services[index].dup} />
                         </td>
                         <td className="bg-light"></td>
                       </tr>
@@ -973,7 +973,6 @@ export const MetricProfilesComponent = (props) => {
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
           enableReinitialize={true}
-          validateOnBlur={false}
           validate={MetricProfileTupleValidate}
           innerRef={formikRef}
         >

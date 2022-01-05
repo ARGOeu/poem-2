@@ -705,7 +705,7 @@ describe('Tests for metric profiles changeview', () => {
     expect(row2[0].value).toBe('org.opensciencegrid.htcondorce');
     expect(row2[1].value).toBe('ch.cern.HTCondorCE-JobSubmit');
 
-    expect(screen.queryByTestId('error-msg')).not.toBeInTheDocument();
+    expect(screen.queryByText('Must be one of predefined metrics')).not.toBeInTheDocument()
   })
 
   test('Test import csv with nonexisting metrics', async () => {
@@ -765,8 +765,7 @@ describe('Tests for metric profiles changeview', () => {
     expect(row2[0].value).toBe('org.opensciencegrid.htcondorce');
     expect(row2[1].value).toBe('ch.cern.HTCondorCE-JobSubmit');
 
-    expect(screen.getByTestId('error-msg')).toBeInTheDocument();
-    expect(screen.getByTestId('error-msg').textContent).toBe('Must be one of predefined metrics')
+    expect(screen.getByText('Must be one of predefined metrics')).toBeInTheDocument()
   })
 
   test('Test export csv successfully', async () => {
