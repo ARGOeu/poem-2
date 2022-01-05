@@ -850,7 +850,6 @@ describe('Tests for reports changeview', () => {
     const disabledField = screen.getByLabelText(/disabled/i);
     const descriptionField = screen.getByLabelText(/description/i);
     const groupField = screen.getByText('ARGO');
-    const topologyTypeField = screen.getByTestId('topologyType');
     const availabilityThresholdField = screen.getByLabelText(/availability/i);
     const reliabilityThresholdField = screen.getByLabelText(/reliability/i);
     const uptimeThresholdField = screen.getByLabelText(/uptime/i);
@@ -872,6 +871,8 @@ describe('Tests for reports changeview', () => {
     const aggrProfileField = screen.getByText('critical')
     const operationsProfileField = screen.getByText('egi_ops')
     const thresholdsProfileField = screen.getAllByText(/select/i)[0]
+
+    const topologyTypeField = screen.getByText('Sites');
 
     expect(metricProfileField).toBeInTheDocument()
     expect(metricProfileField).toBeEnabled()
@@ -907,7 +908,10 @@ describe('Tests for reports changeview', () => {
     expect(screen.getByText('TEST_PROFILE')).toBeInTheDocument()
     expect(screen.getByText('test-thresholds')).toBeInTheDocument()
 
-    expect(topologyTypeField.value).toBe('Sites');
+    expect(topologyTypeField).toBeEnabled()
+    expect(screen.queryByText('ServiceGroups')).not.toBeInTheDocument()
+    selectEvent.openMenu(topologyTypeField)
+    expect(screen.getByText('ServiceGroups')).toBeInTheDocument()
 
     expect(screen.getAllByTestId(/card/i)).toHaveLength(2);
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
@@ -2616,7 +2620,7 @@ describe('Tests for reports addview', () => {
     const operationsProfileField = screen.getAllByText(/select/i)[3]
     const thresholdsProfileField = screen.getAllByText(/select/i)[4]
 
-    const topologyTypeField = screen.getByTestId('topologyType');
+    const topologyTypeField = screen.getAllByText(/select/i)[5];
 
     const availabilityThresholdField = screen.getByLabelText(/availability/i);
     const reliabilityThresholdField = screen.getByLabelText(/reliability/i);
@@ -2635,6 +2639,7 @@ describe('Tests for reports addview', () => {
     expect(aggrProfileField).toBeEnabled();
     expect(operationsProfileField).toBeEnabled();
     expect(thresholdsProfileField).toBeEnabled()
+    expect(topologyTypeField).toBeEnabled()
 
     expect(screen.queryByText('ARGO')).not.toBeInTheDocument()
     expect(screen.queryByText('TEST')).not.toBeInTheDocument()
@@ -2671,7 +2676,12 @@ describe('Tests for reports addview', () => {
     selectEvent.openMenu(operationsProfileField)
     expect(screen.getByText('egi_ops')).toBeInTheDocument()
 
-    expect(topologyTypeField.value).toBe('');
+    expect(screen.queryByText('Sites')).not.toBeInTheDocument()
+    expect(screen.queryByText('ServiceGroups')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(topologyTypeField)
+    expect(screen.getByText('Sites')).toBeInTheDocument()
+    expect(screen.getByText('ServiceGroups')).toBeInTheDocument()
 
     expect(screen.getAllByTestId(/card/i)).toHaveLength(2);
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
@@ -2733,6 +2743,7 @@ describe('Tests for reports addview', () => {
     const aggregationProfile = screen.getAllByText(/select/i)[2]
     const operationsProfile = screen.getAllByText(/select/i)[3]
     const thresholdsProfile = screen.getAllByText(/select/i)[4]
+    const topologyType = screen.getAllByText(/select/i)[5]
 
     await selectEvent.select(groupField, 'ARGO')
 
@@ -2741,7 +2752,7 @@ describe('Tests for reports addview', () => {
     await selectEvent.select(operationsProfile, 'egi_ops')
     await selectEvent.select(thresholdsProfile, 'TEST_PROFILE')
 
-    fireEvent.change(screen.getByTestId('topologyType'), { target: { value: 'Sites' } })
+    await selectEvent.select(topologyType, 'Sites')
 
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
@@ -2974,13 +2985,14 @@ describe('Tests for reports addview', () => {
     const metricProfile = screen.getAllByText(/select/i)[1]
     const aggregationProfile = screen.getAllByText(/select/i)[2]
     const operationsProfile = screen.getAllByText(/select/i)[3]
+    const topologyType = screen.getAllByText(/select/i)[5]
 
     await selectEvent.select(groupField, 'ARGO')
     await selectEvent.select(metricProfile, 'OPS_MONITOR_RHEL7')
     await selectEvent.select(aggregationProfile, 'ops-mon-critical')
     await selectEvent.select(operationsProfile, 'egi_ops')
 
-    fireEvent.change(screen.getByTestId('topologyType'), { target: { value: 'Sites' } })
+    await selectEvent.select(topologyType, 'Sites')
 
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
@@ -3114,13 +3126,14 @@ describe('Tests for reports addview', () => {
     const metricProfile = screen.getAllByText(/select/i)[1]
     const aggregationProfile = screen.getAllByText(/select/i)[2]
     const operationsProfile = screen.getAllByText(/select/i)[3]
+    const topologyType = screen.getAllByText(/select/i)[5]
 
     await selectEvent.select(groupField, 'ARGO')
     await selectEvent.select(metricProfile, 'OPS_MONITOR_RHEL7')
     await selectEvent.select(aggregationProfile, 'ops-mon-critical')
     await selectEvent.select(operationsProfile, 'egi_ops')
 
-    fireEvent.change(screen.getByTestId('topologyType'), { target: { value: 'Sites' } })
+    await selectEvent.select(topologyType, 'Sites')
 
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
@@ -3270,13 +3283,14 @@ describe('Tests for reports addview', () => {
     const metricProfile = screen.getAllByText(/select/i)[1]
     const aggregationProfile = screen.getAllByText(/select/i)[2]
     const operationsProfile = screen.getAllByText(/select/i)[3]
+    const topologyType = screen.getAllByText(/select/i)[5]
 
     await selectEvent.select(groupField, 'ARGO')
     await selectEvent.select(metricProfile, 'OPS_MONITOR_RHEL7')
     await selectEvent.select(aggregationProfile, 'ops-mon-critical')
     await selectEvent.select(operationsProfile, 'egi_ops')
 
-    fireEvent.change(screen.getByTestId('topologyType'), { target: { value: 'Sites' } })
+    await selectEvent.select(topologyType, 'Sites')
 
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
@@ -3432,13 +3446,14 @@ describe('Tests for reports addview', () => {
     const metricProfile = screen.getAllByText(/select/i)[1]
     const aggregationProfile = screen.getAllByText(/select/i)[2]
     const operationsProfile = screen.getAllByText(/select/i)[3]
+    const topologyType = screen.getAllByText(/select/i)[5]
 
     await selectEvent.select(groupField, 'ARGO')
     await selectEvent.select(metricProfile, 'OPS_MONITOR_RHEL7')
     await selectEvent.select(aggregationProfile, 'ops-mon-critical')
     await selectEvent.select(operationsProfile, 'egi_ops')
 
-    fireEvent.change(screen.getByTestId('topologyType'), { target: { value: 'Sites' } })
+    await selectEvent.select(topologyType, 'Sites')
 
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));

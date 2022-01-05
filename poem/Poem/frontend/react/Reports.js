@@ -5,7 +5,6 @@ import { useMutation, useQuery, useQueryClient } from 'react-query';
 import {
   BaseArgoTable,
   BaseArgoView,
-  DropDown,
   ErrorComponent,
   LoadingAnim,
   NotifyError,
@@ -203,14 +202,6 @@ export const ReportsList = (props) => {
   else
     return null
 };
-
-
-function insertSelectPlaceholder(data, text) {
-  if (data)
-    return [text, ...data]
-  else
-    return [text]
-}
 
 
 function preProcessTagValue(data) {
@@ -1579,24 +1570,34 @@ export const ReportsComponent = (props) => {
                   <ParagraphTitle title='Topology configuration'/>
                   <Row>
                     <Col md={2}>
-                      <Label for='topologyType'>Topology type:</Label>
                       {
                         publicView ?
-                          <Field
-                            type='text'
-                            id='topologyType'
-                            name='topologyType'
-                            className='form-control'
-                            disabled={true}
-                          />
+                          <>
+                            <Label for='topologyType'>Topology type:</Label>
+                            <Field
+                              type='text'
+                              id='topologyType'
+                              name='topologyType'
+                              className='form-control'
+                              disabled={true}
+                            />
+                          </>
                         :
-                          <Field
+                          <CustomReactSelect
                             id='topologyType'
                             name='topologyType'
-                            component={DropDown}
-                            data={insertSelectPlaceholder(topologyTypes, 'Select')}
-                            required={true}
-                            class_name='custom-select'
+                            label='Topology type:'
+                            onChange={ e => props.setFieldValue('topologyType', e.value) }
+                            options={
+                              topologyTypes.map(type => new Object({
+                                label: type, value: type
+                              }))
+                            }
+                            value={
+                              props.values.topologyType ?
+                                { label: props.values.topologyType, value: props.values.topologyType }
+                              : undefined
+                            }
                           />
                       }
                       <CustomErrorMessage name='topologyType' />
