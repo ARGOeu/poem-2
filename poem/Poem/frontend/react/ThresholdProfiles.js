@@ -299,7 +299,7 @@ const ThresholdsProfilesForm = ({
                 props.values.rules.map((_rule, index) =>
                   <React.Fragment key={`fragment.rules.${index}`}>
                     <Card className={`mt-${index === 0 ? '1' : '4'}`} data-testid={`rules.${index}`}>
-                      <CardHeader className='p-1 font-weight-bold text-uppercase'>
+                      <CardHeader className='p-1 fw-bold text-uppercase'>
                         <div className='d-flex align-items-center justify-content-between no-gutters'>
                           Rule {index + 1}
                           {
@@ -1465,7 +1465,7 @@ const ListDiffElement = ({title, item1, item2}) => {
 
   return (
     <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
-      <h6 className='mt-4 font-weight-bold text-uppercase'>{title}</h6>
+      <h6 className='mt-4 fw-bold text-uppercase'>{title}</h6>
       <ReactDiffViewer
         oldValue={list2.join('\n')}
         newValue={list1.join('\n')}
