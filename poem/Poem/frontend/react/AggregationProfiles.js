@@ -12,7 +12,9 @@ import {
   NotifyError,
   ErrorComponent,
   ParagraphTitle,
-  ProfilesListTable
+  ProfilesListTable,
+  CustomError,
+  CustomReactSelect
 } from './UIElements';
 import Autosuggest from 'react-autosuggest';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -352,39 +354,51 @@ const AggregationProfilesForm = ({ values, errors, setFieldValue, historyview=fa
       <Col md={4}>
         <FormGroup>
           <Row>
-            <Col md={12}>
-              <Label for='aggregationMetric'>Metric operation:</Label>
-            </Col>
           </Row>
           <Row>
-            <Col md={5} data-testid='metric_operation_col'>
-              {
-                historyview ?
-                  <Field
+            {
+              historyview ?
+                <>
+                  <Col md={12}>
+                    <Label for='aggregationMetric'>Metric operation:</Label>
+                  </Col>
+                  <Col md={5}>
+                    <Field
+                      name='metric_operation'
+                      data-testid='metric_operation'
+                      className='form-control'
+                      id='aggregationMetric'
+                      disabled={true}
+                    />
+                  </Col>
+                </>
+              :
+                <Col md={5}>
+                  <CustomReactSelect
                     name='metric_operation'
-                    className='form-control'
                     id='aggregationMetric'
-                    disabled={true}
+                    onChange={
+                      e => setFieldValue('metric_operation', e.value)
+                    }
+                    options={
+                      logic_operations.map(operation => new Object({
+                        label: operation, value: operation
+                      }))
+                    }
+                    value={
+                      values.metric_operation ?
+                        { label: values.metric_operation, value: values.metric_operation }
+                      : undefined
+                    }
+                    error={errors.metric_operation}
+                    label='Metric operation:'
                   />
-                :
-                  <Field
-                    name='metric_operation'
-                    component={DropDown}
-                    data={insertSelectPlaceholder(logic_operations, 'Select')}
-                    required={true}
-                    class_name='custom-select'
-                    id='aggregationMetric'
-                    errors={errors}
-                  />
-              }
-            </Col>
+                </Col>
+            }
           </Row>
           <Row>
             <Col md={12}>
-              {
-                errors && errors.metric_operation &&
-                  FancyErrorMessage(errors.metric_operation)
-              }
+              <CustomError error={errors.metric_operation} />
               <FormText>
                 Logical operation that will be applied between metrics of each service flavour
               </FormText>
@@ -395,37 +409,47 @@ const AggregationProfilesForm = ({ values, errors, setFieldValue, historyview=fa
       <Col md={4}>
         <FormGroup>
           <Row>
-            <Col md={12}>
-              <Label for='aggregationOperation'>Aggregation operation:</Label>
-            </Col>
-            <Col md={5} data-testid='profile_operation_col'>
-              {
-                historyview ?
-                  <Field
+            {
+              historyview ?
+                <>
+                  <Col md={12}>
+                    <Label for='aggregationOperation'>Aggregation operation:</Label>
+                  </Col>
+                  <Col md={5}>
+                    <Field
+                      name='profile_operation'
+                      data-testid='profile_operation'
+                      className='form-control'
+                      id='aggregationOperation'
+                      disabled={true}
+                    />
+                  </Col>
+                </>
+              :
+                <Col md={5}>
+                  <CustomReactSelect
                     name='profile_operation'
-                    className='form-control'
                     id='aggregationOperation'
-                    disabled={true}
+                    onChange={e => setFieldValue('profile_operation', e.value)}
+                    options={
+                      logic_operations.map(operation => new Object({
+                        label: operation, value: operation
+                      }))
+                    }
+                    value={
+                      values.profile_operation ?
+                        { label: values.profile_operation, value: values.profile_operation }
+                      : undefined
+                    }
+                    label='Aggregation operation:'
+                    error={errors.profile_operation}
                   />
-                :
-                  <Field
-                    name='profile_operation'
-                    component={DropDown}
-                    data={insertSelectPlaceholder(logic_operations, 'Select')}
-                    required={true}
-                    class_name='custom-select'
-                    id='aggregationOperation'
-                    errors={errors}
-                  />
-              }
-            </Col>
+                </Col>
+            }
           </Row>
           <Row>
             <Col md={12}>
-              {
-                errors && errors.profile_operation &&
-                  FancyErrorMessage(errors.profile_operation)
-              }
+              <CustomError error={errors.profile_operation} />
               <FormText>
                 Logical operation that will be applied between defined service flavour groups
               </FormText>
@@ -436,63 +460,85 @@ const AggregationProfilesForm = ({ values, errors, setFieldValue, historyview=fa
       <Col md={4}>
         <FormGroup>
           <Row>
-            <Col md={12}>
-              <Label for='aggregationEndpointGroup'>Endpoint group:</Label>
-            </Col>
-            <Col md={5} data-testid='endpoint_group_col'>
-              {
-                historyview ?
-                  <Field
+            {
+              historyview ?
+                <>
+                  <Col md={12}>
+                    <Label for='aggregationEndpointGroup'>Endpoint group:</Label>
+                  </Col>
+                  <Col md={5}>
+                    <Field
+                      name='endpoint_group'
+                      data-testid='endpoint_group'
+                      className='form-control'
+                      id='aggregationEndpointGroup'
+                      disabled={true}
+                    />
+                  </Col>
+                </>
+              :
+                <Col md={5}>
+                  <CustomReactSelect
                     name='endpoint_group'
-                    className='form-control'
                     id='aggregationEndpointGroup'
-                    disabled={true}
+                    onChange={
+                      e => setFieldValue('endpoint_group', e.value)
+                    }
+                    options={
+                      endpoint_groups.map(group => new Object({
+                        label: group, value: group
+                      }))
+                    }
+                    value={
+                      values.endpoint_group ?
+                        { label: values.endpoint_group, value: values.endpoint_group }
+                      : undefined
+                    }
+                    label='Endpoint group:'
+                    error={errors.endpoint_group}
                   />
-                :
-                  <Field
-                    name='endpoint_group'
-                    component={DropDown}
-                    data={insertSelectPlaceholder(endpoint_groups, 'Select')}
-                    required={true}
-                    class_name='custom-select'
-                    id='aggregationEndpointGroup'
-                    errors={errors}
-                  />
-              }
-              {
-                errors && errors.endpoint_group &&
-                  FancyErrorMessage(errors.endpoint_group)
-              }
-            </Col>
+                </Col>
+            }
+            <CustomError error={errors.endpoint_group} />
           </Row>
         </FormGroup>
       </Col>
     </Row>
     <Row className='mt-4'>
       <Col md={5}>
-        <FormGroup data-testid='metric_profile_row'>
-          <Label for='metricProfile'>Metric profile:</Label>
+        <FormGroup>
           {
             historyview ?
-              <Field
-                name='metric_profile'
-                className='form-control'
-                disabled={true}
-              />
+              <>
+                <Label for='metricProfile'>Metric profile:</Label>
+                <Field
+                  name='metric_profile'
+                  data-testid='metric_profile'
+                  id='metricProfile'
+                  className='form-control'
+                  disabled={true}
+                />
+              </>
             :
-              <Field
+              <CustomReactSelect
                 name='metric_profile'
-                component={DropDown}
-                data={insertSelectPlaceholder(list_id_metric_profiles.map(e => e.name), 'Select')}
-                required={true}
-                class_name='custom-select'
-                errors={errors}
+                id='metricProfile'
+                onChange={e => setFieldValue('metric_profile', e.value)}
+                options={
+                  list_id_metric_profiles.map(profile => new Object({
+                    label: profile.name, value: profile.name
+                  }))
+                }
+                value={
+                  values.metric_profile ?
+                    { label: values.metric_profile, value: values.metric_profile }
+                  : undefined
+                }
+                label='Metric profile:'
+                error={errors.metric_profile}
               />
           }
-          {
-            errors && errors.metric_profile &&
-              FancyErrorMessage(errors.metric_profile)
-          }
+          <CustomError error={errors.metric_profile} />
           <FormText>
             Metric profile associated to Aggregation profile. Service flavours defined in service flavour groups originate from selected metric profile.
           </FormText>
@@ -1004,7 +1050,7 @@ export const AggregationProfilesChange = (props) => {
             groupname: backendAP ? backendAP.groupname: '',
             metric_operation: webApiAP ? webApiAP.metric_operation : '',
             profile_operation: webApiAP ? webApiAP.profile_operation : '',
-            metric_profile: webApiAP ? correctMetricProfileName(webApiAP.metric_profile.id, extractListOfMetricsProfiles(metricProfiles)) : { name: '' },
+            metric_profile: webApiAP ? correctMetricProfileName(webApiAP.metric_profile.id, extractListOfMetricsProfiles(metricProfiles)) : '',
             endpoint_group: webApiAP ? webApiAP.endpoint_group : '',
             groups: !publicView ?
               insertDummyGroup(

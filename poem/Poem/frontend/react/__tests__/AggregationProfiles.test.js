@@ -569,11 +569,11 @@ describe('Tests for aggregation profiles changeview', () => {
 
     const nameField = screen.getByTestId('name');
     const groupField = screen.getByText('EGI');
-    const metricOperation = screen.getByTestId('metric_operation_col').firstChild;
-    const aggrOperation = screen.getByTestId('profile_operation_col').firstChild;
-    const endpointGroup = screen.getByTestId('endpoint_group_col').firstChild;
-    const metricProfileRow = within(screen.getByTestId('metric_profile_row'));
-    const metricProfileField = metricProfileRow.getByRole('combobox');
+
+    const metricOperation = screen.getAllByText('AND')[0]
+    const aggrOperation = screen.getAllByText('AND')[1]
+    const endpointGroup = screen.getByText('servicegroups')
+    const metricProfileField = screen.getByText('ARGO_MON_CRITICAL')
 
     expect(nameField.value).toBe('TEST_PROFILE');
     expect(nameField).toBeDisabled();
@@ -583,14 +583,18 @@ describe('Tests for aggregation profiles changeview', () => {
     selectEvent.openMenu(groupField)
     expect(screen.getByText('ARGO')).toBeInTheDocument()
 
-    expect(metricOperation.value).toBe('AND');
     expect(metricOperation).toBeEnabled();
-    expect(aggrOperation.value).toBe('AND');
     expect(aggrOperation).toBeEnabled();
-    expect(endpointGroup.value).toBe('servicegroups');
     expect(endpointGroup).toBeEnabled();
-    expect(metricProfileField.value).toBe('ARGO_MON_CRITICAL');
     expect(metricProfileField).toBeEnabled();
+
+    expect(screen.queryByText('sites')).not.toBeInTheDocument()
+    selectEvent.openMenu(endpointGroup)
+    expect(screen.getByText('sites')).toBeInTheDocument()
+
+    expect(screen.queryByText('FEDCLOUD')).not.toBeInTheDocument()
+    selectEvent.openMenu(metricProfileField)
+    expect(screen.getByText('FEDCLOUD')).toBeInTheDocument()
 
     expect(screen.getAllByTestId(/card/i)).toHaveLength(4);
     const card0 = within(screen.getByTestId('card-0'));
@@ -674,11 +678,10 @@ describe('Tests for aggregation profiles changeview', () => {
 
     const nameField = screen.getByTestId('name');
     const groupField = screen.getByTestId('groupname');
-    const metricOperation = screen.getByTestId('metric_operation_col').firstChild;
-    const aggrOperation = screen.getByTestId('profile_operation_col').firstChild;
-    const endpointGroup = screen.getByTestId('endpoint_group_col').firstChild;
-    const metricProfileRow = within(screen.getByTestId('metric_profile_row'));
-    const metricProfileField = metricProfileRow.getByRole('textbox');
+    const metricOperation = screen.getByTestId('metric_operation')
+    const aggrOperation = screen.getByTestId('profile_operation')
+    const endpointGroup = screen.getByTestId('endpoint_group')
+    const metricProfileField = screen.getByTestId('metric_profile');
 
     expect(nameField.value).toBe('TEST_PROFILE');
     expect(nameField).toBeDisabled();
@@ -810,24 +813,28 @@ describe('Tests for aggregation profiles changeview', () => {
 
     const nameField = screen.getByTestId('name');
     const groupField = screen.getByText('EGI');
-    const metricOperation = screen.getByTestId('metric_operation_col').firstChild;
-    const aggrOperation = screen.getByTestId('profile_operation_col').firstChild;
-    const endpointGroup = screen.getByTestId('endpoint_group_col').firstChild;
-    const metricProfileRow = within(screen.getByTestId('metric_profile_row'));
-    const metricProfileField = metricProfileRow.getByRole('combobox');
+
+    const metricOperation = screen.getAllByText('OR')[0]
+    const aggrOperation = screen.getAllByText('OR')[1]
+    const endpointGroup = screen.getByText('sites')
+    const metricProfileField = screen.getByText('FEDCLOUD')
 
     expect(nameField.value).toBe('TEST_PROFILE');
     expect(nameField).toBeDisabled();
     expect(groupField).toBeEnabled();
 
-    expect(metricOperation.value).toBe('OR');
     expect(metricOperation).toBeEnabled();
-    expect(aggrOperation.value).toBe('OR');
     expect(aggrOperation).toBeEnabled();
-    expect(endpointGroup.value).toBe('sites');
     expect(endpointGroup).toBeEnabled();
-    expect(metricProfileField.value).toBe('FEDCLOUD');
     expect(metricProfileField).toBeEnabled();
+
+    expect(screen.queryByText('servicegroups')).not.toBeInTheDocument()
+    selectEvent.openMenu(endpointGroup)
+    expect(screen.getByText('servicegroups')).toBeInTheDocument()
+
+    expect(screen.queryByText('ARGO_MON_CRITICAL')).not.toBeInTheDocument()
+    selectEvent.openMenu(metricProfileField)
+    expect(screen.getByText('ARGO_MON_CRITICAL')).toBeInTheDocument()
 
     expect(screen.getAllByTestId(/card/i)).toHaveLength(1);
     const card0 = within(screen.getByTestId('card-0'));
@@ -941,10 +948,15 @@ describe('Tests for aggregation profiles changeview', () => {
 
     await selectEvent.select(screen.getByText('EGI'), 'ARGO')
 
-    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(screen.getByTestId('endpoint_group_col').firstChild, { target: { value: 'sites' } });
-    fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'FEDCLOUD' } })
+    const metricOperation = screen.getAllByText('AND')[0]
+    const aggregationOperation = screen.getAllByText('AND')[1]
+    const endpointGroup = screen.getByText('servicegroups')
+    const metricProfile = screen.getByText('ARGO_MON_CRITICAL')
+
+    await selectEvent.select(metricOperation, 'OR')
+    await selectEvent.select(aggregationOperation, 'OR')
+    await selectEvent.select(endpointGroup, 'sites')
+    await selectEvent.select(metricProfile, 'FEDCLOUD')
 
     const card0 = within(screen.getByTestId('card-0'));
     const card1 = within(screen.getByTestId('card-1'));
@@ -1031,10 +1043,10 @@ describe('Tests for aggregation profiles changeview', () => {
 
     await selectEvent.select(screen.getByText('EGI'), 'ARGO')
 
-    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(screen.getByTestId('endpoint_group_col').firstChild, { target: { value: 'sites' } });
-    fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'FEDCLOUD' } })
+    await selectEvent.select(screen.getAllByText('AND')[0], 'OR')
+    await selectEvent.select(screen.getAllByText('AND')[0], 'OR')
+    await selectEvent.select(screen.getByText('servicegroups'), 'sites')
+    await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'FEDCLOUD')
 
     const card0 = within(screen.getByTestId('card-0'));
     const card1 = within(screen.getByTestId('card-1'));
@@ -1143,10 +1155,10 @@ describe('Tests for aggregation profiles changeview', () => {
 
     await selectEvent.select(screen.getByText('EGI'), 'ARGO')
 
-    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(screen.getByTestId('endpoint_group_col').firstChild, { target: { value: 'sites' } });
-    fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'FEDCLOUD' } })
+    await selectEvent.select(screen.getAllByText('AND')[0], 'OR')
+    await selectEvent.select(screen.getAllByText('AND')[0], 'OR')
+    await selectEvent.select(screen.getByText('servicegroups'), 'sites')
+    await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'FEDCLOUD')
 
     const card0 = within(screen.getByTestId('card-0'));
     const card1 = within(screen.getByTestId('card-1'));
@@ -1260,10 +1272,10 @@ describe('Tests for aggregation profiles changeview', () => {
 
     await selectEvent.select(screen.getByText('EGI'), 'ARGO')
 
-    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(screen.getByTestId('endpoint_group_col').firstChild, { target: { value: 'sites' } });
-    fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'FEDCLOUD' } })
+    await selectEvent.select(screen.getAllByText('AND')[0], 'OR')
+    await selectEvent.select(screen.getAllByText('AND')[0], 'OR')
+    await selectEvent.select(screen.getByText('servicegroups'), 'sites')
+    await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'FEDCLOUD')
 
     const card0 = within(screen.getByTestId('card-0'));
     const card1 = within(screen.getByTestId('card-1'));
@@ -1428,10 +1440,10 @@ describe('Tests for aggregation profiles changeview', () => {
 
     await selectEvent.select(screen.getByText('EGI'), 'ARGO')
 
-    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(screen.getByTestId('endpoint_group_col').firstChild, { target: { value: 'sites' } });
-    fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'FEDCLOUD' } })
+    await selectEvent.select(screen.getAllByText('AND')[0], 'OR')
+    await selectEvent.select(screen.getAllByText('AND')[0], 'OR')
+    await selectEvent.select(screen.getByText('servicegroups'), 'sites')
+    await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'FEDCLOUD')
 
     const card0 = within(screen.getByTestId('card-0'));
     const card1 = within(screen.getByTestId('card-1'));
@@ -1595,10 +1607,10 @@ describe('Tests for aggregation profiles changeview', () => {
 
     await selectEvent.select(screen.getByText('EGI'), 'ARGO')
 
-    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(screen.getByTestId('endpoint_group_col').firstChild, { target: { value: 'sites' } });
-    fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'FEDCLOUD' } })
+    await selectEvent.select(screen.getAllByText('AND')[0], 'OR')
+    await selectEvent.select(screen.getAllByText('AND')[0], 'OR')
+    await selectEvent.select(screen.getByText('servicegroups'), 'sites')
+    await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'FEDCLOUD')
 
     const card0 = within(screen.getByTestId('card-0'));
     const card1 = within(screen.getByTestId('card-1'));
@@ -1799,7 +1811,8 @@ describe('Tests for aggregation profiles changeview', () => {
       fireEvent.load(screen.getByTestId('file_input'))
     })
 
-    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'AND' } });
+
+    await selectEvent.select(screen.getByLabelText('Metric operation:'), 'AND')
 
     const card0 = within(screen.getByTestId('card-0'));
     fireEvent.click(card0.getByTestId('insert-2'));
@@ -2149,11 +2162,10 @@ describe('Tests for aggregation profile addview', () => {
 
     const nameField = screen.getByTestId('name');
     const groupField = screen.getAllByText(/select/i)[0];
-    const metricOperation = screen.getByTestId('metric_operation_col').firstChild;
-    const aggrOperation = screen.getByTestId('profile_operation_col').firstChild;
-    const endpointGroup = screen.getByTestId('endpoint_group_col').firstChild;
-    const metricProfileRow = within(screen.getByTestId('metric_profile_row'));
-    const metricProfileField = metricProfileRow.getByRole('combobox');
+    const metricOperation = screen.getAllByText(/select/i)[1];
+    const aggrOperation = screen.getAllByText(/select/i)[2];
+    const endpointGroup = screen.getAllByText(/select/i)[3];
+    const metricProfileField = screen.getAllByText(/select/i)[4];
 
     expect(nameField.value).toBe('');
     expect(nameField).toBeEnabled();
@@ -2165,14 +2177,22 @@ describe('Tests for aggregation profile addview', () => {
     expect(screen.getByText('EGI')).toBeInTheDocument()
     expect(screen.getByText('ARGO')).toBeInTheDocument()
 
-    expect(metricOperation.value).toBe('');
     expect(metricOperation).toBeEnabled();
-    expect(aggrOperation.value).toBe('');
     expect(aggrOperation).toBeEnabled();
-    expect(endpointGroup.value).toBe('');
     expect(endpointGroup).toBeEnabled();
-    expect(metricProfileField.value).toBe('');
     expect(metricProfileField).toBeEnabled();
+
+    expect(screen.queryByText('OR')).not.toBeInTheDocument()
+    expect(screen.queryByText('AND')).not.toBeInTheDocument()
+    selectEvent.openMenu(metricOperation)
+    expect(screen.getByText('OR')).toBeInTheDocument()
+    expect(screen.getByText('AND')).toBeInTheDocument()
+
+    expect(screen.queryByText('ARGO_MON_CRITICAL')).not.toBeInTheDocument()
+    expect(screen.queryByText('FEDCLOUD')).not.toBeInTheDocument()
+    selectEvent.openMenu(metricProfileField)
+    expect(screen.getByText('ARGO_MON_CRITICAL')).toBeInTheDocument()
+    expect(screen.getByText('FEDCLOUD')).toBeInTheDocument()
 
     expect(screen.getByRole('button', { name: 'Add new group' })).toBeInTheDocument();
     expect(screen.queryAllByTestId(/card-/)).toHaveLength(0);
@@ -2209,10 +2229,10 @@ describe('Tests for aggregation profile addview', () => {
 
     await selectEvent.select(screen.getAllByText(/select/i)[0], 'ARGO')
 
-    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'AND' } });
-    fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'AND' } })
-    fireEvent.change(screen.getByTestId('endpoint_group_col').firstChild, { target: { value: 'servicegroups' } });
-    fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'ARGO_MON_CRITICAL' } })
+    await selectEvent.select(screen.getAllByText(/select/i)[0], 'AND')
+    await selectEvent.select(screen.getAllByText(/select/i)[0], 'AND')
+    await selectEvent.select(screen.getAllByText(/select/i)[0], 'servicegroups')
+    await selectEvent.select(screen.getAllByText(/select/i)[0], 'ARGO_MON_CRITICAL')
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
     const card0 = within(screen.getByTestId('card-0'));
@@ -2344,10 +2364,10 @@ describe('Tests for aggregation profile addview', () => {
 
     await selectEvent.select(screen.getAllByText(/select/i)[0], 'ARGO')
 
-    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'AND' } });
-    fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'AND' } })
-    fireEvent.change(screen.getByTestId('endpoint_group_col').firstChild, { target: { value: 'servicegroups' } });
-    fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'ARGO_MON_CRITICAL' } })
+    await selectEvent.select(screen.getAllByText(/select/i)[0], 'AND')
+    await selectEvent.select(screen.getAllByText(/select/i)[0], 'AND')
+    await selectEvent.select(screen.getAllByText(/select/i)[0], 'servicegroups')
+    await selectEvent.select(screen.getAllByText(/select/i)[0], 'ARGO_MON_CRITICAL')
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
     const card0 = within(screen.getByTestId('card-0'));
@@ -2445,10 +2465,10 @@ describe('Tests for aggregation profile addview', () => {
 
     await selectEvent.select(screen.getAllByText(/select/i)[0], 'ARGO')
 
-    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'AND' } });
-    fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'AND' } })
-    fireEvent.change(screen.getByTestId('endpoint_group_col').firstChild, { target: { value: 'servicegroups' } });
-    fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'ARGO_MON_CRITICAL' } })
+    await selectEvent.select(screen.getAllByText(/select/i)[0], 'AND')
+    await selectEvent.select(screen.getAllByText(/select/i)[0], 'AND')
+    await selectEvent.select(screen.getAllByText(/select/i)[0], 'servicegroups')
+    await selectEvent.select(screen.getAllByText(/select/i)[0], 'ARGO_MON_CRITICAL')
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
     const card0 = within(screen.getByTestId('card-0'));
@@ -2562,10 +2582,10 @@ describe('Tests for aggregation profile addview', () => {
 
     await selectEvent.select(screen.getAllByText(/select/i)[0], 'ARGO')
 
-    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'AND' } });
-    fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'AND' } })
-    fireEvent.change(screen.getByTestId('endpoint_group_col').firstChild, { target: { value: 'servicegroups' } });
-    fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'ARGO_MON_CRITICAL' } })
+    await selectEvent.select(screen.getAllByText(/select/i)[0], 'AND')
+    await selectEvent.select(screen.getAllByText(/select/i)[0], 'AND')
+    await selectEvent.select(screen.getAllByText(/select/i)[0], 'servicegroups')
+    await selectEvent.select(screen.getAllByText(/select/i)[0], 'ARGO_MON_CRITICAL')
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
     const card0 = within(screen.getByTestId('card-0'));
@@ -2714,10 +2734,10 @@ describe('Tests for aggregation profile addview', () => {
 
     await selectEvent.select(screen.getAllByText(/select/i)[0], 'ARGO')
 
-    fireEvent.change(screen.getByTestId('metric_operation_col').firstChild, { target: { value: 'AND' } });
-    fireEvent.change(screen.getByTestId('profile_operation_col').firstChild, { target: { value: 'AND' } })
-    fireEvent.change(screen.getByTestId('endpoint_group_col').firstChild, { target: { value: 'servicegroups' } });
-    fireEvent.change(within(screen.getByTestId('metric_profile_row')).getByRole('combobox'), { target: { value: 'ARGO_MON_CRITICAL' } })
+    await selectEvent.select(screen.getAllByText(/select/i)[0], 'AND')
+    await selectEvent.select(screen.getAllByText(/select/i)[0], 'AND')
+    await selectEvent.select(screen.getAllByText(/select/i)[0], 'servicegroups')
+    await selectEvent.select(screen.getAllByText(/select/i)[0], 'ARGO_MON_CRITICAL')
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
     const card0 = within(screen.getByTestId('card-0'));
@@ -2861,11 +2881,10 @@ describe('Test for aggregation profile version detail page', () => {
 
     const nameField = screen.getByTestId('name');
     const groupField = screen.getByTestId('groupname');
-    const metricOperation = screen.getByTestId('metric_operation_col').firstChild;
-    const aggrOperation = screen.getByTestId('profile_operation_col').firstChild;
-    const endpointGroup = screen.getByTestId('endpoint_group_col').firstChild;
-    const metricProfileRow = within(screen.getByTestId('metric_profile_row'));
-    const metricProfileField = metricProfileRow.getByRole('textbox');
+    const metricOperation = screen.getByTestId('metric_operation')
+    const aggrOperation = screen.getByTestId('profile_operation')
+    const endpointGroup = screen.getByTestId('endpoint_group')
+    const metricProfileField = screen.getByTestId('metric_profile');
 
     expect(nameField.value).toBe('TEST_PROFILE');
     expect(nameField).toBeDisabled();
