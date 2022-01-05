@@ -1256,8 +1256,8 @@ export const DiffElement = ({title, item1, item2}) => {
 };
 
 
-export const ProfileMainInfo = ({errors, values, setFieldValue, grouplist=undefined, description=undefined,
-  fieldsdisable=false, profiletype=undefined, addview=false }) => (
+export const ProfileMainInfo = ({grouplist=undefined, description=undefined,
+  fieldsdisable=false, profiletype=undefined, addview=false, ...props }) => (
     <FormGroup>
       <Row>
         <Col md={6}>
@@ -1267,11 +1267,11 @@ export const ProfileMainInfo = ({errors, values, setFieldValue, grouplist=undefi
               type='text'
               name='name'
               data-testid='name'
-              className={`form-control form-control-lg ${errors.name && 'border-danger'}`}
+              className={`form-control form-control-lg ${props.errors.name && 'border-danger'}`}
               disabled={!addview}
             />
           </InputGroup>
-          <CustomErrorMessage name='name' />
+          <CustomError error={props.errors.name} />
           <FormText color='text-muted'>
             {`Name of ${profiletype} profile`}
           </FormText>
@@ -1313,22 +1313,23 @@ export const ProfileMainInfo = ({errors, values, setFieldValue, grouplist=undefi
                   <CustomReactSelect
                     name='groupname'
                     inputgroup={ true }
+                    error={ props.errors.groupname }
                     options={
                       grouplist.map((group) => new Object({
                         label: group, value: group
                       }))
                     }
                     value={
-                      values.groupname ?
-                        { label: values.groupname, value: values.groupname }
+                      props.values.groupname ?
+                        { label: props.values.groupname, value: props.values.groupname }
                       : undefined
                     }
-                    onChange={ e => setFieldValue('groupname', e.value) }
+                    onChange={ e => props.setFieldValue('groupname', e.value) }
                   />
                 </div>
           }
           </InputGroup>
-          <CustomErrorMessage name='groupname' />
+          <CustomError error={props.errors.groupname} />
           <FormText color='muted'>
             {`${profiletype.charAt(0).toUpperCase() + profiletype.slice(1)} profile is member of given group.`}
           </FormText>
