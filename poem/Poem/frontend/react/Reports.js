@@ -344,7 +344,7 @@ const TopologyTagList = ({ part, fieldName, tagsState, setTagsState, tagsAll, ad
         :
           form.values[fieldName].map((tags, index) => (
             <React.Fragment key={index}>
-              <Row key={index} className="no-gutters">
+              <Row key={index} className="g-0">
                 <Col md={4}>
                   {
                     publicView ?
@@ -407,7 +407,7 @@ const TopologyTagList = ({ part, fieldName, tagsState, setTagsState, tagsAll, ad
                       />
                   }
                 </Col>
-                <Col md={1} className="pl-2 pt-1">
+                <Col md={1} className="ps-2 pt-1">
                   {
                     !publicView &&
                       <Button size="sm" color="danger"
