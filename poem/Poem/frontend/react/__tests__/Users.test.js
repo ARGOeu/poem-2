@@ -990,7 +990,6 @@ describe('Tests for user changeview on tenant POEM', () => {
     const metricGroups = screen.getByText('metric-group1').parentElement
 
     await selectEvent.select(metricGroups, ['metric-group2', 'metric-group3'])
-    await selectEvent.clearFirst(metricGroups)
 
     fireEvent.change(screen.getByTestId('subject'), { target: { value: '' } });
     fireEvent.change(screen.getByTestId('egiid'), { target: { value: '' } });
@@ -1024,7 +1023,7 @@ describe('Tests for user changeview on tenant POEM', () => {
             egiid: '',
             subject: '',
             groupsofaggregations: ['aggr-group1'],
-            groupsofmetrics: ['metric-group2', 'metric-group3'],
+            groupsofmetrics: ['metric-group1', 'metric-group2', 'metric-group3'],
             groupsofmetricprofiles: ['mp-group1'],
             groupsofreports: ['report-group2'],
             groupsofthresholdsprofiles: ['threshold-group3']
@@ -1079,7 +1078,6 @@ describe('Tests for user changeview on tenant POEM', () => {
     const metricGroups = screen.getByText('metric-group1').parentElement
 
     await selectEvent.select(metricGroups, ['metric-group2', 'metric-group3'])
-    await selectEvent.clearFirst(metricGroups)
 
     fireEvent.change(screen.getByTestId('subject'), { target: { value: '' } });
     fireEvent.change(screen.getByTestId('egiid'), { target: { value: '' } });
@@ -1142,7 +1140,6 @@ describe('Tests for user changeview on tenant POEM', () => {
     const metricGroups = screen.getByText('metric-group1').parentElement
 
     await selectEvent.select(metricGroups, ['metric-group2', 'metric-group3'])
-    await selectEvent.clearFirst(metricGroups)
 
     fireEvent.change(screen.getByTestId('subject'), { target: { value: '' } });
     fireEvent.change(screen.getByTestId('egiid'), { target: { value: '' } });
@@ -1178,7 +1175,7 @@ describe('Tests for user changeview on tenant POEM', () => {
             egiid: '',
             subject: '',
             groupsofaggregations: ['aggr-group1'],
-            groupsofmetrics: ['metric-group2', 'metric-group3'],
+            groupsofmetrics: ['metric-group1', 'metric-group2', 'metric-group3'],
             groupsofmetricprofiles: ['mp-group1'],
             groupsofreports: ['report-group2'],
             groupsofthresholdsprofiles: ['threshold-group3']
@@ -1217,7 +1214,6 @@ describe('Tests for user changeview on tenant POEM', () => {
     const metricGroups = screen.getByText('metric-group1').parentElement
 
     await selectEvent.select(metricGroups, ['metric-group2', 'metric-group3'])
-    await selectEvent.clearFirst(metricGroups)
 
     fireEvent.change(screen.getByTestId('subject'), { target: { value: '' } });
     fireEvent.change(screen.getByTestId('egiid'), { target: { value: '' } });
@@ -1278,7 +1274,6 @@ describe('Tests for user changeview on tenant POEM', () => {
     const metricGroups = screen.getByText('metric-group1').parentElement
 
     await selectEvent.select(metricGroups, ['metric-group2', 'metric-group3'])
-    await selectEvent.clearFirst(metricGroups)
 
     fireEvent.change(screen.getByTestId('subject'), { target: { value: '' } });
     fireEvent.change(screen.getByTestId('egiid'), { target: { value: '' } });
@@ -1314,7 +1309,7 @@ describe('Tests for user changeview on tenant POEM', () => {
             egiid: '',
             subject: '',
             groupsofaggregations: ['aggr-group1'],
-            groupsofmetrics: ['metric-group2', 'metric-group3'],
+            groupsofmetrics: ['metric-group1', 'metric-group2', 'metric-group3'],
             groupsofmetricprofiles: ['mp-group1'],
             groupsofreports: ['report-group2'],
             groupsofthresholdsprofiles: ['threshold-group3']

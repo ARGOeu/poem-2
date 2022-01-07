@@ -430,23 +430,19 @@ const GroupSelect = ({ name, label, options, initValues, ...props }) => {
   }
 
   return (
-    <Row>
-      <Col md={6}>
-        <CustomReactSelect
-          name={name}
-          id={name}
-          label={label}
-          isMulti={ true }
-          onChange={ e => {
-            let selectedValues = new Array()
-            e.forEach(e => selectedValues.push(e.value))
-            props.setFieldValue(name, selectedValues)
-          }}
-          options={getOptions(options)}
-          value={getInitValues(initValues)}
-        />
-      </Col>
-    </Row>
+    <CustomReactSelect
+      name={name}
+      id={name}
+      label={label}
+      isMulti={ true }
+      onChange={ e => {
+        let selectedValues = new Array()
+        e.forEach(e => selectedValues.push(e.value))
+        props.setFieldValue(name, selectedValues)
+      }}
+      options={getOptions(options)}
+      value={getInitValues(initValues)}
+    />
   )
 }
 
@@ -716,56 +712,72 @@ export const UserChange = (props) => {
                     <>
                       <FormGroup>
                         <ParagraphTitle title='POEM user permissions'/>
-                        <GroupSelect
-                          {...props}
-                          name='groupsofreports'
-                          label='Groups of reports'
-                          options={allGroups.reports}
-                          initValues={props.values.groupsofreports}
-                        />
-                        <FormText color="muted">
-                          The groups of reports that user will control.
-                        </FormText>
-                        <GroupSelect
-                          {...props}
-                          name='groupsofmetrics'
-                          label='Groups of metrics'
-                          options={allGroups.metrics}
-                          initValues={props.values.groupsofmetrics}
-                        />
-                        <FormText color="muted">
-                          The groups of metrics that user will control.
-                        </FormText>
-                        <GroupSelect
-                          {...props}
-                          name='groupsofmetricprofiles'
-                          label='Groups of metric profiles'
-                          options={allGroups.metricprofiles}
-                          initValues={props.values.groupsofmetricprofiles}
-                        />
-                        <FormText color="muted">
-                          The groups of metric profiles that user will control.
-                        </FormText>
-                        <GroupSelect
-                          {...props}
-                          name='groupsofaggregations'
-                          label='Groups of aggregations'
-                          options={allGroups.aggregations}
-                          initValues={props.values.groupsofaggregations}
-                        />
-                        <FormText color="muted">
-                          The groups of aggregations that user will control.
-                        </FormText>
-                        <GroupSelect
-                          {...props}
-                          name='groupsofthresholdsprofiles'
-                          label='Groups of thresholds profiles'
-                          options={allGroups.thresholdsprofiles}
-                          initValues={props.values.groupsofthresholdsprofiles}
-                        />
-                        <FormText color="muted">
-                          The groups of thresholds profiles that user will control.
-                        </FormText>
+                        <Row>
+                          <Col md={5}>
+                            <GroupSelect
+                              {...props}
+                              name='groupsofreports'
+                              label='Groups of reports'
+                              options={allGroups.reports}
+                              initValues={props.values.groupsofreports}
+                            />
+                            <FormText color="muted">
+                              The groups of reports that user will control.
+                            </FormText>
+                          </Col>
+                          <Col md={5}>
+                            <GroupSelect
+                              {...props}
+                              name='groupsofmetrics'
+                              label='Groups of metrics'
+                              options={allGroups.metrics}
+                              initValues={props.values.groupsofmetrics}
+                            />
+                            <FormText color="muted">
+                              The groups of metrics that user will control.
+                            </FormText>
+                          </Col>
+                        </Row>
+                        <Row className='mt-3'>
+                          <Col md={5}>
+                            <GroupSelect
+                              {...props}
+                              name='groupsofmetricprofiles'
+                              label='Groups of metric profiles'
+                              options={allGroups.metricprofiles}
+                              initValues={props.values.groupsofmetricprofiles}
+                            />
+                            <FormText color="muted">
+                              The groups of metric profiles that user will control.
+                            </FormText>
+                          </Col>
+                          <Col md={5}>
+                            <GroupSelect
+                              {...props}
+                              name='groupsofaggregations'
+                              label='Groups of aggregations'
+                              options={allGroups.aggregations}
+                              initValues={props.values.groupsofaggregations}
+                            />
+                            <FormText color="muted">
+                              The groups of aggregations that user will control.
+                            </FormText>
+                          </Col>
+                        </Row>
+                        <Row className='mt-3'>
+                          <Col md={5}>
+                            <GroupSelect
+                              {...props}
+                              name='groupsofthresholdsprofiles'
+                              label='Groups of thresholds profiles'
+                              options={allGroups.thresholdsprofiles}
+                              initValues={props.values.groupsofthresholdsprofiles}
+                            />
+                            <FormText color="muted">
+                              The groups of thresholds profiles that user will control.
+                            </FormText>
+                          </Col>
+                        </Row>
                       </FormGroup>
                       <FormGroup>
                         <ParagraphTitle title='Additional information'/>
