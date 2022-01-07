@@ -22,7 +22,8 @@ import {
   FormText,
   Button,
   InputGroup,
-  InputGroupText
+  InputGroupText,
+  Input
 } from 'reactstrap';
 import { faClipboard } from '@fortawesome/free-solid-svg-icons';
 import { useQuery, useQueryClient, useMutation } from 'react-query';
@@ -260,7 +261,7 @@ export const APIKeyChange = (props) => {
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
         >
-          {() => (
+          {(props) => (
             <Form>
               <FormGroup>
                 <Row>
@@ -280,17 +281,23 @@ export const APIKeyChange = (props) => {
                 </Row>
                 <Row className='mt-2'>
                   <Col md={6}>
-                    <label>
-                      <Field
-                        type='checkbox'
-                        name='revoked'
-                        id='checkbox'
-                      />
-                      Revoked
-                    </label>
-                    <FormText color='muted'>
-                      If the API key is revoked, clients cannot use it any more. (This cannot be undone.)
-                    </FormText>
+                    <Row>
+                      <FormGroup check inline className='ms-3'>
+                        <Input
+                          type='checkbox'
+                          id='checkbox'
+                          name='revoked'
+                          onChange={e => props.setFieldValue('revoked', e.target.checked)}
+                          checked={props.values.revoked}
+                        />
+                        <Label check for='checkbox'>Revoked</Label>
+                      </FormGroup>
+                    </Row>
+                    <Row>
+                      <FormText color='muted'>
+                        If the API key is revoked, clients cannot use it any more. (This cannot be undone.)
+                      </FormText>
+                    </Row>
                   </Col>
                 </Row>
               </FormGroup>
@@ -302,7 +309,7 @@ export const APIKeyChange = (props) => {
                       If token field is <b>left empty</b>, value will be automatically generated on save.
                     </Alert>
                 }
-                <Row className="no-gutters">
+                <Row className="g-0">
                   <Col sm={6}>
                     <InputGroup>
                       <InputGroupText>Token</InputGroupText>
