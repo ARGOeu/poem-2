@@ -197,8 +197,8 @@ const Group = ({operation, services, groupindex, isnew, last}) => {
                   />)}
               />
             </CardBody>
-            <CardFooter className="p-1 d-flex justify-content-center" data-testid='operation'>
-              <div className='col-2'>
+            <CardFooter className="p-1 d-flex justify-content-center">
+              <div className='col-2' data-testid='operation'>
                 <DropDown
                   field={{name: "operation", value: operation}}
                   data={insertSelectPlaceholder(context.list_operations, 'Select')}
