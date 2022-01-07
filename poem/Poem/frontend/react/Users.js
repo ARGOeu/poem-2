@@ -11,7 +11,8 @@ import {
   ParagraphTitle,
   BaseArgoTable,
   CustomErrorMessage,
-  CustomError
+  CustomError,
+  CustomReactSelect
 } from './UIElements';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
@@ -415,6 +416,41 @@ export const UsersList = (props) => {
 };
 
 
+const GroupSelect = ({ name, label, options, initValues, ...props }) => {
+  const getOptions = ( options ) => {
+    return options.map(
+      option => new Object({ label: option, value: option })
+    )
+  }
+
+  const getInitValues = ( values ) => {
+    return values.map(
+      value => new Object({ label: value, value: value })
+    )
+  }
+
+  return (
+    <Row>
+      <Col md={6}>
+        <CustomReactSelect
+          name={name}
+          id={name}
+          label={label}
+          isMulti={ true }
+          onChange={ e => {
+            let selectedValues = new Array()
+            e.forEach(e => selectedValues.push(e.value))
+            props.setFieldValue(name, selectedValues)
+          }}
+          options={getOptions(options)}
+          value={getInitValues(initValues)}
+        />
+      </Col>
+    </Row>
+  )
+}
+
+
 export const UserChange = (props) => {
   const user_name = props.match.params.user_name;
   const addview = props.addview;
@@ -670,7 +706,7 @@ export const UserChange = (props) => {
             onSubmit = {(values) => onSubmitHandle(values)}
           >
             {props => (
-              <Form>
+              <Form data-testid='form'>
                 <CommonUser
                   {...props}
                   add={addview}
@@ -680,141 +716,56 @@ export const UserChange = (props) => {
                     <>
                       <FormGroup>
                         <ParagraphTitle title='POEM user permissions'/>
-                        <Row>
-                          <Col md={6}>
-                            <Label for="groupsofreports" className="grouplabel">Groups of reports</Label>
-                            <Field
-                              component="select"
-                              name="groupsofreports"
-                              id='groupsofreports'
-                              onChange={evt =>
-                                props.setFieldValue(
-                                  "groupsofreports",
-                                  [].slice
-                                    .call(evt.target.selectedOptions)
-                                    .map(option => option.value)
-                              )}
-                              multiple={true}
-                            >
-                              {allGroups.reports.map( grp => (
-                                <option data-testid='groupsofreports-option' key={grp} value={grp}>
-                                  {grp}
-                                </option>
-                              ))}
-                            </Field>
-                            <FormText color="muted">
-                              The groups of reports that user will control. Hold down &quot;Control&quot; or &quot;Command&quot; on a Mac to select more than one.
-                            </FormText>
-                          </Col>
-                        </Row>
-                        <Row>
-                          <Col md={6}>
-                            <Label for="groupsofmetrics" className="grouplabel">Groups of metrics</Label>
-                            <Field
-                              component="select"
-                              name="groupsofmetrics"
-                              id='groupsofmetrics'
-                              onChange={evt =>
-                                props.setFieldValue(
-                                  "groupsofmetrics",
-                                  [].slice
-                                    .call(evt.target.selectedOptions)
-                                    .map(option => option.value)
-                              )}
-                              multiple={true}
-                            >
-                              {allGroups.metrics.map( grp => (
-                                <option data-testid='groupsofmetrics-option' key={grp} value={grp}>
-                                  {grp}
-                                </option>
-                              ))}
-                            </Field>
-                            <FormText color="muted">
-                              The groups of metrics that user will control. Hold down &quot;Control&quot; or &quot;Command&quot; on a Mac to select more than one.
-                            </FormText>
-                          </Col>
-                        </Row>
-                        <Row>
-                          <Col md={6}>
-                            <Label for="groupsofmetricprofiles" className="grouplabel">Groups of metric profiles</Label>
-                            <Field
-                              component="select"
-                              name="groupsofmetricprofiles"
-                              id='groupsofmetricprofiles'
-                              onChange={evt =>
-                                props.setFieldValue(
-                                  "groupsofmetricprofiles",
-                                  [].slice
-                                    .call(evt.target.selectedOptions)
-                                    .map(option => option.value)
-                              )}
-                              multiple={true}
-                            >
-                              {allGroups.metricprofiles.map( grp => (
-                                <option data-testid='groupsofmetricprofiles-option' key={grp} value={grp}>
-                                  {grp}
-                                </option>
-                              ))}
-                            </Field>
-                            <FormText color="muted">
-                              The groups of metric profiles that user will control. Hold down &quot;Control&quot; or &quot;Command&quot; on a Mac to select more than one.
-                            </FormText>
-                          </Col>
-                        </Row>
-                        <Row>
-                          <Col md={6}>
-                            <Label for="groupsofaggregations" className="grouplabel">Groups of aggregations</Label>
-                            <Field
-                              component="select"
-                              name="groupsofaggregations"
-                              id='groupsofaggregations'
-                              onChange={evt =>
-                                props.setFieldValue(
-                                  "groupsofaggregations",
-                                  [].slice
-                                    .call(evt.target.selectedOptions)
-                                    .map(option => option.value)
-                              )}
-                              multiple={true}
-                            >
-                              {allGroups.aggregations.map( grp => (
-                                <option data-testid='groupsofaggregations-option' key={grp} value={grp}>
-                                  {grp}
-                                </option>
-                              ))}
-                            </Field>
-                            <FormText color="muted">
-                              The groups of aggregations that user will control. Hold down &quot;Control&quot; or &quot;Command&quot; on a Mac to select more than one.
-                            </FormText>
-                          </Col>
-                        </Row>
-                        <Row>
-                          <Col md={6}>
-                            <Label for="groupsofthresholdsprofiles" className="grouplabel">Groups of thresholds profiles</Label>
-                            <Field
-                              component="select"
-                              name="groupsofthresholdsprofiles"
-                              id='groupsofthresholdsprofiles'
-                              onChange={evt =>
-                                props.setFieldValue(
-                                  "groupsofthresholdsprofiles",
-                                  [].slice
-                                    .call(evt.target.selectedOptions)
-                                    .map(option => option.value)
-                              )}
-                              multiple={true}
-                            >
-                              {allGroups.thresholdsprofiles.map( grp => (
-                                <option data-testid='groupsofthresholdsprofiles-option' key={grp} value={grp}>
-                                  {grp}
-                                </option>
-                              ))}
-                            </Field>
-                            <FormText color="muted">
-                              The groups of thresholds profiles that user will control. Hold down &quot;Control&quot; or &quot;Command&quot; on a Mac to select more than one.
-                            </FormText>
-                          </Col>
-                        </Row>
+                        <GroupSelect
+                          {...props}
+                          name='groupsofreports'
+                          label='Groups of reports'
+                          options={allGroups.reports}
+                          initValues={props.values.groupsofreports}
+                        />
+                        <FormText color="muted">
+                          The groups of reports that user will control.
+                        </FormText>
+                        <GroupSelect
+                          {...props}
+                          name='groupsofmetrics'
+                          label='Groups of metrics'
+                          options={allGroups.metrics}
+                          initValues={props.values.groupsofmetrics}
+                        />
+                        <FormText color="muted">
+                          The groups of metrics that user will control.
+                        </FormText>
+                        <GroupSelect
+                          {...props}
+                          name='groupsofmetricprofiles'
+                          label='Groups of metric profiles'
+                          options={allGroups.metricprofiles}
+                          initValues={props.values.groupsofmetricprofiles}
+                        />
+                        <FormText color="muted">
+                          The groups of metric profiles that user will control.
+                        </FormText>
+                        <GroupSelect
+                          {...props}
+                          name='groupsofaggregations'
+                          label='Groups of aggregations'
+                          options={allGroups.aggregations}
+                          initValues={props.values.groupsofaggregations}
+                        />
+                        <FormText color="muted">
+                          The groups of aggregations that user will control.
+                        </FormText>
+                        <GroupSelect
+                          {...props}
+                          name='groupsofthresholdsprofiles'
+                          label='Groups of thresholds profiles'
+                          options={allGroups.thresholdsprofiles}
+                          initValues={props.values.groupsofthresholdsprofiles}
+                        />
+                        <FormText color="muted">
+                          The groups of thresholds profiles that user will control.
+                        </FormText>
                       </FormGroup>
                       <FormGroup>
                         <ParagraphTitle title='Additional information'/>

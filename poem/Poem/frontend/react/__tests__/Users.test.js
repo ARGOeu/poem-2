@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider, setLogger } from 'react-query';
 import { ChangePassword, UserChange, UsersList } from '../Users';
 import { Backend } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
+import selectEvent from 'react-select-event';
 
 
 jest.mock('../DataManager', () => {
@@ -892,6 +893,7 @@ describe('Tests for user changeview on tenant POEM', () => {
       expect(screen.getByRole('heading', { name: /change user/i }).textContent).toBe('Change user')
     })
 
+    const form = screen.getByTestId('form');
     const usernameField = screen.getByTestId('username');
     const passwordField = screen.queryByTestId('password');
     const confirmPasswordField = screen.queryByTestId('confirm_password');
@@ -902,16 +904,11 @@ describe('Tests for user changeview on tenant POEM', () => {
     const dateJoinedField = screen.getByTestId('date_joined');
     const superUserCheckbox = screen.getByRole('checkbox', { name: /superuser/i });
     const activeCheckbox = screen.getByRole('checkbox', { name: /active/i })
-    const groupsOfMetricsField = screen.getByLabelText(/groups of metrics/i);
-    const groupsOfMetricsOptions = screen.getAllByTestId('groupsofmetrics-option');
-    const groupsOfMetricProfilesField = screen.getByLabelText(/groups of metric profiles/i);
-    const groupsOfMetricProfilesOptions = screen.getAllByTestId('groupsofmetricprofiles-option');
-    const groupsOfAggregationsField = screen.getByLabelText(/groups of aggregation/i);
-    const groupsOfAggregationsOptions = screen.getAllByTestId('groupsofaggregations-option');
-    const groupsOfThresholdsField = screen.getByLabelText(/groups of threshold/i)
-    const groupsOfThresholdsOptions = screen.getAllByTestId('groupsofthresholdsprofiles-option');
-    const groupsOfReportsField = screen.getByLabelText(/groups of reports/i);
-    const groupsOfReportsOptions = screen.getAllByTestId('groupsofreports-option');
+    const groupsOfMetricsField = screen.getByText('metric-group1').parentElement
+    const groupsOfMetricProfilesField = screen.getByText('mp-group1').parentElement
+    const groupsOfAggregationsField = screen.getByText('aggr-group1').parentElement
+    const groupsOfThresholdsField = screen.getByText('threshold-group3').parentElement
+    const groupsOfReportsField = screen.getByText('report-group2').parentElement
     const subjectField = screen.getByTestId('subject');
     const egiidField = screen.getByTestId('egiid');
     const displayNameField = screen.getByTestId('displayname');
@@ -930,28 +927,40 @@ describe('Tests for user changeview on tenant POEM', () => {
     expect(lastLoginField).toHaveAttribute('readonly');
     expect(dateJoinedField.value).toBe('2020-02-02 15:17:23');
     expect(dateJoinedField).toHaveAttribute('readonly');
+
     expect(superUserCheckbox.checked).toBeFalsy();
     expect(activeCheckbox.checked).toBeTruthy();
+
     expect(groupsOfMetricsField).toBeInTheDocument();
-    expect(groupsOfMetricsOptions).toHaveLength(3);
-    expect(groupsOfMetricsOptions[0].selected).toBeTruthy();
-    expect(groupsOfMetricsOptions[1].selected).toBeTruthy();
-    expect(groupsOfMetricsOptions[2].selected).toBeFalsy();
     expect(groupsOfMetricProfilesField).toBeInTheDocument();
-    expect(groupsOfMetricProfilesOptions).toHaveLength(1);
-    expect(groupsOfMetricProfilesOptions[0].selected).toBeTruthy();
     expect(groupsOfAggregationsField).toBeInTheDocument();
-    expect(groupsOfAggregationsOptions).toHaveLength(2);
-    expect(groupsOfAggregationsOptions[0].selected).toBeTruthy();
-    expect(groupsOfAggregationsOptions[1].selected).toBeFalsy();
     expect(groupsOfThresholdsField).toBeInTheDocument();
-    expect(groupsOfThresholdsOptions).toHaveLength(2);
-    expect(groupsOfThresholdsOptions[0].selected).toBeFalsy();
     expect(groupsOfReportsField).toBeInTheDocument();
-    expect(groupsOfReportsOptions).toHaveLength(2);
-    expect(groupsOfReportsOptions[0].selected).toBeFalsy();
-    expect(groupsOfReportsOptions[1].selected).toBeTruthy();
-    expect(groupsOfThresholdsOptions[1].selected).toBeTruthy();
+
+    expect(form).toHaveFormValues({
+      groupsofaggregations: 'aggr-group1',
+      groupsofmetrics: ['metric-group1', 'metric-group2'],
+      groupsofmetricprofiles: 'mp-group1',
+      groupsofthresholdsprofiles: 'threshold-group3',
+      groupsofreports: 'report-group2'
+    })
+
+    expect(screen.queryByText('aggr-group2')).not.toBeInTheDocument()
+    selectEvent.openMenu(groupsOfAggregationsField)
+    expect(screen.getByText('aggr-group2')).toBeInTheDocument()
+
+    expect(screen.queryByText('metric-group3')).not.toBeInTheDocument()
+    selectEvent.openMenu(groupsOfMetricsField)
+    expect(screen.getByText('metric-group3')).toBeInTheDocument()
+
+    expect(screen.queryByText('threshold-group2')).not.toBeInTheDocument()
+    selectEvent.openMenu(groupsOfThresholdsField)
+    expect(screen.getByText('threshold-group2')).toBeInTheDocument()
+
+    expect(screen.queryByText('report-group1')).not.toBeInTheDocument()
+    selectEvent.openMenu(groupsOfReportsField)
+    expect(screen.getByText('report-group1')).toBeInTheDocument()
+
     expect(subjectField.value).toBe('some subject');
     expect(subjectField).toBeEnabled();
     expect(egiidField.value).toBe('id');
@@ -978,13 +987,10 @@ describe('Tests for user changeview on tenant POEM', () => {
     fireEvent.change(screen.getByTestId('email'), { target: { value: 'alan.ford@group-tnt.com' } });
     fireEvent.click(screen.getByRole('checkbox', { name: /superuser/i }))
 
-    const metricGroups = screen.getByLabelText(/groups of metrics/i)
+    const metricGroups = screen.getByText('metric-group1').parentElement
 
-    Array.from(metricGroups.children, (option, i) => {
-      if (i == 0) { option.selected = false; }
-      else { option.selected = true; }
-    })
-    fireEvent.change(metricGroups)
+    await selectEvent.select(metricGroups, ['metric-group2', 'metric-group3'])
+    await selectEvent.clearFirst(metricGroups)
 
     fireEvent.change(screen.getByTestId('subject'), { target: { value: '' } });
     fireEvent.change(screen.getByTestId('egiid'), { target: { value: '' } });
@@ -1070,13 +1076,10 @@ describe('Tests for user changeview on tenant POEM', () => {
     fireEvent.change(screen.getByTestId('email'), { target: { value: 'alan.ford@group-tnt.com' } });
     fireEvent.click(screen.getByRole('checkbox', { name: /superuser/i }))
 
-    const metricGroups = screen.getByLabelText(/groups of metrics/i)
+    const metricGroups = screen.getByText('metric-group1').parentElement
 
-    Array.from(metricGroups.children, (option, i) => {
-      if (i == 0) { option.selected = false; }
-      else { option.selected = true; }
-    })
-    fireEvent.change(metricGroups)
+    await selectEvent.select(metricGroups, ['metric-group2', 'metric-group3'])
+    await selectEvent.clearFirst(metricGroups)
 
     fireEvent.change(screen.getByTestId('subject'), { target: { value: '' } });
     fireEvent.change(screen.getByTestId('egiid'), { target: { value: '' } });
@@ -1136,13 +1139,10 @@ describe('Tests for user changeview on tenant POEM', () => {
     fireEvent.change(screen.getByTestId('email'), { target: { value: 'alan.ford@group-tnt.com' } });
     fireEvent.click(screen.getByRole('checkbox', { name: /superuser/i }))
 
-    const metricGroups = screen.getByLabelText(/groups of metrics/i)
+    const metricGroups = screen.getByText('metric-group1').parentElement
 
-    Array.from(metricGroups.children, (option, i) => {
-      if (i == 0) { option.selected = false; }
-      else { option.selected = true; }
-    })
-    fireEvent.change(metricGroups)
+    await selectEvent.select(metricGroups, ['metric-group2', 'metric-group3'])
+    await selectEvent.clearFirst(metricGroups)
 
     fireEvent.change(screen.getByTestId('subject'), { target: { value: '' } });
     fireEvent.change(screen.getByTestId('egiid'), { target: { value: '' } });
@@ -1214,13 +1214,10 @@ describe('Tests for user changeview on tenant POEM', () => {
     fireEvent.change(screen.getByTestId('email'), { target: { value: 'alan.ford@group-tnt.com' } });
     fireEvent.click(screen.getByRole('checkbox', { name: /superuser/i }))
 
-    const metricGroups = screen.getByLabelText(/groups of metrics/i)
+    const metricGroups = screen.getByText('metric-group1').parentElement
 
-    Array.from(metricGroups.children, (option, i) => {
-      if (i == 0) { option.selected = false; }
-      else { option.selected = true; }
-    })
-    fireEvent.change(metricGroups)
+    await selectEvent.select(metricGroups, ['metric-group2', 'metric-group3'])
+    await selectEvent.clearFirst(metricGroups)
 
     fireEvent.change(screen.getByTestId('subject'), { target: { value: '' } });
     fireEvent.change(screen.getByTestId('egiid'), { target: { value: '' } });
@@ -1278,13 +1275,10 @@ describe('Tests for user changeview on tenant POEM', () => {
     fireEvent.change(screen.getByTestId('email'), { target: { value: 'alan.ford@group-tnt.com' } });
     fireEvent.click(screen.getByRole('checkbox', { name: /superuser/i }))
 
-    const metricGroups = screen.getByLabelText(/groups of metrics/i)
+    const metricGroups = screen.getByText('metric-group1').parentElement
 
-    Array.from(metricGroups.children, (option, i) => {
-      if (i == 0) { option.selected = false; }
-      else { option.selected = true; }
-    })
-    fireEvent.change(metricGroups)
+    await selectEvent.select(metricGroups, ['metric-group2', 'metric-group3'])
+    await selectEvent.clearFirst(metricGroups)
 
     fireEvent.change(screen.getByTestId('subject'), { target: { value: '' } });
     fireEvent.change(screen.getByTestId('egiid'), { target: { value: '' } });
@@ -1477,16 +1471,15 @@ describe('Tests for user addview on tenant POEM', () => {
     const dateJoinedField = screen.queryByTestId('date_joined');
     const superUserCheckbox = screen.getByRole('checkbox', { name: /superuser/i });
     const activeCheckbox = screen.getByRole('checkbox', { name: /active/i })
-    const groupsOfMetricsField = screen.getByLabelText(/groups of metrics/i);
-    const groupsOfMetricsOptions = screen.getAllByTestId('groupsofmetrics-option');
-    const groupsOfMetricProfilesField = screen.getByLabelText(/groups of metric profiles/i);
-    const groupsOfMetricProfilesOptions = screen.getAllByTestId('groupsofmetricprofiles-option');
-    const groupsOfAggregationsField = screen.getByLabelText(/groups of aggregation/i);
-    const groupsOfAggregationsOptions = screen.getAllByTestId('groupsofaggregations-option');
-    const groupsOfThresholdsField = screen.getByLabelText(/groups of threshold/i)
-    const groupsOfThresholdsOptions = screen.getAllByTestId('groupsofthresholdsprofiles-option');
-    const groupsOfReportsField = screen.getByLabelText(/groups of reports/i);
-    const groupsOfReportsOptions = screen.getAllByTestId('groupsofreports-option');
+
+    // there is a word 'select' in a description of is_active checkbox, therefore
+    // the numbering here starts from 1
+    const groupsOfReportsField = screen.getAllByText(/select.../i)[1]
+    const groupsOfMetricsField = screen.getAllByText(/select/i)[2]
+    const groupsOfMetricProfilesField = screen.getAllByText(/select/i)[3]
+    const groupsOfAggregationsField = screen.getAllByText(/select/i)[4]
+    const groupsOfThresholdsField = screen.getAllByText(/select/i)[5]
+
     const subjectField = screen.getByTestId('subject');
     const egiidField = screen.getByTestId('egiid');
     const displayNameField = screen.getByTestId('displayname');
@@ -1507,32 +1500,42 @@ describe('Tests for user addview on tenant POEM', () => {
     expect(dateJoinedField).not.toBeInTheDocument();
     expect(superUserCheckbox.checked).toBeFalsy();
     expect(activeCheckbox.checked).toBeTruthy();
-    expect(groupsOfMetricsField).toBeInTheDocument();
-    expect(groupsOfMetricsOptions).toHaveLength(3);
-    expect(groupsOfMetricsOptions[0].selected).toBeFalsy();
-    expect(groupsOfMetricsOptions[1].selected).toBeFalsy();
-    expect(groupsOfMetricsOptions[2].selected).toBeFalsy();
-    expect(groupsOfMetricProfilesField).toBeInTheDocument();
-    expect(groupsOfMetricProfilesOptions).toHaveLength(1);
-    expect(groupsOfMetricProfilesOptions[0].selected).toBeFalsy();
-    expect(groupsOfAggregationsField).toBeInTheDocument();
-    expect(groupsOfAggregationsOptions).toHaveLength(2);
-    expect(groupsOfAggregationsOptions[0].selected).toBeFalsy();
-    expect(groupsOfAggregationsOptions[1].selected).toBeFalsy();
-    expect(groupsOfThresholdsField).toBeInTheDocument();
-    expect(groupsOfThresholdsOptions).toHaveLength(2);
-    expect(groupsOfThresholdsOptions[0].selected).toBeFalsy();
-    expect(groupsOfThresholdsOptions[1].selected).toBeFalsy();
-    expect(groupsOfReportsField).toBeInTheDocument();
-    expect(groupsOfReportsOptions).toHaveLength(2);
-    expect(groupsOfReportsOptions[0].selected).toBeFalsy();
-    expect(groupsOfReportsOptions[1].selected).toBeFalsy();
     expect(subjectField.value).toBe('');
     expect(subjectField).toBeEnabled();
     expect(egiidField.value).toBe('');
     expect(egiidField).toBeEnabled();
     expect(displayNameField.value).toBe('');
     expect(displayNameField).toBeEnabled();
+
+    expect(screen.queryByText('aggr-group1')).not.toBeInTheDocument()
+    expect(screen.queryByText('aggr-group2')).not.toBeInTheDocument()
+    selectEvent.openMenu(groupsOfAggregationsField)
+    expect(screen.getByText('aggr-group1')).toBeInTheDocument()
+    expect(screen.getByText('aggr-group2')).toBeInTheDocument()
+
+    expect(screen.queryByText('metric-group1')).not.toBeInTheDocument()
+    expect(screen.queryByText('metric-group2')).not.toBeInTheDocument()
+    expect(screen.queryByText('metric-group3')).not.toBeInTheDocument()
+    selectEvent.openMenu(groupsOfMetricsField)
+    expect(screen.getByText('metric-group1')).toBeInTheDocument()
+    expect(screen.getByText('metric-group2')).toBeInTheDocument()
+    expect(screen.getByText('metric-group3')).toBeInTheDocument()
+
+    expect(screen.queryByText('mp-group1')).not.toBeInTheDocument()
+    selectEvent.openMenu(groupsOfMetricProfilesField)
+    expect(screen.getByText('mp-group1')).toBeInTheDocument()
+
+    expect(screen.queryByText('report-group1')).not.toBeInTheDocument()
+    expect(screen.queryByText('report-group2')).not.toBeInTheDocument()
+    selectEvent.openMenu(groupsOfReportsField)
+    expect(screen.getByText('report-group1')).toBeInTheDocument()
+    expect(screen.getByText('report-group2')).toBeInTheDocument()
+
+    expect(screen.queryByText('threshold-group2')).not.toBeInTheDocument()
+    expect(screen.queryByText('threshold-group3')).not.toBeInTheDocument()
+    selectEvent.openMenu(groupsOfThresholdsField)
+    expect(screen.getByText('threshold-group2')).toBeInTheDocument()
+    expect(screen.getByText('threshold-group3')).toBeInTheDocument()
 
     expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
@@ -1554,30 +1557,15 @@ describe('Tests for user addview on tenant POEM', () => {
     fireEvent.change(screen.getByTestId('last_name'), { target: { value: 'Rock' } });
     fireEvent.change(screen.getByTestId('email'), { target: { value: 'bob.rock@group-tnt.com' } });
 
-    const metricGroups = screen.getByLabelText(/groups of metrics/i);
-    const metricProfilesGroups = screen.getByLabelText(/groups of metric profile/i);
-    const aggrGroups = screen.getByLabelText(/groups of aggregation/i);
-    const thresholdsGroups = screen.getByLabelText(/groups of threshold/i);
+    const metricGroups = screen.getAllByText(/select/i)[2]
+    const metricProfilesGroups = screen.getAllByText(/select/i)[3]
+    const aggrGroups = screen.getAllByText(/select/i)[4]
+    const thresholdsGroups = screen.getAllByText(/select/i)[5]
 
-    Array.from(metricGroups.children, (option, i) => {
-      if (i == 0) { option.selected = true; }
-    })
-    fireEvent.change(metricGroups);
-
-    Array.from(metricProfilesGroups.children, (option, i) => {
-      if (i == 0) { option.selected = true; }
-    })
-    fireEvent.change(metricProfilesGroups);
-
-    Array.from(aggrGroups.children, (option, i) => {
-      if (i == 1) { option.selected = true }
-    })
-    fireEvent.change(aggrGroups);
-
-    Array.from(thresholdsGroups.children, (option, i) => {
-      if (i == 1) { option.selected = true; }
-    })
-    fireEvent.change(thresholdsGroups);
+    await selectEvent.select(aggrGroups, ['aggr-group2'])
+    await selectEvent.select(metricGroups, ['metric-group1'])
+    await selectEvent.select(metricProfilesGroups, ['mp-group1'])
+    await selectEvent.select(thresholdsGroups, ['threshold-group3'])
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
@@ -1652,30 +1640,15 @@ describe('Tests for user addview on tenant POEM', () => {
     fireEvent.change(screen.getByTestId('last_name'), { target: { value: 'Rock' } });
     fireEvent.change(screen.getByTestId('email'), { target: { value: 'bob.rock@group-tnt.com' } });
 
-    const metricGroups = screen.getByLabelText(/groups of metrics/i);
-    const metricProfilesGroups = screen.getByLabelText(/groups of metric profile/i);
-    const aggrGroups = screen.getByLabelText(/groups of aggregation/i);
-    const thresholdsGroups = screen.getByLabelText(/groups of threshold/i);
+    const metricGroups = screen.getAllByText(/select/i)[2]
+    const metricProfilesGroups = screen.getAllByText(/select/i)[3]
+    const aggrGroups = screen.getAllByText(/select/i)[4]
+    const thresholdsGroups = screen.getAllByText(/select/i)[5]
 
-    Array.from(metricGroups.children, (option, i) => {
-      if (i == 0) { option.selected = true; }
-    })
-    fireEvent.change(metricGroups);
-
-    Array.from(metricProfilesGroups.children, (option, i) => {
-      if (i == 0) { option.selected = true; }
-    })
-    fireEvent.change(metricProfilesGroups);
-
-    Array.from(aggrGroups.children, (option, i) => {
-      if (i == 1) { option.selected = true }
-    })
-    fireEvent.change(aggrGroups);
-
-    Array.from(thresholdsGroups.children, (option, i) => {
-      if (i == 1) { option.selected = true; }
-    })
-    fireEvent.change(thresholdsGroups);
+    await selectEvent.select(aggrGroups, ['aggr-group2'])
+    await selectEvent.select(metricGroups, ['metric-group1'])
+    await selectEvent.select(metricProfilesGroups, ['mp-group1'])
+    await selectEvent.select(thresholdsGroups, ['threshold-group3'])
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
@@ -1726,30 +1699,15 @@ describe('Tests for user addview on tenant POEM', () => {
     fireEvent.change(screen.getByTestId('last_name'), { target: { value: 'Rock' } });
     fireEvent.change(screen.getByTestId('email'), { target: { value: 'bob.rock@group-tnt.com' } });
 
-    const metricGroups = screen.getByLabelText(/groups of metrics/i);
-    const metricProfilesGroups = screen.getByLabelText(/groups of metric profile/i);
-    const aggrGroups = screen.getByLabelText(/groups of aggregation/i);
-    const thresholdsGroups = screen.getByLabelText(/groups of threshold/i);
+    const metricGroups = screen.getAllByText(/select/i)[2]
+    const metricProfilesGroups = screen.getAllByText(/select/i)[3]
+    const aggrGroups = screen.getAllByText(/select/i)[4]
+    const thresholdsGroups = screen.getAllByText(/select/i)[5]
 
-    Array.from(metricGroups.children, (option, i) => {
-      if (i == 0) { option.selected = true; }
-    })
-    fireEvent.change(metricGroups);
-
-    Array.from(metricProfilesGroups.children, (option, i) => {
-      if (i == 0) { option.selected = true; }
-    })
-    fireEvent.change(metricProfilesGroups);
-
-    Array.from(aggrGroups.children, (option, i) => {
-      if (i == 1) { option.selected = true }
-    })
-    fireEvent.change(aggrGroups);
-
-    Array.from(thresholdsGroups.children, (option, i) => {
-      if (i == 1) { option.selected = true; }
-    })
-    fireEvent.change(thresholdsGroups);
+    await selectEvent.select(aggrGroups, ['aggr-group2'])
+    await selectEvent.select(metricGroups, ['metric-group1'])
+    await selectEvent.select(metricProfilesGroups, ['mp-group1'])
+    await selectEvent.select(thresholdsGroups, ['threshold-group3'])
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
@@ -1804,30 +1762,15 @@ describe('Tests for user addview on tenant POEM', () => {
     fireEvent.change(screen.getByTestId('last_name'), { target: { value: 'Rock' } });
     fireEvent.change(screen.getByTestId('email'), { target: { value: 'bob.rock@group-tnt.com' } });
 
-    const metricGroups = screen.getByLabelText(/groups of metrics/i);
-    const metricProfilesGroups = screen.getByLabelText(/groups of metric profile/i);
-    const aggrGroups = screen.getByLabelText(/groups of aggregation/i);
-    const thresholdsGroups = screen.getByLabelText(/groups of threshold/i);
+    const metricGroups = screen.getAllByText(/select/i)[2]
+    const metricProfilesGroups = screen.getAllByText(/select/i)[3]
+    const aggrGroups = screen.getAllByText(/select/i)[4]
+    const thresholdsGroups = screen.getAllByText(/select/i)[5]
 
-    Array.from(metricGroups.children, (option, i) => {
-      if (i == 0) { option.selected = true; }
-    })
-    fireEvent.change(metricGroups);
-
-    Array.from(metricProfilesGroups.children, (option, i) => {
-      if (i == 0) { option.selected = true; }
-    })
-    fireEvent.change(metricProfilesGroups);
-
-    Array.from(aggrGroups.children, (option, i) => {
-      if (i == 1) { option.selected = true }
-    })
-    fireEvent.change(aggrGroups);
-
-    Array.from(thresholdsGroups.children, (option, i) => {
-      if (i == 1) { option.selected = true; }
-    })
-    fireEvent.change(thresholdsGroups);
+    await selectEvent.select(aggrGroups, ['aggr-group2'])
+    await selectEvent.select(metricGroups, ['metric-group1'])
+    await selectEvent.select(metricProfilesGroups, ['mp-group1'])
+    await selectEvent.select(thresholdsGroups, ['threshold-group3'])
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
@@ -1897,30 +1840,15 @@ describe('Tests for user addview on tenant POEM', () => {
     fireEvent.change(screen.getByTestId('last_name'), { target: { value: 'Rock' } });
     fireEvent.change(screen.getByTestId('email'), { target: { value: 'bob.rock@group-tnt.com' } });
 
-    const metricGroups = screen.getByLabelText(/groups of metrics/i);
-    const metricProfilesGroups = screen.getByLabelText(/groups of metric profile/i);
-    const aggrGroups = screen.getByLabelText(/groups of aggregation/i);
-    const thresholdsGroups = screen.getByLabelText(/groups of threshold/i);
+    const metricGroups = screen.getAllByText(/select/i)[2]
+    const metricProfilesGroups = screen.getAllByText(/select/i)[3]
+    const aggrGroups = screen.getAllByText(/select/i)[4]
+    const thresholdsGroups = screen.getAllByText(/select/i)[5]
 
-    Array.from(metricGroups.children, (option, i) => {
-      if (i == 0) { option.selected = true; }
-    })
-    fireEvent.change(metricGroups);
-
-    Array.from(metricProfilesGroups.children, (option, i) => {
-      if (i == 0) { option.selected = true; }
-    })
-    fireEvent.change(metricProfilesGroups);
-
-    Array.from(aggrGroups.children, (option, i) => {
-      if (i == 1) { option.selected = true }
-    })
-    fireEvent.change(aggrGroups);
-
-    Array.from(thresholdsGroups.children, (option, i) => {
-      if (i == 1) { option.selected = true; }
-    })
-    fireEvent.change(thresholdsGroups);
+    await selectEvent.select(aggrGroups, ['aggr-group2'])
+    await selectEvent.select(metricGroups, ['metric-group1'])
+    await selectEvent.select(metricProfilesGroups, ['mp-group1'])
+    await selectEvent.select(thresholdsGroups, ['threshold-group3'])
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
