@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import{
   LoadingAnim,
   BaseArgoView,
-  AutocompleteField,
   NotifyOk,
   NotifyError,
   ErrorComponent,
@@ -13,7 +12,8 @@ import{
   DefaultColumnFilter,
   SelectColumnFilter,
   BaseArgoTable,
-  CustomErrorMessage
+  CustomError,
+  DropdownWithFormText
 } from './UIElements';
 import {
   FormGroup,
@@ -23,7 +23,9 @@ import {
   Button,
   InputGroup,
   InputGroupText,
-  Alert
+  Alert,
+  Input,
+  Label
 } from 'reactstrap';
 import { Formik, Form, Field } from 'formik';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
@@ -147,13 +149,17 @@ export const PackageComponent = (props) => {
   const history = props.history;
 
   const backend = new Backend();
+  const queryClient = useQueryClient();
+
+  const [repos6, setRepos6] = useState(new Array())
+  const [repos7, setRepos7] = useState(new Array())
+  const [probes, setProbes] = useState(new Array())
+  const [presentVersion, setPresentVersion] = useState(false)
 
   const changePackage = useMutation( async (values) => await backend.changeObject('/api/v2/internal/packages/', values) );
   const addPackage = useMutation( async (values) => await backend.addObject('/api/v2/internal/packages/', values) );
   const deletePackage = useMutation( async () => await backend.deleteObject(`/api/v2/internal/packages/${nameversion}`));
   const updateMetricsMutation = useMutation( async (values) => await backend.changeObject('/api/v2/internal/updatemetricsversions/', values) );
-
-  const queryClient = useQueryClient();
 
   const { data: pkg, error: errorPkg, status: statusPkg } = useQuery(
     ['package', nameversion], async () => {
@@ -178,17 +184,50 @@ export const PackageComponent = (props) => {
             return pkg;
           }
         }
+      },
+      onSuccess: (data) => {
+        if (data.version === 'present')
+          setPresentVersion(true)
       }
     }
   );
 
   const { data: repos, error: errorRepos, status: statusRepos } = useQuery(
-    'yumrepo', () => fetchYumRepos()
+    'yumrepo', () => fetchYumRepos(),
+    {
+      onSuccess: (data) => {
+        let listRepos6 = []
+        let listRepos7 = []
+
+        data.forEach(repo => {
+          if (repo.tag === 'CentOS 6')
+            listRepos6.push(`${repo.name} (${repo.tag})`)
+
+          else if (repo.tag === 'CentOS 7')
+            listRepos7.push(`${repo.name} (${repo.tag})`)
+        })
+
+        setRepos6(listRepos6)
+        setRepos7(listRepos7)
+      }
+    }
   );
 
-  const { data: probes, error: errorProbes, status: statusProbes } = useQuery(
+  const { error: errorProbes, status: statusProbes } = useQuery(
     ['probe', 'version'], () => fetchProbeVersions(),
-    { enabled: !addview}
+    {
+      enabled: !!pkg,
+      onSuccess: (data) => {
+        let listProbes = new Array()
+        if (pkg) {
+          data.forEach(probe => {
+            if (probe.fields.package === `${pkg.name} (${pkg.version})`)
+              listProbes.push(probe.fields.name)
+          })
+        }
+        setProbes(listProbes)
+      }
+    }
   );
 
   const { data: packageVersions, error: errorPackageVersions, status: statusPackageVersions } = useQuery(
@@ -395,31 +434,6 @@ export const PackageComponent = (props) => {
     return (<ErrorComponent error={errorPackageVersions}/>);
 
   else if (repos) {
-    var listRepos6 = [];
-    var listRepos7 = [];
-
-    repos.forEach(e => {
-      if (e.tag === 'CentOS 6')
-        listRepos6.push(`${e.name} (${e.tag})`)
-
-      else if (e.tag === 'CentOS 7')
-        listRepos7.push(`${e.name} (${e.tag})`)
-    })
-
-    var listProbes = [];
-    let presentVersion = false;
-    if (pkg) {
-      if (pkg.version === 'present')
-        presentVersion = true;
-
-      if (probes) {
-        probes.forEach(probe => {
-          if (probe.fields.package === `${pkg.name} (${pkg.version})`)
-            listProbes.push(probe.fields.name);
-        });
-      }
-    }
-
     return (
       <BaseArgoView
         resourcename={disabled ? 'Package details' : 'package'}
@@ -457,8 +471,8 @@ export const PackageComponent = (props) => {
             present_version: presentVersion
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
-          validate={packageValidate}
-          enableReinitialize={true}
+          validate={ packageValidate }
+          enableReinitialize={ true }
         >
           {props => (
             <Form>
@@ -470,13 +484,13 @@ export const PackageComponent = (props) => {
                       <Field
                         type='text'
                         name='name'
-                        className={`form-control ${props.errors.name && props.touched.name && 'border-danger'}`}
+                        className={`form-control ${props.errors.name && 'border-danger'}`}
                         id='name'
                         data-testid='name'
                         disabled={disabled}
                       />
                     </InputGroup>
-                    <CustomErrorMessage name='name' />
+                    <CustomError error={ props.errors.name } />
                     <FormText color='muted'>
                       Package name.
                     </FormText>
@@ -488,33 +502,27 @@ export const PackageComponent = (props) => {
                           <InputGroupText>Version</InputGroupText>
                           {
                             disabled ?
-                              <Field
-                                component='select'
+                              <DropdownWithFormText
                                 name='version'
-                                className='form-control custom-select'
                                 id='version'
-                                data-testid='version'
-                                onChange={e => onVersionSelect(props, e.target.value)}
-                              >
-                                {
-                                  packageVersions.map((version, i) =>
-                                    <option key={i} value={version.version}>{version.version}</option>
-                                  )
-                                }
-                              </Field>
+                                error={ props.errors.version }
+                                onChange={ e =>  onVersionSelect(props, e.value) }
+                                options={ packageVersions.map(ver => ver.version) }
+                                value={ props.values.version }
+                              />
                             :
                               <Field
                                 type='text'
                                 name='version'
                                 data-testid='version'
-                                value={props.values.present_version ? 'present' : props.values.version}
-                                disabled={props.values.present_version}
-                                className={`form-control ${props.errors.version && props.touched.version && 'border-danger'}`}
+                                value={ props.values.present_version ? 'present' : props.values.version }
+                                disabled={ props.values.present_version }
+                                className={ `form-control ${props.errors.version && 'border-danger'}` }
                                 id='version'
                               />
                           }
                         </InputGroup>
-                        <CustomErrorMessage name='version' />
+                        <CustomError error={ props.errors.version } />
                         <FormText color='muted'>
                           Package version.
                         </FormText>
@@ -524,14 +532,16 @@ export const PackageComponent = (props) => {
                   {
                     !disabled &&
                       <Col md={3}>
-                        <label>
-                          <Field
+                        <FormGroup check inline className='ms-3'>
+                          <Input
                             type='checkbox'
                             name='present_version'
-                            className='mr-1'
+                            id='present_version'
+                            onChange={ e => props.setFieldValue('present_version', e.target.checked) }
+                            checked={ props.values.present_version }
                           />
-                          Use version which is present in repo
-                        </label>
+                          <Label check for='present_version'>Use version which is present in repo</Label>
+                        </FormGroup>
                       </Col>
                   }
                 </Row>
@@ -548,10 +558,10 @@ export const PackageComponent = (props) => {
                 }
                 <Row>
                   <Col md={8}>
-                    {
-                      disabled ?
-                        <InputGroup>
-                          <InputGroupText>CentOS 6 repo</InputGroupText>
+                    <InputGroup>
+                      <InputGroupText>CentOS 6 repo</InputGroupText>
+                      {
+                        disabled ?
                           <Field
                             type='text'
                             className='form-control'
@@ -560,18 +570,17 @@ export const PackageComponent = (props) => {
                             id='repo_6'
                             disabled={true}
                           />
-                        </InputGroup>
-                      :
-                        <AutocompleteField
-                          {...props}
-                          lists={listRepos6}
-                          icon='yumrepos'
-                          field='repo_6'
-                          onselect_handler={!addview ? (_, newValue) => props.setFieldValue('repo_6', newValue) : undefined}
-                          label='CentOS 6 repo'
-                          hide_error={true}
-                        />
-                    }
+                        :
+                          <DropdownWithFormText
+                            name='repo_6'
+                            error={ props.errors.repo_6 }
+                            isClearable={ true }
+                            onChange={ e => props.setFieldValue('repo_6', e ? e.value : '') }
+                            options={ repos6 }
+                            value={ props.values.repo_6 }
+                          />
+                      }
+                    </InputGroup>
                     <FormText color='muted'>
                       Package is part of selected CentOS 6 repo.
                     </FormText>
@@ -579,10 +588,10 @@ export const PackageComponent = (props) => {
                 </Row>
                 <Row className='mt-4'>
                   <Col md={8}>
-                    {
-                      disabled ?
-                        <InputGroup>
-                          <InputGroupText>CentOS 7 repo</InputGroupText>
+                    <InputGroup>
+                      <InputGroupText>CentOS 7 repo</InputGroupText>
+                      {
+                        disabled ?
                           <Field
                             type='text'
                             className='form-control'
@@ -591,31 +600,30 @@ export const PackageComponent = (props) => {
                             id='repo_7'
                             disabled={true}
                           />
-                        </InputGroup>
-                      :
-                        <AutocompleteField
-                          {...props}
-                          lists={listRepos7}
-                          icon='yumrepos'
-                          field='repo_7'
-                          onselect_handler={!addview ? (_, newValue) => props.setFieldValue('repo_7', newValue) : undefined}
-                          label='CentOS 7 repo'
-                          hide_error={true}
-                        />
-                    }
+                        :
+                          <DropdownWithFormText
+                            name='repo_7'
+                            error={ props.errors.repo_7 }
+                            isClearable={ true }
+                            onChange={ e => props.setFieldValue('repo_7', e ? e.value : '') }
+                            options={ repos7 }
+                            value={ props.values.repo_7 }
+                          />
+                      }
+                    </InputGroup>
                     <FormText color='muted'>
                       Package is part of selected CentOS 7 repo.
                     </FormText>
                   </Col>
                 </Row>
                 {
-                  (!addview && !cloneview && listProbes.length > 0) &&
+                  (!addview && !cloneview && probes.length > 0) &&
                     <Row className='mt-3'>
                       <Col md={8}>
                         Probes:
                         <div>
                           {
-                            listProbes
+                            probes
                               .map((e, i) => <Link key={i} to={`/ui/probes/${e}/history/${props.values.version}`}>{e}</Link>)
                               .reduce((prev, curr) => [prev, ', ', curr])
                           }
