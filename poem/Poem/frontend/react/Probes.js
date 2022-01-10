@@ -5,15 +5,14 @@ import {
   LoadingAnim,
   BaseArgoView,
   NotifyOk,
-  AutocompleteField,
   DiffElement,
   NotifyError,
   ErrorComponent,
   ParagraphTitle,
   DefaultColumnFilter,
   BaseArgoTable,
-  CustomErrorMessage,
-  CustomError
+  CustomError,
+  DropdownWithFormText
 } from './UIElements';
 import {
   FormGroup,
@@ -154,10 +153,10 @@ const ProbeForm = ({
       </Row>
       <Row className='mt-3'>
         <Col md={8}>
-          {
-            (isTenantSchema || isHistory || publicView) ?
-              <InputGroup>
-                <InputGroupText>Package</InputGroupText>
+          <InputGroup>
+            <InputGroupText>Package</InputGroupText>
+            {
+              (isTenantSchema || isHistory || publicView) ?
                 <Field
                   type='text'
                   name='pkg'
@@ -165,18 +164,16 @@ const ProbeForm = ({
                   className='form-control'
                   disabled={true}
                 />
-              </InputGroup>
-            :
-              <>
-                <AutocompleteField
-                  {...props}
-                  lists={list_packages}
-                  icon='packages'
-                  field='pkg'
-                  label='Package'
+              :
+                <DropdownWithFormText
+                  name='pkg'
+                  error={ props.errors.pkg }
+                  onChange={ e => props.setFieldValue('pkg', e.value) }
+                  options={ list_packages }
+                  value={ props.values.pkg }
                 />
-              </>
-          }
+            }
+          </InputGroup>
           <FormText color='muted'>
             Probe is part of selected package.
           </FormText>
