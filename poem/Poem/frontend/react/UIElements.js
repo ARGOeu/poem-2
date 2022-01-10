@@ -250,6 +250,24 @@ export const CustomReactSelect = ({...props}) => {
 }
 
 
+export const DropdownWithFormText = ({ ...props }) => {
+  return (
+    <div className='react-select form-control p-0'>
+      <CustomReactSelect
+        name={ props.name }
+        id={ props.id ? props.id : props.name }
+        isClearable={ false }
+        inputgroup={ true }
+        error={ props.error }
+        onChange={ props.onChange }
+        options={ props.options.map(option => new Object({ label: option, value: option })) }
+        value={ props.value ? { label: props.value, value: props.value } : undefined }
+      />
+    </div>
+  )
+}
+
+
 export const DropDown = ({field, data=[], prefix="", class_name="", isnew=false, errors=undefined}) =>
   <Field component="select"
     name={prefix ? `${prefix}.${field.name}` : field.name}
@@ -1309,24 +1327,13 @@ export const ProfileMainInfo = ({grouplist=undefined, description=undefined,
                   disabled={true}
                 />
               :
-                <div className='react-select form-control p-0'>
-                  <CustomReactSelect
-                    name='groupname'
-                    inputgroup={ true }
-                    error={ props.errors.groupname }
-                    options={
-                      grouplist.map((group) => new Object({
-                        label: group, value: group
-                      }))
-                    }
-                    value={
-                      props.values.groupname ?
-                        { label: props.values.groupname, value: props.values.groupname }
-                      : undefined
-                    }
-                    onChange={ e => props.setFieldValue('groupname', e.value) }
-                  />
-                </div>
+                <DropdownWithFormText
+                  name='groupname'
+                  error={ props.errors.groupname }
+                  options={ grouplist }
+                  value={ props.values.groupname }
+                  onChange={ e => props.setFieldValue('groupname', e.value) }
+                />
           }
           </InputGroup>
           <CustomError error={props.errors.groupname} />

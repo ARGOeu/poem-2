@@ -11,7 +11,7 @@ import {
   SelectColumnFilter,
   BaseArgoTable,
   CustomError,
-  CustomReactSelect
+  DropdownWithFormText
 } from './UIElements';
 import { Formik, Form, Field } from 'formik';
 import {
@@ -325,21 +325,14 @@ export const YumRepoComponent = (props) => {
                             disabled={true}
                           />
                         :
-                          <div className='react-select form-control p-0'>
-                            <CustomReactSelect
-                              name='tag'
-                              id='tag'
-                              isClearable={ false }
-                              inputgroup={ true }
-                              error={ props.errors.tag }
-                              onChange={ e => props.setFieldValue('tag', e.value) }
-                              options={ tags.map(tag => new Object({ label: tag, value: tag })) }
-                              value={ props.values.tag ?
-                                { label: props.values.tag, value: props.values.tag }
-                                : undefined
-                              }
-                            />
-                          </div>
+                          <DropdownWithFormText
+                            name='tag'
+                            id='tag'
+                            error={ props.errors.tag }
+                            onChange={ e => props.setFieldValue('tag', e.value) }
+                            options={ tags }
+                            value={ props.values.tag }
+                          />
                       }
                     </InputGroup>
                     <CustomError error={props.errors.tag} />
