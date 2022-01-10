@@ -256,7 +256,7 @@ export const DropdownWithFormText = ({ ...props }) => {
       <CustomReactSelect
         name={ props.name }
         id={ props.id ? props.id : props.name }
-        isClearable={ false }
+        isClearable={ props.isClearable }
         inputgroup={ true }
         error={ props.error }
         onChange={ props.onChange }
