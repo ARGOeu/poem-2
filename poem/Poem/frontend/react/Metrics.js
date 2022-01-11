@@ -5,7 +5,6 @@ import {
   LoadingAnim,
   BaseArgoView,
   NotifyOk,
-  FancyErrorMessage,
   DiffElement,
   AutocompleteField,
   NotifyWarn,
@@ -17,8 +16,8 @@ import {
   DefaultColumnFilter,
   SelectColumnFilter,
   BaseArgoTable,
-  CustomErrorMessage,
-  CustomReactSelect
+  CustomReactSelect,
+  CustomError
  } from './UIElements';
 import { Formik, Form, Field, FieldArray } from 'formik';
 import {
@@ -187,7 +186,7 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false, addv
                   {
                     errors.config && field === 'config' &&
                       errors.config[index] &&
-                        FancyErrorMessage(errors.config[index].value)
+                        <CustomError error={ errors.config[index].value } />
                   }
                 </Col>
                 <Col md={2}>
@@ -801,13 +800,13 @@ export const MetricForm =
                 <Field
                   type='text'
                   name='name'
-                  className={`form-control ${props.errors.name && props.touched.name && 'border-danger'}`}
+                  className={`form-control ${props.errors.name && 'border-danger'}`}
                   id='name'
                   data-testid='name'
                   readOnly={isHistory || isTenantSchema || publicView}
                 />
               </InputGroup>
-              <CustomErrorMessage name='name' />
+              <CustomError error={ props.errors.name } />
               <FormText color='muted'>
                 Metric name.
               </FormText>
@@ -1080,10 +1079,10 @@ export const MetricForm =
                     type='text'
                     name='probeexecutable'
                     data-testid='probeexecutable'
-                    className={`form-control ${props.errors.probeexecutable && props.touched.probeexecutable && 'border-danger'}`}
+                    className={`form-control ${props.errors.probeexecutable && 'border-danger'}`}
                     readOnly={isTenantSchema || isHistory || publicView}
                   />
-                  <CustomErrorMessage name='probeexecutable' />
+                  <CustomError error={ props.errors.probeexecutable } />
                 </Col>
               </Row>
           }
