@@ -918,6 +918,7 @@ export const MetricForm =
                       />
                 }
               </InputGroup>
+              <CustomError error={ props.errors.probeversion } />
               {
                 props.values.type === 'Active' &&
                   <FormText color='muted'>
@@ -936,7 +937,7 @@ export const MetricForm =
                             isOpen={popoverOpen}
                             target='probe-popover'
                             toggle={togglePopOver}
-                            trigger='click'
+                            trigger='hover'
                           >
                             <PopoverHeader>
                               <ProbeVersionLink
