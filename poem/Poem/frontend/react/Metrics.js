@@ -6,7 +6,6 @@ import {
   BaseArgoView,
   NotifyOk,
   DiffElement,
-  AutocompleteField,
   NotifyWarn,
   NotifyError,
   NotifyInfo,
@@ -16,10 +15,10 @@ import {
   DefaultColumnFilter,
   SelectColumnFilter,
   BaseArgoTable,
-  CustomReactSelect,
   CustomError,
   DropdownWithFormText,
-  CustomDropdownIndicator
+  CustomDropdownIndicator,
+  CustomReactSelect
  } from './UIElements';
 import { Formik, Form, Field, FieldArray } from 'formik';
 import {
@@ -1032,18 +1031,12 @@ export const MetricForm =
                           disabled={true}
                         />
                       :
-                        <div className='react-select form-control p-0'>
-                          <CustomReactSelect
-                            name='group'
-                            closeMenuOnSelect={ true }
-                            isMulti={ false }
-                            isClearable={ false }
-                            inputgroup={ true }
-                            options={ groups.map((name) => new Object({ label: name, value: name })) }
-                            value={ props.values.group ? { label: props.values.group, value: props.values.group } : undefined }
-                            onChange={ e => props.setFieldValue('group', e.value) }
-                          />
-                        </div>
+                        <DropdownWithFormText
+                          name='group'
+                          options={ groups }
+                          value={ props.values.group }
+                          onChange={ e => props.setFieldValue('group', e.value) }
+                        />
                     }
                   </InputGroup>
                   <FormText color='muted'>
@@ -1089,14 +1082,21 @@ export const MetricForm =
                   readOnly={true}
                 />
               :
-                <>
-                  <AutocompleteField
-                    {...props}
-                    lists={metrictemplatelist}
-                    field='parent'
-                    icon='metrics'
-                  />
-                </>
+                <CustomReactSelect
+                  name='parent'
+                  isClearable={ true }
+                  onChange={ e => {
+                    if (e)
+                      props.setFieldValue('parent', e.value)
+                    else
+                    props.setFieldValue('parent', '')
+                  }}
+                  options={ metrictemplatelist.map(templ => new Object({ label: templ, value: templ })) }
+                  value={ props.values.parent ?
+                    new Object({ label: props.values.parent, value: props.values.parent })
+                    : undefined
+                  }
+                />
             }
             </Col>
           </Row>
