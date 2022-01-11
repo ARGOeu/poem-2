@@ -18,7 +18,8 @@ import {
   BaseArgoTable,
   CustomReactSelect,
   CustomError,
-  DropdownWithFormText
+  DropdownWithFormText,
+  CustomDropdownIndicator
  } from './UIElements';
 import { Formik, Form, Field, FieldArray } from 'formik';
 import {
@@ -37,10 +38,9 @@ import {
   Badge
 } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faInfoCircle, faMinus, faPlus, faCaretDown } from '@fortawesome/free-solid-svg-icons';
+import { faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
 import ReactDiffViewer from 'react-diff-viewer';
 import CreatableSelect from 'react-select/creatable';
-import { components } from 'react-select';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import {
   fetchMetricTags,
@@ -763,14 +763,6 @@ const styles = {
   },
 };
 
-const DropdownIndicator = props => {
-  return (
-    <components.DropdownIndicator {...props}>
-      <FontAwesomeIcon icon={faCaretDown}/>
-    </components.DropdownIndicator>
-  );
-};
-
 
 export const MetricForm =
   ({
@@ -980,7 +972,7 @@ export const MetricForm =
                     isMulti
                     onChange={(value) => props.setFieldValue('tags', value)}
                     options={alltags}
-                    components={{DropdownIndicator}}
+                    components={{ CustomDropdownIndicator }}
                     defaultValue={props.values.tags}
                     styles={styles}
                   />
