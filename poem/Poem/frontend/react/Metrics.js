@@ -104,7 +104,7 @@ const InlineDiffElement = ({title, item1, item2}) => {
   }
 
   return (
-    <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
+    <div id='argo-contentwrap' className='ms-2 mb-2 mt-2 p-3 border rounded'>
       <h6 className='mt-4 font-weight-bold text-uppercase'>{title}</h6>
       {elements}
     </div>
@@ -542,7 +542,7 @@ export const ListOfMetrics = (props) => {
                 <Badge color='dark'>none</Badge>
               :
                 row.value.map((tag, i) =>
-                  <Badge className={'mr-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
+                  <Badge className={'me-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
                     {tag}
                   </Badge>
                 )
@@ -687,7 +687,7 @@ export const ListOfMetrics = (props) => {
         return (
           <>
             <div className="d-flex align-items-center justify-content-between">
-              <h2 className="ml-3 mt-1 mb-4">{`Select metric template${(userDetails && userDetails.is_superuser) ? '(s) to import' : ' for details'}`}</h2>
+              <h2 className="ms-3 mt-1 mb-4">{`Select metric template${(userDetails && userDetails.is_superuser) ? '(s) to import' : ' for details'}`}</h2>
               {
                 (userDetails && userDetails.is_superuser) &&
                   <Button
@@ -698,7 +698,7 @@ export const ListOfMetrics = (props) => {
                   </Button>
               }
             </div>
-            <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
+            <div id="argo-contentwrap" className="ms-2 mb-2 mt-2 p-3 border rounded">
               <BaseArgoTable
                 data={metrics}
                 columns={memoized_columns}
@@ -721,11 +721,11 @@ export const ListOfMetrics = (props) => {
               onYes={() => bulkDeleteMetrics(modalVar)}
             />
             <div className="d-flex align-items-center justify-content-between">
-              <h2 className="ml-3 mt-1 mb-4">{`Select metric template ${publicView ? 'for details' : 'to change'}`}</h2>
+              <h2 className="ms-3 mt-1 mb-4">{`Select metric template ${publicView ? 'for details' : 'to change'}`}</h2>
               {
                 !publicView &&
                   <ButtonToolbar>
-                    <Link className={'btn btn-secondary mr-2'} to={location.pathname + '/add'} role='button'>Add</Link>
+                    <Link className={'btn btn-secondary me-2'} to={location.pathname + '/add'} role='button'>Add</Link>
                     {
                       !isTenantSchema &&
                         <Button
@@ -738,7 +738,7 @@ export const ListOfMetrics = (props) => {
                   </ButtonToolbar>
               }
             </div>
-            <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
+            <div id='argo-contentwrap' className='ms-2 mb-2 mt-2 p-3 border rounded'>
               <BaseArgoTable
                 data={metrics}
                 columns={memoized_columns}
@@ -988,13 +988,13 @@ export const MetricForm =
                       :
                         (obj_label === 'metrictemplate' && !isHistory) ?
                           props.values.tags.map((tag, i) =>
-                            <Badge className={'mr-1'} key={i} color={tag.value === 'internal' ? 'success' : tag.value === 'deprecated' ? 'danger' : 'secondary'}>
+                            <Badge className={'me-1'} key={i} color={tag.value === 'internal' ? 'success' : tag.value === 'deprecated' ? 'danger' : 'secondary'}>
                               {tag.value}
                             </Badge>
                           )
                         :
                           props.values.tags.map((tag, i) =>
-                            <Badge className={'mr-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
+                            <Badge className={'me-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
                               {tag}
                             </Badge>
                           )
@@ -1134,7 +1134,7 @@ export const CompareMetrics = (props) => {
     return (
       <React.Fragment>
         <div className='d-flex align-items-center justify-content-between'>
-          <h2 className='ml-3 mt-1 mb-4'>{`Compare ${name}`}</h2>
+          <h2 className='ms-3 mt-1 mb-4'>{`Compare ${name}`}</h2>
         </div>
         {
           (metric1.name !== metric2.name) &&
