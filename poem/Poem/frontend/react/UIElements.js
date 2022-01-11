@@ -158,6 +158,30 @@ export const Icon = props =>
 }
 
 
+export const CustomDropdownIndicator = (props) => {
+  return (
+    <components.DropdownIndicator {...props}>
+      <svg
+        height='10'
+        width='10'
+        viewBox='0 0 4 5'
+        aria-hidden="true"
+        focusable="false"
+        style={{
+          display: 'inline-block',
+          fill: 'currentColor',
+          lineHeight: 1,
+          stroke: 'currentColor',
+          strokeWidth: 0,
+        }}
+      >
+        <path fill='#343a40' d='M2 0L0 2h4zm0 5L0 3h4z'/>
+      </svg>
+    </components.DropdownIndicator>
+  )
+}
+
+
 export const CustomReactSelect = ({...props}) => {
   const customStyles = {
     control: (provided,  state) => ({
@@ -206,24 +230,7 @@ export const CustomReactSelect = ({...props}) => {
       return null
 
     else return (
-      <components.DropdownIndicator {...props}>
-        <svg
-          height='10'
-          width='10'
-          viewBox='0 0 4 5'
-          aria-hidden="true"
-          focusable="false"
-          style={{
-            display: 'inline-block',
-            fill: 'currentColor',
-            lineHeight: 1,
-            stroke: 'currentColor',
-            strokeWidth: 0,
-          }}
-        >
-          <path fill='#343a40' d='M2 0L0 2h4zm0 5L0 3h4z'/>
-        </svg>
-      </components.DropdownIndicator>
+      <CustomDropdownIndicator {...props} />
     )
   }
 
