@@ -1661,13 +1661,11 @@ describe('Test metric template changeview on SuperPOEM', () => {
     })
 
     const nameField = screen.getByTestId('name');
-
-    const typeField = screen.getByText('Active');
-
-    const probeField = screen.getByTestId('autocomplete-probeversion')
+    const typeField = screen.getByText('Active')
+    const probeField = screen.getByText('ams-probe (0.1.12)')
     const packageField = screen.getByTestId('package');
     const descriptionField = screen.getByTestId('description');
-    const groupField = screen.queryByTestId('group');
+    const groupField = screen.queryByText(/group/i)
     const tagsElement = screen.getByLabelText('Tags:')
 
     const executableField = screen.getByTestId('probeexecutable');
@@ -1698,7 +1696,18 @@ describe('Test metric template changeview on SuperPOEM', () => {
     selectEvent.openMenu(typeField)
     expect(screen.getByText('Passive')).toBeInTheDocument()
 
-    expect(probeField.value).toBe('ams-probe (0.1.12)');
+    expect(probeField).toBeEnabled()
+
+    expect(screen.queryByText('ams-probe (0.1.11)')).not.toBeInTheDocument()
+    expect(screen.queryByText('ams-publisher-probe (0.1.11)')).not.toBeInTheDocument()
+    expect(screen.queryByText('ams-publisher-probe (0.1.12)')).not.toBeInTheDocument()
+    expect(screen.queryByText('ams-probe-new (0.1.13)')).not.toBeInTheDocument()
+    selectEvent.openMenu(probeField)
+    expect(screen.queryByText('ams-probe (0.1.11)')).toBeInTheDocument()
+    expect(screen.queryByText('ams-publisher-probe (0.1.11)')).toBeInTheDocument()
+    expect(screen.queryByText('ams-publisher-probe (0.1.12)')).toBeInTheDocument()
+    expect(screen.queryByText('ams-probe-new (0.1.13)')).toBeInTheDocument()
+
     expect(packageField.value).toBe('nagios-plugins-argo (0.1.12)')
     expect(packageField).toBeDisabled();
     expect(descriptionField.value).toBe('Some description of argo.AMS-Check metric template.');
@@ -1865,7 +1874,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
     })
 
     const nameField = screen.getByTestId('name');
-    const probeField = screen.getByTestId('autocomplete-probeversion')
+    const probeField = screen.getByText('ams-probe (0.1.12)')
     const packageField = screen.getByTestId('package');
     const descriptionField = screen.getByTestId('description');
     const tagsField = screen.getByLabelText('Tags:');
@@ -1878,7 +1887,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
     const dependencyVal = screen.getByTestId('dependency.0.value');
 
     fireEvent.change(nameField, { target: { value: 'argo.AMS-Check-new' } })
-    fireEvent.change(probeField, { target: { value: 'ams-probe-new (0.1.13)' } });
+    await selectEvent.select(probeField, 'ams-probe-new (0.1.13)')
     expect(packageField.value).toBe('nagios-plugins-argo (0.1.13)')
     expect(packageField).toBeDisabled();
 
@@ -1971,11 +1980,11 @@ describe('Test metric template changeview on SuperPOEM', () => {
       expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template')
     })
 
-    const probeField = screen.getByTestId('autocomplete-probeversion')
+    const probeField = screen.getByText('ams-probe (0.1.12)')
     const packageField = screen.getByTestId('package');
 
-    fireEvent.change(probeField, { target: { value: 'ams-probe-new' } });
-    expect(packageField.value).toBe('');
+    await selectEvent.select(probeField, 'ams-probe-new (0.1.13)')
+    expect(packageField.value).toBe('nagios-plugins-argo (0.1.13)');
     expect(packageField).toBeDisabled();
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
@@ -1993,7 +2002,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
           'mtype': 'Active',
           'tags': ['test_tag1', 'test_tag2'],
           'description': 'Some description of argo.AMS-Check metric template.',
-          'probeversion': 'ams-probe-new',
+          'probeversion': 'ams-probe-new (0.1.13)',
           'parent': '',
           'probeexecutable': 'ams-probe',
           'config': [
@@ -2041,11 +2050,11 @@ describe('Test metric template changeview on SuperPOEM', () => {
       expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template')
     })
 
-    const probeField = screen.getByTestId('autocomplete-probeversion')
+    const probeField = screen.getByText('ams-probe (0.1.12)')
     const packageField = screen.getByTestId('package');
 
-    fireEvent.change(probeField, { target: { value: 'ams-probe-new' } });
-    expect(packageField.value).toBe('');
+    await selectEvent.select(probeField, 'ams-probe-new (0.1.13)')
+    expect(packageField.value).toBe('nagios-plugins-argo (0.1.13)');
     expect(packageField).toBeDisabled();
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
@@ -2063,7 +2072,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
           'mtype': 'Active',
           'tags': ['test_tag1', 'test_tag2'],
           'description': 'Some description of argo.AMS-Check metric template.',
-          'probeversion': 'ams-probe-new',
+          'probeversion': 'ams-probe-new (0.1.13)',
           'parent': '',
           'probeexecutable': 'ams-probe',
           'config': [
@@ -2109,11 +2118,11 @@ describe('Test metric template changeview on SuperPOEM', () => {
       expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template')
     })
 
-    const probeField = screen.getByTestId('autocomplete-probeversion')
+    const probeField = screen.getByText('ams-probe (0.1.12)')
     const packageField = screen.getByTestId('package');
 
-    fireEvent.change(probeField, { target: { value: 'ams-probe-new' } });
-    expect(packageField.value).toBe('');
+    await selectEvent.select(probeField, 'ams-probe-new (0.1.13)')
+    expect(packageField.value).toBe('nagios-plugins-argo (0.1.13)');
     expect(packageField).toBeDisabled();
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
@@ -2131,7 +2140,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
           'mtype': 'Active',
           'tags': ['test_tag1', 'test_tag2'],
           'description': 'Some description of argo.AMS-Check metric template.',
-          'probeversion': 'ams-probe-new',
+          'probeversion': 'ams-probe-new (0.1.13)',
           'parent': '',
           'probeexecutable': 'ams-probe',
           'config': [
@@ -2374,10 +2383,10 @@ describe('Test metric template changeview on SuperPOEM', () => {
 
     await selectEvent.select(typeField, 'Active')
 
-    const probeField = screen.getByTestId('autocomplete-probeversion')
+    const probeField = screen.getAllByText(/select/i)[0]
     const packageField = screen.getByTestId('package');
     const descriptionField = screen.getByTestId('description');
-    const groupField = screen.queryByTestId('group');
+    const groupField = screen.queryByText(/group/i);
     const tagsField = screen.getByLabelText('Tags:');
 
     const executableField = screen.getByTestId('probeexecutable');
@@ -2404,8 +2413,20 @@ describe('Test metric template changeview on SuperPOEM', () => {
     const parentField = screen.getByTestId('autocomplete-parent');
 
     expect(nameField.value).toBe('org.apel.APEL-Pub');
-    expect(probeField.value).toBe('');
     expect(probeField).toBeEnabled();
+
+    expect(screen.queryByText('ams-probe (0.1.12)')).not.toBeInTheDocument()
+    expect(screen.queryByText('ams-probe (0.1.11)')).not.toBeInTheDocument()
+    expect(screen.queryByText('ams-publisher-probe (0.1.11)')).not.toBeInTheDocument()
+    expect(screen.queryByText('ams-publisher-probe (0.1.12)')).not.toBeInTheDocument()
+    expect(screen.queryByText('ams-probe-new (0.1.13)')).not.toBeInTheDocument()
+    selectEvent.openMenu(probeField)
+    expect(screen.queryByText('ams-probe (0.1.12)')).toBeInTheDocument()
+    expect(screen.queryByText('ams-probe (0.1.11)')).toBeInTheDocument()
+    expect(screen.queryByText('ams-publisher-probe (0.1.11)')).toBeInTheDocument()
+    expect(screen.queryByText('ams-publisher-probe (0.1.12)')).toBeInTheDocument()
+    expect(screen.queryByText('ams-probe-new (0.1.13)')).toBeInTheDocument()
+
     expect(packageField.value).toBe('');
     expect(packageField).toBeDisabled();
     expect(descriptionField.value).toBe('');
@@ -2533,7 +2554,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
 
     await selectEvent.select(typeField, 'Active')
 
-    const probeField2 = screen.getByTestId('autocomplete-probeversion')
+    const probeField2 = screen.getByText('ams-probe (0.1.12)')
     const packageField2 = screen.getByTestId('package');
     const descriptionField2 = screen.getByTestId('description');
     const groupField2 = screen.queryByTestId('group');
@@ -2564,8 +2585,18 @@ describe('Test metric template changeview on SuperPOEM', () => {
     const parentField2 = screen.getByTestId('autocomplete-parent');
 
     expect(nameField.value).toBe('argo.AMS-Check');
-    expect(probeField2.value).toBe('ams-probe (0.1.12)');
     expect(probeField2).toBeEnabled();
+
+    expect(screen.queryByText('ams-probe (0.1.11)')).not.toBeInTheDocument()
+    expect(screen.queryByText('ams-publisher-probe (0.1.11)')).not.toBeInTheDocument()
+    expect(screen.queryByText('ams-publisher-probe (0.1.12)')).not.toBeInTheDocument()
+    expect(screen.queryByText('ams-probe-new (0.1.13)')).not.toBeInTheDocument()
+    selectEvent.openMenu(probeField2)
+    expect(screen.queryByText('ams-probe (0.1.11)')).toBeInTheDocument()
+    expect(screen.queryByText('ams-publisher-probe (0.1.11)')).toBeInTheDocument()
+    expect(screen.queryByText('ams-publisher-probe (0.1.12)')).toBeInTheDocument()
+    expect(screen.queryByText('ams-probe-new (0.1.13)')).toBeInTheDocument()
+
     expect(packageField2.value).toBe('nagios-plugins-argo (0.1.12)');
     expect(packageField2).toBeDisabled();
     expect(descriptionField2.value).toBe('Some description of argo.AMS-Check metric template.');
@@ -2706,7 +2737,7 @@ describe('Test metric template addview on SuperPOEM', () => {
 
     const nameField = screen.getByTestId('name');
     const typeField = screen.getByText('Active');
-    const probeField = screen.getByTestId('autocomplete-probeversion')
+    const probeField = screen.getAllByText(/select/i)[0]
     const packageField = screen.getByTestId('package');
     const descriptionField = screen.getByTestId('description');
     const groupField = screen.queryByTestId('group');
@@ -2740,7 +2771,20 @@ describe('Test metric template addview on SuperPOEM', () => {
     selectEvent.openMenu(typeField)
     expect(screen.queryByText('Passive')).toBeInTheDocument()
 
-    expect(probeField.value).toBe('');
+    expect(probeField).toBeEnabled()
+
+    expect(screen.queryByText('ams-probe (0.1.12)')).not.toBeInTheDocument()
+    expect(screen.queryByText('ams-probe (0.1.11)')).not.toBeInTheDocument()
+    expect(screen.queryByText('ams-publisher-probe (0.1.11)')).not.toBeInTheDocument()
+    expect(screen.queryByText('ams-publisher-probe (0.1.12)')).not.toBeInTheDocument()
+    expect(screen.queryByText('ams-probe-new (0.1.13)')).not.toBeInTheDocument()
+    selectEvent.openMenu(probeField)
+    expect(screen.queryByText('ams-probe (0.1.12)')).toBeInTheDocument()
+    expect(screen.queryByText('ams-probe (0.1.11)')).toBeInTheDocument()
+    expect(screen.queryByText('ams-publisher-probe (0.1.11)')).toBeInTheDocument()
+    expect(screen.queryByText('ams-publisher-probe (0.1.12)')).toBeInTheDocument()
+    expect(screen.queryByText('ams-probe-new (0.1.13)')).toBeInTheDocument()
+
     expect(packageField.value).toBe('');
     expect(packageField).toBeDisabled();
     expect(descriptionField.value).toBe('');
@@ -2792,7 +2836,7 @@ describe('Test metric template addview on SuperPOEM', () => {
     })
 
     const nameField = screen.getByTestId('name');
-    const probeField = screen.getByTestId('autocomplete-probeversion')
+    const probeField = screen.getAllByText(/select/i)[0]
     const packageField = screen.getByTestId('package');
     const tagsField = screen.getByLabelText('Tags:');
     const executableField = screen.getByTestId('probeexecutable');
@@ -2803,7 +2847,7 @@ describe('Test metric template addview on SuperPOEM', () => {
     const configVal5 = screen.getByTestId('config.4.value');
 
     fireEvent.change(nameField, { target: { value: 'argo.AMSPublisher-Check' } })
-    fireEvent.change(probeField, { target: { value: 'ams-publisher-probe (0.1.12)' } });
+    await selectEvent.select(probeField, 'ams-publisher-probe (0.1.12)')
     expect(packageField.value).toBe('nagios-plugins-argo (0.1.12)')
     expect(packageField).toBeDisabled();
 
@@ -3008,7 +3052,7 @@ describe('Test metric template addview on SuperPOEM', () => {
     })
 
     const nameField = screen.getByTestId('name');
-    const probeField = screen.getByTestId('autocomplete-probeversion')
+    const probeField = screen.getAllByText(/select/i)[0]
     const packageField = screen.getByTestId('package');
     const executableField = screen.getByTestId('probeexecutable');
     const configVal1 = screen.getByTestId('config.0.value');
@@ -3018,7 +3062,7 @@ describe('Test metric template addview on SuperPOEM', () => {
     const configVal5 = screen.getByTestId('config.4.value');
 
     fireEvent.change(nameField, { target: { value: 'argo.AMS-Publisher' } })
-    fireEvent.change(probeField, { target: { value: 'ams-publisher-probe (0.1.12)' } });
+    await selectEvent.select(probeField, 'ams-publisher-probe (0.1.12)')
     expect(packageField.value).toBe('nagios-plugins-argo (0.1.12)')
     expect(packageField).toBeDisabled();
 
@@ -3110,7 +3154,7 @@ describe('Test metric template addview on SuperPOEM', () => {
     })
 
     const nameField = screen.getByTestId('name');
-    const probeField = screen.getByTestId('autocomplete-probeversion')
+    const probeField = screen.getAllByText(/select/i)[0]
     const packageField = screen.getByTestId('package');
     const executableField = screen.getByTestId('probeexecutable');
     const configVal1 = screen.getByTestId('config.0.value');
@@ -3120,7 +3164,7 @@ describe('Test metric template addview on SuperPOEM', () => {
     const configVal5 = screen.getByTestId('config.4.value');
 
     fireEvent.change(nameField, { target: { value: 'argo.AMS-Publisher' } })
-    fireEvent.change(probeField, { target: { value: 'ams-publisher-probe (0.1.12)' } });
+    await selectEvent.select(probeField, 'ams-publisher-probe (0.1.12)')
     expect(packageField.value).toBe('nagios-plugins-argo (0.1.12)')
     expect(packageField).toBeDisabled();
 
@@ -3271,7 +3315,7 @@ describe('Test metric template cloneview on SuperPOEM', () => {
 
     const typeField = screen.getByText('Active');
 
-    const probeField = screen.getByTestId('autocomplete-probeversion')
+    const probeField = screen.getByText('ams-probe (0.1.12)')
     const packageField = screen.getByTestId('package');
     const descriptionField = screen.getByTestId('description');
     const groupField = screen.queryByTestId('group');
@@ -3305,7 +3349,18 @@ describe('Test metric template cloneview on SuperPOEM', () => {
     selectEvent.openMenu(typeField)
     expect(screen.getByText('Passive')).toBeInTheDocument()
 
-    expect(probeField.value).toBe('ams-probe (0.1.12)');
+    expect(probeField).toBeEnabled()
+
+    expect(screen.queryByText('ams-probe (0.1.11)')).not.toBeInTheDocument()
+    expect(screen.queryByText('ams-publisher-probe (0.1.11)')).not.toBeInTheDocument()
+    expect(screen.queryByText('ams-publisher-probe (0.1.12)')).not.toBeInTheDocument()
+    expect(screen.queryByText('ams-probe-new (0.1.13)')).not.toBeInTheDocument()
+    selectEvent.openMenu(probeField)
+    expect(screen.queryByText('ams-probe (0.1.11)')).toBeInTheDocument()
+    expect(screen.queryByText('ams-publisher-probe (0.1.11)')).toBeInTheDocument()
+    expect(screen.queryByText('ams-publisher-probe (0.1.12)')).toBeInTheDocument()
+    expect(screen.queryByText('ams-probe-new (0.1.13)')).toBeInTheDocument()
+
     expect(packageField.value).toBe('nagios-plugins-argo (0.1.12)')
     expect(packageField).toBeDisabled();
     expect(descriptionField.value).toBe('Some description of argo.AMS-Check metric template.');

@@ -881,10 +881,10 @@ export const MetricForm =
           </Row>
           <Row>
             <Col md={6}>
-              {
-                props.values.type === 'Passive' ?
-                  <InputGroup>
-                    <InputGroupText>Probe</InputGroupText>
+              <InputGroup>
+                <InputGroupText>Probe</InputGroupText>
+                {
+                  props.values.type === 'Passive' ?
                     <input
                       type='text'
                       className='form-control'
@@ -892,11 +892,8 @@ export const MetricForm =
                       id='passive-probeversion'
                       data-testid='probeversion'
                     />
-                  </InputGroup>
-                :
-                  (isHistory || isTenantSchema || publicView) ?
-                    <InputGroup>
-                      <InputGroupText>Probe</InputGroupText>
+                  :
+                    (isHistory || isTenantSchema || publicView) ?
                       <Field
                         type='text'
                         name='probeversion'
@@ -904,23 +901,23 @@ export const MetricForm =
                         className='form-control'
                         disabled={true}
                       />
-                    </InputGroup>
-                  :
-                    <AutocompleteField
-                      {...props}
-                      lists={list_probes}
-                      icon='probes'
-                      field='probeversion'
-                      onselect_handler={(_, newValue) => {
-                        let probeversion = probeversions.find(prv => prv.object_repr === newValue);
-                        if (probeversion)
-                          props.setFieldValue('probe', probeversion.fields)
-                        else
-                          props.setFieldValue('probe', {'package': ''})
-                      }}
-                      label='Probe'
-                    />
-              }
+                    :
+                      <DropdownWithFormText
+                        name='probeversion'
+                        error={ props.errors.probeversion }
+                        onChange={ e => {
+                          props.setFieldValue('probeversion', e.value)
+                          let probeversion = probeversions.find(prv => prv.object_repr === e.value);
+                          if (probeversion)
+                            props.setFieldValue('probe', probeversion.fields)
+                          else
+                            props.setFieldValue('probe', {'package': ''})
+                        }}
+                        options={ list_probes }
+                        value={ props.values.probeversion }
+                      />
+                }
+              </InputGroup>
               {
                 props.values.type === 'Active' &&
                   <FormText color='muted'>
