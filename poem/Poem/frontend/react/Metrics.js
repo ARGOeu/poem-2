@@ -17,7 +17,8 @@ import {
   SelectColumnFilter,
   BaseArgoTable,
   CustomReactSelect,
-  CustomError
+  CustomError,
+  DropdownWithFormText
  } from './UIElements';
 import { Formik, Form, Field, FieldArray } from 'formik';
 import {
@@ -825,15 +826,12 @@ export const MetricForm =
                       readOnly={true}
                     />
                   :
-                    <Field
-                      component='select'
+                    <DropdownWithFormText
                       name='type'
-                      className='form-control form-select'
                       id='mtype'
-                      data-testid='mtype'
                       onChange={e => {
-                        props.handleChange(e);
-                        if (e.target.value === 'Passive') {
+                        props.setFieldValue('type', e.value)
+                        if (e.value === 'Passive') {
                           let ind = props.values.flags.length;
                           if (ind === 1 && props.values.flags[0].key === '') {
                             props.setFieldValue('flags[0].key', 'PASSIVE');
@@ -842,7 +840,7 @@ export const MetricForm =
                             props.setFieldValue(`flags[${ind}].key`, 'PASSIVE')
                             props.setFieldValue(`flags[${ind}].value`, '1')
                           }
-                        } else if (e.target.value === 'Active') {
+                        } else if (e.value === 'Active') {
                           if (!props.values.probe)
                             props.setFieldValue('probe', {'package': ''})
 
@@ -870,13 +868,10 @@ export const MetricForm =
                             props.values.flags.splice(ind, 1)
                         }
                       }}
-                    >
-                      {
-                        types.map((name, i) =>
-                          <option key={i} value={name}>{name}</option>
-                        )
-                      }
-                    </Field>
+                      options={ types }
+                      value={ props.values.type }
+                      error={ props.errors.type }
+                    />
                 }
               </InputGroup>
               <FormText color='muted'>
