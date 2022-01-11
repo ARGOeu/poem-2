@@ -300,7 +300,7 @@ const ThresholdsProfilesForm = ({
                   <React.Fragment key={`fragment.rules.${index}`}>
                     <Card className={`mt-${index === 0 ? '1' : '4'}`} data-testid={`rules.${index}`}>
                       <CardHeader className='p-1 fw-bold text-uppercase'>
-                        <div className='d-flex align-items-center justify-content-between no-gutters'>
+                        <div className='d-flex align-items-center justify-content-between g-0'>
                           Rule {index + 1}
                           {
                             !historyview &&
@@ -319,7 +319,7 @@ const ThresholdsProfilesForm = ({
                         </div>
                       </CardHeader>
                       <CardBody className='p-1'>
-                        <Row className='d-flex align-items-center no-gutters'>
+                        <Row className='d-flex align-items-center g-0'>
                           <Col md={12}>
                             {
                               historyview ?
@@ -1464,7 +1464,7 @@ const ListDiffElement = ({title, item1, item2}) => {
   }
 
   return (
-    <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
+    <div id='argo-contentwrap' className='ms-2 mb-2 mt-2 p-3 border rounded'>
       <h6 className='mt-4 fw-bold text-uppercase'>{title}</h6>
       <ReactDiffViewer
         oldValue={list2.join('\n')}
@@ -1531,7 +1531,7 @@ export const ThresholdsProfileVersionCompare = (props) => {
       return (
         <React.Fragment>
           <div className='d-flex align-items-center justify-content-between'>
-            <h2 className='ml-3 mt-1 mb-4'>{`Compare ${name} versions`}</h2>
+            <h2 className='ms-3 mt-1 mb-4'>{`Compare ${name} versions`}</h2>
           </div>
           {
             (profile1.name !== profile2.name) &&

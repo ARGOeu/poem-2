@@ -257,7 +257,7 @@ const ServicesList = () => {
                       : null
                   }
                 </td>
-                <td className={service.isNew ? "bg-light align-middle pl-3" : "align-middle pl-3"}>
+                <td className={service.isNew ? "bg-light align-middle ps-3" : "align-middle ps-3"}>
                   <Button size="sm" color="light"
                     type="button"
                     data-testid={`remove-${index}`}
@@ -1219,7 +1219,7 @@ const ListDiffElement = ({title, item1, item2}) => {
   }
 
   return (
-    <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
+    <div id='argo-contentwrap' className='ms-2 mb-2 mt-2 p-3 border rounded'>
       <h6 className='mt-4 font-weight-bold text-uppercase'>{title}</h6>
       <ReactDiffViewer
         oldValue={list2.join('\n')}
@@ -1268,7 +1268,7 @@ export const MetricProfileVersionCompare = (props) => {
     return (
       <React.Fragment>
         <div className='d-flex align-items-center justify-content-between'>
-          <h2 className='ml-3 mt-1 mb-4'>{`Compare ${name} versions`}</h2>
+          <h2 className='ms-3 mt-1 mb-4'>{`Compare ${name} versions`}</h2>
         </div>
         {
           (name1 !== name2) &&

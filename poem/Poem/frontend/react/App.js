@@ -1158,7 +1158,7 @@ const App = () => {
                 />
               </Col>
             </Row>
-            <Row className="no-gutters">
+            <Row className="g-0">
               <Col sm={{size: 2}} md={{size: 2}} id="sidebar-col" className="d-flex flex-column">
                 <NavigationLinksWithRouter isTenantSchema={isTenantSchema} userDetails={userDetails}/>
                 <div id="sidebar-grow" className="flex-grow-1 border-left border-right mb-0 pb-5"/>

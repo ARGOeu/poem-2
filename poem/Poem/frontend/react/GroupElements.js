@@ -338,7 +338,7 @@ export const GroupChange = (props) => {
                                 {index + 1}
                               </td>
                               <td>{item}</td>
-                              <td className='align-middle pl-3'>
+                              <td className='align-middle ps-3'>
                                 <Button
                                   size='sm'
                                   color='light'

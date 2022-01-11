@@ -384,7 +384,7 @@ export const CustomBreadcrumb = ({location, publicView=false}) =>
   }
 
   return (
-    <Breadcrumb id='argo-breadcrumb' className="border-top rounded">
+    <Breadcrumb id='argo-breadcrumb' className="rounded">
       {
         breadcrumb_elements.map((item, i) =>
           i !== breadcrumb_elements.length - 1
@@ -588,14 +588,14 @@ export const NavigationBar = ({history, onLogout, isOpenModal, toggle,
       <Navbar expand="md" id="argo-nav" className="border rounded">
         <NavbarBrand className="text-light">
           <img src={ArgoLogo} alt="ARGO logo" className="img-responsive"/>
-          <span className="pl-3">
+          <span className="ps-3">
             <strong>ARGO</strong> POEM
           </span>
         </NavbarBrand>
         <NavbarToggler/>
         <Collapse navbar className='justify-content-end'>
           <Nav navbar >
-            <NavItem className='m-2 ml-5 text-light'>
+            <NavItem className='m-2 ms-5 text-light'>
               Welcome,&nbsp;
               <span onClick={() => setTooltipOpen(!tooltipOpen)}
                 className='font-weight-bold' href="#" id="userToolTip">
@@ -655,7 +655,7 @@ export const NavigationLinks = ({location, isTenantSchema, userDetails}) => {
 export const NavigationAbout = ({ location, poemVersion, termsLink, privacyLink }) => {
   return (
     <React.Fragment>
-      <div className="bg-white border-left border-right pl-3 mt-0 pt-5 text-uppercase">
+      <div className="bg-white border-left border-right ps-3 mt-0 pt-5 text-uppercase">
         <h5>Info</h5>
       </div>
       <Nav vertical pills id="argo-navlinks" className="border-left border-right sticky-top rounded-bottom border-bottom pb-2 mb-0">
@@ -730,7 +730,7 @@ const InnerFooter = ({ termsLink, privacyLink, border=false, publicPage=false}) 
       }
       <div className="text-center pt-0 pb-2">
         <img src={EULogo} id="eulogo" alt="EU logo"/>
-        <img src={EOSCLogo} id="eosclogo" alt="EOSC logo" className="pl-1"/>
+        <img src={EOSCLogo} id="eosclogo" alt="EOSC logo" className="ps-1"/>
       </div>
       <p className={`text-center ${publicPage ? 'mb-0' : 'mb-0 pb-1'}`}>
         <small>
@@ -783,7 +783,7 @@ export const Footer = ({ termsLink, privacyLink, loginPage=false, publicPage=fal
 
 export const LoadingAnim = () =>
 (
-  <Row className="ml-2 mr-1 border rounded" style={{height: '90%', backgroundColor: 'white'}}>
+  <Row className="ms-2 me-1 border rounded" style={{height: '90%', backgroundColor: 'white'}}>
     <Col className="d-flex flex-column align-items-center align-self-center" md={{size: 8, offset: 2}}>
       <Card className="text-center border-0">
         <CardHeader className="bg-light">
@@ -855,7 +855,7 @@ export const PublicPage = ({privacyLink, termsLink, children}) => {
           />
         </Col>
       </Row>
-      <Row className="no-gutters">
+      <Row className="g-0">
         <Col>
           <CustomBreadcrumb publicView={true}/>
           {children}
@@ -892,11 +892,11 @@ export const BaseArgoView = ({resourcename='', location=undefined,
     <div className="d-flex align-items-center justify-content-between">
       {
         infoview ?
-          <h2 className="ml-3 mt-1 mb-4">{resourcename}</h2>
+          <h2 className="ms-3 mt-1 mb-4">{resourcename}</h2>
         :
           addview ?
             <React.Fragment>
-              <h2 className="ml-3 mt-1 mb-4">{`Add ${resourcename}`}</h2>
+              <h2 className="ms-3 mt-1 mb-4">{`Add ${resourcename}`}</h2>
               { extra_button }
             </React.Fragment>
           :
@@ -904,9 +904,9 @@ export const BaseArgoView = ({resourcename='', location=undefined,
               <React.Fragment>
                 {
                   addnew ?
-                    <h2 className="ml-3 mt-1 mb-4">{`Select ${resourcename} to change`}</h2>
+                    <h2 className="ms-3 mt-1 mb-4">{`Select ${resourcename} to change`}</h2>
                   :
-                    <h2 className='ml-3 mt-1 mb-4'>{`Select ${resourcename} for details`}</h2>
+                    <h2 className='ms-3 mt-1 mb-4'>{`Select ${resourcename} for details`}</h2>
                 }
                 {
                   (addnew && addperm) &&
@@ -928,12 +928,12 @@ export const BaseArgoView = ({resourcename='', location=undefined,
             :
               cloneview ?
                 <React.Fragment>
-                  <h2 className="ml-3 mt-1 mb-4">{`Clone ${resourcename}`}</h2>
+                  <h2 className="ms-3 mt-1 mb-4">{`Clone ${resourcename}`}</h2>
                 </React.Fragment>
               :
                 (tenantview || publicview) ?
                   <React.Fragment>
-                    <h2 className="ml-3 mt-1 mb-4">{resourcename}</h2>
+                    <h2 className="ms-3 mt-1 mb-4">{resourcename}</h2>
                     {
                       history &&
                         <Link className="btn btn-secondary" to={location.pathname + "/history"} role="button">History</Link>
@@ -941,7 +941,7 @@ export const BaseArgoView = ({resourcename='', location=undefined,
                   </React.Fragment>
                 :
                   <React.Fragment>
-                    <h2 className="ml-3 mt-1 mb-4">{`Change ${resourcename}`}</h2>
+                    <h2 className="ms-3 mt-1 mb-4">{`Change ${resourcename}`}</h2>
                     <ButtonToolbar>
                       <div className='p-1'>
                         { extra_button }
@@ -949,7 +949,7 @@ export const BaseArgoView = ({resourcename='', location=undefined,
                       {
                           clone && !publicview &&
                             <div className='p-1'>
-                              <Link className="btn btn-secondary mr-2" to={location.pathname + "/clone"} role="button">Clone</Link>
+                              <Link className="btn btn-secondary me-2" to={location.pathname + "/clone"} role="button">Clone</Link>
                             </div>
                       }
                       {
@@ -962,7 +962,7 @@ export const BaseArgoView = ({resourcename='', location=undefined,
                   </React.Fragment>
       }
     </div>
-    <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
+    <div id="argo-contentwrap" className="ms-2 mb-2 mt-2 p-3 border rounded">
       {
         !submitperm && !infoview && !listview && !publicview &&
           <Alert color='danger'>
@@ -1273,7 +1273,7 @@ export const DiffElement = ({title, item1, item2}) => {
   }
 
   return (
-    <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
+    <div id='argo-contentwrap' className='ms-2 mb-2 mt-2 p-3 border rounded'>
       <h6 className='mt-4 font-weight-bold text-uppercase'>{title}</h6>
       {elements}
     </div>
@@ -1373,7 +1373,7 @@ export const ErrorComponent = ({error}) => {
 
 
 export const ParagraphTitle = ({title}) => (
-  <h4 className="mt-2 p-1 pl-3 text-uppercase rounded" style={{"backgroundColor": "#c4ccd4"}}>{title}</h4>
+  <h4 className="mt-2 p-1 ps-3 text-uppercase rounded" style={{"backgroundColor": "#c4ccd4"}}>{title}</h4>
 )
 
 
@@ -1582,7 +1582,7 @@ export function BaseArgoTable({ columns, data, resourcename, page_size, filter=f
             <PaginationItem disabled={!canNextPage}>
               <PaginationLink last onClick={() => gotoPage(pageCount - 1)}/>
             </PaginationItem>
-            <PaginationItem className='pl-2'>
+            <PaginationItem className='ps-2'>
               <select
                 style={{width: '180px'}}
                 className='form-select text-primary'

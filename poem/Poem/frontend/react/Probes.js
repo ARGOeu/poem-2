@@ -723,7 +723,7 @@ export const ProbeVersionCompare = (props) => {
     return (
       <React.Fragment>
         <div className="d-flex align-items-center justify-content-between">
-          <h2 className='ml-3 mt-1 mb-4'>{`Compare ${name}`}</h2>
+          <h2 className='ms-3 mt-1 mb-4'>{`Compare ${name}`}</h2>
         </div>
         {
           (probe1.name !== probe2.name) &&

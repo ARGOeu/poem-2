@@ -568,7 +568,7 @@ const GroupsDisabledForm = ( props ) => (
                   <Col sm={{size: 8}} md={{size: 5}} className='mt-4 mb-2'>
                     <Card data-testid={`card-${i}`}>
                       <CardHeader className='p-1' color='primary'>
-                        <Row className='d-flex align-items-center no-gutters'>
+                        <Row className='d-flex align-items-center g-0'>
                           <Col sm={{size: 10}} md={{size: 11}} data-testid='service-group'>
                             {props.values.groups[i].name}
                           </Col>
@@ -581,7 +581,7 @@ const GroupsDisabledForm = ( props ) => (
                               key={j}
                               name={`groups.${i}.services`}
                               render={() => (
-                                <Row className='d-flex align-items-center service pt-1 pb-1 no-gutters' key={j}>
+                                <Row className='d-flex align-items-center service pt-1 pb-1 g-0' key={j}>
                                   <Col md={8} data-testid={`service-${j}`}>
                                     {props.values.groups[i].services[j].name}
                                   </Col>
@@ -1009,7 +1009,7 @@ export const AggregationProfilesChange = (props) => {
         submitperm={write_perm}
         extra_button={
           !addview &&
-            <ButtonDropdown className='mr-2' isOpen={dropdownOpen} toggle={ () => setDropdownOpen(!dropdownOpen) }>
+            <ButtonDropdown isOpen={dropdownOpen} toggle={ () => setDropdownOpen(!dropdownOpen) }>
               <DropdownToggle caret color='info'>JSON</DropdownToggle>
               <DropdownMenu>
                 <DropdownItem
@@ -1277,7 +1277,7 @@ const ListDiffElement = ({title, item1, item2}) => {
   }
 
   return (
-    <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
+    <div id='argo-contentwrap' className='ms-2 mb-2 mt-2 p-3 border rounded'>
       <h6 className='mt-4 font-weight-bold text-uppercase'>{title}</h6>
       <ReactDiffViewer
         oldValue={list2.join('\n')}
@@ -1333,7 +1333,7 @@ export const AggregationProfileVersionCompare = (props) => {
     return (
       <React.Fragment>
         <div className='d-flex align-items-center justify-content-between'>
-          <h2 className='ml-3 mt-1 mb-4'>{`Compare ${name} versions`}</h2>
+          <h2 className='ms-3 mt-1 mb-4'>{`Compare ${name} versions`}</h2>
         </div>
         {
           (name1 !== name2) &&

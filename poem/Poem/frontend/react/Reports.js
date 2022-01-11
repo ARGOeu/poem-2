@@ -321,7 +321,7 @@ const TopologyTagList = ({ part, fieldName, tagsState, setTagsState, tagsAll, ad
     <React.Fragment>
       {
         form.values[fieldName].length === 0 && publicView ?
-          <Row className="no-gutters">
+          <Row className="g-0">
             <Col md={4}>
               <Field
                 name={`${fieldName}.0.name`}
@@ -1724,7 +1724,7 @@ export const ReportsComponent = (props) => {
               <FormGroup className='mt-4'>
                 <ParagraphTitle title='Thresholds'/>
                 <Row>
-                  <Col md={2} className='mr-4'>
+                  <Col md={2} className='me-4'>
                     <Label for='availabilityThreshold'>Availability:</Label>
                     <Field
                       id='availabilityThreshold'
@@ -1734,7 +1734,7 @@ export const ReportsComponent = (props) => {
                     />
                     <CustomError error={props.errors.availabilityThreshold} />
                   </Col>
-                  <Col md={2} className='mr-4'>
+                  <Col md={2} className='me-4'>
                     <Label for='reliabilityThreshold'>Reliability:</Label>
                     <Field
                       id='reliabilityThreshold'
@@ -1744,7 +1744,7 @@ export const ReportsComponent = (props) => {
                     />
                     <CustomError error={props.errors.reliabilityThreshold} />
                   </Col>
-                  <Col md={2} className='mr-4'>
+                  <Col md={2} className='me-4'>
                     <Label for='uptimeThreshold'>Uptime:</Label>
                     <Field
                       id='uptimeThreshold'
@@ -1754,7 +1754,7 @@ export const ReportsComponent = (props) => {
                     />
                     <CustomError error={props.errors.uptimeThreshold} />
                   </Col>
-                  <Col md={2} className='mr-4'>
+                  <Col md={2} className='me-4'>
                     <Label for='unknownThreshold'>Unknown:</Label>
                     <Field
                       id='unknownThreshold'
@@ -1764,7 +1764,7 @@ export const ReportsComponent = (props) => {
                     />
                     <CustomError error={props.errors.unknownThreshold} />
                   </Col>
-                  <Col md={2} className='mr-4'>
+                  <Col md={2} className='me-4'>
                     <Label for='downtimeThreshold'>Downtime:</Label>
                     <Field
                       id='downtimeThreshold'

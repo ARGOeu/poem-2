@@ -878,7 +878,7 @@ export const UserChange = (props) => {
             />
           }
           <div className='d-flex align-items-center justify-content-between'>
-            <h2 className='ml-3 mt-1 mb-4'>{`${addview ? 'Add' : 'Change'} user`}</h2>
+            <h2 className='ms-3 mt-1 mb-4'>{`${addview ? 'Add' : 'Change'} user`}</h2>
             {
               (!addview && userDetails.username === user_name) &&
                 <Link
@@ -890,7 +890,7 @@ export const UserChange = (props) => {
                 </Link>
             }
           </div>
-          <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
+          <div id='argo-contentwrap' className='ms-2 mb-2 mt-2 p-3 border rounded'>
             <Formik
               initialValues = {{
                 addview: addview,

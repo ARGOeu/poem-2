@@ -18,27 +18,27 @@ export const CustomCardHeader = ({title}) => (
 export const TenantAdministration = () =>
 (
   <>
-    <h2 className='ml-3 mt-1 mb-4'>Administration</h2>
+    <h2 className='ms-3 mt-1 mb-4'>Administration</h2>
     <Card className='mb-2'>
       <CustomCardHeader title='Poem'/>
       <CardBody>
         <div className="p-1 align-items-center">
-          <Icon i='metrics' /> <Link className='pl-1' to={'/ui/metrics'}>Metrics</Link>
+          <Icon i='metrics' /> <Link className='ps-1' to={'/ui/metrics'}>Metrics</Link>
         </div>
         <div className="p-1 align-items-center">
-          <Icon i='reports' /> <Link className='pl-1' to={'/ui/reports'}>Reports</Link>
+          <Icon i='reports' /> <Link className='ps-1' to={'/ui/reports'}>Reports</Link>
         </div>
         <div className="p-1 align-items-center">
-          <Icon i='metricprofiles' /> <Link className='pl-1' to={'/ui/metricprofiles'}>Metric profiles</Link>
+          <Icon i='metricprofiles' /> <Link className='ps-1' to={'/ui/metricprofiles'}>Metric profiles</Link>
         </div>
         <div className="p-1 align-items-center">
-          <Icon i='aggregationprofiles' /> <Link className='pl-1' to={'/ui/aggregationprofiles'}>Aggregation profiles</Link>
+          <Icon i='aggregationprofiles' /> <Link className='ps-1' to={'/ui/aggregationprofiles'}>Aggregation profiles</Link>
         </div>
         <div className="p-1 align-items-center">
-          <Icon i='thresholdsprofiles' /> <Link className='pl-1' to={'/ui/thresholdsprofiles'}>Thresholds profiles</Link>
+          <Icon i='thresholdsprofiles' /> <Link className='ps-1' to={'/ui/thresholdsprofiles'}>Thresholds profiles</Link>
         </div>
         <div className="p-1 align-items-center">
-          <Icon i='operationsprofiles' /> <Link className='pl-1' to={'/ui/operationsprofiles'}>Operations profiles</Link>
+          <Icon i='operationsprofiles' /> <Link className='ps-1' to={'/ui/operationsprofiles'}>Operations profiles</Link>
         </div>
       </CardBody>
     </Card>
@@ -94,7 +94,7 @@ export const TenantAdministration = () =>
 export const SuperAdminAdministration = () =>
 (
   <>
-    <h2 className='ml-3 mt-1 mb-4'>Administration</h2>
+    <h2 className='ms-3 mt-1 mb-4'>Administration</h2>
     <Card className='mb-2'>
       <CustomCardHeader title='Poem'/>
       <CardBody>
@@ -102,16 +102,16 @@ export const SuperAdminAdministration = () =>
           <Icon i="tenants"/> <Link to={"/ui/tenants"}>Tenants</Link>
         </div>
         <div className="p-1 align-items-center">
-          <Icon i="yumrepos"/> <Link className='pl-1' to={'/ui/yumrepos'}>YUM repos</Link>
+          <Icon i="yumrepos"/> <Link className='ps-1' to={'/ui/yumrepos'}>YUM repos</Link>
         </div>
         <div className="p-1 align-items-center">
-          <Icon i="packages"/> <Link className='pl-1' to={'/ui/packages'}>Packages</Link>
+          <Icon i="packages"/> <Link className='ps-1' to={'/ui/packages'}>Packages</Link>
         </div>
         <div className="p-1 align-items-center">
-          <Icon i="probes"/> <Link className='pl-1' to={'/ui/probes'}>Probes</Link>
+          <Icon i="probes"/> <Link className='ps-1' to={'/ui/probes'}>Probes</Link>
         </div>
         <div className="p-1 align-items-center">
-          <Icon i="metrictemplates"/> <Link className='pl-1' to={'/ui/metrictemplates'}>Metric templates</Link>
+          <Icon i="metrictemplates"/> <Link className='ps-1' to={'/ui/metrictemplates'}>Metric templates</Link>
         </div>
       </CardBody>
     </Card>
