@@ -1353,7 +1353,7 @@ export const ReportsComponent = (props) => {
                   </Col>
                   <Col md={2}>
                     <Row>
-                      <FormGroup check inline>
+                      <FormGroup check inline className='ms-3'>
                         <Input
                           type='checkbox'
                           id='disabled'
