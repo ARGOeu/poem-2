@@ -61,7 +61,7 @@
     "jest": "^26.6.3",
     "jest-junit": "^12.2.0",
     "jsctags": "git+https://github.com/ramitos/jsctags.git",
-    "jshint": "^2.10.2",
+    "jshint": "^2.13.3",
     "postcss-loader": "^3.0.0",
     "react-diff-viewer": "^2.0.5",
     "react-notifications": "^1.6.0",
