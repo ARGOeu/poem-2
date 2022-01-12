@@ -5,14 +5,14 @@ import {
   LoadingAnim,
   BaseArgoView,
   NotifyOk,
-  FancyErrorMessage,
   DiffElement,
   ProfileMainInfo,
   NotifyError,
   ErrorComponent,
   ParagraphTitle,
   ProfilesListTable,
-  CustomReactSelect
+  CustomReactSelect,
+  CustomError
 } from './UIElements';
 import {
   Formik,
@@ -239,7 +239,7 @@ function thresholdsToValues(rules) {
 }
 
 
-const CustomSelect = ({ field, label, options, onChangeHandler, initialValue }) => {
+const CustomSelect = ({ field, error, label, options, onChangeHandler, initialValue }) => {
   let value = null
   if (initialValue) {
     value = { value: initialValue, label: initialValue }
@@ -255,6 +255,7 @@ const CustomSelect = ({ field, label, options, onChangeHandler, initialValue }) 
       onChange={ e => onChangeHandler(e) }
       options={ options }
       value={ value }
+      error={ error }
     />
   )
 }
@@ -348,7 +349,21 @@ const ThresholdsProfilesForm = ({
                                   }}
                                   label='Metric'
                                   initialValue={!addview ? props.values.rules[index].metric : ''}
+                                  error={
+                                    props.errors.rules &&
+                                    props.errors.rules.length > index &&
+                                    props.errors.rules[index] &&
+                                    props.errors.rules[index].metric &&
+                                    props.errors.rules[index].metric
+                                  }
                                 />
+                            }
+                            {
+                              props.errors.rules &&
+                              props.errors.rules.length > index &&
+                              props.errors.rules[index] &&
+                              props.errors.rules[index].metric &&
+                                <CustomError error={ props.errors.rules[index].metric } />
                             }
                           </Col>
                         </Row>
@@ -526,7 +541,7 @@ const ThresholdsProfilesForm = ({
                                                   props.errors.rules[index].thresholds[i] &&
                                                   props.errors.rules[index].thresholds[i].label
                                                 ) &&
-                                                  FancyErrorMessage(props.errors.rules[index].thresholds[i].label)
+                                                  <CustomError  error={ props.errors.rules[index].thresholds[i].label } />
                                                 }
                                               </td>
                                               <td>
@@ -563,7 +578,7 @@ const ThresholdsProfilesForm = ({
                                                   props.errors.rules[index].thresholds[i] &&
                                                   props.errors.rules[index].thresholds[i].value
                                                 ) &&
-                                                  FancyErrorMessage(props.errors.rules[index].thresholds[i].value)
+                                                  <CustomError error={ props.errors.rules[index].thresholds[i].value } />
                                                 }
                                               </td>
                                               <td style={{width: '6%'}}>
@@ -625,7 +640,7 @@ const ThresholdsProfilesForm = ({
                                                   props.errors.rules[index].thresholds[i] &&
                                                   props.errors.rules[index].thresholds[i].warn1
                                                 ) &&
-                                                  FancyErrorMessage(props.errors.rules[index].thresholds[i].warn1)
+                                                  <CustomError error={ props.errors.rules[index].thresholds[i].warn1 } />
                                                 }
                                               </td>
                                               <td>
@@ -665,7 +680,7 @@ const ThresholdsProfilesForm = ({
                                                   props.errors.rules[index].thresholds[i] &&
                                                   props.errors.rules[index].thresholds[i].warn2
                                                 ) &&
-                                                  FancyErrorMessage(props.errors.rules[index].thresholds[i].warn2)
+                                                  <CustomError error={ props.errors.rules[index].thresholds[i].warn2 } />
                                                 }
                                               </td>
                                               <td>
@@ -702,7 +717,7 @@ const ThresholdsProfilesForm = ({
                                                   props.errors.rules[index].thresholds[i] &&
                                                   props.errors.rules[index].thresholds[i].crit1
                                                 ) &&
-                                                  FancyErrorMessage(props.errors.rules[index].thresholds[i].crit1)
+                                                  <CustomError error={ props.errors.rules[index].thresholds[i].crit1 } />
                                                 }
                                               </td>
                                               <td>
@@ -742,7 +757,7 @@ const ThresholdsProfilesForm = ({
                                                   props.errors.rules[index].thresholds[i] &&
                                                   props.errors.rules[index].thresholds[i].crit2
                                                 ) &&
-                                                  FancyErrorMessage(props.errors.rules[index].thresholds[i].crit2)
+                                                  <CustomError error={ props.errors.rules[index].thresholds[i].crit2 } />
                                                 }
                                               </td>
                                               <td>
@@ -779,7 +794,7 @@ const ThresholdsProfilesForm = ({
                                                   props.errors.rules[index].thresholds[i] &&
                                                   props.errors.rules[index].thresholds[i].min
                                                 ) &&
-                                                  FancyErrorMessage(props.errors.rules[index].thresholds[i].min)
+                                                  <CustomError error={ props.errors.rules[index].thresholds[i].min } />
                                                 }
                                               </td>
                                               <td>
@@ -816,7 +831,7 @@ const ThresholdsProfilesForm = ({
                                                   props.errors.rules[index].thresholds[i] &&
                                                   props.errors.rules[index].thresholds[i].max
                                                 ) &&
-                                                  FancyErrorMessage(props.errors.rules[index].thresholds[i].max)
+                                                  <CustomError error={ props.errors.rules[index].thresholds[i].max } />
                                                 }
                                               </td>
                                               {

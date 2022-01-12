@@ -5,7 +5,6 @@ import {
   BaseArgoView,
   NotifyOk,
   DropDown,
-  FancyErrorMessage,
   Icon,
   DiffElement,
   ProfileMainInfo,
@@ -314,7 +313,7 @@ const Service = ({service, operation, groupindex, groupnew, index, isnew,
           context.formikBag.form.errors.groups[groupindex].services && context.formikBag.form.errors.groups[groupindex].services[index] &&
           context.formikBag.form.errors.groups[groupindex].services[index].name &&
             <Col md={8}>
-                { FancyErrorMessage(context.formikBag.form.errors.groups[groupindex].services[index].name) }
+              <CustomError error={ context.formikBag.form.errors.groups[groupindex].services[index].name} />
             </Col>
         }
         {
@@ -322,7 +321,7 @@ const Service = ({service, operation, groupindex, groupnew, index, isnew,
           context.formikBag.form.errors.groups[groupindex].services && context.formikBag.form.errors.groups[groupindex].services[index] &&
           context.formikBag.form.errors.groups[groupindex].services[index].operation &&
             <Col md={{offset: context.formikBag.form.errors.groups[groupindex].services[index].name ? 0 : 8, size: 2}}>
-                { FancyErrorMessage(context.formikBag.form.errors.groups[groupindex].services[index].operation) }
+              <CustomError error={ context.formikBag.form.errors.groups[groupindex].services[index].operation } />
             </Col>
       }
       </Row>

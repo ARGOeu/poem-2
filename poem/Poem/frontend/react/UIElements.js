@@ -977,16 +977,6 @@ export const BaseArgoView = ({resourcename='', location=undefined,
 )
 
 
-export const FancyErrorMessage = (msg) => (
-  <div data-testid='error-msg' style={{color: '#FF0000', fontSize: 'small'}}>{msg}</div>
-)
-
-
-export const CustomErrorMessage = ({...props}) => (
-  <ErrorMessage {...props} render={msg => <div style={{color: '#FF0000', fontSize: 'small'}} data-testid='error-msg'>{msg}</div>} />
-)
-
-
 export const CustomError = (props) => (
   <div data-testid='error-msg' style={{color: '#FF0000', fontSize: 'small'}}>{props.error}</div>
 )
