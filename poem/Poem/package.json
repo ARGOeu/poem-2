@@ -63,7 +63,7 @@
     "jsctags": "git+https://github.com/ramitos/jsctags.git",
     "jshint": "^2.13.3",
     "postcss-loader": "^3.0.0",
-    "react-diff-viewer": "^2.0.5",
+    "react-diff-viewer": "^3.1.1",
     "react-notifications": "^1.6.0",
     "react-router-dom": "^5.1.2",
     "react-select-event": "^5.3.0",
