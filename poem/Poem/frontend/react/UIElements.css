@@ -21,6 +21,14 @@
   background-color: #ffffff;
 }
 
+#argo-navlinks > a {
+  text-decoration: none !important;
+}
+
+#argo-navlinks > a:hover {
+  color:#000000 !important;
+}
+
 .argo-autocomplete-menu {
   display: block;
   width: 94%;

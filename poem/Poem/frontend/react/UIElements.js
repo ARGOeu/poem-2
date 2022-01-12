@@ -637,14 +637,13 @@ export const NavigationLinks = ({location, isTenantSchema, userDetails}) => {
     <Nav vertical pills id="argo-navlinks" className="border-left border-right border-top rounded-top sticky-top">
       {
         data.map((item, i) =>
-          <NavItem key={i}>
-            <NavLink
-              tag={Link}
-              active={location.pathname.split('/')[2] === item ? true : false}
-              className={location.pathname.split('/')[2] === item ? "text-white bg-info" : "text-dark"}
-              to={'/ui/' + item}><Icon i={item}/> {link_title.get(item)}
-            </NavLink>
-          </NavItem>
+          <NavLink
+            key={i}
+            tag={Link}
+            active={location.pathname.split('/')[2] === item ? true : false}
+            className={location.pathname.split('/')[2] === item ? "text-white bg-info" : "text-dark"}
+            to={'/ui/' + item}><Icon i={item}/> {link_title.get(item)}
+          </NavLink>
         )
       }
     </Nav>
