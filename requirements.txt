@@ -37,7 +37,7 @@ pexpect==4.8.0
 pickleshare==0.7.5
 pipenv==2022.1.8
 prompt-toolkit==3.0.20
-psycopg2-binary==2.8.4
+psycopg2-binary==2.9.3
 ptyprocess==0.7.0
 pyasn1==0.4.8
 pycparser==2.20
