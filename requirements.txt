@@ -11,8 +11,8 @@ decorator==5.0.9
 deepdiff==4.0.9
 defusedxml==0.6.0
 distlib==0.3.0
+dj-rest-auth==2.2.2
 Django==3.2.11
-django-rest-auth==0.9.5
 django-tenants==3.4.0
 django-webpack-loader==1.4.1
 djangorestframework==3.13.1
