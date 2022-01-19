@@ -17,7 +17,7 @@ urlpatterns = [
     re_path(r'^ui', TemplateView.as_view(template_name='index.html')),
     re_path(r'^api/v2/', include('Poem.api.urls', namespace='poemapi')),
     re_path(r'^saml2/', include(('djangosaml2.urls', 'poem'), namespace='saml2')),
-    re_path(r'^rest-auth/', include('rest_auth.urls')),
+    re_path(r'^dj-rest-auth/', include('dj_rest_auth.urls')),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 # Django development server settings
