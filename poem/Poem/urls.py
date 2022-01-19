@@ -20,7 +20,6 @@ urlpatterns = [
     re_path(r'^api/v2/', include('Poem.api.urls', namespace='poemapi')),
     re_path(r'^saml2/', include(('djangosaml2.urls', 'poem'), namespace='saml2')),
     re_path(r'^dj-rest-auth/', include('dj_rest_auth.urls')),
-    url('saml2test/', EchoAttributesView)
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 # (r'test/', 'djangosaml2.views.EchoAttributesView.as_view()'),
 
