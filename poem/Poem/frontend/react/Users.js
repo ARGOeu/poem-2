@@ -1003,7 +1003,7 @@ export const ChangePassword = (props) => {
       });
     } else {
       // eslint-disable-next-line no-unused-vars
-      let _response = await fetch('/rest-auth/login/', {
+      let _response = await fetch('/dj-rest-auth/login/', {
         method: 'POST',
         mode: 'cors',
         cache: 'no-cache',

@@ -63,7 +63,7 @@ const Login = (props) => {
   }, []);
 
   async function doUserPassLogin(username, password) {
-    await fetch('/rest-auth/login/', {
+    await fetch('/dj-rest-auth/login/', {
       method: 'POST',
       mode: 'cors',
       cache: 'no-cache',
