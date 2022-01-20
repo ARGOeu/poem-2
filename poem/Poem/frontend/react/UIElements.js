@@ -706,7 +706,7 @@ export const NavigationAbout = ({ location, poemVersion, termsLink, privacyLink 
         <NavLink
           tag="a"
           href='#'
-          className="text-dark font-italic text-monospace"
+          className="text-dark fst-italic font-monospace"
         >
           <FontAwesomeIcon icon={faCrosshairs} size="1x" color="green" fixedWidth/>{' '}
           <small> { poemVersion } </small>
