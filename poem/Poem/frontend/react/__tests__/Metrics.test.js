@@ -7,6 +7,7 @@ import { CompareMetrics, ListOfMetrics, MetricChange, MetricVersionDetails } fro
 import { Backend } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
 import { QueryClientProvider, QueryClient, setLogger } from 'react-query';
+import  selectEvent from 'react-select-event';
 
 
 const mockListOfMetrics = [
@@ -644,7 +645,7 @@ describe('Tests for metric change', () => {
     const probeField = screen.getByTestId('probeversion');
     const packageField = screen.getByTestId('package');
     const descriptionField = screen.getByTestId('description');
-    const groupField = screen.getByTestId('group');
+    const groupField = screen.getByText('EGI');
     const executableField = screen.getByTestId('probeexecutable');
     const configKey1 = screen.getByTestId('config.0.key');
     const configKey2 = screen.getByTestId('config.1.key');
@@ -677,9 +678,12 @@ describe('Tests for metric change', () => {
     expect(screen.queryAllByText(/test_tag/i)).toHaveLength(2);
     expect(descriptionField.value).toBe('Description of argo.AMS-Check metric');
     expect(descriptionField).toBeDisabled();
-    expect(groupField.value).toBe('EGI');
-    expect(screen.getByRole('option', { name: /egi/i })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: /argotest/i })).toBeInTheDocument();
+    expect(groupField).toBeEnabled()
+
+    expect(screen.queryByText('ARGOTEST')).not.toBeInTheDocument()
+    selectEvent.openMenu(groupField)
+    expect(screen.getByText('ARGOTEST')).toBeInTheDocument()
+
     expect(screen.getByRole('heading', { name: /metric conf/i }).textContent).toBe('Metric configuration');
     expect(screen.getByRole('heading', { name: /exec/i }).textContent).toBe('probe executable');
     expect(executableField.value).toBe('ams-probe');
@@ -856,7 +860,7 @@ describe('Tests for metric change', () => {
     const probeField = screen.queryByTestId('probeversion');
     const packageField = screen.queryByTestId('package');
     const descriptionField = screen.getByTestId('description');
-    const groupField = screen.getByTestId('group');
+    const groupField = screen.getByText('ARGOTEST');
     const executableField = screen.queryByTestId('probeexecutable');
     const configKey1 = screen.queryByTestId('config.0.key');
     const configKey2 = screen.queryByTestId('config.1.key');
@@ -890,9 +894,12 @@ describe('Tests for metric change', () => {
     expect(packageField).toBeDisabled();
     expect(descriptionField.value).toBe('');
     expect(descriptionField).toBeDisabled();
-    expect(groupField.value).toBe('ARGOTEST');
-    expect(screen.getByRole('option', { name: /egi/i })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: /argotest/i })).toBeInTheDocument();
+    expect(groupField).toBeInTheDocument()
+
+    expect(screen.queryByText('EGI')).not.toBeInTheDocument()
+    selectEvent.openMenu(groupField)
+    expect(screen.getByText('EGI')).toBeInTheDocument()
+
     expect(screen.getByRole('heading', { name: /flags/i }).textContent).toBe('flags');
     expect(executableField).not.toBeInTheDocument();
     expect(configKey1).not.toBeInTheDocument();
@@ -1021,13 +1028,15 @@ describe('Tests for metric change', () => {
     const configVal2 = screen.getByTestId('config.1.value');
     const configVal3 = screen.getByTestId('config.2.value');
     const configVal4 = screen.getByTestId('config.3.value');
-    const groupField = screen.getByTestId('group');
+    const groupField = screen.getByText('EGI');
 
     fireEvent.change(configVal1, { target: { value: '4' } });
     fireEvent.change(configVal2, { target: { value: '70' } });
     fireEvent.change(configVal3, { target: { value: '4' } });
     fireEvent.change(configVal4, { target: { value: '2' } });
-    fireEvent.change(groupField, { target: { value: 'ARGOTEST' } });
+
+    await selectEvent.select(groupField, 'ARGOTEST')
+
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
 
     await waitFor(() => {
@@ -1081,13 +1090,15 @@ describe('Tests for metric change', () => {
     const configVal2 = screen.getByTestId('config.1.value');
     const configVal3 = screen.getByTestId('config.2.value');
     const configVal4 = screen.getByTestId('config.3.value');
-    const groupField = screen.getByTestId('group');
+    const groupField = screen.getByText('EGI');
 
     fireEvent.change(configVal1, { target: { value: '4' } });
     fireEvent.change(configVal2, { target: { value: '70' } });
     fireEvent.change(configVal3, { target: { value: '4' } });
     fireEvent.change(configVal4, { target: { value: '2' } });
-    fireEvent.change(groupField, { target: { value: 'ARGOTEST' } });
+
+    await selectEvent.select(groupField, 'ARGOTEST')
+
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
 
     await waitFor(() => {
@@ -1145,13 +1156,15 @@ describe('Tests for metric change', () => {
     const configVal2 = screen.getByTestId('config.1.value');
     const configVal3 = screen.getByTestId('config.2.value');
     const configVal4 = screen.getByTestId('config.3.value');
-    const groupField = screen.getByTestId('group');
+    const groupField = screen.getByText('EGI');
 
     fireEvent.change(configVal1, { target: { value: '4' } });
     fireEvent.change(configVal2, { target: { value: '70' } });
     fireEvent.change(configVal3, { target: { value: '4' } });
     fireEvent.change(configVal4, { target: { value: '2' } });
-    fireEvent.change(groupField, { target: { value: 'ARGOTEST' } });
+
+    await selectEvent.select(groupField, 'ARGOTEST')
+
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
 
     await waitFor(() => {
@@ -1318,7 +1331,7 @@ describe('Tests for metric change', () => {
     const probeField = screen.getByTestId('probeversion');
     const packageField = screen.getByTestId('package');
     const descriptionField = screen.getByTestId('description');
-    const groupField = screen.getByTestId('group');
+    const groupField = screen.getByText('EGI');
     const executableField = screen.getByTestId('probeexecutable');
     const configKey1 = screen.getByTestId('config.0.key');
     const configKey2 = screen.getByTestId('config.1.key');
@@ -1354,9 +1367,12 @@ describe('Tests for metric change', () => {
     expect(screen.queryAllByText(/test_tag/i)).toHaveLength(2);
     expect(descriptionField.value).toBe('Description of argo.AMS-Check metric');
     expect(descriptionField).toBeDisabled();
-    expect(groupField.value).toBe('EGI');
-    expect(screen.getByRole('option', { name: /egi/i })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: /argotest/i })).toBeInTheDocument();
+    expect(groupField).toBeEnabled()
+
+    expect(screen.queryByText('ARGOTEST')).not.toBeInTheDocument()
+    selectEvent.openMenu(groupField)
+    expect(screen.getByText('ARGOTEST')).toBeInTheDocument()
+
     expect(screen.getByRole('heading', { name: /metric conf/i }).textContent).toBe('Metric configuration');
     expect(screen.getByRole('heading', { name: /exec/i }).textContent).toBe('probe executable');
     expect(executableField.value).toBe('ams-probe');

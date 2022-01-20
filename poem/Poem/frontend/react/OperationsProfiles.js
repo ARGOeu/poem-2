@@ -13,7 +13,7 @@ import {
   Row,
   Col,
   InputGroup,
-  InputGroupAddon,
+  InputGroupText,
   FormText,
   Table
 } from 'reactstrap';
@@ -130,7 +130,7 @@ export const OperationsProfileDetails = (props) => {
                 <Row>
                   <Col md={6}>
                     <InputGroup>
-                      <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
+                      <InputGroupText>Name</InputGroupText>
                       <Field
                         type='text'
                         name='name'

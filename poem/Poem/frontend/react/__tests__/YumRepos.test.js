@@ -7,6 +7,7 @@ import { YumRepoComponent, YumRepoList } from '../YumRepos';
 import { Backend } from '../DataManager';
 import { QueryClientProvider, QueryClient, setLogger } from 'react-query';
 import { NotificationManager } from 'react-notifications';
+import selectEvent from 'react-select-event';
 
 
 jest.mock('../DataManager', () => {
@@ -355,17 +356,18 @@ describe('Tests for YUM repos changeview on SuperAdmin POEM', () => {
     })
 
     const nameField = screen.getByTestId('name');
-    const tagField = screen.getByTestId('tag');
+    const tagField = screen.getByText('CentOS 6');
     const contentField = screen.getByLabelText('File content');
     const descriptionField = screen.getByLabelText('Description');
 
     expect(nameField.value).toBe('argo');
     expect(nameField).toBeEnabled();
-    expect(tagField.value).toBe('CentOS 6');
     expect(tagField).toBeEnabled();
-    expect(screen.getAllByRole('option')).toHaveLength(2);
-    expect(screen.getByRole('option', { name: 'CentOS 6' })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'CentOS 7' })).toBeInTheDocument();
+
+    expect(screen.queryByText('CentOS 7')).not.toBeInTheDocument()
+    selectEvent.openMenu(tagField)
+    expect(screen.getByText('CentOS 7')).toBeInTheDocument()
+
     expect(contentField.value).toBe('[argo-devel]\nname=ARGO Product Repository\nbaseurl=http://rpm-repo.argo.grnet.gr/ARGO/devel/centos6/\ngpgcheck=0enabled=1\npriority=99\nexclude=\nincludepkgs=')
     expect(contentField).toBeEnabled();
     expect(descriptionField.value).toBe('ARGO Product Repository - devel CentOS 6')
@@ -385,12 +387,12 @@ describe('Tests for YUM repos changeview on SuperAdmin POEM', () => {
     })
 
     const nameField = screen.getByTestId('name');
-    const tagField = screen.getByTestId('tag');
+    const tagField = screen.getByText('CentOS 6');
     const contentField = screen.getByLabelText('File content');
     const descriptionField = screen.getByLabelText('Description');
 
     fireEvent.change(nameField, { target: { value: 'argo-devel' } });
-    fireEvent.change(tagField, { target: { value: 'CentOS 7' } });
+    await selectEvent.select(tagField, 'CentOS 7')
     fireEvent.change(contentField, { target: { value: '[argo-devel]\nname=ARGO Product Repository\nbaseurl=http://rpm-repo.argo.grnet.gr/ARGO/devel/centos7/enabled=1'} })
     fireEvent.change(descriptionField, { target: { value: 'ARGO Product Repository - devel CentOS 7' } })
 
@@ -430,12 +432,12 @@ describe('Tests for YUM repos changeview on SuperAdmin POEM', () => {
     })
 
     const nameField = screen.getByTestId('name');
-    const tagField = screen.getByTestId('tag');
+    const tagField = screen.getByText('CentOS 6');
     const contentField = screen.getByLabelText('File content');
     const descriptionField = screen.getByLabelText('Description');
 
     fireEvent.change(nameField, { target: { value: 'argo-devel' } });
-    fireEvent.change(tagField, { target: { value: 'CentOS 7' } });
+    await selectEvent.select(tagField, 'CentOS 7')
     fireEvent.change(contentField, { target: { value: '[argo-devel]\nname=ARGO Product Repository\nbaseurl=http://rpm-repo.argo.grnet.gr/ARGO/devel/centos7/enabled=1'} })
     fireEvent.change(descriptionField, { target: { value: 'ARGO Product Repository - devel CentOS 7' } })
 
@@ -481,12 +483,12 @@ describe('Tests for YUM repos changeview on SuperAdmin POEM', () => {
     })
 
     const nameField = screen.getByTestId('name');
-    const tagField = screen.getByTestId('tag');
+    const tagField = screen.getByText('CentOS 6');
     const contentField = screen.getByLabelText('File content');
     const descriptionField = screen.getByLabelText('Description');
 
     fireEvent.change(nameField, { target: { value: 'argo-devel' } });
-    fireEvent.change(tagField, { target: { value: 'CentOS 7' } });
+    await selectEvent.select(tagField, 'CentOS 7')
     fireEvent.change(contentField, { target: { value: '[argo-devel]\nname=ARGO Product Repository\nbaseurl=http://rpm-repo.argo.grnet.gr/ARGO/devel/centos7/enabled=1'} })
     fireEvent.change(descriptionField, { target: { value: 'ARGO Product Repository - devel CentOS 7' } })
 
@@ -687,14 +689,20 @@ describe('Tests for YUM repo addview', () => {
     })
 
     const nameField = screen.getByTestId('name');
-    const tagField = screen.getByTestId('tag');
+    const tagField = screen.getByText(/select/i);
     const contentField = screen.getByLabelText('File content');
     const descriptionField = screen.getByLabelText('Description');
 
     expect(nameField.value).toBe('');
     expect(nameField).toBeEnabled();
-    expect(tagField.value).toBe('CentOS 6');
     expect(tagField).toBeEnabled();
+
+    expect(screen.queryByText('CentOS 6')).not.toBeInTheDocument()
+    expect(screen.queryByText('CentOS 7')).not.toBeInTheDocument()
+    selectEvent.openMenu(tagField)
+    expect(screen.getByText('CentOS 6')).toBeInTheDocument()
+    expect(screen.getByText('CentOS 7')).toBeInTheDocument()
+
     expect(contentField.value).toBe('');
     expect(contentField).toBeEnabled();
     expect(descriptionField.value).toBe('');
@@ -713,7 +721,7 @@ describe('Tests for YUM repo addview', () => {
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'etf' } });
-    fireEvent.change(screen.getByTestId('tag'), { target: { value: 'CentOS 7' } });
+    await selectEvent.select(screen.getByText(/select/i), 'CentOS 7')
     fireEvent.change(screen.getByLabelText('File content'), { target: { value: '[etf]\nname=CERN ETF Repo\nbaseurl=http://linuxsoft.cern.ch/internal/repos/etf7-qa/x86_64/os/\ngpgcheck=0\nenabled=1\npriority=99' } });
     fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'CERN ETF Repo' } });
 
@@ -752,7 +760,7 @@ describe('Tests for YUM repo addview', () => {
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'etf' } });
-    fireEvent.change(screen.getByTestId('tag'), { target: { value: 'CentOS 7' } });
+    await selectEvent.select(screen.getByText(/select/i), 'CentOS 7')
     fireEvent.change(screen.getByLabelText('File content'), { target: { value: '[etf]\nname=CERN ETF Repo\nbaseurl=http://linuxsoft.cern.ch/internal/repos/etf7-qa/x86_64/os/\ngpgcheck=0\nenabled=1\npriority=99' } });
     fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'CERN ETF Repo' } });
 
@@ -797,7 +805,7 @@ describe('Tests for YUM repo addview', () => {
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'etf' } });
-    fireEvent.change(screen.getByTestId('tag'), { target: { value: 'CentOS 7' } });
+    await selectEvent.select(screen.getByText(/select/i), 'CentOS 7')
     fireEvent.change(screen.getByLabelText('File content'), { target: { value: '[etf]\nname=CERN ETF Repo\nbaseurl=http://linuxsoft.cern.ch/internal/repos/etf7-qa/x86_64/os/\ngpgcheck=0\nenabled=1\npriority=99' } });
     fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'CERN ETF Repo' } });
 
@@ -866,17 +874,18 @@ describe('Tests for YUM repo cloneview', () => {
     })
 
     const nameField = screen.getByTestId('name');
-    const tagField = screen.getByTestId('tag');
+    const tagField = screen.getByText('CentOS 6');
     const contentField = screen.getByLabelText('File content');
     const descriptionField = screen.getByLabelText('Description');
 
     expect(nameField.value).toBe('argo');
     expect(nameField).toBeEnabled();
-    expect(tagField.value).toBe('CentOS 6');
     expect(tagField).toBeEnabled();
-    expect(screen.getAllByRole('option')).toHaveLength(2);
-    expect(screen.getByRole('option', { name: 'CentOS 6' })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'CentOS 7' })).toBeInTheDocument();
+
+    expect(screen.queryByText('CentOS 7')).not.toBeInTheDocument()
+    selectEvent.openMenu(tagField)
+    expect(screen.getByText('CentOS 7')).toBeInTheDocument()
+
     expect(contentField.value).toBe('[argo-devel]\nname=ARGO Product Repository\nbaseurl=http://rpm-repo.argo.grnet.gr/ARGO/devel/centos6/\ngpgcheck=0enabled=1\npriority=99\nexclude=\nincludepkgs=')
     expect(contentField).toBeEnabled();
     expect(descriptionField.value).toBe('ARGO Product Repository - devel CentOS 6')
@@ -895,12 +904,12 @@ describe('Tests for YUM repo cloneview', () => {
     })
 
     const nameField = screen.getByTestId('name');
-    const tagField = screen.getByTestId('tag');
+    const tagField = screen.getByText('CentOS 6');
     const contentField = screen.getByLabelText('File content');
     const descriptionField = screen.getByLabelText('Description');
 
     fireEvent.change(nameField, { target: { value: 'argo-devel' } });
-    fireEvent.change(tagField, { target: { value: 'CentOS 7' } });
+    await selectEvent.select(tagField, 'CentOS 7')
     fireEvent.change(contentField, { target: { value: '[argo-devel]\nname=ARGO Product Repository\nbaseurl=http://rpm-repo.argo.grnet.gr/ARGO/devel/centos7/enabled=1'} })
     fireEvent.change(descriptionField, { target: { value: 'ARGO Product Repository - devel CentOS 7' } })
 
@@ -939,12 +948,12 @@ describe('Tests for YUM repo cloneview', () => {
     })
 
     const nameField = screen.getByTestId('name');
-    const tagField = screen.getByTestId('tag');
+    const tagField = screen.getByText('CentOS 6');
     const contentField = screen.getByLabelText('File content');
     const descriptionField = screen.getByLabelText('Description');
 
     fireEvent.change(nameField, { target: { value: 'argo-devel' } });
-    fireEvent.change(tagField, { target: { value: 'CentOS 7' } });
+    await selectEvent.select(tagField, 'CentOS 7')
     fireEvent.change(contentField, { target: { value: '[argo-devel]\nname=ARGO Product Repository\nbaseurl=http://rpm-repo.argo.grnet.gr/ARGO/devel/centos7/enabled=1'} })
     fireEvent.change(descriptionField, { target: { value: 'ARGO Product Repository - devel CentOS 7' } })
 
@@ -987,12 +996,12 @@ describe('Tests for YUM repo cloneview', () => {
     })
 
     const nameField = screen.getByTestId('name');
-    const tagField = screen.getByTestId('tag');
+    const tagField = screen.getByText('CentOS 6');
     const contentField = screen.getByLabelText('File content');
     const descriptionField = screen.getByLabelText('Description');
 
     fireEvent.change(nameField, { target: { value: 'argo-devel' } });
-    fireEvent.change(tagField, { target: { value: 'CentOS 7' } });
+    await selectEvent.select(tagField, 'CentOS 7')
     fireEvent.change(contentField, { target: { value: '[argo-devel]\nname=ARGO Product Repository\nbaseurl=http://rpm-repo.argo.grnet.gr/ARGO/devel/centos7/enabled=1'} })
     fireEvent.change(descriptionField, { target: { value: 'ARGO Product Repository - devel CentOS 7' } })
 

@@ -10,7 +10,8 @@ import {
   DefaultColumnFilter,
   SelectColumnFilter,
   BaseArgoTable,
-  CustomErrorMessage
+  CustomError,
+  DropdownWithFormText
 } from './UIElements';
 import { Formik, Form, Field } from 'formik';
 import {
@@ -21,7 +22,7 @@ import {
   Col,
   Button,
   InputGroup,
-  InputGroupAddon
+  InputGroupText
 } from 'reactstrap';
 import * as Yup from 'yup';
 import { useQuery, useQueryClient, useMutation } from 'react-query';
@@ -32,6 +33,7 @@ const RepoSchema = Yup.object().shape({
   name: Yup.string()
     .matches(/^\S*$/, 'Name cannot contain white spaces')
     .required('Required'),
+  tag: Yup.string().required('Required'),
   content: Yup.string().required('Required'),
   description: Yup.string().required('Required')
 });
@@ -280,7 +282,7 @@ export const YumRepoComponent = (props) => {
           initialValues = {{
             id: repo ? repo.id : '',
             name: repo ? repo.name : '',
-            tag: repo ? repo.tag : 'CentOS 6',
+            tag: repo ? repo.tag : '',
             content: repo ? repo.content : '',
             description: repo ? repo.description : ''
           }}
@@ -294,24 +296,24 @@ export const YumRepoComponent = (props) => {
                 <Row>
                   <Col md={6}>
                     <InputGroup>
-                      <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
+                      <InputGroupText>Name</InputGroupText>
                       <Field
                         type='text'
                         name='name'
-                        className={`form-control ${props.errors.name && props.touched.name && 'border-danger'}`}
+                        className={`form-control ${props.errors.name && 'border-danger'}`}
                         id='name'
                         data-testid='name'
                         disabled={disabled}
                       />
                     </InputGroup>
-                    <CustomErrorMessage name='name' />
+                    <CustomError error={props.errors.name} />
                     <FormText color='muted'>
                       Name of YUM repo file.
                     </FormText>
                   </Col>
                   <Col md={2}>
                     <InputGroup>
-                      <InputGroupAddon addonType='prepend'>Tag</InputGroupAddon>
+                      <InputGroupText>Tag</InputGroupText>
                       {
                         disabled ?
                           <Field
@@ -323,21 +325,17 @@ export const YumRepoComponent = (props) => {
                             disabled={true}
                           />
                         :
-                          <Field
-                            component='select'
+                          <DropdownWithFormText
                             name='tag'
-                            className='form-control custom-select'
-                            data-testid='tag'
                             id='tag'
-                          >
-                            {
-                              tags.map((name, i) =>
-                                <option key={i} value={name}>{name}</option>
-                              )
-                            }
-                          </Field>
+                            error={ props.errors.tag }
+                            onChange={ e => props.setFieldValue('tag', e.value) }
+                            options={ tags }
+                            value={ props.values.tag }
+                          />
                       }
                     </InputGroup>
+                    <CustomError error={props.errors.tag} />
                     <FormText color='muted'>
                       OS tag.
                     </FormText>
@@ -352,11 +350,11 @@ export const YumRepoComponent = (props) => {
                       component='textarea'
                       name='content'
                       rows='20'
-                      className={`form-control ${props.errors.content && props.touched.content && 'border-danger'}`}
+                      className={`form-control ${props.errors.content && 'border-danger'}`}
                       id='content'
                       disabled={disabled}
                     />
-                    <CustomErrorMessage name='content' />
+                    <CustomError error={props.errors.content} />
                     <FormText color='muted'>
                       Content of the repo file.
                     </FormText>
@@ -371,11 +369,11 @@ export const YumRepoComponent = (props) => {
                       component='textarea'
                       name='description'
                       rows='5'
-                      className={`form-control ${props.errors.description && props.touched.description && 'border-danger'}`}
+                      className={`form-control ${props.errors.description && 'border-danger'}`}
                       id='description'
                       disabled={disabled}
                     />
-                    <CustomErrorMessage name='description' />
+                    <CustomError error={props.errors.description} />
                     <FormText color='muted'>
                       Short free text description.
                     </FormText>

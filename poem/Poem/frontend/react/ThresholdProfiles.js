@@ -5,14 +5,14 @@ import {
   LoadingAnim,
   BaseArgoView,
   NotifyOk,
-  FancyErrorMessage,
   DiffElement,
   ProfileMainInfo,
   NotifyError,
   ErrorComponent,
   ParagraphTitle,
   ProfilesListTable,
-  CustomReactSelect
+  CustomReactSelect,
+  CustomError
 } from './UIElements';
 import {
   Formik,
@@ -239,7 +239,7 @@ function thresholdsToValues(rules) {
 }
 
 
-const CustomSelect = ({ field, label, options, onChangeHandler, initialValue }) => {
+const CustomSelect = ({ field, error, label, options, onChangeHandler, initialValue }) => {
   let value = null
   if (initialValue) {
     value = { value: initialValue, label: initialValue }
@@ -255,6 +255,7 @@ const CustomSelect = ({ field, label, options, onChangeHandler, initialValue }) 
       onChange={ e => onChangeHandler(e) }
       options={ options }
       value={ value }
+      error={ error }
     />
   )
 }
@@ -275,8 +276,7 @@ const ThresholdsProfilesForm = ({
 }) => (
   <>
     <ProfileMainInfo
-      values={props.values}
-      errors={props.errors}
+      {...props}
       grouplist={
         write_perm ?
           groups_list
@@ -300,8 +300,8 @@ const ThresholdsProfilesForm = ({
                 props.values.rules.map((_rule, index) =>
                   <React.Fragment key={`fragment.rules.${index}`}>
                     <Card className={`mt-${index === 0 ? '1' : '4'}`} data-testid={`rules.${index}`}>
-                      <CardHeader className='p-1 font-weight-bold text-uppercase'>
-                        <div className='d-flex align-items-center justify-content-between no-gutters'>
+                      <CardHeader className='p-1 fw-bold text-uppercase'>
+                        <div className='d-flex align-items-center justify-content-between g-0'>
                           Rule {index + 1}
                           {
                             !historyview &&
@@ -320,7 +320,7 @@ const ThresholdsProfilesForm = ({
                         </div>
                       </CardHeader>
                       <CardBody className='p-1'>
-                        <Row className='d-flex align-items-center no-gutters'>
+                        <Row className='d-flex align-items-center g-0'>
                           <Col md={12}>
                             {
                               historyview ?
@@ -349,7 +349,21 @@ const ThresholdsProfilesForm = ({
                                   }}
                                   label='Metric'
                                   initialValue={!addview ? props.values.rules[index].metric : ''}
+                                  error={
+                                    props.errors.rules &&
+                                    props.errors.rules.length > index &&
+                                    props.errors.rules[index] &&
+                                    props.errors.rules[index].metric &&
+                                    props.errors.rules[index].metric
+                                  }
                                 />
+                            }
+                            {
+                              props.errors.rules &&
+                              props.errors.rules.length > index &&
+                              props.errors.rules[index] &&
+                              props.errors.rules[index].metric &&
+                                <CustomError error={ props.errors.rules[index].metric } />
                             }
                           </Col>
                         </Row>
@@ -527,7 +541,7 @@ const ThresholdsProfilesForm = ({
                                                   props.errors.rules[index].thresholds[i] &&
                                                   props.errors.rules[index].thresholds[i].label
                                                 ) &&
-                                                  FancyErrorMessage(props.errors.rules[index].thresholds[i].label)
+                                                  <CustomError  error={ props.errors.rules[index].thresholds[i].label } />
                                                 }
                                               </td>
                                               <td>
@@ -564,7 +578,7 @@ const ThresholdsProfilesForm = ({
                                                   props.errors.rules[index].thresholds[i] &&
                                                   props.errors.rules[index].thresholds[i].value
                                                 ) &&
-                                                  FancyErrorMessage(props.errors.rules[index].thresholds[i].value)
+                                                  <CustomError error={ props.errors.rules[index].thresholds[i].value } />
                                                 }
                                               </td>
                                               <td style={{width: '6%'}}>
@@ -626,7 +640,7 @@ const ThresholdsProfilesForm = ({
                                                   props.errors.rules[index].thresholds[i] &&
                                                   props.errors.rules[index].thresholds[i].warn1
                                                 ) &&
-                                                  FancyErrorMessage(props.errors.rules[index].thresholds[i].warn1)
+                                                  <CustomError error={ props.errors.rules[index].thresholds[i].warn1 } />
                                                 }
                                               </td>
                                               <td>
@@ -666,7 +680,7 @@ const ThresholdsProfilesForm = ({
                                                   props.errors.rules[index].thresholds[i] &&
                                                   props.errors.rules[index].thresholds[i].warn2
                                                 ) &&
-                                                  FancyErrorMessage(props.errors.rules[index].thresholds[i].warn2)
+                                                  <CustomError error={ props.errors.rules[index].thresholds[i].warn2 } />
                                                 }
                                               </td>
                                               <td>
@@ -703,7 +717,7 @@ const ThresholdsProfilesForm = ({
                                                   props.errors.rules[index].thresholds[i] &&
                                                   props.errors.rules[index].thresholds[i].crit1
                                                 ) &&
-                                                  FancyErrorMessage(props.errors.rules[index].thresholds[i].crit1)
+                                                  <CustomError error={ props.errors.rules[index].thresholds[i].crit1 } />
                                                 }
                                               </td>
                                               <td>
@@ -743,7 +757,7 @@ const ThresholdsProfilesForm = ({
                                                   props.errors.rules[index].thresholds[i] &&
                                                   props.errors.rules[index].thresholds[i].crit2
                                                 ) &&
-                                                  FancyErrorMessage(props.errors.rules[index].thresholds[i].crit2)
+                                                  <CustomError error={ props.errors.rules[index].thresholds[i].crit2 } />
                                                 }
                                               </td>
                                               <td>
@@ -780,7 +794,7 @@ const ThresholdsProfilesForm = ({
                                                   props.errors.rules[index].thresholds[i] &&
                                                   props.errors.rules[index].thresholds[i].min
                                                 ) &&
-                                                  FancyErrorMessage(props.errors.rules[index].thresholds[i].min)
+                                                  <CustomError error={ props.errors.rules[index].thresholds[i].min } />
                                                 }
                                               </td>
                                               <td>
@@ -817,7 +831,7 @@ const ThresholdsProfilesForm = ({
                                                   props.errors.rules[index].thresholds[i] &&
                                                   props.errors.rules[index].thresholds[i].max
                                                 ) &&
-                                                  FancyErrorMessage(props.errors.rules[index].thresholds[i].max)
+                                                  <CustomError error={ props.errors.rules[index].thresholds[i].max } />
                                                 }
                                               </td>
                                               {
@@ -1465,8 +1479,8 @@ const ListDiffElement = ({title, item1, item2}) => {
   }
 
   return (
-    <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
-      <h6 className='mt-4 font-weight-bold text-uppercase'>{title}</h6>
+    <div id='argo-contentwrap' className='ms-2 mb-2 mt-2 p-3 border rounded'>
+      <h6 className='mt-4 fw-bold text-uppercase'>{title}</h6>
       <ReactDiffViewer
         oldValue={list2.join('\n')}
         newValue={list1.join('\n')}
@@ -1532,7 +1546,7 @@ export const ThresholdsProfileVersionCompare = (props) => {
       return (
         <React.Fragment>
           <div className='d-flex align-items-center justify-content-between'>
-            <h2 className='ml-3 mt-1 mb-4'>{`Compare ${name} versions`}</h2>
+            <h2 className='ms-3 mt-1 mb-4'>{`Compare ${name} versions`}</h2>
           </div>
           {
             (profile1.name !== profile2.name) &&

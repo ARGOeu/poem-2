@@ -16,7 +16,7 @@ import {
   FormGroup,
   FormText,
   InputGroup,
-  InputGroupAddon,
+  InputGroupText,
   Label,
   Modal,
   ModalBody,
@@ -34,9 +34,9 @@ import {
   Table,
   Pagination,
   PaginationItem,
-  PaginationLink,
+  PaginationLink
 } from 'reactstrap';
-import {Link} from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import ArgoLogo from './argologo_color.svg';
 import ArgoLogoAnim from './argologo_anim.svg';
 import EULogo from './eu.png';
@@ -66,9 +66,10 @@ import {
   faTasks,
   faUser,
   faWrench,
-  faNewspaper} from '@fortawesome/free-solid-svg-icons';
+  faNewspaper
+} from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
-import { ErrorMessage, Field } from 'formik';
+import { Field } from 'formik';
 import { Backend } from './DataManager';
 import ReactDiffViewer from 'react-diff-viewer';
 import Autosuggest from 'react-autosuggest';
@@ -157,20 +158,44 @@ export const Icon = props =>
 }
 
 
+export const CustomDropdownIndicator = (props) => {
+  return (
+    <components.DropdownIndicator {...props}>
+      <svg
+        height='10'
+        width='10'
+        viewBox='0 0 4 5'
+        aria-hidden="true"
+        focusable="false"
+        style={{
+          display: 'inline-block',
+          fill: 'currentColor',
+          lineHeight: 1,
+          stroke: 'currentColor',
+          strokeWidth: 0,
+        }}
+      >
+        <path fill='#343a40' d='M2 0L0 2h4zm0 5L0 3h4z'/>
+      </svg>
+    </components.DropdownIndicator>
+  )
+}
+
+
 export const CustomReactSelect = ({...props}) => {
   const customStyles = {
     control: (provided,  state) => ({
       ...provided,
-      margin: 0,
+      margin: props.inputgroup ? '-1px' : 0,
       backgroundColor: props.isDisabled ? '#e9ecef' : '#fff',
       overflow: 'visible',
-      borderRadius: '.25rem',
+      borderRadius: props.inputgroup ? '0 .25rem .25rem 0' : '.25rem',
       fontWeight: 400,
       backgroundClip: 'padding-box',
       textShadow: 'none',
       textAlign: 'start',
       textIndent: 0,
-      borderColor: state.selectProps.menuIsOpen ? '#66afe9' : '#ced4da',
+      borderColor: props.error ? '#FF0000' : state.selectProps.menuIsOpen ? '#66afe9' : '#ced4da',
       transition: 'border-color .15s ease-in-out, box-shadow .15s ease-in-out',
       boxShadow: state.selectProps.menuIsOpen ? '0 0 0 .2rem rgba(0, 123, 255, .25)' : 'none',
       ':focus': {
@@ -205,24 +230,7 @@ export const CustomReactSelect = ({...props}) => {
       return null
 
     else return (
-      <components.DropdownIndicator {...props}>
-        <svg
-          height='10'
-          width='10'
-          viewBox='0 0 4 5'
-          aria-hidden="true"
-          focusable="false"
-          style={{
-            display: 'inline-block',
-            fill: 'currentColor',
-            lineHeight: 1,
-            stroke: 'currentColor',
-            strokeWidth: 0,
-          }}
-        >
-          <path fill='#343a40' d='M2 0L0 2h4zm0 5L0 3h4z'/>
-        </svg>
-      </components.DropdownIndicator>
+      <CustomDropdownIndicator {...props} />
     )
   }
 
@@ -249,6 +257,24 @@ export const CustomReactSelect = ({...props}) => {
 }
 
 
+export const DropdownWithFormText = ({ ...props }) => {
+  return (
+    <div className='react-select form-control p-0'>
+      <CustomReactSelect
+        name={ props.name }
+        id={ props.id ? props.id : props.name }
+        isClearable={ props.isClearable }
+        inputgroup={ true }
+        error={ props.error }
+        onChange={ props.onChange }
+        options={ props.options.map(option => new Object({ label: option, value: option })) }
+        value={ props.value ? { label: props.value, value: props.value } : undefined }
+      />
+    </div>
+  )
+}
+
+
 export const DropDown = ({field, data=[], prefix="", class_name="", isnew=false, errors=undefined}) =>
   <Field component="select"
     name={prefix ? `${prefix}.${field.name}` : field.name}
@@ -270,11 +296,9 @@ export const DropDown = ({field, data=[], prefix="", class_name="", isnew=false,
 export const SearchField = ({field, ...rest}) =>
   <div className="input-group">
     <input type="text" placeholder="Search" {...field} {...rest}/>
-    <div className="input-group-append">
-      <span className="input-group-text" id="basic-addon">
-        <FontAwesomeIcon icon={faSearch}/>
-      </span>
-    </div>
+    <span className="input-group-text" id="basic-addon">
+      <FontAwesomeIcon icon={faSearch}/>
+    </span>
   </div>
 
 
@@ -360,7 +384,7 @@ export const CustomBreadcrumb = ({location, publicView=false}) =>
   }
 
   return (
-    <Breadcrumb id='argo-breadcrumb' className="border-top rounded">
+    <Breadcrumb id='argo-breadcrumb' className="rounded">
       {
         breadcrumb_elements.map((item, i) =>
           i !== breadcrumb_elements.length - 1
@@ -564,14 +588,14 @@ export const NavigationBar = ({history, onLogout, isOpenModal, toggle,
       <Navbar expand="md" id="argo-nav" className="border rounded">
         <NavbarBrand className="text-light">
           <img src={ArgoLogo} alt="ARGO logo" className="img-responsive"/>
-          <span className="pl-3">
+          <span className="ps-3">
             <strong>ARGO</strong> POEM
           </span>
         </NavbarBrand>
         <NavbarToggler/>
         <Collapse navbar className='justify-content-end'>
           <Nav navbar >
-            <NavItem className='m-2 ml-5 text-light'>
+            <NavItem className='m-2 ms-5 text-light'>
               Welcome,&nbsp;
               <span onClick={() => setTooltipOpen(!tooltipOpen)}
                 className='font-weight-bold' href="#" id="userToolTip">
@@ -613,14 +637,13 @@ export const NavigationLinks = ({location, isTenantSchema, userDetails}) => {
     <Nav vertical pills id="argo-navlinks" className="border-left border-right border-top rounded-top sticky-top">
       {
         data.map((item, i) =>
-          <NavItem key={i}>
-            <NavLink
-              tag={Link}
-              active={location.pathname.split('/')[2] === item ? true : false}
-              className={location.pathname.split('/')[2] === item ? "text-white bg-info" : "text-dark"}
-              to={'/ui/' + item}><Icon i={item}/> {link_title.get(item)}
-            </NavLink>
-          </NavItem>
+          <NavLink
+            key={i}
+            tag={Link}
+            active={location.pathname.split('/')[2] === item ? true : false}
+            className={location.pathname.split('/')[2] === item ? "text-dark bg-info" : "text-dark"}
+            to={'/ui/' + item}><Icon i={item}/> {link_title.get(item)}
+          </NavLink>
         )
       }
     </Nav>
@@ -631,7 +654,7 @@ export const NavigationLinks = ({location, isTenantSchema, userDetails}) => {
 export const NavigationAbout = ({ location, poemVersion, termsLink, privacyLink }) => {
   return (
     <React.Fragment>
-      <div className="bg-white border-left border-right pl-3 mt-0 pt-5 text-uppercase">
+      <div className="bg-white border-left border-right ps-3 mt-0 pt-5 text-uppercase">
         <h5>Info</h5>
       </div>
       <Nav vertical pills id="argo-navlinks" className="border-left border-right sticky-top rounded-bottom border-bottom pb-2 mb-0">
@@ -683,7 +706,7 @@ export const NavigationAbout = ({ location, poemVersion, termsLink, privacyLink 
         <NavLink
           tag="a"
           href='#'
-          className="text-dark font-italic text-monospace"
+          className="text-dark fst-italic font-monospace"
         >
           <FontAwesomeIcon icon={faCrosshairs} size="1x" color="green" fixedWidth/>{' '}
           <small> { poemVersion } </small>
@@ -706,7 +729,7 @@ const InnerFooter = ({ termsLink, privacyLink, border=false, publicPage=false}) 
       }
       <div className="text-center pt-0 pb-2">
         <img src={EULogo} id="eulogo" alt="EU logo"/>
-        <img src={EOSCLogo} id="eosclogo" alt="EOSC logo" className="pl-1"/>
+        <img src={EOSCLogo} id="eosclogo" alt="EOSC logo" className="ps-1"/>
       </div>
       <p className={`text-center ${publicPage ? 'mb-0' : 'mb-0 pb-1'}`}>
         <small>
@@ -759,7 +782,7 @@ export const Footer = ({ termsLink, privacyLink, loginPage=false, publicPage=fal
 
 export const LoadingAnim = () =>
 (
-  <Row className="ml-2 mr-1 border rounded" style={{height: '90%', backgroundColor: 'white'}}>
+  <Row className="ms-2 me-1 border rounded" style={{height: '90%', backgroundColor: 'white'}}>
     <Col className="d-flex flex-column align-items-center align-self-center" md={{size: 8, offset: 2}}>
       <Card className="text-center border-0">
         <CardHeader className="bg-light">
@@ -831,7 +854,7 @@ export const PublicPage = ({privacyLink, termsLink, children}) => {
           />
         </Col>
       </Row>
-      <Row className="no-gutters">
+      <Row className="g-0">
         <Col>
           <CustomBreadcrumb publicView={true}/>
           {children}
@@ -868,11 +891,11 @@ export const BaseArgoView = ({resourcename='', location=undefined,
     <div className="d-flex align-items-center justify-content-between">
       {
         infoview ?
-          <h2 className="ml-3 mt-1 mb-4">{resourcename}</h2>
+          <h2 className="ms-3 mt-1 mb-4">{resourcename}</h2>
         :
           addview ?
             <React.Fragment>
-              <h2 className="ml-3 mt-1 mb-4">{`Add ${resourcename}`}</h2>
+              <h2 className="ms-3 mt-1 mb-4">{`Add ${resourcename}`}</h2>
               { extra_button }
             </React.Fragment>
           :
@@ -880,9 +903,9 @@ export const BaseArgoView = ({resourcename='', location=undefined,
               <React.Fragment>
                 {
                   addnew ?
-                    <h2 className="ml-3 mt-1 mb-4">{`Select ${resourcename} to change`}</h2>
+                    <h2 className="ms-3 mt-1 mb-4">{`Select ${resourcename} to change`}</h2>
                   :
-                    <h2 className='ml-3 mt-1 mb-4'>{`Select ${resourcename} for details`}</h2>
+                    <h2 className='ms-3 mt-1 mb-4'>{`Select ${resourcename} for details`}</h2>
                 }
                 {
                   (addnew && addperm) &&
@@ -904,12 +927,12 @@ export const BaseArgoView = ({resourcename='', location=undefined,
             :
               cloneview ?
                 <React.Fragment>
-                  <h2 className="ml-3 mt-1 mb-4">{`Clone ${resourcename}`}</h2>
+                  <h2 className="ms-3 mt-1 mb-4">{`Clone ${resourcename}`}</h2>
                 </React.Fragment>
               :
                 (tenantview || publicview) ?
                   <React.Fragment>
-                    <h2 className="ml-3 mt-1 mb-4">{resourcename}</h2>
+                    <h2 className="ms-3 mt-1 mb-4">{resourcename}</h2>
                     {
                       history &&
                         <Link className="btn btn-secondary" to={location.pathname + "/history"} role="button">History</Link>
@@ -917,22 +940,28 @@ export const BaseArgoView = ({resourcename='', location=undefined,
                   </React.Fragment>
                 :
                   <React.Fragment>
-                    <h2 className="ml-3 mt-1 mb-4">{`Change ${resourcename}`}</h2>
+                    <h2 className="ms-3 mt-1 mb-4">{`Change ${resourcename}`}</h2>
                     <ButtonToolbar>
-                      { extra_button }
+                      <div className='p-1'>
+                        { extra_button }
+                      </div>
                       {
                           clone && !publicview &&
-                            <Link className="btn btn-secondary mr-2" to={location.pathname + "/clone"} role="button">Clone</Link>
+                            <div className='p-1'>
+                              <Link className="btn btn-secondary me-2" to={location.pathname + "/clone"} role="button">Clone</Link>
+                            </div>
                       }
                       {
                           history && !publicview &&
-                            <Link className="btn btn-secondary" to={location.pathname + "/history"} role="button">History</Link>
+                            <div className='p-1'>
+                              <Link className="btn btn-secondary" to={location.pathname + "/history"} role="button">History</Link>
+                            </div>
                       }
                     </ButtonToolbar>
                   </React.Fragment>
       }
     </div>
-    <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
+    <div id="argo-contentwrap" className="ms-2 mb-2 mt-2 p-3 border rounded">
       {
         !submitperm && !infoview && !listview && !publicview &&
           <Alert color='danger'>
@@ -948,13 +977,8 @@ export const BaseArgoView = ({resourcename='', location=undefined,
 )
 
 
-export const FancyErrorMessage = (msg) => (
-  <div data-testid='error-msg' style={{color: '#FF0000', fontSize: 'small'}}>{msg}</div>
-)
-
-
-export const CustomErrorMessage = ({...props}) => (
-  <ErrorMessage {...props} render={msg => <div style={{color: '#FF0000', fontSize: 'small'}} data-testid='error-msg'>{msg}</div>} />
+export const CustomError = (props) => (
+  <div data-testid='error-msg' style={{color: '#FF0000', fontSize: 'small'}}>{props.error}</div>
 )
 
 
@@ -1131,8 +1155,8 @@ export const HistoryComponent = (props) => {
                           `${compareUrl}/compare/${compare1}/${compare2}`,
                       )
                       }
-                    >
-                      Compare
+                  >
+                    Compare
                   </Button>
                 </th>
                 }
@@ -1238,7 +1262,7 @@ export const DiffElement = ({title, item1, item2}) => {
   }
 
   return (
-    <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
+    <div id='argo-contentwrap' className='ms-2 mb-2 mt-2 p-3 border rounded'>
       <h6 className='mt-4 font-weight-bold text-uppercase'>{title}</h6>
       {elements}
     </div>
@@ -1246,81 +1270,69 @@ export const DiffElement = ({title, item1, item2}) => {
 };
 
 
-export const ProfileMainInfo = ({errors, grouplist=undefined, description=undefined,
-  fieldsdisable=false, profiletype=undefined, addview=false }) => (
+export const ProfileMainInfo = ({grouplist=undefined, description=undefined,
+  fieldsdisable=false, profiletype=undefined, addview=false, ...props }) => (
     <FormGroup>
       <Row>
         <Col md={6}>
           <InputGroup>
-            <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
+            <InputGroupText>Name</InputGroupText>
             <Field
-            type='text'
-            name='name'
-            data-testid='name'
-            className={`form-control form-control-lg ${errors.name && 'border-danger'}`}
-            disabled={!addview}
-          />
+              type='text'
+              name='name'
+              data-testid='name'
+              className={`form-control form-control-lg ${props.errors.name && 'border-danger'}`}
+              disabled={!addview}
+            />
           </InputGroup>
-          {
-          errors.name &&
-            FancyErrorMessage(errors.name)
-        }
+          <CustomError error={props.errors.name} />
           <FormText color='text-muted'>
             {`Name of ${profiletype} profile`}
           </FormText>
         </Col>
       </Row>
       {
-      description &&
-        <Row className='mt-3'>
-          <Col md={10}>
-            <Label for="profileDescription">Description:</Label>
-            <Field
-              id="profileDescription"
-              className="form-control"
-              component="textarea"
-              rows={4}
-              name={description}
-              disabled={fieldsdisable}/>
-            <FormText color='muted'>
-              Free text description outlining the purpose of this profile.
-            </FormText>
-          </Col>
-        </Row>
+        description &&
+          <Row className='mt-3'>
+            <Col md={10}>
+              <Label for="profileDescription">Description:</Label>
+              <Field
+                id="profileDescription"
+                className="form-control"
+                component="textarea"
+                rows={4}
+                name={description}
+                disabled={fieldsdisable}/>
+              <FormText color='muted'>
+                Free text description outlining the purpose of this profile.
+              </FormText>
+            </Col>
+          </Row>
     }
       <Row className='mt-4'>
         <Col md={3}>
           <InputGroup>
-            <InputGroupAddon addonType='prepend'>Group</InputGroupAddon>
+            <InputGroupText>Group</InputGroupText>
             {
-            fieldsdisable ?
-              <Field
-                type='text'
-                name='groupname'
-                data-testid='groupname'
-                className='form-control'
-                disabled={true}
-              />
-            :
-              <Field
-                name='groupname'
-                data-testid='groupname'
-                component='select'
-                className={`form-control custom-select ${errors.groupname && 'border-danger'}`}
-              >
-                <option key={0} value='' hidden color='text-muted'>Select group</option>
-                {
-                  grouplist.map((group, i) =>
-                    <option key={i + 1} value={group}>{group}</option>
-                  )
-                }
-              </Field>
+              fieldsdisable ?
+                <Field
+                  type='text'
+                  name='groupname'
+                  data-testid='groupname'
+                  className='form-control'
+                  disabled={true}
+                />
+              :
+                <DropdownWithFormText
+                  name='groupname'
+                  error={ props.errors.groupname }
+                  options={ grouplist }
+                  value={ props.values.groupname }
+                  onChange={ e => props.setFieldValue('groupname', e.value) }
+                />
           }
           </InputGroup>
-          {
-          errors.groupname &&
-            FancyErrorMessage(errors.groupname)
-        }
+          <CustomError error={props.errors.groupname} />
           <FormText color='muted'>
             {`${profiletype.charAt(0).toUpperCase() + profiletype.slice(1)} profile is member of given group.`}
           </FormText>
@@ -1350,7 +1362,7 @@ export const ErrorComponent = ({error}) => {
 
 
 export const ParagraphTitle = ({title}) => (
-  <h4 className="mt-2 p-1 pl-3 text-uppercase rounded" style={{"backgroundColor": "#c4ccd4"}}>{title}</h4>
+  <h4 className="mt-2 p-1 ps-3 text-uppercase rounded" style={{"backgroundColor": "#c4ccd4"}}>{title}</h4>
 )
 
 
@@ -1363,11 +1375,9 @@ export const DefaultColumnFilter = ({column: { filterValue, setFilter }}) => {
         value={filterValue || ''}
         onChange={e => {setFilter(e.target.value || undefined)}}
       />
-      <div className="input-group-append">
-        <span className="input-group-text" id="basic-addon">
-          <FontAwesomeIcon icon={faSearch}/>
-        </span>
-      </div>
+      <span className="input-group-text" id="basic-addon">
+        <FontAwesomeIcon icon={faSearch}/>
+      </span>
     </div>
   )
 };
@@ -1378,7 +1388,7 @@ export const SelectColumnFilter = ({column: { filterValue, setFilter, filterList
 
   return (
     <select
-      className='form-control custom-select'
+      className='form-control form-select'
       style={{width: '100%'}}
       value={filterValue}
       onChange={e => setFilter(e.target.value || undefined)}
@@ -1488,59 +1498,55 @@ export function BaseArgoTable({ columns, data, resourcename, page_size, filter=f
 
   return (
     <>
-      <Row>
-        <Col>
-          <Table className='table table-bordered table-hover'>
-            <thead className='table-active align-middle text-center'>
-              {
-                headerGroups.map((headerGroup, thi) => (
-                  <React.Fragment key={thi}>
-                    <tr>
-                      {
-                        headerGroup.headers.map((column, tri) => {
+      <Table className='table table-bordered table-hover'>
+        <thead className='table-active align-middle text-center'>
+          {
+            headerGroups.map((headerGroup, thi) => (
+              <React.Fragment key={thi}>
+                <tr>
+                  {
+                    headerGroup.headers.map((column, tri) => {
+                      return (
+                        <th style={{width: column.column_width}} className='p-1 m-1' key={tri}>
+                          {column.render('Header')}
+                        </th>
+                      )
+                    })
+                  }
+                </tr>
+                {
+                  filter &&
+                    <tr className='p-0 m-0'>
+                      {headerGroup.headers.map((column, tri) => {
+                        if (tri === 0) {
+                          if (selectable)
+                            return (
+                              <th className="p-1 m-1 align-middle" key={tri + 11}>
+                                {column.render('Filter')}
+                              </th>
+                            )
+                          else
+                            return(
+                              <th className="p-1 m-1 align-middle" key={tri + 11}>
+                                <FontAwesomeIcon icon={faSearch}/>
+                              </th>
+                            )
+                        } else {
                           return (
-                            <th style={{width: column.column_width}} className='p-1 m-1' key={tri}>
-                              {column.render('Header')}
+                            <th className="p-1 m-1" key={tri + 11}>
+                              {column.canFilter ? column.render('Filter') : null}
                             </th>
                           )
-                        })
-                      }
+                        }
+                      })}
                     </tr>
-                    {
-                      filter &&
-                        <tr className='p-0 m-0'>
-                          {headerGroup.headers.map((column, tri) => {
-                            if (tri === 0) {
-                              if (selectable)
-                                return (
-                                  <th className="p-1 m-1 align-middle" key={tri + 11}>
-                                    {column.render('Filter')}
-                                  </th>
-                                )
-                              else
-                                return(
-                                  <th className="p-1 m-1 align-middle" key={tri + 11}>
-                                    <FontAwesomeIcon icon={faSearch}/>
-                                  </th>
-                                )
-                            } else {
-                              return (
-                                <th className="p-1 m-1" key={tri + 11}>
-                                  {column.canFilter ? column.render('Filter') : null}
-                                </th>
-                              )
-                            }
-                          })}
-                        </tr>
-                    }
-                  </React.Fragment>
-                ))
-              }
-            </thead>
-            {table_body}
-          </Table>
-        </Col>
-      </Row>
+                }
+              </React.Fragment>
+            ))
+          }
+        </thead>
+        {table_body}
+      </Table>
       <Row>
         <Col className='d-flex justify-content-center'>
           <Pagination>
@@ -1565,10 +1571,10 @@ export function BaseArgoTable({ columns, data, resourcename, page_size, filter=f
             <PaginationItem disabled={!canNextPage}>
               <PaginationLink last onClick={() => gotoPage(pageCount - 1)}/>
             </PaginationItem>
-            <PaginationItem className='pl-2'>
+            <PaginationItem className='ps-2'>
               <select
                 style={{width: '180px'}}
-                className='custom-select text-primary'
+                className='form-select text-primary'
                 value={pageSize}
                 onChange={e => setPageSize(Number(e.target.value))}
               >

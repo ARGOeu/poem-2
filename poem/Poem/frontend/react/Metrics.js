@@ -5,9 +5,7 @@ import {
   LoadingAnim,
   BaseArgoView,
   NotifyOk,
-  FancyErrorMessage,
   DiffElement,
-  AutocompleteField,
   NotifyWarn,
   NotifyError,
   NotifyInfo,
@@ -17,7 +15,10 @@ import {
   DefaultColumnFilter,
   SelectColumnFilter,
   BaseArgoTable,
-  CustomErrorMessage
+  CustomError,
+  DropdownWithFormText,
+  CustomDropdownIndicator,
+  CustomReactSelect
  } from './UIElements';
 import { Formik, Form, Field, FieldArray } from 'formik';
 import {
@@ -31,15 +32,14 @@ import {
   PopoverBody,
   PopoverHeader,
   InputGroup,
-  InputGroupAddon,
+  InputGroupText,
   ButtonToolbar,
   Badge
 } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faInfoCircle, faMinus, faPlus, faCaretDown } from '@fortawesome/free-solid-svg-icons';
+import { faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
 import ReactDiffViewer from 'react-diff-viewer';
 import CreatableSelect from 'react-select/creatable';
-import { components } from 'react-select';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import {
   fetchMetricTags,
@@ -104,7 +104,7 @@ const InlineDiffElement = ({title, item1, item2}) => {
   }
 
   return (
-    <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
+    <div id='argo-contentwrap' className='ms-2 mb-2 mt-2 p-3 border rounded'>
       <h6 className='mt-4 font-weight-bold text-uppercase'>{title}</h6>
       {elements}
     </div>
@@ -186,7 +186,7 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false, addv
                   {
                     errors.config && field === 'config' &&
                       errors.config[index] &&
-                        FancyErrorMessage(errors.config[index].value)
+                        <CustomError error={ errors.config[index].value } />
                   }
                 </Col>
                 <Col md={2}>
@@ -542,7 +542,7 @@ export const ListOfMetrics = (props) => {
                 <Badge color='dark'>none</Badge>
               :
                 row.value.map((tag, i) =>
-                  <Badge className={'mr-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
+                  <Badge className={'me-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
                     {tag}
                   </Badge>
                 )
@@ -687,7 +687,7 @@ export const ListOfMetrics = (props) => {
         return (
           <>
             <div className="d-flex align-items-center justify-content-between">
-              <h2 className="ml-3 mt-1 mb-4">{`Select metric template${(userDetails && userDetails.is_superuser) ? '(s) to import' : ' for details'}`}</h2>
+              <h2 className="ms-3 mt-1 mb-4">{`Select metric template${(userDetails && userDetails.is_superuser) ? '(s) to import' : ' for details'}`}</h2>
               {
                 (userDetails && userDetails.is_superuser) &&
                   <Button
@@ -698,7 +698,7 @@ export const ListOfMetrics = (props) => {
                   </Button>
               }
             </div>
-            <div id="argo-contentwrap" className="ml-2 mb-2 mt-2 p-3 border rounded">
+            <div id="argo-contentwrap" className="ms-2 mb-2 mt-2 p-3 border rounded">
               <BaseArgoTable
                 data={metrics}
                 columns={memoized_columns}
@@ -721,11 +721,11 @@ export const ListOfMetrics = (props) => {
               onYes={() => bulkDeleteMetrics(modalVar)}
             />
             <div className="d-flex align-items-center justify-content-between">
-              <h2 className="ml-3 mt-1 mb-4">{`Select metric template ${publicView ? 'for details' : 'to change'}`}</h2>
+              <h2 className="ms-3 mt-1 mb-4">{`Select metric template ${publicView ? 'for details' : 'to change'}`}</h2>
               {
                 !publicView &&
                   <ButtonToolbar>
-                    <Link className={'btn btn-secondary mr-2'} to={location.pathname + '/add'} role='button'>Add</Link>
+                    <Link className={'btn btn-secondary me-2'} to={location.pathname + '/add'} role='button'>Add</Link>
                     {
                       !isTenantSchema &&
                         <Button
@@ -738,7 +738,7 @@ export const ListOfMetrics = (props) => {
                   </ButtonToolbar>
               }
             </div>
-            <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
+            <div id='argo-contentwrap' className='ms-2 mb-2 mt-2 p-3 border rounded'>
               <BaseArgoTable
                 data={metrics}
                 columns={memoized_columns}
@@ -760,14 +760,6 @@ const styles = {
   multiValue: (base, state) => {
     return (state.data.value === 'internal') ? { ...base, backgroundColor: '#d4edda' } : (state.data.value === 'deprecated') ? { ...base, backgroundColor: '#f8d7da' } : base;
   },
-};
-
-const DropdownIndicator = props => {
-  return (
-    <components.DropdownIndicator {...props}>
-      <FontAwesomeIcon icon={faCaretDown}/>
-    </components.DropdownIndicator>
-  );
 };
 
 
@@ -796,24 +788,24 @@ export const MetricForm =
           <Row className='mb-3'>
             <Col md={6}>
               <InputGroup>
-                <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
+                <InputGroupText>Name</InputGroupText>
                 <Field
                   type='text'
                   name='name'
-                  className={`form-control ${props.errors.name && props.touched.name && 'border-danger'}`}
+                  className={`form-control ${props.errors.name && 'border-danger'}`}
                   id='name'
                   data-testid='name'
                   readOnly={isHistory || isTenantSchema || publicView}
                 />
               </InputGroup>
-              <CustomErrorMessage name='name' />
+              <CustomError error={ props.errors.name } />
               <FormText color='muted'>
                 Metric name.
               </FormText>
             </Col>
             <Col md={4} className='mt-1'>
               <InputGroup>
-                <InputGroupAddon addonType='prepend'>Type</InputGroupAddon>
+                <InputGroupText>Type</InputGroupText>
                 {
                   (isTenantSchema || isHistory || publicView) ?
                     <Field
@@ -825,15 +817,12 @@ export const MetricForm =
                       readOnly={true}
                     />
                   :
-                    <Field
-                      component='select'
+                    <DropdownWithFormText
                       name='type'
-                      className='form-control custom-select'
                       id='mtype'
-                      data-testid='mtype'
                       onChange={e => {
-                        props.handleChange(e);
-                        if (e.target.value === 'Passive') {
+                        props.setFieldValue('type', e.value)
+                        if (e.value === 'Passive') {
                           let ind = props.values.flags.length;
                           if (ind === 1 && props.values.flags[0].key === '') {
                             props.setFieldValue('flags[0].key', 'PASSIVE');
@@ -842,7 +831,7 @@ export const MetricForm =
                             props.setFieldValue(`flags[${ind}].key`, 'PASSIVE')
                             props.setFieldValue(`flags[${ind}].value`, '1')
                           }
-                        } else if (e.target.value === 'Active') {
+                        } else if (e.value === 'Active') {
                           if (!props.values.probe)
                             props.setFieldValue('probe', {'package': ''})
 
@@ -870,13 +859,10 @@ export const MetricForm =
                             props.values.flags.splice(ind, 1)
                         }
                       }}
-                    >
-                      {
-                        types.map((name, i) =>
-                          <option key={i} value={name}>{name}</option>
-                        )
-                      }
-                    </Field>
+                      options={ types }
+                      value={ props.values.type }
+                      error={ props.errors.type }
+                    />
                 }
               </InputGroup>
               <FormText color='muted'>
@@ -886,10 +872,10 @@ export const MetricForm =
           </Row>
           <Row>
             <Col md={6}>
-              {
-                props.values.type === 'Passive' ?
-                  <InputGroup>
-                    <InputGroupAddon addonType='prepend'>Probe</InputGroupAddon>
+              <InputGroup>
+                <InputGroupText>Probe</InputGroupText>
+                {
+                  props.values.type === 'Passive' ?
                     <input
                       type='text'
                       className='form-control'
@@ -897,11 +883,8 @@ export const MetricForm =
                       id='passive-probeversion'
                       data-testid='probeversion'
                     />
-                  </InputGroup>
-                :
-                  (isHistory || isTenantSchema || publicView) ?
-                    <InputGroup>
-                      <InputGroupAddon addonType='prepend'>Probe</InputGroupAddon>
+                  :
+                    (isHistory || isTenantSchema || publicView) ?
                       <Field
                         type='text'
                         name='probeversion'
@@ -909,23 +892,24 @@ export const MetricForm =
                         className='form-control'
                         disabled={true}
                       />
-                    </InputGroup>
-                  :
-                    <AutocompleteField
-                      {...props}
-                      lists={list_probes}
-                      icon='probes'
-                      field='probeversion'
-                      onselect_handler={(_, newValue) => {
-                        let probeversion = probeversions.find(prv => prv.object_repr === newValue);
-                        if (probeversion)
-                          props.setFieldValue('probe', probeversion.fields)
-                        else
-                          props.setFieldValue('probe', {'package': ''})
-                      }}
-                      label='Probe'
-                    />
-              }
+                    :
+                      <DropdownWithFormText
+                        name='probeversion'
+                        error={ props.errors.probeversion }
+                        onChange={ e => {
+                          props.setFieldValue('probeversion', e.value)
+                          let probeversion = probeversions.find(prv => prv.object_repr === e.value);
+                          if (probeversion)
+                            props.setFieldValue('probe', probeversion.fields)
+                          else
+                            props.setFieldValue('probe', {'package': ''})
+                        }}
+                        options={ list_probes }
+                        value={ props.values.probeversion }
+                      />
+                }
+              </InputGroup>
+              <CustomError error={ props.errors.probeversion } />
               {
                 props.values.type === 'Active' &&
                   <FormText color='muted'>
@@ -944,7 +928,7 @@ export const MetricForm =
                             isOpen={popoverOpen}
                             target='probe-popover'
                             toggle={togglePopOver}
-                            trigger='click'
+                            trigger='hover'
                           >
                             <PopoverHeader>
                               <ProbeVersionLink
@@ -961,7 +945,7 @@ export const MetricForm =
             </Col>
             <Col md={4} className='mt-1'>
               <InputGroup>
-                <InputGroupAddon addonType='prepend'>Package</InputGroupAddon>
+                <InputGroupText>Package</InputGroupText>
                 <Field
                   type='text'
                   className='form-control'
@@ -987,7 +971,7 @@ export const MetricForm =
                     isMulti
                     onChange={(value) => props.setFieldValue('tags', value)}
                     options={alltags}
-                    components={{DropdownIndicator}}
+                    components={{ CustomDropdownIndicator }}
                     defaultValue={props.values.tags}
                     styles={styles}
                   />
@@ -1004,13 +988,13 @@ export const MetricForm =
                       :
                         (obj_label === 'metrictemplate' && !isHistory) ?
                           props.values.tags.map((tag, i) =>
-                            <Badge className={'mr-1'} key={i} color={tag.value === 'internal' ? 'success' : tag.value === 'deprecated' ? 'danger' : 'secondary'}>
+                            <Badge className={'me-1'} key={i} color={tag.value === 'internal' ? 'success' : tag.value === 'deprecated' ? 'danger' : 'secondary'}>
                               {tag.value}
                             </Badge>
                           )
                         :
                           props.values.tags.map((tag, i) =>
-                            <Badge className={'mr-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
+                            <Badge className={'me-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
                               {tag}
                             </Badge>
                           )
@@ -1036,7 +1020,7 @@ export const MetricForm =
               <Row className='mb-4'>
                 <Col md={3}>
                   <InputGroup>
-                    <InputGroupAddon addonType='prepend'>Group</InputGroupAddon>
+                    <InputGroupText>Group</InputGroupText>
                     {
                       (isHistory || publicView) ?
                         <Field
@@ -1047,18 +1031,12 @@ export const MetricForm =
                           disabled={true}
                         />
                       :
-                        <Field
-                          component='select'
+                        <DropdownWithFormText
                           name='group'
-                          data-testid='group'
-                          className='form-control custom-select'
-                        >
-                          {
-                            groups.map((name, i) =>
-                              <option key={i} value={name}>{name}</option>
-                            )
-                          }
-                        </Field>
+                          options={ groups }
+                          value={ props.values.group }
+                          onChange={ e => props.setFieldValue('group', e.value) }
+                        />
                     }
                   </InputGroup>
                   <FormText color='muted'>
@@ -1079,10 +1057,10 @@ export const MetricForm =
                     type='text'
                     name='probeexecutable'
                     data-testid='probeexecutable'
-                    className={`form-control ${props.errors.probeexecutable && props.touched.probeexecutable && 'border-danger'}`}
+                    className={`form-control ${props.errors.probeexecutable && 'border-danger'}`}
                     readOnly={isTenantSchema || isHistory || publicView}
                   />
-                  <CustomErrorMessage name='probeexecutable' />
+                  <CustomError error={ props.errors.probeexecutable } />
                 </Col>
               </Row>
           }
@@ -1104,14 +1082,21 @@ export const MetricForm =
                   readOnly={true}
                 />
               :
-                <>
-                  <AutocompleteField
-                    {...props}
-                    lists={metrictemplatelist}
-                    field='parent'
-                    icon='metrics'
-                  />
-                </>
+                <CustomReactSelect
+                  name='parent'
+                  isClearable={ true }
+                  onChange={ e => {
+                    if (e)
+                      props.setFieldValue('parent', e.value)
+                    else
+                    props.setFieldValue('parent', '')
+                  }}
+                  options={ metrictemplatelist.map(templ => new Object({ label: templ, value: templ })) }
+                  value={ props.values.parent ?
+                    new Object({ label: props.values.parent, value: props.values.parent })
+                    : undefined
+                  }
+                />
             }
             </Col>
           </Row>
@@ -1149,7 +1134,7 @@ export const CompareMetrics = (props) => {
     return (
       <React.Fragment>
         <div className='d-flex align-items-center justify-content-between'>
-          <h2 className='ml-3 mt-1 mb-4'>{`Compare ${name}`}</h2>
+          <h2 className='ms-3 mt-1 mb-4'>{`Compare ${name}`}</h2>
         </div>
         {
           (metric1.name !== metric2.name) &&

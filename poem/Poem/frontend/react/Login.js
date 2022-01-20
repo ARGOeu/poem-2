@@ -10,12 +10,14 @@ import {
   CardBody,
   Label,
   CardFooter,
-  FormGroup } from 'reactstrap';
+  FormGroup
+} from 'reactstrap';
 import { Formik, Field, Form } from 'formik';
 import ArgoLogo from './argologo_color.svg';
-import './Login.css';
 import { Footer } from './UIElements.js';
 import { Backend } from './DataManager.js';
+
+import './Login.css';
 
 
 const Login = (props) => {
@@ -126,9 +128,9 @@ const Login = (props) => {
                     </FormGroup>
                     <div className="pt-3">
                     </div>
-                    <FormGroup>
-                      <Button color="success" type="submit" block>Login using username and password</Button>
-                      {isTenantSchema && <a className="btn btn-success btn-block" role="button" href="/saml2/login">{samlIdpString}</a>}
+                    <FormGroup className='justify-content-center'>
+                      <Button color="success" type="submit" block className='mb-2'>Login using username and password</Button>
+                      {isTenantSchema && <a className="btn btn-success btn-block" role="button" href="/saml2/login" style={{width: '100%'}}>{samlIdpString}</a>}
                     </FormGroup>
                   </Form>
                 </Formik>
