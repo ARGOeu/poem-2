@@ -25,10 +25,6 @@
   text-decoration: none !important;
 }
 
-#argo-navlinks > a:hover {
-  color:#000000 !important;
-}
-
 .notification-container {
   max-width: 20% !important;
   width: 20% !important;
