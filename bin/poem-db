@@ -120,7 +120,7 @@ do
             done
             if [[ $schema == 'public' ]]
             then
-              poem-manage tenant_command dumpdata --indent 2 --natural-foreign --natural-primary --exclude tenants.tenant > $filename --schema=$schema
+              poem-manage tenant_command dumpdata --indent 2 --natural-foreign --natural-primary --exclude tenants.tenant --exclude tenants.domain > $filename --schema=$schema
             else
               poem-manage tenant_command dumpdata --indent 2 --natural-foreign --natural-primary  > $filename --schema=$schema
             fi

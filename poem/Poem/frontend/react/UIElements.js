@@ -308,7 +308,7 @@ const doLogout = async (history, onLogout) =>
 
   onLogout();
 
-  let response = await fetch('/rest-auth/logout/', {
+  let response = await fetch('/dj-rest-auth/logout/', {
     method: 'POST',
     mode: 'cors',
     cache: 'no-cache',
@@ -1155,7 +1155,7 @@ export const HistoryComponent = (props) => {
                           `${compareUrl}/compare/${compare1}/${compare2}`,
                       )
                       }
-                  >
+                    >
                     Compare
                   </Button>
                 </th>

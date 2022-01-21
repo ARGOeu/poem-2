@@ -1,6 +1,3 @@
 #!/bin/bash
 
-for tenant in $(poem-tenant -l)
-do
-    poem-manage tenant_command --schema=$tenant clearsessions
-done
+poem-manage all_tenants_command clearsessions
