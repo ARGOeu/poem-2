@@ -270,7 +270,7 @@ describe('Tests for group elements changeview', () => {
     expect(screen.getByTestId('name').value).toBe('TestGroup');
     expect(screen.getByTestId('name')).toBeDisabled();
     const selectField = screen.getByTestId('available_metrics');
-    expect(within(selectField).getByRole('textbox').textContent).toBe('');
+    expect(within(selectField).getByRole('combobox').textContent).toBe('');
     expect(screen.getByRole('button', {name: /add/i}).textContent).toBe('Add new metrics to group');
     expect(screen.getAllByRole('columnheader')).toHaveLength(3);
     expect(screen.getByRole('columnheader', {name: '#'})).toBeInTheDocument();
@@ -304,7 +304,7 @@ describe('Tests for group elements changeview', () => {
     expect(screen.getByTestId('name').value).toBe('TestGroup');
     expect(screen.getByTestId('name')).toBeDisabled();
     const selectField = screen.getByTestId('available_metrics');
-    expect(within(selectField).getByRole('textbox').textContent).toBe('');
+    expect(within(selectField).getByRole('combobox').textContent).toBe('');
     expect(screen.getByRole('button', {name: /add/i}).textContent).toBe('Add new metrics to group');
     expect(screen.getAllByRole('columnheader')).toHaveLength(3);
     expect(screen.getByRole('columnheader', {name: '#'})).toBeInTheDocument();
@@ -450,7 +450,7 @@ describe('Tests for group elements changeview', () => {
     expect(screen.getAllByRole('row')).toHaveLength(6);
 
     const selectField = screen.getByTestId('available_metrics');
-    fireEvent.change(within(selectField).getByRole('textbox'), { target: { value: 'test' } })
+    fireEvent.change(within(selectField).getByRole('combobox'), { target: { value: 'test' } })
     fireEvent.click(within(selectField).getByText('test.AMS-Check'))
     fireEvent.click(screen.getByRole('button', { name: /add/i }))
     expect(screen.getAllByRole('row')).toHaveLength(7);
@@ -613,7 +613,7 @@ describe('Tests for groups addviews', () => {
     expect(screen.getByTestId('name').value).toBe('');
     expect(screen.getByTestId('name')).toBeEnabled();
     const selectField = screen.getByTestId('available_metrics');
-    expect(within(selectField).getByRole('textbox').textContent).toBe('')
+    expect(within(selectField).getByRole('combobox').textContent).toBe('')
     expect(screen.getByRole('button', { name: /add/i }).textContent).toBe('Add new metrics to group');
     expect(screen.getAllByRole('columnheader')).toHaveLength(3);
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
@@ -635,7 +635,7 @@ describe('Tests for groups addviews', () => {
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NewGroup' } });
 
     const selectField = screen.getByTestId('available_metrics');
-    fireEvent.change(within(selectField).getByRole('textbox'), { target: { value: 'test' } })
+    fireEvent.change(within(selectField).getByRole('combobox'), { target: { value: 'test' } })
     fireEvent.click(within(selectField).getByText('test.AMS-Check'))
     fireEvent.click(screen.getByRole('button', { name: /add/i }))
 

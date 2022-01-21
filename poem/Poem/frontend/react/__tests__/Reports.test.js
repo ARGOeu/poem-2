@@ -2687,13 +2687,13 @@ describe('Tests for reports addview', () => {
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
 
-    expect(card_groups.getAllByRole('textbox')).toHaveLength(2);
+    expect(card_groups.getAllByRole('combobox')).toHaveLength(2);
     expect(card_groups.queryAllByTestId(/remove/i)).toHaveLength(0);
     expect(card_groups.getByRole('button', { name: /add new tag/i })).toBeInTheDocument();
     expect(card_groups.getByRole('button', { name: /add new extension/i })).toBeInTheDocument();
     expect(card_groups.getAllByText(/search/i)).toHaveLength(2);
 
-    expect(card_endpoints.queryAllByRole('textbox')).toHaveLength(0);
+    expect(card_endpoints.queryAllByRole('combobox')).toHaveLength(0);
     expect(card_endpoints.getByRole('button', { name: /add new tag/i })).toBeInTheDocument();
     expect(card_endpoints.getByRole('button', { name: /add new extension/i })).toBeInTheDocument();
 
