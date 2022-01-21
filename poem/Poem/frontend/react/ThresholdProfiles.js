@@ -348,7 +348,7 @@ const ThresholdsProfilesForm = ({
                                     props.setFieldValue(`rules[${index}]endpoint_group`, null)
                                   }}
                                   label='Metric'
-                                  initialValue={!addview ? props.values.rules[index].metric : ''}
+                                  initialValue={ props.values.rules[index].metric }
                                   error={
                                     props.errors.rules &&
                                     props.errors.rules.length > index &&
@@ -395,7 +395,7 @@ const ThresholdsProfilesForm = ({
                                       props.setFieldValue(`rules[${index}]host`, '')
                                   } }
                                   label='Host'
-                                  initialValue={ !addview ? props.values.rules[index].host : undefined }
+                                  initialValue={ props.values.rules[index].host }
                                 />
                             }
                           </Col>
@@ -429,7 +429,7 @@ const ThresholdsProfilesForm = ({
                                       props.setFieldValue(`rules[${index}]endpoint_group`, '')
                                   }}
                                   label={'Group'}
-                                  initialValue={!addview ? props.values.rules[index].endpoint_group : undefined}
+                                  initialValue={ props.values.rules[index].endpoint_group }
                                 />
                             }
                           </Col>
@@ -1334,7 +1334,9 @@ export const ThresholdsProfilesChange = (props) => {
     })
   }
 
-  if (loadingThresholdsProfile || loadingUserDetails || loadingAllMetrics || loadingMetricProfiles || loadingTopologyEndpoints )
+  const loading = loadingThresholdsProfile || loadingUserDetails || loadingAllMetrics || loadingMetricProfiles || loadingTopologyEndpoints
+
+  if (loading)
     return (<LoadingAnim/>);
 
   else if (errorThresholdsProfile)
@@ -1349,7 +1351,7 @@ export const ThresholdsProfilesChange = (props) => {
   else if (errorTopologyEndpoints)
     return ( <ErrorComponent error={errorTopologyEndpoints} /> )
 
-  else if (allMetrics) {
+  else if (!loading) {
     let write_perm = userDetails ?
       addview ?
         userDetails.is_superuser || userDetails.groups.thresholdsprofiles.length > 0
