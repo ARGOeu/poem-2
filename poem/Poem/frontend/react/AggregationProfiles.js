@@ -1009,7 +1009,7 @@ export const AggregationProfilesChange = (props) => {
         extra_button={
           !addview &&
             <ButtonDropdown isOpen={dropdownOpen} toggle={ () => setDropdownOpen(!dropdownOpen) }>
-              <DropdownToggle caret color='info'>JSON</DropdownToggle>
+              <DropdownToggle caret color='secondary'>JSON</DropdownToggle>
               <DropdownMenu>
                 <DropdownItem
                   onClick={() => {
