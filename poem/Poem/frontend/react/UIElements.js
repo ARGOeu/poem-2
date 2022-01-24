@@ -641,7 +641,7 @@ export const NavigationLinks = ({location, isTenantSchema, userDetails}) => {
             key={i}
             tag={Link}
             active={location.pathname.split('/')[2] === item ? true : false}
-            className={location.pathname.split('/')[2] === item ? "text-dark bg-info" : "text-dark"}
+            className={location.pathname.split('/')[2] === item ? "text-white bg-secondary" : "text-dark"}
             to={'/ui/' + item}><Icon i={item}/> {link_title.get(item)}
           </NavLink>
         )
