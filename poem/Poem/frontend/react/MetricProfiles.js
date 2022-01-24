@@ -905,7 +905,7 @@ export const MetricProfilesComponent = (props) => {
         extra_button={
           !addview &&
             <ButtonDropdown isOpen={dropdownOpen} toggle={() => setDropdownOpen(!dropdownOpen)}>
-              <DropdownToggle caret color='info'>CSV</DropdownToggle>
+              <DropdownToggle caret color='secondary'>CSV</DropdownToggle>
               <DropdownMenu>
                 <DropdownItem
                   onClick={() => {
