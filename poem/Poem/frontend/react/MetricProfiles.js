@@ -863,7 +863,8 @@ export const MetricProfilesComponent = (props) => {
         setMetricProfileName('Cloned ' + metricProfile.profile.name);
         metricProfile.profile.id = ''
         setMetricProfileDescription(metricProfile.profile.description);
-        setGroupname(metricProfile.groupname)
+        if (userDetails.groups.metricprofiles.indexOf(metricProfile.groupname) != -1)
+          setGroupname(metricProfile.groupname)
         setViewServices(ensureAlignedIndexes(flattenServices(metricProfile.profile.services).sort(sortServices)));
         setListServices(ensureAlignedIndexes(flattenServices(metricProfile.profile.services).sort(sortServices)));
       }
