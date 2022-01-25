@@ -863,7 +863,8 @@ export const MetricProfilesComponent = (props) => {
         setMetricProfileName('Cloned ' + metricProfile.profile.name);
         metricProfile.profile.id = ''
         setMetricProfileDescription(metricProfile.profile.description);
-        setGroupname(metricProfile.groupname)
+        if (userDetails.groups.metricprofiles.indexOf(metricProfile.groupname) != -1)
+          setGroupname(metricProfile.groupname)
         setViewServices(ensureAlignedIndexes(flattenServices(metricProfile.profile.services).sort(sortServices)));
         setListServices(ensureAlignedIndexes(flattenServices(metricProfile.profile.services).sort(sortServices)));
       }
@@ -880,7 +881,11 @@ export const MetricProfilesComponent = (props) => {
     if (publicView) {
       write_perm = false
     }
-    else if (!addview || !cloneview) {
+    else if (cloneview) {
+      write_perm = userDetails.is_superuser ||
+        userDetails.groups.metricprofiles.length > 0;
+    }
+    else if (!addview) {
       write_perm = userDetails.is_superuser ||
             userDetails.groups.metricprofiles.indexOf(metricProfile.groupname) >= 0;
     }
@@ -905,7 +910,7 @@ export const MetricProfilesComponent = (props) => {
         extra_button={
           !addview &&
             <ButtonDropdown isOpen={dropdownOpen} toggle={() => setDropdownOpen(!dropdownOpen)}>
-              <DropdownToggle caret color='info'>CSV</DropdownToggle>
+              <DropdownToggle caret color='secondary'>CSV</DropdownToggle>
               <DropdownMenu>
                 <DropdownItem
                   onClick={() => {

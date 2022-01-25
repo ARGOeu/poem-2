@@ -607,22 +607,31 @@ const TopologyEntityFields = ({topoGroups, addview, publicView, form}) => {
 
 
 const ProfileSelect = ({ field, error, label, options, onChangeHandler, initVal }) => {
-  let value = null
   if (initVal)
-    value = { value: initVal, label: initVal }
-
-  return (
-    <CustomReactSelect
-      name={ field.name }
-      label={ label }
-      error={ error }
-      closeMenuOnSelect={ true }
-      isClearable={ field.name === 'thresholdsProfile' }
-      onChange={ e => onChangeHandler(e) }
-      options={ options }
-      value={ value }
-    />
-  )
+    return (
+      <CustomReactSelect
+        name={ field.name }
+        label={ label }
+        error={ error }
+        closeMenuOnSelect={ true }
+        isClearable={ field.name === 'thresholdsProfile' }
+        onChange={ e => onChangeHandler(e) }
+        options={ options }
+        value={ { value: initVal, label: initVal } }
+      />
+    )
+  else
+    return (
+      <CustomReactSelect
+        name={ field.name }
+        label={ label }
+        error={ error }
+        closeMenuOnSelect={ true }
+        isClearable={ field.name === 'thresholdsProfile' }
+        onChange={ e => onChangeHandler(e) }
+        options={ options }
+      />
+    )
 }
 
 

@@ -21,7 +21,6 @@ import './Login.css';
 
 
 const Login = (props) => {
-  var _isMounted = false
   const [samlIdpString, setSamlIdpString] = useState(null);
   const [loginFailedVisible, setLoginFailedVisible] = useState(false);
   const [isTenantSchema, setIsTenantSchema] = useState(null);
@@ -33,7 +32,6 @@ const Login = (props) => {
   const AppOnLogin = props.onLogin;
 
   useEffect(() => {
-    _isMounted = true;
     setLoading(true);
 
     async function fetchData() {
@@ -44,22 +42,15 @@ const Login = (props) => {
       setTermsLink(options && options.result.terms_privacy_links.terms);
 
       if (response) {
-        if (_isMounted) {
-          setIsTenantSchema(response);
-          setSamlIdpString(options.result.saml_login_string);
-        }
+        setIsTenantSchema(response);
+        setSamlIdpString(options.result.saml_login_string);
       } else
-        if (_isMounted)
-          setIsTenantSchema(response);
+        setIsTenantSchema(response);
 
       setLoading(false);
     }
 
     fetchData();
-
-    return function cleanup() {
-      _isMounted = false;
-    };
   }, []);
 
   async function doUserPassLogin(username, password) {
@@ -79,10 +70,6 @@ const Login = (props) => {
       })
     });
     return backend.isActiveSession(isTenantSchema);
-  }
-
-  function dismissLoginAlert() {
-    _isMounted && setLoginFailedVisible(false);
   }
 
   if (isTenantSchema !== null && !loading) {
@@ -120,7 +107,7 @@ const Login = (props) => {
                       <Field name="password" id="password" className="form-control" type="password"/>
                     </FormGroup>
                     <FormGroup>
-                      <Alert color="danger" isOpen={loginFailedVisible} toggle={dismissLoginAlert} fade={false}>
+                      <Alert color="danger" isOpen={loginFailedVisible} toggle={() => setLoginFailedVisible(false)} fade={false}>
                         <p className="text-center">
                           Login failed, invalid username and password provided
                         </p>
