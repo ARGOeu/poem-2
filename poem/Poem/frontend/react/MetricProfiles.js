@@ -880,7 +880,11 @@ export const MetricProfilesComponent = (props) => {
     if (publicView) {
       write_perm = false
     }
-    else if (!addview || !cloneview) {
+    else if (cloneview) {
+      write_perm = userDetails.is_superuser ||
+        userDetails.groups.metricprofiles.length > 0;
+    }
+    else if (!addview) {
       write_perm = userDetails.is_superuser ||
             userDetails.groups.metricprofiles.indexOf(metricProfile.groupname) >= 0;
     }
