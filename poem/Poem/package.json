@@ -31,6 +31,7 @@
   "homepage": "https://github.com/ARGOeu/poem-2",
   "devDependencies": {
     "@babel/core": "^7.16.7",
+    "@babel/eslint-parser": "^7.16.5",
     "@babel/plugin-proposal-object-rest-spread": "^7.16.7",
     "@babel/plugin-transform-runtime": "^7.16.8",
     "@babel/preset-env": "^7.16.8",
@@ -42,7 +43,6 @@
     "@testing-library/user-event": "^13.5.0",
     "acorn": "^8.7.0",
     "autoprefixer": "^9.5.1",
-    "babel-eslint": "^10.1.0",
     "babel-loader": "^8.2.3",
     "babel-preset-react": "^6.24.1",
     "bootstrap": "^5.1.3",
