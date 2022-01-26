@@ -918,14 +918,14 @@ export const ReportsComponent = (props) => {
         let values = entity.value.split(' ')
         for (var val of values)
           tmpEntites.push(new Object({
-            name: entity.name,
+            name: 'group',
             value: val,
             context: context
           }))
         entities = [...entities, ...tmpEntites]
       }
       else {
-        tmpEntity['name'] = entity.name
+        tmpEntity['name'] = 'group'
         tmpEntity['value'] = entity.value
         tmpEntity['context'] = context
         entities.push(tmpEntity)
