@@ -708,11 +708,11 @@ export const ReportsComponent = (props) => {
   )
 
   const { data: topologyGroups, error: topologyGroupsErrors, isLoading: loadingTopologyGroups } = useQuery(
-    'topologygroups', () => {
-      let topogroups = fetchTopologyGroups(webapi)
+    'topologygroups', async () => {
+      let topogroups = await fetchTopologyGroups(webapi)
 
       if (topogroups) {
-        for (var entity of topologyGroups) {
+        for (var entity of topogroups) {
           if (entity['type'].toLowerCase() === 'project') {
             projects.add(entity['group'])
             servicegroups.add(entity['subgroup'])
@@ -723,6 +723,10 @@ export const ReportsComponent = (props) => {
             sites.add(entity['subgroup'])
           }
         }
+        ngis = Array.from(ngis).sort(sortStr)
+        sites = Array.from(sites).sort(sortStr)
+        projects = Array.from(projects).sort(sortStr)
+        servicegroups = Array.from(servicegroups).sort(sortStr)
       }
 
       return topogroups
@@ -1298,12 +1302,8 @@ export const ReportsComponent = (props) => {
     }
 
     const topoGroups = new Object({
-      'ngis': Array.from(ngis).sort(sortStr),
-      'sites': Array.from(sites).sort(sortStr),
-      'projects': Array.from(projects).sort(sortStr),
-      'servicegroups': Array.from(servicegroups).sort(sortStr)
+      ngis, sites, projects, servicegroups
     })
-
 
     return (
       <BaseArgoView
