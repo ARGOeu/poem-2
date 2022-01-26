@@ -678,6 +678,11 @@ export const ReportsComponent = (props) => {
     thresholdsProfiles: props.webapithresholds
   });
 
+  let ngis = new Set()
+  let sites = new Set()
+  let projects = new Set()
+  let servicegroups = new Set()
+
   const webapiAddMutation = useMutation(async (values) => await webapi.addReport(values));
   const backendAddMutation = useMutation(async (values) => await backend.addObject('/api/v2/internal/reports/', values));
   const webapiChangeMutation = useMutation(async (values) => await webapi.changeReport(values));
@@ -703,7 +708,25 @@ export const ReportsComponent = (props) => {
   )
 
   const { data: topologyGroups, error: topologyGroupsErrors, isLoading: loadingTopologyGroups } = useQuery(
-    'topologygroups', () => fetchTopologyGroups(webapi),
+    'topologygroups', () => {
+      let topogroups = fetchTopologyGroups(webapi)
+
+      if (topogroups) {
+        for (var entity of topologyGroups) {
+          if (entity['type'].toLowerCase() === 'project') {
+            projects.add(entity['group'])
+            servicegroups.add(entity['subgroup'])
+          }
+
+          else if (entity['type'].toLowerCase() === 'ngi') {
+            ngis.add(entity['group'])
+            sites.add(entity['subgroup'])
+          }
+        }
+      }
+
+      return topogroups
+    },
     { enabled: !publicView && !!userDetails && crud }
   );
 
@@ -718,7 +741,7 @@ export const ReportsComponent = (props) => {
         let [endpointstags, endpointexts] = formatFromReportTags([
           'argo.endpoint.filter.tags', 'argo.endpoint.filter.tags.array'],
           data['filter_tags'])
-        let entities = formatFromReportEntities('argo.group.filter.fields', data['filter_tags'])
+        let entities = formatFromReportEntities('argo.group.filter.fields', data['filter_tags'], topologyGroups)
         let preselectedtags = JSON.parse(JSON.stringify(tagsState))
         let preselectedexts = JSON.parse(JSON.stringify(extensionsState))
         preselectedtags['groups'] = new Object()
@@ -778,7 +801,6 @@ export const ReportsComponent = (props) => {
     'topologytags', () => fetchTopologyTags(webapi),
     { enabled: !publicView && !!userDetails && crud }
   );
-
 
   const sortStr = (a, b) => {
     if (a.toLowerCase() < b.toLowerCase()) return -1;
@@ -937,7 +959,7 @@ export const ReportsComponent = (props) => {
     return [tags, extensions]
   }
 
-  const formatFromReportEntities = (context, formikEntities) => {
+  const formatFromReportEntities = (context, formikEntities, topologyGroups) => {
     let tmpEntityJoint = new Object()
     let entities = new Array()
 
@@ -1272,25 +1294,6 @@ export const ReportsComponent = (props) => {
             values: tmpExtensions
           })
         )
-      }
-    }
-
-    let ngis = new Set()
-    let sites = new Set()
-    let projects = new Set()
-    let servicegroups = new Set()
-
-    if (topologyGroups) {
-      for (var entity of topologyGroups) {
-        if (entity['type'].toLowerCase() === 'project') {
-          projects.add(entity['group'])
-          servicegroups.add(entity['subgroup'])
-        }
-
-        else if (entity['type'].toLowerCase() === 'ngi') {
-          ngis.add(entity['group'])
-          sites.add(entity['subgroup'])
-        }
       }
     }
 
