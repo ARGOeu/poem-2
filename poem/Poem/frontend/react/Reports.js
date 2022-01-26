@@ -669,6 +669,11 @@ export const ReportsComponent = (props) => {
     })
   )
 
+  const [entitiesNgi, setEntitiesNgi] = useState(new Array())
+  const [entitiesSites, setEntitiesSites] = useState(new Array())
+  const [entitiesProjects, setEntitiesProjects] = useState(new Array())
+  const [entitiesServiceGroups, setEntitiesServiceGroups] = useState(new Array())
+
   const webapi = new WebApi({
     token: props.webapitoken,
     reportsConfigurations: props.webapireports,
@@ -677,11 +682,6 @@ export const ReportsComponent = (props) => {
     operationsProfiles: props.webapioperations,
     thresholdsProfiles: props.webapithresholds
   });
-
-  let ngis = new Set()
-  let sites = new Set()
-  let projects = new Set()
-  let servicegroups = new Set()
 
   const webapiAddMutation = useMutation(async (values) => await webapi.addReport(values));
   const backendAddMutation = useMutation(async (values) => await backend.addObject('/api/v2/internal/reports/', values));
@@ -710,6 +710,10 @@ export const ReportsComponent = (props) => {
   const { data: topologyGroups, error: topologyGroupsErrors, isLoading: loadingTopologyGroups } = useQuery(
     'topologygroups', async () => {
       let topogroups = await fetchTopologyGroups(webapi)
+      let ngis = new Set()
+      let projects = new Set()
+      let servicegroups = new Set()
+      let sites = new Set()
 
       if (topogroups) {
         for (var entity of topogroups) {
@@ -723,10 +727,10 @@ export const ReportsComponent = (props) => {
             sites.add(entity['subgroup'])
           }
         }
-        ngis = Array.from(ngis).sort(sortStr)
-        sites = Array.from(sites).sort(sortStr)
-        projects = Array.from(projects).sort(sortStr)
-        servicegroups = Array.from(servicegroups).sort(sortStr)
+        setEntitiesNgi(Array.from(ngis).sort(sortStr))
+        setEntitiesSites(Array.from(sites).sort(sortStr))
+        setEntitiesProjects(Array.from(projects).sort(sortStr))
+        setEntitiesServiceGroups(Array.from(servicegroups).sort(sortStr))
       }
 
       return topogroups
@@ -1302,7 +1306,10 @@ export const ReportsComponent = (props) => {
     }
 
     const topoGroups = new Object({
-      ngis, sites, projects, servicegroups
+      'ngis': entitiesNgi,
+      'sites': entitiesSites,
+      'projects': entitiesProjects,
+      'servicegroups': entitiesServiceGroups
     })
 
     return (
