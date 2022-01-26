@@ -702,10 +702,15 @@ export const ReportsComponent = (props) => {
     }
   )
 
+  const { data: topologyGroups, error: topologyGroupsErrors, isLoading: loadingTopologyGroups } = useQuery(
+    'topologygroups', () => fetchTopologyGroups(webapi),
+    { enabled: !publicView && !!userDetails && crud }
+  );
+
   const { data: webApiReport, error: errorWebApiReport, isLoading: loadingWebApiReport } = useQuery(
     ['report', 'webapi', report_name], () => fetchReport(webapi, report_name),
     {
-      enabled: publicView || (!!userDetails && !addview),
+      enabled: publicView || (!!userDetails && !addview && !!topologyGroups),
       onSuccess: (data) => {
         let [groupstags, groupexts] = formatFromReportTags([
           'argo.group.filter.tags', 'argo.group.filter.tags.array'],
@@ -774,10 +779,6 @@ export const ReportsComponent = (props) => {
     { enabled: !publicView && !!userDetails && crud }
   );
 
-  const { data: topologyGroups, error: topologyGroupsErrors, isLoading: loadingTopologyGroups } = useQuery(
-    'topologygroups', () => fetchTopologyGroups(webapi),
-    { enabled: !publicView && !!userDetails && crud }
-  );
 
   const sortStr = (a, b) => {
     if (a.toLowerCase() < b.toLowerCase()) return -1;
