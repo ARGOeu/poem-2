@@ -749,7 +749,13 @@ export const ReportsComponent = (props) => {
         let [endpointstags, endpointexts] = formatFromReportTags([
           'argo.endpoint.filter.tags', 'argo.endpoint.filter.tags.array'],
           data['filter_tags'])
-        let entities = formatFromReportEntities('argo.group.filter.fields', data['filter_tags'], topologyGroups)
+        const topoGroups = new Object({
+          'ngis': entitiesNgi,
+          'sites': entitiesSites,
+          'projects': entitiesProjects,
+          'servicegroups': entitiesServiceGroups
+        })
+        let entities = formatFromReportEntities('argo.group.filter.fields', data['filter_tags'], topoGroups)
         let preselectedtags = JSON.parse(JSON.stringify(tagsState))
         let preselectedexts = JSON.parse(JSON.stringify(extensionsState))
         preselectedtags['groups'] = new Object()
@@ -972,10 +978,21 @@ export const ReportsComponent = (props) => {
     let entities = new Array()
 
     for (let entity of formikEntities) {
+      let entity_type = undefined
+
       if (entity.context === context) {
-        if (tmpEntityJoint[entity.name] === undefined)
-          tmpEntityJoint[entity.name] = new Array()
-        tmpEntityJoint[entity.name].push(entity.value)
+        if (tmpEntityJoint[entity_type] === undefined) {
+          if (topologyGroups['ngis'].indexOf(entity.value) > -1)
+            entity_type = 'NGI'
+          else if (topologyGroups['sites'].indexOf(entity.value) > -1)
+            entity_type = 'SITES'
+          else if (topologyGroups['projects'].indexOf(entity.value) > -1)
+            entity_type = 'PROJECTS'
+          else if (topologyGroups['servicegroups'].indexOf(entity.value) > -1)
+            entity_type = 'SERVICEGROUPS'
+          tmpEntityJoint[entity_type] = new Array()
+        }
+        tmpEntityJoint[entity_type].push(entity.value)
       }
     }
 
