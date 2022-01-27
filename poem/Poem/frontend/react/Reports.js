@@ -975,10 +975,9 @@ export const ReportsComponent = (props) => {
   }
 
   const formatFromReportEntities = (context, formikEntities) => {
-    //let context_found = formikEntities.filter((item) => {
-      //Object.keys(item).indexOf(context) > -1
-    //})
-    //console.log(context_found)
+    let context_found = formikEntities.filter(item => item["context"] === context)
+    if (context_found.length === 0)
+      return new Array()
 
     let tmpEntityJoint = new Object()
     let entities = new Array()
