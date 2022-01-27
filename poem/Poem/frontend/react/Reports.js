@@ -528,20 +528,20 @@ const TopologyEntityFields = ({topoGroups, addview, publicView, form}) => {
   if (topoType === 'Sites') {
     label1 = 'NGIs:'
     label2 = 'Sites:'
-    key1 = 'ngis'
-    key2 = 'sites'
+    key1 = 'entitiesNgi'
+    key2 = 'entitiesSites'
   }
   else if (topoType === 'ServiceGroups'){
     label1 = 'Projects:'
     label2 = 'Service groups:'
-    key1 = 'projects'
-    key2 = 'servicegroups'
+    key1 = 'entitiesProjects'
+    key2 = 'entitiesServiceGroups'
   }
   else {
     label1 = 'Upper group:'
     label2 = 'Lower group:'
-    key1 = 'ngis'
-    key2 = 'sites'
+    key1 = 'entitiesNgi'
+    key2 = 'entitiesSites'
   }
 
   return (
@@ -570,7 +570,7 @@ const TopologyEntityFields = ({topoGroups, addview, publicView, form}) => {
               form.setFieldValue("entities.0.value", joinedValues)
               form.setFieldValue("entities.0.name", key1.toUpperCase().slice(0, -1))
             }}
-            entitiesInitials={!addview ? entityInitValues(["NGI", "PROJECT"]) : undefined}
+            entitiesInitials={!addview ? entityInitValues(["entitiesNgi", "entitiesProjects"]) : undefined}
           />
       }
       <Label for='topoEntity2' className='pt-2'>{label2}</Label>
@@ -598,7 +598,7 @@ const TopologyEntityFields = ({topoGroups, addview, publicView, form}) => {
               form.setFieldValue("entities.1.name", key2.toUpperCase())
               form.setFieldValue("entities.1.value", joinedValues)
             }}
-            entitiesInitials={!addview ? entityInitValues(["SITES", "SERVICEGROUPS"]) : undefined}
+            entitiesInitials={!addview ? entityInitValues(["entitiesSites", "setEntitiesServiceGroups"]) : undefined}
           />
       }
     </React.Fragment>
@@ -744,53 +744,55 @@ export const ReportsComponent = (props) => {
   );
 
   const { data: webApiReport, error: errorWebApiReport, isLoading: loadingWebApiReport } = useQuery(
-    ['report', 'webapi', report_name], () => fetchReport(webapi, report_name),
+    ['report', 'webapi', report_name], async () => {
+      let report = await fetchReport(webapi, report_name)
+      let [groupstags, groupexts] = formatFromReportTags([
+        'argo.group.filter.tags', 'argo.group.filter.tags.array'],
+        report['filter_tags'])
+      let [endpointstags, endpointexts] = formatFromReportTags([
+        'argo.endpoint.filter.tags', 'argo.endpoint.filter.tags.array'],
+        report['filter_tags'])
+      let entities = formatFromReportEntities('argo.group.filter.fields', report['filter_tags'])
+      let preselectedtags = JSON.parse(JSON.stringify(tagsState))
+      let preselectedexts = JSON.parse(JSON.stringify(extensionsState))
+      preselectedtags['groups'] = new Object()
+      preselectedtags['endpoints'] = new Object()
+      preselectedexts['groups'] = new Object()
+      preselectedexts['endpoints'] = new Object()
+      groupstags.forEach((e, i) => {
+        preselectedtags['groups'][i] = e.name
+      })
+      endpointstags.forEach((e, i) => {
+        preselectedtags['endpoints'][i] = e.name
+      })
+      groupexts.forEach((e, i) => {
+        preselectedexts['groups'][i] = e.name
+      })
+      endpointexts.forEach((e, i) => {
+        preselectedexts['endpoints'][i] = e.name
+      })
+      if (tagsState['groups'] === undefined
+        && tagsState['endpoints'] === undefined)
+        setTagsState(preselectedtags)
+      if (
+        extensionsState['groups'] === undefined &&
+        extensionsState['endpoints'] == undefined
+      )
+        setExtensionsState(preselectedexts)
+      setGroupsTags(groupstags)
+      setEndpointsTags(endpointstags)
+      setEntitiesState(entities)
+      setGroupsExtensions(groupexts)
+      setEndpointsExtensions(endpointexts)
+
+      return report
+    },
     {
       enabled: publicView
         || (!!userDetails && !addview
           && !!topologyGroups && !!topologyTags && entitiesNgi.length > 0
           && entitiesSites.length > 0 && entitiesServiceGroups.length > 0
-          && entitiesServiceGroups.length > 0),
-      onSuccess: (data) => {
-        let [groupstags, groupexts] = formatFromReportTags([
-          'argo.group.filter.tags', 'argo.group.filter.tags.array'],
-          data['filter_tags'])
-        let [endpointstags, endpointexts] = formatFromReportTags([
-          'argo.endpoint.filter.tags', 'argo.endpoint.filter.tags.array'],
-          data['filter_tags'])
-        let entities = formatFromReportEntities('argo.group.filter.fields', data['filter_tags'])
-        let preselectedtags = JSON.parse(JSON.stringify(tagsState))
-        let preselectedexts = JSON.parse(JSON.stringify(extensionsState))
-        preselectedtags['groups'] = new Object()
-        preselectedtags['endpoints'] = new Object()
-        preselectedexts['groups'] = new Object()
-        preselectedexts['endpoints'] = new Object()
-        groupstags.forEach((e, i) => {
-          preselectedtags['groups'][i] = e.name
-        })
-        endpointstags.forEach((e, i) => {
-          preselectedtags['endpoints'][i] = e.name
-        })
-        groupexts.forEach((e, i) => {
-          preselectedexts['groups'][i] = e.name
-        })
-        endpointexts.forEach((e, i) => {
-          preselectedexts['endpoints'][i] = e.name
-        })
-        if (tagsState['groups'] === undefined
-          && tagsState['endpoints'] === undefined)
-          setTagsState(preselectedtags)
-        if (
-          extensionsState['groups'] === undefined &&
-          extensionsState['endpoints'] == undefined
-        )
-          setExtensionsState(preselectedexts)
-        setGroupsTags(groupstags)
-        setEndpointsTags(endpointstags)
-        setEntitiesState(entities)
-        setGroupsExtensions(groupexts)
-        setEndpointsExtensions(endpointexts)
-      }
+          && entitiesProjects.length > 0),
     }
   )
 
@@ -973,14 +975,19 @@ export const ReportsComponent = (props) => {
   }
 
   const formatFromReportEntities = (context, formikEntities) => {
+    //let context_found = formikEntities.filter((item) => {
+      //Object.keys(item).indexOf(context) > -1
+    //})
+    //console.log(context_found)
+
     let tmpEntityJoint = new Object()
     let entities = new Array()
 
     const topologyGroups = new Object({
-      'NGI': entitiesNgi,
-      'SITES': entitiesSites,
-      'PROJECTS': entitiesProjects,
-      'SERVICEGROUPS': entitiesServiceGroups
+      entitiesNgi,
+      entitiesSites,
+      entitiesProjects,
+      entitiesServiceGroups
     })
 
     for (let entity of formikEntities) {
@@ -1323,13 +1330,6 @@ export const ReportsComponent = (props) => {
         )
       }
     }
-
-    const topoGroups = new Object({
-      'ngis': entitiesNgi,
-      'sites': entitiesSites,
-      'projects': entitiesProjects,
-      'servicegroups': entitiesServiceGroups
-    })
 
     return (
       <BaseArgoView
@@ -1700,7 +1700,10 @@ export const ReportsComponent = (props) => {
                             name="entities"
                             render={props => (
                               <TopologyEntityFields
-                                topoGroups={topoGroups}
+                                topoGroups={{
+                                  entitiesNgi, entitiesSites,
+                                  entitiesProjects, entitiesServiceGroups
+                                }}
                                 addview={addview}
                                 publicView={publicView}
                                 {...props}
