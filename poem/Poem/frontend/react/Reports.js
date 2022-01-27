@@ -738,12 +738,17 @@ export const ReportsComponent = (props) => {
     { enabled: !publicView && !!userDetails && crud }
   );
 
+  const { data: topologyTags, error: topologyTagsError, isLoading: loadingTopologyTags } = useQuery(
+    'topologytags', () => fetchTopologyTags(webapi),
+    { enabled: !publicView && !!userDetails && crud }
+  );
+
   const { data: webApiReport, error: errorWebApiReport, isLoading: loadingWebApiReport } = useQuery(
     ['report', 'webapi', report_name], () => fetchReport(webapi, report_name),
     {
       enabled: publicView
         || (!!userDetails && !addview
-          && !!topologyGroups && entitiesNgi.length > 0
+          && !!topologyGroups && !!topologyTags && entitiesNgi.length > 0
           && entitiesSites.length > 0 && entitiesServiceGroups.length > 0
           && entitiesServiceGroups.length > 0),
       onSuccess: (data) => {
@@ -809,10 +814,6 @@ export const ReportsComponent = (props) => {
     { enabled: !publicView && !!userDetails }
   )
 
-  const { data: topologyTags, error: topologyTagsError, isLoading: loadingTopologyTags } = useQuery(
-    'topologytags', () => fetchTopologyTags(webapi),
-    { enabled: !publicView && !!userDetails && crud }
-  );
 
   const sortStr = (a, b) => {
     if (a.toLowerCase() < b.toLowerCase()) return -1;
