@@ -741,7 +741,11 @@ export const ReportsComponent = (props) => {
   const { data: webApiReport, error: errorWebApiReport, isLoading: loadingWebApiReport } = useQuery(
     ['report', 'webapi', report_name], () => fetchReport(webapi, report_name),
     {
-      enabled: publicView || (!!userDetails && !addview && !!topologyGroups),
+      enabled: publicView
+        || (!!userDetails && !addview
+          && !!topologyGroups && entitiesNgi.length > 0
+          && entitiesSites.length > 0 && entitiesServiceGroups.length > 0
+          && entitiesServiceGroups.length > 0),
       onSuccess: (data) => {
         let [groupstags, groupexts] = formatFromReportTags([
           'argo.group.filter.tags', 'argo.group.filter.tags.array'],
@@ -1842,3 +1846,5 @@ export const ReportsComponent = (props) => {
   else
     return null
 };
+
+
