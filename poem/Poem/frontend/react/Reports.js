@@ -749,13 +749,7 @@ export const ReportsComponent = (props) => {
         let [endpointstags, endpointexts] = formatFromReportTags([
           'argo.endpoint.filter.tags', 'argo.endpoint.filter.tags.array'],
           data['filter_tags'])
-        const topoGroups = new Object({
-          'NGI': entitiesNgi,
-          'SITES': entitiesSites,
-          'PROJECTS': entitiesProjects,
-          'SERVICEGROUPS': entitiesServiceGroups
-        })
-        let entities = formatFromReportEntities('argo.group.filter.fields', data['filter_tags'], topoGroups)
+        let entities = formatFromReportEntities('argo.group.filter.fields', data['filter_tags'])
         let preselectedtags = JSON.parse(JSON.stringify(tagsState))
         let preselectedexts = JSON.parse(JSON.stringify(extensionsState))
         preselectedtags['groups'] = new Object()
@@ -973,9 +967,16 @@ export const ReportsComponent = (props) => {
     return [tags, extensions]
   }
 
-  const formatFromReportEntities = (context, formikEntities, topologyGroups) => {
+  const formatFromReportEntities = (context, formikEntities) => {
     let tmpEntityJoint = new Object()
     let entities = new Array()
+
+    const topologyGroups = new Object({
+      'NGI': entitiesNgi,
+      'SITES': entitiesSites,
+      'PROJECTS': entitiesProjects,
+      'SERVICEGROUPS': entitiesServiceGroups
+    })
 
     for (let entity of formikEntities) {
       if (entity.context === context) {
