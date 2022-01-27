@@ -790,9 +790,7 @@ export const ReportsComponent = (props) => {
     {
       enabled: publicView
         || (!!userDetails && !addview
-          && !!topologyGroups && !!topologyTags && entitiesNgi.length > 0
-          && entitiesSites.length > 0 && entitiesServiceGroups.length > 0
-          && entitiesProjects.length > 0),
+          && entitiesSites.length > 0),
     }
   )
 
