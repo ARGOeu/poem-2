@@ -568,7 +568,7 @@ const TopologyEntityFields = ({topoGroups, addview, publicView, form}) => {
                 joinedValues += event.value + ' '
               joinedValues = joinedValues.trim()
               form.setFieldValue("entities.0.value", joinedValues)
-              form.setFieldValue("entities.0.name", key1.toUpperCase().slice(0, -1))
+              form.setFieldValue("entities.0.name", key1)
             }}
             entitiesInitials={!addview ? entityInitValues(["entitiesNgi", "entitiesProjects"]) : undefined}
           />
@@ -595,7 +595,7 @@ const TopologyEntityFields = ({topoGroups, addview, publicView, form}) => {
               for (let event of e)
                 joinedValues += event.value + ' '
               joinedValues = joinedValues.trim()
-              form.setFieldValue("entities.1.name", key2.toUpperCase())
+              form.setFieldValue("entities.1.name", key2)
               form.setFieldValue("entities.1.value", joinedValues)
             }}
             entitiesInitials={!addview ? entityInitValues(["entitiesSites", "setEntitiesServiceGroups"]) : undefined}
