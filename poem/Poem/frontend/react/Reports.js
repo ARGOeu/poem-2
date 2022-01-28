@@ -659,7 +659,6 @@ export const ReportsComponent = (props) => {
   }))
   const [groupsTags, setGroupsTags] = useState(new Array())
   const [endpointsTags, setEndpointsTags] = useState(new Array())
-  const [entitiesState, setEntitiesState] = useState(new Array())
   const [groupsExtensions, setGroupsExtensions] = useState(new Array())
   const [endpointsExtensions, setEndpointsExtensions] = useState(new Array())
   const [extensionsState, setExtensionsState] = useState(
@@ -668,11 +667,6 @@ export const ReportsComponent = (props) => {
       endpoints: undefined
     })
   )
-
-  const [entitiesNgi, setEntitiesNgi] = useState(new Array())
-  const [entitiesSites, setEntitiesSites] = useState(new Array())
-  const [entitiesProjects, setEntitiesProjects] = useState(new Array())
-  const [entitiesServiceGroups, setEntitiesServiceGroups] = useState(new Array())
 
   const webapi = new WebApi({
     token: props.webapitoken,
@@ -708,33 +702,7 @@ export const ReportsComponent = (props) => {
   )
 
   const { data: topologyGroups, error: topologyGroupsErrors, isLoading: loadingTopologyGroups } = useQuery(
-    'topologygroups', async () => {
-      let topogroups = await fetchTopologyGroups(webapi)
-      let ngis = new Set()
-      let projects = new Set()
-      let servicegroups = new Set()
-      let sites = new Set()
-
-      if (topogroups) {
-        for (var entity of topogroups) {
-          if (entity['type'].toLowerCase() === 'project') {
-            projects.add(entity['group'])
-            servicegroups.add(entity['subgroup'])
-          }
-
-          else if (entity['type'].toLowerCase() === 'ngi') {
-            ngis.add(entity['group'])
-            sites.add(entity['subgroup'])
-          }
-        }
-        setEntitiesNgi(Array.from(ngis).sort(sortStr))
-        setEntitiesSites(Array.from(sites).sort(sortStr))
-        setEntitiesProjects(Array.from(projects).sort(sortStr))
-        setEntitiesServiceGroups(Array.from(servicegroups).sort(sortStr))
-      }
-
-      return topogroups
-    },
+    'topologygroups', () => fetchTopologyGroups(webapi),
     { enabled: !publicView && !!userDetails && crud }
   );
 
@@ -745,6 +713,9 @@ export const ReportsComponent = (props) => {
 
   const { data: webApiReport, error: errorWebApiReport, isLoading: loadingWebApiReport } = useQuery(
     ['report', 'webapi', report_name], async () => {
+
+      console.log("from fetchReport", topologyGroups[0])
+
       let report = await fetchReport(webapi, report_name)
       let [groupstags, groupexts] = formatFromReportTags([
         'argo.group.filter.tags', 'argo.group.filter.tags.array'],
@@ -752,7 +723,6 @@ export const ReportsComponent = (props) => {
       let [endpointstags, endpointexts] = formatFromReportTags([
         'argo.endpoint.filter.tags', 'argo.endpoint.filter.tags.array'],
         report['filter_tags'])
-      let entities = formatFromReportEntities('argo.group.filter.fields', report['filter_tags'])
       let preselectedtags = JSON.parse(JSON.stringify(tagsState))
       let preselectedexts = JSON.parse(JSON.stringify(extensionsState))
       preselectedtags['groups'] = new Object()
@@ -781,7 +751,6 @@ export const ReportsComponent = (props) => {
         setExtensionsState(preselectedexts)
       setGroupsTags(groupstags)
       setEndpointsTags(endpointstags)
-      setEntitiesState(entities)
       setGroupsExtensions(groupexts)
       setEndpointsExtensions(endpointexts)
 
@@ -790,7 +759,8 @@ export const ReportsComponent = (props) => {
     {
       enabled: publicView
         || (!!userDetails && !addview
-          && entitiesSites.length > 0),
+          && topologyTags && topologyTags.length > 0
+          && topologyGroups && topologyGroups.length > 0),
     }
   )
 
@@ -813,7 +783,6 @@ export const ReportsComponent = (props) => {
     ['thresholdsprofile', 'webapi'], () => fetchThresholdsProfiles(webapi),
     { enabled: !publicView && !!userDetails }
   )
-
 
   const sortStr = (a, b) => {
     if (a.toLowerCase() < b.toLowerCase()) return -1;
@@ -972,20 +941,13 @@ export const ReportsComponent = (props) => {
     return [tags, extensions]
   }
 
-  const formatFromReportEntities = (context, formikEntities) => {
+  const formatFromReportEntities = (context, formikEntities, topologyGroups) => {
     let context_found = formikEntities.filter(item => item["context"] === context)
     if (context_found.length === 0)
       return new Array()
 
     let tmpEntityJoint = new Object()
     let entities = new Array()
-
-    const topologyGroups = new Object({
-      entitiesNgi,
-      entitiesSites,
-      entitiesProjects,
-      entitiesServiceGroups
-    })
 
     for (let entity of formikEntities) {
       if (entity.context === context) {
@@ -1258,6 +1220,11 @@ export const ReportsComponent = (props) => {
     let aggregationProfile = '';
     let operationsProfile = '';
     let thresholdsProfile = '';
+    let entitiesSites = new Array()
+    let entitiesNgi = new Array()
+    let entitiesProjects= new Array()
+    let entitiesServiceGroups = new Array()
+    let entitiesFormik = new Array()
 
     if (webApiReport) {
       webApiReport.profiles.forEach(profile => {
@@ -1273,6 +1240,38 @@ export const ReportsComponent = (props) => {
         if (profile.type == 'thresholds')
           thresholdsProfile = profile.name;
       })
+    }
+
+    if (topologyGroups
+      && webApiReport
+      && entitiesSites.length === 0) {
+      let ngis = new Set()
+      let projects = new Set()
+      let servicegroups = new Set()
+      let sites = new Set()
+
+      for (var entity of topologyGroups) {
+        if (entity['type'].toLowerCase() === 'project') {
+          projects.add(entity['group'])
+          servicegroups.add(entity['subgroup'])
+        }
+
+        else if (entity['type'].toLowerCase() === 'ngi') {
+          ngis.add(entity['group'])
+          sites.add(entity['subgroup'])
+        }
+      }
+      entitiesNgi = Array.from(ngis).sort(sortStr)
+      entitiesSites = Array.from(sites).sort(sortStr)
+      entitiesProjects = Array.from(projects).sort(sortStr)
+      entitiesServiceGroups = Array.from(servicegroups).sort(sortStr)
+      entitiesFormik = formatFromReportEntities('argo.group.filter.fields',
+        webApiReport['filter_tags'], {
+          entitiesNgi,
+          entitiesSites,
+          entitiesProjects,
+          entitiesServiceGroups
+        })
     }
 
     let write_perm = undefined;
@@ -1362,7 +1361,7 @@ export const ReportsComponent = (props) => {
             endpointsTags: endpointsTags,
             groupsExtensions: groupsExtensions,
             endpointsExtensions: endpointsExtensions,
-            entities: entitiesState
+            entities: entitiesFormik
           }}
           enableReinitialize={true}
           onSubmit = {(values) => onSubmitHandle(values)}
