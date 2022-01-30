@@ -1236,7 +1236,7 @@ export const ReportsComponent = (props) => {
 
     if (topologyGroups && webApiReport
       && entitiesNgi.length === 0 && entitiesSites.length === 0
-      && entitiesProjects.length === 0 && entitiesServiceGroups === 0) {
+      && entitiesProjects.length === 0 && entitiesServiceGroups.length === 0) {
       let ngis = new Set()
       let projects = new Set()
       let servicegroups = new Set()
@@ -1265,6 +1265,7 @@ export const ReportsComponent = (props) => {
           entitiesServiceGroups
         })
     }
+    console.log(entitiesNgi, entitiesProjects)
 
     let write_perm = undefined;
     let grouplist = undefined;
@@ -1333,6 +1334,7 @@ export const ReportsComponent = (props) => {
       groupsTags = gt
       endpointsExtensions = ee
     }
+    console.log(endpointsTags, groupsExtensions)
 
     return (
       <BaseArgoView
