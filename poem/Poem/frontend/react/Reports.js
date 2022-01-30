@@ -657,10 +657,6 @@ export const ReportsComponent = (props) => {
     'groups': undefined,
     'endpoints': undefined
   }))
-  const [groupsTags, setGroupsTags] = useState(new Array())
-  const [endpointsTags, setEndpointsTags] = useState(new Array())
-  const [groupsExtensions, setGroupsExtensions] = useState(new Array())
-  const [endpointsExtensions, setEndpointsExtensions] = useState(new Array())
   const [extensionsState, setExtensionsState] = useState(
     new Object({
       groups: undefined,
@@ -714,8 +710,6 @@ export const ReportsComponent = (props) => {
   const { data: webApiReport, error: errorWebApiReport, isLoading: loadingWebApiReport } = useQuery(
     ['report', 'webapi', report_name], async () => {
 
-      console.log("from fetchReport", topologyGroups[0])
-
       let report = await fetchReport(webapi, report_name)
       let [groupstags, groupexts] = formatFromReportTags([
         'argo.group.filter.tags', 'argo.group.filter.tags.array'],
@@ -749,18 +743,12 @@ export const ReportsComponent = (props) => {
         extensionsState['endpoints'] == undefined
       )
         setExtensionsState(preselectedexts)
-      setGroupsTags(groupstags)
-      setEndpointsTags(endpointstags)
-      setGroupsExtensions(groupexts)
-      setEndpointsExtensions(endpointexts)
 
       return report
     },
     {
       enabled: publicView
-        || (!!userDetails && !addview
-          && topologyTags && topologyTags.length > 0
-          && topologyGroups && topologyGroups.length > 0),
+      || (!!userDetails && !addview),
     }
   )
 
@@ -1225,6 +1213,10 @@ export const ReportsComponent = (props) => {
     let entitiesProjects= new Array()
     let entitiesServiceGroups = new Array()
     let entitiesFormik = new Array()
+    let groupsTags = undefined
+    let endpointsTags = undefined
+    let groupsExtensions = undefined
+    let endpointsExtensions = undefined
 
     if (webApiReport) {
       webApiReport.profiles.forEach(profile => {
@@ -1242,9 +1234,9 @@ export const ReportsComponent = (props) => {
       })
     }
 
-    if (topologyGroups
-      && webApiReport
-      && entitiesSites.length === 0) {
+    if (topologyGroups && webApiReport
+      && entitiesNgi.length === 0 && entitiesSites.length === 0
+      && entitiesProjects.length === 0 && entitiesServiceGroups === 0) {
       let ngis = new Set()
       let projects = new Set()
       let servicegroups = new Set()
@@ -1325,6 +1317,21 @@ export const ReportsComponent = (props) => {
           })
         )
       }
+    }
+
+    if (topologyTags && webApiReport && groupsTags === undefined &&
+      endpointsTags == undefined && groupsExtensions === undefined &&
+      endpointsExtensions === undefined ) {
+      let [gt, ge] = formatFromReportTags([
+        'argo.group.filter.tags', 'argo.group.filter.tags.array'],
+        webApiReport['filter_tags'])
+      let [et, ee] = formatFromReportTags([
+        'argo.endpoint.filter.tags', 'argo.endpoint.filter.tags.array'],
+        webApiReport['filter_tags'])
+      endpointsTags = et
+      groupsExtensions = ge
+      groupsTags = gt
+      endpointsExtensions = ee
     }
 
     return (
