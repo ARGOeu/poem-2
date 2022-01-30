@@ -708,44 +708,7 @@ export const ReportsComponent = (props) => {
   );
 
   const { data: webApiReport, error: errorWebApiReport, isLoading: loadingWebApiReport } = useQuery(
-    ['report', 'webapi', report_name], async () => {
-
-      let report = await fetchReport(webapi, report_name)
-      let [groupstags, groupexts] = formatFromReportTags([
-        'argo.group.filter.tags', 'argo.group.filter.tags.array'],
-        report['filter_tags'])
-      let [endpointstags, endpointexts] = formatFromReportTags([
-        'argo.endpoint.filter.tags', 'argo.endpoint.filter.tags.array'],
-        report['filter_tags'])
-      let preselectedtags = JSON.parse(JSON.stringify(tagsState))
-      let preselectedexts = JSON.parse(JSON.stringify(extensionsState))
-      preselectedtags['groups'] = new Object()
-      preselectedtags['endpoints'] = new Object()
-      preselectedexts['groups'] = new Object()
-      preselectedexts['endpoints'] = new Object()
-      groupstags.forEach((e, i) => {
-        preselectedtags['groups'][i] = e.name
-      })
-      endpointstags.forEach((e, i) => {
-        preselectedtags['endpoints'][i] = e.name
-      })
-      groupexts.forEach((e, i) => {
-        preselectedexts['groups'][i] = e.name
-      })
-      endpointexts.forEach((e, i) => {
-        preselectedexts['endpoints'][i] = e.name
-      })
-      if (tagsState['groups'] === undefined
-        && tagsState['endpoints'] === undefined)
-        setTagsState(preselectedtags)
-      if (
-        extensionsState['groups'] === undefined &&
-        extensionsState['endpoints'] == undefined
-      )
-        setExtensionsState(preselectedexts)
-
-      return report
-    },
+    ['report', 'webapi', report_name], () => fetchReport(webapi, report_name),
     {
       enabled: publicView
       || (!!userDetails && !addview),
@@ -1265,7 +1228,6 @@ export const ReportsComponent = (props) => {
           entitiesServiceGroups
         })
     }
-    console.log(entitiesNgi, entitiesProjects)
 
     let write_perm = undefined;
     let grouplist = undefined;
@@ -1334,7 +1296,42 @@ export const ReportsComponent = (props) => {
       groupsTags = gt
       endpointsExtensions = ee
     }
-    console.log(endpointsTags, groupsExtensions)
+
+    if (webApiReport && extensionsState['groups'] === undefined
+      && tagsState['endpoints'] === undefined) {
+      let [groupstags, groupexts] = formatFromReportTags([
+        'argo.group.filter.tags', 'argo.group.filter.tags.array'],
+        webApiReport['filter_tags'])
+      let [endpointstags, endpointexts] = formatFromReportTags([
+        'argo.endpoint.filter.tags', 'argo.endpoint.filter.tags.array'],
+        webApiReport['filter_tags'])
+      let preselectedtags = JSON.parse(JSON.stringify(tagsState))
+      let preselectedexts = JSON.parse(JSON.stringify(extensionsState))
+      preselectedtags['groups'] = new Object()
+      preselectedtags['endpoints'] = new Object()
+      preselectedexts['groups'] = new Object()
+      preselectedexts['endpoints'] = new Object()
+      groupstags.forEach((e, i) => {
+        preselectedtags['groups'][i] = e.name
+      })
+      endpointstags.forEach((e, i) => {
+        preselectedtags['endpoints'][i] = e.name
+      })
+      groupexts.forEach((e, i) => {
+        preselectedexts['groups'][i] = e.name
+      })
+      endpointexts.forEach((e, i) => {
+        preselectedexts['endpoints'][i] = e.name
+      })
+      if (tagsState['groups'] === undefined
+        && tagsState['endpoints'] === undefined)
+        setTagsState(preselectedtags)
+      if (
+        extensionsState['groups'] === undefined &&
+        extensionsState['endpoints'] == undefined
+      )
+        setExtensionsState(preselectedexts)
+    }
 
     return (
       <BaseArgoView
