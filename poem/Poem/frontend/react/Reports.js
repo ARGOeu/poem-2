@@ -1197,8 +1197,7 @@ export const ReportsComponent = (props) => {
       })
     }
 
-    if (topologyGroups && webApiReport
-      && entitiesNgi.length === 0 && entitiesSites.length === 0
+    if (topologyGroups && entitiesNgi.length === 0 && entitiesSites.length === 0
       && entitiesProjects.length === 0 && entitiesServiceGroups.length === 0) {
       let ngis = new Set()
       let projects = new Set()
@@ -1220,6 +1219,11 @@ export const ReportsComponent = (props) => {
       entitiesSites = Array.from(sites).sort(sortStr)
       entitiesProjects = Array.from(projects).sort(sortStr)
       entitiesServiceGroups = Array.from(servicegroups).sort(sortStr)
+    }
+
+    if (!addview && webApiReport
+      && entitiesNgi.length > 0 && entitiesSites.length > 0
+      && entitiesProjects.length > 0 && entitiesServiceGroups.length > 0)
       entitiesFormik = formatFromReportEntities('argo.group.filter.fields',
         webApiReport['filter_tags'], {
           entitiesNgi,
@@ -1227,7 +1231,6 @@ export const ReportsComponent = (props) => {
           entitiesProjects,
           entitiesServiceGroups
         })
-    }
 
     let write_perm = undefined;
     let grouplist = undefined;
