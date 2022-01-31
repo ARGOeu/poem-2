@@ -342,11 +342,11 @@ const TopologyTagList = ({ part, fieldName, tagsState, setTagsState, tagsAll, ad
             </Col>
           </Row>
         :
-          form.values[fieldName].map((tags, index) => (
-            <React.Fragment key={index}>
-              <Row key={index} className="g-0">
-                <Col md={4}>
-                  {
+        form.values[fieldName].map((tags, index) => (
+          <React.Fragment key={index}>
+            <Row key={index} className="g-0">
+              <Col md={4}>
+                {
                     publicView ?
                       <Field
                         name={`${fieldName}.${index}.name`}
@@ -373,9 +373,9 @@ const TopologyTagList = ({ part, fieldName, tagsState, setTagsState, tagsAll, ad
                         tagInitials={!addview ? tagsInitValues('name', tags) : undefined}
                       />
                   }
-                </Col>
-                <Col md={7}>
-                  {
+              </Col>
+              <Col md={7}>
+                {
                     publicView ?
                       <Field
                         name={`${fieldName}.${index}.value`}
@@ -406,9 +406,9 @@ const TopologyTagList = ({ part, fieldName, tagsState, setTagsState, tagsAll, ad
                         tagInitials={!addview ? tagsInitValues('value', tags, true) : undefined}
                       />
                   }
-                </Col>
-                <Col md={1} className="ps-2 pt-1">
-                  {
+              </Col>
+              <Col md={1} className="ps-2 pt-1">
+                {
                     !publicView &&
                       <Button size="sm" color="danger"
                         type="button"
@@ -433,9 +433,9 @@ const TopologyTagList = ({ part, fieldName, tagsState, setTagsState, tagsAll, ad
                         <FontAwesomeIcon icon={faTimes}/>
                       </Button>
                   }
-                </Col>
-              </Row>
-            </React.Fragment>
+              </Col>
+            </Row>
+          </React.Fragment>
           ))
       }
       <Row>
@@ -652,6 +652,7 @@ export const ReportsComponent = (props) => {
   const [onYes, setOnYes] = useState('')
   const [formikValues, setFormikValues] = useState({})
   const topologyTypes = ['Sites', 'ServiceGroups']
+
 
   const [tagsState, setTagsState] = useState(new Object({
     'groups': undefined,
@@ -1171,6 +1172,7 @@ export const ReportsComponent = (props) => {
     let aggregationProfile = '';
     let operationsProfile = '';
     let thresholdsProfile = '';
+
     let entitiesSites = new Array()
     let entitiesNgi = new Array()
     let entitiesProjects= new Array()
@@ -1285,7 +1287,7 @@ export const ReportsComponent = (props) => {
       }
     }
 
-    if (topologyTags && webApiReport && groupsTags === undefined &&
+    if (!addview && topologyTags && webApiReport && groupsTags === undefined &&
       endpointsTags == undefined && groupsExtensions === undefined &&
       endpointsExtensions === undefined ) {
       let [gt, ge] = formatFromReportTags([
@@ -1294,46 +1296,49 @@ export const ReportsComponent = (props) => {
       let [et, ee] = formatFromReportTags([
         'argo.endpoint.filter.tags', 'argo.endpoint.filter.tags.array'],
         webApiReport['filter_tags'])
-      endpointsTags = et
-      groupsExtensions = ge
-      groupsTags = gt
-      endpointsExtensions = ee
-    }
 
-    if (webApiReport && extensionsState['groups'] === undefined
-      && tagsState['endpoints'] === undefined) {
-      let [groupstags, groupexts] = formatFromReportTags([
-        'argo.group.filter.tags', 'argo.group.filter.tags.array'],
-        webApiReport['filter_tags'])
-      let [endpointstags, endpointexts] = formatFromReportTags([
-        'argo.endpoint.filter.tags', 'argo.endpoint.filter.tags.array'],
-        webApiReport['filter_tags'])
       let preselectedtags = JSON.parse(JSON.stringify(tagsState))
       let preselectedexts = JSON.parse(JSON.stringify(extensionsState))
       preselectedtags['groups'] = new Object()
       preselectedtags['endpoints'] = new Object()
       preselectedexts['groups'] = new Object()
       preselectedexts['endpoints'] = new Object()
-      groupstags.forEach((e, i) => {
+
+      endpointsTags = et
+      groupsExtensions = ge
+      groupsTags = gt
+      endpointsExtensions = ee
+
+      groupsTags.forEach((e, i) => {
         preselectedtags['groups'][i] = e.name
       })
-      endpointstags.forEach((e, i) => {
+      endpointsTags.forEach((e, i) => {
         preselectedtags['endpoints'][i] = e.name
       })
-      groupexts.forEach((e, i) => {
+      groupsExtensions.forEach((e, i) => {
         preselectedexts['groups'][i] = e.name
       })
-      endpointexts.forEach((e, i) => {
+      endpointsExtensions.forEach((e, i) => {
         preselectedexts['endpoints'][i] = e.name
       })
+
       if (tagsState['groups'] === undefined
         && tagsState['endpoints'] === undefined)
         setTagsState(preselectedtags)
+
       if (
         extensionsState['groups'] === undefined &&
         extensionsState['endpoints'] == undefined
       )
         setExtensionsState(preselectedexts)
+    }
+    else if (addview && groupsTags === undefined
+      && endpointsTags == undefined && groupsExtensions === undefined
+      && endpointsExtensions === undefined) {
+      endpointsTags = new Array()
+      groupsExtensions = new Array()
+      groupsTags = new Array()
+      endpointsExtensions = new Array()
     }
 
     return (
@@ -1682,19 +1687,19 @@ export const ReportsComponent = (props) => {
                             <strong>Extensions</strong>
                           </CardTitle>
                           <FieldArray
-                            name="groupsExtensions"
-                            render={ props => (
-                              <TopologyTagList
-                                {...props}
-                                part="groups"
-                                fieldName="groupsExtensions"
-                                tagsState={extensionsState}
-                                setTagsState={setExtensionsState}
-                                tagsAll={allExtensions}
-                                publicView={publicView}
-                              />
-                            ) }
-                          />
+                              name="groupsExtensions"
+                              render={ props => (
+                                <TopologyTagList
+                                  {...props}
+                                  part="groups"
+                                  fieldName="groupsExtensions"
+                                  tagsState={extensionsState}
+                                  setTagsState={setExtensionsState}
+                                  tagsAll={allExtensions}
+                                  publicView={publicView}
+                                />
+                              ) }
+                            />
                           <div>
                             <hr style={{'borderTop': '1px solid #b5c4d1'}}/>
                           </div>
@@ -1748,20 +1753,20 @@ export const ReportsComponent = (props) => {
                             <strong>Extensions</strong>
                           </CardTitle>
                           <FieldArray
-                            name="endpointsExtensions"
-                            render={ propsLocal => (
-                              <TopologyTagList
-                                {...propsLocal}
-                                part="endpoints"
-                                fieldName="endpointsExtensions"
-                                tagsState={extensionsState}
-                                setTagsState={setExtensionsState}
-                                tagsAll={allExtensions}
-                                addview={addview}
-                                publicView={publicView}
-                              />
-                            ) }
-                          />
+                              name="endpointsExtensions"
+                              render={ propsLocal => (
+                                <TopologyTagList
+                                  {...propsLocal}
+                                  part="endpoints"
+                                  fieldName="endpointsExtensions"
+                                  tagsState={extensionsState}
+                                  setTagsState={setExtensionsState}
+                                  tagsAll={allExtensions}
+                                  addview={addview}
+                                  publicView={publicView}
+                                />
+                              ) }
+                            />
                         </CardBody>
                       </Card>
                     </Col>
