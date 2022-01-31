@@ -1332,7 +1332,7 @@ export const ReportsComponent = (props) => {
       )
         setExtensionsState(preselectedexts)
     }
-    else if (addview && groupsTags === undefined
+    else if ((addview || publicView) && groupsTags === undefined
       && endpointsTags == undefined && groupsExtensions === undefined
       && endpointsExtensions === undefined) {
       endpointsTags = new Array()
