@@ -700,7 +700,7 @@ export const ReportsComponent = (props) => {
 
   const { data: topologyGroups, error: topologyGroupsErrors, isLoading: loadingTopologyGroups } = useQuery(
     'topologygroups', () => fetchTopologyGroups(webapi),
-    { enabled: !publicView && !!userDetails && crud }
+    { enabled: (publicView || !!userDetails) && crud }
   );
 
   const { data: topologyTags, error: topologyTagsError, isLoading: loadingTopologyTags } = useQuery(
@@ -1287,9 +1287,8 @@ export const ReportsComponent = (props) => {
       }
     }
 
-    if (!addview && topologyTags && webApiReport && groupsTags === undefined &&
-      endpointsTags == undefined && groupsExtensions === undefined &&
-      endpointsExtensions === undefined ) {
+    if (!addview && groupsTags === undefined && endpointsTags == undefined
+      && groupsExtensions === undefined && endpointsExtensions === undefined ) {
       let [gt, ge] = formatFromReportTags([
         'argo.group.filter.tags', 'argo.group.filter.tags.array'],
         webApiReport['filter_tags'])
