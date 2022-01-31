@@ -153,17 +153,17 @@ const mockReport = {
       context: "argo.endpoint.filter.tags"
     },
     {
-      name: "NGI",
+      name: "group",
       value: "iris.ac.uk",
       context: "argo.group.filter.fields"
     },
     {
-      name: "SITES",
+      name: "group",
       value: "dirac-durham",
       context: "argo.group.filter.fields"
     },
     {
-      name: "SITES",
+      name: "group",
       value: "IRISOPS-IAM",
       context: "argo.group.filter.fields"
     },
@@ -1366,7 +1366,7 @@ describe('Tests for reports changeview', () => {
             value: 'ce1.gridpp.ecdf.ed.ac.uk'
           },
           {
-            name: "NGI",
+            name: "group",
             value: "iris.ac.uk",
             context: "argo.group.filter.fields"
           },
@@ -1608,22 +1608,22 @@ describe('Tests for reports changeview', () => {
             value: 'ce1.gridpp.ecdf.ed.ac.uk'
           },
           {
-            name: "NGI",
+            name: "group",
             value: "iris.ac.uk",
             context: "argo.group.filter.fields"
           },
           {
-            name: "SITES",
+            name: "group",
             value: "dirac-durham",
             context: "argo.group.filter.fields"
           },
           {
-            name: "SITES",
+            name: "group",
             value: "IRISOPS-IAM",
             context: "argo.group.filter.fields"
           },
           {
-            name: "SITES",
+            name: "group",
             value: "RU-SARFTI",
             context: "argo.group.filter.fields"
           }
@@ -1846,7 +1846,7 @@ describe('Tests for reports changeview', () => {
             value: 'ce1.gridpp.ecdf.ed.ac.uk'
           },
           {
-            name: "NGI",
+            name: "group",
             value: "iris.ac.uk",
             context: "argo.group.filter.fields"
           },
@@ -2089,7 +2089,7 @@ describe('Tests for reports changeview', () => {
             value: 'ce1.gridpp.ecdf.ed.ac.uk'
           },
           {
-            name: "NGI",
+            name: "group",
             value: "iris.ac.uk",
             context: "argo.group.filter.fields"
           },
@@ -2336,7 +2336,7 @@ describe('Tests for reports changeview', () => {
             value: 'ce1.gridpp.ecdf.ed.ac.uk'
           },
           {
-            name: "NGI",
+            name: "group",
             value: "iris.ac.uk",
             context: "argo.group.filter.fields"
           },
