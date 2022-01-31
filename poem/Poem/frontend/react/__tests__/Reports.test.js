@@ -1371,17 +1371,17 @@ describe('Tests for reports changeview', () => {
             context: "argo.group.filter.fields"
           },
           {
-            name: "SITES",
+            name: "group",
             value: "dirac-durham",
             context: "argo.group.filter.fields"
           },
           {
-            name: "SITES",
+            name: "group",
             value: "IRISOPS-IAM",
             context: "argo.group.filter.fields"
           },
           {
-            name: "SITES",
+            name: "group",
             value: "RU-SARFTI",
             context: "argo.group.filter.fields"
           }
@@ -1851,17 +1851,17 @@ describe('Tests for reports changeview', () => {
             context: "argo.group.filter.fields"
           },
           {
-            name: "SITES",
+            name: "group",
             value: "dirac-durham",
             context: "argo.group.filter.fields"
           },
           {
-            name: "SITES",
+            name: "group",
             value: "IRISOPS-IAM",
             context: "argo.group.filter.fields"
           },
           {
-            name: "SITES",
+            name: "group",
             value: "RU-SARFTI",
             context: "argo.group.filter.fields"
           }
@@ -2094,17 +2094,17 @@ describe('Tests for reports changeview', () => {
             context: "argo.group.filter.fields"
           },
           {
-            name: "SITES",
+            name: "group",
             value: "dirac-durham",
             context: "argo.group.filter.fields"
           },
           {
-            name: "SITES",
+            name: "group",
             value: "IRISOPS-IAM",
             context: "argo.group.filter.fields"
           },
           {
-            name: "SITES",
+            name: "group",
             value: "RU-SARFTI",
             context: "argo.group.filter.fields"
           }
@@ -2341,17 +2341,17 @@ describe('Tests for reports changeview', () => {
             context: "argo.group.filter.fields"
           },
           {
-            name: "SITES",
+            name: "group",
             value: "dirac-durham",
             context: "argo.group.filter.fields"
           },
           {
-            name: "SITES",
+            name: "group",
             value: "IRISOPS-IAM",
             context: "argo.group.filter.fields"
           },
           {
-            name: "SITES",
+            name: "group",
             value: "RU-SARFTI",
             context: "argo.group.filter.fields"
           }
