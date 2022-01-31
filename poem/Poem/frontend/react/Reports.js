@@ -342,11 +342,11 @@ const TopologyTagList = ({ part, fieldName, tagsState, setTagsState, tagsAll, ad
             </Col>
           </Row>
         :
-          form.values[fieldName].map((tags, index) => (
-            <React.Fragment key={index}>
-              <Row key={index} className="g-0">
-                <Col md={4}>
-                  {
+        form.values[fieldName].map((tags, index) => (
+          <React.Fragment key={index}>
+            <Row key={index} className="g-0">
+              <Col md={4}>
+                {
                     publicView ?
                       <Field
                         name={`${fieldName}.${index}.name`}
@@ -373,9 +373,9 @@ const TopologyTagList = ({ part, fieldName, tagsState, setTagsState, tagsAll, ad
                         tagInitials={!addview ? tagsInitValues('name', tags) : undefined}
                       />
                   }
-                </Col>
-                <Col md={7}>
-                  {
+              </Col>
+              <Col md={7}>
+                {
                     publicView ?
                       <Field
                         name={`${fieldName}.${index}.value`}
@@ -406,9 +406,9 @@ const TopologyTagList = ({ part, fieldName, tagsState, setTagsState, tagsAll, ad
                         tagInitials={!addview ? tagsInitValues('value', tags, true) : undefined}
                       />
                   }
-                </Col>
-                <Col md={1} className="ps-2 pt-1">
-                  {
+              </Col>
+              <Col md={1} className="ps-2 pt-1">
+                {
                     !publicView &&
                       <Button size="sm" color="danger"
                         type="button"
@@ -433,9 +433,9 @@ const TopologyTagList = ({ part, fieldName, tagsState, setTagsState, tagsAll, ad
                         <FontAwesomeIcon icon={faTimes}/>
                       </Button>
                   }
-                </Col>
-              </Row>
-            </React.Fragment>
+              </Col>
+            </Row>
+          </React.Fragment>
           ))
       }
       <Row>
@@ -528,20 +528,20 @@ const TopologyEntityFields = ({topoGroups, addview, publicView, form}) => {
   if (topoType === 'Sites') {
     label1 = 'NGIs:'
     label2 = 'Sites:'
-    key1 = 'ngis'
-    key2 = 'sites'
+    key1 = 'entitiesNgi'
+    key2 = 'entitiesSites'
   }
   else if (topoType === 'ServiceGroups'){
     label1 = 'Projects:'
     label2 = 'Service groups:'
-    key1 = 'projects'
-    key2 = 'servicegroups'
+    key1 = 'entitiesProjects'
+    key2 = 'entitiesServiceGroups'
   }
   else {
     label1 = 'Upper group:'
     label2 = 'Lower group:'
-    key1 = 'ngis'
-    key2 = 'sites'
+    key1 = 'entitiesNgi'
+    key2 = 'entitiesSites'
   }
 
   return (
@@ -568,9 +568,9 @@ const TopologyEntityFields = ({topoGroups, addview, publicView, form}) => {
                 joinedValues += event.value + ' '
               joinedValues = joinedValues.trim()
               form.setFieldValue("entities.0.value", joinedValues)
-              form.setFieldValue("entities.0.name", key1.toUpperCase().slice(0, -1))
+              form.setFieldValue("entities.0.name", key1)
             }}
-            entitiesInitials={!addview ? entityInitValues(["NGI", "PROJECT"]) : undefined}
+            entitiesInitials={!addview ? entityInitValues(["entitiesNgi", "entitiesProjects"]) : undefined}
           />
       }
       <Label for='topoEntity2' className='pt-2'>{label2}</Label>
@@ -595,10 +595,10 @@ const TopologyEntityFields = ({topoGroups, addview, publicView, form}) => {
               for (let event of e)
                 joinedValues += event.value + ' '
               joinedValues = joinedValues.trim()
-              form.setFieldValue("entities.1.name", key2.toUpperCase())
+              form.setFieldValue("entities.1.name", key2)
               form.setFieldValue("entities.1.value", joinedValues)
             }}
-            entitiesInitials={!addview ? entityInitValues(["SITES", "SERVICEGROUPS"]) : undefined}
+            entitiesInitials={!addview ? entityInitValues(["entitiesSites", "setEntitiesServiceGroups"]) : undefined}
           />
       }
     </React.Fragment>
@@ -653,15 +653,11 @@ export const ReportsComponent = (props) => {
   const [formikValues, setFormikValues] = useState({})
   const topologyTypes = ['Sites', 'ServiceGroups']
 
+
   const [tagsState, setTagsState] = useState(new Object({
     'groups': undefined,
     'endpoints': undefined
   }))
-  const [groupsTags, setGroupsTags] = useState(new Array())
-  const [endpointsTags, setEndpointsTags] = useState(new Array())
-  const [entitiesState, setEntitiesState] = useState(new Array())
-  const [groupsExtensions, setGroupsExtensions] = useState(new Array())
-  const [endpointsExtensions, setEndpointsExtensions] = useState(new Array())
   const [extensionsState, setExtensionsState] = useState(
     new Object({
       groups: undefined,
@@ -702,50 +698,21 @@ export const ReportsComponent = (props) => {
     }
   )
 
+  const { data: topologyGroups, error: topologyGroupsErrors, isLoading: loadingTopologyGroups } = useQuery(
+    'topologygroups', () => fetchTopologyGroups(webapi),
+    { enabled: (publicView || !!userDetails) && crud }
+  );
+
+  const { data: topologyTags, error: topologyTagsError, isLoading: loadingTopologyTags } = useQuery(
+    'topologytags', () => fetchTopologyTags(webapi),
+    { enabled: !publicView && !!userDetails && crud }
+  );
+
   const { data: webApiReport, error: errorWebApiReport, isLoading: loadingWebApiReport } = useQuery(
     ['report', 'webapi', report_name], () => fetchReport(webapi, report_name),
     {
-      enabled: publicView || (!!userDetails && !addview),
-      onSuccess: (data) => {
-        let [groupstags, groupexts] = formatFromReportTags([
-          'argo.group.filter.tags', 'argo.group.filter.tags.array'],
-          data['filter_tags'])
-        let [endpointstags, endpointexts] = formatFromReportTags([
-          'argo.endpoint.filter.tags', 'argo.endpoint.filter.tags.array'],
-          data['filter_tags'])
-        let entities = formatFromReportEntities('argo.group.filter.fields', data['filter_tags'])
-        let preselectedtags = JSON.parse(JSON.stringify(tagsState))
-        let preselectedexts = JSON.parse(JSON.stringify(extensionsState))
-        preselectedtags['groups'] = new Object()
-        preselectedtags['endpoints'] = new Object()
-        preselectedexts['groups'] = new Object()
-        preselectedexts['endpoints'] = new Object()
-        groupstags.forEach((e, i) => {
-          preselectedtags['groups'][i] = e.name
-        })
-        endpointstags.forEach((e, i) => {
-          preselectedtags['endpoints'][i] = e.name
-        })
-        groupexts.forEach((e, i) => {
-          preselectedexts['groups'][i] = e.name
-        })
-        endpointexts.forEach((e, i) => {
-          preselectedexts['endpoints'][i] = e.name
-        })
-        if (tagsState['groups'] === undefined
-          && tagsState['endpoints'] === undefined)
-          setTagsState(preselectedtags)
-        if (
-          extensionsState['groups'] === undefined &&
-          extensionsState['endpoints'] == undefined
-        )
-          setExtensionsState(preselectedexts)
-        setGroupsTags(groupstags)
-        setEndpointsTags(endpointstags)
-        setEntitiesState(entities)
-        setGroupsExtensions(groupexts)
-        setEndpointsExtensions(endpointexts)
-      }
+      enabled: publicView
+      || (!!userDetails && !addview),
     }
   )
 
@@ -768,16 +735,6 @@ export const ReportsComponent = (props) => {
     ['thresholdsprofile', 'webapi'], () => fetchThresholdsProfiles(webapi),
     { enabled: !publicView && !!userDetails }
   )
-
-  const { data: topologyTags, error: topologyTagsError, isLoading: loadingTopologyTags } = useQuery(
-    'topologytags', () => fetchTopologyTags(webapi),
-    { enabled: !publicView && !!userDetails && crud }
-  );
-
-  const { data: topologyGroups, error: topologyGroupsErrors, isLoading: loadingTopologyGroups } = useQuery(
-    'topologygroups', () => fetchTopologyGroups(webapi),
-    { enabled: !publicView && !!userDetails && crud }
-  );
 
   const sortStr = (a, b) => {
     if (a.toLowerCase() < b.toLowerCase()) return -1;
@@ -887,14 +844,14 @@ export const ReportsComponent = (props) => {
         let values = entity.value.split(' ')
         for (var val of values)
           tmpEntites.push(new Object({
-            name: entity.name,
+            name: 'group',
             value: val,
             context: context
           }))
         entities = [...entities, ...tmpEntites]
       }
       else {
-        tmpEntity['name'] = entity.name
+        tmpEntity['name'] = 'group'
         tmpEntity['value'] = entity.value
         tmpEntity['context'] = context
         entities.push(tmpEntity)
@@ -936,15 +893,26 @@ export const ReportsComponent = (props) => {
     return [tags, extensions]
   }
 
-  const formatFromReportEntities = (context, formikEntities) => {
+  const formatFromReportEntities = (context, formikEntities, topologyGroups) => {
+    let context_found = formikEntities.filter(item => item["context"] === context)
+    if (context_found.length === 0)
+      return new Array()
+
     let tmpEntityJoint = new Object()
     let entities = new Array()
 
     for (let entity of formikEntities) {
       if (entity.context === context) {
-        if (tmpEntityJoint[entity.name] === undefined)
-          tmpEntityJoint[entity.name] = new Array()
-        tmpEntityJoint[entity.name].push(entity.value)
+        let entity_type = undefined
+        for (var type in topologyGroups)
+          if (topologyGroups[type].indexOf(entity.value) > -1) {
+            entity_type = type
+            break
+          }
+        if (tmpEntityJoint[entity_type] === undefined)
+          tmpEntityJoint[entity_type] = new Array()
+        if (entity_type)
+          tmpEntityJoint[entity_type].push(entity.value)
       }
     }
 
@@ -1205,6 +1173,16 @@ export const ReportsComponent = (props) => {
     let operationsProfile = '';
     let thresholdsProfile = '';
 
+    let entitiesSites = new Array()
+    let entitiesNgi = new Array()
+    let entitiesProjects= new Array()
+    let entitiesServiceGroups = new Array()
+    let entitiesFormik = new Array()
+    let groupsTags = undefined
+    let endpointsTags = undefined
+    let groupsExtensions = undefined
+    let endpointsExtensions = undefined
+
     if (webApiReport) {
       webApiReport.profiles.forEach(profile => {
         if (profile.type === 'metric')
@@ -1220,6 +1198,41 @@ export const ReportsComponent = (props) => {
           thresholdsProfile = profile.name;
       })
     }
+
+    if (topologyGroups && entitiesNgi.length === 0 && entitiesSites.length === 0
+      && entitiesProjects.length === 0 && entitiesServiceGroups.length === 0) {
+      let ngis = new Set()
+      let projects = new Set()
+      let servicegroups = new Set()
+      let sites = new Set()
+
+      for (var entity of topologyGroups) {
+        if (entity['type'].toLowerCase() === 'project') {
+          projects.add(entity['group'])
+          servicegroups.add(entity['subgroup'])
+        }
+
+        else if (entity['type'].toLowerCase() === 'ngi') {
+          ngis.add(entity['group'])
+          sites.add(entity['subgroup'])
+        }
+      }
+      entitiesNgi = Array.from(ngis).sort(sortStr)
+      entitiesSites = Array.from(sites).sort(sortStr)
+      entitiesProjects = Array.from(projects).sort(sortStr)
+      entitiesServiceGroups = Array.from(servicegroups).sort(sortStr)
+    }
+
+    if (!addview && webApiReport
+      && entitiesNgi.length > 0 && entitiesSites.length > 0
+      && entitiesProjects.length > 0 && entitiesServiceGroups.length > 0)
+      entitiesFormik = formatFromReportEntities('argo.group.filter.fields',
+        webApiReport['filter_tags'], {
+          entitiesNgi,
+          entitiesSites,
+          entitiesProjects,
+          entitiesServiceGroups
+        })
 
     let write_perm = undefined;
     let grouplist = undefined;
@@ -1274,32 +1287,58 @@ export const ReportsComponent = (props) => {
       }
     }
 
-    let ngis = new Set()
-    let sites = new Set()
-    let projects = new Set()
-    let servicegroups = new Set()
+    if (!addview && groupsTags === undefined && endpointsTags == undefined
+      && groupsExtensions === undefined && endpointsExtensions === undefined ) {
+      let [gt, ge] = formatFromReportTags([
+        'argo.group.filter.tags', 'argo.group.filter.tags.array'],
+        webApiReport['filter_tags'])
+      let [et, ee] = formatFromReportTags([
+        'argo.endpoint.filter.tags', 'argo.endpoint.filter.tags.array'],
+        webApiReport['filter_tags'])
 
-    if (topologyGroups) {
-      for (var entity of topologyGroups) {
-        if (entity['type'].toLowerCase() === 'project') {
-          projects.add(entity['group'])
-          servicegroups.add(entity['subgroup'])
-        }
+      let preselectedtags = JSON.parse(JSON.stringify(tagsState))
+      let preselectedexts = JSON.parse(JSON.stringify(extensionsState))
+      preselectedtags['groups'] = new Object()
+      preselectedtags['endpoints'] = new Object()
+      preselectedexts['groups'] = new Object()
+      preselectedexts['endpoints'] = new Object()
 
-        else if (entity['type'].toLowerCase() === 'ngi') {
-          ngis.add(entity['group'])
-          sites.add(entity['subgroup'])
-        }
-      }
+      endpointsTags = et
+      groupsExtensions = ge
+      groupsTags = gt
+      endpointsExtensions = ee
+
+      groupsTags.forEach((e, i) => {
+        preselectedtags['groups'][i] = e.name
+      })
+      endpointsTags.forEach((e, i) => {
+        preselectedtags['endpoints'][i] = e.name
+      })
+      groupsExtensions.forEach((e, i) => {
+        preselectedexts['groups'][i] = e.name
+      })
+      endpointsExtensions.forEach((e, i) => {
+        preselectedexts['endpoints'][i] = e.name
+      })
+
+      if (tagsState['groups'] === undefined
+        && tagsState['endpoints'] === undefined)
+        setTagsState(preselectedtags)
+
+      if (
+        extensionsState['groups'] === undefined &&
+        extensionsState['endpoints'] == undefined
+      )
+        setExtensionsState(preselectedexts)
     }
-
-    const topoGroups = new Object({
-      'ngis': Array.from(ngis).sort(sortStr),
-      'sites': Array.from(sites).sort(sortStr),
-      'projects': Array.from(projects).sort(sortStr),
-      'servicegroups': Array.from(servicegroups).sort(sortStr)
-    })
-
+    else if ((addview || publicView) && groupsTags === undefined
+      && endpointsTags == undefined && groupsExtensions === undefined
+      && endpointsExtensions === undefined) {
+      endpointsTags = new Array()
+      groupsExtensions = new Array()
+      groupsTags = new Array()
+      endpointsExtensions = new Array()
+    }
 
     return (
       <BaseArgoView
@@ -1335,7 +1374,7 @@ export const ReportsComponent = (props) => {
             endpointsTags: endpointsTags,
             groupsExtensions: groupsExtensions,
             endpointsExtensions: endpointsExtensions,
-            entities: entitiesState
+            entities: entitiesFormik
           }}
           enableReinitialize={true}
           onSubmit = {(values) => onSubmitHandle(values)}
@@ -1647,19 +1686,19 @@ export const ReportsComponent = (props) => {
                             <strong>Extensions</strong>
                           </CardTitle>
                           <FieldArray
-                            name="groupsExtensions"
-                            render={ props => (
-                              <TopologyTagList
-                                {...props}
-                                part="groups"
-                                fieldName="groupsExtensions"
-                                tagsState={extensionsState}
-                                setTagsState={setExtensionsState}
-                                tagsAll={allExtensions}
-                                publicView={publicView}
-                              />
-                            ) }
-                          />
+                              name="groupsExtensions"
+                              render={ props => (
+                                <TopologyTagList
+                                  {...props}
+                                  part="groups"
+                                  fieldName="groupsExtensions"
+                                  tagsState={extensionsState}
+                                  setTagsState={setExtensionsState}
+                                  tagsAll={allExtensions}
+                                  publicView={publicView}
+                                />
+                              ) }
+                            />
                           <div>
                             <hr style={{'borderTop': '1px solid #b5c4d1'}}/>
                           </div>
@@ -1670,7 +1709,10 @@ export const ReportsComponent = (props) => {
                             name="entities"
                             render={props => (
                               <TopologyEntityFields
-                                topoGroups={topoGroups}
+                                topoGroups={{
+                                  entitiesNgi, entitiesSites,
+                                  entitiesProjects, entitiesServiceGroups
+                                }}
                                 addview={addview}
                                 publicView={publicView}
                                 {...props}
@@ -1710,20 +1752,20 @@ export const ReportsComponent = (props) => {
                             <strong>Extensions</strong>
                           </CardTitle>
                           <FieldArray
-                            name="endpointsExtensions"
-                            render={ propsLocal => (
-                              <TopologyTagList
-                                {...propsLocal}
-                                part="endpoints"
-                                fieldName="endpointsExtensions"
-                                tagsState={extensionsState}
-                                setTagsState={setExtensionsState}
-                                tagsAll={allExtensions}
-                                addview={addview}
-                                publicView={publicView}
-                              />
-                            ) }
-                          />
+                              name="endpointsExtensions"
+                              render={ propsLocal => (
+                                <TopologyTagList
+                                  {...propsLocal}
+                                  part="endpoints"
+                                  fieldName="endpointsExtensions"
+                                  tagsState={extensionsState}
+                                  setTagsState={setExtensionsState}
+                                  tagsAll={allExtensions}
+                                  addview={addview}
+                                  publicView={publicView}
+                                />
+                              ) }
+                            />
                         </CardBody>
                       </Card>
                     </Col>
@@ -1817,3 +1859,5 @@ export const ReportsComponent = (props) => {
   else
     return null
 };
+
+
