@@ -864,6 +864,9 @@ export const ReportsComponent = (props) => {
   }
 
   const formatFromReportTags = (tagsContext, formikTags) => {
+    if (!formikTags)
+      return new Array()
+
     let tmpTagsJoint = new Object()
     let tags = new Array()
     let extensions = new Array()
@@ -897,6 +900,9 @@ export const ReportsComponent = (props) => {
   }
 
   const formatFromReportEntities = (context, formikEntities, topologyGroups) => {
+    if (!formikEntities)
+      return new Array()
+
     let context_found = formikEntities.filter(item => item["context"] === context)
     if (context_found.length === 0)
       return new Array()
@@ -1000,12 +1006,12 @@ export const ReportsComponent = (props) => {
       onSuccess: () => {
         backendDeleteMutation.mutate(idReport, {
           onSuccess: () => {
-            queryClient.invalidateQueries('report');
             NotifyOk({
               msg: 'Report successfully deleted',
               title: 'Deleted',
               callback: () => history.push('/ui/reports')
             });
+            queryClient.invalidateQueries('report');
           },
           onError: (error) => {
             NotifyError({
@@ -1186,7 +1192,7 @@ export const ReportsComponent = (props) => {
     let groupsExtensions = undefined
     let endpointsExtensions = undefined
 
-    if (webApiReport) {
+    if (webApiReport && webApiReport.profiles) {
       webApiReport.profiles.forEach(profile => {
         if (profile.type === 'metric')
           metricProfile = profile.name;
@@ -1311,16 +1317,16 @@ export const ReportsComponent = (props) => {
       groupsTags = gt
       endpointsExtensions = ee
 
-      groupsTags.forEach((e, i) => {
+      groupsTags && groupsTags.forEach((e, i) => {
         preselectedtags['groups'][i] = e.name
       })
-      endpointsTags.forEach((e, i) => {
+      endpointsTags && endpointsTags.forEach((e, i) => {
         preselectedtags['endpoints'][i] = e.name
       })
-      groupsExtensions.forEach((e, i) => {
+      groupsExtensions && groupsExtensions.forEach((e, i) => {
         preselectedexts['groups'][i] = e.name
       })
-      endpointsExtensions.forEach((e, i) => {
+      endpointsExtensions && endpointsExtensions.forEach((e, i) => {
         preselectedexts['endpoints'][i] = e.name
       })
 
