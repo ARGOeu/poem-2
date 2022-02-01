@@ -843,18 +843,21 @@ export const ReportsComponent = (props) => {
       if (entity.value.indexOf(' ') !== -1) {
         let values = entity.value.split(' ')
         for (var val of values)
-          tmpEntites.push(new Object({
-            name: 'group',
-            value: val,
-            context: context
-          }))
+          if (val)
+            tmpEntites.push(new Object({
+              name: 'group',
+              value: val,
+              context: context
+            }))
         entities = [...entities, ...tmpEntites]
       }
       else {
-        tmpEntity['name'] = 'group'
-        tmpEntity['value'] = entity.value
-        tmpEntity['context'] = context
-        entities.push(tmpEntity)
+        if (entity.value) {
+          tmpEntity['name'] = 'group'
+          tmpEntity['value'] = entity.value
+          tmpEntity['context'] = context
+          entities.push(tmpEntity)
+        }
       }
     }
     return entities
