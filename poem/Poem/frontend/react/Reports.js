@@ -1052,7 +1052,6 @@ export const ReportsComponent = (props) => {
     dataToSend.info = {
       name: formValues.name,
       description: formValues.description,
-      //TODO: created, updated
     }
     dataToSend.thresholds = {
       availability: Number.parseFloat(formValues.availabilityThreshold),
@@ -1252,7 +1251,6 @@ export const ReportsComponent = (props) => {
     if (!addview && webApiReport
       && entitiesNgi.length > 0 && entitiesSites.length > 0
       && entitiesProjects.length > 0 && entitiesServiceGroups.length > 0)
-      // TODO: pass topotype and pass two entities and build always two objs in array
       entitiesFormik = formatFromReportEntities('argo.group.filter.fields',
         webApiReport['filter_tags'], {
           entitiesNgi,
