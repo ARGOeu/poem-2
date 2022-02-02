@@ -571,8 +571,8 @@ const TopologyEntityFields = ({topoGroups, addview, publicView, form}) => {
               form.setFieldValue("entities.0.name", key1)
             }}
             entitiesInitials={!addview ? entityInitValues(["entitiesNgi", "entitiesProjects"]) : undefined}
-          />
-      }
+           />
+       }
       <Label for='topoEntity2' className='pt-2'>{label2}</Label>
       {
         publicView ?
@@ -598,7 +598,7 @@ const TopologyEntityFields = ({topoGroups, addview, publicView, form}) => {
               form.setFieldValue("entities.1.name", key2)
               form.setFieldValue("entities.1.value", joinedValues)
             }}
-            entitiesInitials={!addview ? entityInitValues(["entitiesSites", "setEntitiesServiceGroups"]) : undefined}
+            entitiesInitials={!addview ? entityInitValues(["entitiesSites", "entitiesServiceGroups"]) : undefined}
           />
       }
     </React.Fragment>
@@ -840,7 +840,7 @@ export const ReportsComponent = (props) => {
     for (let entity of formikEntities) {
       let tmpEntity = new Object()
       let tmpEntites = new Array()
-      if (entity.value.indexOf(' ') !== -1) {
+      if (entity.value && entity.value.indexOf(' ') !== -1) {
         let values = entity.value.split(' ')
         for (var val of values)
           if (val)
@@ -900,12 +900,18 @@ export const ReportsComponent = (props) => {
   }
 
   const formatFromReportEntities = (context, formikEntities, topologyGroups) => {
-    if (!formikEntities)
-      return new Array()
+    let default_empty = new Object(
+      {
+        'name': undefined,
+        'value': undefined
+      }
+    )
+    if (!formikEntities || (formikEntities && formikEntities.length === 0))
+      return new Array(default_empty, default_empty)
 
     let context_found = formikEntities.filter(item => item["context"] === context)
     if (context_found.length === 0)
-      return new Array()
+      return new Array(default_empty, default_empty)
 
     let tmpEntityJoint = new Object()
     let entities = new Array()
@@ -931,7 +937,18 @@ export const ReportsComponent = (props) => {
         'value': tmpEntityJoint[entity].join(' ')
       }))
 
-    return entities
+    let final_entities = new Array()
+    if (entities.length === 1) {
+      let only_type = entities[0].name.toLowerCase()
+      if (only_type.indexOf('ngi') !== -1 || only_type.indexOf('project') !== -1)
+        final_entities = [entities[0], default_empty]
+      else if (only_type.indexOf('site') !== -1 || only_type.indexOf('servicegroup') !== -1)
+        final_entities = [default_empty, entities[0]]
+    }
+    else
+      final_entities = entities
+
+    return final_entities
   }
 
   const formatTopologySchema = (toposchema) => {
@@ -1035,7 +1052,6 @@ export const ReportsComponent = (props) => {
     dataToSend.info = {
       name: formValues.name,
       description: formValues.description,
-      //TODO: created, updated
     }
     dataToSend.thresholds = {
       availability: Number.parseFloat(formValues.availabilityThreshold),
@@ -1242,6 +1258,17 @@ export const ReportsComponent = (props) => {
           entitiesProjects,
           entitiesServiceGroups
         })
+    else if (addview)
+      entitiesFormik = new Array(
+        new Object({
+          'name': undefined,
+          'value': undefined
+        }),
+        new Object({
+          'name': undefined,
+          'value': undefined
+        })
+      )
 
     let write_perm = undefined;
     let grouplist = undefined;
