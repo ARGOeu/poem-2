@@ -1506,7 +1506,10 @@ export const ReportsComponent = (props) => {
                           </div>
                       }
                     </InputGroup>
-                    <CustomError error={props.errors.groupname} />
+                    {
+                      !publicView &&
+                        <CustomError error={props.errors.groupname} />
+                    }
                     <FormText color='muted'>
                       Report is member of given group
                     </FormText>
