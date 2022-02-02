@@ -554,7 +554,7 @@ const TopologyEntityFields = ({topoGroups, addview, publicView, form}) => {
             id='topoEntity1'
             className='form-control'
             disabled={true}
-            value={form.values.entities[0] ? form.values.entities[0].value.replace(new RegExp(' ', 'g'), ', ') : ''}
+            value={form.values.entities[0] ? form.values.entities[0].value ? form.values.entities[0].value.replace(new RegExp(' ', 'g'), ', ') : '' : ''}
           />
         :
           <Field
@@ -581,7 +581,7 @@ const TopologyEntityFields = ({topoGroups, addview, publicView, form}) => {
             id='topoEntity2'
             className='form-control'
             disabled={true}
-            value={form.values.entities[1] ? form.values.entities[1].value.replace(new RegExp(' ', 'g'), ', ') : ''}
+            value={form.values.entities[1] ? form.values.entities[1].value ? form.values.entities[1].value.replace(new RegExp(' ', 'g'), ', ') : '' : ''}
           />
         :
           <Field
@@ -1506,7 +1506,10 @@ export const ReportsComponent = (props) => {
                           </div>
                       }
                     </InputGroup>
-                    <CustomError error={props.errors.groupname} />
+                    {
+                      !publicView &&
+                        <CustomError error={props.errors.groupname} />
+                    }
                     <FormText color='muted'>
                       Report is member of given group
                     </FormText>
@@ -1895,5 +1898,3 @@ export const ReportsComponent = (props) => {
   else
     return null
 };
-
-
