@@ -825,7 +825,8 @@ export const ReportsComponent = (props) => {
     let tags = new Array()
 
     for (let tag of formikTags) {
-      tags.push(formatTag(tag))
+      if (tag && tag.value !== '')
+        tags.push(formatTag(tag))
     }
 
     for (let tag of formikExtensions)
