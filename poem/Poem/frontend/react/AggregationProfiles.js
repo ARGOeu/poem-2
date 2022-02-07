@@ -95,7 +95,7 @@ const AggregationProfileAutocompleteField = ({service, index, isNew, groupNew, g
       }}
       getSuggestionValue={(suggestion) => suggestion}
       suggestions={suggestionList}
-      renderSuggestion={(suggestion, {query, isHighlighted}) =>
+      renderSuggestion={(suggestion, {_, isHighlighted}) =>
         <div
           key={context.list_services.indexOf(suggestion)}
           className={`aggregation-autocomplete-entries ${isHighlighted ?
@@ -633,7 +633,6 @@ export const AggregationProfilesChange = (props) => {
   const [modalTitle, setModalTitle] = useState(undefined);
   const [onYes, setOnYes] = useState('')
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  // TODO: useFormik hook with formik 2.x
   const [formikValues, setFormikValues] = useState({})
   const hiddenFileInput = React.useRef(null);
   const formikRef = React.useRef();
@@ -939,6 +938,27 @@ export const AggregationProfilesChange = (props) => {
     return isMissing
   }
 
+  const checkIfServiceExtraInMetricProfile = (servicesMetricProfile, serviceGroupsAggregationProfile) => {
+    let serviceGroupsInAggregationProfile = new Set()
+    let _difference = new Set(servicesMetricProfile)
+    let isExtra = false
+
+    serviceGroupsAggregationProfile.forEach(group => {
+      for (let service of group.services) {
+        serviceGroupsInAggregationProfile.add(service.name)
+      }
+    })
+
+    for (let elem of serviceGroupsInAggregationProfile) {
+      _difference.delete(elem)
+    }
+
+    if (_difference.size > 0)
+      isExtra = true
+
+    return { isServiceExtra: isExtra, extraServices: Array.from(_difference).sort(sortServices) }
+  }
+
   const handleFileRead = (e) => {
     let jsonData = JSON.parse(e.target.result);
     formikRef.current.setFieldValue('metric_operation', jsonData.metric_operation);
@@ -981,6 +1001,7 @@ export const AggregationProfilesChange = (props) => {
       setListServices(!addview ? extractListOfServices(webApiAP.metric_profile, metricProfiles) : [])
 
     let isServiceMissing = checkIfServiceMissingInMetricProfile(listServices, !addview ? webApiAP.groups : [])
+    let { isServiceExtra, extraServices } = checkIfServiceExtraInMetricProfile(listServices, !addview ? webApiAP.groups : [])
     let write_perm = undefined
 
     if (publicView) {
@@ -1082,11 +1103,23 @@ export const AggregationProfilesChange = (props) => {
               {
                 (isServiceMissing && !publicView) &&
                 <Alert color='danger'>
-                  <center>
+                  <center data-testid='alert-missing'>
                     <FontAwesomeIcon icon={faInfoCircle} size="lg" color="black"/> &nbsp;
                     Some Service Flavours used in Aggregation profile are not presented in associated Metric profile meaning that two profiles are out of sync. Check below for Service Flavours in blue borders.
                   </center>
                 </Alert>
+              }
+              {
+                (isServiceExtra && !publicView) &&
+                  <Alert color='danger'>
+                    <center data-testid='alert-extra'>
+                      <p>
+                        <FontAwesomeIcon icon={faInfoCircle} size='lg' color='black' /> &nbsp;
+                        There are some extra Service Flavours in associated metric profile which are not used in the aggregation profile, meaning that two profiles are out of sync:
+                      </p>
+                      <p>{ extraServices.join(', ') }</p>
+                    </center>
+                  </Alert>
               }
               <AggregationProfilesForm
                 {...props}
