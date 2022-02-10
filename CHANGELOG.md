@@ -1,5 +1,40 @@
 # Changelog
 
+## [3.4.0] - 2022-02-10
+
+### Added
+
+* ARGO-3131 Introduce public reports pages
+* ARGO-3223 Introduce filters based on EXTENSIONS
+* ARGO-3412 Filter group values
+* ARGO-3413 Filter hostname value
+* ARGO-3495 Add thresholds profile field
+* ARGO-3542 Update documentation on users page
+
+### Fixed
+
+* ARGO-3394 Public metrics view return 403
+* ARGO-3544 Cannot select metric in thresholds profiles' addview
+* ARGO-3546 Fix filter_tags settings for "name" field
+* ARGO-3561 Fix shelljs security vulnerability
+* ARGO-3562 Fix profiles select on report, write_perm on add/cloneview, closing of failed login alert
+* ARGO-3566 Ensure that entity data with empty value is not POSTed on WEB-AP
+* ARGO-3567 Fix entity formik initialization for different cases
+* ARGO-3568 Public report page not rendering if no entities
+* ARGO-3570 Ensure that no empty report tag is POSTed on WEB-API
+
+### Changed
+
+* ARGO-3244 Bump django to version 3.2
+* ARGO-3397 Upgrade to Reactstrap 9
+* ARGO-3411 Change label Endpoint group
+* ARGO-3425 input value is not required
+* ARGO-3485 Update documentation on thresholds profile page
+* ARGO-3496 Update documentation on reports page
+* ARGO-3497 Remove info_* and vo_* tags from group of endpoints tags options
+* ARGO-3523 Bump webpack stuff
+* ARGO-3543 Update frontend
+
 ## [3.3.11] - 2021-10-15
 
 ### Added
@@ -9,7 +44,7 @@
 
 ### Changed
 
-* ARGO-3261 Refactor components just to work with react-query 3.* 
+* ARGO-3261 Refactor components just to work with react-query 3.*
 * ARGO-3262 Improve query functions in all the components
 * ARGO-3263 Refactor components to use 'useMutation' hook
 * ARGO-3285 Handle binary tag value when second value is not presented in bucket
@@ -17,30 +52,30 @@
 ### Fixed
 
 * ARGO-3260 Fix parallel run of React tests
-* ARGO-3330 500 status issue when trying to delete a threshold profile 
+* ARGO-3330 500 status issue when trying to delete a threshold profile
 * ARGO-3358 Fix error that is sometimes returned in specific probe page
 
 ## [3.3.10] - 2021-09-02
 
 ### Added
 
-* ARGO-2718 Create tests for reports 
-* ARGO-3096 Delete tenant feature 
+* ARGO-2718 Create tests for reports
+* ARGO-3096 Delete tenant feature
 * ARGO-3171 Include tests for reports related API views
 * ARGO-3177 Selective enablement of Reports WEB-API CRUD
-* ARGO-3242 Use read-only token in repos internal API 
+* ARGO-3242 Use read-only token in repos internal API
 
 ### Changed
 
 * ARGO-3094 Use django-tenants for PostgreSQL tenant schemas
-* ARGO-3221 Tag multiple values as comma separated strings 
-* ARGO-3230 Update POEM documentation 
+* ARGO-3221 Tag multiple values as comma separated strings
+* ARGO-3230 Update POEM documentation
 * ARGO-3242 Use read-only token in repos internal API
 
 ### Fixed
 
-* ARGO-3242 Use read-only token in repos internal API 
-* ARGO-3243 Bump outdated libs versions 
+* ARGO-3242 Use read-only token in repos internal API
+* ARGO-3243 Bump outdated libs versions
 
 ## [3.3.9] - 2021-06-10
 
@@ -110,7 +145,7 @@
 * ARGO-2925 Bump pysaml to resolve security issue
 * ARGO-2912 sync-servtype not returning properly if tenant service types should be synced
 
-### Changed 
+### Changed
 
 * ARGO-2924 Update documentation regarding import/export csv for metric profiles
 
@@ -185,7 +220,7 @@
 
 ### Added
 
-* ARGO-2574 Cookie policy for ARGO POEM 
+* ARGO-2574 Cookie policy for ARGO POEM
 
 ## [3.3.2] - 2020-09-08
 
@@ -280,20 +315,20 @@
 
 ### Added
 * ARGO-2278 Create user manual for POEM
-* ARGO-1935 Add description to metrics 
-* ARGO-2361 Expose last_login on user detail view 
-* ARGO-2400 Public pages in React POEM 
+* ARGO-1935 Add description to metrics
+* ARGO-2361 Expose last_login on user detail view
+* ARGO-2400 Public pages in React POEM
 
 ### Fixed
 * ARGO-2359 Fix tenant_command parsing introduced in newer django-tenant-schemas
-* ARGO-2348 Clearance of staled sessions does not work 
-* ARGO-2366 Correctly handle empty metric profiles 
+* ARGO-2348 Clearance of staled sessions does not work
+* ARGO-2366 Correctly handle empty metric profiles
 * ARGO-2368 Fix parsing of DEBUG option
-* ARGO-2397 [packages] - add a new package 
+* ARGO-2397 [packages] - add a new package
 
 ### Changed
 * ARGO-2347 Resolve security issues
-* ARGO-2282 Get rid of Promises spaghetti code and use async/await 
+* ARGO-2282 Get rid of Promises spaghetti code and use async/await
 
 ## [3.1.0] - 2020-03-30
 
@@ -388,7 +423,7 @@
 
 * ARGO-1807 Investigate and possibly fix additional re-render from changelist to change view
 * ARGO-1836 Session not activated for superuser login
-* ARGO-1818 Select flavor in aggregation form 
+* ARGO-1818 Select flavor in aggregation form
 * ARGO-1923 Create UserProfile when creating Superuser using poem-db tool
 * ARGO-2023 Internal group of resources API should be filtered by correct field
 * ARGO-2026 Make API key clickable
@@ -429,7 +464,7 @@
 
 ## [2.2.0] - 2019-02-05
 
-### Added 
+### Added
 - ARGO-1580 Minimal container for tests
 - ARGO-1572 Public profiles, probes and metric pages
 - ARGO-1524 Introduce services and probes view
@@ -454,7 +489,7 @@
 - ARGO-1370 Optimize connectors queries to POEM
 - ARGO-1327 Update probe data without creating new version
 
-### Changed 
+### Changed
 - ARGO-1500 Reformat None/NULL field values fetched from DB to empty string in API views
 - ARGO-1499 Do not allow probe name changes to existing probe
 - ARGO-1485 Sorted autocompletion Metric entries
