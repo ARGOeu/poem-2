@@ -5,14 +5,15 @@ import {
   BaseArgoView,
   NotifyOk,
   DropDown,
-  FancyErrorMessage,
   Icon,
   DiffElement,
   ProfileMainInfo,
   NotifyError,
   ErrorComponent,
   ParagraphTitle,
-  ProfilesListTable
+  ProfilesListTable,
+  CustomError,
+  CustomReactSelect
 } from './UIElements';
 import Autosuggest from 'react-autosuggest';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -87,7 +88,7 @@ const AggregationProfileAutocompleteField = ({service, index, isNew, groupNew, g
   return (
     <Autosuggest
       inputProps={{
-        className: `"form-control custom-select " ${isNew && !groupNew ? "border-success" : ""} ${isMissing ? "border-primary": ""}`,
+        className: `"form-control form-select " ${isNew && !groupNew ? "border-success" : ""} ${isMissing ? "border-primary": ""}`,
         placeholder: '',
         onChange: (_, {newValue}) => context.formikBag.form.setFieldValue(`groups.${groupIndex}.services.${index}.name`, newValue),
         value: service.name
@@ -163,7 +164,7 @@ const Group = ({operation, services, groupindex, isnew, last}) => {
         <Col sm={{size: 8}} md={{size: 5}} className="mt-4 mb-2">
           <Card className={isnew ? "border-success" : ""} data-testid={`card-${groupindex}`}>
             <CardHeader className="p-1" color="primary">
-              <Row className="d-flex align-items-center no-gutters">
+              <Row className="d-flex align-items-center g-0">
                 <Col sm={{size: 10}} md={{size: 11}}>
                   <Field
                     name={`groups.${groupindex}.name`}
@@ -174,7 +175,7 @@ const Group = ({operation, services, groupindex, isnew, last}) => {
                       context.formikBag.form.errors.groups[groupindex].name ? "form-control border-danger" : "form-control"}`}
                   />
                 </Col>
-                <Col sm={{size: 2}} md={{size: 1}} className="pl-1">
+                <Col sm={{size: 2}} md={{size: 1}} className="ps-1">
                   <Button size="sm" color="danger"
                     data-testid='remove-group'
                     type="button"
@@ -195,14 +196,16 @@ const Group = ({operation, services, groupindex, isnew, last}) => {
                   />)}
               />
             </CardBody>
-            <CardFooter className="p-1 d-flex justify-content-center" data-testid='operation'>
-              <DropDown
-                field={{name: "operation", value: operation}}
-                data={insertSelectPlaceholder(context.list_operations, 'Select')}
-                prefix={`groups.${groupindex}`}
-                class_name="custom-select col-2"
-                errors={context.formikBag.form.errors && context.formikBag.form.errors.groups && context.formikBag.form.errors.groups[groupindex]}
-              />
+            <CardFooter className="p-1 d-flex justify-content-center">
+              <div className='col-2' data-testid='operation'>
+                <DropDown
+                  field={{name: "operation", value: operation}}
+                  data={insertSelectPlaceholder(context.list_operations, 'Select')}
+                  prefix={`groups.${groupindex}`}
+                  class_name="form-select form-control"
+                  errors={context.formikBag.form.errors && context.formikBag.form.errors.groups && context.formikBag.form.errors.groups[groupindex]}
+                />
+              </div>
             </CardFooter>
           </Card>
         </Col>
@@ -211,6 +214,7 @@ const Group = ({operation, services, groupindex, isnew, last}) => {
             <DropDown
               field={{name: 'profile_operation', value: context.formikBag.form.values.profile_operation}}
               data={insertSelectPlaceholder(context.list_operations, 'Select')}
+              class_name='form-select'
             />
           </div>
         </Col>
@@ -264,7 +268,7 @@ const Service = ({service, operation, groupindex, groupnew, index, isnew,
 
   return (
     <React.Fragment>
-      <Row className="d-flex align-items-center service pt-1 pb-1 no-gutters" key={index}>
+      <Row className="d-flex align-items-center service pt-1 pb-1 g-0" key={index}>
         <Col md={8}>
           <AggregationProfileAutocompleteField
             service={service}
@@ -282,12 +286,12 @@ const Service = ({service, operation, groupindex, groupnew, index, isnew,
               field={{name: "operation", value: operation}}
               data={insertSelectPlaceholder(context.list_operations, 'Select')}
               prefix={`groups.${groupindex}.services.${index}`}
-              class_name="custom-select service-operation"
+              class_name="form-select service-operation"
               isnew={isnew && !groupnew}
           />
           </div>
         </Col>
-        <Col md={2} className="pl-2">
+        <Col md={2} className="ps-2">
           <Button size="sm" color="light"
             type="button"
             data-testid={`remove-${index}`}
@@ -309,7 +313,7 @@ const Service = ({service, operation, groupindex, groupnew, index, isnew,
           context.formikBag.form.errors.groups[groupindex].services && context.formikBag.form.errors.groups[groupindex].services[index] &&
           context.formikBag.form.errors.groups[groupindex].services[index].name &&
             <Col md={8}>
-                { FancyErrorMessage(context.formikBag.form.errors.groups[groupindex].services[index].name) }
+              <CustomError error={ context.formikBag.form.errors.groups[groupindex].services[index].name} />
             </Col>
         }
         {
@@ -317,7 +321,7 @@ const Service = ({service, operation, groupindex, groupnew, index, isnew,
           context.formikBag.form.errors.groups[groupindex].services && context.formikBag.form.errors.groups[groupindex].services[index] &&
           context.formikBag.form.errors.groups[groupindex].services[index].operation &&
             <Col md={{offset: context.formikBag.form.errors.groups[groupindex].services[index].name ? 0 : 8, size: 2}}>
-                { FancyErrorMessage(context.formikBag.form.errors.groups[groupindex].services[index].operation) }
+              <CustomError error={ context.formikBag.form.errors.groups[groupindex].services[index].operation } />
             </Col>
       }
       </Row>
@@ -326,13 +330,14 @@ const Service = ({service, operation, groupindex, groupnew, index, isnew,
 }
 
 
-const AggregationProfilesForm = ({ values, errors, historyview=false, addview=false, write_perm=false,
+const AggregationProfilesForm = ({ values, errors, setFieldValue, historyview=false, addview=false, write_perm=false,
   list_user_groups, logic_operations, endpoint_groups, list_id_metric_profiles }) =>
 (
   <>
     <ProfileMainInfo
       values={values}
       errors={errors}
+      setFieldValue={setFieldValue}
       fieldsdisable={historyview}
       grouplist={
         historyview ?
@@ -351,39 +356,51 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, addview=fa
       <Col md={4}>
         <FormGroup>
           <Row>
-            <Col md={12}>
-              <Label for='aggregationMetric'>Metric operation:</Label>
-            </Col>
           </Row>
           <Row>
-            <Col md={5} data-testid='metric_operation_col'>
-              {
-                historyview ?
-                  <Field
+            {
+              historyview ?
+                <>
+                  <Col md={12}>
+                    <Label for='aggregationMetric'>Metric operation:</Label>
+                  </Col>
+                  <Col md={5}>
+                    <Field
+                      name='metric_operation'
+                      data-testid='metric_operation'
+                      className='form-control'
+                      id='aggregationMetric'
+                      disabled={true}
+                    />
+                  </Col>
+                </>
+              :
+                <Col md={5}>
+                  <CustomReactSelect
                     name='metric_operation'
-                    className='form-control'
                     id='aggregationMetric'
-                    disabled={true}
+                    onChange={
+                      e => setFieldValue('metric_operation', e.value)
+                    }
+                    options={
+                      logic_operations.map(operation => new Object({
+                        label: operation, value: operation
+                      }))
+                    }
+                    value={
+                      values.metric_operation ?
+                        { label: values.metric_operation, value: values.metric_operation }
+                      : undefined
+                    }
+                    error={errors.metric_operation}
+                    label='Metric operation:'
                   />
-                :
-                  <Field
-                    name='metric_operation'
-                    component={DropDown}
-                    data={insertSelectPlaceholder(logic_operations, 'Select')}
-                    required={true}
-                    class_name='custom-select'
-                    id='aggregationMetric'
-                    errors={errors}
-                  />
-              }
-            </Col>
+                </Col>
+            }
           </Row>
           <Row>
             <Col md={12}>
-              {
-                errors && errors.metric_operation &&
-                  FancyErrorMessage(errors.metric_operation)
-              }
+              <CustomError error={errors.metric_operation} />
               <FormText>
                 Logical operation that will be applied between metrics of each service flavour
               </FormText>
@@ -394,37 +411,47 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, addview=fa
       <Col md={4}>
         <FormGroup>
           <Row>
-            <Col md={12}>
-              <Label for='aggregationOperation'>Aggregation operation:</Label>
-            </Col>
-            <Col md={5} data-testid='profile_operation_col'>
-              {
-                historyview ?
-                  <Field
+            {
+              historyview ?
+                <>
+                  <Col md={12}>
+                    <Label for='aggregationOperation'>Aggregation operation:</Label>
+                  </Col>
+                  <Col md={5}>
+                    <Field
+                      name='profile_operation'
+                      data-testid='profile_operation'
+                      className='form-control'
+                      id='aggregationOperation'
+                      disabled={true}
+                    />
+                  </Col>
+                </>
+              :
+                <Col md={5}>
+                  <CustomReactSelect
                     name='profile_operation'
-                    className='form-control'
                     id='aggregationOperation'
-                    disabled={true}
+                    onChange={e => setFieldValue('profile_operation', e.value)}
+                    options={
+                      logic_operations.map(operation => new Object({
+                        label: operation, value: operation
+                      }))
+                    }
+                    value={
+                      values.profile_operation ?
+                        { label: values.profile_operation, value: values.profile_operation }
+                      : undefined
+                    }
+                    label='Aggregation operation:'
+                    error={errors.profile_operation}
                   />
-                :
-                  <Field
-                    name='profile_operation'
-                    component={DropDown}
-                    data={insertSelectPlaceholder(logic_operations, 'Select')}
-                    required={true}
-                    class_name='custom-select'
-                    id='aggregationOperation'
-                    errors={errors}
-                  />
-              }
-            </Col>
+                </Col>
+            }
           </Row>
           <Row>
             <Col md={12}>
-              {
-                errors && errors.profile_operation &&
-                  FancyErrorMessage(errors.profile_operation)
-              }
+              <CustomError error={errors.profile_operation} />
               <FormText>
                 Logical operation that will be applied between defined service flavour groups
               </FormText>
@@ -435,63 +462,85 @@ const AggregationProfilesForm = ({ values, errors, historyview=false, addview=fa
       <Col md={4}>
         <FormGroup>
           <Row>
-            <Col md={12}>
-              <Label for='aggregationEndpointGroup'>Endpoint group:</Label>
-            </Col>
-            <Col md={5} data-testid='endpoint_group_col'>
-              {
-                historyview ?
-                  <Field
+            {
+              historyview ?
+                <>
+                  <Col md={12}>
+                    <Label for='aggregationEndpointGroup'>Endpoint group:</Label>
+                  </Col>
+                  <Col md={5}>
+                    <Field
+                      name='endpoint_group'
+                      data-testid='endpoint_group'
+                      className='form-control'
+                      id='aggregationEndpointGroup'
+                      disabled={true}
+                    />
+                  </Col>
+                </>
+              :
+                <Col md={5}>
+                  <CustomReactSelect
                     name='endpoint_group'
-                    className='form-control'
                     id='aggregationEndpointGroup'
-                    disabled={true}
+                    onChange={
+                      e => setFieldValue('endpoint_group', e.value)
+                    }
+                    options={
+                      endpoint_groups.map(group => new Object({
+                        label: group, value: group
+                      }))
+                    }
+                    value={
+                      values.endpoint_group ?
+                        { label: values.endpoint_group, value: values.endpoint_group }
+                      : undefined
+                    }
+                    label='Endpoint group:'
+                    error={errors.endpoint_group}
                   />
-                :
-                  <Field
-                    name='endpoint_group'
-                    component={DropDown}
-                    data={insertSelectPlaceholder(endpoint_groups, 'Select')}
-                    required={true}
-                    class_name='custom-select'
-                    id='aggregationEndpointGroup'
-                    errors={errors}
-                  />
-              }
-              {
-                errors && errors.endpoint_group &&
-                  FancyErrorMessage(errors.endpoint_group)
-              }
-            </Col>
+                </Col>
+            }
+            <CustomError error={errors.endpoint_group} />
           </Row>
         </FormGroup>
       </Col>
     </Row>
     <Row className='mt-4'>
       <Col md={5}>
-        <FormGroup data-testid='metric_profile_row'>
-          <Label for='metricProfile'>Metric profile:</Label>
+        <FormGroup>
           {
             historyview ?
-              <Field
-                name='metric_profile'
-                className='form-control'
-                disabled={true}
-              />
+              <>
+                <Label for='metricProfile'>Metric profile:</Label>
+                <Field
+                  name='metric_profile'
+                  data-testid='metric_profile'
+                  id='metricProfile'
+                  className='form-control'
+                  disabled={true}
+                />
+              </>
             :
-              <Field
+              <CustomReactSelect
                 name='metric_profile'
-                component={DropDown}
-                data={insertSelectPlaceholder(list_id_metric_profiles.map(e => e.name), 'Select')}
-                required={true}
-                class_name='custom-select'
-                errors={errors}
+                id='metricProfile'
+                onChange={e => setFieldValue('metric_profile', e.value)}
+                options={
+                  list_id_metric_profiles.map(profile => new Object({
+                    label: profile.name, value: profile.name
+                  }))
+                }
+                value={
+                  values.metric_profile ?
+                    { label: values.metric_profile, value: values.metric_profile }
+                  : undefined
+                }
+                label='Metric profile:'
+                error={errors.metric_profile}
               />
           }
-          {
-            errors && errors.metric_profile &&
-              FancyErrorMessage(errors.metric_profile)
-          }
+          <CustomError error={errors.metric_profile} />
           <FormText>
             Metric profile associated to Aggregation profile. Service flavours defined in service flavour groups originate from selected metric profile.
           </FormText>
@@ -518,7 +567,7 @@ const GroupsDisabledForm = ( props ) => (
                   <Col sm={{size: 8}} md={{size: 5}} className='mt-4 mb-2'>
                     <Card data-testid={`card-${i}`}>
                       <CardHeader className='p-1' color='primary'>
-                        <Row className='d-flex align-items-center no-gutters'>
+                        <Row className='d-flex align-items-center g-0'>
                           <Col sm={{size: 10}} md={{size: 11}} data-testid='service-group'>
                             {props.values.groups[i].name}
                           </Col>
@@ -531,7 +580,7 @@ const GroupsDisabledForm = ( props ) => (
                               key={j}
                               name={`groups.${i}.services`}
                               render={() => (
-                                <Row className='d-flex align-items-center service pt-1 pb-1 no-gutters' key={j}>
+                                <Row className='d-flex align-items-center service pt-1 pb-1 g-0' key={j}>
                                   <Col md={8} data-testid={`service-${j}`}>
                                     {props.values.groups[i].services[j].name}
                                   </Col>
@@ -959,8 +1008,8 @@ export const AggregationProfilesChange = (props) => {
         submitperm={write_perm}
         extra_button={
           !addview &&
-            <ButtonDropdown className='mr-2' isOpen={dropdownOpen} toggle={ () => setDropdownOpen(!dropdownOpen) }>
-              <DropdownToggle caret color='info'>JSON</DropdownToggle>
+            <ButtonDropdown isOpen={dropdownOpen} toggle={ () => setDropdownOpen(!dropdownOpen) }>
+              <DropdownToggle caret color='secondary'>JSON</DropdownToggle>
               <DropdownMenu>
                 <DropdownItem
                   onClick={() => {
@@ -1003,7 +1052,7 @@ export const AggregationProfilesChange = (props) => {
             groupname: backendAP ? backendAP.groupname: '',
             metric_operation: webApiAP ? webApiAP.metric_operation : '',
             profile_operation: webApiAP ? webApiAP.profile_operation : '',
-            metric_profile: webApiAP ? correctMetricProfileName(webApiAP.metric_profile.id, extractListOfMetricsProfiles(metricProfiles)) : { name: '' },
+            metric_profile: webApiAP ? correctMetricProfileName(webApiAP.metric_profile.id, extractListOfMetricsProfiles(metricProfiles)) : '',
             endpoint_group: webApiAP ? webApiAP.endpoint_group : '',
             groups: !publicView ?
               insertDummyGroup(
@@ -1227,7 +1276,7 @@ const ListDiffElement = ({title, item1, item2}) => {
   }
 
   return (
-    <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
+    <div id='argo-contentwrap' className='ms-2 mb-2 mt-2 p-3 border rounded'>
       <h6 className='mt-4 font-weight-bold text-uppercase'>{title}</h6>
       <ReactDiffViewer
         oldValue={list2.join('\n')}
@@ -1283,7 +1332,7 @@ export const AggregationProfileVersionCompare = (props) => {
     return (
       <React.Fragment>
         <div className='d-flex align-items-center justify-content-between'>
-          <h2 className='ml-3 mt-1 mb-4'>{`Compare ${name} versions`}</h2>
+          <h2 className='ms-3 mt-1 mb-4'>{`Compare ${name} versions`}</h2>
         </div>
         {
           (name1 !== name2) &&

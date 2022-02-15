@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardBody, Row, CardTitle, CardSubtitle, CardGroup } from 'reactstrap';
+import { Card, CardBody, CardTitle, CardSubtitle, CardGroup } from 'reactstrap';
 import { CustomCardHeader } from './Administration';
 import { Icon, LoadingAnim, ErrorComponent, ParagraphTitle } from './UIElements';
 import { Link } from 'react-router-dom';
@@ -50,7 +50,7 @@ export const PublicHome = (props) => {
         for (let j = 0; j < 3; j++) {
           if ((i + j) < tenants.length)
             cards.push(
-              <Card className='mr-3' key={j + 1}>
+              <Card className='me-3' key={j + 1}>
                 <CardTitle className='text-center'><h3>{tenants[i + j].name}</h3></CardTitle>
                 <CardSubtitle className='mb-4 mt-3 text-center'>
                   <FontAwesomeIcon icon={faIdBadge} size='5x'/>
@@ -59,21 +59,24 @@ export const PublicHome = (props) => {
                   <Card>
                     <CustomCardHeader title='Tenant resources'/>
                     <CardBody>
-                      <Row className='p-1 align-items-center'>
+                      <div className='p-1 align-items-center'>
                         <Icon i='metrics'/> <a href={`https://${tenants[i + j].domain_url}/ui/public_metrics`}>Metrics</a>
-                      </Row>
-                      <Row className='p-1 align-items-center'>
+                      </div>
+                      <div className='p-1 align-items-center'>
+                        <Icon i='reports'/> <a href={`https://${tenants[i + j].domain_url}/ui/public_reports`}>Reports</a>
+                      </div>
+                      <div className='p-1 align-items-center'>
                         <Icon i='metricprofiles'/> <a href={`https://${tenants[i + j].domain_url}/ui/public_metricprofiles`}>Metric profiles</a>
-                      </Row>
-                      <Row className='p-1 align-items-center'>
+                      </div>
+                      <div className='p-1 align-items-center'>
                         <Icon i='aggregationprofiles'/> <a href={`https://${tenants[i + j].domain_url}/ui/public_aggregationprofiles`}>Aggregation profiles</a>
-                      </Row>
-                      <Row className='p-1 align-items-center'>
+                      </div>
+                      <div className='p-1 align-items-center'>
                         <Icon i='thresholdsprofiles'/> <a href={`https://${tenants[i + j].domain_url}/ui/public_thresholdsprofiles`}>Thresholds profiles</a>
-                      </Row>
-                      <Row className='p-1 align-items-center'>
+                      </div>
+                      <div className='p-1 align-items-center'>
                         <Icon i='operationsprofiles'/> <a href={`https://${tenants[i + j].domain_url}/ui/public_operationsprofiles`}>Operations profiles</a>
-                      </Row>
+                      </div>
                     </CardBody>
                   </Card>
                 </CardBody>
@@ -97,16 +100,16 @@ export const PublicHome = (props) => {
       }
       return (
         <>
-          <h2 className='ml-3 mt-1 mb-4'>Public pages</h2>
+          <h2 className='ms-3 mt-1 mb-4'>Public pages</h2>
           <Card className='mb-2'>
             <CustomCardHeader title='Shared resources'/>
             <CardBody>
-              <Row className='p-1 align-items-center'>
+              <div className='p-1 align-items-center'>
                 <Icon i='probes'/> <Link to={'/ui/public_probes'}>Probes</Link>
-              </Row>
-              <Row className='p-1 align-items-center'>
+              </div>
+              <div className='p-1 align-items-center'>
                 <Icon i='metrictemplates'/> <Link to={'/ui/public_metrictemplates'}>Metric templates</Link>
-              </Row>
+              </div>
             </CardBody>
           </Card>
           <ParagraphTitle title='Tenants'/>
@@ -120,39 +123,42 @@ export const PublicHome = (props) => {
   } else {
     return (
       <>
-        <h2 className='ml-3 mt-1 mb-4'>Public pages</h2>
+        <h2 className='ms-3 mt-1 mb-4'>Public pages</h2>
         <Card className='mb-2'>
           <CustomCardHeader title='Shared resources'/>
           <CardBody>
-            <Row className='p-1 align-items-center'>
+            <div className='p-1 align-items-center'>
               <Icon i='probes'/> <Link to={'/ui/public_probes'}>Probes</Link>
-            </Row>
-            <Row className='p-1 align-items-center'>
+            </div>
+            <div className='p-1 align-items-center'>
               <Icon i='metrictemplates'/> <Link to={'/ui/public_metrictemplates'}>Metric templates</Link>
-            </Row>
+            </div>
           </CardBody>
         </Card>
         <Card className='mb-2'>
           <CustomCardHeader title='Tenant resources'/>
           <CardBody>
-            <Row className='p-1 align-items-center'>
+            <div className='p-1 align-items-center'>
               <Icon i='metrics'/> <Link to={'/ui/public_metrics'}>Metrics</Link>
-            </Row>
-            <Row className='p-1 align-items-center'>
+            </div>
+            <div className='p-1 align-items-center'>
+              <Icon i='reports'/> <Link to={'/ui/public_reports'}>Reports</Link>
+            </div>
+            <div className='p-1 align-items-center'>
               <Icon i='servicetypes'/> <Link to={'/ui/public_servicetypes'}>Service types</Link>
-            </Row>
-            <Row className='p-1 align-items-center'>
+            </div>
+            <div className='p-1 align-items-center'>
               <Icon i='metricprofiles'/> <Link to={'/ui/public_metricprofiles'}>Metric profiles</Link>
-            </Row>
-            <Row className='p-1 align-items-center'>
+            </div>
+            <div className='p-1 align-items-center'>
               <Icon i='aggregationprofiles'/> <Link to={'/ui/public_aggregationprofiles'}>Aggregation profiles</Link>
-            </Row>
-            <Row className='p-1 align-items-center'>
+            </div>
+            <div className='p-1 align-items-center'>
               <Icon i='thresholdsprofiles'/> <Link to={'/ui/public_thresholdsprofiles'}>Thresholds profiles</Link>
-            </Row>
-            <Row className='p-1 align-items-center'>
+            </div>
+            <div className='p-1 align-items-center'>
               <Icon i='operationsprofiles'/> <Link to={'/ui/public_operationsprofiles'}>Operations profiles</Link>
-            </Row>
+            </div>
           </CardBody>
         </Card>
       </>

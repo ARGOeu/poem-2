@@ -7,6 +7,7 @@ import { ProbeComponent, ProbeList, ProbeVersionDetails } from '../Probes';
 import { Backend } from '../DataManager';
 import { QueryClientProvider, QueryClient, setLogger } from 'react-query';
 import { NotificationManager } from 'react-notifications';
+import selectEvent from 'react-select-event';
 
 
 jest.mock('../DataManager', () => {
@@ -598,7 +599,7 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
     const nameField = screen.getByTestId('name')
     const versionField = screen.getByTestId('version');
     const checkField = screen.getByRole('checkbox', { name: /update/i });
-    const packageField = screen.getByTestId('autocomplete-pkg')
+    const packageField = screen.getByText('nagios-plugins-argo (0.1.11)')
     const repositoryField = screen.getByTestId('repository');
     const docurlField = screen.getByTestId('docurl');
     const descriptionField = screen.getByLabelText(/description/i);
@@ -610,7 +611,6 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
     expect(versionField.value).toBe('0.1.11');
     expect(versionField).toBeDisabled();
     expect(checkField).toBeInTheDocument();
-    expect(packageField.value).toBe('nagios-plugins-argo (0.1.11)');
     expect(repositoryField.value).toBe('https://github.com/ARGOeu/nagios-plugins-argo');
     expect(repositoryField).toBeEnabled();
     expect(docurlField.value).toBe('https://github.com/ARGOeu/nagios-plugins-argo/blob/master/README.md')
@@ -619,6 +619,16 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
     expect(descriptionField).toBeEnabled();
     expect(commentField.value).toBe('Newer version.')
     expect(commentField).toBeEnabled();
+
+    expect(screen.queryByText('nagios-plugins-argo (0.1.12)')).not.toBeInTheDocument()
+    expect(screen.queryByText('nagios-plugins-fedcloud (0.5.0)')).not.toBeInTheDocument()
+    expect(screen.queryByText('nagios-plugins-globus (0.1.5)')).not.toBeInTheDocument()
+    expect(screen.queryByText('nagios-plugins-http (present)')).not.toBeInTheDocument()
+    selectEvent.openMenu(packageField)
+    expect(screen.queryByText('nagios-plugins-argo (0.1.12)')).toBeInTheDocument()
+    expect(screen.queryByText('nagios-plugins-fedcloud (0.5.0)')).toBeInTheDocument()
+    expect(screen.queryByText('nagios-plugins-globus (0.1.5)')).toBeInTheDocument()
+    expect(screen.queryByText('nagios-plugins-http (present)')).toBeInTheDocument()
 
     expect(metricLinks[0].closest('a')).toHaveAttribute('href', '/ui/metrictemplates/argo.AMS-Check');
     expect(metricLinks[1].closest('a')).toHaveAttribute('href', '/ui/metrictemplates/test.AMS-Check');
@@ -681,11 +691,13 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
 
     const nameField = screen.getByTestId('name');
     const checkField = screen.getByRole('checkbox', { name: /update/i });
-    const packageField = screen.getByTestId('autocomplete-pkg');
+    const packageField = screen.getByText('nagios-plugins-argo (0.1.11)');
     const commentField = screen.getByLabelText(/comment/i)
 
     fireEvent.change(nameField, { target: { value: 'new-ams-probe' } });
-    fireEvent.change(packageField, { target: { value: 'nagios-plugins-argo (0.1.12)' } });
+
+    await selectEvent.select(packageField, 'nagios-plugins-argo (0.1.12)')
+
     const versionField = screen.getByTestId('version');
     expect(versionField.value).toBe('0.1.12');
     expect(versionField).toBeDisabled();
@@ -728,11 +740,13 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
     })
 
     const nameField = screen.getByTestId('name');
-    const packageField = screen.getByTestId('autocomplete-pkg');
+    const packageField = screen.getByText('nagios-plugins-argo (0.1.11)');
     const commentField = screen.getByLabelText(/comment/i)
 
     fireEvent.change(nameField, { target: { value: 'new-ams-probe' } });
-    fireEvent.change(packageField, { target: { value: 'nagios-plugins-argo (0.1.12)' } });
+
+    await selectEvent.select(packageField, 'nagios-plugins-argo (0.1.12)')
+
     const versionField = screen.getByTestId('version');
     expect(versionField.value).toBe('0.1.12');
     expect(versionField).toBeDisabled();
@@ -778,11 +792,13 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
     })
 
     const nameField = screen.getByTestId('name');
-    const packageField = screen.getByTestId('autocomplete-pkg');
+    const packageField = screen.getByText('nagios-plugins-argo (0.1.11)');
     const commentField = screen.getByLabelText(/comment/i)
 
     fireEvent.change(nameField, { target: { value: 'test-ams-probe' } });
-    fireEvent.change(packageField, { target: { value: 'nagios-plugins-argo (0.1.12)' } });
+
+    await selectEvent.select(packageField, 'nagios-plugins-argo (0.1.12)')
+
     const versionField = screen.getByTestId('version');
     expect(versionField.value).toBe('0.1.12');
     expect(versionField).toBeDisabled();
@@ -832,11 +848,13 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
     })
 
     const nameField = screen.getByTestId('name');
-    const packageField = screen.getByTestId('autocomplete-pkg');
+    const packageField = screen.getByText('nagios-plugins-argo (0.1.11)');
     const commentField = screen.getByLabelText(/comment/i)
 
     fireEvent.change(nameField, { target: { value: 'test-ams-probe' } });
-    fireEvent.change(packageField, { target: { value: 'nagios-plugins-argo (0.1.12)' } });
+
+    await selectEvent.select(packageField, 'nagios-plugins-argo (0.1.12)')
+
     const versionField = screen.getByTestId('version');
     expect(versionField.value).toBe('0.1.12');
     expect(versionField).toBeDisabled();
@@ -1074,7 +1092,7 @@ describe('Test probe addview', () => {
     const nameField = screen.getByTestId('name')
     const versionField = screen.getByTestId('version');
     const checkField = screen.queryByRole('checkbox', { name: /update/i });
-    const packageField = screen.getByTestId('autocomplete-pkg');
+    const packageField = screen.getAllByText(/select/i)[0];
     const repositoryField = screen.getByTestId('repository');
     const docurlField = screen.getByTestId('docurl');
     const descriptionField = screen.getByLabelText(/description/i);
@@ -1086,7 +1104,6 @@ describe('Test probe addview', () => {
     expect(versionField.value).toBe('');
     expect(versionField).toBeDisabled();
     expect(checkField).not.toBeInTheDocument();
-    expect(packageField.value).toBe('');
     expect(packageField).toBeEnabled();
     expect(repositoryField.value).toBe('');
     expect(repositoryField).toBeEnabled();
@@ -1097,6 +1114,18 @@ describe('Test probe addview', () => {
     expect(commentField.value).toBe('');
     expect(commentField).toBeEnabled();
     expect(metricLinks.length).toBe(0);
+
+    expect(screen.queryByText('nagios-plugins-argo (0.1.11)')).not.toBeInTheDocument()
+    expect(screen.queryByText('nagios-plugins-argo (0.1.12)')).not.toBeInTheDocument()
+    expect(screen.queryByText('nagios-plugins-fedcloud (0.5.0)')).not.toBeInTheDocument()
+    expect(screen.queryByText('nagios-plugins-globus (0.1.5)')).not.toBeInTheDocument()
+    expect(screen.queryByText('nagios-plugins-http (present)')).not.toBeInTheDocument()
+    selectEvent.openMenu(packageField)
+    expect(screen.queryByText('nagios-plugins-argo (0.1.11)')).toBeInTheDocument()
+    expect(screen.queryByText('nagios-plugins-argo (0.1.12)')).toBeInTheDocument()
+    expect(screen.queryByText('nagios-plugins-fedcloud (0.5.0)')).toBeInTheDocument()
+    expect(screen.queryByText('nagios-plugins-globus (0.1.5)')).toBeInTheDocument()
+    expect(screen.queryByText('nagios-plugins-http (present)')).toBeInTheDocument()
 
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
@@ -1113,14 +1142,16 @@ describe('Test probe addview', () => {
 
     const nameField = screen.getByTestId('name')
     const versionField = screen.getByTestId('version');
-    const packageField = screen.getByTestId('autocomplete-pkg');
+    const packageField = screen.getAllByText(/select/i)[0]
     const repositoryField = screen.getByTestId('repository');
     const docurlField = screen.getByTestId('docurl');
     const descriptionField = screen.getByLabelText(/description/i);
     const commentField = screen.getByLabelText(/comment/i)
 
     fireEvent.change(nameField, { target: { value: 'check_nagios' } });
-    fireEvent.change(packageField, { target: { value: 'nagios-plugins-argo (0.1.11)' } });
+
+    await selectEvent.select(packageField, 'nagios-plugins-argo (0.1.11)')
+
     expect(versionField.value).toBe('0.1.11')
     expect(versionField).toBeDisabled();
     fireEvent.change(repositoryField, { target: { value: 'https://github.com/nagios-plugins/nagios-plugins' } });
@@ -1167,14 +1198,16 @@ describe('Test probe addview', () => {
 
     const nameField = screen.getByTestId('name')
     const versionField = screen.getByTestId('version');
-    const packageField = screen.getByTestId('autocomplete-pkg');
+    const packageField = screen.getAllByText(/select/i)[0]
     const repositoryField = screen.getByTestId('repository');
     const docurlField = screen.getByTestId('docurl');
     const descriptionField = screen.getByLabelText(/description/i);
     const commentField = screen.getByLabelText(/comment/i)
 
     fireEvent.change(nameField, { target: { value: 'check_nagios' } });
-    fireEvent.change(packageField, { target: { value: 'nagios-plugins-argo (0.1.11)' } });
+
+    await selectEvent.select(packageField, 'nagios-plugins-argo (0.1.11)')
+
     expect(versionField.value).toBe('0.1.11')
     expect(versionField).toBeDisabled();
     fireEvent.change(repositoryField, { target: { value: 'https://github.com/nagios-plugins/nagios-plugins' } });
@@ -1225,14 +1258,14 @@ describe('Test probe addview', () => {
 
     const nameField = screen.getByTestId('name')
     const versionField = screen.getByTestId('version');
-    const packageField = screen.getByTestId('autocomplete-pkg');
+    const packageField = screen.getAllByText(/select/i)[0]
     const repositoryField = screen.getByTestId('repository');
     const docurlField = screen.getByTestId('docurl');
     const descriptionField = screen.getByLabelText(/description/i);
     const commentField = screen.getByLabelText(/comment/i)
 
     fireEvent.change(nameField, { target: { value: 'check_nagios' } });
-    fireEvent.change(packageField, { target: { value: 'nagios-plugins-argo (0.1.11)' } });
+    await selectEvent.select(packageField, 'nagios-plugins-argo (0.1.11)')
     expect(versionField.value).toBe('0.1.11')
     expect(versionField).toBeDisabled();
     fireEvent.change(repositoryField, { target: { value: 'https://github.com/nagios-plugins/nagios-plugins' } });
@@ -1320,7 +1353,7 @@ describe('Test probe cloneview', () => {
     const nameField = screen.getByTestId('name')
     const versionField = screen.getByTestId('version');
     const checkField = screen.queryByRole('checkbox', { name: /update/i });
-    const packageField = screen.getByTestId('autocomplete-pkg')
+    const packageField = screen.getByText('nagios-plugins-argo (0.1.11)')
     const repositoryField = screen.getByTestId('repository');
     const docurlField = screen.getByTestId('docurl');
     const descriptionField = screen.getByLabelText(/description/i);
@@ -1332,7 +1365,6 @@ describe('Test probe cloneview', () => {
     expect(versionField.value).toBe('0.1.11');
     expect(versionField).toBeDisabled();
     expect(checkField).not.toBeInTheDocument();
-    expect(packageField.value).toBe('nagios-plugins-argo (0.1.11)');
     expect(repositoryField.value).toBe('https://github.com/ARGOeu/nagios-plugins-argo');
     expect(repositoryField).toBeEnabled();
     expect(docurlField.value).toBe('https://github.com/ARGOeu/nagios-plugins-argo/blob/master/README.md')
@@ -1342,6 +1374,16 @@ describe('Test probe cloneview', () => {
     expect(commentField.value).toBe('Newer version.')
     expect(commentField).toBeEnabled();
     expect(metricLinks.length).toBe(0);
+
+    expect(screen.queryByText('nagios-plugins-argo (0.1.12)')).not.toBeInTheDocument()
+    expect(screen.queryByText('nagios-plugins-fedcloud (0.5.0)')).not.toBeInTheDocument()
+    expect(screen.queryByText('nagios-plugins-globus (0.1.5)')).not.toBeInTheDocument()
+    expect(screen.queryByText('nagios-plugins-http (present)')).not.toBeInTheDocument()
+    selectEvent.openMenu(packageField)
+    expect(screen.queryByText('nagios-plugins-argo (0.1.12)')).toBeInTheDocument()
+    expect(screen.queryByText('nagios-plugins-fedcloud (0.5.0)')).toBeInTheDocument()
+    expect(screen.queryByText('nagios-plugins-globus (0.1.5)')).toBeInTheDocument()
+    expect(screen.queryByText('nagios-plugins-http (present)')).toBeInTheDocument()
 
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
@@ -1357,11 +1399,11 @@ describe('Test probe cloneview', () => {
     })
 
     const nameField = screen.getByTestId('name');
-    const packageField = screen.getByTestId('autocomplete-pkg');
+    const packageField = screen.getByText('nagios-plugins-argo (0.1.11)');
     const commentField = screen.getByLabelText(/comment/i)
 
     fireEvent.change(nameField, { target: { value: 'cloned-ams-probe' } });
-    fireEvent.change(packageField, { target: { value: 'nagios-plugins-argo (0.1.12)' } });
+    await selectEvent.select(packageField, 'nagios-plugins-argo (0.1.12)')
     const versionField = screen.getByTestId('version');
     expect(versionField.value).toBe('0.1.12');
     expect(versionField).toBeDisabled();
@@ -1406,11 +1448,11 @@ describe('Test probe cloneview', () => {
     })
 
     const nameField = screen.getByTestId('name');
-    const packageField = screen.getByTestId('autocomplete-pkg');
+    const packageField = screen.getByText('nagios-plugins-argo (0.1.11)')
     const commentField = screen.getByLabelText(/comment/i)
 
     fireEvent.change(nameField, { target: { value: 'test-ams-probe' } });
-    fireEvent.change(packageField, { target: { value: 'nagios-plugins-argo (0.1.12)' } });
+    await selectEvent.select(packageField, 'nagios-plugins-argo (0.1.12)')
     const versionField = screen.getByTestId('version');
     expect(versionField.value).toBe('0.1.12');
     expect(versionField).toBeDisabled();
@@ -1459,11 +1501,11 @@ describe('Test probe cloneview', () => {
     })
 
     const nameField = screen.getByTestId('name');
-    const packageField = screen.getByTestId('autocomplete-pkg');
+    const packageField = screen.getByText('nagios-plugins-argo (0.1.11)')
     const commentField = screen.getByLabelText(/comment/i)
 
     fireEvent.change(nameField, { target: { value: 'test-ams-probe' } });
-    fireEvent.change(packageField, { target: { value: 'nagios-plugins-argo (0.1.12)' } });
+    await selectEvent.select(packageField, 'nagios-plugins-argo (0.1.12)')
     const versionField = screen.getByTestId('version');
     expect(versionField.value).toBe('0.1.12');
     expect(versionField).toBeDisabled();

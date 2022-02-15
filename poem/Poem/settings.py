@@ -105,7 +105,7 @@ SHARED_APPS = (
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_api_key',
-    'rest_auth',
+    'dj_rest_auth',
     'Poem.users',
     'Poem.poem_super_admin',
     'Poem.api',
@@ -122,7 +122,7 @@ TENANT_APPS = (
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_api_key',
-    'rest_auth',
+    'dj_rest_auth',
     'webpack_loader',
     'Poem.api',
     'Poem.poem',
@@ -215,6 +215,7 @@ LOGOUT_REDIRECT_URL = '/ui/login'
 SAML_CONFIG_LOADER = 'Poem.poem.saml2.config.get_saml_config'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_SAMESITE = None
+SESSION_COOKIE_SECURE = True
 
 
 WEBPACK_LOADER = {
@@ -226,3 +227,5 @@ WEBPACK_LOADER = {
 
 TEST_RUNNER = 'xmlrunner.extra.djangotestrunner.XMLTestRunner'
 TEST_OUTPUT_FILE_NAME = 'junit-backend.xml'
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'

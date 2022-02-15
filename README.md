@@ -20,13 +20,13 @@ Here is a complete list of features:
 
 ### Design
 
-ARGO POEM is SPA (single page) web application using Django framework as backend and ReactJS UI library as a frontend component. Client's browser loads in bundle code that jointly represents whole frontend component that packs together Javascript, CSS, fonts, icons and everything else needed to properly render the UI. Frontend component is glued with backend Django framework as its staticfile that loads bundle in a single Django template presented to client. Keeping frontend close to backend allows exploiting of some nice Django packages that primarily deal with API methods, user authentication and tenant database handling. Frontend talks to backend over session protected REST API methods for resources that should be stored in local database. For the other part of the resources that should be kept on token protected ARGO WEB-API, HTTP requests are triggered directly from frontend. 
+ARGO POEM is SPA (single page) web application using Django framework as backend and ReactJS UI library as a frontend component. Client's browser loads in bundle code that jointly represents whole frontend component that packs together Javascript, CSS, fonts, icons and everything else needed to properly render the UI. Frontend component is glued with backend Django framework as its staticfile that loads bundle in a single Django template presented to client. Keeping frontend close to backend allows exploiting of some nice Django packages that primarily deal with API methods, user authentication and tenant database handling. Frontend talks to backend over session protected REST API methods for resources that should be stored in local database. For the other part of the resources that should be kept on token protected ARGO WEB-API, HTTP requests are triggered directly from frontend.
 
 Web application is served with Apache web server and uses PostgreSQL as database storage.
 
 #### List of packages used
 
-Backend: `Django`, `django-rest-auth`, `django-tenant-schemas`, `django-webpack-loader`, `djangorestframework`, `djangorestframework-api-key`, `djangosaml2`, `psycopg2-binary`
+Backend: `Django`, `dj-rest-auth`, `django-tenants`, `django-webpack-loader`, `djangorestframework`, `djangorestframework-api-key`, `djangosaml2`, `psycopg2-binary`
 
 Frontend: `ReactJS`, `formik`, `react-autosuggest`, `react-diff-viewer`, `react-dom`, `react-fontawesome`, `react-helmet`, `react-notifications`, `react-popup`, `react-router`, `react-select`, `react-table`, `reactstrap`, `webpack`, `yup`
 
@@ -46,7 +46,7 @@ Public pages:
 
 ## Installation
 
-POEM web service is meant to be running with Django 2.x driven by Python 3.x on CentOS 7 and served by installation of Apache from Software Collections. Setting up Python virtual environment based on Python 3.x is prerequisite. Once the virtual environment is set up, installation of the service simply narrows down to creating and installing wheel package that will also pull and install all needed dependencies. Beside wheel dependencies, service also needs some packages to be installed from CentOS 7 repositories:
+POEM web service is meant to be running with Django 3.x driven by Python 3.x on CentOS 7 and served by installation of Apache from Software Collections. Setting up Python virtual environment based on Python 3.x is prerequisite. Once the virtual environment is set up, installation of the service simply narrows down to creating and installing wheel package that will also pull and install all needed dependencies. Beside wheel dependencies, service also needs some packages to be installed from CentOS 7 repositories:
 
 ```sh
 % yum -y install ca-certificates \
@@ -282,7 +282,7 @@ Initial superuser credentials that can be used to sign in to POEM with username 
 
 ### SYNC_<tenant_name>
 
-> Section is _optional_ and is of particular interest for tenants that comes with GOCDB-like service whose service types are defined there and should be periodically pulled and presented in the ARGO POEM. 
+> Section is _optional_ and is of particular interest for tenants that comes with GOCDB-like service whose service types are defined there and should be periodically pulled and presented in the ARGO POEM.
 
 These control options are used by sync scripts that fetch all available services types from GOCDB-like service. Additionally, if GOCDB-like service supports only Basic HTTP Authentication, it should be enabled by setting `UsePlainHttpAuth` and specifying credentials in `HttpUser` and `HttpPass`.
 
@@ -317,7 +317,7 @@ Once all is set, database can be created with provided tool `poem-db`.
 
 ### SuperPOEM
 
-TODO: Tenant handling will be done within SuperPOEM that will spawn TenantPOEM and will have a register all of them with needed tenant metadata. Until then, TenantPOEM is created with a set of Django backend tools that set and create needed tenant metadata. 
+TODO: Tenant handling will be done within SuperPOEM that will spawn TenantPOEM and will have a register all of them with needed tenant metadata. Until then, TenantPOEM is created with a set of Django backend tools that set and create needed tenant metadata.
 
 Prerequisite for spawning of new TenantPOEM is to have SuperPOEM operational with its data (metric templates, probes, packages and repo) loaded in `public` database schema. SuperPOEM is residing on its own FQDN, supporting only username/password login that should be defined in `poem.conf`:
 ```
@@ -333,7 +333,7 @@ PrivacyPolicies = https://argo.egi.eu/egi/policies/ALL
 [SUPERUSER_ALL]
 Name = <username>
 Password = <password>
-Email = <email> 
+Email = <email>
 ```
 
 `public` schema is automatically created once the database is created. It just needs to be populated with SuperPOEM data:
@@ -363,7 +363,7 @@ SamlServiceName = ARGO POEM EGI-CheckIN
 [SUPERUSER_EGI]
 Name = <username>
 Password = <password>
-Email = <email> 
+Email = <email>
 
 [SYNC_EGI]
 UsePlainHttpAuth = False
@@ -404,18 +404,18 @@ For seamless interaction with ARGO WEB-API, tokens with predefined names and val
 
 Example:
 ```
-poem-token -t WEB-API-RO -s egi -o xxxx 
-poem-token -t WEB-API -s egi -o xxxx 
+poem-token -t WEB-API-RO -s egi -o xxxx
+poem-token -t WEB-API -s egi -o xxxx
 ```
 
 `poem-token` tools takes two or three arguments. In three-arguments-mode, it's setting token name provided after `-t` within schema provided after `-s` to a predefined value provided after `-o`. If `-o` is omitted, than value will be automatically created.
- 
+
 In two-argument-mode it is used to generate a token for its REST API that will be consumed by monitoring boxes:
 ```
 poem-token -t EGI -s egi
 ```
 
-## Development 
+## Development
 
 ### Container environment
 
@@ -438,7 +438,7 @@ docker/ $ docker-compose up
 
 ### Packaging
 
-Deployment of new versions is done with wheel packages that contain both backend Python and frontend Javascript code. Packages are build using setuptools and helper make target rules are provided in [Makefile](Makefile) and in [poem/Poem/Makefile](poem/Poem/Makefile). Latter is used to create a devel or production bundle of frontend Javascript code and place it as Django staticfiles, while the former is used to create Python wheel package. 
+Deployment of new versions is done with wheel packages that contain both backend Python and frontend Javascript code. Packages are build using setuptools and helper make target rules are provided in [Makefile](Makefile) and in [poem/Poem/Makefile](poem/Poem/Makefile). Latter is used to create a devel or production bundle of frontend Javascript code and place it as Django staticfiles, while the former is used to create Python wheel package.
 
 * frontend `Makefile` package targets:
   - `make devel` - create a development Webpack bundle

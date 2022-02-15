@@ -5,13 +5,13 @@ import { useMutation, useQuery, useQueryClient } from 'react-query';
 import {
   BaseArgoTable,
   BaseArgoView,
-  DropDown,
   ErrorComponent,
-  FancyErrorMessage,
   LoadingAnim,
   NotifyError,
   NotifyOk,
   ParagraphTitle,
+  CustomReactSelect,
+  CustomError
  } from './UIElements';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -27,11 +27,11 @@ import {
   CardHeader,
   CardTitle,
   InputGroup,
-  InputGroupAddon,
+  InputGroupText,
   FormText,
-  Label
+  Label,
+  Input
 } from 'reactstrap';
-import { CustomReactSelect } from './UIElements';
 import * as Yup from 'yup';
 import {
   fetchMetricProfiles,
@@ -68,6 +68,10 @@ const fetchAggregationProfiles = async (webapi) => {
   return await webapi.fetchAggregationProfiles();
 }
 
+const fetchThresholdsProfiles = async (webapi) => {
+  return await webapi.fetchThresholdsProfiles()
+}
+
 
 const fetchTopologyTags = async (webapi) => {
   return await webapi.fetchReportsTopologyTags();
@@ -84,6 +88,8 @@ const getCrud = (props) => {
 
 export const ReportsList = (props) => {
   const location = props.location;
+  const publicView = props.publicView;
+
   const queryClient = useQueryClient();
 
   const webapi = new WebApi({
@@ -91,7 +97,8 @@ export const ReportsList = (props) => {
     reportsConfigurations: props.webapireports,
     metricProfiles: props.webapimetric,
     aggregationProfiles: props.webapiaggregation,
-    operationsProfiles: props.webapioperations
+    operationsProfiles: props.webapioperations,
+    thresholdsProfiles: props.webapithresholds
   });
   const crud = getCrud(props);
 
@@ -100,8 +107,8 @@ export const ReportsList = (props) => {
   );
 
   const { data: reports, error: errorReports, isLoading: loadingReports } = useQuery(
-    ['report', 'backend'],  () => fetchReports(),
-    { enabled: !!userDetails }
+    [`${publicView ? 'public_' : ''}report`, 'backend'],  () => fetchReports(publicView),
+    { enabled: !publicView ? !!userDetails : true }
   );
 
   const columns = React.useMemo(
@@ -116,20 +123,23 @@ export const ReportsList = (props) => {
         id: 'name',
         accessor: e =>
           <Link
-            to={`/ui/reports/${e.name}`}
+            to={`/ui/${publicView ? 'public_' : ''}reports/${e.name}`}
             onMouseEnter={ async () => {
               await queryClient.prefetchQuery(
-                ['report', 'webapi', e.name], () => fetchReport(webapi, e.name)
+                [`${publicView ? 'public_' : ''}report`, 'webapi', e.name], () => fetchReport(webapi, e.name)
               );
               await queryClient.prefetchQuery(
-                ['metricprofile', 'webapi'], () => fetchMetricProfiles(webapi)
+                [`${publicView ? 'public_' : ''}metricprofile`, 'webapi'], () => fetchMetricProfiles(webapi)
               );
               await queryClient.prefetchQuery(
-                ['aggregationprofile', 'webapi'], () => fetchAggregationProfiles(webapi)
+                [`${publicView ? 'public_' : ''}aggregationprofile`, 'webapi'], () => fetchAggregationProfiles(webapi)
               );
               await queryClient.prefetchQuery(
-                'operationsprofile', () => fetchOperationsProfiles(webapi)
+                `${publicView ? 'public_' : ''}operationsprofile`, () => fetchOperationsProfiles(webapi)
               );
+              await queryClient.prefetchQuery(
+                [`${publicView ? 'public_' : ''}thresholdsprofile`, 'webapi'], () => fetchThresholdsProfiles(webapi)
+              )
               if (crud) {
                 await queryClient.prefetchQuery(
                   'topologytags', () => fetchTopologyTags(webapi)
@@ -177,8 +187,8 @@ export const ReportsList = (props) => {
         resourcename='report'
         location={location}
         listview={true}
-        addnew={true}
-        addperm={userDetails.is_superuser || userDetails.groups.reports.length > 0}
+        addnew={!publicView}
+        addperm={publicView ? false : userDetails.is_superuser || userDetails.groups.reports.length > 0}
       >
         <BaseArgoTable
           data={reports}
@@ -192,14 +202,6 @@ export const ReportsList = (props) => {
   else
     return null
 };
-
-
-function insertSelectPlaceholder(data, text) {
-  if (data)
-    return [text, ...data]
-  else
-    return [text]
-}
 
 
 function preProcessTagValue(data) {
@@ -241,7 +243,7 @@ const TagSelect = ({field, tagOptions, onChangeHandler, isMulti,
 }
 
 
-const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, addview, push, form, remove }) => {
+const TopologyTagList = ({ part, fieldName, tagsState, setTagsState, tagsAll, addview, publicView, push, form, remove }) => {
   const extractTags = (which, filter=false) => {
     let selected = new Array()
 
@@ -272,17 +274,19 @@ const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, addview, push
   }
 
   const isMultiValuesTags = (data) => {
-    if (data.length === 2 || data.length === 1) {
-      if (data[0].value === 'yes' ||
-        data[0].value === 'no')
-      return false
+    if (data) {
+      if (data.length === 2 || data.length === 1) {
+        if (data[0].value === 'yes' ||
+          data[0].value === 'no')
+        return false
+      }
+      else
+        return true
     }
-    else
-      return true
   }
 
   const tagsInitValues = (key, data, preprocess=false) => {
-    if (data[key] === '')
+    if (!data[key])
       return undefined
     if (data[key].indexOf(' ') === -1)
       return new Object({
@@ -316,84 +320,134 @@ const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, addview, push
   return (
     <React.Fragment>
       {
-        form.values[part].map((tags, index) => (
+        form.values[fieldName].length === 0 && publicView ?
+          <Row className="g-0">
+            <Col md={4}>
+              <Field
+                name={`${fieldName}.0.name`}
+                data-testid={`${fieldName}.0.name`}
+                className='form-control'
+                disabled={true}
+                value=''
+              />
+            </Col>
+            <Col md={7}>
+              <Field
+                name={`${fieldName}.0.value`}
+                data-testid={`${fieldName}.0.value`}
+                className='form-control'
+                disabled={true}
+                value=''
+              />
+            </Col>
+          </Row>
+        :
+        form.values[fieldName].map((tags, index) => (
           <React.Fragment key={index}>
-            <Row key={index} className="no-gutters">
+            <Row key={index} className="g-0">
               <Col md={4}>
-                <Field
-                  name={`${part}.${index}.name`}
-                  data-testid={`${part}.${index}.name`}
-                  component={TagSelect}
-                  tagOptions={extractTags(part, true).map((e) => new Object({
-                    'label': e.name,
-                    'value': e.name
-                  }))}
-                  onChangeHandler={(e) => {
-                    form.setFieldValue(`${part}.${index}.name`, e.value)
-                    recordSelectedTagKeys(index, e.value)
-                  }}
-                  isMulti={false}
-                  closeMenuOnSelect={true}
-                  tagInitials={!addview ? tagsInitValues('name', tags) : undefined}
-                />
+                {
+                    publicView ?
+                      <Field
+                        name={`${fieldName}.${index}.name`}
+                        data-testid={`${fieldName}.${index}.name`}
+                        className='form-control'
+                        disabled={true}
+                        value={form.values[fieldName][index].name}
+                      />
+                    :
+                      <Field
+                        name={`${fieldName}.${index}.name`}
+                        data-testid={`${fieldName}.${index}.name`}
+                        component={TagSelect}
+                        tagOptions={extractTags(part, true).map((e) => new Object({
+                          'label': e.name,
+                          'value': e.name
+                        }))}
+                        onChangeHandler={(e) => {
+                          form.setFieldValue(`${fieldName}.${index}.name`, e.value)
+                          recordSelectedTagKeys(index, e.value)
+                        }}
+                        isMulti={false}
+                        closeMenuOnSelect={true}
+                        tagInitials={!addview ? tagsInitValues('name', tags) : undefined}
+                      />
+                  }
               </Col>
               <Col md={7}>
-                <Field
-                  name={`${part}.${index}.value`}
-                  data-testid={`${part}.${index}.value`}
-                  component={TagSelect}
-                  tagOptions={extractValuesTags(index, true)}
-                  onChangeHandler={(e) => {
-                    if (Array.isArray(e)) {
-                      let joinedValues = ''
-                      e.forEach((e) => {
-                        joinedValues += e.value + ' '
-                      })
-                      form.setFieldValue(`${part}.${index}.value`, joinedValues.trim())
-                    }
-                    else
-                      form.setFieldValue(`${part}.${index}.value`, e.value.trim())
-                  }}
-                  isMulti={isMultiValuesTags(extractValuesTags(index))}
-                  closeMenuOnSelect={!isMultiValuesTags(extractValuesTags(index))}
-                  tagInitials={!addview ? tagsInitValues('value', tags, true) : undefined}
-                />
+                {
+                    publicView ?
+                      <Field
+                        name={`${fieldName}.${index}.value`}
+                        data-testid={`${fieldName}.${index}.value`}
+                        className='form-control'
+                        disabled={true}
+                        value={preProcessTagValue(tags.value.replace(new RegExp(' ', 'g'), ', '))}
+                      />
+                    :
+                      <Field
+                        name={`${fieldName}.${index}.value`}
+                        data-testid={`${fieldName}.${index}.value`}
+                        component={TagSelect}
+                        tagOptions={extractValuesTags(index, true)}
+                        onChangeHandler={(e) => {
+                          if (Array.isArray(e)) {
+                            let joinedValues = ''
+                            e.forEach((e) => {
+                              joinedValues += e.value + ' '
+                            })
+                            form.setFieldValue(`${fieldName}.${index}.value`, joinedValues.trim())
+                          }
+                          else
+                            form.setFieldValue(`${fieldName}.${index}.value`, e.value.trim())
+                        }}
+                        isMulti={isMultiValuesTags(extractValuesTags(index))}
+                        closeMenuOnSelect={!isMultiValuesTags(extractValuesTags(index))}
+                        tagInitials={!addview ? tagsInitValues('value', tags, true) : undefined}
+                      />
+                  }
               </Col>
-              <Col md={1} className="pl-2 pt-1">
-                <Button size="sm" color="danger"
-                  type="button"
-                  data-testid={`remove-${index}`}
-                  onClick={() => {
-                    let newState = JSON.parse(JSON.stringify(tagsState))
-                    let renumNewState = JSON.parse(JSON.stringify(tagsState))
+              <Col md={1} className="ps-2 pt-1">
+                {
+                    !publicView &&
+                      <Button size="sm" color="danger"
+                        type="button"
+                        data-testid={`remove${fieldName.toLowerCase().endsWith('tags') ? 'Tag' : 'Extension'}-${index}`}
+                        onClick={() => {
+                          let newState = JSON.parse(JSON.stringify(tagsState))
+                          let renumNewState = JSON.parse(JSON.stringify(tagsState))
 
-                    delete newState[part][index]
-                    delete renumNewState[part]
-                    renumNewState[part] = new Object()
+                          delete newState[part][index]
+                          delete renumNewState[part]
+                          renumNewState[part] = new Object()
 
-                    let i = 0
-                    for (var tag in newState[part]) {
-                      renumNewState[part][i] = newState[part][tag]
-                      i += 1
-                    }
+                          let i = 0
+                          for (var tag in newState[part]) {
+                            renumNewState[part][i] = newState[part][tag]
+                            i += 1
+                          }
 
-                    remove(index)
-                    setTagsState(renumNewState)
-                  }}>
-                  <FontAwesomeIcon icon={faTimes}/>
-                </Button>
+                          remove(index)
+                          setTagsState(renumNewState)
+                        }}>
+                        <FontAwesomeIcon icon={faTimes}/>
+                      </Button>
+                  }
               </Col>
             </Row>
           </React.Fragment>
-        ))
+          ))
       }
       <Row>
         <Col className="pt-4 d-flex justify-content-center">
-          <Button color="success"
-            type="button"
-            onClick={() => {push({'name': '', 'value': ''})}}>
-            Add new tag
-          </Button>
+          {
+            !publicView &&
+              <Button color="success"
+                type="button"
+                onClick={() => {push({'name': '', 'value': ''})}}>
+                {`Add new ${fieldName.toLowerCase().endsWith('tags') ? 'tag' : 'extension'}`}
+              </Button>
+          }
         </Col>
       </Row>
     </React.Fragment>
@@ -401,7 +455,7 @@ const TopologyTagList = ({ part, tagsState, setTagsState, tagsAll, addview, push
 }
 
 
-const EntitySelect = ({field, entitiesOptions, onChangeHandler, entitiesInitials}) => {
+const EntitySelect = ({field, label, entitiesOptions, onChangeHandler, entitiesInitials }) => {
   if (entitiesInitials) {
     return (
       <CustomReactSelect
@@ -412,7 +466,8 @@ const EntitySelect = ({field, entitiesOptions, onChangeHandler, entitiesInitials
         isMulti
         onChange={(e) => onChangeHandler(e)}
         options={entitiesOptions}
-        defaultValue={entitiesInitials}
+        value={entitiesInitials}
+        label={label}
       />
     )
   }
@@ -426,12 +481,13 @@ const EntitySelect = ({field, entitiesOptions, onChangeHandler, entitiesInitials
         isMulti
         onChange={(e) => onChangeHandler(e)}
         options={entitiesOptions}
+        label={label}
       />
     )
 }
 
 
-const TopologyEntityFields = ({topoGroups, addview, form}) => {
+const TopologyEntityFields = ({topoGroups, addview, publicView, form}) => {
   const entityInitValues = (matchWhat) => {
     let tmp = new Array()
     for (let entity of form.values.entities) {
@@ -472,68 +528,117 @@ const TopologyEntityFields = ({topoGroups, addview, form}) => {
   if (topoType === 'Sites') {
     label1 = 'NGIs:'
     label2 = 'Sites:'
-    key1 = 'ngis'
-    key2 = 'sites'
+    key1 = 'entitiesNgi'
+    key2 = 'entitiesSites'
   }
   else if (topoType === 'ServiceGroups'){
     label1 = 'Projects:'
     label2 = 'Service groups:'
-    key1 = 'projects'
-    key2 = 'servicegroups'
+    key1 = 'entitiesProjects'
+    key2 = 'entitiesServiceGroups'
   }
   else {
     label1 = 'Upper group:'
     label2 = 'Lower group:'
-    key1 = 'ngis'
-    key2 = 'sites'
+    key1 = 'entitiesNgi'
+    key2 = 'entitiesSites'
   }
 
   return (
     <React.Fragment>
-      <Label to='topoEntity1'>
-        {label1}
-      </Label>
-      <Field
-        name="entities.0.value"
-        id="topoEntity1"
-        component={EntitySelect}
-        entitiesOptions={formatSelectEntities(topoGroups[key1])}
-        onChangeHandler={(e) => {
-          let joinedValues = ''
-          for (let event of e)
-            joinedValues += event.value + ' '
-          joinedValues = joinedValues.trim()
-          form.setFieldValue("entities.0.value", joinedValues)
-          form.setFieldValue("entities.0.name", key1.toUpperCase().slice(0, -1))
-        }}
-        entitiesInitials={!addview ? entityInitValues(["NGI", "PROJECT"]) : undefined}
-      />
-      <Label to='topoEntity2' className="pt-2">
-        {label2}
-      </Label>
-      <Field
-        name="entities.1.value"
-        id="topoEntity2"
-        component={EntitySelect}
-        entitiesOptions={formatSelectEntities(topoGroups[key2])}
-        onChangeHandler={(e) => {
-          let joinedValues = ''
-          for (let event of e)
-            joinedValues += event.value + ' '
-          joinedValues = joinedValues.trim()
-          form.setFieldValue("entities.1.name", key2.toUpperCase())
-          form.setFieldValue("entities.1.value", joinedValues)
-        }}
-        entitiesInitials={!addview ? entityInitValues(["SITES", "SERVICEGROUPS"]) : undefined}
-      />
+      <Label for='topoEntity1'>{label1}</Label>
+      {
+        publicView ?
+          <Field
+            name='entities.0.value'
+            id='topoEntity1'
+            className='form-control'
+            disabled={true}
+            value={form.values.entities[0] ? form.values.entities[0].value ? form.values.entities[0].value.replace(new RegExp(' ', 'g'), ', ') : '' : ''}
+          />
+        :
+          <Field
+            name="entities.0.value"
+            id="topoEntity1"
+            component={EntitySelect}
+            entitiesOptions={formatSelectEntities(topoGroups[key1])}
+            onChangeHandler={(e) => {
+              let joinedValues = ''
+              for (let event of e)
+                joinedValues += event.value + ' '
+              joinedValues = joinedValues.trim()
+              form.setFieldValue("entities.0.value", joinedValues)
+              form.setFieldValue("entities.0.name", key1)
+            }}
+            entitiesInitials={!addview ? entityInitValues(["entitiesNgi", "entitiesProjects"]) : undefined}
+           />
+       }
+      <Label for='topoEntity2' className='pt-2'>{label2}</Label>
+      {
+        publicView ?
+          <Field
+            name='entities.1.value'
+            id='topoEntity2'
+            className='form-control'
+            disabled={true}
+            value={form.values.entities[1] ? form.values.entities[1].value ? form.values.entities[1].value.replace(new RegExp(' ', 'g'), ', ') : '' : ''}
+          />
+        :
+          <Field
+            name="entities.1.value"
+            className="pt-2"
+            id="topoEntity2"
+            component={EntitySelect}
+            entitiesOptions={formatSelectEntities(topoGroups[key2])}
+            onChangeHandler={(e) => {
+              let joinedValues = ''
+              for (let event of e)
+                joinedValues += event.value + ' '
+              joinedValues = joinedValues.trim()
+              form.setFieldValue("entities.1.name", key2)
+              form.setFieldValue("entities.1.value", joinedValues)
+            }}
+            entitiesInitials={!addview ? entityInitValues(["entitiesSites", "entitiesServiceGroups"]) : undefined}
+          />
+      }
     </React.Fragment>
   )
+}
+
+
+const ProfileSelect = ({ field, error, label, options, onChangeHandler, initVal }) => {
+  if (initVal)
+    return (
+      <CustomReactSelect
+        name={ field.name }
+        label={ label }
+        error={ error }
+        closeMenuOnSelect={ true }
+        isClearable={ field.name === 'thresholdsProfile' }
+        onChange={ e => onChangeHandler(e) }
+        options={ options }
+        value={ { value: initVal, label: initVal } }
+      />
+    )
+  else
+    return (
+      <CustomReactSelect
+        name={ field.name }
+        label={ label }
+        error={ error }
+        closeMenuOnSelect={ true }
+        isClearable={ field.name === 'thresholdsProfile' }
+        onChange={ e => onChangeHandler(e) }
+        options={ options }
+      />
+    )
 }
 
 
 export const ReportsComponent = (props) => {
   const report_name = props.match.params.name;
   const addview = props.addview
+  const publicView = props.publicView
   const location = props.location;
   const history = props.history;
 
@@ -548,20 +653,25 @@ export const ReportsComponent = (props) => {
   const [formikValues, setFormikValues] = useState({})
   const topologyTypes = ['Sites', 'ServiceGroups']
 
+
   const [tagsState, setTagsState] = useState(new Object({
     'groups': undefined,
     'endpoints': undefined
   }))
-  const [groupsTags, setGroupsTags] = useState(new Array())
-  const [endpointsTags, setEndpointsTags] = useState(new Array())
-  const [entitiesState, setEntitiesState] = useState(new Array())
+  const [extensionsState, setExtensionsState] = useState(
+    new Object({
+      groups: undefined,
+      endpoints: undefined
+    })
+  )
 
   const webapi = new WebApi({
     token: props.webapitoken,
     reportsConfigurations: props.webapireports,
     metricProfiles: props.webapimetric,
     aggregationProfiles: props.webapiaggregation,
-    operationsProfiles: props.webapioperations
+    operationsProfiles: props.webapioperations,
+    thresholdsProfiles: props.webapithresholds
   });
 
   const webapiAddMutation = useMutation(async (values) => await webapi.addReport(values));
@@ -572,76 +682,59 @@ export const ReportsComponent = (props) => {
   const backendDeleteMutation = useMutation(async (idReport) => await backend.deleteObject(`/api/v2/internal/reports/${idReport}`));
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
-    'userdetails', () => fetchUserDetails(true)
+    'userdetails', () => fetchUserDetails(true),
+    { enabled: !publicView }
   );
 
   const { data: backendReport, error: errorBackendReport, isLoading: loadingBackendReport } = useQuery(
-    ['report', 'backend', report_name], async () => {
-      return await backend.fetchData(`/api/v2/internal/reports/${report_name}`)
+    [`${publicView ? 'public_' : ''}report`, 'backend', report_name], async () => {
+      return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}reports/${report_name}`)
     },
     {
-      enabled: !!userDetails && !addview,
+      enabled: publicView || (!!userDetails && !addview),
       initialData: () => {
-        return queryClient.getQueryData(['reports', 'backend'])?.find(rep => rep.name === report_name)
+        return queryClient.getQueryData([`${publicView ? 'public_' : ''}report`, 'backend'])?.find(rep => rep.name === report_name)
       }
     }
   )
 
+  const { data: topologyGroups, error: topologyGroupsErrors, isLoading: loadingTopologyGroups } = useQuery(
+    'topologygroups', () => fetchTopologyGroups(webapi),
+    { enabled: (publicView || !!userDetails) && crud }
+  );
+
+  const { data: topologyTags, error: topologyTagsError, isLoading: loadingTopologyTags } = useQuery(
+    'topologytags', () => fetchTopologyTags(webapi),
+    { enabled: !publicView && !!userDetails && crud }
+  );
+
   const { data: webApiReport, error: errorWebApiReport, isLoading: loadingWebApiReport } = useQuery(
     ['report', 'webapi', report_name], () => fetchReport(webapi, report_name),
     {
-      enabled: !!userDetails && !addview,
-      onSuccess: (data) => {
-        let groupstags = formatFromReportTags([
-          'argo.group.filter.tags', 'argo.group.filter.tags.array'],
-          data['filter_tags'])
-        let endpointstags = formatFromReportTags([
-          'argo.endpoint.filter.tags', 'argo.endpoint.filter.tags.array'],
-          data['filter_tags'])
-        let entities = formatFromReportEntities('argo.group.filter.fields', data['filter_tags'])
-        let preselectedtags = JSON.parse(JSON.stringify(tagsState))
-        preselectedtags['groups'] = new Object()
-        preselectedtags['endpoints'] = new Object()
-        groupstags.forEach((e, i) => {
-          preselectedtags['groups'][i] = e.name
-        })
-        endpointstags.forEach((e, i) => {
-          preselectedtags['endpoints'][i] = e.name
-        })
-        if (tagsState['groups'] === undefined
-          && tagsState['endpoints'] === undefined)
-          setTagsState(preselectedtags)
-        setGroupsTags(groupstags)
-        setEndpointsTags(endpointstags)
-        setEntitiesState(entities)
-      }
+      enabled: publicView
+      || (!!userDetails && !addview),
     }
   )
 
   const { data: listMetricProfiles, error: listMetricProfilesError, isLoading: listMetricProfilesLoading } = useQuery(
     ['metricprofile', 'webapi'],  () => fetchMetricProfiles(webapi),
-    { enabled: !!userDetails }
+    { enabled: !publicView && !!userDetails }
   );
 
   const { data: listAggregationProfiles, error: listAggregationProfilesError, isLoading: listAggregationProfilesLoading } = useQuery(
     ['aggregationprofile', 'webapi'], () => fetchAggregationProfiles(webapi),
-    { enabled: !!userDetails }
+    { enabled: !publicView && !!userDetails }
   );
 
   const { data: listOperationsProfiles, error: listOperationsProfilesError, isLoading: listOperationsProfilesLoading } = useQuery(
     'operationsprofile', () => fetchOperationsProfiles(webapi),
-    { enabled: !!userDetails }
+    { enabled: !publicView && !!userDetails }
   );
 
-  const { data: topologyTags, error: topologyTagsError, isLoading: loadingTopologyTags } = useQuery(
-    'topologytags', () => fetchTopologyTags(webapi),
-    { enabled: !!userDetails && crud }
-  );
-
-  const { data: topologyGroups, error: topologyGroupsErrors, isLoading: loadingTopologyGroups } = useQuery(
-    'topologygroups', () => fetchTopologyGroups(webapi),
-    { enabled: !!userDetails && crud }
-  );
+  const { data: listThresholdsProfiles, error: listThresholdsProfilesError, isLoading: listThresholdsProfilesLoading } = useQuery(
+    ['thresholdsprofile', 'webapi'], () => fetchThresholdsProfiles(webapi),
+    { enabled: !publicView && !!userDetails }
+  )
 
   const sortStr = (a, b) => {
     if (a.toLowerCase() < b.toLowerCase()) return -1;
@@ -694,29 +787,27 @@ export const ReportsComponent = (props) => {
     setFormikValues(formValues)
   }
 
-  const formatToReportTags = (tagsContext, formikTags) => {
-    let tags = new Array()
-
-    for (let tag of formikTags) {
+  const formatToReportTags = (tagsContext, formikTags, formikExtensions) => {
+    const formatTag = (tag, prefix='') => {
       let tmpTag = new Object()
       if (tag.value.indexOf(' ') !== -1) {
         if (tag.value.indexOf(',') !== -1)
           tag.value = tag.value.replace(',', '')
         let values = tag.value.replace(/ /g, ', ')
         tmpTag = new Object({
-          name: tag.name,
+          name: `${prefix}${tag.name}`,
           value: values,
           context: tagsContext.replace(".filter.tags", ".filter.tags.array")
         })
-        tags = [...tags, tmpTag]
       }
       else if (tag.value.indexOf(' ') === -1
+        && tag.value.toLowerCase() !== 'yes'
+        && tag.value.toLowerCase() !== 'no'
         && tag.value.toLowerCase() !== '1'
         && tag.value.toLowerCase() !== '0') {
-        tmpTag['name'] = tag.name
+        tmpTag['name'] = `${prefix}${tag.name}`
         tmpTag['value'] = tag.value
         tmpTag['context'] = tagsContext.replace(".filter.tags", ".filter.tags.array")
-        tags.push(tmpTag)
       }
       else {
         let tmpTagValue = tag.value
@@ -724,12 +815,23 @@ export const ReportsComponent = (props) => {
           tmpTagValue = '1'
         else if (tag.value === 'no')
           tmpTagValue = '0'
-        tmpTag['name'] = tag.name
+        tmpTag['name'] = `${prefix}${tag.name}`
         tmpTag['value'] = tmpTagValue
         tmpTag['context'] = tagsContext
-        tags.push(tmpTag)
       }
+      return tmpTag
     }
+
+    let tags = new Array()
+
+    for (let tag of formikTags) {
+      if (tag && tag.value !== '')
+        tags.push(formatTag(tag))
+    }
+
+    for (let tag of formikExtensions)
+      tags.push(formatTag(tag, 'info_ext_'))
+
     return tags
   }
 
@@ -739,29 +841,36 @@ export const ReportsComponent = (props) => {
     for (let entity of formikEntities) {
       let tmpEntity = new Object()
       let tmpEntites = new Array()
-      if (entity.value.indexOf(' ') !== -1) {
+      if (entity.value && entity.value.indexOf(' ') !== -1) {
         let values = entity.value.split(' ')
         for (var val of values)
-          tmpEntites.push(new Object({
-            name: entity.name,
-            value: val,
-            context: context
-          }))
+          if (val)
+            tmpEntites.push(new Object({
+              name: 'group',
+              value: val,
+              context: context
+            }))
         entities = [...entities, ...tmpEntites]
       }
       else {
-        tmpEntity['name'] = entity.name
-        tmpEntity['value'] = entity.value
-        tmpEntity['context'] = context
-        entities.push(tmpEntity)
+        if (entity.value) {
+          tmpEntity['name'] = 'group'
+          tmpEntity['value'] = entity.value
+          tmpEntity['context'] = context
+          entities.push(tmpEntity)
+        }
       }
     }
     return entities
   }
 
   const formatFromReportTags = (tagsContext, formikTags) => {
+    if (!formikTags)
+      return new Array()
+
     let tmpTagsJoint = new Object()
     let tags = new Array()
+    let extensions = new Array()
 
     for (let tag of formikTags) {
       for (let tagContext of tagsContext) {
@@ -773,24 +882,53 @@ export const ReportsComponent = (props) => {
       }
     }
 
-    for (let tag in tmpTagsJoint)
-      tags.push(new Object({
-        'name': tag,
-        'value': tmpTagsJoint[tag].join(' ').trim().replace(/,/g, '')
-      }))
+    for (let tag in tmpTagsJoint) {
+      if (tag.startsWith('info_ext_'))
+        extensions.push(
+          new Object({
+            name: tag.substring(9),
+            value: tmpTagsJoint[tag].join(' ').trim().replace(/,/g, '')
+          })
+        )
+      else
+        tags.push(new Object({
+          'name': tag,
+          'value': tmpTagsJoint[tag].join(' ').trim().replace(/,/g, '')
+        }))
+    }
 
-    return tags
+    return [tags, extensions]
   }
 
-  const formatFromReportEntities = (context, formikEntities) => {
+  const formatFromReportEntities = (context, formikEntities, topologyGroups) => {
+    let default_empty = new Object(
+      {
+        'name': undefined,
+        'value': undefined
+      }
+    )
+    if (!formikEntities || (formikEntities && formikEntities.length === 0))
+      return new Array(default_empty, default_empty)
+
+    let context_found = formikEntities.filter(item => item["context"] === context)
+    if (context_found.length === 0)
+      return new Array(default_empty, default_empty)
+
     let tmpEntityJoint = new Object()
     let entities = new Array()
 
     for (let entity of formikEntities) {
       if (entity.context === context) {
-        if (tmpEntityJoint[entity.name] === undefined)
-          tmpEntityJoint[entity.name] = new Array()
-        tmpEntityJoint[entity.name].push(entity.value)
+        let entity_type = undefined
+        for (var type in topologyGroups)
+          if (topologyGroups[type].indexOf(entity.value) > -1) {
+            entity_type = type
+            break
+          }
+        if (tmpEntityJoint[entity_type] === undefined)
+          tmpEntityJoint[entity_type] = new Array()
+        if (entity_type)
+          tmpEntityJoint[entity_type].push(entity.value)
       }
     }
 
@@ -800,7 +938,18 @@ export const ReportsComponent = (props) => {
         'value': tmpEntityJoint[entity].join(' ')
       }))
 
-    return entities
+    let final_entities = new Array()
+    if (entities.length === 1) {
+      let only_type = entities[0].name.toLowerCase()
+      if (only_type.indexOf('ngi') !== -1 || only_type.indexOf('project') !== -1)
+        final_entities = [entities[0], default_empty]
+      else if (only_type.indexOf('site') !== -1 || only_type.indexOf('servicegroup') !== -1)
+        final_entities = [default_empty, entities[0]]
+    }
+    else
+      final_entities = entities
+
+    return final_entities
   }
 
   const formatTopologySchema = (toposchema) => {
@@ -852,6 +1001,13 @@ export const ReportsComponent = (props) => {
       profile = profile[0]
     }
 
+    if (profiletype === 'thresholds') {
+      profile = listThresholdsProfiles.filter(
+        profile => profile.name === name
+      )
+      profile = profile[0]
+    }
+
     if (profile) {
       return new Object({
         id: profile.id,
@@ -868,12 +1024,12 @@ export const ReportsComponent = (props) => {
       onSuccess: () => {
         backendDeleteMutation.mutate(idReport, {
           onSuccess: () => {
-            queryClient.invalidateQueries('report');
             NotifyOk({
               msg: 'Report successfully deleted',
               title: 'Deleted',
               callback: () => history.push('/ui/reports')
             });
+            queryClient.invalidateQueries('report');
           },
           onError: (error) => {
             NotifyError({
@@ -897,7 +1053,6 @@ export const ReportsComponent = (props) => {
     dataToSend.info = {
       name: formValues.name,
       description: formValues.description,
-      //TODO: created, updated
     }
     dataToSend.thresholds = {
       availability: Number.parseFloat(formValues.availabilityThreshold),
@@ -913,12 +1068,17 @@ export const ReportsComponent = (props) => {
       formValues.aggregationProfile)
     let extractedOperationProfile = extractProfileMetadata('operations',
       formValues.operationsProfile)
+    let extractedThresholdsProfile = extractProfileMetadata(
+      'thresholds', formValues.thresholdsProfile
+    )
     dataToSend.profiles = new Array()
     dataToSend['profiles'].push(extractedMetricProfile)
     dataToSend['profiles'].push(extractedAggregationProfile)
     dataToSend['profiles'].push(extractedOperationProfile)
-    let groupTagsFormatted = formatToReportTags('argo.group.filter.tags', formValues.groups)
-    let endpointTagsFormatted = formatToReportTags('argo.endpoint.filter.tags', formValues.endpoints)
+    if (extractedThresholdsProfile)
+      dataToSend['profiles'].push(extractedThresholdsProfile)
+    let groupTagsFormatted = formatToReportTags('argo.group.filter.tags', formValues.groupsTags, formikValues.groupsExtensions)
+    let endpointTagsFormatted = formatToReportTags('argo.endpoint.filter.tags', formValues.endpointsTags, formikValues.endpointsExtensions)
     let groupEntitiesFormatted = formatToReportEntities('argo.group.filter.fields', formValues.entities)
     dataToSend['filter_tags'] = [...groupTagsFormatted,
       ...endpointTagsFormatted, ...groupEntitiesFormatted]
@@ -998,7 +1158,12 @@ export const ReportsComponent = (props) => {
       doChange(formikValues)
   }
 
-  if (loadingUserDetails || loadingBackendReport || loadingWebApiReport || listMetricProfilesLoading || listAggregationProfilesLoading || listOperationsProfilesLoading || loadingTopologyTags || loadingTopologyGroups)
+  const loading = publicView ?
+    loadingBackendReport || loadingWebApiReport
+  :
+    loadingUserDetails || loadingBackendReport || loadingWebApiReport || listMetricProfilesLoading || listAggregationProfilesLoading || listOperationsProfilesLoading || listThresholdsProfilesLoading || loadingTopologyTags || loadingTopologyGroups
+
+  if (loading)
     return (<LoadingAnim/>);
 
   else if (errorUserDetails)
@@ -1019,21 +1184,53 @@ export const ReportsComponent = (props) => {
   else if (listOperationsProfilesError)
     return (<ErrorComponent error={listOperationsProfilesError}/>);
 
+  else if (listThresholdsProfilesError)
+    return (<ErrorComponent error={listThresholdsProfilesError} />)
+
   else if (topologyTagsError)
     return (<ErrorComponent error={topologyTagsError} />)
 
   else if (topologyGroupsErrors)
     return (<ErrorComponent error={topologyGroupsErrors} />)
 
-  else if (userDetails && listMetricProfiles && listAggregationProfiles && listOperationsProfiles) {
-    const topoTags = topologyTags ? topologyTags : new Array();
-    var topoGroups = new Object();
+  else if (!loading) {
+    let metricProfile = '';
+    let aggregationProfile = '';
+    let operationsProfile = '';
+    let thresholdsProfile = '';
 
-    if (topologyGroups) {
+    let entitiesSites = new Array()
+    let entitiesNgi = new Array()
+    let entitiesProjects= new Array()
+    let entitiesServiceGroups = new Array()
+    let entitiesFormik = new Array()
+    let groupsTags = undefined
+    let endpointsTags = undefined
+    let groupsExtensions = undefined
+    let endpointsExtensions = undefined
+
+    if (webApiReport && webApiReport.profiles) {
+      webApiReport.profiles.forEach(profile => {
+        if (profile.type === 'metric')
+          metricProfile = profile.name;
+
+        if (profile.type === 'aggregation')
+          aggregationProfile = profile.name;
+
+        if (profile.type === 'operations')
+          operationsProfile = profile.name;
+
+        if (profile.type == 'thresholds')
+          thresholdsProfile = profile.name;
+      })
+    }
+
+    if (topologyGroups && entitiesNgi.length === 0 && entitiesSites.length === 0
+      && entitiesProjects.length === 0 && entitiesServiceGroups.length === 0) {
       let ngis = new Set()
-      let sites = new Set()
       let projects = new Set()
       let servicegroups = new Set()
+      let sites = new Set()
 
       for (var entity of topologyGroups) {
         if (entity['type'].toLowerCase() === 'project') {
@@ -1046,56 +1243,150 @@ export const ReportsComponent = (props) => {
           sites.add(entity['subgroup'])
         }
       }
-
-      topoGroups = new Object({
-        'ngis': Array.from(ngis).sort(sortStr),
-        'sites': Array.from(sites).sort(sortStr),
-        'projects': Array.from(projects).sort(sortStr),
-        'servicegroups': Array.from(servicegroups).sort(sortStr)
-      })
+      entitiesNgi = Array.from(ngis).sort(sortStr)
+      entitiesSites = Array.from(sites).sort(sortStr)
+      entitiesProjects = Array.from(projects).sort(sortStr)
+      entitiesServiceGroups = Array.from(servicegroups).sort(sortStr)
     }
 
-    let metricProfile = '';
-    let aggregationProfile = '';
-    let operationsProfile = '';
-
-    if (webApiReport) {
-      webApiReport.profiles.forEach(profile => {
-        if (profile.type === 'metric')
-          metricProfile = profile.name;
-
-        if (profile.type === 'aggregation')
-          aggregationProfile = profile.name;
-
-        if (profile.type === 'operations')
-          operationsProfile = profile.name;
-      })
-    }
+    if (!addview && webApiReport
+      && entitiesNgi.length > 0 && entitiesSites.length > 0
+      && entitiesProjects.length > 0 && entitiesServiceGroups.length > 0)
+      entitiesFormik = formatFromReportEntities('argo.group.filter.fields',
+        webApiReport['filter_tags'], {
+          entitiesNgi,
+          entitiesSites,
+          entitiesProjects,
+          entitiesServiceGroups
+        })
+    else if (addview)
+      entitiesFormik = new Array(
+        new Object({
+          'name': undefined,
+          'value': undefined
+        }),
+        new Object({
+          'name': undefined,
+          'value': undefined
+        })
+      )
 
     let write_perm = undefined;
     let grouplist = undefined;
-    if (!addview) {
-      write_perm = userDetails.is_superuser ||
-            userDetails.groups.reports.indexOf(backendReport.groupname) >= 0;
+
+    if (!publicView) {
+      if (!addview) {
+        write_perm = userDetails.is_superuser ||
+              userDetails.groups.reports.indexOf(backendReport.groupname) >= 0;
+      }
+      else {
+        write_perm = userDetails.is_superuser ||
+          userDetails.groups.reports.length > 0;
+      }
     }
-    else {
-      write_perm = userDetails.is_superuser ||
-        userDetails.groups.reports.length > 0;
-    }
+
     if (write_perm)
       grouplist = userDetails.groups.reports
     else
       grouplist = [backendReport.groupname]
 
+    var allTags = new Array()
+    var allExtensions = new Array()
+
+    if (topologyTags) {
+      for (let entity of topologyTags) {
+        let tmpTags = new Array()
+        let tmpExtensions = new Array()
+        for (let item of entity['values']) {
+          if (item['name'].startsWith('info_ext_'))
+            tmpExtensions.push(
+              new Object({
+                name: item['name'].substring(9),
+                values: item['values']
+              })
+            )
+
+          else if (!item['name'].startsWith('info_') && !item['name'].startsWith('vo_'))
+            tmpTags.push(item)
+        }
+        allTags.push(
+          new Object({
+            name: entity['name'],
+            values: tmpTags
+          })
+        )
+        allExtensions.push(
+          new Object({
+            name: entity['name'],
+            values: tmpExtensions
+          })
+        )
+      }
+    }
+
+    if (!addview && groupsTags === undefined && endpointsTags == undefined
+      && groupsExtensions === undefined && endpointsExtensions === undefined ) {
+      let [gt, ge] = formatFromReportTags([
+        'argo.group.filter.tags', 'argo.group.filter.tags.array'],
+        webApiReport['filter_tags'])
+      let [et, ee] = formatFromReportTags([
+        'argo.endpoint.filter.tags', 'argo.endpoint.filter.tags.array'],
+        webApiReport['filter_tags'])
+
+      let preselectedtags = JSON.parse(JSON.stringify(tagsState))
+      let preselectedexts = JSON.parse(JSON.stringify(extensionsState))
+      preselectedtags['groups'] = new Object()
+      preselectedtags['endpoints'] = new Object()
+      preselectedexts['groups'] = new Object()
+      preselectedexts['endpoints'] = new Object()
+
+      endpointsTags = et
+      groupsExtensions = ge
+      groupsTags = gt
+      endpointsExtensions = ee
+
+      groupsTags && groupsTags.forEach((e, i) => {
+        preselectedtags['groups'][i] = e.name
+      })
+      endpointsTags && endpointsTags.forEach((e, i) => {
+        preselectedtags['endpoints'][i] = e.name
+      })
+      groupsExtensions && groupsExtensions.forEach((e, i) => {
+        preselectedexts['groups'][i] = e.name
+      })
+      endpointsExtensions && endpointsExtensions.forEach((e, i) => {
+        preselectedexts['endpoints'][i] = e.name
+      })
+
+      if (tagsState['groups'] === undefined
+        && tagsState['endpoints'] === undefined)
+        setTagsState(preselectedtags)
+
+      if (
+        extensionsState['groups'] === undefined &&
+        extensionsState['endpoints'] == undefined
+      )
+        setExtensionsState(preselectedexts)
+    }
+    else if ((addview || publicView) && groupsTags === undefined
+      && endpointsTags == undefined && groupsExtensions === undefined
+      && endpointsExtensions === undefined) {
+      endpointsTags = new Array()
+      groupsExtensions = new Array()
+      groupsTags = new Array()
+      endpointsExtensions = new Array()
+    }
+
     return (
       <BaseArgoView
-        resourcename='report'
+        resourcename={publicView ? 'Report details' : 'report'}
         location={location}
         modal={true}
         state={{areYouSureModal, 'modalFunc': onYesCallback, modalTitle, modalMsg}}
         toggle={() => setAreYouSureModal(!areYouSureModal)}
         submitperm={write_perm}
         addview={addview}
+        publicview={publicView}
         history={false}
       >
         <Formik
@@ -1108,6 +1399,7 @@ export const ReportsComponent = (props) => {
             metricProfile: metricProfile,
             aggregationProfile: aggregationProfile,
             operationsProfile: operationsProfile,
+            thresholdsProfile: thresholdsProfile,
             availabilityThreshold: webApiReport ? webApiReport.thresholds.availability : '',
             reliabilityThreshold: webApiReport ? webApiReport.thresholds.reliability : '',
             uptimeThreshold: webApiReport ? webApiReport.thresholds.uptime : '',
@@ -1115,47 +1407,54 @@ export const ReportsComponent = (props) => {
             downtimeThreshold: webApiReport ? webApiReport.thresholds.downtime : '',
             topologyType: whichTopologyType(webApiReport ? webApiReport.topology_schema : {}),
             groupname: backendReport ? backendReport.groupname : '',
-            groups: groupsTags,
-            endpoints: endpointsTags,
-            entities: entitiesState
+            groupsTags: groupsTags,
+            endpointsTags: endpointsTags,
+            groupsExtensions: groupsExtensions,
+            endpointsExtensions: endpointsExtensions,
+            entities: entitiesFormik
           }}
           enableReinitialize={true}
           onSubmit = {(values) => onSubmitHandle(values)}
         >
           {(props) => (
-            <Form>
+            <Form data-testid='form'>
               <FormGroup>
                 <Row className='align-items-center'>
                   <Col md={6}>
                     <InputGroup>
-                      <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
+                      <InputGroupText>Name</InputGroupText>
                       <Field
                         type='text'
                         name='name'
                         data-testid='name'
-                        className='form-control form-control-lg'
+                        className={`form-control form-control-lg ${props.errors.name && 'border-danger'}`}
+                        disabled={publicView}
                       />
                     </InputGroup>
-                    {
-                      props.errors && props.errors.name &&
-                        FancyErrorMessage(props.errors.name)
-                    }
+                    <CustomError error={props.errors.name} />
                     <FormText color='muted'>
                       Report name
                     </FormText>
                   </Col>
                   <Col md={2}>
-                    <label>
-                      <Field
-                        type='checkbox'
-                        name='disabled'
-                        className='mr-1'
-                      />
-                      Disabled
-                    </label>
-                    <FormText color='muted'>
-                      Mark report as disabled.
-                    </FormText>
+                    <Row>
+                      <FormGroup check inline className='ms-3'>
+                        <Input
+                          type='checkbox'
+                          id='disabled'
+                          name='disabled'
+                          disabled={publicView}
+                          onChange={e => props.setFieldValue('disabled', e.target.checked)}
+                          checked={props.values.disabled}
+                        />
+                        <Label check for='disabled'>Disabled</Label>
+                      </FormGroup>
+                    </Row>
+                    <Row>
+                      <FormText color='muted'>
+                        Mark report as disabled.
+                      </FormText>
+                    </Row>
                   </Col>
                 </Row>
                 <Row className='mt-3'>
@@ -1167,6 +1466,7 @@ export const ReportsComponent = (props) => {
                       component='textarea'
                       rows={4}
                       name='description'
+                      disabled={publicView}
                     />
                     <FormText color='muted'>
                       Free text report description.
@@ -1176,24 +1476,40 @@ export const ReportsComponent = (props) => {
                 <Row className='mt-4'>
                   <Col md={3}>
                     <InputGroup>
-                      <InputGroupAddon addonType='prepend'>Group</InputGroupAddon>
-                      <Field
-                        name='groupname'
-                        data-testid='groupname'
-                        component='select'
-                        className={`form-control custom-select`}
-                      >
-                        <option key={0} value='' hidden color='text-muted'>Select group</option>
-                        {
-                          grouplist.map((group, i) =>
-                            <option key={i + 1} value={group}>{group}</option>
-                          )
-                        }
-                      </Field>
+                      <InputGroupText>Group</InputGroupText>
+                      {
+                        publicView ?
+                          <Field
+                            type='text'
+                            name='groupname'
+                            data-testid='groupname'
+                            className='form-control'
+                            disabled={true}
+                          />
+                        :
+                          <div className='react-select form-control p-0'>
+                            <CustomReactSelect
+                              name='groupname'
+                              inputgroup={ true }
+                              error={props.errors.groupname}
+                              options={
+                                grouplist.map((group) => new Object({
+                                  label: group, value: group
+                                }))
+                               }
+                               value={
+                                 props.values.groupname ?
+                                  { label: props.values.groupname, value: props.values.groupname }
+                                  : undefined
+                               }
+                               onChange={ e => props.setFieldValue('groupname', e.value) }
+                            />
+                          </div>
+                      }
                     </InputGroup>
                     {
-                      props.errors && props.errors.groupname &&
-                        FancyErrorMessage(props.errors.groupname)
+                      !publicView &&
+                        <CustomError error={props.errors.groupname} />
                     }
                     <FormText color='muted'>
                       Report is member of given group
@@ -1205,54 +1521,137 @@ export const ReportsComponent = (props) => {
                 <ParagraphTitle title='Profiles'/>
                 <Row className='mt-2'>
                   <Col md={4}>
-                    <Label to='metricProfile'>Metric profile:</Label>
-                    <Field
-                      id='metricProfile'
-                      name='metricProfile'
-                      component={DropDown}
-                      data={insertSelectPlaceholder(extractProfileNames(
-                        listMetricProfiles),
-                        'Select')}
-                      required={true}
-                      class_name='custom-select'
-                    />
                     {
-                      props.errors && props.errors.metricProfile &&
-                        FancyErrorMessage(props.errors.metricProfile)
+                      publicView ?
+                        <>
+                          <Label for='metricProfile'>Metric profile:</Label>
+                          <Field
+                            type='text'
+                            id='metricProfile'
+                            name='metricProfile'
+                            className='form-control'
+                            disabled={true}
+                          />
+                        </>
+                      :
+                        <Field
+                          id='metricProfile'
+                          name='metricProfile'
+                          component={ProfileSelect}
+                          error={props.errors.metricProfile}
+                          options={
+                            extractProfileNames(listMetricProfiles).map((profile) => new Object({
+                              label: profile, value: profile
+                            }))
+                          }
+                          onChangeHandler={(e) => props.setFieldValue('metricProfile', e.value)}
+                          label='Metric profile:'
+                          initVal={ !addview ? props.values.metricProfile : null }
+                          required={true}
+                        />
                     }
+                    <CustomError error={props.errors.metricProfile} />
                   </Col>
                   <Col md={4}>
-                    <Label to='aggregationProfile'>Aggregation profile:</Label>
-                    <Field
-                      id='aggregationProfile'
-                      name='aggregationProfile'
-                      component={DropDown}
-                      data={insertSelectPlaceholder(
-                        extractProfileNames(listAggregationProfiles).sort(sortStr),
-                        'Select')}
-                      required={true}
-                      class_name='custom-select'
-                    />
                     {
-                      props.errors && props.errors.aggregationProfile &&
-                        FancyErrorMessage(props.errors.aggregationProfile)
+                      publicView ?
+                        <>
+                          <Label for='aggregationProfile'>Aggregation profile:</Label>
+                          <Field
+                            type='text'
+                            id='aggregationProfile'
+                            name='aggregationProfile'
+                            className='form-control'
+                            disabled={true}
+                          />
+                        </>
+                      :
+                        <Field
+                          id='aggregationProfile'
+                          name='aggregationProfile'
+                          component={ProfileSelect}
+                          error={props.errors.aggregationProfile}
+                          options={
+                            extractProfileNames(listAggregationProfiles).map((profile) => new Object({
+                              label: profile, value: profile
+                            }))
+                          }
+                          onChangeHandler={ (e) => props.setFieldValue('aggregationProfile', e.value) }
+                          label='Aggregation profile:'
+                          initVal={ !addview ? props.values.aggregationProfile : null }
+                          required={true}
+                        />
                     }
+                    <CustomError error={props.errors.aggregationProfile} />
                   </Col>
                   <Col md={4}>
-                    <Label to='operationsProfile'>Operations profile:</Label>
-                    <Field
-                      name='operationsProfile'
-                      id='operationsProfile'
-                      component={DropDown}
-                      data={insertSelectPlaceholder(
-                        extractProfileNames(listOperationsProfiles),
-                        'Select')}
-                      required={true}
-                      class_name='custom-select'
-                    />
                     {
-                      props.errors && props.errors.operationsProfile &&
-                        FancyErrorMessage(props.errors.operationsProfile)
+                      publicView ?
+                        <>
+                          <Label for='operationsProfile'>Operations profile:</Label>
+                          <Field
+                            type='text'
+                            id='operationsProfile'
+                            name='operationsProfile'
+                            className='form-control'
+                            disabled={true}
+                          />
+                        </>
+                      :
+                        <Field
+                          name='operationsProfile'
+                          id='operationsProfile'
+                          component={ProfileSelect}
+                          error={props.errors.operationsProfile}
+                          options={
+                            extractProfileNames(listOperationsProfiles).map((profile) => new Object({
+                              label: profile, value: profile
+                            }))
+                          }
+                          onChangeHandler={ (e) =>
+                            props.setFieldValue('operationsProfile', e.value)
+                          }
+                          label='Operations profile:'
+                          initVal={ !addview ? props.values.operationsProfile : null }
+                          required={true}
+                        />
+                    }
+                    <CustomError error={props.errors.operationsProfile} />
+                  </Col>
+                </Row>
+                <Row className='mt-4'>
+                  <Col md={4}>
+                    {
+                      publicView ?
+                        <>
+                          <Label for='thresholdsProfile'>Thresholds profile:</Label>
+                          <Field
+                            type='text'
+                            id='thresholdsProfile'
+                            name='thresholdsProfile'
+                            className='form-control'
+                            disabled={true}
+                          />
+                        </>
+                      :
+                        <Field
+                          name='thresholdsProfile'
+                          id='thresholdsProfile'
+                          component={ProfileSelect}
+                          options={
+                            extractProfileNames(listThresholdsProfiles).map((profile) => new Object({
+                              label: profile, value: profile
+                            }))
+                          }
+                          onChangeHandler={ (e) => {
+                            if (e)
+                              props.setFieldValue('thresholdsProfile', e.value)
+                            else
+                              props.setFieldValue('thresholdsProfile', null)
+                          }}
+                          label='Thresholds profile:'
+                          initVal={ !addview ? props.values.thresholdsProfile : null }
+                        />
                     }
                   </Col>
                 </Row>
@@ -1263,19 +1662,38 @@ export const ReportsComponent = (props) => {
                   <ParagraphTitle title='Topology configuration'/>
                   <Row>
                     <Col md={2}>
-                      <Label for='topologyType'>Topology type:</Label>
-                      <Field
-                        id='topologyType'
-                        name='topologyType'
-                        component={DropDown}
-                        data={insertSelectPlaceholder(topologyTypes, 'Select')}
-                        required={true}
-                        class_name='custom-select'
-                      />
                       {
-                        props.errors && props.errors.topologyType &&
-                          FancyErrorMessage(props.errors.topologyType)
+                        publicView ?
+                          <>
+                            <Label for='topologyType'>Topology type:</Label>
+                            <Field
+                              type='text'
+                              id='topologyType'
+                              name='topologyType'
+                              className='form-control'
+                              disabled={true}
+                            />
+                          </>
+                        :
+                          <CustomReactSelect
+                            id='topologyType'
+                            name='topologyType'
+                            error={props.errors.topologyType}
+                            label='Topology type:'
+                            onChange={ e => props.setFieldValue('topologyType', e.value) }
+                            options={
+                              topologyTypes.map(type => new Object({
+                                label: type, value: type
+                              }))
+                            }
+                            value={
+                              props.values.topologyType ?
+                                { label: props.values.topologyType, value: props.values.topologyType }
+                              : undefined
+                            }
+                          />
                       }
+                      <CustomError error={props.errors.topologyType} />
                     </Col>
                   </Row>
                   <Row>
@@ -1289,16 +1707,38 @@ export const ReportsComponent = (props) => {
                             <strong>Tags</strong>
                           </CardTitle>
                           <FieldArray
-                            name="groups"
+                            name="groupsTags"
                             render={props => (
                               <TopologyTagList
                                 part="groups"
+                                fieldName="groupsTags"
                                 tagsState={tagsState}
                                 setTagsState={setTagsState}
-                                tagsAll={topoTags}
+                                tagsAll={allTags}
+                                publicView={publicView}
                                 {...props}/>
                             )}
                           />
+                          <div>
+                            <hr style={{'borderTop': '1px solid #b5c4d1'}}/>
+                          </div>
+                          <CardTitle className="mb-2">
+                            <strong>Extensions</strong>
+                          </CardTitle>
+                          <FieldArray
+                              name="groupsExtensions"
+                              render={ props => (
+                                <TopologyTagList
+                                  {...props}
+                                  part="groups"
+                                  fieldName="groupsExtensions"
+                                  tagsState={extensionsState}
+                                  setTagsState={setExtensionsState}
+                                  tagsAll={allExtensions}
+                                  publicView={publicView}
+                                />
+                              ) }
+                            />
                           <div>
                             <hr style={{'borderTop': '1px solid #b5c4d1'}}/>
                           </div>
@@ -1309,8 +1749,12 @@ export const ReportsComponent = (props) => {
                             name="entities"
                             render={props => (
                               <TopologyEntityFields
-                                topoGroups={topoGroups}
+                                topoGroups={{
+                                  entitiesNgi, entitiesSites,
+                                  entitiesProjects, entitiesServiceGroups
+                                }}
                                 addview={addview}
+                                publicView={publicView}
                                 {...props}
                               />
                             )}
@@ -1328,17 +1772,40 @@ export const ReportsComponent = (props) => {
                             <strong>Tags</strong>
                           </CardTitle>
                           <FieldArray
-                            name="endpoints"
+                            name="endpointsTags"
                             render={propsLocal => (
                               <TopologyTagList
                                 part="endpoints"
+                                fieldName="endpointsTags"
                                 tagsState={tagsState}
                                 setTagsState={setTagsState}
-                                tagsAll={topoTags}
+                                tagsAll={allTags}
                                 addview={addview}
+                                publicView={publicView}
                                 {...propsLocal}/>
                             )}
                           />
+                          <div>
+                            <hr style={{'borderTop': '1px solid #b5c4d1'}}/>
+                          </div>
+                          <CardTitle className="mb-2">
+                            <strong>Extensions</strong>
+                          </CardTitle>
+                          <FieldArray
+                              name="endpointsExtensions"
+                              render={ propsLocal => (
+                                <TopologyTagList
+                                  {...propsLocal}
+                                  part="endpoints"
+                                  fieldName="endpointsExtensions"
+                                  tagsState={extensionsState}
+                                  setTagsState={setExtensionsState}
+                                  tagsAll={allExtensions}
+                                  addview={addview}
+                                  publicView={publicView}
+                                />
+                              ) }
+                            />
                         </CardBody>
                       </Card>
                     </Col>
@@ -1348,70 +1815,60 @@ export const ReportsComponent = (props) => {
               <FormGroup className='mt-4'>
                 <ParagraphTitle title='Thresholds'/>
                 <Row>
-                  <Col md={2} className='mr-4'>
+                  <Col md={2} className='me-4'>
                     <Label for='availabilityThreshold'>Availability:</Label>
                     <Field
                       id='availabilityThreshold'
                       name='availabilityThreshold'
-                      className='form-control'
+                      className={`form-control ${props.errors.availabilityThreshold && 'border-danger'}`}
+                      disabled={publicView}
                     />
-                    {
-                      props.errors && props.errors.availabilityThreshold &&
-                        FancyErrorMessage(props.errors.availabilityThreshold)
-                    }
+                    <CustomError error={props.errors.availabilityThreshold} />
                   </Col>
-                  <Col md={2} className='mr-4'>
+                  <Col md={2} className='me-4'>
                     <Label for='reliabilityThreshold'>Reliability:</Label>
                     <Field
                       id='reliabilityThreshold'
                       name='reliabilityThreshold'
-                      className='form-control'
+                      className={`form-control ${props.errors.reliabilityThreshold && 'border-danger'}`}
+                      disabled={publicView}
                     />
-                    {
-                      props.errors && props.errors.reliabilityThreshold &&
-                        FancyErrorMessage(props.errors.reliabilityThreshold)
-                    }
+                    <CustomError error={props.errors.reliabilityThreshold} />
                   </Col>
-                  <Col md={2} className='mr-4'>
+                  <Col md={2} className='me-4'>
                     <Label for='uptimeThreshold'>Uptime:</Label>
                     <Field
                       id='uptimeThreshold'
                       name='uptimeThreshold'
-                      className='form-control'
+                      className={`form-control ${props.errors.uptimeThreshold && 'border-danger'}`}
+                      disabled={publicView}
                     />
-                    {
-                      props.errors && props.errors.uptimeThreshold &&
-                        FancyErrorMessage(props.errors.uptimeThreshold)
-                    }
+                    <CustomError error={props.errors.uptimeThreshold} />
                   </Col>
-                  <Col md={2} className='mr-4'>
+                  <Col md={2} className='me-4'>
                     <Label for='unknownThreshold'>Unknown:</Label>
                     <Field
                       id='unknownThreshold'
                       name='unknownThreshold'
-                      className='form-control'
+                      className={`form-control ${props.errors.unknownThreshold && 'border-danger'}`}
+                      disabled={publicView}
                     />
-                    {
-                      props.errors && props.errors.unknownThreshold &&
-                        FancyErrorMessage(props.errors.unknownThreshold)
-                    }
+                    <CustomError error={props.errors.unknownThreshold} />
                   </Col>
-                  <Col md={2} className='mr-4'>
+                  <Col md={2} className='me-4'>
                     <Label for='downtimeThreshold'>Downtime:</Label>
                     <Field
                       id='downtimeThreshold'
                       name='downtimeThreshold'
-                      className='form-control'
+                      className={`form-control ${props.errors.downtimeThreshold && 'border-danger'}`}
+                      disabled={publicView}
                     />
-                    {
-                      props.errors && props.errors.downtimeThreshold &&
-                        FancyErrorMessage(props.errors.downtimeThreshold)
-                    }
+                    <CustomError error={props.errors.downtimeThreshold} />
                   </Col>
                 </Row>
               </FormGroup>
               {
-                (write_perm && crud) &&
+                (!publicView && write_perm && crud) &&
                 <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
                   {
                     !addview ?

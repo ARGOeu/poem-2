@@ -1,5 +1,4 @@
 import React from 'react';
-import { BaseArgoView } from './UIElements';
 import {
   Table,
   Card,
@@ -12,7 +11,7 @@ export const CookiePolicy = ({ fromModal=false }) => {
   let fqdn = window.location.hostname;
 
   const Document = () => (
-    <Card className={`${!fromModal ? "ml-2 mb-2 border rounded" : ""}`}>
+    <Card className={`${!fromModal ? "ms-2 mb-2 border rounded" : ""}`}>
       <CardHeader>
         <h3 className='p-2'>Cookie Policies</h3>
       </CardHeader>

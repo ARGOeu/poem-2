@@ -6,7 +6,6 @@ import {
   LoadingAnim,
   BaseArgoView,
   SearchField,
-  FancyErrorMessage,
   NotifyOk,
   Icon,
   DiffElement,
@@ -14,7 +13,8 @@ import {
   NotifyError,
   ErrorComponent,
   ParagraphTitle,
-  ProfilesListTable
+  ProfilesListTable,
+  CustomError
 } from './UIElements';
 import { Formik, Field, FieldArray, Form } from 'formik';
 import {
@@ -66,7 +66,7 @@ const MetricProfileAutocompleteField = ({suggestions, service, index, icon, tupl
   return (
     <Autosuggest
       inputProps={{
-        className: `"form-control custom-select " ${service.isNew ? "border border-success" : service[tupleType + 'Changed'] ? "border border-danger" : ""}`,
+        className: `"form-control form-select " ${service.isNew ? "border border-success" : service[tupleType + 'Changed'] ? "border border-danger" : ""}`,
         placeholder: '',
         onChange: (_, {newValue}) => changeFieldValue(newValue),
         value: service[tupleType]
@@ -235,7 +235,7 @@ const ServicesList = () => {
                       context.formikBag.form.errors.view_services &&
                       context.formikBag.form.errors.view_services[index]
                       ? context.formikBag.form.errors.view_services[index].service
-                        ? FancyErrorMessage(context.formikBag.form.errors.view_services[index].service)
+                        ? <CustomError error={context.formikBag.form.errors.view_services[index].service} />
                         : null
                       : null
                   }
@@ -252,12 +252,12 @@ const ServicesList = () => {
                   {
                     context.formikBag.form.errors && context.formikBag.form.errors.view_services && context.formikBag.form.errors.view_services[index]
                       ? context.formikBag.form.errors.view_services[index].metric
-                        ? FancyErrorMessage(context.formikBag.form.errors.view_services[index].metric)
+                        ? <CustomError error={context.formikBag.form.errors.view_services[index].metric} />
                         : null
                       : null
                   }
                 </td>
-                <td className={service.isNew ? "bg-light align-middle pl-3" : "align-middle pl-3"}>
+                <td className={service.isNew ? "bg-light align-middle ps-3" : "align-middle ps-3"}>
                   <Button size="sm" color="light"
                     type="button"
                     data-testid={`remove-${index}`}
@@ -291,7 +291,7 @@ const ServicesList = () => {
                       <tr key={index + context.formikBag.form.values.view_services.length}>
                         <td className="bg-light"></td>
                         <td colSpan="2" className="bg-light text-center">
-                          {FancyErrorMessage(context.formikBag.form.errors.view_services[index].dup)}
+                          <CustomError error={context.formikBag.form.errors.view_services[index].dup} />
                         </td>
                         <td className="bg-light"></td>
                       </tr>
@@ -863,7 +863,8 @@ export const MetricProfilesComponent = (props) => {
         setMetricProfileName('Cloned ' + metricProfile.profile.name);
         metricProfile.profile.id = ''
         setMetricProfileDescription(metricProfile.profile.description);
-        setGroupname(metricProfile.groupname)
+        if (userDetails.groups.metricprofiles.indexOf(metricProfile.groupname) != -1)
+          setGroupname(metricProfile.groupname)
         setViewServices(ensureAlignedIndexes(flattenServices(metricProfile.profile.services).sort(sortServices)));
         setListServices(ensureAlignedIndexes(flattenServices(metricProfile.profile.services).sort(sortServices)));
       }
@@ -880,7 +881,11 @@ export const MetricProfilesComponent = (props) => {
     if (publicView) {
       write_perm = false
     }
-    else if (!addview || !cloneview) {
+    else if (cloneview) {
+      write_perm = userDetails.is_superuser ||
+        userDetails.groups.metricprofiles.length > 0;
+    }
+    else if (!addview) {
       write_perm = userDetails.is_superuser ||
             userDetails.groups.metricprofiles.indexOf(metricProfile.groupname) >= 0;
     }
@@ -904,8 +909,8 @@ export const MetricProfilesComponent = (props) => {
         submitperm={write_perm}
         extra_button={
           !addview &&
-            <ButtonDropdown className='mr-2' isOpen={dropdownOpen} toggle={() => setDropdownOpen(!dropdownOpen)}>
-              <DropdownToggle caret color='info'>CSV</DropdownToggle>
+            <ButtonDropdown isOpen={dropdownOpen} toggle={() => setDropdownOpen(!dropdownOpen)}>
+              <DropdownToggle caret color='secondary'>CSV</DropdownToggle>
               <DropdownMenu>
                 <DropdownItem
                   onClick={() => {
@@ -973,7 +978,6 @@ export const MetricProfilesComponent = (props) => {
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
           enableReinitialize={true}
-          validateOnBlur={false}
           validate={MetricProfileTupleValidate}
           innerRef={formikRef}
         >
@@ -1220,7 +1224,7 @@ const ListDiffElement = ({title, item1, item2}) => {
   }
 
   return (
-    <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
+    <div id='argo-contentwrap' className='ms-2 mb-2 mt-2 p-3 border rounded'>
       <h6 className='mt-4 font-weight-bold text-uppercase'>{title}</h6>
       <ReactDiffViewer
         oldValue={list2.join('\n')}
@@ -1269,7 +1273,7 @@ export const MetricProfileVersionCompare = (props) => {
     return (
       <React.Fragment>
         <div className='d-flex align-items-center justify-content-between'>
-          <h2 className='ml-3 mt-1 mb-4'>{`Compare ${name} versions`}</h2>
+          <h2 className='ms-3 mt-1 mb-4'>{`Compare ${name} versions`}</h2>
         </div>
         {
           (name1 !== name2) &&

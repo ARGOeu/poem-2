@@ -10,16 +10,17 @@ import {
   CardBody,
   Label,
   CardFooter,
-  FormGroup } from 'reactstrap';
+  FormGroup
+} from 'reactstrap';
 import { Formik, Field, Form } from 'formik';
 import ArgoLogo from './argologo_color.svg';
-import './Login.css';
 import { Footer } from './UIElements.js';
 import { Backend } from './DataManager.js';
 
+import './Login.css';
+
 
 const Login = (props) => {
-  var _isMounted = false
   const [samlIdpString, setSamlIdpString] = useState(null);
   const [loginFailedVisible, setLoginFailedVisible] = useState(false);
   const [isTenantSchema, setIsTenantSchema] = useState(null);
@@ -31,7 +32,6 @@ const Login = (props) => {
   const AppOnLogin = props.onLogin;
 
   useEffect(() => {
-    _isMounted = true;
     setLoading(true);
 
     async function fetchData() {
@@ -42,26 +42,19 @@ const Login = (props) => {
       setTermsLink(options && options.result.terms_privacy_links.terms);
 
       if (response) {
-        if (_isMounted) {
-          setIsTenantSchema(response);
-          setSamlIdpString(options.result.saml_login_string);
-        }
+        setIsTenantSchema(response);
+        setSamlIdpString(options.result.saml_login_string);
       } else
-        if (_isMounted)
-          setIsTenantSchema(response);
+        setIsTenantSchema(response);
 
       setLoading(false);
     }
 
     fetchData();
-
-    return function cleanup() {
-      _isMounted = false;
-    };
   }, []);
 
   async function doUserPassLogin(username, password) {
-    await fetch('/rest-auth/login/', {
+    await fetch('/dj-rest-auth/login/', {
       method: 'POST',
       mode: 'cors',
       cache: 'no-cache',
@@ -77,10 +70,6 @@ const Login = (props) => {
       })
     });
     return backend.isActiveSession(isTenantSchema);
-  }
-
-  function dismissLoginAlert() {
-    _isMounted && setLoginFailedVisible(false);
   }
 
   if (isTenantSchema !== null && !loading) {
@@ -118,7 +107,7 @@ const Login = (props) => {
                       <Field name="password" id="password" className="form-control" type="password"/>
                     </FormGroup>
                     <FormGroup>
-                      <Alert color="danger" isOpen={loginFailedVisible} toggle={dismissLoginAlert} fade={false}>
+                      <Alert color="danger" isOpen={loginFailedVisible} toggle={() => setLoginFailedVisible(false)} fade={false}>
                         <p className="text-center">
                           Login failed, invalid username and password provided
                         </p>
@@ -126,9 +115,9 @@ const Login = (props) => {
                     </FormGroup>
                     <div className="pt-3">
                     </div>
-                    <FormGroup>
-                      <Button color="success" type="submit" block>Login using username and password</Button>
-                      {isTenantSchema && <a className="btn btn-success btn-block" role="button" href="/saml2/login">{samlIdpString}</a>}
+                    <FormGroup className='justify-content-center'>
+                      <Button color="success" type="submit" block className='mb-2'>Login using username and password</Button>
+                      {isTenantSchema && <a className="btn btn-success btn-block" role="button" href="/saml2/login" style={{width: '100%'}}>{samlIdpString}</a>}
                     </FormGroup>
                   </Form>
                 </Formik>

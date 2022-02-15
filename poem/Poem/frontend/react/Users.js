@@ -10,7 +10,8 @@ import {
   ErrorComponent,
   ParagraphTitle,
   BaseArgoTable,
-  CustomErrorMessage
+  CustomError,
+  CustomReactSelect
 } from './UIElements';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
@@ -23,7 +24,8 @@ import {
   FormText,
   Button,
   InputGroup,
-  InputGroupAddon
+  InputGroupText,
+  Input
 } from "reactstrap";
 import * as Yup from 'yup';
 import './Users.css';
@@ -76,46 +78,46 @@ const CommonUser = ({add, ...props}) =>
           <Row>
             <Col md={6}>
               <InputGroup>
-                <InputGroupAddon addonType='prepend'>Username</InputGroupAddon>
+                <InputGroupText>Username</InputGroupText>
                 <Field
                   type="text"
                   name="username"
                   data-testid="username"
-                  className={`form-control ${props.errors.username && props.touched.username && 'border-danger'}`}
+                  className={`form-control ${props.errors.username && 'border-danger'}`}
                   id="userUsername"
                 />
               </InputGroup>
-              <CustomErrorMessage name='username' />
+              <CustomError error={props.errors.username} />
             </Col>
           </Row>
           <Row>
             <Col md={6}>
               <InputGroup>
-                <InputGroupAddon addonType='prepend'>Password</InputGroupAddon>
+                <InputGroupText>Password</InputGroupText>
                 <Field
                   type="password"
                   name="password"
                   data-testid="password"
-                  className={`form-control ${props.errors.password && props.touched.password && 'border-danger'}`}
+                  className={`form-control ${props.errors.password && 'border-danger'}`}
                   id="password"
                 />
               </InputGroup>
-              <CustomErrorMessage name='password' />
+              <CustomError error={props.errors.password} />
             </Col>
           </Row>
           <Row>
             <Col md={6}>
               <InputGroup>
-                <InputGroupAddon addonType='prepend'>Confirm password</InputGroupAddon>
+                <InputGroupText>Confirm password</InputGroupText>
                 <Field
                   type='password'
                   name='confirm_password'
                   data-testid='confirm_password'
-                  className={`form-control ${props.errors.confirm_password && props.touched.confirm_password && 'border-danger'}`}
+                  className={`form-control ${props.errors.confirm_password && 'border-danger'}`}
                   id='confirm_password'
                 />
               </InputGroup>
-              <CustomErrorMessage name='confirm_password' />
+              <CustomError error={props.errors.confirm_password} />
             </Col>
           </Row>
         </FormGroup>
@@ -124,16 +126,16 @@ const CommonUser = ({add, ...props}) =>
           <Row>
             <Col md={6}>
               <InputGroup>
-                <InputGroupAddon addonType='prepend'>Username</InputGroupAddon>
+                <InputGroupText>Username</InputGroupText>
                 <Field
                   type="text"
                   name='username'
                   data-testid='username'
-                  className={`form-control ${props.errors.username && props.touched.username && 'border-danger'}`}
+                  className={`form-control ${props.errors.username && 'border-danger'}`}
                   id='userUsername'
                 />
               </InputGroup>
-              <CustomErrorMessage name='username' />
+              <CustomError error={props.errors.username} />
             </Col>
           </Row>
         </FormGroup>
@@ -143,7 +145,7 @@ const CommonUser = ({add, ...props}) =>
       <Row>
         <Col md={6}>
           <InputGroup>
-            <InputGroupAddon addonType="prepend">First name</InputGroupAddon>
+            <InputGroupText>First name</InputGroupText>
             <Field
               type="text"
               name="first_name"
@@ -157,7 +159,7 @@ const CommonUser = ({add, ...props}) =>
       <Row>
         <Col md={6}>
           <InputGroup>
-            <InputGroupAddon addonType="prepend">Last name</InputGroupAddon>
+            <InputGroupText>Last name</InputGroupText>
             <Field
               type="text"
               name="last_name"
@@ -171,16 +173,16 @@ const CommonUser = ({add, ...props}) =>
       <Row>
         <Col md={6}>
           <InputGroup>
-            <InputGroupAddon addonType="prepend">Email</InputGroupAddon>
+            <InputGroupText>Email</InputGroupText>
             <Field
               type="text"
               name="email"
               data-testid="email"
-              className={`form-control ${props.errors.email && props.touched.email && 'border-danger'}`}
+              className={`form-control ${props.errors.email && 'border-danger'}`}
               id="userEmail"
             />
           </InputGroup>
-          <CustomErrorMessage name='email' />
+          <CustomError error={props.errors.email} />
         </Col>
       </Row>
       {
@@ -189,7 +191,7 @@ const CommonUser = ({add, ...props}) =>
             <Row>
               <Col md={6}>
                 <InputGroup>
-                  <InputGroupAddon addonType='prepend'>Last login</InputGroupAddon>
+                  <InputGroupText>Last login</InputGroupText>
                   <Field
                     type='text'
                     name='last_login'
@@ -203,7 +205,7 @@ const CommonUser = ({add, ...props}) =>
             <Row>
               <Col md={6}>
                 <InputGroup>
-                  <InputGroupAddon addonType='prepend'>Date joined</InputGroupAddon>
+                  <InputGroupText>Date joined</InputGroupText>
                   <Field
                     type='text'
                     name='date_joined'
@@ -221,32 +223,44 @@ const CommonUser = ({add, ...props}) =>
       <ParagraphTitle title='permissions'/>
       <Row>
         <Col md={6}>
-          <label>
-            <Field
-              type="checkbox"
-              name="is_superuser"
-              className="mr-1"
-            />
-            Superuser status
-          </label>
-          <FormText color="muted">
-            Designates that this user has all permissions without explicitly assigning them.
-          </FormText>
+          <Row>
+            <FormGroup check inline className='ms-3'>
+              <Input
+                type='checkbox'
+                id='is_superuser'
+                name='is_superuser'
+                onChange={e => props.setFieldValue('is_superuser', e.target.checked)}
+                checked={props.values.is_superuser}
+              />
+              <Label check for='is_superuser'>Superuser status</Label>
+            </FormGroup>
+          </Row>
+          <Row>
+            <FormText color="muted">
+              Designates that this user has all permissions without explicitly assigning them.
+            </FormText>
+          </Row>
         </Col>
       </Row>
       <Row>
         <Col md={6}>
-          <label>
-            <Field
-              type="checkbox"
-              name="is_active"
-              className="mr-1"
-            />
-            Active
-          </label>
-          <FormText color="muted">
-            Designates whether this user should be treated as active. Unselect this instead of deleting accounts.
-          </FormText>
+          <Row>
+            <FormGroup check inline className='ms-3'>
+              <Input
+                type='checkbox'
+                id='is_active'
+                name='is_active'
+                onChange={e => props.setFieldValue('is_active', e.target.checked)}
+                checked={props.values.is_active}
+              />
+              <Label check for='is_active'>Active</Label>
+            </FormGroup>
+          </Row>
+          <Row className='mt-0'>
+            <FormText color="muted">
+              Designates whether this user should be treated as active. Unselect this instead of deleting accounts.
+            </FormText>
+          </Row>
         </Col>
       </Row>
     </FormGroup>
@@ -399,6 +413,37 @@ export const UsersList = (props) => {
   else
     return null;
 };
+
+
+const GroupSelect = ({ name, label, options, initValues, ...props }) => {
+  const getOptions = ( options ) => {
+    return options.map(
+      option => new Object({ label: option, value: option })
+    )
+  }
+
+  const getInitValues = ( values ) => {
+    return values.map(
+      value => new Object({ label: value, value: value })
+    )
+  }
+
+  return (
+    <CustomReactSelect
+      name={name}
+      id={name}
+      label={label}
+      isMulti={ true }
+      onChange={ e => {
+        let selectedValues = new Array()
+        e.forEach(e => selectedValues.push(e.value))
+        props.setFieldValue(name, selectedValues)
+      }}
+      options={getOptions(options)}
+      value={getInitValues(initValues)}
+    />
+  )
+}
 
 
 export const UserChange = (props) => {
@@ -656,7 +701,7 @@ export const UserChange = (props) => {
             onSubmit = {(values) => onSubmitHandle(values)}
           >
             {props => (
-              <Form>
+              <Form data-testid='form'>
                 <CommonUser
                   {...props}
                   add={addview}
@@ -667,137 +712,68 @@ export const UserChange = (props) => {
                       <FormGroup>
                         <ParagraphTitle title='POEM user permissions'/>
                         <Row>
-                          <Col md={6}>
-                            <Label for="groupsofreports" className="grouplabel">Groups of reports</Label>
-                            <Field
-                              component="select"
-                              name="groupsofreports"
-                              id='groupsofreports'
-                              onChange={evt =>
-                                props.setFieldValue(
-                                  "groupsofreports",
-                                  [].slice
-                                    .call(evt.target.selectedOptions)
-                                    .map(option => option.value)
-                              )}
-                              multiple={true}
-                            >
-                              {allGroups.reports.map( grp => (
-                                <option data-testid='groupsofreports-option' key={grp} value={grp}>
-                                  {grp}
-                                </option>
-                              ))}
-                            </Field>
+                          <Col md={5}>
+                            <GroupSelect
+                              {...props}
+                              name='groupsofreports'
+                              label='Groups of reports'
+                              options={allGroups.reports}
+                              initValues={props.values.groupsofreports}
+                            />
                             <FormText color="muted">
-                              The groups of reports that user will control. Hold down &quot;Control&quot; or &quot;Command&quot; on a Mac to select more than one.
+                              The groups of reports that user will control.
+                            </FormText>
+                          </Col>
+                          <Col md={5}>
+                            <GroupSelect
+                              {...props}
+                              name='groupsofmetrics'
+                              label='Groups of metrics'
+                              options={allGroups.metrics}
+                              initValues={props.values.groupsofmetrics}
+                            />
+                            <FormText color="muted">
+                              The groups of metrics that user will control.
                             </FormText>
                           </Col>
                         </Row>
-                        <Row>
-                          <Col md={6}>
-                            <Label for="groupsofmetrics" className="grouplabel">Groups of metrics</Label>
-                            <Field
-                              component="select"
-                              name="groupsofmetrics"
-                              id='groupsofmetrics'
-                              onChange={evt =>
-                                props.setFieldValue(
-                                  "groupsofmetrics",
-                                  [].slice
-                                    .call(evt.target.selectedOptions)
-                                    .map(option => option.value)
-                              )}
-                              multiple={true}
-                            >
-                              {allGroups.metrics.map( grp => (
-                                <option data-testid='groupsofmetrics-option' key={grp} value={grp}>
-                                  {grp}
-                                </option>
-                              ))}
-                            </Field>
+                        <Row className='mt-3'>
+                          <Col md={5}>
+                            <GroupSelect
+                              {...props}
+                              name='groupsofmetricprofiles'
+                              label='Groups of metric profiles'
+                              options={allGroups.metricprofiles}
+                              initValues={props.values.groupsofmetricprofiles}
+                            />
                             <FormText color="muted">
-                              The groups of metrics that user will control. Hold down &quot;Control&quot; or &quot;Command&quot; on a Mac to select more than one.
+                              The groups of metric profiles that user will control.
+                            </FormText>
+                          </Col>
+                          <Col md={5}>
+                            <GroupSelect
+                              {...props}
+                              name='groupsofaggregations'
+                              label='Groups of aggregations'
+                              options={allGroups.aggregations}
+                              initValues={props.values.groupsofaggregations}
+                            />
+                            <FormText color="muted">
+                              The groups of aggregations that user will control.
                             </FormText>
                           </Col>
                         </Row>
-                        <Row>
-                          <Col md={6}>
-                            <Label for="groupsofmetricprofiles" className="grouplabel">Groups of metric profiles</Label>
-                            <Field
-                              component="select"
-                              name="groupsofmetricprofiles"
-                              id='groupsofmetricprofiles'
-                              onChange={evt =>
-                                props.setFieldValue(
-                                  "groupsofmetricprofiles",
-                                  [].slice
-                                    .call(evt.target.selectedOptions)
-                                    .map(option => option.value)
-                              )}
-                              multiple={true}
-                            >
-                              {allGroups.metricprofiles.map( grp => (
-                                <option data-testid='groupsofmetricprofiles-option' key={grp} value={grp}>
-                                  {grp}
-                                </option>
-                              ))}
-                            </Field>
+                        <Row className='mt-3'>
+                          <Col md={5}>
+                            <GroupSelect
+                              {...props}
+                              name='groupsofthresholdsprofiles'
+                              label='Groups of thresholds profiles'
+                              options={allGroups.thresholdsprofiles}
+                              initValues={props.values.groupsofthresholdsprofiles}
+                            />
                             <FormText color="muted">
-                              The groups of metric profiles that user will control. Hold down &quot;Control&quot; or &quot;Command&quot; on a Mac to select more than one.
-                            </FormText>
-                          </Col>
-                        </Row>
-                        <Row>
-                          <Col md={6}>
-                            <Label for="groupsofaggregations" className="grouplabel">Groups of aggregations</Label>
-                            <Field
-                              component="select"
-                              name="groupsofaggregations"
-                              id='groupsofaggregations'
-                              onChange={evt =>
-                                props.setFieldValue(
-                                  "groupsofaggregations",
-                                  [].slice
-                                    .call(evt.target.selectedOptions)
-                                    .map(option => option.value)
-                              )}
-                              multiple={true}
-                            >
-                              {allGroups.aggregations.map( grp => (
-                                <option data-testid='groupsofaggregations-option' key={grp} value={grp}>
-                                  {grp}
-                                </option>
-                              ))}
-                            </Field>
-                            <FormText color="muted">
-                              The groups of aggregations that user will control. Hold down &quot;Control&quot; or &quot;Command&quot; on a Mac to select more than one.
-                            </FormText>
-                          </Col>
-                        </Row>
-                        <Row>
-                          <Col md={6}>
-                            <Label for="groupsofthresholdsprofiles" className="grouplabel">Groups of thresholds profiles</Label>
-                            <Field
-                              component="select"
-                              name="groupsofthresholdsprofiles"
-                              id='groupsofthresholdsprofiles'
-                              onChange={evt =>
-                                props.setFieldValue(
-                                  "groupsofthresholdsprofiles",
-                                  [].slice
-                                    .call(evt.target.selectedOptions)
-                                    .map(option => option.value)
-                              )}
-                              multiple={true}
-                            >
-                              {allGroups.thresholdsprofiles.map( grp => (
-                                <option data-testid='groupsofthresholdsprofiles-option' key={grp} value={grp}>
-                                  {grp}
-                                </option>
-                              ))}
-                            </Field>
-                            <FormText color="muted">
-                              The groups of thresholds profiles that user will control. Hold down &quot;Control&quot; or &quot;Command&quot; on a Mac to select more than one.
+                              The groups of thresholds profiles that user will control.
                             </FormText>
                           </Col>
                         </Row>
@@ -807,7 +783,7 @@ export const UserChange = (props) => {
                         <Row>
                           <Col md={12}>
                             <InputGroup>
-                              <InputGroupAddon addonType='prepend'>distinguishedName</InputGroupAddon>
+                              <InputGroupText>distinguishedName</InputGroupText>
                               <Field
                                 type="text"
                                 name="subject"
@@ -824,7 +800,7 @@ export const UserChange = (props) => {
                         <Row>
                           <Col md={8}>
                             <InputGroup>
-                              <InputGroupAddon addonType="prepend">eduPersonUniqueId</InputGroupAddon>
+                              <InputGroupText>eduPersonUniqueId</InputGroupText>
                               <Field
                                 type="text"
                                 name="egiid"
@@ -841,7 +817,7 @@ export const UserChange = (props) => {
                         <Row>
                           <Col md={6}>
                             <InputGroup>
-                              <InputGroupAddon addonType="prepend">displayName</InputGroupAddon>
+                              <InputGroupText>displayName</InputGroupText>
                               <Field
                                 type="text"
                                 name="displayname"
@@ -901,7 +877,7 @@ export const UserChange = (props) => {
             />
           }
           <div className='d-flex align-items-center justify-content-between'>
-            <h2 className='ml-3 mt-1 mb-4'>{`${addview ? 'Add' : 'Change'} user`}</h2>
+            <h2 className='ms-3 mt-1 mb-4'>{`${addview ? 'Add' : 'Change'} user`}</h2>
             {
               (!addview && userDetails.username === user_name) &&
                 <Link
@@ -913,7 +889,7 @@ export const UserChange = (props) => {
                 </Link>
             }
           </div>
-          <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
+          <div id='argo-contentwrap' className='ms-2 mb-2 mt-2 p-3 border rounded'>
             <Formik
               initialValues = {{
                 addview: addview,
@@ -1027,7 +1003,7 @@ export const ChangePassword = (props) => {
       });
     } else {
       // eslint-disable-next-line no-unused-vars
-      let _response = await fetch('/rest-auth/login/', {
+      let _response = await fetch('/dj-rest-auth/login/', {
         method: 'POST',
         mode: 'cors',
         cache: 'no-cache',
@@ -1079,31 +1055,31 @@ export const ChangePassword = (props) => {
               <Row>
                 <Col md={6}>
                   <InputGroup>
-                    <InputGroupAddon addonType='prepend'>New password</InputGroupAddon>
+                    <InputGroupText>New password</InputGroupText>
                     <Field
                       type="password"
                       name="password"
-                      className={`form-control ${props.errors.password && props.touched.password && 'border-danger'}`}
+                      className={`form-control ${props.errors.password && 'border-danger'}`}
                       id="password"
                       data-testid="password"
                     />
                   </InputGroup>
-                  <CustomErrorMessage name='password' />
+                  <CustomError error={ props.errors.password } />
                 </Col>
               </Row>
               <Row>
                 <Col md={6}>
                   <InputGroup>
-                    <InputGroupAddon addonType='prepend'>Confirm password</InputGroupAddon>
+                    <InputGroupText>Confirm password</InputGroupText>
                     <Field
                       type='password'
                       name='confirm_password'
-                      className={`form-control ${props.errors.confirm_password && props.touched.confirm_password && 'border-danger'}`}
+                      className={`form-control ${props.errors.confirm_password && 'border-danger'}`}
                       id='confirm_password'
                       data-testid='confirm_password'
                     />
                   </InputGroup>
-                  <CustomErrorMessage name='confirm_password' />
+                  <CustomError error={ props.errors.confirm_password } />
                 </Col>
               </Row>
               {

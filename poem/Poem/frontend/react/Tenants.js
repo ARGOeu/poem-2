@@ -7,7 +7,7 @@ import {
   Row,
   Col,
   InputGroup,
-  InputGroupAddon,
+  InputGroupText,
   Card,
   CardText,
   CardGroup,
@@ -44,7 +44,7 @@ export const TenantList = (props) => {
       for (let j = 0; j < 3; j++) {
         if ((i + j) < tenants.length)
           cards.push(
-            <Card data-testid={`${tenants[i + j].name}-card`} className='mr-3' key={j + 1} tag='a' onClick={() => history.push(`/ui/tenants/${tenants[i + j].name}`)} style={{cursor: 'pointer', color: 'black'}}>
+            <Card data-testid={`${tenants[i + j].name}-card`} className='me-3' key={j + 1} onClick={() => history.push(`/ui/tenants/${tenants[i + j].name}`)} style={{cursor: 'pointer', color: 'black'}}>
               <CardTitle className='text-center'>
                 <h3>{tenants[i + j].name}</h3>
               </CardTitle>
@@ -59,15 +59,15 @@ export const TenantList = (props) => {
                   <b>POEM url:</b> {tenants[i + j].domain_url}
                 </CardText>
                 <div className='mb-1'>
-                  <Badge color='info' className='mr-2' data-testid={`${tenants[i + j].name}-metrics`}>
+                  <Badge color='info' className='me-2' data-testid={`${tenants[i + j].name}-metrics`}>
                     {`Metric${tenants[i + j].schema_name == 'public' ? ' templates ' : 's '
                     }`}
-                    <Badge style={{fontSize: '10pt'}} color='light'>{tenants[i + j].nr_metrics}</Badge>
+                    <Badge style={{fontSize: '10pt', color: 'black'}} color='light'>{tenants[i + j].nr_metrics}</Badge>
                   </Badge>
                 </div>
                 <div>
                   <Badge color='success' data-testid={`${tenants[i + j].name}-probes`}>
-                    Probes <Badge style={{fontSize: '10pt'}} color='light'>{tenants[i + j].nr_probes}</Badge>
+                    Probes <Badge style={{fontSize: '10pt', color: 'black'}} color='light'>{tenants[i + j].nr_probes}</Badge>
                   </Badge>
                 </div>
               </CardFooter>
@@ -195,7 +195,7 @@ export const TenantChange = (props) => {
                 <Row>
                   <Col md={6}>
                     <InputGroup>
-                      <InputGroupAddon addonType='prepend'>Name</InputGroupAddon>
+                      <InputGroupText>Name</InputGroupText>
                       <Field
                         type='text'
                         name='name'
@@ -213,7 +213,7 @@ export const TenantChange = (props) => {
                 <Row>
                   <Col md={6}>
                     <InputGroup>
-                      <InputGroupAddon addonType='prepend'>Schema</InputGroupAddon>
+                      <InputGroupText>Schema</InputGroupText>
                       <Field
                         type='text'
                         name='schema'
@@ -228,7 +228,7 @@ export const TenantChange = (props) => {
                 <Row>
                   <Col md={6}>
                     <InputGroup>
-                      <InputGroupAddon addonType='prepend'>POEM URL</InputGroupAddon>
+                      <InputGroupText>POEM URL</InputGroupText>
                       <Field
                         type='text'
                         name='url'
@@ -243,7 +243,7 @@ export const TenantChange = (props) => {
                 <Row>
                   <Col md={6}>
                     <InputGroup>
-                      <InputGroupAddon addonType='prepend'>Created on</InputGroupAddon>
+                      <InputGroupText>Created on</InputGroupText>
                       <Field
                         type='text'
                         name='created_on'

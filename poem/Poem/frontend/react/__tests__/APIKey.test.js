@@ -175,7 +175,7 @@ describe('Tests for API key change', () => {
     });
     expect(screen.getByRole('heading', {name: /credent/i}).textContent).toBe('Credentials')
     expect(screen.getByRole('textbox', {name: /name/i}).value).toBe('FIRST_TOKEN');
-    expect(screen.getByRole('checkbox', {name: /revoked/i}).value).toBe('false');
+    expect(screen.getByRole('checkbox', {name: /revoked/i}).checked).toBeFalsy()
     expect(screen.getByDisplayValue(/123/i).value).toBe('123456');
     expect(screen.getByDisplayValue(/123/i)).toBeDisabled();
     expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
@@ -347,7 +347,7 @@ describe('Tests for API key addview', () => {
     expect(screen.getByRole('heading', {name: /api/i}).textContent).toBe('Add API key')
     expect(screen.getByRole('heading', {name: /credent/i}).textContent).toBe('Credentials')
     expect(screen.getByRole('textbox', {name: /name/i}).value).toBe('');
-    expect(screen.getByRole('checkbox', {name: /revoked/i}).value).toBe('false');
+    expect(screen.getByRole('checkbox', {name: /revoked/i}).checked).toBeFalsy()
     expect(screen.getByRole('alert').textContent).toBe('If token field is left empty, value will be automatically generated on save.')
     expect(screen.getByTestId('token').value).toBe('');
     expect(screen.getByTestId('token')).toBeEnabled();
