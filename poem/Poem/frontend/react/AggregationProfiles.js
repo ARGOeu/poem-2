@@ -941,7 +941,6 @@ export const AggregationProfilesChange = (props) => {
   const checkIfServiceExtraInMetricProfile = (servicesMetricProfile, serviceGroupsAggregationProfile) => {
     let serviceGroupsInAggregationProfile = new Set()
     let _difference = new Set(servicesMetricProfile)
-    let isExtra = false
 
     serviceGroupsAggregationProfile.forEach(group => {
       for (let service of group.services) {
@@ -953,10 +952,7 @@ export const AggregationProfilesChange = (props) => {
       _difference.delete(elem)
     }
 
-    if (_difference.size > 0)
-      isExtra = true
-
-    return { isServiceExtra: isExtra, extraServices: Array.from(_difference).sort(sortServices) }
+    return  Array.from(_difference).sort(sortServices)
   }
 
   const handleFileRead = (e) => {
@@ -1001,7 +997,6 @@ export const AggregationProfilesChange = (props) => {
       setListServices(!addview ? extractListOfServices(webApiAP.metric_profile, metricProfiles) : [])
 
     let isServiceMissing = checkIfServiceMissingInMetricProfile(listServices, !addview ? webApiAP.groups : [])
-    let { isServiceExtra, extraServices } = checkIfServiceExtraInMetricProfile(listServices, !addview ? webApiAP.groups : [])
     let write_perm = undefined
 
     if (publicView) {
@@ -1088,96 +1083,98 @@ export const AggregationProfilesChange = (props) => {
           validateOnChange={false}
           innerRef={formikRef}
         >
-          {props => (
-            <Form>
-              <FormikEffect onChange={(current, prev) => {
-                if (current.values.metric_profile !== prev.values.metric_profile) {
-                  let selected_profile = {
-                    name: current.values.metric_profile
+          {props => {
+            let extraServices = checkIfServiceExtraInMetricProfile(listServices, props.values.groups)
+            return (
+              <Form>
+                <FormikEffect onChange={(current, prev) => {
+                  if (current.values.metric_profile !== prev.values.metric_profile) {
+                    let selected_profile = {
+                      name: current.values.metric_profile
+                    }
+                    setListServices(extractListOfServices(selected_profile,
+                      metricProfiles))
                   }
-                  setListServices(extractListOfServices(selected_profile,
-                    metricProfiles))
-                }
-              }}
-              />
-              {
-                (isServiceMissing && !publicView) &&
-                <Alert color='danger'>
-                  <center data-testid='alert-missing'>
-                    <FontAwesomeIcon icon={faInfoCircle} size="lg" color="black"/> &nbsp;
-                    Some Service Flavours used in Aggregation profile are not presented in associated Metric profile meaning that two profiles are out of sync. Check below for Service Flavours in blue borders.
-                  </center>
-                </Alert>
-              }
-              {
-                (isServiceExtra && !publicView) &&
+                }}
+                />
+                {
+                  (isServiceMissing && !publicView) &&
                   <Alert color='danger'>
-                    <center data-testid='alert-extra'>
-                      <p>
-                        <FontAwesomeIcon icon={faInfoCircle} size='lg' color='black' /> &nbsp;
-                        There are some extra Service Flavours in associated metric profile which are not used in the aggregation profile, meaning that two profiles are out of sync:
-                      </p>
-                      <p>{ extraServices.join(', ') }</p>
+                    <center data-testid='alert-missing'>
+                      <FontAwesomeIcon icon={faInfoCircle} size="lg" color="black"/> &nbsp;
+                      Some Service Flavours used in Aggregation profile are not presented in associated Metric profile meaning that two profiles are out of sync. Check below for Service Flavours in blue borders.
                     </center>
                   </Alert>
-              }
-              <AggregationProfilesForm
-                {...props}
-                list_user_groups={!publicView ? userDetails.groups.aggregations : []}
-                logic_operations={logic_operations}
-                endpoint_groups={endpoint_groups}
-                list_id_metric_profiles={extractListOfMetricsProfiles(metricProfiles)}
-                write_perm={write_perm}
-                historyview={publicView}
-                addview={addview}
-              />
-              {
-                !publicView ?
-                  <FieldArray
-                    name="groups"
-                    render={props => (
-                      <AggregationProfilesChangeContext.Provider value={{
-                        list_services: listServices,
-                        list_operations: logic_operations,
-                        write_perm: write_perm,
-                        last_service_operation: insertOperationFromPrevious,
-                        formikBag: {
-                          form: props.form,
-                          groupRemove: props.remove,
-                          groupInsert: props.insert
-                        }
-                      }}>
-                        <GroupList {...props}/>
-                      </AggregationProfilesChangeContext.Provider>
-                    )}
-                  />
-                :
-                  <GroupsDisabledForm {...props} />
-              }
-              {
-                (write_perm) &&
-                  <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                    {
-                      !addview ?
-                        <Button
-                          color="danger"
-                          onClick={() => {
-                            setModalMsg('Are you sure you want to delete Aggregation profile?')
-                            setModalTitle('Delete aggregation profile')
-                            setAreYouSureModal(!areYouSureModal);
-                            setFormikValues(props.values)
-                            setOnYes('delete')
-                          }}>
-                          Delete
-                        </Button>
-                      :
-                        <div></div>
-                    }
-                    <Button color="success" id="submit-button" type="submit">Save</Button>
-                  </div>
-              }
-            </Form>
-          )}
+                }
+                {
+                  (extraServices.length > 0 && !publicView) &&
+                    <Alert color='danger'>
+                      <center data-testid='alert-extra'>
+                        <p>
+                          <FontAwesomeIcon icon={faInfoCircle} size='lg' color='black' /> &nbsp;
+                          There are some extra Service Flavours in associated metric profile which are not used in the aggregation profile, meaning that two profiles are out of sync:
+                        </p>
+                        <p>{ extraServices.join(', ') }</p>
+                      </center>
+                    </Alert>
+                }
+                <AggregationProfilesForm
+                  {...props}
+                  list_user_groups={!publicView ? userDetails.groups.aggregations : []}
+                  logic_operations={logic_operations}
+                  endpoint_groups={endpoint_groups}
+                  list_id_metric_profiles={extractListOfMetricsProfiles(metricProfiles)}
+                  write_perm={write_perm}
+                  historyview={publicView}
+                  addview={addview}
+                />
+                {
+                  !publicView ?
+                    <FieldArray
+                      name="groups"
+                      render={props => (
+                        <AggregationProfilesChangeContext.Provider value={{
+                          list_services: listServices,
+                          list_operations: logic_operations,
+                          write_perm: write_perm,
+                          last_service_operation: insertOperationFromPrevious,
+                          formikBag: {
+                            form: props.form,
+                            groupRemove: props.remove,
+                            groupInsert: props.insert
+                          }
+                        }}>
+                          <GroupList {...props}/>
+                        </AggregationProfilesChangeContext.Provider>
+                      )}
+                    />
+                  :
+                    <GroupsDisabledForm {...props} />
+                }
+                {
+                  (write_perm) &&
+                    <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                      {
+                        !addview ?
+                          <Button
+                            color="danger"
+                            onClick={() => {
+                              setModalMsg('Are you sure you want to delete Aggregation profile?')
+                              setModalTitle('Delete aggregation profile')
+                              setAreYouSureModal(!areYouSureModal);
+                              setFormikValues(props.values)
+                              setOnYes('delete')
+                            }}>
+                            Delete
+                          </Button>
+                        :
+                          <div></div>
+                      }
+                      <Button color="success" id="submit-button" type="submit">Save</Button>
+                    </div>
+                }
+              </Form>
+          )}}
         </Formik>
       </BaseArgoView>
     )
