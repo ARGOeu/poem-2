@@ -55,7 +55,26 @@ import { OperationsProfilesList, OperationsProfileDetails } from './OperationsPr
 import { CookiePolicy } from './CookiePolicy';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { ReactQueryDevtools } from 'react-query/devtools';
-import { fetchAggregationProfiles, fetchAPIKeys, fetchBackendMetricProfiles, fetchMetrics, fetchMetricTags, fetchMetricTemplates, fetchMetricTemplateTypes, fetchMetricTypes, fetchOperationsProfiles, fetchOStags, fetchPackages, fetchProbes, fetchReports, fetchTenants, fetchThresholdsProfiles, fetchUserGroups, fetchUsers, fetchYumRepos } from './QueryFunctions';
+import {
+  fetchBackendAggregationProfiles,
+  fetchAPIKeys,
+  fetchBackendMetricProfiles,
+  fetchMetrics,
+  fetchMetricTags,
+  fetchMetricTemplates,
+  fetchMetricTemplateTypes,
+  fetchMetricTypes,
+  fetchOperationsProfiles,
+  fetchOStags,
+  fetchPackages,
+  fetchProbes,
+  fetchBackendReports,
+  fetchTenants,
+  fetchBackendThresholdsProfiles,
+  fetchUserGroups,
+  fetchUsers,
+  fetchYumRepos
+} from './QueryFunctions';
 
 
 const NavigationBarWithRouter = withRouter(NavigationBar);
@@ -647,16 +666,16 @@ const App = () => {
         ['metric', 'usergroups'], () => fetchUserGroups(true, false, 'metrics')
       )
       queryClient.prefetchQuery(
-        'report', () => fetchReports()
+        ['report', 'backend'], () => fetchBackendReports()
       );
       queryClient.prefetchQuery(
         ['metricprofile', 'backend'], () => fetchBackendMetricProfiles()
       );
       queryClient.prefetchQuery(
-        ['aggregationprofile', 'backend'], () => fetchAggregationProfiles()
+        ['aggregationprofile', 'backend'], () => fetchBackendAggregationProfiles()
       );
       queryClient.prefetchQuery(
-        'thresholdsprofile', () => fetchThresholdsProfiles()
+        ['thresholdsprofile', 'backend'], () => fetchBackendThresholdsProfiles()
       );
       queryClient.prefetchQuery(
         'operationsprofile', () => fetchOperationsProfiles(
@@ -715,13 +734,13 @@ const App = () => {
       'public_ostags', () => fetchOStags(true)
     );
     queryClient.prefetchQuery(
-      'public_metricprofile', () => fetchBackendMetricProfiles(true)
+      ['public_metricprofile', 'backend'], () => fetchBackendMetricProfiles(true)
     );
     queryClient.prefetchQuery(
-      ['public_aggregationprofile', 'backend'], () => fetchAggregationProfiles(true)
+      ['public_aggregationprofile', 'backend'], () => fetchBackendAggregationProfiles(true)
     );
     queryClient.prefetchQuery(
-      'public_thresholdsprofile', () => fetchThresholdsProfiles(true)
+      ['public_thresholdsprofile', 'backend'], () => fetchBackendThresholdsProfiles(true)
     );
     queryClient.prefetchQuery(
       'public_operationsprofile', () => fetchOperationsProfiles(new WebApi({ token: token, operationsProfiles: webApiOperations }))

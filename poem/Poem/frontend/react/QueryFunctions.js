@@ -130,7 +130,7 @@ export const fetchTenants = async () => {
 }
 
 
-export const fetchReports = async (publicView=false) => {
+export const fetchBackendReports = async (publicView=false) => {
   const backend = new Backend();
 
   return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}reports`);
@@ -149,14 +149,14 @@ export const fetchMetricProfiles = async (webapi) => {
 }
 
 
-export const fetchAggregationProfiles = async (publicView=false) => {
+export const fetchBackendAggregationProfiles = async (publicView=false) => {
   const backend = new Backend();
 
   return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}aggregations`)
 }
 
 
-export const fetchThresholdsProfiles = async (publicView=false) => {
+export const fetchBackendThresholdsProfiles = async (publicView=false) => {
   const backend = new Backend();
 
   return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}thresholdsprofiles`);

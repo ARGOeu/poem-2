@@ -37,7 +37,7 @@ import {
   fetchMetricProfiles,
   fetchOperationsProfiles,
   fetchUserDetails,
-  fetchReports
+  fetchBackendReports
 } from './QueryFunctions';
 
 
@@ -107,7 +107,7 @@ export const ReportsList = (props) => {
   );
 
   const { data: reports, error: errorReports, isLoading: loadingReports } = useQuery(
-    [`${publicView ? 'public_' : ''}report`, 'backend'],  () => fetchReports(publicView),
+    [`${publicView ? 'public_' : ''}report`, 'backend'],  () => fetchBackendReports(publicView),
     { enabled: !publicView ? !!userDetails : true }
   );
 
