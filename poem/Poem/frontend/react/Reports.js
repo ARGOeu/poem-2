@@ -975,7 +975,6 @@ export const ReportsComponent = (props) => {
               title: 'Deleted',
               callback: () => history.push('/ui/reports')
             });
-            queryClient.invalidateQueries('report');
           },
           onError: (error) => {
             NotifyError({
@@ -992,6 +991,7 @@ export const ReportsComponent = (props) => {
         })
       }
     })
+    queryClient.invalidateQueries('report')
   }
 
   const doChange = (formValues) => {

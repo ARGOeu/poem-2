@@ -3231,7 +3231,7 @@ describe('Tests for reports changeview', () => {
       expect(mockDeleteObject).not.toHaveBeenCalled();
     })
 
-    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report');
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>406 Content Not acceptable: There has been an error.</p>
@@ -3266,7 +3266,7 @@ describe('Tests for reports changeview', () => {
       expect(mockDeleteObject).not.toHaveBeenCalled();
     })
 
-    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report');
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Web API error deleting report</p>
@@ -3306,7 +3306,7 @@ describe('Tests for reports changeview', () => {
       )
     })
 
-    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report');
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>400 BAD REQUEST: There has been an error.</p>
@@ -3344,7 +3344,7 @@ describe('Tests for reports changeview', () => {
       )
     })
 
-    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report');
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Internal API error deleting report</p>
