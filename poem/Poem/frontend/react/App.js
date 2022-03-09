@@ -73,7 +73,13 @@ import {
   fetchBackendThresholdsProfiles,
   fetchUserGroups,
   fetchUsers,
-  fetchYumRepos
+  fetchYumRepos,
+  fetchReports,
+  fetchMetricProfiles,
+  fetchAggregationProfiles,
+  fetchThresholdsProfiles,
+  fetchTopologyTags,
+  fetchTopologyGroups
 } from './QueryFunctions';
 
 
@@ -656,6 +662,14 @@ const App = () => {
       setWebApiOperations(options && options.result.webapioperations);
       setWebApiReports(options && options.result.webapireports);
       setTenantName(options && options.result.tenant_name);
+      let webapi = new WebApi({
+        token: token,
+        metricProfiles: webApiMetric,
+        aggregationProfiles: webApiAggregation,
+        thresholdsProfiles: webApiThresholds,
+        operationsProfiles: webApiOperations,
+        reportsConfigurations: webApiReports
+      })
       queryClient.prefetchQuery(
         'metric', () => fetchMetrics(false)
       );
@@ -669,22 +683,40 @@ const App = () => {
         ['report', 'backend'], () => fetchBackendReports()
       );
       queryClient.prefetchQuery(
+        ['report', 'webapi'], () => fetchReports(webapi)
+      )
+      queryClient.prefetchQuery(
         ['metricprofile', 'backend'], () => fetchBackendMetricProfiles()
       );
+      queryClient.prefetchQuery(
+        ['metricprofile', 'webapi'], () => fetchMetricProfiles(webapi)
+      )
       queryClient.prefetchQuery(
         ['aggregationprofile', 'backend'], () => fetchBackendAggregationProfiles()
       );
       queryClient.prefetchQuery(
+        ['aggregationprofile', 'webapi'], () => fetchAggregationProfiles(webapi)
+      )
+      queryClient.prefetchQuery(
         ['thresholdsprofile', 'backend'], () => fetchBackendThresholdsProfiles()
       );
       queryClient.prefetchQuery(
-        'operationsprofile', () => fetchOperationsProfiles(
-          new WebApi({ token: token, operationsProfiles: webApiOperations })
-        )
+        ['thresholdsprofile', 'webapi'], () => fetchThresholdsProfiles(webapi)
+      )
+      queryClient.prefetchQuery(
+        'operationsprofile', () => fetchOperationsProfiles(webapi)
       );
       queryClient.prefetchQuery(
         'usergroups', () => fetchUserGroups(true)
       );
+      if (webApiReports && webApiReports.crud) {
+        queryClient.prefetchQuery(
+          'topologytags', () => fetchTopologyTags(webapi)
+        )
+        queryClient.prefetchQuery(
+          'topologygroups', () => fetchTopologyGroups(webapi)
+        )
+      }
     } else {
       queryClient.prefetchQuery(
         'tenant', () => fetchTenants()
@@ -709,6 +741,14 @@ const App = () => {
     setTermsLink(options && options.result.terms_privacy_links.terms);
     setTenantName(options && options.result.tenant_name);
     setPublicView(true);
+      let webapi = new WebApi({
+        token: token,
+        metricProfiles: webApiMetric,
+        aggregationProfiles: webApiAggregation,
+        thresholdsProfiles: webApiThresholds,
+        operationsProfiles: webApiOperations,
+        reportsConfigurations: webApiReports
+      })
     queryClient.prefetchQuery(
       'public_probe', () => fetchProbes(true)
     );
@@ -737,11 +777,20 @@ const App = () => {
       ['public_metricprofile', 'backend'], () => fetchBackendMetricProfiles(true)
     );
     queryClient.prefetchQuery(
+      ['public_metricprofile', 'webapi'], () => fetchMetricProfiles(webapi)
+    )
+    queryClient.prefetchQuery(
       ['public_aggregationprofile', 'backend'], () => fetchBackendAggregationProfiles(true)
     );
     queryClient.prefetchQuery(
+      ['public_aggregationprofile', 'webapi'], () => fetchAggregationProfiles(webapi)
+    )
+    queryClient.prefetchQuery(
       ['public_thresholdsprofile', 'backend'], () => fetchBackendThresholdsProfiles(true)
     );
+    queryClient.prefetchQuery(
+      ['public_thresholdsprofile', 'webapi'], () => fetchThresholdsProfiles(webapi)
+    )
     queryClient.prefetchQuery(
       'public_operationsprofile', () => fetchOperationsProfiles(new WebApi({ token: token, operationsProfiles: webApiOperations }))
     );

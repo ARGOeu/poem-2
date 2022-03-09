@@ -137,6 +137,11 @@ export const fetchBackendReports = async (publicView=false) => {
 }
 
 
+export const fetchReports = async (webapi) => {
+  return await webapi.fetchReports()
+}
+
+
 export const fetchBackendMetricProfiles = async (publicView=false) => {
   const backend = new Backend();
 
@@ -156,6 +161,11 @@ export const fetchBackendAggregationProfiles = async (publicView=false) => {
 }
 
 
+export const fetchAggregationProfiles = async (webapi) => {
+  return await webapi.fetchAggregationProfiles()
+}
+
+
 export const fetchBackendThresholdsProfiles = async (publicView=false) => {
   const backend = new Backend();
 
@@ -163,6 +173,21 @@ export const fetchBackendThresholdsProfiles = async (publicView=false) => {
 }
 
 
+export const fetchThresholdsProfiles = async (webapi) => {
+  return await webapi.fetchThresholdsProfiles()
+}
+
+
 export const fetchOperationsProfiles = async (webapi) => {
   return await webapi.fetchOperationsProfiles();
+}
+
+
+export const fetchTopologyTags = async (webapi) => {
+  return await webapi.fetchReportsTopologyTags()
+}
+
+
+export const fetchTopologyGroups = async (webapi) => {
+  return await webapi.fetchReportsTopologyGroups()
 }
