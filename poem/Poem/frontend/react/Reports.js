@@ -648,7 +648,7 @@ export const ReportsComponent = (props) => {
   )
 
   const { data: topologyGroups, error: topologyGroupsErrors, isLoading: loadingTopologyGroups } = useQuery(
-    'topologygroups', () => fetchTopologyGroups(webapi),
+    `${publicView ? 'public_' : ''}topologygroups`, () => fetchTopologyGroups(webapi),
     { enabled: (publicView || !!userDetails) && crud }
   );
 

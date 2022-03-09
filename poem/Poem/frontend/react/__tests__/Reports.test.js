@@ -1270,222 +1270,6 @@ describe('Tests for reports changeview', () => {
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
   })
 
-  test('Test that public page renders properly', async () => {
-    renderChangeView(true);
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /details/i }).textContent).toBe('Report details');
-    })
-
-    const nameField = screen.getByTestId('name');
-    const disabledField = screen.getByLabelText(/disabled/i);
-    const descriptionField = screen.getByLabelText(/description/i);
-    const groupField = screen.getByTestId('groupname');
-    const metricProfileField = screen.getByLabelText('Metric profile:')
-    const aggrProfileField = screen.getByLabelText('Aggregation profile:')
-    const operationsProfileField = screen.getByLabelText('Operations profile:')
-    const thresholdsProfileField = screen.getByLabelText('Thresholds profile:')
-    const topologyTypeField = screen.getByLabelText('Topology type:');
-    const availabilityThresholdField = screen.getByLabelText(/availability/i);
-    const reliabilityThresholdField = screen.getByLabelText(/reliability/i);
-    const uptimeThresholdField = screen.getByLabelText(/uptime/i);
-    const unknownThresholdField = screen.getByLabelText(/unknown/i);
-    const downtimeThresholdField = screen.getByLabelText(/downtime/i);
-
-    expect(nameField.value).toBe('Critical');
-    expect(nameField).toBeDisabled();
-    expect(disabledField.checked).toBeFalsy();
-    expect(disabledField).toBeDisabled();
-    expect(descriptionField.value).toBe('Critical report');
-    expect(descriptionField).toBeDisabled();
-    expect(groupField.value).toBe('ARGO')
-    expect(groupField).toBeDisabled();
-
-    expect(metricProfileField.value).toBe('ARGO_MON_CRITICAL')
-    expect(metricProfileField).toBeDisabled()
-
-    expect(aggrProfileField.value).toBe('critical')
-    expect(aggrProfileField).toBeDisabled()
-
-    expect(operationsProfileField.value).toBe('egi_ops')
-    expect(operationsProfileField).toBeDisabled()
-
-    expect(thresholdsProfileField.value).toBe('')
-    expect(thresholdsProfileField).toBeDisabled()
-
-    expect(topologyTypeField.value).toBe('Sites');
-    expect(topologyTypeField).toBeDisabled()
-
-    expect(screen.getAllByTestId(/card/i)).toHaveLength(2);
-    const card_groups = within(screen.getByTestId('card-group-of-groups'));
-    const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
-
-    const tag1name = card_groups.getByTestId('groupsTags.0.name')
-    const tag1value = card_groups.getByTestId('groupsTags.0.value')
-    const tag2name = card_groups.getByTestId('groupsTags.1.name')
-    const tag2value = card_groups.getByTestId('groupsTags.1.value')
-    const tag3name = card_groups.getByTestId('groupsTags.2.name')
-    const tag3value = card_groups.getByTestId('groupsTags.2.value')
-
-    expect(tag1name.value).toBe('certification')
-    expect(tag1name).toBeDisabled()
-    expect(tag1value.value).toBe('Certified')
-    expect(tag1value).toBeDisabled()
-    expect(tag2name.value).toBe('infrastructure')
-    expect(tag2name).toBeDisabled()
-    expect(tag2value.value).toBe('Production')
-    expect(tag2value).toBeDisabled()
-    expect(tag3name.value).toBe('scope')
-    expect(tag3name).toBeDisabled()
-    expect(tag3value.value).toBe('EGI*')
-    expect(tag3value).toBeDisabled()
-    expect(card_groups.queryByTestId(/remove/i)).not.toBeInTheDocument()
-
-    expect(card_groups.queryByRole('button', { name: /add new tag/i })).not.toBeInTheDocument();
-    expect(card_groups.queryByRole('button', { name: /add new extension/i })).not.toBeInTheDocument();
-    expect(card_groups.getByTestId('groupsExtensions.0.name').value).toBe('GLUE2ComputingShareMappingQueue')
-    expect(card_groups.getByTestId('groupsExtensions.0.value').value).toBe('condor')
-    expect(card_groups.getByLabelText('NGIs:').value).toBe('iris.ac.uk')
-    expect(card_groups.getByLabelText('Sites:').value).toBe('dirac-durham, IRISOPS-IAM')
-
-    expect(card_endpoints.getByTestId('endpointsTags.0.name').value).toBe('production')
-    expect(card_endpoints.getByTestId('endpointsTags.0.value').value).toBe('yes')
-    expect(card_endpoints.getByTestId('endpointsTags.1.name').value).toBe('monitored')
-    expect(card_endpoints.getByTestId('endpointsTags.1.value').value).toBe('yes')
-    expect(card_endpoints.getByTestId('endpointsTags.2.name').value).toBe('scope')
-    expect(card_endpoints.getByTestId('endpointsTags.2.value').value).toBe('EGI*')
-
-    expect(card_endpoints.queryByTestId(/remove/i)).not.toBeInTheDocument();
-    expect(card_endpoints.queryByRole('button', { name: /add new tag/i })).not.toBeInTheDocument();
-    expect(card_endpoints.queryByRole('button', { name: /add new extension/i })).not.toBeInTheDocument();
-
-    expect(availabilityThresholdField.value).toBe('80');
-    expect(availabilityThresholdField).toBeDisabled();
-    expect(reliabilityThresholdField.value).toBe('85');
-    expect(reliabilityThresholdField).toBeDisabled();
-    expect(uptimeThresholdField.value).toBe('0.8');
-    expect(uptimeThresholdField).toBeDisabled();
-    expect(unknownThresholdField.value).toBe('0.1');
-    expect(unknownThresholdField).toBeDisabled();
-    expect(downtimeThresholdField.value).toBe('0.1');
-    expect(downtimeThresholdField).toBeDisabled();
-
-    expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
-  })
-
-  test('Test that public page renders properly if report has no entities', async () => {
-    WebApi.mockImplementation(() => {
-      return {
-        fetchReport: () => Promise.resolve(mockReport2),
-        fetchReportsTopologyTags: () => Promise.resolve(mockReportsTopologyTags)
-      }
-    })
-    renderChangeView(true);
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /details/i }).textContent).toBe('Report details');
-    })
-
-    const nameField = screen.getByTestId('name');
-    const disabledField = screen.getByLabelText(/disabled/i);
-    const descriptionField = screen.getByLabelText(/description/i);
-    const groupField = screen.getByTestId('groupname');
-    const metricProfileField = screen.getByLabelText('Metric profile:')
-    const aggrProfileField = screen.getByLabelText('Aggregation profile:')
-    const operationsProfileField = screen.getByLabelText('Operations profile:')
-    const thresholdsProfileField = screen.getByLabelText('Thresholds profile:')
-    const topologyTypeField = screen.getByLabelText('Topology type:');
-    const availabilityThresholdField = screen.getByLabelText(/availability/i);
-    const reliabilityThresholdField = screen.getByLabelText(/reliability/i);
-    const uptimeThresholdField = screen.getByLabelText(/uptime/i);
-    const unknownThresholdField = screen.getByLabelText(/unknown/i);
-    const downtimeThresholdField = screen.getByLabelText(/downtime/i);
-
-    expect(nameField.value).toBe('Critical');
-    expect(nameField).toBeDisabled();
-    expect(disabledField.checked).toBeFalsy();
-    expect(disabledField).toBeDisabled();
-    expect(descriptionField.value).toBe('Critical report');
-    expect(descriptionField).toBeDisabled();
-    expect(groupField.value).toBe('ARGO')
-    expect(groupField).toBeDisabled();
-
-    expect(metricProfileField.value).toBe('ARGO_MON_CRITICAL')
-    expect(metricProfileField).toBeDisabled()
-
-    expect(aggrProfileField.value).toBe('critical')
-    expect(aggrProfileField).toBeDisabled()
-
-    expect(operationsProfileField.value).toBe('egi_ops')
-    expect(operationsProfileField).toBeDisabled()
-
-    expect(thresholdsProfileField.value).toBe('')
-    expect(thresholdsProfileField).toBeDisabled()
-
-    expect(topologyTypeField.value).toBe('Sites');
-    expect(topologyTypeField).toBeDisabled()
-
-    expect(screen.getAllByTestId(/card/i)).toHaveLength(2);
-    const card_groups = within(screen.getByTestId('card-group-of-groups'));
-    const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
-
-    const tag1name = card_groups.getByTestId('groupsTags.0.name')
-    const tag1value = card_groups.getByTestId('groupsTags.0.value')
-    const tag2name = card_groups.getByTestId('groupsTags.1.name')
-    const tag2value = card_groups.getByTestId('groupsTags.1.value')
-    const tag3name = card_groups.getByTestId('groupsTags.2.name')
-    const tag3value = card_groups.getByTestId('groupsTags.2.value')
-
-    expect(tag1name.value).toBe('certification')
-    expect(tag1name).toBeDisabled()
-    expect(tag1value.value).toBe('Certified')
-    expect(tag1value).toBeDisabled()
-    expect(tag2name.value).toBe('infrastructure')
-    expect(tag2name).toBeDisabled()
-    expect(tag2value.value).toBe('Production')
-    expect(tag2value).toBeDisabled()
-    expect(tag3name.value).toBe('scope')
-    expect(tag3name).toBeDisabled()
-    expect(tag3value.value).toBe('EGI*')
-    expect(tag3value).toBeDisabled()
-    expect(card_groups.queryByTestId(/remove/i)).not.toBeInTheDocument()
-
-    expect(card_groups.queryByRole('button', { name: /add new tag/i })).not.toBeInTheDocument();
-    expect(card_groups.queryByRole('button', { name: /add new extension/i })).not.toBeInTheDocument();
-    expect(card_groups.getByTestId('groupsExtensions.0.name').value).toBe('')
-    expect(card_groups.getByTestId('groupsExtensions.0.value').value).toBe('')
-    expect(card_groups.getByLabelText('NGIs:').value).toBe('')
-    expect(card_groups.getByLabelText('Sites:').value).toBe('')
-
-    expect(card_endpoints.getByTestId('endpointsTags.0.name').value).toBe('production')
-    expect(card_endpoints.getByTestId('endpointsTags.0.value').value).toBe('yes')
-    expect(card_endpoints.getByTestId('endpointsTags.1.name').value).toBe('monitored')
-    expect(card_endpoints.getByTestId('endpointsTags.1.value').value).toBe('yes')
-    expect(card_endpoints.getByTestId('endpointsTags.2.name').value).toBe('scope')
-    expect(card_endpoints.getByTestId('endpointsTags.2.value').value).toBe('EGI*')
-
-    expect(card_endpoints.queryByTestId(/remove/i)).not.toBeInTheDocument();
-    expect(card_endpoints.queryByRole('button', { name: /add new tag/i })).not.toBeInTheDocument();
-    expect(card_endpoints.queryByRole('button', { name: /add new extension/i })).not.toBeInTheDocument();
-
-    expect(availabilityThresholdField.value).toBe('80');
-    expect(availabilityThresholdField).toBeDisabled();
-    expect(reliabilityThresholdField.value).toBe('85');
-    expect(reliabilityThresholdField).toBeDisabled();
-    expect(uptimeThresholdField.value).toBe('0.8');
-    expect(uptimeThresholdField).toBeDisabled();
-    expect(unknownThresholdField.value).toBe('0.1');
-    expect(unknownThresholdField).toBeDisabled();
-    expect(downtimeThresholdField.value).toBe('0.1');
-    expect(downtimeThresholdField).toBeDisabled();
-
-    expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
-  })
-
   test('Test change report name', async () => {
     mockChangeObject.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
@@ -3354,6 +3138,239 @@ describe('Tests for reports changeview', () => {
       0,
       expect.any(Function)
     )
+  })
+})
+
+
+describe('Tests for public reports changeview', () => {
+  beforeEach(() => {
+    WebApi.mockImplementation(() => {
+      return {
+        fetchReport: () => Promise.resolve(mockReport),
+        fetchReportsTopologyGroups: () => Promise.resolve(mockReportsTopologyGroups),
+      }
+    })
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: () => Promise.resolve(mockBackendReport)
+      }
+    })
+  })
+
+  test('Test that page renders properly', async () => {
+    renderChangeView(true);
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /details/i }).textContent).toBe('Report details');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const disabledField = screen.getByLabelText(/disabled/i);
+    const descriptionField = screen.getByLabelText(/description/i);
+    const groupField = screen.getByTestId('groupname');
+    const metricProfileField = screen.getByLabelText('Metric profile:')
+    const aggrProfileField = screen.getByLabelText('Aggregation profile:')
+    const operationsProfileField = screen.getByLabelText('Operations profile:')
+    const thresholdsProfileField = screen.getByLabelText('Thresholds profile:')
+    const topologyTypeField = screen.getByLabelText('Topology type:');
+    const availabilityThresholdField = screen.getByLabelText(/availability/i);
+    const reliabilityThresholdField = screen.getByLabelText(/reliability/i);
+    const uptimeThresholdField = screen.getByLabelText(/uptime/i);
+    const unknownThresholdField = screen.getByLabelText(/unknown/i);
+    const downtimeThresholdField = screen.getByLabelText(/downtime/i);
+
+    expect(nameField.value).toBe('Critical');
+    expect(nameField).toBeDisabled();
+    expect(disabledField.checked).toBeFalsy();
+    expect(disabledField).toBeDisabled();
+    expect(descriptionField.value).toBe('Critical report');
+    expect(descriptionField).toBeDisabled();
+    expect(groupField.value).toBe('ARGO')
+    expect(groupField).toBeDisabled();
+
+    expect(metricProfileField.value).toBe('ARGO_MON_CRITICAL')
+    expect(metricProfileField).toBeDisabled()
+
+    expect(aggrProfileField.value).toBe('critical')
+    expect(aggrProfileField).toBeDisabled()
+
+    expect(operationsProfileField.value).toBe('egi_ops')
+    expect(operationsProfileField).toBeDisabled()
+
+    expect(thresholdsProfileField.value).toBe('')
+    expect(thresholdsProfileField).toBeDisabled()
+
+    expect(topologyTypeField.value).toBe('Sites');
+    expect(topologyTypeField).toBeDisabled()
+
+    expect(screen.getAllByTestId(/card/i)).toHaveLength(2);
+    const card_groups = within(screen.getByTestId('card-group-of-groups'));
+    const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
+
+    const tag1name = card_groups.getByTestId('groupsTags.0.name')
+    const tag1value = card_groups.getByTestId('groupsTags.0.value')
+    const tag2name = card_groups.getByTestId('groupsTags.1.name')
+    const tag2value = card_groups.getByTestId('groupsTags.1.value')
+    const tag3name = card_groups.getByTestId('groupsTags.2.name')
+    const tag3value = card_groups.getByTestId('groupsTags.2.value')
+
+    expect(tag1name.value).toBe('certification')
+    expect(tag1name).toBeDisabled()
+    expect(tag1value.value).toBe('Certified')
+    expect(tag1value).toBeDisabled()
+    expect(tag2name.value).toBe('infrastructure')
+    expect(tag2name).toBeDisabled()
+    expect(tag2value.value).toBe('Production')
+    expect(tag2value).toBeDisabled()
+    expect(tag3name.value).toBe('scope')
+    expect(tag3name).toBeDisabled()
+    expect(tag3value.value).toBe('EGI*')
+    expect(tag3value).toBeDisabled()
+    expect(card_groups.queryByTestId(/remove/i)).not.toBeInTheDocument()
+
+    expect(card_groups.queryByRole('button', { name: /add new tag/i })).not.toBeInTheDocument();
+    expect(card_groups.queryByRole('button', { name: /add new extension/i })).not.toBeInTheDocument();
+    expect(card_groups.getByTestId('groupsExtensions.0.name').value).toBe('GLUE2ComputingShareMappingQueue')
+    expect(card_groups.getByTestId('groupsExtensions.0.value').value).toBe('condor')
+    expect(card_groups.getByLabelText('NGIs:').value).toBe('iris.ac.uk')
+    expect(card_groups.getByLabelText('Sites:').value).toBe('dirac-durham, IRISOPS-IAM')
+
+    expect(card_endpoints.getByTestId('endpointsTags.0.name').value).toBe('production')
+    expect(card_endpoints.getByTestId('endpointsTags.0.value').value).toBe('yes')
+    expect(card_endpoints.getByTestId('endpointsTags.1.name').value).toBe('monitored')
+    expect(card_endpoints.getByTestId('endpointsTags.1.value').value).toBe('yes')
+    expect(card_endpoints.getByTestId('endpointsTags.2.name').value).toBe('scope')
+    expect(card_endpoints.getByTestId('endpointsTags.2.value').value).toBe('EGI*')
+
+    expect(card_endpoints.queryByTestId(/remove/i)).not.toBeInTheDocument();
+    expect(card_endpoints.queryByRole('button', { name: /add new tag/i })).not.toBeInTheDocument();
+    expect(card_endpoints.queryByRole('button', { name: /add new extension/i })).not.toBeInTheDocument();
+
+    expect(availabilityThresholdField.value).toBe('80');
+    expect(availabilityThresholdField).toBeDisabled();
+    expect(reliabilityThresholdField.value).toBe('85');
+    expect(reliabilityThresholdField).toBeDisabled();
+    expect(uptimeThresholdField.value).toBe('0.8');
+    expect(uptimeThresholdField).toBeDisabled();
+    expect(unknownThresholdField.value).toBe('0.1');
+    expect(unknownThresholdField).toBeDisabled();
+    expect(downtimeThresholdField.value).toBe('0.1');
+    expect(downtimeThresholdField).toBeDisabled();
+
+    expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
+  })
+
+  test('Test that page renders properly if report has no entities', async () => {
+    WebApi.mockImplementation(() => {
+      return {
+        fetchReport: () => Promise.resolve(mockReport2),
+        fetchReportsTopologyTags: () => Promise.resolve(mockReportsTopologyTags)
+      }
+    })
+    renderChangeView(true);
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /details/i }).textContent).toBe('Report details');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const disabledField = screen.getByLabelText(/disabled/i);
+    const descriptionField = screen.getByLabelText(/description/i);
+    const groupField = screen.getByTestId('groupname');
+    const metricProfileField = screen.getByLabelText('Metric profile:')
+    const aggrProfileField = screen.getByLabelText('Aggregation profile:')
+    const operationsProfileField = screen.getByLabelText('Operations profile:')
+    const thresholdsProfileField = screen.getByLabelText('Thresholds profile:')
+    const topologyTypeField = screen.getByLabelText('Topology type:');
+    const availabilityThresholdField = screen.getByLabelText(/availability/i);
+    const reliabilityThresholdField = screen.getByLabelText(/reliability/i);
+    const uptimeThresholdField = screen.getByLabelText(/uptime/i);
+    const unknownThresholdField = screen.getByLabelText(/unknown/i);
+    const downtimeThresholdField = screen.getByLabelText(/downtime/i);
+
+    expect(nameField.value).toBe('Critical');
+    expect(nameField).toBeDisabled();
+    expect(disabledField.checked).toBeFalsy();
+    expect(disabledField).toBeDisabled();
+    expect(descriptionField.value).toBe('Critical report');
+    expect(descriptionField).toBeDisabled();
+    expect(groupField.value).toBe('ARGO')
+    expect(groupField).toBeDisabled();
+
+    expect(metricProfileField.value).toBe('ARGO_MON_CRITICAL')
+    expect(metricProfileField).toBeDisabled()
+
+    expect(aggrProfileField.value).toBe('critical')
+    expect(aggrProfileField).toBeDisabled()
+
+    expect(operationsProfileField.value).toBe('egi_ops')
+    expect(operationsProfileField).toBeDisabled()
+
+    expect(thresholdsProfileField.value).toBe('')
+    expect(thresholdsProfileField).toBeDisabled()
+
+    expect(topologyTypeField.value).toBe('Sites');
+    expect(topologyTypeField).toBeDisabled()
+
+    expect(screen.getAllByTestId(/card/i)).toHaveLength(2);
+    const card_groups = within(screen.getByTestId('card-group-of-groups'));
+    const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
+
+    const tag1name = card_groups.getByTestId('groupsTags.0.name')
+    const tag1value = card_groups.getByTestId('groupsTags.0.value')
+    const tag2name = card_groups.getByTestId('groupsTags.1.name')
+    const tag2value = card_groups.getByTestId('groupsTags.1.value')
+    const tag3name = card_groups.getByTestId('groupsTags.2.name')
+    const tag3value = card_groups.getByTestId('groupsTags.2.value')
+
+    expect(tag1name.value).toBe('certification')
+    expect(tag1name).toBeDisabled()
+    expect(tag1value.value).toBe('Certified')
+    expect(tag1value).toBeDisabled()
+    expect(tag2name.value).toBe('infrastructure')
+    expect(tag2name).toBeDisabled()
+    expect(tag2value.value).toBe('Production')
+    expect(tag2value).toBeDisabled()
+    expect(tag3name.value).toBe('scope')
+    expect(tag3name).toBeDisabled()
+    expect(tag3value.value).toBe('EGI*')
+    expect(tag3value).toBeDisabled()
+    expect(card_groups.queryByTestId(/remove/i)).not.toBeInTheDocument()
+
+    expect(card_groups.queryByRole('button', { name: /add new tag/i })).not.toBeInTheDocument();
+    expect(card_groups.queryByRole('button', { name: /add new extension/i })).not.toBeInTheDocument();
+    expect(card_groups.getByTestId('groupsExtensions.0.name').value).toBe('')
+    expect(card_groups.getByTestId('groupsExtensions.0.value').value).toBe('')
+    expect(card_groups.getByLabelText('NGIs:').value).toBe('')
+    expect(card_groups.getByLabelText('Sites:').value).toBe('')
+
+    expect(card_endpoints.getByTestId('endpointsTags.0.name').value).toBe('production')
+    expect(card_endpoints.getByTestId('endpointsTags.0.value').value).toBe('yes')
+    expect(card_endpoints.getByTestId('endpointsTags.1.name').value).toBe('monitored')
+    expect(card_endpoints.getByTestId('endpointsTags.1.value').value).toBe('yes')
+    expect(card_endpoints.getByTestId('endpointsTags.2.name').value).toBe('scope')
+    expect(card_endpoints.getByTestId('endpointsTags.2.value').value).toBe('EGI*')
+
+    expect(card_endpoints.queryByTestId(/remove/i)).not.toBeInTheDocument();
+    expect(card_endpoints.queryByRole('button', { name: /add new tag/i })).not.toBeInTheDocument();
+    expect(card_endpoints.queryByRole('button', { name: /add new extension/i })).not.toBeInTheDocument();
+
+    expect(availabilityThresholdField.value).toBe('80');
+    expect(availabilityThresholdField).toBeDisabled();
+    expect(reliabilityThresholdField.value).toBe('85');
+    expect(reliabilityThresholdField).toBeDisabled();
+    expect(uptimeThresholdField.value).toBe('0.8');
+    expect(uptimeThresholdField).toBeDisabled();
+    expect(unknownThresholdField.value).toBe('0.1');
+    expect(unknownThresholdField).toBeDisabled();
+    expect(downtimeThresholdField.value).toBe('0.1');
+    expect(downtimeThresholdField).toBeDisabled();
+
+    expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
   })
 })
 
