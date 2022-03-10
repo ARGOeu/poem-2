@@ -4,6 +4,7 @@ from Poem.api.models import MyAPIKey
 from Poem.api.views import NotFound
 from Poem.poem import models as poem_models
 from django.db.models import Q
+from django_tenants.utils import get_public_schema_name
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
@@ -18,19 +19,24 @@ class ListAPIKeys(APIView):
     def get(self, request, name=None):
         if name:
             try:
-                userprofile = poem_models.UserProfile.objects.get(
-                    user=request.user
-                )
-                regular_user = not request.user.is_superuser and (
-                    len(userprofile.groupsofaggregations.all()) > 0 or
-                    len(userprofile.groupsofmetricprofiles.all()) > 0 or
-                    len(userprofile.groupsofthresholdsprofiles.all()) > 0
-                )
-                regular_user_no_perms = not request.user.is_superuser and (
-                    len(userprofile.groupsofaggregations.all()) == 0 and
-                    len(userprofile.groupsofmetricprofiles.all()) == 0 and
-                    len(userprofile.groupsofthresholdsprofiles.all()) == 0
-                )
+                if request.tenant.schema_name == get_public_schema_name():
+                    regular_user = None
+                    regular_user_no_perms = None
+
+                else:
+                    userprofile = poem_models.UserProfile.objects.get(
+                        user=request.user
+                    )
+                    regular_user = not request.user.is_superuser and (
+                        len(userprofile.groupsofaggregations.all()) > 0 or
+                        len(userprofile.groupsofmetricprofiles.all()) > 0 or
+                        len(userprofile.groupsofthresholdsprofiles.all()) > 0
+                    )
+                    regular_user_no_perms = not request.user.is_superuser and (
+                        len(userprofile.groupsofaggregations.all()) == 0 and
+                        len(userprofile.groupsofmetricprofiles.all()) == 0 and
+                        len(userprofile.groupsofthresholdsprofiles.all()) == 0
+                    )
                 if request.user.is_superuser or (
                     regular_user and name.startswith('WEB-API')
                 ) or (
