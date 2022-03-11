@@ -69,11 +69,13 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
 
     def test_permission_denied_in_case_no_authorization(self):
         request = self.factory.get(self.url)
+        request.tenant = self.tenant
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_get_list_of_apikeys(self):
         request = self.factory.get(self.url)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(
@@ -114,6 +116,7 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
 
     def test_get_list_of_apikeys_regular_user_with_some_permissions(self):
         request = self.factory.get(self.url)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.regular_user)
         response = self.view(request)
         self.assertEqual(
@@ -136,6 +139,7 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
 
     def test_get_list_of_apikeys_regular_user_with_no_permissions(self):
         request = self.factory.get(self.url)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.poor_user)
         response = self.view(request)
         self.assertEqual(
@@ -158,6 +162,7 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
 
     def test_get_apikey_for_given_name(self):
         request = self.factory.get(self.url + 'EGI')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request, 'EGI')
         self.assertEqual(
@@ -173,6 +178,7 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
 
     def test_get_apikey_for_given_name_regular_user(self):
         request = self.factory.get(self.url + 'EGI')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.regular_user)
         response = self.view(request, 'EGI')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -183,6 +189,7 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
 
     def test_get_apikey_for_given_name_regular_user_without_permissions(self):
         request = self.factory.get(self.url + 'EGI')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.poor_user)
         response = self.view(request, 'EGI')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -193,6 +200,7 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
 
     def test_get_apikey_for_webapi_name_regular_user(self):
         request = self.factory.get(self.url + 'WEB-API')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.regular_user)
         response = self.view(request, 'WEB-API')
         self.assertEqual(
@@ -208,6 +216,7 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
 
     def test_get_apikey_for_webapi_name_regular_user_without_permissions(self):
         request = self.factory.get(self.url + 'WEB-API')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.poor_user)
         response = self.view(request, 'WEB-API')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -218,6 +227,7 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
 
     def test_get_apikey_for_webapi_ro_name_regular_user_without_perms(self):
         request = self.factory.get(self.url + 'WEB-API-RO')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.poor_user)
         response = self.view(request, 'WEB-API-RO')
         self.assertEqual(
