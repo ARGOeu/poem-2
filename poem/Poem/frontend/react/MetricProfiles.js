@@ -1127,7 +1127,7 @@ export const MetricProfilesList = (props) => {
   );
 
   const { data: metricProfiles, error: errorMetricProfiles, status: statusMetricProfiles} = useQuery(
-    `${publicView ? 'public_' : ''}metricprofile`,
+    [`${publicView ? 'public_' : ''}metricprofile`, 'backend'],
     () => fetchBackendMetricProfiles(publicView),
     { enabled: !publicView ? !!userDetails : true }
   );

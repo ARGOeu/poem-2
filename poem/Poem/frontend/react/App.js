@@ -55,7 +55,32 @@ import { OperationsProfilesList, OperationsProfileDetails } from './OperationsPr
 import { CookiePolicy } from './CookiePolicy';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { ReactQueryDevtools } from 'react-query/devtools';
-import { fetchAggregationProfiles, fetchAPIKeys, fetchBackendMetricProfiles, fetchMetrics, fetchMetricTags, fetchMetricTemplates, fetchMetricTemplateTypes, fetchMetricTypes, fetchOperationsProfiles, fetchOStags, fetchPackages, fetchProbes, fetchReports, fetchTenants, fetchThresholdsProfiles, fetchUserGroups, fetchUsers, fetchYumRepos } from './QueryFunctions';
+import {
+  fetchBackendAggregationProfiles,
+  fetchAPIKeys,
+  fetchBackendMetricProfiles,
+  fetchMetrics,
+  fetchMetricTags,
+  fetchMetricTemplates,
+  fetchMetricTemplateTypes,
+  fetchMetricTypes,
+  fetchOperationsProfiles,
+  fetchOStags,
+  fetchPackages,
+  fetchProbes,
+  fetchBackendReports,
+  fetchTenants,
+  fetchBackendThresholdsProfiles,
+  fetchUserGroups,
+  fetchUsers,
+  fetchYumRepos,
+  fetchReports,
+  fetchMetricProfiles,
+  fetchAggregationProfiles,
+  fetchThresholdsProfiles,
+  fetchTopologyTags,
+  fetchTopologyGroups
+} from './QueryFunctions';
 
 
 const NavigationBarWithRouter = withRouter(NavigationBar);
@@ -595,40 +620,13 @@ const App = () => {
 
   async function initalizeState(poemType, response) {
     let options = await backend.fetchConfigOptions();
-      setIsTenantSchema(poemType);
-      setIsSessionActive(response.active);
-      setUserDetails(response.userdetails);
-      setVersion(options && options.result.version);
-      setPrivacyLink(options && options.result.terms_privacy_links.privacy);
-      setTermsLink(options && options.result.terms_privacy_links.terms);
-      setPublicView(false);
-      queryClient.prefetchQuery(
-        'user', () => fetchUsers()
-      );
-      queryClient.prefetchQuery(
-        'yumrepo', () => fetchYumRepos()
-      );
-      queryClient.prefetchQuery(
-        'ostags', () => fetchOStags()
-      );
-      queryClient.prefetchQuery(
-        'package', () => fetchPackages()
-      );
-      queryClient.prefetchQuery(
-        'metrictemplate', () => fetchMetricTemplates(publicView)
-      );
-      queryClient.prefetchQuery(
-        'metrictemplatestypes', () => fetchMetricTemplateTypes(publicView)
-      );
-      queryClient.prefetchQuery(
-        'metrictags', () => fetchMetricTags(publicView)
-      );
-      queryClient.prefetchQuery(
-        'apikey', () => fetchAPIKeys()
-      );
-      queryClient.prefetchQuery(
-        'probe', () => fetchProbes(publicView)
-      );
+    setIsTenantSchema(poemType);
+    setIsSessionActive(response.active);
+    setUserDetails(response.userdetails);
+    setVersion(options && options.result.version);
+    setPrivacyLink(options && options.result.terms_privacy_links.privacy);
+    setTermsLink(options && options.result.terms_privacy_links.terms);
+    setPublicView(false);
     if (poemType) {
       setToken(response.userdetails.token);
       setWebApiMetric(options && options.result.webapimetric);
@@ -637,40 +635,8 @@ const App = () => {
       setWebApiOperations(options && options.result.webapioperations);
       setWebApiReports(options && options.result.webapireports);
       setTenantName(options && options.result.tenant_name);
-      queryClient.prefetchQuery(
-        'metric', () => fetchMetrics(false)
-      );
-      queryClient.prefetchQuery(
-        'metricstypes', () => fetchMetricTypes(false)
-      );
-      queryClient.prefetchQuery(
-        ['metric', 'usergroups'], () => fetchUserGroups(true, false, 'metrics')
-      )
-      queryClient.prefetchQuery(
-        'report', () => fetchReports()
-      );
-      queryClient.prefetchQuery(
-        ['metricprofile', 'backend'], () => fetchBackendMetricProfiles()
-      );
-      queryClient.prefetchQuery(
-        ['aggregationprofile', 'backend'], () => fetchAggregationProfiles()
-      );
-      queryClient.prefetchQuery(
-        'thresholdsprofile', () => fetchThresholdsProfiles()
-      );
-      queryClient.prefetchQuery(
-        'operationsprofile', () => fetchOperationsProfiles(
-          new WebApi({ token: token, operationsProfiles: webApiOperations })
-        )
-      );
-      queryClient.prefetchQuery(
-        'usergroups', () => fetchUserGroups(true)
-      );
-    } else {
-      queryClient.prefetchQuery(
-        'tenant', () => fetchTenants()
-      );
     }
+    options && prefetchData(false, poemType, options, poemType ? response.userdetails.token : null)
   }
 
   async function initalizePublicState() {
@@ -690,42 +656,107 @@ const App = () => {
     setTermsLink(options && options.result.terms_privacy_links.terms);
     setTenantName(options && options.result.tenant_name);
     setPublicView(true);
+    options && prefetchData(true, isTenantSchema, options, token)
+  }
+
+  function prefetchData(isPublic, isTenant, options, token) {
+    if (!isPublic) {
+      queryClient.prefetchQuery(
+        'user', () => fetchUsers()
+      )
+      queryClient.prefetchQuery(
+        'yumrepo', () => fetchYumRepos()
+      )
+      queryClient.prefetchQuery(
+        'apikey', () => fetchAPIKeys()
+      )
+    }
+
     queryClient.prefetchQuery(
-      'public_probe', () => fetchProbes(true)
-    );
+      `${isPublic ? 'public_' : ''}ostags`, () => fetchOStags(isPublic)
+    )
     queryClient.prefetchQuery(
-      'public_metrictemplate', () => fetchMetricTemplates(true)
-    );
+      `${isPublic ? 'public_' : ''}package`, () => fetchPackages(isPublic)
+    )
     queryClient.prefetchQuery(
-      'public_metric', () => fetchMetrics(true)
-    );
+      `${isPublic ? 'public_' : ''}metrictemplate`, () => fetchMetricTemplates(isPublic)
+    )
     queryClient.prefetchQuery(
-      'public_metricstypes', () => fetchMetricTypes(true)
-    );
+      `${isPublic ? 'public_' : ''}metrictemplatestypes`, () => fetchMetricTemplateTypes(isPublic)
+    )
     queryClient.prefetchQuery(
-      'public_metrictemplatestypes', () => fetchMetricTemplateTypes(true)
-    );
+      `${isPublic ? 'public_' : ''}metrictags`, () => fetchMetricTags(isPublic)
+    )
     queryClient.prefetchQuery(
-      'public_metrictags', () => fetchMetricTags(true)
-    );
-    queryClient.prefetchQuery(
-      ['public_metric', 'usergroups'], () => fetchUserGroups(isTenantSchema, true, 'metrics')
-    );
-    queryClient.prefetchQuery(
-      'public_ostags', () => fetchOStags(true)
-    );
-    queryClient.prefetchQuery(
-      'public_metricprofile', () => fetchBackendMetricProfiles(true)
-    );
-    queryClient.prefetchQuery(
-      ['public_aggregationprofile', 'backend'], () => fetchAggregationProfiles(true)
-    );
-    queryClient.prefetchQuery(
-      'public_thresholdsprofile', () => fetchThresholdsProfiles(true)
-    );
-    queryClient.prefetchQuery(
-      'public_operationsprofile', () => fetchOperationsProfiles(new WebApi({ token: token, operationsProfiles: webApiOperations }))
-    );
+      `${isPublic ? 'public_' : ''}probe`, () => fetchProbes(isPublic)
+    )
+
+    if (isTenant) {
+      let webapi = new WebApi({
+        token: token,
+        metricProfiles: options.result.webapimetric,
+        aggregationProfiles: options.result.webapiaggregation,
+        thresholdsProfiles: options.result.webapithresholds,
+        operationsProfiles: options.result.webapioperations,
+        reportsConfigurations: options.result.webapireports
+      })
+
+      if (!isPublic)
+        queryClient.prefetchQuery(
+          'usergroups', () => fetchUserGroups(isTenant)
+        );
+
+      queryClient.prefetchQuery(
+        `${isPublic ? 'public_' : ''}metric`, () => fetchMetrics(isPublic)
+      );
+      queryClient.prefetchQuery(
+        `${isPublic ? 'public_' : ''}metricstypes`, () => fetchMetricTypes(isPublic)
+      );
+      queryClient.prefetchQuery(
+        [`${isPublic ? 'public_' : ''}metric`, 'usergroups'], () => fetchUserGroups(isTenant, isPublic, 'metrics')
+      )
+      queryClient.prefetchQuery(
+        [`${isPublic ? 'public_' : ''}report`, 'backend'], () => fetchBackendReports(isPublic)
+      );
+      queryClient.prefetchQuery(
+        [`${isPublic ? 'public_' : ''}report`, 'webapi'], () => fetchReports(webapi)
+      )
+      queryClient.prefetchQuery(
+        [`${isPublic ? 'public_' : ''}metricprofile`, 'backend'], () => fetchBackendMetricProfiles(isPublic)
+      );
+      queryClient.prefetchQuery(
+        [`${isPublic ? 'public_' : ''}metricprofile`, 'webapi'], () => fetchMetricProfiles(webapi)
+      )
+      queryClient.prefetchQuery(
+        [`${isPublic ? 'public_' : ''}aggregationprofile`, 'backend'], () => fetchBackendAggregationProfiles(isPublic)
+      );
+      queryClient.prefetchQuery(
+        [`${isPublic ? 'public_' : ''}aggregationprofile`, 'webapi'], () => fetchAggregationProfiles(webapi)
+      )
+      queryClient.prefetchQuery(
+        [`${isPublic ? 'public_' : ''}thresholdsprofile`, 'backend'], () => fetchBackendThresholdsProfiles(isPublic)
+      );
+      queryClient.prefetchQuery(
+        [`${isPublic ? 'public_' : ''}thresholdsprofile`, 'webapi'], () => fetchThresholdsProfiles(webapi)
+      )
+      queryClient.prefetchQuery(
+        `${isPublic ? 'public_' : ''}operationsprofile`, () => fetchOperationsProfiles(webapi)
+      );
+      if (options.result.webapireports && options.result.webapireports.crud) {
+        if (!isPublic)
+          queryClient.prefetchQuery(
+            'topologytags', () => fetchTopologyTags(webapi)
+          )
+
+        queryClient.prefetchQuery(
+          `${isPublic ? 'public_' : ''}topologygroups`, () => fetchTopologyGroups(webapi)
+        )
+      }
+    } else {
+      queryClient.prefetchQuery(
+        'tenant', () => fetchTenants()
+      );
+    }
   }
 
   function isPublicUrl () {

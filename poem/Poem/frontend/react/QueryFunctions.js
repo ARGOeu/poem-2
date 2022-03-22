@@ -130,10 +130,15 @@ export const fetchTenants = async () => {
 }
 
 
-export const fetchReports = async (publicView=false) => {
+export const fetchBackendReports = async (publicView=false) => {
   const backend = new Backend();
 
   return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}reports`);
+}
+
+
+export const fetchReports = async (webapi) => {
+  return await webapi.fetchReports()
 }
 
 
@@ -149,20 +154,40 @@ export const fetchMetricProfiles = async (webapi) => {
 }
 
 
-export const fetchAggregationProfiles = async (publicView=false) => {
+export const fetchBackendAggregationProfiles = async (publicView=false) => {
   const backend = new Backend();
 
   return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}aggregations`)
 }
 
 
-export const fetchThresholdsProfiles = async (publicView=false) => {
+export const fetchAggregationProfiles = async (webapi) => {
+  return await webapi.fetchAggregationProfiles()
+}
+
+
+export const fetchBackendThresholdsProfiles = async (publicView=false) => {
   const backend = new Backend();
 
   return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}thresholdsprofiles`);
 }
 
 
+export const fetchThresholdsProfiles = async (webapi) => {
+  return await webapi.fetchThresholdsProfiles()
+}
+
+
 export const fetchOperationsProfiles = async (webapi) => {
   return await webapi.fetchOperationsProfiles();
+}
+
+
+export const fetchTopologyTags = async (webapi) => {
+  return await webapi.fetchReportsTopologyTags()
+}
+
+
+export const fetchTopologyGroups = async (webapi) => {
+  return await webapi.fetchReportsTopologyGroups()
 }

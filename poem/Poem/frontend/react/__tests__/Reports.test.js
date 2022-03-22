@@ -175,6 +175,7 @@ const mockReport = {
   ]
 };
 
+
 const mockReport2 = {
   id: "yee9chel-5o4u-l4j4-410b-eipi3ohrah5i",
   tenant: "EGI",
@@ -886,6 +887,107 @@ describe('Tests for reports listview', () => {
 })
 
 
+const report4sending = {
+  id: 'yee9chel-5o4u-l4j4-410b-eipi3ohrah5i',
+  info: {
+    name: 'Critical',
+    description: 'Critical report'
+  },
+  thresholds: {
+    availability: 80,
+    reliability: 85,
+    uptime: 0.8,
+    unknown: 0.1,
+    downtime: 0.1
+  },
+  disabled: false,
+  profiles: [
+    {
+      id: 'iethai8e-5nv4-urd2-6frc-eequ1saifoon',
+      name: 'ARGO_MON_CRITICAL',
+      type: 'metric'
+    },
+    {
+      id: 'goo4nohb-lc8y-l5bj-v991-ohzah8xethie',
+      name: 'critical',
+      type: 'aggregation'
+    },
+    {
+      id: 'gahjohf1-xx39-e0c9-p0rj-choh6ahziz9e',
+      name: 'egi_ops',
+      type: 'operations'
+    }
+  ],
+  topology_schema: {
+    group: {
+      type: "NGI",
+      group: {
+        type: "SITES"
+      }
+    }
+  },
+  filter_tags: [
+    {
+      name: "certification",
+      value: "Certified",
+      context: "argo.group.filter.tags.array"
+    },
+    {
+      name: "infrastructure",
+      value: "Production",
+      context: "argo.group.filter.tags.array"
+    },
+    {
+      name: "scope",
+      value: "EGI*",
+      context: "argo.group.filter.tags.array"
+    },
+    {
+      name: "info_ext_GLUE2ComputingShareMappingQueue",
+      value: "condor",
+      context: "argo.group.filter.tags.array"
+    },
+    {
+      name: "production",
+      value: "1",
+      context: "argo.endpoint.filter.tags"
+    },
+    {
+      name: "monitored",
+      value: "1",
+      context: "argo.endpoint.filter.tags"
+    },
+    {
+      name: "scope",
+      value: "EGI*",
+      context: "argo.endpoint.filter.tags.array"
+    },
+    {
+      name: "group",
+      value: "iris.ac.uk",
+      context: "argo.group.filter.fields"
+    },
+    {
+      name: "group",
+      value: "dirac-durham",
+      context: "argo.group.filter.fields"
+    },
+    {
+      name: "group",
+      value: "IRISOPS-IAM",
+      context: "argo.group.filter.fields"
+    }
+  ]
+}
+
+const backendReport4sending = {
+  name: 'Critical',
+  description: 'Critical report',
+  groupname: 'ARGO',
+  apiid: 'yee9chel-5o4u-l4j4-410b-eipi3ohrah5i'
+}
+
+
 describe('Tests for reports changeview', () => {
   jest.spyOn(NotificationManager, 'success');
   jest.spyOn(NotificationManager, 'error');
@@ -920,6 +1022,39 @@ describe('Tests for reports changeview', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Change report');
+    })
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': 'Critical',
+      'disabled': false,
+      'groupname': 'ARGO',
+      'description': 'Critical report',
+      'metricProfile': 'ARGO_MON_CRITICAL',
+      'aggregationProfile': 'critical',
+      'operationsProfile': 'egi_ops',
+      'thresholdsProfile': '',
+      'topologyType': 'Sites',
+      'groupsTags.0.name': 'certification',
+      'groupsTags.0.value': 'Certified',
+      'groupsTags.1.name': 'infrastructure',
+      'groupsTags.1.value': 'Production',
+      'groupsTags.2.name': 'scope',
+      'groupsTags.2.value': 'EGI*',
+      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
+      'groupsExtensions.0.value': 'condor',
+      'entities.0.value': 'iris.ac.uk',
+      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'endpointsTags.0.name': 'production',
+      'endpointsTags.0.value': 'yes',
+      'endpointsTags.1.name': 'monitored',
+      'endpointsTags.1.value': 'yes',
+      'endpointsTags.2.name': 'scope',
+      'endpointsTags.2.value': 'EGI*',
+      'availabilityThreshold': '80',
+      'reliabilityThreshold': '85',
+      'uptimeThreshold': '0.8',
+      'unknownThreshold': '0.1',
+      'downtimeThreshold' : '0.1'
     })
 
     const nameField = screen.getByTestId('name');
@@ -1135,7 +1270,1894 @@ describe('Tests for reports changeview', () => {
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
   })
 
-  test('Test that public page renders properly', async () => {
+  test('Test change report name', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+    mockChangeReport.mockReturnValueOnce(
+      Promise.resolve({ ok: 'ok' })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'new-report-name' } })
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': 'new-report-name',
+      'disabled': false,
+      'groupname': 'ARGO',
+      'description': 'Critical report',
+      'metricProfile': 'ARGO_MON_CRITICAL',
+      'aggregationProfile': 'critical',
+      'operationsProfile': 'egi_ops',
+      'thresholdsProfile': '',
+      'topologyType': 'Sites',
+      'groupsTags.0.name': 'certification',
+      'groupsTags.0.value': 'Certified',
+      'groupsTags.1.name': 'infrastructure',
+      'groupsTags.1.value': 'Production',
+      'groupsTags.2.name': 'scope',
+      'groupsTags.2.value': 'EGI*',
+      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
+      'groupsExtensions.0.value': 'condor',
+      'entities.0.value': 'iris.ac.uk',
+      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'endpointsTags.0.name': 'production',
+      'endpointsTags.0.value': 'yes',
+      'endpointsTags.1.name': 'monitored',
+      'endpointsTags.1.value': 'yes',
+      'endpointsTags.2.name': 'scope',
+      'endpointsTags.2.value': 'EGI*',
+      'availabilityThreshold': '80',
+      'reliabilityThreshold': '85',
+      'uptimeThreshold': '0.8',
+      'unknownThreshold': '0.1',
+      'downtimeThreshold' : '0.1'
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    let frontendReport = JSON.parse(JSON.stringify(report4sending))
+    let backendReport = JSON.parse(JSON.stringify(backendReport4sending))
+    frontendReport.info.name = 'new-report-name'
+    backendReport.name = 'new-report-name'
+    await waitFor(() => {
+      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
+    })
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/reports/', backendReport
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report')
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Report successfully changed', 'Changed', 2000
+    )
+  })
+
+  test('Test disable report', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+    mockChangeReport.mockReturnValueOnce(
+      Promise.resolve({ ok: 'ok' })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+    })
+
+    fireEvent.click(screen.getByLabelText(/disabled/i))
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': 'Critical',
+      'disabled': true,
+      'groupname': 'ARGO',
+      'description': 'Critical report',
+      'metricProfile': 'ARGO_MON_CRITICAL',
+      'aggregationProfile': 'critical',
+      'operationsProfile': 'egi_ops',
+      'thresholdsProfile': '',
+      'topologyType': 'Sites',
+      'groupsTags.0.name': 'certification',
+      'groupsTags.0.value': 'Certified',
+      'groupsTags.1.name': 'infrastructure',
+      'groupsTags.1.value': 'Production',
+      'groupsTags.2.name': 'scope',
+      'groupsTags.2.value': 'EGI*',
+      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
+      'groupsExtensions.0.value': 'condor',
+      'entities.0.value': 'iris.ac.uk',
+      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'endpointsTags.0.name': 'production',
+      'endpointsTags.0.value': 'yes',
+      'endpointsTags.1.name': 'monitored',
+      'endpointsTags.1.value': 'yes',
+      'endpointsTags.2.name': 'scope',
+      'endpointsTags.2.value': 'EGI*',
+      'availabilityThreshold': '80',
+      'reliabilityThreshold': '85',
+      'uptimeThreshold': '0.8',
+      'unknownThreshold': '0.1',
+      'downtimeThreshold' : '0.1'
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    let frontendReport = JSON.parse(JSON.stringify(report4sending))
+    frontendReport.disabled = true
+    await waitFor(() => {
+      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
+    })
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/reports/', backendReport4sending
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report')
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Report successfully changed', 'Changed', 2000
+    )
+  })
+
+  test('Test change groupname', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+    mockChangeReport.mockReturnValueOnce(
+      Promise.resolve({ ok: 'ok' })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
+    })
+
+    await selectEvent.select(screen.getByText('ARGO'), 'TEST')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': 'Critical',
+      'disabled': false,
+      'groupname': 'TEST',
+      'description': 'Critical report',
+      'metricProfile': 'ARGO_MON_CRITICAL',
+      'aggregationProfile': 'critical',
+      'operationsProfile': 'egi_ops',
+      'thresholdsProfile': '',
+      'topologyType': 'Sites',
+      'groupsTags.0.name': 'certification',
+      'groupsTags.0.value': 'Certified',
+      'groupsTags.1.name': 'infrastructure',
+      'groupsTags.1.value': 'Production',
+      'groupsTags.2.name': 'scope',
+      'groupsTags.2.value': 'EGI*',
+      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
+      'groupsExtensions.0.value': 'condor',
+      'entities.0.value': 'iris.ac.uk',
+      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'endpointsTags.0.name': 'production',
+      'endpointsTags.0.value': 'yes',
+      'endpointsTags.1.name': 'monitored',
+      'endpointsTags.1.value': 'yes',
+      'endpointsTags.2.name': 'scope',
+      'endpointsTags.2.value': 'EGI*',
+      'availabilityThreshold': '80',
+      'reliabilityThreshold': '85',
+      'uptimeThreshold': '0.8',
+      'unknownThreshold': '0.1',
+      'downtimeThreshold' : '0.1'
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeReport).toHaveBeenCalledWith(report4sending)
+    })
+
+    let backendReport = JSON.parse(JSON.stringify(backendReport4sending))
+    backendReport.groupname = 'TEST'
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/reports/', backendReport
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report')
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Report successfully changed', 'Changed', 2000
+    )
+  })
+
+  test('Test change description', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+    mockChangeReport.mockReturnValueOnce(
+      Promise.resolve({ ok: 'ok' })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'Some new description' } })
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': 'Critical',
+      'disabled': false,
+      'groupname': 'ARGO',
+      'description': 'Some new description',
+      'metricProfile': 'ARGO_MON_CRITICAL',
+      'aggregationProfile': 'critical',
+      'operationsProfile': 'egi_ops',
+      'thresholdsProfile': '',
+      'topologyType': 'Sites',
+      'groupsTags.0.name': 'certification',
+      'groupsTags.0.value': 'Certified',
+      'groupsTags.1.name': 'infrastructure',
+      'groupsTags.1.value': 'Production',
+      'groupsTags.2.name': 'scope',
+      'groupsTags.2.value': 'EGI*',
+      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
+      'groupsExtensions.0.value': 'condor',
+      'entities.0.value': 'iris.ac.uk',
+      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'endpointsTags.0.name': 'production',
+      'endpointsTags.0.value': 'yes',
+      'endpointsTags.1.name': 'monitored',
+      'endpointsTags.1.value': 'yes',
+      'endpointsTags.2.name': 'scope',
+      'endpointsTags.2.value': 'EGI*',
+      'availabilityThreshold': '80',
+      'reliabilityThreshold': '85',
+      'uptimeThreshold': '0.8',
+      'unknownThreshold': '0.1',
+      'downtimeThreshold' : '0.1'
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    let frontendReport = JSON.parse(JSON.stringify(report4sending))
+    frontendReport.info.description = 'Some new description'
+    await waitFor(() => {
+      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
+    })
+
+    let backendReport = JSON.parse(JSON.stringify(backendReport4sending))
+    backendReport.description = 'Some new description'
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/reports/', backendReport
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report')
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Report successfully changed', 'Changed', 2000
+    )
+  })
+
+  test('Test change metric profile', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+    mockChangeReport.mockReturnValueOnce(
+      Promise.resolve({ ok: 'ok' })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
+    })
+
+    await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'OPS_MONITOR_RHEL7')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': 'Critical',
+      'disabled': false,
+      'groupname': 'ARGO',
+      'description': 'Critical report',
+      'metricProfile': 'OPS_MONITOR_RHEL7',
+      'aggregationProfile': 'critical',
+      'operationsProfile': 'egi_ops',
+      'thresholdsProfile': '',
+      'topologyType': 'Sites',
+      'groupsTags.0.name': 'certification',
+      'groupsTags.0.value': 'Certified',
+      'groupsTags.1.name': 'infrastructure',
+      'groupsTags.1.value': 'Production',
+      'groupsTags.2.name': 'scope',
+      'groupsTags.2.value': 'EGI*',
+      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
+      'groupsExtensions.0.value': 'condor',
+      'entities.0.value': 'iris.ac.uk',
+      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'endpointsTags.0.name': 'production',
+      'endpointsTags.0.value': 'yes',
+      'endpointsTags.1.name': 'monitored',
+      'endpointsTags.1.value': 'yes',
+      'endpointsTags.2.name': 'scope',
+      'endpointsTags.2.value': 'EGI*',
+      'availabilityThreshold': '80',
+      'reliabilityThreshold': '85',
+      'uptimeThreshold': '0.8',
+      'unknownThreshold': '0.1',
+      'downtimeThreshold' : '0.1'
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    let frontendReport = JSON.parse(JSON.stringify(report4sending))
+    frontendReport.profiles.forEach(profile => {
+      if (profile.type === 'metric') {
+        profile.id = 'il8aimoh-r2ov-05aq-z4l2-uko2moophi9s'
+        profile.name = 'OPS_MONITOR_RHEL7'
+      }
+    })
+    await waitFor(() => {
+      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
+    })
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/reports/', backendReport4sending
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report')
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Report successfully changed', 'Changed', 2000
+    )
+  })
+
+  test('Test change aggregation profile', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+    mockChangeReport.mockReturnValueOnce(
+      Promise.resolve({ ok: 'ok' })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
+    })
+
+    await selectEvent.select(screen.getByText('critical'), 'ops-mon-critical')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': 'Critical',
+      'disabled': false,
+      'groupname': 'ARGO',
+      'description': 'Critical report',
+      'metricProfile': 'ARGO_MON_CRITICAL',
+      'aggregationProfile': 'ops-mon-critical',
+      'operationsProfile': 'egi_ops',
+      'thresholdsProfile': '',
+      'topologyType': 'Sites',
+      'groupsTags.0.name': 'certification',
+      'groupsTags.0.value': 'Certified',
+      'groupsTags.1.name': 'infrastructure',
+      'groupsTags.1.value': 'Production',
+      'groupsTags.2.name': 'scope',
+      'groupsTags.2.value': 'EGI*',
+      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
+      'groupsExtensions.0.value': 'condor',
+      'entities.0.value': 'iris.ac.uk',
+      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'endpointsTags.0.name': 'production',
+      'endpointsTags.0.value': 'yes',
+      'endpointsTags.1.name': 'monitored',
+      'endpointsTags.1.value': 'yes',
+      'endpointsTags.2.name': 'scope',
+      'endpointsTags.2.value': 'EGI*',
+      'availabilityThreshold': '80',
+      'reliabilityThreshold': '85',
+      'uptimeThreshold': '0.8',
+      'unknownThreshold': '0.1',
+      'downtimeThreshold' : '0.1'
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    let frontendReport = JSON.parse(JSON.stringify(report4sending))
+    frontendReport.profiles.forEach(profile => {
+      if (profile.type === 'aggregation') {
+        profile.id = 'ye3ioph5-1ryg-k4ea-e6eb-nei6zoupain2'
+        profile.name = 'ops-mon-critical'
+      }
+    })
+    await waitFor(() => {
+      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
+    })
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/reports/', backendReport4sending
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report')
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Report successfully changed', 'Changed', 2000
+    )
+  })
+
+  test('Test change thresholds profile', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+    mockChangeReport.mockReturnValueOnce(
+      Promise.resolve({ ok: 'ok' })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
+    })
+
+    await selectEvent.select(screen.getAllByText(/select/i)[0], 'test-thresholds')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': 'Critical',
+      'disabled': false,
+      'groupname': 'ARGO',
+      'description': 'Critical report',
+      'metricProfile': 'ARGO_MON_CRITICAL',
+      'aggregationProfile': 'critical',
+      'operationsProfile': 'egi_ops',
+      'thresholdsProfile': 'test-thresholds',
+      'topologyType': 'Sites',
+      'groupsTags.0.name': 'certification',
+      'groupsTags.0.value': 'Certified',
+      'groupsTags.1.name': 'infrastructure',
+      'groupsTags.1.value': 'Production',
+      'groupsTags.2.name': 'scope',
+      'groupsTags.2.value': 'EGI*',
+      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
+      'groupsExtensions.0.value': 'condor',
+      'entities.0.value': 'iris.ac.uk',
+      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'endpointsTags.0.name': 'production',
+      'endpointsTags.0.value': 'yes',
+      'endpointsTags.1.name': 'monitored',
+      'endpointsTags.1.value': 'yes',
+      'endpointsTags.2.name': 'scope',
+      'endpointsTags.2.value': 'EGI*',
+      'availabilityThreshold': '80',
+      'reliabilityThreshold': '85',
+      'uptimeThreshold': '0.8',
+      'unknownThreshold': '0.1',
+      'downtimeThreshold' : '0.1'
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    let frontendReport = JSON.parse(JSON.stringify(report4sending))
+    frontendReport.profiles.push({
+      id: 'aH9se5aJ-MP2e-3oIF-GQU2-ShoobeeK3ohs',
+      name: 'test-thresholds',
+      type: 'thresholds'
+    })
+
+    await waitFor(() => {
+      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
+    })
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/reports/', backendReport4sending
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report')
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Report successfully changed', 'Changed', 2000
+    )
+  })
+
+  test('Test change topology type', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+    mockChangeReport.mockReturnValueOnce(
+      Promise.resolve({ ok: 'ok' })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
+    })
+
+    expect(screen.getAllByText(/sites/i)).toHaveLength(2)
+    expect(screen.getByText(/ngis/i)).toBeInTheDocument()
+    expect(screen.queryByText(/service groups/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/projects/i)).not.toBeInTheDocument()
+
+    await selectEvent.select(screen.getByText('Sites'), 'ServiceGroups')
+
+    expect(screen.getByText(/projects/i)).toBeInTheDocument()
+    expect(screen.getByText(/service groups/i)).toBeInTheDocument()
+    expect(screen.queryByText(/sites/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/ngis/i)).not.toBeInTheDocument()
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': 'Critical',
+      'disabled': false,
+      'groupname': 'ARGO',
+      'description': 'Critical report',
+      'metricProfile': 'ARGO_MON_CRITICAL',
+      'aggregationProfile': 'critical',
+      'operationsProfile': 'egi_ops',
+      'thresholdsProfile': '',
+      'topologyType': 'ServiceGroups',
+      'groupsTags.0.name': 'certification',
+      'groupsTags.0.value': 'Certified',
+      'groupsTags.1.name': 'infrastructure',
+      'groupsTags.1.value': 'Production',
+      'groupsTags.2.name': 'scope',
+      'groupsTags.2.value': 'EGI*',
+      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
+      'groupsExtensions.0.value': 'condor',
+      'entities.0.value': 'iris.ac.uk',
+      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'endpointsTags.0.name': 'production',
+      'endpointsTags.0.value': 'yes',
+      'endpointsTags.1.name': 'monitored',
+      'endpointsTags.1.value': 'yes',
+      'endpointsTags.2.name': 'scope',
+      'endpointsTags.2.value': 'EGI*',
+      'availabilityThreshold': '80',
+      'reliabilityThreshold': '85',
+      'uptimeThreshold': '0.8',
+      'unknownThreshold': '0.1',
+      'downtimeThreshold' : '0.1'
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    let frontendReport = JSON.parse(JSON.stringify(report4sending))
+    frontendReport.topology_schema = {
+      group: {
+        type: 'PROJECT',
+        group: {
+          type: 'SERVICEGROUPS'
+        }
+      }
+    }
+
+    await waitFor(() => {
+      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
+    })
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/reports/', backendReport4sending
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report')
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Report successfully changed', 'Changed', 2000
+    )
+  })
+
+  test('Test change groups tags', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+    mockChangeReport.mockReturnValueOnce(
+      Promise.resolve({ ok: 'ok' })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
+    })
+
+    const card_groups = within(screen.getByTestId('card-group-of-groups'));
+
+    await selectEvent.select(card_groups.getByText('Certified'), 'Candidate')
+
+    fireEvent.click(card_groups.getByTestId('removeTag-1'))
+
+    fireEvent.click(card_groups.getByRole('button', { name: /add new tag/i }))
+
+    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'monitored')
+    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'yes')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': 'Critical',
+      'disabled': false,
+      'groupname': 'ARGO',
+      'description': 'Critical report',
+      'metricProfile': 'ARGO_MON_CRITICAL',
+      'aggregationProfile': 'critical',
+      'operationsProfile': 'egi_ops',
+      'thresholdsProfile': '',
+      'topologyType': 'Sites',
+      'groupsTags.0.name': 'certification',
+      'groupsTags.0.value': ['Certified', 'Candidate'],
+      'groupsTags.1.name': 'scope',
+      'groupsTags.1.value': 'EGI*',
+      'groupsTags.2.name': 'monitored',
+      'groupsTags.2.value': 'yes',
+      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
+      'groupsExtensions.0.value': 'condor',
+      'entities.0.value': 'iris.ac.uk',
+      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'endpointsTags.0.name': 'production',
+      'endpointsTags.0.value': 'yes',
+      'endpointsTags.1.name': 'monitored',
+      'endpointsTags.1.value': 'yes',
+      'endpointsTags.2.name': 'scope',
+      'endpointsTags.2.value': 'EGI*',
+      'availabilityThreshold': '80',
+      'reliabilityThreshold': '85',
+      'uptimeThreshold': '0.8',
+      'unknownThreshold': '0.1',
+      'downtimeThreshold' : '0.1'
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    let frontendReport = JSON.parse(JSON.stringify(report4sending))
+    frontendReport.filter_tags[0] = {
+      name: 'certification',
+      value: 'Certified, Candidate',
+      context: 'argo.group.filter.tags.array'
+    }
+    frontendReport.filter_tags.splice(1, 1)
+    frontendReport.filter_tags.splice(
+      2, 0, {
+        name: 'monitored',
+        value: '1',
+        context: 'argo.group.filter.tags'
+      }
+    )
+
+    await waitFor(() => {
+      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
+    })
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/reports/', backendReport4sending
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report')
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Report successfully changed', 'Changed', 2000
+    )
+  })
+
+  test('Test change group extensions', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+    mockChangeReport.mockReturnValueOnce(
+      Promise.resolve({ ok: 'ok' })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
+    })
+
+    const card_groups = within(screen.getByTestId('card-group-of-groups'));
+
+    await selectEvent.select(card_groups.getByText('condor'), 'eddie')
+
+    fireEvent.click(card_groups.getByText(/add new extension/i))
+
+    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'GLUE2EndpointImplementationName')
+    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'ARC-CE')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': 'Critical',
+      'disabled': false,
+      'groupname': 'ARGO',
+      'description': 'Critical report',
+      'metricProfile': 'ARGO_MON_CRITICAL',
+      'aggregationProfile': 'critical',
+      'operationsProfile': 'egi_ops',
+      'thresholdsProfile': '',
+      'topologyType': 'Sites',
+      'groupsTags.0.name': 'certification',
+      'groupsTags.0.value': 'Certified',
+      'groupsTags.1.name': 'infrastructure',
+      'groupsTags.1.value': 'Production',
+      'groupsTags.2.name': 'scope',
+      'groupsTags.2.value': 'EGI*',
+      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
+      'groupsExtensions.0.value': ['condor', 'eddie'],
+      'groupsExtensions.1.name': 'GLUE2EndpointImplementationName',
+      'groupsExtensions.1.value': 'ARC-CE',
+      'entities.0.value': 'iris.ac.uk',
+      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'endpointsTags.0.name': 'production',
+      'endpointsTags.0.value': 'yes',
+      'endpointsTags.1.name': 'monitored',
+      'endpointsTags.1.value': 'yes',
+      'endpointsTags.2.name': 'scope',
+      'endpointsTags.2.value': 'EGI*',
+      'availabilityThreshold': '80',
+      'reliabilityThreshold': '85',
+      'uptimeThreshold': '0.8',
+      'unknownThreshold': '0.1',
+      'downtimeThreshold' : '0.1'
+    })
+
+    fireEvent.click(card_groups.getByTestId('removeExtension-0'))
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': 'Critical',
+      'disabled': false,
+      'groupname': 'ARGO',
+      'description': 'Critical report',
+      'metricProfile': 'ARGO_MON_CRITICAL',
+      'aggregationProfile': 'critical',
+      'operationsProfile': 'egi_ops',
+      'thresholdsProfile': '',
+      'topologyType': 'Sites',
+      'groupsTags.0.name': 'certification',
+      'groupsTags.0.value': 'Certified',
+      'groupsTags.1.name': 'infrastructure',
+      'groupsTags.1.value': 'Production',
+      'groupsTags.2.name': 'scope',
+      'groupsTags.2.value': 'EGI*',
+      'groupsExtensions.0.name': 'GLUE2EndpointImplementationName',
+      'groupsExtensions.0.value': 'ARC-CE',
+      'entities.0.value': 'iris.ac.uk',
+      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'endpointsTags.0.name': 'production',
+      'endpointsTags.0.value': 'yes',
+      'endpointsTags.1.name': 'monitored',
+      'endpointsTags.1.value': 'yes',
+      'endpointsTags.2.name': 'scope',
+      'endpointsTags.2.value': 'EGI*',
+      'availabilityThreshold': '80',
+      'reliabilityThreshold': '85',
+      'uptimeThreshold': '0.8',
+      'unknownThreshold': '0.1',
+      'downtimeThreshold' : '0.1'
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    let frontendReport = JSON.parse(JSON.stringify(report4sending))
+    frontendReport.filter_tags[3] = {
+      name: 'info_ext_GLUE2EndpointImplementationName',
+      value: 'ARC-CE',
+      context: 'argo.group.filter.tags.array'
+    }
+
+    await waitFor(() => {
+      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
+    })
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/reports/', backendReport4sending
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report')
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Report successfully changed', 'Changed', 2000
+    )
+  })
+
+  test('Test change group entities', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+    mockChangeReport.mockReturnValueOnce(
+      Promise.resolve({ ok: 'ok' })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
+    })
+
+    const card_groups = within(screen.getByTestId('card-group-of-groups'));
+    const entity1 = card_groups.getByText('iris.ac.uk')
+    const entity2 = card_groups.getByText(/dirac/i)
+
+    await selectEvent.select(entity1, 'Russia')
+    await selectEvent.select(entity2, 'RU-SARFTI')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': 'Critical',
+      'disabled': false,
+      'groupname': 'ARGO',
+      'description': 'Critical report',
+      'metricProfile': 'ARGO_MON_CRITICAL',
+      'aggregationProfile': 'critical',
+      'operationsProfile': 'egi_ops',
+      'thresholdsProfile': '',
+      'topologyType': 'Sites',
+      'groupsTags.0.name': 'certification',
+      'groupsTags.0.value': 'Certified',
+      'groupsTags.1.name': 'infrastructure',
+      'groupsTags.1.value': 'Production',
+      'groupsTags.2.name': 'scope',
+      'groupsTags.2.value': 'EGI*',
+      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
+      'groupsExtensions.0.value': 'condor',
+      'entities.0.value': ['iris.ac.uk', 'Russia'],
+      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM', 'RU-SARFTI'],
+      'endpointsTags.0.name': 'production',
+      'endpointsTags.0.value': 'yes',
+      'endpointsTags.1.name': 'monitored',
+      'endpointsTags.1.value': 'yes',
+      'endpointsTags.2.name': 'scope',
+      'endpointsTags.2.value': 'EGI*',
+      'availabilityThreshold': '80',
+      'reliabilityThreshold': '85',
+      'uptimeThreshold': '0.8',
+      'unknownThreshold': '0.1',
+      'downtimeThreshold' : '0.1'
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    let frontendReport = JSON.parse(JSON.stringify(report4sending))
+    frontendReport.filter_tags.splice(8, 0, {
+      name: 'group',
+      value: 'Russia',
+      context: 'argo.group.filter.fields'
+    })
+    frontendReport.filter_tags.push(
+      {
+        name: 'group',
+        value: 'RU-SARFTI',
+        context: 'argo.group.filter.fields'
+      }
+    )
+
+    await waitFor(() => {
+      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
+    })
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/reports/', backendReport4sending
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report')
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Report successfully changed', 'Changed', 2000
+    )
+  })
+
+  test('Test change endpoint tags', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+    mockChangeReport.mockReturnValueOnce(
+      Promise.resolve({ ok: 'ok' })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
+    })
+
+    const endpoint_groups = within(screen.getByTestId('card-group-of-endpoints'));
+
+    await selectEvent.select(endpoint_groups.getAllByText('yes')[0], 'no')
+
+    fireEvent.click(endpoint_groups.getByTestId('removeTag-1'))
+    fireEvent.click(endpoint_groups.getByTestId('removeTag-1'))
+
+    fireEvent.click(endpoint_groups.getByRole('button', { name: /add new tag/i }))
+
+    await selectEvent.select(endpoint_groups.getAllByText(/select/i)[0], 'monitored')
+    await selectEvent.select(endpoint_groups.getAllByText(/select/i)[0], 'yes')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': 'Critical',
+      'disabled': false,
+      'groupname': 'ARGO',
+      'description': 'Critical report',
+      'metricProfile': 'ARGO_MON_CRITICAL',
+      'aggregationProfile': 'critical',
+      'operationsProfile': 'egi_ops',
+      'thresholdsProfile': '',
+      'topologyType': 'Sites',
+      'groupsTags.0.name': 'certification',
+      'groupsTags.0.value': 'Certified',
+      'groupsTags.1.name': 'infrastructure',
+      'groupsTags.1.value': 'Production',
+      'groupsTags.2.name': 'scope',
+      'groupsTags.2.value': 'EGI*',
+      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
+      'groupsExtensions.0.value': 'condor',
+      'entities.0.value': 'iris.ac.uk',
+      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'endpointsTags.0.name': 'production',
+      'endpointsTags.0.value': 'no',
+      'endpointsTags.1.name': 'monitored',
+      'endpointsTags.1.value': 'yes',
+      'availabilityThreshold': '80',
+      'reliabilityThreshold': '85',
+      'uptimeThreshold': '0.8',
+      'unknownThreshold': '0.1',
+      'downtimeThreshold' : '0.1'
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    let frontendReport = JSON.parse(JSON.stringify(report4sending))
+    frontendReport.filter_tags[4].value = '0'
+    frontendReport.filter_tags.splice(6, 1)
+
+    await waitFor(() => {
+      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
+    })
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/reports/', backendReport4sending
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report')
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Report successfully changed', 'Changed', 2000
+    )
+  })
+
+  test('Test change endpoint extensions', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+    mockChangeReport.mockReturnValueOnce(
+      Promise.resolve({ ok: 'ok' })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
+    })
+
+    const endpoint_groups = within(screen.getByTestId('card-group-of-endpoints'));
+
+    fireEvent.click(endpoint_groups.getByText(/add new extension/i))
+
+    await selectEvent.select(endpoint_groups.getAllByText(/select/i)[0], 'GLUE2EndpointID')
+    await selectEvent.select(endpoint_groups.getAllByText(/select/i)[0], 'ce1.gridpp.ecdf.ed.ac.uk')
+    await selectEvent.select(endpoint_groups.getByText('ce1.gridpp.ecdf.ed.ac.uk'), 'svr009.gla.scotgrid.ac.uk')
+
+    fireEvent.click(endpoint_groups.getByText(/add new extension/i))
+
+    await selectEvent.select(endpoint_groups.getAllByText(/select/i)[0], 'GLUE2EndpointImplementationName')
+    await selectEvent.select(endpoint_groups.getAllByText(/select/i)[0], 'ARC-CE')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': 'Critical',
+      'disabled': false,
+      'groupname': 'ARGO',
+      'description': 'Critical report',
+      'metricProfile': 'ARGO_MON_CRITICAL',
+      'aggregationProfile': 'critical',
+      'operationsProfile': 'egi_ops',
+      'thresholdsProfile': '',
+      'topologyType': 'Sites',
+      'groupsTags.0.name': 'certification',
+      'groupsTags.0.value': 'Certified',
+      'groupsTags.1.name': 'infrastructure',
+      'groupsTags.1.value': 'Production',
+      'groupsTags.2.name': 'scope',
+      'groupsTags.2.value': 'EGI*',
+      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
+      'groupsExtensions.0.value': 'condor',
+      'entities.0.value': 'iris.ac.uk',
+      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'endpointsTags.0.name': 'production',
+      'endpointsTags.0.value': 'yes',
+      'endpointsTags.1.name': 'monitored',
+      'endpointsTags.1.value': 'yes',
+      'endpointsTags.2.name': 'scope',
+      'endpointsTags.2.value': 'EGI*',
+      'endpointsExtensions.0.name': 'GLUE2EndpointID',
+      'endpointsExtensions.0.value': ['ce1.gridpp.ecdf.ed.ac.uk', 'svr009.gla.scotgrid.ac.uk'],
+      'endpointsExtensions.1.name': 'GLUE2EndpointImplementationName',
+      'endpointsExtensions.1.value': 'ARC-CE',
+      'availabilityThreshold': '80',
+      'reliabilityThreshold': '85',
+      'uptimeThreshold': '0.8',
+      'unknownThreshold': '0.1',
+      'downtimeThreshold' : '0.1'
+    })
+
+    fireEvent.click(endpoint_groups.getByTestId('removeExtension-0'))
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': 'Critical',
+      'disabled': false,
+      'groupname': 'ARGO',
+      'description': 'Critical report',
+      'metricProfile': 'ARGO_MON_CRITICAL',
+      'aggregationProfile': 'critical',
+      'operationsProfile': 'egi_ops',
+      'thresholdsProfile': '',
+      'topologyType': 'Sites',
+      'groupsTags.0.name': 'certification',
+      'groupsTags.0.value': 'Certified',
+      'groupsTags.1.name': 'infrastructure',
+      'groupsTags.1.value': 'Production',
+      'groupsTags.2.name': 'scope',
+      'groupsTags.2.value': 'EGI*',
+      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
+      'groupsExtensions.0.value': 'condor',
+      'entities.0.value': 'iris.ac.uk',
+      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'endpointsTags.0.name': 'production',
+      'endpointsTags.0.value': 'yes',
+      'endpointsTags.1.name': 'monitored',
+      'endpointsTags.1.value': 'yes',
+      'endpointsTags.2.name': 'scope',
+      'endpointsTags.2.value': 'EGI*',
+      'endpointsExtensions.0.name': 'GLUE2EndpointImplementationName',
+      'endpointsExtensions.0.value': 'ARC-CE',
+      'availabilityThreshold': '80',
+      'reliabilityThreshold': '85',
+      'uptimeThreshold': '0.8',
+      'unknownThreshold': '0.1',
+      'downtimeThreshold' : '0.1'
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    let frontendReport = JSON.parse(JSON.stringify(report4sending))
+    frontendReport.filter_tags.splice(7, 0, {
+      name: 'info_ext_GLUE2EndpointImplementationName',
+      value: 'ARC-CE',
+      context: 'argo.endpoint.filter.tags.array'
+    })
+
+    await waitFor(() => {
+      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
+    })
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/reports/', backendReport4sending
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report')
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Report successfully changed', 'Changed', 2000
+    )
+  })
+
+  test('Test change availability threshold', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+    mockChangeReport.mockReturnValueOnce(
+      Promise.resolve({ ok: 'ok' })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '70' } })
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': 'Critical',
+      'disabled': false,
+      'groupname': 'ARGO',
+      'description': 'Critical report',
+      'metricProfile': 'ARGO_MON_CRITICAL',
+      'aggregationProfile': 'critical',
+      'operationsProfile': 'egi_ops',
+      'thresholdsProfile': '',
+      'topologyType': 'Sites',
+      'groupsTags.0.name': 'certification',
+      'groupsTags.0.value': 'Certified',
+      'groupsTags.1.name': 'infrastructure',
+      'groupsTags.1.value': 'Production',
+      'groupsTags.2.name': 'scope',
+      'groupsTags.2.value': 'EGI*',
+      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
+      'groupsExtensions.0.value': 'condor',
+      'entities.0.value': 'iris.ac.uk',
+      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'endpointsTags.0.name': 'production',
+      'endpointsTags.0.value': 'yes',
+      'endpointsTags.1.name': 'monitored',
+      'endpointsTags.1.value': 'yes',
+      'endpointsTags.2.name': 'scope',
+      'endpointsTags.2.value': 'EGI*',
+      'availabilityThreshold': '70',
+      'reliabilityThreshold': '85',
+      'uptimeThreshold': '0.8',
+      'unknownThreshold': '0.1',
+      'downtimeThreshold' : '0.1'
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    let frontendReport = JSON.parse(JSON.stringify(report4sending))
+    frontendReport.thresholds.availability = 70
+
+    await waitFor(() => {
+      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
+    })
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/reports/', backendReport4sending
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report')
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Report successfully changed', 'Changed', 2000
+    )
+  })
+
+  test('Test change reliability threshold', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+    mockChangeReport.mockReturnValueOnce(
+      Promise.resolve({ ok: 'ok' })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByLabelText(/reliability/i), { target: { value: '90' } })
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': 'Critical',
+      'disabled': false,
+      'groupname': 'ARGO',
+      'description': 'Critical report',
+      'metricProfile': 'ARGO_MON_CRITICAL',
+      'aggregationProfile': 'critical',
+      'operationsProfile': 'egi_ops',
+      'thresholdsProfile': '',
+      'topologyType': 'Sites',
+      'groupsTags.0.name': 'certification',
+      'groupsTags.0.value': 'Certified',
+      'groupsTags.1.name': 'infrastructure',
+      'groupsTags.1.value': 'Production',
+      'groupsTags.2.name': 'scope',
+      'groupsTags.2.value': 'EGI*',
+      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
+      'groupsExtensions.0.value': 'condor',
+      'entities.0.value': 'iris.ac.uk',
+      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'endpointsTags.0.name': 'production',
+      'endpointsTags.0.value': 'yes',
+      'endpointsTags.1.name': 'monitored',
+      'endpointsTags.1.value': 'yes',
+      'endpointsTags.2.name': 'scope',
+      'endpointsTags.2.value': 'EGI*',
+      'availabilityThreshold': '80',
+      'reliabilityThreshold': '90',
+      'uptimeThreshold': '0.8',
+      'unknownThreshold': '0.1',
+      'downtimeThreshold' : '0.1'
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    let frontendReport = JSON.parse(JSON.stringify(report4sending))
+    frontendReport.thresholds.reliability = 90
+
+    await waitFor(() => {
+      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
+    })
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/reports/', backendReport4sending
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report')
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Report successfully changed', 'Changed', 2000
+    )
+  })
+
+  test('Test change uptime threshold', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+    mockChangeReport.mockReturnValueOnce(
+      Promise.resolve({ ok: 'ok' })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByLabelText(/uptime/i), { target: { value: '1.0' } })
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': 'Critical',
+      'disabled': false,
+      'groupname': 'ARGO',
+      'description': 'Critical report',
+      'metricProfile': 'ARGO_MON_CRITICAL',
+      'aggregationProfile': 'critical',
+      'operationsProfile': 'egi_ops',
+      'thresholdsProfile': '',
+      'topologyType': 'Sites',
+      'groupsTags.0.name': 'certification',
+      'groupsTags.0.value': 'Certified',
+      'groupsTags.1.name': 'infrastructure',
+      'groupsTags.1.value': 'Production',
+      'groupsTags.2.name': 'scope',
+      'groupsTags.2.value': 'EGI*',
+      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
+      'groupsExtensions.0.value': 'condor',
+      'entities.0.value': 'iris.ac.uk',
+      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'endpointsTags.0.name': 'production',
+      'endpointsTags.0.value': 'yes',
+      'endpointsTags.1.name': 'monitored',
+      'endpointsTags.1.value': 'yes',
+      'endpointsTags.2.name': 'scope',
+      'endpointsTags.2.value': 'EGI*',
+      'availabilityThreshold': '80',
+      'reliabilityThreshold': '85',
+      'uptimeThreshold': '1.0',
+      'unknownThreshold': '0.1',
+      'downtimeThreshold' : '0.1'
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    let frontendReport = JSON.parse(JSON.stringify(report4sending))
+    frontendReport.thresholds.uptime = 1.0
+
+    await waitFor(() => {
+      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
+    })
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/reports/', backendReport4sending
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report')
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Report successfully changed', 'Changed', 2000
+    )
+  })
+
+  test('Test change unknown threshold', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+    mockChangeReport.mockReturnValueOnce(
+      Promise.resolve({ ok: 'ok' })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByLabelText(/unknown/i), { target: { value: '0.2' } })
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': 'Critical',
+      'disabled': false,
+      'groupname': 'ARGO',
+      'description': 'Critical report',
+      'metricProfile': 'ARGO_MON_CRITICAL',
+      'aggregationProfile': 'critical',
+      'operationsProfile': 'egi_ops',
+      'thresholdsProfile': '',
+      'topologyType': 'Sites',
+      'groupsTags.0.name': 'certification',
+      'groupsTags.0.value': 'Certified',
+      'groupsTags.1.name': 'infrastructure',
+      'groupsTags.1.value': 'Production',
+      'groupsTags.2.name': 'scope',
+      'groupsTags.2.value': 'EGI*',
+      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
+      'groupsExtensions.0.value': 'condor',
+      'entities.0.value': 'iris.ac.uk',
+      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'endpointsTags.0.name': 'production',
+      'endpointsTags.0.value': 'yes',
+      'endpointsTags.1.name': 'monitored',
+      'endpointsTags.1.value': 'yes',
+      'endpointsTags.2.name': 'scope',
+      'endpointsTags.2.value': 'EGI*',
+      'availabilityThreshold': '80',
+      'reliabilityThreshold': '85',
+      'uptimeThreshold': '0.8',
+      'unknownThreshold': '0.2',
+      'downtimeThreshold' : '0.1'
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    let frontendReport = JSON.parse(JSON.stringify(report4sending))
+    frontendReport.thresholds.unknown = 0.2
+
+    await waitFor(() => {
+      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
+    })
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/reports/', backendReport4sending
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report')
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Report successfully changed', 'Changed', 2000
+    )
+  })
+
+  test('Test change downtime threshold', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+    mockChangeReport.mockReturnValueOnce(
+      Promise.resolve({ ok: 'ok' })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByLabelText(/downtime/i), { target: { value: '0.3' } })
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': 'Critical',
+      'disabled': false,
+      'groupname': 'ARGO',
+      'description': 'Critical report',
+      'metricProfile': 'ARGO_MON_CRITICAL',
+      'aggregationProfile': 'critical',
+      'operationsProfile': 'egi_ops',
+      'thresholdsProfile': '',
+      'topologyType': 'Sites',
+      'groupsTags.0.name': 'certification',
+      'groupsTags.0.value': 'Certified',
+      'groupsTags.1.name': 'infrastructure',
+      'groupsTags.1.value': 'Production',
+      'groupsTags.2.name': 'scope',
+      'groupsTags.2.value': 'EGI*',
+      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
+      'groupsExtensions.0.value': 'condor',
+      'entities.0.value': 'iris.ac.uk',
+      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'endpointsTags.0.name': 'production',
+      'endpointsTags.0.value': 'yes',
+      'endpointsTags.1.name': 'monitored',
+      'endpointsTags.1.value': 'yes',
+      'endpointsTags.2.name': 'scope',
+      'endpointsTags.2.value': 'EGI*',
+      'availabilityThreshold': '80',
+      'reliabilityThreshold': '85',
+      'uptimeThreshold': '0.8',
+      'unknownThreshold': '0.1',
+      'downtimeThreshold' : '0.3'
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    let frontendReport = JSON.parse(JSON.stringify(report4sending))
+    frontendReport.thresholds.downtime = 0.3
+
+    await waitFor(() => {
+      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
+    })
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/reports/', backendReport4sending
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report')
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Report successfully changed', 'Changed', 2000
+    )
+  })
+
+  test('Test error changing report on web api with error message', async () => {
+    mockChangeReport.mockImplementationOnce( () => {
+      throw Error('406 Content Not acceptable: There has been an error.')
+    } );
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+    })
+
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'More elaborate description of the critical report.' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    let frontendReport = JSON.parse(JSON.stringify(report4sending))
+    frontendReport.info.description = 'More elaborate description of the critical report.'
+
+    await waitFor(() => {
+      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
+    })
+
+    await waitFor(() => {
+      expect(mockChangeObject).not.toHaveBeenCalled();
+    })
+
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>406 Content Not acceptable: There has been an error.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Web API error',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error changing report on web api without error message', async () => {
+    mockChangeReport.mockImplementationOnce( () => { throw Error() } );
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+    })
+
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'More elaborate description of the critical report.' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    let frontendReport = JSON.parse(JSON.stringify(report4sending))
+    frontendReport.info.description = 'More elaborate description of the critical report.'
+
+    await waitFor(() => {
+      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
+    })
+
+    await waitFor(() => {
+      expect(mockChangeObject).not.toHaveBeenCalled();
+    })
+
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Web API error changing report</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Web API error',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error changing report on internal API with error message', async () => {
+    mockChangeObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: There has been an error.')
+    } );
+    mockChangeReport.mockReturnValueOnce(
+      Promise.resolve({ ok: 'ok' })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+    })
+
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'More elaborate description of the critical report.' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    let frontendReport = JSON.parse(JSON.stringify(report4sending))
+    frontendReport.info.description = 'More elaborate description of the critical report.'
+
+    let backendReport = JSON.parse(JSON.stringify(backendReport4sending))
+    backendReport.description = 'More elaborate description of the critical report.'
+
+    await waitFor(() => {
+      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
+    })
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/reports/', backendReport
+      )
+    })
+
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>400 BAD REQUEST: There has been an error.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Internal API error',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error changing report on internal API without error message', async () => {
+    mockChangeObject.mockImplementationOnce( () => { throw Error() } );
+    mockChangeReport.mockReturnValueOnce( Promise.resolve({ ok: 'ok' }) );
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+    })
+
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'More elaborate description of the critical report.' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    let frontendReport = JSON.parse(JSON.stringify(report4sending))
+    frontendReport.info.description = 'More elaborate description of the critical report.'
+
+    let backendReport = JSON.parse(JSON.stringify(backendReport4sending))
+    backendReport.description = 'More elaborate description of the critical report.'
+
+    await waitFor(() => {
+      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
+    })
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/reports/', backendReport
+      )
+    })
+
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Internal API error changing report</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Internal API error',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test successfully deleting report', async () => {
+    mockDeleteReport.mockReturnValueOnce( Promise.resolve({ ok: 'ok' }) );
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteReport).toHaveBeenCalledWith('yee9chel-5o4u-l4j4-410b-eipi3ohrah5i')
+    })
+
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        '/api/v2/internal/reports/yee9chel-5o4u-l4j4-410b-eipi3ohrah5i'
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report');
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Report successfully deleted', 'Deleted', 2000
+    )
+  })
+
+  test('Test error deleting report on web api with error message', async () => {
+    mockDeleteReport.mockImplementationOnce( () => {
+      throw Error('406 Content Not acceptable: There has been an error.')
+    } );
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteReport).toHaveBeenCalledWith('yee9chel-5o4u-l4j4-410b-eipi3ohrah5i')
+    })
+
+    await waitFor(() => {
+      expect(mockDeleteObject).not.toHaveBeenCalled();
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report');
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>406 Content Not acceptable: There has been an error.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Web API error',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error deleting report on web api without error message', async () => {
+    mockDeleteReport.mockImplementationOnce( () => { throw Error() } );
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteReport).toHaveBeenCalledWith('yee9chel-5o4u-l4j4-410b-eipi3ohrah5i')
+    })
+
+    await waitFor(() => {
+      expect(mockDeleteObject).not.toHaveBeenCalled();
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report');
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Web API error deleting report</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Web API error',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error deleting report on internal backend with error message', async () => {
+    mockDeleteObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: There has been an error.')
+    } );
+    mockDeleteReport.mockReturnValueOnce( Promise.resolve({ ok: 'ok' }) );
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteReport).toHaveBeenCalledWith('yee9chel-5o4u-l4j4-410b-eipi3ohrah5i')
+    })
+
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        '/api/v2/internal/reports/yee9chel-5o4u-l4j4-410b-eipi3ohrah5i'
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report');
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>400 BAD REQUEST: There has been an error.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Internal API error',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test error deleting report on internal backend without error message', async () => {
+    mockDeleteObject.mockImplementationOnce( () => { throw Error() } );
+    mockDeleteReport.mockReturnValueOnce( Promise.resolve({ ok: 'ok' }) );
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteReport).toHaveBeenCalledWith('yee9chel-5o4u-l4j4-410b-eipi3ohrah5i')
+    })
+
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        '/api/v2/internal/reports/yee9chel-5o4u-l4j4-410b-eipi3ohrah5i'
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report');
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Internal API error deleting report</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Internal API error',
+      0,
+      expect.any(Function)
+    )
+  })
+})
+
+
+describe('Tests for public reports changeview', () => {
+  beforeEach(() => {
+    WebApi.mockImplementation(() => {
+      return {
+        fetchReport: () => Promise.resolve(mockReport),
+        fetchReportsTopologyGroups: () => Promise.resolve(mockReportsTopologyGroups),
+      }
+    })
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: () => Promise.resolve(mockBackendReport)
+      }
+    })
+  })
+
+  test('Test that page renders properly', async () => {
     renderChangeView(true);
 
     await waitFor(() => {
@@ -1240,7 +3262,7 @@ describe('Tests for reports changeview', () => {
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
   })
 
-  test('Test that public page renders properly if report has no entities', async () => {
+  test('Test that page renders properly if report has no entities', async () => {
     WebApi.mockImplementation(() => {
       return {
         fetchReport: () => Promise.resolve(mockReport2),
@@ -1350,1415 +3372,78 @@ describe('Tests for reports changeview', () => {
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
   })
-
-  test('Test change report and save', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-    mockChangeReport.mockReturnValueOnce(
-      Promise.resolve({ ok: 'ok' })
-    )
-
-    renderChangeView();
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
-    })
-
-    await selectEvent.select(screen.getByText('ARGO'), 'TEST')
-
-    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'More elaborate description of the critical report.' } })
-
-    await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'OPS_MONITOR_RHEL7')
-    await selectEvent.select(screen.getByText('critical'), 'ops-mon-critical')
-    await selectEvent.select(screen.getAllByText(/select/i)[0], 'TEST_PROFILE')
-
-    const card_groups = within(screen.getByTestId('card-group-of-groups'));
-    const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
-
-    fireEvent.click(card_groups.getByTestId(/removeTag-2/i));
-    fireEvent.click(card_groups.getByText(/add new tag/i));
-
-    const selectTagName = card_groups.getAllByText(/select/i)[0]
-    const selectTagValue = card_groups.getAllByText(/select/i)[1]
-
-    selectEvent.openMenu(selectTagName)
-    expect(card_groups.getByText('certification')).toBeInTheDocument();
-    expect(card_groups.getByText('monitored')).toBeInTheDocument();
-    expect(card_groups.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument();
-
-    await selectEvent.select(selectTagName, 'monitored')
-
-    selectEvent.openMenu(selectTagValue)
-    expect(card_groups.getByText('yes')).toBeInTheDocument();
-    expect(card_groups.getByText('no')).toBeInTheDocument();
-
-    await selectEvent.select(selectTagValue, 'yes')
-
-    expect(card_groups.queryByText(/select/i)).not.toBeInTheDocument();
-    await selectEvent.select(card_groups.getByText('GLUE2ComputingShareMappingQueue'), 'GLUE2EndpointImplementationName')
-
-    const selectExtensionValue = card_groups.getByText('condor');
-
-    expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument()
-    expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument()
-
-    expect(selectExtensionValue).toBeInTheDocument();
-    selectEvent.openMenu(selectExtensionValue)
-    expect(card_groups.getByText('ARC-CE')).toBeInTheDocument()
-    expect(card_groups.getByText('nordugrid-arc')).toBeInTheDocument()
-    await selectEvent.select(selectExtensionValue, 'ARC-CE')
-
-    await selectEvent.select(card_groups.getByText('dirac-durham'), 'RU-SARFTI');
-
-    fireEvent.click(card_endpoints.getByTestId(/removeTag-0/i));
-    fireEvent.click(card_endpoints.getByText(/add new extension/i))
-
-    expect(card_endpoints.getAllByText(/select/i)).toHaveLength(2)
-
-    expect(card_endpoints.queryByText('info_ID')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('info_URL')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_a_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_aaa_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_afigrid_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText(/dpm/i)).not.toBeInTheDocument();
-
-    const endpointExtensionName = card_endpoints.getAllByText(/select/i)[0]
-    const endpointExtensionValue = card_endpoints.getAllByText(/select/i)[1]
-
-    expect(card_endpoints.queryByText('GLUE2ComputingShareMappingQueue')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('condor')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('condor_q2d')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('eddie')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('info_ID')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('info_URL')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_a_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_aaa_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_afigrid_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText(/dpm/i)).not.toBeInTheDocument();
-
-    selectEvent.openMenu(endpointExtensionName)
-    expect(card_endpoints.getByText('GLUE2EndpointID')).toBeInTheDocument()
-    expect(card_endpoints.getByText('GLUE2EndpointImplementationName')).toBeInTheDocument()
-    expect(card_endpoints.queryByText('ce1.gridpp.ecdf.ed.ac.uk')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('svr009.gla.scotgrid.ac.uk')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('t3-mw1.ph.ed.ac.uk')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('info_ID')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('info_URL')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_a_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_aaa_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_afigrid_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText(/dpm/i)).not.toBeInTheDocument();
-
-    await selectEvent.select(endpointExtensionName, 'GLUE2EndpointID')
-
-    selectEvent.openMenu(endpointExtensionValue)
-    expect(card_endpoints.getByText('ce1.gridpp.ecdf.ed.ac.uk')).toBeInTheDocument()
-    expect(card_endpoints.getByText('ce1.gridpp.ecdf.ed.ac.uk')).toBeInTheDocument()
-    expect(card_endpoints.getByText('t3-mw1.ph.ed.ac.uk')).toBeInTheDocument()
-    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText(/dpm/i)).not.toBeInTheDocument();
-
-    await selectEvent.select(endpointExtensionValue, 'ce1.gridpp.ecdf.ed.ac.uk')
-
-    fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '70' } });
-    fireEvent.change(screen.getByLabelText(/reliability/i), { target: { value: '80' } });
-    fireEvent.change(screen.getByLabelText(/uptime/i), { target: { value: '1.0' } });
-    fireEvent.change(screen.getByLabelText(/unknown/i), { target: { value: '0.2' } });
-    fireEvent.change(screen.getByLabelText(/downtime/i), { target: { value: '0.2' } });
-
-    fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    await waitFor(() => {
-      expect(mockChangeReport).toHaveBeenCalledWith({
-        id: 'yee9chel-5o4u-l4j4-410b-eipi3ohrah5i',
-        info: {
-          name: 'Critical',
-          description: 'More elaborate description of the critical report.'
-        },
-        thresholds: {
-          availability: 70,
-          reliability: 80,
-          uptime: 1.0,
-          unknown: 0.2,
-          downtime: 0.2
-        },
-        disabled: false,
-        profiles: [
-          {
-            id: 'il8aimoh-r2ov-05aq-z4l2-uko2moophi9s',
-            name: 'OPS_MONITOR_RHEL7',
-            type: 'metric'
-          },
-          {
-            id: 'ye3ioph5-1ryg-k4ea-e6eb-nei6zoupain2',
-            name: 'ops-mon-critical',
-            type: 'aggregation'
-          },
-          {
-            id: 'gahjohf1-xx39-e0c9-p0rj-choh6ahziz9e',
-            name: 'egi_ops',
-            type: 'operations'
-          },
-          {
-            id: 'Iesh4Eis-Z6JC-xWK8-O5KG-nae4eephoLah',
-            name: 'TEST_PROFILE',
-            type: 'thresholds'
-          }
-        ],
-        filter_tags: [
-          {
-            context: 'argo.group.filter.tags.array',
-            name: 'certification',
-            value: 'Certified'
-          },
-          {
-            context: 'argo.group.filter.tags.array',
-            name: 'infrastructure',
-            value: 'Production'
-          },
-          {
-            context: 'argo.group.filter.tags',
-            name: 'monitored',
-            value: '1'
-          },
-          {
-            context: 'argo.group.filter.tags.array',
-            name: 'info_ext_GLUE2EndpointImplementationName',
-            value: 'ARC-CE'
-          },
-          {
-            context: 'argo.endpoint.filter.tags',
-            name: 'monitored',
-            value: '1'
-          },
-          {
-            context: 'argo.endpoint.filter.tags.array',
-            name: 'scope',
-            value: 'EGI*'
-          },
-          {
-            context: 'argo.endpoint.filter.tags.array',
-            name: 'info_ext_GLUE2EndpointID',
-            value: 'ce1.gridpp.ecdf.ed.ac.uk'
-          },
-          {
-            name: "group",
-            value: "iris.ac.uk",
-            context: "argo.group.filter.fields"
-          },
-          {
-            name: "group",
-            value: "dirac-durham",
-            context: "argo.group.filter.fields"
-          },
-          {
-            name: "group",
-            value: "IRISOPS-IAM",
-            context: "argo.group.filter.fields"
-          },
-          {
-            name: "group",
-            value: "RU-SARFTI",
-            context: "argo.group.filter.fields"
-          }
-        ],
-        topology_schema: {
-          group: {
-            type: 'NGI',
-            group: {
-              type: 'SITES'
-            }
-          }
-        }
-      })
-    })
-
-    await waitFor(() => {
-      expect(mockChangeObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/',
-        {
-          name: 'Critical',
-          description: 'More elaborate description of the critical report.',
-          groupname: 'TEST',
-          apiid: 'yee9chel-5o4u-l4j4-410b-eipi3ohrah5i'
-        }
-      )
-    })
-
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report');
-    expect(NotificationManager.success).toHaveBeenCalledWith(
-      'Report successfully changed', 'Changed', 2000
-    )
-  })
-
-  test('Test error changing report on web api with error message', async () => {
-    mockChangeReport.mockImplementationOnce( () => {
-      throw Error('406 Content Not acceptable: There has been an error.')
-    } );
-
-    renderChangeView();
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
-    })
-
-    await selectEvent.select(screen.getByText('ARGO'), 'TEST')
-
-    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'More elaborate description of the critical report.' } })
-
-    await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'OPS_MONITOR_RHEL7')
-    await selectEvent.select(screen.getByText('critical'), 'ops-mon-critical')
-
-    const card_groups = within(screen.getByTestId('card-group-of-groups'));
-    const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
-
-    fireEvent.click(card_groups.getByTestId(/removeTag-2/i));
-    fireEvent.click(card_groups.getByText(/add new tag/i));
-
-    const selectTagName = card_groups.getAllByText(/select/i)[0]
-    const selectTagValue = card_groups.getAllByText(/select/i)[1]
-
-    selectEvent.openMenu(selectTagName)
-    expect(card_groups.getByText('certification')).toBeInTheDocument();
-    expect(card_groups.getByText('monitored')).toBeInTheDocument();
-    expect(card_groups.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument();
-
-    await selectEvent.select(selectTagName, 'monitored')
-
-    selectEvent.openMenu(selectTagValue)
-    expect(card_groups.getByText('yes')).toBeInTheDocument();
-    expect(card_groups.getByText('no')).toBeInTheDocument();
-
-    await selectEvent.select(selectTagValue, 'yes')
-
-    expect(card_groups.queryByText(/select/i)).not.toBeInTheDocument();
-    await selectEvent.select(card_groups.getByText('GLUE2ComputingShareMappingQueue'), 'GLUE2EndpointImplementationName')
-
-    const selectExtensionValue = card_groups.getByText('condor');
-
-    expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument()
-    expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument()
-
-    expect(selectExtensionValue).toBeInTheDocument();
-    selectEvent.openMenu(selectExtensionValue)
-    expect(card_groups.getByText('ARC-CE')).toBeInTheDocument()
-    expect(card_groups.getByText('nordugrid-arc')).toBeInTheDocument()
-    await selectEvent.select(selectExtensionValue, 'ARC-CE')
-
-    await selectEvent.select(card_groups.getByText('dirac-durham'), 'RU-SARFTI');
-
-    fireEvent.click(card_endpoints.getByTestId(/removeTag-0/i));
-    fireEvent.click(card_endpoints.getByText(/add new extension/i))
-
-    expect(card_endpoints.getAllByText(/select/i)).toHaveLength(2)
-
-    expect(card_endpoints.queryByText('info_ID')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('info_URL')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_a_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_aaa_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_afigrid_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText(/dpm/i)).not.toBeInTheDocument();
-
-    const endpointExtensionName = card_endpoints.getAllByText(/select/i)[0]
-    const endpointExtensionValue = card_endpoints.getAllByText(/select/i)[1]
-
-    expect(card_endpoints.queryByText('GLUE2ComputingShareMappingQueue')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('condor')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('condor_q2d')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('eddie')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('info_ID')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('info_URL')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_a_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_aaa_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_afigrid_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText(/dpm/i)).not.toBeInTheDocument();
-
-    selectEvent.openMenu(endpointExtensionName)
-    expect(card_endpoints.getByText('GLUE2EndpointID')).toBeInTheDocument()
-    expect(card_endpoints.getByText('GLUE2EndpointImplementationName')).toBeInTheDocument()
-    expect(card_endpoints.queryByText('ce1.gridpp.ecdf.ed.ac.uk')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('svr009.gla.scotgrid.ac.uk')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('t3-mw1.ph.ed.ac.uk')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('info_ID')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('info_URL')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_a_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_aaa_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_afigrid_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText(/dpm/i)).not.toBeInTheDocument();
-
-    await selectEvent.select(endpointExtensionName, 'GLUE2EndpointID')
-
-    selectEvent.openMenu(endpointExtensionValue)
-    expect(card_endpoints.getByText('ce1.gridpp.ecdf.ed.ac.uk')).toBeInTheDocument()
-    expect(card_endpoints.getByText('ce1.gridpp.ecdf.ed.ac.uk')).toBeInTheDocument()
-    expect(card_endpoints.getByText('t3-mw1.ph.ed.ac.uk')).toBeInTheDocument()
-    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText(/dpm/i)).not.toBeInTheDocument();
-
-    await selectEvent.select(endpointExtensionValue, 'ce1.gridpp.ecdf.ed.ac.uk')
-
-    fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '70' } });
-    fireEvent.change(screen.getByLabelText(/reliability/i), { target: { value: '80' } });
-    fireEvent.change(screen.getByLabelText(/uptime/i), { target: { value: '1.0' } });
-    fireEvent.change(screen.getByLabelText(/unknown/i), { target: { value: '0.2' } });
-    fireEvent.change(screen.getByLabelText(/downtime/i), { target: { value: '0.2' } });
-
-    fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    await waitFor(() => {
-      expect(mockChangeReport).toHaveBeenCalledWith({
-        id: 'yee9chel-5o4u-l4j4-410b-eipi3ohrah5i',
-        info: {
-          name: 'Critical',
-          description: 'More elaborate description of the critical report.'
-        },
-        thresholds: {
-          availability: 70,
-          reliability: 80,
-          uptime: 1.0,
-          unknown: 0.2,
-          downtime: 0.2
-        },
-        disabled: false,
-        profiles: [
-          {
-            id: 'il8aimoh-r2ov-05aq-z4l2-uko2moophi9s',
-            name: 'OPS_MONITOR_RHEL7',
-            type: 'metric'
-          },
-          {
-            id: 'ye3ioph5-1ryg-k4ea-e6eb-nei6zoupain2',
-            name: 'ops-mon-critical',
-            type: 'aggregation'
-          },
-          {
-            id: 'gahjohf1-xx39-e0c9-p0rj-choh6ahziz9e',
-            name: 'egi_ops',
-            type: 'operations'
-          }
-        ],
-        filter_tags: [
-          {
-            context: 'argo.group.filter.tags.array',
-            name: 'certification',
-            value: 'Certified'
-          },
-          {
-            context: 'argo.group.filter.tags.array',
-            name: 'infrastructure',
-            value: 'Production'
-          },
-          {
-            context: 'argo.group.filter.tags',
-            name: 'monitored',
-            value: '1'
-          },
-          {
-            context: 'argo.group.filter.tags.array',
-            name: 'info_ext_GLUE2EndpointImplementationName',
-            value: 'ARC-CE'
-          },
-          {
-            context: 'argo.endpoint.filter.tags',
-            name: 'monitored',
-            value: '1'
-          },
-          {
-            context: 'argo.endpoint.filter.tags.array',
-            name: 'scope',
-            value: 'EGI*'
-          },
-          {
-            context: 'argo.endpoint.filter.tags.array',
-            name: 'info_ext_GLUE2EndpointID',
-            value: 'ce1.gridpp.ecdf.ed.ac.uk'
-          },
-          {
-            name: "group",
-            value: "iris.ac.uk",
-            context: "argo.group.filter.fields"
-          },
-          {
-            name: "group",
-            value: "dirac-durham",
-            context: "argo.group.filter.fields"
-          },
-          {
-            name: "group",
-            value: "IRISOPS-IAM",
-            context: "argo.group.filter.fields"
-          },
-          {
-            name: "group",
-            value: "RU-SARFTI",
-            context: "argo.group.filter.fields"
-          }
-        ],
-        topology_schema: {
-          group: {
-            type: 'NGI',
-            group: {
-              type: 'SITES'
-            }
-          }
-        }
-      })
-    })
-
-    await waitFor(() => {
-      expect(mockChangeObject).not.toHaveBeenCalled();
-    })
-
-    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>406 Content Not acceptable: There has been an error.</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Web API error',
-      0,
-      expect.any(Function)
-    )
-  })
-
-  test('Test error changing report on web api without error message', async () => {
-    mockChangeReport.mockImplementationOnce( () => { throw Error() } );
-
-    renderChangeView();
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
-    })
-
-    await selectEvent.select(screen.getByText('ARGO'), 'TEST')
-
-    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'More elaborate description of the critical report.' } })
-
-    await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'OPS_MONITOR_RHEL7')
-    await selectEvent.select(screen.getByText('critical'), 'ops-mon-critical')
-
-    const card_groups = within(screen.getByTestId('card-group-of-groups'));
-    const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
-
-    fireEvent.click(card_groups.getByTestId(/removeTag-2/i));
-    fireEvent.click(card_groups.getByText(/add new tag/i));
-
-    const selectTagName = card_groups.getAllByText(/select/i)[0]
-    const selectTagValue = card_groups.getAllByText(/select/i)[1]
-
-    selectEvent.openMenu(selectTagName)
-    expect(card_groups.getByText('certification')).toBeInTheDocument();
-    expect(card_groups.getByText('monitored')).toBeInTheDocument();
-    expect(card_groups.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument();
-
-    await selectEvent.select(selectTagName, 'monitored')
-
-    selectEvent.openMenu(selectTagValue)
-    expect(card_groups.getByText('yes')).toBeInTheDocument();
-    expect(card_groups.getByText('no')).toBeInTheDocument();
-
-    await selectEvent.select(selectTagValue, 'yes')
-
-    expect(card_groups.queryByText(/select/i)).not.toBeInTheDocument();
-    await selectEvent.select(card_groups.getByText('GLUE2ComputingShareMappingQueue'), 'GLUE2EndpointImplementationName')
-
-    const selectExtensionValue = card_groups.getByText('condor');
-
-    expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument()
-    expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument()
-
-    expect(selectExtensionValue).toBeInTheDocument();
-    selectEvent.openMenu(selectExtensionValue)
-    expect(card_groups.getByText('ARC-CE')).toBeInTheDocument()
-    expect(card_groups.getByText('nordugrid-arc')).toBeInTheDocument()
-    await selectEvent.select(selectExtensionValue, 'ARC-CE')
-
-    await selectEvent.select(card_groups.getByText('dirac-durham'), 'RU-SARFTI');
-
-    fireEvent.click(card_endpoints.getByTestId(/removeTag-0/i));
-    fireEvent.click(card_endpoints.getByText(/add new extension/i))
-
-    expect(card_endpoints.getAllByText(/select/i)).toHaveLength(2)
-
-    expect(card_endpoints.queryByText('info_ID')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('info_URL')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_a_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_aaa_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_afigrid_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText(/dpm/i)).not.toBeInTheDocument();
-
-    const endpointExtensionName = card_endpoints.getAllByText(/select/i)[0]
-    const endpointExtensionValue = card_endpoints.getAllByText(/select/i)[1]
-
-    expect(card_endpoints.queryByText('GLUE2ComputingShareMappingQueue')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('condor')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('condor_q2d')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('eddie')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('info_ID')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('info_URL')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_a_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_aaa_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_afigrid_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText(/dpm/i)).not.toBeInTheDocument();
-
-    selectEvent.openMenu(endpointExtensionName)
-    expect(card_endpoints.getByText('GLUE2EndpointID')).toBeInTheDocument()
-    expect(card_endpoints.getByText('GLUE2EndpointImplementationName')).toBeInTheDocument()
-    expect(card_endpoints.queryByText('ce1.gridpp.ecdf.ed.ac.uk')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('svr009.gla.scotgrid.ac.uk')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('t3-mw1.ph.ed.ac.uk')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('info_ID')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('info_URL')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_a_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_aaa_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_afigrid_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText(/dpm/i)).not.toBeInTheDocument();
-
-    await selectEvent.select(endpointExtensionName, 'GLUE2EndpointID')
-
-    selectEvent.openMenu(endpointExtensionValue)
-    expect(card_endpoints.getByText('ce1.gridpp.ecdf.ed.ac.uk')).toBeInTheDocument()
-    expect(card_endpoints.getByText('ce1.gridpp.ecdf.ed.ac.uk')).toBeInTheDocument()
-    expect(card_endpoints.getByText('t3-mw1.ph.ed.ac.uk')).toBeInTheDocument()
-    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText(/dpm/i)).not.toBeInTheDocument();
-
-    await selectEvent.select(endpointExtensionValue, 'ce1.gridpp.ecdf.ed.ac.uk')
-
-    fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '70' } });
-    fireEvent.change(screen.getByLabelText(/reliability/i), { target: { value: '80' } });
-    fireEvent.change(screen.getByLabelText(/uptime/i), { target: { value: '1.0' } });
-    fireEvent.change(screen.getByLabelText(/unknown/i), { target: { value: '0.2' } });
-    fireEvent.change(screen.getByLabelText(/downtime/i), { target: { value: '0.2' } });
-
-    fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    await waitFor(() => {
-      expect(mockChangeReport).toHaveBeenCalledWith({
-        id: 'yee9chel-5o4u-l4j4-410b-eipi3ohrah5i',
-        info: {
-          name: 'Critical',
-          description: 'More elaborate description of the critical report.'
-        },
-        thresholds: {
-          availability: 70,
-          reliability: 80,
-          uptime: 1.0,
-          unknown: 0.2,
-          downtime: 0.2
-        },
-        disabled: false,
-        profiles: [
-          {
-            id: 'il8aimoh-r2ov-05aq-z4l2-uko2moophi9s',
-            name: 'OPS_MONITOR_RHEL7',
-            type: 'metric'
-          },
-          {
-            id: 'ye3ioph5-1ryg-k4ea-e6eb-nei6zoupain2',
-            name: 'ops-mon-critical',
-            type: 'aggregation'
-          },
-          {
-            id: 'gahjohf1-xx39-e0c9-p0rj-choh6ahziz9e',
-            name: 'egi_ops',
-            type: 'operations'
-          }
-        ],
-        filter_tags: [
-          {
-            context: 'argo.group.filter.tags.array',
-            name: 'certification',
-            value: 'Certified'
-          },
-          {
-            context: 'argo.group.filter.tags.array',
-            name: 'infrastructure',
-            value: 'Production'
-          },
-          {
-            context: 'argo.group.filter.tags',
-            name: 'monitored',
-            value: '1'
-          },
-          {
-            context: 'argo.group.filter.tags.array',
-            name: 'info_ext_GLUE2EndpointImplementationName',
-            value: 'ARC-CE'
-          },
-          {
-            context: 'argo.endpoint.filter.tags',
-            name: 'monitored',
-            value: '1'
-          },
-          {
-            context: 'argo.endpoint.filter.tags.array',
-            name: 'scope',
-            value: 'EGI*'
-          },
-          {
-            context: 'argo.endpoint.filter.tags.array',
-            name: 'info_ext_GLUE2EndpointID',
-            value: 'ce1.gridpp.ecdf.ed.ac.uk'
-          },
-          {
-            name: "group",
-            value: "iris.ac.uk",
-            context: "argo.group.filter.fields"
-          },
-          {
-            name: "group",
-            value: "dirac-durham",
-            context: "argo.group.filter.fields"
-          },
-          {
-            name: "group",
-            value: "IRISOPS-IAM",
-            context: "argo.group.filter.fields"
-          },
-          {
-            name: "group",
-            value: "RU-SARFTI",
-            context: "argo.group.filter.fields"
-          }
-        ],
-        topology_schema: {
-          group: {
-            type: 'NGI',
-            group: {
-              type: 'SITES'
-            }
-          }
-        }
-      })
-    })
-
-    await waitFor(() => {
-      expect(mockChangeObject).not.toHaveBeenCalled();
-    })
-
-    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>Web API error changing report</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Web API error',
-      0,
-      expect.any(Function)
-    )
-  })
-
-  test('Test error changing report on internal API with error message', async () => {
-    mockChangeObject.mockImplementationOnce( () => {
-      throw Error('400 BAD REQUEST: There has been an error.')
-    } );
-    mockChangeReport.mockReturnValueOnce(
-      Promise.resolve({ ok: 'ok' })
-    )
-
-    renderChangeView();
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
-    })
-
-    await selectEvent.select(screen.getByText('ARGO'), 'TEST')
-
-    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'More elaborate description of the critical report.' } })
-
-    await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'OPS_MONITOR_RHEL7')
-    await selectEvent.select(screen.getByText('critical'), 'ops-mon-critical')
-
-    const card_groups = within(screen.getByTestId('card-group-of-groups'));
-    const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
-
-    fireEvent.click(card_groups.getByTestId(/removeTag-2/i));
-    fireEvent.click(card_groups.getByText(/add new tag/i));
-
-    const selectTagName = card_groups.getAllByText(/select/i)[0]
-    const selectTagValue = card_groups.getAllByText(/select/i)[1]
-
-    selectEvent.openMenu(selectTagName)
-    expect(card_groups.getByText('certification')).toBeInTheDocument();
-    expect(card_groups.getByText('monitored')).toBeInTheDocument();
-    expect(card_groups.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument();
-
-    await selectEvent.select(selectTagName, 'monitored')
-
-    selectEvent.openMenu(selectTagValue)
-    expect(card_groups.getByText('yes')).toBeInTheDocument();
-    expect(card_groups.getByText('no')).toBeInTheDocument();
-
-    await selectEvent.select(selectTagValue, 'yes')
-
-    expect(card_groups.queryByText(/select/i)).not.toBeInTheDocument();
-    await selectEvent.select(card_groups.getByText('GLUE2ComputingShareMappingQueue'), 'GLUE2EndpointImplementationName')
-
-    const selectExtensionValue = card_groups.getByText('condor');
-
-    expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument()
-    expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument()
-
-    expect(selectExtensionValue).toBeInTheDocument();
-    selectEvent.openMenu(selectExtensionValue)
-    expect(card_groups.getByText('ARC-CE')).toBeInTheDocument()
-    expect(card_groups.getByText('nordugrid-arc')).toBeInTheDocument()
-    await selectEvent.select(selectExtensionValue, 'ARC-CE')
-
-    await selectEvent.select(card_groups.getByText('dirac-durham'), 'RU-SARFTI');
-
-    fireEvent.click(card_endpoints.getByTestId(/removeTag-0/i));
-    fireEvent.click(card_endpoints.getByText(/add new extension/i))
-
-    expect(card_endpoints.getAllByText(/select/i)).toHaveLength(2)
-
-    expect(card_endpoints.queryByText('info_ID')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('info_URL')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_a_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_aaa_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_afigrid_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText(/dpm/i)).not.toBeInTheDocument();
-
-    const endpointExtensionName = card_endpoints.getAllByText(/select/i)[0]
-    const endpointExtensionValue = card_endpoints.getAllByText(/select/i)[1]
-
-    expect(card_endpoints.queryByText('GLUE2ComputingShareMappingQueue')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('condor')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('condor_q2d')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('eddie')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('info_ID')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('info_URL')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_a_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_aaa_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_afigrid_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText(/dpm/i)).not.toBeInTheDocument();
-
-    selectEvent.openMenu(endpointExtensionName)
-    expect(card_endpoints.getByText('GLUE2EndpointID')).toBeInTheDocument()
-    expect(card_endpoints.getByText('GLUE2EndpointImplementationName')).toBeInTheDocument()
-    expect(card_endpoints.queryByText('ce1.gridpp.ecdf.ed.ac.uk')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('svr009.gla.scotgrid.ac.uk')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('t3-mw1.ph.ed.ac.uk')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('info_ID')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('info_URL')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_a_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_aaa_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_afigrid_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText(/dpm/i)).not.toBeInTheDocument();
-
-    await selectEvent.select(endpointExtensionName, 'GLUE2EndpointID')
-
-    selectEvent.openMenu(endpointExtensionValue)
-    expect(card_endpoints.getByText('ce1.gridpp.ecdf.ed.ac.uk')).toBeInTheDocument()
-    expect(card_endpoints.getByText('ce1.gridpp.ecdf.ed.ac.uk')).toBeInTheDocument()
-    expect(card_endpoints.getByText('t3-mw1.ph.ed.ac.uk')).toBeInTheDocument()
-    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText(/dpm/i)).not.toBeInTheDocument();
-
-    await selectEvent.select(endpointExtensionValue, 'ce1.gridpp.ecdf.ed.ac.uk')
-
-    fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '70' } });
-    fireEvent.change(screen.getByLabelText(/reliability/i), { target: { value: '80' } });
-    fireEvent.change(screen.getByLabelText(/uptime/i), { target: { value: '1.0' } });
-    fireEvent.change(screen.getByLabelText(/unknown/i), { target: { value: '0.2' } });
-    fireEvent.change(screen.getByLabelText(/downtime/i), { target: { value: '0.2' } });
-
-    fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    await waitFor(() => {
-      expect(mockChangeReport).toHaveBeenCalledWith({
-        id: 'yee9chel-5o4u-l4j4-410b-eipi3ohrah5i',
-        info: {
-          name: 'Critical',
-          description: 'More elaborate description of the critical report.'
-        },
-        thresholds: {
-          availability: 70,
-          reliability: 80,
-          uptime: 1.0,
-          unknown: 0.2,
-          downtime: 0.2
-        },
-        disabled: false,
-        profiles: [
-          {
-            id: 'il8aimoh-r2ov-05aq-z4l2-uko2moophi9s',
-            name: 'OPS_MONITOR_RHEL7',
-            type: 'metric'
-          },
-          {
-            id: 'ye3ioph5-1ryg-k4ea-e6eb-nei6zoupain2',
-            name: 'ops-mon-critical',
-            type: 'aggregation'
-          },
-          {
-            id: 'gahjohf1-xx39-e0c9-p0rj-choh6ahziz9e',
-            name: 'egi_ops',
-            type: 'operations'
-          }
-        ],
-        filter_tags: [
-          {
-            context: 'argo.group.filter.tags.array',
-            name: 'certification',
-            value: 'Certified'
-          },
-          {
-            context: 'argo.group.filter.tags.array',
-            name: 'infrastructure',
-            value: 'Production'
-          },
-          {
-            context: 'argo.group.filter.tags',
-            name: 'monitored',
-            value: '1'
-          },
-          {
-            context: 'argo.group.filter.tags.array',
-            name: 'info_ext_GLUE2EndpointImplementationName',
-            value: 'ARC-CE'
-          },
-          {
-            context: 'argo.endpoint.filter.tags',
-            name: 'monitored',
-            value: '1'
-          },
-          {
-            context: 'argo.endpoint.filter.tags.array',
-            name: 'scope',
-            value: 'EGI*'
-          },
-          {
-            context: 'argo.endpoint.filter.tags.array',
-            name: 'info_ext_GLUE2EndpointID',
-            value: 'ce1.gridpp.ecdf.ed.ac.uk'
-          },
-          {
-            name: "group",
-            value: "iris.ac.uk",
-            context: "argo.group.filter.fields"
-          },
-          {
-            name: "group",
-            value: "dirac-durham",
-            context: "argo.group.filter.fields"
-          },
-          {
-            name: "group",
-            value: "IRISOPS-IAM",
-            context: "argo.group.filter.fields"
-          },
-          {
-            name: "group",
-            value: "RU-SARFTI",
-            context: "argo.group.filter.fields"
-          }
-        ],
-        topology_schema: {
-          group: {
-            type: 'NGI',
-            group: {
-              type: 'SITES'
-            }
-          }
-        }
-      })
-    })
-
-    await waitFor(() => {
-      expect(mockChangeObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/',
-        {
-          name: 'Critical',
-          description: 'More elaborate description of the critical report.',
-          groupname: 'TEST',
-          apiid: 'yee9chel-5o4u-l4j4-410b-eipi3ohrah5i'
-        }
-      )
-    })
-
-    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>400 BAD REQUEST: There has been an error.</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Internal API error',
-      0,
-      expect.any(Function)
-    )
-  })
-
-  test('Test error changing report on internal API without error message', async () => {
-    mockChangeObject.mockImplementationOnce( () => { throw Error() } );
-    mockChangeReport.mockReturnValueOnce( Promise.resolve({ ok: 'ok' }) );
-
-    renderChangeView();
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
-    })
-
-    await selectEvent.select(screen.getByText('ARGO'), 'TEST')
-
-    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'More elaborate description of the critical report.' } })
-
-    await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'OPS_MONITOR_RHEL7')
-    await selectEvent.select(screen.getByText('critical'), 'ops-mon-critical')
-
-    const card_groups = within(screen.getByTestId('card-group-of-groups'));
-    const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
-
-    fireEvent.click(card_groups.getByTestId(/removeTag-2/i));
-    fireEvent.click(card_groups.getByText(/add new tag/i));
-
-    const selectTagName = card_groups.getAllByText(/select/i)[0]
-    const selectTagValue = card_groups.getAllByText(/select/i)[1]
-
-    selectEvent.openMenu(selectTagName)
-    expect(card_groups.getByText('certification')).toBeInTheDocument();
-    expect(card_groups.getByText('monitored')).toBeInTheDocument();
-    expect(card_groups.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument();
-
-    await selectEvent.select(selectTagName, 'monitored')
-
-    selectEvent.openMenu(selectTagValue)
-    expect(card_groups.getByText('yes')).toBeInTheDocument();
-    expect(card_groups.getByText('no')).toBeInTheDocument();
-
-    await selectEvent.select(selectTagValue, 'yes')
-
-    expect(card_groups.queryByText(/select/i)).not.toBeInTheDocument();
-    await selectEvent.select(card_groups.getByText('GLUE2ComputingShareMappingQueue'), 'GLUE2EndpointImplementationName')
-
-    const selectExtensionValue = card_groups.getByText('condor');
-
-    expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument()
-    expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument()
-
-    expect(selectExtensionValue).toBeInTheDocument();
-    selectEvent.openMenu(selectExtensionValue)
-    expect(card_groups.getByText('ARC-CE')).toBeInTheDocument()
-    expect(card_groups.getByText('nordugrid-arc')).toBeInTheDocument()
-    await selectEvent.select(selectExtensionValue, 'ARC-CE')
-
-    await selectEvent.select(card_groups.getByText('dirac-durham'), 'RU-SARFTI');
-
-    fireEvent.click(card_endpoints.getByTestId(/removeTag-0/i));
-    fireEvent.click(card_endpoints.getByText(/add new extension/i))
-
-    expect(card_endpoints.getAllByText(/select/i)).toHaveLength(2)
-
-    expect(card_endpoints.queryByText('info_ID')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('info_URL')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_a_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_aaa_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_afigrid_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText(/dpm/i)).not.toBeInTheDocument();
-
-    const endpointExtensionName = card_endpoints.getAllByText(/select/i)[0]
-    const endpointExtensionValue = card_endpoints.getAllByText(/select/i)[1]
-
-    expect(card_endpoints.queryByText('GLUE2ComputingShareMappingQueue')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('condor')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('condor_q2d')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('eddie')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('info_ID')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('info_URL')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_a_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_aaa_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_afigrid_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText(/dpm/i)).not.toBeInTheDocument();
-
-    selectEvent.openMenu(endpointExtensionName)
-    expect(card_endpoints.getByText('GLUE2EndpointID')).toBeInTheDocument()
-    expect(card_endpoints.getByText('GLUE2EndpointImplementationName')).toBeInTheDocument()
-    expect(card_endpoints.queryByText('ce1.gridpp.ecdf.ed.ac.uk')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('svr009.gla.scotgrid.ac.uk')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('t3-mw1.ph.ed.ac.uk')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('info_ID')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('info_URL')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_a_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_aaa_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_afigrid_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText(/dpm/i)).not.toBeInTheDocument();
-
-    await selectEvent.select(endpointExtensionName, 'GLUE2EndpointID')
-
-    selectEvent.openMenu(endpointExtensionValue)
-    expect(card_endpoints.getByText('ce1.gridpp.ecdf.ed.ac.uk')).toBeInTheDocument()
-    expect(card_endpoints.getByText('ce1.gridpp.ecdf.ed.ac.uk')).toBeInTheDocument()
-    expect(card_endpoints.getByText('t3-mw1.ph.ed.ac.uk')).toBeInTheDocument()
-    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText(/dpm/i)).not.toBeInTheDocument();
-
-    await selectEvent.select(endpointExtensionValue, 'ce1.gridpp.ecdf.ed.ac.uk')
-
-    fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '70' } });
-    fireEvent.change(screen.getByLabelText(/reliability/i), { target: { value: '80' } });
-    fireEvent.change(screen.getByLabelText(/uptime/i), { target: { value: '1.0' } });
-    fireEvent.change(screen.getByLabelText(/unknown/i), { target: { value: '0.2' } });
-    fireEvent.change(screen.getByLabelText(/downtime/i), { target: { value: '0.2' } });
-
-    fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    await waitFor(() => {
-      expect(mockChangeReport).toHaveBeenCalledWith({
-        id: 'yee9chel-5o4u-l4j4-410b-eipi3ohrah5i',
-        info: {
-          name: 'Critical',
-          description: 'More elaborate description of the critical report.'
-        },
-        thresholds: {
-          availability: 70,
-          reliability: 80,
-          uptime: 1.0,
-          unknown: 0.2,
-          downtime: 0.2
-        },
-        disabled: false,
-        profiles: [
-          {
-            id: 'il8aimoh-r2ov-05aq-z4l2-uko2moophi9s',
-            name: 'OPS_MONITOR_RHEL7',
-            type: 'metric'
-          },
-          {
-            id: 'ye3ioph5-1ryg-k4ea-e6eb-nei6zoupain2',
-            name: 'ops-mon-critical',
-            type: 'aggregation'
-          },
-          {
-            id: 'gahjohf1-xx39-e0c9-p0rj-choh6ahziz9e',
-            name: 'egi_ops',
-            type: 'operations'
-          }
-        ],
-        filter_tags: [
-          {
-            context: 'argo.group.filter.tags.array',
-            name: 'certification',
-            value: 'Certified'
-          },
-          {
-            context: 'argo.group.filter.tags.array',
-            name: 'infrastructure',
-            value: 'Production'
-          },
-          {
-            context: 'argo.group.filter.tags',
-            name: 'monitored',
-            value: '1'
-          },
-          {
-            context: 'argo.group.filter.tags.array',
-            name: 'info_ext_GLUE2EndpointImplementationName',
-            value: 'ARC-CE'
-          },
-          {
-            context: 'argo.endpoint.filter.tags',
-            name: 'monitored',
-            value: '1'
-          },
-          {
-            context: 'argo.endpoint.filter.tags.array',
-            name: 'scope',
-            value: 'EGI*'
-          },
-          {
-            context: 'argo.endpoint.filter.tags.array',
-            name: 'info_ext_GLUE2EndpointID',
-            value: 'ce1.gridpp.ecdf.ed.ac.uk'
-          },
-          {
-            name: "group",
-            value: "iris.ac.uk",
-            context: "argo.group.filter.fields"
-          },
-          {
-            name: "group",
-            value: "dirac-durham",
-            context: "argo.group.filter.fields"
-          },
-          {
-            name: "group",
-            value: "IRISOPS-IAM",
-            context: "argo.group.filter.fields"
-          },
-          {
-            name: "group",
-            value: "RU-SARFTI",
-            context: "argo.group.filter.fields"
-          }
-        ],
-        topology_schema: {
-          group: {
-            type: 'NGI',
-            group: {
-              type: 'SITES'
-            }
-          }
-        }
-      })
-    })
-
-    await waitFor(() => {
-      expect(mockChangeObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/',
-        {
-          name: 'Critical',
-          description: 'More elaborate description of the critical report.',
-          groupname: 'TEST',
-          apiid: 'yee9chel-5o4u-l4j4-410b-eipi3ohrah5i'
-        }
-      )
-    })
-
-    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>Internal API error changing report</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Internal API error',
-      0,
-      expect.any(Function)
-    )
-  })
-
-  test('Test successfully deleting report', async () => {
-    mockDeleteReport.mockReturnValueOnce( Promise.resolve({ ok: 'ok' }) );
-
-    renderChangeView();
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
-    })
-
-    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    await waitFor(() => {
-      expect(mockDeleteReport).toHaveBeenCalledWith('yee9chel-5o4u-l4j4-410b-eipi3ohrah5i')
-    })
-
-    await waitFor(() => {
-      expect(mockDeleteObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/yee9chel-5o4u-l4j4-410b-eipi3ohrah5i'
-      )
-    })
-
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report');
-    expect(NotificationManager.success).toHaveBeenCalledWith(
-      'Report successfully deleted', 'Deleted', 2000
-    )
-  })
-
-  test('Test error deleting report on web api with error message', async () => {
-    mockDeleteReport.mockImplementationOnce( () => {
-      throw Error('406 Content Not acceptable: There has been an error.')
-    } );
-
-    renderChangeView();
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
-    })
-
-    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    await waitFor(() => {
-      expect(mockDeleteReport).toHaveBeenCalledWith('yee9chel-5o4u-l4j4-410b-eipi3ohrah5i')
-    })
-
-    await waitFor(() => {
-      expect(mockDeleteObject).not.toHaveBeenCalled();
-    })
-
-    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>406 Content Not acceptable: There has been an error.</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Web API error',
-      0,
-      expect.any(Function)
-    )
-  })
-
-  test('Test error deleting report on web api without error message', async () => {
-    mockDeleteReport.mockImplementationOnce( () => { throw Error() } );
-
-    renderChangeView();
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
-    })
-
-    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    await waitFor(() => {
-      expect(mockDeleteReport).toHaveBeenCalledWith('yee9chel-5o4u-l4j4-410b-eipi3ohrah5i')
-    })
-
-    await waitFor(() => {
-      expect(mockDeleteObject).not.toHaveBeenCalled();
-    })
-
-    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>Web API error deleting report</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Web API error',
-      0,
-      expect.any(Function)
-    )
-  })
-
-  test('Test error deleting report on internal backend with error message', async () => {
-    mockDeleteObject.mockImplementationOnce( () => {
-      throw Error('400 BAD REQUEST: There has been an error.')
-    } );
-    mockDeleteReport.mockReturnValueOnce( Promise.resolve({ ok: 'ok' }) );
-
-    renderChangeView();
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
-    })
-
-    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    await waitFor(() => {
-      expect(mockDeleteReport).toHaveBeenCalledWith('yee9chel-5o4u-l4j4-410b-eipi3ohrah5i')
-    })
-
-    await waitFor(() => {
-      expect(mockDeleteObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/yee9chel-5o4u-l4j4-410b-eipi3ohrah5i'
-      )
-    })
-
-    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>400 BAD REQUEST: There has been an error.</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Internal API error',
-      0,
-      expect.any(Function)
-    )
-  })
-
-  test('Test error deleting report on internal backend without error message', async () => {
-    mockDeleteObject.mockImplementationOnce( () => { throw Error() } );
-    mockDeleteReport.mockReturnValueOnce( Promise.resolve({ ok: 'ok' }) );
-
-    renderChangeView();
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
-    })
-
-    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    await waitFor(() => {
-      expect(mockDeleteReport).toHaveBeenCalledWith('yee9chel-5o4u-l4j4-410b-eipi3ohrah5i')
-    })
-
-    await waitFor(() => {
-      expect(mockDeleteObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/yee9chel-5o4u-l4j4-410b-eipi3ohrah5i'
-      )
-    })
-
-    expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>Internal API error deleting report</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Internal API error',
-      0,
-      expect.any(Function)
-    )
-  })
 })
+
+
+const newReport4Sending = {
+  info: {
+    name: 'OPS-MONITOR',
+    description: 'A/R report for Operations services.'
+  },
+  thresholds: {
+    availability: 70,
+    reliability: 80,
+    uptime: 1.0,
+    unknown: 0.2,
+    downtime: 0.2
+  },
+  disabled: false,
+  profiles: [
+    {
+      id: 'il8aimoh-r2ov-05aq-z4l2-uko2moophi9s',
+      name: 'OPS_MONITOR_RHEL7',
+      type: 'metric'
+    },
+    {
+      id: 'ye3ioph5-1ryg-k4ea-e6eb-nei6zoupain2',
+      name: 'ops-mon-critical',
+      type: 'aggregation'
+    },
+    {
+      id: 'gahjohf1-xx39-e0c9-p0rj-choh6ahziz9e',
+      name: 'egi_ops',
+      type: 'operations'
+    },
+    {
+      id: 'Iesh4Eis-Z6JC-xWK8-O5KG-nae4eephoLah',
+      name: 'TEST_PROFILE',
+      type: 'thresholds'
+    }
+  ],
+  topology_schema: {
+    group: {
+      type: 'NGI',
+      group: {
+        type: 'SITES'
+      }
+    }
+  },
+  filter_tags: [
+    {
+      name: 'monitored',
+      value: '1',
+      context: 'argo.group.filter.tags'
+    },
+    {
+      name: 'info_ext_GLUE2EndpointImplementationName',
+      value: 'ARC-CE',
+      context: 'argo.group.filter.tags.array'
+    },
+    {
+      name: 'info_ext_GLUE2EndpointID',
+      value: 'ce1.gridpp.ecdf.ed.ac.uk',
+      context: 'argo.endpoint.filter.tags.array'
+    }
+  ]
+}
+
+
+const newBackendReport4Sending = {
+  name: 'OPS-MONITOR',
+  description: 'A/R report for Operations services.',
+  groupname: 'ARGO',
+  apiid: 'Ohs2duRu-tU6N-mF3Q-jV8F-Wiush8ieR7me'
+}
 
 
 describe('Tests for reports addview', () => {
@@ -2900,6 +3585,1658 @@ describe('Tests for reports addview', () => {
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
   })
 
+  test('Test add name', async () => {
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'OPS-MONITOR' } });
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': 'OPS-MONITOR',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+  })
+
+  test('Test disable report', async () => {
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
+    })
+
+    fireEvent.click(screen.getByLabelText(/disable/i))
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': true,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+  })
+
+  test('Test add description', async () => {
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
+    })
+
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'A/R report for Operations services.' } })
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': 'A/R report for Operations services.',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+  })
+
+  test('Test add group name', async () => {
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
+    })
+
+    const groupField = screen.getAllByText(/select/i)[0]
+
+    expect(screen.queryByText('ARGO')).not.toBeInTheDocument()
+    expect(screen.queryByText('TEST')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(groupField)
+    expect(screen.queryByText('ARGO')).toBeInTheDocument()
+    expect(screen.queryByText('TEST')).toBeInTheDocument()
+
+    await selectEvent.select(groupField, 'ARGO')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': 'ARGO',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+  })
+
+  test('Test add metric profile', async () => {
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
+    })
+
+    const metricProfileField = screen.getAllByText(/select/i)[1]
+
+    expect(screen.queryByText('FEDCLOUD')).not.toBeInTheDocument()
+    expect(screen.queryByText('OPS_MONITOR_RHEL7')).not.toBeInTheDocument()
+    expect(screen.queryByText('ARGO_MON_CRITICAL')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(metricProfileField)
+    expect(screen.queryByText('FEDCLOUD')).toBeInTheDocument()
+    expect(screen.queryByText('OPS_MONITOR_RHEL7')).toBeInTheDocument()
+    expect(screen.queryByText('ARGO_MON_CRITICAL')).toBeInTheDocument()
+
+    await selectEvent.select(metricProfileField, 'ARGO_MON_CRITICAL')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': 'ARGO_MON_CRITICAL',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+  })
+
+  test('Test add aggregation profile', async () => {
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
+    })
+
+    const aggregationProfileField = screen.getAllByText(/select/i)[2]
+
+    expect(screen.queryByText('critical')).not.toBeInTheDocument()
+    expect(screen.queryByText('ops-mon-critical')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(aggregationProfileField)
+    expect(screen.queryByText('critical')).toBeInTheDocument()
+    expect(screen.queryByText('ops-mon-critical')).toBeInTheDocument()
+
+    await selectEvent.select(aggregationProfileField, 'critical')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': 'critical',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+  })
+
+  test('Test add operations profile', async () => {
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
+    })
+
+    const operationsProfileField = screen.getAllByText(/select/i)[3]
+
+    expect(screen.queryByText('egi_ops')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(operationsProfileField)
+    expect(screen.queryByText('egi_ops')).toBeInTheDocument()
+
+    await selectEvent.select(operationsProfileField, 'egi_ops')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': 'egi_ops',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+  })
+
+  test('Test add thresholds profile', async () => {
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
+    })
+
+    const thresholdsProfileField = screen.getAllByText(/select/i)[4]
+
+    expect(screen.queryByText('TEST_PROFILE')).not.toBeInTheDocument()
+    expect(screen.queryByText('test-thresholds')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(thresholdsProfileField)
+    expect(screen.queryByText('TEST_PROFILE')).toBeInTheDocument()
+    expect(screen.queryByText('test-thresholds')).toBeInTheDocument()
+
+    await selectEvent.select(thresholdsProfileField, 'TEST_PROFILE')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': 'TEST_PROFILE',
+      'topologyType': '',
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+  })
+
+  test('Test add topology type', async () => {
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
+    })
+
+    const topologyTypeField = screen.getAllByText(/select/i)[5]
+
+    expect(screen.queryByText(/upper group/i)).toBeInTheDocument()
+    expect(screen.queryByText(/lower group/i)).toBeInTheDocument()
+
+    expect(screen.queryByText(/sites/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/ngis/i)).not.toBeInTheDocument()
+
+    expect(screen.queryByText(/projects/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/service groups/i)).not.toBeInTheDocument()
+
+    expect(screen.queryByText('Sites')).not.toBeInTheDocument()
+    expect(screen.queryByText('ServiceGroups')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(topologyTypeField)
+    expect(screen.queryByText('Sites')).toBeInTheDocument()
+    expect(screen.queryByText('ServiceGroups')).toBeInTheDocument()
+
+    await selectEvent.select(topologyTypeField, 'Sites')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': 'Sites',
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+
+    expect(screen.queryByText(/upper group/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/lower group/i)).not.toBeInTheDocument()
+
+    expect(screen.queryAllByText(/sites/i)).toHaveLength(2)
+    expect(screen.queryByText(/ngis/i)).toBeInTheDocument()
+
+    expect(screen.queryByText(/service groups/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/projects/i)).not.toBeInTheDocument()
+
+    await selectEvent.select(screen.getByText('Sites'), 'ServiceGroups')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': 'ServiceGroups',
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+
+    expect(screen.queryByText(/upper group/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/lower group/i)).not.toBeInTheDocument()
+
+    expect(screen.queryByText(/sites/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/ngis/i)).not.toBeInTheDocument()
+
+    expect(screen.queryByText(/service groups/i)).toBeInTheDocument()
+    expect(screen.queryByText(/projects/i)).toBeInTheDocument()
+  })
+
+  test('Test add group tags', async () => {
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
+    })
+
+    const card_groups = within(screen.getByTestId('card-group-of-groups'));
+
+    fireEvent.click(card_groups.getByText(/add new tag/i))
+
+    expect(card_groups.queryByText('certification')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('infrastructure')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('monitored')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('scope')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(card_groups.getAllByText(/select/i)[0])
+    expect(card_groups.queryByText('certification')).toBeInTheDocument()
+    expect(card_groups.queryByText('infrastructure')).toBeInTheDocument()
+    expect(card_groups.queryByText('monitored')).toBeInTheDocument()
+    expect(card_groups.queryByText('scope')).toBeInTheDocument()
+
+    expect(card_groups.queryByText('Candidate')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Certified')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Closed')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Suspended')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Uncertified')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('PPS')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Production')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Test')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('yes')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('no')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('1')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('0')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EGI')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSC-hub')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSCCore')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('FedCloud')).not.toBeInTheDocument()
+
+    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'certification')
+    selectEvent.openMenu(card_groups.queryByText(/select/i))
+    expect(card_groups.queryByText('Candidate')).toBeInTheDocument()
+    expect(card_groups.queryByText('Certified')).toBeInTheDocument()
+    expect(card_groups.queryByText('Closed')).toBeInTheDocument()
+    expect(card_groups.queryByText('Suspended')).toBeInTheDocument()
+    expect(card_groups.queryByText('Uncertified')).toBeInTheDocument()
+    expect(card_groups.queryByText('PPS')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Production')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Test')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('yes')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('no')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('1')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('0')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EGI')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSC-hub')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSCCore')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('FedCloud')).not.toBeInTheDocument()
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'groupsTags.0.name': 'certification',
+      'groupsTags.0.value': '',
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+
+    await selectEvent.select(card_groups.queryByText(/select/i), 'Candidate')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'groupsTags.0.name': 'certification',
+      'groupsTags.0.value': 'Candidate',
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+
+    await selectEvent.select(card_groups.queryByText('Candidate'), 'Certified')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'groupsTags.0.name': 'certification',
+      'groupsTags.0.value': ['Candidate', 'Certified'],
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+
+    fireEvent.click(card_groups.getByText(/add new tag/i))
+
+    expect(card_groups.queryAllByText('certification')).toHaveLength(1)
+    expect(card_groups.queryByText('infrastructure')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('monitored')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('scope')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(card_groups.queryAllByText(/select/i)[0])
+    expect(card_groups.queryAllByText('certification')).toHaveLength(1)
+    expect(card_groups.queryByText('infrastructure')).toBeInTheDocument()
+    expect(card_groups.queryByText('monitored')).toBeInTheDocument()
+    expect(card_groups.queryByText('scope')).toBeInTheDocument()
+
+    await selectEvent.select(card_groups.queryAllByText(/select/i)[0], 'infrastructure')
+
+    expect(card_groups.queryByText('PPS')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Production')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Test')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('yes')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('no')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('1')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('0')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EGI')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSC-hub')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSCCore')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('FedCloud')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(card_groups.getByText(/select/i))
+    expect(card_groups.queryByText('PPS')).toBeInTheDocument()
+    expect(card_groups.queryByText('Production')).toBeInTheDocument()
+    expect(card_groups.queryByText('Test')).toBeInTheDocument()
+    expect(card_groups.queryByText('yes')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('no')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('1')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('0')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EGI')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSC-hub')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSCCore')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('FedCloud')).not.toBeInTheDocument()
+
+    await selectEvent.select(card_groups.getByText('infrastructure'), 'monitored')
+    selectEvent.openMenu(card_groups.getByText(/select/i))
+    expect(card_groups.queryByText('PPS')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Production')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Test')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('yes')).toBeInTheDocument()
+    expect(card_groups.queryByText('no')).toBeInTheDocument()
+    expect(card_groups.queryByText('1')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('0')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EGI')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSC-hub')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSCCore')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('FedCloud')).not.toBeInTheDocument()
+
+    await selectEvent.select(card_groups.getByText('monitored'), 'scope')
+    selectEvent.openMenu(card_groups.getByText(/select/i))
+    expect(card_groups.queryByText('PPS')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Production')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Test')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('yes')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('no')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('1')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('0')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EGI')).toBeInTheDocument()
+    expect(card_groups.queryByText('EOSC-hub')).toBeInTheDocument()
+    expect(card_groups.queryByText('EOSCCore')).toBeInTheDocument()
+    expect(card_groups.queryByText('FedCloud')).toBeInTheDocument()
+
+    await selectEvent.select(card_groups.getByText(/select/i), 'EGI')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'groupsTags.0.name': 'certification',
+      'groupsTags.0.value': ['Candidate', 'Certified'],
+      'groupsTags.1.name': 'scope',
+      'groupsTags.1.value': 'EGI',
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+
+    fireEvent.click(card_groups.getByTestId('removeTag-0'))
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'groupsTags.0.name': 'scope',
+      'groupsTags.0.value': 'EGI',
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+  })
+
+  test('Test add group extensions', async () => {
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
+    })
+
+    const card_groups = within(screen.getByTestId('card-group-of-groups'));
+
+    fireEvent.click(card_groups.getByText(/add new extension/i))
+
+    expect(card_groups.queryByText('certification')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('infrastructure')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('monitored')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('scope')).not.toBeInTheDocument()
+    expect(card_groups.queryByText(/GLUE2ComputingShareMappingQueue/i)).not.toBeInTheDocument()
+    expect(card_groups.queryByText(/GLUE2EndpointImplementationName/i)).not.toBeInTheDocument()
+    expect(card_groups.queryByText('production')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('info_ID')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('info_URL')).not.toBeInTheDocument()
+    expect(card_groups.queryByText(/GLUE2EndpointID/i)).not.toBeInTheDocument()
+    expect(card_groups.queryByText(/vo_/i)).not.toBeInTheDocument()
+
+    selectEvent.openMenu(card_groups.getAllByText(/select/i)[0])
+    expect(card_groups.queryByText('certification')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('infrastructure')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('monitored')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('scope')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('GLUE2ComputingShareMappingQueue')).toBeInTheDocument()
+    expect(card_groups.queryByText('GLUE2EndpointImplementationName')).toBeInTheDocument()
+    expect(card_groups.queryByText('info_ext_GLUE2ComputingShareMappingQueue')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('info_ext_GLUE2EndpointImplementationName')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('production')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('info_ID')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('info_URL')).not.toBeInTheDocument()
+    expect(card_groups.queryByText(/GLUE2EndpointID/i)).not.toBeInTheDocument()
+    expect(card_groups.queryByText(/vo_/i)).not.toBeInTheDocument()
+
+    expect(card_groups.queryByText('Candidate')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Certified')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Closed')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Suspended')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Uncertified')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('PPS')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Production')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Test')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('yes')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('no')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('1')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('0')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EGI')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSC-hub')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSCCore')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('FedCloud')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('condor')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('condor_q2d')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('eddie')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('1111G0')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('2222G0')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('3333G0')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('4444G0')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('meh')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('mock_url')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('ce1.gridpp.ecdf.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('svr009.gla.scotgrid.ac.uk')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('t3-mw1.ph.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('/dpm/farm.particle.cz/home/a')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('/dpm/farm.particle.cz/home/aaa')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('/dpm/fis.puc.cl/home/afigrid')).not.toBeInTheDocument()
+
+    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'GLUE2ComputingShareMappingQueue')
+    selectEvent.openMenu(card_groups.getByText(/select/i))
+    expect(card_groups.queryByText('Candidate')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Certified')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Closed')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Suspended')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Uncertified')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('PPS')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Production')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Test')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('yes')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('no')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('1')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('0')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EGI')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSC-hub')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSCCore')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('FedCloud')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('condor')).toBeInTheDocument()
+    expect(card_groups.queryByText('condor_q2d')).toBeInTheDocument()
+    expect(card_groups.queryByText('eddie')).toBeInTheDocument()
+    expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('1111G0')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('2222G0')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('3333G0')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('4444G0')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('meh')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('mock_url')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('ce1.gridpp.ecdf.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('svr009.gla.scotgrid.ac.uk')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('t3-mw1.ph.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('/dpm/farm.particle.cz/home/a')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('/dpm/farm.particle.cz/home/aaa')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('/dpm/fis.puc.cl/home/afigrid')).not.toBeInTheDocument()
+
+    await selectEvent.select(card_groups.getByText(/select/i), 'condor')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
+      'groupsExtensions.0.value': 'condor',
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+
+    await selectEvent.select(card_groups.getByText('condor'), 'eddie')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
+      'groupsExtensions.0.value': ['condor', 'eddie'],
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+
+    fireEvent.click(card_groups.getByText(/add new extension/i))
+
+    expect(card_groups.queryByText('certification')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('infrastructure')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('monitored')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('scope')).not.toBeInTheDocument()
+    expect(card_groups.getAllByText(/GLUE2ComputingShareMappingQueue/i)).toHaveLength(1)
+    expect(card_groups.queryByText(/GLUE2EndpointImplementationName/i)).not.toBeInTheDocument()
+    expect(card_groups.queryByText('production')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('info_ID')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('info_URL')).not.toBeInTheDocument()
+    expect(card_groups.queryByText(/GLUE2EndpointID/i)).not.toBeInTheDocument()
+    expect(card_groups.queryByText(/vo_/i)).not.toBeInTheDocument()
+
+    selectEvent.openMenu(card_groups.getAllByText(/select/i)[0])
+    expect(card_groups.queryByText('certification')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('infrastructure')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('monitored')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('scope')).not.toBeInTheDocument()
+    expect(card_groups.getAllByText(/GLUE2ComputingShareMappingQueue/i)).toHaveLength(1)
+    expect(card_groups.queryByText(/GLUE2EndpointImplementationName/i)).toBeInTheDocument()
+    expect(card_groups.queryByText('production')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('info_ID')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('info_URL')).not.toBeInTheDocument()
+    expect(card_groups.queryByText(/GLUE2EndpointID/i)).not.toBeInTheDocument()
+    expect(card_groups.queryByText(/vo_/i)).not.toBeInTheDocument()
+
+    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'GLUE2EndpointImplementationName')
+
+    expect(card_groups.queryByText('Candidate')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Certified')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Closed')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Suspended')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Uncertified')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('PPS')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Production')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Test')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('yes')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('no')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('1')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('0')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EGI')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSC-hub')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSCCore')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('FedCloud')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('1111G0')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('2222G0')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('3333G0')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('4444G0')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('meh')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('mock_url')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('ce1.gridpp.ecdf.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('svr009.gla.scotgrid.ac.uk')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('t3-mw1.ph.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('/dpm/farm.particle.cz/home/a')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('/dpm/farm.particle.cz/home/aaa')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('/dpm/fis.puc.cl/home/afigrid')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(card_groups.getByText(/select/i))
+    expect(card_groups.queryByText('Candidate')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Certified')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Closed')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Suspended')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Uncertified')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('PPS')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Production')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('Test')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('yes')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('no')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('1')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('0')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EGI')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSC-hub')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('EOSCCore')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('FedCloud')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('ARC-CE')).toBeInTheDocument()
+    expect(card_groups.queryByText('nordugrid-arc')).toBeInTheDocument()
+    expect(card_groups.queryByText('1111G0')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('2222G0')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('3333G0')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('4444G0')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('meh')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('mock_url')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('ce1.gridpp.ecdf.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('svr009.gla.scotgrid.ac.uk')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('t3-mw1.ph.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('/dpm/farm.particle.cz/home/a')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('/dpm/farm.particle.cz/home/aaa')).not.toBeInTheDocument()
+    expect(card_groups.queryByText('/dpm/fis.puc.cl/home/afigrid')).not.toBeInTheDocument()
+
+    await selectEvent.select(card_groups.getByText(/select/i), 'ARC-CE')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
+      'groupsExtensions.0.value': ['condor', 'eddie'],
+      'groupsExtensions.1.name': 'GLUE2EndpointImplementationName',
+      'groupsExtensions.1.value': 'ARC-CE',
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+
+    fireEvent.click(card_groups.getByTestId('removeExtension-1'))
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
+      'groupsExtensions.0.value': ['condor', 'eddie'],
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+  })
+
+  test('Test add group entities', async () => {
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
+    })
+
+    const card_groups = within(screen.getByTestId('card-group-of-groups'));
+
+    const entity1 = card_groups.getAllByText(/search/i)[0]
+    const entity2 = card_groups.getAllByText(/search/i)[1]
+
+    await selectEvent.select(entity1, 'Russia')
+
+    await selectEvent.select(entity2, 'dirac-durham')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'entities.0.value': 'Russia',
+      'entities.1.value': 'dirac-durham',
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+  })
+
+  test('Test add endpoint tags', async () => {
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
+    })
+
+    const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
+
+    fireEvent.click(card_endpoints.getByText(/add new tag/i))
+
+    expect(card_endpoints.queryByText('certification')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('infrastructure')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('monitored')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('production')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('scope')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText(/info_ext_/i)).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText(/info_/i)).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ID')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('URL')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('GLUE2EndpointID')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('GLUE2ComputingShareMappingQueue')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText(/vo_/i)).not.toBeInTheDocument()
+
+    selectEvent.openMenu(card_endpoints.getAllByText(/select/i)[0])
+    expect(card_endpoints.queryByText('certification')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('infrastructure')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('monitored')).toBeInTheDocument()
+    expect(card_endpoints.queryByText('production')).toBeInTheDocument()
+    expect(card_endpoints.queryByText('scope')).toBeInTheDocument()
+    expect(card_endpoints.queryByText(/info_ext_/i)).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText(/info_/i)).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ID')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('URL')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('GLUE2EndpointID')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('GLUE2ComputingShareMappingQueue')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText(/vo_/i)).not.toBeInTheDocument()
+
+    expect(card_endpoints.queryByText('yes')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('no')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('EGI')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('EOSC-hub')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('EOSCCore')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('FedCloud')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('1111G0')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('2222G0')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('3333G0')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('4444G0')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('meh')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('mock_url')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ce1.gridpp.ecdf.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('svr009.gla.scotgrid.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('t3-mw1.ph.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('/dpm/farm.particle.cz/home/a')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('/dpm/farm.particle.cz/home/aaa')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText("/dpm/fis.puc.cl/home/afigrid")).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Candidate')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Certified')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Closed')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Suspended')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Uncertified')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('PPS')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Production')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Test')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('1')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('0')).not.toBeInTheDocument()
+
+    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'scope')
+    selectEvent.openMenu(card_endpoints.queryByText(/select/i))
+    expect(card_endpoints.queryByText('yes')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('no')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('EGI')).toBeInTheDocument()
+    expect(card_endpoints.queryByText('EOSC-hub')).toBeInTheDocument()
+    expect(card_endpoints.queryByText('EOSCCore')).toBeInTheDocument()
+    expect(card_endpoints.queryByText('FedCloud')).toBeInTheDocument()
+    expect(card_endpoints.queryByText('1111G0')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('2222G0')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('3333G0')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('4444G0')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('meh')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('mock_url')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ce1.gridpp.ecdf.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('svr009.gla.scotgrid.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('t3-mw1.ph.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('/dpm/farm.particle.cz/home/a')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('/dpm/farm.particle.cz/home/aaa')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText("/dpm/fis.puc.cl/home/afigrid")).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Candidate')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Certified')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Closed')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Suspended')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Uncertified')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('PPS')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Production')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Test')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('1')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('0')).not.toBeInTheDocument()
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'endpointsTags.0.name': 'scope',
+      'endpointsTags.0.value': '',
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+
+    await selectEvent.select(card_endpoints.queryByText(/select/i), 'EOSCCore')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'endpointsTags.0.name': 'scope',
+      'endpointsTags.0.value': 'EOSCCore',
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+
+    await selectEvent.select(card_endpoints.queryByText('EOSCCore'), 'EGI')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'endpointsTags.0.name': 'scope',
+      'endpointsTags.0.value': ['EOSCCore', 'EGI'],
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+
+    fireEvent.click(card_endpoints.getByText(/add new tag/i))
+
+    expect(card_endpoints.queryByText('certification')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('infrastructure')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('monitored')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('production')).not.toBeInTheDocument()
+    expect(card_endpoints.queryAllByText('scope')).toHaveLength(1)
+    expect(card_endpoints.queryByText(/info_ext_/i)).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText(/info_/i)).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ID')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('URL')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('GLUE2EndpointID')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('GLUE2ComputingShareMappingQueue')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText(/vo_/i)).not.toBeInTheDocument()
+
+    selectEvent.openMenu(card_endpoints.queryAllByText(/select/i)[0])
+    expect(card_endpoints.queryByText('certification')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('infrastructure')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('monitored')).toBeInTheDocument()
+    expect(card_endpoints.queryByText('production')).toBeInTheDocument()
+    expect(card_endpoints.queryAllByText('scope')).toHaveLength(1)
+    expect(card_endpoints.queryByText(/info_ext_/i)).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText(/info_/i)).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ID')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('URL')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('GLUE2EndpointID')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('GLUE2ComputingShareMappingQueue')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText(/vo_/i)).not.toBeInTheDocument()
+
+    await selectEvent.select(card_endpoints.queryAllByText(/select/i)[0], 'monitored')
+
+    expect(card_endpoints.queryByText('yes')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('no')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('1111G0')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('2222G0')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('3333G0')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('4444G0')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('meh')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('mock_url')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ce1.gridpp.ecdf.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('svr009.gla.scotgrid.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('t3-mw1.ph.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('/dpm/farm.particle.cz/home/a')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('/dpm/farm.particle.cz/home/aaa')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText("/dpm/fis.puc.cl/home/afigrid")).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Candidate')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Certified')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Closed')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Suspended')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Uncertified')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('PPS')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Production')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Test')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('1')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('0')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(card_endpoints.getByText(/select/i))
+    expect(card_endpoints.queryByText('yes')).toBeInTheDocument()
+    expect(card_endpoints.queryByText('no')).toBeInTheDocument()
+    expect(card_endpoints.queryByText('1111G0')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('2222G0')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('3333G0')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('4444G0')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('meh')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('mock_url')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ce1.gridpp.ecdf.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('svr009.gla.scotgrid.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('t3-mw1.ph.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('/dpm/farm.particle.cz/home/a')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('/dpm/farm.particle.cz/home/aaa')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText("/dpm/fis.puc.cl/home/afigrid")).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Candidate')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Certified')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Closed')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Suspended')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Uncertified')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('PPS')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Production')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Test')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('1')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('0')).not.toBeInTheDocument()
+
+    await selectEvent.select(card_endpoints.getByText(/select/i), 'yes')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'endpointsTags.0.name': 'scope',
+      'endpointsTags.0.value': ['EOSCCore', 'EGI'],
+      'endpointsTags.1.name': 'monitored',
+      'endpointsTags.1.value': 'yes',
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+
+    fireEvent.click(card_endpoints.getByTestId('removeTag-1'))
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'endpointsTags.0.name': 'scope',
+      'endpointsTags.0.value': ['EOSCCore', 'EGI'],
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+  })
+
+  test('Test add endpoint extensions', async () => {
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
+    })
+
+    const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
+
+    fireEvent.click(card_endpoints.getByText(/add new extension/i))
+
+    expect(card_endpoints.queryByText('certification')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('infrastructure')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('monitored')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('production')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('scope')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText(/info_ext_/i)).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText(/info_/i)).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ID')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('URL')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('GLUE2EndpointID')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('GLUE2ComputingShareMappingQueue')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText(/vo_/i)).not.toBeInTheDocument()
+
+    selectEvent.openMenu(card_endpoints.getAllByText(/select/i)[0])
+    expect(card_endpoints.queryByText('certification')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('infrastructure')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('monitored')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('production')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('scope')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText(/info_ext_/i)).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText(/info_/i)).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ID')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('URL')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('GLUE2EndpointID')).toBeInTheDocument()
+    expect(card_endpoints.queryByText('GLUE2EndpointImplementationName')).toBeInTheDocument()
+    expect(card_endpoints.queryByText('GLUE2ComputingShareMappingQueue')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText(/vo_/i)).not.toBeInTheDocument()
+
+    expect(card_endpoints.queryByText('yes')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('no')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('EGI')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('EOSC-hub')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('EOSCCore')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('FedCloud')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('1111G0')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('2222G0')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('3333G0')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('4444G0')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('meh')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('mock_url')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ce1.gridpp.ecdf.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('svr009.gla.scotgrid.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('t3-mw1.ph.ed.ac.uk')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('/dpm/farm.particle.cz/home/a')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('/dpm/farm.particle.cz/home/aaa')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText("/dpm/fis.puc.cl/home/afigrid")).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Candidate')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Certified')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Closed')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Suspended')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Uncertified')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('PPS')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Production')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Test')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('1')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('0')).not.toBeInTheDocument()
+
+    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'GLUE2EndpointID')
+    selectEvent.openMenu(card_endpoints.queryByText(/select/i))
+    expect(card_endpoints.queryByText('yes')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('no')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('EGI')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('EOSC-hub')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('EOSCCore')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('FedCloud')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('1111G0')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('2222G0')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('3333G0')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('4444G0')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('meh')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('mock_url')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ce1.gridpp.ecdf.ed.ac.uk')).toBeInTheDocument()
+    expect(card_endpoints.queryByText('svr009.gla.scotgrid.ac.uk')).toBeInTheDocument()
+    expect(card_endpoints.queryByText('t3-mw1.ph.ed.ac.uk')).toBeInTheDocument()
+    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('/dpm/farm.particle.cz/home/a')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('/dpm/farm.particle.cz/home/aaa')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText("/dpm/fis.puc.cl/home/afigrid")).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Candidate')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Certified')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Closed')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Suspended')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Uncertified')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('PPS')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Production')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Test')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('1')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('0')).not.toBeInTheDocument()
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'endpointsExtensions.0.name': 'GLUE2EndpointID',
+      'endpointsExtensions.0.value': '',
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+
+    await selectEvent.select(card_endpoints.queryByText(/select/i), 'ce1.gridpp.ecdf.ed.ac.uk')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'endpointsExtensions.0.name': 'GLUE2EndpointID',
+      'endpointsExtensions.0.value': 'ce1.gridpp.ecdf.ed.ac.uk',
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+
+    await selectEvent.select(card_endpoints.queryByText('GLUE2EndpointID'), 'svr009.gla.scotgrid.ac.uk')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'endpointsExtensions.0.name': 'GLUE2EndpointID',
+      'endpointsExtensions.0.value': ['ce1.gridpp.ecdf.ed.ac.uk', 'svr009.gla.scotgrid.ac.uk'],
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+
+    fireEvent.click(card_endpoints.getByText(/add new extension/i))
+
+    expect(card_endpoints.queryByText('certification')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('infrastructure')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('monitored')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('production')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('scope')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText(/info_ext_/i)).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText(/info_/i)).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ID')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('URL')).not.toBeInTheDocument()
+    expect(card_endpoints.queryAllByText('GLUE2EndpointID')).toHaveLength(1)
+    expect(card_endpoints.queryAllByText('GLUE2EndpointImplementationName')).toHaveLength(1)
+    expect(card_endpoints.queryByText('GLUE2ComputingShareMappingQueue')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText(/vo_/i)).not.toBeInTheDocument()
+
+    selectEvent.openMenu(card_endpoints.queryAllByText(/select/i)[0])
+    expect(card_endpoints.queryByText('certification')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('infrastructure')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('monitored')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('production')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('scope')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText(/info_ext_/i)).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText(/info_/i)).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ID')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('URL')).not.toBeInTheDocument()
+    expect(card_endpoints.queryAllByText('GLUE2EndpointID')).toHaveLength(1)
+    expect(card_endpoints.queryAllByText('GLUE2EndpointImplementationName')).toHaveLength(2)
+    expect(card_endpoints.queryByText('GLUE2ComputingShareMappingQueue')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText(/vo_/i)).not.toBeInTheDocument()
+
+    await selectEvent.select(card_endpoints.queryAllByText(/select/i)[0], 'GLUE2EndpointImplementationName')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'endpointsExtensions.0.name': 'GLUE2EndpointID',
+      'endpointsExtensions.0.value': ['ce1.gridpp.ecdf.ed.ac.uk', 'svr009.gla.scotgrid.ac.uk'],
+      'endpointsExtensions.1.name': 'GLUE2EndpointImplementationName',
+      'endpointsExtensions.1.value': '',
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+
+    expect(card_endpoints.queryByText('yes')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('no')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('EGI')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('EOSC-hub')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('EOSCCore')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('FedCloud')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('1111G0')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('2222G0')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('3333G0')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('4444G0')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('meh')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('mock_url')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('/dpm/farm.particle.cz/home/a')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('/dpm/farm.particle.cz/home/aaa')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText("/dpm/fis.puc.cl/home/afigrid")).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Candidate')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Certified')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Closed')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Suspended')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Uncertified')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('PPS')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Production')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Test')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('1')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('0')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(card_endpoints.getByText(/select/i))
+    expect(card_endpoints.queryByText('yes')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('no')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('EGI')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('EOSC-hub')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('EOSCCore')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('FedCloud')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('1111G0')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('2222G0')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('3333G0')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('4444G0')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('meh')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('mock_url')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('ARC-CE')).toBeInTheDocument()
+    expect(card_endpoints.queryByText('nordugrid-arc')).toBeInTheDocument()
+    expect(card_endpoints.queryByText('/dpm/farm.particle.cz/home/a')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('/dpm/farm.particle.cz/home/aaa')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText("/dpm/fis.puc.cl/home/afigrid")).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Candidate')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Certified')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Closed')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Suspended')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Uncertified')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('PPS')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Production')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('Test')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('1')).not.toBeInTheDocument()
+    expect(card_endpoints.queryByText('0')).not.toBeInTheDocument()
+
+    await selectEvent.select(card_endpoints.getByText(/select/i), 'ARC-CE')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'endpointsExtensions.0.name': 'GLUE2EndpointID',
+      'endpointsExtensions.0.value': ['ce1.gridpp.ecdf.ed.ac.uk', 'svr009.gla.scotgrid.ac.uk'],
+      'endpointsExtensions.1.name': 'GLUE2EndpointImplementationName',
+      'endpointsExtensions.1.value': 'ARC-CE',
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+
+    fireEvent.click(card_endpoints.getByTestId('removeExtension-1'))
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'endpointsExtensions.0.name': 'GLUE2EndpointID',
+      'endpointsExtensions.0.value': ['ce1.gridpp.ecdf.ed.ac.uk', 'svr009.gla.scotgrid.ac.uk'],
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+  })
+
+  test('Test add availability threshold', async () => {
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
+    })
+
+    fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '70' } })
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'availabilityThreshold': '70',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+  })
+
+  test('Test add reliability threshold', async () => {
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
+    })
+
+    fireEvent.change(screen.getByLabelText(/reliability/i), { target: { value: '80' } })
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '80',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+  })
+
+  test('Test add uptime threshold', async () => {
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
+    })
+
+    fireEvent.change(screen.getByLabelText(/uptime/i), { target: { value: '0.8' } })
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '0.8',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+  })
+
+  test('Test add unknown threshold', async () => {
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
+    })
+
+    fireEvent.change(screen.getByLabelText(/unknown/i), { target: { value: '0.8' } })
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '0.8',
+      'downtimeThreshold' : ''
+    })
+  })
+
+  test('Test add downtime threshold', async () => {
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
+    })
+
+    fireEvent.change(screen.getByLabelText(/downtime/i), { target: { value: '0.8' } })
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : '0.8'
+    })
+  })
+
   test('Test successfully adding a report', async () => {
     mockAddReport.mockReturnValueOnce(
       Promise.resolve({
@@ -2949,26 +5286,7 @@ describe('Tests for reports addview', () => {
     const selectTagName = card_groups.getAllByText(/select/i)[0]
     const selectTagValue = card_groups.getAllByText(/select/i)[1]
 
-    expect(card_groups.queryByText('certification')).not.toBeInTheDocument();
-    expect(card_groups.queryByText('infrastructure')).not.toBeInTheDocument();
-    expect(card_groups.queryByText('monitored')).not.toBeInTheDocument();
-    expect(card_groups.queryByText('scope')).not.toBeInTheDocument();
-    expect(card_groups.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument();
-    expect(card_groups.queryByText('GLUE2ComputingShareMappingQueue')).not.toBeInTheDocument();
-
-    selectEvent.openMenu(selectTagName)
-    expect(card_groups.getByText('certification')).toBeInTheDocument();
-    expect(card_groups.getByText('infrastructure')).toBeInTheDocument();
-    expect(card_groups.getByText('monitored')).toBeInTheDocument();
-    expect(card_groups.getByText('scope')).toBeInTheDocument();
-    expect(card_groups.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument();
-    expect(card_groups.queryByText('GLUE2ComputingShareMappingQueue')).not.toBeInTheDocument();
-
     await selectEvent.select(selectTagName, 'monitored')
-
-    selectEvent.openMenu(selectTagValue)
-    expect(card_groups.getByText('yes')).toBeInTheDocument();
-    expect(card_groups.getByText('no')).toBeInTheDocument();
 
     await selectEvent.select(selectTagValue, 'yes')
 
@@ -2977,33 +5295,7 @@ describe('Tests for reports addview', () => {
     const selectExtensionName = card_groups.getAllByText(/select/i)[0]
     const selectExtensionValue = card_groups.getAllByText(/select/i)[1]
 
-    expect(card_groups.queryByText('certification')).not.toBeInTheDocument();
-    expect(card_groups.queryByText('infrastructure')).not.toBeInTheDocument();
-    expect(card_groups.queryByText('scope')).not.toBeInTheDocument();
-    expect(card_groups.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument();
-    expect(card_groups.queryByText('GLUE2ComputingShareMappingQueue')).not.toBeInTheDocument();
-
-    selectEvent.openMenu(selectExtensionName)
-    expect(card_groups.queryByText('certification')).not.toBeInTheDocument();
-    expect(card_groups.queryByText('infrastructure')).not.toBeInTheDocument();
-    expect(card_groups.queryByText('scope')).not.toBeInTheDocument();
-    expect(card_groups.getByText('GLUE2EndpointImplementationName')).toBeInTheDocument();
-    expect(card_groups.getByText('GLUE2ComputingShareMappingQueue')).toBeInTheDocument();
-
     await selectEvent.select(selectExtensionName, 'GLUE2EndpointImplementationName')
-
-    expect(card_groups.queryByText('condor')).not.toBeInTheDocument();
-    expect(card_groups.queryByText('condor_q2d')).not.toBeInTheDocument();
-    expect(card_groups.queryByText('eddie')).not.toBeInTheDocument();
-    expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument();
-    expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument();
-
-    selectEvent.openMenu(selectExtensionValue)
-    expect(card_groups.queryByText('condor')).not.toBeInTheDocument();
-    expect(card_groups.queryByText('condor_q2d')).not.toBeInTheDocument();
-    expect(card_groups.queryByText('eddie')).not.toBeInTheDocument();
-    expect(card_groups.getByText('ARC-CE')).toBeInTheDocument()
-    expect(card_groups.getByText('nordugrid-arc')).toBeInTheDocument()
 
     await selectEvent.select(selectExtensionValue, 'ARC-CE')
 
@@ -3014,49 +5306,7 @@ describe('Tests for reports addview', () => {
     const endpointExtensionName = card_endpoints.getAllByText(/select/i)[0]
     const endpointExtensionValue = card_endpoints.getAllByText(/select/i)[1]
 
-    expect(card_endpoints.queryByText('GLUE2ComputingShareMappingQueue')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('GLUE2EndpointImplementationName')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('condor')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('condor_q2d')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('eddie')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('info_ID')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('info_URL')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_a_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_aaa_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_afigrid_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText(/dpm/i)).not.toBeInTheDocument();
-
-    selectEvent.openMenu(endpointExtensionName)
-    expect(card_endpoints.getByText('GLUE2EndpointID')).toBeInTheDocument()
-    expect(card_endpoints.getByText('GLUE2EndpointImplementationName')).toBeInTheDocument()
-    expect(card_endpoints.queryByText('ce1.gridpp.ecdf.ed.ac.uk')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('svr009.gla.scotgrid.ac.uk')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('t3-mw1.ph.ed.ac.uk')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('info_ID')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('info_URL')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_a_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_aaa_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_afigrid_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText(/dpm/i)).not.toBeInTheDocument();
-
     await selectEvent.select(endpointExtensionName, 'GLUE2EndpointID')
-
-    selectEvent.openMenu(endpointExtensionValue)
-    expect(card_endpoints.getByText('ce1.gridpp.ecdf.ed.ac.uk')).toBeInTheDocument()
-    expect(card_endpoints.getByText('ce1.gridpp.ecdf.ed.ac.uk')).toBeInTheDocument()
-    expect(card_endpoints.getByText('t3-mw1.ph.ed.ac.uk')).toBeInTheDocument()
-    expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('info_ID')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('info_URL')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_a_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_aaa_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText('vo_afigrid_attr_SE_PATH')).not.toBeInTheDocument();
-    expect(card_endpoints.queryByText(/dpm/i)).not.toBeInTheDocument();
 
     await selectEvent.select(endpointExtensionValue, 'ce1.gridpp.ecdf.ed.ac.uk')
 
@@ -3073,78 +5323,12 @@ describe('Tests for reports addview', () => {
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
     await waitFor(() => {
-      expect(mockAddReport).toHaveBeenCalledWith({
-        info: {
-          name: 'OPS-MONITOR',
-          description: 'A/R report for Operations services.'
-        },
-        thresholds: {
-          availability: 70,
-          reliability: 80,
-          uptime: 1.0,
-          unknown: 0.2,
-          downtime: 0.2
-        },
-        disabled: false,
-        profiles: [
-          {
-            id: 'il8aimoh-r2ov-05aq-z4l2-uko2moophi9s',
-            name: 'OPS_MONITOR_RHEL7',
-            type: 'metric'
-          },
-          {
-            id: 'ye3ioph5-1ryg-k4ea-e6eb-nei6zoupain2',
-            name: 'ops-mon-critical',
-            type: 'aggregation'
-          },
-          {
-            id: 'gahjohf1-xx39-e0c9-p0rj-choh6ahziz9e',
-            name: 'egi_ops',
-            type: 'operations'
-          },
-          {
-            id: 'Iesh4Eis-Z6JC-xWK8-O5KG-nae4eephoLah',
-            name: 'TEST_PROFILE',
-            type: 'thresholds'
-          }
-        ],
-        filter_tags: [
-          {
-            context: 'argo.group.filter.tags',
-            name: 'monitored',
-            value: '1'
-          },
-          {
-            context: 'argo.group.filter.tags.array',
-            name: 'info_ext_GLUE2EndpointImplementationName',
-            value: 'ARC-CE'
-          },
-          {
-            context: 'argo.endpoint.filter.tags.array',
-            name: 'info_ext_GLUE2EndpointID',
-            value: 'ce1.gridpp.ecdf.ed.ac.uk'
-          }
-        ],
-        topology_schema: {
-          group: {
-            type: 'NGI',
-            group: {
-              type: 'SITES'
-            }
-          }
-        }
-      })
+      expect(mockAddReport).toHaveBeenCalledWith(newReport4Sending)
     })
 
     await waitFor(() => {
       expect(mockAddObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/',
-        {
-          apiid: 'Ohs2duRu-tU6N-mF3Q-jV8F-Wiush8ieR7me',
-          name: 'OPS-MONITOR',
-          groupname: 'ARGO',
-          description: 'A/R report for Operations services.'
-        }
+        '/api/v2/internal/reports/', newBackendReport4Sending
       )
     })
 
@@ -3172,12 +5356,15 @@ describe('Tests for reports addview', () => {
     const metricProfile = screen.getAllByText(/select/i)[1]
     const aggregationProfile = screen.getAllByText(/select/i)[2]
     const operationsProfile = screen.getAllByText(/select/i)[3]
+    const thresholdsProfile = screen.getAllByText(/select/i)[4]
     const topologyType = screen.getAllByText(/select/i)[5]
 
     await selectEvent.select(groupField, 'ARGO')
+
     await selectEvent.select(metricProfile, 'OPS_MONITOR_RHEL7')
     await selectEvent.select(aggregationProfile, 'ops-mon-critical')
     await selectEvent.select(operationsProfile, 'egi_ops')
+    await selectEvent.select(thresholdsProfile, 'TEST_PROFILE')
 
     await selectEvent.select(topologyType, 'Sites')
 
@@ -3190,6 +5377,7 @@ describe('Tests for reports addview', () => {
     const selectTagValue = card_groups.getAllByText(/select/i)[1]
 
     await selectEvent.select(selectTagName, 'monitored')
+
     await selectEvent.select(selectTagValue, 'yes')
 
     fireEvent.click(card_groups.getByRole('button', { name: /add new extension/i }))
@@ -3198,6 +5386,7 @@ describe('Tests for reports addview', () => {
     const selectExtensionValue = card_groups.getAllByText(/select/i)[1]
 
     await selectEvent.select(selectExtensionName, 'GLUE2EndpointImplementationName')
+
     await selectEvent.select(selectExtensionValue, 'ARC-CE')
 
     fireEvent.click(card_endpoints.getByText(/add new extension/i))
@@ -3208,6 +5397,7 @@ describe('Tests for reports addview', () => {
     const endpointExtensionValue = card_endpoints.getAllByText(/select/i)[1]
 
     await selectEvent.select(endpointExtensionName, 'GLUE2EndpointID')
+
     await selectEvent.select(endpointExtensionValue, 'ce1.gridpp.ecdf.ed.ac.uk')
 
     fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '70' } });
@@ -3223,62 +5413,7 @@ describe('Tests for reports addview', () => {
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
     await waitFor(() => {
-      expect(mockAddReport).toHaveBeenCalledWith({
-        info: {
-          name: 'OPS-MONITOR',
-          description: 'A/R report for Operations services.'
-        },
-        thresholds: {
-          availability: 70,
-          reliability: 80,
-          uptime: 1.0,
-          unknown: 0.2,
-          downtime: 0.2
-        },
-        disabled: false,
-        profiles: [
-          {
-            id: 'il8aimoh-r2ov-05aq-z4l2-uko2moophi9s',
-            name: 'OPS_MONITOR_RHEL7',
-            type: 'metric'
-          },
-          {
-            id: 'ye3ioph5-1ryg-k4ea-e6eb-nei6zoupain2',
-            name: 'ops-mon-critical',
-            type: 'aggregation'
-          },
-          {
-            id: 'gahjohf1-xx39-e0c9-p0rj-choh6ahziz9e',
-            name: 'egi_ops',
-            type: 'operations'
-          }
-        ],
-        filter_tags: [
-          {
-            context: 'argo.group.filter.tags',
-            name: 'monitored',
-            value: '1'
-          },
-          {
-            context: 'argo.group.filter.tags.array',
-            name: 'info_ext_GLUE2EndpointImplementationName',
-            value: 'ARC-CE'
-          },
-          {
-            context: 'argo.endpoint.filter.tags.array',
-            name: 'info_ext_GLUE2EndpointID',
-            value: 'ce1.gridpp.ecdf.ed.ac.uk'
-          }
-        ],
-        topology_schema: {
-          group: {
-            type: 'NGI',
-            group: {
-              type: 'SITES'
-            }
-          }
-        }
-      })
+      expect(mockAddReport).toHaveBeenCalledWith(newReport4Sending)
     })
 
     await waitFor(() => {
@@ -3313,12 +5448,15 @@ describe('Tests for reports addview', () => {
     const metricProfile = screen.getAllByText(/select/i)[1]
     const aggregationProfile = screen.getAllByText(/select/i)[2]
     const operationsProfile = screen.getAllByText(/select/i)[3]
+    const thresholdsProfile = screen.getAllByText(/select/i)[4]
     const topologyType = screen.getAllByText(/select/i)[5]
 
     await selectEvent.select(groupField, 'ARGO')
+
     await selectEvent.select(metricProfile, 'OPS_MONITOR_RHEL7')
     await selectEvent.select(aggregationProfile, 'ops-mon-critical')
     await selectEvent.select(operationsProfile, 'egi_ops')
+    await selectEvent.select(thresholdsProfile, 'TEST_PROFILE')
 
     await selectEvent.select(topologyType, 'Sites')
 
@@ -3331,6 +5469,7 @@ describe('Tests for reports addview', () => {
     const selectTagValue = card_groups.getAllByText(/select/i)[1]
 
     await selectEvent.select(selectTagName, 'monitored')
+
     await selectEvent.select(selectTagValue, 'yes')
 
     fireEvent.click(card_groups.getByRole('button', { name: /add new extension/i }))
@@ -3339,6 +5478,7 @@ describe('Tests for reports addview', () => {
     const selectExtensionValue = card_groups.getAllByText(/select/i)[1]
 
     await selectEvent.select(selectExtensionName, 'GLUE2EndpointImplementationName')
+
     await selectEvent.select(selectExtensionValue, 'ARC-CE')
 
     fireEvent.click(card_endpoints.getByText(/add new extension/i))
@@ -3349,6 +5489,7 @@ describe('Tests for reports addview', () => {
     const endpointExtensionValue = card_endpoints.getAllByText(/select/i)[1]
 
     await selectEvent.select(endpointExtensionName, 'GLUE2EndpointID')
+
     await selectEvent.select(endpointExtensionValue, 'ce1.gridpp.ecdf.ed.ac.uk')
 
     fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '70' } });
@@ -3364,62 +5505,7 @@ describe('Tests for reports addview', () => {
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
     await waitFor(() => {
-      expect(mockAddReport).toHaveBeenCalledWith({
-        info: {
-          name: 'OPS-MONITOR',
-          description: 'A/R report for Operations services.'
-        },
-        thresholds: {
-          availability: 70,
-          reliability: 80,
-          uptime: 1.0,
-          unknown: 0.2,
-          downtime: 0.2
-        },
-        disabled: false,
-        profiles: [
-          {
-            id: 'il8aimoh-r2ov-05aq-z4l2-uko2moophi9s',
-            name: 'OPS_MONITOR_RHEL7',
-            type: 'metric'
-          },
-          {
-            id: 'ye3ioph5-1ryg-k4ea-e6eb-nei6zoupain2',
-            name: 'ops-mon-critical',
-            type: 'aggregation'
-          },
-          {
-            id: 'gahjohf1-xx39-e0c9-p0rj-choh6ahziz9e',
-            name: 'egi_ops',
-            type: 'operations'
-          }
-        ],
-        filter_tags: [
-          {
-            context: 'argo.group.filter.tags',
-            name: 'monitored',
-            value: '1'
-          },
-          {
-            context: 'argo.group.filter.tags.array',
-            name: 'info_ext_GLUE2EndpointImplementationName',
-            value: 'ARC-CE'
-          },
-          {
-            context: 'argo.endpoint.filter.tags.array',
-            name: 'info_ext_GLUE2EndpointID',
-            value: 'ce1.gridpp.ecdf.ed.ac.uk'
-          }
-        ],
-        topology_schema: {
-          group: {
-            type: 'NGI',
-            group: {
-              type: 'SITES'
-            }
-          }
-        }
-      })
+      expect(mockAddReport).toHaveBeenCalledWith(newReport4Sending)
     })
 
     await waitFor(() => {
@@ -3470,12 +5556,15 @@ describe('Tests for reports addview', () => {
     const metricProfile = screen.getAllByText(/select/i)[1]
     const aggregationProfile = screen.getAllByText(/select/i)[2]
     const operationsProfile = screen.getAllByText(/select/i)[3]
+    const thresholdsProfile = screen.getAllByText(/select/i)[4]
     const topologyType = screen.getAllByText(/select/i)[5]
 
     await selectEvent.select(groupField, 'ARGO')
+
     await selectEvent.select(metricProfile, 'OPS_MONITOR_RHEL7')
     await selectEvent.select(aggregationProfile, 'ops-mon-critical')
     await selectEvent.select(operationsProfile, 'egi_ops')
+    await selectEvent.select(thresholdsProfile, 'TEST_PROFILE')
 
     await selectEvent.select(topologyType, 'Sites')
 
@@ -3488,6 +5577,7 @@ describe('Tests for reports addview', () => {
     const selectTagValue = card_groups.getAllByText(/select/i)[1]
 
     await selectEvent.select(selectTagName, 'monitored')
+
     await selectEvent.select(selectTagValue, 'yes')
 
     fireEvent.click(card_groups.getByRole('button', { name: /add new extension/i }))
@@ -3496,6 +5586,7 @@ describe('Tests for reports addview', () => {
     const selectExtensionValue = card_groups.getAllByText(/select/i)[1]
 
     await selectEvent.select(selectExtensionName, 'GLUE2EndpointImplementationName')
+
     await selectEvent.select(selectExtensionValue, 'ARC-CE')
 
     fireEvent.click(card_endpoints.getByText(/add new extension/i))
@@ -3506,6 +5597,7 @@ describe('Tests for reports addview', () => {
     const endpointExtensionValue = card_endpoints.getAllByText(/select/i)[1]
 
     await selectEvent.select(endpointExtensionName, 'GLUE2EndpointID')
+
     await selectEvent.select(endpointExtensionValue, 'ce1.gridpp.ecdf.ed.ac.uk')
 
     fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '70' } });
@@ -3521,73 +5613,12 @@ describe('Tests for reports addview', () => {
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
     await waitFor(() => {
-      expect(mockAddReport).toHaveBeenCalledWith({
-        info: {
-          name: 'OPS-MONITOR',
-          description: 'A/R report for Operations services.'
-        },
-        thresholds: {
-          availability: 70,
-          reliability: 80,
-          uptime: 1.0,
-          unknown: 0.2,
-          downtime: 0.2
-        },
-        disabled: false,
-        profiles: [
-          {
-            id: 'il8aimoh-r2ov-05aq-z4l2-uko2moophi9s',
-            name: 'OPS_MONITOR_RHEL7',
-            type: 'metric'
-          },
-          {
-            id: 'ye3ioph5-1ryg-k4ea-e6eb-nei6zoupain2',
-            name: 'ops-mon-critical',
-            type: 'aggregation'
-          },
-          {
-            id: 'gahjohf1-xx39-e0c9-p0rj-choh6ahziz9e',
-            name: 'egi_ops',
-            type: 'operations'
-          }
-        ],
-        filter_tags: [
-          {
-            context: 'argo.group.filter.tags',
-            name: 'monitored',
-            value: '1'
-          },
-          {
-            context: 'argo.group.filter.tags.array',
-            name: 'info_ext_GLUE2EndpointImplementationName',
-            value: 'ARC-CE'
-          },
-          {
-            context: 'argo.endpoint.filter.tags.array',
-            name: 'info_ext_GLUE2EndpointID',
-            value: 'ce1.gridpp.ecdf.ed.ac.uk'
-          }
-        ],
-        topology_schema: {
-          group: {
-            type: 'NGI',
-            group: {
-              type: 'SITES'
-            }
-          }
-        }
-      })
+      expect(mockAddReport).toHaveBeenCalledWith(newReport4Sending)
     })
 
     await waitFor(() => {
       expect(mockAddObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/',
-        {
-          apiid: 'Ohs2duRu-tU6N-mF3Q-jV8F-Wiush8ieR7me',
-          name: 'OPS-MONITOR',
-          groupname: 'ARGO',
-          description: 'A/R report for Operations services.'
-        }
+        '/api/v2/internal/reports/', newBackendReport4Sending
       )
     })
 
@@ -3633,12 +5664,15 @@ describe('Tests for reports addview', () => {
     const metricProfile = screen.getAllByText(/select/i)[1]
     const aggregationProfile = screen.getAllByText(/select/i)[2]
     const operationsProfile = screen.getAllByText(/select/i)[3]
+    const thresholdsProfile = screen.getAllByText(/select/i)[4]
     const topologyType = screen.getAllByText(/select/i)[5]
 
     await selectEvent.select(groupField, 'ARGO')
+
     await selectEvent.select(metricProfile, 'OPS_MONITOR_RHEL7')
     await selectEvent.select(aggregationProfile, 'ops-mon-critical')
     await selectEvent.select(operationsProfile, 'egi_ops')
+    await selectEvent.select(thresholdsProfile, 'TEST_PROFILE')
 
     await selectEvent.select(topologyType, 'Sites')
 
@@ -3651,6 +5685,7 @@ describe('Tests for reports addview', () => {
     const selectTagValue = card_groups.getAllByText(/select/i)[1]
 
     await selectEvent.select(selectTagName, 'monitored')
+
     await selectEvent.select(selectTagValue, 'yes')
 
     fireEvent.click(card_groups.getByRole('button', { name: /add new extension/i }))
@@ -3659,6 +5694,7 @@ describe('Tests for reports addview', () => {
     const selectExtensionValue = card_groups.getAllByText(/select/i)[1]
 
     await selectEvent.select(selectExtensionName, 'GLUE2EndpointImplementationName')
+
     await selectEvent.select(selectExtensionValue, 'ARC-CE')
 
     fireEvent.click(card_endpoints.getByText(/add new extension/i))
@@ -3669,6 +5705,7 @@ describe('Tests for reports addview', () => {
     const endpointExtensionValue = card_endpoints.getAllByText(/select/i)[1]
 
     await selectEvent.select(endpointExtensionName, 'GLUE2EndpointID')
+
     await selectEvent.select(endpointExtensionValue, 'ce1.gridpp.ecdf.ed.ac.uk')
 
     fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '70' } });
@@ -3684,73 +5721,12 @@ describe('Tests for reports addview', () => {
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
     await waitFor(() => {
-      expect(mockAddReport).toHaveBeenCalledWith({
-        info: {
-          name: 'OPS-MONITOR',
-          description: 'A/R report for Operations services.'
-        },
-        thresholds: {
-          availability: 70,
-          reliability: 80,
-          uptime: 1.0,
-          unknown: 0.2,
-          downtime: 0.2
-        },
-        disabled: false,
-        profiles: [
-          {
-            id: 'il8aimoh-r2ov-05aq-z4l2-uko2moophi9s',
-            name: 'OPS_MONITOR_RHEL7',
-            type: 'metric'
-          },
-          {
-            id: 'ye3ioph5-1ryg-k4ea-e6eb-nei6zoupain2',
-            name: 'ops-mon-critical',
-            type: 'aggregation'
-          },
-          {
-            id: 'gahjohf1-xx39-e0c9-p0rj-choh6ahziz9e',
-            name: 'egi_ops',
-            type: 'operations'
-          }
-        ],
-        filter_tags: [
-          {
-            context: 'argo.group.filter.tags',
-            name: 'monitored',
-            value: '1'
-          },
-          {
-            context: 'argo.group.filter.tags.array',
-            name: 'info_ext_GLUE2EndpointImplementationName',
-            value: 'ARC-CE'
-          },
-          {
-            context: 'argo.endpoint.filter.tags.array',
-            name: 'info_ext_GLUE2EndpointID',
-            value: 'ce1.gridpp.ecdf.ed.ac.uk'
-          }
-        ],
-        topology_schema: {
-          group: {
-            type: 'NGI',
-            group: {
-              type: 'SITES'
-            }
-          }
-        }
-      })
+      expect(mockAddReport).toHaveBeenCalledWith(newReport4Sending)
     })
 
     await waitFor(() => {
       expect(mockAddObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/',
-        {
-          apiid: 'Ohs2duRu-tU6N-mF3Q-jV8F-Wiush8ieR7me',
-          name: 'OPS-MONITOR',
-          groupname: 'ARGO',
-          description: 'A/R report for Operations services.'
-        }
+        '/api/v2/internal/reports/', newBackendReport4Sending
       )
     })
 

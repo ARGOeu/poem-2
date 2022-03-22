@@ -37,7 +37,11 @@ import {
   fetchMetricProfiles,
   fetchOperationsProfiles,
   fetchUserDetails,
-  fetchReports
+  fetchBackendReports,
+  fetchAggregationProfiles,
+  fetchThresholdsProfiles,
+  fetchTopologyTags,
+  fetchTopologyGroups
 } from './QueryFunctions';
 
 
@@ -64,24 +68,6 @@ const fetchReport = async (webapi, name) => {
 }
 
 
-const fetchAggregationProfiles = async (webapi) => {
-  return await webapi.fetchAggregationProfiles();
-}
-
-const fetchThresholdsProfiles = async (webapi) => {
-  return await webapi.fetchThresholdsProfiles()
-}
-
-
-const fetchTopologyTags = async (webapi) => {
-  return await webapi.fetchReportsTopologyTags();
-}
-
-
-const fetchTopologyGroups = async (webapi) => {
-  return await webapi.fetchReportsTopologyGroups();
-}
-
 const getCrud = (props) => {
   return props.webapireports ? props.webapireports.crud : undefined;
 }
@@ -90,24 +76,12 @@ export const ReportsList = (props) => {
   const location = props.location;
   const publicView = props.publicView;
 
-  const queryClient = useQueryClient();
-
-  const webapi = new WebApi({
-    token: props.webapitoken,
-    reportsConfigurations: props.webapireports,
-    metricProfiles: props.webapimetric,
-    aggregationProfiles: props.webapiaggregation,
-    operationsProfiles: props.webapioperations,
-    thresholdsProfiles: props.webapithresholds
-  });
-  const crud = getCrud(props);
-
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
     'userdetails', () => fetchUserDetails(true)
   );
 
   const { data: reports, error: errorReports, isLoading: loadingReports } = useQuery(
-    [`${publicView ? 'public_' : ''}report`, 'backend'],  () => fetchReports(publicView),
+    [`${publicView ? 'public_' : ''}report`, 'backend'],  () => fetchBackendReports(publicView),
     { enabled: !publicView ? !!userDetails : true }
   );
 
@@ -124,31 +98,6 @@ export const ReportsList = (props) => {
         accessor: e =>
           <Link
             to={`/ui/${publicView ? 'public_' : ''}reports/${e.name}`}
-            onMouseEnter={ async () => {
-              await queryClient.prefetchQuery(
-                [`${publicView ? 'public_' : ''}report`, 'webapi', e.name], () => fetchReport(webapi, e.name)
-              );
-              await queryClient.prefetchQuery(
-                [`${publicView ? 'public_' : ''}metricprofile`, 'webapi'], () => fetchMetricProfiles(webapi)
-              );
-              await queryClient.prefetchQuery(
-                [`${publicView ? 'public_' : ''}aggregationprofile`, 'webapi'], () => fetchAggregationProfiles(webapi)
-              );
-              await queryClient.prefetchQuery(
-                `${publicView ? 'public_' : ''}operationsprofile`, () => fetchOperationsProfiles(webapi)
-              );
-              await queryClient.prefetchQuery(
-                [`${publicView ? 'public_' : ''}thresholdsprofile`, 'webapi'], () => fetchThresholdsProfiles(webapi)
-              )
-              if (crud) {
-                await queryClient.prefetchQuery(
-                  'topologytags', () => fetchTopologyTags(webapi)
-                );
-                await queryClient.prefetchQuery(
-                  'topologygroups', () => fetchTopologyGroups(webapi)
-                );
-              }
-            } }
           >
             {e.name}
           </Link>,
@@ -699,7 +648,7 @@ export const ReportsComponent = (props) => {
   )
 
   const { data: topologyGroups, error: topologyGroupsErrors, isLoading: loadingTopologyGroups } = useQuery(
-    'topologygroups', () => fetchTopologyGroups(webapi),
+    `${publicView ? 'public_' : ''}topologygroups`, () => fetchTopologyGroups(webapi),
     { enabled: (publicView || !!userDetails) && crud }
   );
 
@@ -709,30 +658,27 @@ export const ReportsComponent = (props) => {
   );
 
   const { data: webApiReport, error: errorWebApiReport, isLoading: loadingWebApiReport } = useQuery(
-    ['report', 'webapi', report_name], () => fetchReport(webapi, report_name),
-    {
-      enabled: publicView
-      || (!!userDetails && !addview),
-    }
+    [`${publicView ? 'public_' : ''}report`, 'webapi', report_name], () => fetchReport(webapi, report_name),
+    { enabled: publicView || (!!userDetails && !addview) }
   )
 
   const { data: listMetricProfiles, error: listMetricProfilesError, isLoading: listMetricProfilesLoading } = useQuery(
-    ['metricprofile', 'webapi'],  () => fetchMetricProfiles(webapi),
+    [`${publicView ? 'public_' : ''}metricprofile`, 'webapi'],  () => fetchMetricProfiles(webapi),
     { enabled: !publicView && !!userDetails }
   );
 
   const { data: listAggregationProfiles, error: listAggregationProfilesError, isLoading: listAggregationProfilesLoading } = useQuery(
-    ['aggregationprofile', 'webapi'], () => fetchAggregationProfiles(webapi),
+    [`${publicView ? 'public_' : ''}aggregationprofile`, 'webapi'], () => fetchAggregationProfiles(webapi),
     { enabled: !publicView && !!userDetails }
   );
 
   const { data: listOperationsProfiles, error: listOperationsProfilesError, isLoading: listOperationsProfilesLoading } = useQuery(
-    'operationsprofile', () => fetchOperationsProfiles(webapi),
+    `${publicView ? 'public_' : ''}operationsprofile`, () => fetchOperationsProfiles(webapi),
     { enabled: !publicView && !!userDetails }
   );
 
   const { data: listThresholdsProfiles, error: listThresholdsProfilesError, isLoading: listThresholdsProfilesLoading } = useQuery(
-    ['thresholdsprofile', 'webapi'], () => fetchThresholdsProfiles(webapi),
+    [`${publicView ? 'public_' : ''}thresholdsprofile`, 'webapi'], () => fetchThresholdsProfiles(webapi),
     { enabled: !publicView && !!userDetails }
   )
 
@@ -1029,7 +975,6 @@ export const ReportsComponent = (props) => {
               title: 'Deleted',
               callback: () => history.push('/ui/reports')
             });
-            queryClient.invalidateQueries('report');
           },
           onError: (error) => {
             NotifyError({
@@ -1046,6 +991,7 @@ export const ReportsComponent = (props) => {
         })
       }
     })
+    queryClient.invalidateQueries('report')
   }
 
   const doChange = (formValues) => {
@@ -1394,17 +1340,17 @@ export const ReportsComponent = (props) => {
           initialValues = {{
             id: webApiReport ? webApiReport.id : '',
             disabled: webApiReport ? webApiReport.disabled : false,
-            name: webApiReport ? webApiReport.info.name : '',
-            description: webApiReport ? webApiReport.info.description : '',
+            name: webApiReport ? webApiReport.info ? webApiReport.info.name : '' : '',
+            description: webApiReport ? webApiReport.info ? webApiReport.info.description : '' : '',
             metricProfile: metricProfile,
             aggregationProfile: aggregationProfile,
             operationsProfile: operationsProfile,
             thresholdsProfile: thresholdsProfile,
-            availabilityThreshold: webApiReport ? webApiReport.thresholds.availability : '',
-            reliabilityThreshold: webApiReport ? webApiReport.thresholds.reliability : '',
-            uptimeThreshold: webApiReport ? webApiReport.thresholds.uptime : '',
-            unknownThreshold: webApiReport ? webApiReport.thresholds.unknown : '',
-            downtimeThreshold: webApiReport ? webApiReport.thresholds.downtime : '',
+            availabilityThreshold: webApiReport ? webApiReport.thresholds ? webApiReport.thresholds.availability : '' : '',
+            reliabilityThreshold: webApiReport ? webApiReport.thresholds ? webApiReport.thresholds.reliability : '' : '',
+            uptimeThreshold: webApiReport ? webApiReport.thresholds ? webApiReport.thresholds.uptime : '' : '',
+            unknownThreshold: webApiReport ? webApiReport.thresholds ? webApiReport.thresholds.unknown : '' : '',
+            downtimeThreshold: webApiReport ? webApiReport.thresholds ? webApiReport.thresholds.downtime : '' : '',
             topologyType: whichTopologyType(webApiReport ? webApiReport.topology_schema : {}),
             groupname: backendReport ? backendReport.groupname : '',
             groupsTags: groupsTags,

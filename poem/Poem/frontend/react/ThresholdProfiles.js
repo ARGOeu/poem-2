@@ -42,7 +42,7 @@ import { useMutation, useQuery, useQueryClient } from 'react-query';
 import {
   fetchUserDetails,
   fetchAllMetrics,
-  fetchThresholdsProfiles,
+  fetchBackendThresholdsProfiles,
   fetchMetricProfiles
 } from './QueryFunctions';
 
@@ -1006,8 +1006,8 @@ export const ThresholdsProfilesList = (props) => {
   );
 
   const { data: thresholdsProfiles, error: errorThresholdsProfiles, status: statusThresholdsProfiles } = useQuery(
-    `${publicView ? 'public_' : ''}thresholdsprofile`,
-    () => fetchThresholdsProfiles(publicView),
+    [`${publicView ? 'public_' : ''}thresholdsprofile`, 'backend'],
+    () => fetchBackendThresholdsProfiles(publicView),
     {
       enabled: !publicView ? !!userDetails : true
     }

@@ -46,7 +46,11 @@ import ReactDiffViewer from 'react-diff-viewer';
 
 import "react-notifications/lib/notifications.css";
 import './AggregationProfiles.css';
-import { fetchAggregationProfiles, fetchMetricProfiles, fetchUserDetails } from './QueryFunctions';
+import {
+  fetchBackendAggregationProfiles,
+  fetchMetricProfiles,
+  fetchUserDetails
+} from './QueryFunctions';
 
 
 const AggregationProfilesChangeContext = React.createContext();
@@ -1201,7 +1205,7 @@ export const AggregationProfilesList = (props) => {
 
   const { data: aggregations, error: errorAggregations, isLoading: loadingAggregations } = useQuery(
     [`${publicView ? 'public_' : ''}aggregationprofile`, 'backend'],
-    () => fetchAggregationProfiles(publicView),
+    () => fetchBackendAggregationProfiles(publicView),
     { enabled: !publicView ? !!userDetails : true }
   );
 
