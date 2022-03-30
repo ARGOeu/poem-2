@@ -542,7 +542,7 @@ export const ListOfMetrics = (props) => {
                 <Badge color='dark'>none</Badge>
               :
                 row.value.map((tag, i) =>
-                  <Badge className={'me-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
+                  <Badge className={'me-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' | tag === 'eol' ? 'danger' : 'secondary'}>
                     {tag}
                   </Badge>
                 )
@@ -758,7 +758,7 @@ export const ListOfMetrics = (props) => {
 
 const styles = {
   multiValue: (base, state) => {
-    return (state.data.value === 'internal') ? { ...base, backgroundColor: '#d4edda' } : (state.data.value === 'deprecated') ? { ...base, backgroundColor: '#f8d7da' } : base;
+    return (state.data.value === 'internal') ? { ...base, backgroundColor: '#d4edda' } : (state.data.value === 'deprecated' | state.data.value === 'eol') ? { ...base, backgroundColor: '#f8d7da' } : base;
   },
 };
 
@@ -988,13 +988,13 @@ export const MetricForm =
                       :
                         (obj_label === 'metrictemplate' && !isHistory) ?
                           props.values.tags.map((tag, i) =>
-                            <Badge className={'me-1'} key={i} color={tag.value === 'internal' ? 'success' : tag.value === 'deprecated' ? 'danger' : 'secondary'}>
+                            <Badge className={'me-1'} key={i} color={tag.value === 'internal' ? 'success' : tag.value === 'deprecated' | tag.value === 'eol' ? 'danger' : 'secondary'}>
                               {tag.value}
                             </Badge>
                           )
                         :
                           props.values.tags.map((tag, i) =>
-                            <Badge className={'me-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' ? 'danger' : 'secondary'}>
+                            <Badge className={'me-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' | tag === 'eol' ? 'danger' : 'secondary'}>
                               {tag}
                             </Badge>
                           )
