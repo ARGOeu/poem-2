@@ -548,7 +548,7 @@ export const ListOfMetrics = (props) => {
                 )
             }
           </div>,
-        filterList: tags,
+        filterList: tags ? tags.map(tag => tag.name) : [],
         Filter: SelectColumnFilter
       }
     ];

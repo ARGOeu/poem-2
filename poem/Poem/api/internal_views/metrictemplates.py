@@ -16,6 +16,7 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django_tenants.utils import get_public_schema_name, schema_context
+from Poem.api import serializers
 
 from .utils import error_response
 
@@ -727,8 +728,8 @@ class ListMetricTags(APIView):
 
     def get(self, request):
         tags = admin_models.MetricTags.objects.all().order_by('name')
-        tags_list = [tag.name for tag in tags]
-        return Response(tags_list)
+        serializer = serializers.MetricTagsSerializer(tags, many=True)
+        return Response(serializer.data)
 
 
 class ListPublicMetricTags(ListMetricTags):

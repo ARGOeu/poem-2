@@ -297,7 +297,7 @@ export const MetricTemplateComponent = (props) => {
                 popoverOpen={popoverOpen}
                 togglePopOver={togglePopOver}
                 types={types}
-                alltags={tags.map(tag => new Object({ value: tag, label: tag }))}
+                alltags={tags.map(tag => new Object({ value: tag.name, label: tag.name }))}
                 probeversions={probeVersions}
                 metrictemplatelist={metricTemplates.map(met => met.name)}
               />

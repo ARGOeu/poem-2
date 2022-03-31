@@ -8321,10 +8321,10 @@ class MetricTagsTests(TenantTestCase):
         self.url = '/api/v2/internal/metrictags/'
         self.user = CustUser.objects.create_user(username='testuser')
 
-        admin_models.MetricTags.objects.create(name='internal')
-        admin_models.MetricTags.objects.create(name='deprecated')
-        admin_models.MetricTags.objects.create(name='test_tag1')
-        admin_models.MetricTags.objects.create(name='test_tag2')
+        self.tag1 = admin_models.MetricTags.objects.create(name='internal')
+        self.tag2 = admin_models.MetricTags.objects.create(name='deprecated')
+        self.tag3 = admin_models.MetricTags.objects.create(name='test_tag1')
+        self.tag4 = admin_models.MetricTags.objects.create(name='test_tag2')
 
     def test_get_metric_tags(self):
         request = self.factory.get(self.url)
@@ -8332,7 +8332,24 @@ class MetricTagsTests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(
             response.data,
-            ['deprecated', 'internal', 'test_tag1', 'test_tag2']
+            [
+                {
+                    "id": self.tag2.id,
+                    "name": "deprecated"
+                },
+                {
+                    "id": self.tag1.id,
+                    "name": "internal"
+                },
+                {
+                    "id": self.tag3.id,
+                    "name": "test_tag1"
+                },
+                {
+                    "id": self.tag4.id,
+                    "name": "test_tag2"
+                }
+            ]
         )
 
     def test_get_metric_tags_if_not_auth(self):

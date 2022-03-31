@@ -262,6 +262,21 @@ const mockMetricVersion = [
   }
 ]
 
+const mockMetricTags = [
+  {
+    id: 1,
+    name: "test_tag1"
+  },
+  {
+    id: 2,
+    name: "test_tag2"
+  },
+  {
+    id: 3,
+    name: "internal"
+  }
+]
+
 const mockChangeObject = jest.fn();
 const mockDeleteObject = jest.fn();
 
@@ -398,7 +413,7 @@ describe('Tests for metrics listview', () => {
               return Promise.resolve(['Active', 'Passive'])
 
             case '/api/v2/internal/metrictags':
-              return Promise.resolve(['test_tag1', 'test_tag2', 'internal'])
+              return Promise.resolve(mockMetricTags)
 
             case '/api/v2/internal/metric':
               return Promise.resolve(mockListOfMetrics)
@@ -410,7 +425,7 @@ describe('Tests for metrics listview', () => {
               return Promise.resolve(['Active', 'Passive'])
 
             case '/api/v2/internal/public_metrictags':
-              return Promise.resolve(['test_tag1', 'test_tag2', 'internal'])
+              return Promise.resolve(mockMetricTags)
           }
         },
         fetchResult: () => Promise.resolve(mockUserGroups),
@@ -554,7 +569,7 @@ describe('Tests for metrics listview', () => {
               return Promise.resolve(['Active', 'Passive'])
 
             case '/api/v2/internal/metrictags':
-              return Promise.resolve(['test_tag1', 'test_tag2', 'internal'])
+              return Promise.resolve(mockMetricTags)
 
             case '/api/v2/internal/metric':
               return Promise.resolve([])

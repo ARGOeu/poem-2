@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from Poem.poem import models
-from Poem.poem_super_admin.models import Probe
+from Poem.poem_super_admin.models import Probe, MetricTags
 from Poem.users.models import CustUser
 
 
@@ -58,3 +58,9 @@ class ThresholdsProfileSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('name', 'description', 'apiid', 'groupname',)
         model = models.ThresholdsProfiles
+
+
+class MetricTagsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MetricTags
+        fields = "__all__"
