@@ -703,7 +703,9 @@ class BulkDeleteMetricTemplates(APIView):
             )
 
 
-class ListPublicMetricTemplatesForProbeVersion(ListMetricTemplatesForProbeVersion):
+class ListPublicMetricTemplatesForProbeVersion(
+    ListMetricTemplatesForProbeVersion
+):
     authentication_classes = ()
     permission_classes = ()
 
@@ -732,6 +734,28 @@ class ListMetricTags(APIView):
         return Response(serializer.data)
 
 
+class ListMetricTemplates4Tag(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request, tag):
+        try:
+            admin_models.MetricTags.objects.get(name=tag)
+            mts = admin_models.MetricTemplate.objects.filter(tags__name=tag)
+
+            return Response(sorted([mt.name for mt in mts]))
+
+        except admin_models.MetricTags.DoesNotExist:
+            return Response(
+                {"detail": "Requested tag not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+
 class ListPublicMetricTags(ListMetricTags):
+    authentication_classes = ()
+    permission_classes = ()
+
+
+class ListMetricTemplates4Tag(ListMetricTemplates4Tag):
     authentication_classes = ()
     permission_classes = ()

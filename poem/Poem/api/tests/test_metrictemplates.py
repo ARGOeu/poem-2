@@ -8356,3 +8356,116 @@ class MetricTagsTests(TenantTestCase):
         request = self.factory.get(self.url)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
+class ListMetricTemplates4Tag(TenantTestCase):
+    def setUp(self) -> None:
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.ListMetricTemplates4Tag.as_view()
+        self.url = '/api/v2/internal/metrictags/'
+        self.user = CustUser.objects.create_user(username='testuser')
+
+        mtype1 = admin_models.MetricTemplateType.objects.create(name='Active')
+        mtype2 = admin_models.MetricTemplateType.objects.create(name='Passive')
+
+        tag = admin_models.OSTag.objects.create(name='CentOS 6')
+        repo = admin_models.YumRepo.objects.create(name='repo-1', tag=tag)
+        package1 = admin_models.Package.objects.create(
+            name='nagios-plugins-argo',
+            version='0.1.7'
+        )
+        package1.repos.add(repo)
+
+        probe1 = admin_models.Probe.objects.create(
+            name='ams-probe',
+            package=package1,
+            description='Probe is inspecting AMS service by trying to publish '
+                        'and consume randomly generated messages.',
+            comment='Initial version.',
+            repository='https://github.com/ARGOeu/nagios-plugins-argo',
+            docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
+                   'README.md'
+        )
+
+        probe2 = admin_models.Probe.objects.create(
+            name='ams-publisher-probe',
+            package=package1,
+            description='Probe is inspecting AMS publisher running on Nagios '
+                        'monitoring instances.',
+            comment='Initial version.',
+            repository='https://github.com/ARGOeu/nagios-plugins-argo',
+            docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
+                   'README.md'
+        )
+
+        self.probeversion1 = admin_models.ProbeHistory.objects.create(
+            object_id=probe1,
+            name=probe1.name,
+            package=probe1.package,
+            description=probe1.description,
+            comment=probe1.comment,
+            repository=probe1.repository,
+            docurl=probe1.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='Initial version.',
+            version_user=self.user.username
+        )
+
+        self.probeversion2 = admin_models.ProbeHistory.objects.create(
+            object_id=probe2,
+            name=probe2.name,
+            package=probe2.package,
+            description=probe2.description,
+            comment=probe2.comment,
+            repository=probe2.repository,
+            docurl=probe2.docurl,
+            date_created=datetime.datetime.now(),
+            version_comment='Initial version.',
+            version_user=self.user.username
+        )
+
+        metrictag1 = admin_models.MetricTags.objects.create(name='test_tag1')
+        metrictag2 = admin_models.MetricTags.objects.create(name='test_tag2')
+
+        mt1 = admin_models.MetricTemplate.objects.create(
+            name='argo.AMS-Check',
+            mtype=mtype1,
+            probekey=self.probeversion1,
+            probeexecutable='["ams-probe"]',
+            config='["maxCheckAttempts 3", "timeout 60",'
+                   ' "path /usr/libexec/argo-monitoring/probes/argo",'
+                   ' "interval 5", "retryInterval 3"]',
+            attribute='["argo.ams_TOKEN --token"]',
+            flags='["OBSESS 1"]',
+            parameter='["--project EGI"]'
+        )
+        mt1.tags.add(metrictag1, metrictag2)
+
+        mt2 = admin_models.MetricTemplate.objects.create(
+            name='org.apel.APEL-Pub',
+            flags='["OBSESS 1", "PASSIVE 1"]',
+            mtype=mtype2,
+        )
+        mt2.tags.add(metrictag2)
+
+        admin_models.MetricTemplate.objects.create(
+            name='test-metric',
+            mtype=mtype1,
+            probekey=self.probeversion1,
+            probeexecutable='["test-metric"]',
+            config='["maxCheckAttempts 3", "timeout 60",'
+                   ' "path /usr/libexec/argo-monitoring/probes/argo",'
+                   ' "interval 5", "retryInterval 3"]',
+            attribute='["argo.ams_TOKEN --token"]',
+            flags='["OBSESS 1"]',
+            parameter='["--project EGI"]'
+        )
+
+    def test_get_metrics4tag(self):
+        request = self.factory.get(self.url + "test_tag2")
+        force_authenticate(request, user=self.user)
+        response = self.view(request, "test_tag2")
+        self.assertEqual(
+            response.data,
+            ["argo.AMS-Check", "org.apel.APEL-Pub"]
+        )
