@@ -175,8 +175,12 @@ class ListPackagesAPIViewTests(TenantTestCase):
             request = self.factory.get(self.url)
             force_authenticate(request, user=self.user)
             response = self.view(request)
+            data = response.data
+            for item in data:
+                item["repos"] = sorted(item["repos"])
+
             self.assertEqual(
-                response.data,
+                data,
                 [
                     {
                         'id': self.package1.id,
