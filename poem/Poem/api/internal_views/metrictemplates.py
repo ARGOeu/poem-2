@@ -728,10 +728,23 @@ class ListPublicMetricTemplateTypes(ListMetricTemplateTypes):
 class ListMetricTags(APIView):
     authentication_classes = (SessionAuthentication,)
 
-    def get(self, request):
-        tags = admin_models.MetricTags.objects.all().order_by('name')
-        serializer = serializers.MetricTagsSerializer(tags, many=True)
-        return Response(serializer.data)
+    def get(self, request, name=None):
+        if name:
+            try:
+                tag = admin_models.MetricTags.objects.get(name=name)
+                serializer = serializers.MetricTagsSerializer(tag)
+                return Response(serializer.data)
+
+            except admin_models.MetricTags.DoesNotExist:
+                return Response(
+                    {"detail": "Requested tag not found."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+        else:
+            tags = admin_models.MetricTags.objects.all().order_by('name')
+            serializer = serializers.MetricTagsSerializer(tags, many=True)
+            return Response(serializer.data)
 
 
 class ListMetricTemplates4Tag(APIView):

@@ -8357,6 +8357,25 @@ class MetricTagsTests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_get_metric_tag_by_name(self):
+        request = self.factory.get(self.url + "internal")
+        force_authenticate(request, user=self.user)
+        response = self.view(request, "internal")
+        self.assertEqual(
+            response.data,
+            {
+                "id": self.tag1.id,
+                "name": "internal"
+            }
+        )
+
+    def test_get_metric_tag_by_nonexisting_name(self):
+        request = self.factory.get(self.url + "nonexisting")
+        force_authenticate(request, user=self.user)
+        response = self.view(request, "nonexisting")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data["detail"], "Requested tag not found.")
+
 
 class ListMetricTemplates4Tag(TenantTestCase):
     def setUp(self) -> None:
