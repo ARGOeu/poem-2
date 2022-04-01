@@ -30,7 +30,7 @@ export const MetricsTagsList = (props) => {
       Header: "Name",
       accessor: "name",
       Cell: row =>
-        <Link to={`/ui/metrictags/${row.value}`}>{row.value}</Link>,
+        <Link to={`/ui/${publicView ? "public_" : ""}metrictags/${row.value}`}>{row.value}</Link>,
       column_width: "95%",
       Filter: DefaultColumnFilter
     }
@@ -48,6 +48,7 @@ export const MetricsTagsList = (props) => {
         resourcename="metric tag"
         location={location}
         listview={true}
+        addnew={!publicView}
       >
         <BaseArgoTable
           data={tags}

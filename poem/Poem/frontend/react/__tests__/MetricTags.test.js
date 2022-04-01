@@ -49,21 +49,35 @@ const mockListTags = [
 ]
 
 
-function renderListView() {
-  const route = "/ui/metrictags"
+function renderListView(publicView) {
+  const route = `/ui/${publicView ? "public_" : ""}metrictags`
   const history = createMemoryHistory({ initialEntries: [route] })
 
-  return {
-    ...render(
-      <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            render={ props => <MetricsTagsList {...props} /> }
-          />
-        </Router>
-      </QueryClientProvider>
-    )
-  }
+  if (publicView)
+    return {
+      ...render(
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              render={ props => <MetricsTagsList {...props} publicView={true} /> }
+            />
+          </Router>
+        </QueryClientProvider>
+      )
+    }
+
+  else
+    return {
+      ...render(
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              render={ props => <MetricsTagsList {...props} /> }
+            />
+          </Router>
+        </QueryClientProvider>
+      )
+    }
 }
 
 
@@ -100,5 +114,35 @@ describe("Test list of metric tags", () => {
     expect(screen.getByRole("link", { name: /eol/i }).closest("a")).toHaveAttribute("href", "/ui/metrictags/eol")
     expect(screen.getByRole("link", { name: /internal/i }).closest("a")).toHaveAttribute("href", "/ui/metrictags/internal")
     expect(screen.getByRole("link", { name: /test/i }).closest("a")).toHaveAttribute("href", "/ui/metrictags/test")
+
+    expect(screen.getByRole("button", { name: /add/i })).toBeInTheDocument()
+  })
+
+  test("Test that public page renders properly", async () => {
+    renderListView(true)
+
+    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /metric tag/i }).textContent).toBe("Select metric tag for details")
+    })
+
+    expect(screen.getAllByRole("columnheader")).toHaveLength(4)
+    expect(screen.getByRole("columnheader", { name: "#" })).toBeInTheDocument()
+    expect(screen.getByRole("columnheader", { name: /name/i })).toBeInTheDocument()
+    expect(screen.getAllByPlaceholderText("Search")).toHaveLength(1)
+
+    expect(screen.getAllByRole("row")).toHaveLength(22)
+    expect(screen.getByRole("row", { name: /deprecated/i }).textContent).toBe("1deprecated")
+    expect(screen.getByRole("row", { name: /eol/i }).textContent).toBe("2eol")
+    expect(screen.getByRole("row", { name: /internal/ }).textContent).toBe("3internal")
+    expect(screen.getByRole("row", { name: /test/i }).textContent).toBe("4test")
+
+    expect(screen.getByRole("link", { name: /deprecated/i }).closest("a")).toHaveAttribute("href", "/ui/public_metrictags/deprecated")
+    expect(screen.getByRole("link", { name: /eol/i }).closest("a")).toHaveAttribute("href", "/ui/public_metrictags/eol")
+    expect(screen.getByRole("link", { name: /internal/i }).closest("a")).toHaveAttribute("href", "/ui/public_metrictags/internal")
+    expect(screen.getByRole("link", { name: /test/i }).closest("a")).toHaveAttribute("href", "/ui/public_metrictags/test")
+
+    expect(screen.queryByRole("button", { name: /add/i })).not.toBeInTheDocument()
   })
 })

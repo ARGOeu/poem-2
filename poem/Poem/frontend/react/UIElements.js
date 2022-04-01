@@ -100,6 +100,7 @@ link_title.set('groupofthresholdsprofiles', 'Groups of thresholds profiles');
 link_title.set('metricprofiles', 'Metric profiles');
 link_title.set('metrics', 'Metrics');
 link_title.set("metrictags", "Metric tags")
+link_title.set("public_metrictags", "Public metric tags")
 link_title.set('metrictemplates', 'Metric templates');
 link_title.set('operationsprofiles', 'Operations profiles');
 link_title.set('packages', 'Packages');

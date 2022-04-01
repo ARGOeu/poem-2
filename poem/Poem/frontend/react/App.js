@@ -1108,6 +1108,14 @@ const App = () => {
                 }
               />
               <Route
+                exact path="/ui/public_metrictags"
+                render={ props =>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
+                    <MetricsTagsList publicView={true} {...props} />
+                  </PublicPage>
+                }
+              />
+              <Route
                 exact path="/ui/public_metrictemplates"
                 render={props =>
                   <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
