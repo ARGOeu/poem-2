@@ -1,15 +1,10 @@
-from configparser import NoOptionError, NoSectionError
-
-from Poem.helpers.metrics_helpers import import_metrics
-from Poem.poem.management.commands.poem_superuser import tenant_superuser
-from Poem.poem_super_admin import models as admin_models
-from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
-from django.db import connection
+import json
 
+from django_tenants.utils import schema_context, get_public_schema_name
 
 class Command(BaseCommand):
-    help = """Import set of internal metrics to tenant."""
+    help = """Import set of service names and descriptions."""
 
     def __init__(self):
         super().__init__()
@@ -19,4 +14,6 @@ class Command(BaseCommand):
         parser.add_argument('--json', dest='json', help='JSON file with services data')
 
     def handle(self, *args, **kwargs):
-        pass
+        with open(kwargs['json']) as jsonfile:
+            raw = jsonfile.read()
+            services = json.loads(raw)
