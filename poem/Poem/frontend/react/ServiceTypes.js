@@ -32,13 +32,13 @@ export const ServiceTypesList = (props) => {
       {
         Header: <div><Icon i="servicetypes"/> Service type</div>,
         accessor: 'name',
-        column_width: '20%',
+        column_width: '25%',
         Filter: DefaultColumnFilter
       },
       {
         Header: 'Description',
         accessor: 'description',
-        column_width: '78%',
+        column_width: '73%',
         Filter: DefaultColumnFilter
       }
     ], []
