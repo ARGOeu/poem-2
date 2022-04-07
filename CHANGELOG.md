@@ -1,5 +1,22 @@
 # Changelog
 
+## [3.4.1] - 2022-04-07
+
+### Added
+
+* ARGO-3499 Poem: Warn user if service exists in metric profile but not in aggregation profile
+* ARGO-3618 Token protected API view for metric templates on SuperPOEM
+
+### Changed
+
+* ARGO-3672 Color "eol" tag red
+* ARGO-3565 Improve fetching and caching data in reports page
+
+### Fixed
+
+* ARGO-3670 Error saving tags for passive metrics
+* ARGO-3667 Resolve security issues
+
 ## [3.4.0] - 2022-02-10
 
 ### Added
