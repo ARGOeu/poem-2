@@ -40,6 +40,13 @@ def mock_function(profile):
 
 @factory.django.mute_signals(post_save)
 def mock_db_for_metrics_tests():
+    active_template = admin_models.MetricTemplateType.objects.create(
+        name='Active'
+    )
+    passive_template = admin_models.MetricTemplateType.objects.create(
+        name='Passive'
+    )
+
     active = poem_models.MetricType.objects.create(name='Active')
     passive = poem_models.MetricType.objects.create(name='Passive')
 
@@ -138,6 +145,24 @@ def mock_db_for_metrics_tests():
     mtag3 = admin_models.MetricTags.objects.create(name='internal')
     admin_models.MetricTags.objects.create(name='empty_tag')
 
+    mt1 = admin_models.MetricTemplate.objects.create(
+        name='test.AMS-Check',
+        mtype=active_template,
+        probekey=probekey1,
+        parent='["org.nagios.CDMI-TCP"]',
+        probeexecutable='["ams-probe"]',
+        config='["maxCheckAttempts 3", "timeout 60", '
+               '"path /usr/libexec/argo-monitoring/probes/argo", "interval 5", '
+               '"retryInterval 3"]',
+        attribute='["argo.ams_TOKEN --token"]',
+        dependency='["argo.AMS-Check 1"]',
+        flags='["OBSESS 1"]',
+        files='["UCC_CONFIG UCC_CONFIG"]',
+        parameter='["--project EGI"]',
+        fileparameter='["FILE_SIZE_KBS 1000"]'
+    )
+    mt1.tags.add(mtag1, mtag2)
+
     metric1 = poem_models.Metric.objects.create(
         name='test.AMS-Check',
         mtype=active,
@@ -157,6 +182,20 @@ def mock_db_for_metrics_tests():
     )
     metric1.tags.add(mtag1, mtag2)
 
+    mt2 = admin_models.MetricTemplate.objects.create(
+        name='argo.AMSPublisher-Check',
+        mtype=active_template,
+        probekey=probekey2,
+        probeexecutable='["ams-publisher-probe"]',
+        config='["maxCheckAttempts 1", "timeout 120", '
+               '"path /usr/libexec/argo-monitoring/probes/argo", '
+               '"interval 180", "retryInterval 1"]',
+        parameter='["-s /var/run/argo-nagios-ams-publisher/sock", '
+                  '"-q w:metrics+g:published180"]',
+        flags='["NOHOSTNAME 1", "NOTIMEOUT 1", "NOPUBLISH 1"]'
+    )
+    mt2.tags.add(mtag1, mtag3)
+
     metric2 = poem_models.Metric.objects.create(
         name='argo.AMSPublisher-Check',
         mtype=active,
@@ -172,6 +211,19 @@ def mock_db_for_metrics_tests():
     )
     metric2.tags.add(mtag1, mtag3)
 
+    mt3 = admin_models.MetricTemplate.objects.create(
+        name='hr.srce.CertLifetime-Local',
+        mtype=active_template,
+        probekey=probekey3,
+        probeexecutable='["CertLifetime-probe"]',
+        config='["maxCheckAttempts 2", "timeout 60", '
+               '"path /usr/libexec/argo-monitoring/probes/cert", '
+               '"interval 240", "retryInterval 30"]',
+        attribute='["NAGIOS_HOST_CERT -f"]',
+        flags='["NOHOSTNAME 1", "NOPUBLISH 1"]'
+    )
+    mt3.tags.add(mtag3)
+
     metric3 = poem_models.Metric.objects.create(
         name='hr.srce.CertLifetime-Local',
         mtype=active,
@@ -186,11 +238,22 @@ def mock_db_for_metrics_tests():
     )
     metric3.tags.add(mtag3)
 
+    admin_models.MetricTemplate.objects.create(
+        name='org.apel.APEL-Pub',
+        mtype=passive_template,
+        flags='["OBSESS 1", "PASSIVE 1"]'
+    )
+
     poem_models.Metric.objects.create(
         name='org.apel.APEL-Pub',
         mtype=passive,
         group=group,
         flags='["OBSESS 1", "PASSIVE 1"]'
+    )
+
+    admin_models.MetricTemplate.objects.create(
+        name='test.EMPTY-metric',
+        mtype=active_template
     )
 
     poem_models.Metric.objects.create(
@@ -1130,3 +1193,180 @@ class ListReposAPIViewTests(TenantTestCase):
                 'missing_packages': ['nagios-promoo (1.4.0)']
             }
         )
+
+
+class ListMetricTemplateAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.token = create_credentials()
+        self.view = views.ListMetrics.as_view()
+        self.factory = TenantRequestFactory(self.tenant)
+        self.url = '/api/v2/metrics'
+
+        mock_db_for_metrics_tests()
+
+    def test_list_metric_templates_if_wrong_token(self):
+        request = self.factory.get(
+            self.url, **{'HTTP_X_API_KEY': 'wrong_token'}
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_list_metric_templates(self):
+        request = self.factory.get(self.url, **{'HTTP_X_API_KEY': self.token})
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    'argo.AMSPublisher-Check': {
+                        'probe': 'ams-publisher-probe',
+                        'tags': ['internal', 'test_tag1'],
+                        'config': {
+                            'maxCheckAttempts': '1',
+                            'timeout': '120',
+                            'path': '/usr/libexec/argo-monitoring/probes/argo',
+                            'interval': '180',
+                            'retryInterval': '1'
+                        },
+                        'flags': {
+                            'NOHOSTNAME': '1',
+                            'NOTIMEOUT': '1',
+                            'NOPUBLISH': '1'
+                        },
+                        'dependency': {},
+                        'attribute': {},
+                        'parameter': {
+                            '-s': '/var/run/argo-nagios-ams-publisher/sock',
+                            '-q': 'w:metrics+g:published180'
+                        },
+                        'file_parameter': {},
+                        'file_attribute': {},
+                        'parent': '',
+                        'docurl':
+                            'https://github.com/ARGOeu/nagios-plugins-argo'
+                            '/blob/master/README.md'
+                    }
+                },
+                {
+                    'hr.srce.CertLifetime-Local': {
+                        'probe': 'CertLifetime-probe',
+                        'tags': ['internal'],
+                        'config': {
+                            'maxCheckAttempts': '2',
+                            'timeout': '60',
+                            'path': '/usr/libexec/argo-monitoring/probes/cert',
+                            'interval': '240',
+                            'retryInterval': '30'
+                        },
+                        'flags': {
+                            'NOHOSTNAME': '1',
+                            'NOPUBLISH': '1'
+                        },
+                        'dependency': {},
+                        'attribute': {
+                            'NAGIOS_HOST_CERT': '-f'
+                        },
+                        'parameter': {},
+                        'file_parameter': {},
+                        'file_attribute': {},
+                        'parent': '',
+                        'docurl':
+                            'https://wiki.egi.eu/wiki/ROC_SAM_Tests#hr.srce.'
+                            'CREAMCE-CertLifetime'
+                    }
+                },
+                {
+                    'org.apel.APEL-Pub': {
+                        'probe': '',
+                        'tags': [],
+                        'config': {},
+                        'flags': {
+                            'OBSESS': '1',
+                            'PASSIVE': '1'
+                        },
+                        'dependency': {},
+                        'attribute': {},
+                        'parameter': {},
+                        'file_parameter': {},
+                        'file_attribute': {},
+                        'parent': '',
+                        'docurl': ''
+                    }
+                },
+                {
+                    'test.AMS-Check': {
+                        'probe': 'ams-probe',
+                        'tags': ['test_tag1', 'test_tag2'],
+                        'config': {
+                            'maxCheckAttempts': '3',
+                            'timeout': '60',
+                            'path': '/usr/libexec/argo-monitoring/probes/argo',
+                            'interval': '5',
+                            'retryInterval': '3'
+                        },
+                        'flags': {
+                            'OBSESS': '1'
+                        },
+                        'dependency': {
+                            'argo.AMS-Check': '1'
+                        },
+                        'attribute': {
+                            'argo.ams_TOKEN': '--token'
+                        },
+                        'parameter': {
+                            '--project': 'EGI'
+                        },
+                        'file_parameter': {
+                            'FILE_SIZE_KBS': '1000'
+                        },
+                        'file_attribute': {
+                            'UCC_CONFIG': 'UCC_CONFIG'
+                        },
+                        'parent': 'org.nagios.CDMI-TCP',
+                        'docurl':
+                            'https://github.com/ARGOeu/nagios-plugins-argo'
+                            '/blob/master/README.md'
+                    }
+                },
+                {
+                    'test.EMPTY-metric': {
+                        'probe': '',
+                        'tags': [],
+                        'config': {},
+                        'flags': {},
+                        'dependency': {},
+                        'attribute': {},
+                        'parameter': {},
+                        'file_parameter': {},
+                        'file_attribute': {},
+                        'parent': '',
+                        'docurl': ''
+                    }
+                }
+            ]
+        )
+
+    def test_get_internal_metric_templates(self):
+        request = self.factory.get(
+            self.url + '/internal', **{'HTTP_X_API_KEY': self.token}
+        )
+        response = self.view(request, 'internal')
+        self.assertEqual(
+            response.data,
+            ['argo.AMSPublisher-Check', 'hr.srce.CertLifetime-Local']
+        )
+
+    def test_get_metric_templates_if_no_tagged_metrics(self):
+        request = self.factory.get(
+            self.url + '/empty_tag', **{'HTTP_X_API_KEY': self.token}
+        )
+        response = self.view(request, 'empty_tag')
+        self.assertEqual(response.data, [])
+
+    def test_get_metric_templates_if_nonexistent_tag(self):
+        request = self.factory.get(
+            self.url + '/nonexistent', **{'HTTP_X_API_KEY': self.token}
+        )
+        response = self.view(request, 'nonexistent')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data, {'detail': 'Requested tag not found.'})

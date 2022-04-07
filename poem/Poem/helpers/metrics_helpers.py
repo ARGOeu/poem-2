@@ -266,10 +266,18 @@ def update_metrics(metrictemplate, name, probekey, user=''):
 
     msgs = []
     for schema in schemas:
-        msg = update_metric_in_schema(
-            mt_id=metrictemplate.id, name=name, pk_id=probekey.id,
-            schema=schema, user=user
-        )
+        if probekey:
+            msg = update_metric_in_schema(
+                mt_id=metrictemplate.id, name=name, pk_id=probekey.id,
+                schema=schema, user=user
+            )
+
+        else:
+            msg = update_metric_in_schema(
+                mt_id=metrictemplate.id, name=name, pk_id=None,
+                schema=schema, user=user
+            )
+
         if msg:
             msgs.append(msg)
 

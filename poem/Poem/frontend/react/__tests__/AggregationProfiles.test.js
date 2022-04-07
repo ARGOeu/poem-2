@@ -210,6 +210,81 @@ const mockWebApiMetricProfiles = [
         ]
       },
       {
+        service: "Site-BDII",
+        metrics: [
+          "org.bdii.Entries",
+          "org.bdii.Freshness",
+          "org.nagios.BDII-Check"
+        ]
+      },
+      {
+        service: "SRM",
+        metrics: [
+          "eu.egi.SRM-CertValidity",
+          "eu.egi.SRM-GetSURLs",
+          "eu.egi.SRM-VODel",
+          "eu.egi.SRM-VOGet",
+          "eu.egi.SRM-VOGetTurl",
+          "eu.egi.SRM-VOLs",
+          "eu.egi.SRM-VOLsDir",
+          "eu.egi.SRM-VOPut"
+        ]
+      },
+    ]
+  },
+  {
+    id: "Eitaew8t-gSk6-nW8Q-Z3aF-quo0Saevooze",
+    date: "2022-02-07",
+    name: "ARGO_MON_TEST",
+    description: "Profile for testing",
+    services: [
+      {
+        service: "ARC-CE",
+        metrics: [
+          "org.nordugrid.ARC-CE-ARIS",
+          "org.nordugrid.ARC-CE-IGTF",
+          "org.nordugrid.ARC-CE-result",
+          "org.nordugrid.ARC-CE-srm"
+        ]
+      },
+      {
+        service: "GRAM5",
+        metrics: [
+          "eu.egi.GRAM-CertValidity",
+          "hr.srce.GRAM-Auth",
+          "hr.srce.GRAM-Command"
+        ]
+      },
+      {
+        service: "org.opensciencegrid.htcondorce",
+        metrics: [
+          "ch.cern.HTCondorCE-JobState",
+          "ch.cern.HTCondorCE-JobSubmit"
+        ]
+      },
+      {
+        service: "org.openstack.nova",
+        metrics: [
+          "eu.egi.cloud.OpenStack-VM",
+          "org.nagios.Keystone-TCP"
+        ]
+      },
+      {
+        service: "QCG.Computing",
+        metrics: [
+          "eu.egi.QCG-Computing-CertValidity",
+          "pl.plgrid.QCG-Computing"
+        ]
+      },
+      {
+        service: "Site-BDII",
+        metrics: [
+          "org.bdii.Entries",
+          "org.bdii.Freshness",
+          "org.nagios.BDII-Check"
+        ]
+      },
+      {
         service: "SRM",
         metrics: [
           "eu.egi.SRM-CertValidity",
@@ -556,7 +631,7 @@ describe('Tests for aggregation profiles changeview', () => {
     })
   })
 
-  test('Test that page renders properly', async () => {
+  test('Test that page renders properly without alerts', async () => {
     renderChangeView();
 
     await waitFor(() => {
@@ -662,7 +737,33 @@ describe('Tests for aggregation profiles changeview', () => {
     expect(screen.getByRole('button', { name: 'Add new group' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /json/i })).toBeInTheDocument();
 
-    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument();
+  })
+
+  test('Test alert if metric profile is missing service types', async () => {
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change aggregation profile');
+    })
+
+    await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'FEDCLOUD')
+
+    expect(screen.getByTestId('alert-missing')).toBeInTheDocument();
+    expect(screen.queryByTestId('alert-extra')).not.toBeInTheDocument()
+  })
+
+  test('Test alert if metric profile has extra service types', async () => {
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change aggregation profile')
+    })
+
+    await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'ARGO_MON_TEST')
+
+    expect(screen.queryByTestId('alert-missing')).not.toBeInTheDocument()
+    expect(screen.getByTestId('alert-extra')).toBeInTheDocument()
   })
 
   test('Test that public page renders properly', async () => {
@@ -757,7 +858,7 @@ describe('Tests for aggregation profiles changeview', () => {
     expect(screen.queryByRole('button', { name: 'Add new group' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /json/i })).not.toBeInTheDocument();
 
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument();
   })
 
   test('Test import json successfully', async () => {

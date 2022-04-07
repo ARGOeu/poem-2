@@ -3256,6 +3256,27 @@ class UpdateMetricsTests(TenantTestCase):
             )
         ], any_order=True)
 
+    @patch("Poem.helpers.metrics_helpers.update_metric_in_schema")
+    def test_update_all_passive_metrics_on_metrictemplate_change(
+            self, mock_update
+    ):
+        mock_update.side_effect = mocked_func
+        metrictemplate = admin_models.MetricTemplate.objects.get(
+            name="org.apel.APEL-Pub"
+        )
+        update_metrics(metrictemplate, "org.apel.APEL-Pub", None)
+        self.assertEqual(mock_update.call_count, 2)
+        mock_update.assert_has_calls([
+            call(
+                mt_id=metrictemplate.id, name="org.apel.APEL-Pub",
+                pk_id=None, schema="test", user=""
+            ),
+            call(
+                mt_id=metrictemplate.id, name="org.apel.APEL-Pub",
+                pk_id=None, schema="test2", user=""
+            )
+        ], any_order=True)
+
 
 class MetricsInProfilesTests(TenantTestCase):
     def setUp(self):

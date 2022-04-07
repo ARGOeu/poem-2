@@ -19,10 +19,14 @@ class NotFound(APIException):
         self.code = code if code else detail
 
 
-def build_metricconfigs():
+def build_metricconfigs(templates=False):
     ret = []
 
-    metricsobjs = models.Metric.objects.all().order_by('name')
+    if templates:
+        metricsobjs = admin_models.MetricTemplate.objects.all().order_by('name')
+
+    else:
+        metricsobjs = models.Metric.objects.all().order_by('name')
 
     for m in metricsobjs:
         mdict = dict()
@@ -32,7 +36,10 @@ def build_metricconfigs():
         parent = one_value_inline(m.parent)
         probeexecutable = one_value_inline(m.probeexecutable)
         attribute = two_value_inline_dict(m.attribute)
-        dependancy = two_value_inline_dict(m.dependancy)
+        if templates:
+            dependency = two_value_inline_dict(m.dependency)
+        else:
+            dependency = two_value_inline_dict(m.dependancy)
         flags = two_value_inline_dict(m.flags)
         files = two_value_inline_dict(m.files)
         parameter = two_value_inline_dict(m.parameter)
@@ -57,8 +64,8 @@ def build_metricconfigs():
         else:
             mdict[m.name].update({'flags': dict()})
 
-        if dependancy:
-            mdict[m.name].update({'dependency': dependancy})
+        if dependency:
+            mdict[m.name].update({'dependency': dependency})
         else:
             mdict[m.name].update({'dependency': dict()})
 
@@ -244,3 +251,24 @@ class ListRepos(APIView):
             'data': data,
             'missing_packages': sorted(missing_packages)
         })
+
+
+class ListMetricTemplates(APIView):
+    permission_classes = (MyHasAPIKey,)
+
+    def get(self, request, tag=None):
+        if tag:
+            try:
+                admin_models.MetricTags.objects.get(name=tag)
+                mts = admin_models.MetricTemplate.objects.filter(tags__name=tag)
+
+                return Response(sorted([mt.name for mt in mts]))
+
+            except admin_models.MetricTags.DoesNotExist:
+                return Response(
+                    {"detail": "Requested tag not found."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+        else:
+            return Response(build_metricconfigs(templates=True))
