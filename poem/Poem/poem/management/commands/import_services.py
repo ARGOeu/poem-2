@@ -3,6 +3,7 @@ import os
 
 from django.core.management.base import BaseCommand, CommandError
 from django_tenants.utils import schema_context
+from django.db import DataError
 
 from Poem.poem import models
 from Poem.tenants.models import Tenant
@@ -41,7 +42,6 @@ class Command(BaseCommand):
                     sd = models.ServiceFlavour(name=service['name'], description=service['description'])
                     bulk.append(sd)
                 models.ServiceFlavour.objects.bulk_create(bulk)
-                models.ServiceFlavour.objects.save()
 
-            except Tenant.DoesNotExist as exc:
+            except (Tenant.DoesNotExist, DataError) as exc:
                 raise CommandError(repr(exc))
