@@ -1,9 +1,12 @@
-from django.core.management.base import BaseCommand, CommandError
 import json
 import os
+
+from django.core.management.base import BaseCommand, CommandError
+from django_tenants.utils import schema_context
+
+from Poem.poem import models
 from Poem.tenants.models import Tenant
 
-from django_tenants.utils import schema_context, get_public_schema_name
 
 class Command(BaseCommand):
     help = """Import set of service names and descriptions."""
@@ -16,6 +19,8 @@ class Command(BaseCommand):
         parser.add_argument('--json', dest='json', help='JSON file with services data')
 
     def handle(self, *args, **kwargs):
+        services = list()
+
         if not kwargs.get('json', False) or not kwargs.get('schemaname', False):
             raise CommandError("Both arguments should be specified")
 
@@ -23,11 +28,20 @@ class Command(BaseCommand):
             with open(os.path.expandvars(kwargs['json'])) as jsonfile:
                 raw = jsonfile.read()
                 services = json.loads(raw)
-        except Exception as exc:
+        except OSError as exc:
             raise CommandError(repr(exc))
 
         with schema_context(kwargs['schemaname'].lower()):
             try:
                 tenant = Tenant.objects.get(schema_name=kwargs['schemaname'].lower())
+
+                models.ServiceFlavour.objects.all().delete()
+                bulk = list()
+                for service in services:
+                    sd = models.ServiceFlavour(name=service['name'], description=service['description'])
+                    bulk.append(sd)
+                models.ServiceFlavour.objects.bulk_create(bulk)
+                models.ServiceFlavour.objects.save()
+
             except Tenant.DoesNotExist as exc:
                 raise CommandError(repr(exc))
