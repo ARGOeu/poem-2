@@ -1473,7 +1473,7 @@ export function BaseArgoTable({ columns, data, resourcename, page_size, filter=f
                   if (cell_index === 0 && !selectable)
                     return <td key={cell_index} className='align-middle text-center'>{(row_index + 1) + (pageIndex * pageSize)}</td>
                   else
-                    return <td key={cell_index} className='align-middle'>{cell.render('Cell')}</td>
+                    return <td key={cell_index} style={{overflowWrap: 'anywhere'}} className='align-middle'>{cell.render('Cell')}</td>
                 })
               }
             </tr>
