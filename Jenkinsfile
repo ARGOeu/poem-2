@@ -60,7 +60,7 @@ pipeline {
                                     containers_running=$(docker ps -f name=poem-react-tests -f status=running -q)
                                     if [ ! -z "$containers_running" ]
                                     then
-                                        echo "running"
+                                        echo "Backend container running"
                                         docker exec -i poem-react-tests-webapp /home/jenkins/execute-backend-tests.sh
                                         exit $?
                                     else
@@ -91,7 +91,7 @@ pipeline {
                                     containers_running=$(docker ps -f name=poem-react-tests -f status=running -q)
                                     if [ ! -z "$containers_running" ]
                                     then
-                                        echo "running"
+                                        echo "Frontend container running"
                                         docker exec -i poem-react-tests-webapp /home/jenkins/execute-frontend-tests.sh
                                         exit $?
                                     else
