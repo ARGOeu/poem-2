@@ -61,6 +61,7 @@ pipeline {
                                     if [ ! -z "$containers_running" ]
                                     then
                                         echo "running"
+                                        exit 1
                                         docker exec -i poem-react-tests-webapp /home/jenkins/execute-backend-tests.sh
                                         exit $?
                                     else
