@@ -56,7 +56,8 @@ pipeline {
                             {
                                 echo 'Executing backend tests...'
                                 sh '''
-                                    while (( 1 ))
+                                    let i=1
+                                    while (( $i <= 5 ))
                                     do
                                         sleep 5
                                         containers_running=$(docker ps -f name=poem-react-tests -f status=running -q)
@@ -68,6 +69,7 @@ pipeline {
                                         else
                                             echo "not running"
                                         fi
+                                        (( i++ ))
                                     done
                                     exit 1
                                 '''
@@ -90,7 +92,8 @@ pipeline {
                             {
                                 echo 'Executing frontend tests...'
                                 sh '''
-                                    while (( 1 ))
+                                    let i=1
+                                    while (( $i <= 5 ))
                                     do
                                         sleep 5
                                         containers_running=$(docker ps -f name=poem-react-tests -f status=running -q)
@@ -102,6 +105,7 @@ pipeline {
                                         else
                                             echo "not running"
                                         fi
+                                        (( i++ ))
                                     done
                                     exit 1
                                 '''
