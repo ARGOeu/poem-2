@@ -27,6 +27,7 @@ pipeline {
                                 if [[ ! -z "$container_web_running" && ! -z "$container_db_running" ]]
                                 then
                                     docker exec -i poem-react-tests-webapp /home/jenkins/poem-install.sh
+                                    exit $?
                                 else
                                     echo "not running"
                                 fi
@@ -64,7 +65,6 @@ pipeline {
                                         then
                                             echo "running"
                                             docker exec -i poem-react-tests-webapp /home/jenkins/execute-backend-tests.sh
-                                            exit $?
                                         else
                                             echo "not running"
                                         fi
