@@ -56,20 +56,17 @@ pipeline {
                             {
                                 echo 'Executing backend tests...'
                                 sh '''
-                                    while (( 1 ))
-                                    do
-                                        sleep 5
-                                        containers_running=$(docker ps -f name=poem-react-tests -f status=running -q)
-                                        if [ ! -z "$containers_running" ]
-                                        then
-                                            echo "running"
-                                            docker exec -i poem-react-tests-webapp /home/jenkins/execute-backend-tests.sh
-                                            exit $?
-                                        else
-                                            echo "not running"
-                                        fi
-                                    done
-                                    exit 1
+                                    sleep 5
+                                    containers_running=$(docker ps -f name=poem-react-tests -f status=running -q)
+                                    if [ ! -z "$containers_running" ]
+                                    then
+                                        echo "Backend container running"
+                                        docker exec -i poem-react-tests-webapp /home/jenkins/execute-backend-tests.sh
+                                        exit $?
+                                    else
+                                        echo "not running"
+                                        exit 1
+                                    fi
                                 '''
                             }
                             catch (Exception err)
@@ -90,20 +87,17 @@ pipeline {
                             {
                                 echo 'Executing frontend tests...'
                                 sh '''
-                                    while (( 1 ))
-                                    do
-                                        sleep 5
-                                        containers_running=$(docker ps -f name=poem-react-tests -f status=running -q)
-                                        if [ ! -z "$containers_running" ]
-                                        then
-                                            echo "running"
-                                            docker exec -i poem-react-tests-webapp /home/jenkins/execute-frontend-tests.sh
-                                            exit $?
-                                        else
-                                            echo "not running"
-                                        fi
-                                    done
-                                    exit 1
+                                    sleep 5
+                                    containers_running=$(docker ps -f name=poem-react-tests -f status=running -q)
+                                    if [ ! -z "$containers_running" ]
+                                    then
+                                        echo "Frontend container running"
+                                        docker exec -i poem-react-tests-webapp /home/jenkins/execute-frontend-tests.sh
+                                        exit $?
+                                    else
+                                        echo "not running"
+                                        exit 1
+                                    fi
                                 '''
                             }
                             catch (Exception err)
