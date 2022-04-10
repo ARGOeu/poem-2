@@ -7,12 +7,12 @@ module.exports = {
   entry: "./frontend/react/index.js",
   output: {
     path: path.resolve("./frontend/bundles/reactbundle/"),
-    filename: "[name]-[hash].js",
-    chunkFilename: "[name]-[hash].js"
+    filename: "[name]-[fullhash].js",
+    chunkFilename: "[name]-[fullhash].js"
   },
   optimization: {
     runtimeChunk: 'single',
-    moduleIds: 'hashed',
+    moduleIds: 'deterministic',
     splitChunks: {
       cacheGroups: {
         vendor: {
