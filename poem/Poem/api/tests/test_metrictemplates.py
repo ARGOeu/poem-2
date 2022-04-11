@@ -5,7 +5,6 @@ from unittest.mock import patch, call
 import requests
 from Poem.api import views_internal as views
 from Poem.helpers.history_helpers import create_comment
-from Poem.helpers.versioned_comments import new_comment
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
@@ -448,7 +447,7 @@ def mock_db():
     mt5.save()
     mt5.tags.add(tag3)
 
-    admin_models.MetricTemplateHistory.objects.create(
+    mt5_version2 = admin_models.MetricTemplateHistory.objects.create(
         object_id=mt5,
         name=mt5.name,
         mtype=mt5.mtype,
@@ -466,6 +465,7 @@ def mock_db():
         version_user=superuser.username,
         version_comment='Newer version.',
     )
+    mt5_version2.tags.add(tag3)
 
     mt6 = admin_models.MetricTemplate.objects.create(
         name='eu.seadatanet.org.nerc-sparql-check',
@@ -578,6 +578,7 @@ def mock_db():
         fileparameter=mt2.fileparameter,
         group=group
     )
+    metric2.tags.add(tag4)
 
     poem_models.TenantHistory.objects.create(
         object_id=metric2.id,
@@ -608,6 +609,7 @@ def mock_db():
         fileparameter=mt1.fileparameter,
         group=group
     )
+    metric3.tags.add(tag1, tag3, tag4)
 
     poem_models.TenantHistory.objects.create(
         object_id=metric3.id,
@@ -9114,6 +9116,2051 @@ class MetricTagsTests(TenantTestCase):
             "You do not have permission to add metric tags."
         )
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+
+    def test_put_metric_tag_without_metrics_admin_superuser(self):
+        data = {
+            "id": self.tag4.id,
+            "name": "test_tag3",
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt6.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag3"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag3"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag3"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag3"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+
+    def test_put_metric_tag_without_metrics_admin_regular_user(self):
+        data = {
+            "id": self.tag4.id,
+            "name": "test_tag3",
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt6.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to change metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+
+    def test_put_metric_tag_without_metrics_tenant_superuser(self):
+        data = {
+            "id": self.tag4.id,
+            "name": "test_tag3",
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt6.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to change metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+
+    def test_put_metric_tag_without_metrics_tenant_regular_user(self):
+        data = {
+            "id": self.tag4.id,
+            "name": "test_tag3",
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt6.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to change metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+
+    def test_put_metric_tag_with_existing_name_admin_superuser(self):
+        data = {
+            "id": self.tag4.id,
+            "name": "deprecated",
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["detail"], "Metric tag with that name already exists."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+
+    def test_put_metric_tag_with_existing_name_admin_regular_user(self):
+        data = {
+            "id": self.tag4.id,
+            "name": "deprecated",
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to change metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+
+    def test_put_metric_tag_with_existing_name_tenant_superuser(self):
+        data = {
+            "id": self.tag4.id,
+            "name": "deprecated",
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to change metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+
+    def test_put_metric_tag_with_existing_name_tenant_regular_user(self):
+        data = {
+            "id": self.tag4.id,
+            "name": "deprecated",
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to change metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+
+    def test_put_metric_tag_with_empty_name_admin_superuser(self):
+        data = {
+            "id": self.tag4.id,
+            "name": "",
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["detail"], "You must specify metric tag name."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+
+    def test_put_metric_tag_with_empty_name_admin_regular_user(self):
+        data = {
+            "id": self.tag4.id,
+            "name": "",
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to change metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+
+    def test_put_metric_tag_with_empty_name_tenant_superuser(self):
+        data = {
+            "id": self.tag4.id,
+            "name": "",
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to change metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+
+    def test_put_metric_tag_with_empty_name_tenant_regular_user(self):
+        data = {
+            "id": self.tag4.id,
+            "name": "",
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to change metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+
+    def test_put_metric_tag_with_empty_id_admin_superuser(self):
+        data = {
+            "id": "",
+            "name": "test_tag3",
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["detail"], "You must specify metric tag ID."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+
+    def test_put_metric_tag_with_empty_id_admin_regular_user(self):
+        data = {
+            "id": "",
+            "name": "test_tag3",
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to change metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+
+    def test_put_metric_tag_with_empty_id_tenant_superuser(self):
+        data = {
+            "id": "",
+            "name": "test_tag3",
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to change metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+
+    def test_put_metric_tag_with_empty_id_tenant_regular_user(self):
+        data = {
+            "id": "",
+            "name": "test_tag3",
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to change metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+
+    def test_put_metric_tag_with_faulty_json_admin_superuser(self):
+        data = {
+            "id": self.tag4.id,
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["detail"], "Missing data key: name.")
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+
+    def test_put_metric_tag_with_faulty_json_admin_regular_user(self):
+        data = {
+            "id": self.tag4.id,
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to change metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+
+    def test_put_metric_tag_with_faulty_json_tenant_superuser(self):
+        data = {
+            "id": self.tag4.id,
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to change metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+
+    def test_put_metric_tag_with_faulty_json_tenant_regular_user(self):
+        data = {
+            "id": self.tag4.id,
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to change metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+
+    def test_put_metric_tag_with_metrics_admin_superuser(self):
+        data = {
+            "id": self.tag3.id,
+            "name": "test_tag3",
+            "metrics": ["argo.AMS-Check", "test.AMS-Check"]
+        }
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2_version1.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt6.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.metric3.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag2", "test_tag3"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag2", "test_tag3"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag2", "test_tag3"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2_version1.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt4.tags.all()], ["test_tag3"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt4_version1.tags.all()], ["test_tag3"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt5_version2.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt6.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.metric1.tags.all()], ["test_tag3"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.metric3.tags.all()]),
+            ["internal", "test_tag2", "test_tag3"]
+        )
+
+    def test_put_metric_tag_with_metrics_admin_regular_user(self):
+        data = {
+            "id": self.tag3.id,
+            "name": "test_tag3",
+            "metrics": ["argo.AMS-Check", "test.AMS-Check"]
+        }
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2_version1.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt6.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.metric3.tags.all()],
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to change metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2_version1.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt6.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.metric3.tags.all()],
+            ["internal", "test_tag1", "test_tag2"]
+        )
+
+    def test_put_metric_tag_with_metrics_tenant_superuser(self):
+        data = {
+            "id": self.tag3.id,
+            "name": "test_tag3",
+            "metrics": ["argo.AMS-Check", "test.AMS-Check"]
+        }
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2_version1.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt6.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.metric3.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to change metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2_version1.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt6.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.metric3.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+
+    def test_put_metric_tag_with_metrics_tenant_regular_user(self):
+        data = {
+            "id": self.tag3.id,
+            "name": "test_tag3",
+            "metrics": ["argo.AMS-Check", "test.AMS-Check"]
+        }
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2_version1.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt6.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.metric3.tags.all()],
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to change metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2_version1.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt6.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.metric3.tags.all()],
+            ["internal", "test_tag1", "test_tag2"]
+        )
+
+    def test_put_metric_tag_with_nonexisting_metric_admin_superuser(self):
+        data = {
+            "id": self.tag3.id,
+            "name": "test_tag3",
+            "metrics": ["mock.AMS-Check", "test.AMS-Check"]
+        }
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2_version1.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt6.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.metric3.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data["detail"], "Metric mock.AMS-Check does not exist."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag2", "test_tag3"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2_version1.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt4.tags.all()], ["test_tag3"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt4_version1.tags.all()], ["test_tag3"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt5_version2.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt6.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.metric1.tags.all()], ["test_tag3"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.metric3.tags.all()]),
+            ["internal", "test_tag2"]
+        )
+
+    def test_put_metric_tag_with_nonexisting_metrics_admin_superuser(self):
+        data = {
+            "id": self.tag3.id,
+            "name": "test_tag3",
+            "metrics": ["mock.AMS-Check", "mock2.AMS-Check", "test.AMS-Check"]
+        }
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2_version1.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt6.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.metric3.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data["detail"],
+            "Metrics mock.AMS-Check, mock2.AMS-Check do not exist."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag2", "test_tag3"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2_version1.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt4.tags.all()], ["test_tag3"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt4_version1.tags.all()], ["test_tag3"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt5_version2.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt6.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.metric1.tags.all()], ["test_tag3"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.metric3.tags.all()]),
+            ["internal", "test_tag2"]
+        )
+
+    def test_put_metric_tag_with_nonexisting_metric_admin_regular_user(self):
+        data = {
+            "id": self.tag3.id,
+            "name": "test_tag3",
+            "metrics": ["mock.AMS-Check", "test.AMS-Check"]
+        }
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2_version1.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt6.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.metric3.tags.all()],
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to change metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2_version1.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt6.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.metric3.tags.all()],
+            ["internal", "test_tag1", "test_tag2"]
+        )
+
+    def test_put_metric_tag_with_nonexisting_metric_tenant_superuser(self):
+        data = {
+            "id": self.tag3.id,
+            "name": "test_tag3",
+            "metrics": ["mock.AMS-Check", "test.AMS-Check"]
+        }
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2_version1.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt6.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.metric3.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to change metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2_version1.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt6.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.metric3.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+
+    def test_put_metric_tag_with_nonexisting_metric_tenant_regular_user(self):
+        data = {
+            "id": self.tag3.id,
+            "name": "test_tag3",
+            "metrics": ["mock.AMS-Check", "test.AMS-Check"]
+        }
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2_version1.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt6.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.metric3.tags.all()],
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to change metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2_version1.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt6.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.metric3.tags.all()],
+            ["internal", "test_tag1", "test_tag2"]
+        )
 
 
 class ListMetricTemplates4Tag(TenantTestCase):

@@ -828,6 +828,123 @@ class ListMetricTags(APIView):
                 detail="You do not have permission to add metric tags."
             )
 
+    def put(self, request):
+        if request.tenant.schema_name == get_public_schema_name() and \
+                request.user.is_superuser:
+            tags = admin_models.MetricTags.objects.all().values_list(
+                "name", flat=True
+            )
+
+            try:
+                if request.data["name"] in tags:
+                    return error_response(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Metric tag with that name already exists."
+                    )
+
+                else:
+                    if request.data["id"]:
+                        tag = admin_models.MetricTags.objects.get(
+                            id=request.data["id"]
+                        )
+                        if request.data["name"]:
+                            tag.name = request.data["name"]
+                            tag.save()
+
+                            old_metrics = set(
+                                admin_models.MetricTemplate.objects.filter(
+                                    tags__name=tag.name
+                                ).values_list("name", flat=True)
+                            )
+
+                            missing_metrics = set()
+                            try:
+                                new_metrics = set(dict(request.data)["metrics"])
+
+                                for metric_name in old_metrics.difference(
+                                        new_metrics
+                                ):
+                                    try:
+                                        mt = admin_models.MetricTemplate.objects.get(
+                                            name=metric_name
+                                        )
+                                        mt.tags.remove(tag)
+
+                                        mt_hist = admin_models.MetricTemplateHistory.objects.filter(
+                                            object_id=mt
+                                        ).order_by("-date_created")[0]
+                                        mt_hist.tags.remove(tag)
+                                        update_metrics(mt, mt.name, mt.probekey)
+
+                                    except admin_models.MetricTemplate.DoesNotExist:
+                                        missing_metrics.add(metric_name)
+
+                                for metric_name in new_metrics.difference(
+                                        old_metrics
+                                ):
+                                    try:
+                                        mt = admin_models.MetricTemplate.objects.get(
+                                            name=metric_name
+                                        )
+                                        mt.tags.add(tag)
+                                        mt_hist = admin_models.MetricTemplateHistory.objects.filter(
+                                            object_id=mt
+                                        ).order_by("-date_created")[0]
+                                        mt_hist.tags.add(tag)
+                                        update_metrics(mt, mt.name, mt.probekey)
+
+                                    except admin_models.MetricTemplate.DoesNotExist:
+                                        missing_metrics.add(metric_name)
+
+                            except KeyError:
+                                pass
+
+                            if len(missing_metrics) > 0:
+                                if len(missing_metrics) == 1:
+                                    warn_msg = \
+                                        f"Metric {list(missing_metrics)[0]} " \
+                                        f"does not exist."
+
+                                else:
+                                    warn_msg = \
+                                        "Metrics {} do not exist.".format(
+                                            ", ".join(
+                                                sorted(list(missing_metrics))
+                                            )
+                                        )
+
+                                return Response(
+                                    {"detail": warn_msg},
+                                    status=status.HTTP_201_CREATED
+                                )
+
+                            else:
+                                return Response(status=status.HTTP_201_CREATED)
+
+                        else:
+                            return error_response(
+                                status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="You must specify metric tag name."
+                            )
+
+                    else:
+                        return error_response(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="You must specify metric tag ID."
+                        )
+
+            except KeyError as e:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Missing data key: {e.args[0]}."
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You do not have permission to change metric tags."
+            )
+
 
 class ListMetricTemplates4Tag(APIView):
     authentication_classes = (SessionAuthentication,)
