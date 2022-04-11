@@ -8,6 +8,7 @@ from Poem.helpers.history_helpers import create_comment, update_comment
 from Poem.helpers.metrics_helpers import import_metrics, update_metrics, \
     update_metrics_in_profiles, get_metrics_in_profiles, \
     delete_metrics_from_profile, update_metric_in_schema
+from Poem.helpers.versioned_comments import new_comment
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
@@ -3536,4 +3537,94 @@ class MetricsInProfilesTests(TenantTestCase):
         self.assertEqual(
             str(context.exception),
             'Error deleting metric from profile: Profile not found.'
+        )
+
+
+class CommentsTests(TenantTestCase):
+    def test_new_comment_with_objects_change(self):
+        comment = '[{"changed": {"fields": ["config"], ' \
+                  '"object": ["maxCheckAttempts", "path", "timeout"]}}, ' \
+                  '{"changed": {"fields": ["attribute"], ' \
+                  '"object": ["attribute-key1", "attribute-key2"]}}, ' \
+                  '{"changed": {"fields": ["dependency"], ' \
+                  '"object": ["dependency-key"]}}]'
+        self.assertEqual(
+            new_comment(comment),
+            'Changed config fields "maxCheckAttempts", "path" and "timeout". '
+            'Changed attribute fields "attribute-key1" and "attribute-key2". '
+            'Changed dependency field "dependency-key".'
+        )
+
+    def test_new_comment_with_objects_add(self):
+        comment = '[{"added": {"fields": ["config"], ' \
+                  '"object": ["maxCheckAttempts", "path", "timeout"]}}, ' \
+                  '{"added": {"fields": ["attribute"], ' \
+                  '"object": ["attribute-key1", "attribute-key2"]}}, ' \
+                  '{"added": {"fields": ["dependency"], ' \
+                  '"object": ["dependency-key"]}}]'
+        self.assertEqual(
+            new_comment(comment),
+            'Added config fields "maxCheckAttempts", "path" and "timeout". '
+            'Added attribute fields "attribute-key1" and "attribute-key2". '
+            'Added dependency field "dependency-key".'
+        )
+
+    def test_new_comment_with_objects_delete(self):
+        comment = '[{"deleted": {"fields": ["config"], ' \
+                  '"object": ["maxCheckAttempts", "path", "timeout"]}}, ' \
+                  '{"deleted": {"fields": ["attribute"], ' \
+                  '"object": ["attribute-key1", "attribute-key2"]}}, ' \
+                  '{"deleted": {"fields": ["dependency"], ' \
+                  '"object": ["dependency-key"]}}]'
+        self.assertEqual(
+            new_comment(comment),
+            'Deleted config fields "maxCheckAttempts", "path" and "timeout". '
+            'Deleted attribute fields "attribute-key1" and "attribute-key2". '
+            'Deleted dependency field "dependency-key".'
+        )
+
+    def test_new_comment_with_fields(self):
+        comment = '[{"added": {"fields": ["docurl", "comment"]}}, ' \
+                  '{"changed": {"fields": ["name", "probeexecutable", ' \
+                  '"group"]}}, ' \
+                  '{"deleted": {"fields": ["version", "description"]}}]'
+        self.assertEqual(
+            new_comment(comment),
+            'Added docurl and comment. '
+            'Changed name, probeexecutable and group. '
+            'Deleted version and description.'
+        )
+
+    def test_new_comment_initial(self):
+        comment = 'Initial version.'
+        self.assertEqual(new_comment(comment), 'Initial version.')
+
+    def test_new_comment_no_changes(self):
+        comment = '[]'
+        self.assertEqual(new_comment(comment), 'No fields changed.')
+
+    def test_new_comment_for_thresholds_profiles_rules_field(self):
+        comment = '[{"changed": {"fields": ["rules"], ' \
+                  '"object": ["metricA"]}}, ' \
+                  '{"deleted": {"fields": ["rules"], ' \
+                  '"object": ["metricB"]}}, ' \
+                  '{"added": {"fields": ["rules"], "object": ["metricC"]}}]'
+        self.assertEqual(
+            new_comment(comment),
+            'Changed rule for metric "metricA". '
+            'Deleted rule for metric "metricB". '
+            'Added rule for metric "metricC".'
+        )
+
+    def test_new_comment_for_metric_profile_metricinstances(self):
+        comment = '[{"added": {"fields": ["metricinstances"], ' \
+                  '"object": ["ARC-CE", "org.nordugrid.ARC-CE-IGTF"]}}, ' \
+                  '{"deleted": {"fields": ["metricinstances"], ' \
+                  '"object": ["APEL", "org.apel.APEL-Sync"]}}]'
+        self.assertEqual(
+            new_comment(comment),
+            'Added service-metric instance tuple '
+            '(ARC-CE, org.nordugrid.ARC-CE-IGTF). '
+            'Deleted service-metric instance tuple '
+            '(APEL, org.apel.APEL-Sync).'
         )
