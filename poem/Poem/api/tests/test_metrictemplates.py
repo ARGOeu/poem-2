@@ -8437,18 +8437,160 @@ class MetricTagsTests(TenantTestCase):
         self.factory = TenantRequestFactory(self.tenant)
         self.view = views.ListMetricTags.as_view()
         self.url = '/api/v2/internal/metrictags/'
-        self.user = CustUser.objects.create_user(username='testuser')
 
         mock_db()
+
+        self.tenant_superuser = CustUser.objects.get(username="tenant_poem")
+        self.tenant_user = CustUser.objects.get(username="tenant_user")
+
+        with schema_context(get_public_schema_name()):
+            self.superuser = CustUser.objects.get(username="poem")
+            self.user = CustUser.objects.get(username='admin_user')
+
+            self.public_tenant = Tenant.objects.get(name="public")
 
         self.tag1 = admin_models.MetricTags.objects.get(name='internal')
         self.tag2 = admin_models.MetricTags.objects.get(name='deprecated')
         self.tag3 = admin_models.MetricTags.objects.get(name='test_tag1')
         self.tag4 = admin_models.MetricTags.objects.get(name='test_tag2')
 
-    def test_get_metric_tags(self):
+        self.mt1 = admin_models.MetricTemplate.objects.get(
+            name="argo.AMS-Check"
+        )
+        mt1_versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=self.mt1
+        ).order_by("-date_created")
+        self.mt1_version1 = mt1_versions[1]
+        self.mt1_version2 = mt1_versions[0]
+        self.mt2 = admin_models.MetricTemplate.objects.get(
+            name="org.apel.APEL-Pub"
+        )
+        self.mt2_version1 = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=self.mt2
+        ).order_by('-date_created')[0]
+        self.mt3 = admin_models.MetricTemplate.objects.get(
+            name="argo.AMSPublisher-Check"
+        )
+        self.mt3_version1 = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=self.mt3
+        ).order_by('-date_created')[0]
+        self.mt4 = admin_models.MetricTemplate.objects.get(
+            name="test.AMS-Check"
+        )
+        self.mt4_version1 = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=self.mt4
+        ).order_by('-date_created')[0]
+        self.mt5 = admin_models.MetricTemplate.objects.get(
+            name="argo.EGI-Connectors-Check"
+        )
+        mt5_versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=self.mt5
+        ).order_by('-date_created')
+        self.mt5_version1 = mt5_versions[1]
+        self.mt5_version2 = mt5_versions[0]
+        self.mt6 = admin_models.MetricTemplate.objects.get(
+            name="eu.seadatanet.org.nerc-sparql-check"
+        )
+        self.mt6_version1 = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=self.mt6
+        ).order_by('-date_created')[0]
+        self.mt7 = admin_models.MetricTemplate.objects.get(
+            name="test2.AMS-Check"
+        )
+        self.mt7_version1 = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=self.mt7
+        ).order_by('-date_created')[0]
+        self.metric1 = poem_models.Metric.objects.get(
+            name="test.AMS-Check"
+        )
+        self.metric2 = poem_models.Metric.objects.get(
+            name="org.apel.APEL-Pub"
+        )
+        self.metric3 = poem_models.Metric.objects.get(
+            name="argo.AMS-Check"
+        )
+
+    def test_get_metric_tags_admin_superuser(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    "id": self.tag2.id,
+                    "name": "deprecated"
+                },
+                {
+                    "id": self.tag1.id,
+                    "name": "internal"
+                },
+                {
+                    "id": self.tag3.id,
+                    "name": "test_tag1"
+                },
+                {
+                    "id": self.tag4.id,
+                    "name": "test_tag2"
+                }
+            ]
+        )
+
+    def test_get_metric_tags_admin_regular_user(self):
         request = self.factory.get(self.url)
         force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    "id": self.tag2.id,
+                    "name": "deprecated"
+                },
+                {
+                    "id": self.tag1.id,
+                    "name": "internal"
+                },
+                {
+                    "id": self.tag3.id,
+                    "name": "test_tag1"
+                },
+                {
+                    "id": self.tag4.id,
+                    "name": "test_tag2"
+                }
+            ]
+        )
+
+    def test_get_metric_tags_tenant_superuser(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    "id": self.tag2.id,
+                    "name": "deprecated"
+                },
+                {
+                    "id": self.tag1.id,
+                    "name": "internal"
+                },
+                {
+                    "id": self.tag3.id,
+                    "name": "test_tag1"
+                },
+                {
+                    "id": self.tag4.id,
+                    "name": "test_tag2"
+                }
+            ]
+        )
+
+    def test_get_metric_tags_tenant_regular_user(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.tenant_user)
         response = self.view(request)
         self.assertEqual(
             response.data,
@@ -8477,9 +8619,45 @@ class MetricTagsTests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_get_metric_tag_by_name(self):
+    def test_get_metric_tag_by_name_admin_superuser(self):
+        request = self.factory.get(self.url + "internal")
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, "internal")
+        self.assertEqual(
+            response.data,
+            {
+                "id": self.tag1.id,
+                "name": "internal"
+            }
+        )
+
+    def test_get_metric_tag_by_name_admin_regular_user(self):
         request = self.factory.get(self.url + "internal")
         force_authenticate(request, user=self.user)
+        response = self.view(request, "internal")
+        self.assertEqual(
+            response.data,
+            {
+                "id": self.tag1.id,
+                "name": "internal"
+            }
+        )
+
+    def test_get_metric_tag_by_name_tenant_superuser(self):
+        request = self.factory.get(self.url + "internal")
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request, "internal")
+        self.assertEqual(
+            response.data,
+            {
+                "id": self.tag1.id,
+                "name": "internal"
+            }
+        )
+
+    def test_get_metric_tag_by_name_tenant_regular_user(self):
+        request = self.factory.get(self.url + "internal")
+        force_authenticate(request, user=self.tenant_user)
         response = self.view(request, "internal")
         self.assertEqual(
             response.data,
@@ -8495,6 +8673,537 @@ class MetricTagsTests(TenantTestCase):
         response = self.view(request, "nonexisting")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data["detail"], "Requested tag not found.")
+
+    def test_post_metric_tag_without_metrics_admin_superuser(self):
+        data = {
+            "name": "test_tag3",
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 5)
+        tag = admin_models.MetricTags.objects.get(name="test_tag3")
+        self.assertFalse(tag in self.mt1.tags.all())
+        self.assertFalse(tag in self.mt1_version1.tags.all())
+        self.assertFalse(tag in self.mt1_version2.tags.all())
+        self.assertFalse(tag in self.mt2.tags.all())
+        self.assertFalse(tag in self.mt2_version1.tags.all())
+        self.assertFalse(tag in self.mt3.tags.all())
+        self.assertFalse(tag in self.mt3_version1.tags.all())
+        self.assertFalse(tag in self.mt4.tags.all())
+        self.assertFalse(tag in self.mt4_version1.tags.all())
+        self.assertFalse(tag in self.mt5.tags.all())
+        self.assertFalse(tag in self.mt5_version1.tags.all())
+        self.assertFalse(tag in self.mt5_version2.tags.all())
+        self.assertFalse(tag in self.mt6.tags.all())
+        self.assertFalse(tag in self.mt6_version1.tags.all())
+        self.assertFalse(tag in self.mt7.tags.all())
+        self.assertFalse(tag in self.mt7_version1.tags.all())
+        self.assertFalse(tag in self.metric1.tags.all())
+        self.assertFalse(tag in self.metric2.tags.all())
+        self.assertFalse(tag in self.metric3.tags.all())
+
+    def test_post_metric_tag_without_metrics_admin_regular_user(self):
+        data = {
+            "name": "test_tag3",
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertRaises(
+            admin_models.MetricTags.DoesNotExist,
+            admin_models.MetricTags.objects.get,
+            name="test_tag3"
+        )
+
+    def test_post_metric_tag_without_metrics_tenant_superuser(self):
+        data = {
+            "name": "test_tag3",
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertRaises(
+            admin_models.MetricTags.DoesNotExist,
+            admin_models.MetricTags.objects.get,
+            name="test_tag3"
+        )
+
+    def test_post_metric_tag_without_metrics_tenant_regular_user(self):
+        data = {
+            "name": "test_tag3",
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertRaises(
+            admin_models.MetricTags.DoesNotExist,
+            admin_models.MetricTags.objects.get,
+            name="test_tag3"
+        )
+
+    def test_post_existing_metric_tag_without_metrics_admin_superuser(self):
+        data = {
+            "name": "internal",
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["detail"],
+            "Metric tag with this name already exists."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+
+    def test_post_existing_metric_tag_without_metrics_admin_regular_user(self):
+        data = {
+            "name": "internal",
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+
+    def test_post_existing_metric_tag_without_metrics_tenant_superuser(self):
+        data = {
+            "name": "internal",
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+
+    def test_post_existing_metric_tag_without_metrics_tenant_regular_user(self):
+        data = {
+            "name": "internal",
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+
+    def test_post_metric_tag_without_metrics_without_name_admin_superuser(self):
+        data = {
+            "name": "",
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["detail"],
+            "You must specify metric tag name."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+
+    def test_post_metric_tag_without_metrics_without_name_admin_reg_user(self):
+        data = {
+            "name": "",
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+
+    def test_post_metric_tag_without_metrics_without_name_tenant_superusr(self):
+        data = {
+            "name": "",
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+
+    def test_post_metric_tag_without_metrics_without_name_tenant_reg_user(self):
+        data = {
+            "name": "",
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+
+    def test_post_metric_tag_without_metrics_faulty_json_admin_superuser(self):
+        data = {
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["detail"], "Missing data key: name.")
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+
+    def test_post_metric_tag_without_metrics_faulty_json_admin_superuser(self):
+        data = {
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["detail"], "Missing data key: name.")
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+
+    def test_post_metric_tag_without_metrics_faulty_json_admin_reg_user(self):
+        data = {
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+
+    def test_post_metric_tag_without_metrics_faulty_json_tenant_superuser(self):
+        data = {
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+
+    def test_post_metric_tag_without_metrics_faulty_json_tenant_reg_user(self):
+        data = {
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+
+    def test_post_metric_tag_with_metrics_admin_superuser(self):
+        data = {
+            "name": "test_tag3",
+            "metrics": ["argo.AMS-Check", "test2.AMS-Check"]
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 5)
+        tag = admin_models.MetricTags.objects.get(name="test_tag3")
+        self.assertEqual(len(self.mt1.tags.all()), 4)
+        self.assertTrue(tag in self.mt1.tags.all())
+        self.assertEqual(len(self.mt1_version1.tags.all()), 2)
+        self.assertFalse(tag in self.mt1_version1.tags.all())
+        self.assertEqual(len(self.mt1_version2.tags.all()), 4)
+        self.assertTrue(tag in self.mt1_version2.tags.all())
+        self.assertFalse(tag in self.mt2.tags.all())
+        self.assertFalse(tag in self.mt2_version1.tags.all())
+        self.assertFalse(tag in self.mt3.tags.all())
+        self.assertFalse(tag in self.mt3_version1.tags.all())
+        self.assertFalse(tag in self.mt4.tags.all())
+        self.assertFalse(tag in self.mt4_version1.tags.all())
+        self.assertFalse(tag in self.mt5.tags.all())
+        self.assertFalse(tag in self.mt5_version1.tags.all())
+        self.assertFalse(tag in self.mt5_version2.tags.all())
+        self.assertFalse(tag in self.mt6.tags.all())
+        self.assertFalse(tag in self.mt6_version1.tags.all())
+        self.assertEqual(len(self.mt7.tags.all()), 1)
+        self.assertEqual(len(self.mt7_version1.tags.all()), 1)
+        self.assertTrue(tag in self.mt7.tags.all())
+        self.assertTrue(tag in self.mt7_version1.tags.all())
+        self.assertFalse(tag in self.metric1.tags.all())
+        self.assertFalse(tag in self.metric2.tags.all())
+        self.assertEqual(len(self.metric3.tags.all()), 4)
+        self.assertTrue(tag in self.metric3.tags.all())
+
+    def test_post_metric_tag_with_metrics_admin_regular_user(self):
+        data = {
+            "name": "test_tag3",
+            "metrics": ["test.AMS-Check", "test2.AMS-Check"]
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+
+    def test_post_metric_tag_with_metrics_tenant_superuser(self):
+        data = {
+            "name": "test_tag3",
+            "metrics": ["test.AMS-Check", "test2.AMS-Check"]
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+
+    def test_post_metric_tag_with_metrics_tenant_regular_user(self):
+        data = {
+            "name": "test_tag3",
+            "metrics": ["test.AMS-Check", "test2.AMS-Check"]
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+
+    def test_post_metric_tag_with_nonexisting_metrics_admin_superuser(self):
+        data = {
+            "name": "test_tag3",
+            "metrics": ["argo.AMS-Check", "mock.AMS-Check"]
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data["detail"], "Metric mock.AMS-Check does not exist."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 5)
+        tag = admin_models.MetricTags.objects.get(name="test_tag3")
+        self.assertEqual(len(self.mt1.tags.all()), 4)
+        self.assertTrue(tag in self.mt1.tags.all())
+        self.assertEqual(len(self.mt1_version1.tags.all()), 2)
+        self.assertFalse(tag in self.mt1_version1.tags.all())
+        self.assertEqual(len(self.mt1_version2.tags.all()), 4)
+        self.assertTrue(tag in self.mt1_version2.tags.all())
+        self.assertFalse(tag in self.mt2.tags.all())
+        self.assertFalse(tag in self.mt2_version1.tags.all())
+        self.assertFalse(tag in self.mt3.tags.all())
+        self.assertFalse(tag in self.mt3_version1.tags.all())
+        self.assertFalse(tag in self.mt4.tags.all())
+        self.assertFalse(tag in self.mt4_version1.tags.all())
+        self.assertFalse(tag in self.mt5.tags.all())
+        self.assertFalse(tag in self.mt5_version1.tags.all())
+        self.assertFalse(tag in self.mt5_version2.tags.all())
+        self.assertFalse(tag in self.mt6.tags.all())
+        self.assertFalse(tag in self.mt6_version1.tags.all())
+        self.assertFalse(tag in self.mt7.tags.all())
+        self.assertFalse(tag in self.mt7_version1.tags.all())
+        self.assertFalse(tag in self.metric1.tags.all())
+        self.assertFalse(tag in self.metric2.tags.all())
+        self.assertEqual(len(self.metric3.tags.all()), 4)
+        self.assertTrue(tag in self.metric3.tags.all())
+
+    def test_post_metric_tag_with_multi_nonexisting_metrics_admin_suprusr(self):
+        data = {
+            "name": "test_tag3",
+            "metrics": ["argo.AMS-Check", "mock.AMS-Check", "mock2.AMS-Check"]
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data["detail"],
+            "Metrics mock.AMS-Check, mock2.AMS-Check do not exist."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 5)
+        tag = admin_models.MetricTags.objects.get(name="test_tag3")
+        self.assertEqual(len(self.mt1.tags.all()), 4)
+        self.assertTrue(tag in self.mt1.tags.all())
+        self.assertEqual(len(self.mt1_version1.tags.all()), 2)
+        self.assertFalse(tag in self.mt1_version1.tags.all())
+        self.assertEqual(len(self.mt1_version2.tags.all()), 4)
+        self.assertTrue(tag in self.mt1_version2.tags.all())
+        self.assertFalse(tag in self.mt2.tags.all())
+        self.assertFalse(tag in self.mt2_version1.tags.all())
+        self.assertFalse(tag in self.mt3.tags.all())
+        self.assertFalse(tag in self.mt3_version1.tags.all())
+        self.assertFalse(tag in self.mt4.tags.all())
+        self.assertFalse(tag in self.mt4_version1.tags.all())
+        self.assertFalse(tag in self.mt5.tags.all())
+        self.assertFalse(tag in self.mt5_version1.tags.all())
+        self.assertFalse(tag in self.mt5_version2.tags.all())
+        self.assertFalse(tag in self.mt6.tags.all())
+        self.assertFalse(tag in self.mt6_version1.tags.all())
+        self.assertFalse(tag in self.mt7.tags.all())
+        self.assertFalse(tag in self.mt7_version1.tags.all())
+        self.assertFalse(tag in self.metric1.tags.all())
+        self.assertFalse(tag in self.metric2.tags.all())
+        self.assertEqual(len(self.metric3.tags.all()), 4)
+        self.assertTrue(tag in self.metric3.tags.all())
+
+    def test_post_metric_tag_with_nonexisting_metrics_admin_regular_user(self):
+        data = {
+            "name": "test_tag3",
+            "metrics": ["argo.AMS-Check", "mock.AMS-Check"]
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+
+    def test_post_metric_tag_with_nonexisting_metrics_tenant_superuser(self):
+        data = {
+            "name": "test_tag3",
+            "metrics": ["argo.AMS-Check", "mock.AMS-Check"]
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+
+    def test_post_metric_tag_with_nonexisting_metrics_tenant_regular_user(self):
+        data = {
+            "name": "test_tag3",
+            "metrics": ["argo.AMS-Check", "mock.AMS-Check"]
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add metric tags."
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
 
 
 class ListMetricTemplates4Tag(TenantTestCase):

@@ -1,5 +1,6 @@
 import json
 
+from Poem.api import serializers
 from Poem.api.internal_views.utils import one_value_inline, two_value_inline, \
     inline_metric_for_db
 from Poem.api.views import NotFound
@@ -11,12 +12,11 @@ from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
 from django.contrib.contenttypes.models import ContentType
 from django.db import IntegrityError
+from django_tenants.utils import get_public_schema_name, schema_context
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django_tenants.utils import get_public_schema_name, schema_context
-from Poem.api import serializers
 
 from .utils import error_response
 
@@ -745,6 +745,88 @@ class ListMetricTags(APIView):
             tags = admin_models.MetricTags.objects.all().order_by('name')
             serializer = serializers.MetricTagsSerializer(tags, many=True)
             return Response(serializer.data)
+
+    def post(self, request):
+        if request.tenant.schema_name == get_public_schema_name() and \
+                request.user.is_superuser:
+
+            try:
+                if not request.data["name"]:
+                    return error_response(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="You must specify metric tag name."
+                    )
+
+                else:
+                    tags = admin_models.MetricTags.objects.all().values_list(
+                        "name", flat=True
+                    )
+
+                    if request.data["name"] in tags:
+                        return error_response(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Metric tag with this name already exists."
+                        )
+
+                    else:
+                        tag = admin_models.MetricTags.objects.create(
+                            name=request.data["name"]
+                        )
+
+                        missing_metrics = set()
+                        try:
+                            metric_names = dict(request.data)["metrics"]
+                            for metric_name in metric_names:
+                                try:
+                                    mt = \
+                                        admin_models.MetricTemplate.objects.get(
+                                            name=metric_name
+                                        )
+                                    mt_history = \
+                                        admin_models.MetricTemplateHistory.objects.filter(
+                                            object_id=mt
+                                        ).order_by("-date_created")[0]
+                                    mt.tags.add(tag)
+                                    mt_history.tags.add(tag)
+
+                                    update_metrics(mt, mt.name, mt.probekey)
+
+                                except admin_models.MetricTemplate.DoesNotExist:
+                                    missing_metrics.add(metric_name)
+
+                        except KeyError:
+                            pass
+
+                        if len(missing_metrics) > 0:
+                            if len(missing_metrics) == 1:
+                                warn_msg = \
+                                    f"Metric {list(missing_metrics)[0]} " \
+                                    f"does not exist."
+
+                            else:
+                                warn_msg = "Metrics {} do not exist.".format(
+                                    ", ".join(sorted(list(missing_metrics)))
+                                )
+
+                            return Response(
+                                {"detail": warn_msg},
+                                status=status.HTTP_201_CREATED,
+                            )
+
+                        else:
+                            return Response(status=status.HTTP_201_CREATED)
+
+            except KeyError as e:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Missing data key: {e.args[0]}."
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You do not have permission to add metric tags."
+            )
 
 
 class ListMetricTemplates4Tag(APIView):
