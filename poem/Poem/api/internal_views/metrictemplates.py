@@ -945,6 +945,26 @@ class ListMetricTags(APIView):
                 detail="You do not have permission to change metric tags."
             )
 
+    def delete(self, request, tag):
+        if request.tenant.schema_name == get_public_schema_name() and \
+                request.user.is_superuser:
+            try:
+                admin_models.MetricTags.objects.get(name=tag).delete()
+
+                return Response(status=status.HTTP_204_NO_CONTENT)
+
+            except admin_models.MetricTags.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="The requested metric tag does not exist."
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You do not have permission to delete metric tags."
+            )
+
 
 class ListMetricTemplates4Tag(APIView):
     authentication_classes = (SessionAuthentication,)
