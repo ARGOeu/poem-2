@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import { useQuery } from "react-query"
+import { useMutation, useQuery, useQueryClient } from "react-query"
 import { Link } from "react-router-dom"
 import { fetchMetricTags, fetchMetricTemplates, fetchUserDetails } from "./QueryFunctions"
 import {
@@ -10,6 +10,7 @@ import {
   ErrorComponent,
   Icon,
   LoadingAnim,
+  NotifyOk,
   ParagraphTitle,
   SearchField
 } from "./UIElements"
@@ -83,10 +84,19 @@ export const MetricTagsComponent = (props) => {
   const name = props.match.params.name
   const publicView = props.publicView
   const location = props.location
+  const history = props.history
 
   const [searchItem, setSearchItem] = useState('');
+  const [areYouSureModal, setAreYouSureModal] = useState(false);
+  const [modalFlag, setModalFlag] = useState(undefined);
+  const [modalTitle, setModalTitle] = useState(undefined);
+  const [modalMsg, setModalMsg] = useState(undefined);
+  const [formValues, setFormValues] = useState(undefined);
 
   const backend = new Backend()
+  const queryClient = useQueryClient()
+
+  const changeMutation = useMutation(async (values) => await backend.changeObject('/api/v2/internal/metrictags/', values));
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
     "userdetails", () => fetchUserDetails(false),
@@ -110,6 +120,43 @@ export const MetricTagsComponent = (props) => {
     { enabled: !publicView }
   )
 
+  const toggleAreYouSure = () => {
+    setAreYouSureModal(!areYouSureModal)
+  }
+
+  const onSubmitHandle = (values) => {
+    let msg = "Are you sure you want to change metric tag?"
+    let title = "Change metric tag"
+
+    setFormValues(values);
+    setModalMsg(msg);
+    setModalTitle(title);
+    setModalFlag('submit');
+    toggleAreYouSure();
+  }
+
+  const doChange = () => {
+    const sendValues = new Object({
+      id: formValues.id,
+      name: formValues.name,
+      metrics: formValues.metrics4tag
+    })
+
+    changeMutation.mutate(sendValues, {
+      onSuccess: () => {
+        queryClient.invalidateQueries("public_metrictags")
+        queryClient.invalidateQueries(["public_metrics4tags", name])
+        queryClient.invalidateQueries("metrictags")
+        queryClient.invalidateQueries(["metrics4tags", name])
+        NotifyOk({
+          msg: "Metric tag successfully changed",
+          title: "Changed",
+          callback: () => history.push("/ui/metrictags")
+        })
+      }
+    })
+  }
+
   if (loadingUserDetails || loadingTag || loadingMetrics || loadingAllMetrics)
     return (<LoadingAnim/>)
 
@@ -129,9 +176,20 @@ export const MetricTagsComponent = (props) => {
     return (
       <BaseArgoView
         resourcename={publicView ? "Metric tag details" : "metric tag"}
-        publicview={publicView}
         location={location}
         history={false}
+        publicview={publicView}
+        modal={true}
+        state={{
+          areYouSureModal,
+          modalTitle,
+          modalMsg,
+          modalFunc: modalFlag === "submit" ?
+            doChange
+          :
+            undefined
+        }}
+        toggle={toggleAreYouSure}
       >
         <Formik
           initialValues={{
@@ -154,7 +212,6 @@ export const MetricTagsComponent = (props) => {
                           name="name"
                           data-testid="name"
                           disabled={publicView}
-                          required={true}
                           className="form-control"
                           id="name"
                         />
@@ -257,6 +314,7 @@ export const MetricTagsComponent = (props) => {
                       </Button>
                       <Button
                         color="success"
+                        onClick={() => onSubmitHandle(props.values)}
                       >
                         Save
                       </Button>

@@ -502,4 +502,39 @@ describe("Test metric tags changeview", () => {
     expect(screen.queryByRole("button", { name: /delete/i })).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /clone/i })).not.toBeInTheDocument()
   })
+
+  test("Test change metric tags name", async () => {
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "test_tag" } })
+
+    await waitFor(() => {
+      expect(screen.getByTestId("form")).toHaveFormValues({name: "test_tag"})
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metrictags/",
+        { id: "3", name: "test_tag", metrics: ["argo.AMS-Check", "argo.AMSPublisher-Check"] }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith(["metrics4tags", "internal"])
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith(["public_metrics4tags", "internal"])
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Metric tag successfully changed", "Changed", 2000
+    )
+  })
 })
