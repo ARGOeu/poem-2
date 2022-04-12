@@ -1,10 +1,11 @@
 import React, { useState } from "react"
 import { useQuery } from "react-query"
 import { Link } from "react-router-dom"
-import { fetchMetricTags } from "./QueryFunctions"
+import { fetchMetricTags, fetchMetricTemplates, fetchUserDetails } from "./QueryFunctions"
 import {
   BaseArgoTable,
   BaseArgoView,
+  CustomReactSelect,
   DefaultColumnFilter,
   ErrorComponent,
   Icon,
@@ -20,10 +21,11 @@ import {
   InputGroup,
   InputGroupText,
   Row,
-  Col
+  Col,
+  Button
  } from "reactstrap"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faSearch } from '@fortawesome/free-solid-svg-icons';
+import { faSearch,faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 
 export const MetricTagsList = (props) => {
@@ -86,6 +88,11 @@ export const MetricTagsComponent = (props) => {
 
   const backend = new Backend()
 
+  const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
+    "userdetails", () => fetchUserDetails(false),
+    { enabled: !publicView }
+  )
+
   const { data: tag, error: errorTag, isLoading: loadingTag } = useQuery(
     [`${publicView ? "public_" : ""}metrictags`, name], async () => {
       return await backend.fetchData(`/api/v2/internal/${publicView ? "public_" : ""}metrictags/${name}`)
@@ -93,13 +100,21 @@ export const MetricTagsComponent = (props) => {
   )
 
   const { data: metrics, error: errorMetrics, isLoading: loadingMetrics } = useQuery(
-    `${publicView ? "public_" : ""}metrics4tags`, async () => {
+    [`${publicView ? "public_" : ""}metrics4tags`, name], async () => {
       return await backend.fetchData(`/api/v2/internal/${publicView ? "public_" : ""}metrics4tags/${name}`)
     }
   )
 
-  if (loadingTag || loadingMetrics)
+  const { data: allMetrics, error: errorAllMetrics, isLoading: loadingAllMetrics } = useQuery(
+    "metrictemplate", () => fetchMetricTemplates(publicView),
+    { enabled: !publicView }
+  )
+
+  if (loadingUserDetails || loadingTag || loadingMetrics || loadingAllMetrics)
     return (<LoadingAnim/>)
+
+  else if (errorUserDetails)
+    return (<ErrorComponent error={errorUserDetails} />)
 
   else if (errorTag)
     return (<ErrorComponent error={errorTag} />)
@@ -107,7 +122,10 @@ export const MetricTagsComponent = (props) => {
   else if (errorMetrics)
     return (<ErrorComponent error={errorMetrics} />)
 
-  else if (tag && metrics) {
+  else if (errorAllMetrics)
+    return (<ErrorComponent error={errorAllMetrics} />)
+
+  else if (tag && metrics && (publicView || (allMetrics && userDetails))) {
     return (
       <BaseArgoView
         resourcename={publicView ? "Metric tag details" : "metric tag"}
@@ -119,12 +137,13 @@ export const MetricTagsComponent = (props) => {
           initialValues={{
             id: `${tag ? tag.id : ""}`,
             name: `${tag ? tag.name: ""}`,
-            metrics4tag: metrics
+            metrics4tag: metrics ? metrics : [],
+            metrics: !publicView ? allMetrics.map(met => met.name).filter(met => !metrics.includes(met)) : []
           }}
         >
           {
             props => (
-              <Form>
+              <Form data-testid="form">
                 <FormGroup>
                   <Row>
                     <Col md={6}>
@@ -149,7 +168,10 @@ export const MetricTagsComponent = (props) => {
                     <thead className="table-active">
                       <tr>
                         <th className="align-middle text-center" style={{width: "5%"}}>#</th>
-                        <th style={{width: "95%"}}><Icon i="metrictemplates" />Metric template</th>
+                        <th style={{width: "85%"}}><Icon i="metrictemplates" />Metric template</th>
+                        {
+                          !publicView && <th className="align-middle text-center" style={{width: "10%"}}>Actions</th>
+                        }
                       </tr>
                     </thead>
                     <tbody>
@@ -177,7 +199,47 @@ export const MetricTagsComponent = (props) => {
                               <td className="align-middle text-center">
                                 { index + 1 }
                               </td>
-                              <td>{ item }</td>
+                              <td>
+                                {
+                                  publicView ?
+                                    item
+                                  :
+                                    <CustomReactSelect
+                                      name={ item }
+                                      id={ `metric-${index}` }
+                                      isClearable={ false }
+                                      onChange={ (e) => {
+                                        let tmpMetrics = props.values.metrics4tag
+                                        let tmpAllMetrics = props.values.metrics
+                                        tmpMetrics.splice(index, 0, e.value)
+                                        tmpAllMetrics.splice(tmpAllMetrics.indexOf(e.value), 1)
+                                        props.setFieldValue("metrics4tag", tmpMetrics)
+                                        props.setFieldValue("metrics", tmpAllMetrics)
+                                      } }
+                                      options={ props.values.metrics.map(option => new Object({ label: option, value: option })) }
+                                      value={ { label: item, value: item } }
+                                    />
+                                }
+                              </td>
+                              {
+                                !publicView &&
+                                  <td>
+                                    <Button
+                                      size="sm"
+                                      color="light"
+                                      data-testid={`remove-${index}`}
+                                    >
+                                      <FontAwesomeIcon icon={faTimes} />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      color="light"
+                                      data-testid={`insert-${index}`}
+                                    >
+                                      <FontAwesomeIcon icon={faPlus} />
+                                    </Button>
+                                  </td>
+                              }
                             </tr>
                           </React.Fragment>
                         )
@@ -185,6 +247,21 @@ export const MetricTagsComponent = (props) => {
                     </tbody>
                   </table>
                 </FormGroup>
+                {
+                  !publicView &&
+                    <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                      <Button
+                        color="danger"
+                      >
+                        Delete
+                      </Button>
+                      <Button
+                        color="success"
+                      >
+                        Save
+                      </Button>
+                    </div>
+                }
               </Form>
             )
           }
