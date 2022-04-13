@@ -98,6 +98,7 @@ export const MetricTagsComponent = (props) => {
   const queryClient = useQueryClient()
 
   const changeMutation = useMutation(async (values) => await backend.changeObject('/api/v2/internal/metrictags/', values));
+  const deleteMutation = useMutation(async () => await backend.deleteObject(`/api/v2/internal/metrictags/${name}`))
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
     "userdetails", () => fetchUserDetails(false),
@@ -164,6 +165,29 @@ export const MetricTagsComponent = (props) => {
     })
   }
 
+  const doDelete = () => {
+    deleteMutation.mutate(undefined, {
+      onSuccess: () => {
+        queryClient.invalidateQueries("public_metrictags")
+        queryClient.invalidateQueries(["public_metrics4tags", name])
+        queryClient.invalidateQueries("metrictags")
+        queryClient.invalidateQueries(["metrics4tags", name])
+        NotifyOk({
+          msg: "Metric tag successfully deleted",
+          title: "Deleted",
+          callback: () => history.push("/ui/metrictags")
+        })
+      },
+      onError: (error) => {
+        NotifyError({
+          title: "Error",
+          msg: error.message ? error.message : "Error deleting metric tag"
+        })
+      }
+    })
+
+  }
+
   if (loadingUserDetails || loadingTag || loadingMetrics || loadingAllMetrics)
     return (<LoadingAnim/>)
 
@@ -194,7 +218,10 @@ export const MetricTagsComponent = (props) => {
           modalFunc: modalFlag === "submit" ?
             doChange
           :
-            undefined
+            modalFlag === "delete" ?
+              doDelete
+            :
+              undefined
         }}
         toggle={toggleAreYouSure}
       >
@@ -322,6 +349,12 @@ export const MetricTagsComponent = (props) => {
                     <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
                       <Button
                         color="danger"
+                        onClick={() => {
+                          setModalMsg("Are you sure you want to delete metric tag?")
+                          setModalTitle("Delete metric tag")
+                          setModalFlag("delete")
+                          toggleAreYouSure()
+                        }}
                       >
                         Delete
                       </Button>
