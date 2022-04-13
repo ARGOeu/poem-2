@@ -10,6 +10,7 @@ import {
   ErrorComponent,
   Icon,
   LoadingAnim,
+  NotifyError,
   NotifyOk,
   ParagraphTitle,
   SearchField
@@ -152,6 +153,12 @@ export const MetricTagsComponent = (props) => {
           msg: "Metric tag successfully changed",
           title: "Changed",
           callback: () => history.push("/ui/metrictags")
+        })
+      },
+      onError: (error) => {
+        NotifyError({
+          title: "Error",
+          msg: error.message ? error.message: "Error changing metric tag"
         })
       }
     })

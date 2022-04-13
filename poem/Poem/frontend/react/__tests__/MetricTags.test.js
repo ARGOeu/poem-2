@@ -592,4 +592,86 @@ describe("Test metric tags changeview", () => {
       "Metric tag successfully changed", "Changed", 2000
     )
   })
+
+  test("Test error changing metric tag with error message", async () => {
+    mockChangeObject.mockImplementationOnce(() => {
+      throw Error("400 BAD REQUEST: Metric tag with this name already exists.")
+    })
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "test_tag" } })
+
+    await waitFor(() => {
+      expect(screen.getByTestId("form")).toHaveFormValues({name: "test_tag"})
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metrictags/",
+        { id: "3", name: "test_tag", metrics: ["argo.AMS-Check", "argo.AMSPublisher-Check"] }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled()
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>400 BAD REQUEST: Metric tag with this name already exists.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      "Error",
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test("Test error changing metric tag without error message", async () => {
+    mockChangeObject.mockImplementationOnce(() => { throw Error() })
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "test_tag" } })
+
+    await waitFor(() => {
+      expect(screen.getByTestId("form")).toHaveFormValues({name: "test_tag"})
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metrictags/",
+        { id: "3", name: "test_tag", metrics: ["argo.AMS-Check", "argo.AMSPublisher-Check"] }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled()
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error changing metric tag</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      "Error",
+      0,
+      expect.any(Function)
+    )
+  })
 })
