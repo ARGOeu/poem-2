@@ -504,6 +504,10 @@ describe("Test metric tags changeview", () => {
   })
 
   test("Test change metric tags name", async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 201, statusText: "CREATED" })
+    )
+
     renderChangeView()
 
     await waitFor(() => {
@@ -526,6 +530,57 @@ describe("Test metric tags changeview", () => {
       expect(mockChangeObject).toHaveBeenCalledWith(
         "/api/v2/internal/metrictags/",
         { id: "3", name: "test_tag", metrics: ["argo.AMS-Check", "argo.AMSPublisher-Check"] }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith(["metrics4tags", "internal"])
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith(["public_metrics4tags", "internal"])
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Metric tag successfully changed", "Changed", 2000
+    )
+  })
+
+  test("Test change metrics for metric tag", async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 201, statusText: "CREATED" })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
+    })
+
+    await selectEvent.select(screen.getByText("argo.AMS-Check"), "generic.certificate.validity")
+
+    fireEvent.click(screen.getByTestId("remove-1"))
+
+    fireEvent.click(screen.getByTestId("insert-0"))
+
+    const table = within(screen.getByRole("table"))
+
+    const row2 = table.getAllByRole("row")[3]
+
+    await selectEvent.select(within(row2).getByRole("combobox"), "generic.http.connect")
+
+    fireEvent.click(screen.getByTestId("insert-1"))
+
+    const row3 = table.getAllByRole("row")[4]
+
+    await selectEvent.select(within(row3).getByRole("combobox"), "generic.tcp.connect")
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metrictags/",
+        { id: "3", name: "internal", metrics: ["generic.certificate.validity", "generic.http.connect", "generic.tcp.connect"] }
       )
     })
 

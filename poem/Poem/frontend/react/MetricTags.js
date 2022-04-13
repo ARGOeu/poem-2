@@ -196,7 +196,6 @@ export const MetricTagsComponent = (props) => {
             id: `${tag ? tag.id : ""}`,
             name: `${tag ? tag.name: ""}`,
             metrics4tag: metrics ? metrics : [],
-            metrics: !publicView ? allMetrics.map(met => met.name).filter(met => !metrics.includes(met)) : []
           }}
         >
           {
@@ -267,13 +266,10 @@ export const MetricTagsComponent = (props) => {
                                       isClearable={ false }
                                       onChange={ (e) => {
                                         let tmpMetrics = props.values.metrics4tag
-                                        let tmpAllMetrics = props.values.metrics
-                                        tmpMetrics.splice(index, 0, e.value)
-                                        tmpAllMetrics.splice(tmpAllMetrics.indexOf(e.value), 1)
+                                        tmpMetrics[index] = e.value
                                         props.setFieldValue("metrics4tag", tmpMetrics)
-                                        props.setFieldValue("metrics", tmpAllMetrics)
                                       } }
-                                      options={ props.values.metrics.map(option => new Object({ label: option, value: option })) }
+                                      options={ allMetrics.map(met => met.name).filter(met => !metrics.includes(met)).map(option => new Object({ label: option, value: option }))  }
                                       value={ { label: item, value: item } }
                                     />
                                 }
@@ -285,6 +281,11 @@ export const MetricTagsComponent = (props) => {
                                       size="sm"
                                       color="light"
                                       data-testid={`remove-${index}`}
+                                      onClick={() => {
+                                        let tmpMetrics = props.values.metrics4tag
+                                        tmpMetrics.splice(index, 1)
+                                        props.setFieldValue("metrics4tag", tmpMetrics)
+                                      }}
                                     >
                                       <FontAwesomeIcon icon={faTimes} />
                                     </Button>
@@ -292,6 +293,11 @@ export const MetricTagsComponent = (props) => {
                                       size="sm"
                                       color="light"
                                       data-testid={`insert-${index}`}
+                                      onClick={() => {
+                                        let tmpMetrics = props.values.metrics4tag
+                                        tmpMetrics.splice(index + 1, 0, "")
+                                        props.setFieldValue("metrics4tag", tmpMetrics)
+                                      }}
                                     >
                                       <FontAwesomeIcon icon={faPlus} />
                                     </Button>
