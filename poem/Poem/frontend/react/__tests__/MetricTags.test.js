@@ -357,6 +357,7 @@ describe("Test list of metric tags", () => {
 describe("Test metric tags changeview", () => {
   jest.spyOn(NotificationManager, "success")
   jest.spyOn(NotificationManager, "error")
+  jest.spyOn(NotificationManager, "warning")
   jest.spyOn(queryClient, "invalidateQueries")
 
   beforeAll(() => {
@@ -671,6 +672,71 @@ describe("Test metric tags changeview", () => {
         <p>Click to dismiss.</p>
       </div>,
       "Error",
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test("Test display warning messages", async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({
+        ok: true,
+        status: 201,
+        statusText: "CREATED",
+        detail: "Metric generic.tcp.connect does not exist."
+      })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
+    })
+
+    await selectEvent.select(screen.getByText("argo.AMS-Check"), "generic.certificate.validity")
+
+    fireEvent.click(screen.getByTestId("remove-1"))
+
+    fireEvent.click(screen.getByTestId("insert-0"))
+
+    const table = within(screen.getByRole("table"))
+
+    const row2 = table.getAllByRole("row")[3]
+
+    await selectEvent.select(within(row2).getByRole("combobox"), "generic.http.connect")
+
+    fireEvent.click(screen.getByTestId("insert-1"))
+
+    const row3 = table.getAllByRole("row")[4]
+
+    await selectEvent.select(within(row3).getByRole("combobox"), "generic.tcp.connect")
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metrictags/",
+        { id: "3", name: "internal", metrics: ["generic.certificate.validity", "generic.http.connect", "generic.tcp.connect"] }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith(["metrics4tags", "internal"])
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith(["public_metrics4tags", "internal"])
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Metric tag successfully changed", "Changed", 2000
+    )
+    expect(NotificationManager.warning).toHaveBeenCalledWith(
+      <div>
+        <p>Metric generic.tcp.connect does not exist.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      "Warning",
       0,
       expect.any(Function)
     )

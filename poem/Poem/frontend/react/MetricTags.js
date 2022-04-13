@@ -12,6 +12,7 @@ import {
   LoadingAnim,
   NotifyError,
   NotifyOk,
+  NotifyWarn,
   ParagraphTitle,
   SearchField
 } from "./UIElements"
@@ -145,7 +146,7 @@ export const MetricTagsComponent = (props) => {
     })
 
     changeMutation.mutate(sendValues, {
-      onSuccess: () => {
+      onSuccess: (response) => {
         queryClient.invalidateQueries("public_metrictags")
         queryClient.invalidateQueries(["public_metrics4tags", name])
         queryClient.invalidateQueries("metrictags")
@@ -155,6 +156,11 @@ export const MetricTagsComponent = (props) => {
           title: "Changed",
           callback: () => history.push("/ui/metrictags")
         })
+        if ("detail" in response)
+          NotifyWarn({
+            title: "Warning",
+            msg: response.detail
+          })
       },
       onError: (error) => {
         NotifyError({
