@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('poem', '0019_userprofile_groupsofreports'),
+        ('poem', '0020_servicetype_fields_extend'),
     ]
 
     operations = [
