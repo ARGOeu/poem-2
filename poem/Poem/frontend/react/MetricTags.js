@@ -100,6 +100,7 @@ export const MetricTagsComponent = (props) => {
   const queryClient = useQueryClient()
 
   const changeMutation = useMutation(async (values) => await backend.changeObject('/api/v2/internal/metrictags/', values));
+  const addMutation = useMutation(async (values) => await backend.addObject('/api/v2/internal/metrictags/', values));
   const deleteMutation = useMutation(async () => await backend.deleteObject(`/api/v2/internal/metrictags/${name}`))
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
@@ -131,8 +132,8 @@ export const MetricTagsComponent = (props) => {
   }
 
   const onSubmitHandle = (values) => {
-    let msg = "Are you sure you want to change metric tag?"
-    let title = "Change metric tag"
+    let msg = `Are you sure you want to ${addview ? "add" : "change"} metric tag?`
+    let title = `${addview ? "Add" : "Change "}metric tag`
 
     setFormValues(values);
     setModalMsg(msg);
@@ -143,35 +144,67 @@ export const MetricTagsComponent = (props) => {
 
   const doChange = () => {
     const sendValues = new Object({
-      id: formValues.id,
       name: formValues.name,
-      metrics: formValues.metrics4tag
+      metrics: formValues.metrics4tag.filter(met => met !== "")
     })
 
-    changeMutation.mutate(sendValues, {
-      onSuccess: (response) => {
-        queryClient.invalidateQueries("public_metrictags")
-        queryClient.invalidateQueries(["public_metrics4tags", name])
-        queryClient.invalidateQueries("metrictags")
-        queryClient.invalidateQueries(["metrics4tags", name])
-        NotifyOk({
-          msg: "Metric tag successfully changed",
-          title: "Changed",
-          callback: () => history.push("/ui/metrictags")
-        })
-        if ("detail" in response)
-          NotifyWarn({
-            title: "Warning",
-            msg: response.detail
+    if (addview)
+      addMutation.mutate(sendValues, {
+        onSuccess: (response) => {
+          queryClient.invalidateQueries("public_metrictags")
+          queryClient.invalidateQueries("metrictags")
+          queryClient.invalidateQueries("metric")
+          queryClient.invalidateQueries("public_metric")
+          queryClient.invalidateQueries("metrictemplate")
+          queryClient.invalidateQueries("public_metrictemplate")
+          NotifyOk({
+            msg: "Metric tag successfully added",
+            title: "Added",
+            callback: () => history.push("/ui/metrictags")
           })
-      },
-      onError: (error) => {
-        NotifyError({
-          title: "Error",
-          msg: error.message ? error.message: "Error changing metric tag"
-        })
-      }
-    })
+          if ("detail" in response)
+            NotifyWarn({
+              title: "Warning",
+              msg: response.detail
+            })
+        },
+        onError: (error) => {
+          NotifyError({
+            title: "Error",
+            msg: error.message ? error.message : "Error adding metric tag"
+          })
+        }
+      })
+
+    else
+      changeMutation.mutate({ ...sendValues, id: formValues.id }, {
+        onSuccess: (response) => {
+          queryClient.invalidateQueries("public_metrictags")
+          queryClient.invalidateQueries(["public_metrics4tags", name])
+          queryClient.invalidateQueries("metrictags")
+          queryClient.invalidateQueries(["metrics4tags", name])
+          queryClient.invalidateQueries("metric")
+          queryClient.invalidateQueries("public_metric")
+          queryClient.invalidateQueries("metrictemplate")
+          queryClient.invalidateQueries("public_metrictemplate")
+          NotifyOk({
+            msg: "Metric tag successfully changed",
+            title: "Changed",
+            callback: () => history.push("/ui/metrictags")
+          })
+          if ("detail" in response)
+            NotifyWarn({
+              title: "Warning",
+              msg: response.detail
+            })
+        },
+        onError: (error) => {
+          NotifyError({
+            title: "Error",
+            msg: error.message ? error.message: "Error changing metric tag"
+          })
+        }
+      })
   }
 
   const doDelete = () => {
@@ -181,6 +214,10 @@ export const MetricTagsComponent = (props) => {
         queryClient.invalidateQueries(["public_metrics4tags", name])
         queryClient.invalidateQueries("metrictags")
         queryClient.invalidateQueries(["metrics4tags", name])
+        queryClient.invalidateQueries("metric")
+        queryClient.invalidateQueries("public_metric")
+        queryClient.invalidateQueries("metrictemplate")
+        queryClient.invalidateQueries("public_metrictemplate")
         NotifyOk({
           msg: "Metric tag successfully deleted",
           title: "Deleted",

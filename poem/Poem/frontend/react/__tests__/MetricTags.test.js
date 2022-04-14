@@ -20,6 +20,7 @@ jest.setTimeout(50000)
 
 const mockChangeObject = jest.fn()
 const mockDeleteObject = jest.fn()
+const mockAddObject = jest.fn()
 
 const queryClient = new QueryClient()
 
@@ -555,7 +556,11 @@ describe("Test metric tags changeview", () => {
     })
 
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictemplate")
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictemplate")
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith(["metrics4tags", "internal"])
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith(["public_metrics4tags", "internal"])
     expect(NotificationManager.success).toHaveBeenCalledWith(
@@ -606,7 +611,11 @@ describe("Test metric tags changeview", () => {
     })
 
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictemplate")
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictemplate")
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith(["metrics4tags", "internal"])
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith(["public_metrics4tags", "internal"])
     expect(NotificationManager.success).toHaveBeenCalledWith(
@@ -744,7 +753,11 @@ describe("Test metric tags changeview", () => {
     })
 
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictemplate")
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictemplate")
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith(["metrics4tags", "internal"])
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith(["public_metrics4tags", "internal"])
     expect(NotificationManager.success).toHaveBeenCalledWith(
@@ -785,7 +798,11 @@ describe("Test metric tags changeview", () => {
     })
 
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictemplate")
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictemplate")
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith(["metrics4tags", "internal"])
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith(["public_metrics4tags", "internal"])
     expect(NotificationManager.success).toHaveBeenCalledWith(
@@ -819,7 +836,11 @@ describe("Test metric tags changeview", () => {
     })
 
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictemplate")
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictemplate")
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith(["metrics4tags", "internal"])
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith(["public_metrics4tags", "internal"])
     expect(NotificationManager.success).toHaveBeenCalledWith(
@@ -897,6 +918,11 @@ describe("Test metric tags changeview", () => {
 })
 
 describe("Test metric tags addview", () => {
+  jest.spyOn(NotificationManager, "success")
+  jest.spyOn(NotificationManager, "error")
+  jest.spyOn(NotificationManager, "warning")
+  jest.spyOn(queryClient, "invalidateQueries")
+
   beforeEach(() => {
     Backend.mockImplementation(() => {
       return {
@@ -906,7 +932,8 @@ describe("Test metric tags addview", () => {
               return Promise.resolve(mockMetricTemplates)
           }
         },
-        isActiveSession: () => Promise.resolve(mockActiveSession)
+        isActiveSession: () => Promise.resolve(mockActiveSession),
+        addObject: mockAddObject
       }
     })
   })
@@ -956,5 +983,252 @@ describe("Test metric tags addview", () => {
     expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /delete/i })).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /clone/i })).not.toBeInTheDocument()
+  })
+
+  test("Test change metric tags name", async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 201, statusText: "CREATED" })
+    )
+
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "test_tag" } })
+
+    await waitFor(() => {
+      expect(screen.getByTestId("form")).toHaveFormValues({name: "test_tag"})
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metrictags/",
+        { name: "test_tag", metrics: [] }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictemplate")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictemplate")
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Metric tag successfully added", "Added", 2000
+    )
+  })
+
+  test("Test change metrics for metric tag", async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 201, statusText: "CREATED" })
+    )
+
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "test_tag" } })
+
+    const table = within(screen.getByRole("table"))
+
+    fireEvent.click(table.getByTestId("remove-0"))
+
+    expect(table.getAllByRole("row")).toHaveLength(3)
+    expect(table.getAllByTestId(/remove-/i)).toHaveLength(1)
+    expect(table.getAllByTestId(/insert-/i)).toHaveLength(1)
+
+    const row1 = table.getAllByRole("row")[2]
+    const input1 = within(row1).getByRole("combobox")
+
+    await selectEvent.select(input1, "generic.certificate.validity")
+
+    fireEvent.click(table.getByTestId("insert-0"))
+
+    const row2 = table.getAllByRole("row")[3]
+    const input2 = within(row2).getByRole("combobox")
+
+    await selectEvent.select(input2, "generic.http.connect")
+
+    fireEvent.click(table.getByTestId("insert-1"))
+
+    const row3 = table.getAllByRole("row")[4]
+    const input3 = within(row3).getByRole("combobox")
+
+    await selectEvent.select(input3, "generic.tcp.connect")
+
+    fireEvent.click(table.getByTestId("remove-1"))
+
+    await selectEvent.select(table.getByText("generic.tcp.connect"), "argo.AMS-Check")
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metrictags/",
+        { name: "test_tag", metrics: ["generic.certificate.validity", "argo.AMS-Check"] }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictemplate")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictemplate")
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Metric tag successfully added", "Added", 2000
+    )
+  })
+
+  test("Test display warning messages", async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({
+        ok: true,
+        status: 201,
+        statusText: "CREATED",
+        detail: "Metric generic.tcp.connect does not exist."
+      })
+    )
+
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "test_tag" } })
+
+    const table = within(screen.getByRole("table"))
+
+    const row1 = table.getAllByRole("row")[2]
+    const input1 = within(row1).getByRole("combobox")
+
+    await selectEvent.select(input1, "generic.tcp.connect")
+
+    fireEvent.click(table.getByTestId("insert-0"))
+
+    const row2 = table.getAllByRole("row")[3]
+
+    await selectEvent.select(within(row2).getByRole("combobox"), "generic.http.connect")
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metrictags/",
+        { name: "test_tag", metrics: ["generic.tcp.connect", "generic.http.connect"] }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictemplate")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictemplate")
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Metric tag successfully added", "Added", 2000
+    )
+    expect(NotificationManager.warning).toHaveBeenCalledWith(
+      <div>
+        <p>Metric generic.tcp.connect does not exist.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      "Warning",
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test("Test error adding metric tag with error message", async () => {
+    mockAddObject.mockImplementationOnce(() => {
+      throw Error("400 BAD REQUEST: Metric tag with this name already exists.")
+    })
+
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "test_tag" } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metrictags/",
+        { name: "test_tag", metrics: [] }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled()
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>400 BAD REQUEST: Metric tag with this name already exists.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      "Error",
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test("Test error adding metric tag without error message", async () => {
+    mockAddObject.mockImplementationOnce(() => { throw Error() })
+
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "test_tag" } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metrictags/",
+        { name: "test_tag", metrics: [] }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled()
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error adding metric tag</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      "Error",
+      0,
+      expect.any(Function)
+    )
   })
 })
