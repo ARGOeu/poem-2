@@ -48,7 +48,6 @@ class Metric(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=128, unique=True)
     mtype = models.ForeignKey(MetricType, on_delete=models.CASCADE)
-    tags = models.ManyToManyField(MetricTags)
     probekey = models.ForeignKey(ProbeHistory, blank=True, null=True,
                                  on_delete=models.SET_NULL)
     description = models.TextField(default='')

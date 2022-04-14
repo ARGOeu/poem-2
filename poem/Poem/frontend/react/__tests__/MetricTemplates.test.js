@@ -555,6 +555,25 @@ const passiveMetricTemplateVersions = [
   }
 ]
 
+const mockMetricTags = [
+  {
+    id: 1,
+    name: "test_tag1"
+  },
+  {
+    id: 2,
+    name: "test_tag2"
+  },
+  {
+    id: 3,
+    name: "internal"
+  },
+  {
+    id: 4,
+    name: "deprecated"
+  }
+]
+
 
 function renderListView(publicView=undefined) {
   const route = `/ui/${publicView ? 'public_' : ''}metrictemplates`;
@@ -741,10 +760,10 @@ describe('Test list of metric templates on SuperPOEM', () => {
               return Promise.resolve(['Active', 'Passive'])
 
             case '/api/v2/internal/metrictags':
-              return Promise.resolve(['test_tag1', 'test_tag2', 'internal', 'deprecated'])
+              return Promise.resolve(mockMetricTags)
 
             case '/api/v2/internal/public_metrictags':
-              return Promise.resolve(['test_tag1', 'test_tag2', 'internal', 'deprecated'])
+              return Promise.resolve(mockMetricTags)
 
             case '/api/v2/internal/ostags':
               return Promise.resolve(['CentOS 6', 'CentOS 7'])
@@ -1098,10 +1117,10 @@ describe('Test list of metric templates on SuperPOEM if empty list', () => {
               return Promise.resolve(['Active', 'Passive'])
 
             case '/api/v2/internal/metrictags':
-              return Promise.resolve(['test_tag1', 'test_tag2', 'internal', 'deprecated'])
+              return Promise.resolve(mockMetricTags)
 
             case '/api/v2/internal/public_metrictags':
-              return Promise.resolve(['test_tag1', 'test_tag2', 'internal', 'deprecated'])
+              return Promise.resolve(mockMetricTags)
 
             case '/api/v2/internal/ostags':
               return Promise.resolve(['CentOS 6', 'CentOS 7'])
@@ -1191,7 +1210,7 @@ describe('Test list of metric templates on tenant POEM', () => {
               return Promise.resolve(['Active', 'Passive'])
 
             case '/api/v2/internal/metrictags':
-              return Promise.resolve(['test_tag1', 'test_tag2', 'internal', 'deprecated'])
+              return Promise.resolve(mockMetricTags)
 
             case '/api/v2/internal/ostags':
               return Promise.resolve(['CentOS 6', 'CentOS 7'])
@@ -1634,10 +1653,10 @@ describe('Test metric template changeview on SuperPOEM', () => {
               return Promise.resolve(['Active', 'Passive'])
 
             case '/api/v2/internal/metrictags':
-              return Promise.resolve(['test_tag1', 'test_tag2', 'internal', 'deprecated'])
+              return Promise.resolve(mockMetricTags)
 
             case '/api/v2/internal/public_metrictags':
-              return Promise.resolve(['test_tag1', 'test_tag2', 'internal', 'deprecated'])
+              return Promise.resolve(mockMetricTags)
 
             case '/api/v2/internal/version/probe':
               return Promise.resolve(mockProbeVersions)
@@ -2730,7 +2749,7 @@ describe('Test metric template addview on SuperPOEM', () => {
               return Promise.resolve(['Active', 'Passive'])
 
             case '/api/v2/internal/metrictags':
-              return Promise.resolve(['test_tag1', 'test_tag2', 'internal', 'deprecated'])
+              return Promise.resolve(mockMetricTags)
 
             case '/api/v2/internal/version/probe':
               return Promise.resolve(mockProbeVersions)
@@ -3312,7 +3331,7 @@ describe('Test metric template cloneview on SuperPOEM', () => {
               return Promise.resolve(['Active', 'Passive'])
 
             case '/api/v2/internal/metrictags':
-              return Promise.resolve(['test_tag1', 'test_tag2', 'internal', 'deprecated'])
+              return Promise.resolve(mockMetricTags)
 
             case '/api/v2/internal/version/probe':
               return Promise.resolve(mockProbeVersions)
@@ -3702,7 +3721,7 @@ describe('Test metric template detail view on tenant POEM', () => {
               return Promise.resolve(['Active', 'Passive'])
 
             case '/api/v2/internal/metrictags':
-              return Promise.resolve(['test_tag1', 'test_tag2', 'internal', 'deprecated'])
+              return Promise.resolve(mockMetricTags)
 
             case '/api/v2/internal/version/probe':
               return Promise.resolve(mockProbeVersions)

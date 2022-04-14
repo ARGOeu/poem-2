@@ -81,6 +81,7 @@ import {
   fetchTopologyTags,
   fetchTopologyGroups
 } from './QueryFunctions';
+import { MetricTagsComponent, MetricTagsList } from './MetricTags';
 
 
 const NavigationBarWithRouter = withRouter(NavigationBar);
@@ -535,6 +536,9 @@ const SuperAdminRouteSwitch = () => (
     <Route exact path="/ui/probes/:name/history/compare/:id1/:id2" render={props => <ProbeVersionCompare {...props}/>}/>
     <Route exact path="/ui/probes/:name/history/:version" render={props => <ProbeVersionDetails {...props}/>}/>
     <Route exact path="/ui/probes/:name" render={props => <ProbeComponent {...props}/>}/>
+    <Route exact path="/ui/metrictags" render={props => <MetricTagsList {...props}/>}/>
+    <Route exact path="/ui/metrictags/add" render={props => <MetricTagsComponent {...props} addview={true}/>}/>
+    <Route exact path="/ui/metrictags/:name" render={props => <MetricTagsComponent {...props}/>}/>
     <Route exact path='/ui/metrictemplates' render={props => <ListOfMetrics type='metrictemplates' {...props} />} />
     <Route exact path='/ui/metrictemplates/add' render={props => <MetricTemplateComponent {...props} addview={true}/>}/>
     <Route exact path='/ui/metrictemplates/:name/clone' render={props => <MetricTemplateComponent {...props} cloneview={true}/>}/>
@@ -677,6 +681,9 @@ const App = () => {
     )
     queryClient.prefetchQuery(
       `${isPublic ? 'public_' : ''}package`, () => fetchPackages(isPublic)
+    )
+    queryClient.prefetchQuery(
+      `${isPublic ? 'public_' : ''}metrictags`, () => fetchMetricTags(isPublic)
     )
     queryClient.prefetchQuery(
       `${isPublic ? 'public_' : ''}metrictemplate`, () => fetchMetricTemplates(isPublic)
@@ -1099,6 +1106,22 @@ const App = () => {
                 render={props =>
                   <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <ProbeVersionDetails publicView={true} {...props}/>
+                  </PublicPage>
+                }
+              />
+              <Route
+                exact path="/ui/public_metrictags"
+                render={ props =>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
+                    <MetricTagsList publicView={true} {...props} />
+                  </PublicPage>
+                }
+              />
+              <Route
+                exact path="/ui/public_metrictags/:name"
+                render={ props =>
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
+                    <MetricTagsList publicView={true} {...props} />
                   </PublicPage>
                 }
               />

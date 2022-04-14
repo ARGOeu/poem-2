@@ -26,7 +26,7 @@ class MetricTemplateType(models.Model):
 
 class MetricTags(models.Model):
     id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=128, blank=True, null=True)
+    name = models.CharField(max_length=128, unique=True)
 
     objects = MetricTemplateManager()
 

@@ -2,13 +2,12 @@ import json
 
 import requests
 from Poem.api.models import MyAPIKey
-from Poem.helpers.history_helpers import create_history
+from Poem.helpers.history_helpers import create_history, serialize_metric
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from django.core import serializers
 from django.db import IntegrityError
 from django_tenants.utils import schema_context, get_public_schema_name
 
@@ -47,10 +46,9 @@ def import_metrics(metrictemplates, tenant, user):
                             package=package_version
                         )
 
-                        metrictemplate = \
-                            admin_models.MetricTemplateHistory.objects.get(
-                                name=mt.name, probekey=ver
-                            )
+                        mt = admin_models.MetricTemplateHistory.objects.get(
+                            name=mt.name, probekey=ver
+                        )
                         imported_different_version = True
 
                     except admin_models.ProbeHistory.DoesNotExist:
@@ -62,26 +60,24 @@ def import_metrics(metrictemplates, tenant, user):
                         continue
 
                 else:
-                    metrictemplate = mt
                     ver = mt.probekey
 
                 metric = poem_models.Metric.objects.create(
-                    name=metrictemplate.name,
+                    name=mt.name,
                     mtype=mtype,
                     probekey=ver,
-                    description=metrictemplate.description,
-                    parent=metrictemplate.parent,
+                    description=mt.description,
+                    parent=mt.parent,
                     group=gr,
-                    probeexecutable=metrictemplate.probeexecutable,
-                    config=metrictemplate.config,
-                    attribute=metrictemplate.attribute,
-                    dependancy=metrictemplate.dependency,
-                    flags=metrictemplate.flags,
-                    files=metrictemplate.files,
-                    parameter=metrictemplate.parameter,
-                    fileparameter=metrictemplate.fileparameter
+                    probeexecutable=mt.probeexecutable,
+                    config=mt.config,
+                    attribute=mt.attribute,
+                    dependancy=mt.dependency,
+                    flags=mt.flags,
+                    files=mt.files,
+                    parameter=mt.parameter,
+                    fileparameter=mt.fileparameter
                 )
-                new_tags = set([tag.name for tag in metrictemplate.tags.all()])
 
             else:
                 metric = poem_models.Metric.objects.create(
@@ -92,24 +88,11 @@ def import_metrics(metrictemplates, tenant, user):
                     flags=mt.flags,
                     group=gr
                 )
-                new_tags = set([tag.name for tag in mt.tags.all()])
 
-            old_tags = set([tag.name for tag in metric.tags.all()])
-
-            if new_tags.difference(old_tags):
-                for tag_name in new_tags.difference(old_tags):
-                    metric.tags.add(
-                        admin_models.MetricTags.objects.get(name=tag_name)
-                    )
-
-            if old_tags.difference(new_tags):
-                for tag_name in old_tags.difference(new_tags):
-                    metric.tags.remove(
-                        admin_models.MetricTags.objects.get(name=tag_name)
-                    )
+            new_tags = [tag for tag in mt.tags.all()]
 
             create_history(
-                metric, user.username, comment='Initial version.'
+                metric, user.username, comment='Initial version.', tags=new_tags
             )
 
             if imported_different_version:
@@ -219,22 +202,10 @@ def update_metric_in_schema(
 
             met.save()
 
-            new_tags = set([tag.name for tag in metrictemplate.tags.all()])
-            old_tags = set([tag.name for tag in met.tags.all()])
-            if new_tags.difference(old_tags):
-                for tag_name in new_tags.difference(old_tags):
-                    met.tags.add(
-                        admin_models.MetricTags.objects.get(name=tag_name)
-                    )
-
-            if old_tags.difference(new_tags):
-                for tag_name in old_tags.difference(new_tags):
-                    met.tags.remove(
-                        admin_models.MetricTags.objects.get(name=tag_name)
-                    )
+            tags = [tag for tag in metrictemplate.tags.all()]
 
             if update_from_history or met.probekey != probekey:
-                create_history(met, user)
+                create_history(met, user, tags=tags)
 
             else:
                 history = poem_models.TenantHistory.objects.filter(
@@ -243,11 +214,7 @@ def update_metric_in_schema(
                         poem_models.Metric
                     )
                 )[0]
-                history.serialized_data = serializers.serialize(
-                    'json', [met],
-                    use_natural_foreign_keys=True,
-                    use_natural_primary_keys=True
-                )
+                history.serialized_data = serialize_metric(met, tags=tags)
                 history.object_repr = met.__str__()
                 history.save()
 
