@@ -85,6 +85,7 @@ export const MetricTagsList = (props) => {
 export const MetricTagsComponent = (props) => {
   const name = props.match.params.name
   const publicView = props.publicView
+  const addview = props.addview
   const location = props.location
   const history = props.history
 
@@ -109,13 +110,15 @@ export const MetricTagsComponent = (props) => {
   const { data: tag, error: errorTag, isLoading: loadingTag } = useQuery(
     [`${publicView ? "public_" : ""}metrictags`, name], async () => {
       return await backend.fetchData(`/api/v2/internal/${publicView ? "public_" : ""}metrictags/${name}`)
-    }
+    },
+    { enabled: !addview }
   )
 
   const { data: metrics, error: errorMetrics, isLoading: loadingMetrics } = useQuery(
     [`${publicView ? "public_" : ""}metrics4tags`, name], async () => {
       return await backend.fetchData(`/api/v2/internal/${publicView ? "public_" : ""}metrics4tags/${name}`)
-    }
+    },
+    { enabled: !addview }
   )
 
   const { data: allMetrics, error: errorAllMetrics, isLoading: loadingAllMetrics } = useQuery(
@@ -209,13 +212,14 @@ export const MetricTagsComponent = (props) => {
   else if (errorAllMetrics)
     return (<ErrorComponent error={errorAllMetrics} />)
 
-  else if (tag && metrics && (publicView || (allMetrics && userDetails))) {
+  else if ((addview || (tag && metrics)) && (publicView || (allMetrics && userDetails))) {
     return (
       <BaseArgoView
         resourcename={publicView ? "Metric tag details" : "metric tag"}
         location={location}
         history={false}
         publicview={publicView}
+        addview={addview}
         modal={true}
         state={{
           areYouSureModal,
@@ -235,7 +239,7 @@ export const MetricTagsComponent = (props) => {
           initialValues={{
             id: `${tag ? tag.id : ""}`,
             name: `${tag ? tag.name: ""}`,
-            metrics4tag: metrics ? metrics : [],
+            metrics4tag: metrics ? metrics : [""],
           }}
         >
           {
@@ -309,7 +313,14 @@ export const MetricTagsComponent = (props) => {
                                         tmpMetrics[index] = e.value
                                         props.setFieldValue("metrics4tag", tmpMetrics)
                                       } }
-                                      options={ allMetrics.map(met => met.name).filter(met => !metrics.includes(met)).map(option => new Object({ label: option, value: option }))  }
+                                      options={
+                                        allMetrics.map(
+                                          met => met.name
+                                        ).filter(
+                                          met => !props.values.metrics4tag.includes(met)
+                                        ).map(
+                                          option => new Object({ label: option, value: option })
+                                      )}
                                       value={ { label: item, value: item } }
                                     />
                                 }
@@ -324,6 +335,8 @@ export const MetricTagsComponent = (props) => {
                                       onClick={() => {
                                         let tmpMetrics = props.values.metrics4tag
                                         tmpMetrics.splice(index, 1)
+                                        if (tmpMetrics.length === 0)
+                                          tmpMetrics = [""]
                                         props.setFieldValue("metrics4tag", tmpMetrics)
                                       }}
                                     >
@@ -353,17 +366,22 @@ export const MetricTagsComponent = (props) => {
                 {
                   !publicView &&
                     <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                      <Button
-                        color="danger"
-                        onClick={() => {
-                          setModalMsg("Are you sure you want to delete metric tag?")
-                          setModalTitle("Delete metric tag")
-                          setModalFlag("delete")
-                          toggleAreYouSure()
-                        }}
-                      >
-                        Delete
-                      </Button>
+                      {
+                        !addview ?
+                          <Button
+                            color="danger"
+                            onClick={() => {
+                              setModalMsg("Are you sure you want to delete metric tag?")
+                              setModalTitle("Delete metric tag")
+                              setModalFlag("delete")
+                              toggleAreYouSure()
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        :
+                          <div></div>
+                      }
                       <Button
                         color="success"
                         onClick={() => onSubmitHandle(props.values)}

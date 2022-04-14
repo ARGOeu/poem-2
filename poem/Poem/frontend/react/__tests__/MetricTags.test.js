@@ -287,6 +287,25 @@ function renderChangeView(publicView) {
 }
 
 
+function renderAddView() {
+  const route = "/ui/metrictags/add"
+  const history = createMemoryHistory({ initialEntries: [route] })
+
+  return {
+    ...render(
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path="/ui/metrictags/add"
+            render={ props => <MetricTagsComponent {...props} addview={true} /> }
+          />
+        </Router>
+      </QueryClientProvider>
+    )
+  }
+}
+
+
 describe("Test list of metric tags", () => {
   beforeAll(() => {
     Backend.mockImplementation(() => {
@@ -360,7 +379,7 @@ describe("Test metric tags changeview", () => {
   jest.spyOn(NotificationManager, "warning")
   jest.spyOn(queryClient, "invalidateQueries")
 
-  beforeAll(() => {
+  beforeEach(() => {
     Backend.mockImplementation(() => {
       return {
         fetchData: (path) => {
@@ -875,5 +894,67 @@ describe("Test metric tags changeview", () => {
       expect.any(Function)
     )
   })
+})
 
+describe("Test metric tags addview", () => {
+  beforeEach(() => {
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: (path) => {
+          switch (path) {
+            case "/api/v2/internal/metrictemplates":
+              return Promise.resolve(mockMetricTemplates)
+          }
+        },
+        isActiveSession: () => Promise.resolve(mockActiveSession)
+      }
+    })
+  })
+
+  test("Test that page renders properly", async () => {
+    renderAddView()
+
+    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /metric tag/i }).textContent).toBe("Add metric tag")
+    })
+
+    expect(screen.getByTestId("form")).toHaveFormValues({
+      "name": ""
+    })
+
+    const nameField = screen.getByTestId("name")
+
+    expect(nameField.value).toBe("")
+    expect(nameField).toBeEnabled()
+
+    expect(screen.getByPlaceholderText(/search/i)).toBeInTheDocument()
+    const table = within(screen.getByRole("table"))
+
+    expect(table.getAllByRole("columnheader")).toHaveLength(3)
+    expect(table.getByRole("columnheader", { name: "#" })).toBeInTheDocument()
+    expect(table.getByRole("columnheader", { name: /metric/i }).textContent).toBe("Metric template")
+    expect(table.getByRole("columnheader", { name: /action/i }).textContent).toBe("Actions")
+
+    expect(table.getAllByRole("row")).toHaveLength(3)
+    expect(table.getAllByTestId(/remove-/i)).toHaveLength(1)
+    expect(table.getAllByTestId(/insert-/i)).toHaveLength(1)
+    const row1 = table.getAllByRole("row")[2]
+    const input = within(row1).getByRole("combobox")
+    expect(input).toBeInTheDocument()
+
+    expect(table.queryByText(/generic/i)).not.toBeInTheDocument()
+    expect(table.queryByText(/argo/i)).not.toBeInTheDocument()
+    selectEvent.openMenu(input)
+    expect(table.getByText("generic.certificate.validity")).toBeInTheDocument()
+    expect(table.getByText("generic.http.connect")).toBeInTheDocument()
+    expect(table.getByText("generic.tcp.connect")).toBeInTheDocument()
+    expect(table.getByText("argo.AMS-Check")).toBeInTheDocument()
+    expect(table.getByText("argo.AMSPublisher-Check")).toBeInTheDocument()
+
+    expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /delete/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /clone/i })).not.toBeInTheDocument()
+  })
 })

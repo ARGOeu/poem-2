@@ -537,6 +537,7 @@ const SuperAdminRouteSwitch = () => (
     <Route exact path="/ui/probes/:name/history/:version" render={props => <ProbeVersionDetails {...props}/>}/>
     <Route exact path="/ui/probes/:name" render={props => <ProbeComponent {...props}/>}/>
     <Route exact path="/ui/metrictags" render={props => <MetricTagsList {...props}/>}/>
+    <Route exact path="/ui/metrictags/add" render={props => <MetricTagsComponent {...props} addview={true}/>}/>
     <Route exact path="/ui/metrictags/:name" render={props => <MetricTagsComponent {...props}/>}/>
     <Route exact path='/ui/metrictemplates' render={props => <ListOfMetrics type='metrictemplates' {...props} />} />
     <Route exact path='/ui/metrictemplates/add' render={props => <MetricTemplateComponent {...props} addview={true}/>}/>
