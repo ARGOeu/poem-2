@@ -2,11 +2,11 @@ import datetime
 import json
 
 from Poem.api import views_internal as views
+from Poem.helpers.history_helpers import serialize_metric
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from Poem.users.models import CustUser
 from django.contrib.contenttypes.models import ContentType
-from django.core import serializers
 from django_tenants.test.cases import TenantTestCase
 from django_tenants.test.client import TenantRequestFactory
 from rest_framework import status
@@ -122,11 +122,7 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
 
         self.ver1 = poem_models.TenantHistory.objects.create(
             object_id=self.metric1.id,
-            serialized_data=serializers.serialize(
-                'json', [self.metric1],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
-            ),
+            serialized_data=serialize_metric(self.metric1),
             object_repr=self.metric1.__str__(),
             content_type=self.ct,
             date_created=datetime.datetime.now(),
@@ -136,11 +132,7 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
 
         self.ver2 = poem_models.TenantHistory.objects.create(
             object_id=self.metric2.id,
-            serialized_data=serializers.serialize(
-                'json', [self.metric2],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
-            ),
+            serialized_data=serialize_metric(self.metric2),
             object_repr=self.metric2.__str__(),
             content_type=self.ct,
             date_created=datetime.datetime.now(),
@@ -150,11 +142,7 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
 
         self.ver3 = poem_models.TenantHistory.objects.create(
             object_id=self.metric3.id,
-            serialized_data=serializers.serialize(
-                'json', [self.metric3],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
-            ),
+            serialized_data=serialize_metric(self.metric3),
             object_repr=self.metric3.__str__(),
             content_type=self.ct,
             date_created=datetime.datetime.now(),
@@ -164,11 +152,7 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
 
         self.ver4 = poem_models.TenantHistory.objects.create(
             object_id=self.metric4.id,
-            serialized_data=serializers.serialize(
-                'json', [self.metric4],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
-            ),
+            serialized_data=serialize_metric(self.metric4),
             object_repr=self.metric4.__str__(),
             content_type=self.ct,
             date_created=datetime.datetime.now(),

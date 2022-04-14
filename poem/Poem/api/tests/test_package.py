@@ -2,12 +2,12 @@ import datetime
 import json
 
 from Poem.api import views_internal as views
+from Poem.helpers.history_helpers import serialize_metric
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
 from Poem.users.models import CustUser
 from django.contrib.contenttypes.models import ContentType
-from django.core import serializers
 from django_tenants.test.cases import TenantTestCase
 from django_tenants.test.client import TenantRequestFactory
 from django_tenants.utils import schema_context, get_public_schema_name, \
@@ -154,15 +154,10 @@ class ListPackagesAPIViewTests(TenantTestCase):
             flags='["OBSESS 1"]',
             parameter='["--project EGI"]'
         )
-        metric1.tags.add(mtag1)
 
         poem_models.TenantHistory.objects.create(
             object_id=metric1.id,
-            serialized_data=serializers.serialize(
-                'json', [metric1],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
-            ),
+            serialized_data=serialize_metric(metric1, [mtag1]),
             object_repr=metric1.__str__(),
             content_type=ct,
             date_created=datetime.datetime.now(),

@@ -45,9 +45,21 @@ def build_metricconfigs(templates=False):
         parameter = two_value_inline_dict(m.parameter)
         fileparameter = two_value_inline_dict(m.fileparameter)
 
-        mdict[m.name].update(
-            {'tags': sorted([tag.name for tag in m.tags.all()])}
-        )
+        if templates:
+            mdict[m.name].update(
+                {'tags': sorted([tag.name for tag in m.tags.all()])}
+            )
+
+        else:
+            tags = []
+            try:
+                mt = admin_models.MetricTemplate.objects.get(name=m.name)
+                tags = sorted([tag.name for tag in mt.tags.all()])
+
+            except admin_models.MetricTemplate.DoesNotExist:
+                pass
+
+            mdict[m.name].update({"tags": tags})
 
         if probeexecutable:
             mdict[m.name].update({'probe': probeexecutable})
@@ -141,7 +153,15 @@ class ListMetrics(APIView):
         if tag:
             try:
                 admin_models.MetricTags.objects.get(name=tag)
-                metrics = models.Metric.objects.filter(tags__name=tag)
+                mts = [
+                    mt.name for mt in
+                    admin_models.MetricTemplate.objects.filter(tags__name=tag)
+                ]
+
+                metrics = [
+                    metric for metric in models.Metric.objects.all() if
+                    metric.name in mts
+                ]
 
                 return Response(sorted([metric.name for metric in metrics]))
 
@@ -177,10 +197,15 @@ class ListRepos(APIView):
             for profile in profiles:
                 metrics = metrics.union(get_metrics_from_profile(profile))
 
-            internal_metrics = set([
-                metric.name for metric in models.Metric.objects.filter(
-                    tags__name='internal'
+            internal_mt = [
+                mt.name for mt in
+                admin_models.MetricTemplate.objects.filter(
+                    tags__name="internal"
                 )
+            ]
+            internal_metrics = set([
+                metric.name for metric in models.Metric.objects.all() if
+                metric.name in internal_mt
             ])
             metrics = metrics.union(internal_metrics)
 

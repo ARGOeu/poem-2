@@ -2,7 +2,7 @@ import datetime
 import json
 
 from Poem.api import views_internal as views
-from Poem.helpers.history_helpers import create_comment
+from Poem.helpers.history_helpers import create_comment, serialize_metric
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from Poem.users.models import CustUser
@@ -107,7 +107,6 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
             flags='["OBSESS 1"]',
             parameter='["--project EGI"]'
         )
-        self.metric1.tags.add(self.mtag1, self.mtag2)
 
         poem_models.Metric.objects.create(
             name='test.AMS-Check',
@@ -126,10 +125,8 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
 
         self.ver1 = poem_models.TenantHistory.objects.create(
             object_id=self.metric1.id,
-            serialized_data=serializers.serialize(
-                'json', [self.metric1],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
+            serialized_data=serialize_metric(
+                self.metric1, tags=[self.mtag1, self.mtag2]
             ),
             object_repr='argo.AMS-Check',
             content_type=ct_m,
@@ -153,21 +150,17 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
         self.metric1.parameter = ''
         self.metric1.fileparameter = '["new-key new-value"]'
         self.metric1.save()
-        self.metric1.tags.add(self.mtag3)
 
         comment = create_comment(
-            self.metric1, ct=ct_m, new_serialized_data=serializers.serialize(
-                'json', [self.metric1],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
+            self.metric1, ct=ct_m,
+            new_serialized_data=serialize_metric(
+                self.metric1, tags=[self.mtag1, self.mtag2, self.mtag3]
             )
         )
         self.ver2 = poem_models.TenantHistory.objects.create(
             object_id=self.metric1.id,
-            serialized_data=serializers.serialize(
-                'json', [self.metric1],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
+            serialized_data=serialize_metric(
+                self.metric1, tags=[self.mtag1, self.mtag2, self.mtag3]
             ),
             object_repr=self.metric1.__str__(),
             content_type=ct_m,
@@ -186,11 +179,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
 
         self.ver3 = poem_models.TenantHistory.objects.create(
             object_id=self.metric2.id,
-            serialized_data=serializers.serialize(
-                'json', [self.metric2],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
-            ),
+            serialized_data=serialize_metric(self.metric2),
             object_repr=self.metric2.__str__(),
             content_type=ct_m,
             date_created=datetime.datetime.now(),

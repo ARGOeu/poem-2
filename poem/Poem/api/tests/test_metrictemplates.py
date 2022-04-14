@@ -4,13 +4,12 @@ from unittest.mock import patch, call
 
 import requests
 from Poem.api import views_internal as views
-from Poem.helpers.history_helpers import create_comment
+from Poem.helpers.history_helpers import create_comment, serialize_metric
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
 from Poem.users.models import CustUser
 from django.contrib.contenttypes.models import ContentType
-from django.core import serializers
 from django.db import transaction
 from django_tenants.test.cases import TenantTestCase
 from django_tenants.test.client import TenantRequestFactory
@@ -552,11 +551,7 @@ def mock_db():
 
     poem_models.TenantHistory.objects.create(
         object_id=metric1.id,
-        serialized_data=serializers.serialize(
-            "json", [metric1],
-            use_natural_foreign_keys=True,
-            use_natural_primary_keys=True
-        ),
+        serialized_data=serialize_metric(metric1),
         object_repr="test.AMS-Check",
         content_type=ContentType.objects.get_for_model(metric1),
         date_created=datetime.datetime.now(),
@@ -579,16 +574,11 @@ def mock_db():
         fileparameter=mt2.fileparameter,
         group=group
     )
-    metric2.tags.add(tag4)
 
     poem_models.TenantHistory.objects.create(
         object_id=metric2.id,
         object_repr=metric2.__str__(),
-        serialized_data=serializers.serialize(
-            'json', [metric2],
-            use_natural_foreign_keys=True,
-            use_natural_primary_keys=True
-        ),
+        serialized_data=serialize_metric(metric2, tags=[tag4]),
         content_type=ContentType.objects.get_for_model(metric2),
         date_created=datetime.datetime.now(),
         comment='Initial version.',
@@ -610,16 +600,11 @@ def mock_db():
         fileparameter=mt1.fileparameter,
         group=group
     )
-    metric3.tags.add(tag1, tag3, tag4)
 
     poem_models.TenantHistory.objects.create(
         object_id=metric3.id,
         object_repr=metric3.__str__(),
-        serialized_data=serializers.serialize(
-            'json', [metric3],
-            use_natural_foreign_keys=True,
-            use_natural_primary_keys=True
-        ),
+        serialized_data=serialize_metric(metric3, tags=[tag1, tag3, tag4]),
         content_type=ContentType.objects.get_for_model(metric3),
         date_created=datetime.datetime.now(),
         comment='Initial version.',
@@ -8416,12 +8401,21 @@ class MetricTagsTests(TenantTestCase):
         self.metric1 = poem_models.Metric.objects.get(
             name="test.AMS-Check"
         )
+        self.metric1_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric1.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
         self.metric2 = poem_models.Metric.objects.get(
             name="org.apel.APEL-Pub"
         )
+        self.metric2_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric2.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
         self.metric3 = poem_models.Metric.objects.get(
             name="argo.AMS-Check"
         )
+        self.metric3_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric3.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
 
     def test_get_metric_tags_admin_superuser(self):
         request = self.factory.get(self.url)
@@ -8616,9 +8610,6 @@ class MetricTagsTests(TenantTestCase):
         self.assertFalse(tag in self.mt6_version1.tags.all())
         self.assertFalse(tag in self.mt7.tags.all())
         self.assertFalse(tag in self.mt7_version1.tags.all())
-        self.assertFalse(tag in self.metric1.tags.all())
-        self.assertFalse(tag in self.metric2.tags.all())
-        self.assertFalse(tag in self.metric3.tags.all())
 
     def test_post_metric_tag_without_metrics_admin_regular_user(self):
         data = {
@@ -8931,10 +8922,6 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual(len(self.mt7_version1.tags.all()), 1)
         self.assertTrue(tag in self.mt7.tags.all())
         self.assertTrue(tag in self.mt7_version1.tags.all())
-        self.assertFalse(tag in self.metric1.tags.all())
-        self.assertFalse(tag in self.metric2.tags.all())
-        self.assertEqual(len(self.metric3.tags.all()), 4)
-        self.assertTrue(tag in self.metric3.tags.all())
 
     def test_post_metric_tag_with_metrics_admin_regular_user(self):
         data = {
@@ -9022,10 +9009,6 @@ class MetricTagsTests(TenantTestCase):
         self.assertFalse(tag in self.mt6_version1.tags.all())
         self.assertFalse(tag in self.mt7.tags.all())
         self.assertFalse(tag in self.mt7_version1.tags.all())
-        self.assertFalse(tag in self.metric1.tags.all())
-        self.assertFalse(tag in self.metric2.tags.all())
-        self.assertEqual(len(self.metric3.tags.all()), 4)
-        self.assertTrue(tag in self.metric3.tags.all())
 
     def test_post_metric_tag_with_multi_nonexisting_metrics_admin_suprusr(self):
         data = {
@@ -9063,10 +9046,6 @@ class MetricTagsTests(TenantTestCase):
         self.assertFalse(tag in self.mt6_version1.tags.all())
         self.assertFalse(tag in self.mt7.tags.all())
         self.assertFalse(tag in self.mt7_version1.tags.all())
-        self.assertFalse(tag in self.metric1.tags.all())
-        self.assertFalse(tag in self.metric2.tags.all())
-        self.assertEqual(len(self.metric3.tags.all()), 4)
-        self.assertTrue(tag in self.metric3.tags.all())
 
     def test_post_metric_tag_with_nonexisting_metrics_admin_regular_user(self):
         data = {
@@ -10243,12 +10222,12 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual([tag[0] for tag in self.metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in self.metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in self.metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
@@ -10292,14 +10271,23 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
+        metric1_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric1.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric2_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric2.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric3_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric3.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
         self.assertEqual(
-            [tag.name for tag in self.metric1.tags.all()], ["test_tag3"]
+            [tag[0] for tag in metric1_history["tags"]], ["test_tag3"]
         )
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in metric3_history["tags"]]),
             ["internal", "test_tag2", "test_tag3"]
         )
 
@@ -10345,12 +10333,12 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual([tag[0] for tag in self.metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in self.metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in self.metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
@@ -10401,12 +10389,21 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        metric1_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric1.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric2_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric2.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric3_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric3.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        self.assertEqual([tag[0] for tag in metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
 
@@ -10452,12 +10449,12 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual([tag[0] for tag in self.metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in self.metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in self.metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
@@ -10508,12 +10505,21 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        metric1_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric1.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric2_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric2.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric3_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric3.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        self.assertEqual([tag[0] for tag in metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
 
@@ -10559,12 +10565,12 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual([tag[0] for tag in self.metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in self.metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in self.metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
@@ -10615,12 +10621,21 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        metric1_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric1.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric2_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric2.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric3_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric3.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        self.assertEqual([tag[0] for tag in metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
 
@@ -10666,12 +10681,12 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual([tag[0] for tag in self.metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in self.metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in self.metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
@@ -10715,14 +10730,23 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
+        metric1_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric1.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric2_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric2.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric3_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric3.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
         self.assertEqual(
-            [tag.name for tag in self.metric1.tags.all()], ["test_tag1"]
+            [tag[0] for tag in metric1_history["tags"]], ["test_tag1"]
         )
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
 
@@ -10768,12 +10792,12 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual([tag[0] for tag in self.metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in self.metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in self.metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
@@ -10824,12 +10848,21 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        metric1_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric1.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric2_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric2.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric3_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric3.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        self.assertEqual([tag[0] for tag in metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
 
@@ -10875,12 +10908,12 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual([tag[0] for tag in self.metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in self.metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in self.metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
@@ -10931,12 +10964,21 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        metric1_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric1.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric2_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric2.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric3_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric3.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        self.assertEqual([tag[0] for tag in metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
 
@@ -10982,12 +11024,12 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual([tag[0] for tag in self.metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in self.metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in self.metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
@@ -11038,12 +11080,21 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        metric1_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric1.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric2_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric2.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric3_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric3.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        self.assertEqual([tag[0] for tag in metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
 
@@ -11089,12 +11140,12 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual([tag[0] for tag in self.metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in self.metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in self.metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
@@ -11141,14 +11192,23 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
+        metric1_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric1.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric2_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric2.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric3_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric3.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
         self.assertEqual(
-            [tag.name for tag in self.metric1.tags.all()], ["test_tag3"]
+            [tag[0] for tag in metric1_history["tags"]], ["test_tag3"]
         )
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in metric3_history["tags"]]),
             ["internal", "test_tag2"]
         )
 
@@ -11194,12 +11254,12 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual([tag[0] for tag in self.metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in self.metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in self.metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
@@ -11247,14 +11307,23 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
+        metric1_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric1.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric2_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric2.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric3_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric3.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
         self.assertEqual(
-            [tag.name for tag in self.metric1.tags.all()], ["test_tag3"]
+            [tag[0] for tag in metric1_history["tags"]], ["test_tag3"]
         )
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in metric3_history["tags"]]),
             ["internal", "test_tag2"]
         )
 
@@ -11300,12 +11369,12 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual([tag[0] for tag in self.metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in self.metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in self.metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
@@ -11360,12 +11429,21 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        metric1_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric1.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric2_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric2.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric3_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric3.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        self.assertEqual([tag[0] for tag in metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
 
@@ -11411,12 +11489,12 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual([tag[0] for tag in self.metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in self.metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in self.metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
@@ -11471,12 +11549,21 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        metric1_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric1.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric2_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric2.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric3_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric3.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        self.assertEqual([tag[0] for tag in metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
 
@@ -11522,12 +11609,12 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual([tag[0] for tag in self.metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in self.metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in self.metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
@@ -11582,12 +11669,21 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        metric1_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric1.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric2_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric2.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric3_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric3.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        self.assertEqual([tag[0] for tag in metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
 
@@ -11628,12 +11724,12 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual([tag[0] for tag in self.metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in self.metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in self.metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
@@ -11674,10 +11770,19 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric2.tags.all()], [])
+        metric1_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric1.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric2_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric2.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric3_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric3.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        self.assertEqual([tag[0] for tag in metric1_history["tags"]], [])
+        self.assertEqual([tag[0] for tag in metric2_history["tags"]], [])
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in metric3_history["tags"]]),
             ["internal", "test_tag1"]
         )
 
@@ -11718,12 +11823,12 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual([tag[0] for tag in self.metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in self.metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in self.metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
@@ -11773,12 +11878,21 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        metric1_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric1.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric2_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric2.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric3_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric3.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        self.assertEqual([tag[0] for tag in metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
 
@@ -11819,12 +11933,12 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual([tag[0] for tag in self.metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in self.metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in self.metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
@@ -11874,12 +11988,21 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        metric1_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric1.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric2_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric2.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric3_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric3.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        self.assertEqual([tag[0] for tag in metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
 
@@ -11920,12 +12043,12 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual([tag[0] for tag in self.metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in self.metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in self.metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
@@ -11975,12 +12098,21 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        metric1_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric1.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric2_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric2.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric3_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric3.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        self.assertEqual([tag[0] for tag in metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
 
@@ -12021,12 +12153,12 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual([tag[0] for tag in self.metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in self.metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in self.metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
@@ -12075,12 +12207,21 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        metric1_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric1.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric2_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric2.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric3_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric3.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        self.assertEqual([tag[0] for tag in metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
 
@@ -12121,12 +12262,12 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual([tag[0] for tag in self.metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in self.metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in self.metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
@@ -12176,12 +12317,21 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        metric1_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric1.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric2_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric2.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric3_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric3.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        self.assertEqual([tag[0] for tag in metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
 
@@ -12222,12 +12372,12 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual([tag[0] for tag in self.metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in self.metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in self.metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
@@ -12277,12 +12427,21 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        metric1_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric1.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric2_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric2.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric3_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric3.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        self.assertEqual([tag[0] for tag in metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
 
@@ -12323,12 +12482,12 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        self.assertEqual([tag[0] for tag in self.metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in self.metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in self.metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
@@ -12378,12 +12537,21 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
         self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
-        self.assertEqual([tag.name for tag in self.metric1.tags.all()], [])
+        metric1_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric1.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric2_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric2.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric3_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric3.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        self.assertEqual([tag[0] for tag in metric1_history["tags"]], [])
         self.assertEqual(
-            [tag.name for tag in self.metric2.tags.all()], ["test_tag2"]
+            [tag[0] for tag in metric2_history["tags"]], ["test_tag2"]
         )
         self.assertEqual(
-            sorted([tag.name for tag in self.metric3.tags.all()]),
+            sorted([tag[0] for tag in metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
         )
 

@@ -5,12 +5,12 @@ from unittest.mock import patch, call
 import requests
 from Poem.api import views_internal as views
 from Poem.api.internal_views.utils import inline_metric_for_db
+from Poem.helpers.history_helpers import serialize_metric
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
 from Poem.users.models import CustUser
 from django.contrib.contenttypes.models import ContentType
-from django.core import serializers
 from django_tenants.test.cases import TenantTestCase
 from django_tenants.test.client import TenantRequestFactory
 from django_tenants.utils import get_public_schema_name, schema_context, \
@@ -20,6 +20,310 @@ from rest_framework.test import force_authenticate
 
 from .utils_test import mocked_func, encode_data, mocked_inline_metric_for_db, \
     MockResponse
+
+
+def mock_db():
+    superuser = CustUser.objects.create_user(
+        username='poem', is_superuser=True
+    )
+    user = CustUser.objects.create_user(username='testuser')
+    limited_user = CustUser.objects.create_user(username='limited')
+
+    mtype1 = poem_models.MetricType.objects.create(name='Active')
+    mtype2 = poem_models.MetricType.objects.create(name='Passive')
+
+    mttype1 = admin_models.MetricTemplateType.objects.create(name="Active")
+    mttype2 = admin_models.MetricTemplateType.objects.create(name="Passive")
+
+    mtag1 = admin_models.MetricTags.objects.create(name='test_tag1')
+    mtag2 = admin_models.MetricTags.objects.create(name='test_tag2')
+
+    group1 = poem_models.GroupOfMetrics.objects.create(name='EGI')
+    group2 = poem_models.GroupOfMetrics.objects.create(name='ARGO')
+    group3 = poem_models.GroupOfMetrics.objects.create(name='EUDAT')
+
+    userprofile = poem_models.UserProfile.objects.create(user=user)
+    userprofile.groupsofmetrics.add(group1)
+    userprofile.groupsofmetrics.add(group2)
+
+    poem_models.UserProfile.objects.create(user=superuser)
+    poem_models.UserProfile.objects.create(user=limited_user)
+
+    tag = admin_models.OSTag.objects.create(name='CentOS 6')
+    repo = admin_models.YumRepo.objects.create(name='repo-1', tag=tag)
+    package1 = admin_models.Package.objects.create(
+        name='nagios-plugins-argo',
+        version='0.1.7'
+    )
+    package1.repos.add(repo)
+
+    package2 = admin_models.Package.objects.create(
+        name='nagios-plugins-argo',
+        version='0.1.11'
+    )
+
+    probe1 = admin_models.Probe.objects.create(
+        name='ams-probe',
+        package=package1,
+        description='Probe is inspecting AMS service by trying to publish '
+                    'and consume randomly generated messages.',
+        comment='Initial version.',
+        repository='https://github.com/ARGOeu/nagios-plugins-argo',
+        docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
+               'README.md'
+    )
+
+    probe1_version1 = admin_models.ProbeHistory.objects.create(
+        object_id=probe1,
+        name=probe1.name,
+        package=probe1.package,
+        description=probe1.description,
+        comment=probe1.comment,
+        repository=probe1.repository,
+        docurl=probe1.docurl,
+        date_created=datetime.datetime.now(),
+        version_comment='Initial version.',
+        version_user=user.username
+    )
+
+    probe1.package = package2
+    probe1.comment = 'Updated version.'
+    probe1.save()
+
+    probe1_version2 = admin_models.ProbeHistory.objects.create(
+        object_id=probe1,
+        name=probe1.name,
+        package=probe1.package,
+        description=probe1.description,
+        comment=probe1.comment,
+        repository=probe1.repository,
+        docurl=probe1.docurl,
+        date_created=datetime.datetime.now(),
+        version_comment='Updated version.',
+        version_user=user.username
+    )
+
+    probe2 = admin_models.Probe.objects.create(
+        name='ams-publisher-probe',
+        package=package1,
+        description='Probe is inspecting AMS publisher running on Nagios '
+                    'monitoring instances.',
+        comment='Initial version.',
+        repository='https://github.com/ARGOeu/nagios-plugins-argo',
+        docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
+               'README.md'
+    )
+
+    probeversion3 = admin_models.ProbeHistory.objects.create(
+        object_id=probe2,
+        name=probe2.name,
+        package=probe2.package,
+        description=probe2.description,
+        comment=probe2.comment,
+        repository=probe2.repository,
+        docurl=probe2.docurl,
+        date_created=datetime.datetime.now(),
+        version_comment='Initial version.',
+        version_user=user.username
+    )
+
+    probe2.package = package2
+    probe2.comment = 'Updated version.'
+    probe2.save()
+
+    admin_models.ProbeHistory.objects.create(
+        object_id=probe2,
+        name=probe2.name,
+        package=probe2.package,
+        description=probe2.description,
+        comment=probe2.comment,
+        repository=probe2.repository,
+        docurl=probe2.docurl,
+        date_created=datetime.datetime.now(),
+        version_comment='Updated version.',
+        version_user=user.username
+    )
+
+    mt1 = admin_models.MetricTemplate.objects.create(
+        name='argo.AMS-Check',
+        mtype=mttype1,
+        probekey=probe1_version1,
+        description='Description of argo.AMS-Check',
+        probeexecutable='["ams-probe"]',
+        config='["maxCheckAttempts 3", "timeout 60",'
+               ' "path /usr/libexec/argo-monitoring/probes/argo",'
+               ' "interval 5", "retryInterval 3"]',
+        attribute='["argo.ams_TOKEN --token"]',
+        flags='["OBSESS 1"]',
+        parameter='["--project EGI"]'
+    )
+    mt1.tags.add(mtag1, mtag2)
+
+    mt1_version1 = admin_models.MetricTemplateHistory.objects.create(
+        object_id=mt1,
+        name=mt1.name,
+        mtype=mt1.mtype,
+        probekey=mt1.probekey,
+        description=mt1.description,
+        probeexecutable=mt1.probeexecutable,
+        config=mt1.config,
+        attribute=mt1.attribute,
+        dependency=mt1.dependency,
+        flags=mt1.flags,
+        files=mt1.files,
+        parameter=mt1.parameter,
+        fileparameter=mt1.fileparameter,
+        date_created=datetime.datetime.now(),
+        version_user=superuser.username,
+        version_comment='Initial version.'
+    )
+    mt1_version1.tags.add(mtag1, mtag2)
+
+    mt1.probekey = probe1_version2
+    mt1.save()
+
+    mt1_version2 = admin_models.MetricTemplateHistory.objects.create(
+        object_id=mt1,
+        name=mt1.name,
+        mtype=mt1.mtype,
+        probekey=mt1.probekey,
+        description=mt1.description,
+        probeexecutable=mt1.probeexecutable,
+        config=mt1.config,
+        attribute=mt1.attribute,
+        dependency=mt1.dependency,
+        flags=mt1.flags,
+        files=mt1.files,
+        parameter=mt1.parameter,
+        fileparameter=mt1.fileparameter,
+        date_created=datetime.datetime.now(),
+        version_user=superuser.username,
+        version_comment='Initial version.'
+    )
+    mt1_version2.tags.add(mtag1, mtag2)
+
+    mt2 = admin_models.MetricTemplate.objects.create(
+        name='org.apel.APEL-Pub',
+        flags='["OBSESS 1", "PASSIVE 1"]',
+        mtype=mttype2
+    )
+
+    admin_models.MetricTemplateHistory.objects.create(
+        object_id=mt2,
+        name=mt2.name,
+        mtype=mt2.mtype,
+        probekey=mt2.probekey,
+        description=mt2.description,
+        probeexecutable=mt2.probeexecutable,
+        config=mt2.config,
+        attribute=mt2.attribute,
+        dependency=mt2.dependency,
+        flags=mt2.flags,
+        files=mt2.files,
+        parameter=mt2.parameter,
+        fileparameter=mt2.fileparameter,
+        date_created=datetime.datetime.now(),
+        version_user=superuser.username,
+        version_comment='Initial version.'
+    )
+
+    mt3 = admin_models.MetricTemplate.objects.create(
+        name='argo.AMSPublisher-Check',
+        mtype=mttype1,
+        probekey=probeversion3,
+        description='',
+        probeexecutable='["ams-publisher-probe"]',
+        config='["interval 180", "maxCheckAttempts 1", '
+               '"path /usr/libexec/argo-monitoring/probes/argo", '
+               '"retryInterval 1", "timeout 120"]',
+        parameter='["-s /var/run/argo-nagios-ams-publisher/sock"]',
+        flags='["NOHOSTNAME 1", "NOTIMEOUT 1", "NOPUBLISH 1"]'
+    )
+    mt3.tags.add(mtag1)
+
+    mt3_version1 = admin_models.MetricTemplateHistory.objects.create(
+        object_id=mt3,
+        name=mt3.name,
+        mtype=mt3.mtype,
+        probekey=mt3.probekey,
+        description=mt3.description,
+        probeexecutable=mt3.probeexecutable,
+        config=mt3.config,
+        attribute=mt3.attribute,
+        dependency=mt3.dependency,
+        flags=mt3.flags,
+        files=mt3.files,
+        parameter=mt3.parameter,
+        fileparameter=mt3.fileparameter,
+        date_created=datetime.datetime.now(),
+        version_user=superuser.username,
+        version_comment='Initial version.'
+    )
+    mt3_version1.tags.add(mtag1)
+
+    metric1 = poem_models.Metric.objects.create(
+        name=mt1_version1.name,
+        mtype=mtype1,
+        probekey=mt1_version1.probekey,
+        description=mt1_version1.description,
+        group=group1,
+        probeexecutable=mt1_version1.probeexecutable,
+        config=mt1_version1.config,
+        attribute=mt1_version1.attribute,
+        flags=mt1_version1.flags,
+        parameter=mt1_version1.parameter
+    )
+
+    ct = ContentType.objects.get_for_model(poem_models.Metric)
+
+    poem_models.TenantHistory.objects.create(
+        object_id=metric1.id,
+        object_repr=metric1.__str__(),
+        serialized_data=serialize_metric(metric1, tags=[mtag1, mtag2]),
+        date_created=datetime.datetime.now(),
+        user=user.username,
+        comment='Initial version.',
+        content_type=ct
+    )
+
+    metric2 = poem_models.Metric.objects.create(
+        name=mt2.name,
+        flags=mt2.flags,
+        group=group1,
+        mtype=mtype2
+    )
+
+    poem_models.TenantHistory.objects.create(
+        object_id=metric2.id,
+        object_repr=metric2.__str__(),
+        serialized_data=serialize_metric(metric2),
+        date_created=datetime.datetime.now(),
+        user=user.username,
+        comment='Initial version.',
+        content_type=ct
+    )
+
+    metric3 = poem_models.Metric.objects.create(
+        name=mt3.name,
+        mtype=mtype1,
+        probekey=mt3.probekey,
+        description=mt3.description,
+        group=group3,
+        probeexecutable=mt3.probeexecutable,
+        config=mt3.config,
+        parameter=mt3.parameter,
+        flags=mt3.flags
+    )
+
+    poem_models.TenantHistory.objects.create(
+        object_id=metric3.id,
+        object_repr=metric3.__str__(),
+        serialized_data=serialize_metric(metric3, tags=[mtag1]),
+        date_created=datetime.datetime.now(),
+        user=user.username,
+        comment='Initial version.',
+        content_type=ct
+    )
 
 
 class ListAllMetricsAPIViewTests(TenantTestCase):
@@ -98,204 +402,29 @@ class ListMetricAPIViewTests(TenantTestCase):
         self.factory = TenantRequestFactory(self.tenant)
         self.view = views.ListMetric.as_view()
         self.url = '/api/v2/internal/metric/'
-        self.superuser = CustUser.objects.create_user(
-            username='poem', is_superuser=True
-        )
-        self.user = CustUser.objects.create_user(username='testuser')
-        self.limited_user = CustUser.objects.create_user(username='limited')
 
-        mtype1 = poem_models.MetricType.objects.create(name='Active')
-        mtype2 = poem_models.MetricType.objects.create(name='Passive')
+        mock_db()
 
-        self.mtag1 = admin_models.MetricTags.objects.create(name='test_tag1')
-        self.mtag2 = admin_models.MetricTags.objects.create(name='test_tag2')
-
-        group1 = poem_models.GroupOfMetrics.objects.create(name='EGI')
-        group2 = poem_models.GroupOfMetrics.objects.create(name='ARGO')
-        group3 = poem_models.GroupOfMetrics.objects.create(name='EUDAT')
-
-        userprofile = poem_models.UserProfile.objects.create(user=self.user)
-        userprofile.groupsofmetrics.add(group1)
-        userprofile.groupsofmetrics.add(group2)
-
-        poem_models.UserProfile.objects.create(user=self.superuser)
-        poem_models.UserProfile.objects.create(user=self.limited_user)
-
-        tag = admin_models.OSTag.objects.create(name='CentOS 6')
-        repo = admin_models.YumRepo.objects.create(name='repo-1', tag=tag)
-        package1 = admin_models.Package.objects.create(
-            name='nagios-plugins-argo',
-            version='0.1.7'
-        )
-        package1.repos.add(repo)
-
-        package2 = admin_models.Package.objects.create(
-            name='nagios-plugins-argo',
-            version='0.1.11'
-        )
-
-        probe1 = admin_models.Probe.objects.create(
-            name='ams-probe',
-            package=package1,
-            description='Probe is inspecting AMS service by trying to publish '
-                        'and consume randomly generated messages.',
-            comment='Initial version.',
-            repository='https://github.com/ARGOeu/nagios-plugins-argo',
-            docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
-                   'README.md'
-        )
-
-        self.probeversion1 = admin_models.ProbeHistory.objects.create(
-            object_id=probe1,
-            name=probe1.name,
-            package=probe1.package,
-            description=probe1.description,
-            comment=probe1.comment,
-            repository=probe1.repository,
-            docurl=probe1.docurl,
-            date_created=datetime.datetime.now(),
-            version_comment='Initial version.',
-            version_user=self.user.username
-        )
-
-        probe1.package = package2
-        probe1.comment = 'Updated version.'
-        probe1.save()
-
-        self.probeversion2 = admin_models.ProbeHistory.objects.create(
-            object_id=probe1,
-            name=probe1.name,
-            package=probe1.package,
-            description=probe1.description,
-            comment=probe1.comment,
-            repository=probe1.repository,
-            docurl=probe1.docurl,
-            date_created=datetime.datetime.now(),
-            version_comment='Updated version.',
-            version_user=self.user.username
-        )
-
-        probe2 = admin_models.Probe.objects.create(
-            name='ams-publisher-probe',
-            package=package1,
-            description='Probe is inspecting AMS publisher running on Nagios '
-                        'monitoring instances.',
-            comment='Initial version.',
-            repository='https://github.com/ARGOeu/nagios-plugins-argo',
-            docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
-                   'README.md'
-        )
-
-        self.probeversion3 = admin_models.ProbeHistory.objects.create(
-            object_id=probe2,
-            name=probe2.name,
-            package=probe2.package,
-            description=probe2.description,
-            comment=probe2.comment,
-            repository=probe2.repository,
-            docurl=probe2.docurl,
-            date_created=datetime.datetime.now(),
-            version_comment='Initial version.',
-            version_user=self.user.username
-        )
-
-        probe2.package = package2
-        probe2.comment = 'Updated version.'
-        probe2.save()
-
-        self.probeversion4 = admin_models.ProbeHistory.objects.create(
-            object_id=probe2,
-            name=probe2.name,
-            package=probe2.package,
-            description=probe2.description,
-            comment=probe2.comment,
-            repository=probe2.repository,
-            docurl=probe2.docurl,
-            date_created=datetime.datetime.now(),
-            version_comment='Updated version.',
-            version_user=self.user.username
-        )
-
-        self.metric1 = poem_models.Metric.objects.create(
-            name='argo.AMS-Check',
-            mtype=mtype1,
-            probekey=self.probeversion1,
-            description='Description of argo.AMS-Check',
-            group=group1,
-            probeexecutable='["ams-probe"]',
-            config='["maxCheckAttempts 3", "timeout 60",'
-                   ' "path /usr/libexec/argo-monitoring/probes/argo",'
-                   ' "interval 5", "retryInterval 3"]',
-            attribute='["argo.ams_TOKEN --token"]',
-            flags='["OBSESS 1"]',
-            parameter='["--project EGI"]'
-        )
-        self.metric1.tags.add(self.mtag1, self.mtag2)
-
-        self.metric2 = poem_models.Metric.objects.create(
-            name='org.apel.APEL-Pub',
-            flags='["OBSESS 1", "PASSIVE 1"]',
-            group=group1,
-            mtype=mtype2
-        )
-
-        self.metric3 = poem_models.Metric.objects.create(
-            name='argo.AMSPublisher-Check',
-            mtype=mtype1,
-            probekey=self.probeversion3,
-            description='',
-            group=group3,
-            probeexecutable='["ams-publisher-probe"]',
-            config='["interval 180", "maxCheckAttempts 1", '
-                   '"path /usr/libexec/argo-monitoring/probes/argo", '
-                   '"retryInterval 1", "timeout 120"]',
-            parameter='["-s /var/run/argo-nagios-ams-publisher/sock"]',
-            flags='["NOHOSTNAME 1", "NOTIMEOUT 1", "NOPUBLISH 1"]'
-        )
-        self.metric3.tags.add(self.mtag1)
+        self.user = CustUser.objects.get(username="testuser")
+        self.superuser = CustUser.objects.get(username="poem")
+        self.limited_user = CustUser.objects.get(username="limited")
 
         self.ct = ContentType.objects.get_for_model(poem_models.Metric)
 
-        poem_models.TenantHistory.objects.create(
-            object_id=self.metric1.id,
-            object_repr=self.metric1.__str__(),
-            serialized_data=serializers.serialize(
-                'json', [self.metric1],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
-            ),
-            date_created=datetime.datetime.now(),
-            user=self.user.username,
-            comment='Initial version.',
-            content_type=self.ct
+        self.metric1 = poem_models.Metric.objects.get(name="argo.AMS-Check")
+        self.metric2 = poem_models.Metric.objects.get(name="org.apel.APEL-Pub")
+        self.metric3 = poem_models.Metric.objects.get(
+            name="argo.AMSPublisher-Check"
         )
 
-        poem_models.TenantHistory.objects.create(
-            object_id=self.metric2.id,
-            object_repr=self.metric2.__str__(),
-            serialized_data=serializers.serialize(
-                'json', [self.metric2],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
-            ),
-            date_created=datetime.datetime.now(),
-            user=self.user.username,
-            comment='Initial version.',
-            content_type=self.ct
+        self.probeversion1 = admin_models.ProbeHistory.objects.get(
+            name="ams-probe", comment="Initial version."
         )
-
-        poem_models.TenantHistory.objects.create(
-            object_id=self.metric3.id,
-            object_repr=self.metric3.__str__(),
-            serialized_data=serializers.serialize(
-                'json', [self.metric3],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
-            ),
-            date_created=datetime.datetime.now(),
-            user=self.user.username,
-            comment='Initial version.',
-            content_type=self.ct
+        self.probeversion2 = admin_models.ProbeHistory.objects.get(
+            name="ams-probe", comment="Updated version."
+        )
+        self.probeversion3 = admin_models.ProbeHistory.objects.get(
+            name="ams-publisher-probe", comment="Initial version."
         )
 
     def test_get_metric_list(self):
@@ -569,9 +698,6 @@ class ListMetricAPIViewTests(TenantTestCase):
             versions[0].serialized_data
         )[0]['fields']
         self.assertEqual(metric.mtype.name, 'Active')
-        self.assertEqual(len(metric.tags.all()), 2)
-        self.assertTrue(self.mtag1 in metric.tags.all())
-        self.assertTrue(self.mtag2 in metric.tags.all())
         self.assertEqual(metric.probekey, self.probeversion2)
         self.assertEqual(metric.group.name, 'EUDAT')
         self.assertEqual(
@@ -661,9 +787,6 @@ class ListMetricAPIViewTests(TenantTestCase):
             versions[0].serialized_data
         )[0]['fields']
         self.assertEqual(metric.mtype.name, 'Active')
-        self.assertEqual(len(metric.tags.all()), 2)
-        self.assertTrue(self.mtag1 in metric.tags.all())
-        self.assertTrue(self.mtag2 in metric.tags.all())
         self.assertEqual(metric.probekey, self.probeversion2)
         self.assertEqual(metric.group.name, 'ARGO')
         self.assertEqual(
@@ -757,9 +880,6 @@ class ListMetricAPIViewTests(TenantTestCase):
             versions[0].serialized_data
         )[0]['fields']
         self.assertEqual(metric.mtype.name, 'Active')
-        self.assertEqual(len(metric.tags.all()), 2)
-        self.assertTrue(self.mtag1 in metric.tags.all())
-        self.assertTrue(self.mtag2 in metric.tags.all())
         self.assertEqual(metric.probekey, self.probeversion1)
         self.assertEqual(metric.group.name, 'EGI')
         self.assertEqual(
@@ -849,8 +969,6 @@ class ListMetricAPIViewTests(TenantTestCase):
             versions[0].serialized_data
         )[0]['fields']
         self.assertEqual(metric.mtype.name, 'Active')
-        self.assertEqual(len(metric.tags.all()), 1)
-        self.assertTrue(self.mtag1 in metric.tags.all())
         self.assertEqual(metric.probekey, self.probeversion3)
         self.assertEqual(metric.group.name, 'EUDAT')
         self.assertEqual(metric.description, '')
@@ -942,9 +1060,6 @@ class ListMetricAPIViewTests(TenantTestCase):
             versions[0].serialized_data
         )[0]['fields']
         self.assertEqual(metric.mtype.name, 'Active')
-        self.assertEqual(len(metric.tags.all()), 2)
-        self.assertTrue(self.mtag1 in metric.tags.all())
-        self.assertTrue(self.mtag2 in metric.tags.all())
         self.assertEqual(metric.probekey, self.probeversion1)
         self.assertEqual(metric.group.name, 'EGI')
         self.assertEqual(
@@ -1553,7 +1668,6 @@ class ListMetricAPIViewTests(TenantTestCase):
             versions[0].serialized_data
         )[0]['fields']
         self.assertEqual(metric.mtype.name, 'Passive')
-        self.assertEqual(len(metric.tags.all()), 0)
         self.assertEqual(metric.probekey, None)
         self.assertEqual(metric.group.name, 'EUDAT')
         self.assertEqual(
@@ -1623,7 +1737,6 @@ class ListMetricAPIViewTests(TenantTestCase):
             versions[0].serialized_data
         )[0]['fields']
         self.assertEqual(metric.mtype.name, 'Passive')
-        self.assertEqual(len(metric.tags.all()), 0)
         self.assertEqual(metric.probekey, None)
         self.assertEqual(metric.group.name, 'ARGO')
         self.assertEqual(
@@ -1697,7 +1810,6 @@ class ListMetricAPIViewTests(TenantTestCase):
             versions[0].serialized_data
         )[0]['fields']
         self.assertEqual(metric.mtype.name, 'Passive')
-        self.assertEqual(len(metric.tags.all()), 0)
         self.assertEqual(metric.probekey, None)
         self.assertEqual(metric.group.name, 'EGI')
         self.assertEqual(metric.description, '')
@@ -1765,7 +1877,6 @@ class ListMetricAPIViewTests(TenantTestCase):
             versions[0].serialized_data
         )[0]['fields']
         self.assertEqual(metric.mtype.name, 'Passive')
-        self.assertEqual(len(metric.tags.all()), 0)
         self.assertEqual(metric.probekey, None)
         self.assertEqual(metric.group.name, 'EGI')
         self.assertEqual(metric.description, '')
@@ -2172,7 +2283,6 @@ class UpdateMetricsVersionsTests(TenantTestCase):
                 domain='public', tenant=tenant, is_primary=True
             )
 
-
         self.mtype1 = poem_models.MetricType.objects.create(name='Active')
         self.mtype2 = poem_models.MetricType.objects.create(name='Passive')
         self.mttype1 = admin_models.MetricTemplateType.objects.create(
@@ -2471,7 +2581,6 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             probekey=self.probehistory1,
             group=self.group
         )
-        metric1.tags.add(self.mtag1, self.mtag2)
 
         metric2 = poem_models.Metric.objects.create(
             name='argo.AMSPublisher-Check',
@@ -2485,7 +2594,6 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             probekey=self.probehistory3,
             group=self.group
         )
-        metric2.tags.add(self.mtag2)
 
         metric3 = poem_models.Metric.objects.create(
             name='emi.unicore.Gateway',
@@ -2501,7 +2609,6 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             probekey=self.probehistory5,
             group=self.group
         )
-        metric3.tags.add(self.mtag1)
 
         metric4 = poem_models.Metric.objects.create(
             name='org.apel.APEL-Pub',
@@ -2512,24 +2619,8 @@ class UpdateMetricsVersionsTests(TenantTestCase):
 
         poem_models.TenantHistory.objects.create(
             object_id=metric1.id,
-            serialized_data=serializers.serialize(
-                'json', [metric1],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
-            ),
-            object_repr=metric1.__str__(),
-            content_type=ct,
-            date_created=datetime.datetime.now(),
-            comment='Initial version.',
-            user=self.user.username
-        )
-
-        poem_models.TenantHistory.objects.create(
-            object_id=metric1.id,
-            serialized_data=serializers.serialize(
-                'json', [metric1],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
+            serialized_data=serialize_metric(
+                metric1, tags=[self.mtag1, self.mtag2]
             ),
             object_repr=metric1.__str__(),
             content_type=ct,
@@ -2540,11 +2631,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
 
         poem_models.TenantHistory.objects.create(
             object_id=metric2.id,
-            serialized_data=serializers.serialize(
-                'json', [metric2],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
-            ),
+            serialized_data=serialize_metric(metric2, tags=[self.mtag2]),
             object_repr=metric2.__str__(),
             content_type=ct,
             date_created=datetime.datetime.now(),
@@ -2554,11 +2641,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
 
         poem_models.TenantHistory.objects.create(
             object_id=metric3.id,
-            serialized_data=serializers.serialize(
-                'json', [metric3],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
-            ),
+            serialized_data=serialize_metric(metric3, tags=[self.mtag1]),
             object_repr=metric3.__str__(),
             content_type=ct,
             date_created=datetime.datetime.now(),
@@ -2568,11 +2651,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
 
         poem_models.TenantHistory.objects.create(
             object_id=metric4.id,
-            serialized_data=serializers.serialize(
-                'json', [metric4],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
-            ),
+            serialized_data=serialize_metric(metric4),
             object_repr=metric4.__str__(),
             content_type=ct,
             date_created=datetime.datetime.now(),
@@ -2882,7 +2961,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             version_comment='Newest version.'
         )
         mt1_history3.tags.add(self.mtag1, self.mtag2, self.mtag3)
-        metric = poem_models.Metric.objects.create(
+        poem_models.Metric.objects.create(
             name='test.AMS-Check',
             description='Description of test.AMS-Check.',
             probeexecutable='["ams-probe"]',
@@ -2896,7 +2975,6 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             probekey=self.probehistory1,
             group=self.group
         )
-        metric.tags.add(self.mtag1)
         data = {
             'name': self.package3.name,
             'version': self.package3.version
@@ -2982,7 +3060,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             version_comment='Newest version.'
         )
         mt1_history3.tags.add(self.mtag1, self.mtag2, self.mtag3)
-        metric = poem_models.Metric.objects.create(
+        poem_models.Metric.objects.create(
             name='test.AMS-Check',
             description='Description of test.AMS-Check.',
             probeexecutable='["ams-probe"]',
@@ -2996,7 +3074,6 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             probekey=self.probehistory1,
             group=self.group
         )
-        metric.tags.add(self.mtag1)
         data = {
             'name': self.package3.name,
             'version': self.package3.version
@@ -3085,7 +3162,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             version_comment='Newest version.'
         )
         mt1_history3.tags.add(self.mtag1, self.mtag2, self.mtag3)
-        metric = poem_models.Metric.objects.create(
+        poem_models.Metric.objects.create(
             name='test.AMS-Check',
             description='Description of test.AMS-Check.',
             probeexecutable='["ams-probe"]',
@@ -3099,7 +3176,6 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             probekey=self.probehistory1,
             group=self.group
         )
-        metric.tags.add(self.mtag1)
         data = {
             'name': self.package3.name,
             'version': self.package3.version
@@ -3390,7 +3466,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             version_comment='Newest version.'
         )
         mt1_history3.tags.add(self.mtag1, self.mtag2, self.mtag3)
-        metric1 = poem_models.Metric.objects.create(
+        poem_models.Metric.objects.create(
             name='test.AMS-Check',
             description='Description of test.AMS-Check.',
             probeexecutable='["ams-probe"]',
@@ -3404,7 +3480,6 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             probekey=self.probehistory1,
             group=self.group
         )
-        metric1.tags.add(self.mtag1)
         request = self.factory.get(self.url + 'nagios-plugins-argo-0.1.9')
         request.tenant = self.tenant
         force_authenticate(request, user=self.user)

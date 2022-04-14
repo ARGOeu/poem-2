@@ -831,15 +831,21 @@ class ListMetricTags(APIView):
                     tag = admin_models.MetricTags.objects.get(
                         id=request.data["id"]
                     )
+                    old_tag_name = tag.name
                     if request.data["name"]:
                         tag.name = request.data["name"]
                         tag.save()
 
-                        old_metrics = set(
-                            admin_models.MetricTemplate.objects.filter(
-                                tags__name=tag.name
-                            ).values_list("name", flat=True)
+                        old_mts = admin_models.MetricTemplate.objects.filter(
+                            tags__name=tag.name
                         )
+                        old_metrics = set(
+                            old_mts.values_list("name", flat=True)
+                        )
+
+                        if old_tag_name != tag.name:
+                            for mt in old_mts:
+                                update_metrics(mt, mt.name, mt.probekey)
 
                         missing_metrics = set()
                         try:
@@ -935,11 +941,22 @@ class ListMetricTags(APIView):
                 detail="You do not have permission to change metric tags."
             )
 
-    def delete(self, request, tag):
+    def delete(self, request, name):
         if request.tenant.schema_name == get_public_schema_name() and \
                 request.user.is_superuser:
             try:
-                admin_models.MetricTags.objects.get(name=tag).delete()
+
+                mts = admin_models.MetricTemplate.objects.filter(
+                    tags__name=name
+                )
+
+                tag = admin_models.MetricTags.objects.get(name=name)
+
+                for mt in mts:
+                    mt.tags.remove(tag)
+                    update_metrics(mt, mt.name, mt.probekey)
+
+                tag.delete()
 
                 return Response(status=status.HTTP_204_NO_CONTENT)
 
