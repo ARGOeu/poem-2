@@ -150,7 +150,7 @@ export const MetricTagsComponent = (props) => {
 
     if (addview)
       addMutation.mutate(sendValues, {
-        onSuccess: (response) => {
+        onSuccess: async (response) => {
           queryClient.invalidateQueries("public_metrictags")
           queryClient.invalidateQueries("metrictags")
           queryClient.invalidateQueries("metric")
