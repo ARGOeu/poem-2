@@ -736,10 +736,8 @@ export const ReportsComponent = (props) => {
   const formatToReportTags = (tagsContext, formikTags, formikExtensions) => {
     const formatTag = (tag, prefix='') => {
       let tmpTag = new Object()
-      if (tag.value.indexOf(' ') !== -1) {
-        if (tag.value.indexOf(',') !== -1)
-          tag.value = tag.value.replace(',', '')
-        let values = tag.value.replace(/ /g, ', ')
+      if (tag.value.indexOf('|') !== -1) {
+        let values = tag.value.replace(/\|/g, ', ')
         tmpTag = new Object({
           name: `${prefix}${tag.name}`,
           value: values,
