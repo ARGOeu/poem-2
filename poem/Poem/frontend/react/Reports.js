@@ -237,13 +237,13 @@ const TopologyTagList = ({ part, fieldName, tagsState, setTagsState, tagsAll, ad
   const tagsInitValues = (key, data, preprocess=false) => {
     if (!data[key])
       return undefined
-    if (data[key].indexOf(' ') === -1)
+    if (data[key].indexOf('|') === -1)
       return new Object({
         'label': preprocess ? preProcessTagValue(data[key]) : data[key],
         'value': preprocess ? preProcessTagValue(data[key]) : data[key]
       })
     else {
-      let tmp = data[key].split(' ').map(e => new Object({
+      let tmp = data[key].split('|').map(e => new Object({
         'label': preprocess ? preProcessTagValue(e) : e,
         'value': preprocess ? preProcessTagValue(e) : e
       }))
@@ -331,7 +331,7 @@ const TopologyTagList = ({ part, fieldName, tagsState, setTagsState, tagsAll, ad
                         data-testid={`${fieldName}.${index}.value`}
                         className='form-control'
                         disabled={true}
-                        value={preProcessTagValue(tags.value.replace(new RegExp(' ', 'g'), ', '))}
+                        value={preProcessTagValue(tags.value.replace(new RegExp('|', 'g'), ', '))}
                       />
                     :
                       <Field
@@ -343,7 +343,7 @@ const TopologyTagList = ({ part, fieldName, tagsState, setTagsState, tagsAll, ad
                           if (Array.isArray(e)) {
                             let joinedValues = ''
                             e.forEach((e) => {
-                              joinedValues += e.value + ' '
+                              joinedValues += e.value + '|'
                             })
                             form.setFieldValue(`${fieldName}.${index}.value`, joinedValues.trim())
                           }
