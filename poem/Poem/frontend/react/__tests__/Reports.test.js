@@ -134,7 +134,7 @@ const mockReport = {
     },
     {
       name: "scope",
-      value: "EGI*",
+      value: "EGI",
       context: "argo.group.filter.tags"
     },
     {
@@ -149,7 +149,7 @@ const mockReport = {
     },
     {
       name: "scope",
-      value: "EGI*",
+      value: "EGI",
       context: "argo.endpoint.filter.tags"
     },
     {
@@ -231,7 +231,7 @@ const mockReport2 = {
     },
     {
       name: "scope",
-      value: "EGI*",
+      value: "EGI",
       context: "argo.group.filter.tags"
     },
     {
@@ -246,7 +246,7 @@ const mockReport2 = {
     },
     {
       name: "scope",
-      value: "EGI*",
+      value: "EGI",
       context: "argo.endpoint.filter.tags"
     }
   ]
@@ -939,7 +939,7 @@ const report4sending = {
     },
     {
       name: "scope",
-      value: "EGI*",
+      value: "EGI",
       context: "argo.group.filter.tags.array"
     },
     {
@@ -959,7 +959,7 @@ const report4sending = {
     },
     {
       name: "scope",
-      value: "EGI*",
+      value: "EGI",
       context: "argo.endpoint.filter.tags.array"
     },
     {
@@ -1039,7 +1039,7 @@ describe('Tests for reports changeview', () => {
       'groupsTags.1.name': 'infrastructure',
       'groupsTags.1.value': 'Production',
       'groupsTags.2.name': 'scope',
-      'groupsTags.2.value': 'EGI*',
+      'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
       'entities.0.value': 'iris.ac.uk',
@@ -1049,7 +1049,7 @@ describe('Tests for reports changeview', () => {
       'endpointsTags.1.name': 'monitored',
       'endpointsTags.1.value': 'yes',
       'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI*',
+      'endpointsTags.2.value': 'EGI',
       'availabilityThreshold': '80',
       'reliabilityThreshold': '85',
       'uptimeThreshold': '0.8',
@@ -1137,7 +1137,7 @@ describe('Tests for reports changeview', () => {
     expect(card_groups.getByText('infrastructure')).toBeInTheDocument();
     expect(card_groups.getByText('Production')).toBeInTheDocument();
     expect(card_groups.getByText('scope')).toBeInTheDocument();
-    expect(card_groups.getByText('EGI*')).toBeInTheDocument();
+    expect(card_groups.getByText('EGI')).toBeInTheDocument();
 
     selectEvent.openMenu(card_groups.getByText('Certified'));
     expect(card_groups.getByText('Candidate')).toBeInTheDocument();
@@ -1149,7 +1149,7 @@ describe('Tests for reports changeview', () => {
     expect(card_groups.getByText('PPS')).toBeInTheDocument();
     expect(card_groups.getByText('Test')).toBeInTheDocument();
 
-    selectEvent.openMenu(card_groups.getByText('EGI*'));
+    selectEvent.openMenu(card_groups.getByText('EGI'));
     expect(card_groups.getByText('EOSC-hub')).toBeInTheDocument();
     expect(card_groups.getByText('EOSCCore')).toBeInTheDocument();
     expect(card_groups.getByText('FedCloud')).toBeInTheDocument();
@@ -1198,7 +1198,7 @@ describe('Tests for reports changeview', () => {
     expect(card_endpoints.getByText('monitored')).toBeInTheDocument();
     expect(card_endpoints.getByText('scope')).toBeInTheDocument();
     expect(card_endpoints.getAllByText('yes')).toHaveLength(2);
-    expect(card_endpoints.getByText('EGI*')).toBeInTheDocument();
+    expect(card_endpoints.getByText('EGI')).toBeInTheDocument();
     expect(card_endpoints.queryByText('EGI')).not.toBeInTheDocument();
     expect(card_endpoints.queryByText('EOSC-hub')).not.toBeInTheDocument();
     expect(card_endpoints.queryByText('EOSCCore')).not.toBeInTheDocument();
@@ -1226,7 +1226,7 @@ describe('Tests for reports changeview', () => {
     expect(card_endpoints.queryByText('vo_afigrid_attr_SE_PATH')).not.toBeInTheDocument();
     expect(card_endpoints.queryByText(/dpm/i)).not.toBeInTheDocument();
 
-    selectEvent.openMenu(card_endpoints.getByText('EGI*'))
+    selectEvent.openMenu(card_endpoints.getByText('EGI'))
     expect(card_endpoints.getByText('EGI')).toBeInTheDocument();
     expect(card_endpoints.getByText('EOSC-hub')).toBeInTheDocument();
     expect(card_endpoints.getByText('EOSCCore')).toBeInTheDocument();
@@ -1301,7 +1301,7 @@ describe('Tests for reports changeview', () => {
       'groupsTags.1.name': 'infrastructure',
       'groupsTags.1.value': 'Production',
       'groupsTags.2.name': 'scope',
-      'groupsTags.2.value': 'EGI*',
+      'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
       'entities.0.value': 'iris.ac.uk',
@@ -1311,7 +1311,7 @@ describe('Tests for reports changeview', () => {
       'endpointsTags.1.name': 'monitored',
       'endpointsTags.1.value': 'yes',
       'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI*',
+      'endpointsTags.2.value': 'EGI',
       'availabilityThreshold': '80',
       'reliabilityThreshold': '85',
       'uptimeThreshold': '0.8',
@@ -1376,7 +1376,7 @@ describe('Tests for reports changeview', () => {
       'groupsTags.1.name': 'infrastructure',
       'groupsTags.1.value': 'Production',
       'groupsTags.2.name': 'scope',
-      'groupsTags.2.value': 'EGI*',
+      'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
       'entities.0.value': 'iris.ac.uk',
@@ -1386,7 +1386,7 @@ describe('Tests for reports changeview', () => {
       'endpointsTags.1.name': 'monitored',
       'endpointsTags.1.value': 'yes',
       'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI*',
+      'endpointsTags.2.value': 'EGI',
       'availabilityThreshold': '80',
       'reliabilityThreshold': '85',
       'uptimeThreshold': '0.8',
@@ -1449,7 +1449,7 @@ describe('Tests for reports changeview', () => {
       'groupsTags.1.name': 'infrastructure',
       'groupsTags.1.value': 'Production',
       'groupsTags.2.name': 'scope',
-      'groupsTags.2.value': 'EGI*',
+      'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
       'entities.0.value': 'iris.ac.uk',
@@ -1459,7 +1459,7 @@ describe('Tests for reports changeview', () => {
       'endpointsTags.1.name': 'monitored',
       'endpointsTags.1.value': 'yes',
       'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI*',
+      'endpointsTags.2.value': 'EGI',
       'availabilityThreshold': '80',
       'reliabilityThreshold': '85',
       'uptimeThreshold': '0.8',
@@ -1522,7 +1522,7 @@ describe('Tests for reports changeview', () => {
       'groupsTags.1.name': 'infrastructure',
       'groupsTags.1.value': 'Production',
       'groupsTags.2.name': 'scope',
-      'groupsTags.2.value': 'EGI*',
+      'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
       'entities.0.value': 'iris.ac.uk',
@@ -1532,7 +1532,7 @@ describe('Tests for reports changeview', () => {
       'endpointsTags.1.name': 'monitored',
       'endpointsTags.1.value': 'yes',
       'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI*',
+      'endpointsTags.2.value': 'EGI',
       'availabilityThreshold': '80',
       'reliabilityThreshold': '85',
       'uptimeThreshold': '0.8',
@@ -1597,7 +1597,7 @@ describe('Tests for reports changeview', () => {
       'groupsTags.1.name': 'infrastructure',
       'groupsTags.1.value': 'Production',
       'groupsTags.2.name': 'scope',
-      'groupsTags.2.value': 'EGI*',
+      'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
       'entities.0.value': 'iris.ac.uk',
@@ -1607,7 +1607,7 @@ describe('Tests for reports changeview', () => {
       'endpointsTags.1.name': 'monitored',
       'endpointsTags.1.value': 'yes',
       'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI*',
+      'endpointsTags.2.value': 'EGI',
       'availabilityThreshold': '80',
       'reliabilityThreshold': '85',
       'uptimeThreshold': '0.8',
@@ -1675,7 +1675,7 @@ describe('Tests for reports changeview', () => {
       'groupsTags.1.name': 'infrastructure',
       'groupsTags.1.value': 'Production',
       'groupsTags.2.name': 'scope',
-      'groupsTags.2.value': 'EGI*',
+      'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
       'entities.0.value': 'iris.ac.uk',
@@ -1685,7 +1685,7 @@ describe('Tests for reports changeview', () => {
       'endpointsTags.1.name': 'monitored',
       'endpointsTags.1.value': 'yes',
       'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI*',
+      'endpointsTags.2.value': 'EGI',
       'availabilityThreshold': '80',
       'reliabilityThreshold': '85',
       'uptimeThreshold': '0.8',
@@ -1753,7 +1753,7 @@ describe('Tests for reports changeview', () => {
       'groupsTags.1.name': 'infrastructure',
       'groupsTags.1.value': 'Production',
       'groupsTags.2.name': 'scope',
-      'groupsTags.2.value': 'EGI*',
+      'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
       'entities.0.value': 'iris.ac.uk',
@@ -1763,7 +1763,7 @@ describe('Tests for reports changeview', () => {
       'endpointsTags.1.name': 'monitored',
       'endpointsTags.1.value': 'yes',
       'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI*',
+      'endpointsTags.2.value': 'EGI',
       'availabilityThreshold': '80',
       'reliabilityThreshold': '85',
       'uptimeThreshold': '0.8',
@@ -1841,7 +1841,7 @@ describe('Tests for reports changeview', () => {
       'groupsTags.1.name': 'infrastructure',
       'groupsTags.1.value': 'Production',
       'groupsTags.2.name': 'scope',
-      'groupsTags.2.value': 'EGI*',
+      'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
       'entities.0.value': 'iris.ac.uk',
@@ -1851,7 +1851,7 @@ describe('Tests for reports changeview', () => {
       'endpointsTags.1.name': 'monitored',
       'endpointsTags.1.value': 'yes',
       'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI*',
+      'endpointsTags.2.value': 'EGI',
       'availabilityThreshold': '80',
       'reliabilityThreshold': '85',
       'uptimeThreshold': '0.8',
@@ -1929,7 +1929,7 @@ describe('Tests for reports changeview', () => {
       'groupsTags.0.name': 'certification',
       'groupsTags.0.value': ['Certified', 'Candidate'],
       'groupsTags.1.name': 'scope',
-      'groupsTags.1.value': 'EGI*',
+      'groupsTags.1.value': 'EGI',
       'groupsTags.2.name': 'monitored',
       'groupsTags.2.value': 'yes',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
@@ -1941,7 +1941,7 @@ describe('Tests for reports changeview', () => {
       'endpointsTags.1.name': 'monitored',
       'endpointsTags.1.value': 'yes',
       'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI*',
+      'endpointsTags.2.value': 'EGI',
       'availabilityThreshold': '80',
       'reliabilityThreshold': '85',
       'uptimeThreshold': '0.8',
@@ -2024,7 +2024,7 @@ describe('Tests for reports changeview', () => {
       'groupsTags.1.name': 'infrastructure',
       'groupsTags.1.value': 'Production',
       'groupsTags.2.name': 'scope',
-      'groupsTags.2.value': 'EGI*',
+      'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': ['condor', 'eddie'],
       'groupsExtensions.1.name': 'GLUE2EndpointImplementationName',
@@ -2036,7 +2036,7 @@ describe('Tests for reports changeview', () => {
       'endpointsTags.1.name': 'monitored',
       'endpointsTags.1.value': 'yes',
       'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI*',
+      'endpointsTags.2.value': 'EGI',
       'availabilityThreshold': '80',
       'reliabilityThreshold': '85',
       'uptimeThreshold': '0.8',
@@ -2061,7 +2061,7 @@ describe('Tests for reports changeview', () => {
       'groupsTags.1.name': 'infrastructure',
       'groupsTags.1.value': 'Production',
       'groupsTags.2.name': 'scope',
-      'groupsTags.2.value': 'EGI*',
+      'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2EndpointImplementationName',
       'groupsExtensions.0.value': 'ARC-CE',
       'entities.0.value': 'iris.ac.uk',
@@ -2071,7 +2071,7 @@ describe('Tests for reports changeview', () => {
       'endpointsTags.1.name': 'monitored',
       'endpointsTags.1.value': 'yes',
       'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI*',
+      'endpointsTags.2.value': 'EGI',
       'availabilityThreshold': '80',
       'reliabilityThreshold': '85',
       'uptimeThreshold': '0.8',
@@ -2144,7 +2144,7 @@ describe('Tests for reports changeview', () => {
       'groupsTags.1.name': 'infrastructure',
       'groupsTags.1.value': 'Production',
       'groupsTags.2.name': 'scope',
-      'groupsTags.2.value': 'EGI*',
+      'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
       'entities.0.value': ['iris.ac.uk', 'Russia'],
@@ -2154,7 +2154,7 @@ describe('Tests for reports changeview', () => {
       'endpointsTags.1.name': 'monitored',
       'endpointsTags.1.value': 'yes',
       'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI*',
+      'endpointsTags.2.value': 'EGI',
       'availabilityThreshold': '80',
       'reliabilityThreshold': '85',
       'uptimeThreshold': '0.8',
@@ -2239,7 +2239,7 @@ describe('Tests for reports changeview', () => {
       'groupsTags.1.name': 'infrastructure',
       'groupsTags.1.value': 'Production',
       'groupsTags.2.name': 'scope',
-      'groupsTags.2.value': 'EGI*',
+      'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
       'entities.0.value': 'iris.ac.uk',
@@ -2323,7 +2323,7 @@ describe('Tests for reports changeview', () => {
       'groupsTags.1.name': 'infrastructure',
       'groupsTags.1.value': 'Production',
       'groupsTags.2.name': 'scope',
-      'groupsTags.2.value': 'EGI*',
+      'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
       'entities.0.value': 'iris.ac.uk',
@@ -2333,7 +2333,7 @@ describe('Tests for reports changeview', () => {
       'endpointsTags.1.name': 'monitored',
       'endpointsTags.1.value': 'yes',
       'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI*',
+      'endpointsTags.2.value': 'EGI',
       'endpointsExtensions.0.name': 'GLUE2EndpointID',
       'endpointsExtensions.0.value': ['ce1.gridpp.ecdf.ed.ac.uk', 'svr009.gla.scotgrid.ac.uk'],
       'endpointsExtensions.1.name': 'GLUE2EndpointImplementationName',
@@ -2362,7 +2362,7 @@ describe('Tests for reports changeview', () => {
       'groupsTags.1.name': 'infrastructure',
       'groupsTags.1.value': 'Production',
       'groupsTags.2.name': 'scope',
-      'groupsTags.2.value': 'EGI*',
+      'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
       'entities.0.value': 'iris.ac.uk',
@@ -2372,7 +2372,7 @@ describe('Tests for reports changeview', () => {
       'endpointsTags.1.name': 'monitored',
       'endpointsTags.1.value': 'yes',
       'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI*',
+      'endpointsTags.2.value': 'EGI',
       'endpointsExtensions.0.name': 'GLUE2EndpointImplementationName',
       'endpointsExtensions.0.value': 'ARC-CE',
       'availabilityThreshold': '80',
@@ -2442,7 +2442,7 @@ describe('Tests for reports changeview', () => {
       'groupsTags.1.name': 'infrastructure',
       'groupsTags.1.value': 'Production',
       'groupsTags.2.name': 'scope',
-      'groupsTags.2.value': 'EGI*',
+      'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
       'entities.0.value': 'iris.ac.uk',
@@ -2452,7 +2452,7 @@ describe('Tests for reports changeview', () => {
       'endpointsTags.1.name': 'monitored',
       'endpointsTags.1.value': 'yes',
       'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI*',
+      'endpointsTags.2.value': 'EGI',
       'availabilityThreshold': '70',
       'reliabilityThreshold': '85',
       'uptimeThreshold': '0.8',
@@ -2516,7 +2516,7 @@ describe('Tests for reports changeview', () => {
       'groupsTags.1.name': 'infrastructure',
       'groupsTags.1.value': 'Production',
       'groupsTags.2.name': 'scope',
-      'groupsTags.2.value': 'EGI*',
+      'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
       'entities.0.value': 'iris.ac.uk',
@@ -2526,7 +2526,7 @@ describe('Tests for reports changeview', () => {
       'endpointsTags.1.name': 'monitored',
       'endpointsTags.1.value': 'yes',
       'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI*',
+      'endpointsTags.2.value': 'EGI',
       'availabilityThreshold': '80',
       'reliabilityThreshold': '90',
       'uptimeThreshold': '0.8',
@@ -2590,7 +2590,7 @@ describe('Tests for reports changeview', () => {
       'groupsTags.1.name': 'infrastructure',
       'groupsTags.1.value': 'Production',
       'groupsTags.2.name': 'scope',
-      'groupsTags.2.value': 'EGI*',
+      'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
       'entities.0.value': 'iris.ac.uk',
@@ -2600,7 +2600,7 @@ describe('Tests for reports changeview', () => {
       'endpointsTags.1.name': 'monitored',
       'endpointsTags.1.value': 'yes',
       'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI*',
+      'endpointsTags.2.value': 'EGI',
       'availabilityThreshold': '80',
       'reliabilityThreshold': '85',
       'uptimeThreshold': '1.0',
@@ -2664,7 +2664,7 @@ describe('Tests for reports changeview', () => {
       'groupsTags.1.name': 'infrastructure',
       'groupsTags.1.value': 'Production',
       'groupsTags.2.name': 'scope',
-      'groupsTags.2.value': 'EGI*',
+      'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
       'entities.0.value': 'iris.ac.uk',
@@ -2674,7 +2674,7 @@ describe('Tests for reports changeview', () => {
       'endpointsTags.1.name': 'monitored',
       'endpointsTags.1.value': 'yes',
       'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI*',
+      'endpointsTags.2.value': 'EGI',
       'availabilityThreshold': '80',
       'reliabilityThreshold': '85',
       'uptimeThreshold': '0.8',
@@ -2738,7 +2738,7 @@ describe('Tests for reports changeview', () => {
       'groupsTags.1.name': 'infrastructure',
       'groupsTags.1.value': 'Production',
       'groupsTags.2.name': 'scope',
-      'groupsTags.2.value': 'EGI*',
+      'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
       'entities.0.value': 'iris.ac.uk',
@@ -2748,7 +2748,7 @@ describe('Tests for reports changeview', () => {
       'endpointsTags.1.name': 'monitored',
       'endpointsTags.1.value': 'yes',
       'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI*',
+      'endpointsTags.2.value': 'EGI',
       'availabilityThreshold': '80',
       'reliabilityThreshold': '85',
       'uptimeThreshold': '0.8',
@@ -3224,7 +3224,7 @@ describe('Tests for public reports changeview', () => {
     expect(tag2value).toBeDisabled()
     expect(tag3name.value).toBe('scope')
     expect(tag3name).toBeDisabled()
-    expect(tag3value.value).toBe('EGI*')
+    expect(tag3value.value).toBe('EGI')
     expect(tag3value).toBeDisabled()
     expect(card_groups.queryByTestId(/remove/i)).not.toBeInTheDocument()
 
@@ -3240,7 +3240,7 @@ describe('Tests for public reports changeview', () => {
     expect(card_endpoints.getByTestId('endpointsTags.1.name').value).toBe('monitored')
     expect(card_endpoints.getByTestId('endpointsTags.1.value').value).toBe('yes')
     expect(card_endpoints.getByTestId('endpointsTags.2.name').value).toBe('scope')
-    expect(card_endpoints.getByTestId('endpointsTags.2.value').value).toBe('EGI*')
+    expect(card_endpoints.getByTestId('endpointsTags.2.value').value).toBe('EGI')
 
     expect(card_endpoints.queryByTestId(/remove/i)).not.toBeInTheDocument();
     expect(card_endpoints.queryByRole('button', { name: /add new tag/i })).not.toBeInTheDocument();
@@ -3335,7 +3335,7 @@ describe('Tests for public reports changeview', () => {
     expect(tag2value).toBeDisabled()
     expect(tag3name.value).toBe('scope')
     expect(tag3name).toBeDisabled()
-    expect(tag3value.value).toBe('EGI*')
+    expect(tag3value.value).toBe('EGI')
     expect(tag3value).toBeDisabled()
     expect(card_groups.queryByTestId(/remove/i)).not.toBeInTheDocument()
 
@@ -3351,7 +3351,7 @@ describe('Tests for public reports changeview', () => {
     expect(card_endpoints.getByTestId('endpointsTags.1.name').value).toBe('monitored')
     expect(card_endpoints.getByTestId('endpointsTags.1.value').value).toBe('yes')
     expect(card_endpoints.getByTestId('endpointsTags.2.name').value).toBe('scope')
-    expect(card_endpoints.getByTestId('endpointsTags.2.value').value).toBe('EGI*')
+    expect(card_endpoints.getByTestId('endpointsTags.2.value').value).toBe('EGI')
 
     expect(card_endpoints.queryByTestId(/remove/i)).not.toBeInTheDocument();
     expect(card_endpoints.queryByRole('button', { name: /add new tag/i })).not.toBeInTheDocument();
