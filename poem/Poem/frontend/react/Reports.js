@@ -237,13 +237,13 @@ const TopologyTagList = ({ part, fieldName, tagsState, setTagsState, tagsAll, ad
   const tagsInitValues = (key, data, preprocess=false) => {
     if (!data[key])
       return undefined
-    if (data[key].indexOf(' ') === -1)
+    if (data[key].indexOf('|') === -1)
       return new Object({
         'label': preprocess ? preProcessTagValue(data[key]) : data[key],
         'value': preprocess ? preProcessTagValue(data[key]) : data[key]
       })
     else {
-      let tmp = data[key].split(' ').map(e => new Object({
+      let tmp = data[key].split('|').map(e => new Object({
         'label': preprocess ? preProcessTagValue(e) : e,
         'value': preprocess ? preProcessTagValue(e) : e
       }))
@@ -331,7 +331,7 @@ const TopologyTagList = ({ part, fieldName, tagsState, setTagsState, tagsAll, ad
                         data-testid={`${fieldName}.${index}.value`}
                         className='form-control'
                         disabled={true}
-                        value={preProcessTagValue(tags.value.replace(new RegExp(' ', 'g'), ', '))}
+                        value={preProcessTagValue(tags.value.replace(new RegExp('\\|', 'g'), ', '))}
                       />
                     :
                       <Field
@@ -343,9 +343,9 @@ const TopologyTagList = ({ part, fieldName, tagsState, setTagsState, tagsAll, ad
                           if (Array.isArray(e)) {
                             let joinedValues = ''
                             e.forEach((e) => {
-                              joinedValues += e.value + ' '
+                              joinedValues += e.value + '|'
                             })
-                            form.setFieldValue(`${fieldName}.${index}.value`, joinedValues.trim())
+                            form.setFieldValue(`${fieldName}.${index}.value`, joinedValues.replace(/\|$/, ''))
                           }
                           else
                             form.setFieldValue(`${fieldName}.${index}.value`, e.value.trim())
@@ -441,10 +441,10 @@ const TopologyEntityFields = ({topoGroups, addview, publicView, form}) => {
     let tmp = new Array()
     for (let entity of form.values.entities) {
       if (matchWhat.indexOf(entity.name) > -1) {
-        if (entity.value.indexOf(' ') > -1) {
-          tmp = entity.value.split(' ').map(e => new Object({
-            'label': e,
-            'value': e
+        if (entity.value.indexOf('|') > -1) {
+          tmp = entity.value.split('|').map(e => new Object({
+            'label': e.trim(),
+            'value': e.trim()
           }))
         }
         else
@@ -542,8 +542,8 @@ const TopologyEntityFields = ({topoGroups, addview, publicView, form}) => {
             onChangeHandler={(e) => {
               let joinedValues = ''
               for (let event of e)
-                joinedValues += event.value + ' '
-              joinedValues = joinedValues.trim()
+                joinedValues += event.value + '|'
+              joinedValues = joinedValues.replace(/\|$/, '')
               form.setFieldValue("entities.1.name", key2)
               form.setFieldValue("entities.1.value", joinedValues)
             }}
@@ -736,10 +736,8 @@ export const ReportsComponent = (props) => {
   const formatToReportTags = (tagsContext, formikTags, formikExtensions) => {
     const formatTag = (tag, prefix='') => {
       let tmpTag = new Object()
-      if (tag.value.indexOf(' ') !== -1) {
-        if (tag.value.indexOf(',') !== -1)
-          tag.value = tag.value.replace(',', '')
-        let values = tag.value.replace(/ /g, ', ')
+      if (tag.value.indexOf('|') !== -1) {
+        let values = tag.value.replace(/\|/g, ', ')
         tmpTag = new Object({
           name: `${prefix}${tag.name}`,
           value: values,
@@ -787,13 +785,13 @@ export const ReportsComponent = (props) => {
     for (let entity of formikEntities) {
       let tmpEntity = new Object()
       let tmpEntites = new Array()
-      if (entity.value && entity.value.indexOf(' ') !== -1) {
-        let values = entity.value.split(' ')
+      if (entity.value && entity.value.indexOf('|') !== -1) {
+        let values = entity.value.split('|')
         for (var val of values)
           if (val)
             tmpEntites.push(new Object({
               name: 'group',
-              value: val,
+              value: val.trim(),
               context: context
             }))
         entities = [...entities, ...tmpEntites]
@@ -818,6 +816,7 @@ export const ReportsComponent = (props) => {
     let tags = new Array()
     let extensions = new Array()
 
+
     for (let tag of formikTags) {
       for (let tagContext of tagsContext) {
         if (tag.context === tagContext) {
@@ -833,13 +832,13 @@ export const ReportsComponent = (props) => {
         extensions.push(
           new Object({
             name: tag.substring(9),
-            value: tmpTagsJoint[tag].join(' ').trim().replace(/,/g, '')
+            value: tmpTagsJoint[tag].join().replace(/, /g, '|')
           })
         )
       else
         tags.push(new Object({
           'name': tag,
-          'value': tmpTagsJoint[tag].join(' ').trim().replace(/,/g, '')
+          'value': tmpTagsJoint[tag].join().replace(/, /g, '|')
         }))
     }
 
@@ -881,7 +880,7 @@ export const ReportsComponent = (props) => {
     for (let entity in tmpEntityJoint)
       entities.push(new Object({
         'name': entity,
-        'value': tmpEntityJoint[entity].join(' ')
+        'value': tmpEntityJoint[entity].join('|')
       }))
 
     let final_entities = new Array()
