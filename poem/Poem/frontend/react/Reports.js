@@ -785,13 +785,13 @@ export const ReportsComponent = (props) => {
     for (let entity of formikEntities) {
       let tmpEntity = new Object()
       let tmpEntites = new Array()
-      if (entity.value && entity.value.indexOf(' ') !== -1) {
-        let values = entity.value.split(' ')
+      if (entity.value && entity.value.indexOf('|') !== -1) {
+        let values = entity.value.split('|')
         for (var val of values)
           if (val)
             tmpEntites.push(new Object({
               name: 'group',
-              value: val,
+              value: val.trim(),
               context: context
             }))
         entities = [...entities, ...tmpEntites]
