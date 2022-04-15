@@ -1199,7 +1199,6 @@ describe('Tests for reports changeview', () => {
     expect(card_endpoints.getByText('scope')).toBeInTheDocument();
     expect(card_endpoints.getAllByText('yes')).toHaveLength(2);
     expect(card_endpoints.getByText('EGI')).toBeInTheDocument();
-    expect(card_endpoints.queryByText('EGI')).not.toBeInTheDocument();
     expect(card_endpoints.queryByText('EOSC-hub')).not.toBeInTheDocument();
     expect(card_endpoints.queryByText('EOSCCore')).not.toBeInTheDocument();
     expect(card_endpoints.queryByText('FedCloud')).not.toBeInTheDocument();
@@ -1213,7 +1212,6 @@ describe('Tests for reports changeview', () => {
     expect(card_endpoints.queryByText(/dpm/i)).not.toBeInTheDocument();
 
     selectEvent.openMenu(card_endpoints.getByText('scope'))
-    expect(card_endpoints.queryByText('EGI')).not.toBeInTheDocument();
     expect(card_endpoints.queryByText('EOSC-hub')).not.toBeInTheDocument();
     expect(card_endpoints.queryByText('EOSCCore')).not.toBeInTheDocument();
     expect(card_endpoints.queryByText('FedCloud')).not.toBeInTheDocument();
