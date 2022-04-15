@@ -816,6 +816,7 @@ export const ReportsComponent = (props) => {
     let tags = new Array()
     let extensions = new Array()
 
+
     for (let tag of formikTags) {
       for (let tagContext of tagsContext) {
         if (tag.context === tagContext) {
@@ -837,7 +838,7 @@ export const ReportsComponent = (props) => {
       else
         tags.push(new Object({
           'name': tag,
-          'value': tmpTagsJoint[tag].join(' ').trim().replace(/,/g, '')
+          'value': tmpTagsJoint[tag].join().replace(/, /g, '|')
         }))
     }
 
