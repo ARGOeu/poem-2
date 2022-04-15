@@ -436,7 +436,7 @@ const TopologyEntityFields = ({topoGroups, addview, publicView, form}) => {
   const entityInitValues = (matchWhat) => {
     let tmp = new Array()
     for (let entity of form.values.entities) {
-      if (matchWhat.indexOf(entity.name) > -1) {
+      if (entity && matchWhat.indexOf(entity.name) > -1) {
         if (entity.value.indexOf('|') > -1) {
           tmp = entity.value.split('|').map(e => new Object({
             'label': e.trim(),
