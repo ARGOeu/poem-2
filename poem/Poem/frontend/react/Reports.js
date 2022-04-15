@@ -832,7 +832,7 @@ export const ReportsComponent = (props) => {
         extensions.push(
           new Object({
             name: tag.substring(9),
-            value: tmpTagsJoint[tag].join(' ').trim().replace(/,/g, '')
+            value: tmpTagsJoint[tag].join().replace(/, /g, '|')
           })
         )
       else
