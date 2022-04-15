@@ -68,10 +68,6 @@ const fetchReport = async (webapi, name) => {
 }
 
 
-const getCrud = (props) => {
-  return props.webapireports ? props.webapireports.crud : undefined;
-}
-
 export const ReportsList = (props) => {
   const location = props.location;
   const publicView = props.publicView;
@@ -503,7 +499,7 @@ const TopologyEntityFields = ({topoGroups, addview, publicView, form}) => {
             id='topoEntity1'
             className='form-control'
             disabled={true}
-            value={form.values.entities[0] ? form.values.entities[0].value ? form.values.entities[0].value.replace(new RegExp(' ', 'g'), ', ') : '' : ''}
+            value={form.values.entities[0] ? form.values.entities[0].value ? form.values.entities[0].value.replace(new RegExp('\\|', 'g'), ', ') : '' : ''}
           />
         :
           <Field
@@ -514,10 +510,10 @@ const TopologyEntityFields = ({topoGroups, addview, publicView, form}) => {
             onChangeHandler={(e) => {
               let joinedValues = ''
               for (let event of e)
-                joinedValues += event.value + ' '
-              joinedValues = joinedValues.trim()
-              form.setFieldValue("entities.0.value", joinedValues)
+                joinedValues += event.value + '|'
+              joinedValues = joinedValues.replace(/\|$/, '')
               form.setFieldValue("entities.0.name", key1)
+              form.setFieldValue("entities.0.value", joinedValues)
             }}
             entitiesInitials={!addview ? entityInitValues(["entitiesNgi", "entitiesProjects"]) : undefined}
            />
@@ -530,7 +526,7 @@ const TopologyEntityFields = ({topoGroups, addview, publicView, form}) => {
             id='topoEntity2'
             className='form-control'
             disabled={true}
-            value={form.values.entities[1] ? form.values.entities[1].value ? form.values.entities[1].value.replace(new RegExp(' ', 'g'), ', ') : '' : ''}
+            value={form.values.entities[1] ? form.values.entities[1].value ? form.values.entities[1].value.replace(new RegExp('\\|', 'g'), ', ') : '' : ''}
           />
         :
           <Field
@@ -593,7 +589,6 @@ export const ReportsComponent = (props) => {
 
   const backend = new Backend();
   const queryClient = useQueryClient();
-  const crud = getCrud(props);
 
   const [areYouSureModal, setAreYouSureModal] = useState(false)
   const [modalMsg, setModalMsg] = useState(undefined);
@@ -649,12 +644,12 @@ export const ReportsComponent = (props) => {
 
   const { data: topologyGroups, error: topologyGroupsErrors, isLoading: loadingTopologyGroups } = useQuery(
     `${publicView ? 'public_' : ''}topologygroups`, () => fetchTopologyGroups(webapi),
-    { enabled: (publicView || !!userDetails) && crud }
+    { enabled: publicView || !!userDetails }
   );
 
   const { data: topologyTags, error: topologyTagsError, isLoading: loadingTopologyTags } = useQuery(
     'topologytags', () => fetchTopologyTags(webapi),
-    { enabled: !publicView && !!userDetails && crud }
+    { enabled: !publicView && !!userDetails }
   );
 
   const { data: webApiReport, error: errorWebApiReport, isLoading: loadingWebApiReport } = useQuery(
@@ -1601,162 +1596,159 @@ export const ReportsComponent = (props) => {
                   </Col>
                 </Row>
               </FormGroup>
-              {
-                (crud) &&
-                <FormGroup className='mt-4'>
-                  <ParagraphTitle title='Topology configuration'/>
-                  <Row>
-                    <Col md={2}>
-                      {
-                        publicView ?
-                          <>
-                            <Label for='topologyType'>Topology type:</Label>
-                            <Field
-                              type='text'
-                              id='topologyType'
-                              name='topologyType'
-                              className='form-control'
-                              disabled={true}
-                            />
-                          </>
-                        :
-                          <CustomReactSelect
+              <FormGroup className='mt-4'>
+                <ParagraphTitle title='Topology configuration'/>
+                <Row>
+                  <Col md={2}>
+                    {
+                      publicView ?
+                        <>
+                          <Label for='topologyType'>Topology type:</Label>
+                          <Field
+                            type='text'
                             id='topologyType'
                             name='topologyType'
-                            error={props.errors.topologyType}
-                            label='Topology type:'
-                            onChange={ e => props.setFieldValue('topologyType', e.value) }
-                            options={
-                              topologyTypes.map(type => new Object({
-                                label: type, value: type
-                              }))
-                            }
-                            value={
-                              props.values.topologyType ?
-                                { label: props.values.topologyType, value: props.values.topologyType }
-                              : undefined
-                            }
+                            className='form-control'
+                            disabled={true}
                           />
-                      }
-                      <CustomError error={props.errors.topologyType} />
-                    </Col>
-                  </Row>
-                  <Row>
-                    <Col md={6}>
-                      <Card className="mt-3" data-testid="card-group-of-groups">
-                        <CardHeader>
-                          <strong>Group of groups</strong>
-                        </CardHeader>
-                        <CardBody>
-                          <CardTitle className="mb-2">
-                            <strong>Tags</strong>
-                          </CardTitle>
-                          <FieldArray
-                            name="groupsTags"
-                            render={props => (
+                        </>
+                      :
+                        <CustomReactSelect
+                          id='topologyType'
+                          name='topologyType'
+                          error={props.errors.topologyType}
+                          label='Topology type:'
+                          onChange={ e => props.setFieldValue('topologyType', e.value) }
+                          options={
+                            topologyTypes.map(type => new Object({
+                              label: type, value: type
+                            }))
+                          }
+                          value={
+                            props.values.topologyType ?
+                              { label: props.values.topologyType, value: props.values.topologyType }
+                            : undefined
+                          }
+                        />
+                    }
+                    <CustomError error={props.errors.topologyType} />
+                  </Col>
+                </Row>
+                <Row>
+                  <Col md={6}>
+                    <Card className="mt-3" data-testid="card-group-of-groups">
+                      <CardHeader>
+                        <strong>Group of groups</strong>
+                      </CardHeader>
+                      <CardBody>
+                        <CardTitle className="mb-2">
+                          <strong>Tags</strong>
+                        </CardTitle>
+                        <FieldArray
+                          name="groupsTags"
+                          render={props => (
+                            <TopologyTagList
+                              part="groups"
+                              fieldName="groupsTags"
+                              tagsState={tagsState}
+                              setTagsState={setTagsState}
+                              tagsAll={allTags}
+                              publicView={publicView}
+                              {...props}/>
+                          )}
+                        />
+                        <div>
+                          <hr style={{'borderTop': '1px solid #b5c4d1'}}/>
+                        </div>
+                        <CardTitle className="mb-2">
+                          <strong>Extensions</strong>
+                        </CardTitle>
+                        <FieldArray
+                            name="groupsExtensions"
+                            render={ props => (
                               <TopologyTagList
-                                part="groups"
-                                fieldName="groupsTags"
-                                tagsState={tagsState}
-                                setTagsState={setTagsState}
-                                tagsAll={allTags}
-                                publicView={publicView}
-                                {...props}/>
-                            )}
-                          />
-                          <div>
-                            <hr style={{'borderTop': '1px solid #b5c4d1'}}/>
-                          </div>
-                          <CardTitle className="mb-2">
-                            <strong>Extensions</strong>
-                          </CardTitle>
-                          <FieldArray
-                              name="groupsExtensions"
-                              render={ props => (
-                                <TopologyTagList
-                                  {...props}
-                                  part="groups"
-                                  fieldName="groupsExtensions"
-                                  tagsState={extensionsState}
-                                  setTagsState={setExtensionsState}
-                                  tagsAll={allExtensions}
-                                  publicView={publicView}
-                                />
-                              ) }
-                            />
-                          <div>
-                            <hr style={{'borderTop': '1px solid #b5c4d1'}}/>
-                          </div>
-                          <CardTitle className="mb-2">
-                            <strong>Entities</strong>
-                          </CardTitle>
-                          <FieldArray
-                            name="entities"
-                            render={props => (
-                              <TopologyEntityFields
-                                topoGroups={{
-                                  entitiesNgi, entitiesSites,
-                                  entitiesProjects, entitiesServiceGroups
-                                }}
-                                addview={addview}
-                                publicView={publicView}
                                 {...props}
+                                part="groups"
+                                fieldName="groupsExtensions"
+                                tagsState={extensionsState}
+                                setTagsState={setExtensionsState}
+                                tagsAll={allExtensions}
+                                publicView={publicView}
                               />
-                            )}
+                            ) }
                           />
-                        </CardBody>
-                      </Card>
-                    </Col>
-                    <Col md={6}>
-                      <Card className="mt-3" data-testid='card-group-of-endpoints'>
-                        <CardHeader>
-                          <strong>Group of endpoints</strong>
-                        </CardHeader>
-                        <CardBody>
-                          <CardTitle className="mb-2">
-                            <strong>Tags</strong>
-                          </CardTitle>
-                          <FieldArray
-                            name="endpointsTags"
-                            render={propsLocal => (
+                        <div>
+                          <hr style={{'borderTop': '1px solid #b5c4d1'}}/>
+                        </div>
+                        <CardTitle className="mb-2">
+                          <strong>Entities</strong>
+                        </CardTitle>
+                        <FieldArray
+                          name="entities"
+                          render={props => (
+                            <TopologyEntityFields
+                              topoGroups={{
+                                entitiesNgi, entitiesSites,
+                                entitiesProjects, entitiesServiceGroups
+                              }}
+                              addview={addview}
+                              publicView={publicView}
+                              {...props}
+                            />
+                          )}
+                        />
+                      </CardBody>
+                    </Card>
+                  </Col>
+                  <Col md={6}>
+                    <Card className="mt-3" data-testid='card-group-of-endpoints'>
+                      <CardHeader>
+                        <strong>Group of endpoints</strong>
+                      </CardHeader>
+                      <CardBody>
+                        <CardTitle className="mb-2">
+                          <strong>Tags</strong>
+                        </CardTitle>
+                        <FieldArray
+                          name="endpointsTags"
+                          render={propsLocal => (
+                            <TopologyTagList
+                              part="endpoints"
+                              fieldName="endpointsTags"
+                              tagsState={tagsState}
+                              setTagsState={setTagsState}
+                              tagsAll={allTags}
+                              addview={addview}
+                              publicView={publicView}
+                              {...propsLocal}/>
+                          )}
+                        />
+                        <div>
+                          <hr style={{'borderTop': '1px solid #b5c4d1'}}/>
+                        </div>
+                        <CardTitle className="mb-2">
+                          <strong>Extensions</strong>
+                        </CardTitle>
+                        <FieldArray
+                            name="endpointsExtensions"
+                            render={ propsLocal => (
                               <TopologyTagList
+                                {...propsLocal}
                                 part="endpoints"
-                                fieldName="endpointsTags"
-                                tagsState={tagsState}
-                                setTagsState={setTagsState}
-                                tagsAll={allTags}
+                                fieldName="endpointsExtensions"
+                                tagsState={extensionsState}
+                                setTagsState={setExtensionsState}
+                                tagsAll={allExtensions}
                                 addview={addview}
                                 publicView={publicView}
-                                {...propsLocal}/>
-                            )}
+                              />
+                            ) }
                           />
-                          <div>
-                            <hr style={{'borderTop': '1px solid #b5c4d1'}}/>
-                          </div>
-                          <CardTitle className="mb-2">
-                            <strong>Extensions</strong>
-                          </CardTitle>
-                          <FieldArray
-                              name="endpointsExtensions"
-                              render={ propsLocal => (
-                                <TopologyTagList
-                                  {...propsLocal}
-                                  part="endpoints"
-                                  fieldName="endpointsExtensions"
-                                  tagsState={extensionsState}
-                                  setTagsState={setExtensionsState}
-                                  tagsAll={allExtensions}
-                                  addview={addview}
-                                  publicView={publicView}
-                                />
-                              ) }
-                            />
-                        </CardBody>
-                      </Card>
-                    </Col>
-                  </Row>
-                </FormGroup>
-              }
+                      </CardBody>
+                    </Card>
+                  </Col>
+                </Row>
+              </FormGroup>
               <FormGroup className='mt-4'>
                 <ParagraphTitle title='Thresholds'/>
                 <Row>
@@ -1813,7 +1805,7 @@ export const ReportsComponent = (props) => {
                 </Row>
               </FormGroup>
               {
-                (!publicView && write_perm && crud) &&
+                (!publicView && write_perm) &&
                 <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
                   {
                     !addview ?
