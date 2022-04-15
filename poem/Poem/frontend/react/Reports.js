@@ -441,10 +441,10 @@ const TopologyEntityFields = ({topoGroups, addview, publicView, form}) => {
     let tmp = new Array()
     for (let entity of form.values.entities) {
       if (matchWhat.indexOf(entity.name) > -1) {
-        if (entity.value.indexOf(' ') > -1) {
-          tmp = entity.value.split(' ').map(e => new Object({
-            'label': e,
-            'value': e
+        if (entity.value.indexOf('|') > -1) {
+          tmp = entity.value.split('|').map(e => new Object({
+            'label': e.trim(),
+            'value': e.trim()
           }))
         }
         else
@@ -542,8 +542,8 @@ const TopologyEntityFields = ({topoGroups, addview, publicView, form}) => {
             onChangeHandler={(e) => {
               let joinedValues = ''
               for (let event of e)
-                joinedValues += event.value + ' '
-              joinedValues = joinedValues.trim()
+                joinedValues += event.value + '|'
+              joinedValues = joinedValues.replace(/\|$/, '')
               form.setFieldValue("entities.1.name", key2)
               form.setFieldValue("entities.1.value", joinedValues)
             }}
