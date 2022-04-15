@@ -880,7 +880,7 @@ export const ReportsComponent = (props) => {
     for (let entity in tmpEntityJoint)
       entities.push(new Object({
         'name': entity,
-        'value': tmpEntityJoint[entity].join(' ')
+        'value': tmpEntityJoint[entity].join('|')
       }))
 
     let final_entities = new Array()
