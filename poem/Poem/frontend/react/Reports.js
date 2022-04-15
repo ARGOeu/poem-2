@@ -539,6 +539,7 @@ const TopologyEntityFields = ({topoGroups, addview, publicView, form}) => {
               let joinedValues = ''
               for (let event of e)
                 joinedValues += event.value + '|'
+              joinedValues = joinedValues.replace(/\|$/, '')
               form.setFieldValue("entities.1.name", key2)
               form.setFieldValue("entities.1.value", joinedValues)
             }}
