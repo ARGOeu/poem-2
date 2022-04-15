@@ -331,7 +331,7 @@ const TopologyTagList = ({ part, fieldName, tagsState, setTagsState, tagsAll, ad
                         data-testid={`${fieldName}.${index}.value`}
                         className='form-control'
                         disabled={true}
-                        value={preProcessTagValue(tags.value.replace(new RegExp('|', 'g'), ', '))}
+                        value={preProcessTagValue(tags.value.replace(new RegExp('\\|', 'g'), ', '))}
                       />
                     :
                       <Field
@@ -345,7 +345,7 @@ const TopologyTagList = ({ part, fieldName, tagsState, setTagsState, tagsAll, ad
                             e.forEach((e) => {
                               joinedValues += e.value + '|'
                             })
-                            form.setFieldValue(`${fieldName}.${index}.value`, joinedValues.trim())
+                            form.setFieldValue(`${fieldName}.${index}.value`, joinedValues.replace(/\|$/, ''))
                           }
                           else
                             form.setFieldValue(`${fieldName}.${index}.value`, e.value.trim())
