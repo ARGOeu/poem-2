@@ -847,6 +847,7 @@ export const ReportsComponent = (props) => {
         'value': undefined
       }
     )
+
     if (!formikEntities || (formikEntities && formikEntities.length === 0))
       return new Array(default_empty, default_empty)
 
@@ -1190,8 +1191,8 @@ export const ReportsComponent = (props) => {
     }
 
     if (!addview && webApiReport
-      && entitiesNgi.length > 0 && entitiesSites.length > 0
-      && entitiesProjects.length > 0 && entitiesServiceGroups.length > 0)
+      && (entitiesNgi.length > 0 && entitiesSites.length > 0)
+      || (entitiesProjects.length > 0 && entitiesServiceGroups.length > 0)) {
       entitiesFormik = formatFromReportEntities('argo.group.filter.fields',
         webApiReport['filter_tags'], {
           entitiesNgi,
@@ -1199,6 +1200,7 @@ export const ReportsComponent = (props) => {
           entitiesProjects,
           entitiesServiceGroups
         })
+    }
     else if (addview)
       entitiesFormik = new Array(
         new Object({
