@@ -3233,7 +3233,7 @@ describe('Tests for public reports changeview', () => {
     expect(card_groups.getByTestId('groupsExtensions.0.name').value).toBe('GLUE2ComputingShareMappingQueue')
     expect(card_groups.getByTestId('groupsExtensions.0.value').value).toBe('condor')
     expect(card_groups.getByLabelText('NGIs:').value).toBe('iris.ac.uk')
-    expect(card_groups.getByLabelText('Sites:').value).toBe('dirac-durham|IRISOPS-IAM')
+    expect(card_groups.getByLabelText('Sites:').value).toBe('dirac-durham, IRISOPS-IAM')
 
     expect(card_endpoints.getByTestId('endpointsTags.0.name').value).toBe('production')
     expect(card_endpoints.getByTestId('endpointsTags.0.value').value).toBe('yes')
