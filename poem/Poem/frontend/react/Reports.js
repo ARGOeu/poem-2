@@ -436,7 +436,7 @@ const EntitySelect = ({field, label, entitiesOptions, onChangeHandler, entitiesI
 const TopologyConfGroupsEntityFields = ({topoGroups, addview, publicView, form}) => {
   const entityInitValues = (matchWhat) => {
     let tmp = new Array()
-    for (let entity of form.values.entities) {
+    for (let entity of form.values.entitiesGroups) {
       if (entity && matchWhat.indexOf(entity.name) > -1) {
         if (entity.value.indexOf('|') > -1) {
           tmp = entity.value.split('|').map(e => new Object({
@@ -500,7 +500,7 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, publicView, form})
             id='topoEntity1'
             className='form-control'
             disabled={true}
-            value={form.values.entities[0] ? form.values.entities[0].value ? form.values.entities[0].value.replace(new RegExp('\\|', 'g'), ', ') : '' : ''}
+            value={form.values.entitiesGroups[0] ? form.values.entitiesGroups[0].value ? form.values.entitiesGroups[0].value.replace(new RegExp('\\|', 'g'), ', ') : '' : ''}
           />
         :
           <Field
@@ -513,8 +513,8 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, publicView, form})
               for (let event of e)
                 joinedValues += event.value + '|'
               joinedValues = joinedValues.replace(/\|$/, '')
-              form.setFieldValue("entities.0.name", key1)
-              form.setFieldValue("entities.0.value", joinedValues)
+              form.setFieldValue("entitiesGroups.0.name", key1)
+              form.setFieldValue("entitiesGroups.0.value", joinedValues)
             }}
             entitiesInitials={!addview ? entityInitValues(["entitiesNgi", "entitiesProjects"]) : undefined}
            />
@@ -527,7 +527,7 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, publicView, form})
             id='topoEntity2'
             className='form-control'
             disabled={true}
-            value={form.values.entities[1] ? form.values.entities[1].value ? form.values.entities[1].value.replace(new RegExp('\\|', 'g'), ', ') : '' : ''}
+            value={form.values.entitiesGroups[1] ? form.values.entitiesGroups[1].value ? form.values.entitiesGroups[1].value.replace(new RegExp('\\|', 'g'), ', ') : '' : ''}
           />
         :
           <Field
@@ -541,8 +541,8 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, publicView, form})
               for (let event of e)
                 joinedValues += event.value + '|'
               joinedValues = joinedValues.replace(/\|$/, '')
-              form.setFieldValue("entities.1.name", key2)
-              form.setFieldValue("entities.1.value", joinedValues)
+              form.setFieldValue("entitiesGroups.1.name", key2)
+              form.setFieldValue("entitiesGroups.1.value", joinedValues)
             }}
             entitiesInitials={!addview ? entityInitValues(["entitiesSites", "entitiesServiceGroups"]) : undefined}
           />
@@ -1027,7 +1027,7 @@ export const ReportsComponent = (props) => {
       dataToSend['profiles'].push(extractedThresholdsProfile)
     let groupTagsFormatted = formatToReportTags('argo.group.filter.tags', formValues.groupsTags, formikValues.groupsExtensions)
     let endpointTagsFormatted = formatToReportTags('argo.endpoint.filter.tags', formValues.endpointsTags, formikValues.endpointsExtensions)
-    let groupEntitiesFormatted = formatToReportEntities('argo.group.filter.fields', formValues.entities)
+    let groupEntitiesFormatted = formatToReportEntities('argo.group.filter.fields', formValues.entitiesGroups)
     dataToSend['filter_tags'] = [...groupTagsFormatted,
       ...endpointTagsFormatted, ...groupEntitiesFormatted]
     dataToSend['topology_schema'] = formatTopologySchema(formValues.topologyType)
@@ -1156,7 +1156,7 @@ export const ReportsComponent = (props) => {
     let entitiesServiceGroups = new Array()
     let serviceTypesServiceGroupsEndpoints = new Array()
     let serviceTypesSitesEndpoints = new Array()
-    let entitiesFormik = new Array()
+    let entitiesGroupsFormik = new Array()
     let groupsTags = undefined
     let endpointsTags = undefined
     let groupsExtensions = undefined
@@ -1221,7 +1221,7 @@ export const ReportsComponent = (props) => {
         || (entitiesProjects.length > 0 && entitiesServiceGroups.length > 0)
       )
     ) {
-      entitiesFormik = formatFromReportEntities('argo.group.filter.fields',
+      entitiesGroupsFormik = formatFromReportEntities('argo.group.filter.fields',
         webApiReport['filter_tags'], {
           entitiesNgi,
           entitiesSites,
@@ -1230,7 +1230,7 @@ export const ReportsComponent = (props) => {
         })
     }
     else if (addview)
-      entitiesFormik = new Array(
+      entitiesGroupsFormik = new Array(
         new Object({
           'name': undefined,
           'value': undefined
@@ -1381,7 +1381,7 @@ export const ReportsComponent = (props) => {
             endpointsTags: endpointsTags,
             groupsExtensions: groupsExtensions,
             endpointsExtensions: endpointsExtensions,
-            entities: entitiesFormik
+            entitiesGroups: entitiesGroupsFormik
           }}
           enableReinitialize={true}
           onSubmit = {(values) => onSubmitHandle(values)}
