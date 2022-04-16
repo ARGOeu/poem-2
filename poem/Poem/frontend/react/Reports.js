@@ -1157,6 +1157,7 @@ export const ReportsComponent = (props) => {
     let serviceTypesServiceGroupsEndpoints = new Array()
     let serviceTypesSitesEndpoints = new Array()
     let entitiesGroupsFormik = new Array()
+    let entitiesEndpointsFormik = new Array()
     let groupsTags = undefined
     let endpointsTags = undefined
     let groupsExtensions = undefined
@@ -1189,6 +1190,8 @@ export const ReportsComponent = (props) => {
         else if (endpoint['type'].toLowerCase() === 'servicegroups')
           servicesServiceGroups.add(endpoint['service'])
       }
+      serviceTypesSitesEndpoints = Array.from(servicesSites).sort(sortStr)
+      serviceTypesServiceGroupsEndpoints = Array.from(servicesServiceGroups).sort(sortStr)
     }
 
     if (topologyGroups && entitiesNgi.length === 0 && entitiesSites.length === 0
@@ -1231,6 +1234,32 @@ export const ReportsComponent = (props) => {
     }
     else if (addview)
       entitiesGroupsFormik = new Array(
+        new Object({
+          'name': undefined,
+          'value': undefined
+        }),
+        new Object({
+          'name': undefined,
+          'value': undefined
+        })
+      )
+
+    if (!addview && webApiReport
+      && (
+        (entitiesSites.length > 0 && serviceTypesSitesEndpoints.length > 0)
+        || (entitiesServiceGroups.length > 0 && serviceTypesServiceGroupsEndpoints.length > 0)
+      )
+    ) {
+      entitiesEndpointsFormik = formatFromReportEntities('argo.endpoint.filter.fields',
+        webApiReport['filter_tags'], {
+          entitiesSites,
+          entitiesServiceGroups,
+          serviceTypesSitesEndpoints,
+          serviceTypesServiceGroupsEndpoints
+        })
+    }
+    else if (addview)
+      entitiesEndpointsFormik = new Array(
         new Object({
           'name': undefined,
           'value': undefined
@@ -1381,7 +1410,8 @@ export const ReportsComponent = (props) => {
             endpointsTags: endpointsTags,
             groupsExtensions: groupsExtensions,
             endpointsExtensions: endpointsExtensions,
-            entitiesGroups: entitiesGroupsFormik
+            entitiesGroups: entitiesGroupsFormik,
+            entitiesEndpoints: entitiesEndpointsFormik
           }}
           enableReinitialize={true}
           onSubmit = {(values) => onSubmitHandle(values)}
