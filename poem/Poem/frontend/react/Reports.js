@@ -887,15 +887,28 @@ export const ReportsComponent = (props) => {
       }))
 
     let final_entities = new Array()
-    if (entities.length === 1) {
-      let only_type = entities[0].name.toLowerCase()
-      if (only_type.indexOf('ngi') !== -1 || only_type.indexOf('project') !== -1)
-        final_entities = [entities[0], default_empty]
-      else if (only_type.indexOf('site') !== -1 || only_type.indexOf('servicegroup') !== -1)
-        final_entities = [default_empty, entities[0]]
+    if (context.indexOf('argo.group') !== -1) {
+      if (entities.length === 1) {
+        let only_type = entities[0].name.toLowerCase()
+        if (only_type.indexOf('ngi') !== -1 || only_type.indexOf('project') !== -1)
+          final_entities = [entities[0], default_empty]
+        else if (only_type.indexOf('site') !== -1 || only_type.indexOf('servicegroup') !== -1)
+          final_entities = [default_empty, entities[0]]
+      }
+      else
+        final_entities = entities
     }
-    else
-      final_entities = entities
+    else if (context.indexOf('argo.endpoint') !== 1) {
+      if (entities.length === 1) {
+        let only_type = entities[0].name.toLowerCase()
+        if (only_type.indexOf('site') !== -1 || only_type.indexOf('servicegroup') !== -1)
+          final_entities = [entities[0], default_empty]
+        else if (only_type.indexOf('servicetypessites') !== -1 || only_type.indexOf('servicetypesservicegroups') !== -1)
+          final_entities = [default_empty, entities[0]]
+      }
+      else
+        final_entities = entities
+    }
 
     return final_entities
   }
