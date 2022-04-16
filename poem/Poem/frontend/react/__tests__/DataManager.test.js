@@ -66,7 +66,6 @@ const mockConfigOptions = {
     'version': '1.0.0',
     'webapireports': {
         'main': 'https://reports.com',
-        'crud': true,
         'tags': 'https://reports-tags.com',
         'topologygroups': 'https://topology-groups.com',
         'topologyendpoints': 'https://endpoints.com'
@@ -1709,7 +1708,6 @@ describe('Tests for WebApi', () => {
       token: 'reimohl4thub0Zai',
       reportsConfigurations: {
         main: 'mock.reports.url',
-        crud: true,
         tags: 'mock.reports-tags.url',
         topologygroups: 'mock.reports-topology-groups.url',
         topologyendpoints: 'mock.reports-topology-endpoints.url'
@@ -1735,7 +1733,6 @@ describe('Tests for WebApi', () => {
       token: 'reimohl4thub0Zai',
       reportsConfigurations: {
         main: 'mock.reports.url',
-        crud: true,
         tags: 'mock.reports-tags.url',
         topologygroups: 'mock.reports-topology-groups.url',
         topologyendpoints: 'mock.reports-topology-endpoints.url'
@@ -1761,7 +1758,6 @@ describe('Tests for WebApi', () => {
       token: 'reimohl4thub0Zai',
       reportsConfigurations: {
         main: 'mock.reports.url',
-        crud: true,
         tags: 'mock.reports-tags.url',
         topologygroups: 'mock.reports-topology-groups.url',
         topologyendpoints: 'mock.reports-topology-endpoints.url'
@@ -1787,7 +1783,6 @@ describe('Tests for WebApi', () => {
       token: 'reimohl4thub0Zai',
       reportsConfigurations: {
         main: 'mock.reports.url',
-        crud: true,
         tags: 'mock.reports-tags.url',
         topologygroups: 'mock.reports-topology-groups.url',
         topologyendpoints: 'mock.reports-topology-endpoints.url'
@@ -1955,7 +1950,6 @@ describe('Tests for WebApi', () => {
       token: 'reimohl4thub0Zai',
       reportsConfigurations: {
         main: 'mock.reports.url',
-        crud: true,
         tags: 'mock.reports-tags.url',
         topologygroups: 'mock.reports-topology-groups.url',
         topologyendpoints: 'mock.reports-topology-endpoints.url'
@@ -1978,7 +1972,6 @@ describe('Tests for WebApi', () => {
       token: 'reimohl4thub0Zai',
       reportsConfigurations: {
         main: 'mock.reports.url',
-        crud: true,
         tags: 'mock.reports-tags.url',
         topologygroups: 'mock.reports-topology-groups.url',
         topologyendpoints: 'mock.reports-topology-endpoints.url'
@@ -2162,7 +2155,6 @@ describe('Tests for WebApi', () => {
       token: 'reimohl4thub0Zai',
       reportsConfigurations: {
         main: 'mock.reports.url',
-        crud: true,
         tags: 'mock.reports-tags.url',
         topologygroups: 'mock.reports-topology-groups.url',
         topologyendpoints: 'mock.reports-topology-endpoints.url'
@@ -2313,7 +2305,6 @@ describe('Tests for WebApi', () => {
       token: 'reimohl4thub0Zai',
       reportsConfigurations: {
         main: 'mock.reports.url',
-        crud: true,
         tags: 'mock.reports-tags.url',
         topologygroups: 'mock.reports-topology-groups.url',
         topologyendpoints: 'mock.reports-topology-endpoints.url'

@@ -691,7 +691,6 @@ const mockReportsTopologyGroups = [
 
 const webapireports = {
   main: 'https://reports.com',
-  crud: true,
   tags: 'https://reports-tags.com',
   topologygroups: 'https://topology-groups.com',
   topologyendpoints: 'https://endpoints.com'

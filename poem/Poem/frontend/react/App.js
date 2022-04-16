@@ -749,7 +749,7 @@ const App = () => {
       queryClient.prefetchQuery(
         `${isPublic ? 'public_' : ''}operationsprofile`, () => fetchOperationsProfiles(webapi)
       );
-      if (options.result.webapireports && options.result.webapireports.crud) {
+      if (options.result.webapireports) {
         if (!isPublic)
           queryClient.prefetchQuery(
             'topologytags', () => fetchTopologyTags(webapi)
