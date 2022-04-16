@@ -1870,7 +1870,7 @@ export const ReportsComponent = (props) => {
                           <strong>Entities</strong>
                         </CardTitle>
                         <FieldArray
-                          name="entities"
+                          name="entitiesGroups"
                           render={props => (
                             <TopologyConfGroupsEntityFields
                               topoGroups={{
@@ -1930,6 +1930,26 @@ export const ReportsComponent = (props) => {
                               />
                             ) }
                           />
+                        <div>
+                          <hr style={{'borderTop': '1px solid #b5c4d1'}}/>
+                        </div>
+                        <CardTitle className="mb-2">
+                          <strong>Entities</strong>
+                        </CardTitle>
+                        <FieldArray
+                          name="entitiesEndpoints"
+                          render={props => (
+                            <TopologyConfEndpointsEntityFields
+                              topoGroups={{
+                                entitiesSites, entitiesServiceGroups,
+                                serviceTypesSitesEndpoints, serviceTypesServiceGroupsEndpoints
+                              }}
+                              addview={addview}
+                              publicView={publicView}
+                              {...props}
+                            />
+                          )}
+                        />
                       </CardBody>
                     </Card>
                   </Col>
