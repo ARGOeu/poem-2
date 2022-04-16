@@ -1191,8 +1191,11 @@ export const ReportsComponent = (props) => {
     }
 
     if (!addview && webApiReport
-      && (entitiesNgi.length > 0 && entitiesSites.length > 0)
-      || (entitiesProjects.length > 0 && entitiesServiceGroups.length > 0)) {
+      && (
+        (entitiesNgi.length > 0 && entitiesSites.length > 0)
+        || (entitiesProjects.length > 0 && entitiesServiceGroups.length > 0)
+      )
+    ) {
       entitiesFormik = formatFromReportEntities('argo.group.filter.fields',
         webApiReport['filter_tags'], {
           entitiesNgi,
