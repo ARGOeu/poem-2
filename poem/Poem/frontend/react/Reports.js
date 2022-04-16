@@ -777,7 +777,8 @@ export const ReportsComponent = (props) => {
   const formatToReportEntities = (context, formikEntities) => {
     let entities = new Array()
 
-    for (let entity of formikEntities) {
+    for (var i = 0; i < formikEntities.length; i++) {
+      let entity = formikEntities[i]
       let tmpEntity = new Object()
       let tmpEntites = new Array()
       if (entity.value && entity.value.indexOf('|') !== -1) {
@@ -785,7 +786,7 @@ export const ReportsComponent = (props) => {
         for (var val of values)
           if (val)
             tmpEntites.push(new Object({
-              name: 'group',
+              name: i === 0 ? 'group' : 'subgroup',
               value: val.trim(),
               context: context
             }))
@@ -793,7 +794,7 @@ export const ReportsComponent = (props) => {
       }
       else {
         if (entity.value) {
-          tmpEntity['name'] = 'group'
+          tmpEntity['name'] = i === 0 ? 'group' : 'subgroup',
           tmpEntity['value'] = entity.value
           tmpEntity['context'] = context
           entities.push(tmpEntity)
