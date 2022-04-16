@@ -41,7 +41,8 @@ import {
   fetchAggregationProfiles,
   fetchThresholdsProfiles,
   fetchTopologyTags,
-  fetchTopologyGroups
+  fetchTopologyGroups,
+  fetchTopologyEndpoints,
 } from './QueryFunctions';
 
 
@@ -647,6 +648,11 @@ export const ReportsComponent = (props) => {
     { enabled: publicView || !!userDetails }
   );
 
+  const { data: topologyEndpoints, error: topologyEndpointsErrors, isLoading: loadingTopologyEndpoints } = useQuery(
+    `${publicView ? 'public_' : ''}topologyendpoints`, () => fetchTopologyEndpoints(webapi),
+    { enabled: publicView || !!userDetails }
+  );
+
   const { data: topologyTags, error: topologyTagsError, isLoading: loadingTopologyTags } = useQuery(
     'topologytags', () => fetchTopologyTags(webapi),
     { enabled: !publicView && !!userDetails }
@@ -1103,7 +1109,7 @@ export const ReportsComponent = (props) => {
   const loading = publicView ?
     loadingBackendReport || loadingWebApiReport
   :
-    loadingUserDetails || loadingBackendReport || loadingWebApiReport || listMetricProfilesLoading || listAggregationProfilesLoading || listOperationsProfilesLoading || listThresholdsProfilesLoading || loadingTopologyTags || loadingTopologyGroups
+    loadingUserDetails || loadingBackendReport || loadingWebApiReport || listMetricProfilesLoading || listAggregationProfilesLoading || listOperationsProfilesLoading || listThresholdsProfilesLoading || loadingTopologyTags || loadingTopologyGroups || loadingTopologyEndpoints
 
   if (loading)
     return (<LoadingAnim/>);
@@ -1134,6 +1140,9 @@ export const ReportsComponent = (props) => {
 
   else if (topologyGroupsErrors)
     return (<ErrorComponent error={topologyGroupsErrors} />)
+
+  else if (topologyEndpointsErrors)
+    return (<ErrorComponent error={topologyEndpointsErrors} />)
 
   else if (!loading) {
     let metricProfile = '';
