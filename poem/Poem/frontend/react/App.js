@@ -79,7 +79,8 @@ import {
   fetchAggregationProfiles,
   fetchThresholdsProfiles,
   fetchTopologyTags,
-  fetchTopologyGroups
+  fetchTopologyGroups,
+  fetchTopologyEndpoints
 } from './QueryFunctions';
 import { MetricTagsComponent, MetricTagsList } from './MetricTags';
 
@@ -757,6 +758,9 @@ const App = () => {
 
         queryClient.prefetchQuery(
           `${isPublic ? 'public_' : ''}topologygroups`, () => fetchTopologyGroups(webapi)
+        )
+        queryClient.prefetchQuery(
+          `${isPublic ? 'public_' : ''}topologyendpoints`, () => fetchTopologyEndpoints(webapi)
         )
       }
     } else {
