@@ -433,7 +433,7 @@ const EntitySelect = ({field, label, entitiesOptions, onChangeHandler, entitiesI
 }
 
 
-const TopologyEntityFields = ({topoGroups, addview, publicView, form}) => {
+const TopologyConfGroupsEntityFields = ({topoGroups, addview, publicView, form}) => {
   const entityInitValues = (matchWhat) => {
     let tmp = new Array()
     for (let entity of form.values.entities) {
@@ -1154,6 +1154,8 @@ export const ReportsComponent = (props) => {
     let entitiesNgi = new Array()
     let entitiesProjects= new Array()
     let entitiesServiceGroups = new Array()
+    let serviceTypesServiceGroupsEndpoints = new Array()
+    let serviceTypesSitesEndpoints = new Array()
     let entitiesFormik = new Array()
     let groupsTags = undefined
     let endpointsTags = undefined
@@ -1174,6 +1176,19 @@ export const ReportsComponent = (props) => {
         if (profile.type == 'thresholds')
           thresholdsProfile = profile.name;
       })
+    }
+
+    if (topologyEndpoints && serviceTypesSitesEndpoints.length === 0 &&
+      serviceTypesServiceGroupsEndpoints.length === 0) {
+      let servicesSites = new Set()
+      let servicesServiceGroups = new Set()
+
+      for (var endpoint of topologyEndpoints) {
+        if (endpoint['type'].toLowerCase() === 'sites')
+          servicesSites.add(endpoint['service'])
+        else if (endpoint['type'].toLowerCase() === 'servicegroups')
+          servicesServiceGroups.add(endpoint['service'])
+      }
     }
 
     if (topologyGroups && entitiesNgi.length === 0 && entitiesSites.length === 0
@@ -1701,7 +1716,7 @@ export const ReportsComponent = (props) => {
                         <FieldArray
                           name="entities"
                           render={props => (
-                            <TopologyEntityFields
+                            <TopologyConfGroupsEntityFields
                               topoGroups={{
                                 entitiesNgi, entitiesSites,
                                 entitiesProjects, entitiesServiceGroups
