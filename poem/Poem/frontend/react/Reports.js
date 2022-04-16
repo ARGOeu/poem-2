@@ -896,12 +896,10 @@ export const ReportsComponent = (props) => {
   const formatToReportEntities = (context, formikEntities) => {
     const setNameField = (i) => {
         let name_field = ''
-        if (context.indexOf('argo.group') !== -1 && i === 0)
+        if (i === 0)
           name_field = 'group'
         else if (context.indexOf('argo.group') !== -1 && i === 1)
           name_field = 'subgroup'
-        else if (context.indexOf('argo.endpoint') !== -1 && i === 0)
-          name_field = 'group'
         else if (context.indexOf('argo.endpoint') !== -1 && i === 1)
           name_field = 'service'
         return name_field
