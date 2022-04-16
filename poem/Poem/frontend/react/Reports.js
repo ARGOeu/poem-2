@@ -496,7 +496,7 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, publicView, form})
       {
         publicView ?
           <Field
-            name='entities.0.value'
+            name='entitiesGroups.0.value'
             id='topoEntity1'
             className='form-control'
             disabled={true}
@@ -504,7 +504,7 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, publicView, form})
           />
         :
           <Field
-            name="entities.0.value"
+            name="entitiesGroups.0.value"
             id="topoEntity1"
             component={EntitySelect}
             entitiesOptions={formatSelectEntities(topoGroups[key1])}
@@ -523,7 +523,7 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, publicView, form})
       {
         publicView ?
           <Field
-            name='entities.1.value'
+            name='entitiesGroups.1.value'
             id='topoEntity2'
             className='form-control'
             disabled={true}
@@ -531,7 +531,7 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, publicView, form})
           />
         :
           <Field
-            name="entities.1.value"
+            name="entitiesGroups.1.value"
             className="pt-2"
             id="topoEntity2"
             component={EntitySelect}
@@ -545,6 +545,118 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, publicView, form})
               form.setFieldValue("entitiesGroups.1.value", joinedValues)
             }}
             entitiesInitials={!addview ? entityInitValues(["entitiesSites", "entitiesServiceGroups"]) : undefined}
+          />
+      }
+    </React.Fragment>
+  )
+}
+
+const TopologyConfEndpointsEntityFields = ({topoGroups, addview, publicView, form}) => {
+  const entityInitValues = (matchWhat) => {
+    let tmp = new Array()
+    for (let entity of form.values.entitiesEndpoints) {
+      if (entity && matchWhat.indexOf(entity.name) > -1) {
+        if (entity.value.indexOf('|') > -1) {
+          tmp = entity.value.split('|').map(e => new Object({
+            'label': e.trim(),
+            'value': e.trim()
+          }))
+        }
+        else
+          tmp.push(
+            new Object({
+              'label': entity.value,
+              'value': entity.value
+            }))
+      }
+    }
+    return tmp
+  }
+
+  const formatSelectEntities = (data) => {
+    let formatted = new Array()
+    for (var e of [...data])
+      formatted.push(new Object({
+        'label': e,
+        'value': e
+      }))
+    return formatted
+  }
+
+  let topoType = form.values.topologyType
+  let label1 = undefined
+  let label2 = undefined
+  let key1 = undefined
+  let key2 = undefined
+
+  if (topoType === 'Sites') {
+    label1 = 'Sites:'
+    label2 = 'Service types:'
+    key1 = 'entitiesSites'
+    key2 = 'serviceTypesSitesEndpoints'
+  }
+  else if (topoType === 'ServiceGroups'){
+    label1 = 'Service groups:'
+    label2 = 'Service types:'
+    key1 = 'entitiesServiceGroups'
+    key2 = 'serviceTypesServiceGroupsEndpoints'
+  }
+
+  return (
+    <React.Fragment>
+      <Label for='topoEntity1'>{label1}</Label>
+      {
+        publicView ?
+          <Field
+            name='entitiesEndpoints.0.value'
+            id='topoEntity1'
+            className='form-control'
+            disabled={true}
+            value={form.values.entitiesEndpoints[0] ? form.values.entitiesEndpoints[0].value ? form.values.entitiesEndpoints[0].value.replace(new RegExp('\\|', 'g'), ', ') : '' : ''}
+          />
+        :
+          <Field
+            name="entitiesEndpoints.0.value"
+            id="topoEntity1"
+            component={EntitySelect}
+            entitiesOptions={formatSelectEntities(topoGroups[key1])}
+            onChangeHandler={(e) => {
+              let joinedValues = ''
+              for (let event of e)
+                joinedValues += event.value + '|'
+              joinedValues = joinedValues.replace(/\|$/, '')
+              form.setFieldValue("entitiesEndpoints.0.name", key1)
+              form.setFieldValue("entitiesEndpoints.0.value", joinedValues)
+            }}
+            entitiesInitials={!addview ? entityInitValues(["entitiesSites", "entitiesServiceGroups"]) : undefined}
+           />
+       }
+      <Label for='topoEntity2' className='pt-2'>{label2}</Label>
+      {
+        publicView ?
+          <Field
+            name='entitiesEndpoints.1.value'
+            id='topoEntity2'
+            className='form-control'
+            disabled={true}
+            value={form.values.entitiesEndpoints[1] ? form.values.entitiesEndpoints[1].value ? form.values.entitiesEndpoints[1].value.replace(new RegExp('\\|', 'g'), ', ') : '' : ''}
+          />
+        :
+          <Field
+            name="entitiesEndpoints.1.value"
+            className="pt-2"
+            id="topoEntity2"
+            component={EntitySelect}
+            entitiesOptions={formatSelectEntities(topoGroups[key2])}
+            onChangeHandler={(e) => {
+              let joinedValues = ''
+              for (let event of e)
+                joinedValues += event.value + '|'
+              joinedValues = joinedValues.replace(/\|$/, '')
+              form.setFieldValue("entitiesEndpoints.1.name", key2)
+              form.setFieldValue("entitiesEndpoints.1.value", joinedValues)
+            }}
+            entitiesInitials={!addview ? entityInitValues(["serviceTypesSitesEndpoints", "serviceTypesServiceGroupsEndpoints"]) : undefined}
           />
       }
     </React.Fragment>
