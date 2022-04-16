@@ -492,12 +492,12 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, publicView, form})
 
   return (
     <React.Fragment>
-      <Label for='topoEntity1'>{label1}</Label>
+      <Label for='topoEntityGroup1'>{label1}</Label>
       {
         publicView ?
           <Field
             name='entitiesGroups.0.value'
-            id='topoEntity1'
+            id='topoEntityGroup1'
             className='form-control'
             disabled={true}
             value={form.values.entitiesGroups[0] ? form.values.entitiesGroups[0].value ? form.values.entitiesGroups[0].value.replace(new RegExp('\\|', 'g'), ', ') : '' : ''}
@@ -505,7 +505,7 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, publicView, form})
         :
           <Field
             name="entitiesGroups.0.value"
-            id="topoEntity1"
+            id="topoEntityGroup1"
             component={EntitySelect}
             entitiesOptions={formatSelectEntities(topoGroups[key1])}
             onChangeHandler={(e) => {
@@ -519,12 +519,12 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, publicView, form})
             entitiesInitials={!addview ? entityInitValues(["entitiesNgi", "entitiesProjects"]) : undefined}
            />
        }
-      <Label for='topoEntity2' className='pt-2'>{label2}</Label>
+      <Label for='topoEntityGroup2' className='pt-2'>{label2}</Label>
       {
         publicView ?
           <Field
             name='entitiesGroups.1.value'
-            id='topoEntity2'
+            id='topoEntityGroup2'
             className='form-control'
             disabled={true}
             value={form.values.entitiesGroups[1] ? form.values.entitiesGroups[1].value ? form.values.entitiesGroups[1].value.replace(new RegExp('\\|', 'g'), ', ') : '' : ''}
@@ -533,7 +533,7 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, publicView, form})
           <Field
             name="entitiesGroups.1.value"
             className="pt-2"
-            id="topoEntity2"
+            id="topoEntityGroup2"
             component={EntitySelect}
             entitiesOptions={formatSelectEntities(topoGroups[key2])}
             onChangeHandler={(e) => {
@@ -550,6 +550,7 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, publicView, form})
     </React.Fragment>
   )
 }
+
 
 const TopologyConfEndpointsEntityFields = ({topoGroups, addview, publicView, form}) => {
   const entityInitValues = (matchWhat) => {
@@ -604,12 +605,12 @@ const TopologyConfEndpointsEntityFields = ({topoGroups, addview, publicView, for
 
   return (
     <React.Fragment>
-      <Label for='topoEntity1'>{label1}</Label>
+      <Label for='topoEntityEndoint1'>{label1}</Label>
       {
         publicView ?
           <Field
             name='entitiesEndpoints.0.value'
-            id='topoEntity1'
+            id='topoEntityEndoint1'
             className='form-control'
             disabled={true}
             value={form.values.entitiesEndpoints[0] ? form.values.entitiesEndpoints[0].value ? form.values.entitiesEndpoints[0].value.replace(new RegExp('\\|', 'g'), ', ') : '' : ''}
@@ -617,7 +618,7 @@ const TopologyConfEndpointsEntityFields = ({topoGroups, addview, publicView, for
         :
           <Field
             name="entitiesEndpoints.0.value"
-            id="topoEntity1"
+            id="topoEntityEndoint1"
             component={EntitySelect}
             entitiesOptions={formatSelectEntities(topoGroups[key1])}
             onChangeHandler={(e) => {
@@ -631,12 +632,12 @@ const TopologyConfEndpointsEntityFields = ({topoGroups, addview, publicView, for
             entitiesInitials={!addview ? entityInitValues(["entitiesSites", "entitiesServiceGroups"]) : undefined}
            />
        }
-      <Label for='topoEntity2' className='pt-2'>{label2}</Label>
+      <Label for='topoEntityEndoint2' className='pt-2'>{label2}</Label>
       {
         publicView ?
           <Field
             name='entitiesEndpoints.1.value'
-            id='topoEntity2'
+            id='topoEntityEndoint2'
             className='form-control'
             disabled={true}
             value={form.values.entitiesEndpoints[1] ? form.values.entitiesEndpoints[1].value ? form.values.entitiesEndpoints[1].value.replace(new RegExp('\\|', 'g'), ', ') : '' : ''}
@@ -645,7 +646,7 @@ const TopologyConfEndpointsEntityFields = ({topoGroups, addview, publicView, for
           <Field
             name="entitiesEndpoints.1.value"
             className="pt-2"
-            id="topoEntity2"
+            id="topoEntityEndoint2"
             component={EntitySelect}
             entitiesOptions={formatSelectEntities(topoGroups[key2])}
             onChangeHandler={(e) => {
