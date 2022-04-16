@@ -158,12 +158,12 @@ const mockReport = {
       context: "argo.group.filter.fields"
     },
     {
-      name: "group",
+      name: "subgroup",
       value: "dirac-durham",
       context: "argo.group.filter.fields"
     },
     {
-      name: "group",
+      name: "subgroup",
       value: "IRISOPS-IAM",
       context: "argo.group.filter.fields"
     },
@@ -968,12 +968,12 @@ const report4sending = {
       context: "argo.group.filter.fields"
     },
     {
-      name: "group",
+      name: "subgroup",
       value: "dirac-durham",
       context: "argo.group.filter.fields"
     },
     {
-      name: "group",
+      name: "subgroup",
       value: "IRISOPS-IAM",
       context: "argo.group.filter.fields"
     }
@@ -2174,7 +2174,7 @@ describe('Tests for reports changeview', () => {
     })
     frontendReport.filter_tags.push(
       {
-        name: 'group',
+        name: 'subgroup',
         value: 'RU-SARFTI',
         context: 'argo.group.filter.fields'
       }
