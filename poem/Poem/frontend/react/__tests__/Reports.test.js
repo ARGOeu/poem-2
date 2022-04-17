@@ -171,6 +171,26 @@ const mockReport = {
       name: "info_ext_GLUE2ComputingShareMappingQueue",
       value: "condor",
       context: "argo.group.filter.tags.array"
+    },
+    {
+      name: "service",
+      value: "ARC-CE",
+      context: "argo.endpoint.filter.fields"
+    },
+    {
+      name: "group",
+      value: "dirac-durham",
+      context: "argo.endpoint.filter.fields"
+    },
+    {
+      name: "group",
+      value: "IRISOPS-IAM",
+      context: "argo.endpoint.filter.fields"
+    },
+    {
+      name: "service",
+      value: "TOP-BDII",
+      context: "argo.endpoint.filter.fields"
     }
   ]
 };
