@@ -4563,6 +4563,8 @@ describe('Tests for reports addview', () => {
       'topologyType': '',
       'entitiesGroups.0.value': 'Russia',
       'entitiesGroups.1.value': 'dirac-durham',
+      'entitiesEndpoints.0.value': '',
+      'entitiesEndpoints.1.value': '',
       'availabilityThreshold': '',
       'reliabilityThreshold': '',
       'uptimeThreshold': '',
@@ -5182,6 +5184,44 @@ describe('Tests for reports addview', () => {
       'topologyType': '',
       'endpointsExtensions.0.name': 'GLUE2EndpointID',
       'endpointsExtensions.0.value': ['ce1.gridpp.ecdf.ed.ac.uk', 'svr009.gla.scotgrid.ac.uk'],
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+  })
+
+  test('Test add endpoint entities', async () => {
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
+    })
+
+    const card_groups = within(screen.getByTestId('card-group-of-endpoints'));
+
+    const entity1 = card_groups.getAllByText(/search/i)[0]
+    const entity2 = card_groups.getAllByText(/search/i)[1]
+
+    await selectEvent.select(entity1, 'IRISOPS-IAM')
+
+    await selectEvent.select(entity2, 'egi.Portal')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'entitiesGroups.0.value': '',
+      'entitiesGroups.1.value': '',
+      'entitiesEndpoints.0.value': 'IRISOPS-IAM',
+      'entitiesEndpoints.1.value': 'egi.Portal',
       'availabilityThreshold': '',
       'reliabilityThreshold': '',
       'uptimeThreshold': '',
