@@ -1897,7 +1897,7 @@ describe('Tests for reports changeview', () => {
       expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
     })
 
-    expect(screen.getAllByText(/sites/i)).toHaveLength(2)
+    expect(screen.getAllByText(/sites/i)).toHaveLength(3)
     expect(screen.getByText(/ngis/i)).toBeInTheDocument()
     expect(screen.queryByText(/service groups/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/projects/i)).not.toBeInTheDocument()
