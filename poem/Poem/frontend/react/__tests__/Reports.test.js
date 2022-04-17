@@ -3652,6 +3652,7 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryAllByRole('combobox')).toHaveLength(2);
     expect(card_endpoints.getByRole('button', { name: /add new tag/i })).toBeInTheDocument();
     expect(card_endpoints.getByRole('button', { name: /add new extension/i })).toBeInTheDocument();
+    expect(card_endpoints.getAllByText(/search/i)).toHaveLength(2);
 
     expect(availabilityThresholdField.value).toBe('');
     expect(availabilityThresholdField).toBeEnabled();
