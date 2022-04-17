@@ -602,6 +602,12 @@ const TopologyConfEndpointsEntityFields = ({topoGroups, addview, publicView, for
     key1 = 'entitiesServiceGroups'
     key2 = 'serviceTypesServiceGroupsEndpoints'
   }
+  else {
+    label1 = 'Upper group:'
+    label2 = 'Lower group:'
+    key1 = 'entitiesSites'
+    key2 = 'serviceTypesSitesEndpoints'
+  }
 
   return (
     <React.Fragment>
