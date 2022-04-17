@@ -1905,7 +1905,7 @@ describe('Tests for reports changeview', () => {
     await selectEvent.select(screen.getByText('Sites'), 'ServiceGroups')
 
     expect(screen.getByText(/projects/i)).toBeInTheDocument()
-    expect(screen.getByText(/service groups/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/service groups/i)).toHaveLength(2)
     expect(screen.queryByText(/sites/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/ngis/i)).not.toBeInTheDocument()
 
