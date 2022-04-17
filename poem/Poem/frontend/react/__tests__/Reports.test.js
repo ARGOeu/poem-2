@@ -3649,7 +3649,7 @@ describe('Tests for reports addview', () => {
     expect(card_groups.getByRole('button', { name: /add new extension/i })).toBeInTheDocument();
     expect(card_groups.getAllByText(/search/i)).toHaveLength(2);
 
-    expect(card_endpoints.queryAllByRole('combobox')).toHaveLength(0);
+    expect(card_endpoints.queryAllByRole('combobox')).toHaveLength(2);
     expect(card_endpoints.getByRole('button', { name: /add new tag/i })).toBeInTheDocument();
     expect(card_endpoints.getByRole('button', { name: /add new extension/i })).toBeInTheDocument();
 
@@ -3939,8 +3939,8 @@ describe('Tests for reports addview', () => {
 
     const topologyTypeField = screen.getAllByText(/select/i)[5]
 
-    expect(screen.queryByText(/upper group/i)).toBeInTheDocument()
-    expect(screen.queryByText(/lower group/i)).toBeInTheDocument()
+    expect(screen.queryAllByText(/upper group/i)).toHaveLength(2)
+    expect(screen.queryAllByText(/lower group/i)).toHaveLength(2)
 
     expect(screen.queryByText(/sites/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/ngis/i)).not.toBeInTheDocument()
@@ -3977,7 +3977,7 @@ describe('Tests for reports addview', () => {
     expect(screen.queryByText(/upper group/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/lower group/i)).not.toBeInTheDocument()
 
-    expect(screen.queryAllByText(/sites/i)).toHaveLength(2)
+    expect(screen.queryAllByText(/sites/i)).toHaveLength(3)
     expect(screen.queryByText(/ngis/i)).toBeInTheDocument()
 
     expect(screen.queryByText(/service groups/i)).not.toBeInTheDocument()
@@ -4008,7 +4008,7 @@ describe('Tests for reports addview', () => {
     expect(screen.queryByText(/sites/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/ngis/i)).not.toBeInTheDocument()
 
-    expect(screen.queryByText(/service groups/i)).toBeInTheDocument()
+    expect(screen.queryAllByText(/service groups/i)).toHaveLength(2)
     expect(screen.queryByText(/projects/i)).toBeInTheDocument()
   })
 
