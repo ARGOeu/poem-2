@@ -621,6 +621,91 @@ const mockReportsTopologyTags = [
   }
 ];
 
+const mockReportsTopologyEndpoints = [
+  {
+    "date": "2022-04-17",
+    "group": "100IT",
+    "type": "SITES",
+    "service": "eu.egi.cloud.accounting",
+    "hostname": "egi.100percentit.com",
+    "tags": {
+      "info_HOSTDN": "/C=UK/O=eScience/OU=Oxford/L=OeSC/CN=egi-cloud-accounting.100percentit.com",
+      "info_ID": "4495G0",
+      "info_URL": "100IT",
+      "monitored": "1",
+      "production": "1",
+      "scope": "EGI, FedCloud"
+    }
+  },
+  {
+    "date": "2022-04-17",
+    "group": "100IT",
+    "type": "SITES",
+    "service": "Site-BDII",
+    "hostname": "site-bdii.100percentit.com",
+    "tags": {
+      "info_ID": "4588G0",
+      "info_URL": "ldap://site-bdii.100percentit.com:2170",
+      "monitored": "0",
+      "production": "0",
+      "scope": "EGI, FedCloud"
+    }
+  },
+  {
+    "date": "2022-04-17",
+    "group": "100IT",
+    "type": "SITES",
+    "service": "eu.egi.cloud.vm-management.occi",
+    "hostname": "occi-api.100percentit.com",
+    "tags": {
+      "info_ID": "8253G0",
+      "info_URL": "https://occi-api.100percentit.com:8787/occi1.1/?image=53d9172f-599f-4340-86a2-a52b425f80a3&platform=openstack&resource=1",
+      "monitored": "0",
+      "production": "0",
+      "scope": "EGI, FedCloud"
+    }
+  },
+  {
+    "date": "2022-04-17",
+    "group": "DAVETESTSG",
+    "type": "SERVICEGROUPS",
+    "service": "egi.GOCDB",
+    "hostname": "goc.egi.eu",
+    "tags": {
+      "info_ID": "4180G0",
+      "monitored": "1",
+      "production": "1",
+      "scope": "EGI, EGICore"
+    }
+  },
+  {
+    "date": "2022-04-17",
+    "group": "NGI_AEGIS_SERVICES",
+    "type": "SERVICEGROUPS",
+    "service": "WMS",
+    "hostname": "wms.ipb.ac.rs",
+    "tags": {
+      "info_ID": "939G0",
+      "monitored": "0",
+      "production": "0",
+      "scope": "EGI"
+    }
+  },
+  {
+    "date": "2022-04-17",
+    "group": "NGI_AEGIS_SERVICES",
+    "type": "SERVICEGROUPS",
+    "service": "Top-BDII",
+    "hostname": "bdii.ipb.ac.rs",
+    "tags": {
+      "info_ID": "1183G0",
+      "monitored": "1",
+      "production": "1",
+      "scope": "EGI"
+    }
+  }
+]
+
 
 const mockReportsTopologyGroups = [
   {
@@ -1002,6 +1087,7 @@ describe('Tests for reports changeview', () => {
         fetchThresholdsProfiles: () => Promise.resolve(mockThresholdsProfiles),
         fetchReportsTopologyTags: () => Promise.resolve(mockReportsTopologyTags),
         fetchReportsTopologyGroups: () => Promise.resolve(mockReportsTopologyGroups),
+        fetchReportsTopologyEndpoints: () => Promise.resolve(mockReportsTopologyEndpoints),
         changeReport: mockChangeReport,
         deleteReport: mockDeleteReport
       }
