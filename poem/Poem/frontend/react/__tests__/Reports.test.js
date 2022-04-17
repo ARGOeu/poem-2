@@ -3543,6 +3543,7 @@ describe('Tests for reports addview', () => {
         fetchThresholdsProfiles: () => Promise.resolve(mockThresholdsProfiles),
         fetchReportsTopologyTags: () => Promise.resolve(mockReportsTopologyTags),
         fetchReportsTopologyGroups: () => Promise.resolve(mockReportsTopologyGroups),
+        fetchReportsTopologyEndpoints: () => Promise.resolve(mockReportsTopologyEndpoints),
         addReport: mockAddReport
       }
     })
