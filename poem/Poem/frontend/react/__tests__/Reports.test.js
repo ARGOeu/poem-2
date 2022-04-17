@@ -623,85 +623,88 @@ const mockReportsTopologyTags = [
 
 const mockReportsTopologyEndpoints = [
   {
-    "date": "2022-04-17",
-    "group": "100IT",
-    "type": "SITES",
-    "service": "eu.egi.cloud.accounting",
-    "hostname": "egi.100percentit.com",
-    "tags": {
-      "info_HOSTDN": "/C=UK/O=eScience/OU=Oxford/L=OeSC/CN=egi-cloud-accounting.100percentit.com",
-      "info_ID": "4495G0",
-      "info_URL": "100IT",
-      "monitored": "1",
-      "production": "1",
-      "scope": "EGI, FedCloud"
-    }
-  },
-  {
-    "date": "2022-04-17",
-    "group": "100IT",
-    "type": "SITES",
-    "service": "Site-BDII",
-    "hostname": "site-bdii.100percentit.com",
-    "tags": {
-      "info_ID": "4588G0",
-      "info_URL": "ldap://site-bdii.100percentit.com:2170",
-      "monitored": "0",
-      "production": "0",
-      "scope": "EGI, FedCloud"
-    }
-  },
-  {
-    "date": "2022-04-17",
-    "group": "100IT",
-    "type": "SITES",
-    "service": "eu.egi.cloud.vm-management.occi",
-    "hostname": "occi-api.100percentit.com",
-    "tags": {
-      "info_ID": "8253G0",
-      "info_URL": "https://occi-api.100percentit.com:8787/occi1.1/?image=53d9172f-599f-4340-86a2-a52b425f80a3&platform=openstack&resource=1",
-      "monitored": "0",
-      "production": "0",
-      "scope": "EGI, FedCloud"
-    }
-  },
-  {
-    "date": "2022-04-17",
-    "group": "DAVETESTSG",
     "type": "SERVICEGROUPS",
+    "group": "DAVETESTSG",
     "service": "egi.GOCDB",
     "hostname": "goc.egi.eu",
+    "notifications": null,
     "tags": {
-      "info_ID": "4180G0",
+      "scope": "EGI, EGICore",
       "monitored": "1",
       "production": "1",
-      "scope": "EGI, EGICore"
+      "info_ID": "4180G0"
     }
   },
   {
-    "date": "2022-04-17",
-    "group": "NGI_AEGIS_SERVICES",
     "type": "SERVICEGROUPS",
+    "group": "NGI_AEGIS_SERVICES",
     "service": "WMS",
     "hostname": "wms.ipb.ac.rs",
+    "notifications": null,
     "tags": {
-      "info_ID": "939G0",
+      "scope": "EGI",
       "monitored": "0",
       "production": "0",
-      "scope": "EGI"
+      "info_ID": "939G0"
     }
   },
   {
-    "date": "2022-04-17",
-    "group": "NGI_AEGIS_SERVICES",
-    "type": "SERVICEGROUPS",
+    "type": "SITES",
+    "group": "NGI_UA_SERVICES",
     "service": "Top-BDII",
-    "hostname": "bdii.ipb.ac.rs",
+    "hostname": "bdii.ha.grid.org.ua",
+    "notifications": null,
     "tags": {
-      "info_ID": "1183G0",
+      "scope": "EGI",
       "monitored": "1",
       "production": "1",
-      "scope": "EGI"
+      "info_ID": "1306G0"
+    }
+  },
+  {
+    "type": "SITES",
+    "group": "RU-SARFTI",
+    "service": "ARC-CE",
+    "hostname":
+    "ce2.grid.sarfti.ru",
+    "notifications": null,
+    "tags": {
+      "scope": "EGI",
+      "monitored": "1",
+      "production": "1",
+      "info_ID": "10340G0",
+      "info_HOSTDN": "/FOOBAR/CN=ce2.grid.sarfti.ru",
+      "info_URL": "ce2.grid.sarfti.ru"
+    }
+  },
+  {
+    "type": "SITES",
+    "group": "IRISOPS-IAM",
+    "service": "it.infn.iam",
+    "hostname": "iris-iam.nubes.rl.ac.uk",
+    "notifications": null,
+    "tags": {
+      "scope": "iris.ac.uk",
+      "monitored": "1",
+      "production": "1",
+      "info_ID": "13212G0",
+      "info_HOSTDN": "/FOOBAR/CN=iris-iam.nubes.rl.ac.uk",
+      "info_URL": "https://iris-iam.stfc.ac.uk"
+    }
+  },
+  {
+    "type": "SITES",
+    "group": "dirac-durham",
+    "service": "egi.Portal",
+    "hostname": "dirac.egi.eu",
+    "notifications": null,
+    "tags": {
+      "scope": "EGI",
+      "monitored": "1",
+      "production": "1",
+      "info_ID": "8375G0",
+      "info_HOSTDN": "/FOOBAR/CN=dirac-config.egi.eu ",
+      "info_URL": "https://dirac.egi.eu"
     }
   }
 ]
