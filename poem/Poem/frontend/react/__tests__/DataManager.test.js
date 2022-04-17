@@ -556,7 +556,7 @@ const mockReports = [
       },
       {
         name: "scope",
-        value: "EGI*",
+        value: "EGI",
         context: "argo.group.filter.tags"
       },
       {
@@ -571,7 +571,7 @@ const mockReports = [
       },
       {
         name: "scope",
-        value: "EGI*",
+        value: "EGI",
         context: "argo.endpoint.filter.tags"
       }
     ]
@@ -631,7 +631,7 @@ const mockReports = [
       },
       {
         name: "scope",
-        value: "EGI*",
+        value: "EGI",
         context: "argo.group.filter.tags"
       },
       {
@@ -646,7 +646,7 @@ const mockReports = [
       },
       {
         name: "scope",
-        value: "EGI*",
+        value: "EGI",
         context: "argo.endpoint.filter.tags"
       }
     ]
