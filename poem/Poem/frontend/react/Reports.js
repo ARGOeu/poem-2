@@ -984,7 +984,6 @@ export const ReportsComponent = (props) => {
         'value': undefined
       }
     )
-
     if (!formikEntities || (formikEntities && formikEntities.length === 0))
       return new Array(default_empty, default_empty)
 
@@ -1003,10 +1002,11 @@ export const ReportsComponent = (props) => {
             entity_type = type
             break
           }
-        if (tmpEntityJoint[entity_type] === undefined)
-          tmpEntityJoint[entity_type] = new Array()
-        if (entity_type)
+        if (entity_type) {
+          if (tmpEntityJoint[entity_type] === undefined)
+            tmpEntityJoint[entity_type] = new Array()
           tmpEntityJoint[entity_type].push(entity.value)
+        }
       }
     }
 
@@ -1039,7 +1039,6 @@ export const ReportsComponent = (props) => {
       else
         final_entities = entities
     }
-
 
     return final_entities
   }
