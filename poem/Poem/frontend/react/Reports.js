@@ -1040,6 +1040,7 @@ export const ReportsComponent = (props) => {
         final_entities = entities
     }
 
+
     return final_entities
   }
 
@@ -1397,8 +1398,8 @@ export const ReportsComponent = (props) => {
       entitiesEndpointsFormik = formatFromReportEntities('argo.endpoint.filter.fields',
         webApiReport['filter_tags'], {
           entitiesSites,
-          entitiesServiceGroups,
           serviceTypesSitesEndpoints,
+          entitiesServiceGroups,
           serviceTypesServiceGroupsEndpoints
         })
     }

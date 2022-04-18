@@ -173,11 +173,6 @@ const mockReport = {
       context: "argo.group.filter.tags.array"
     },
     {
-      name: "service",
-      value: "ARC-CE",
-      context: "argo.endpoint.filter.fields"
-    },
-    {
       name: "group",
       value: "dirac-durham",
       context: "argo.endpoint.filter.fields"
@@ -185,6 +180,11 @@ const mockReport = {
     {
       name: "group",
       value: "IRISOPS-IAM",
+      context: "argo.endpoint.filter.fields"
+    },
+    {
+      name: "service",
+      value: "ARC-CE",
       context: "argo.endpoint.filter.fields"
     },
     {
@@ -1086,17 +1086,17 @@ const report4sending = {
     {
       context: "argo.endpoint.filter.fields",
       name: "group",
-      value: "ARC-CE"
-    },
-    {
-      context: "argo.endpoint.filter.fields",
-      name: "service",
       value: "dirac-durham"
     },
     {
       context: "argo.endpoint.filter.fields",
-      name: "service",
+      name: "group",
       value: "IRISOPS-IAM"
+    },
+    {
+      context: "argo.endpoint.filter.fields",
+      name: "service",
+      value: "ARC-CE"
     },
   ]
 }
