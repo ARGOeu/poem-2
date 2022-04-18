@@ -2203,7 +2203,7 @@ describe('Tests for reports changeview', () => {
       'entitiesGroups.0.value': 'iris.ac.uk',
       'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
       'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
-      'entitiesEndpoints.1.value': 'ARC-CE',
+      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
