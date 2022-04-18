@@ -725,6 +725,21 @@ const mockReportsTopologyEndpoints = [
       "info_HOSTDN": "/FOOBAR/CN=dirac-config.egi.eu ",
       "info_URL": "https://dirac.egi.eu"
     }
+  },
+  {
+    "type": "SITES",
+    "group": "fedcloud.srce.hr",
+    "service": "eu.egi.cloud.accounting",
+    "hostname": "cloud.egi.cro-ngi.hr",
+    "notifications": null,
+    "tags": {
+      "scope": "EGI, FedCloud",
+      "monitored": "1",
+      "production": "1",
+      "info_ID": "6589G0",
+      "info_HOSTDN": "/C=HR/O=edu/OU=srce/CN=cloud.egi.cro-ngi.hr",
+      "info_URL": "fedcloud.srce.hr"
+    }
   }
 ]
 
@@ -792,6 +807,19 @@ const mockReportsTopologyGroups = [
       infrastructure: "Production",
       scope: "iris.ac.uk"
     }
+  },
+  {
+    "type": "NGI",
+      "group": "NGI_HR",
+      "subgroup": "fedcloud.srce.hr",
+      "notifications": {
+        "contacts": ["foo@srce.hr", "bar@srce.hr"], "enabled": true
+      },
+      "tags": {
+        "certification": "Certified",
+        "scope": "EGI, FedCloud",
+        "infrastructure": "Production"
+      }
   }
 ];
 
@@ -2543,6 +2571,97 @@ describe('Tests for reports changeview', () => {
       name: 'info_ext_GLUE2EndpointImplementationName',
       value: 'ARC-CE',
       context: 'argo.endpoint.filter.tags.array'
+    })
+
+    await waitFor(() => {
+      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
+    })
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/reports/', backendReport4sending
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report')
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Report successfully changed', 'Changed', 2000
+    )
+  })
+
+  test('Test change endpoint entities', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+    mockChangeReport.mockReturnValueOnce(
+      Promise.resolve({ ok: 'ok' })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
+    })
+
+    const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
+
+    const entity1 = card_endpoints.getByText('IRISOPS-IAM')
+    const entity2 = card_endpoints.getByText('Top-BDII')
+
+    await selectEvent.select(entity1, 'fedcloud.srce.hr')
+    await selectEvent.select(entity2, 'eu.egi.cloud.accounting')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': 'Critical',
+      'disabled': false,
+      'groupname': 'ARGO',
+      'description': 'Critical report',
+      'metricProfile': 'ARGO_MON_CRITICAL',
+      'aggregationProfile': 'critical',
+      'operationsProfile': 'egi_ops',
+      'thresholdsProfile': '',
+      'topologyType': 'Sites',
+      'groupsTags.0.name': 'certification',
+      'groupsTags.0.value': 'Certified',
+      'groupsTags.1.name': 'infrastructure',
+      'groupsTags.1.value': 'Production',
+      'groupsTags.2.name': 'scope',
+      'groupsTags.2.value': 'EGI',
+      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
+      'groupsExtensions.0.value': 'condor',
+      'entitiesGroups.0.value': 'iris.ac.uk',
+      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM', 'fedcloud.srce.hr'],
+      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII', 'eu.egi.cloud.accounting'],
+      'endpointsTags.0.name': 'production',
+      'endpointsTags.0.value': 'yes',
+      'endpointsTags.1.name': 'monitored',
+      'endpointsTags.1.value': 'yes',
+      'endpointsTags.2.name': 'scope',
+      'endpointsTags.2.value': 'EGI',
+      'availabilityThreshold': '80',
+      'reliabilityThreshold': '85',
+      'uptimeThreshold': '0.8',
+      'unknownThreshold': '0.1',
+      'downtimeThreshold' : '0.1'
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    let frontendReport = JSON.parse(JSON.stringify(report4sending))
+    frontendReport.filter_tags.splice(12, 0, {
+      context: 'argo.endpoint.filter.fields',
+      name: 'group',
+      value: 'fedcloud.srce.hr',
+    })
+    frontendReport.filter_tags.splice(15, 0, {
+      context: 'argo.endpoint.filter.fields',
+      name: 'service',
+      value: 'eu.egi.cloud.accounting',
     })
 
     await waitFor(() => {
