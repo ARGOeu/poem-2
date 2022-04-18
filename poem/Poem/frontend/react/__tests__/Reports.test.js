@@ -685,8 +685,7 @@ const mockReportsTopologyEndpoints = [
     "type": "SITES",
     "group": "RU-SARFTI",
     "service": "ARC-CE",
-    "hostname":
-    "ce2.grid.sarfti.ru",
+    "hostname": "ce2.grid.sarfti.ru",
     "notifications": null,
     "tags": {
       "scope": "EGI",
@@ -1080,10 +1079,25 @@ const report4sending = {
       context: "argo.group.filter.fields"
     },
     {
+      context: "argo.group.filter.fields",
       name: "subgroup",
-      value: "IRISOPS-IAM",
-      context: "argo.group.filter.fields"
-    }
+      value: "IRISOPS-IAM"
+    },
+    {
+      context: "argo.endpoint.filter.fields",
+      name: "group",
+      value: "ARC-CE"
+    },
+    {
+      context: "argo.endpoint.filter.fields",
+      name: "service",
+      value: "dirac-durham"
+    },
+    {
+      context: "argo.endpoint.filter.fields",
+      name: "service",
+      value: "IRISOPS-IAM"
+    },
   ]
 }
 
@@ -1412,6 +1426,8 @@ describe('Tests for reports changeview', () => {
       'groupsExtensions.0.value': 'condor',
       'entitiesGroups.0.value': 'iris.ac.uk',
       'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': 'ARC-CE',
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -1487,6 +1503,8 @@ describe('Tests for reports changeview', () => {
       'groupsExtensions.0.value': 'condor',
       'entitiesGroups.0.value': 'iris.ac.uk',
       'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': 'ARC-CE',
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -1560,6 +1578,8 @@ describe('Tests for reports changeview', () => {
       'groupsExtensions.0.value': 'condor',
       'entitiesGroups.0.value': 'iris.ac.uk',
       'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': 'ARC-CE',
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -1633,6 +1653,8 @@ describe('Tests for reports changeview', () => {
       'groupsExtensions.0.value': 'condor',
       'entitiesGroups.0.value': 'iris.ac.uk',
       'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': 'ARC-CE',
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -1708,6 +1730,8 @@ describe('Tests for reports changeview', () => {
       'groupsExtensions.0.value': 'condor',
       'entitiesGroups.0.value': 'iris.ac.uk',
       'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': 'ARC-CE',
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -1786,6 +1810,8 @@ describe('Tests for reports changeview', () => {
       'groupsExtensions.0.value': 'condor',
       'entitiesGroups.0.value': 'iris.ac.uk',
       'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': 'ARC-CE',
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -1864,6 +1890,8 @@ describe('Tests for reports changeview', () => {
       'groupsExtensions.0.value': 'condor',
       'entitiesGroups.0.value': 'iris.ac.uk',
       'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': 'ARC-CE',
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -1952,6 +1980,8 @@ describe('Tests for reports changeview', () => {
       'groupsExtensions.0.value': 'condor',
       'entitiesGroups.0.value': 'iris.ac.uk',
       'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': 'ARC-CE',
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -2042,6 +2072,8 @@ describe('Tests for reports changeview', () => {
       'groupsExtensions.0.value': 'condor',
       'entitiesGroups.0.value': 'iris.ac.uk',
       'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': 'ARC-CE',
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -2137,6 +2169,8 @@ describe('Tests for reports changeview', () => {
       'groupsExtensions.1.value': 'ARC-CE',
       'entitiesGroups.0.value': 'iris.ac.uk',
       'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': 'ARC-CE',
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -2255,6 +2289,8 @@ describe('Tests for reports changeview', () => {
       'groupsExtensions.0.value': 'condor',
       'entitiesGroups.0.value': ['iris.ac.uk', 'Russia'],
       'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM', 'RU-SARFTI'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': 'ARC-CE',
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -2280,8 +2316,7 @@ describe('Tests for reports changeview', () => {
       value: 'Russia',
       context: 'argo.group.filter.fields'
     })
-    frontendReport.filter_tags.push(
-      {
+    frontendReport.filter_tags.splice(11, 0, {
         name: 'subgroup',
         value: 'RU-SARFTI',
         context: 'argo.group.filter.fields'
@@ -2350,6 +2385,8 @@ describe('Tests for reports changeview', () => {
       'groupsExtensions.0.value': 'condor',
       'entitiesGroups.0.value': 'iris.ac.uk',
       'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': 'ARC-CE',
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'no',
       'endpointsTags.1.name': 'monitored',
@@ -2434,6 +2471,8 @@ describe('Tests for reports changeview', () => {
       'groupsExtensions.0.value': 'condor',
       'entitiesGroups.0.value': 'iris.ac.uk',
       'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': 'ARC-CE',
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -2553,6 +2592,8 @@ describe('Tests for reports changeview', () => {
       'groupsExtensions.0.value': 'condor',
       'entitiesGroups.0.value': 'iris.ac.uk',
       'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': 'ARC-CE',
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -2627,6 +2668,8 @@ describe('Tests for reports changeview', () => {
       'groupsExtensions.0.value': 'condor',
       'entitiesGroups.0.value': 'iris.ac.uk',
       'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': 'ARC-CE',
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -2701,6 +2744,8 @@ describe('Tests for reports changeview', () => {
       'groupsExtensions.0.value': 'condor',
       'entitiesGroups.0.value': 'iris.ac.uk',
       'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': 'ARC-CE',
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -2775,6 +2820,8 @@ describe('Tests for reports changeview', () => {
       'groupsExtensions.0.value': 'condor',
       'entitiesGroups.0.value': 'iris.ac.uk',
       'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': 'ARC-CE',
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -2849,6 +2896,8 @@ describe('Tests for reports changeview', () => {
       'groupsExtensions.0.value': 'condor',
       'entitiesGroups.0.value': 'iris.ac.uk',
       'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': 'ARC-CE',
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -5225,7 +5274,6 @@ describe('Tests for reports addview', () => {
     const entity2 = card_groups.getAllByText(/search/i)[1]
 
     await selectEvent.select(entity1, 'IRISOPS-IAM')
-
     await selectEvent.select(entity2, 'egi.Portal')
 
     expect(screen.getByTestId('form')).toHaveFormValues({
