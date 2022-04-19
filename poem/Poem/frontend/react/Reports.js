@@ -563,12 +563,14 @@ const TopologyConfEndpointsEntityFields = ({topoGroups, addview, publicView, for
             'value': e.trim()
           }))
         }
-        else
+        else if (entity.value)
           tmp.push(
             new Object({
               'label': entity.value,
               'value': entity.value
             }))
+        else
+          tmp.push(undefined)
       }
     }
     return tmp
