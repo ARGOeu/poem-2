@@ -158,12 +158,12 @@ const mockReport = {
       context: "argo.group.filter.fields"
     },
     {
-      name: "group",
+      name: "subgroup",
       value: "dirac-durham",
       context: "argo.group.filter.fields"
     },
     {
-      name: "group",
+      name: "subgroup",
       value: "IRISOPS-IAM",
       context: "argo.group.filter.fields"
     },
@@ -171,6 +171,26 @@ const mockReport = {
       name: "info_ext_GLUE2ComputingShareMappingQueue",
       value: "condor",
       context: "argo.group.filter.tags.array"
+    },
+    {
+      name: "group",
+      value: "dirac-durham",
+      context: "argo.endpoint.filter.fields"
+    },
+    {
+      name: "group",
+      value: "IRISOPS-IAM",
+      context: "argo.endpoint.filter.fields"
+    },
+    {
+      name: "service",
+      value: "ARC-CE",
+      context: "argo.endpoint.filter.fields"
+    },
+    {
+      name: "service",
+      value: "Top-BDII",
+      context: "argo.endpoint.filter.fields"
     }
   ]
 };
@@ -621,6 +641,108 @@ const mockReportsTopologyTags = [
   }
 ];
 
+const mockReportsTopologyEndpoints = [
+  {
+    "type": "SERVICEGROUPS",
+    "group": "DAVETESTSG",
+    "service": "egi.GOCDB",
+    "hostname": "goc.egi.eu",
+    "notifications": null,
+    "tags": {
+      "scope": "EGI, EGICore",
+      "monitored": "1",
+      "production": "1",
+      "info_ID": "4180G0"
+    }
+  },
+  {
+    "type": "SERVICEGROUPS",
+    "group": "NGI_AEGIS_SERVICES",
+    "service": "WMS",
+    "hostname": "wms.ipb.ac.rs",
+    "notifications": null,
+    "tags": {
+      "scope": "EGI",
+      "monitored": "0",
+      "production": "0",
+      "info_ID": "939G0"
+    }
+  },
+  {
+    "type": "SITES",
+    "group": "NGI_UA_SERVICES",
+    "service": "Top-BDII",
+    "hostname": "bdii.ha.grid.org.ua",
+    "notifications": null,
+    "tags": {
+      "scope": "EGI",
+      "monitored": "1",
+      "production": "1",
+      "info_ID": "1306G0"
+    }
+  },
+  {
+    "type": "SITES",
+    "group": "RU-SARFTI",
+    "service": "ARC-CE",
+    "hostname": "ce2.grid.sarfti.ru",
+    "notifications": null,
+    "tags": {
+      "scope": "EGI",
+      "monitored": "1",
+      "production": "1",
+      "info_ID": "10340G0",
+      "info_HOSTDN": "/FOOBAR/CN=ce2.grid.sarfti.ru",
+      "info_URL": "ce2.grid.sarfti.ru"
+    }
+  },
+  {
+    "type": "SITES",
+    "group": "IRISOPS-IAM",
+    "service": "it.infn.iam",
+    "hostname": "iris-iam.nubes.rl.ac.uk",
+    "notifications": null,
+    "tags": {
+      "scope": "iris.ac.uk",
+      "monitored": "1",
+      "production": "1",
+      "info_ID": "13212G0",
+      "info_HOSTDN": "/FOOBAR/CN=iris-iam.nubes.rl.ac.uk",
+      "info_URL": "https://iris-iam.stfc.ac.uk"
+    }
+  },
+  {
+    "type": "SITES",
+    "group": "dirac-durham",
+    "service": "egi.Portal",
+    "hostname": "dirac.egi.eu",
+    "notifications": null,
+    "tags": {
+      "scope": "EGI",
+      "monitored": "1",
+      "production": "1",
+      "info_ID": "8375G0",
+      "info_HOSTDN": "/FOOBAR/CN=dirac-config.egi.eu ",
+      "info_URL": "https://dirac.egi.eu"
+    }
+  },
+  {
+    "type": "SITES",
+    "group": "fedcloud.srce.hr",
+    "service": "eu.egi.cloud.accounting",
+    "hostname": "cloud.egi.cro-ngi.hr",
+    "notifications": null,
+    "tags": {
+      "scope": "EGI, FedCloud",
+      "monitored": "1",
+      "production": "1",
+      "info_ID": "6589G0",
+      "info_HOSTDN": "/C=HR/O=edu/OU=srce/CN=cloud.egi.cro-ngi.hr",
+      "info_URL": "fedcloud.srce.hr"
+    }
+  }
+]
+
 
 const mockReportsTopologyGroups = [
   {
@@ -685,13 +807,25 @@ const mockReportsTopologyGroups = [
       infrastructure: "Production",
       scope: "iris.ac.uk"
     }
+  },
+  {
+    "type": "NGI",
+      "group": "NGI_HR",
+      "subgroup": "fedcloud.srce.hr",
+      "notifications": {
+        "contacts": ["foo@srce.hr", "bar@srce.hr"], "enabled": true
+      },
+      "tags": {
+        "certification": "Certified",
+        "scope": "EGI, FedCloud",
+        "infrastructure": "Production"
+      }
   }
 ];
 
 
 const webapireports = {
   main: 'https://reports.com',
-  crud: true,
   tags: 'https://reports-tags.com',
   topologygroups: 'https://topology-groups.com',
   topologyendpoints: 'https://endpoints.com'
@@ -968,15 +1102,35 @@ const report4sending = {
       context: "argo.group.filter.fields"
     },
     {
-      name: "group",
+      name: "subgroup",
       value: "dirac-durham",
       context: "argo.group.filter.fields"
     },
     {
+      context: "argo.group.filter.fields",
+      name: "subgroup",
+      value: "IRISOPS-IAM"
+    },
+    {
+      context: "argo.endpoint.filter.fields",
       name: "group",
-      value: "IRISOPS-IAM",
-      context: "argo.group.filter.fields"
-    }
+      value: "dirac-durham"
+    },
+    {
+      context: "argo.endpoint.filter.fields",
+      name: "group",
+      value: "IRISOPS-IAM"
+    },
+    {
+      context: "argo.endpoint.filter.fields",
+      name: "service",
+      value: "ARC-CE"
+    },
+    {
+      context: "argo.endpoint.filter.fields",
+      name: "service",
+      value: "Top-BDII"
+    },
   ]
 }
 
@@ -1003,6 +1157,7 @@ describe('Tests for reports changeview', () => {
         fetchThresholdsProfiles: () => Promise.resolve(mockThresholdsProfiles),
         fetchReportsTopologyTags: () => Promise.resolve(mockReportsTopologyTags),
         fetchReportsTopologyGroups: () => Promise.resolve(mockReportsTopologyGroups),
+        fetchReportsTopologyEndpoints: () => Promise.resolve(mockReportsTopologyEndpoints),
         changeReport: mockChangeReport,
         deleteReport: mockDeleteReport
       }
@@ -1042,8 +1197,8 @@ describe('Tests for reports changeview', () => {
       'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
-      'entities.0.value': 'iris.ac.uk',
-      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesGroups.0.value': 'iris.ac.uk',
+      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -1302,8 +1457,10 @@ describe('Tests for reports changeview', () => {
       'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
-      'entities.0.value': 'iris.ac.uk',
-      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesGroups.0.value': 'iris.ac.uk',
+      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -1377,8 +1534,10 @@ describe('Tests for reports changeview', () => {
       'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
-      'entities.0.value': 'iris.ac.uk',
-      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesGroups.0.value': 'iris.ac.uk',
+      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -1450,8 +1609,10 @@ describe('Tests for reports changeview', () => {
       'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
-      'entities.0.value': 'iris.ac.uk',
-      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesGroups.0.value': 'iris.ac.uk',
+      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -1523,8 +1684,10 @@ describe('Tests for reports changeview', () => {
       'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
-      'entities.0.value': 'iris.ac.uk',
-      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesGroups.0.value': 'iris.ac.uk',
+      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -1598,8 +1761,10 @@ describe('Tests for reports changeview', () => {
       'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
-      'entities.0.value': 'iris.ac.uk',
-      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesGroups.0.value': 'iris.ac.uk',
+      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -1676,8 +1841,10 @@ describe('Tests for reports changeview', () => {
       'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
-      'entities.0.value': 'iris.ac.uk',
-      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesGroups.0.value': 'iris.ac.uk',
+      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -1754,8 +1921,10 @@ describe('Tests for reports changeview', () => {
       'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
-      'entities.0.value': 'iris.ac.uk',
-      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesGroups.0.value': 'iris.ac.uk',
+      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -1812,7 +1981,7 @@ describe('Tests for reports changeview', () => {
       expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
     })
 
-    expect(screen.getAllByText(/sites/i)).toHaveLength(2)
+    expect(screen.getAllByText(/sites/i)).toHaveLength(3)
     expect(screen.getByText(/ngis/i)).toBeInTheDocument()
     expect(screen.queryByText(/service groups/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/projects/i)).not.toBeInTheDocument()
@@ -1820,7 +1989,7 @@ describe('Tests for reports changeview', () => {
     await selectEvent.select(screen.getByText('Sites'), 'ServiceGroups')
 
     expect(screen.getByText(/projects/i)).toBeInTheDocument()
-    expect(screen.getByText(/service groups/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/service groups/i)).toHaveLength(2)
     expect(screen.queryByText(/sites/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/ngis/i)).not.toBeInTheDocument()
 
@@ -1842,8 +2011,10 @@ describe('Tests for reports changeview', () => {
       'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
-      'entities.0.value': 'iris.ac.uk',
-      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesGroups.0.value': 'iris.ac.uk',
+      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -1932,8 +2103,10 @@ describe('Tests for reports changeview', () => {
       'groupsTags.2.value': 'yes',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
-      'entities.0.value': 'iris.ac.uk',
-      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesGroups.0.value': 'iris.ac.uk',
+      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -2027,8 +2200,10 @@ describe('Tests for reports changeview', () => {
       'groupsExtensions.0.value': ['condor', 'eddie'],
       'groupsExtensions.1.name': 'GLUE2EndpointImplementationName',
       'groupsExtensions.1.value': 'ARC-CE',
-      'entities.0.value': 'iris.ac.uk',
-      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesGroups.0.value': 'iris.ac.uk',
+      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -2062,8 +2237,8 @@ describe('Tests for reports changeview', () => {
       'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2EndpointImplementationName',
       'groupsExtensions.0.value': 'ARC-CE',
-      'entities.0.value': 'iris.ac.uk',
-      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesGroups.0.value': 'iris.ac.uk',
+      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -2145,8 +2320,10 @@ describe('Tests for reports changeview', () => {
       'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
-      'entities.0.value': ['iris.ac.uk', 'Russia'],
-      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM', 'RU-SARFTI'],
+      'entitiesGroups.0.value': ['iris.ac.uk', 'Russia'],
+      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM', 'RU-SARFTI'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -2172,9 +2349,8 @@ describe('Tests for reports changeview', () => {
       value: 'Russia',
       context: 'argo.group.filter.fields'
     })
-    frontendReport.filter_tags.push(
-      {
-        name: 'group',
+    frontendReport.filter_tags.splice(11, 0, {
+        name: 'subgroup',
         value: 'RU-SARFTI',
         context: 'argo.group.filter.fields'
       }
@@ -2240,8 +2416,10 @@ describe('Tests for reports changeview', () => {
       'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
-      'entities.0.value': 'iris.ac.uk',
-      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesGroups.0.value': 'iris.ac.uk',
+      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'no',
       'endpointsTags.1.name': 'monitored',
@@ -2324,8 +2502,10 @@ describe('Tests for reports changeview', () => {
       'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
-      'entities.0.value': 'iris.ac.uk',
-      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesGroups.0.value': 'iris.ac.uk',
+      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -2363,8 +2543,8 @@ describe('Tests for reports changeview', () => {
       'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
-      'entities.0.value': 'iris.ac.uk',
-      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesGroups.0.value': 'iris.ac.uk',
+      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -2391,6 +2571,97 @@ describe('Tests for reports changeview', () => {
       name: 'info_ext_GLUE2EndpointImplementationName',
       value: 'ARC-CE',
       context: 'argo.endpoint.filter.tags.array'
+    })
+
+    await waitFor(() => {
+      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
+    })
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/reports/', backendReport4sending
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report')
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Report successfully changed', 'Changed', 2000
+    )
+  })
+
+  test('Test change endpoint entities', async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+    mockChangeReport.mockReturnValueOnce(
+      Promise.resolve({ ok: 'ok' })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
+    })
+
+    const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
+
+    const entity1 = card_endpoints.getByText('IRISOPS-IAM')
+    const entity2 = card_endpoints.getByText('Top-BDII')
+
+    await selectEvent.select(entity1, 'fedcloud.srce.hr')
+    await selectEvent.select(entity2, 'eu.egi.cloud.accounting')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': 'Critical',
+      'disabled': false,
+      'groupname': 'ARGO',
+      'description': 'Critical report',
+      'metricProfile': 'ARGO_MON_CRITICAL',
+      'aggregationProfile': 'critical',
+      'operationsProfile': 'egi_ops',
+      'thresholdsProfile': '',
+      'topologyType': 'Sites',
+      'groupsTags.0.name': 'certification',
+      'groupsTags.0.value': 'Certified',
+      'groupsTags.1.name': 'infrastructure',
+      'groupsTags.1.value': 'Production',
+      'groupsTags.2.name': 'scope',
+      'groupsTags.2.value': 'EGI',
+      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
+      'groupsExtensions.0.value': 'condor',
+      'entitiesGroups.0.value': 'iris.ac.uk',
+      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM', 'fedcloud.srce.hr'],
+      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII', 'eu.egi.cloud.accounting'],
+      'endpointsTags.0.name': 'production',
+      'endpointsTags.0.value': 'yes',
+      'endpointsTags.1.name': 'monitored',
+      'endpointsTags.1.value': 'yes',
+      'endpointsTags.2.name': 'scope',
+      'endpointsTags.2.value': 'EGI',
+      'availabilityThreshold': '80',
+      'reliabilityThreshold': '85',
+      'uptimeThreshold': '0.8',
+      'unknownThreshold': '0.1',
+      'downtimeThreshold' : '0.1'
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    let frontendReport = JSON.parse(JSON.stringify(report4sending))
+    frontendReport.filter_tags.splice(12, 0, {
+      context: 'argo.endpoint.filter.fields',
+      name: 'group',
+      value: 'fedcloud.srce.hr',
+    })
+    frontendReport.filter_tags.splice(15, 0, {
+      context: 'argo.endpoint.filter.fields',
+      name: 'service',
+      value: 'eu.egi.cloud.accounting',
     })
 
     await waitFor(() => {
@@ -2443,8 +2714,10 @@ describe('Tests for reports changeview', () => {
       'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
-      'entities.0.value': 'iris.ac.uk',
-      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesGroups.0.value': 'iris.ac.uk',
+      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -2517,8 +2790,10 @@ describe('Tests for reports changeview', () => {
       'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
-      'entities.0.value': 'iris.ac.uk',
-      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesGroups.0.value': 'iris.ac.uk',
+      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -2591,8 +2866,10 @@ describe('Tests for reports changeview', () => {
       'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
-      'entities.0.value': 'iris.ac.uk',
-      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesGroups.0.value': 'iris.ac.uk',
+      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -2665,8 +2942,10 @@ describe('Tests for reports changeview', () => {
       'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
-      'entities.0.value': 'iris.ac.uk',
-      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesGroups.0.value': 'iris.ac.uk',
+      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -2739,8 +3018,10 @@ describe('Tests for reports changeview', () => {
       'groupsTags.2.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
-      'entities.0.value': 'iris.ac.uk',
-      'entities.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesGroups.0.value': 'iris.ac.uk',
+      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'yes',
       'endpointsTags.1.name': 'monitored',
@@ -3458,6 +3739,7 @@ describe('Tests for reports addview', () => {
         fetchThresholdsProfiles: () => Promise.resolve(mockThresholdsProfiles),
         fetchReportsTopologyTags: () => Promise.resolve(mockReportsTopologyTags),
         fetchReportsTopologyGroups: () => Promise.resolve(mockReportsTopologyGroups),
+        fetchReportsTopologyEndpoints: () => Promise.resolve(mockReportsTopologyEndpoints),
         addReport: mockAddReport
       }
     })
@@ -3563,9 +3845,10 @@ describe('Tests for reports addview', () => {
     expect(card_groups.getByRole('button', { name: /add new extension/i })).toBeInTheDocument();
     expect(card_groups.getAllByText(/search/i)).toHaveLength(2);
 
-    expect(card_endpoints.queryAllByRole('combobox')).toHaveLength(0);
+    expect(card_endpoints.queryAllByRole('combobox')).toHaveLength(2);
     expect(card_endpoints.getByRole('button', { name: /add new tag/i })).toBeInTheDocument();
     expect(card_endpoints.getByRole('button', { name: /add new extension/i })).toBeInTheDocument();
+    expect(card_endpoints.getAllByText(/search/i)).toHaveLength(2);
 
     expect(availabilityThresholdField.value).toBe('');
     expect(availabilityThresholdField).toBeEnabled();
@@ -3853,8 +4136,8 @@ describe('Tests for reports addview', () => {
 
     const topologyTypeField = screen.getAllByText(/select/i)[5]
 
-    expect(screen.queryByText(/upper group/i)).toBeInTheDocument()
-    expect(screen.queryByText(/lower group/i)).toBeInTheDocument()
+    expect(screen.queryAllByText(/upper group/i)).toHaveLength(2)
+    expect(screen.queryAllByText(/lower group/i)).toHaveLength(2)
 
     expect(screen.queryByText(/sites/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/ngis/i)).not.toBeInTheDocument()
@@ -3891,7 +4174,7 @@ describe('Tests for reports addview', () => {
     expect(screen.queryByText(/upper group/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/lower group/i)).not.toBeInTheDocument()
 
-    expect(screen.queryAllByText(/sites/i)).toHaveLength(2)
+    expect(screen.queryAllByText(/sites/i)).toHaveLength(3)
     expect(screen.queryByText(/ngis/i)).toBeInTheDocument()
 
     expect(screen.queryByText(/service groups/i)).not.toBeInTheDocument()
@@ -3922,7 +4205,7 @@ describe('Tests for reports addview', () => {
     expect(screen.queryByText(/sites/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/ngis/i)).not.toBeInTheDocument()
 
-    expect(screen.queryByText(/service groups/i)).toBeInTheDocument()
+    expect(screen.queryAllByText(/service groups/i)).toHaveLength(2)
     expect(screen.queryByText(/projects/i)).toBeInTheDocument()
   })
 
@@ -4471,8 +4754,10 @@ describe('Tests for reports addview', () => {
       'operationsProfile': '',
       'thresholdsProfile': '',
       'topologyType': '',
-      'entities.0.value': 'Russia',
-      'entities.1.value': 'dirac-durham',
+      'entitiesGroups.0.value': 'Russia',
+      'entitiesGroups.1.value': 'dirac-durham',
+      'entitiesEndpoints.0.value': '',
+      'entitiesEndpoints.1.value': '',
       'availabilityThreshold': '',
       'reliabilityThreshold': '',
       'uptimeThreshold': '',
@@ -5092,6 +5377,43 @@ describe('Tests for reports addview', () => {
       'topologyType': '',
       'endpointsExtensions.0.name': 'GLUE2EndpointID',
       'endpointsExtensions.0.value': ['ce1.gridpp.ecdf.ed.ac.uk', 'svr009.gla.scotgrid.ac.uk'],
+      'availabilityThreshold': '',
+      'reliabilityThreshold': '',
+      'uptimeThreshold': '',
+      'unknownThreshold': '',
+      'downtimeThreshold' : ''
+    })
+  })
+
+  test('Test add endpoint entities', async () => {
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
+    })
+
+    const card_groups = within(screen.getByTestId('card-group-of-endpoints'));
+
+    const entity1 = card_groups.getAllByText(/search/i)[0]
+    const entity2 = card_groups.getAllByText(/search/i)[1]
+
+    await selectEvent.select(entity1, 'IRISOPS-IAM')
+    await selectEvent.select(entity2, 'egi.Portal')
+
+    expect(screen.getByTestId('form')).toHaveFormValues({
+      'name': '',
+      'disabled': false,
+      'groupname': '',
+      'description': '',
+      'metricProfile': '',
+      'aggregationProfile': '',
+      'operationsProfile': '',
+      'thresholdsProfile': '',
+      'topologyType': '',
+      'entitiesGroups.0.value': '',
+      'entitiesGroups.1.value': '',
+      'entitiesEndpoints.0.value': 'IRISOPS-IAM',
+      'entitiesEndpoints.1.value': 'egi.Portal',
       'availabilityThreshold': '',
       'reliabilityThreshold': '',
       'uptimeThreshold': '',
