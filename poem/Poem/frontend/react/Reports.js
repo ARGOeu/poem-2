@@ -468,37 +468,6 @@ const EntitySelect = ({field, label, entitiesOptions, onChangeHandler, entitiesI
 
 
 const TopologyConfGroupsEntityFields = ({topoGroups, addview, publicView, form}) => {
-  const entityInitValues = (matchWhat) => {
-    let tmp = new Array()
-    for (let entity of form.values.entitiesGroups) {
-      if (entity && matchWhat.indexOf(entity.name) > -1) {
-        if (entity.value.indexOf('|') > -1) {
-          tmp = entity.value.split('|').map(e => new Object({
-            'label': e.trim(),
-            'value': e.trim()
-          }))
-        }
-        else
-          tmp.push(
-            new Object({
-              'label': entity.value,
-              'value': entity.value
-            }))
-      }
-    }
-    return tmp
-  }
-
-  const formatSelectEntities = (data) => {
-    let formatted = new Array()
-    for (var e of [...data])
-      formatted.push(new Object({
-        'label': e,
-        'value': e
-      }))
-    return formatted
-  }
-
   let topoType = form.values.topologyType
   let label1 = undefined
   let label2 = undefined
@@ -550,7 +519,7 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, publicView, form})
               form.setFieldValue("entitiesGroups.0.name", key1)
               form.setFieldValue("entitiesGroups.0.value", joinedValues)
             }}
-            entitiesInitials={!addview ? entityInitValues(["entitiesNgi", "entitiesProjects"]) : undefined}
+            entitiesInitials={!addview ? entityInitValues(["entitiesNgi", "entitiesProjects"], form.values.entitiesGroups) : undefined}
            />
        }
       <Label for='topoEntityGroup2' className='pt-2'>{label2}</Label>
@@ -578,7 +547,7 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, publicView, form})
               form.setFieldValue("entitiesGroups.1.name", key2)
               form.setFieldValue("entitiesGroups.1.value", joinedValues)
             }}
-            entitiesInitials={!addview ? entityInitValues(["entitiesSites", "entitiesServiceGroups"]) : undefined}
+            entitiesInitials={!addview ? entityInitValues(["entitiesSites", "entitiesServiceGroups"], form.values.entitiesGroups) : undefined}
           />
       }
     </React.Fragment>
