@@ -159,6 +159,40 @@ function preProcessTagValue(data) {
   return data
 }
 
+const entityInitValues = (matchWhat, formvalue) => {
+  let tmp = new Array()
+  for (let entity of formvalue) {
+    if (entity && matchWhat.indexOf(entity.name) > -1) {
+      if (entity.value.indexOf('|') > -1) {
+        tmp = entity.value.split('|').map(e => new Object({
+          'label': e.trim(),
+          'value': e.trim()
+        }))
+      }
+      else if (entity.value)
+        tmp.push(
+          new Object({
+            'label': entity.value,
+            'value': entity.value
+          }))
+      else
+        tmp.push(undefined)
+    }
+  }
+  return tmp
+}
+
+
+const formatSelectEntities = (data) => {
+  let formatted = new Array()
+  for (var e of [...data])
+    formatted.push(new Object({
+      'label': e,
+      'value': e
+    }))
+  return formatted
+}
+
 
 const TagSelect = ({field, tagOptions, onChangeHandler, isMulti,
   closeMenuOnSelect, tagInitials}) => {
@@ -553,39 +587,6 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, publicView, form})
 
 
 const TopologyConfEndpointsEntityFields = ({topoGroups, addview, publicView, form}) => {
-  const entityInitValues = (matchWhat) => {
-    let tmp = new Array()
-    for (let entity of form.values.entitiesEndpoints) {
-      if (entity && matchWhat.indexOf(entity.name) > -1) {
-        if (entity.value.indexOf('|') > -1) {
-          tmp = entity.value.split('|').map(e => new Object({
-            'label': e.trim(),
-            'value': e.trim()
-          }))
-        }
-        else if (entity.value)
-          tmp.push(
-            new Object({
-              'label': entity.value,
-              'value': entity.value
-            }))
-        else
-          tmp.push(undefined)
-      }
-    }
-    return tmp
-  }
-
-  const formatSelectEntities = (data) => {
-    let formatted = new Array()
-    for (var e of [...data])
-      formatted.push(new Object({
-        'label': e,
-        'value': e
-      }))
-    return formatted
-  }
-
   let topoType = form.values.topologyType
   let label1 = undefined
   let label2 = undefined
@@ -637,7 +638,7 @@ const TopologyConfEndpointsEntityFields = ({topoGroups, addview, publicView, for
               form.setFieldValue("entitiesEndpoints.0.name", key1)
               form.setFieldValue("entitiesEndpoints.0.value", joinedValues)
             }}
-            entitiesInitials={!addview ? entityInitValues(["entitiesSites", "entitiesServiceGroups"]) : undefined}
+            entitiesInitials={!addview ? entityInitValues(["entitiesSites", "entitiesServiceGroups"], form.values.entitiesEndpoints) : undefined}
            />
        }
       <Label for='topoEntityEndoint2' className='pt-2'>{label2}</Label>
@@ -665,7 +666,7 @@ const TopologyConfEndpointsEntityFields = ({topoGroups, addview, publicView, for
               form.setFieldValue("entitiesEndpoints.1.name", key2)
               form.setFieldValue("entitiesEndpoints.1.value", joinedValues)
             }}
-            entitiesInitials={!addview ? entityInitValues(["serviceTypesSitesEndpoints", "serviceTypesServiceGroupsEndpoints"]) : undefined}
+            entitiesInitials={!addview ? entityInitValues(["serviceTypesSitesEndpoints", "serviceTypesServiceGroupsEndpoints"], form.values.entitiesEndpoints) : undefined}
           />
       }
     </React.Fragment>
