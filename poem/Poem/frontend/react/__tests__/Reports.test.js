@@ -56,7 +56,6 @@ const mockReports = [
   }
 ];
 
-
 const mockActiveSession = {
   active: true,
   userdetails: {
@@ -77,7 +76,6 @@ const mockActiveSession = {
     }
   }
 };
-
 
 const mockReport = {
   id: "yee9chel-5o4u-l4j4-410b-eipi3ohrah5i",
@@ -195,7 +193,6 @@ const mockReport = {
   ]
 };
 
-
 const mockReport2 = {
   id: "yee9chel-5o4u-l4j4-410b-eipi3ohrah5i",
   tenant: "EGI",
@@ -272,14 +269,12 @@ const mockReport2 = {
   ]
 };
 
-
 const mockBackendReport = {
   name: 'Critical',
   description: 'Critical report',
   apiid: 'yee9chel-5o4u-l4j4-410b-eipi3ohrah5i',
   groupname: 'ARGO'
 };
-
 
 const mockMetricProfiles = [
   {
@@ -345,7 +340,6 @@ const mockMetricProfiles = [
     ]
   }
 ];
-
 
 const mockAggregationProfiles = [
   {
@@ -432,7 +426,6 @@ const mockAggregationProfiles = [
   }
 ];
 
-
 const mockOperationsProfiles = [
   {
     id: "gahjohf1-xx39-e0c9-p0rj-choh6ahziz9e",
@@ -463,7 +456,6 @@ const mockOperationsProfiles = [
     ]
   }
 ];
-
 
 const mockThresholdsProfiles = [
   {
@@ -505,7 +497,6 @@ const mockThresholdsProfiles = [
     ]
    }
 ]
-
 
 const mockReportsTopologyTags = [
   {
@@ -743,7 +734,6 @@ const mockReportsTopologyEndpoints = [
   }
 ]
 
-
 const mockReportsTopologyGroups = [
   {
     date: "2021-06-29",
@@ -822,7 +812,6 @@ const mockReportsTopologyGroups = [
       }
   }
 ];
-
 
 const webapireports = {
   main: 'https://reports.com',
@@ -1147,7 +1136,7 @@ describe('Tests for reports changeview', () => {
   jest.spyOn(NotificationManager, 'error');
   jest.spyOn(queryClient, 'invalidateQueries');
 
-  beforeEach(() => {
+  beforeAll(() => {
     WebApi.mockImplementation(() => {
       return {
         fetchReport: () => Promise.resolve(mockReport),
@@ -2799,7 +2788,6 @@ const newReport4Sending = {
   ]
 }
 
-
 const newBackendReport4Sending = {
   name: 'OPS-MONITOR',
   description: 'A/R report for Operations services.',
@@ -2949,7 +2937,7 @@ describe('Tests for reports addview', () => {
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
   })
 
-  test('Test add name', async () => {
+  test('Test add basic information', async () => {
     renderAddView()
 
     await waitFor(() => {
@@ -2957,65 +2945,24 @@ describe('Tests for reports addview', () => {
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'OPS-MONITOR' } });
+    fireEvent.click(screen.getByLabelText(/disable/i))
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'A/R report for Operations services.' } })
+
+    const groupField = screen.getAllByText(/select/i)[0]
+
+    expect(screen.queryByText('ARGO')).not.toBeInTheDocument()
+    expect(screen.queryByText('TEST')).not.toBeInTheDocument()
+
+    selectEvent.openMenu(groupField)
+    expect(screen.queryByText('ARGO')).toBeInTheDocument()
+    expect(screen.queryByText('TEST')).toBeInTheDocument()
+
+    await selectEvent.select(groupField, 'ARGO')
 
     expect(screen.getByTestId('form')).toHaveFormValues({
       'name': 'OPS-MONITOR',
-      'disabled': false,
-      'groupname': '',
-      'description': '',
-      'metricProfile': '',
-      'aggregationProfile': '',
-      'operationsProfile': '',
-      'thresholdsProfile': '',
-      'topologyType': '',
-      'availabilityThreshold': '',
-      'reliabilityThreshold': '',
-      'uptimeThreshold': '',
-      'unknownThreshold': '',
-      'downtimeThreshold' : ''
-    })
-  })
-
-  test('Test disable report', async () => {
-    renderAddView()
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
-    })
-
-    fireEvent.click(screen.getByLabelText(/disable/i))
-
-    expect(screen.getByTestId('form')).toHaveFormValues({
-      'name': '',
       'disabled': true,
-      'groupname': '',
-      'description': '',
-      'metricProfile': '',
-      'aggregationProfile': '',
-      'operationsProfile': '',
-      'thresholdsProfile': '',
-      'topologyType': '',
-      'availabilityThreshold': '',
-      'reliabilityThreshold': '',
-      'uptimeThreshold': '',
-      'unknownThreshold': '',
-      'downtimeThreshold' : ''
-    })
-  })
-
-  test('Test add description', async () => {
-    renderAddView()
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
-    })
-
-    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'A/R report for Operations services.' } })
-
-    expect(screen.getByTestId('form')).toHaveFormValues({
-      'name': '',
-      'disabled': false,
-      'groupname': '',
+      'groupname': 'ARGO',
       'description': 'A/R report for Operations services.',
       'metricProfile': '',
       'aggregationProfile': '',
@@ -3030,43 +2977,7 @@ describe('Tests for reports addview', () => {
     })
   })
 
-  test('Test add group name', async () => {
-    renderAddView()
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
-    })
-
-    const groupField = screen.getAllByText(/select/i)[0]
-
-    expect(screen.queryByText('ARGO')).not.toBeInTheDocument()
-    expect(screen.queryByText('TEST')).not.toBeInTheDocument()
-
-    selectEvent.openMenu(groupField)
-    expect(screen.queryByText('ARGO')).toBeInTheDocument()
-    expect(screen.queryByText('TEST')).toBeInTheDocument()
-
-    await selectEvent.select(groupField, 'ARGO')
-
-    expect(screen.getByTestId('form')).toHaveFormValues({
-      'name': '',
-      'disabled': false,
-      'groupname': 'ARGO',
-      'description': '',
-      'metricProfile': '',
-      'aggregationProfile': '',
-      'operationsProfile': '',
-      'thresholdsProfile': '',
-      'topologyType': '',
-      'availabilityThreshold': '',
-      'reliabilityThreshold': '',
-      'uptimeThreshold': '',
-      'unknownThreshold': '',
-      'downtimeThreshold' : ''
-    })
-  })
-
-  test('Test add metric profile', async () => {
+  test('Test add profiles', async () => {
     renderAddView()
 
     await waitFor(() => {
@@ -3074,6 +2985,9 @@ describe('Tests for reports addview', () => {
     })
 
     const metricProfileField = screen.getAllByText(/select/i)[1]
+    const aggregationProfileField = screen.getAllByText(/select/i)[2]
+    const operationsProfileField = screen.getAllByText(/select/i)[3]
+    const thresholdsProfileField = screen.getAllByText(/select/i)[4]
 
     expect(screen.queryByText('FEDCLOUD')).not.toBeInTheDocument()
     expect(screen.queryByText('OPS_MONITOR_RHEL7')).not.toBeInTheDocument()
@@ -3086,33 +3000,6 @@ describe('Tests for reports addview', () => {
 
     await selectEvent.select(metricProfileField, 'ARGO_MON_CRITICAL')
 
-    expect(screen.getByTestId('form')).toHaveFormValues({
-      'name': '',
-      'disabled': false,
-      'groupname': '',
-      'description': '',
-      'metricProfile': 'ARGO_MON_CRITICAL',
-      'aggregationProfile': '',
-      'operationsProfile': '',
-      'thresholdsProfile': '',
-      'topologyType': '',
-      'availabilityThreshold': '',
-      'reliabilityThreshold': '',
-      'uptimeThreshold': '',
-      'unknownThreshold': '',
-      'downtimeThreshold' : ''
-    })
-  })
-
-  test('Test add aggregation profile', async () => {
-    renderAddView()
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
-    })
-
-    const aggregationProfileField = screen.getAllByText(/select/i)[2]
-
     expect(screen.queryByText('critical')).not.toBeInTheDocument()
     expect(screen.queryByText('ops-mon-critical')).not.toBeInTheDocument()
 
@@ -3122,66 +3009,12 @@ describe('Tests for reports addview', () => {
 
     await selectEvent.select(aggregationProfileField, 'critical')
 
-    expect(screen.getByTestId('form')).toHaveFormValues({
-      'name': '',
-      'disabled': false,
-      'groupname': '',
-      'description': '',
-      'metricProfile': '',
-      'aggregationProfile': 'critical',
-      'operationsProfile': '',
-      'thresholdsProfile': '',
-      'topologyType': '',
-      'availabilityThreshold': '',
-      'reliabilityThreshold': '',
-      'uptimeThreshold': '',
-      'unknownThreshold': '',
-      'downtimeThreshold' : ''
-    })
-  })
-
-  test('Test add operations profile', async () => {
-    renderAddView()
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
-    })
-
-    const operationsProfileField = screen.getAllByText(/select/i)[3]
-
     expect(screen.queryByText('egi_ops')).not.toBeInTheDocument()
 
     selectEvent.openMenu(operationsProfileField)
     expect(screen.queryByText('egi_ops')).toBeInTheDocument()
 
     await selectEvent.select(operationsProfileField, 'egi_ops')
-
-    expect(screen.getByTestId('form')).toHaveFormValues({
-      'name': '',
-      'disabled': false,
-      'groupname': '',
-      'description': '',
-      'metricProfile': '',
-      'aggregationProfile': '',
-      'operationsProfile': 'egi_ops',
-      'thresholdsProfile': '',
-      'topologyType': '',
-      'availabilityThreshold': '',
-      'reliabilityThreshold': '',
-      'uptimeThreshold': '',
-      'unknownThreshold': '',
-      'downtimeThreshold' : ''
-    })
-  })
-
-  test('Test add thresholds profile', async () => {
-    renderAddView()
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
-    })
-
-    const thresholdsProfileField = screen.getAllByText(/select/i)[4]
 
     expect(screen.queryByText('TEST_PROFILE')).not.toBeInTheDocument()
     expect(screen.queryByText('test-thresholds')).not.toBeInTheDocument()
@@ -3197,9 +3030,9 @@ describe('Tests for reports addview', () => {
       'disabled': false,
       'groupname': '',
       'description': '',
-      'metricProfile': '',
-      'aggregationProfile': '',
-      'operationsProfile': '',
+      'metricProfile': 'ARGO_MON_CRITICAL',
+      'aggregationProfile': 'critical',
+      'operationsProfile': 'egi_ops',
       'thresholdsProfile': 'TEST_PROFILE',
       'topologyType': '',
       'availabilityThreshold': '',
@@ -3292,7 +3125,7 @@ describe('Tests for reports addview', () => {
     expect(screen.queryByText(/projects/i)).toBeInTheDocument()
   })
 
-  test('Test add group tags', async () => {
+  test('Test add groups', async () => {
     renderAddView()
 
     await waitFor(() => {
@@ -3300,6 +3133,9 @@ describe('Tests for reports addview', () => {
     })
 
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
+
+    const entity1 = card_groups.getAllByText(/search/i)[0]
+    const entity2 = card_groups.getAllByText(/search/i)[1]
 
     fireEvent.click(card_groups.getByText(/add new tag/i))
 
@@ -3522,23 +3358,13 @@ describe('Tests for reports addview', () => {
       'unknownThreshold': '',
       'downtimeThreshold' : ''
     })
-  })
-
-  test('Test add group extensions', async () => {
-    renderAddView()
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
-    })
-
-    const card_groups = within(screen.getByTestId('card-group-of-groups'));
 
     fireEvent.click(card_groups.getByText(/add new extension/i))
 
     expect(card_groups.queryByText('certification')).not.toBeInTheDocument()
     expect(card_groups.queryByText('infrastructure')).not.toBeInTheDocument()
     expect(card_groups.queryByText('monitored')).not.toBeInTheDocument()
-    expect(card_groups.queryByText('scope')).not.toBeInTheDocument()
+    expect(card_groups.queryAllByText('scope')).toHaveLength(1)
     expect(card_groups.queryByText(/GLUE2ComputingShareMappingQueue/i)).not.toBeInTheDocument()
     expect(card_groups.queryByText(/GLUE2EndpointImplementationName/i)).not.toBeInTheDocument()
     expect(card_groups.queryByText('production')).not.toBeInTheDocument()
@@ -3551,7 +3377,7 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText('certification')).not.toBeInTheDocument()
     expect(card_groups.queryByText('infrastructure')).not.toBeInTheDocument()
     expect(card_groups.queryByText('monitored')).not.toBeInTheDocument()
-    expect(card_groups.queryByText('scope')).not.toBeInTheDocument()
+    expect(card_groups.queryAllByText('scope')).toHaveLength(1)
     expect(card_groups.queryByText('GLUE2ComputingShareMappingQueue')).toBeInTheDocument()
     expect(card_groups.queryByText('GLUE2EndpointImplementationName')).toBeInTheDocument()
     expect(card_groups.queryByText('info_ext_GLUE2ComputingShareMappingQueue')).not.toBeInTheDocument()
@@ -3574,10 +3400,10 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText('no')).not.toBeInTheDocument()
     expect(card_groups.queryByText('1')).not.toBeInTheDocument()
     expect(card_groups.queryByText('0')).not.toBeInTheDocument()
-    expect(card_groups.queryByText('EGI')).not.toBeInTheDocument()
-    expect(card_groups.queryByText('EOSC-hub')).not.toBeInTheDocument()
-    expect(card_groups.queryByText('EOSCCore')).not.toBeInTheDocument()
-    expect(card_groups.queryByText('FedCloud')).not.toBeInTheDocument()
+    expect(card_groups.queryAllByText('EGI')).toHaveLength(1)
+    expect(card_groups.queryAllByText('EOSC-hub')).toHaveLength(1)
+    expect(card_groups.queryAllByText('EOSCCore')).toHaveLength(1)
+    expect(card_groups.queryAllByText('FedCloud')).toHaveLength(1)
     expect(card_groups.queryByText('condor')).not.toBeInTheDocument()
     expect(card_groups.queryByText('condor_q2d')).not.toBeInTheDocument()
     expect(card_groups.queryByText('eddie')).not.toBeInTheDocument()
@@ -3610,10 +3436,10 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText('no')).not.toBeInTheDocument()
     expect(card_groups.queryByText('1')).not.toBeInTheDocument()
     expect(card_groups.queryByText('0')).not.toBeInTheDocument()
-    expect(card_groups.queryByText('EGI')).not.toBeInTheDocument()
-    expect(card_groups.queryByText('EOSC-hub')).not.toBeInTheDocument()
-    expect(card_groups.queryByText('EOSCCore')).not.toBeInTheDocument()
-    expect(card_groups.queryByText('FedCloud')).not.toBeInTheDocument()
+    expect(card_groups.queryAllByText('EGI')).toHaveLength(1)
+    expect(card_groups.queryAllByText('EOSC-hub')).toHaveLength(1)
+    expect(card_groups.queryAllByText('EOSCCore')).toHaveLength(1)
+    expect(card_groups.queryAllByText('FedCloud')).toHaveLength(1)
     expect(card_groups.queryByText('condor')).toBeInTheDocument()
     expect(card_groups.queryByText('condor_q2d')).toBeInTheDocument()
     expect(card_groups.queryByText('eddie')).toBeInTheDocument()
@@ -3644,6 +3470,8 @@ describe('Tests for reports addview', () => {
       'operationsProfile': '',
       'thresholdsProfile': '',
       'topologyType': '',
+      'groupsTags.0.name': 'scope',
+      'groupsTags.0.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': 'condor',
       'availabilityThreshold': '',
@@ -3665,6 +3493,8 @@ describe('Tests for reports addview', () => {
       'operationsProfile': '',
       'thresholdsProfile': '',
       'topologyType': '',
+      'groupsTags.0.name': 'scope',
+      'groupsTags.0.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': ['condor', 'eddie'],
       'availabilityThreshold': '',
@@ -3679,7 +3509,7 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText('certification')).not.toBeInTheDocument()
     expect(card_groups.queryByText('infrastructure')).not.toBeInTheDocument()
     expect(card_groups.queryByText('monitored')).not.toBeInTheDocument()
-    expect(card_groups.queryByText('scope')).not.toBeInTheDocument()
+    expect(card_groups.queryAllByText('scope')).toHaveLength(1)
     expect(card_groups.getAllByText(/GLUE2ComputingShareMappingQueue/i)).toHaveLength(1)
     expect(card_groups.queryByText(/GLUE2EndpointImplementationName/i)).not.toBeInTheDocument()
     expect(card_groups.queryByText('production')).not.toBeInTheDocument()
@@ -3692,7 +3522,7 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText('certification')).not.toBeInTheDocument()
     expect(card_groups.queryByText('infrastructure')).not.toBeInTheDocument()
     expect(card_groups.queryByText('monitored')).not.toBeInTheDocument()
-    expect(card_groups.queryByText('scope')).not.toBeInTheDocument()
+    expect(card_groups.queryAllByText('scope')).toHaveLength(1)
     expect(card_groups.getAllByText(/GLUE2ComputingShareMappingQueue/i)).toHaveLength(1)
     expect(card_groups.queryByText(/GLUE2EndpointImplementationName/i)).toBeInTheDocument()
     expect(card_groups.queryByText('production')).not.toBeInTheDocument()
@@ -3715,10 +3545,10 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText('no')).not.toBeInTheDocument()
     expect(card_groups.queryByText('1')).not.toBeInTheDocument()
     expect(card_groups.queryByText('0')).not.toBeInTheDocument()
-    expect(card_groups.queryByText('EGI')).not.toBeInTheDocument()
-    expect(card_groups.queryByText('EOSC-hub')).not.toBeInTheDocument()
-    expect(card_groups.queryByText('EOSCCore')).not.toBeInTheDocument()
-    expect(card_groups.queryByText('FedCloud')).not.toBeInTheDocument()
+    expect(card_groups.queryAllByText('EGI')).toHaveLength(1)
+    expect(card_groups.queryAllByText('EOSC-hub')).toHaveLength(1)
+    expect(card_groups.queryAllByText('EOSCCore')).toHaveLength(1)
+    expect(card_groups.queryAllByText('FedCloud')).toHaveLength(1)
     expect(card_groups.queryByText('ARC-CE')).not.toBeInTheDocument()
     expect(card_groups.queryByText('nordugrid-arc')).not.toBeInTheDocument()
     expect(card_groups.queryByText('1111G0')).not.toBeInTheDocument()
@@ -3747,10 +3577,10 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText('no')).not.toBeInTheDocument()
     expect(card_groups.queryByText('1')).not.toBeInTheDocument()
     expect(card_groups.queryByText('0')).not.toBeInTheDocument()
-    expect(card_groups.queryByText('EGI')).not.toBeInTheDocument()
-    expect(card_groups.queryByText('EOSC-hub')).not.toBeInTheDocument()
-    expect(card_groups.queryByText('EOSCCore')).not.toBeInTheDocument()
-    expect(card_groups.queryByText('FedCloud')).not.toBeInTheDocument()
+    expect(card_groups.queryAllByText('EGI')).toHaveLength(1)
+    expect(card_groups.queryAllByText('EOSC-hub')).toHaveLength(1)
+    expect(card_groups.queryAllByText('EOSCCore')).toHaveLength(1)
+    expect(card_groups.queryAllByText('FedCloud')).toHaveLength(1)
     expect(card_groups.queryByText('ARC-CE')).toBeInTheDocument()
     expect(card_groups.queryByText('nordugrid-arc')).toBeInTheDocument()
     expect(card_groups.queryByText('1111G0')).not.toBeInTheDocument()
@@ -3778,6 +3608,8 @@ describe('Tests for reports addview', () => {
       'operationsProfile': '',
       'thresholdsProfile': '',
       'topologyType': '',
+      'groupsTags.0.name': 'scope',
+      'groupsTags.0.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': ['condor', 'eddie'],
       'groupsExtensions.1.name': 'GLUE2EndpointImplementationName',
@@ -3801,6 +3633,8 @@ describe('Tests for reports addview', () => {
       'operationsProfile': '',
       'thresholdsProfile': '',
       'topologyType': '',
+      'groupsTags.0.name': 'scope',
+      'groupsTags.0.value': 'EGI',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': ['condor', 'eddie'],
       'availabilityThreshold': '',
@@ -3809,19 +3643,6 @@ describe('Tests for reports addview', () => {
       'unknownThreshold': '',
       'downtimeThreshold' : ''
     })
-  })
-
-  test('Test add group entities', async () => {
-    renderAddView()
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
-    })
-
-    const card_groups = within(screen.getByTestId('card-group-of-groups'));
-
-    const entity1 = card_groups.getAllByText(/search/i)[0]
-    const entity2 = card_groups.getAllByText(/search/i)[1]
 
     await selectEvent.select(entity1, 'Russia')
 
@@ -3837,10 +3658,12 @@ describe('Tests for reports addview', () => {
       'operationsProfile': '',
       'thresholdsProfile': '',
       'topologyType': '',
+      'groupsTags.0.name': 'scope',
+      'groupsTags.0.value': 'EGI',
+      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
+      'groupsExtensions.0.value': ['condor', 'eddie'],
       'entitiesGroups.0.value': 'Russia',
       'entitiesGroups.1.value': 'dirac-durham',
-      'entitiesEndpoints.0.value': '',
-      'entitiesEndpoints.1.value': '',
       'availabilityThreshold': '',
       'reliabilityThreshold': '',
       'uptimeThreshold': '',
@@ -3849,7 +3672,7 @@ describe('Tests for reports addview', () => {
     })
   })
 
-  test('Test add endpoint tags', async () => {
+  test('Test add endpoints', async () => {
     renderAddView()
 
     await waitFor(() => {
@@ -3857,6 +3680,9 @@ describe('Tests for reports addview', () => {
     })
 
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
+
+    const entity1 = card_endpoints.getAllByText(/search/i)[0]
+    const entity2 = card_endpoints.getAllByText(/search/i)[1]
 
     fireEvent.click(card_endpoints.getByText(/add new tag/i))
 
@@ -4145,16 +3971,6 @@ describe('Tests for reports addview', () => {
       'unknownThreshold': '',
       'downtimeThreshold' : ''
     })
-  })
-
-  test('Test add endpoint extensions', async () => {
-    renderAddView()
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
-    })
-
-    const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
 
     fireEvent.click(card_endpoints.getByText(/add new extension/i))
 
@@ -4162,7 +3978,7 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('infrastructure')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('monitored')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('production')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('scope')).not.toBeInTheDocument()
+    expect(card_endpoints.queryAllByText('scope')).toHaveLength(1)
     expect(card_endpoints.queryByText(/info_ext_/i)).not.toBeInTheDocument()
     expect(card_endpoints.queryByText(/info_/i)).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('ID')).not.toBeInTheDocument()
@@ -4177,7 +3993,7 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('infrastructure')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('monitored')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('production')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('scope')).not.toBeInTheDocument()
+    expect(card_endpoints.queryAllByText('scope')).toHaveLength(1)
     expect(card_endpoints.queryByText(/info_ext_/i)).not.toBeInTheDocument()
     expect(card_endpoints.queryByText(/info_/i)).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('ID')).not.toBeInTheDocument()
@@ -4189,10 +4005,10 @@ describe('Tests for reports addview', () => {
 
     expect(card_endpoints.queryByText('yes')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('no')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('EGI')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('EOSC-hub')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('EOSCCore')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('FedCloud')).not.toBeInTheDocument()
+    expect(card_endpoints.queryAllByText('EGI')).toHaveLength(1)
+    expect(card_endpoints.queryAllByText('EOSC-hub')).toHaveLength(1)
+    expect(card_endpoints.queryAllByText('EOSCCore')).toHaveLength(1)
+    expect(card_endpoints.queryAllByText('FedCloud')).toHaveLength(1)
     expect(card_endpoints.queryByText('1111G0')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('2222G0')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('3333G0')).not.toBeInTheDocument()
@@ -4222,10 +4038,10 @@ describe('Tests for reports addview', () => {
     selectEvent.openMenu(card_endpoints.queryByText(/select/i))
     expect(card_endpoints.queryByText('yes')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('no')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('EGI')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('EOSC-hub')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('EOSCCore')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('FedCloud')).not.toBeInTheDocument()
+    expect(card_endpoints.queryAllByText('EGI')).toHaveLength(1)
+    expect(card_endpoints.queryAllByText('EOSC-hub')).toHaveLength(1)
+    expect(card_endpoints.queryAllByText('EOSCCore')).toHaveLength(1)
+    expect(card_endpoints.queryAllByText('FedCloud')).toHaveLength(1)
     expect(card_endpoints.queryByText('1111G0')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('2222G0')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('3333G0')).not.toBeInTheDocument()
@@ -4261,6 +4077,8 @@ describe('Tests for reports addview', () => {
       'operationsProfile': '',
       'thresholdsProfile': '',
       'topologyType': '',
+      'endpointsTags.0.name': 'scope',
+      'endpointsTags.0.value': ['EOSCCore', 'EGI'],
       'endpointsExtensions.0.name': 'GLUE2EndpointID',
       'endpointsExtensions.0.value': '',
       'availabilityThreshold': '',
@@ -4282,6 +4100,8 @@ describe('Tests for reports addview', () => {
       'operationsProfile': '',
       'thresholdsProfile': '',
       'topologyType': '',
+      'endpointsTags.0.name': 'scope',
+      'endpointsTags.0.value': ['EOSCCore', 'EGI'],
       'endpointsExtensions.0.name': 'GLUE2EndpointID',
       'endpointsExtensions.0.value': 'ce1.gridpp.ecdf.ed.ac.uk',
       'availabilityThreshold': '',
@@ -4303,6 +4123,8 @@ describe('Tests for reports addview', () => {
       'operationsProfile': '',
       'thresholdsProfile': '',
       'topologyType': '',
+      'endpointsTags.0.name': 'scope',
+      'endpointsTags.0.value': ['EOSCCore', 'EGI'],
       'endpointsExtensions.0.name': 'GLUE2EndpointID',
       'endpointsExtensions.0.value': ['ce1.gridpp.ecdf.ed.ac.uk', 'svr009.gla.scotgrid.ac.uk'],
       'availabilityThreshold': '',
@@ -4318,7 +4140,7 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('infrastructure')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('monitored')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('production')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('scope')).not.toBeInTheDocument()
+    expect(card_endpoints.queryAllByText('scope')).toHaveLength(1)
     expect(card_endpoints.queryByText(/info_ext_/i)).not.toBeInTheDocument()
     expect(card_endpoints.queryByText(/info_/i)).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('ID')).not.toBeInTheDocument()
@@ -4333,7 +4155,7 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('infrastructure')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('monitored')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('production')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('scope')).not.toBeInTheDocument()
+    expect(card_endpoints.queryAllByText('scope')).toHaveLength(1)
     expect(card_endpoints.queryByText(/info_ext_/i)).not.toBeInTheDocument()
     expect(card_endpoints.queryByText(/info_/i)).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('ID')).not.toBeInTheDocument()
@@ -4355,6 +4177,8 @@ describe('Tests for reports addview', () => {
       'operationsProfile': '',
       'thresholdsProfile': '',
       'topologyType': '',
+      'endpointsTags.0.name': 'scope',
+      'endpointsTags.0.value': ['EOSCCore', 'EGI'],
       'endpointsExtensions.0.name': 'GLUE2EndpointID',
       'endpointsExtensions.0.value': ['ce1.gridpp.ecdf.ed.ac.uk', 'svr009.gla.scotgrid.ac.uk'],
       'endpointsExtensions.1.name': 'GLUE2EndpointImplementationName',
@@ -4368,10 +4192,10 @@ describe('Tests for reports addview', () => {
 
     expect(card_endpoints.queryByText('yes')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('no')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('EGI')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('EOSC-hub')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('EOSCCore')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('FedCloud')).not.toBeInTheDocument()
+    expect(card_endpoints.queryAllByText('EGI')).toHaveLength(1)
+    expect(card_endpoints.queryAllByText('EOSC-hub')).toHaveLength(1)
+    expect(card_endpoints.queryAllByText('EOSCCore')).toHaveLength(1)
+    expect(card_endpoints.queryAllByText('FedCloud')).toHaveLength(1)
     expect(card_endpoints.queryByText('1111G0')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('2222G0')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('3333G0')).not.toBeInTheDocument()
@@ -4397,10 +4221,10 @@ describe('Tests for reports addview', () => {
     selectEvent.openMenu(card_endpoints.getByText(/select/i))
     expect(card_endpoints.queryByText('yes')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('no')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('EGI')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('EOSC-hub')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('EOSCCore')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('FedCloud')).not.toBeInTheDocument()
+    expect(card_endpoints.queryAllByText('EGI')).toHaveLength(1)
+    expect(card_endpoints.queryAllByText('EOSC-hub')).toHaveLength(1)
+    expect(card_endpoints.queryAllByText('EOSCCore')).toHaveLength(1)
+    expect(card_endpoints.queryAllByText('FedCloud')).toHaveLength(1)
     expect(card_endpoints.queryByText('1111G0')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('2222G0')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('3333G0')).not.toBeInTheDocument()
@@ -4435,6 +4259,8 @@ describe('Tests for reports addview', () => {
       'operationsProfile': '',
       'thresholdsProfile': '',
       'topologyType': '',
+      'endpointsTags.0.name': 'scope',
+      'endpointsTags.0.value': ['EOSCCore', 'EGI'],
       'endpointsExtensions.0.name': 'GLUE2EndpointID',
       'endpointsExtensions.0.value': ['ce1.gridpp.ecdf.ed.ac.uk', 'svr009.gla.scotgrid.ac.uk'],
       'endpointsExtensions.1.name': 'GLUE2EndpointImplementationName',
@@ -4458,6 +4284,8 @@ describe('Tests for reports addview', () => {
       'operationsProfile': '',
       'thresholdsProfile': '',
       'topologyType': '',
+      'endpointsTags.0.name': 'scope',
+      'endpointsTags.0.value': ['EOSCCore', 'EGI'],
       'endpointsExtensions.0.name': 'GLUE2EndpointID',
       'endpointsExtensions.0.value': ['ce1.gridpp.ecdf.ed.ac.uk', 'svr009.gla.scotgrid.ac.uk'],
       'availabilityThreshold': '',
@@ -4466,19 +4294,6 @@ describe('Tests for reports addview', () => {
       'unknownThreshold': '',
       'downtimeThreshold' : ''
     })
-  })
-
-  test('Test add endpoint entities', async () => {
-    renderAddView()
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
-    })
-
-    const card_groups = within(screen.getByTestId('card-group-of-endpoints'));
-
-    const entity1 = card_groups.getAllByText(/search/i)[0]
-    const entity2 = card_groups.getAllByText(/search/i)[1]
 
     await selectEvent.select(entity1, 'IRISOPS-IAM')
     await selectEvent.select(entity2, 'egi.Portal')
@@ -4493,8 +4308,10 @@ describe('Tests for reports addview', () => {
       'operationsProfile': '',
       'thresholdsProfile': '',
       'topologyType': '',
-      'entitiesGroups.0.value': '',
-      'entitiesGroups.1.value': '',
+      'endpointsTags.0.name': 'scope',
+      'endpointsTags.0.value': ['EOSCCore', 'EGI'],
+      'endpointsExtensions.0.name': 'GLUE2EndpointID',
+      'endpointsExtensions.0.value': ['ce1.gridpp.ecdf.ed.ac.uk', 'svr009.gla.scotgrid.ac.uk'],
       'entitiesEndpoints.0.value': 'IRISOPS-IAM',
       'entitiesEndpoints.1.value': 'egi.Portal',
       'availabilityThreshold': '',
@@ -4505,7 +4322,7 @@ describe('Tests for reports addview', () => {
     })
   })
 
-  test('Test add availability threshold', async () => {
+  test('Test add thresholds', async () => {
     renderAddView();
 
     await waitFor(() => {
@@ -4513,113 +4330,9 @@ describe('Tests for reports addview', () => {
     })
 
     fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '70' } })
-
-    expect(screen.getByTestId('form')).toHaveFormValues({
-      'name': '',
-      'disabled': false,
-      'groupname': '',
-      'description': '',
-      'metricProfile': '',
-      'aggregationProfile': '',
-      'operationsProfile': '',
-      'thresholdsProfile': '',
-      'topologyType': '',
-      'availabilityThreshold': '70',
-      'reliabilityThreshold': '',
-      'uptimeThreshold': '',
-      'unknownThreshold': '',
-      'downtimeThreshold' : ''
-    })
-  })
-
-  test('Test add reliability threshold', async () => {
-    renderAddView();
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
-    })
-
     fireEvent.change(screen.getByLabelText(/reliability/i), { target: { value: '80' } })
-
-    expect(screen.getByTestId('form')).toHaveFormValues({
-      'name': '',
-      'disabled': false,
-      'groupname': '',
-      'description': '',
-      'metricProfile': '',
-      'aggregationProfile': '',
-      'operationsProfile': '',
-      'thresholdsProfile': '',
-      'topologyType': '',
-      'availabilityThreshold': '',
-      'reliabilityThreshold': '80',
-      'uptimeThreshold': '',
-      'unknownThreshold': '',
-      'downtimeThreshold' : ''
-    })
-  })
-
-  test('Test add uptime threshold', async () => {
-    renderAddView();
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
-    })
-
     fireEvent.change(screen.getByLabelText(/uptime/i), { target: { value: '0.8' } })
-
-    expect(screen.getByTestId('form')).toHaveFormValues({
-      'name': '',
-      'disabled': false,
-      'groupname': '',
-      'description': '',
-      'metricProfile': '',
-      'aggregationProfile': '',
-      'operationsProfile': '',
-      'thresholdsProfile': '',
-      'topologyType': '',
-      'availabilityThreshold': '',
-      'reliabilityThreshold': '',
-      'uptimeThreshold': '0.8',
-      'unknownThreshold': '',
-      'downtimeThreshold' : ''
-    })
-  })
-
-  test('Test add unknown threshold', async () => {
-    renderAddView();
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
-    })
-
     fireEvent.change(screen.getByLabelText(/unknown/i), { target: { value: '0.8' } })
-
-    expect(screen.getByTestId('form')).toHaveFormValues({
-      'name': '',
-      'disabled': false,
-      'groupname': '',
-      'description': '',
-      'metricProfile': '',
-      'aggregationProfile': '',
-      'operationsProfile': '',
-      'thresholdsProfile': '',
-      'topologyType': '',
-      'availabilityThreshold': '',
-      'reliabilityThreshold': '',
-      'uptimeThreshold': '',
-      'unknownThreshold': '0.8',
-      'downtimeThreshold' : ''
-    })
-  })
-
-  test('Test add downtime threshold', async () => {
-    renderAddView();
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
-    })
-
     fireEvent.change(screen.getByLabelText(/downtime/i), { target: { value: '0.8' } })
 
     expect(screen.getByTestId('form')).toHaveFormValues({
@@ -4632,10 +4345,10 @@ describe('Tests for reports addview', () => {
       'operationsProfile': '',
       'thresholdsProfile': '',
       'topologyType': '',
-      'availabilityThreshold': '',
-      'reliabilityThreshold': '',
-      'uptimeThreshold': '',
-      'unknownThreshold': '',
+      'availabilityThreshold': '70',
+      'reliabilityThreshold': '80',
+      'uptimeThreshold': '0.8',
+      'unknownThreshold': '0.8',
       'downtimeThreshold' : '0.8'
     })
   })
