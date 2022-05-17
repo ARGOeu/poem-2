@@ -1423,7 +1423,7 @@ describe('Tests for reports changeview', () => {
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
   })
 
-  test('Test change report name', async () => {
+  test('Test change basic information', async () => {
     mockChangeObject.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
     )
@@ -1438,12 +1438,15 @@ describe('Tests for reports changeview', () => {
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'new-report-name' } })
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'Some new description' } })
+
+    await selectEvent.select(screen.getByText('ARGO'), 'TEST')
 
     expect(screen.getByTestId('form')).toHaveFormValues({
       'name': 'new-report-name',
       'disabled': false,
-      'groupname': 'ARGO',
-      'description': 'Critical report',
+      'groupname': 'TEST',
+      'description': 'Some new description',
       'metricProfile': 'ARGO_MON_CRITICAL',
       'aggregationProfile': 'critical',
       'operationsProfile': 'egi_ops',
@@ -1483,7 +1486,10 @@ describe('Tests for reports changeview', () => {
     let frontendReport = JSON.parse(JSON.stringify(report4sending))
     let backendReport = JSON.parse(JSON.stringify(backendReport4sending))
     frontendReport.info.name = 'new-report-name'
+    frontendReport.info.description = 'Some new description'
     backendReport.name = 'new-report-name'
+    backendReport.groupname = 'TEST'
+    backendReport.description = 'Some new description'
     await waitFor(() => {
       expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
     })
@@ -1575,159 +1581,7 @@ describe('Tests for reports changeview', () => {
     )
   })
 
-  test('Test change groupname', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-    mockChangeReport.mockReturnValueOnce(
-      Promise.resolve({ ok: 'ok' })
-    )
-
-    renderChangeView()
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
-    })
-
-    await selectEvent.select(screen.getByText('ARGO'), 'TEST')
-
-    expect(screen.getByTestId('form')).toHaveFormValues({
-      'name': 'Critical',
-      'disabled': false,
-      'groupname': 'TEST',
-      'description': 'Critical report',
-      'metricProfile': 'ARGO_MON_CRITICAL',
-      'aggregationProfile': 'critical',
-      'operationsProfile': 'egi_ops',
-      'thresholdsProfile': '',
-      'topologyType': 'Sites',
-      'groupsTags.0.name': 'certification',
-      'groupsTags.0.value': 'Certified',
-      'groupsTags.1.name': 'infrastructure',
-      'groupsTags.1.value': 'Production',
-      'groupsTags.2.name': 'scope',
-      'groupsTags.2.value': 'EGI',
-      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
-      'groupsExtensions.0.value': 'condor',
-      'entitiesGroups.0.value': 'iris.ac.uk',
-      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
-      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
-      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
-      'endpointsTags.0.name': 'production',
-      'endpointsTags.0.value': 'yes',
-      'endpointsTags.1.name': 'monitored',
-      'endpointsTags.1.value': 'yes',
-      'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI',
-      'availabilityThreshold': '80',
-      'reliabilityThreshold': '85',
-      'uptimeThreshold': '0.8',
-      'unknownThreshold': '0.1',
-      'downtimeThreshold' : '0.1'
-    })
-
-    fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    await waitFor(() => {
-      expect(mockChangeReport).toHaveBeenCalledWith(report4sending)
-    })
-
-    let backendReport = JSON.parse(JSON.stringify(backendReport4sending))
-    backendReport.groupname = 'TEST'
-    await waitFor(() => {
-      expect(mockChangeObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', backendReport
-      )
-    })
-
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report')
-    expect(NotificationManager.success).toHaveBeenCalledWith(
-      'Report successfully changed', 'Changed', 2000
-    )
-  })
-
-  test('Test change description', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-    mockChangeReport.mockReturnValueOnce(
-      Promise.resolve({ ok: 'ok' })
-    )
-
-    renderChangeView()
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
-    })
-
-    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'Some new description' } })
-
-    expect(screen.getByTestId('form')).toHaveFormValues({
-      'name': 'Critical',
-      'disabled': false,
-      'groupname': 'ARGO',
-      'description': 'Some new description',
-      'metricProfile': 'ARGO_MON_CRITICAL',
-      'aggregationProfile': 'critical',
-      'operationsProfile': 'egi_ops',
-      'thresholdsProfile': '',
-      'topologyType': 'Sites',
-      'groupsTags.0.name': 'certification',
-      'groupsTags.0.value': 'Certified',
-      'groupsTags.1.name': 'infrastructure',
-      'groupsTags.1.value': 'Production',
-      'groupsTags.2.name': 'scope',
-      'groupsTags.2.value': 'EGI',
-      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
-      'groupsExtensions.0.value': 'condor',
-      'entitiesGroups.0.value': 'iris.ac.uk',
-      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
-      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
-      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
-      'endpointsTags.0.name': 'production',
-      'endpointsTags.0.value': 'yes',
-      'endpointsTags.1.name': 'monitored',
-      'endpointsTags.1.value': 'yes',
-      'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI',
-      'availabilityThreshold': '80',
-      'reliabilityThreshold': '85',
-      'uptimeThreshold': '0.8',
-      'unknownThreshold': '0.1',
-      'downtimeThreshold' : '0.1'
-    })
-
-    fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    let frontendReport = JSON.parse(JSON.stringify(report4sending))
-    frontendReport.info.description = 'Some new description'
-    await waitFor(() => {
-      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
-    })
-
-    let backendReport = JSON.parse(JSON.stringify(backendReport4sending))
-    backendReport.description = 'Some new description'
-    await waitFor(() => {
-      expect(mockChangeObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', backendReport
-      )
-    })
-
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report')
-    expect(NotificationManager.success).toHaveBeenCalledWith(
-      'Report successfully changed', 'Changed', 2000
-    )
-  })
-
-  test('Test change metric profile', async () => {
+  test('Test change profiles info', async () => {
     mockChangeObject.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
     )
@@ -1743,15 +1597,19 @@ describe('Tests for reports changeview', () => {
 
     await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'OPS_MONITOR_RHEL7')
 
+    await selectEvent.select(screen.getByText('critical'), 'ops-mon-critical')
+
+    await selectEvent.select(screen.getAllByText(/select/i)[0], 'test-thresholds')
+
     expect(screen.getByTestId('form')).toHaveFormValues({
       'name': 'Critical',
       'disabled': false,
       'groupname': 'ARGO',
       'description': 'Critical report',
       'metricProfile': 'OPS_MONITOR_RHEL7',
-      'aggregationProfile': 'critical',
+      'aggregationProfile': 'ops-mon-critical',
       'operationsProfile': 'egi_ops',
-      'thresholdsProfile': '',
+      'thresholdsProfile': 'test-thresholds',
       'topologyType': 'Sites',
       'groupsTags.0.name': 'certification',
       'groupsTags.0.value': 'Certified',
@@ -1790,161 +1648,12 @@ describe('Tests for reports changeview', () => {
         profile.id = 'il8aimoh-r2ov-05aq-z4l2-uko2moophi9s'
         profile.name = 'OPS_MONITOR_RHEL7'
       }
-    })
-    await waitFor(() => {
-      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
-    })
-
-    await waitFor(() => {
-      expect(mockChangeObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', backendReport4sending
-      )
-    })
-
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report')
-    expect(NotificationManager.success).toHaveBeenCalledWith(
-      'Report successfully changed', 'Changed', 2000
-    )
-  })
-
-  test('Test change aggregation profile', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-    mockChangeReport.mockReturnValueOnce(
-      Promise.resolve({ ok: 'ok' })
-    )
-
-    renderChangeView()
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
-    })
-
-    await selectEvent.select(screen.getByText('critical'), 'ops-mon-critical')
-
-    expect(screen.getByTestId('form')).toHaveFormValues({
-      'name': 'Critical',
-      'disabled': false,
-      'groupname': 'ARGO',
-      'description': 'Critical report',
-      'metricProfile': 'ARGO_MON_CRITICAL',
-      'aggregationProfile': 'ops-mon-critical',
-      'operationsProfile': 'egi_ops',
-      'thresholdsProfile': '',
-      'topologyType': 'Sites',
-      'groupsTags.0.name': 'certification',
-      'groupsTags.0.value': 'Certified',
-      'groupsTags.1.name': 'infrastructure',
-      'groupsTags.1.value': 'Production',
-      'groupsTags.2.name': 'scope',
-      'groupsTags.2.value': 'EGI',
-      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
-      'groupsExtensions.0.value': 'condor',
-      'entitiesGroups.0.value': 'iris.ac.uk',
-      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
-      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
-      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
-      'endpointsTags.0.name': 'production',
-      'endpointsTags.0.value': 'yes',
-      'endpointsTags.1.name': 'monitored',
-      'endpointsTags.1.value': 'yes',
-      'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI',
-      'availabilityThreshold': '80',
-      'reliabilityThreshold': '85',
-      'uptimeThreshold': '0.8',
-      'unknownThreshold': '0.1',
-      'downtimeThreshold' : '0.1'
-    })
-
-    fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    let frontendReport = JSON.parse(JSON.stringify(report4sending))
-    frontendReport.profiles.forEach(profile => {
       if (profile.type === 'aggregation') {
         profile.id = 'ye3ioph5-1ryg-k4ea-e6eb-nei6zoupain2'
         profile.name = 'ops-mon-critical'
       }
     })
-    await waitFor(() => {
-      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
-    })
 
-    await waitFor(() => {
-      expect(mockChangeObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', backendReport4sending
-      )
-    })
-
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report')
-    expect(NotificationManager.success).toHaveBeenCalledWith(
-      'Report successfully changed', 'Changed', 2000
-    )
-  })
-
-  test('Test change thresholds profile', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-    mockChangeReport.mockReturnValueOnce(
-      Promise.resolve({ ok: 'ok' })
-    )
-
-    renderChangeView()
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
-    })
-
-    await selectEvent.select(screen.getAllByText(/select/i)[0], 'test-thresholds')
-
-    expect(screen.getByTestId('form')).toHaveFormValues({
-      'name': 'Critical',
-      'disabled': false,
-      'groupname': 'ARGO',
-      'description': 'Critical report',
-      'metricProfile': 'ARGO_MON_CRITICAL',
-      'aggregationProfile': 'critical',
-      'operationsProfile': 'egi_ops',
-      'thresholdsProfile': 'test-thresholds',
-      'topologyType': 'Sites',
-      'groupsTags.0.name': 'certification',
-      'groupsTags.0.value': 'Certified',
-      'groupsTags.1.name': 'infrastructure',
-      'groupsTags.1.value': 'Production',
-      'groupsTags.2.name': 'scope',
-      'groupsTags.2.value': 'EGI',
-      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
-      'groupsExtensions.0.value': 'condor',
-      'entitiesGroups.0.value': 'iris.ac.uk',
-      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
-      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
-      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
-      'endpointsTags.0.name': 'production',
-      'endpointsTags.0.value': 'yes',
-      'endpointsTags.1.name': 'monitored',
-      'endpointsTags.1.value': 'yes',
-      'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI',
-      'availabilityThreshold': '80',
-      'reliabilityThreshold': '85',
-      'uptimeThreshold': '0.8',
-      'unknownThreshold': '0.1',
-      'downtimeThreshold' : '0.1'
-    })
-
-    fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    let frontendReport = JSON.parse(JSON.stringify(report4sending))
     frontendReport.profiles.push({
       id: 'aH9se5aJ-MP2e-3oIF-GQU2-ShoobeeK3ohs',
       name: 'test-thresholds',
@@ -2060,7 +1769,7 @@ describe('Tests for reports changeview', () => {
     )
   })
 
-  test('Test change groups tags', async () => {
+  test('Test change groups', async () => {
     mockChangeObject.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
     )
@@ -2085,6 +1794,19 @@ describe('Tests for reports changeview', () => {
     await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'monitored')
     await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'yes')
 
+    await selectEvent.select(card_groups.getByText('condor'), 'eddie')
+
+    fireEvent.click(card_groups.getByText(/add new extension/i))
+
+    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'GLUE2EndpointImplementationName')
+    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'ARC-CE')
+
+    const entity1 = card_groups.getByText('iris.ac.uk')
+    const entity2 = card_groups.getByText(/dirac/i)
+
+    await selectEvent.select(entity1, 'Russia')
+    await selectEvent.select(entity2, 'RU-SARFTI')
+
     expect(screen.getByTestId('form')).toHaveFormValues({
       'name': 'Critical',
       'disabled': false,
@@ -2102,9 +1824,11 @@ describe('Tests for reports changeview', () => {
       'groupsTags.2.name': 'monitored',
       'groupsTags.2.value': 'yes',
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
-      'groupsExtensions.0.value': 'condor',
-      'entitiesGroups.0.value': 'iris.ac.uk',
-      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'groupsExtensions.0.value': ['condor', 'eddie'],
+      'groupsExtensions.1.name': 'GLUE2EndpointImplementationName',
+      'groupsExtensions.1.value': 'ARC-CE',
+      'entitiesGroups.0.value':['iris.ac.uk', 'Russia'],
+      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM', 'RU-SARFTI'],
       'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
       'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
       'endpointsTags.0.name': 'production',
@@ -2140,221 +1864,26 @@ describe('Tests for reports changeview', () => {
         context: 'argo.group.filter.tags'
       }
     )
-
-    await waitFor(() => {
-      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
-    })
-
-    await waitFor(() => {
-      expect(mockChangeObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', backendReport4sending
-      )
-    })
-
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report')
-    expect(NotificationManager.success).toHaveBeenCalledWith(
-      'Report successfully changed', 'Changed', 2000
-    )
-  })
-
-  test('Test change group extensions', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-    mockChangeReport.mockReturnValueOnce(
-      Promise.resolve({ ok: 'ok' })
-    )
-
-    renderChangeView()
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
-    })
-
-    const card_groups = within(screen.getByTestId('card-group-of-groups'));
-
-    await selectEvent.select(card_groups.getByText('condor'), 'eddie')
-
-    fireEvent.click(card_groups.getByText(/add new extension/i))
-
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'GLUE2EndpointImplementationName')
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'ARC-CE')
-
-    expect(screen.getByTestId('form')).toHaveFormValues({
-      'name': 'Critical',
-      'disabled': false,
-      'groupname': 'ARGO',
-      'description': 'Critical report',
-      'metricProfile': 'ARGO_MON_CRITICAL',
-      'aggregationProfile': 'critical',
-      'operationsProfile': 'egi_ops',
-      'thresholdsProfile': '',
-      'topologyType': 'Sites',
-      'groupsTags.0.name': 'certification',
-      'groupsTags.0.value': 'Certified',
-      'groupsTags.1.name': 'infrastructure',
-      'groupsTags.1.value': 'Production',
-      'groupsTags.2.name': 'scope',
-      'groupsTags.2.value': 'EGI',
-      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
-      'groupsExtensions.0.value': ['condor', 'eddie'],
-      'groupsExtensions.1.name': 'GLUE2EndpointImplementationName',
-      'groupsExtensions.1.value': 'ARC-CE',
-      'entitiesGroups.0.value': 'iris.ac.uk',
-      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
-      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
-      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
-      'endpointsTags.0.name': 'production',
-      'endpointsTags.0.value': 'yes',
-      'endpointsTags.1.name': 'monitored',
-      'endpointsTags.1.value': 'yes',
-      'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI',
-      'availabilityThreshold': '80',
-      'reliabilityThreshold': '85',
-      'uptimeThreshold': '0.8',
-      'unknownThreshold': '0.1',
-      'downtimeThreshold' : '0.1'
-    })
-
-    fireEvent.click(card_groups.getByTestId('removeExtension-0'))
-
-    expect(screen.getByTestId('form')).toHaveFormValues({
-      'name': 'Critical',
-      'disabled': false,
-      'groupname': 'ARGO',
-      'description': 'Critical report',
-      'metricProfile': 'ARGO_MON_CRITICAL',
-      'aggregationProfile': 'critical',
-      'operationsProfile': 'egi_ops',
-      'thresholdsProfile': '',
-      'topologyType': 'Sites',
-      'groupsTags.0.name': 'certification',
-      'groupsTags.0.value': 'Certified',
-      'groupsTags.1.name': 'infrastructure',
-      'groupsTags.1.value': 'Production',
-      'groupsTags.2.name': 'scope',
-      'groupsTags.2.value': 'EGI',
-      'groupsExtensions.0.name': 'GLUE2EndpointImplementationName',
-      'groupsExtensions.0.value': 'ARC-CE',
-      'entitiesGroups.0.value': 'iris.ac.uk',
-      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
-      'endpointsTags.0.name': 'production',
-      'endpointsTags.0.value': 'yes',
-      'endpointsTags.1.name': 'monitored',
-      'endpointsTags.1.value': 'yes',
-      'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI',
-      'availabilityThreshold': '80',
-      'reliabilityThreshold': '85',
-      'uptimeThreshold': '0.8',
-      'unknownThreshold': '0.1',
-      'downtimeThreshold' : '0.1'
-    })
-
-    fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    let frontendReport = JSON.parse(JSON.stringify(report4sending))
     frontendReport.filter_tags[3] = {
+      name: 'info_ext_GLUE2ComputingShareMappingQueue',
+      value: 'condor, eddie',
+      context: 'argo.group.filter.tags.array'
+    }
+    frontendReport.filter_tags.splice(4, 0, {
       name: 'info_ext_GLUE2EndpointImplementationName',
       value: 'ARC-CE',
       context: 'argo.group.filter.tags.array'
-    }
-
-    await waitFor(() => {
-      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
     })
-
-    await waitFor(() => {
-      expect(mockChangeObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', backendReport4sending
-      )
-    })
-
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report')
-    expect(NotificationManager.success).toHaveBeenCalledWith(
-      'Report successfully changed', 'Changed', 2000
-    )
-  })
-
-  test('Test change group entities', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-    mockChangeReport.mockReturnValueOnce(
-      Promise.resolve({ ok: 'ok' })
-    )
-
-    renderChangeView()
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
-    })
-
-    const card_groups = within(screen.getByTestId('card-group-of-groups'));
-    const entity1 = card_groups.getByText('iris.ac.uk')
-    const entity2 = card_groups.getByText(/dirac/i)
-
-    await selectEvent.select(entity1, 'Russia')
-    await selectEvent.select(entity2, 'RU-SARFTI')
-
-    expect(screen.getByTestId('form')).toHaveFormValues({
-      'name': 'Critical',
-      'disabled': false,
-      'groupname': 'ARGO',
-      'description': 'Critical report',
-      'metricProfile': 'ARGO_MON_CRITICAL',
-      'aggregationProfile': 'critical',
-      'operationsProfile': 'egi_ops',
-      'thresholdsProfile': '',
-      'topologyType': 'Sites',
-      'groupsTags.0.name': 'certification',
-      'groupsTags.0.value': 'Certified',
-      'groupsTags.1.name': 'infrastructure',
-      'groupsTags.1.value': 'Production',
-      'groupsTags.2.name': 'scope',
-      'groupsTags.2.value': 'EGI',
-      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
-      'groupsExtensions.0.value': 'condor',
-      'entitiesGroups.0.value': ['iris.ac.uk', 'Russia'],
-      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM', 'RU-SARFTI'],
-      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
-      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
-      'endpointsTags.0.name': 'production',
-      'endpointsTags.0.value': 'yes',
-      'endpointsTags.1.name': 'monitored',
-      'endpointsTags.1.value': 'yes',
-      'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI',
-      'availabilityThreshold': '80',
-      'reliabilityThreshold': '85',
-      'uptimeThreshold': '0.8',
-      'unknownThreshold': '0.1',
-      'downtimeThreshold' : '0.1'
-    })
-
-    fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    let frontendReport = JSON.parse(JSON.stringify(report4sending))
-    frontendReport.filter_tags.splice(8, 0, {
+    frontendReport.filter_tags.splice(9, 0, {
       name: 'group',
       value: 'Russia',
       context: 'argo.group.filter.fields'
     })
-    frontendReport.filter_tags.splice(11, 0, {
-        name: 'subgroup',
-        value: 'RU-SARFTI',
-        context: 'argo.group.filter.fields'
-      }
-    )
+    frontendReport.filter_tags.splice(12, 0, {
+      name: 'subgroup',
+      value: 'RU-SARFTI',
+      context: 'argo.group.filter.fields'
+    })
 
     await waitFor(() => {
       expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
@@ -2372,7 +1901,7 @@ describe('Tests for reports changeview', () => {
     )
   })
 
-  test('Test change endpoint tags', async () => {
+  test('Test change endpoints', async () => {
     mockChangeObject.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
     )
@@ -2398,81 +1927,6 @@ describe('Tests for reports changeview', () => {
     await selectEvent.select(endpoint_groups.getAllByText(/select/i)[0], 'monitored')
     await selectEvent.select(endpoint_groups.getAllByText(/select/i)[0], 'yes')
 
-    expect(screen.getByTestId('form')).toHaveFormValues({
-      'name': 'Critical',
-      'disabled': false,
-      'groupname': 'ARGO',
-      'description': 'Critical report',
-      'metricProfile': 'ARGO_MON_CRITICAL',
-      'aggregationProfile': 'critical',
-      'operationsProfile': 'egi_ops',
-      'thresholdsProfile': '',
-      'topologyType': 'Sites',
-      'groupsTags.0.name': 'certification',
-      'groupsTags.0.value': 'Certified',
-      'groupsTags.1.name': 'infrastructure',
-      'groupsTags.1.value': 'Production',
-      'groupsTags.2.name': 'scope',
-      'groupsTags.2.value': 'EGI',
-      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
-      'groupsExtensions.0.value': 'condor',
-      'entitiesGroups.0.value': 'iris.ac.uk',
-      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
-      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
-      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
-      'endpointsTags.0.name': 'production',
-      'endpointsTags.0.value': 'no',
-      'endpointsTags.1.name': 'monitored',
-      'endpointsTags.1.value': 'yes',
-      'availabilityThreshold': '80',
-      'reliabilityThreshold': '85',
-      'uptimeThreshold': '0.8',
-      'unknownThreshold': '0.1',
-      'downtimeThreshold' : '0.1'
-    })
-
-    fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    let frontendReport = JSON.parse(JSON.stringify(report4sending))
-    frontendReport.filter_tags[4].value = '0'
-    frontendReport.filter_tags.splice(6, 1)
-
-    await waitFor(() => {
-      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
-    })
-
-    await waitFor(() => {
-      expect(mockChangeObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', backendReport4sending
-      )
-    })
-
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report')
-    expect(NotificationManager.success).toHaveBeenCalledWith(
-      'Report successfully changed', 'Changed', 2000
-    )
-  })
-
-  test('Test change endpoint extensions', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-    mockChangeReport.mockReturnValueOnce(
-      Promise.resolve({ ok: 'ok' })
-    )
-
-    renderChangeView()
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
-    })
-
-    const endpoint_groups = within(screen.getByTestId('card-group-of-endpoints'));
-
     fireEvent.click(endpoint_groups.getByText(/add new extension/i))
 
     await selectEvent.select(endpoint_groups.getAllByText(/select/i)[0], 'GLUE2EndpointID')
@@ -2484,6 +1938,12 @@ describe('Tests for reports changeview', () => {
     await selectEvent.select(endpoint_groups.getAllByText(/select/i)[0], 'GLUE2EndpointImplementationName')
     await selectEvent.select(endpoint_groups.getAllByText(/select/i)[0], 'ARC-CE')
 
+    const entity1 = endpoint_groups.getByText('IRISOPS-IAM')
+    const entity2 = endpoint_groups.getByText('Top-BDII')
+
+    await selectEvent.select(entity1, 'fedcloud.srce.hr')
+    await selectEvent.select(entity2, 'eu.egi.cloud.accounting')
+
     expect(screen.getByTestId('form')).toHaveFormValues({
       'name': 'Critical',
       'disabled': false,
@@ -2504,14 +1964,12 @@ describe('Tests for reports changeview', () => {
       'groupsExtensions.0.value': 'condor',
       'entitiesGroups.0.value': 'iris.ac.uk',
       'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
-      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
-      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM', 'fedcloud.srce.hr'],
+      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII', 'eu.egi.cloud.accounting'],
       'endpointsTags.0.name': 'production',
-      'endpointsTags.0.value': 'yes',
+      'endpointsTags.0.value': 'no',
       'endpointsTags.1.name': 'monitored',
       'endpointsTags.1.value': 'yes',
-      'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI',
       'endpointsExtensions.0.name': 'GLUE2EndpointID',
       'endpointsExtensions.0.value': ['ce1.gridpp.ecdf.ed.ac.uk', 'svr009.gla.scotgrid.ac.uk'],
       'endpointsExtensions.1.name': 'GLUE2EndpointImplementationName',
@@ -2545,12 +2003,12 @@ describe('Tests for reports changeview', () => {
       'groupsExtensions.0.value': 'condor',
       'entitiesGroups.0.value': 'iris.ac.uk',
       'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM', 'fedcloud.srce.hr'],
+      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII', 'eu.egi.cloud.accounting'],
       'endpointsTags.0.name': 'production',
-      'endpointsTags.0.value': 'yes',
+      'endpointsTags.0.value': 'no',
       'endpointsTags.1.name': 'monitored',
       'endpointsTags.1.value': 'yes',
-      'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI',
       'endpointsExtensions.0.name': 'GLUE2EndpointImplementationName',
       'endpointsExtensions.0.value': 'ARC-CE',
       'availabilityThreshold': '80',
@@ -2567,92 +2025,13 @@ describe('Tests for reports changeview', () => {
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
     let frontendReport = JSON.parse(JSON.stringify(report4sending))
-    frontendReport.filter_tags.splice(7, 0, {
+    frontendReport.filter_tags[4].value = '0'
+    frontendReport.filter_tags.splice(6, 1)
+    frontendReport.filter_tags.splice(6, 0, {
       name: 'info_ext_GLUE2EndpointImplementationName',
       value: 'ARC-CE',
       context: 'argo.endpoint.filter.tags.array'
     })
-
-    await waitFor(() => {
-      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
-    })
-
-    await waitFor(() => {
-      expect(mockChangeObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', backendReport4sending
-      )
-    })
-
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report')
-    expect(NotificationManager.success).toHaveBeenCalledWith(
-      'Report successfully changed', 'Changed', 2000
-    )
-  })
-
-  test('Test change endpoint entities', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-    mockChangeReport.mockReturnValueOnce(
-      Promise.resolve({ ok: 'ok' })
-    )
-
-    renderChangeView()
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
-    })
-
-    const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
-
-    const entity1 = card_endpoints.getByText('IRISOPS-IAM')
-    const entity2 = card_endpoints.getByText('Top-BDII')
-
-    await selectEvent.select(entity1, 'fedcloud.srce.hr')
-    await selectEvent.select(entity2, 'eu.egi.cloud.accounting')
-
-    expect(screen.getByTestId('form')).toHaveFormValues({
-      'name': 'Critical',
-      'disabled': false,
-      'groupname': 'ARGO',
-      'description': 'Critical report',
-      'metricProfile': 'ARGO_MON_CRITICAL',
-      'aggregationProfile': 'critical',
-      'operationsProfile': 'egi_ops',
-      'thresholdsProfile': '',
-      'topologyType': 'Sites',
-      'groupsTags.0.name': 'certification',
-      'groupsTags.0.value': 'Certified',
-      'groupsTags.1.name': 'infrastructure',
-      'groupsTags.1.value': 'Production',
-      'groupsTags.2.name': 'scope',
-      'groupsTags.2.value': 'EGI',
-      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
-      'groupsExtensions.0.value': 'condor',
-      'entitiesGroups.0.value': 'iris.ac.uk',
-      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
-      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM', 'fedcloud.srce.hr'],
-      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII', 'eu.egi.cloud.accounting'],
-      'endpointsTags.0.name': 'production',
-      'endpointsTags.0.value': 'yes',
-      'endpointsTags.1.name': 'monitored',
-      'endpointsTags.1.value': 'yes',
-      'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI',
-      'availabilityThreshold': '80',
-      'reliabilityThreshold': '85',
-      'uptimeThreshold': '0.8',
-      'unknownThreshold': '0.1',
-      'downtimeThreshold' : '0.1'
-    })
-
-    fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    let frontendReport = JSON.parse(JSON.stringify(report4sending))
     frontendReport.filter_tags.splice(12, 0, {
       context: 'argo.endpoint.filter.fields',
       name: 'group',
@@ -2680,7 +2059,7 @@ describe('Tests for reports changeview', () => {
     )
   })
 
-  test('Test change availability threshold', async () => {
+  test('Test change thresholds', async () => {
     mockChangeObject.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
     )
@@ -2695,309 +2074,9 @@ describe('Tests for reports changeview', () => {
     })
 
     fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '70' } })
-
-    expect(screen.getByTestId('form')).toHaveFormValues({
-      'name': 'Critical',
-      'disabled': false,
-      'groupname': 'ARGO',
-      'description': 'Critical report',
-      'metricProfile': 'ARGO_MON_CRITICAL',
-      'aggregationProfile': 'critical',
-      'operationsProfile': 'egi_ops',
-      'thresholdsProfile': '',
-      'topologyType': 'Sites',
-      'groupsTags.0.name': 'certification',
-      'groupsTags.0.value': 'Certified',
-      'groupsTags.1.name': 'infrastructure',
-      'groupsTags.1.value': 'Production',
-      'groupsTags.2.name': 'scope',
-      'groupsTags.2.value': 'EGI',
-      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
-      'groupsExtensions.0.value': 'condor',
-      'entitiesGroups.0.value': 'iris.ac.uk',
-      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
-      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
-      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
-      'endpointsTags.0.name': 'production',
-      'endpointsTags.0.value': 'yes',
-      'endpointsTags.1.name': 'monitored',
-      'endpointsTags.1.value': 'yes',
-      'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI',
-      'availabilityThreshold': '70',
-      'reliabilityThreshold': '85',
-      'uptimeThreshold': '0.8',
-      'unknownThreshold': '0.1',
-      'downtimeThreshold' : '0.1'
-    })
-
-    fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    let frontendReport = JSON.parse(JSON.stringify(report4sending))
-    frontendReport.thresholds.availability = 70
-
-    await waitFor(() => {
-      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
-    })
-
-    await waitFor(() => {
-      expect(mockChangeObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', backendReport4sending
-      )
-    })
-
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report')
-    expect(NotificationManager.success).toHaveBeenCalledWith(
-      'Report successfully changed', 'Changed', 2000
-    )
-  })
-
-  test('Test change reliability threshold', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-    mockChangeReport.mockReturnValueOnce(
-      Promise.resolve({ ok: 'ok' })
-    )
-
-    renderChangeView()
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
-    })
-
     fireEvent.change(screen.getByLabelText(/reliability/i), { target: { value: '90' } })
-
-    expect(screen.getByTestId('form')).toHaveFormValues({
-      'name': 'Critical',
-      'disabled': false,
-      'groupname': 'ARGO',
-      'description': 'Critical report',
-      'metricProfile': 'ARGO_MON_CRITICAL',
-      'aggregationProfile': 'critical',
-      'operationsProfile': 'egi_ops',
-      'thresholdsProfile': '',
-      'topologyType': 'Sites',
-      'groupsTags.0.name': 'certification',
-      'groupsTags.0.value': 'Certified',
-      'groupsTags.1.name': 'infrastructure',
-      'groupsTags.1.value': 'Production',
-      'groupsTags.2.name': 'scope',
-      'groupsTags.2.value': 'EGI',
-      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
-      'groupsExtensions.0.value': 'condor',
-      'entitiesGroups.0.value': 'iris.ac.uk',
-      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
-      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
-      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
-      'endpointsTags.0.name': 'production',
-      'endpointsTags.0.value': 'yes',
-      'endpointsTags.1.name': 'monitored',
-      'endpointsTags.1.value': 'yes',
-      'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI',
-      'availabilityThreshold': '80',
-      'reliabilityThreshold': '90',
-      'uptimeThreshold': '0.8',
-      'unknownThreshold': '0.1',
-      'downtimeThreshold' : '0.1'
-    })
-
-    fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    let frontendReport = JSON.parse(JSON.stringify(report4sending))
-    frontendReport.thresholds.reliability = 90
-
-    await waitFor(() => {
-      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
-    })
-
-    await waitFor(() => {
-      expect(mockChangeObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', backendReport4sending
-      )
-    })
-
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report')
-    expect(NotificationManager.success).toHaveBeenCalledWith(
-      'Report successfully changed', 'Changed', 2000
-    )
-  })
-
-  test('Test change uptime threshold', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-    mockChangeReport.mockReturnValueOnce(
-      Promise.resolve({ ok: 'ok' })
-    )
-
-    renderChangeView()
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
-    })
-
     fireEvent.change(screen.getByLabelText(/uptime/i), { target: { value: '1.0' } })
-
-    expect(screen.getByTestId('form')).toHaveFormValues({
-      'name': 'Critical',
-      'disabled': false,
-      'groupname': 'ARGO',
-      'description': 'Critical report',
-      'metricProfile': 'ARGO_MON_CRITICAL',
-      'aggregationProfile': 'critical',
-      'operationsProfile': 'egi_ops',
-      'thresholdsProfile': '',
-      'topologyType': 'Sites',
-      'groupsTags.0.name': 'certification',
-      'groupsTags.0.value': 'Certified',
-      'groupsTags.1.name': 'infrastructure',
-      'groupsTags.1.value': 'Production',
-      'groupsTags.2.name': 'scope',
-      'groupsTags.2.value': 'EGI',
-      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
-      'groupsExtensions.0.value': 'condor',
-      'entitiesGroups.0.value': 'iris.ac.uk',
-      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
-      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
-      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
-      'endpointsTags.0.name': 'production',
-      'endpointsTags.0.value': 'yes',
-      'endpointsTags.1.name': 'monitored',
-      'endpointsTags.1.value': 'yes',
-      'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI',
-      'availabilityThreshold': '80',
-      'reliabilityThreshold': '85',
-      'uptimeThreshold': '1.0',
-      'unknownThreshold': '0.1',
-      'downtimeThreshold' : '0.1'
-    })
-
-    fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    let frontendReport = JSON.parse(JSON.stringify(report4sending))
-    frontendReport.thresholds.uptime = 1.0
-
-    await waitFor(() => {
-      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
-    })
-
-    await waitFor(() => {
-      expect(mockChangeObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', backendReport4sending
-      )
-    })
-
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report')
-    expect(NotificationManager.success).toHaveBeenCalledWith(
-      'Report successfully changed', 'Changed', 2000
-    )
-  })
-
-  test('Test change unknown threshold', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-    mockChangeReport.mockReturnValueOnce(
-      Promise.resolve({ ok: 'ok' })
-    )
-
-    renderChangeView()
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
-    })
-
     fireEvent.change(screen.getByLabelText(/unknown/i), { target: { value: '0.2' } })
-
-    expect(screen.getByTestId('form')).toHaveFormValues({
-      'name': 'Critical',
-      'disabled': false,
-      'groupname': 'ARGO',
-      'description': 'Critical report',
-      'metricProfile': 'ARGO_MON_CRITICAL',
-      'aggregationProfile': 'critical',
-      'operationsProfile': 'egi_ops',
-      'thresholdsProfile': '',
-      'topologyType': 'Sites',
-      'groupsTags.0.name': 'certification',
-      'groupsTags.0.value': 'Certified',
-      'groupsTags.1.name': 'infrastructure',
-      'groupsTags.1.value': 'Production',
-      'groupsTags.2.name': 'scope',
-      'groupsTags.2.value': 'EGI',
-      'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
-      'groupsExtensions.0.value': 'condor',
-      'entitiesGroups.0.value': 'iris.ac.uk',
-      'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
-      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
-      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
-      'endpointsTags.0.name': 'production',
-      'endpointsTags.0.value': 'yes',
-      'endpointsTags.1.name': 'monitored',
-      'endpointsTags.1.value': 'yes',
-      'endpointsTags.2.name': 'scope',
-      'endpointsTags.2.value': 'EGI',
-      'availabilityThreshold': '80',
-      'reliabilityThreshold': '85',
-      'uptimeThreshold': '0.8',
-      'unknownThreshold': '0.2',
-      'downtimeThreshold' : '0.1'
-    })
-
-    fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    let frontendReport = JSON.parse(JSON.stringify(report4sending))
-    frontendReport.thresholds.unknown = 0.2
-
-    await waitFor(() => {
-      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
-    })
-
-    await waitFor(() => {
-      expect(mockChangeObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', backendReport4sending
-      )
-    })
-
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report')
-    expect(NotificationManager.success).toHaveBeenCalledWith(
-      'Report successfully changed', 'Changed', 2000
-    )
-  })
-
-  test('Test change downtime threshold', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-    mockChangeReport.mockReturnValueOnce(
-      Promise.resolve({ ok: 'ok' })
-    )
-
-    renderChangeView()
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
-    })
-
     fireEvent.change(screen.getByLabelText(/downtime/i), { target: { value: '0.3' } })
 
     expect(screen.getByTestId('form')).toHaveFormValues({
@@ -3028,10 +2107,10 @@ describe('Tests for reports changeview', () => {
       'endpointsTags.1.value': 'yes',
       'endpointsTags.2.name': 'scope',
       'endpointsTags.2.value': 'EGI',
-      'availabilityThreshold': '80',
-      'reliabilityThreshold': '85',
-      'uptimeThreshold': '0.8',
-      'unknownThreshold': '0.1',
+      'availabilityThreshold': '70',
+      'reliabilityThreshold': '90',
+      'uptimeThreshold': '1.0',
+      'unknownThreshold': '0.2',
       'downtimeThreshold' : '0.3'
     })
 
@@ -3042,6 +2121,10 @@ describe('Tests for reports changeview', () => {
     fireEvent.click(screen.getByRole('button', { name: /yes/i }));
 
     let frontendReport = JSON.parse(JSON.stringify(report4sending))
+    frontendReport.thresholds.availability = 70
+    frontendReport.thresholds.reliability = 90
+    frontendReport.thresholds.uptime = 1.0
+    frontendReport.thresholds.unknown = 0.2
     frontendReport.thresholds.downtime = 0.3
 
     await waitFor(() => {
