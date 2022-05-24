@@ -45,7 +45,7 @@ export const TenantAdministration = () =>
     <Card className='mb-2'>
       <CustomCardHeader title='Authentication and authorization'/>
       <CardBody>
-        <div className="align-items-center">
+        <div className="p-1 align-items-center">
           <Icon i="groupofreports"/> <Link to={'/ui/administration/groupofreports'}>Groups of reports</Link>
         </div>
         <div className="p-1 align-items-center">
