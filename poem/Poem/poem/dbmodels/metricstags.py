@@ -70,3 +70,18 @@ class Metric(models.Model):
 
     def __str__(self):
         return u'%s' % self.name
+
+
+class MetricConfiguration(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=1024, unique=True)
+    globalattribute = models.TextField()
+    hostattribute = models.TextField()
+    metricparameter = models.TextField()
+
+    class Meta:
+        app_label = "poem"
+
+    def __str__(self):
+        return u"%s" % self.name
+
