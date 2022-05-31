@@ -691,3 +691,121 @@ class UpdateMetricsVersions(APIView):
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="You do not have permission to update metrics' versions."
             )
+
+
+class ListMetricConfiguration(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    @staticmethod
+    def _get_global_attributes(db_entry):
+        results = []
+        if db_entry:
+            data = json.loads(db_entry)
+
+            for item in data:
+                split = item.split(" ")
+                results.append({
+                    "attribute": split[0],
+                    "value": split[1]
+                })
+
+        return results
+
+    @staticmethod
+    def _get_host_attributes(db_entry):
+        results = []
+
+        if db_entry:
+            data = json.loads(db_entry)
+
+            for item in data:
+                split = item.split(" ")
+
+                if len(split) == 2:
+                    value = ""
+
+                else:
+                    value = split[2]
+
+                results.append({
+                    "hostname": split[0],
+                    "attribute": split[1],
+                    "value": value
+                })
+
+        return results
+
+    @staticmethod
+    def _get_metric_parameters(db_entry):
+        results = []
+
+        if db_entry:
+            data = json.loads(db_entry)
+
+            for item in data:
+                split = item.split(" ")
+
+                if len(split) == 3:
+                    value = ""
+
+                else:
+                    value = split[3]
+
+                results.append({
+                    "hostname": split[0],
+                    "metric": split[1],
+                    "parameter": split[2],
+                    "value": value
+                })
+
+        return results
+
+    def get(self, request, name=None):
+        if request.user.is_superuser:
+            if name:
+                configurations = poem_models.MetricConfiguration.objects.filter(
+                    name=name
+                )
+
+                if configurations.count() == 0:
+                    raise NotFound(
+                        status=404, detail="Metric configuration not found."
+                    )
+
+            else:
+                configurations = poem_models.MetricConfiguration.objects.all()
+
+            results = []
+            for configuration in configurations:
+                global_attributes = self._get_global_attributes(
+                    configuration.globalattribute
+                )
+                host_attributes = self._get_host_attributes(
+                    configuration.hostattribute
+                )
+                metric_parameters = self._get_metric_parameters(
+                    configuration.metricparameter
+                )
+
+                results.append(dict(
+                    id=configuration.id,
+                    name=configuration.name,
+                    global_attributes=global_attributes,
+                    host_attributes=host_attributes,
+                    metric_parameters=metric_parameters
+                ))
+
+            results = sorted(results, key=lambda k: k["name"])
+
+            if name:
+                return Response(results[0])
+
+            else:
+                return Response(results)
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You do not have permission to view metric "
+                       "configuration overrides."
+            )

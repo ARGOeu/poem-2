@@ -3579,3 +3579,188 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         )
         mock_get.assert_called_once()
         self.assertFalse(mock_update.called)
+
+
+class ListMetricConfigurationAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.ListMetricConfiguration.as_view()
+        self.url = '/api/v2/internal/metricconfiguration'
+        self.user = CustUser.objects.create_user(
+            username='testuser', is_superuser=True
+        )
+        self.regular_user = CustUser.objects.create_user(username='test')
+
+        self.configuration1 = poem_models.MetricConfiguration.objects.create(
+            name="local",
+            globalattribute=json.dumps(
+                [
+                    "NAGIOS_ACTUAL_HOST_CERT /etc/nagios/globus/hostcert.pem",
+                    "NAGIOS_ACTUAL_HOST_KEY /etc/nagios/globus/hostkey.pem"
+                ]
+            ),
+            hostattribute=json.dumps(["mock.host.name attr1 some-new-value"]),
+            metricparameter=json.dumps(
+                [
+                    "eosccore.ui.argo.grnet.gr org.nagios.ARGOWeb-AR "
+                    "-r EOSC_Monitoring",
+                    "argo.eosc-portal.eu org.nagios.ARGOWeb-Status -u "
+                    "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
+                ]
+            )
+        )
+        self.configuration2 = poem_models.MetricConfiguration.objects.create(
+            name="consumer",
+            globalattribute="",
+            hostattribute="",
+            metricparameter=json.dumps([
+                "eosccore.mon.devel.argo.grnet.gr argo.AMSPublisher-Check "
+                "-q w:metrics+g:published180"
+            ])
+        )
+
+    def test_get_configurations_super_user(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    "id": self.configuration2.id,
+                    "name": "consumer",
+                    "global_attributes": [],
+                    "host_attributes": [],
+                    "metric_parameters": [
+                        {
+                            "hostname": "eosccore.mon.devel.argo.grnet.gr",
+                            "metric": "argo.AMSPublisher-Check",
+                            "parameter": "-q",
+                            "value": "w:metrics+g:published180"
+                        }
+                    ]
+                },
+                {
+                    "id": self.configuration1.id,
+                    "name": "local",
+                    "global_attributes": [
+                        {
+                            "attribute": "NAGIOS_ACTUAL_HOST_CERT",
+                            "value": "/etc/nagios/globus/hostcert.pem"
+                        },
+                        {
+                            "attribute": "NAGIOS_ACTUAL_HOST_KEY",
+                            "value": "/etc/nagios/globus/hostkey.pem"
+                        }
+                    ],
+                    "host_attributes": [
+                        {
+                            "hostname": "mock.host.name",
+                            "attribute": "attr1",
+                            "value": "some-new-value"
+                        }
+                    ],
+                    "metric_parameters": [
+                        {
+                            "hostname": "eosccore.ui.argo.grnet.gr",
+                            "metric": "org.nagios.ARGOWeb-AR",
+                            "parameter": "-r",
+                            "value": "EOSC_Monitoring"
+                        },
+                        {
+                            "hostname": "argo.eosc-portal.eu",
+                            "metric": "org.nagios.ARGOWeb-Status",
+                            "parameter": "-u",
+                            "value": "/eosc/report-status/Default/SERVICEGROUPS"
+                                     "?accept=csv"
+                        }
+                    ]
+                }
+            ]
+        )
+
+    def test_get_configurations_regular_user(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.regular_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to view metric configuration "
+            "overrides."
+        )
+
+    def test_get_configuration_super_user(self):
+        request = self.factory.get(self.url + "local")
+        force_authenticate(request, user=self.user)
+        response = self.view(request, "local")
+        self.assertEqual(
+            response.data,
+            {
+                "id": self.configuration1.id,
+                "name": "local",
+                "global_attributes": [
+                    {
+                        "attribute": "NAGIOS_ACTUAL_HOST_CERT",
+                        "value": "/etc/nagios/globus/hostcert.pem"
+                    },
+                    {
+                        "attribute": "NAGIOS_ACTUAL_HOST_KEY",
+                        "value": "/etc/nagios/globus/hostkey.pem"
+                    }
+                ],
+                "host_attributes": [
+                    {
+                        "hostname": "mock.host.name",
+                        "attribute": "attr1",
+                        "value": "some-new-value"
+                    }
+                ],
+                "metric_parameters": [
+                    {
+                        "hostname": "eosccore.ui.argo.grnet.gr",
+                        "metric": "org.nagios.ARGOWeb-AR",
+                        "parameter": "-r",
+                        "value": "EOSC_Monitoring"
+                    },
+                    {
+                        "hostname": "argo.eosc-portal.eu",
+                        "metric": "org.nagios.ARGOWeb-Status",
+                        "parameter": "-u",
+                        "value": "/eosc/report-status/Default/SERVICEGROUPS"
+                                 "?accept=csv"
+                    }
+                ]
+            }
+        )
+
+    def test_get_configuration_regular_user(self):
+        request = self.factory.get(self.url + "local")
+        force_authenticate(request, user=self.regular_user)
+        response = self.view(request, "local")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to view metric configuration "
+            "overrides."
+        )
+
+    def test_get_configuration_nonexisting_name_super_user(self):
+        request = self.factory.get(self.url + "nonexisting")
+        force_authenticate(request, user=self.user)
+        response = self.view(request, "nonexisting")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data["detail"], "Metric configuration not found."
+        )
+
+    def test_get_configuration_nonexisting_name_regular_user(self):
+        request = self.factory.get(self.url + "nonexisting")
+        force_authenticate(request, user=self.regular_user)
+        response = self.view(request, "nonexisting")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to view metric configuration "
+            "overrides."
+        )
