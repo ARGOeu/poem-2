@@ -1,3 +1,4 @@
+import ast
 import json
 
 import requests
@@ -11,6 +12,7 @@ from Poem.helpers.metrics_helpers import import_metrics, \
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from django.contrib.contenttypes.models import ContentType
+from django.db import IntegrityError
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
@@ -807,5 +809,69 @@ class ListMetricConfiguration(APIView):
             return error_response(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="You do not have permission to view metric "
+                       "configuration overrides."
+            )
+
+    def put(self, request):
+        if request.user.is_superuser:
+            try:
+                conf = poem_models.MetricConfiguration.objects.get(
+                    id=request.data["id"]
+                )
+                conf.name = request.data["name"]
+                global_attrs = list()
+                for item in dict(request.data)["global_attributes"]:
+                    global_attrs.append("{attribute} {value}".format(
+                        **ast.literal_eval(item))
+                    )
+
+                host_attrs = list()
+                for item in dict(request.data)["host_attributes"]:
+                    host_attrs.append(
+                        "{hostname} {attribute} {value}".format(
+                            **ast.literal_eval(item)
+                        )
+                    )
+
+                metric_params = list()
+                for item in dict(request.data)["metric_parameters"]:
+                    metric_params.append(
+                        "{hostname} {metric} {parameter} {value}".format(
+                            **ast.literal_eval(item)
+                        )
+                    )
+
+                conf.globalattribute = json.dumps(global_attrs)
+                conf.hostattribute = json.dumps(host_attrs)
+                conf.metricparameter = json.dumps(metric_params)
+
+                conf.save()
+
+                return Response(status=status.HTTP_201_CREATED)
+
+            except IntegrityError:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Metric configuration override with this name "
+                           "already exists."
+                )
+
+            except poem_models.MetricConfiguration.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Metric configuration override with requested id "
+                           "does not exist."
+                )
+
+            except KeyError as e:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Missing data key: {e.args[0]}"
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You do not have permission to change metric "
                        "configuration overrides."
             )
