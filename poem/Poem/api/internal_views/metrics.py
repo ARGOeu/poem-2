@@ -875,3 +875,57 @@ class ListMetricConfiguration(APIView):
                 detail="You do not have permission to change metric "
                        "configuration overrides."
             )
+
+    def post(self, request):
+        if request.user.is_superuser:
+            try:
+                global_attrs = list()
+                for item in dict(request.data)["global_attributes"]:
+                    global_attrs.append("{attribute} {value}".format(
+                        **ast.literal_eval(item))
+                    )
+
+                host_attrs = list()
+                for item in dict(request.data)["host_attributes"]:
+                    host_attrs.append(
+                        "{hostname} {attribute} {value}".format(
+                            **ast.literal_eval(item)
+                        )
+                    )
+
+                metric_params = list()
+                for item in dict(request.data)["metric_parameters"]:
+                    metric_params.append(
+                        "{hostname} {metric} {parameter} {value}".format(
+                            **ast.literal_eval(item)
+                        )
+                    )
+
+                poem_models.MetricConfiguration.objects.create(
+                    name=request.data["name"],
+                    globalattribute=json.dumps(global_attrs),
+                    hostattribute=json.dumps(host_attrs),
+                    metricparameter=json.dumps(metric_params)
+                )
+
+                return Response(status=status.HTTP_201_CREATED)
+
+            except IntegrityError:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Local metric configuration with this name already "
+                           "exists."
+                )
+
+            except KeyError as e:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Missing data key: {e.args[0]}"
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You do not have permission to add metric configuration "
+                       "overrides."
+            )

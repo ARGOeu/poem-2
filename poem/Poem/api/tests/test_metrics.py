@@ -4107,3 +4107,280 @@ class ListMetricConfigurationAPIViewTests(TenantTestCase):
             "You do not have permission to change metric configuration "
             "overrides."
         )
+
+    def test_post_configuration_super_user(self):
+        data = {
+            "name": "new",
+            "global_attributes": [
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_CERT",
+                    "value": "/etc/nagios/globus/hostcert.pem"
+                },
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_KEY",
+                    "value": "/etc/nagios/globus/hostcert.key"
+                }
+            ],
+            "host_attributes": [
+                {
+                    "hostname": "mock2.host.name",
+                    "attribute": "attr3",
+                    "value": "value"
+                }
+            ],
+            "metric_parameters": [
+                {
+                    "hostname": "eosccore.ui.argo.grnet.gr",
+                    "metric": "generic.http.ar-argoui",
+                    "parameter": "-r",
+                    "value": "EOSC"
+                }
+            ]
+        }
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+        request = self.factory.post(self.url, data, format="json")
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 3
+        )
+        conf = poem_models.MetricConfiguration.objects.get(name="new")
+        self.assertEqual(
+            conf.globalattribute,
+            json.dumps([
+                "NAGIOS_ACTUAL_HOST_CERT /etc/nagios/globus/hostcert.pem",
+                "NAGIOS_ACTUAL_HOST_KEY /etc/nagios/globus/hostcert.key"
+            ])
+        )
+        self.assertEqual(
+            conf.hostattribute, json.dumps(["mock2.host.name attr3 value"])
+        )
+        self.assertEqual(
+            conf.metricparameter,
+            json.dumps([
+                "eosccore.ui.argo.grnet.gr generic.http.ar-argoui -r EOSC"
+            ])
+        )
+
+    def test_post_configuration_regular_user(self):
+        data = {
+            "name": "new",
+            "global_attributes": [
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_CERT",
+                    "value": "/etc/nagios/globus/hostcert.pem"
+                },
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_KEY",
+                    "value": "/etc/nagios/globus/hostcert.key"
+                }
+            ],
+            "host_attributes": [
+                {
+                    "hostname": "mock2.host.name",
+                    "attribute": "attr3",
+                    "value": "value"
+                }
+            ],
+            "metric_parameters": [
+                {
+                    "hostname": "eosccore.ui.argo.grnet.gr",
+                    "metric": "generic.http.ar-argoui",
+                    "parameter": "-r",
+                    "value": "EOSC"
+                }
+            ]
+        }
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+        request = self.factory.post(self.url, data, format="json")
+        force_authenticate(request, user=self.regular_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add metric configuration "
+            "overrides."
+        )
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+        self.assertRaises(
+            poem_models.MetricConfiguration.DoesNotExist,
+            poem_models.MetricConfiguration.objects.get,
+            name="new"
+        )
+
+    def test_post_configuration_with_existing_name_super_user(self):
+        data = {
+            "name": "local",
+            "global_attributes": [
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_CERT",
+                    "value": "/etc/nagios/globus/hostcert.pem"
+                },
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_KEY",
+                    "value": "/etc/nagios/globus/hostcert.key"
+                }
+            ],
+            "host_attributes": [
+                {
+                    "hostname": "mock2.host.name",
+                    "attribute": "attr3",
+                    "value": "value"
+                }
+            ],
+            "metric_parameters": [
+                {
+                    "hostname": "eosccore.ui.argo.grnet.gr",
+                    "metric": "generic.http.ar-argoui",
+                    "parameter": "-r",
+                    "value": "EOSC"
+                }
+            ]
+        }
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+        request = self.factory.post(self.url, data, format="json")
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["detail"],
+            "Local metric configuration with this name already exists."
+        )
+
+    def test_post_configuration_with_existing_name_regular_user(self):
+        data = {
+            "name": "local",
+            "global_attributes": [
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_CERT",
+                    "value": "/etc/nagios/globus/hostcert.pem"
+                },
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_KEY",
+                    "value": "/etc/nagios/globus/hostcert.key"
+                }
+            ],
+            "host_attributes": [
+                {
+                    "hostname": "mock2.host.name",
+                    "attribute": "attr3",
+                    "value": "value"
+                }
+            ],
+            "metric_parameters": [
+                {
+                    "hostname": "eosccore.ui.argo.grnet.gr",
+                    "metric": "generic.http.ar-argoui",
+                    "parameter": "-r",
+                    "value": "EOSC"
+                }
+            ]
+        }
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+        request = self.factory.post(self.url, data, format="json")
+        force_authenticate(request, user=self.regular_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add metric configuration "
+            "overrides."
+        )
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+
+    def test_post_configuration_with_missing_key_super_user(self):
+        data = {
+            "name": "new",
+            "global_attributes": [
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_CERT",
+                    "value": "/etc/nagios/globus/hostcert.pem"
+                },
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_KEY",
+                    "value": "/etc/nagios/globus/hostcert.key"
+                }
+            ],
+            "metric_parameters": [
+                {
+                    "hostname": "eosccore.ui.argo.grnet.gr",
+                    "metric": "generic.http.ar-argoui",
+                    "parameter": "-r",
+                    "value": "EOSC"
+                }
+            ]
+        }
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+        request = self.factory.post(self.url, data, format="json")
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+        self.assertEqual(
+            response.data["detail"], "Missing data key: host_attributes"
+        )
+        self.assertRaises(
+            poem_models.MetricConfiguration.DoesNotExist,
+            poem_models.MetricConfiguration.objects.get,
+            name="new"
+        )
+
+    def test_post_configuration_with_missing_key_regular_user(self):
+        data = {
+            "name": "new",
+            "global_attributes": [
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_CERT",
+                    "value": "/etc/nagios/globus/hostcert.pem"
+                },
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_KEY",
+                    "value": "/etc/nagios/globus/hostcert.key"
+                }
+            ],
+            "metric_parameters": [
+                {
+                    "hostname": "eosccore.ui.argo.grnet.gr",
+                    "metric": "generic.http.ar-argoui",
+                    "parameter": "-r",
+                    "value": "EOSC"
+                }
+            ]
+        }
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+        request = self.factory.post(self.url, data, format="json")
+        force_authenticate(request, user=self.regular_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add metric configuration "
+            "overrides."
+        )
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+        self.assertRaises(
+            poem_models.MetricConfiguration.DoesNotExist,
+            poem_models.MetricConfiguration.objects.get,
+            name="new"
+        )
