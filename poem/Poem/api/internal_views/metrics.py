@@ -929,3 +929,33 @@ class ListMetricConfiguration(APIView):
                 detail="You do not have permission to add metric configuration "
                        "overrides."
             )
+
+    def delete(self, request, name=None):
+        if request.user.is_superuser:
+            if name:
+                try:
+                    conf = poem_models.MetricConfiguration.objects.get(
+                        name=name
+                    )
+                    conf.delete()
+
+                    return Response(status=status.HTTP_204_NO_CONTENT)
+
+                except poem_models.MetricConfiguration.DoesNotExist:
+                    return error_response(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Metric configuration not found."
+                    )
+
+            else:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Metric configuration name must be defined."
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You do not have permission to delete local metric "
+                       "configurations."
+            )

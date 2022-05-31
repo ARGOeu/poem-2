@@ -4384,3 +4384,99 @@ class ListMetricConfigurationAPIViewTests(TenantTestCase):
             poem_models.MetricConfiguration.objects.get,
             name="new"
         )
+
+    def test_delete_configuration_superuser(self):
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+        request = self.factory.delete(self.url + "consumer")
+        force_authenticate(request, user=self.user)
+        response = self.view(request, "consumer")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 1
+        )
+        self.assertRaises(
+            poem_models.MetricConfiguration.DoesNotExist,
+            poem_models.MetricConfiguration.objects.get,
+            name="consumer"
+        )
+
+    def test_delete_configuration_regular_user(self):
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+        request = self.factory.delete(self.url + "consumer")
+        force_authenticate(request, user=self.regular_user)
+        response = self.view(request, "consumer")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to delete local metric configurations."
+        )
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+
+    def test_delete_configuration_if_nonexisting_name_superuser(self):
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+        request = self.factory.delete(self.url + "nonexisting")
+        force_authenticate(request, user=self.user)
+        response = self.view(request, "nonexisting")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data["detail"], "Metric configuration not found."
+        )
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+
+    def test_delete_configuration_if_nonexisting_name_regular_user(self):
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+        request = self.factory.delete(self.url + "nonexisting")
+        force_authenticate(request, user=self.regular_user)
+        response = self.view(request, "nonexisting")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to delete local metric configurations."
+        )
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+
+    def test_delete_configuration_name_not_defined_superuser(self):
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["detail"],
+            "Metric configuration name must be defined."
+        )
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+
+    def test_delete_configuration_name_not_defined_regular_user(self):
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.regular_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to delete local metric configurations."
+        )
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
