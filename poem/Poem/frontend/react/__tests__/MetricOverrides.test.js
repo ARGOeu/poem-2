@@ -5,7 +5,7 @@ import { createMemoryHistory } from "history"
 import { render, screen, waitFor } from "@testing-library/react"
 import { Route, Router } from 'react-router-dom';
 import { Backend } from "../DataManager"
-import { MetricOverrideList } from "../MetricOverrides"
+import { MetricOverrideChange, MetricOverrideList } from "../MetricOverrides"
 
 
 jest.mock("../DataManager", () => {
@@ -13,6 +13,8 @@ jest.mock("../DataManager", () => {
     Backend: jest.fn()
   }
 })
+
+const mockAddObject = jest.fn()
 
 const queryClient = new QueryClient()
 
@@ -104,7 +106,7 @@ const mockActiveSession = {
 
 
 function renderListView() {
-  const route = "/ui/administration/metricoverride"
+  const route = "/ui/administration/metricoverrides"
   const history = createMemoryHistory({ initialEntries: [route] })
 
   return {
@@ -112,8 +114,30 @@ function renderListView() {
       <QueryClientProvider client={queryClient}>
         <Router history={history}>
           <Route
-            path="/ui/administration/metricoverride"
+            path="/ui/administration/metricoverrides"
             render={ props => <MetricOverrideList {...props} /> }
+          />
+        </Router>
+      </QueryClientProvider>
+    )
+  }
+}
+
+
+function renderAddView() {
+  const route = "/ui/administration/metricoverrides/add"
+  const history = createMemoryHistory({ initialEntries: [route] })
+
+  return {
+    ...render(
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/administration/metricoverrides/add'
+            render={ props => <MetricOverrideChange
+              {...props}
+              addview={true}
+            /> }
           />
         </Router>
       </QueryClientProvider>
@@ -148,11 +172,81 @@ describe("Tests for metric overrides listview", () => {
     expect(screen.getAllByRole("row")).toHaveLength(11)
     expect(screen.getAllByRole("row", { name: "" })).toHaveLength(8)
     expect(screen.getByRole("row", { name: /consumer/i }).textContent).toBe("1consumer")
-    expect(screen.getByRole("link", { name: /consumer/i }).closest("a")).toHaveAttribute("href", "/ui/administration/metricoverride/consumer")
+    expect(screen.getByRole("link", { name: /consumer/i }).closest("a")).toHaveAttribute("href", "/ui/administration/metricoverrides/consumer")
     expect(screen.getByRole("row", { name: /local/i }).textContent).toBe("2local")
-    expect(screen.getByRole("link", { name: /local/i }).closest("a")).toHaveAttribute("href", "/ui/administration/metricoverride/local")
+    expect(screen.getByRole("link", { name: /local/i }).closest("a")).toHaveAttribute("href", "/ui/administration/metricoverrides/local")
 
     expect(screen.getByRole('button', { name: /add/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /add/i }).closest('a')).toHaveAttribute('href', '/ui/administration/metricoverride/add')
+    expect(screen.getByRole('button', { name: /add/i }).closest('a')).toHaveAttribute('href', '/ui/administration/metricoverrides/add')
+  })
+})
+
+
+describe("Tests for metric configuration overrides addview", () => {
+  beforeAll(() => {
+    Backend.mockImplementation(() => {
+      return {
+        isActiveSession: () => Promise.resolve(mockActiveSession),
+        addObject: () => mockAddObject
+      }
+    })
+  })
+
+  test("Test that page renders properly", async () => {
+    renderAddView()
+    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /override/i }).textContent).toBe("Add metric configuration override")
+    })
+
+    const nameField = screen.getByTestId("name")
+
+    const globalAttribute = screen.getByTestId("globalAttributes.0.attribute")
+    const globalValue = screen.getByTestId("globalAttributes.0.value")
+
+    const hostAttributeHostname = screen.getByTestId("hostAttributes.0.hostname")
+    const hostAttribute = screen.getByTestId("hostAttributes.0.attribute")
+    const hostAttributeValue = screen.getByTestId("hostAttributes.0.value")
+
+    const parameterHostname = screen.getByTestId("metricParameters.0.hostname")
+    const parameterMetric = screen.getByTestId("metricParameters.0.metric")
+    const parameterKey = screen.getByTestId("metricParameters.0.parameter")
+    const parameterValue = screen.getByTestId("metricParameters.0.value")
+
+    expect(nameField.value).toBe("")
+    expect(nameField).toBeEnabled()
+
+    expect(globalAttribute.value).toBe("")
+    expect(globalAttribute).toBeEnabled()
+    expect(globalValue.value).toBe("")
+    expect(globalValue).toBeEnabled()
+    expect(screen.getByTestId("globalAttributes.0.remove")).toBeInTheDocument()
+    expect(screen.getByTestId("globalAttributes.0.add")).toBeInTheDocument()
+
+    expect(hostAttributeHostname.value).toBe("")
+    expect(hostAttributeHostname).toBeEnabled()
+    expect(hostAttribute.value).toBe("")
+    expect(hostAttribute).toBeEnabled()
+    expect(hostAttributeValue.value).toBe("")
+    expect(hostAttributeValue).toBeEnabled()
+    expect(screen.getByTestId("hostAttributes.0.remove")).toBeInTheDocument()
+    expect(screen.getByTestId("hostAttributes.0.add")).toBeInTheDocument()
+
+    expect(parameterHostname.value).toBe("")
+    expect(parameterHostname).toBeEnabled()
+    expect(parameterMetric.value).toBe("")
+    expect(parameterMetric).toBeEnabled()
+    expect(parameterKey.value).toBe("")
+    expect(parameterKey).toBeEnabled()
+    expect(parameterValue.value).toBe("")
+    expect(parameterValue).toBeEnabled()
+    expect(screen.getByTestId("metricParameters.0.remove")).toBeInTheDocument()
+    expect(screen.getByTestId("metricParameters.0.add")).toBeInTheDocument()
+
+    expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
   })
 })

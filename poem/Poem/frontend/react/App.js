@@ -83,7 +83,7 @@ import {
   fetchTopologyEndpoints
 } from './QueryFunctions';
 import { MetricTagsComponent, MetricTagsList } from './MetricTags';
-import { MetricOverrideList } from './MetricOverrides';
+import { MetricOverrideChange, MetricOverrideList } from './MetricOverrides';
 
 
 const NavigationBarWithRouter = withRouter(NavigationBar);
@@ -296,6 +296,9 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
       render={ props => <MetricOverrideList
         {...props}
       /> }
+    />
+    <SuperUserRoute isSuperUser={isSuperUser} exactpath="/ui/administration/metricoverrides/add"
+      render={ props => <MetricOverrideChange {...props} addview={true} /> }
     />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/users"
       render={ props => <UsersList
