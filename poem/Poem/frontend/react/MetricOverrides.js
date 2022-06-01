@@ -114,7 +114,7 @@ export const MetricOverrideChange = (props) => {
           }}
         >
           { props => (
-            <Form>
+            <Form data-testid="metric-override-form">
               <FormGroup>
                 <Row>
                   <Col md={6}>
@@ -257,7 +257,7 @@ export const MetricOverrideChange = (props) => {
                                     type="button"
                                     data-testid={`hostAttributes.${index}.remove`}
                                     onClick={() => {
-                                      if (props.values.hostAttributes.length == 0) {
+                                      if (props.values.hostAttributes.length == 1) {
                                         arrayHelpers.push({ hostname: "", attribute: "", value: "" })
                                       }
                                       arrayHelpers.remove(index)
@@ -348,7 +348,7 @@ export const MetricOverrideChange = (props) => {
                                   type="button"
                                   data-testid={`metricParameters.${index}.remove`}
                                   onClick={() => {
-                                    if (props.values.metricParameters.length == 0) {
+                                    if (props.values.metricParameters.length == 1) {
                                       arrayHelpers.push({ hostname: "", metric: "", parameter: "", value: "" })
                                     }
                                     arrayHelpers.remove(index)

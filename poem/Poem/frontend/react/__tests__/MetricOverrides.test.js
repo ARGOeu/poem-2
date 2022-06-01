@@ -2,7 +2,7 @@ import React from "react"
 import "@testing-library/jest-dom/extend-expect"
 import { QueryClient, QueryClientProvider, setLogger } from "react-query"
 import { createMemoryHistory } from "history"
-import { render, screen, waitFor } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { Route, Router } from 'react-router-dom';
 import { Backend } from "../DataManager"
 import { MetricOverrideChange, MetricOverrideList } from "../MetricOverrides"
@@ -248,5 +248,298 @@ describe("Tests for metric configuration overrides addview", () => {
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+  })
+
+  test("Test add global attributes", async () => {
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /override/i }).textContent).toBe("Add metric configuration override")
+    })
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "",
+      "globalAttributes.0.attribute": "",
+      "globalAttributes.0.value": "",
+      "hostAttributes.0.hostname": "",
+      "hostAttributes.0.attribute": "",
+      "hostAttributes.0.value": "",
+      "metricParameters.0.hostname": "",
+      "metricParameters.0.metric": "",
+      "metricParameters.0.parameter": "",
+      "metricParameters.0.value": "",
+    })
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "local" } })
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "local",
+      "globalAttributes.0.attribute": "",
+      "globalAttributes.0.value": "",
+      "hostAttributes.0.hostname": "",
+      "hostAttributes.0.attribute": "",
+      "hostAttributes.0.value": "",
+      "metricParameters.0.hostname": "",
+      "metricParameters.0.metric": "",
+      "metricParameters.0.parameter": "",
+      "metricParameters.0.value": "",
+    })
+
+    fireEvent.change(screen.getByTestId("globalAttributes.0.attribute"), { target: { value: "NAGIOS_ACTUAL_HOST_CERT" } })
+    fireEvent.change(screen.getByTestId("globalAttributes.0.value"), { target: { value: "/etc/nagios/globus/cert.pem" } })
+
+    await waitFor(() => fireEvent.click(screen.getByTestId("globalAttributes.0.add")))
+
+    fireEvent.change(screen.getByTestId("globalAttributes.1.attribute"), { target: { value: "NAGIOS_ACTUAL_HOST_KEY" } })
+    fireEvent.change(screen.getByTestId("globalAttributes.1.value"), { target: { value: "/etc/nagios/globus/cert.key" } })
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "local",
+      "globalAttributes.0.attribute": "NAGIOS_ACTUAL_HOST_CERT",
+      "globalAttributes.0.value": "/etc/nagios/globus/cert.pem",
+      "globalAttributes.1.attribute": "NAGIOS_ACTUAL_HOST_KEY",
+      "globalAttributes.1.value": "/etc/nagios/globus/cert.key",
+      "hostAttributes.0.hostname": "",
+      "hostAttributes.0.attribute": "",
+      "hostAttributes.0.value": "",
+      "metricParameters.0.hostname": "",
+      "metricParameters.0.metric": "",
+      "metricParameters.0.parameter": "",
+      "metricParameters.0.value": ""
+    })
+
+    await waitFor(() => fireEvent.click(screen.getByTestId("globalAttributes.1.add")))
+
+    fireEvent.change(screen.getByTestId("globalAttributes.2.attribute"), { target: { value: "MOCK_ATTRIBUTE" } })
+    fireEvent.change(screen.getByTestId("globalAttributes.2.value"), { target: { value: "some-value" } })
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "local",
+      "globalAttributes.0.attribute": "NAGIOS_ACTUAL_HOST_CERT",
+      "globalAttributes.0.value": "/etc/nagios/globus/cert.pem",
+      "globalAttributes.1.attribute": "NAGIOS_ACTUAL_HOST_KEY",
+      "globalAttributes.1.value": "/etc/nagios/globus/cert.key",
+      "globalAttributes.2.attribute": "MOCK_ATTRIBUTE",
+      "globalAttributes.2.value": "some-value",
+      "hostAttributes.0.hostname": "",
+      "hostAttributes.0.attribute": "",
+      "hostAttributes.0.value": "",
+      "metricParameters.0.hostname": "",
+      "metricParameters.0.metric": "",
+      "metricParameters.0.parameter": "",
+      "metricParameters.0.value": ""
+    })
+
+    await waitFor(() => fireEvent.click(screen.getByTestId("globalAttributes.1.remove")))
+    await waitFor(() => fireEvent.click(screen.getByTestId("globalAttributes.0.remove")))
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "local",
+      "globalAttributes.0.attribute": "MOCK_ATTRIBUTE",
+      "globalAttributes.0.value": "some-value",
+      "hostAttributes.0.hostname": "",
+      "hostAttributes.0.attribute": "",
+      "hostAttributes.0.value": "",
+      "metricParameters.0.hostname": "",
+      "metricParameters.0.metric": "",
+      "metricParameters.0.parameter": "",
+    })
+
+    await waitFor(() => fireEvent.click(screen.getByTestId("globalAttributes.0.remove")))
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "local",
+      "globalAttributes.0.attribute": "",
+      "globalAttributes.0.value": "",
+      "hostAttributes.0.hostname": "",
+      "hostAttributes.0.attribute": "",
+      "hostAttributes.0.value": "",
+      "metricParameters.0.hostname": "",
+      "metricParameters.0.metric": "",
+      "metricParameters.0.parameter": "",
+    })
+  })
+
+  test("Test add host attributes", async () => {
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /override/i }).textContent).toBe("Add metric configuration override")
+    })
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "",
+      "globalAttributes.0.attribute": "",
+      "globalAttributes.0.value": "",
+      "hostAttributes.0.hostname": "",
+      "hostAttributes.0.attribute": "",
+      "hostAttributes.0.value": "",
+      "metricParameters.0.hostname": "",
+      "metricParameters.0.metric": "",
+      "metricParameters.0.parameter": "",
+      "metricParameters.0.value": "",
+    })
+
+    fireEvent.change(screen.getByTestId("hostAttributes.0.hostname"), { target: { value: "foo.bar.hr" } })
+    fireEvent.change(screen.getByTestId("hostAttributes.0.attribute"), { target: { value: "FOOBAR" } })
+    fireEvent.change(screen.getByTestId("hostAttributes.0.value"), { target: { value: "foo-bar" } })
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "",
+      "globalAttributes.0.attribute": "",
+      "globalAttributes.0.value": "",
+      "hostAttributes.0.hostname": "foo.bar.hr",
+      "hostAttributes.0.attribute": "FOOBAR",
+      "hostAttributes.0.value": "foo-bar",
+      "metricParameters.0.hostname": "",
+      "metricParameters.0.metric": "",
+      "metricParameters.0.parameter": "",
+      "metricParameters.0.value": "",
+    })
+
+    await waitFor(() => fireEvent.click(screen.getByTestId("hostAttributes.0.add")))
+
+    fireEvent.change(screen.getByTestId("hostAttributes.1.hostname"), { target: { value: "host.name.com" } })
+    fireEvent.change(screen.getByTestId("hostAttributes.1.attribute"), { target: { value: "ATTRIBUTE" } })
+    fireEvent.change(screen.getByTestId("hostAttributes.1.value"), { target: { value: "some-value" } })
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "",
+      "globalAttributes.0.attribute": "",
+      "globalAttributes.0.value": "",
+      "hostAttributes.0.hostname": "foo.bar.hr",
+      "hostAttributes.0.attribute": "FOOBAR",
+      "hostAttributes.0.value": "foo-bar",
+      "hostAttributes.1.hostname": "host.name.com",
+      "hostAttributes.1.attribute": "ATTRIBUTE",
+      "hostAttributes.1.value": "some-value",
+      "metricParameters.0.hostname": "",
+      "metricParameters.0.metric": "",
+      "metricParameters.0.parameter": "",
+      "metricParameters.0.value": "",
+    })
+
+    await waitFor(() => fireEvent.click(screen.getByTestId("hostAttributes.0.remove")))
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "",
+      "globalAttributes.0.attribute": "",
+      "globalAttributes.0.value": "",
+      "hostAttributes.0.hostname": "host.name.com",
+      "hostAttributes.0.attribute": "ATTRIBUTE",
+      "hostAttributes.0.value": "some-value",
+      "metricParameters.0.hostname": "",
+      "metricParameters.0.metric": "",
+      "metricParameters.0.parameter": "",
+      "metricParameters.0.value": "",
+    })
+
+    await waitFor(() => fireEvent.click(screen.getByTestId("hostAttributes.0.remove")))
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "",
+      "globalAttributes.0.attribute": "",
+      "globalAttributes.0.value": "",
+      "hostAttributes.0.hostname": "",
+      "hostAttributes.0.attribute": "",
+      "hostAttributes.0.value": "",
+      "metricParameters.0.hostname": "",
+      "metricParameters.0.metric": "",
+      "metricParameters.0.parameter": "",
+      "metricParameters.0.value": "",
+    })
+  })
+
+  test("Test add metric parameters", async () => {
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /override/i }).textContent).toBe("Add metric configuration override")
+    })
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "",
+      "globalAttributes.0.attribute": "",
+      "globalAttributes.0.value": "",
+      "hostAttributes.0.hostname": "",
+      "hostAttributes.0.attribute": "",
+      "hostAttributes.0.value": "",
+      "metricParameters.0.hostname": "",
+      "metricParameters.0.metric": "",
+      "metricParameters.0.parameter": "",
+      "metricParameters.0.value": "",
+    })
+
+    fireEvent.change(screen.getByTestId("metricParameters.0.hostname"), { target: { value: "epic5.storage.surfsara.nl" } })
+    fireEvent.change(screen.getByTestId("metricParameters.0.metric"), { target: { value: "generic.tcp.connect" } })
+    fireEvent.change(screen.getByTestId("metricParameters.0.parameter"), { target: { value: "-p" } })
+    fireEvent.change(screen.getByTestId("metricParameters.0.value"), { target: { value: "8004" } })
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "",
+      "globalAttributes.0.attribute": "",
+      "globalAttributes.0.value": "",
+      "hostAttributes.0.hostname": "",
+      "hostAttributes.0.attribute": "",
+      "hostAttributes.0.value": "",
+      "metricParameters.0.hostname": "epic5.storage.surfsara.nl",
+      "metricParameters.0.metric": "generic.tcp.connect",
+      "metricParameters.0.parameter": "-p",
+      "metricParameters.0.value": "8004"
+    })
+
+    await waitFor(() => fireEvent.click(screen.getByTestId("metricParameters.0.add")))
+
+    fireEvent.change(screen.getByTestId("metricParameters.1.hostname"), { target: { value: "b2share.eudat.eu" } })
+    fireEvent.change(screen.getByTestId("metricParameters.1.metric"), { target: { value: "eudat.b2share.invenio.healthcheck" } })
+    fireEvent.change(screen.getByTestId("metricParameters.1.parameter"), { target: { value: "--url" } })
+    fireEvent.change(screen.getByTestId("metricParameters.1.value"), { target: { value: "https://b2share.eudat.eu" } })
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "",
+      "globalAttributes.0.attribute": "",
+      "globalAttributes.0.value": "",
+      "hostAttributes.0.hostname": "",
+      "hostAttributes.0.attribute": "",
+      "hostAttributes.0.value": "",
+      "metricParameters.0.hostname": "epic5.storage.surfsara.nl",
+      "metricParameters.0.metric": "generic.tcp.connect",
+      "metricParameters.0.parameter": "-p",
+      "metricParameters.0.value": "8004",
+      "metricParameters.1.hostname": "b2share.eudat.eu",
+      "metricParameters.1.metric": "eudat.b2share.invenio.healthcheck",
+      "metricParameters.1.parameter": "--url",
+      "metricParameters.1.value": "https://b2share.eudat.eu"
+    })
+
+    await waitFor(() => fireEvent.click(screen.getByTestId("metricParameters.0.remove")))
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "",
+      "globalAttributes.0.attribute": "",
+      "globalAttributes.0.value": "",
+      "hostAttributes.0.hostname": "",
+      "hostAttributes.0.attribute": "",
+      "hostAttributes.0.value": "",
+      "metricParameters.0.hostname": "b2share.eudat.eu",
+      "metricParameters.0.metric": "eudat.b2share.invenio.healthcheck",
+      "metricParameters.0.parameter": "--url",
+      "metricParameters.0.value": "https://b2share.eudat.eu"
+    })
+
+    await waitFor(() => fireEvent.click(screen.getByTestId("metricParameters.0.remove")))
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "",
+      "globalAttributes.0.attribute": "",
+      "globalAttributes.0.value": "",
+      "hostAttributes.0.hostname": "",
+      "hostAttributes.0.attribute": "",
+      "hostAttributes.0.value": "",
+      "metricParameters.0.hostname": "",
+      "metricParameters.0.metric": "",
+      "metricParameters.0.parameter": "",
+      "metricParameters.0.value": ""
+    })
   })
 })
