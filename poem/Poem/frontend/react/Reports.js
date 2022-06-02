@@ -1287,6 +1287,8 @@ export const ReportsComponent = (props) => {
     if (Object.keys(topologyMaps).length === 0) {
       topologyMaps['project_servicegroups'] = new Map()
       topologyMaps['ngi_sites'] = new Map()
+      topologyMaps['site_services'] = new Map()
+      topologyMaps['servicegroup_services'] = new Map()
 
       for (let group of topologyGroups) {
         let key = group['group']
@@ -1308,7 +1310,28 @@ export const ReportsComponent = (props) => {
             topologyMaps['ngi_sites'].set(key, new Array(value))
         }
       }
+      for (let endpoint of topologyEndpoints) {
+        let key = endpoint['group']
+        let value = endpoint['service']
+        if (endpoint['type'] === 'SITES') {
+          if (topologyMaps['site_services'].has(key)) {
+            let values = topologyMaps['site_services'].get(key)
+            topologyMaps['site_services'].set(key, [value, ...values])
+          }
+          else
+            topologyMaps['site_services'].set(key, new Array(value))
+        }
+        else if (endpoint['type'] === 'SERVICEGROUPS') {
+          if (topologyMaps['servicegroup_services'].has(key)) {
+            let values = topologyMaps['servicegroup_services'].get(key)
+            topologyMaps['servicegroup_services'].set(key, [value, ...values])
+          }
+          else
+            topologyMaps['servicegroup_services'].set(key, new Array(value))
+        }
+      }
     }
+    console.log(topologyMaps)
 
     if (webApiReport && webApiReport.profiles) {
       webApiReport.profiles.forEach(profile => {
