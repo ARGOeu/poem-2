@@ -821,24 +821,24 @@ class ListMetricConfiguration(APIView):
                 conf.name = request.data["name"]
                 global_attrs = list()
                 for item in dict(request.data)["global_attributes"]:
-                    global_attrs.append("{attribute} {value}".format(
-                        **ast.literal_eval(item))
-                    )
+                    if isinstance(item, str):
+                        item = ast.literal_eval(item)
+                    global_attrs.append("{attribute} {value}".format(**item))
 
                 host_attrs = list()
                 for item in dict(request.data)["host_attributes"]:
+                    if isinstance(item, str):
+                        item = ast.literal_eval(item)
                     host_attrs.append(
-                        "{hostname} {attribute} {value}".format(
-                            **ast.literal_eval(item)
-                        )
+                        "{hostname} {attribute} {value}".format(**item)
                     )
 
                 metric_params = list()
                 for item in dict(request.data)["metric_parameters"]:
+                    if isinstance(item, str):
+                        item = ast.literal_eval(item)
                     metric_params.append(
-                        "{hostname} {metric} {parameter} {value}".format(
-                            **ast.literal_eval(item)
-                        )
+                        "{hostname} {metric} {parameter} {value}".format(**item)
                     )
 
                 conf.globalattribute = json.dumps(global_attrs)
@@ -881,24 +881,24 @@ class ListMetricConfiguration(APIView):
             try:
                 global_attrs = list()
                 for item in dict(request.data)["global_attributes"]:
-                    global_attrs.append("{attribute} {value}".format(
-                        **ast.literal_eval(item))
-                    )
+                    if isinstance(item, str):
+                        item = ast.literal_eval(item)
+                    global_attrs.append("{attribute} {value}".format(**item))
 
                 host_attrs = list()
                 for item in dict(request.data)["host_attributes"]:
+                    if isinstance(item, str):
+                        item = ast.literal_eval(item)
                     host_attrs.append(
-                        "{hostname} {attribute} {value}".format(
-                            **ast.literal_eval(item)
-                        )
+                        "{hostname} {attribute} {value}".format(**item)
                     )
 
                 metric_params = list()
                 for item in dict(request.data)["metric_parameters"]:
+                    if isinstance(item, str):
+                        item = ast.literal_eval(item)
                     metric_params.append(
-                        "{hostname} {metric} {parameter} {value}".format(
-                            **ast.literal_eval(item)
-                        )
+                        "{hostname} {metric} {parameter} {value}".format(**item)
                     )
 
                 poem_models.MetricConfiguration.objects.create(
