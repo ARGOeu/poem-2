@@ -1296,7 +1296,8 @@ export const ReportsComponent = (props) => {
         if (group['type'] === 'PROJECT') {
           if (topologyMaps['project_servicegroups'].has(key)) {
             let values = topologyMaps['project_servicegroups'].get(key)
-            topologyMaps['project_servicegroups'].set(key, [value, ...values])
+            if (values.indexOf(value) === -1)
+              topologyMaps['project_servicegroups'].set(key, [value, ...values])
           }
           else
             topologyMaps['project_servicegroups'].set(key, new Array(value))
@@ -1304,7 +1305,8 @@ export const ReportsComponent = (props) => {
         else if (group['type'] === 'NGI') {
           if (topologyMaps['ngi_sites'].has(key)) {
             let values = topologyMaps['ngi_sites'].get(key)
-            topologyMaps['ngi_sites'].set(key, [value, ...values])
+            if (values.indexOf(value) === -1)
+              topologyMaps['ngi_sites'].set(key, [value, ...values])
           }
           else
             topologyMaps['ngi_sites'].set(key, new Array(value))
@@ -1316,7 +1318,8 @@ export const ReportsComponent = (props) => {
         if (endpoint['type'] === 'SITES') {
           if (topologyMaps['site_services'].has(key)) {
             let values = topologyMaps['site_services'].get(key)
-            topologyMaps['site_services'].set(key, [value, ...values])
+            if (values.indexOf(value) === -1)
+              topologyMaps['site_services'].set(key, [value, ...values])
           }
           else
             topologyMaps['site_services'].set(key, new Array(value))
@@ -1324,7 +1327,8 @@ export const ReportsComponent = (props) => {
         else if (endpoint['type'] === 'SERVICEGROUPS') {
           if (topologyMaps['servicegroup_services'].has(key)) {
             let values = topologyMaps['servicegroup_services'].get(key)
-            topologyMaps['servicegroup_services'].set(key, [value, ...values])
+            if (values.indexOf(value) === -1)
+              topologyMaps['servicegroup_services'].set(key, [value, ...values])
           }
           else
             topologyMaps['servicegroup_services'].set(key, new Array(value))
