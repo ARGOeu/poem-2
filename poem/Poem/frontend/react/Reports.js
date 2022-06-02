@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Backend, WebApi } from './DataManager';
 
 import { useMutation, useQuery, useQueryClient } from 'react-query';
@@ -44,6 +44,9 @@ import {
   fetchTopologyGroups,
   fetchTopologyEndpoints,
 } from './QueryFunctions';
+
+
+const TopologyMapsContext = React.createContext()
 
 
 const ReportsSchema = Yup.object().shape({
@@ -701,6 +704,8 @@ export const ReportsComponent = (props) => {
     })
   )
 
+  let topologyMaps = new Object();
+
   const webapi = new WebApi({
     token: props.webapitoken,
     reportsConfigurations: props.webapireports,
@@ -1279,6 +1284,32 @@ export const ReportsComponent = (props) => {
     let groupsExtensions = undefined
     let endpointsExtensions = undefined
 
+    if (Object.keys(topologyMaps).length === 0) {
+      topologyMaps['project_servicegroups'] = new Map()
+      topologyMaps['ngi_sites'] = new Map()
+
+      for (let group of topologyGroups) {
+        let key = group['group']
+        let value = group['subgroup']
+        if (group['type'] === 'PROJECT') {
+          if (topologyMaps['project_servicegroups'].has(key)) {
+            let values = topologyMaps['project_servicegroups'].get(key)
+            topologyMaps['project_servicegroups'].set(key, [value, ...values])
+          }
+          else
+            topologyMaps['project_servicegroups'].set(key, new Array(value))
+        }
+        else if (group['type'] === 'NGI') {
+          if (topologyMaps['ngi_sites'].has(key)) {
+            let values = topologyMaps['ngi_sites'].get(key)
+            topologyMaps['ngi_sites'].set(key, [value, ...values])
+          }
+          else
+            topologyMaps['ngi_sites'].set(key, new Array(value))
+        }
+      }
+    }
+
     if (webApiReport && webApiReport.profiles) {
       webApiReport.profiles.forEach(profile => {
         if (profile.type === 'metric')
@@ -1294,6 +1325,9 @@ export const ReportsComponent = (props) => {
           thresholdsProfile = profile.name;
       })
     }
+
+    //console.log(topologyEndpoints)
+    //console.log(topologyGroups)
 
     if (topologyEndpoints && serviceTypesSitesEndpoints.length === 0 &&
       serviceTypesServiceGroupsEndpoints.length === 0) {
