@@ -297,8 +297,11 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         {...props}
       /> }
     />
-    <SuperUserRoute isSuperUser={isSuperUser} exactpath="/ui/administration/metricoverrides/add"
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/metricoverrides/add"
       render={ props => <MetricOverrideChange {...props} addview={true} /> }
+    />
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/metricoverrides/:name"
+      render={ props => <MetricOverrideChange {...props} /> }
     />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/users"
       render={ props => <UsersList

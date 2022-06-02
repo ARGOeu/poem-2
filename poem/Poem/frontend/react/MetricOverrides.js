@@ -86,6 +86,7 @@ export const MetricOverrideList = (props) => {
 
 
 export const MetricOverrideChange = (props) => {
+  const name = props.match.params.name
   const addview = props.addview
   const location = props.location
   const history = props.history
@@ -95,6 +96,7 @@ export const MetricOverrideChange = (props) => {
   const queryClient = useQueryClient()
 
   const addMutation = useMutation(async (values) => await backend.addObject("/api/v2/internal/metricconfiguration/", values))
+  const changeMutation = useMutation(async (values) => await backend.changeObject("/api/v2/internal/metricconfiguration/", values))
 
   const [areYouSureModal, setAreYouSureModal] = useState(false);
   const [modalMsg, setModalMsg] = useState(undefined);
@@ -106,13 +108,18 @@ export const MetricOverrideChange = (props) => {
     'userdetails', () => fetchUserDetails(true)
   );
 
+  const { data: override, error: errorOverride, isLoading: loadingOverride } = useQuery(
+    ["metricoverride", name], async () => { return await backend.fetchData(`/api/v2/internal/metricconfiguration/${name}`)},
+    { enabled: !addview && !!userDetails }
+  )
+
   const toggleAreYouSure = () => {
     setAreYouSureModal(!areYouSureModal)
   }
 
   const onSubmitHandle = (values) => {
-    let msg = "Are you sure you want to add metric configuration override?"
-    let title = "Add metric configuration override"
+    let msg = `Are you sure you want to ${addview ? "add" : "change"} metric configuration override?`
+    let title = `${addview ? "Add" : "Change"} metric configuration override`
 
     setModalMsg(msg)
     setModalTitle(title)
@@ -122,35 +129,60 @@ export const MetricOverrideChange = (props) => {
   }
 
   const doChange = () => {
-    addMutation.mutate(
-      {
-        name: formValues.name,
-        global_attributes: formValues.globalAttributes,
-        host_attributes: formValues.hostAttributes,
-        metric_parameters: formValues.metricParameters
-      }, {
-        onSuccess: () => {
-          queryClient.invalidateQueries("metricoverride")
-          NotifyOk({
-            msg: "Metric configuration override successfully added",
-            title: "Added",
-            callback: () => history.push("/ui/administration/metricoverrides")
-          })
-        },
-        onError: (error) => {
-          NotifyError({
-            title: "Error",
-            msg: error.message ? error.message : "Error adding metric configuration override"
-          })
+    let sendValues = {
+      name: formValues.name,
+      global_attributes: formValues.globalAttributes,
+      host_attributes: formValues.hostAttributes,
+      metric_parameters: formValues.metricParameters
+    }
+    if (addview) {
+      addMutation.mutate(
+        sendValues, {
+          onSuccess: () => {
+            queryClient.invalidateQueries("metricoverride")
+            NotifyOk({
+              msg: "Metric configuration override successfully added",
+              title: "Added",
+              callback: () => history.push("/ui/administration/metricoverrides")
+            })
+          },
+          onError: (error) => {
+            NotifyError({
+              title: "Error",
+              msg: error.message ? error.message : "Error adding metric configuration override"
+            })
+          }
         }
-      }
-    )
+      )
+    } else {
+      changeMutation.mutate(
+        { id: formValues.id, ...sendValues }, {
+          onSuccess: () => {
+            queryClient.invalidateQueries("metricoverride")
+            NotifyOk({
+              msg: "Metric configuration override successfully changed",
+              title: "Changed",
+              callback: () => history.push("/ui/administration/metricoverrides")
+            })
+          },
+          onError: (error) => {
+            NotifyError({
+              title: "Error",
+              msg: error.message ? error.message : "Error changing metric configuration override"
+            })
+          }
+        }
+      )
+    }
   }
 
-  if (loading)
+  if (loading || loadingOverride)
     return (<LoadingAnim />)
 
-  else if (!loading)
+  else if (errorOverride)
+    return (<ErrorComponent error={errorOverride} />)
+
+  else if ((!loading && addview) || override)
     return (
       <BaseArgoView
         resourcename="metric configuration override"
@@ -172,10 +204,11 @@ export const MetricOverrideChange = (props) => {
       >
         <Formik
           initialValues={{
-            name: "",
-            globalAttributes: [{attribute: "", value: ""}],
-            hostAttributes: [{hostname: "", attribute: "", value: ""}],
-            metricParameters: [{hostname: "", metric: "", parameter: "", value: ""}]
+            id: override ? override.id : undefined,
+            name: override ? override.name : "",
+            globalAttributes: override ? override.global_attributes : [{attribute: "", value: ""}],
+            hostAttributes: override ? override.host_attributes : [{hostname: "", attribute: "", value: ""}],
+            metricParameters: override ? override.metric_parameters : [{hostname: "", metric: "", parameter: "", value: ""}]
           }}
           onSubmit={(values) => onSubmitHandle(values)}
         >
@@ -254,7 +287,7 @@ export const MetricOverrideChange = (props) => {
                                     color="light"
                                     type="button"
                                     data-testid={`globalAttributes.${index}.add`}
-                                    onClick={() => {arrayHelpers.push({ attribute: "", value: "" }) }}
+                                    onClick={() => {arrayHelpers.insert(index + 1, { attribute: "", value: "" }) }}
                                   >
                                     <FontAwesomeIcon icon={faPlus} />
                                   </Button>
@@ -336,7 +369,7 @@ export const MetricOverrideChange = (props) => {
                                     color="light"
                                     type="button"
                                     data-testid={`hostAttributes.${index}.add`}
-                                    onClick={() => {arrayHelpers.push({ hostname: "", attribute: "", value: "" }) }}
+                                    onClick={() => {arrayHelpers.insert(index + 1, { hostname: "", attribute: "", value: "" }) }}
                                   >
                                     <FontAwesomeIcon icon={faPlus} />
                                   </Button>
@@ -427,7 +460,7 @@ export const MetricOverrideChange = (props) => {
                                   color="light"
                                   type="button"
                                   data-testid={`metricParameters.${index}.add`}
-                                  onClick={() => {arrayHelpers.push({ hostname: "", metric: "", parameter: "", value: "" }) }}
+                                  onClick={() => {arrayHelpers.insert(index + 1, { hostname: "", metric: "", parameter: "", value: "" }) }}
                                 >
                                   <FontAwesomeIcon icon={faPlus} />
                                 </Button>
