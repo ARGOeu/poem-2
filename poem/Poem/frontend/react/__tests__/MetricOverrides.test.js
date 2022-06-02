@@ -6,6 +6,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { Route, Router } from 'react-router-dom';
 import { Backend } from "../DataManager"
 import { MetricOverrideChange, MetricOverrideList } from "../MetricOverrides"
+import { NotificationManager } from "react-notifications"
 
 
 jest.mock("../DataManager", () => {
@@ -183,11 +184,15 @@ describe("Tests for metric overrides listview", () => {
 
 
 describe("Tests for metric configuration overrides addview", () => {
+  jest.spyOn(NotificationManager, 'success');
+  jest.spyOn(NotificationManager, 'error');
+  jest.spyOn(queryClient, 'invalidateQueries');
+
   beforeAll(() => {
     Backend.mockImplementation(() => {
       return {
         isActiveSession: () => Promise.resolve(mockActiveSession),
-        addObject: () => mockAddObject
+        addObject: mockAddObject
       }
     })
   })
@@ -541,5 +546,276 @@ describe("Tests for metric configuration overrides addview", () => {
       "metricParameters.0.parameter": "",
       "metricParameters.0.value": ""
     })
+  })
+
+  test("Test save metric override successfully", async () => {
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /override/i }).textContent).toBe("Add metric configuration override")
+    })
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "local" } })
+
+    fireEvent.change(screen.getByTestId("globalAttributes.0.attribute"), { target: { value: "NAGIOS_ACTUAL_HOST_CERT" } })
+    fireEvent.change(screen.getByTestId("globalAttributes.0.value"), { target: { value: "/etc/nagios/globus/cert.pem" } })
+
+    await waitFor(() => fireEvent.click(screen.getByTestId("globalAttributes.0.add")))
+
+    fireEvent.change(screen.getByTestId("globalAttributes.1.attribute"), { target: { value: "NAGIOS_ACTUAL_HOST_KEY" } })
+    fireEvent.change(screen.getByTestId("globalAttributes.1.value"), { target: { value: "/etc/nagios/globus/cert.key" } })
+
+    fireEvent.change(screen.getByTestId("hostAttributes.0.hostname"), { target: { value: "host.foo.bar" } })
+    fireEvent.change(screen.getByTestId("hostAttributes.0.attribute"), { target: { value: "FOOBAR" } })
+    fireEvent.change(screen.getByTestId("hostAttributes.0.value"), { target: { value: "foo-bar" } })
+
+    fireEvent.change(screen.getByTestId("metricParameters.0.hostname"), { target: { value: "b2access.eudat.eu" } })
+    fireEvent.change(screen.getByTestId("metricParameters.0.metric"), { target: { value: "eudat.b2access.unity-cert" } })
+    fireEvent.change(screen.getByTestId("metricParameters.0.parameter"), { target: { value: "--url" } })
+    fireEvent.change(screen.getByTestId("metricParameters.0.value"), { target: { value: "https://b2access.mock.url" } })
+
+    await waitFor(() => fireEvent.click(screen.getByTestId("metricParameters.0.add")))
+
+    fireEvent.change(screen.getByTestId("metricParameters.1.hostname"), { target: { value: "epic5.storage.surfsara.nl" } })
+    fireEvent.change(screen.getByTestId("metricParameters.1.metric"), { target: { value: "generic.tcp.connect" } })
+    fireEvent.change(screen.getByTestId("metricParameters.1.parameter"), { target: { value: "-p" } })
+    fireEvent.change(screen.getByTestId("metricParameters.1.value"), { target: { value: "8004" } })
+
+    fireEvent.click(screen.getByRole("button", { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metricconfiguration/",
+        {
+          name: "local",
+          global_attributes: [
+            {
+              attribute: "NAGIOS_ACTUAL_HOST_CERT",
+              value: "/etc/nagios/globus/cert.pem"
+            },
+            {
+              attribute: "NAGIOS_ACTUAL_HOST_KEY",
+              value: "/etc/nagios/globus/cert.key"
+            }
+          ],
+          host_attributes: [
+            {
+              hostname: "host.foo.bar",
+              attribute: "FOOBAR",
+              value: "foo-bar"
+            }
+          ],
+          metric_parameters: [
+            {
+              hostname: "b2access.eudat.eu",
+              metric: "eudat.b2access.unity-cert",
+              parameter: "--url",
+              value: "https://b2access.mock.url"
+            },
+            {
+              hostname: "epic5.storage.surfsara.nl",
+              metric: "generic.tcp.connect",
+              parameter: "-p",
+              value: "8004"
+            }
+          ]
+        }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metricoverride")
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Metric configuration override successfully added", "Added", 2000
+    )
+  })
+
+  test("Test error saving metric override with message", async () => {
+    mockAddObject.mockImplementationOnce( () => { throw Error("There has been an error.") })
+
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /override/i }).textContent).toBe("Add metric configuration override")
+    })
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "local" } })
+
+    fireEvent.change(screen.getByTestId("globalAttributes.0.attribute"), { target: { value: "NAGIOS_ACTUAL_HOST_CERT" } })
+    fireEvent.change(screen.getByTestId("globalAttributes.0.value"), { target: { value: "/etc/nagios/globus/cert.pem" } })
+
+    await waitFor(() => fireEvent.click(screen.getByTestId("globalAttributes.0.add")))
+
+    fireEvent.change(screen.getByTestId("globalAttributes.1.attribute"), { target: { value: "NAGIOS_ACTUAL_HOST_KEY" } })
+    fireEvent.change(screen.getByTestId("globalAttributes.1.value"), { target: { value: "/etc/nagios/globus/cert.key" } })
+
+    fireEvent.change(screen.getByTestId("hostAttributes.0.hostname"), { target: { value: "host.foo.bar" } })
+    fireEvent.change(screen.getByTestId("hostAttributes.0.attribute"), { target: { value: "FOOBAR" } })
+    fireEvent.change(screen.getByTestId("hostAttributes.0.value"), { target: { value: "foo-bar" } })
+
+    fireEvent.change(screen.getByTestId("metricParameters.0.hostname"), { target: { value: "b2access.eudat.eu" } })
+    fireEvent.change(screen.getByTestId("metricParameters.0.metric"), { target: { value: "eudat.b2access.unity-cert" } })
+    fireEvent.change(screen.getByTestId("metricParameters.0.parameter"), { target: { value: "--url" } })
+    fireEvent.change(screen.getByTestId("metricParameters.0.value"), { target: { value: "https://b2access.mock.url" } })
+
+    await waitFor(() => fireEvent.click(screen.getByTestId("metricParameters.0.add")))
+
+    fireEvent.change(screen.getByTestId("metricParameters.1.hostname"), { target: { value: "epic5.storage.surfsara.nl" } })
+    fireEvent.change(screen.getByTestId("metricParameters.1.metric"), { target: { value: "generic.tcp.connect" } })
+    fireEvent.change(screen.getByTestId("metricParameters.1.parameter"), { target: { value: "-p" } })
+    fireEvent.change(screen.getByTestId("metricParameters.1.value"), { target: { value: "8004" } })
+
+    fireEvent.click(screen.getByRole("button", { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metricconfiguration/",
+        {
+          name: "local",
+          global_attributes: [
+            {
+              attribute: "NAGIOS_ACTUAL_HOST_CERT",
+              value: "/etc/nagios/globus/cert.pem"
+            },
+            {
+              attribute: "NAGIOS_ACTUAL_HOST_KEY",
+              value: "/etc/nagios/globus/cert.key"
+            }
+          ],
+          host_attributes: [
+            {
+              hostname: "host.foo.bar",
+              attribute: "FOOBAR",
+              value: "foo-bar"
+            }
+          ],
+          metric_parameters: [
+            {
+              hostname: "b2access.eudat.eu",
+              metric: "eudat.b2access.unity-cert",
+              parameter: "--url",
+              value: "https://b2access.mock.url"
+            },
+            {
+              hostname: "epic5.storage.surfsara.nl",
+              metric: "generic.tcp.connect",
+              parameter: "-p",
+              value: "8004"
+            }
+          ]
+        }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith("metricoverride")
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>There has been an error.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      "Error",
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test("Test error saving metric override without message", async () => {
+    mockAddObject.mockImplementationOnce( () => { throw Error() })
+
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /override/i }).textContent).toBe("Add metric configuration override")
+    })
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "local" } })
+
+    fireEvent.change(screen.getByTestId("globalAttributes.0.attribute"), { target: { value: "NAGIOS_ACTUAL_HOST_CERT" } })
+    fireEvent.change(screen.getByTestId("globalAttributes.0.value"), { target: { value: "/etc/nagios/globus/cert.pem" } })
+
+    await waitFor(() => fireEvent.click(screen.getByTestId("globalAttributes.0.add")))
+
+    fireEvent.change(screen.getByTestId("globalAttributes.1.attribute"), { target: { value: "NAGIOS_ACTUAL_HOST_KEY" } })
+    fireEvent.change(screen.getByTestId("globalAttributes.1.value"), { target: { value: "/etc/nagios/globus/cert.key" } })
+
+    fireEvent.change(screen.getByTestId("hostAttributes.0.hostname"), { target: { value: "host.foo.bar" } })
+    fireEvent.change(screen.getByTestId("hostAttributes.0.attribute"), { target: { value: "FOOBAR" } })
+    fireEvent.change(screen.getByTestId("hostAttributes.0.value"), { target: { value: "foo-bar" } })
+
+    fireEvent.change(screen.getByTestId("metricParameters.0.hostname"), { target: { value: "b2access.eudat.eu" } })
+    fireEvent.change(screen.getByTestId("metricParameters.0.metric"), { target: { value: "eudat.b2access.unity-cert" } })
+    fireEvent.change(screen.getByTestId("metricParameters.0.parameter"), { target: { value: "--url" } })
+    fireEvent.change(screen.getByTestId("metricParameters.0.value"), { target: { value: "https://b2access.mock.url" } })
+
+    await waitFor(() => fireEvent.click(screen.getByTestId("metricParameters.0.add")))
+
+    fireEvent.change(screen.getByTestId("metricParameters.1.hostname"), { target: { value: "epic5.storage.surfsara.nl" } })
+    fireEvent.change(screen.getByTestId("metricParameters.1.metric"), { target: { value: "generic.tcp.connect" } })
+    fireEvent.change(screen.getByTestId("metricParameters.1.parameter"), { target: { value: "-p" } })
+    fireEvent.change(screen.getByTestId("metricParameters.1.value"), { target: { value: "8004" } })
+
+    fireEvent.click(screen.getByRole("button", { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metricconfiguration/",
+        {
+          name: "local",
+          global_attributes: [
+            {
+              attribute: "NAGIOS_ACTUAL_HOST_CERT",
+              value: "/etc/nagios/globus/cert.pem"
+            },
+            {
+              attribute: "NAGIOS_ACTUAL_HOST_KEY",
+              value: "/etc/nagios/globus/cert.key"
+            }
+          ],
+          host_attributes: [
+            {
+              hostname: "host.foo.bar",
+              attribute: "FOOBAR",
+              value: "foo-bar"
+            }
+          ],
+          metric_parameters: [
+            {
+              hostname: "b2access.eudat.eu",
+              metric: "eudat.b2access.unity-cert",
+              parameter: "--url",
+              value: "https://b2access.mock.url"
+            },
+            {
+              hostname: "epic5.storage.surfsara.nl",
+              metric: "generic.tcp.connect",
+              parameter: "-p",
+              value: "8004"
+            }
+          ]
+        }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith("metricoverride")
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error adding metric configuration override</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      "Error",
+      0,
+      expect.any(Function)
+    )
   })
 })

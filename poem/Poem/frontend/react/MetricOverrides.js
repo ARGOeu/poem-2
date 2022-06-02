@@ -1,9 +1,9 @@
-import React, { useMemo } from "react"
-import { useQuery } from "react-query"
+import React, { useMemo, useState } from "react"
+import { useMutation, useQuery, useQueryClient } from "react-query"
 import { Link } from "react-router-dom"
 import { Backend } from "./DataManager"
 import { fetchUserDetails } from "./QueryFunctions"
-import { BaseArgoTable, BaseArgoView, ErrorComponent, LoadingAnim } from "./UIElements"
+import { BaseArgoTable, BaseArgoView, ErrorComponent, LoadingAnim, NotifyError, NotifyOk } from "./UIElements"
 import { Formik, Form, Field, FieldArray } from "formik"
 import {
   FormGroup,
@@ -88,10 +88,64 @@ export const MetricOverrideList = (props) => {
 export const MetricOverrideChange = (props) => {
   const addview = props.addview
   const location = props.location
+  const history = props.history
+
+  const backend = new Backend()
+
+  const queryClient = useQueryClient()
+
+  const addMutation = useMutation(async (values) => await backend.addObject("/api/v2/internal/metricconfiguration/", values))
+
+  const [areYouSureModal, setAreYouSureModal] = useState(false);
+  const [modalMsg, setModalMsg] = useState(undefined);
+  const [modalTitle, setModalTitle] = useState(undefined);
+  const [modalFlag, setModalFlag] = useState(undefined);
+  const [formValues, setFormValues] = useState(undefined);
 
   const { data: userDetails, isLoading: loading } = useQuery(
     'userdetails', () => fetchUserDetails(true)
   );
+
+  const toggleAreYouSure = () => {
+    setAreYouSureModal(!areYouSureModal)
+  }
+
+  const onSubmitHandle = (values) => {
+    let msg = "Are you sure you want to add metric configuration override?"
+    let title = "Add metric configuration override"
+
+    setModalMsg(msg)
+    setModalTitle(title)
+    setFormValues(values)
+    setModalFlag("submit")
+    toggleAreYouSure()
+  }
+
+  const doChange = () => {
+    addMutation.mutate(
+      {
+        name: formValues.name,
+        global_attributes: formValues.globalAttributes,
+        host_attributes: formValues.hostAttributes,
+        metric_parameters: formValues.metricParameters
+      }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries("metricoverride")
+          NotifyOk({
+            msg: "Metric configuration override successfully added",
+            title: "Added",
+            callback: () => history.push("/ui/administration/metricoverrides")
+          })
+        },
+        onError: (error) => {
+          NotifyError({
+            title: "Error",
+            msg: error.message ? error.message : "Error adding metric configuration override"
+          })
+        }
+      }
+    )
+  }
 
   if (loading)
     return (<LoadingAnim />)
@@ -104,6 +158,17 @@ export const MetricOverrideChange = (props) => {
         history={false}
         submitperm={userDetails.is_superuser}
         addview={addview}
+        modal={true}
+        state={{
+          areYouSureModal,
+          modalTitle,
+          modalMsg,
+          "modalFunc": modalFlag === "submit" ?
+            doChange
+          :
+            undefined
+        }}
+        toggle={toggleAreYouSure}
       >
         <Formik
           initialValues={{
@@ -112,6 +177,7 @@ export const MetricOverrideChange = (props) => {
             hostAttributes: [{hostname: "", attribute: "", value: ""}],
             metricParameters: [{hostname: "", metric: "", parameter: "", value: ""}]
           }}
+          onSubmit={(values) => onSubmitHandle(values)}
         >
           { props => (
             <Form data-testid="metric-override-form">
