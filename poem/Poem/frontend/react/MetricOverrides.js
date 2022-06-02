@@ -97,6 +97,7 @@ export const MetricOverrideChange = (props) => {
 
   const addMutation = useMutation(async (values) => await backend.addObject("/api/v2/internal/metricconfiguration/", values))
   const changeMutation = useMutation(async (values) => await backend.changeObject("/api/v2/internal/metricconfiguration/", values))
+  const deleteMutation = useMutation(async () => await backend.deleteObject(`/api/v2/internal/metricconfiguration/${name}`))
 
   const [areYouSureModal, setAreYouSureModal] = useState(false);
   const [modalMsg, setModalMsg] = useState(undefined);
@@ -176,6 +177,25 @@ export const MetricOverrideChange = (props) => {
     }
   }
 
+  const doDelete = () => {
+    deleteMutation.mutate(undefined, {
+      onSuccess: () => {
+        queryClient.invalidateQueries("metricoverride")
+        NotifyOk({
+          msg: "Metric configuration override successfully deleted",
+          title: "Deleted",
+          callback: () => history.push("/ui/administration/metricoverrides")
+        })
+      },
+      onError: (error) => {
+        NotifyError({
+          title: "Error",
+          msg: error.message ? error.message : "Error deleting metric configuration override"
+        })
+      }
+    })
+  }
+
   if (loading || loadingOverride)
     return (<LoadingAnim />)
 
@@ -198,7 +218,10 @@ export const MetricOverrideChange = (props) => {
           "modalFunc": modalFlag === "submit" ?
             doChange
           :
-            undefined
+            modalFlag === "delete" ?
+              doDelete
+            :
+              undefined
         }}
         toggle={toggleAreYouSure}
       >
@@ -480,6 +503,12 @@ export const MetricOverrideChange = (props) => {
                       !addview ?
                         <Button
                           color='danger'
+                          onClick={() => {
+                            setModalMsg("Are you sure you want to delete metric configuration override?")
+                            setModalTitle("Delete metric configuration override")
+                            setModalFlag("delete")
+                            toggleAreYouSure()
+                          }}
                         >
                           Delete
                         </Button>

@@ -17,6 +17,7 @@ jest.mock("../DataManager", () => {
 
 const mockAddObject = jest.fn()
 const mockChangeObject = jest.fn()
+const mockDeleteObject = jest.fn()
 
 const queryClient = new QueryClient()
 
@@ -850,7 +851,8 @@ describe("Tests for metric configuration overrides changeview", () => {
       return {
         fetchData: () => Promise.resolve(mockConfigurations[1]),
         isActiveSession: () => Promise.resolve(mockActiveSession),
-        changeObject: mockChangeObject
+        changeObject: mockChangeObject,
+        deleteObject: mockDeleteObject
       }
     })
   })
@@ -1184,9 +1186,6 @@ describe("Tests for metric configuration overrides changeview", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: /override/i }).textContent).toBe("Change metric configuration override")
-    })
-
-    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
     })
 
     expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
@@ -1607,6 +1606,99 @@ describe("Tests for metric configuration overrides changeview", () => {
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Error changing metric configuration override</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      "Error",
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test("Test delete metric configuration override successfully", async () => {
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /override/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "new_name" } })
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metricconfiguration/local"
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metricoverride")
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Metric configuration override successfully deleted", "Deleted", 2000
+    )
+  })
+
+  test("Test error delete metric configuration override with message", async () => {
+    mockDeleteObject.mockImplementationOnce( () => { throw Error("There has been an error.") })
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /override/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metricconfiguration/local"
+      )
+    })
+
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith("metricoverride")
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>There has been an error.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      "Error",
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test("Test error delete metric configuration override without message", async () => {
+    mockDeleteObject.mockImplementationOnce( () => { throw Error() })
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /override/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metricconfiguration/local"
+      )
+    })
+
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith("metricoverride")
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error deleting metric configuration override</p>
         <p>Click to dismiss.</p>
       </div>,
       "Error",
