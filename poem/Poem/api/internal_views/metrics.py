@@ -4,7 +4,7 @@ import json
 import requests
 from Poem.api.internal_views.utils import one_value_inline, two_value_inline, \
     inline_metric_for_db
-from Poem.api.views import NotFound
+from Poem.api.views import NotFound, ListMetricOverrides
 from Poem.helpers.history_helpers import create_history
 from Poem.helpers.metrics_helpers import import_metrics, \
     update_metric_in_schema, get_metrics_in_profiles, \
@@ -695,72 +695,9 @@ class UpdateMetricsVersions(APIView):
             )
 
 
-class ListMetricConfiguration(APIView):
+class ListMetricConfiguration(ListMetricOverrides):
     authentication_classes = (SessionAuthentication,)
-
-    @staticmethod
-    def _get_global_attributes(db_entry):
-        results = []
-        if db_entry:
-            data = json.loads(db_entry)
-
-            for item in data:
-                split = item.split(" ")
-                results.append({
-                    "attribute": split[0],
-                    "value": split[1]
-                })
-
-        return results
-
-    @staticmethod
-    def _get_host_attributes(db_entry):
-        results = []
-
-        if db_entry:
-            data = json.loads(db_entry)
-
-            for item in data:
-                split = item.split(" ")
-
-                if len(split) == 2:
-                    value = ""
-
-                else:
-                    value = split[2]
-
-                results.append({
-                    "hostname": split[0],
-                    "attribute": split[1],
-                    "value": value
-                })
-
-        return results
-
-    @staticmethod
-    def _get_metric_parameters(db_entry):
-        results = []
-
-        if db_entry:
-            data = json.loads(db_entry)
-
-            for item in data:
-                split = item.split(" ")
-
-                if len(split) == 3:
-                    value = ""
-
-                else:
-                    value = split[3]
-
-                results.append({
-                    "hostname": split[0],
-                    "metric": split[1],
-                    "parameter": split[2],
-                    "value": value
-                })
-
-        return results
+    permission_classes = ()
 
     def get(self, request, name=None):
         if request.user.is_superuser:
