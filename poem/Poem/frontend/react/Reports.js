@@ -188,13 +188,14 @@ const entityInitValues = (matchWhat, formvalue) => {
 const filterEntitesBasedOnSelection = (data, selectedEntitiesTop, selectedEntitiesMiddle, topoMaps, lookkey) => {
   let selected = new Array()
 
-  if (selectedEntitiesTop && selectedEntitiesTop['value'] &&
-    selectedEntitiesTop['value'].includes('|'))
-    selected = selectedEntitiesTop['value'].split('|')
-  else
-    selected = [selectedEntitiesTop['value']]
+  if (selectedEntitiesTop && selectedEntitiesTop['value']) {
+    if (selectedEntitiesTop['value'].includes('|'))
+      selected = selectedEntitiesTop['value'].split('|')
+    else
+      selected = [selectedEntitiesTop['value']]
+  }
 
-  if (selected && lookkey && lookkey.includes('Sites')) {
+  if (selected.length > 0 && lookkey && lookkey.includes('Sites')) {
     let choices = new Array()
     selected.forEach(sel => {
       let sels = topoMaps['ngi_sites'].get(sel)
