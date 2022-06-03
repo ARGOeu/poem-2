@@ -185,10 +185,38 @@ const entityInitValues = (matchWhat, formvalue) => {
   return tmp
 }
 
+const filterEntitesBasedOnSelection = (data, selectedEntities, topoMaps, lookkey) => {
+  let selected = new Array()
 
-const formatSelectEntities = (data) => {
+  if (selectedEntities && selectedEntities['value'] &&
+    selectedEntities['value'].includes('|'))
+    selected = selectedEntities['value'].split('|')
+  else
+    selected = [selectedEntities['value']]
+
+  if (selected && lookkey && lookkey.includes('Sites')) {
+    let choices = new Array()
+    selected.forEach(sel => {
+      let sels = topoMaps['ngi_sites'].get(sel)
+      if (sels)
+        choices = [...choices, ...sels]
+    })
+    return choices
+  }
+  else
+    return data
+}
+
+const formatSelectEntities = (data, selectedEntities=undefined, topoMaps=undefined, lookkey=undefined) => {
+  let filtered = undefined
+
+  if (lookkey)
+    filtered = filterEntitesBasedOnSelection(data, selectedEntities, topoMaps, lookkey)
+  else
+    filtered = data
+
   let formatted = new Array()
-  for (var e of [...data])
+  for (var e of [...filtered])
     formatted.push(new Object({
       'label': e,
       'value': e
@@ -470,7 +498,7 @@ const EntitySelect = ({field, label, entitiesOptions, onChangeHandler, entitiesI
 }
 
 
-const TopologyConfGroupsEntityFields = ({topoGroups, addview, publicView, form}) => {
+const TopologyConfGroupsEntityFields = ({topoGroups, addview, topoMaps, publicView, form}) => {
   let topoType = form.values.topologyType
   let label1 = undefined
   let label2 = undefined
@@ -541,7 +569,7 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, publicView, form})
             className="pt-2"
             id="topoEntityGroup2"
             component={EntitySelect}
-            entitiesOptions={formatSelectEntities(topoGroups[key2])}
+            entitiesOptions={formatSelectEntities(topoGroups[key2], form.values.entitiesGroups[0], topoMaps, key2)}
             onChangeHandler={(e) => {
               let joinedValues = ''
               for (let event of e)
@@ -691,7 +719,6 @@ export const ReportsComponent = (props) => {
   const [onYes, setOnYes] = useState('')
   const [formikValues, setFormikValues] = useState({})
   const topologyTypes = ['Sites', 'ServiceGroups']
-
 
   const [tagsState, setTagsState] = useState(new Object({
     'groups': undefined,
@@ -1335,7 +1362,6 @@ export const ReportsComponent = (props) => {
         }
       }
     }
-    console.log(topologyMaps)
 
     if (webApiReport && webApiReport.profiles) {
       webApiReport.profiles.forEach(profile => {
@@ -1851,7 +1877,7 @@ export const ReportsComponent = (props) => {
                         </>
                       :
                         <CustomReactSelect
-                          id='topologyType'
+                         id='topologyType'
                           name='topologyType'
                           error={props.errors.topologyType}
                           label='Topology type:'
@@ -1928,6 +1954,7 @@ export const ReportsComponent = (props) => {
                                 entitiesNgi, entitiesSites,
                                 entitiesProjects, entitiesServiceGroups
                               }}
+                              topoMaps={topologyMaps}
                               addview={addview}
                               publicView={publicView}
                               {...props}
