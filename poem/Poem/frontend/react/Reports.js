@@ -185,14 +185,14 @@ const entityInitValues = (matchWhat, formvalue) => {
   return tmp
 }
 
-const filterEntitesBasedOnSelection = (data, selectedEntities, topoMaps, lookkey) => {
+const filterEntitesBasedOnSelection = (data, selectedEntitiesTop, selectedEntitiesMiddle, topoMaps, lookkey) => {
   let selected = new Array()
 
-  if (selectedEntities && selectedEntities['value'] &&
-    selectedEntities['value'].includes('|'))
-    selected = selectedEntities['value'].split('|')
+  if (selectedEntitiesTop && selectedEntitiesTop['value'] &&
+    selectedEntitiesTop['value'].includes('|'))
+    selected = selectedEntitiesTop['value'].split('|')
   else
-    selected = [selectedEntities['value']]
+    selected = [selectedEntitiesTop['value']]
 
   if (selected && lookkey && lookkey.includes('Sites')) {
     let choices = new Array()
@@ -207,11 +207,11 @@ const filterEntitesBasedOnSelection = (data, selectedEntities, topoMaps, lookkey
     return data
 }
 
-const formatSelectEntities = (data, selectedEntities=undefined, topoMaps=undefined, lookkey=undefined) => {
+const formatSelectEntities = (data, selectedEntitiesTop=undefined, selectedEntitiesMiddle=undefined, topoMaps=undefined, lookkey=undefined) => {
   let filtered = undefined
 
   if (lookkey)
-    filtered = filterEntitesBasedOnSelection(data, selectedEntities, topoMaps, lookkey)
+    filtered = filterEntitesBasedOnSelection(data, selectedEntitiesTop, selectedEntitiesMiddle, topoMaps, lookkey)
   else
     filtered = data
 
@@ -569,7 +569,7 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, topoMaps, publicVi
             className="pt-2"
             id="topoEntityGroup2"
             component={EntitySelect}
-            entitiesOptions={formatSelectEntities(topoGroups[key2], form.values.entitiesGroups[0], topoMaps, key2)}
+            entitiesOptions={formatSelectEntities(topoGroups[key2], form.values.entitiesGroups[0], undefined, topoMaps, key2)}
             onChangeHandler={(e) => {
               let joinedValues = ''
               for (let event of e)
