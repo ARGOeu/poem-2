@@ -3,7 +3,7 @@ import json
 from unittest.mock import patch
 
 from Poem.api.internal_views.utils import sync_webapi, \
-    get_tenant_resources
+    get_tenant_resources, sync_tags_webapi, WebApiException
 from Poem.api.models import MyAPIKey
 from Poem.helpers.history_helpers import create_comment
 from Poem.poem import models as poem_models
@@ -14,7 +14,43 @@ from django.core import serializers
 from django_tenants.test.cases import TenantTestCase
 from django_tenants.utils import get_public_schema_name
 
-from .utils_test import mocked_web_api_request
+from .test_views import mock_db_for_metrics_tests
+from .utils_test import mocked_web_api_request, MockResponse
+
+
+def mocked_put_response(*args, **kwargs):
+    return MockResponse({
+        "data": [
+            {
+                "name": "metric1",
+                "tags": [
+                    "tag1",
+                    "tag2"
+                ]
+            }
+        ]
+    }, 200)
+
+
+def mocked_put_response_not_ok(*args, **kwargs):
+    return MockResponse(
+        {
+            "code": "400",
+            "message": "Content Not acceptable",
+            "errors": [
+                {
+                    "message": "Content Not acceptable",
+                    "code": "400",
+                    "details": "Content Not acceptable"
+                }
+            ],
+            "details": "Content Not acceptable"
+        }, 400
+    )
+
+
+def mocked_put_response_not_ok_no_msg(*args, **kwargs):
+    return MockResponse(None, 500)
 
 
 class SyncWebApiTests(TenantTestCase):
@@ -182,6 +218,169 @@ class SyncWebApiTests(TenantTestCase):
             poem_models.ThresholdsProfiles.objects.get,
             name='ANOTHER-PROFILE'
         )
+
+
+class SyncWebApiTagsTests(TenantTestCase):
+    def setUp(self) -> None:
+        mock_db_for_metrics_tests()
+
+        MyAPIKey.objects.create(
+            name='WEB-API-ADMIN',
+            token='mocked_token'
+        )
+
+    @patch("requests.put")
+    def test_sync_tags(self, mock_put):
+        with self.settings(
+            WEBAPI_METRICSTAGS="https://metric.tags.com"
+        ):
+            mock_put.side_effect = mocked_put_response
+
+            sync_tags_webapi()
+
+            mock_put.assert_called_with(
+                "https://metric.tags.com",
+                headers={
+                    "x-api-key": "mocked_token",
+                    "Accept": "application/json"
+                },
+                data=[
+                    {
+                        "name": "test.AMS-Check",
+                        "tags": [
+                            "test_tag1",
+                            "test_tag2"
+                        ]
+                    },
+                    {
+                        "name": "argo.AMSPublisher-Check",
+                        "tags": [
+                            "internal",
+                            "test_tag1"
+                        ]
+                    },
+                    {
+                        "name": "hr.srce.CertLifetime-Local",
+                        "tags": [
+                            "internal"
+                        ]
+                    },
+                    {
+                        "name": "org.apel.APEL-Pub",
+                        "tags": []
+                    },
+                    {
+                        "name": "test.EMPTY-metric",
+                        "tags": []
+                    }
+                ]
+            )
+
+    @patch("requests.put")
+    def test_sync_tags_with_error(self, mock_put):
+        with self.settings(
+            WEBAPI_METRICSTAGS="https://metric.tags.com"
+        ):
+            mock_put.side_effect = mocked_put_response_not_ok
+
+            with self.assertRaises(WebApiException) as context:
+                sync_tags_webapi()
+
+            mock_put.assert_called_with(
+                "https://metric.tags.com",
+                headers={
+                    "x-api-key": "mocked_token",
+                    "Accept": "application/json"
+                },
+                data=[
+                    {
+                        "name": "test.AMS-Check",
+                        "tags": [
+                            "test_tag1",
+                            "test_tag2"
+                        ]
+                    },
+                    {
+                        "name": "argo.AMSPublisher-Check",
+                        "tags": [
+                            "internal",
+                            "test_tag1"
+                        ]
+                    },
+                    {
+                        "name": "hr.srce.CertLifetime-Local",
+                        "tags": [
+                            "internal"
+                        ]
+                    },
+                    {
+                        "name": "org.apel.APEL-Pub",
+                        "tags": []
+                    },
+                    {
+                        "name": "test.EMPTY-metric",
+                        "tags": []
+                    }
+                ]
+            )
+
+            self.assertEqual(
+                context.exception.__str__(),
+                "Web API error: 400 BAD REQUEST: Content Not acceptable"
+            )
+
+    @patch("requests.put")
+    def test_sync_tags_with_error_without_msg(self, mock_put):
+        with self.settings(
+            WEBAPI_METRICSTAGS="https://metric.tags.com"
+        ):
+            mock_put.side_effect = mocked_put_response_not_ok_no_msg
+
+            with self.assertRaises(WebApiException) as context:
+                sync_tags_webapi()
+
+            mock_put.assert_called_with(
+                "https://metric.tags.com",
+                headers={
+                    "x-api-key": "mocked_token",
+                    "Accept": "application/json"
+                },
+                data=[
+                    {
+                        "name": "test.AMS-Check",
+                        "tags": [
+                            "test_tag1",
+                            "test_tag2"
+                        ]
+                    },
+                    {
+                        "name": "argo.AMSPublisher-Check",
+                        "tags": [
+                            "internal",
+                            "test_tag1"
+                        ]
+                    },
+                    {
+                        "name": "hr.srce.CertLifetime-Local",
+                        "tags": [
+                            "internal"
+                        ]
+                    },
+                    {
+                        "name": "org.apel.APEL-Pub",
+                        "tags": []
+                    },
+                    {
+                        "name": "test.EMPTY-metric",
+                        "tags": []
+                    }
+                ]
+            )
+
+            self.assertEqual(
+                context.exception.__str__(),
+                "Web API error: 500 SERVER ERROR"
+            )
 
 
 class BasicResourceInfoTests(TenantTestCase):
