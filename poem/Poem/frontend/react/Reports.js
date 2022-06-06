@@ -200,7 +200,7 @@ const filterEntitesBasedOnSelection = (data, selectedEntitiesTop, selectedEntiti
     selected.forEach(sel => {
       let sels = topoMaps['ngi_sites'].get(sel)
       if (sels)
-        choices = [...choices, ...sels]
+        choices.push(...sels)
     })
     return choices
   }
