@@ -8711,14 +8711,16 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
 
         self.metric = poem_models.Metric.objects.get(name="test.AMS-Check")
 
+    @patch('Poem.api.internal_views.metrictemplates.sync_tags_webapi')
     @patch(
         'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
     @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
     def test_bulk_delete_metric_templates_sp_superuser(
-            self, mock_get, mock_delete
+            self, mock_get, mock_delete, mock_sync
     ):
         mock_get.return_value = {'test.AMS-Check': ['PROFILE1', 'PROFILE2']}
         mock_delete.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         data = {
             'metrictemplates': ['argo.AMS-Check', 'test.AMS-Check']
         }
@@ -8762,13 +8764,18 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             call('PROFILE1', ['test.AMS-Check']),
             call('PROFILE2', ['test.AMS-Check'])
         ])
+        mock_sync.assert_called_once()
 
+    @patch('Poem.api.internal_views.metrictemplates.sync_tags_webapi')
     @patch(
         'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
     @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
-    def test_bulk_delete_metric_templates_sp_user(self, mock_get, mock_delete):
+    def test_bulk_delete_metric_templates_sp_user(
+            self, mock_get, mock_delete, mock_sync
+    ):
         mock_get.return_value = {'test.AMS-Check': ['PROFILE1', 'PROFILE2']}
         mock_delete.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         data = {
             'metrictemplates': ['argo.AMS-Check', 'test.AMS-Check']
         }
@@ -8790,15 +8797,18 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             1
         )
         self.assertFalse(mock_delete.called)
+        self.assertFalse(mock_sync.called)
 
+    @patch('Poem.api.internal_views.metrictemplates.sync_tags_webapi')
     @patch(
         'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
     @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
     def test_bulk_delete_metric_templates_tenant_superuser(
-            self, mock_get, mock_delete
+            self, mock_get, mock_delete, mock_sync
     ):
         mock_get.return_value = {'test.AMS-Check': ['PROFILE1', 'PROFILE2']}
         mock_delete.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         data = {
             'metrictemplates': ['argo.AMS-Check', 'test.AMS-Check']
         }
@@ -8820,15 +8830,18 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             1
         )
         self.assertFalse(mock_delete.called)
+        self.assertFalse(mock_sync.called)
 
+    @patch('Poem.api.internal_views.metrictemplates.sync_tags_webapi')
     @patch(
         'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
     @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
     def test_bulk_delete_metric_templates_tenant_user(
-            self, mock_get, mock_delete
+            self, mock_get, mock_delete, mock_sync
     ):
         mock_get.return_value = {'test.AMS-Check': ['PROFILE1', 'PROFILE2']}
         mock_delete.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         data = {
             'metrictemplates': ['argo.AMS-Check', 'test.AMS-Check']
         }
@@ -8850,15 +8863,74 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             1
         )
         self.assertFalse(mock_delete.called)
+        self.assertFalse(mock_sync.called)
 
+    @patch('Poem.api.internal_views.metrictemplates.sync_tags_webapi')
+    @patch(
+        'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
+    @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
+    def test_bulk_delete_metric_templates_sync_error_sp_superuser(
+            self, mock_get, mock_delete, mock_sync
+    ):
+        mock_get.return_value = {'test.AMS-Check': ['PROFILE1', 'PROFILE2']}
+        mock_delete.side_effect = mocked_func
+        mock_sync.side_effect = mocked_syncer_error
+        data = {
+            'metrictemplates': ['argo.AMS-Check', 'test.AMS-Check']
+        }
+        assert self.metric
+        metric_id = self.metric.id
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.sp_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data,
+            {
+                "info": "Metric templates argo.AMS-Check, test.AMS-Check "
+                        "successfully deleted.",
+                "warning": "Error syncing metric tags: 400 BAD REQUEST"
+            }
+        )
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 5)
+        self.assertRaises(
+            admin_models.MetricTemplate.DoesNotExist,
+            admin_models.MetricTemplate.objects.get,
+            name='argo.AMS-Check'
+        )
+        self.assertRaises(
+            admin_models.MetricTemplate.DoesNotExist,
+            admin_models.MetricTemplate.objects.get,
+            name='test.AMS-Check'
+        )
+        self.assertRaises(
+            poem_models.Metric.DoesNotExist,
+            poem_models.Metric.objects.get,
+            name='test.AMS-Check'
+        )
+        self.assertEqual(
+            len(poem_models.TenantHistory.objects.filter(object_id=metric_id)),
+            0
+        )
+        self.assertEqual(mock_delete.call_count, 2)
+        mock_delete.assert_has_calls([
+            call('PROFILE1', ['test.AMS-Check']),
+            call('PROFILE2', ['test.AMS-Check'])
+        ])
+        mock_sync.assert_called_once()
+
+    @patch('Poem.api.internal_views.metrictemplates.sync_tags_webapi')
     @patch(
         'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
     @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
     def test_bulk_delete_one_metric_templates_sp_superuser(
-            self, mock_get, mock_delete
+            self, mock_get, mock_delete, mock_sync
     ):
         mock_get.return_value = {'test.AMS-Check': ['PROFILE1', 'PROFILE2']}
         mock_delete.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         data = {'metrictemplates': ['test.AMS-Check']}
         assert self.metric
         metric_id = self.metric.id
@@ -8892,15 +8964,18 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             call('PROFILE1', ['test.AMS-Check']),
             call('PROFILE2', ['test.AMS-Check'])
         ])
+        mock_sync.assert_called_once()
 
+    @patch('Poem.api.internal_views.metrictemplates.sync_tags_webapi')
     @patch(
         'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
     @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
     def test_bulk_delete_one_metric_templates_sp_user(
-            self, mock_get, mock_delete
+            self, mock_get, mock_delete, mock_sync
     ):
         mock_get.return_value = {'test.AMS-Check': ['PROFILE1', 'PROFILE2']}
         mock_delete.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         data = {'metrictemplates': ['test.AMS-Check']}
         assert self.metric
         metric_id = self.metric.id
@@ -8920,15 +8995,18 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             1
         )
         self.assertFalse(mock_delete.called)
+        self.assertFalse(mock_sync.called)
 
+    @patch('Poem.api.internal_views.metrictemplates.sync_tags_webapi')
     @patch(
         'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
     @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
     def test_bulk_delete_one_metric_templates_tenant_superuser(
-            self, mock_get, mock_delete
+            self, mock_get, mock_delete, mock_sync
     ):
         mock_get.return_value = {'test.AMS-Check': ['PROFILE1', 'PROFILE2']}
         mock_delete.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         data = {'metrictemplates': ['test.AMS-Check']}
         assert self.metric
         metric_id = self.metric.id
@@ -8948,15 +9026,18 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             1
         )
         self.assertFalse(mock_delete.called)
+        self.assertFalse(mock_sync.called)
 
+    @patch('Poem.api.internal_views.metrictemplates.sync_tags_webapi')
     @patch(
         'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
     @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
     def test_bulk_delete_one_metric_templates_tenant_user(
-            self, mock_get, mock_delete
+            self, mock_get, mock_delete, mock_sync
     ):
         mock_get.return_value = {'test.AMS-Check': ['PROFILE1', 'PROFILE2']}
         mock_delete.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         data = {'metrictemplates': ['test.AMS-Check']}
         assert self.metric
         metric_id = self.metric.id
@@ -8976,17 +9057,20 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             1
         )
         self.assertFalse(mock_delete.called)
+        self.assertFalse(mock_sync.called)
 
+    @patch('Poem.api.internal_views.metrictemplates.sync_tags_webapi')
     @patch(
         'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
     @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
     def test_bulk_delete_metric_templates_if_get_exception_sp_superuser(
-            self, mock_get, mock_delete
+            self, mock_get, mock_delete, mock_sync
     ):
         mock_get.side_effect = Exception(
             'Error fetching WEB API data: API key not found'
         )
         mock_delete.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         data = {
             'metrictemplates': ['argo.AMS-Check', 'test.AMS-Check']
         }
@@ -9010,17 +9094,20 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             object_id=self.metric.id
         )
         assert self.metric, metric_history
+        mock_sync.assert_called_once()
 
+    @patch('Poem.api.internal_views.metrictemplates.sync_tags_webapi')
     @patch(
         'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
     @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
     def test_bulk_delete_metric_templates_if_get_exception_sp_user(
-            self, mock_get, mock_delete
+            self, mock_get, mock_delete, mock_sync
     ):
         mock_get.side_effect = Exception(
             'Error fetching WEB API data: API key not found'
         )
         mock_delete.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         data = {
             'metrictemplates': ['argo.AMS-Check', 'test.AMS-Check']
         }
@@ -9038,17 +9125,21 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             object_id=self.metric.id
         )
         assert self.metric, metric_history
+        self.assertFalse(mock_delete.called)
+        self.assertFalse(mock_sync.called)
 
+    @patch('Poem.api.internal_views.metrictemplates.sync_tags_webapi')
     @patch(
         'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
     @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
     def test_bulk_delete_metric_templates_if_get_exception_tenant_superuser(
-            self, mock_get, mock_delete
+            self, mock_get, mock_delete, mock_sync
     ):
         mock_get.side_effect = Exception(
             'Error fetching WEB API data: API key not found'
         )
         mock_delete.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         data = {
             'metrictemplates': ['argo.AMS-Check', 'test.AMS-Check']
         }
@@ -9066,17 +9157,21 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             object_id=self.metric.id
         )
         assert self.metric, metric_history
+        self.assertFalse(mock_delete.called)
+        self.assertFalse(mock_sync.called)
 
+    @patch('Poem.api.internal_views.metrictemplates.sync_tags_webapi')
     @patch(
         'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
     @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
     def test_bulk_delete_metric_templates_if_get_exception_tenant_user(
-            self, mock_get, mock_delete
+            self, mock_get, mock_delete, mock_sync
     ):
         mock_get.side_effect = Exception(
             'Error fetching WEB API data: API key not found'
         )
         mock_delete.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         data = {
             'metrictemplates': ['argo.AMS-Check', 'test.AMS-Check']
         }
@@ -9094,15 +9189,19 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             object_id=self.metric.id
         )
         assert self.metric, metric_history
+        self.assertFalse(mock_delete.called)
+        self.assertFalse(mock_sync.called)
 
+    @patch('Poem.api.internal_views.metrictemplates.sync_tags_webapi')
     @patch(
         'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
     @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
     def test_bulk_delete_metric_templates_if_get_requests_exception_sp_sprusr(
-            self, mock_get, mock_delete
+            self, mock_get, mock_delete, mock_sync
     ):
         mock_get.side_effect = requests.exceptions.HTTPError('Exception')
         mock_delete.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         data = {
             'metrictemplates': ['argo.AMS-Check', 'test.AMS-Check']
         }
@@ -9124,15 +9223,18 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             object_id=self.metric.id
         )
         assert self.metric, metric_history
+        mock_sync.assert_called_once()
 
+    @patch('Poem.api.internal_views.metrictemplates.sync_tags_webapi')
     @patch(
         'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
     @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
     def test_bulk_delete_metric_templates_if_get_requests_exception_sp_user(
-            self, mock_get, mock_delete
+            self, mock_get, mock_delete, mock_sync
     ):
         mock_get.side_effect = requests.exceptions.HTTPError('Exception')
         mock_delete.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         data = {
             'metrictemplates': ['argo.AMS-Check', 'test.AMS-Check']
         }
@@ -9149,15 +9251,18 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             object_id=self.metric.id
         )
         assert self.metric, metric_history
+        self.assertFalse(mock_sync.called)
 
+    @patch('Poem.api.internal_views.metrictemplates.sync_tags_webapi')
     @patch(
         'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
     @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
     def test_bulk_delete_metric_templates_if_get_requests_exception_tenant_susr(
-            self, mock_get, mock_delete
+            self, mock_get, mock_delete, mock_sync
     ):
         mock_get.side_effect = requests.exceptions.HTTPError('Exception')
         mock_delete.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         data = {
             'metrictemplates': ['argo.AMS-Check', 'test.AMS-Check']
         }
@@ -9174,15 +9279,18 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             object_id=self.metric.id
         )
         assert self.metric, metric_history
+        self.assertFalse(mock_sync.called)
 
+    @patch('Poem.api.internal_views.metrictemplates.sync_tags_webapi')
     @patch(
         'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
     @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
     def test_bulk_delete_metric_templates_if_get_requests_exception_tenant_user(
-            self, mock_get, mock_delete
+            self, mock_get, mock_delete, mock_sync
     ):
         mock_get.side_effect = requests.exceptions.HTTPError('Exception')
         mock_delete.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         data = {
             'metrictemplates': ['argo.AMS-Check', 'test.AMS-Check']
         }
@@ -9199,17 +9307,20 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             object_id=self.metric.id
         )
         assert self.metric, metric_history
+        self.assertFalse(mock_sync.called)
 
+    @patch('Poem.api.internal_views.metrictemplates.sync_tags_webapi')
     @patch(
         'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
     @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
     def test_bulk_delete_metric_templates_if_delete_profile_exception_sp_spusr(
-            self, mock_get, mock_delete
+            self, mock_get, mock_delete, mock_sync
     ):
         mock_get.return_value = {'test.AMS-Check': ['PROFILE1', 'PROFILE2']}
         mock_delete.side_effect = Exception(
             'Error deleting metric from profile: Something went wrong'
         )
+        mock_sync.side_effect = mocked_func
         data = {
             'metrictemplates': ['argo.AMS-Check', 'test.AMS-Check']
         }
@@ -9256,12 +9367,14 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             call('PROFILE1', ['test.AMS-Check']),
             call('PROFILE2', ['test.AMS-Check'])
         ])
+        mock_sync.assert_called_once()
 
+    @patch('Poem.api.internal_views.metrictemplates.sync_tags_webapi')
     @patch(
         'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
     @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
     def test_bulk_delete_metric_templates_if_metric_not_in_profile(
-            self, mock_get, mock_delete
+            self, mock_get, mock_delete, mock_sync
     ):
         mock_get.return_value = {}
         mock_delete.side_effect = mocked_func
@@ -9301,15 +9414,18 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             0
         )
         self.assertFalse(mock_delete.called)
+        mock_sync.assert_called_once()
 
+    @patch('Poem.api.internal_views.metrictemplates.sync_tags_webapi')
     @patch(
         'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
     @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
     def test_bulk_delete_metric_templates_if_metric_not_in_profile(
-            self, mock_get, mock_delete
+            self, mock_get, mock_delete, mock_sync
     ):
         mock_get.return_value = {}
         mock_delete.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         data = {
             'metrictemplates': ['argo.AMS-Check', 'test.AMS-Check']
         }
@@ -9346,6 +9462,68 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             0
         )
         self.assertFalse(mock_delete.called)
+        mock_sync.assert_called_once()
+
+    @patch('Poem.api.internal_views.metrictemplates.sync_tags_webapi')
+    @patch(
+        'Poem.api.internal_views.metrictemplates.delete_metrics_from_profile')
+    @patch('Poem.api.internal_views.metrictemplates.get_metrics_in_profiles')
+    def test_bulk_delete_metric_templates_sync_error_with_other_excp_sp_spusr(
+            self, mock_get, mock_delete, mock_sync
+    ):
+        mock_get.return_value = {'test.AMS-Check': ['PROFILE1', 'PROFILE2']}
+        mock_delete.side_effect = Exception(
+            'Error deleting metric from profile: Something went wrong'
+        )
+        mock_sync.side_effect = mocked_syncer_error
+        data = {
+            'metrictemplates': ['argo.AMS-Check', 'test.AMS-Check']
+        }
+        metric_id = self.metric.id
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.sp_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            {
+                "info": "Metric templates argo.AMS-Check, test.AMS-Check "
+                        "successfully deleted.",
+                "warning": "test: Metric test.AMS-Check not deleted "
+                           "from profile PROFILE1: Error deleting metric from "
+                           "profile: Something went wrong; "
+                           "test: Metric test.AMS-Check not deleted from "
+                           "profile PROFILE2: Error deleting metric from "
+                           "profile: Something went wrong\n"
+                           "Error syncing metric tags: 400 BAD REQUEST"
+            }
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertRaises(
+            admin_models.MetricTemplate.DoesNotExist,
+            admin_models.MetricTemplate.objects.get,
+            name='argo.AMS-Check'
+        )
+        self.assertRaises(
+            admin_models.MetricTemplate.DoesNotExist,
+            admin_models.MetricTemplate.objects.get,
+            name='test.AMS-Check'
+        )
+        self.assertRaises(
+            poem_models.Metric.DoesNotExist,
+            poem_models.Metric.objects.get,
+            name='test.AMS-Check'
+        )
+        self.assertEqual(
+            len(poem_models.TenantHistory.objects.filter(object_id=metric_id)),
+            0
+        )
+        self.assertEqual(mock_delete.call_count, 2)
+        mock_delete.assert_has_calls([
+            call('PROFILE1', ['test.AMS-Check']),
+            call('PROFILE2', ['test.AMS-Check'])
+        ])
+        mock_sync.assert_called_once()
 
 
 class MetricTagsTests(TenantTestCase):

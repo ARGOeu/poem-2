@@ -718,6 +718,17 @@ class BulkDeleteMetricTemplates(APIView):
             if warning_message:
                 response_message.update({'warning': '; '.join(warning_message)})
 
+            try:
+                sync_tags_webapi()
+
+            except WebApiException as error:
+                response_message.update({
+                    "warning":
+                        f"{'; '.join(warning_message)}\n{str(error)}".strip(
+                            "\n"
+                        )
+                })
+
             return Response(
                 data=response_message, status=status.HTTP_200_OK
             )
