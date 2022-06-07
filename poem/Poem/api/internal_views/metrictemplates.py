@@ -812,20 +812,29 @@ class ListMetricTags(APIView):
                     except KeyError:
                         pass
 
+                    warn_msg = ""
+                    try:
+                        sync_tags_webapi()
+
+                    except WebApiException as error:
+                        warn_msg = f"{str(error)}\n"
+
                     if len(missing_metrics) > 0:
                         if len(missing_metrics) == 1:
                             warn_msg = \
-                                f"Metric {list(missing_metrics)[0]} " \
+                                f"{warn_msg}Metric {list(missing_metrics)[0]} " \
                                 f"does not exist."
 
                         else:
-                            warn_msg = "Metrics {} do not exist.".format(
+                            warn_msg = "{}Metrics {} do not exist.".format(
+                                warn_msg,
                                 ", ".join(sorted(list(missing_metrics)))
                             )
 
+                    if warn_msg:
                         return Response(
-                            {"detail": warn_msg},
-                            status=status.HTTP_201_CREATED,
+                            {"detail": warn_msg.strip("\n")},
+                            status=status.HTTP_201_CREATED
                         )
 
                     else:
@@ -915,22 +924,32 @@ class ListMetricTags(APIView):
                         except KeyError:
                             pass
 
+                        warn_msg = ""
+                        try:
+                            sync_tags_webapi()
+
+                        except WebApiException as error:
+                            warn_msg = f"{str(error)}\n"
+
                         if len(missing_metrics) > 0:
                             if len(missing_metrics) == 1:
                                 warn_msg = \
+                                    f"{warn_msg}" \
                                     f"Metric {list(missing_metrics)[0]} " \
                                     f"does not exist."
 
                             else:
                                 warn_msg = \
-                                    "Metrics {} do not exist.".format(
+                                    "{}Metrics {} do not exist.".format(
+                                        warn_msg,
                                         ", ".join(
                                             sorted(list(missing_metrics))
                                         )
                                     )
 
+                        if warn_msg:
                             return Response(
-                                {"detail": warn_msg},
+                                {"detail": warn_msg.strip("\n")},
                                 status=status.HTTP_201_CREATED
                             )
 
@@ -984,6 +1003,15 @@ class ListMetricTags(APIView):
 
                 tag.delete()
 
+                try:
+                    sync_tags_webapi()
+
+                except WebApiException as error:
+                    return Response(
+                        {"detail": str(error)},
+                        status=status.HTTP_204_NO_CONTENT
+                    )
+
                 return Response(status=status.HTTP_204_NO_CONTENT)
 
             except admin_models.MetricTags.DoesNotExist:
@@ -1021,6 +1049,6 @@ class ListPublicMetricTags(ListMetricTags):
     permission_classes = ()
 
 
-class ListMetricTemplates4Tag(ListMetricTemplates4Tag):
+class ListPublicMetricTemplates4Tag(ListMetricTemplates4Tag):
     authentication_classes = ()
     permission_classes = ()

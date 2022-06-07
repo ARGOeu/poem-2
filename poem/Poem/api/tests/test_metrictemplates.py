@@ -9602,7 +9602,9 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data["detail"], "Requested tag not found.")
 
-    def test_post_metric_tag_without_metrics_admin_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_post_metric_tag_without_metrics_admin_superuser(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         data = {
             "name": "test_tag3",
             "metrics": []
@@ -9613,6 +9615,7 @@ class MetricTagsTests(TenantTestCase):
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        mock_sync.assert_called_once()
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 5)
         tag = admin_models.MetricTags.objects.get(name="test_tag3")
         self.assertFalse(tag in self.mt1.tags.all())
@@ -9632,7 +9635,11 @@ class MetricTagsTests(TenantTestCase):
         self.assertFalse(tag in self.mt7.tags.all())
         self.assertFalse(tag in self.mt7_version1.tags.all())
 
-    def test_post_metric_tag_without_metrics_admin_regular_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_post_metric_tag_without_metrics_admin_regular_user(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "name": "test_tag3",
             "metrics": []
@@ -9647,6 +9654,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to add metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertRaises(
             admin_models.MetricTags.DoesNotExist,
@@ -9654,7 +9662,9 @@ class MetricTagsTests(TenantTestCase):
             name="test_tag3"
         )
 
-    def test_post_metric_tag_without_metrics_tenant_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_post_metric_tag_without_metrics_tenant_superuser(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         data = {
             "name": "test_tag3",
             "metrics": []
@@ -9669,6 +9679,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to add metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertRaises(
             admin_models.MetricTags.DoesNotExist,
@@ -9676,7 +9687,11 @@ class MetricTagsTests(TenantTestCase):
             name="test_tag3"
         )
 
-    def test_post_metric_tag_without_metrics_tenant_regular_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_post_metric_tag_without_metrics_tenant_regular_user(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "name": "test_tag3",
             "metrics": []
@@ -9691,6 +9706,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to add metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertRaises(
             admin_models.MetricTags.DoesNotExist,
@@ -9698,7 +9714,125 @@ class MetricTagsTests(TenantTestCase):
             name="test_tag3"
         )
 
-    def test_post_existing_metric_tag_without_metrics_admin_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_post_metric_tag_sync_error_admin_superuser(self, mock_sync):
+        mock_sync.side_effect = mocked_syncer_error
+        data = {
+            "name": "test_tag3",
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data["detail"],
+            "Error syncing metric tags: 400 BAD REQUEST"
+        )
+        mock_sync.assert_called_once()
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 5)
+        tag = admin_models.MetricTags.objects.get(name="test_tag3")
+        self.assertFalse(tag in self.mt1.tags.all())
+        self.assertFalse(tag in self.mt1_version1.tags.all())
+        self.assertFalse(tag in self.mt1_version2.tags.all())
+        self.assertFalse(tag in self.mt2.tags.all())
+        self.assertFalse(tag in self.mt2_version1.tags.all())
+        self.assertFalse(tag in self.mt3.tags.all())
+        self.assertFalse(tag in self.mt3_version1.tags.all())
+        self.assertFalse(tag in self.mt4.tags.all())
+        self.assertFalse(tag in self.mt4_version1.tags.all())
+        self.assertFalse(tag in self.mt5.tags.all())
+        self.assertFalse(tag in self.mt5_version1.tags.all())
+        self.assertFalse(tag in self.mt5_version2.tags.all())
+        self.assertFalse(tag in self.mt6.tags.all())
+        self.assertFalse(tag in self.mt6_version1.tags.all())
+        self.assertFalse(tag in self.mt7.tags.all())
+        self.assertFalse(tag in self.mt7_version1.tags.all())
+
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_post_metric_tag_sync_error_admin_regular_user(self, mock_sync):
+        mock_sync.side_effect = mocked_syncer_error
+        data = {
+            "name": "test_tag3",
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add metric tags."
+        )
+        self.assertFalse(mock_sync.called)
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertRaises(
+            admin_models.MetricTags.DoesNotExist,
+            admin_models.MetricTags.objects.get,
+            name="test_tag3"
+        )
+
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_post_metric_tag_sync_error_tenant_superuser(self, mock_sync):
+        mock_sync.side_effect = mocked_syncer_error
+        data = {
+            "name": "test_tag3",
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add metric tags."
+        )
+        self.assertFalse(mock_sync.called)
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertRaises(
+            admin_models.MetricTags.DoesNotExist,
+            admin_models.MetricTags.objects.get,
+            name="test_tag3"
+        )
+
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_post_metric_tag_sync_error_tenant_regular_user(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_syncer_error
+        data = {
+            "name": "test_tag3",
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add metric tags."
+        )
+        self.assertFalse(mock_sync.called)
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertRaises(
+            admin_models.MetricTags.DoesNotExist,
+            admin_models.MetricTags.objects.get,
+            name="test_tag3"
+        )
+
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_post_existing_metric_tag_without_metrics_admin_superuser(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "name": "internal",
             "metrics": []
@@ -9714,9 +9848,14 @@ class MetricTagsTests(TenantTestCase):
                 response.data["detail"],
                 "Metric tag with this name already exists."
             )
+            self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
 
-    def test_post_existing_metric_tag_without_metrics_admin_regular_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_post_existing_metric_tag_without_metrics_admin_regular_user(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "name": "internal",
             "metrics": []
@@ -9731,9 +9870,14 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to add metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
 
-    def test_post_existing_metric_tag_without_metrics_tenant_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_post_existing_metric_tag_without_metrics_tenant_superuser(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "name": "internal",
             "metrics": []
@@ -9748,9 +9892,14 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to add metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
 
-    def test_post_existing_metric_tag_without_metrics_tenant_regular_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_post_existing_metric_tag_without_metrics_tenant_regular_user(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "name": "internal",
             "metrics": []
@@ -9765,9 +9914,14 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to add metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
 
-    def test_post_metric_tag_without_metrics_without_name_admin_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_post_metric_tag_without_metrics_without_name_admin_superuser(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "name": "",
             "metrics": []
@@ -9782,9 +9936,14 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You must specify metric tag name."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
 
-    def test_post_metric_tag_without_metrics_without_name_admin_reg_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_post_metric_tag_without_metrics_without_name_admin_reg_user(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "name": "",
             "metrics": []
@@ -9799,9 +9958,14 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to add metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
 
-    def test_post_metric_tag_without_metrics_without_name_tenant_superusr(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_post_metric_tag_without_metrics_without_name_tenant_superusr(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "name": "",
             "metrics": []
@@ -9816,9 +9980,14 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to add metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
 
-    def test_post_metric_tag_without_metrics_without_name_tenant_reg_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_post_metric_tag_without_metrics_without_name_tenant_reg_user(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "name": "",
             "metrics": []
@@ -9833,9 +10002,14 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to add metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
 
-    def test_post_metric_tag_without_metrics_faulty_json_admin_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_post_metric_tag_without_metrics_faulty_json_admin_superuser(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "metrics": []
         }
@@ -9846,9 +10020,14 @@ class MetricTagsTests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["detail"], "Missing data key: name.")
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
 
-    def test_post_metric_tag_without_metrics_faulty_json_admin_reg_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_post_metric_tag_without_metrics_faulty_json_admin_reg_user(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "metrics": []
         }
@@ -9862,9 +10041,14 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to add metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
 
-    def test_post_metric_tag_without_metrics_faulty_json_tenant_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_post_metric_tag_without_metrics_faulty_json_tenant_superuser(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "metrics": []
         }
@@ -9878,9 +10062,14 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to add metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
 
-    def test_post_metric_tag_without_metrics_faulty_json_tenant_reg_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_post_metric_tag_without_metrics_faulty_json_tenant_reg_user(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "metrics": []
         }
@@ -9894,9 +10083,12 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to add metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
 
-    def test_post_metric_tag_with_metrics_admin_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_post_metric_tag_with_metrics_admin_superuser(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         data = {
             "name": "test_tag3",
             "metrics": ["argo.AMS-Check", "test2.AMS-Check"]
@@ -9907,6 +10099,7 @@ class MetricTagsTests(TenantTestCase):
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        mock_sync.assert_called_once()
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 5)
         tag = admin_models.MetricTags.objects.get(name="test_tag3")
         self.assertEqual(len(self.mt1.tags.all()), 4)
@@ -9931,7 +10124,9 @@ class MetricTagsTests(TenantTestCase):
         self.assertTrue(tag in self.mt7.tags.all())
         self.assertTrue(tag in self.mt7_version1.tags.all())
 
-    def test_post_metric_tag_with_metrics_admin_regular_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_post_metric_tag_with_metrics_admin_regular_user(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         data = {
             "name": "test_tag3",
             "metrics": ["test.AMS-Check", "test2.AMS-Check"]
@@ -9946,9 +10141,12 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to add metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
 
-    def test_post_metric_tag_with_metrics_tenant_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_post_metric_tag_with_metrics_tenant_superuser(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         data = {
             "name": "test_tag3",
             "metrics": ["test.AMS-Check", "test2.AMS-Check"]
@@ -9963,9 +10161,12 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to add metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
 
-    def test_post_metric_tag_with_metrics_tenant_regular_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_post_metric_tag_with_metrics_tenant_regular_user(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         data = {
             "name": "test_tag3",
             "metrics": ["test.AMS-Check", "test2.AMS-Check"]
@@ -9980,9 +10181,14 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to add metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
 
-    def test_post_metric_tag_with_nonexisting_metrics_admin_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_post_metric_tag_with_nonexisting_metrics_admin_superuser(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "name": "test_tag3",
             "metrics": ["argo.AMS-Check", "mock.AMS-Check"]
@@ -9996,6 +10202,7 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual(
             response.data["detail"], "Metric mock.AMS-Check does not exist."
         )
+        mock_sync.assert_called_once()
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 5)
         tag = admin_models.MetricTags.objects.get(name="test_tag3")
         self.assertEqual(len(self.mt1.tags.all()), 4)
@@ -10018,7 +10225,11 @@ class MetricTagsTests(TenantTestCase):
         self.assertFalse(tag in self.mt7.tags.all())
         self.assertFalse(tag in self.mt7_version1.tags.all())
 
-    def test_post_metric_tag_with_multi_nonexisting_metrics_admin_suprusr(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_post_metric_tag_with_multi_nonexisting_metrics_admin_suprusr(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "name": "test_tag3",
             "metrics": ["argo.AMS-Check", "mock.AMS-Check", "mock2.AMS-Check"]
@@ -10033,6 +10244,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "Metrics mock.AMS-Check, mock2.AMS-Check do not exist."
         )
+        mock_sync.assert_called_once()
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 5)
         tag = admin_models.MetricTags.objects.get(name="test_tag3")
         self.assertEqual(len(self.mt1.tags.all()), 4)
@@ -10055,7 +10267,11 @@ class MetricTagsTests(TenantTestCase):
         self.assertFalse(tag in self.mt7.tags.all())
         self.assertFalse(tag in self.mt7_version1.tags.all())
 
-    def test_post_metric_tag_with_nonexisting_metrics_admin_regular_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_post_metric_tag_with_nonexisting_metrics_admin_regular_user(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "name": "test_tag3",
             "metrics": ["argo.AMS-Check", "mock.AMS-Check"]
@@ -10070,9 +10286,14 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to add metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
 
-    def test_post_metric_tag_with_nonexisting_metrics_tenant_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_post_metric_tag_with_nonexisting_metrics_tenant_superuser(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "name": "test_tag3",
             "metrics": ["argo.AMS-Check", "mock.AMS-Check"]
@@ -10087,9 +10308,14 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to add metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
 
-    def test_post_metric_tag_with_nonexisting_metrics_tenant_regular_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_post_metric_tag_with_nonexisting_metrics_tenant_regular_user(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "name": "test_tag3",
             "metrics": ["argo.AMS-Check", "mock.AMS-Check"]
@@ -10104,9 +10330,121 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to add metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
 
-    def test_put_metric_tag_without_metrics_admin_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_post_metric_tag_nonexisting_metrics_sync_error_admin_suprusr(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_syncer_error
+        data = {
+            "name": "test_tag3",
+            "metrics": ["argo.AMS-Check", "mock.AMS-Check", "mock2.AMS-Check"]
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data["detail"],
+            "Error syncing metric tags: 400 BAD REQUEST\n"
+            "Metrics mock.AMS-Check, mock2.AMS-Check do not exist."
+        )
+        mock_sync.assert_called_once()
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 5)
+        tag = admin_models.MetricTags.objects.get(name="test_tag3")
+        self.assertEqual(len(self.mt1.tags.all()), 4)
+        self.assertTrue(tag in self.mt1.tags.all())
+        self.assertEqual(len(self.mt1_version1.tags.all()), 2)
+        self.assertFalse(tag in self.mt1_version1.tags.all())
+        self.assertEqual(len(self.mt1_version2.tags.all()), 4)
+        self.assertTrue(tag in self.mt1_version2.tags.all())
+        self.assertFalse(tag in self.mt2.tags.all())
+        self.assertFalse(tag in self.mt2_version1.tags.all())
+        self.assertFalse(tag in self.mt3.tags.all())
+        self.assertFalse(tag in self.mt3_version1.tags.all())
+        self.assertFalse(tag in self.mt4.tags.all())
+        self.assertFalse(tag in self.mt4_version1.tags.all())
+        self.assertFalse(tag in self.mt5.tags.all())
+        self.assertFalse(tag in self.mt5_version1.tags.all())
+        self.assertFalse(tag in self.mt5_version2.tags.all())
+        self.assertFalse(tag in self.mt6.tags.all())
+        self.assertFalse(tag in self.mt6_version1.tags.all())
+        self.assertFalse(tag in self.mt7.tags.all())
+        self.assertFalse(tag in self.mt7_version1.tags.all())
+
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_post_metric_tag_nonexisting_metrics_sync_error_admin_regular_user(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_syncer_error
+        data = {
+            "name": "test_tag3",
+            "metrics": ["argo.AMS-Check", "mock.AMS-Check"]
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add metric tags."
+        )
+        self.assertFalse(mock_sync.called)
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_post_metric_tag_nonexisting_metrics_sync_error_tenant_superuser(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_syncer_error
+        data = {
+            "name": "test_tag3",
+            "metrics": ["argo.AMS-Check", "mock.AMS-Check"]
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add metric tags."
+        )
+        self.assertFalse(mock_sync.called)
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_post_metric_tag_nonexisting_metrics_sync_error_tenant_regular_user(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
+        data = {
+            "name": "test_tag3",
+            "metrics": ["argo.AMS-Check", "mock.AMS-Check"]
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add metric tags."
+        )
+        self.assertFalse(mock_sync.called)
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_without_metrics_admin_superuser(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         data = {
             "id": self.tag4.id,
             "name": "test_tag3",
@@ -10152,6 +10490,7 @@ class MetricTagsTests(TenantTestCase):
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        mock_sync.assert_called_once()
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -10183,7 +10522,9 @@ class MetricTagsTests(TenantTestCase):
             ["test_tag1"]
         )
 
-    def test_put_metric_tag_without_metrics_admin_regular_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_without_metrics_admin_regular_user(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         data = {
             "id": self.tag4.id,
             "name": "test_tag3",
@@ -10233,6 +10574,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to change metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -10264,7 +10606,9 @@ class MetricTagsTests(TenantTestCase):
             ["test_tag1"]
         )
 
-    def test_put_metric_tag_without_metrics_tenant_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_without_metrics_tenant_superuser(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         data = {
             "id": self.tag4.id,
             "name": "test_tag3",
@@ -10314,6 +10658,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to change metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -10345,7 +10690,11 @@ class MetricTagsTests(TenantTestCase):
             ["test_tag1"]
         )
 
-    def test_put_metric_tag_without_metrics_tenant_regular_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_without_metrics_tenant_regular_user(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "id": self.tag4.id,
             "name": "test_tag3",
@@ -10395,6 +10744,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to change metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -10426,7 +10776,93 @@ class MetricTagsTests(TenantTestCase):
             ["test_tag1"]
         )
 
-    def test_put_metric_tag_with_existing_name_admin_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_sync_error_admin_superuser(self, mock_sync):
+        mock_sync.side_effect = mocked_syncer_error
+        data = {
+            "id": self.tag4.id,
+            "name": "test_tag3",
+            "metrics": []
+        }
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt6.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data["detail"],
+            "Error syncing metric tags: 400 BAD REQUEST"
+        )
+        mock_sync.assert_called_once()
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag3"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag3"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag3"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag3"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_with_existing_name_admin_superuser(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         data = {
             "id": self.tag4.id,
             "name": "deprecated",
@@ -10446,6 +10882,7 @@ class MetricTagsTests(TenantTestCase):
                 response.data["detail"],
                 "Metric tag with this name already exists."
             )
+            self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -10477,7 +10914,11 @@ class MetricTagsTests(TenantTestCase):
             ["test_tag1"]
         )
 
-    def test_put_metric_tag_with_existing_name_admin_regular_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_with_existing_name_admin_regular_user(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "id": self.tag4.id,
             "name": "deprecated",
@@ -10494,6 +10935,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to change metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -10525,7 +10967,11 @@ class MetricTagsTests(TenantTestCase):
             ["test_tag1"]
         )
 
-    def test_put_metric_tag_with_existing_name_tenant_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_with_existing_name_tenant_superuser(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "id": self.tag4.id,
             "name": "deprecated",
@@ -10542,6 +10988,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to change metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -10573,7 +11020,11 @@ class MetricTagsTests(TenantTestCase):
             ["test_tag1"]
         )
 
-    def test_put_metric_tag_with_existing_name_tenant_regular_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_with_existing_name_tenant_regular_user(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "id": self.tag4.id,
             "name": "deprecated",
@@ -10590,6 +11041,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to change metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -10621,7 +11073,9 @@ class MetricTagsTests(TenantTestCase):
             ["test_tag1"]
         )
 
-    def test_put_metric_tag_with_empty_name_admin_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_with_empty_name_admin_superuser(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         data = {
             "id": self.tag4.id,
             "name": "",
@@ -10637,6 +11091,7 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual(
             response.data["detail"], "You must specify metric tag name."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -10668,7 +11123,9 @@ class MetricTagsTests(TenantTestCase):
             ["test_tag1"]
         )
 
-    def test_put_metric_tag_with_empty_name_admin_regular_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_with_empty_name_admin_regular_user(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         data = {
             "id": self.tag4.id,
             "name": "",
@@ -10685,6 +11142,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to change metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -10716,7 +11174,9 @@ class MetricTagsTests(TenantTestCase):
             ["test_tag1"]
         )
 
-    def test_put_metric_tag_with_empty_name_tenant_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_with_empty_name_tenant_superuser(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         data = {
             "id": self.tag4.id,
             "name": "",
@@ -10733,6 +11193,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to change metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -10764,7 +11225,11 @@ class MetricTagsTests(TenantTestCase):
             ["test_tag1"]
         )
 
-    def test_put_metric_tag_with_empty_name_tenant_regular_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_with_empty_name_tenant_regular_user(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "id": self.tag4.id,
             "name": "",
@@ -10781,6 +11246,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to change metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -10812,7 +11278,9 @@ class MetricTagsTests(TenantTestCase):
             ["test_tag1"]
         )
 
-    def test_put_metric_tag_with_empty_id_admin_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_with_empty_id_admin_superuser(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         data = {
             "id": "",
             "name": "test_tag3",
@@ -10828,6 +11296,7 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual(
             response.data["detail"], "You must specify metric tag ID."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -10859,7 +11328,9 @@ class MetricTagsTests(TenantTestCase):
             ["test_tag1"]
         )
 
-    def test_put_metric_tag_with_empty_id_admin_regular_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_with_empty_id_admin_regular_user(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         data = {
             "id": "",
             "name": "test_tag3",
@@ -10876,6 +11347,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to change metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -10907,7 +11379,9 @@ class MetricTagsTests(TenantTestCase):
             ["test_tag1"]
         )
 
-    def test_put_metric_tag_with_empty_id_tenant_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_with_empty_id_tenant_superuser(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         data = {
             "id": "",
             "name": "test_tag3",
@@ -10924,6 +11398,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to change metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -10955,7 +11430,9 @@ class MetricTagsTests(TenantTestCase):
             ["test_tag1"]
         )
 
-    def test_put_metric_tag_with_empty_id_tenant_regular_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_with_empty_id_tenant_regular_user(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         data = {
             "id": "",
             "name": "test_tag3",
@@ -10972,6 +11449,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to change metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -11003,7 +11481,9 @@ class MetricTagsTests(TenantTestCase):
             ["test_tag1"]
         )
 
-    def test_put_metric_tag_with_faulty_json_admin_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_with_faulty_json_admin_superuser(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         data = {
             "id": self.tag4.id,
             "metrics": []
@@ -11016,6 +11496,7 @@ class MetricTagsTests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["detail"], "Missing data key: name.")
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -11047,7 +11528,11 @@ class MetricTagsTests(TenantTestCase):
             ["test_tag1"]
         )
 
-    def test_put_metric_tag_with_faulty_json_admin_regular_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_with_faulty_json_admin_regular_user(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "id": self.tag4.id,
             "metrics": []
@@ -11063,6 +11548,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to change metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -11094,7 +11580,9 @@ class MetricTagsTests(TenantTestCase):
             ["test_tag1"]
         )
 
-    def test_put_metric_tag_with_faulty_json_tenant_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_with_faulty_json_tenant_superuser(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         data = {
             "id": self.tag4.id,
             "metrics": []
@@ -11110,6 +11598,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to change metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -11141,7 +11630,11 @@ class MetricTagsTests(TenantTestCase):
             ["test_tag1"]
         )
 
-    def test_put_metric_tag_with_faulty_json_tenant_regular_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_with_faulty_json_tenant_regular_user(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "id": self.tag4.id,
             "metrics": []
@@ -11157,6 +11650,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to change metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -11188,7 +11682,9 @@ class MetricTagsTests(TenantTestCase):
             ["test_tag1"]
         )
 
-    def test_put_metric_tag_with_metrics_admin_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_with_metrics_admin_superuser(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         data = {
             "id": self.tag3.id,
             "name": "test_tag3",
@@ -11245,6 +11741,7 @@ class MetricTagsTests(TenantTestCase):
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        mock_sync.assert_called_once()
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -11299,7 +11796,9 @@ class MetricTagsTests(TenantTestCase):
             ["internal", "test_tag2", "test_tag3"]
         )
 
-    def test_put_metric_tag_with_metrics_admin_regular_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_with_metrics_admin_regular_user(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         data = {
             "id": self.tag3.id,
             "name": "test_tag3",
@@ -11360,6 +11859,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to change metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -11415,7 +11915,9 @@ class MetricTagsTests(TenantTestCase):
             ["internal", "test_tag1", "test_tag2"]
         )
 
-    def test_put_metric_tag_with_metrics_tenant_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_with_metrics_tenant_superuser(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         data = {
             "id": self.tag3.id,
             "name": "test_tag3",
@@ -11476,6 +11978,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to change metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -11531,7 +12034,9 @@ class MetricTagsTests(TenantTestCase):
             ["internal", "test_tag1", "test_tag2"]
         )
 
-    def test_put_metric_tag_with_metrics_tenant_regular_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_with_metrics_tenant_regular_user(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         data = {
             "id": self.tag3.id,
             "name": "test_tag3",
@@ -11592,6 +12097,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to change metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -11647,7 +12153,11 @@ class MetricTagsTests(TenantTestCase):
             ["internal", "test_tag1", "test_tag2"]
         )
 
-    def test_put_metric_tag_with_metrics_without_rename_admin_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_with_metrics_without_rename_admin_superuser(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "id": self.tag3.id,
             "name": "test_tag1",
@@ -11704,6 +12214,7 @@ class MetricTagsTests(TenantTestCase):
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        mock_sync.assert_called_once()
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -11758,7 +12269,11 @@ class MetricTagsTests(TenantTestCase):
             ["internal", "test_tag1", "test_tag2"]
         )
 
-    def test_put_metric_tag_with_metrics_without_rename_admin_reg_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_with_metrics_without_rename_admin_reg_user(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "id": self.tag3.id,
             "name": "test_tag1",
@@ -11819,6 +12334,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to change metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -11874,7 +12390,11 @@ class MetricTagsTests(TenantTestCase):
             ["internal", "test_tag1", "test_tag2"]
         )
 
-    def test_put_metric_tag_with_metrics_without_rename_tenant_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_with_metrics_without_rename_tenant_superuser(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "id": self.tag3.id,
             "name": "test_tag1",
@@ -11935,6 +12455,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to change metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -11990,7 +12511,11 @@ class MetricTagsTests(TenantTestCase):
             ["internal", "test_tag1", "test_tag2"]
         )
 
-    def test_put_metric_tag_with_metrics_without_rename_tenant_reg_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_with_metrics_without_rename_tenant_reg_user(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "id": self.tag3.id,
             "name": "test_tag1",
@@ -12051,6 +12576,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to change metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -12106,7 +12632,11 @@ class MetricTagsTests(TenantTestCase):
             ["internal", "test_tag1", "test_tag2"]
         )
 
-    def test_put_metric_tag_with_nonexisting_metric_admin_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_with_nonexisting_metric_admin_superuser(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "id": self.tag3.id,
             "name": "test_tag3",
@@ -12166,6 +12696,7 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual(
             response.data["detail"], "Metric mock.AMS-Check does not exist."
         )
+        mock_sync.assert_called_once()
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -12220,7 +12751,11 @@ class MetricTagsTests(TenantTestCase):
             ["internal", "test_tag2"]
         )
 
-    def test_put_metric_tag_with_nonexisting_metrics_admin_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_with_nonexisting_metrics_admin_superuser(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "id": self.tag3.id,
             "name": "test_tag3",
@@ -12281,6 +12816,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "Metrics mock.AMS-Check, mock2.AMS-Check do not exist."
         )
+        mock_sync.assert_called_once()
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -12335,7 +12871,11 @@ class MetricTagsTests(TenantTestCase):
             ["internal", "test_tag2"]
         )
 
-    def test_put_metric_tag_with_nonexisting_metric_admin_regular_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_with_nonexisting_metric_admin_regular_user(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "id": self.tag3.id,
             "name": "test_tag3",
@@ -12396,6 +12936,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to change metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -12455,7 +12996,11 @@ class MetricTagsTests(TenantTestCase):
             ["internal", "test_tag1", "test_tag2"]
         )
 
-    def test_put_metric_tag_with_nonexisting_metric_tenant_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_with_nonexisting_metric_tenant_superuser(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "id": self.tag3.id,
             "name": "test_tag3",
@@ -12516,6 +13061,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to change metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -12575,7 +13121,11 @@ class MetricTagsTests(TenantTestCase):
             ["internal", "test_tag1", "test_tag2"]
         )
 
-    def test_put_metric_tag_with_nonexisting_metric_tenant_regular_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_put_metric_tag_with_nonexisting_metric_tenant_regular_user(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         data = {
             "id": self.tag3.id,
             "name": "test_tag3",
@@ -12636,6 +13186,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to change metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -12695,7 +13246,9 @@ class MetricTagsTests(TenantTestCase):
             ["internal", "test_tag1", "test_tag2"]
         )
 
-    def test_delete_metric_tag_admin_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_delete_metric_tag_admin_superuser(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
             ["internal", "test_tag1", "test_tag2"]
@@ -12746,6 +13299,7 @@ class MetricTagsTests(TenantTestCase):
         force_authenticate(request, user=self.superuser)
         response = self.view(request, "test_tag2")
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        mock_sync.assert_called_once()
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 3)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -12794,7 +13348,115 @@ class MetricTagsTests(TenantTestCase):
             ["internal", "test_tag1"]
         )
 
-    def test_delete_metric_tag_admin_regular_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_delete_metric_tag_sync_error_admin_superuser(self, mock_sync):
+        mock_sync.side_effect = mocked_syncer_error
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2.tags.all()],
+            ["test_tag2"]
+        )
+        self.assertEqual(
+            [tag.name for tag in self.mt2_version1.tags.all()], ["test_tag2"]
+        )
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt6.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
+        self.assertEqual([tag[0] for tag in self.metric1_history["tags"]], [])
+        self.assertEqual(
+            [tag[0] for tag in self.metric2_history["tags"]], ["test_tag2"]
+        )
+        self.assertEqual(
+            sorted([tag[0] for tag in self.metric3_history["tags"]]),
+            ["internal", "test_tag1", "test_tag2"]
+        )
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
+        request = self.factory.delete(self.url + "test_tag2")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, "test_tag2")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(
+            response.data["detail"],
+            "Error syncing metric tags: 400 BAD REQUEST"
+        )
+        mock_sync.assert_called_once()
+        self.assertEqual(admin_models.MetricTags.objects.all().count(), 3)
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1.tags.all()]),
+            ["internal", "test_tag1"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version1.tags.all()]),
+            ["test_tag1"]
+        )
+        self.assertEqual(
+            sorted([tag.name for tag in self.mt1_version2.tags.all()]),
+            ["internal", "test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt2.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt2_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt3_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt4_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt5_version1.tags.all()], [])
+        self.assertEqual(
+            [tag.name for tag in self.mt5_version2.tags.all()],
+            ["test_tag1"]
+        )
+        self.assertEqual([tag.name for tag in self.mt6.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt6_version1.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7.tags.all()], [])
+        self.assertEqual([tag.name for tag in self.mt7_version1.tags.all()], [])
+        metric1_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric1.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric2_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric2.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        metric3_history = json.loads(poem_models.TenantHistory.objects.filter(
+            object_id=self.metric3.id
+        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        self.assertEqual([tag[0] for tag in metric1_history["tags"]], [])
+        self.assertEqual([tag[0] for tag in metric2_history["tags"]], [])
+        self.assertEqual(
+            sorted([tag[0] for tag in metric3_history["tags"]]),
+            ["internal", "test_tag1"]
+        )
+
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_delete_metric_tag_admin_regular_user(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
             ["internal", "test_tag1", "test_tag2"]
@@ -12849,6 +13511,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to delete metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -12904,7 +13567,9 @@ class MetricTagsTests(TenantTestCase):
             ["internal", "test_tag1", "test_tag2"]
         )
 
-    def test_delete_metric_tag_tenant_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_delete_metric_tag_tenant_superuser(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
             ["internal", "test_tag1", "test_tag2"]
@@ -12959,6 +13624,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to delete metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -13014,7 +13680,9 @@ class MetricTagsTests(TenantTestCase):
             ["internal", "test_tag1", "test_tag2"]
         )
 
-    def test_delete_metric_tag_tenant_regular_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_delete_metric_tag_tenant_regular_user(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
             ["internal", "test_tag1", "test_tag2"]
@@ -13069,6 +13737,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to delete metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -13124,7 +13793,9 @@ class MetricTagsTests(TenantTestCase):
             ["internal", "test_tag1", "test_tag2"]
         )
 
-    def test_delete_nonexisting_metric_tag_admin_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_delete_nonexisting_metric_tag_admin_superuser(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
             ["internal", "test_tag1", "test_tag2"]
@@ -13178,6 +13849,7 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual(
             response.data["detail"], "The requested metric tag does not exist."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -13233,7 +13905,9 @@ class MetricTagsTests(TenantTestCase):
             ["internal", "test_tag1", "test_tag2"]
         )
 
-    def test_delete_nonexisting_metric_tag_admin_regular_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_delete_nonexisting_metric_tag_admin_regular_user(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
             ["internal", "test_tag1", "test_tag2"]
@@ -13288,6 +13962,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to delete metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -13343,7 +14018,9 @@ class MetricTagsTests(TenantTestCase):
             ["internal", "test_tag1", "test_tag2"]
         )
 
-    def test_delete_nonexisting_metric_tag_tenant_superadmin(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_delete_nonexisting_metric_tag_tenant_superadmin(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
             ["internal", "test_tag1", "test_tag2"]
@@ -13398,6 +14075,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to delete metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
@@ -13453,7 +14131,9 @@ class MetricTagsTests(TenantTestCase):
             ["internal", "test_tag1", "test_tag2"]
         )
 
-    def test_delete_nonexisting_metric_tag_tenant_regular_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_delete_nonexisting_metric_tag_tenant_regular_user(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
             ["internal", "test_tag1", "test_tag2"]
@@ -13508,6 +14188,7 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to delete metric tags."
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
         self.assertEqual(
             sorted([tag.name for tag in self.mt1.tags.all()]),
