@@ -587,7 +587,7 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, topoMaps, publicVi
 }
 
 
-const TopologyConfEndpointsEntityFields = ({topoGroups, addview, publicView, form}) => {
+const TopologyConfEndpointsEntityFields = ({topoGroups, addview, topoMaps, publicView, form}) => {
   let topoType = form.values.topologyType
   let label1 = undefined
   let label2 = undefined
@@ -630,7 +630,7 @@ const TopologyConfEndpointsEntityFields = ({topoGroups, addview, publicView, for
             name="entitiesEndpoints.0.value"
             id="topoEntityEndoint1"
             component={EntitySelect}
-            entitiesOptions={formatSelectEntities(topoGroups[key1])}
+            entitiesOptions={formatSelectEntities(topoGroups[key1], form.values.entitiesGroups[0], undefined, topoMaps, key1)}
             onChangeHandler={(e) => {
               let joinedValues = ''
               for (let event of e)
@@ -2023,6 +2023,7 @@ export const ReportsComponent = (props) => {
                                 entitiesSites, entitiesServiceGroups,
                                 serviceTypesSitesEndpoints, serviceTypesServiceGroupsEndpoints
                               }}
+                              topoMaps={topologyMaps}
                               addview={addview}
                               publicView={publicView}
                               {...props}
