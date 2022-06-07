@@ -195,14 +195,17 @@ const filterEntitesBasedOnSelection = (data, selectedEntitiesTop, selectedEntiti
       selected = [selectedEntitiesTop['value']]
   }
 
-  if (selected.length > 0 && lookkey && lookkey.includes('Sites')) {
+  if (selected.length > 0) {
     let choices = new Array()
-    selected.forEach(sel => {
-      let sels = topoMaps['ngi_sites'].get(sel)
-      if (sels)
-        choices.push(...sels)
-    })
-    return choices
+
+    if (lookkey.includes('Sites')) {
+      selected.forEach(sel => {
+        let sels = topoMaps['ngi_sites'].get(sel)
+        if (sels)
+          choices.push(...sels)
+      })
+      return choices
+    }
   }
   else
     return data
@@ -658,7 +661,7 @@ const TopologyConfEndpointsEntityFields = ({topoGroups, addview, topoMaps, publi
             className="pt-2"
             id="topoEntityEndoint2"
             component={EntitySelect}
-            entitiesOptions={formatSelectEntities(topoGroups[key2])}
+            entitiesOptions={formatSelectEntities(topoGroups[key2], form.values.entitiesGroups[0], form.values.entitiesGroups[1], topoMaps, key2)}
             onChangeHandler={(e) => {
               let joinedValues = ''
               for (let event of e)
