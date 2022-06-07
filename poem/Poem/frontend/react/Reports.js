@@ -195,7 +195,6 @@ const filterEntitesBasedOnSelection = (data, selectedEntities, topoMaps, lookkey
       selected = [selectedEntities['value']]
   }
 
-
   if (selected.length > 0) {
     let choices = new Array()
 
@@ -669,7 +668,16 @@ const TopologyConfEndpointsEntityFields = ({topoGroups, addview, topoMaps, publi
             className="pt-2"
             id="topoEntityEndoint2"
             component={EntitySelect}
-            entitiesOptions={formatSelectEntities(topoGroups[key2], form.values.entitiesEndpoints[0], topoMaps, key2)}
+            entitiesOptions={
+              formatSelectEntities(
+                topoGroups[key2],
+                form.values.entitiesEndpoints[0]['value']
+                  ? form.values.entitiesEndpoints[0]
+                  : form.values.entitiesGroups[1],
+                topoMaps,
+                key2
+            )
+            }
             onChangeHandler={(e) => {
               let joinedValues = ''
               for (let event of e)
@@ -1390,9 +1398,6 @@ export const ReportsComponent = (props) => {
           thresholdsProfile = profile.name;
       })
     }
-
-    //console.log(topologyEndpoints)
-    //console.log(topologyGroups)
 
     if (topologyEndpoints && serviceTypesSitesEndpoints.length === 0 &&
       serviceTypesServiceGroupsEndpoints.length === 0) {
