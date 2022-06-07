@@ -164,7 +164,7 @@ class WebApiException(Exception):
         self.msg = msg
 
     def __str__(self):
-        return f"Web API error: {str(self.msg)}"
+        return f"Error syncing metric tags: {str(self.msg)}"
 
 
 def sync_tags_webapi():

@@ -2,7 +2,7 @@ import json
 
 from Poem.api import serializers
 from Poem.api.internal_views.utils import one_value_inline, two_value_inline, \
-    inline_metric_for_db
+    inline_metric_for_db, sync_tags_webapi, WebApiException
 from Poem.api.views import NotFound
 from Poem.helpers.history_helpers import create_history, update_comment
 from Poem.helpers.metrics_helpers import update_metrics, \
@@ -203,7 +203,15 @@ class ListMetricTemplates(APIView):
                 else:
                     create_history(mt, request.user.username)
 
-                return Response(status=status.HTTP_201_CREATED)
+                try:
+                    sync_tags_webapi()
+
+                    return Response(status=status.HTTP_201_CREATED)
+
+                except WebApiException as err:
+                    return error_response(
+                        status_code=status.HTTP_201_CREATED, detail=str(err)
+                    )
 
             except IntegrityError:
                 return error_response(
@@ -416,7 +424,15 @@ class ListMetricTemplates(APIView):
                             status_code=status.HTTP_418_IM_A_TEAPOT
                         )
 
-                return Response(status=status.HTTP_201_CREATED)
+                try:
+                    sync_tags_webapi()
+
+                    return Response(status=status.HTTP_201_CREATED)
+
+                except WebApiException as error:
+                    return error_response(
+                        status_code=status.HTTP_201_CREATED, detail=str(error)
+                    )
 
             except admin_models.MetricTemplate.DoesNotExist:
                 return error_response(
@@ -486,7 +502,17 @@ class ListMetricTemplates(APIView):
                                 pass
 
                     mt.delete()
-                    return Response(status=status.HTTP_204_NO_CONTENT)
+
+                    try:
+                        sync_tags_webapi()
+
+                        return Response(status=status.HTTP_204_NO_CONTENT)
+
+                    except WebApiException as error:
+                        return error_response(
+                            status_code=status.HTTP_204_NO_CONTENT,
+                            detail=str(error)
+                        )
 
                 except admin_models.MetricTemplate.DoesNotExist:
                     return error_response(

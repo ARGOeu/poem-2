@@ -4,6 +4,7 @@ from unittest.mock import patch, call
 
 import requests
 from Poem.api import views_internal as views
+from Poem.api.internal_views.utils import WebApiException
 from Poem.helpers.history_helpers import create_comment, serialize_metric
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
@@ -610,6 +611,10 @@ def mock_db():
         comment='Initial version.',
         user=tenant_superuser.username
     )
+
+
+def mocked_syncer_error(*args, **kwargs):
+    raise WebApiException("400 BAD REQUEST")
 
 
 class ListMetricTemplatesAPIViewTests(TenantTestCase):
@@ -1520,9 +1525,11 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data, {'detail': 'Metric template not found'})
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_sp_superuser(self, mocked_inline):
-        mocked_inline.side_effect = mocked_inline_metric_for_db
+    def test_post_metric_template_sp_superuser(self, mock_inline, mock_sync):
+        mock_inline.side_effect = mocked_inline_metric_for_db
+        mock_sync.side_effect = mocked_func
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -1553,6 +1560,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        mock_sync.assert_called_once()
         mt = admin_models.MetricTemplate.objects.get(name='new-template')
         versions = admin_models.MetricTemplateHistory.objects.filter(
             object_id=mt
@@ -1596,9 +1604,11 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].version_user, 'poem')
         self.assertEqual(versions[0].version_comment, 'Initial version.')
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_sp_user(self, mocked_inline):
+    def test_post_metric_template_sp_user(self, mocked_inline, mock_sync):
         mocked_inline.side_effect = mocked_inline_metric_for_db
+        mock_sync.side_effect = mocked_func
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -1633,6 +1643,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to add metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertRaises(
             admin_models.MetricTemplate.DoesNotExist,
             admin_models.MetricTemplate.objects.get,
@@ -1644,9 +1655,13 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions.count(), 0)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_tenant_superuser(self, mocked_inline):
+    def test_post_metric_template_tenant_superuser(
+            self, mocked_inline, mock_sync
+    ):
         mocked_inline.side_effect = mocked_inline_metric_for_db
+        mock_sync.side_effect = mocked_func
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -1681,6 +1696,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to add metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertRaises(
             admin_models.MetricTemplate.DoesNotExist,
             admin_models.MetricTemplate.objects.get,
@@ -1692,9 +1708,11 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions.count(), 0)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_tenant_user(self, mocked_inline):
+    def test_post_metric_template_tenant_user(self, mocked_inline, mock_sync):
         mocked_inline.side_effect = mocked_inline_metric_for_db
+        mock_sync.side_effect = mocked_func
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -1729,6 +1747,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to add metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertRaises(
             admin_models.MetricTemplate.DoesNotExist,
             admin_models.MetricTemplate.objects.get,
@@ -1740,11 +1759,13 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions.count(), 0)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_post_metric_template_with_nonexisting_tag_sp_superuser(
-            self, mocked_inline
+            self, mocked_inline, mock_sync
     ):
         mocked_inline.side_effect = mocked_inline_metric_for_db
+        mock_sync.side_effect = mocked_func
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -1780,6 +1801,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        mock_sync.assert_called_once()
         new_tag = admin_models.MetricTags.objects.get(name='new_tag')
         mt = admin_models.MetricTemplate.objects.get(name='new-template')
         versions = admin_models.MetricTemplateHistory.objects.filter(
@@ -1824,11 +1846,13 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].version_user, 'poem')
         self.assertEqual(versions[0].version_comment, 'Initial version.')
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_post_metric_template_with_nonexisting_tag_sp_user(
-            self, mocked_inline
+            self, mocked_inline, mock_sync
     ):
         mocked_inline.side_effect = mocked_inline_metric_for_db
+        mock_sync.side_effect = mocked_func
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -1868,6 +1892,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to add metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertRaises(
             admin_models.MetricTags.DoesNotExist,
             admin_models.MetricTags.objects.get,
@@ -1884,11 +1909,13 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions.count(), 0)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_post_metric_template_with_nonexisting_tag_tenant_superuser(
-            self, mocked_inline
+            self, mocked_inline, mock_sync
     ):
         mocked_inline.side_effect = mocked_inline_metric_for_db
+        mock_sync.side_effect = mocked_func
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -1928,6 +1955,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to add metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertRaises(
             admin_models.MetricTags.DoesNotExist,
             admin_models.MetricTags.objects.get,
@@ -1944,11 +1972,13 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions.count(), 0)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_post_metric_template_with_nonexisting_tag_tenant_user(
-            self, mocked_inline
+            self, mocked_inline, mock_sync
     ):
         mocked_inline.side_effect = mocked_inline_metric_for_db
+        mock_sync.side_effect = mocked_func
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -1988,6 +2018,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to add metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertRaises(
             admin_models.MetricTags.DoesNotExist,
             admin_models.MetricTags.objects.get,
@@ -2004,11 +2035,13 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions.count(), 0)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_post_metric_template_without_tag_sp_superuser(
-            self, mocked_inline
+            self, mocked_inline, mock_sync
     ):
         mocked_inline.side_effect = mocked_inline_metric_for_db
+        mock_sync.side_effect = mocked_func
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -2039,6 +2072,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        mock_sync.assert_called_once()
         mt = admin_models.MetricTemplate.objects.get(name='new-template')
         versions = admin_models.MetricTemplateHistory.objects.filter(
             object_id=mt
@@ -2080,9 +2114,13 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].version_user, 'poem')
         self.assertEqual(versions[0].version_comment, 'Initial version.')
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_without_tag_sp_user(self, mocked_inline):
+    def test_post_metric_template_without_tag_sp_user(
+            self, mocked_inline, mock_sync
+    ):
         mocked_inline.side_effect = mocked_inline_metric_for_db
+        mock_sync.side_effect = mocked_func
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -2117,6 +2155,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to add metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertRaises(
             admin_models.MetricTemplate.DoesNotExist,
             admin_models.MetricTemplate.objects.get,
@@ -2128,11 +2167,13 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions.count(), 0)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_post_metric_template_without_tag_tenant_superuser(
-            self, mocked_inline
+            self, mocked_inline, mock_sync
     ):
         mocked_inline.side_effect = mocked_inline_metric_for_db
+        mock_sync.side_effect = mocked_func
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -2167,6 +2208,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to add metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertRaises(
             admin_models.MetricTemplate.DoesNotExist,
             admin_models.MetricTemplate.objects.get,
@@ -2178,9 +2220,13 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions.count(), 0)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_without_tag_tenant_user(self, mocked_inline):
+    def test_post_metric_template_without_tag_tenant_user(
+            self, mocked_inline, mock_sync
+    ):
         mocked_inline.side_effect = mocked_inline_metric_for_db
+        mock_sync.side_effect = mocked_func
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -2215,6 +2261,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to add metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertRaises(
             admin_models.MetricTemplate.DoesNotExist,
             admin_models.MetricTemplate.objects.get,
@@ -2226,11 +2273,255 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions.count(), 0)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_with_existing_name_sp_superuser(
-            self, mocked_inline
+    def test_post_metric_template_sync_error_sp_superuser(
+            self, mock_inline, mock_sync
+    ):
+        mock_inline.side_effect = mocked_inline_metric_for_db
+        mock_sync.side_effect = mocked_syncer_error
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path',
+             'value': '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'cloned_from': '',
+            'name': 'new-template',
+            'probeversion': 'ams-probe (0.1.7)',
+            'mtype': 'Active',
+            'tags': ['internal', 'test_tag1'],
+            'description': 'New description for new-template.',
+            'probeexecutable': 'ams-probe',
+            'parent': '',
+            'config': json.dumps(conf),
+            'attribute': json.dumps([{'key': 'attr-key', 'value': 'attr-val'}]),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data["detail"],
+            "Error syncing metric tags: 400 BAD REQUEST"
+        )
+        mock_sync.assert_called_once()
+        mt = admin_models.MetricTemplate.objects.get(name='new-template')
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        )
+        self.assertEqual(versions.count(), 1)
+        self.assertEqual(mt.mtype, self.template_active)
+        self.assertTrue(self.tag1 in mt.tags.all())
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertEqual(mt.probekey, self.ams_probe_7)
+        self.assertEqual(mt.description, 'New description for new-template.')
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/probes/argo", '
+            '"interval 6", "retryInterval 4"]'
+        )
+        self.assertEqual(mt.attribute, '["attr-key attr-val"]')
+        self.assertEqual(mt.dependency, '["dep-key dep-val"]')
+        self.assertEqual(mt.flags, '["flag-key flag-val"]')
+        self.assertEqual(mt.files, '["file-key file-val"]')
+        self.assertEqual(mt.parameter, '["par-key par-val"]')
+        self.assertEqual(mt.fileparameter, '["fp-key fp-val"]')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertTrue(self.tag1 in versions[0].tags.all())
+        self.assertTrue(self.tag3 in versions[0].tags.all())
+        self.assertEqual(
+            versions[0].probekey, mt.probekey
+        )
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+        self.assertEqual(versions[0].version_user, 'poem')
+        self.assertEqual(versions[0].version_comment, 'Initial version.')
+
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_post_metric_template_sync_error_sp_user(self, mocked_inline, mock_sync):
+        mocked_inline.side_effect = mocked_inline_metric_for_db
+        mock_sync.side_effect = mocked_syncer_error
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path',
+             'value': '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'cloned_from': '',
+            'name': 'new-template',
+            'probeversion': 'ams-probe (0.1.7)',
+            'mtype': 'Active',
+            'tags': ['internal', 'test_tag1'],
+            'description': 'New description for new-template.',
+            'probeexecutable': 'ams-probe',
+            'parent': '',
+            'config': json.dumps(conf),
+            'attribute': json.dumps([{'key': 'attr-key', 'value': 'attr-val'}]),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add metric templates.'
+        )
+        self.assertFalse(mock_sync.called)
+        self.assertRaises(
+            admin_models.MetricTemplate.DoesNotExist,
+            admin_models.MetricTemplate.objects.get,
+            name='new-template'
+        )
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            name='new-template'
+        )
+        self.assertEqual(versions.count(), 0)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_post_metric_template_sync_error_tenant_superuser(
+            self, mocked_inline, mock_sync
     ):
         mocked_inline.side_effect = mocked_inline_metric_for_db
+        mock_sync.side_effect = mocked_syncer_error
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path',
+             'value': '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'cloned_from': '',
+            'name': 'new-template',
+            'probeversion': 'ams-probe (0.1.7)',
+            'mtype': 'Active',
+            'tags': ['internal', 'test_tag1'],
+            'description': 'New description for new-template.',
+            'probeexecutable': 'ams-probe',
+            'parent': '',
+            'config': json.dumps(conf),
+            'attribute': json.dumps([{'key': 'attr-key', 'value': 'attr-val'}]),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add metric templates.'
+        )
+        self.assertFalse(mock_sync.called)
+        self.assertRaises(
+            admin_models.MetricTemplate.DoesNotExist,
+            admin_models.MetricTemplate.objects.get,
+            name='new-template'
+        )
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            name='new-template'
+        )
+        self.assertEqual(versions.count(), 0)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_post_metric_template_sync_error_tenant_user(
+            self, mocked_inline, mock_sync
+    ):
+        mocked_inline.side_effect = mocked_inline_metric_for_db
+        mock_sync.side_effect = mocked_syncer_error
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path',
+             'value': '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'cloned_from': '',
+            'name': 'new-template',
+            'probeversion': 'ams-probe (0.1.7)',
+            'mtype': 'Active',
+            'tags': ['internal', 'test_tag1'],
+            'description': 'New description for new-template.',
+            'probeexecutable': 'ams-probe',
+            'parent': '',
+            'config': json.dumps(conf),
+            'attribute': json.dumps([{'key': 'attr-key', 'value': 'attr-val'}]),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to add metric templates.'
+        )
+        self.assertFalse(mock_sync.called)
+        self.assertRaises(
+            admin_models.MetricTemplate.DoesNotExist,
+            admin_models.MetricTemplate.objects.get,
+            name='new-template'
+        )
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            name='new-template'
+        )
+        self.assertEqual(versions.count(), 0)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_post_metric_template_with_existing_name_sp_superuser(
+            self, mocked_inline, mock_sync
+    ):
+        mocked_inline.side_effect = mocked_inline_metric_for_db
+        mock_sync.side_effect = mocked_func
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -2264,12 +2555,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'Metric template with this name already exists.'
         )
+        self.assertFalse(mock_sync.called)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_post_metric_template_with_existing_name_sp_user(
-            self, mocked_inline
+            self, mocked_inline, mock_sync
     ):
         mocked_inline.side_effect = mocked_inline_metric_for_db
+        mock_sync.side_effect = mocked_func
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -2303,13 +2597,16 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to add metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_post_metric_template_with_existing_name_tenant_superuser(
-            self, mocked_inline
+            self, mocked_inline, mock_sync
     ):
         mocked_inline.side_effect = mocked_inline_metric_for_db
+        mock_sync.side_effect = mocked_func
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -2343,13 +2640,16 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to add metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_post_metric_template_with_existing_name_tenant_user(
-            self, mocked_inline
+            self, mocked_inline, mock_sync
     ):
         mocked_inline.side_effect = mocked_inline_metric_for_db
+        mock_sync.side_effect = mocked_func
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -2383,13 +2683,16 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to add metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_post_metric_template_with_nonexisting_probeversion_sp_superuser(
-            self, mock_inline
+            self, mock_inline, mock_sync
     ):
         mock_inline.side_effect = mocked_inline_metric_for_db
+        mock_sync.side_effect = mocked_func
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -2422,13 +2725,16 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(
             response.data['detail'], 'Probe version does not exist.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_post_metric_template_with_nonexisting_probeversion_sp_user(
-            self, mock_inline
+            self, mock_inline, mock_sync
     ):
         mock_inline.side_effect = mocked_inline_metric_for_db
+        mock_sync.side_effect = mocked_func
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -2462,13 +2768,16 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to add metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_post_metric_template_with_nonexisting_probeversion_tenant_sprusr(
-            self, mock_inline
+            self, mock_inline, mock_sync
     ):
         mock_inline.side_effect = mocked_inline_metric_for_db
+        mock_sync.side_effect = mocked_func
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -2502,13 +2811,16 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to add metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_post_metric_template_with_nonexisting_probeversion_tenant_user(
-            self, mock_inline
+            self, mock_inline, mock_sync
     ):
         mock_inline.side_effect = mocked_inline_metric_for_db
+        mock_sync.side_effect = mocked_func
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -2542,13 +2854,16 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to add metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_post_metric_template_without_specifying_probes_version_sp_suprusr(
-            self, mock_inline
+            self, mock_inline, mock_sync
     ):
         mock_inline.side_effect = mocked_inline_metric_for_db
+        mock_sync.side_effect = mocked_func
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -2581,13 +2896,16 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(
             response.data['detail'], 'Probe version not specified.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_post_metric_template_without_specifying_probes_version_sp_user(
-            self, mock_inline
+            self, mock_inline, mock_sync
     ):
         mock_inline.side_effect = mocked_inline_metric_for_db
+        mock_sync.side_effect = mocked_func
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -2621,13 +2939,16 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to add metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_post_metric_template_without_specifying_probes_version_tenant_spu(
-            self, mock_inline
+            self, mock_inline, mock_sync
     ):
         mock_inline.side_effect = mocked_inline_metric_for_db
+        mock_sync.side_effect = mocked_func
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -2661,13 +2982,16 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to add metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_post_metric_template_without_specifying_probes_version_tenant_usr(
-            self, mock_inline
+            self, mock_inline, mock_sync
     ):
         mock_inline.side_effect = mocked_inline_metric_for_db
+        mock_sync.side_effect = mocked_func
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -2701,13 +3025,16 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to add metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_post_metric_template_with_missing_data_key_sp_superuser(
-            self, mock_inline
+            self, mock_inline, mock_sync
     ):
         mock_inline.side_effect = mocked_inline_metric_for_db
+        mock_sync.side_effect = mocked_func
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -2739,13 +3066,16 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(
             response.data['detail'], 'Missing data key: flags'
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_post_metric_template_with_missing_data_key_sp_user(
-            self, mock_inline
+            self, mock_inline, mock_sync
     ):
         mock_inline.side_effect = mocked_inline_metric_for_db
+        mock_sync.side_effect = mocked_func
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -2778,13 +3108,16 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to add metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_post_metric_template_with_missing_data_key_tenant_superuser(
-            self, mock_inline
+            self, mock_inline, mock_sync
     ):
         mock_inline.side_effect = mocked_inline_metric_for_db
+        mock_sync.side_effect = mocked_func
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -2817,13 +3150,16 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to add metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_post_metric_template_with_missing_data_key_tenant_user(
-            self, mock_inline
+            self, mock_inline, mock_sync
     ):
         mock_inline.side_effect = mocked_inline_metric_for_db
+        mock_sync.side_effect = mocked_func
         conf = [
             {'key': 'maxCheckAttempts', 'value': '4'},
             {'key': 'timeout', 'value': '70'},
@@ -2856,15 +3192,18 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to add metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_without_changing_probekey_sp_superuser(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
         ]
@@ -2899,6 +3238,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        mock_sync.assert_called_once()
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         update.assert_called_once()
         update.assert_called_with(mt, 'argo.AMS-Check', self.ams_probe_11)
@@ -2971,13 +3311,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_without_changing_probekey_sp_user(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
         ]
@@ -3016,6 +3358,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to change metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         self.assertFalse(update.called)
         versions = admin_models.MetricTemplateHistory.objects.filter(
@@ -3070,13 +3413,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_without_changing_probekey_tenant_superuser(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
         ]
@@ -3115,6 +3460,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to change metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         self.assertFalse(update.called)
         versions = admin_models.MetricTemplateHistory.objects.filter(
@@ -3169,13 +3515,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_without_changing_probekey_tenant_user(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
         ]
@@ -3214,6 +3562,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to change metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         self.assertFalse(update.called)
         versions = admin_models.MetricTemplateHistory.objects.filter(
@@ -3268,13 +3617,441 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_sync_error_sp_superuser(
+            self, inline, update, mock_sync
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_syncer_error
+        attr = [
+            {'key': 'argo.ams_TOKEN2', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'argo.AMS-Check-new',
+            'mtype': 'Active',
+            'tags': ['internal', 'test_tag2'],
+            'description': 'New description for the metric template.',
+            'probeversion': 'ams-probe (0.1.11)',
+            'parent': 'argo.AMS-Check',
+            'probeexecutable': 'ams-probe',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data["detail"],
+            "Error syncing metric tags: 400 BAD REQUEST"
+        )
+        mock_sync.assert_called_once()
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        update.assert_called_once()
+        update.assert_called_with(mt, 'argo.AMS-Check', self.ams_probe_11)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(versions.count(), 2)
+        self.assertEqual(versions[1].version_comment, 'Initial version.')
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["interval", "maxCheckAttempts", "retryInterval", '
+                '"timeout"]}}',
+                '{"deleted": {"fields": ["attribute"], '
+                '"object": ["argo.ams_TOKEN"]}}',
+                '{"added": {"fields": ["attribute"], '
+                '"object": ["argo.ams_TOKEN2"]}}',
+                '{"added": {"fields": ["dependency"], "object": ["dep-key"]}}',
+                '{"deleted": {"fields": ["flags"], "object": ["OBSESS"]}}',
+                '{"added": {"fields": ["flags"], "object": ["flag-key"]}}',
+                '{"added": {"fields": ["files"], "object": ["file-key"]}}',
+                '{"deleted": {"fields": ["parameter"], '
+                '"object": ["--project"]}}',
+                '{"added": {"fields": ["parameter"], "object": ["par-key"]}}',
+                '{"added": {"fields": ["fileparameter"], '
+                '"object": ["fp-key"]}}',
+                '{"added": {"fields": ["tags"], "object": ["internal"]}}',
+                '{"deleted": {"fields": ["tags"], "object": ["test_tag1"]}}',
+                '{"added": {"fields": ["description", "parent"]}}',
+                '{"changed": {"fields": ["name", "probekey"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check-new')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 2)
+        self.assertTrue(self.tag1 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(
+            mt.description, 'New description for the metric template.'
+        )
+        self.assertEqual(mt.parent, '["argo.AMS-Check"]')
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/probes/argo", '
+            '"interval 6", "retryInterval 4"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN2 --token"]')
+        self.assertEqual(mt.dependency, '["dep-key dep-val"]')
+        self.assertEqual(mt.flags, '["flag-key flag-val"]')
+        self.assertEqual(mt.files, '["file-key file-val"]')
+        self.assertEqual(mt.parameter, '["par-key par-val"]')
+        self.assertEqual(mt.fileparameter, '["fp-key fp-val"]')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_sync_error_sp_user(
+            self, inline, update, mock_sync
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_syncer_error
+        attr = [
+            {'key': 'argo.ams_TOKEN2', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'argo.AMS-Check-new',
+            'mtype': 'Active',
+            'tags': ['internal', 'test_tag2'],
+            'description': 'New description for the metric template.',
+            'probeversion': 'ams-probe (0.1.8)',
+            'parent': 'argo.AMS-Check',
+            'probeexecutable': 'ams-probe',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        self.assertFalse(mock_sync.called)
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        self.assertFalse(update.called)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(versions.count(), 2)
+        self.assertEqual(versions[1].version_comment, 'Initial version.')
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}',
+                '{"added": {"fields": ["tags"], "object": ["internal"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 3)
+        self.assertTrue(self.tag1 in mt.tags.all())
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(mt.description, "")
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_sync_error_tenant_superuser(
+            self, inline, update, mock_sync
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_syncer_error
+        attr = [
+            {'key': 'argo.ams_TOKEN2', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'argo.AMS-Check-new',
+            'mtype': 'Active',
+            'tags': ['internal', 'test_tag2'],
+            'description': 'New description for the metric template.',
+            'probeversion': 'ams-probe (0.1.8)',
+            'parent': 'argo.AMS-Check',
+            'probeexecutable': 'ams-probe',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        self.assertFalse(mock_sync.called)
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        self.assertFalse(update.called)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(versions.count(), 2)
+        self.assertEqual(versions[1].version_comment, 'Initial version.')
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}',
+                '{"added": {"fields": ["tags"], "object": ["internal"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 3)
+        self.assertTrue(self.tag1 in mt.tags.all())
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(mt.description, "")
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    @patch('Poem.api.internal_views.metrictemplates.update_metrics')
+    @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
+    def test_put_metrictemplate_sync_error_tenant_user(
+            self, inline, update, mock_sync
+    ):
+        inline.side_effect = mocked_inline_metric_for_db
+        update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_syncer_error
+        attr = [
+            {'key': 'argo.ams_TOKEN2', 'value': '--token'}
+        ]
+        conf = [
+            {'key': 'maxCheckAttempts', 'value': '4'},
+            {'key': 'timeout', 'value': '70'},
+            {'key': 'path', 'value':
+                '/usr/libexec/argo-monitoring/probes/argo'},
+            {'key': 'interval', 'value': '6'},
+            {'key': 'retryInterval', 'value': '4'}
+        ]
+        data = {
+            'id': self.metrictemplate1.id,
+            'name': 'argo.AMS-Check-new',
+            'mtype': 'Active',
+            'tags': ['internal', 'test_tag2'],
+            'description': 'New description for the metric template.',
+            'probeversion': 'ams-probe (0.1.8)',
+            'parent': 'argo.AMS-Check',
+            'probeexecutable': 'ams-probe',
+            'config': json.dumps(conf),
+            'attribute': json.dumps(attr),
+            'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
+            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
+            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to change metric templates.'
+        )
+        self.assertFalse(mock_sync.called)
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
+        self.assertFalse(update.called)
+        versions = admin_models.MetricTemplateHistory.objects.filter(
+            object_id=mt
+        ).order_by('-date_created')
+        self.assertEqual(versions.count(), 2)
+        self.assertEqual(versions[1].version_comment, 'Initial version.')
+        comment_set = set()
+        for item in json.loads(versions[0].version_comment):
+            comment_set.add(json.dumps(item))
+        self.assertEqual(
+            comment_set,
+            {
+                '{"changed": {"fields": ["config"], '
+                '"object": ["maxCheckAttempts", "path", "timeout"]}}',
+                '{"changed": {"fields": ["probekey"]}}',
+                '{"added": {"fields": ["tags"], "object": ["internal"]}}'
+            }
+        )
+        self.assertEqual(mt.name, 'argo.AMS-Check')
+        self.assertEqual(mt.mtype.name, 'Active')
+        self.assertEqual(len(mt.tags.all()), 3)
+        self.assertTrue(self.tag1 in mt.tags.all())
+        self.assertTrue(self.tag3 in mt.tags.all())
+        self.assertTrue(self.tag4 in mt.tags.all())
+        self.assertEqual(mt.description, "")
+        self.assertEqual(mt.parent, '')
+        self.assertEqual(mt.probeexecutable, '["ams-probe"]')
+        self.assertEqual(
+            mt.config,
+            '["maxCheckAttempts 4", "timeout 70", '
+            '"path /usr/libexec/argo-monitoring/", '
+            '"interval 5", "retryInterval 3"]'
+        )
+        self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
+        self.assertEqual(mt.dependency, '')
+        self.assertEqual(mt.flags, '["OBSESS 1"]')
+        self.assertEqual(mt.files, '')
+        self.assertEqual(mt.parameter, '["--project EGI"]')
+        self.assertEqual(mt.fileparameter, '')
+        self.assertEqual(versions[0].name, mt.name)
+        self.assertEqual(versions[0].mtype, mt.mtype)
+        self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
+        self.assertEqual(versions[0].probekey, mt.probekey)
+        self.assertEqual(versions[0].parent, mt.parent)
+        self.assertEqual(versions[0].probeexecutable, mt.probeexecutable)
+        self.assertEqual(versions[0].config, mt.config)
+        self.assertEqual(versions[0].attribute, mt.attribute)
+        self.assertEqual(versions[0].dependency, mt.dependency)
+        self.assertEqual(versions[0].flags, mt.flags)
+        self.assertEqual(versions[0].files, mt.files)
+        self.assertEqual(versions[0].parameter, mt.parameter)
+        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
+
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_mttemplate_without_changing_prbkey_with_nonexist_tag_sp_spusr(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
         ]
@@ -3314,6 +4091,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        mock_sync.assert_called_once()
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         new_tag = admin_models.MetricTags.objects.get(name='new_tag')
         update.assert_called_once()
@@ -3387,13 +4165,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_mttemplate_without_changing_prbkey_with_nonexist_tag_sp_user(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
         ]
@@ -3433,6 +4213,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertFalse(mock_sync.called)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         self.assertRaises(
             admin_models.MetricTags.DoesNotExist,
@@ -3492,13 +4273,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_mttemplate_without_changing_prbkey_with_nonexist_tag_ten_susr(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
         ]
@@ -3538,6 +4321,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.tenant_superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertFalse(mock_sync.called)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         self.assertRaises(
             admin_models.MetricTags.DoesNotExist,
@@ -3597,13 +4381,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_mttemplate_without_changing_prbkey_with_nonexist_tag_tenn_usr(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
         ]
@@ -3643,6 +4429,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.tenant_user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertFalse(mock_sync.called)
         self.assertEqual(
             response.data['detail'],
             'You do not have permission to change metric templates.'
@@ -3706,13 +4493,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_without_changing_probekey_with_no_tag_sp_spusr(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
         ]
@@ -3747,6 +4536,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        mock_sync.assert_called_once()
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         update.assert_called_once()
         update.assert_called_with(mt, 'argo.AMS-Check', self.ams_probe_11)
@@ -3817,13 +4607,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_without_changing_probekey_with_no_tag_sp_usr(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
         ]
@@ -3862,6 +4654,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to change metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         self.assertFalse(update.called)
         versions = admin_models.MetricTemplateHistory.objects.filter(
@@ -3916,13 +4709,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_without_changing_probekey_with_no_tag_tenn_sus(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
         ]
@@ -3961,6 +4756,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to change metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         self.assertFalse(update.called)
         versions = admin_models.MetricTemplateHistory.objects.filter(
@@ -4015,13 +4811,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_without_changing_probekey_with_no_tag_tenn_usr(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
         ]
@@ -4060,6 +4858,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to change metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         self.assertFalse(update.called)
         versions = admin_models.MetricTemplateHistory.objects.filter(
@@ -4111,13 +4910,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_with_new_probekey_sp_superuser(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
         ]
@@ -4153,6 +4954,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertFalse(update.called)
+        mock_sync.assert_called_once()
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         versions = admin_models.MetricTemplateHistory.objects.filter(
             object_id=mt
@@ -4220,13 +5022,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_with_new_probekey_sp_user(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
         ]
@@ -4266,6 +5070,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to change metric templates.'
         )
         self.assertFalse(update.called)
+        self.assertFalse(mock_sync.called)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         versions = admin_models.MetricTemplateHistory.objects.filter(
             object_id=mt
@@ -4319,13 +5124,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_with_new_probekey_tenant_superuser(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
         ]
@@ -4365,6 +5172,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to change metric templates.'
         )
         self.assertFalse(update.called)
+        self.assertFalse(mock_sync.called)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         versions = admin_models.MetricTemplateHistory.objects.filter(
             object_id=mt
@@ -4418,13 +5226,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_with_new_probekey_tenant_user(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
         ]
@@ -4464,6 +5274,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to change metric templates.'
         )
         self.assertFalse(update.called)
+        self.assertFalse(mock_sync.called)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         versions = admin_models.MetricTemplateHistory.objects.filter(
             object_id=mt
@@ -4517,13 +5328,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_with_new_probekey_nonexisting_tag_sp_superusr(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
         ]
@@ -4564,6 +5377,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertFalse(update.called)
+        mock_sync.assert_called_once()
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         new_tag = admin_models.MetricTags.objects.get(name='new_tag')
         versions = admin_models.MetricTemplateHistory.objects.filter(
@@ -4634,13 +5448,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_with_new_probekey_nonexisting_tag_sp_user(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
         ]
@@ -4685,6 +5501,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to change metric templates.'
         )
         self.assertFalse(update.called)
+        self.assertFalse(mock_sync.called)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         self.assertRaises(
             admin_models.MetricTags.DoesNotExist,
@@ -4743,13 +5560,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_with_new_probekey_nonexisting_tag_tenant_susr(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
         ]
@@ -4794,6 +5613,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to change metric templates.'
         )
         self.assertFalse(update.called)
+        self.assertFalse(mock_sync.called)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         self.assertRaises(
             admin_models.MetricTags.DoesNotExist,
@@ -4852,13 +5672,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_with_new_probekey_nonexisting_tag_tenant_usr(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
         ]
@@ -4903,6 +5725,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to change metric templates.'
         )
         self.assertFalse(update.called)
+        self.assertFalse(mock_sync.called)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         self.assertRaises(
             admin_models.MetricTags.DoesNotExist,
@@ -4961,13 +5784,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_with_new_probekey_no_tag_sp_superuser(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
         ]
@@ -5003,6 +5828,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertFalse(update.called)
+        mock_sync.assert_called_once()
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         versions = admin_models.MetricTemplateHistory.objects.filter(
             object_id=mt
@@ -5070,13 +5896,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_with_new_probekey_no_tag_sp_user(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
         ]
@@ -5116,6 +5944,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to change metric templates.'
         )
         self.assertFalse(update.called)
+        self.assertFalse(mock_sync.called)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         versions = admin_models.MetricTemplateHistory.objects.filter(
             object_id=mt
@@ -5169,13 +5998,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_with_new_probekey_no_tag_tenant_superuser(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
         ]
@@ -5215,6 +6046,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to change metric templates.'
         )
         self.assertFalse(update.called)
+        self.assertFalse(mock_sync.called)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         versions = admin_models.MetricTemplateHistory.objects.filter(
             object_id=mt
@@ -5269,13 +6101,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_with_new_probekey_no_tag_tenant_user(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
         ]
@@ -5315,6 +6149,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to change metric templates.'
         )
         self.assertFalse(update.called)
+        self.assertFalse(mock_sync.called)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         versions = admin_models.MetricTemplateHistory.objects.filter(
             object_id=mt
@@ -5368,13 +6203,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_with_new_probekey_no_tag_tenant_superuser(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
         ]
@@ -5414,6 +6251,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to change metric templates.'
         )
         self.assertFalse(update.called)
+        self.assertFalse(mock_sync.called)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         versions = admin_models.MetricTemplateHistory.objects.filter(
             object_id=mt
@@ -5467,11 +6305,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_put_passive_metric_template_sp_superusr(self, inline, update):
+    def test_put_passive_metric_template_sp_superusr(
+            self, inline, update, mock_sync
+    ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         data = {
             'id': self.metrictemplate2.id,
             'name': 'org.apel.APEL-Pub-new',
@@ -5495,6 +6337,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        mock_sync.assert_called_once()
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate2.id)
         update.assert_called_once()
         update.assert_called_with(mt, 'org.apel.APEL-Pub', None)
@@ -5533,11 +6376,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_put_passive_metric_template_sp_user(self, inline, update):
+    def test_put_passive_metric_template_sp_user(
+            self, inline, update, mock_sync
+    ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         data = {
             'id': self.metrictemplate2.id,
             'name': 'org.apel.APEL-Pub-new',
@@ -5565,8 +6412,9 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to change metric templates.'
         )
-        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate2.id)
         self.assertFalse(update.called)
+        self.assertFalse(mock_sync.called)
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate2.id)
         versions = admin_models.MetricTemplateHistory.objects.filter(
             object_id=mt
         )
@@ -5600,13 +6448,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_passive_metric_template_tenant_superuser(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         data = {
             'id': self.metrictemplate2.id,
             'name': 'org.apel.APEL-Pub-new',
@@ -5634,8 +6484,9 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to change metric templates.'
         )
-        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate2.id)
         self.assertFalse(update.called)
+        self.assertFalse(mock_sync.called)
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate2.id)
         versions = admin_models.MetricTemplateHistory.objects.filter(
             object_id=mt
         )
@@ -5669,11 +6520,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_put_passive_metric_template_tenant_user(self, inline, update):
+    def test_put_passive_metric_template_tenant_user(
+            self, inline, update, mock_sync
+    ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         data = {
             'id': self.metrictemplate2.id,
             'name': 'org.apel.APEL-Pub-new',
@@ -5701,8 +6556,9 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to change metric templates.'
         )
-        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate2.id)
         self.assertFalse(update.called)
+        self.assertFalse(mock_sync.called)
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate2.id)
         versions = admin_models.MetricTemplateHistory.objects.filter(
             object_id=mt
         )
@@ -5736,13 +6592,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_with_existing_name_sp_superuser(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN', 'value': '--token'}
         ]
@@ -5782,14 +6640,17 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'Metric template with this name already exists.'
         )
         self.assertFalse(update.called)
+        self.assertFalse(mock_sync.called)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_with_existing_name_sp_user(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN', 'value': '--token'}
         ]
@@ -5829,6 +6690,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to change metric templates.'
         )
         self.assertFalse(update.called)
+        self.assertFalse(mock_sync.called)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         self.assertFalse(update.called)
         versions = admin_models.MetricTemplateHistory.objects.filter(
@@ -5883,13 +6745,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_with_existing_name_tenant_superuser(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN', 'value': '--token'}
         ]
@@ -5929,6 +6793,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to change metric templates.'
         )
         self.assertFalse(update.called)
+        self.assertFalse(mock_sync.called)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         self.assertFalse(update.called)
         versions = admin_models.MetricTemplateHistory.objects.filter(
@@ -5983,13 +6848,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_with_existing_name_tenant_user(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN', 'value': '--token'}
         ]
@@ -6029,6 +6896,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to change metric templates.'
         )
         self.assertFalse(update.called)
+        self.assertFalse(mock_sync.called)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         self.assertFalse(update.called)
         versions = admin_models.MetricTemplateHistory.objects.filter(
@@ -6083,13 +6951,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_with_nonexisting_probeversion_sp_superuser(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN', 'value': '--token'}
         ]
@@ -6128,6 +6998,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'], 'Probe version does not exist.'
         )
         self.assertFalse(update.called)
+        self.assertFalse(mock_sync.called)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         self.assertFalse(update.called)
         versions = admin_models.MetricTemplateHistory.objects.filter(
@@ -6182,13 +7053,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_with_nonexisting_probeversion_sp_user(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN', 'value': '--token'}
         ]
@@ -6228,6 +7101,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to change metric templates.'
         )
         self.assertFalse(update.called)
+        self.assertFalse(mock_sync.called)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         self.assertFalse(update.called)
         versions = admin_models.MetricTemplateHistory.objects.filter(
@@ -6282,13 +7156,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_with_nonexisting_probeversion_tenant_superusr(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN', 'value': '--token'}
         ]
@@ -6328,6 +7204,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to change metric templates.'
         )
         self.assertFalse(update.called)
+        self.assertFalse(mock_sync.called)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         self.assertFalse(update.called)
         versions = admin_models.MetricTemplateHistory.objects.filter(
@@ -6382,13 +7259,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_with_nonexisting_probeversion_tenant_user(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN', 'value': '--token'}
         ]
@@ -6428,6 +7307,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to change metric templates.'
         )
         self.assertFalse(update.called)
+        self.assertFalse(mock_sync.called)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         self.assertFalse(update.called)
         versions = admin_models.MetricTemplateHistory.objects.filter(
@@ -6482,13 +7362,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_without_specifying_probes_version_sp_superuser(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN', 'value': '--token'}
         ]
@@ -6527,6 +7409,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'], 'Probe version not specified.'
         )
         self.assertFalse(update.called)
+        self.assertFalse(mock_sync.called)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         self.assertFalse(update.called)
         versions = admin_models.MetricTemplateHistory.objects.filter(
@@ -6581,13 +7464,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_without_specifying_probes_version_sp_user(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN', 'value': '--token'}
         ]
@@ -6627,6 +7512,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to change metric templates.'
         )
         self.assertFalse(update.called)
+        self.assertFalse(mock_sync.called)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         self.assertFalse(update.called)
         versions = admin_models.MetricTemplateHistory.objects.filter(
@@ -6681,13 +7567,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_without_specifying_probes_version_tenn_suprusr(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN', 'value': '--token'}
         ]
@@ -6727,6 +7615,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to change metric templates.'
         )
         self.assertFalse(update.called)
+        self.assertFalse(mock_sync.called)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         self.assertFalse(update.called)
         versions = admin_models.MetricTemplateHistory.objects.filter(
@@ -6781,13 +7670,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_without_specifying_probes_version_tenn_user(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN', 'value': '--token'}
         ]
@@ -6827,6 +7718,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to change metric templates.'
         )
         self.assertFalse(update.called)
+        self.assertFalse(mock_sync.called)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         self.assertFalse(update.called)
         versions = admin_models.MetricTemplateHistory.objects.filter(
@@ -6881,9 +7773,12 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_put_metrictemplates_with_update_err_msgs(self, inline, update):
+    def test_put_metrictemplates_with_update_err_msgs(
+            self, inline, update, mock_sync
+    ):
         inline.side_effect = mocked_inline_metric_for_db
         update.return_value = [
             'TENANT1: Error trying to update metric in metric profiles.\n'
@@ -6891,6 +7786,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'TENANT2: Error trying to update metric in metric profiles.\n'
             'Please update metric profiles manually.'
         ]
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
         ]
@@ -6934,9 +7830,9 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                           'profiles.\nPlease update metric profiles manually.'
             }
         )
+        self.assertFalse(mock_sync.called)
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
-        update.assert_called_once()
-        update.assert_called_with(mt, 'argo.AMS-Check', self.ams_probe_11)
+        update.assert_called_once_with(mt, 'argo.AMS-Check', self.ams_probe_11)
         versions = admin_models.MetricTemplateHistory.objects.filter(
             object_id=mt
         ).order_by('-date_created')
@@ -7004,13 +7900,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_missing_data_key_sp_superuser(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
         ]
@@ -7044,9 +7942,10 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(update.called)
+        self.assertFalse(mock_sync.called)
         self.assertEqual(response.data['detail'], 'Missing data key: flags')
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
-        self.assertFalse(update.called)
         versions = admin_models.MetricTemplateHistory.objects.filter(
             object_id=mt
         ).order_by('-date_created')
@@ -7099,13 +7998,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_missing_data_key_sp_user(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
         ]
@@ -7143,8 +8044,9 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to change metric templates.'
         )
-        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         self.assertFalse(update.called)
+        self.assertFalse(mock_sync.called)
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         versions = admin_models.MetricTemplateHistory.objects.filter(
             object_id=mt
         ).order_by('-date_created')
@@ -7197,13 +8099,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_missing_data_key_tenant_superuser(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
         ]
@@ -7241,8 +8145,9 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to change metric templates.'
         )
-        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         self.assertFalse(update.called)
+        self.assertFalse(mock_sync.called)
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         versions = admin_models.MetricTemplateHistory.objects.filter(
             object_id=mt
         ).order_by('-date_created')
@@ -7295,13 +8200,15 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
     def test_put_metrictemplate_missing_data_key_tenant_user(
-            self, inline, update
+            self, inline, update, mock_sync
     ):
         inline.side_effect = mocked_inline_metric_for_db
         update.side_effect = mocked_func
+        mock_sync.side_effect = mocked_func
         attr = [
             {'key': 'argo.ams_TOKEN2', 'value': '--token'}
         ]
@@ -7339,8 +8246,9 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to change metric templates.'
         )
-        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         self.assertFalse(update.called)
+        self.assertFalse(mock_sync.called)
+        mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         versions = admin_models.MetricTemplateHistory.objects.filter(
             object_id=mt
         ).order_by('-date_created')
@@ -7393,16 +8301,21 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].parameter, mt.parameter)
         self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
-    def test_delete_metric_template_sp_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_delete_metric_template_sp_superuser(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
         request = self.factory.delete(self.url + 'argo.AMS-Check')
         request.tenant = self.public_tenant
         force_authenticate(request, user=self.superuser)
         response = self.view(request, 'argo.AMS-Check')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        mock_sync.assert_called_once()
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 6)
 
-    def test_delete_metric_template_sp_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_delete_metric_template_sp_user(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
         request = self.factory.delete(self.url + 'argo.AMS-Check')
         request.tenant = self.public_tenant
@@ -7413,9 +8326,12 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to delete metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
-    def test_delete_metric_template_tenant_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_delete_metric_template_tenant_superuser(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
         request = self.factory.delete(self.url + 'argo.AMS-Check')
         request.tenant = self.tenant
@@ -7426,9 +8342,12 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to delete metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
-    def test_delete_metric_template_tenant_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_delete_metric_template_tenant_user(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
         request = self.factory.delete(self.url + 'argo.AMS-Check')
         request.tenant = self.tenant
@@ -7439,9 +8358,78 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to delete metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
-    def test_delete_nonexisting_metric_template_sp_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_delete_metric_template_error_sync_sp_superuser(self, mock_sync):
+        mock_sync.side_effect = mocked_syncer_error
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        request = self.factory.delete(self.url + 'argo.AMS-Check')
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, 'argo.AMS-Check')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(
+            response.data["detail"],
+            "Error syncing metric tags: 400 BAD REQUEST"
+        )
+        mock_sync.assert_called_once()
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 6)
+
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_delete_metric_template_error_sync_sp_user(self, mock_sync):
+        mock_sync.side_effect = mocked_syncer_error
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        request = self.factory.delete(self.url + 'argo.AMS-Check')
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'argo.AMS-Check')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete metric templates.'
+        )
+        self.assertFalse(mock_sync.called)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_delete_metric_template_error_sync_tenant_superuser(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_syncer_error
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        request = self.factory.delete(self.url + 'argo.AMS-Check')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request, 'argo.AMS-Check')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete metric templates.'
+        )
+        self.assertFalse(mock_sync.called)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_delete_metric_template_error_sync_tenant_user(self, mock_sync):
+        mock_sync.side_effect = mocked_syncer_error
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        request = self.factory.delete(self.url + 'argo.AMS-Check')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request, 'argo.AMS-Check')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete metric templates.'
+        )
+        self.assertFalse(mock_sync.called)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_delete_nonexisting_metric_template_sp_superuser(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         request = self.factory.delete(self.url + 'nonexisting')
         request.tenant = self.public_tenant
         force_authenticate(request, user=self.superuser)
@@ -7450,9 +8438,12 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(
             response.data['detail'], 'Metric template does not exist.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
-    def test_delete_nonexisting_metric_template_sp_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_delete_nonexisting_metric_template_sp_user(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         request = self.factory.delete(self.url + 'nonexisting')
         request.tenant = self.public_tenant
         force_authenticate(request, user=self.user)
@@ -7462,9 +8453,14 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to delete metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
-    def test_delete_nonexisting_metric_template_tenant_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_delete_nonexisting_metric_template_tenant_superuser(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         request = self.factory.delete(self.url + 'nonexisting')
         request.tenant = self.tenant
         force_authenticate(request, user=self.tenant_superuser)
@@ -7474,9 +8470,12 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to delete metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
-    def test_delete_nonexisting_metric_template_tenant_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_delete_nonexisting_metric_template_tenant_user(self, mock_sync):
+        mock_sync.side_effect = mocked_func
         request = self.factory.delete(self.url + 'nonexisting')
         request.tenant = self.tenant
         force_authenticate(request, user=self.tenant_user)
@@ -7486,9 +8485,14 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to delete metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
-    def test_delete_metric_template_without_specifying_name_sp_superuser(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_delete_metric_template_without_specifying_name_sp_superuser(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         request = self.factory.delete(self.url)
         request.tenant = self.public_tenant
         force_authenticate(request, user=self.superuser)
@@ -7497,9 +8501,14 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(
             response.data['detail'], 'Metric template name not specified.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
-    def test_delete_metric_template_without_specifying_name_sp_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_delete_metric_template_without_specifying_name_sp_user(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         request = self.factory.delete(self.url)
         request.tenant = self.public_tenant
         force_authenticate(request, user=self.user)
@@ -7509,11 +8518,14 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to delete metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     def test_delete_metric_template_without_specifying_name_tenant_superuser(
-            self
+            self, mock_sync
     ):
+        mock_sync.side_effect = mocked_func
         request = self.factory.delete(self.url)
         request.tenant = self.tenant
         force_authenticate(request, user=self.tenant_superuser)
@@ -7523,9 +8535,14 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to delete metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
-    def test_delete_metric_template_without_specifying_name_tenant_user(self):
+    @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
+    def test_delete_metric_template_without_specifying_name_tenant_user(
+            self, mock_sync
+    ):
+        mock_sync.side_effect = mocked_func
         request = self.factory.delete(self.url)
         request.tenant = self.tenant
         force_authenticate(request, user=self.tenant_user)
@@ -7535,6 +8552,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to delete metric templates.'
         )
+        self.assertFalse(mock_sync.called)
         self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
 
@@ -8401,21 +9419,24 @@ class MetricTagsTests(TenantTestCase):
         self.metric1 = poem_models.Metric.objects.get(
             name="test.AMS-Check"
         )
-        self.metric1_history = json.loads(poem_models.TenantHistory.objects.filter(
-            object_id=self.metric1.id
-        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        self.metric1_history = json.loads(
+            poem_models.TenantHistory.objects.filter(
+                object_id=self.metric1.id
+            ).order_by("-date_created")[0].serialized_data)[0]["fields"]
         self.metric2 = poem_models.Metric.objects.get(
             name="org.apel.APEL-Pub"
         )
-        self.metric2_history = json.loads(poem_models.TenantHistory.objects.filter(
-            object_id=self.metric2.id
-        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        self.metric2_history = json.loads(
+            poem_models.TenantHistory.objects.filter(
+                object_id=self.metric2.id
+            ).order_by("-date_created")[0].serialized_data)[0]["fields"]
         self.metric3 = poem_models.Metric.objects.get(
             name="argo.AMS-Check"
         )
-        self.metric3_history = json.loads(poem_models.TenantHistory.objects.filter(
-            object_id=self.metric3.id
-        ).order_by("-date_created")[0].serialized_data)[0]["fields"]
+        self.metric3_history = json.loads(
+            poem_models.TenantHistory.objects.filter(
+                object_id=self.metric3.id
+            ).order_by("-date_created")[0].serialized_data)[0]["fields"]
 
     def test_get_metric_tags_admin_superuser(self):
         request = self.factory.get(self.url)
@@ -8812,19 +9833,6 @@ class MetricTagsTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to add metric tags."
         )
-        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
-
-    def test_post_metric_tag_without_metrics_faulty_json_admin_superuser(self):
-        data = {
-            "metrics": []
-        }
-        self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
-        request = self.factory.post(self.url, data, format="json")
-        request.tenant = self.public_tenant
-        force_authenticate(request, user=self.superuser)
-        response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["detail"], "Missing data key: name.")
         self.assertEqual(admin_models.MetricTags.objects.all().count(), 4)
 
     def test_post_metric_tag_without_metrics_faulty_json_admin_superuser(self):

@@ -326,7 +326,8 @@ class SyncWebApiTagsTests(TenantTestCase):
 
             self.assertEqual(
                 context.exception.__str__(),
-                "Web API error: 400 BAD REQUEST: Content Not acceptable"
+                "Error syncing metric tags: 400 BAD REQUEST: "
+                "Content Not acceptable"
             )
 
     @patch("requests.put")
@@ -379,7 +380,7 @@ class SyncWebApiTagsTests(TenantTestCase):
 
             self.assertEqual(
                 context.exception.__str__(),
-                "Web API error: 500 SERVER ERROR"
+                "Error syncing metric tags: 500 SERVER ERROR"
             )
 
 
