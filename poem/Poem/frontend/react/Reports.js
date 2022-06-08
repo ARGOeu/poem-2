@@ -215,7 +215,7 @@ const formatFilteredSelectEntities = (data, {entitiesGroups, entitiesEndpoints},
         'middleMapKey': 'site_services'
       }),
       new Object({
-        'middleKey': 'entitiesProjects',
+        'middleKey': 'entitiesServiceGroups',
         'lowerKey': 'serviceTypesServiceGroupsEndpoints',
         'topMapKey': 'project_servicegroups',
         'middleMapKey': 'servicegroup_services'
@@ -1362,7 +1362,7 @@ export const ReportsComponent = (props) => {
 
     let entitiesSites = new Array()
     let entitiesNgi = new Array()
-    let entitiesProjects= new Array()
+    let entitiesProjects = new Array()
     let entitiesServiceGroups = new Array()
     let serviceTypesServiceGroupsEndpoints = new Array()
     let serviceTypesSitesEndpoints = new Array()
