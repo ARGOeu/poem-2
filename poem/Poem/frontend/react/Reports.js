@@ -207,43 +207,59 @@ const formatFilteredSelectEntities = (data, {entitiesGroups, entitiesEndpoints},
   }
 
   if (selectedTop.length > 0 || selectedMiddle.length > 0) {
+    let topoTypeMeta = new Array(
+      new Object({
+        'middleKey': 'entitiesSites',
+        'lowerKey': 'serviceTypesSitesEndpoints',
+        'topMapKey': 'ngi_sites',
+        'middleMapKey': 'site_services'
+      }),
+      new Object({
+        'middleKey': 'entitiesProjects',
+        'lowerKey': 'serviceTypesServiceGroupsEndpoints',
+        'topMapKey': 'project_servicegroups',
+        'middleMapKey': 'servicegroup_services'
+      })
+    )
 
-    if (lookkey.includes('entitiesSites')) {
-      let choices = new Array()
-      if (selectedTop.length > 0)
-        selectedTop.forEach(sel => {
-          let sels = topoMaps['ngi_sites'].get(sel)
-          if (sels)
-            choices.push(...sels)
-        })
-      else
-        choices = data
-      return formatSelectEntities(choices)
-    }
-
-    else if (lookkey.includes('serviceTypesSitesEndpoints')) {
-      let services = new Array()
-      if (selectedMiddle.length > 0) {
-        selectedMiddle.forEach(sel => {
-          let sels = topoMaps['site_services'].get(sel)
-          if (sels)
-            services.push(...sels)
-        })
-        return formatSelectEntities(services)
+    for (var tt of topoTypeMeta) {
+      if (lookkey.includes(tt['middleKey'])) {
+        let choices = new Array()
+        if (selectedTop.length > 0)
+          selectedTop.forEach(sel => {
+            let sels = topoMaps[tt['topMapKey']].get(sel)
+            if (sels)
+              choices.push(...sels)
+          })
+        else
+          choices = data
+        return formatSelectEntities(choices)
       }
-      else if (selectedTop.length > 0) {
-        let sites = new Array()
-        selectedTop.forEach(sel => {
-          let sels = topoMaps['ngi_sites'].get(sel)
-          if (sels)
-            sites.push(...sels)
-        })
-        sites.forEach(sel => {
-          let sels = topoMaps['site_services'].get(sel)
-          if (sels)
-            services.push(...sels)
-        })
-        return formatSelectEntities(services)
+
+      else if (lookkey.includes(tt['lowerKey'])) {
+        let services = new Array()
+        if (selectedMiddle.length > 0) {
+          selectedMiddle.forEach(sel => {
+            let sels = topoMaps[tt['middleMapKey']].get(sel)
+            if (sels)
+              services.push(...sels)
+          })
+          return formatSelectEntities(services)
+        }
+        else if (selectedTop.length > 0) {
+          let sites = new Array()
+          selectedTop.forEach(sel => {
+            let sels = topoMaps[tt['topMapKey']].get(sel)
+            if (sels)
+              sites.push(...sels)
+          })
+          sites.forEach(sel => {
+            let sels = topoMaps[tt['middleMapKey']].get(sel)
+            if (sels)
+              services.push(...sels)
+          })
+          return formatSelectEntities(services)
+        }
       }
     }
   }
