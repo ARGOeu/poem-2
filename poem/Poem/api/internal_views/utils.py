@@ -180,14 +180,15 @@ def sync_tags_webapi():
         response = requests.put(
             settings.WEBAPI_METRICSTAGS,
             headers={"x-api-key": token.token, "Accept": "application/json"},
-            data=data2send
+            data=json.dumps(data2send)
         )
 
         if not response.ok:
             error_msg = f"{response.status_code} {response.reason}"
 
             try:
-                error_msg = f"{error_msg}: {response.json()['message']}"
+                error_msg = \
+                    f"{error_msg}: {response.json()['errors'][0]['details']}"
 
             except (ValueError, TypeError, KeyError):
                 pass

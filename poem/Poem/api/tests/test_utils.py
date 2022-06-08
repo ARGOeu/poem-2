@@ -35,16 +35,17 @@ def mocked_put_response(*args, **kwargs):
 def mocked_put_response_not_ok(*args, **kwargs):
     return MockResponse(
         {
-            "code": "400",
-            "message": "Content Not acceptable",
+            "status": {
+                "message": "Bad Request",
+                "code": "400"
+            },
             "errors": [
                 {
-                    "message": "Content Not acceptable",
+                    "message": "Bad Request",
                     "code": "400",
-                    "details": "Content Not acceptable"
+                    "details": "There has been an error"
                 }
-            ],
-            "details": "Content Not acceptable"
+            ]
         }, 400
     )
 
@@ -244,7 +245,7 @@ class SyncWebApiTagsTests(TenantTestCase):
                     "x-api-key": "mocked_token",
                     "Accept": "application/json"
                 },
-                data=[
+                data=json.dumps([
                     {
                         "name": "test.AMS-Check",
                         "tags": [
@@ -273,7 +274,7 @@ class SyncWebApiTagsTests(TenantTestCase):
                         "name": "test.EMPTY-metric",
                         "tags": []
                     }
-                ]
+                ])
             )
 
     @patch("requests.put")
@@ -292,7 +293,7 @@ class SyncWebApiTagsTests(TenantTestCase):
                     "x-api-key": "mocked_token",
                     "Accept": "application/json"
                 },
-                data=[
+                data=json.dumps([
                     {
                         "name": "test.AMS-Check",
                         "tags": [
@@ -321,13 +322,13 @@ class SyncWebApiTagsTests(TenantTestCase):
                         "name": "test.EMPTY-metric",
                         "tags": []
                     }
-                ]
+                ])
             )
 
             self.assertEqual(
                 context.exception.__str__(),
                 "Error syncing metric tags: 400 BAD REQUEST: "
-                "Content Not acceptable"
+                "There has been an error"
             )
 
     @patch("requests.put")
@@ -346,7 +347,7 @@ class SyncWebApiTagsTests(TenantTestCase):
                     "x-api-key": "mocked_token",
                     "Accept": "application/json"
                 },
-                data=[
+                data=json.dumps([
                     {
                         "name": "test.AMS-Check",
                         "tags": [
@@ -375,7 +376,7 @@ class SyncWebApiTagsTests(TenantTestCase):
                         "name": "test.EMPTY-metric",
                         "tags": []
                     }
-                ]
+                ])
             )
 
             self.assertEqual(
