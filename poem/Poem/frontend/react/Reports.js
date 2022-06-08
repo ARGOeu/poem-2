@@ -185,28 +185,45 @@ const entityInitValues = (matchWhat, formvalue) => {
   return tmp
 }
 
-const formatFilteredSelectEntities = (data, selectedEntities, topoMaps, lookkey) => {
-  let selected = new Array()
+const formatFilteredSelectEntities = (data, {entitiesGroups, entitiesEndpoints}, topoMaps, lookkey) => {
+  let selectedTop = new Array()
+  let selectedMiddle = new Array()
 
-  if (selectedEntities && selectedEntities['value']) {
-    if (selectedEntities['value'].includes('|'))
-      selected = selectedEntities['value'].split('|')
+  console.log(entitiesGroups, entitiesEndpoints)
+
+  let selectedEntitiesTop = entitiesGroups[0]
+  let selectedEntitiesMiddle = entitiesEndpoints[0] && entitiesEndpoints[0]['value'] ? entitiesEndpoints[0] : entitiesGroups[1]
+
+
+  if (selectedEntitiesTop && selectedEntitiesTop['value']) {
+    if (selectedEntitiesTop['value'].includes('|'))
+      selectedTop = selectedEntitiesTop['value'].split('|')
     else
-      selected = [selectedEntities['value']]
+      selectedTop = [selectedEntitiesTop['value']]
   }
 
-  if (selected.length > 0) {
+  if (selectedEntitiesMiddle && selectedEntitiesMiddle['value']) {
+    if (selectedEntitiesMiddle['value'].includes('|'))
+      selectedMiddle = selectedEntitiesMiddle['value'].split('|')
+    else
+      selectedMiddle = [selectedEntitiesMiddle['value']]
+  }
+
+  console.log(selectedEntitiesTop, selectedEntitiesMiddle)
+
+
+  if (selectedTop.length > 0) {
     let choices = new Array()
 
     if (lookkey.includes('entitiesSites')) {
-      selected.forEach(sel => {
+      selectedTop.forEach(sel => {
         let sels = topoMaps['ngi_sites'].get(sel)
         if (sels)
           choices.push(...sels)
       })
     }
     else if (lookkey.includes('serviceTypesSitesEndpoints')) {
-      selected.forEach(sel => {
+      selectedTop.forEach(sel => {
         let sels = topoMaps['site_services'].get(sel)
         if (sels)
           choices.push(...sels)
@@ -573,7 +590,7 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, topoMaps, publicVi
             className="pt-2"
             id="topoEntityGroup2"
             component={EntitySelect}
-            entitiesOptions={formatFilteredSelectEntities(topoGroups[key2], form.values.entitiesGroups[0], topoMaps, key2)}
+            entitiesOptions={formatFilteredSelectEntities(topoGroups[key2], form.values, topoMaps, key2)}
             onChangeHandler={(e) => {
               let joinedValues = ''
               for (let event of e)
@@ -635,7 +652,7 @@ const TopologyConfEndpointsEntityFields = ({topoGroups, addview, topoMaps, publi
             component={EntitySelect}
             entitiesOptions={
               formatFilteredSelectEntities(
-                topoGroups[key1], form.values.entitiesGroups[0], topoMaps, key1
+                topoGroups[key1], form.values, topoMaps, key1
             )}
             onChangeHandler={(e) => {
               let joinedValues = ''
@@ -667,13 +684,10 @@ const TopologyConfEndpointsEntityFields = ({topoGroups, addview, topoMaps, publi
             entitiesOptions={
               formatFilteredSelectEntities(
                 topoGroups[key2],
-                form.values.entitiesEndpoints[0]['value']
-                  ? form.values.entitiesEndpoints[0]
-                  : form.values.entitiesGroups[1],
+                form.values,
                 topoMaps,
                 key2
-            )
-            }
+            )}
             onChangeHandler={(e) => {
               let joinedValues = ''
               for (let event of e)
