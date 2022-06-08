@@ -189,11 +189,8 @@ const formatFilteredSelectEntities = (data, {entitiesGroups, entitiesEndpoints},
   let selectedTop = new Array()
   let selectedMiddle = new Array()
 
-  console.log(entitiesGroups, entitiesEndpoints)
-
   let selectedEntitiesTop = entitiesGroups[0]
   let selectedEntitiesMiddle = entitiesEndpoints[0] && entitiesEndpoints[0]['value'] ? entitiesEndpoints[0] : entitiesGroups[1]
-
 
   if (selectedEntitiesTop && selectedEntitiesTop['value']) {
     if (selectedEntitiesTop['value'].includes('|'))
@@ -209,27 +206,46 @@ const formatFilteredSelectEntities = (data, {entitiesGroups, entitiesEndpoints},
       selectedMiddle = [selectedEntitiesMiddle['value']]
   }
 
-  console.log(selectedEntitiesTop, selectedEntitiesMiddle)
-
-
-  if (selectedTop.length > 0) {
-    let choices = new Array()
+  if (selectedTop.length > 0 || selectedMiddle.length > 0) {
 
     if (lookkey.includes('entitiesSites')) {
-      selectedTop.forEach(sel => {
-        let sels = topoMaps['ngi_sites'].get(sel)
-        if (sels)
-          choices.push(...sels)
-      })
+      let choices = new Array()
+      if (selectedTop.length > 0)
+        selectedTop.forEach(sel => {
+          let sels = topoMaps['ngi_sites'].get(sel)
+          if (sels)
+            choices.push(...sels)
+        })
+      else
+        choices = data
+      return formatSelectEntities(choices)
     }
+
     else if (lookkey.includes('serviceTypesSitesEndpoints')) {
-      selectedTop.forEach(sel => {
-        let sels = topoMaps['site_services'].get(sel)
-        if (sels)
-          choices.push(...sels)
-      })
+      let services = new Array()
+      if (selectedMiddle.length > 0) {
+        selectedMiddle.forEach(sel => {
+          let sels = topoMaps['site_services'].get(sel)
+          if (sels)
+            services.push(...sels)
+        })
+        return formatSelectEntities(services)
+      }
+      else if (selectedTop.length > 0) {
+        let sites = new Array()
+        selectedTop.forEach(sel => {
+          let sels = topoMaps['ngi_sites'].get(sel)
+          if (sels)
+            sites.push(...sels)
+        })
+        sites.forEach(sel => {
+          let sels = topoMaps['site_services'].get(sel)
+          if (sels)
+            services.push(...sels)
+        })
+        return formatSelectEntities(services)
+      }
     }
-    return formatSelectEntities(choices)
   }
   else
     return formatSelectEntities(data)
