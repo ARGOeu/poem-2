@@ -1373,7 +1373,8 @@ export const ReportsComponent = (props) => {
     let groupsExtensions = undefined
     let endpointsExtensions = undefined
 
-    if (Object.keys(topologyMaps).length === 0) {
+    if (topologyEndpoints && topologyGroups
+      && Object.keys(topologyMaps).length === 0) {
       topologyMaps['project_servicegroups'] = new Map()
       topologyMaps['ngi_sites'] = new Map()
       topologyMaps['site_services'] = new Map()
