@@ -353,7 +353,7 @@ Tenant metadata is:
 Tenant metadata should be listed in `poem.conf` with corresponding sections:
 ```
 [SECURITY]
-AllowedHosts = egi.poem.devel.argo.grnet.gr
+AllowedHosts = poem.devel.argo.grnet.gr, egi.poem.devel.argo.grnet.gr
 
 [GENERAL_EGI]
 SamlLoginString = Login using EGI CHECK-IN
