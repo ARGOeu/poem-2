@@ -71,11 +71,15 @@ class ListMetric(APIView):
             else:
                 group = ''
 
+            mt = admin_models.MetricTemplateHistory.objects.get(
+                name=metric.name, probekey=metric.probekey
+            )
+
             results.append(dict(
                 id=metric.id,
                 name=metric.name,
                 mtype=metric.mtype.name,
-                tags=[tag.name for tag in metric.tags.all()],
+                tags=[tag.name for tag in mt.tags.all()],
                 probeversion=probeversion,
                 group=group,
                 description=metric.description,
@@ -183,7 +187,12 @@ class ListMetric(APIView):
                         )
 
                     metric.save()
-                    create_history(metric, request.user.username)
+                    mt = admin_models.MetricTemplateHistory.objects.get(
+                        name=metric.name, probekey=metric.probekey
+                    )
+                    create_history(
+                        metric, request.user.username, tags=mt.tags.all()
+                    )
 
                     return Response(status=status.HTTP_201_CREATED)
 

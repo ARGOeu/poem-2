@@ -163,7 +163,7 @@ def mock_db_for_metrics_tests():
     )
     mt1.tags.add(mtag1, mtag2)
 
-    metric1 = poem_models.Metric.objects.create(
+    poem_models.Metric.objects.create(
         name='test.AMS-Check',
         mtype=active,
         group=group,
@@ -180,7 +180,6 @@ def mock_db_for_metrics_tests():
         parameter='["--project EGI"]',
         fileparameter='["FILE_SIZE_KBS 1000"]'
     )
-    metric1.tags.add(mtag1, mtag2)
 
     mt2 = admin_models.MetricTemplate.objects.create(
         name='argo.AMSPublisher-Check',
@@ -196,7 +195,7 @@ def mock_db_for_metrics_tests():
     )
     mt2.tags.add(mtag1, mtag3)
 
-    metric2 = poem_models.Metric.objects.create(
+    poem_models.Metric.objects.create(
         name='argo.AMSPublisher-Check',
         mtype=active,
         group=group,
@@ -209,7 +208,6 @@ def mock_db_for_metrics_tests():
                   '"-q w:metrics+g:published180"]',
         flags='["NOHOSTNAME 1", "NOTIMEOUT 1", "NOPUBLISH 1"]'
     )
-    metric2.tags.add(mtag1, mtag3)
 
     mt3 = admin_models.MetricTemplate.objects.create(
         name='hr.srce.CertLifetime-Local',
@@ -224,7 +222,7 @@ def mock_db_for_metrics_tests():
     )
     mt3.tags.add(mtag3)
 
-    metric3 = poem_models.Metric.objects.create(
+    poem_models.Metric.objects.create(
         name='hr.srce.CertLifetime-Local',
         mtype=active,
         group=group,
@@ -236,7 +234,6 @@ def mock_db_for_metrics_tests():
         attribute='["NAGIOS_HOST_CERT -f"]',
         flags='["NOHOSTNAME 1", "NOPUBLISH 1"]'
     )
-    metric3.tags.add(mtag3)
 
     admin_models.MetricTemplate.objects.create(
         name='org.apel.APEL-Pub',
@@ -620,7 +617,7 @@ def mock_db_for_repos_tests():
         fileparameter=mt1.fileparameter
     )
 
-    metric2 = poem_models.Metric.objects.create(
+    poem_models.Metric.objects.create(
         name=mt2.name,
         group=group,
         mtype=metric_type,
@@ -634,9 +631,8 @@ def mock_db_for_repos_tests():
         parameter=mt2.parameter,
         fileparameter=mt2.fileparameter
     )
-    metric2.tags.add(mtag1)
 
-    metric3 = poem_models.Metric.objects.create(
+    poem_models.Metric.objects.create(
         name=mt3.name,
         group=group,
         mtype=metric_type,
@@ -650,9 +646,8 @@ def mock_db_for_repos_tests():
         parameter=mt3.parameter,
         fileparameter=mt3.fileparameter
     )
-    metric3.tags.add(mtag2)
 
-    metric4 = poem_models.Metric.objects.create(
+    poem_models.Metric.objects.create(
         name=mt4.name,
         group=group,
         mtype=metric_type,
@@ -666,7 +661,6 @@ def mock_db_for_repos_tests():
         parameter=mt4.parameter,
         fileparameter=mt4.fileparameter
     )
-    metric4.tags.add(mtag2)
 
     poem_models.Metric.objects.create(
         name=mt5.name,
@@ -698,7 +692,7 @@ def mock_db_for_repos_tests():
         fileparameter=mt6.fileparameter
     )
 
-    metric7 = poem_models.Metric.objects.create(
+    poem_models.Metric.objects.create(
         name=mt7.name,
         group=group,
         mtype=metric_type,
@@ -712,7 +706,6 @@ def mock_db_for_repos_tests():
         parameter=mt7.parameter,
         fileparameter=mt7.fileparameter
     )
-    metric7.tags.add(mtag1)
 
 
 def create_credentials():
@@ -1198,7 +1191,7 @@ class ListReposAPIViewTests(TenantTestCase):
 class ListMetricTemplateAPIViewTests(TenantTestCase):
     def setUp(self):
         self.token = create_credentials()
-        self.view = views.ListMetrics.as_view()
+        self.view = views.ListMetricTemplates.as_view()
         self.factory = TenantRequestFactory(self.tenant)
         self.url = '/api/v2/metrics'
 

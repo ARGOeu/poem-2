@@ -40,15 +40,31 @@ def inline_one_to_dict(data):
         return ''
 
 
-def create_history_entry(instance, user, comment):
+def serialize_metric(metric_instance, tags=None):
+    serialized_data = serializers.serialize(
+        "json", [metric_instance],
+        use_natural_foreign_keys=True,
+        use_natural_primary_keys=True
+    )
+
+    if not tags or len(tags) == 0:
+        tags_list = []
+
+    else:
+        tags_list = [[tag.name] for tag in tags]
+
+    unserialized = json.loads(serialized_data)[0]
+
+    unserialized["fields"].update({"tags": tags_list})
+
+    return json.dumps([unserialized])
+
+
+def create_history_entry(instance, user, comment, tags=None):
     if isinstance(instance, poem_models.Metric):
         poem_models.TenantHistory.objects.create(
             object_id=instance.id,
-            serialized_data=serializers.serialize(
-                'json', [instance],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
-            ),
+            serialized_data=serialize_metric(instance, tags=tags),
             object_repr=instance.__str__(),
             content_type=ContentType.objects.get_for_model(instance),
             comment=comment,
@@ -91,13 +107,9 @@ def create_history_entry(instance, user, comment):
             history.tags.add(tag)
 
 
-def create_history(instance, user, comment=None):
+def create_history(instance, user, comment=None, tags=None):
     if isinstance(instance, poem_models.Metric):
-        serialized_data = serializers.serialize(
-            'json', [instance],
-            use_natural_foreign_keys=True,
-            use_natural_primary_keys=True
-        )
+        serialized_data = serialize_metric(instance, tags=tags)
         content_type = ContentType.objects.get_for_model(instance)
 
         if not comment:
@@ -109,7 +121,7 @@ def create_history(instance, user, comment=None):
         if not comment:
             comment = create_comment(instance)
 
-    create_history_entry(instance, user, comment)
+    create_history_entry(instance, user, comment, tags)
 
 
 def analyze_differences(old_data, new_data):

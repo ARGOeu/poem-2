@@ -182,7 +182,6 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
                 WEBAPI_REPORTSTAGS='https://reports-tags.com',
                 WEBAPI_REPORTSTOPOLOGYGROUPS='https://topology-groups.com',
                 WEBAPI_REPORTSTOPOLOGYENDPOINTS='https://endpoints.com',
-                WEBAPI_REPORTSCRUD=True,
                 LINKS_TERMS_PRIVACY={
                     'tenant': {
                         'terms': 'https://terms.of.use.com',
@@ -206,7 +205,6 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
                         ).version,
                         'webapireports': {
                             'main': 'https://reports.com',
-                            'crud': True,
                             'tags': 'https://reports-tags.com',
                             'topologygroups': 'https://topology-groups.com',
                             'topologyendpoints': 'https://endpoints.com'

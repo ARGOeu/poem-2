@@ -1,0 +1,43 @@
+#!/bin/sh
+
+RUNASUSER="apache"
+SITEPACK=$(python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
+
+usage()
+{
+	printf "Usage: %s -f <JSON file> -s <schema name>\n" $(basename $0) >&2
+	printf "       [-f] - JSON file with services\n" >&2
+	printf "       [-s] - schema\n" >&2
+    exit 2
+}
+
+if [[ $# == 0 ]]
+then
+    usage
+fi
+
+while getopts 'f:s:h' OPTION
+do
+    case $OPTION in
+        f)
+            jsonfile=$OPTARG
+            ;;
+        s)
+            schema=$OPTARG
+            ;;
+        h)
+            usage
+            ;;
+        ?)
+            usage
+            ;;
+    esac
+done
+
+if [[ ! -z "$jsonfile" && ! -z "$schema" ]]
+then
+    su -m -s /bin/sh $RUNASUSER -c \
+    "poem-manage import_services --json $jsonfile --schema $schema"
+else
+  usage
+fi

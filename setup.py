@@ -16,7 +16,7 @@ def get_files(install_prefix, directory):
 
 
 setup(name=NAME,
-      version='3.4.1',
+      version='3.4.2',
       description='Reports, Profiles, Probes and Metric Configuration Management (POEM) for ARGO Monitoring framework.',
       author='SRCE',
       author_email='dvrcic@srce.hr, kzailac@srce.hr',
@@ -31,7 +31,7 @@ setup(name=NAME,
       ),
       scripts=['bin/poem-syncservtype', 'bin/poem-db', 'bin/poem-genseckey',
                'bin/poem-manage', 'bin/poem-token', 'bin/poem-tenant',
-               'bin/poem-clearsessions'],
+               'bin/poem-importservices', 'bin/poem-clearsessions'],
       data_files=[
           ('etc/poem', ['etc/poem.conf.template', 'etc/poem_logging.conf']),
           ('etc/cron.d/', ['cron/poem-sync', 'cron/poem-clearsessions', 'cron/poem-db_backup']),

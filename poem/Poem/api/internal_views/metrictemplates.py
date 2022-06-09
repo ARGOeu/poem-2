@@ -1,5 +1,6 @@
 import json
 
+from Poem.api import serializers
 from Poem.api.internal_views.utils import one_value_inline, two_value_inline, \
     inline_metric_for_db
 from Poem.api.views import NotFound
@@ -11,11 +12,11 @@ from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
 from django.contrib.contenttypes.models import ContentType
 from django.db import IntegrityError
+from django_tenants.utils import get_public_schema_name, schema_context
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django_tenants.utils import get_public_schema_name, schema_context
 
 from .utils import error_response
 
@@ -702,7 +703,9 @@ class BulkDeleteMetricTemplates(APIView):
             )
 
 
-class ListPublicMetricTemplatesForProbeVersion(ListMetricTemplatesForProbeVersion):
+class ListPublicMetricTemplatesForProbeVersion(
+    ListMetricTemplatesForProbeVersion
+):
     authentication_classes = ()
     permission_classes = ()
 
@@ -725,12 +728,273 @@ class ListPublicMetricTemplateTypes(ListMetricTemplateTypes):
 class ListMetricTags(APIView):
     authentication_classes = (SessionAuthentication,)
 
-    def get(self, request):
-        tags = admin_models.MetricTags.objects.all().order_by('name')
-        tags_list = [tag.name for tag in tags]
-        return Response(tags_list)
+    def get(self, request, name=None):
+        if name:
+            try:
+                tag = admin_models.MetricTags.objects.get(name=name)
+                serializer = serializers.MetricTagsSerializer(tag)
+                return Response(serializer.data)
+
+            except admin_models.MetricTags.DoesNotExist:
+                return Response(
+                    {"detail": "Requested tag not found."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+        else:
+            tags = admin_models.MetricTags.objects.all().order_by('name')
+            serializer = serializers.MetricTagsSerializer(tags, many=True)
+            return Response(serializer.data)
+
+    def post(self, request):
+        if request.tenant.schema_name == get_public_schema_name() and \
+                request.user.is_superuser:
+
+            try:
+                if not request.data["name"]:
+                    return error_response(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="You must specify metric tag name."
+                    )
+
+                else:
+                    tag = admin_models.MetricTags.objects.create(
+                        name=request.data["name"]
+                    )
+
+                    missing_metrics = set()
+                    try:
+                        metric_names = dict(request.data)["metrics"]
+                        for metric_name in metric_names:
+                            try:
+                                mt = \
+                                    admin_models.MetricTemplate.objects.get(
+                                        name=metric_name
+                                    )
+                                mt_history = \
+                                    admin_models.MetricTemplateHistory.objects.filter(
+                                        object_id=mt
+                                    ).order_by("-date_created")[0]
+                                mt.tags.add(tag)
+                                mt_history.tags.add(tag)
+
+                                update_metrics(mt, mt.name, mt.probekey)
+
+                            except admin_models.MetricTemplate.DoesNotExist:
+                                missing_metrics.add(metric_name)
+
+                    except KeyError:
+                        pass
+
+                    if len(missing_metrics) > 0:
+                        if len(missing_metrics) == 1:
+                            warn_msg = \
+                                f"Metric {list(missing_metrics)[0]} " \
+                                f"does not exist."
+
+                        else:
+                            warn_msg = "Metrics {} do not exist.".format(
+                                ", ".join(sorted(list(missing_metrics)))
+                            )
+
+                        return Response(
+                            {"detail": warn_msg},
+                            status=status.HTTP_201_CREATED,
+                        )
+
+                    else:
+                        return Response(status=status.HTTP_201_CREATED)
+
+            except KeyError as e:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Missing data key: {e.args[0]}."
+                )
+
+            except IntegrityError:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Metric tag with this name already exists."
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You do not have permission to add metric tags."
+            )
+
+    def put(self, request):
+        if request.tenant.schema_name == get_public_schema_name() and \
+                request.user.is_superuser:
+            try:
+                if request.data["id"]:
+                    tag = admin_models.MetricTags.objects.get(
+                        id=request.data["id"]
+                    )
+                    old_tag_name = tag.name
+                    if request.data["name"]:
+                        tag.name = request.data["name"]
+                        tag.save()
+
+                        old_mts = admin_models.MetricTemplate.objects.filter(
+                            tags__name=tag.name
+                        )
+                        old_metrics = set(
+                            old_mts.values_list("name", flat=True)
+                        )
+
+                        if old_tag_name != tag.name:
+                            for mt in old_mts:
+                                update_metrics(mt, mt.name, mt.probekey)
+
+                        missing_metrics = set()
+                        try:
+                            new_metrics = set(dict(request.data)["metrics"])
+
+                            for metric_name in old_metrics.difference(
+                                    new_metrics
+                            ):
+                                try:
+                                    mt = admin_models.MetricTemplate.objects.get(
+                                        name=metric_name
+                                    )
+                                    mt.tags.remove(tag)
+
+                                    mt_hist = admin_models.MetricTemplateHistory.objects.filter(
+                                        object_id=mt
+                                    ).order_by("-date_created")[0]
+                                    mt_hist.tags.remove(tag)
+                                    update_metrics(mt, mt.name, mt.probekey)
+
+                                except admin_models.MetricTemplate.DoesNotExist:
+                                    missing_metrics.add(metric_name)
+
+                            for metric_name in new_metrics.difference(
+                                    old_metrics
+                            ):
+                                try:
+                                    mt = admin_models.MetricTemplate.objects.get(
+                                        name=metric_name
+                                    )
+                                    mt.tags.add(tag)
+                                    mt_hist = admin_models.MetricTemplateHistory.objects.filter(
+                                        object_id=mt
+                                    ).order_by("-date_created")[0]
+                                    mt_hist.tags.add(tag)
+                                    update_metrics(mt, mt.name, mt.probekey)
+
+                                except admin_models.MetricTemplate.DoesNotExist:
+                                    missing_metrics.add(metric_name)
+
+                        except KeyError:
+                            pass
+
+                        if len(missing_metrics) > 0:
+                            if len(missing_metrics) == 1:
+                                warn_msg = \
+                                    f"Metric {list(missing_metrics)[0]} " \
+                                    f"does not exist."
+
+                            else:
+                                warn_msg = \
+                                    "Metrics {} do not exist.".format(
+                                        ", ".join(
+                                            sorted(list(missing_metrics))
+                                        )
+                                    )
+
+                            return Response(
+                                {"detail": warn_msg},
+                                status=status.HTTP_201_CREATED
+                            )
+
+                        else:
+                            return Response(status=status.HTTP_201_CREATED)
+
+                    else:
+                        return error_response(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="You must specify metric tag name."
+                        )
+
+                else:
+                    return error_response(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="You must specify metric tag ID."
+                    )
+
+            except KeyError as e:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Missing data key: {e.args[0]}."
+                )
+
+            except IntegrityError:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Metric tag with this name already exists."
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You do not have permission to change metric tags."
+            )
+
+    def delete(self, request, name):
+        if request.tenant.schema_name == get_public_schema_name() and \
+                request.user.is_superuser:
+            try:
+
+                mts = admin_models.MetricTemplate.objects.filter(
+                    tags__name=name
+                )
+
+                tag = admin_models.MetricTags.objects.get(name=name)
+
+                for mt in mts:
+                    mt.tags.remove(tag)
+                    update_metrics(mt, mt.name, mt.probekey)
+
+                tag.delete()
+
+                return Response(status=status.HTTP_204_NO_CONTENT)
+
+            except admin_models.MetricTags.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="The requested metric tag does not exist."
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You do not have permission to delete metric tags."
+            )
+
+
+class ListMetricTemplates4Tag(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request, tag):
+        try:
+            admin_models.MetricTags.objects.get(name=tag)
+            mts = admin_models.MetricTemplate.objects.filter(tags__name=tag)
+
+            return Response(sorted([mt.name for mt in mts]))
+
+        except admin_models.MetricTags.DoesNotExist:
+            return Response(
+                {"detail": "Requested tag not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
 
 class ListPublicMetricTags(ListMetricTags):
+    authentication_classes = ()
+    permission_classes = ()
+
+
+class ListMetricTemplates4Tag(ListMetricTemplates4Tag):
     authentication_classes = ()
     permission_classes = ()

@@ -66,7 +66,8 @@ import {
   faTasks,
   faUser,
   faWrench,
-  faNewspaper
+  faNewspaper,
+  faTags
 } from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
 import { Field } from 'formik';
@@ -83,7 +84,8 @@ var list_pages = ['administration', 'probes',
                   'metrics', 'reports', 'servicetypes', 'metricprofiles', 'aggregationprofiles',
                   'thresholdsprofiles', 'operationsprofiles'];
 var admin_list_pages = [ 'administration', 'tenants',
-                        'yumrepos', 'packages', 'probes', 'metrictemplates'];
+                        'yumrepos', 'packages', 'probes',
+                        'metrictags', 'metrictemplates'];
 
 var link_title = new Map();
 
@@ -97,6 +99,8 @@ link_title.set('groupofmetrics', 'Groups of metrics');
 link_title.set('groupofthresholdsprofiles', 'Groups of thresholds profiles');
 link_title.set('metricprofiles', 'Metric profiles');
 link_title.set('metrics', 'Metrics');
+link_title.set("metrictags", "Metric tags")
+link_title.set("public_metrictags", "Public metric tags")
 link_title.set('metrictemplates', 'Metric templates');
 link_title.set('operationsprofiles', 'Operations profiles');
 link_title.set('packages', 'Packages');
@@ -128,6 +132,7 @@ export const Icon = props =>
   link_icon.set('reports', faFileAlt);
   link_icon.set('probes', faServer);
   link_icon.set('metrics', faCog);
+  link_icon.set("metrictags", faTags)
   link_icon.set('metrictemplates', faCog);
   link_icon.set('metricprofiles', faCogs);
   link_icon.set('aggregationprofiles', faTasks);
@@ -1473,7 +1478,7 @@ export function BaseArgoTable({ columns, data, resourcename, page_size, filter=f
                   if (cell_index === 0 && !selectable)
                     return <td key={cell_index} className='align-middle text-center'>{(row_index + 1) + (pageIndex * pageSize)}</td>
                   else
-                    return <td key={cell_index} className='align-middle'>{cell.render('Cell')}</td>
+                    return <td key={cell_index} style={{overflowWrap: 'anywhere'}} className='align-middle'>{cell.render('Cell')}</td>
                 })
               }
             </tr>

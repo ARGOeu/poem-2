@@ -4,10 +4,12 @@ from unittest.mock import patch, call
 
 import requests
 from Poem.api.models import MyAPIKey
-from Poem.helpers.history_helpers import create_comment, update_comment
+from Poem.helpers.history_helpers import create_comment, update_comment, \
+    serialize_metric
 from Poem.helpers.metrics_helpers import import_metrics, update_metrics, \
     update_metrics_in_profiles, get_metrics_in_profiles, \
     delete_metrics_from_profile, update_metric_in_schema
+from Poem.helpers.versioned_comments import new_comment
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
@@ -881,15 +883,10 @@ def mock_db(tenant, tenant2=False):
         flags='["OBSESS 1"]',
         parameter='["--project EGI"]'
     )
-    metric1.tags.add(mtag1, mtag2, mtag3)
 
     poem_models.TenantHistory.objects.create(
         object_id=metric1.id,
-        serialized_data=serializers.serialize(
-            'json', [metric1],
-            use_natural_foreign_keys=True,
-            use_natural_primary_keys=True
-        ),
+        serialized_data=serialize_metric(metric1, tags=[mtag1, mtag2, mtag3]),
         object_repr=metric1.__str__(),
         content_type=ct,
         comment='Initial version.',
@@ -911,16 +908,11 @@ def mock_db(tenant, tenant2=False):
         parameter=metrictemplate2.parameter,
         fileparameter=metrictemplate2.fileparameter,
     )
-    metric2.tags.add(mtag2)
 
     poem_models.TenantHistory.objects.create(
         object_id=metric2.id,
         object_repr=metric2.__str__(),
-        serialized_data=serializers.serialize(
-            'json', [metric2],
-            use_natural_foreign_keys=True,
-            use_natural_primary_keys=True
-        ),
+        serialized_data=serialize_metric(metric2, tags=[mtag2]),
         content_type=ct,
         date_created=datetime.datetime.now(),
         comment='Initial version.',
@@ -944,16 +936,11 @@ def mock_db(tenant, tenant2=False):
         parameter=metrictemplate4.parameter,
         fileparameter=metrictemplate4.fileparameter
     )
-    metric3.tags.add(mtag3)
 
     poem_models.TenantHistory.objects.create(
         object_id=metric3.id,
         object_repr=metric3.__str__(),
-        serialized_data=serializers.serialize(
-            'json', [metric3],
-            use_natural_foreign_keys=True,
-            use_natural_primary_keys=True
-        ),
+        serialized_data=serialize_metric(metric3, tags=[mtag3]),
         content_type=ct,
         date_created=datetime.datetime.now(),
         comment='Initial version.',
@@ -979,11 +966,7 @@ def mock_db(tenant, tenant2=False):
     poem_models.TenantHistory.objects.create(
         object_id=metric4.id,
         object_repr=metric4.__str__(),
-        serialized_data=serializers.serialize(
-            'json', [metric4],
-            use_natural_foreign_keys=True,
-            use_natural_primary_keys=True
-        ),
+        serialized_data=serialize_metric(metric4),
         content_type=ct,
         date_created=datetime.datetime.now(),
         comment='Initial version.',
@@ -1005,16 +988,11 @@ def mock_db(tenant, tenant2=False):
         parameter=metrictemplate10.parameter,
         fileparameter=metrictemplate10.fileparameter,
     )
-    metric5.tags.add(mtag1, mtag2)
 
     poem_models.TenantHistory.objects.create(
         object_id=metric5.id,
         object_repr=metric5.__str__(),
-        serialized_data=serializers.serialize(
-            'json', [metric5],
-            use_natural_foreign_keys=True,
-            use_natural_primary_keys=True
-        ),
+        serialized_data=serialize_metric(metric5, tags=[mtag1, mtag2]),
         content_type=ct,
         date_created=datetime.datetime.now(),
         comment='Initial version.',
@@ -1044,14 +1022,11 @@ def mock_db(tenant, tenant2=False):
                 flags='["OBSESS 1"]',
                 parameter='["--project EGI"]'
             )
-            metric1a.tags.add(mtag1, mtag2, mtag3)
 
             poem_models.TenantHistory.objects.create(
                 object_id=metric1a.id,
-                serialized_data=serializers.serialize(
-                    'json', [metric1a],
-                    use_natural_foreign_keys=True,
-                    use_natural_primary_keys=True
+                serialized_data=serialize_metric(
+                    metric1a, tags=[mtag1, mtag2, mtag3]
                 ),
                 object_repr=metric1a.__str__(),
                 content_type=ct,
@@ -1074,16 +1049,11 @@ def mock_db(tenant, tenant2=False):
                 parameter=metrictemplate2.parameter,
                 fileparameter=metrictemplate2.fileparameter,
             )
-            metric2a.tags.add(mtag2)
 
             poem_models.TenantHistory.objects.create(
                 object_id=metric2a.id,
                 object_repr=metric2a.__str__(),
-                serialized_data=serializers.serialize(
-                    'json', [metric2a],
-                    use_natural_foreign_keys=True,
-                    use_natural_primary_keys=True
-                ),
+                serialized_data=serialize_metric(metric2a, tags=[mtag2]),
                 content_type=ct,
                 date_created=datetime.datetime.now(),
                 comment='Initial version.',
@@ -1107,16 +1077,11 @@ def mock_db(tenant, tenant2=False):
                 parameter=metrictemplate4.parameter,
                 fileparameter=metrictemplate4.fileparameter
             )
-            metric3a.tags.add(mtag3)
 
             poem_models.TenantHistory.objects.create(
                 object_id=metric3a.id,
                 object_repr=metric3a.__str__(),
-                serialized_data=serializers.serialize(
-                    'json', [metric3a],
-                    use_natural_foreign_keys=True,
-                    use_natural_primary_keys=True
-                ),
+                serialized_data=serialize_metric(metric3a, tags=[mtag3]),
                 content_type=ct,
                 date_created=datetime.datetime.now(),
                 comment='Initial version.',
@@ -1142,11 +1107,7 @@ def mock_db(tenant, tenant2=False):
             poem_models.TenantHistory.objects.create(
                 object_id=metric4a.id,
                 object_repr=metric4a.__str__(),
-                serialized_data=serializers.serialize(
-                    'json', [metric4a],
-                    use_natural_foreign_keys=True,
-                    use_natural_primary_keys=True
-                ),
+                serialized_data=serialize_metric(metric4a),
                 content_type=ct,
                 date_created=datetime.datetime.now(),
                 comment='Initial version.',
@@ -1168,16 +1129,11 @@ def mock_db(tenant, tenant2=False):
                 parameter=metrictemplate10.parameter,
                 fileparameter=metrictemplate10.fileparameter,
             )
-            metric5a.tags.add(mtag1, mtag2)
 
             poem_models.TenantHistory.objects.create(
                 object_id=metric5a.id,
                 object_repr=metric5a.__str__(),
-                serialized_data=serializers.serialize(
-                    'json', [metric5a],
-                    use_natural_foreign_keys=True,
-                    use_natural_primary_keys=True
-                ),
+                serialized_data=serialize_metric(metric5a, tags=[mtag1, mtag2]),
                 content_type=ct,
                 date_created=datetime.datetime.now(),
                 comment='Initial version.',
@@ -1412,14 +1368,11 @@ class HistoryHelpersTests(TenantTestCase):
             mtype=self.metric_active,
             probekey=probe_history1
         )
-        self.metric1.tags.add(self.metrictag1, self.metrictag2)
 
         poem_models.TenantHistory.objects.create(
             object_id=self.metric1.id,
-            serialized_data=serializers.serialize(
-                'json', [self.metric1],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
+            serialized_data=serialize_metric(
+                self.metric1, tags=[self.metrictag1, self.metrictag2]
             ),
             object_repr=self.metric1.__str__(),
             comment='Initial version.',
@@ -2257,7 +2210,6 @@ class ImportMetricsTests(TransactionTestCase):
         self.assertEqual(history1.count(), 1)
         self.assertEqual(metric1.name, self.metrictemplate3.name)
         self.assertEqual(metric1.mtype, self.m_active)
-        self.assertEqual(len(metric1.tags.all()), 0)
         self.assertEqual(metric1.group, self.group)
         self.assertEqual(metric1.description, self.metrictemplate3.description)
         self.assertEqual(metric1.probekey, self.metrictemplate3.probekey)
@@ -2297,9 +2249,6 @@ class ImportMetricsTests(TransactionTestCase):
         self.assertEqual(history2.count(), 1)
         self.assertEqual(metric2.name, self.metrictemplate6.name)
         self.assertEqual(metric2.mtype, self.m_active)
-        self.assertEqual(len(metric2.tags.all()), 2)
-        self.assertTrue(self.mtag1 in metric2.tags.all())
-        self.assertTrue(self.mtag2 in metric2.tags.all())
         self.assertEqual(metric2.group, self.group)
         self.assertEqual(metric2.description, self.metrictemplate6.description)
         self.assertEqual(metric2.probekey, self.metrictemplate6.probekey)
@@ -2359,7 +2308,6 @@ class ImportMetricsTests(TransactionTestCase):
         self.assertEqual(history1.count(), 1)
         self.assertEqual(metric1.name, self.metrictemplate7.name)
         self.assertEqual(metric1.mtype, self.m_passive)
-        self.assertEqual(len(metric1.tags.all()), 0)
         self.assertEqual(metric1.group, self.group)
         self.assertEqual(metric1.description, self.metrictemplate7.description)
         self.assertEqual(metric1.probekey, self.metrictemplate7.probekey)
@@ -2414,8 +2362,6 @@ class ImportMetricsTests(TransactionTestCase):
         self.assertEqual(history1.count(), 1)
         self.assertEqual(metric1.name, self.mt8_history2.name)
         self.assertEqual(metric1.mtype, self.m_active)
-        self.assertEqual(len(metric1.tags.all()), 1)
-        self.assertTrue(self.mtag1 in metric1.tags.all())
         self.assertEqual(metric1.group, self.group)
         self.assertEqual(metric1.description, self.mt8_history2.description)
         self.assertEqual(metric1.probekey, self.mt8_history2.probekey)
@@ -2474,7 +2420,6 @@ class ImportMetricsTests(TransactionTestCase):
         self.assertEqual(history1.count(), 1)
         self.assertEqual(metric1.name, self.metric5.name)
         self.assertEqual(metric1.mtype, self.metric5.mtype)
-        self.assertEqual(metric1.tags, self.metric5.tags)
         self.assertEqual(metric1.group, self.metric5.group)
         self.assertEqual(metric1.description, self.metric5.description)
         self.assertEqual(metric1.probekey, self.metric5.probekey)
@@ -2542,7 +2487,6 @@ class ImportMetricsTests(TransactionTestCase):
         self.assertEqual(history1.count(), 1)
         self.assertEqual(metric1.name, self.metric1.name)
         self.assertEqual(metric1.mtype, self.metric1.mtype)
-        self.assertEqual(metric1.tags, self.metric1.tags)
         self.assertEqual(metric1.group, self.metric1.group)
         self.assertEqual(metric1.description, self.metric1.description)
         self.assertEqual(metric1.probekey, self.metric1.probekey)
@@ -2592,7 +2536,6 @@ class ImportMetricsTests(TransactionTestCase):
         self.assertEqual(history2.count(), 1)
         self.assertEqual(metric2.name, self.metric2.name)
         self.assertEqual(metric2.mtype, self.metric2.mtype)
-        self.assertEqual(metric2.tags, self.metric2.tags)
         self.assertEqual(metric2.group, self.metric2.group)
         self.assertEqual(metric2.description, self.metric2.description)
         self.assertEqual(metric2.probekey, self.metric2.probekey)
@@ -2721,9 +2664,6 @@ class UpdateMetricsTests(TenantTestCase):
         self.assertEqual(metric_versions.count(), 1)
         self.assertEqual(metric.name, metrictemplate.name)
         self.assertEqual(metric.mtype.name, metrictemplate.mtype.name)
-        self.assertEqual(len(metric.tags.all()), 2)
-        self.assertTrue(self.mtag1 in metric.tags.all())
-        self.assertTrue(self.mtag3 in metric.tags.all())
         self.assertEqual(metric.probekey, metrictemplate.probekey)
         self.assertEqual(metric.description, metrictemplate.description)
         self.assertEqual(metric.group.name, 'TEST')
@@ -2774,10 +2714,6 @@ class UpdateMetricsTests(TenantTestCase):
             )[0]['fields']
             self.assertEqual(metric1.name, 'argo.AMS-Check')
             self.assertEqual(metric1.mtype.name, 'Active')
-            self.assertEqual(len(metric1.tags.all()), 3)
-            self.assertTrue(self.mtag1 in metric1.tags.all())
-            self.assertTrue(self.mtag2 in metric1.tags.all())
-            self.assertTrue(self.mtag3 in metric1.tags.all())
             self.assertEqual(metric1.probekey, metrictemplate.probekey)
             self.assertEqual(
                 metric1.description,
@@ -2868,8 +2804,6 @@ class UpdateMetricsTests(TenantTestCase):
         self.assertEqual(metric_versions.count(), 1)
         self.assertEqual(metric.name, metrictemplate.name)
         self.assertEqual(metric.mtype.name, metrictemplate.mtype.name)
-        self.assertEqual(len(metric.tags.all()), 1)
-        self.assertTrue(self.mtag1 in metric.tags.all())
         self.assertEqual(metric.probekey, metrictemplate.probekey)
         self.assertEqual(metric.description, metrictemplate.description)
         self.assertEqual(metric.group.name, 'TEST')
@@ -2913,7 +2847,6 @@ class UpdateMetricsTests(TenantTestCase):
             )[0]['fields']
             self.assertEqual(metric_versions1.count(), 1)
             self.assertEqual(metric1.mtype.name, 'Passive')
-            self.assertEqual(len(metric1.tags.all()), 0)
             self.assertEqual(metric1.probekey, None)
             self.assertEqual(metric1.description, '')
             self.assertEqual(metric1.group.name, 'TEST2')
@@ -2995,9 +2928,6 @@ class UpdateMetricsTests(TenantTestCase):
         self.assertEqual(metric_versions.count(), 2)
         self.assertEqual(metric.name, metrictemplate.name)
         self.assertEqual(metric.mtype.name, metrictemplate.mtype.name)
-        self.assertEqual(len(metric.tags.all()), 2)
-        self.assertTrue(self.mtag1 in metric.tags.all())
-        self.assertTrue(self.mtag2 in metric.tags.all())
         self.assertEqual(metric.probekey, metrictemplate.probekey)
         self.assertEqual(metric.description, metrictemplate.description)
         self.assertEqual(metric.group.name, 'TEST')
@@ -3042,10 +2972,6 @@ class UpdateMetricsTests(TenantTestCase):
             )[0]['fields']
             self.assertEqual(metric_versions1.count(), 1)
             self.assertEqual(metric1.mtype.name, 'Active')
-            self.assertEqual(len(metric1.tags.all()), 3)
-            self.assertTrue(self.mtag1 in metric1.tags.all())
-            self.assertTrue(self.mtag2 in metric1.tags.all())
-            self.assertTrue(self.mtag3 in metric1.tags.all())
             self.assertEqual(metric1.probekey, metrictemplate.probekey)
             self.assertEqual(
                 metric1.description,
@@ -3130,9 +3056,6 @@ class UpdateMetricsTests(TenantTestCase):
         self.assertEqual(metric_versions.count(), 2)
         self.assertEqual(metric_versions[0].user, 'testuser')
         self.assertEqual(metric.name, metrictemplate.name)
-        self.assertEqual(len(metric.tags.all()), 2)
-        self.assertTrue(self.mtag1 in metric.tags.all())
-        self.assertTrue(self.mtag3 in metric.tags.all())
         self.assertEqual(metric.mtype.name, metrictemplate.mtype.name)
         self.assertEqual(metric.probekey, metrictemplate.probekey)
         self.assertEqual(metric.description, metrictemplate.description)
@@ -3183,10 +3106,6 @@ class UpdateMetricsTests(TenantTestCase):
                 metric_versions1[0].serialized_data
             )[0]['fields']
             self.assertEqual(metric_versions1.count(), 1)
-            self.assertEqual(len(metric1.tags.all()), 3)
-            self.assertTrue(self.mtag1 in metric1.tags.all())
-            self.assertTrue(self.mtag2 in metric1.tags.all())
-            self.assertTrue(self.mtag3 in metric1.tags.all())
             self.assertEqual(metric1.mtype.name, 'Active')
             self.assertEqual(metric1.probekey, self.probeversion1_2)
             self.assertEqual(
@@ -3536,4 +3455,94 @@ class MetricsInProfilesTests(TenantTestCase):
         self.assertEqual(
             str(context.exception),
             'Error deleting metric from profile: Profile not found.'
+        )
+
+
+class CommentsTests(TenantTestCase):
+    def test_new_comment_with_objects_change(self):
+        comment = '[{"changed": {"fields": ["config"], ' \
+                  '"object": ["maxCheckAttempts", "path", "timeout"]}}, ' \
+                  '{"changed": {"fields": ["attribute"], ' \
+                  '"object": ["attribute-key1", "attribute-key2"]}}, ' \
+                  '{"changed": {"fields": ["dependency"], ' \
+                  '"object": ["dependency-key"]}}]'
+        self.assertEqual(
+            new_comment(comment),
+            'Changed config fields "maxCheckAttempts", "path" and "timeout". '
+            'Changed attribute fields "attribute-key1" and "attribute-key2". '
+            'Changed dependency field "dependency-key".'
+        )
+
+    def test_new_comment_with_objects_add(self):
+        comment = '[{"added": {"fields": ["config"], ' \
+                  '"object": ["maxCheckAttempts", "path", "timeout"]}}, ' \
+                  '{"added": {"fields": ["attribute"], ' \
+                  '"object": ["attribute-key1", "attribute-key2"]}}, ' \
+                  '{"added": {"fields": ["dependency"], ' \
+                  '"object": ["dependency-key"]}}]'
+        self.assertEqual(
+            new_comment(comment),
+            'Added config fields "maxCheckAttempts", "path" and "timeout". '
+            'Added attribute fields "attribute-key1" and "attribute-key2". '
+            'Added dependency field "dependency-key".'
+        )
+
+    def test_new_comment_with_objects_delete(self):
+        comment = '[{"deleted": {"fields": ["config"], ' \
+                  '"object": ["maxCheckAttempts", "path", "timeout"]}}, ' \
+                  '{"deleted": {"fields": ["attribute"], ' \
+                  '"object": ["attribute-key1", "attribute-key2"]}}, ' \
+                  '{"deleted": {"fields": ["dependency"], ' \
+                  '"object": ["dependency-key"]}}]'
+        self.assertEqual(
+            new_comment(comment),
+            'Deleted config fields "maxCheckAttempts", "path" and "timeout". '
+            'Deleted attribute fields "attribute-key1" and "attribute-key2". '
+            'Deleted dependency field "dependency-key".'
+        )
+
+    def test_new_comment_with_fields(self):
+        comment = '[{"added": {"fields": ["docurl", "comment"]}}, ' \
+                  '{"changed": {"fields": ["name", "probeexecutable", ' \
+                  '"group"]}}, ' \
+                  '{"deleted": {"fields": ["version", "description"]}}]'
+        self.assertEqual(
+            new_comment(comment),
+            'Added docurl and comment. '
+            'Changed name, probeexecutable and group. '
+            'Deleted version and description.'
+        )
+
+    def test_new_comment_initial(self):
+        comment = 'Initial version.'
+        self.assertEqual(new_comment(comment), 'Initial version.')
+
+    def test_new_comment_no_changes(self):
+        comment = '[]'
+        self.assertEqual(new_comment(comment), 'No fields changed.')
+
+    def test_new_comment_for_thresholds_profiles_rules_field(self):
+        comment = '[{"changed": {"fields": ["rules"], ' \
+                  '"object": ["metricA"]}}, ' \
+                  '{"deleted": {"fields": ["rules"], ' \
+                  '"object": ["metricB"]}}, ' \
+                  '{"added": {"fields": ["rules"], "object": ["metricC"]}}]'
+        self.assertEqual(
+            new_comment(comment),
+            'Changed rule for metric "metricA". '
+            'Deleted rule for metric "metricB". '
+            'Added rule for metric "metricC".'
+        )
+
+    def test_new_comment_for_metric_profile_metricinstances(self):
+        comment = '[{"added": {"fields": ["metricinstances"], ' \
+                  '"object": ["ARC-CE", "org.nordugrid.ARC-CE-IGTF"]}}, ' \
+                  '{"deleted": {"fields": ["metricinstances"], ' \
+                  '"object": ["APEL", "org.apel.APEL-Sync"]}}]'
+        self.assertEqual(
+            new_comment(comment),
+            'Added service-metric instance tuple '
+            '(ARC-CE, org.nordugrid.ARC-CE-IGTF). '
+            'Deleted service-metric instance tuple '
+            '(APEL, org.apel.APEL-Sync).'
         )
