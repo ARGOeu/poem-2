@@ -246,13 +246,11 @@ Part of the REST API is protected by token so for tenants that consume those API
     ReportsTopologyTags = https://api.devel.argo.grnet.gr/api/v2/topology/tags
     ReportsTopologyGroups = https://api.devel.argo.grnet.gr/api/v2/topology/groups
     ReportsTopologyEndpoints = https://api.devel.argo.grnet.gr/api/v2/topology/endpoints
-    ReportsCRUD = True
 
 This section lists WEB-API methods for the resources that are not stored in
 POEM's PostgreSQL DB, but instead are consumed from ARGO WEB-API services. POEM
 actively polls the PI methods and is doing the full round of CRUD operations on
-them. `ReportsCRUD` enables the polling of the WEB-API method related to ARGO
-Reports handling.
+them.
 
 ### GENERAL_<tenant_name>
 
