@@ -1,5 +1,26 @@
 # Changelog
 
+## [3.4.2] - 2022-06-09
+
+### Added
+
+* ARGO-3734 Introduce topology endpoint report filters
+* ARGO-3671 Introduce page for handling metric tags
+* ARGO-3686 Introduce tool for local import of EOSC services
+
+### Changed
+
+* ARGO-3841 Bump libs
+* ARGO-3733 Do not assume both types of topology exists for every tenant
+* ARGO-3523 Clean webpack deprecations
+* ARGO-3694 Limit number of tries of executing backend and frontend tests
+
+### Fixed
+
+* ARGO-3693 Fix false negative unit tests occuring occasionally
+* ARGO-3730 Remove toggle of Reports WEB-API CRUD
+* ARGO-3707 Bug when handling topology entities values with whitespaces
+
 ## [3.4.1] - 2022-04-07
 
 ### Added

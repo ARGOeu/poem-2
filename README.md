@@ -72,6 +72,7 @@ VENV = /home/pyvenv/poem/
 | Security key generator          | `VENV/bin/poem-genseckey`                                                     |
 | Token set/create                | `VENV/bin/poem-token`                                                         |
 | Tenant management               | `VENV/bin/poem-tenant`                                                        |
+| Import services from json file  | `VENV/bin/poem-importservices`                                                |
 | Django `manage.py` wrapper      | `VENV/bin/poem-manage`                                                        |
 | Static data served by Apache    | `VENV/usr/share/poem/`                                                        |
 | Main application code           | `VENV/lib/python3.6/site-packages/Poem/`                                      |
@@ -245,13 +246,11 @@ Part of the REST API is protected by token so for tenants that consume those API
     ReportsTopologyTags = https://api.devel.argo.grnet.gr/api/v2/topology/tags
     ReportsTopologyGroups = https://api.devel.argo.grnet.gr/api/v2/topology/groups
     ReportsTopologyEndpoints = https://api.devel.argo.grnet.gr/api/v2/topology/endpoints
-    ReportsCRUD = True
 
 This section lists WEB-API methods for the resources that are not stored in
 POEM's PostgreSQL DB, but instead are consumed from ARGO WEB-API services. POEM
 actively polls the PI methods and is doing the full round of CRUD operations on
-them. `ReportsCRUD` enables the polling of the WEB-API method related to ARGO
-Reports handling.
+them.
 
 ### GENERAL_<tenant_name>
 
@@ -354,7 +353,7 @@ Tenant metadata is:
 Tenant metadata should be listed in `poem.conf` with corresponding sections:
 ```
 [SECURITY]
-AllowedHosts = egi.poem.devel.argo.grnet.gr
+AllowedHosts = poem.devel.argo.grnet.gr, egi.poem.devel.argo.grnet.gr
 
 [GENERAL_EGI]
 SamlLoginString = Login using EGI CHECK-IN
