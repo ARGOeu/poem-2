@@ -72,6 +72,7 @@ VENV = /home/pyvenv/poem/
 | Security key generator          | `VENV/bin/poem-genseckey`                                                     |
 | Token set/create                | `VENV/bin/poem-token`                                                         |
 | Tenant management               | `VENV/bin/poem-tenant`                                                        |
+| Import services from json file  | `VENV/bin/poem-importservices`                                                |
 | Django `manage.py` wrapper      | `VENV/bin/poem-manage`                                                        |
 | Static data served by Apache    | `VENV/usr/share/poem/`                                                        |
 | Main application code           | `VENV/lib/python3.6/site-packages/Poem/`                                      |
