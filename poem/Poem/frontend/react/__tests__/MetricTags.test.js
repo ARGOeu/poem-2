@@ -774,6 +774,85 @@ describe("Test metric tags changeview", () => {
     )
   })
 
+  test("Test display multiple warning messages", async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({
+        ok: true,
+        status: 201,
+        statusText: "CREATED",
+        detail: "Error syncing metric tags\nMetric generic.tcp.connect does not exist."
+      })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
+    })
+
+    await selectEvent.select(screen.getByText("argo.AMS-Check"), "generic.certificate.validity")
+
+    fireEvent.click(screen.getByTestId("remove-1"))
+
+    fireEvent.click(screen.getByTestId("insert-0"))
+
+    const table = within(screen.getByRole("table"))
+
+    const row2 = table.getAllByRole("row")[3]
+
+    await selectEvent.select(within(row2).getByRole("combobox"), "generic.http.connect")
+
+    fireEvent.click(screen.getByTestId("insert-1"))
+
+    const row3 = table.getAllByRole("row")[4]
+
+    await selectEvent.select(within(row3).getByRole("combobox"), "generic.tcp.connect")
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metrictags/",
+        { id: "3", name: "internal", metrics: ["generic.certificate.validity", "generic.http.connect", "generic.tcp.connect"] }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictemplate")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictemplate")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith(["metrics4tags", "internal"])
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith(["public_metrics4tags", "internal"])
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Metric tag successfully changed", "Changed", 2000
+    )
+    expect(NotificationManager.warning).toHaveBeenCalledWith(
+      <div>
+        <p>Metric generic.tcp.connect does not exist.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      "Warning",
+      0,
+      expect.any(Function)
+    )
+
+    expect(NotificationManager.warning).toHaveBeenCalledWith(
+      <div>
+        <p>Error syncing metric tags</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      "Warning",
+      0,
+      expect.any(Function)
+    )
+  })
+
   test("Test delete metric tag", async () => {
     mockDeleteObject.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 204, statusText: "NO CONTENT" })
@@ -916,6 +995,7 @@ describe("Test metric tags changeview", () => {
     )
   })
 })
+
 
 describe("Test metric tags addview", () => {
   jest.spyOn(NotificationManager, "success")
@@ -1150,6 +1230,79 @@ describe("Test metric tags addview", () => {
     expect(NotificationManager.warning).toHaveBeenCalledWith(
       <div>
         <p>Metric generic.tcp.connect does not exist.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      "Warning",
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test("Test display multiple warning messages", async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({
+        ok: true,
+        status: 201,
+        statusText: "CREATED",
+        detail: "Error syncing metric tags\nMetric generic.tcp.connect does not exist."
+      })
+    )
+
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "test_tag" } })
+
+    const table = within(screen.getByRole("table"))
+
+    const row1 = table.getAllByRole("row")[2]
+    const input1 = within(row1).getByRole("combobox")
+
+    await selectEvent.select(input1, "generic.tcp.connect")
+
+    fireEvent.click(table.getByTestId("insert-0"))
+
+    const row2 = table.getAllByRole("row")[3]
+
+    await selectEvent.select(within(row2).getByRole("combobox"), "generic.http.connect")
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metrictags/",
+        { name: "test_tag", metrics: ["generic.tcp.connect", "generic.http.connect"] }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictemplate")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictemplate")
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Metric tag successfully added", "Added", 2000
+    )
+    expect(NotificationManager.warning).toHaveBeenCalledWith(
+      <div>
+        <p>Metric generic.tcp.connect does not exist.</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      "Warning",
+      0,
+      expect.any(Function)
+    )
+    expect(NotificationManager.warning).toHaveBeenCalledWith(
+      <div>
+        <p>Error syncing metric tags</p>
         <p>Click to dismiss.</p>
       </div>,
       "Warning",

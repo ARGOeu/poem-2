@@ -2,7 +2,7 @@ import json
 
 from Poem.api import serializers
 from Poem.api.internal_views.utils import one_value_inline, two_value_inline, \
-    inline_metric_for_db
+    inline_metric_for_db, sync_tags_webapi, WebApiException
 from Poem.api.views import NotFound
 from Poem.helpers.history_helpers import create_history, update_comment
 from Poem.helpers.metrics_helpers import update_metrics, \
@@ -203,7 +203,15 @@ class ListMetricTemplates(APIView):
                 else:
                     create_history(mt, request.user.username)
 
-                return Response(status=status.HTTP_201_CREATED)
+                try:
+                    sync_tags_webapi()
+
+                    return Response(status=status.HTTP_201_CREATED)
+
+                except WebApiException as err:
+                    return error_response(
+                        status_code=status.HTTP_201_CREATED, detail=str(err)
+                    )
 
             except IntegrityError:
                 return error_response(
@@ -416,7 +424,15 @@ class ListMetricTemplates(APIView):
                             status_code=status.HTTP_418_IM_A_TEAPOT
                         )
 
-                return Response(status=status.HTTP_201_CREATED)
+                try:
+                    sync_tags_webapi()
+
+                    return Response(status=status.HTTP_201_CREATED)
+
+                except WebApiException as error:
+                    return error_response(
+                        status_code=status.HTTP_201_CREATED, detail=str(error)
+                    )
 
             except admin_models.MetricTemplate.DoesNotExist:
                 return error_response(
@@ -486,7 +502,17 @@ class ListMetricTemplates(APIView):
                                 pass
 
                     mt.delete()
-                    return Response(status=status.HTTP_204_NO_CONTENT)
+
+                    try:
+                        sync_tags_webapi()
+
+                        return Response(status=status.HTTP_204_NO_CONTENT)
+
+                    except WebApiException as error:
+                        return error_response(
+                            status_code=status.HTTP_204_NO_CONTENT,
+                            detail=str(error)
+                        )
 
                 except admin_models.MetricTemplate.DoesNotExist:
                     return error_response(
@@ -692,6 +718,17 @@ class BulkDeleteMetricTemplates(APIView):
             if warning_message:
                 response_message.update({'warning': '; '.join(warning_message)})
 
+            try:
+                sync_tags_webapi()
+
+            except WebApiException as error:
+                response_message.update({
+                    "warning":
+                        f"{'; '.join(warning_message)}\n{str(error)}".strip(
+                            "\n"
+                        )
+                })
+
             return Response(
                 data=response_message, status=status.HTTP_200_OK
             )
@@ -786,20 +823,29 @@ class ListMetricTags(APIView):
                     except KeyError:
                         pass
 
+                    warn_msg = ""
+                    try:
+                        sync_tags_webapi()
+
+                    except WebApiException as error:
+                        warn_msg = f"{str(error)}\n"
+
                     if len(missing_metrics) > 0:
                         if len(missing_metrics) == 1:
                             warn_msg = \
-                                f"Metric {list(missing_metrics)[0]} " \
+                                f"{warn_msg}Metric {list(missing_metrics)[0]} " \
                                 f"does not exist."
 
                         else:
-                            warn_msg = "Metrics {} do not exist.".format(
+                            warn_msg = "{}Metrics {} do not exist.".format(
+                                warn_msg,
                                 ", ".join(sorted(list(missing_metrics)))
                             )
 
+                    if warn_msg:
                         return Response(
-                            {"detail": warn_msg},
-                            status=status.HTTP_201_CREATED,
+                            {"detail": warn_msg.strip("\n")},
+                            status=status.HTTP_201_CREATED
                         )
 
                     else:
@@ -889,22 +935,32 @@ class ListMetricTags(APIView):
                         except KeyError:
                             pass
 
+                        warn_msg = ""
+                        try:
+                            sync_tags_webapi()
+
+                        except WebApiException as error:
+                            warn_msg = f"{str(error)}\n"
+
                         if len(missing_metrics) > 0:
                             if len(missing_metrics) == 1:
                                 warn_msg = \
+                                    f"{warn_msg}" \
                                     f"Metric {list(missing_metrics)[0]} " \
                                     f"does not exist."
 
                             else:
                                 warn_msg = \
-                                    "Metrics {} do not exist.".format(
+                                    "{}Metrics {} do not exist.".format(
+                                        warn_msg,
                                         ", ".join(
                                             sorted(list(missing_metrics))
                                         )
                                     )
 
+                        if warn_msg:
                             return Response(
-                                {"detail": warn_msg},
+                                {"detail": warn_msg.strip("\n")},
                                 status=status.HTTP_201_CREATED
                             )
 
@@ -958,6 +1014,15 @@ class ListMetricTags(APIView):
 
                 tag.delete()
 
+                try:
+                    sync_tags_webapi()
+
+                except WebApiException as error:
+                    return Response(
+                        {"detail": str(error)},
+                        status=status.HTTP_204_NO_CONTENT
+                    )
+
                 return Response(status=status.HTTP_204_NO_CONTENT)
 
             except admin_models.MetricTags.DoesNotExist:
@@ -995,6 +1060,6 @@ class ListPublicMetricTags(ListMetricTags):
     permission_classes = ()
 
 
-class ListMetricTemplates4Tag(ListMetricTemplates4Tag):
+class ListPublicMetricTemplates4Tag(ListMetricTemplates4Tag):
     authentication_classes = ()
     permission_classes = ()

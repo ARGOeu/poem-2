@@ -162,11 +162,10 @@ export const MetricTagsComponent = (props) => {
             title: "Added",
             callback: () => history.push("/ui/metrictags")
           })
-          if ("detail" in response)
-            NotifyWarn({
-              title: "Warning",
-              msg: response.detail
-            })
+          if ("detail" in response) {
+            let msgs = response.detail.split("\n")
+            msgs.forEach(msg => NotifyWarn({ title: "Warning", msg: msg }))
+          }
         },
         onError: (error) => {
           NotifyError({
@@ -192,11 +191,10 @@ export const MetricTagsComponent = (props) => {
             title: "Changed",
             callback: () => history.push("/ui/metrictags")
           })
-          if ("detail" in response)
-            NotifyWarn({
-              title: "Warning",
-              msg: response.detail
-            })
+          if ("detail" in response) {
+            let msgs = response.detail.split("\n")
+            msgs.forEach(msg => NotifyWarn({ title: "Warning", msg: msg }))
+          }
         },
         onError: (error) => {
           NotifyError({
