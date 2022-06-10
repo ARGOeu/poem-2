@@ -1,9 +1,10 @@
+import ast
 import json
 
 import requests
 from Poem.api.internal_views.utils import one_value_inline, two_value_inline, \
     inline_metric_for_db
-from Poem.api.views import NotFound
+from Poem.api.views import NotFound, ListMetricOverrides
 from Poem.helpers.history_helpers import create_history
 from Poem.helpers.metrics_helpers import import_metrics, \
     update_metric_in_schema, get_metrics_in_profiles, \
@@ -11,6 +12,7 @@ from Poem.helpers.metrics_helpers import import_metrics, \
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from django.contrib.contenttypes.models import ContentType
+from django.db import IntegrityError
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
@@ -690,4 +692,207 @@ class UpdateMetricsVersions(APIView):
             return error_response(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="You do not have permission to update metrics' versions."
+            )
+
+
+class ListMetricConfiguration(ListMetricOverrides):
+    authentication_classes = (SessionAuthentication,)
+    permission_classes = ()
+
+    def get(self, request, name=None):
+        if request.user.is_superuser:
+            if name:
+                configurations = poem_models.MetricConfiguration.objects.filter(
+                    name=name
+                )
+
+                if configurations.count() == 0:
+                    raise NotFound(
+                        status=404, detail="Metric configuration not found."
+                    )
+
+            else:
+                configurations = poem_models.MetricConfiguration.objects.all()
+
+            results = []
+            for configuration in configurations:
+                global_attributes = self._get_global_attributes(
+                    configuration.globalattribute
+                )
+                host_attributes = self._get_host_attributes(
+                    configuration.hostattribute
+                )
+                metric_parameters = self._get_metric_parameters(
+                    configuration.metricparameter
+                )
+
+                results.append(dict(
+                    id=configuration.id,
+                    name=configuration.name,
+                    global_attributes=global_attributes,
+                    host_attributes=host_attributes,
+                    metric_parameters=metric_parameters
+                ))
+
+            results = sorted(results, key=lambda k: k["name"])
+
+            if name:
+                return Response(results[0])
+
+            else:
+                return Response(results)
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You do not have permission to view metric "
+                       "configuration overrides."
+            )
+
+    def put(self, request):
+        if request.user.is_superuser:
+            try:
+                conf = poem_models.MetricConfiguration.objects.get(
+                    id=request.data["id"]
+                )
+                conf.name = request.data["name"]
+                global_attrs = list()
+                for item in dict(request.data)["global_attributes"]:
+                    if isinstance(item, str):
+                        item = ast.literal_eval(item)
+                    global_attrs.append("{attribute} {value}".format(**item))
+
+                host_attrs = list()
+                for item in dict(request.data)["host_attributes"]:
+                    if isinstance(item, str):
+                        item = ast.literal_eval(item)
+                    host_attrs.append(
+                        "{hostname} {attribute} {value}".format(**item)
+                    )
+
+                metric_params = list()
+                for item in dict(request.data)["metric_parameters"]:
+                    if isinstance(item, str):
+                        item = ast.literal_eval(item)
+                    metric_params.append(
+                        "{hostname} {metric} {parameter} {value}".format(**item)
+                    )
+
+                conf.globalattribute = json.dumps(global_attrs)
+                conf.hostattribute = json.dumps(host_attrs)
+                conf.metricparameter = json.dumps(metric_params)
+
+                conf.save()
+
+                return Response(status=status.HTTP_201_CREATED)
+
+            except IntegrityError:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Metric configuration override with this name "
+                           "already exists."
+                )
+
+            except poem_models.MetricConfiguration.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Metric configuration override with requested id "
+                           "does not exist."
+                )
+
+            except KeyError as e:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Missing data key: {e.args[0]}"
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You do not have permission to change metric "
+                       "configuration overrides."
+            )
+
+    def post(self, request):
+        if request.user.is_superuser:
+            try:
+                global_attrs = list()
+                for item in dict(request.data)["global_attributes"]:
+                    if isinstance(item, str):
+                        item = ast.literal_eval(item)
+                    global_attrs.append("{attribute} {value}".format(**item))
+
+                host_attrs = list()
+                for item in dict(request.data)["host_attributes"]:
+                    if isinstance(item, str):
+                        item = ast.literal_eval(item)
+                    host_attrs.append(
+                        "{hostname} {attribute} {value}".format(**item)
+                    )
+
+                metric_params = list()
+                for item in dict(request.data)["metric_parameters"]:
+                    if isinstance(item, str):
+                        item = ast.literal_eval(item)
+                    metric_params.append(
+                        "{hostname} {metric} {parameter} {value}".format(**item)
+                    )
+
+                poem_models.MetricConfiguration.objects.create(
+                    name=request.data["name"],
+                    globalattribute=json.dumps(global_attrs),
+                    hostattribute=json.dumps(host_attrs),
+                    metricparameter=json.dumps(metric_params)
+                )
+
+                return Response(status=status.HTTP_201_CREATED)
+
+            except IntegrityError:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Local metric configuration with this name already "
+                           "exists."
+                )
+
+            except KeyError as e:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Missing data key: {e.args[0]}"
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You do not have permission to add metric configuration "
+                       "overrides."
+            )
+
+    def delete(self, request, name=None):
+        if request.user.is_superuser:
+            if name:
+                try:
+                    conf = poem_models.MetricConfiguration.objects.get(
+                        name=name
+                    )
+                    conf.delete()
+
+                    return Response(status=status.HTTP_204_NO_CONTENT)
+
+                except poem_models.MetricConfiguration.DoesNotExist:
+                    return error_response(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Metric configuration not found."
+                    )
+
+            else:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Metric configuration name must be defined."
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You do not have permission to delete local metric "
+                       "configurations."
             )

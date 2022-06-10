@@ -1,5 +1,6 @@
 import datetime
 from unittest.mock import patch, call
+import json
 
 import factory
 from Poem.api import views
@@ -256,6 +257,35 @@ def mock_db_for_metrics_tests():
     poem_models.Metric.objects.create(
         name='test.EMPTY-metric',
         mtype=active
+    )
+
+    poem_models.MetricConfiguration.objects.create(
+        name="local",
+        globalattribute=json.dumps(
+            [
+                "NAGIOS_ACTUAL_HOST_CERT /etc/nagios/globus/hostcert.pem",
+                "NAGIOS_ACTUAL_HOST_KEY /etc/nagios/globus/hostkey.pem"
+            ]
+        ),
+        hostattribute=json.dumps(["mock.host.name attr1 some-new-value"]),
+        metricparameter=json.dumps(
+            [
+                "eosccore.ui.argo.grnet.gr org.nagios.ARGOWeb-AR "
+                "-r EOSC_Monitoring",
+                "argo.eosc-portal.eu org.nagios.ARGOWeb-Status -u "
+                "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
+            ]
+        )
+    )
+
+    poem_models.MetricConfiguration.objects.create(
+        name="consumer",
+        globalattribute="",
+        hostattribute="",
+        metricparameter=json.dumps([
+            "eosccore.mon.devel.argo.grnet.gr argo.AMSPublisher-Check "
+            "-q w:metrics+g:published180"
+        ])
     )
 
 
@@ -1363,3 +1393,75 @@ class ListMetricTemplateAPIViewTests(TenantTestCase):
         response = self.view(request, 'nonexistent')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data, {'detail': 'Requested tag not found.'})
+
+
+class ListMetricConfigurationAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.token = create_credentials()
+        self.view = views.ListMetricOverrides.as_view()
+        self.factory = TenantRequestFactory(self.tenant)
+        self.url = '/api/v2/metricoverrides'
+
+        mock_db_for_metrics_tests()
+
+    def test_list_metric_overrides_if_wrong_token(self):
+        request = self.factory.get(
+            self.url, **{'HTTP_X_API_KEY': 'wrong_token'}
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_list_metric_overrides(self):
+        request = self.factory.get(self.url, **{'HTTP_X_API_KEY': self.token})
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            {
+                "consumer": {
+                    "global_attributes": [],
+                    "host_attributes": [],
+                    "metric_parameters": [
+                        {
+                            "hostname": "eosccore.mon.devel.argo.grnet.gr",
+                            "metric": "argo.AMSPublisher-Check",
+                            "parameter": "-q",
+                            "value": "w:metrics+g:published180"
+                        }
+                    ]
+                },
+                "local": {
+                    "global_attributes": [
+                        {
+                            "attribute": "NAGIOS_ACTUAL_HOST_CERT",
+                            "value": "/etc/nagios/globus/hostcert.pem"
+                        },
+                        {
+                            "attribute": "NAGIOS_ACTUAL_HOST_KEY",
+                            "value": "/etc/nagios/globus/hostkey.pem"
+                        }
+                    ],
+                    "host_attributes": [
+                        {
+                            "hostname": "mock.host.name",
+                            "attribute": "attr1",
+                            "value": "some-new-value"
+                        }
+                    ],
+                    "metric_parameters": [
+                        {
+                            "hostname": "eosccore.ui.argo.grnet.gr",
+                            "metric": "org.nagios.ARGOWeb-AR",
+                            "parameter": "-r",
+                            "value": "EOSC_Monitoring"
+                        },
+                        {
+                            "hostname": "argo.eosc-portal.eu",
+                            "metric": "org.nagios.ARGOWeb-Status",
+                            "parameter": "-u",
+                            "value": "/eosc/report-status/Default/SERVICEGROUPS"
+                                     "?accept=csv"
+                        }
+                    ]
+                }
+            }
+        )

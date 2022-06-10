@@ -96,5 +96,7 @@ urlpatterns = [
     path('reports/<str:report_name>', views_internal.ListReports.as_view(), name='reports'),
     path('public_reports/<str:report_name>', views_internal.ListPublicReports.as_view(), name='reports'),
     path('reportsgroup/', views_internal.ListReportsInGroup.as_view(), name='reports'),
-    path('reportsgroup/<str:group>', views_internal.ListReportsInGroup.as_view(), name='reports')
+    path('reportsgroup/<str:group>', views_internal.ListReportsInGroup.as_view(), name='reports'),
+    path("metricconfiguration/", views_internal.ListMetricConfiguration.as_view(), name="metricconfiguration"),
+    path("metricconfiguration/<str:name>", views_internal.ListMetricConfiguration.as_view(), name="metricconfiguration")
 ]
