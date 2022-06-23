@@ -162,7 +162,7 @@ export const MetricTemplateComponent = (props) => {
             callback: () => history.push('/ui/metrictemplates')
           })
 
-          if ("warning" in data)
+          if (data && "warning" in data)
             NotifyWarn({ msg: data.warning, title: "Warning" })
         },
         onError: (error) => {
@@ -183,7 +183,7 @@ export const MetricTemplateComponent = (props) => {
             callback: () => history.push('/ui/metrictemplates')
           })
 
-          if ("warning" in data)
+          if (data && "warning" in data)
             NotifyWarn({ msg: data.warning, title: "Warning" })
         },
         onError: (error) => {
