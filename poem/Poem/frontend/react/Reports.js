@@ -1097,9 +1097,9 @@ export const ReportsComponent = (props) => {
     else if (context.indexOf('argo.endpoint') !== 1) {
       if (entities.length === 1) {
         let only_type = entities[0].name.toLowerCase()
-        if (only_type.indexOf('site') !== -1 || only_type.indexOf('servicegroup') !== -1)
+        if (only_type.startsWith('site') || only_type.startsWith('servicegroup'))
           final_entities = [entities[0], default_empty]
-        else if (only_type.indexOf('servicetypessites') !== -1 || only_type.indexOf('servicetypesservicegroups') !== -1)
+        else if (only_type.startsWith('servicetypessites') || only_type.startsWith('servicetypesservicegroups'))
           final_entities = [default_empty, entities[0]]
       }
       else
