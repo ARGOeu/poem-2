@@ -3126,7 +3126,6 @@ describe('Tests for reports addview', () => {
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
 
     const entity1 = card_groups.getAllByText(/search/i)[0]
-    const entity2 = card_groups.getAllByText(/search/i)[1]
 
     fireEvent.click(card_groups.getByText(/add new tag/i))
 
@@ -3637,8 +3636,6 @@ describe('Tests for reports addview', () => {
 
     await selectEvent.select(entity1, 'Russia')
 
-    await selectEvent.select(entity2, 'dirac-durham')
-
     expect(screen.getByTestId('form')).toHaveFormValues({
       'name': '',
       'disabled': false,
@@ -3654,7 +3651,7 @@ describe('Tests for reports addview', () => {
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': ['condor', 'eddie'],
       'entitiesGroups.0.value': 'Russia',
-      'entitiesGroups.1.value': 'dirac-durham',
+      'entitiesGroups.1.value': '',
       'availabilityThreshold': '',
       'reliabilityThreshold': '',
       'uptimeThreshold': '',
@@ -3673,7 +3670,6 @@ describe('Tests for reports addview', () => {
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
 
     const entity1 = card_endpoints.getAllByText(/search/i)[0]
-    const entity2 = card_endpoints.getAllByText(/search/i)[1]
 
     fireEvent.click(card_endpoints.getByText(/add new tag/i))
 
@@ -4287,7 +4283,6 @@ describe('Tests for reports addview', () => {
     })
 
     await selectEvent.select(entity1, 'IRISOPS-IAM')
-    await selectEvent.select(entity2, 'egi.Portal')
 
     expect(screen.getByTestId('form')).toHaveFormValues({
       'name': '',
@@ -4304,7 +4299,7 @@ describe('Tests for reports addview', () => {
       'endpointsExtensions.0.name': 'GLUE2EndpointID',
       'endpointsExtensions.0.value': ['ce1.gridpp.ecdf.ed.ac.uk', 'svr009.gla.scotgrid.ac.uk'],
       'entitiesEndpoints.0.value': 'IRISOPS-IAM',
-      'entitiesEndpoints.1.value': 'egi.Portal',
+      'entitiesEndpoints.1.value': '',
       'availabilityThreshold': '',
       'reliabilityThreshold': '',
       'uptimeThreshold': '',
