@@ -46,9 +46,6 @@ import {
 } from './QueryFunctions';
 
 
-const TopologyMapsContext = React.createContext()
-
-
 const ReportsSchema = Yup.object().shape({
   name: Yup.string().required('Required'),
   groupname: Yup.string().required('Required'),
@@ -153,6 +150,17 @@ export const ReportsList = (props) => {
 };
 
 
+const sortStr = (a, b) => {
+  if (a.toLowerCase() < b.toLowerCase()) return -1;
+  if (a.toLowerCase() > b.toLowerCase()) return 1;
+  if (a.toLowerCase() === b.toLowerCase()) {
+    if (a.toLowerCase() < b.toLowerCase()) return -1;
+    if (a.toLowerCase() > b.toLowerCase()) return 1;
+    if (a.toLowerCase() === b.toLowerCase()) return 0;
+  }
+}
+
+
 function preProcessTagValue(data) {
   if (data === '1')
     return 'yes'
@@ -233,7 +241,7 @@ const formatFilteredSelectEntities = (data, {entitiesGroups, entitiesEndpoints},
           })
         else
           choices = data
-        return formatSelectEntities(choices)
+        return formatSelectEntities(choices.sort(sortStr))
       }
 
       else if (lookkey.includes(tt['lowerKey'])) {
@@ -244,7 +252,7 @@ const formatFilteredSelectEntities = (data, {entitiesGroups, entitiesEndpoints},
             if (sels)
               services.push(...sels)
           })
-          return formatSelectEntities(services)
+          return formatSelectEntities(services.sort(sortStr))
         }
         else if (selectedTop.length > 0) {
           let sites = new Array()
@@ -258,13 +266,13 @@ const formatFilteredSelectEntities = (data, {entitiesGroups, entitiesEndpoints},
             if (sels)
               services.push(...sels)
           })
-          return formatSelectEntities(services)
+          return formatSelectEntities(services.sort(sortStr))
         }
       }
     }
   }
   else
-    return formatSelectEntities(data)
+    return formatSelectEntities(data.sort(sortStr))
 }
 
 const formatSelectEntities = (data) => {
@@ -867,16 +875,6 @@ export const ReportsComponent = (props) => {
     [`${publicView ? 'public_' : ''}thresholdsprofile`, 'webapi'], () => fetchThresholdsProfiles(webapi),
     { enabled: !publicView && !!userDetails }
   )
-
-  const sortStr = (a, b) => {
-    if (a.toLowerCase() < b.toLowerCase()) return -1;
-    if (a.toLowerCase() > b.toLowerCase()) return 1;
-    if (a.toLowerCase() === b.toLowerCase()) {
-      if (a.toLowerCase() < b.toLowerCase()) return -1;
-      if (a.toLowerCase() > b.toLowerCase()) return 1;
-      if (a.toLowerCase() === b.toLowerCase()) return 0;
-    }
-  }
 
   const extractProfileNames = (profiles) => {
     let tmp = new Array();
