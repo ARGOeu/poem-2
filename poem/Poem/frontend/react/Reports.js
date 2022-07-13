@@ -250,7 +250,8 @@ const formatFilteredSelectEntities = (data, {entitiesGroups, entitiesEndpoints},
           selectedMiddle.forEach(sel => {
             let sels = topoMaps[tt['middleMapKey']].get(sel)
             if (sels)
-              services.add(...sels)
+              for (var ser of sels)
+                services.add(ser)
           })
           return formatSelectEntities(Array.from(services).sort(sortStr))
         }
@@ -264,7 +265,8 @@ const formatFilteredSelectEntities = (data, {entitiesGroups, entitiesEndpoints},
           sites.forEach(sel => {
             let sels = topoMaps[tt['middleMapKey']].get(sel)
             if (sels)
-              services.add(...sels)
+              for (var ser of sels)
+                services.add(ser)
           })
           return formatSelectEntities(Array.from(services).sort(sortStr))
         }
