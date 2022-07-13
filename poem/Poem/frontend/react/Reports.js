@@ -245,14 +245,14 @@ const formatFilteredSelectEntities = (data, {entitiesGroups, entitiesEndpoints},
       }
 
       else if (lookkey.includes(tt['lowerKey'])) {
-        let services = new Array()
+        let services = new Set()
         if (selectedMiddle.length > 0) {
           selectedMiddle.forEach(sel => {
             let sels = topoMaps[tt['middleMapKey']].get(sel)
             if (sels)
-              services.push(...sels)
+              services.add(...sels)
           })
-          return formatSelectEntities(services.sort(sortStr))
+          return formatSelectEntities(Array.from(services).sort(sortStr))
         }
         else if (selectedTop.length > 0) {
           let sites = new Array()
@@ -264,9 +264,9 @@ const formatFilteredSelectEntities = (data, {entitiesGroups, entitiesEndpoints},
           sites.forEach(sel => {
             let sels = topoMaps[tt['middleMapKey']].get(sel)
             if (sels)
-              services.push(...sels)
+              services.add(...sels)
           })
-          return formatSelectEntities(services.sort(sortStr))
+          return formatSelectEntities(Array.from(services).sort(sortStr))
         }
       }
     }
