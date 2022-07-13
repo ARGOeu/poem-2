@@ -1931,8 +1931,8 @@ describe('Tests for reports changeview', () => {
     const entity1 = endpoint_groups.getByText('IRISOPS-IAM')
     const entity2 = endpoint_groups.getByText('Top-BDII')
 
-    await selectEvent.select(entity1, 'fedcloud.srce.hr')
-    await selectEvent.select(entity2, 'eu.egi.cloud.accounting')
+    await selectEvent.select(entity1, 'dirac-durham')
+    await selectEvent.select(entity2, 'ARC-CE')
 
     expect(screen.getByTestId('form')).toHaveFormValues({
       'name': 'Critical',
@@ -1954,8 +1954,8 @@ describe('Tests for reports changeview', () => {
       'groupsExtensions.0.value': 'condor',
       'entitiesGroups.0.value': 'iris.ac.uk',
       'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
-      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM', 'fedcloud.srce.hr'],
-      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII', 'eu.egi.cloud.accounting'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'no',
       'endpointsTags.1.name': 'monitored',
@@ -1993,8 +1993,8 @@ describe('Tests for reports changeview', () => {
       'groupsExtensions.0.value': 'condor',
       'entitiesGroups.0.value': 'iris.ac.uk',
       'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
-      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM', 'fedcloud.srce.hr'],
-      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII', 'eu.egi.cloud.accounting'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'no',
       'endpointsTags.1.name': 'monitored',
@@ -2021,16 +2021,6 @@ describe('Tests for reports changeview', () => {
       name: 'info_ext_GLUE2EndpointImplementationName',
       value: 'ARC-CE',
       context: 'argo.endpoint.filter.tags.array'
-    })
-    frontendReport.filter_tags.splice(12, 0, {
-      context: 'argo.endpoint.filter.fields',
-      name: 'group',
-      value: 'fedcloud.srce.hr',
-    })
-    frontendReport.filter_tags.splice(15, 0, {
-      context: 'argo.endpoint.filter.fields',
-      name: 'service',
-      value: 'eu.egi.cloud.accounting',
     })
 
     await waitFor(() => {
