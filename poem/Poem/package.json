@@ -82,6 +82,7 @@
     "@fortawesome/react-fontawesome": "^0.1.18",
     "@popperjs/core": "^2.11.2",
     "async": "^2.6.4",
+    "caniuse-lite": "^1.0.30001366",
     "formik": "^2.2.9",
     "lodash": "^4.17.21",
     "papaparse": "^5.3.1",
