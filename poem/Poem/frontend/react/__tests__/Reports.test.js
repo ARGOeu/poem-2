@@ -1316,7 +1316,8 @@ describe('Tests for reports changeview', () => {
     expect(card_groups.getByText('IRISOPS-IAM')).toBeInTheDocument();
 
     selectEvent.openMenu(card_groups.getByText('dirac-durham'));
-    expect(card_groups.getByText('RU-SARFTI')).toBeInTheDocument();
+    expect(card_groups.getByText('IRISOPS-IAM')).toBeInTheDocument();
+    expect(card_groups.queryByText('RU-SARFTI')).not.toBeInTheDocument();
     expect(card_groups.queryByText('DAVETESTSG')).not.toBeInTheDocument();
     expect(card_groups.queryByText('NGI_AEGIS_SERVICES')).not.toBeInTheDocument();
     expect(card_groups.queryByText('NGI_ARMGRID_SERVICES')).not.toBeInTheDocument();
@@ -1930,8 +1931,8 @@ describe('Tests for reports changeview', () => {
     const entity1 = endpoint_groups.getByText('IRISOPS-IAM')
     const entity2 = endpoint_groups.getByText('Top-BDII')
 
-    await selectEvent.select(entity1, 'fedcloud.srce.hr')
-    await selectEvent.select(entity2, 'eu.egi.cloud.accounting')
+    await selectEvent.select(entity1, 'dirac-durham')
+    await selectEvent.select(entity2, 'ARC-CE')
 
     expect(screen.getByTestId('form')).toHaveFormValues({
       'name': 'Critical',
@@ -1953,8 +1954,8 @@ describe('Tests for reports changeview', () => {
       'groupsExtensions.0.value': 'condor',
       'entitiesGroups.0.value': 'iris.ac.uk',
       'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
-      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM', 'fedcloud.srce.hr'],
-      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII', 'eu.egi.cloud.accounting'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'no',
       'endpointsTags.1.name': 'monitored',
@@ -1992,8 +1993,8 @@ describe('Tests for reports changeview', () => {
       'groupsExtensions.0.value': 'condor',
       'entitiesGroups.0.value': 'iris.ac.uk',
       'entitiesGroups.1.value': ['dirac-durham', 'IRISOPS-IAM'],
-      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM', 'fedcloud.srce.hr'],
-      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII', 'eu.egi.cloud.accounting'],
+      'entitiesEndpoints.0.value': ['dirac-durham', 'IRISOPS-IAM'],
+      'entitiesEndpoints.1.value': ['ARC-CE', 'Top-BDII'],
       'endpointsTags.0.name': 'production',
       'endpointsTags.0.value': 'no',
       'endpointsTags.1.name': 'monitored',
@@ -2020,16 +2021,6 @@ describe('Tests for reports changeview', () => {
       name: 'info_ext_GLUE2EndpointImplementationName',
       value: 'ARC-CE',
       context: 'argo.endpoint.filter.tags.array'
-    })
-    frontendReport.filter_tags.splice(12, 0, {
-      context: 'argo.endpoint.filter.fields',
-      name: 'group',
-      value: 'fedcloud.srce.hr',
-    })
-    frontendReport.filter_tags.splice(15, 0, {
-      context: 'argo.endpoint.filter.fields',
-      name: 'service',
-      value: 'eu.egi.cloud.accounting',
     })
 
     await waitFor(() => {
@@ -3135,7 +3126,6 @@ describe('Tests for reports addview', () => {
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
 
     const entity1 = card_groups.getAllByText(/search/i)[0]
-    const entity2 = card_groups.getAllByText(/search/i)[1]
 
     fireEvent.click(card_groups.getByText(/add new tag/i))
 
@@ -3646,8 +3636,6 @@ describe('Tests for reports addview', () => {
 
     await selectEvent.select(entity1, 'Russia')
 
-    await selectEvent.select(entity2, 'dirac-durham')
-
     expect(screen.getByTestId('form')).toHaveFormValues({
       'name': '',
       'disabled': false,
@@ -3663,7 +3651,7 @@ describe('Tests for reports addview', () => {
       'groupsExtensions.0.name': 'GLUE2ComputingShareMappingQueue',
       'groupsExtensions.0.value': ['condor', 'eddie'],
       'entitiesGroups.0.value': 'Russia',
-      'entitiesGroups.1.value': 'dirac-durham',
+      'entitiesGroups.1.value': '',
       'availabilityThreshold': '',
       'reliabilityThreshold': '',
       'uptimeThreshold': '',
@@ -3682,7 +3670,6 @@ describe('Tests for reports addview', () => {
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
 
     const entity1 = card_endpoints.getAllByText(/search/i)[0]
-    const entity2 = card_endpoints.getAllByText(/search/i)[1]
 
     fireEvent.click(card_endpoints.getByText(/add new tag/i))
 
@@ -4296,7 +4283,6 @@ describe('Tests for reports addview', () => {
     })
 
     await selectEvent.select(entity1, 'IRISOPS-IAM')
-    await selectEvent.select(entity2, 'egi.Portal')
 
     expect(screen.getByTestId('form')).toHaveFormValues({
       'name': '',
@@ -4313,7 +4299,7 @@ describe('Tests for reports addview', () => {
       'endpointsExtensions.0.name': 'GLUE2EndpointID',
       'endpointsExtensions.0.value': ['ce1.gridpp.ecdf.ed.ac.uk', 'svr009.gla.scotgrid.ac.uk'],
       'entitiesEndpoints.0.value': 'IRISOPS-IAM',
-      'entitiesEndpoints.1.value': 'egi.Portal',
+      'entitiesEndpoints.1.value': '',
       'availabilityThreshold': '',
       'reliabilityThreshold': '',
       'uptimeThreshold': '',
