@@ -1316,7 +1316,8 @@ describe('Tests for reports changeview', () => {
     expect(card_groups.getByText('IRISOPS-IAM')).toBeInTheDocument();
 
     selectEvent.openMenu(card_groups.getByText('dirac-durham'));
-    expect(card_groups.getByText('RU-SARFTI')).toBeInTheDocument();
+    expect(card_groups.getByText('IRISOPS-IAM')).toBeInTheDocument();
+    expect(card_groups.queryByText('RU-SARFTI')).not.toBeInTheDocument();
     expect(card_groups.queryByText('DAVETESTSG')).not.toBeInTheDocument();
     expect(card_groups.queryByText('NGI_AEGIS_SERVICES')).not.toBeInTheDocument();
     expect(card_groups.queryByText('NGI_ARMGRID_SERVICES')).not.toBeInTheDocument();
