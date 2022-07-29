@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
 
-import './scss/custom.css';
+import './bootstrap-custom.scss'
 
 ReactDOM.render(<App />, document.getElementById('react'));
 // If you want your app to work offline and load faster, you can change
