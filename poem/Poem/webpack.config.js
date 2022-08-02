@@ -56,25 +56,11 @@ module.exports = {
       },
       {
         test: /\.(png|jpg|gif|svg)$/i,
-        use: [
-          {
-            loader: 'url-loader',
-            options: {
-              limit: 10000
-            }
-          }
-        ]
+        type: 'asset/resource'
       },
       {
-        test: /\.(woff(2)?|ttf|eot)(\?v=\d+\.\d+\.\d+)?$/,
-        use: [
-          {
-            loader: "url-loader",
-            options: {
-              name: "/static/reactbundle/fonts/[name].[ext]"
-            }
-          }
-        ]
+        test: /\.(woff(2)?|ttf|eot|otf)$/i,
+        type: 'asset/resource'
       }
     ]
   },
