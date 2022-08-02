@@ -201,7 +201,7 @@ export const TenantChange = (props) => {
                         name='name'
                         id='name'
                         data-testid='name'
-                        readOnly
+                        disabled={true}
                         className='form-control form-control-lg'
                       />
                     </InputGroup>
@@ -219,7 +219,7 @@ export const TenantChange = (props) => {
                         name='schema'
                         id='schema'
                         data-testid='schema'
-                        readOnly
+                        disabled={true}
                         className='form-control'
                       />
                     </InputGroup>
@@ -234,7 +234,7 @@ export const TenantChange = (props) => {
                         name='url'
                         id='url'
                         data-testid='url'
-                        readOnly
+                        disabled={true}
                         className='form-control'
                       />
                     </InputGroup>
@@ -249,7 +249,7 @@ export const TenantChange = (props) => {
                         name='created_on'
                         id='created_on'
                         data-testid='created_on'
-                        readOnly
+                        disabled={true}
                         className='form-control'
                       />
                     </InputGroup>
