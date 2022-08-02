@@ -136,7 +136,7 @@ export const OperationsProfileDetails = (props) => {
                         name='name'
                         data-testid='name'
                         className='form-control form-control-lg'
-                        readOnly
+                        disabled={true}
                       />
                     </InputGroup>
                     <FormText color='muted'>

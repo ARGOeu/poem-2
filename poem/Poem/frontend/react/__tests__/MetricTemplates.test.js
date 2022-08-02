@@ -1736,25 +1736,25 @@ describe('Test metric template changeview on SuperPOEM', () => {
 
     expect(executableField.value).toBe('ams-probe');
     expect(configKey1.value).toBe('maxCheckAttempts');
-    expect(configKey1).toHaveAttribute('readonly');
+    expect(configKey1).toBeDisabled()
     expect(configVal1.value).toBe('4');
-    expect(configVal1).not.toHaveAttribute('readonly');
+    expect(configVal1).toBeEnabled()
     expect(configKey2.value).toBe('timeout');
-    expect(configKey2).toHaveAttribute('readonly');
+    expect(configKey2).toBeDisabled()
     expect(configVal2.value).toBe('70');
-    expect(configVal2).not.toHaveAttribute('readonly');
+    expect(configVal2).toBeEnabled()
     expect(configKey3.value).toBe('path');
-    expect(configKey3).toHaveAttribute('readonly');
+    expect(configKey3).toBeDisabled()
     expect(configVal3.value).toBe('/usr/libexec/argo-monitoring/');
-    expect(configVal3).not.toHaveAttribute('readonly');
+    expect(configVal3).toBeEnabled()
     expect(configKey4.value).toBe('interval');
-    expect(configKey4).toHaveAttribute('readonly');
+    expect(configKey4).toBeDisabled()
     expect(configVal4.value).toBe('5');
-    expect(configVal4).not.toHaveAttribute('readonly');
+    expect(configVal4).toBeEnabled()
     expect(configKey5.value).toBe('retryInterval');
-    expect(configKey5).toHaveAttribute('readonly');
+    expect(configKey5).toBeDisabled()
     expect(configVal5.value).toBe('3');
-    expect(configVal5).not.toHaveAttribute('readonly');
+    expect(configVal5).toBeEnabled()
     expect(attributeKey.value).toBe('argo.ams_TOKEN');
     expect(attributeVal.value).toBe('--token');
     expect(dependencyKey.value).toBe('');
@@ -1822,9 +1822,9 @@ describe('Test metric template changeview on SuperPOEM', () => {
     const parentField = screen.getByTestId('parent');
 
     expect(nameField.value).toBe('argo.AMS-Check');
-    expect(nameField).toHaveAttribute('readonly')
+    expect(nameField).toBeDisabled()
     expect(typeField.value).toBe('Active');
-    expect(typeField).toHaveAttribute('readonly');
+    expect(typeField).toBeDisabled()
     expect(screen.queryByRole('option', { name: /active/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('option', { name: /passive/i })).not.toBeInTheDocument()
     expect(probeField.value).toBe('ams-probe (0.1.12)');
@@ -1837,60 +1837,60 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(tagBadge1.textContent).toBe('test_tag1');
     expect(tagBadge2.textContent).toBe('test_tag2');
     expect(executableField.value).toBe('ams-probe');
-    expect(executableField).toHaveAttribute('readonly');
+    expect(executableField).toBeDisabled()
     expect(configKey1.value).toBe('maxCheckAttempts');
-    expect(configKey1).toHaveAttribute('readonly');
+    expect(configKey1).toBeDisabled()
     expect(configVal1.value).toBe('4');
-    expect(configVal1).toHaveAttribute('readonly');
-    expect(configVal1).toHaveAttribute('readonly');
+    expect(configVal1).toBeDisabled()
+    expect(configVal1).toBeDisabled()
     expect(screen.queryByTestId('config.0.remove')).not.toBeInTheDocument();
     expect(configKey2.value).toBe('timeout');
-    expect(configKey2).toHaveAttribute('readonly');
+    expect(configKey2).toBeDisabled()
     expect(configVal2.value).toBe('70');
-    expect(configVal2).toHaveAttribute('readonly');
+    expect(configVal2).toBeDisabled()
     expect(screen.queryByTestId('config.1.remove')).not.toBeInTheDocument();
     expect(configKey3.value).toBe('path');
-    expect(configKey3).toHaveAttribute('readonly');
+    expect(configKey3).toBeDisabled()
     expect(configVal3.value).toBe('/usr/libexec/argo-monitoring/');
-    expect(configVal3).toHaveAttribute('readonly');
+    expect(configVal3).toBeDisabled()
     expect(screen.queryByTestId('config.2.remove')).not.toBeInTheDocument();
     expect(configKey4.value).toBe('interval');
-    expect(configKey4).toHaveAttribute('readonly');
+    expect(configKey4).toBeDisabled()
     expect(configVal4.value).toBe('5');
-    expect(configVal4).toHaveAttribute('readonly');
+    expect(configVal4).toBeDisabled()
     expect(screen.queryByTestId('config.3.remove')).not.toBeInTheDocument();
     expect(configKey5.value).toBe('retryInterval');
-    expect(configKey5).toHaveAttribute('readonly');
+    expect(configKey5).toBeDisabled()
     expect(configVal5.value).toBe('3');
-    expect(configVal5).toHaveAttribute('readonly');
+    expect(configVal5).toBeDisabled()
     expect(screen.queryByTestId('config.4.remove')).not.toBeInTheDocument();
     expect(screen.queryByTestId('config.addnew')).not.toBeInTheDocument();
     expect(attributeKey.value).toBe('argo.ams_TOKEN');
-    expect(attributeKey).toHaveAttribute('readonly');
+    expect(attributeKey).toBeDisabled()
     expect(attributeVal.value).toBe('--token');
-    expect(attributeVal).toHaveAttribute('readonly');
+    expect(attributeVal).toBeDisabled()
     expect(screen.queryByTestId('attributes.0.remove')).not.toBeInTheDocument();
     expect(screen.queryByTestId('attributes.addnew')).not.toBeInTheDocument();
     expect(dependencyKey.value).toBe('');
-    expect(dependencyKey).toHaveAttribute('readonly');
+    expect(dependencyKey).toBeDisabled()
     expect(dependencyVal.value).toBe('');
-    expect(dependencyVal).toHaveAttribute('readonly');
+    expect(dependencyVal).toBeDisabled()
     expect(screen.queryByTestId('dependency.0.remove')).not.toBeInTheDocument();
     expect(screen.queryByTestId('dependency.addnew')).not.toBeInTheDocument();
     expect(parameterKey.value).toBe('--project');
-    expect(parameterKey).toHaveAttribute('readonly');
+    expect(parameterKey).toBeDisabled()
     expect(parameterVal.value).toBe('EGI');
-    expect(parameterVal).toHaveAttribute('readonly');
+    expect(parameterVal).toBeDisabled()
     expect(screen.queryByTestId('parameter.0.remove')).not.toBeInTheDocument();
     expect(screen.queryByTestId('parameter.addnew')).not.toBeInTheDocument();
     expect(flagKey.value).toBe('OBSESS');
-    expect(flagKey).toHaveAttribute('readonly');
+    expect(flagKey).toBeDisabled()
     expect(flagVal.value).toBe('1');
-    expect(flagVal).toHaveAttribute('readonly');
+    expect(flagVal).toBeDisabled()
     expect(screen.queryByTestId('flags.0.remove')).not.toBeInTheDocument();
     expect(screen.queryByTestId('flags.addnew')).not.toBeInTheDocument();
     expect(parentField.value).toBe('');
-    expect(parentField).toHaveAttribute('readonly');
+    expect(parentField).toBeDisabled()
     expect(screen.getByRole('button', { name: /history/i }).closest('a')).toHaveAttribute('href', '/ui/public_metrictemplates/argo.AMS-Check/history');
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
@@ -3169,8 +3169,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(flagVal1.value).toBe('1');
     expect(flagKey2.value).toBe('PASSIVE');
     expect(flagVal2.value).toBe('1');
-    expect(flagKey2).toHaveAttribute('readonly');
-    expect(flagVal2).toHaveAttribute('readonly');
+    expect(flagKey2).toBeDisabled()
+    expect(flagVal2).toBeDisabled()
 
     expect(screen.queryByText('argo.AMS-Publisher')).not.toBeInTheDocument()
     expect(screen.queryByText('argo.AMS-Check')).not.toBeInTheDocument()
@@ -3224,9 +3224,9 @@ describe('Test metric template changeview on SuperPOEM', () => {
     const parentField = screen.getByTestId('parent');
 
     expect(nameField.value).toBe('org.apel.APEL-Pub');
-    expect(nameField).toHaveAttribute('readonly');
+    expect(nameField).toBeDisabled()
     expect(typeField.value).toBe('Passive');
-    expect(typeField).toHaveAttribute('readonly');
+    expect(typeField).toBeDisabled()
     expect(screen.queryByRole('option', { name: /active/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('option', { name: /passive/i })).not.toBeInTheDocument()
     expect(probeField.value).toBe('');
@@ -3271,18 +3271,18 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(screen.queryByTestId('parameter.0.remove')).not.toBeInTheDocument();
     expect(screen.queryByTestId('parameter.addnew')).not.toBeInTheDocument();
     expect(flagKey1.value).toBe('OBSESS');
-    expect(flagKey1).toHaveAttribute('readonly');
+    expect(flagKey1).toBeDisabled()
     expect(flagVal1.value).toBe('1');
-    expect(flagVal1).toHaveAttribute('readonly');
+    expect(flagVal1).toBeDisabled()
     expect(flagKey2.value).toBe('PASSIVE');
     expect(flagVal2.value).toBe('1');
-    expect(flagKey2).toHaveAttribute('readonly');
-    expect(flagVal2).toHaveAttribute('readonly');
+    expect(flagKey2).toBeDisabled()
+    expect(flagVal2).toBeDisabled()
     expect(screen.queryByTestId('flags.0.remove')).not.toBeInTheDocument();
     expect(screen.queryByTestId('flags.1.remove')).not.toBeInTheDocument();
     expect(screen.queryByTestId('flags.addnew')).not.toBeInTheDocument();
     expect(parentField.value).toBe('');
-    expect(parentField).toHaveAttribute('readonly');
+    expect(parentField).toBeDisabled()
     expect(screen.getByRole('button', { name: /history/i }).closest('a')).toHaveAttribute('href', '/ui/public_metrictemplates/org.apel.APEL-Pub/history');
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
@@ -3357,25 +3357,25 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(executableField.value).toBe('');
     expect(executableField).not.toHaveAttribute('hidden');
     expect(configKey1.value).toBe('maxCheckAttempts');
-    expect(configKey1).toHaveAttribute('readonly');
+    expect(configKey1).toBeDisabled()
     expect(configVal1.value).toBe('');
-    expect(configVal1).not.toHaveAttribute('readonly');
+    expect(configVal1).toBeEnabled()
     expect(configKey2.value).toBe('timeout');
-    expect(configKey2).toHaveAttribute('readonly');
+    expect(configKey2).toBeDisabled()
     expect(configVal2.value).toBe('');
-    expect(configVal2).not.toHaveAttribute('readonly');
+    expect(configVal2).toBeEnabled()
     expect(configKey3.value).toBe('path');
-    expect(configKey3).toHaveAttribute('readonly');
+    expect(configKey3).toBeDisabled()
     expect(configVal3.value).toBe('');
-    expect(configVal3).not.toHaveAttribute('readonly');
+    expect(configVal3).toBeEnabled()
     expect(configKey4.value).toBe('interval');
-    expect(configKey4).toHaveAttribute('readonly');
+    expect(configKey4).toBeDisabled()
     expect(configVal4.value).toBe('');
-    expect(configVal4).not.toHaveAttribute('readonly');
+    expect(configVal4).toBeEnabled()
     expect(configKey5.value).toBe('retryInterval');
-    expect(configKey5).toHaveAttribute('readonly');
+    expect(configKey5).toBeDisabled()
     expect(configVal5.value).toBe('');
-    expect(configVal5).not.toHaveAttribute('readonly');
+    expect(configVal5).toBeEnabled()
     expect(attributeKey.value).toBe('');
     expect(attributeKey).not.toHaveAttribute('hidden');
     expect(attributeVal.value).toBe('');
@@ -3472,9 +3472,9 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(flagKey1.value).toBe('OBSESS');
     expect(flagVal1.value).toBe('1');
     expect(flagKey2.value).toBe('PASSIVE');
-    expect(flagKey2).toHaveAttribute('readonly');
+    expect(flagKey2).toBeDisabled()
     expect(flagVal2.value).toBe('1');
-    expect(flagVal2).toHaveAttribute('readonly');
+    expect(flagVal2).toBeDisabled()
     expect(parentField).toBeEnabled()
 
     await selectEvent.select(typeField, 'Active')
@@ -3530,25 +3530,25 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(screen.getByTestId('metric-form')).toHaveFormValues({ tags: ['test_tag1', 'test_tag2'] });
     expect(executableField2.value).toBe('ams-probe');
     expect(configKey1a.value).toBe('maxCheckAttempts');
-    expect(configKey1a).toHaveAttribute('readonly');
+    expect(configKey1a).toBeDisabled()
     expect(configVal1a.value).toBe('4');
-    expect(configVal1a).not.toHaveAttribute('readonly');
+    expect(configVal1a).toBeEnabled()
     expect(configKey2a.value).toBe('timeout');
-    expect(configKey2a).toHaveAttribute('readonly');
+    expect(configKey2a).toBeDisabled()
     expect(configVal2a.value).toBe('70');
-    expect(configVal2a).not.toHaveAttribute('readonly');
+    expect(configVal2a).toBeEnabled()
     expect(configKey3a.value).toBe('path');
-    expect(configKey3a).toHaveAttribute('readonly');
+    expect(configKey3a).toBeDisabled()
     expect(configVal3a.value).toBe('/usr/libexec/argo-monitoring/');
-    expect(configVal3a).not.toHaveAttribute('readonly');
+    expect(configVal3a).toBeEnabled()
     expect(configKey4a.value).toBe('interval');
-    expect(configKey4a).toHaveAttribute('readonly');
+    expect(configKey4a).toBeDisabled()
     expect(configVal4a.value).toBe('5');
-    expect(configVal4a).not.toHaveAttribute('readonly');
+    expect(configVal4a).toBeEnabled()
     expect(configKey5a.value).toBe('retryInterval');
-    expect(configKey5a).toHaveAttribute('readonly');
+    expect(configKey5a).toBeDisabled()
     expect(configVal5a.value).toBe('3');
-    expect(configVal5a).not.toHaveAttribute('readonly');
+    expect(configVal5a).toBeEnabled()
     expect(attributeKey2.value).toBe('argo.ams_TOKEN');
     expect(attributeVal2.value).toBe('--token');
     expect(dependencyKey2.value).toBe('');
@@ -3716,25 +3716,25 @@ describe('Test metric template addview on SuperPOEM', () => {
     expect(screen.getByTestId('metric-form')).toHaveFormValues({ tags: '', parent: '' })
     expect(executableField.value).toBe('');
     expect(configKey1.value).toBe('maxCheckAttempts');
-    expect(configKey1).toHaveAttribute('readonly');
+    expect(configKey1).toBeDisabled()
     expect(configVal1.value).toBe('');
-    expect(configVal1).not.toHaveAttribute('readonly');
+    expect(configVal1).toBeEnabled()
     expect(configKey2.value).toBe('timeout');
-    expect(configKey2).toHaveAttribute('readonly');
+    expect(configKey2).toBeDisabled()
     expect(configVal2.value).toBe('');
-    expect(configVal2).not.toHaveAttribute('readonly');
+    expect(configVal2).toBeEnabled()
     expect(configKey3.value).toBe('path');
-    expect(configKey3).toHaveAttribute('readonly');
+    expect(configKey3).toBeDisabled()
     expect(configVal3.value).toBe('');
-    expect(configVal3).not.toHaveAttribute('readonly');
+    expect(configVal3).toBeEnabled()
     expect(configKey4.value).toBe('interval');
-    expect(configKey4).toHaveAttribute('readonly');
+    expect(configKey4).toBeDisabled()
     expect(configVal4.value).toBe('');
-    expect(configVal4).not.toHaveAttribute('readonly');
+    expect(configVal4).toBeEnabled()
     expect(configKey5.value).toBe('retryInterval');
-    expect(configKey5).toHaveAttribute('readonly');
+    expect(configKey5).toBeDisabled()
     expect(configVal5.value).toBe('');
-    expect(configVal5).not.toHaveAttribute('readonly');
+    expect(configVal5).toBeEnabled()
     expect(attributeKey.value).toBe('');
     expect(attributeVal.value).toBe('');
     expect(dependencyKey.value).toBe('');
@@ -4775,9 +4775,9 @@ describe('Test metric template addview on SuperPOEM', () => {
     const flagKey = screen.getByTestId('flags.0.key');
     const flagVal = screen.getByTestId('flags.0.value');
     expect(flagKey.value).toBe('PASSIVE');
-    expect(flagKey).toHaveAttribute('readonly');
+    expect(flagKey).toBeDisabled()
     expect(flagVal.value).toBe('1');
-    expect(flagVal).toHaveAttribute('readonly');
+    expect(flagVal).toBeDisabled()
 
     const nameField = screen.getByTestId('name');
     const probeField = screen.getByTestId('probeversion')
@@ -5277,25 +5277,25 @@ describe('Test metric template cloneview on SuperPOEM', () => {
 
     expect(executableField.value).toBe('ams-probe');
     expect(configKey1.value).toBe('maxCheckAttempts');
-    expect(configKey1).toHaveAttribute('readonly');
+    expect(configKey1).toBeDisabled()
     expect(configVal1.value).toBe('4');
-    expect(configVal1).not.toHaveAttribute('readonly');
+    expect(configVal1).toBeEnabled()
     expect(configKey2.value).toBe('timeout');
-    expect(configKey2).toHaveAttribute('readonly');
+    expect(configKey2).toBeDisabled()
     expect(configVal2.value).toBe('70');
-    expect(configVal2).not.toHaveAttribute('readonly');
+    expect(configVal2).toBeEnabled()
     expect(configKey3.value).toBe('path');
-    expect(configKey3).toHaveAttribute('readonly');
+    expect(configKey3).toBeDisabled()
     expect(configVal3.value).toBe('/usr/libexec/argo-monitoring/');
-    expect(configVal3).not.toHaveAttribute('readonly');
+    expect(configVal3).toBeEnabled()
     expect(configKey4.value).toBe('interval');
-    expect(configKey4).toHaveAttribute('readonly');
+    expect(configKey4).toBeDisabled()
     expect(configVal4.value).toBe('5');
-    expect(configVal4).not.toHaveAttribute('readonly');
+    expect(configVal4).toBeEnabled()
     expect(configKey5.value).toBe('retryInterval');
-    expect(configKey5).toHaveAttribute('readonly');
+    expect(configKey5).toBeDisabled()
     expect(configVal5.value).toBe('3');
-    expect(configVal5).not.toHaveAttribute('readonly');
+    expect(configVal5).toBeEnabled()
     expect(attributeKey.value).toBe('argo.ams_TOKEN');
     expect(attributeVal.value).toBe('--token');
     expect(dependencyKey.value).toBe('');
@@ -5643,9 +5643,9 @@ describe('Test metric template detail view on tenant POEM', () => {
     const parentField = screen.getByTestId('parent');
 
     expect(nameField.value).toBe('argo.AMS-Check');
-    expect(nameField).toHaveAttribute('readonly')
+    expect(nameField).toBeDisabled()
     expect(typeField.value).toBe('Active');
-    expect(typeField).toHaveAttribute('readonly');
+    expect(typeField).toBeDisabled()
     expect(screen.queryByRole('option', { name: /active/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('option', { name: /passive/i })).not.toBeInTheDocument()
     expect(probeField.value).toBe('ams-probe (0.1.12)');
@@ -5656,60 +5656,60 @@ describe('Test metric template detail view on tenant POEM', () => {
     expect(descriptionField).toBeDisabled();
     expect(groupField).not.toBeInTheDocument();
     expect(executableField.value).toBe('ams-probe');
-    expect(executableField).toHaveAttribute('readonly');
+    expect(executableField).toBeDisabled()
     expect(configKey1.value).toBe('maxCheckAttempts');
-    expect(configKey1).toHaveAttribute('readonly');
+    expect(configKey1).toBeDisabled()
     expect(configVal1.value).toBe('4');
-    expect(configVal1).toHaveAttribute('readonly');
-    expect(configVal1).toHaveAttribute('readonly');
+    expect(configVal1).toBeDisabled()
+    expect(configVal1).toBeDisabled()
     expect(screen.queryByTestId('config.0.remove')).not.toBeInTheDocument();
     expect(configKey2.value).toBe('timeout');
-    expect(configKey2).toHaveAttribute('readonly');
+    expect(configKey2).toBeDisabled()
     expect(configVal2.value).toBe('70');
-    expect(configVal2).toHaveAttribute('readonly');
+    expect(configVal2).toBeDisabled()
     expect(screen.queryByTestId('config.1.remove')).not.toBeInTheDocument();
     expect(configKey3.value).toBe('path');
-    expect(configKey3).toHaveAttribute('readonly');
+    expect(configKey3).toBeDisabled()
     expect(configVal3.value).toBe('/usr/libexec/argo-monitoring/');
-    expect(configVal3).toHaveAttribute('readonly');
+    expect(configVal3).toBeDisabled()
     expect(screen.queryByTestId('config.2.remove')).not.toBeInTheDocument();
     expect(configKey4.value).toBe('interval');
-    expect(configKey4).toHaveAttribute('readonly');
+    expect(configKey4).toBeDisabled()
     expect(configVal4.value).toBe('5');
-    expect(configVal4).toHaveAttribute('readonly');
+    expect(configVal4).toBeDisabled()
     expect(screen.queryByTestId('config.3.remove')).not.toBeInTheDocument();
     expect(configKey5.value).toBe('retryInterval');
-    expect(configKey5).toHaveAttribute('readonly');
+    expect(configKey5).toBeDisabled()
     expect(configVal5.value).toBe('3');
-    expect(configVal5).toHaveAttribute('readonly');
+    expect(configVal5).toBeDisabled()
     expect(screen.queryByTestId('config.4.remove')).not.toBeInTheDocument();
     expect(screen.queryByTestId('config.addnew')).not.toBeInTheDocument();
     expect(attributeKey.value).toBe('argo.ams_TOKEN');
-    expect(attributeKey).toHaveAttribute('readonly');
+    expect(attributeKey).toBeDisabled()
     expect(attributeVal.value).toBe('--token');
-    expect(attributeVal).toHaveAttribute('readonly');
+    expect(attributeVal).toBeDisabled()
     expect(screen.queryByTestId('attributes.0.remove')).not.toBeInTheDocument();
     expect(screen.queryByTestId('attributes.addnew')).not.toBeInTheDocument();
     expect(dependencyKey.value).toBe('');
-    expect(dependencyKey).toHaveAttribute('readonly');
+    expect(dependencyKey).toBeDisabled()
     expect(dependencyVal.value).toBe('');
-    expect(dependencyVal).toHaveAttribute('readonly');
+    expect(dependencyVal).toBeDisabled()
     expect(screen.queryByTestId('dependency.0.remove')).not.toBeInTheDocument();
     expect(screen.queryByTestId('dependency.addnew')).not.toBeInTheDocument();
     expect(parameterKey.value).toBe('--project');
-    expect(parameterKey).toHaveAttribute('readonly');
+    expect(parameterKey).toBeDisabled()
     expect(parameterVal.value).toBe('EGI');
-    expect(parameterVal).toHaveAttribute('readonly');
+    expect(parameterVal).toBeDisabled()
     expect(screen.queryByTestId('parameter.0.remove')).not.toBeInTheDocument();
     expect(screen.queryByTestId('parameter.addnew')).not.toBeInTheDocument();
     expect(flagKey.value).toBe('OBSESS');
-    expect(flagKey).toHaveAttribute('readonly');
+    expect(flagKey).toBeDisabled()
     expect(flagVal.value).toBe('1');
-    expect(flagVal).toHaveAttribute('readonly');
+    expect(flagVal).toBeDisabled()
     expect(screen.queryByTestId('flags.0.remove')).not.toBeInTheDocument();
     expect(screen.queryByTestId('flags.addnew')).not.toBeInTheDocument();
     expect(parentField.value).toBe('');
-    expect(parentField).toHaveAttribute('readonly');
+    expect(parentField).toBeDisabled()
     expect(screen.getByRole('button', { name: /history/i }).closest('a')).toHaveAttribute('href', '/ui/administration/metrictemplates/argo.AMS-Check/history');
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
@@ -5776,9 +5776,9 @@ describe('Test metric template version detail view', () => {
     const parentField = screen.getByTestId('parent');
 
     expect(nameField.value).toBe('argo.AMS-Check');
-    expect(nameField).toHaveAttribute('readonly')
+    expect(nameField).toBeDisabled()
     expect(typeField.value).toBe('Active');
-    expect(typeField).toHaveAttribute('readonly');
+    expect(typeField).toBeDisabled()
     expect(screen.queryByRole('option', { name: /active/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('option', { name: /passive/i })).not.toBeInTheDocument()
     expect(probeField.value).toBe('ams-probe (0.1.12)');
@@ -5789,60 +5789,60 @@ describe('Test metric template version detail view', () => {
     expect(descriptionField).toBeDisabled();
     expect(groupField).not.toBeInTheDocument();
     expect(executableField.value).toBe('ams-probe');
-    expect(executableField).toHaveAttribute('readonly');
+    expect(executableField).toBeDisabled()
     expect(configKey1.value).toBe('maxCheckAttempts');
-    expect(configKey1).toHaveAttribute('readonly');
+    expect(configKey1).toBeDisabled()
     expect(configVal1.value).toBe('4');
-    expect(configVal1).toHaveAttribute('readonly');
-    expect(configVal1).toHaveAttribute('readonly');
+    expect(configVal1).toBeDisabled()
+    expect(configVal1).toBeDisabled()
     expect(screen.queryByTestId('config.0.remove')).not.toBeInTheDocument();
     expect(configKey2.value).toBe('timeout');
-    expect(configKey2).toHaveAttribute('readonly');
+    expect(configKey2).toBeDisabled()
     expect(configVal2.value).toBe('70');
-    expect(configVal2).toHaveAttribute('readonly');
+    expect(configVal2).toBeDisabled()
     expect(screen.queryByTestId('config.1.remove')).not.toBeInTheDocument();
     expect(configKey3.value).toBe('path');
-    expect(configKey3).toHaveAttribute('readonly');
+    expect(configKey3).toBeDisabled()
     expect(configVal3.value).toBe('/usr/libexec/argo-monitoring/probes/argo');
-    expect(configVal3).toHaveAttribute('readonly');
+    expect(configVal3).toBeDisabled()
     expect(screen.queryByTestId('config.2.remove')).not.toBeInTheDocument();
     expect(configKey4.value).toBe('interval');
-    expect(configKey4).toHaveAttribute('readonly');
+    expect(configKey4).toBeDisabled()
     expect(configVal4.value).toBe('5');
-    expect(configVal4).toHaveAttribute('readonly');
+    expect(configVal4).toBeDisabled()
     expect(screen.queryByTestId('config.3.remove')).not.toBeInTheDocument();
     expect(configKey5.value).toBe('retryInterval');
-    expect(configKey5).toHaveAttribute('readonly');
+    expect(configKey5).toBeDisabled()
     expect(configVal5.value).toBe('3');
-    expect(configVal5).toHaveAttribute('readonly');
+    expect(configVal5).toBeDisabled()
     expect(screen.queryByTestId('config.4.remove')).not.toBeInTheDocument();
     expect(screen.queryByTestId('config.addnew')).not.toBeInTheDocument();
     expect(attributeKey.value).toBe('argo.ams_TOKEN');
-    expect(attributeKey).toHaveAttribute('readonly');
+    expect(attributeKey).toBeDisabled()
     expect(attributeVal.value).toBe('--token');
-    expect(attributeVal).toHaveAttribute('readonly');
+    expect(attributeVal).toBeDisabled()
     expect(screen.queryByTestId('attributes.0.remove')).not.toBeInTheDocument();
     expect(screen.queryByTestId('attributes.addnew')).not.toBeInTheDocument();
     expect(dependencyKey.value).toBe('');
-    expect(dependencyKey).toHaveAttribute('readonly');
+    expect(dependencyKey).toBeDisabled()
     expect(dependencyVal.value).toBe('');
-    expect(dependencyVal).toHaveAttribute('readonly');
+    expect(dependencyVal).toBeDisabled()
     expect(screen.queryByTestId('dependency.0.remove')).not.toBeInTheDocument();
     expect(screen.queryByTestId('dependency.addnew')).not.toBeInTheDocument();
     expect(parameterKey.value).toBe('--project');
-    expect(parameterKey).toHaveAttribute('readonly');
+    expect(parameterKey).toBeDisabled()
     expect(parameterVal.value).toBe('EGI');
-    expect(parameterVal).toHaveAttribute('readonly');
+    expect(parameterVal).toBeDisabled()
     expect(screen.queryByTestId('parameter.0.remove')).not.toBeInTheDocument();
     expect(screen.queryByTestId('parameter.addnew')).not.toBeInTheDocument();
     expect(flagKey.value).toBe('OBSESS');
-    expect(flagKey).toHaveAttribute('readonly');
+    expect(flagKey).toBeDisabled()
     expect(flagVal.value).toBe('1');
-    expect(flagVal).toHaveAttribute('readonly');
+    expect(flagVal).toBeDisabled()
     expect(screen.queryByTestId('flags.0.remove')).not.toBeInTheDocument();
     expect(screen.queryByTestId('flags.addnew')).not.toBeInTheDocument();
     expect(parentField.value).toBe('');
-    expect(parentField).toHaveAttribute('readonly');
+    expect(parentField).toBeDisabled()
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
@@ -5886,9 +5886,9 @@ describe('Test metric template version detail view', () => {
     const parentField = screen.getByTestId('parent');
 
     expect(nameField.value).toBe('org.apel.APEL-Pub');
-    expect(nameField).toHaveAttribute('readonly')
+    expect(nameField).toBeDisabled()
     expect(typeField.value).toBe('Passive');
-    expect(typeField).toHaveAttribute('readonly');
+    expect(typeField).toBeDisabled()
     expect(screen.queryByRole('option', { name: /active/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('option', { name: /passive/i })).not.toBeInTheDocument()
     expect(probeField.value).toBe('');
@@ -5928,17 +5928,17 @@ describe('Test metric template version detail view', () => {
     expect(screen.queryByTestId('parameter.0.remove')).not.toBeInTheDocument();
     expect(screen.queryByTestId('parameter.addnew')).not.toBeInTheDocument();
     expect(flagKey1.value).toBe('OBSESS');
-    expect(flagKey1).toHaveAttribute('readonly');
+    expect(flagKey1).toBeDisabled()
     expect(flagVal1.value).toBe('1');
-    expect(flagVal1).toHaveAttribute('readonly');
+    expect(flagVal1).toBeDisabled()
     expect(screen.queryByTestId('flags.0.remove')).not.toBeInTheDocument();
     expect(screen.queryByTestId('flags.addnew')).not.toBeInTheDocument();
     expect(flagKey2.value).toBe('PASSIVE');
-    expect(flagKey2).toHaveAttribute('readonly');
+    expect(flagKey2).toBeDisabled()
     expect(flagVal2.value).toBe('1');
-    expect(flagVal2).toHaveAttribute('readonly');
+    expect(flagVal2).toBeDisabled()
     expect(parentField.value).toBe('');
-    expect(parentField).toHaveAttribute('readonly');
+    expect(parentField).toBeDisabled()
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
