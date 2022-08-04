@@ -168,13 +168,13 @@ describe('Test tenants changeview', () => {
     const createdField = screen.getByTestId('created_on');
 
     expect(nameField.value).toBe('TENANT1');
-    expect(nameField).toHaveAttribute('readonly');
+    expect(nameField).toBeDisabled()
     expect(schemaField.value).toBe('tenant1');
-    expect(schemaField).toHaveAttribute('readonly');
+    expect(schemaField).toBeDisabled()
     expect(urlField.value).toBe('tenant1.tenant.com');
-    expect(urlField).toHaveAttribute('readonly');
+    expect(urlField).toBeDisabled()
     expect(createdField.value).toBe('2020-02-02');
-    expect(createdField).toHaveAttribute('readonly');
+    expect(createdField).toBeDisabled()
 
     expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();

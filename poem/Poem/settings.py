@@ -52,6 +52,7 @@ try:
     WEBAPI_REPORTSTAGS = config.get('WEBAPI', 'ReportsTopologyTags')
     WEBAPI_REPORTSTOPOLOGYGROUPS = config.get('WEBAPI', 'ReportsTopologyGroups')
     WEBAPI_REPORTSTOPOLOGYENDPOINTS = config.get('WEBAPI', 'ReportsTopologyEndpoints')
+    WEBAPI_METRICSTAGS = config.get("WEBAPI", "Metrics")
 
     LINKS_TERMS_PRIVACY = dict()
     all_sections = config.sections()

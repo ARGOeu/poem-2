@@ -121,6 +121,7 @@ link_title.set('tenants', 'Tenants');
 link_title.set('thresholdsprofiles', 'Thresholds profiles');
 link_title.set('users', 'Users');
 link_title.set('yumrepos', 'YUM repos');
+link_title.set("metricoverrides", "Metric configuration overrides")
 
 
 export const Icon = props =>

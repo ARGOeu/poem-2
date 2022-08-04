@@ -155,7 +155,7 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false, addv
                         id={`${field}.${index}.key`}
                         data-testid={`${field}.${index}.key`}
                         className={`form-control ${values[field][index].isNew && 'border-success'}`}
-                        readOnly={!addnew || field === 'config' || (values.type === 'Passive' && item.key === 'PASSIVE')}
+                        disabled={!addnew || field === 'config' || (values.type === 'Passive' && item.key === 'PASSIVE')}
                       />
                     </Col>
                 }
@@ -168,7 +168,7 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false, addv
                         id={`${field}.${index}.value`}
                         data-testid={`${field}.${index}.value`}
                         className={`form-control ${(errors.config && errors.config[index]) && 'border-danger'}`}
-                        readOnly={readonly || (!addnew && field === 'config' && item.key === 'path')}
+                        disabled={readonly || (!addnew && field === 'config' && item.key === 'path')}
                         validate={validateConfig}
                       />
                     :
@@ -180,7 +180,7 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false, addv
                           data-testid={`${field}.${index}.value`}
                           className={`form-control ${values[field][index].isNew && 'border-success'}`}
                           style={{overflowX : 'auto'}}
-                          readOnly={readonly || (!addnew && (field !== 'config' || field === 'config' && item.key === 'path')) || values.type === 'Passive' && item.key === 'PASSIVE'}
+                          disabled={readonly || (!addnew && (field !== 'config' || field === 'config' && item.key === 'path')) || values.type === 'Passive' && item.key === 'PASSIVE'}
                         />
                   }
                   {
@@ -261,7 +261,7 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false, addv
                     value=''
                     id='empty-key'
                     data-testid={`empty-key.${field}`}
-                    readOnly={!addnew}
+                    disabled={!addnew}
                   />
                 </Col>
                 <Col md={5}>
@@ -272,7 +272,7 @@ const InlineFields = ({values, errors, field, addnew=false, readonly=false, addv
                     className='form-control'
                     id='empty-value'
                     data-testid={`empty-value.${field}`}
-                    readOnly={!addnew}
+                    disabled={!addnew}
                   />
                 </Col>
               </Row>
@@ -795,7 +795,7 @@ export const MetricForm =
                   className={`form-control ${props.errors.name && 'border-danger'}`}
                   id='name'
                   data-testid='name'
-                  readOnly={isHistory || isTenantSchema || publicView}
+                  disabled={isHistory || isTenantSchema || publicView}
                 />
               </InputGroup>
               <CustomError error={ props.errors.name } />
@@ -814,7 +814,7 @@ export const MetricForm =
                       className='form-control'
                       id='mtype'
                       data-testid='mtype'
-                      readOnly={true}
+                      disabled={true}
                     />
                   :
                     <DropdownWithFormText
@@ -1058,7 +1058,7 @@ export const MetricForm =
                     name='probeexecutable'
                     data-testid='probeexecutable'
                     className={`form-control ${props.errors.probeexecutable && 'border-danger'}`}
-                    readOnly={isTenantSchema || isHistory || publicView}
+                    disabled={isTenantSchema || isHistory || publicView}
                   />
                   <CustomError error={ props.errors.probeexecutable } />
                 </Col>
@@ -1079,7 +1079,7 @@ export const MetricForm =
                   name='parent'
                   className='form-control'
                   data-testid='parent'
-                  readOnly={true}
+                  disabled={true}
                 />
               :
                 <CustomReactSelect

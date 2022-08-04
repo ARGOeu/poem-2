@@ -153,7 +153,7 @@ export const MetricTemplateComponent = (props) => {
       }
 
       addMutation.mutate({ ...sendValues, cloned_from: cloned_from }, {
-        onSuccess: () => {
+        onSuccess: (data) => {
           queryClient.invalidateQueries('public_metrictemplate');
           queryClient.invalidateQueries('metrictemplate');
           NotifyOk({
@@ -161,6 +161,9 @@ export const MetricTemplateComponent = (props) => {
             title: 'Added',
             callback: () => history.push('/ui/metrictemplates')
           })
+
+          if (data && "warning" in data)
+            NotifyWarn({ msg: data.warning, title: "Warning" })
         },
         onError: (error) => {
           NotifyError({
@@ -171,7 +174,7 @@ export const MetricTemplateComponent = (props) => {
       })
     } else {
       changeMutation.mutate({ ...sendValues, id: formValues.id }, {
-        onSuccess: () => {
+        onSuccess: (data) => {
           queryClient.invalidateQueries('public_metrictemplate');
           queryClient.invalidateQueries('metrictemplate');
           NotifyOk({
@@ -179,6 +182,9 @@ export const MetricTemplateComponent = (props) => {
             title: 'Changed',
             callback: () => history.push('/ui/metrictemplates')
           })
+
+          if (data && "warning" in data)
+            NotifyWarn({ msg: data.warning, title: "Warning" })
         },
         onError: (error) => {
           if (error.message && error.message.includes('418')) {

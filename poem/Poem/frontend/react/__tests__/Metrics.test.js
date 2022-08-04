@@ -683,9 +683,9 @@ describe('Tests for metric change', () => {
     const parentField = screen.getByTestId('parent');
 
     expect(nameField.value).toBe('argo.AMS-Check');
-    expect(nameField).toHaveAttribute('readOnly');
+    expect(nameField).toBeDisabled()
     expect(typeField.value).toBe('Active');
-    expect(typeField).toHaveAttribute('readonly');
+    expect(typeField).toBeDisabled()
     expect(probeField.value).toBe('ams-probe (0.1.12)');
     expect(probeField).toBeDisabled();
     expect(packageField.value).toBe('nagios-plugins-argo (0.1.12)');
@@ -702,45 +702,45 @@ describe('Tests for metric change', () => {
     expect(screen.getByRole('heading', { name: /metric conf/i }).textContent).toBe('Metric configuration');
     expect(screen.getByRole('heading', { name: /exec/i }).textContent).toBe('probe executable');
     expect(executableField.value).toBe('ams-probe');
-    expect(executableField).toHaveAttribute('readonly');
+    expect(executableField).toBeDisabled()
     expect(configKey1.value).toBe('maxCheckAttempts');
-    expect(configKey1).toHaveAttribute('readonly');
+    expect(configKey1).toBeDisabled()
     expect(configVal1.value).toBe('3');
-    expect(configVal1).not.toHaveAttribute('readonly');
+    expect(configVal1).not.toBeDisabled()
     expect(configKey2.value).toBe('timeout');
-    expect(configKey2).toHaveAttribute('readonly');
+    expect(configKey2).toBeDisabled()
     expect(configVal2.value).toBe('60');
-    expect(configVal2).not.toHaveAttribute('readonly');
+    expect(configVal2).not.toBeDisabled()
     expect(configKey3.value).toBe('interval');
-    expect(configKey3).toHaveAttribute('readonly');
+    expect(configKey3).toBeDisabled()
     expect(configVal3.value).toBe('5')
-    expect(configVal3).not.toHaveAttribute('readonly');
+    expect(configVal3).not.toBeDisabled()
     expect(configKey4.value).toBe('retryInterval');
-    expect(configKey4).toHaveAttribute('readonly');
+    expect(configKey4).toBeDisabled()
     expect(configVal4.value).toBe('3')
-    expect(configVal4).not.toHaveAttribute('readonly');
+    expect(configVal4).not.toBeDisabled()
     expect(configKey5.value).toBe('path');
-    expect(configKey5).toHaveAttribute('readonly');
+    expect(configKey5).toBeDisabled()
     expect(configVal5.value).toBe('/usr/libexec/argo-monitoring/probes/argo');
-    expect(configVal5).toHaveAttribute('readonly');
+    expect(configVal5).toBeDisabled()
     expect(attributeKey.value).toBe('argo.ams_TOKEN');
-    expect(attributeKey).toHaveAttribute('readonly');
+    expect(attributeKey).toBeDisabled()
     expect(attributeVal.value).toBe('--token');
-    expect(attributeVal).toHaveAttribute('readonly');
+    expect(attributeVal).toBeDisabled()
     expect(dependencyKey.value).toBe('');
-    expect(dependencyKey).toHaveAttribute('readonly');
+    expect(dependencyKey).toBeDisabled()
     expect(dependencyVal.value).toBe('');
-    expect(dependencyVal).toHaveAttribute('readonly');
+    expect(dependencyVal).toBeDisabled()
     expect(parameterKey.value).toBe('--project');
-    expect(parameterKey).toHaveAttribute('readonly');
+    expect(parameterKey).toBeDisabled()
     expect(parameterVal.value).toBe('EGI');
-    expect(parameterVal).toHaveAttribute('readonly');
+    expect(parameterVal).toBeDisabled()
     expect(flagKey.value).toBe('OBSESS');
-    expect(flagKey).toHaveAttribute('readonly');
+    expect(flagKey).toBeDisabled()
     expect(flagVal.value).toBe('1');
-    expect(flagVal).toHaveAttribute('readonly');
+    expect(flagVal).toBeDisabled()
     expect(parentField.value).toBe('');
-    expect(parentField).toHaveAttribute('readonly');
+    expect(parentField).toBeDisabled()
     expect(screen.getByRole('button', { name: /history/i }).closest('a')).toHaveAttribute('href', '/ui/metrics/argo.AMS-Check/history')
     expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
@@ -800,9 +800,9 @@ describe('Tests for metric change', () => {
     const parentField = screen.getByTestId('parent');
 
     expect(nameField.value).toBe('argo.AMS-Check');
-    expect(nameField).toHaveAttribute('readOnly');
+    expect(nameField).toBeDisabled()
     expect(typeField.value).toBe('Active');
-    expect(typeField).toHaveAttribute('readonly');
+    expect(typeField).toBeDisabled()
     expect(probeField.value).toBe('ams-probe (0.1.12)');
     expect(probeField).toBeDisabled();
     expect(packageField.value).toBe('nagios-plugins-argo (0.1.12)');
@@ -817,45 +817,45 @@ describe('Tests for metric change', () => {
     expect(screen.getByRole('heading', { name: /metric conf/i }).textContent).toBe('Metric configuration');
     expect(screen.getByRole('heading', { name: /exec/i }).textContent).toBe('probe executable');
     expect(executableField.value).toBe('ams-probe');
-    expect(executableField).toHaveAttribute('readonly');
+    expect(executableField).toBeDisabled()
     expect(configKey1.value).toBe('maxCheckAttempts');
-    expect(configKey1).toHaveAttribute('readonly');
+    expect(configKey1).toBeDisabled()
     expect(configVal1.value).toBe('3');
-    expect(configVal1).toHaveAttribute('readonly');
+    expect(configVal1).toBeDisabled()
     expect(configKey2.value).toBe('timeout');
-    expect(configKey2).toHaveAttribute('readonly');
+    expect(configKey2).toBeDisabled()
     expect(configVal2.value).toBe('60');
-    expect(configVal2).toHaveAttribute('readonly');
+    expect(configVal2).toBeDisabled()
     expect(configKey3.value).toBe('interval');
-    expect(configKey3).toHaveAttribute('readonly');
+    expect(configKey3).toBeDisabled()
     expect(configVal3.value).toBe('5')
-    expect(configVal3).toHaveAttribute('readonly');
+    expect(configVal3).toBeDisabled()
     expect(configKey4.value).toBe('retryInterval');
-    expect(configKey4).toHaveAttribute('readonly');
+    expect(configKey4).toBeDisabled()
     expect(configVal4.value).toBe('3')
-    expect(configVal4).toHaveAttribute('readonly');
+    expect(configVal4).toBeDisabled()
     expect(configKey5.value).toBe('path');
-    expect(configKey5).toHaveAttribute('readonly');
+    expect(configKey5).toBeDisabled()
     expect(configVal5.value).toBe('/usr/libexec/argo-monitoring/probes/argo');
-    expect(configVal5).toHaveAttribute('readonly');
+    expect(configVal5).toBeDisabled()
     expect(attributeKey.value).toBe('argo.ams_TOKEN');
-    expect(attributeKey).toHaveAttribute('readonly');
+    expect(attributeKey).toBeDisabled()
     expect(attributeVal.value).toBe('--token');
-    expect(attributeVal).toHaveAttribute('readonly');
+    expect(attributeVal).toBeDisabled()
     expect(dependencyKey.value).toBe('');
-    expect(dependencyKey).toHaveAttribute('readonly');
+    expect(dependencyKey).toBeDisabled()
     expect(dependencyVal.value).toBe('');
-    expect(dependencyVal).toHaveAttribute('readonly');
+    expect(dependencyVal).toBeDisabled()
     expect(parameterKey.value).toBe('--project');
-    expect(parameterKey).toHaveAttribute('readonly');
+    expect(parameterKey).toBeDisabled()
     expect(parameterVal.value).toBe('EGI');
-    expect(parameterVal).toHaveAttribute('readonly');
+    expect(parameterVal).toBeDisabled()
     expect(flagKey.value).toBe('OBSESS');
-    expect(flagKey).toHaveAttribute('readonly');
+    expect(flagKey).toBeDisabled()
     expect(flagVal.value).toBe('1');
-    expect(flagVal).toHaveAttribute('readonly');
+    expect(flagVal).toBeDisabled()
     expect(parentField.value).toBe('');
-    expect(parentField).toHaveAttribute('readonly');
+    expect(parentField).toBeDisabled()
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
@@ -900,9 +900,9 @@ describe('Tests for metric change', () => {
     const parentField = screen.getByTestId('parent');
 
     expect(nameField.value).toBe('org.apel.APEL-Pub');
-    expect(nameField).toHaveAttribute('readOnly');
+    expect(nameField).toBeDisabled()
     expect(typeField.value).toBe('Passive');
-    expect(typeField).toHaveAttribute('readonly');
+    expect(typeField).toBeDisabled()
     expect(probeField.value).toBe('');
     expect(probeField).toBeDisabled();
     expect(packageField.value).toBe('');
@@ -934,15 +934,15 @@ describe('Tests for metric change', () => {
     expect(parameterKey).not.toBeInTheDocument();
     expect(parameterVal).not.toBeInTheDocument();
     expect(flagKey1.value).toBe('OBSESS');
-    expect(flagKey1).toHaveAttribute('readonly');
+    expect(flagKey1).toBeDisabled()
     expect(flagVal1.value).toBe('1');
-    expect(flagVal1).toHaveAttribute('readonly');
+    expect(flagVal1).toBeDisabled()
     expect(flagKey2.value).toBe('PASSIVE');
-    expect(flagKey2).toHaveAttribute('readonly');
+    expect(flagKey2).toBeDisabled()
     expect(flagVal2.value).toBe('1');
-    expect(flagVal2).toHaveAttribute('readonly');
+    expect(flagVal2).toBeDisabled()
     expect(parentField.value).toBe('');
-    expect(parentField).toHaveAttribute('readonly');
+    expect(parentField).toBeDisabled()
     expect(screen.getByRole('button', { name: /history/i }).closest('a')).toHaveAttribute('href', '/ui/metrics/org.apel.APEL-Pub/history')
     expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
@@ -987,9 +987,9 @@ describe('Tests for metric change', () => {
     const parentField = screen.getByTestId('parent');
 
     expect(nameField.value).toBe('org.apel.APEL-Pub');
-    expect(nameField).toHaveAttribute('readOnly');
+    expect(nameField).toBeDisabled()
     expect(typeField.value).toBe('Passive');
-    expect(typeField).toHaveAttribute('readonly');
+    expect(typeField).toBeDisabled()
     expect(probeField.value).toBe('');
     expect(probeField).toBeDisabled();
     expect(packageField.value).toBe('');
@@ -1018,15 +1018,15 @@ describe('Tests for metric change', () => {
     expect(parameterKey).not.toBeInTheDocument();
     expect(parameterVal).not.toBeInTheDocument();
     expect(flagKey1.value).toBe('OBSESS');
-    expect(flagKey1).toHaveAttribute('readonly');
+    expect(flagKey1).toBeDisabled()
     expect(flagVal1.value).toBe('1');
-    expect(flagVal1).toHaveAttribute('readonly');
+    expect(flagVal1).toBeDisabled()
     expect(flagKey2.value).toBe('PASSIVE');
-    expect(flagKey2).toHaveAttribute('readonly');
+    expect(flagKey2).toBeDisabled()
     expect(flagVal2.value).toBe('1');
-    expect(flagVal2).toHaveAttribute('readonly');
+    expect(flagVal2).toBeDisabled()
     expect(parentField.value).toBe('');
-    expect(parentField).toHaveAttribute('readonly');
+    expect(parentField).toBeDisabled()
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
@@ -1372,9 +1372,9 @@ describe('Tests for metric change', () => {
       'This is a read-only instance, please request the corresponding permissions to perform any changes in this form.'
     )
     expect(nameField.value).toBe('argo.AMS-Check');
-    expect(nameField).toHaveAttribute('readOnly');
+    expect(nameField).toBeDisabled()
     expect(typeField.value).toBe('Active');
-    expect(typeField).toHaveAttribute('readonly');
+    expect(typeField).toBeDisabled()
     expect(probeField.value).toBe('ams-probe (0.1.12)');
     expect(probeField).toBeDisabled();
     expect(packageField.value).toBe('nagios-plugins-argo (0.1.12)');
@@ -1391,45 +1391,45 @@ describe('Tests for metric change', () => {
     expect(screen.getByRole('heading', { name: /metric conf/i }).textContent).toBe('Metric configuration');
     expect(screen.getByRole('heading', { name: /exec/i }).textContent).toBe('probe executable');
     expect(executableField.value).toBe('ams-probe');
-    expect(executableField).toHaveAttribute('readonly');
+    expect(executableField).toBeDisabled()
     expect(configKey1.value).toBe('maxCheckAttempts');
-    expect(configKey1).toHaveAttribute('readonly');
+    expect(configKey1).toBeDisabled()
     expect(configVal1.value).toBe('3');
-    expect(configVal1).not.toHaveAttribute('readonly');
+    expect(configVal1).not.toBeDisabled()
     expect(configKey2.value).toBe('timeout');
-    expect(configKey2).toHaveAttribute('readonly');
+    expect(configKey2).toBeDisabled()
     expect(configVal2.value).toBe('60');
-    expect(configVal2).not.toHaveAttribute('readonly');
+    expect(configVal2).toBeEnabled()
     expect(configKey3.value).toBe('interval');
-    expect(configKey3).toHaveAttribute('readonly');
+    expect(configKey3).toBeDisabled()
     expect(configVal3.value).toBe('5')
-    expect(configVal3).not.toHaveAttribute('readonly');
+    expect(configVal3).toBeEnabled()
     expect(configKey4.value).toBe('retryInterval');
-    expect(configKey4).toHaveAttribute('readonly');
+    expect(configKey4).toBeDisabled()
     expect(configVal4.value).toBe('3')
-    expect(configVal4).not.toHaveAttribute('readonly');
+    expect(configVal4).toBeEnabled()
     expect(configKey5.value).toBe('path');
-    expect(configKey5).toHaveAttribute('readonly');
+    expect(configKey5).toBeDisabled()
     expect(configVal5.value).toBe('/usr/libexec/argo-monitoring/probes/argo');
-    expect(configVal5).toHaveAttribute('readonly');
+    expect(configVal5).toBeDisabled()
     expect(attributeKey.value).toBe('argo.ams_TOKEN');
-    expect(attributeKey).toHaveAttribute('readonly');
+    expect(attributeKey).toBeDisabled()
     expect(attributeVal.value).toBe('--token');
-    expect(attributeVal).toHaveAttribute('readonly');
+    expect(attributeVal).toBeDisabled()
     expect(dependencyKey.value).toBe('');
-    expect(dependencyKey).toHaveAttribute('readonly');
+    expect(dependencyKey).toBeDisabled()
     expect(dependencyVal.value).toBe('');
-    expect(dependencyVal).toHaveAttribute('readonly');
+    expect(dependencyVal).toBeDisabled()
     expect(parameterKey.value).toBe('--project');
-    expect(parameterKey).toHaveAttribute('readonly');
+    expect(parameterKey).toBeDisabled()
     expect(parameterVal.value).toBe('EGI');
-    expect(parameterVal).toHaveAttribute('readonly');
+    expect(parameterVal).toBeDisabled()
     expect(flagKey.value).toBe('OBSESS');
-    expect(flagKey).toHaveAttribute('readonly');
+    expect(flagKey).toBeDisabled()
     expect(flagVal.value).toBe('1');
-    expect(flagVal).toHaveAttribute('readonly');
+    expect(flagVal).toBeDisabled()
     expect(parentField.value).toBe('');
-    expect(parentField).toHaveAttribute('readonly');
+    expect(parentField).toBeDisabled()
     expect(screen.getByRole('button', { name: /history/i }).closest('a')).toHaveAttribute('href', '/ui/metrics/argo.AMS-Check/history')
     expect(screen.queryByText(/save/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/delete/i)).not.toBeInTheDocument();
@@ -1491,9 +1491,9 @@ describe('Tests for metric history', () => {
     const parentField = screen.getByTestId('parent');
 
     expect(nameField.value).toBe('argo.AMS-Check');
-    expect(nameField).toHaveAttribute('readOnly');
+    expect(nameField).toBeDisabled()
     expect(typeField.value).toBe('Active');
-    expect(typeField).toHaveAttribute('readonly');
+    expect(typeField).toBeDisabled()
     expect(probeField.value).toBe('ams-probe (0.1.12)');
     expect(probeField).toBeDisabled();
     expect(packageField.value).toBe('nagios-plugins-argo (0.1.12)');
@@ -1506,45 +1506,45 @@ describe('Tests for metric history', () => {
     expect(screen.getByRole('heading', { name: /metric conf/i }).textContent).toBe('Metric configuration');
     expect(screen.getByRole('heading', { name: /exec/i }).textContent).toBe('probe executable');
     expect(executableField.value).toBe('ams-probe');
-    expect(executableField).toHaveAttribute('readonly');
+    expect(executableField).toBeDisabled()
     expect(configKey1.value).toBe('maxCheckAttempts');
-    expect(configKey1).toHaveAttribute('readonly');
+    expect(configKey1).toBeDisabled()
     expect(configVal1.value).toBe('3');
-    expect(configVal1).toHaveAttribute('readonly');
+    expect(configVal1).toBeDisabled()
     expect(configKey2.value).toBe('timeout');
-    expect(configKey2).toHaveAttribute('readonly');
+    expect(configKey2).toBeDisabled()
     expect(configVal2.value).toBe('60');
-    expect(configVal2).toHaveAttribute('readonly');
+    expect(configVal2).toBeDisabled()
     expect(configKey3.value).toBe('path');
-    expect(configKey3).toHaveAttribute('readonly');
+    expect(configKey3).toBeDisabled()
     expect(configVal3.value).toBe('/usr/libexec/argo-monitoring/probes/argo');
-    expect(configVal3).toHaveAttribute('readonly');
+    expect(configVal3).toBeDisabled()
     expect(configKey4.value).toBe('interval');
-    expect(configKey4).toHaveAttribute('readonly');
+    expect(configKey4).toBeDisabled()
     expect(configVal4.value).toBe('5')
-    expect(configVal4).toHaveAttribute('readonly');
+    expect(configVal4).toBeDisabled()
     expect(configKey5.value).toBe('retryInterval');
-    expect(configKey5).toHaveAttribute('readonly');
+    expect(configKey5).toBeDisabled()
     expect(configVal5.value).toBe('3')
-    expect(configVal5).toHaveAttribute('readonly');
+    expect(configVal5).toBeDisabled()
     expect(attributeKey.value).toBe('argo.ams_TOKEN');
-    expect(attributeKey).toHaveAttribute('readonly');
+    expect(attributeKey).toBeDisabled()
     expect(attributeVal.value).toBe('--token');
-    expect(attributeVal).toHaveAttribute('readonly');
+    expect(attributeVal).toBeDisabled()
     expect(dependencyKey.value).toBe('');
-    expect(dependencyKey).toHaveAttribute('readonly');
+    expect(dependencyKey).toBeDisabled()
     expect(dependencyVal.value).toBe('');
-    expect(dependencyVal).toHaveAttribute('readonly');
+    expect(dependencyVal).toBeDisabled()
     expect(parameterKey.value).toBe('--project');
-    expect(parameterKey).toHaveAttribute('readonly');
+    expect(parameterKey).toBeDisabled()
     expect(parameterVal.value).toBe('EGI');
-    expect(parameterVal).toHaveAttribute('readonly');
+    expect(parameterVal).toBeDisabled()
     expect(flagKey.value).toBe('OBSESS');
-    expect(flagKey).toHaveAttribute('readonly');
+    expect(flagKey).toBeDisabled()
     expect(flagVal.value).toBe('1');
-    expect(flagVal).toHaveAttribute('readonly');
+    expect(flagVal).toBeDisabled()
     expect(parentField.value).toBe('');
-    expect(parentField).toHaveAttribute('readonly');
+    expect(parentField).toBeDisabled()
     expect(screen.queryByText(/history/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/save/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/delete/i)).not.toBeInTheDocument();

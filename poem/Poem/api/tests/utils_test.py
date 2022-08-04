@@ -33,15 +33,23 @@ class MockResponse:
     def __init__(self, data, status_code):
         self.data = data
         self.status_code = status_code
+        self.ok = False
 
         if self.status_code == 200:
             self.reason = 'OK'
+            self.ok = True
+
+        elif self.status_code == 400:
+            self.reason = "BAD REQUEST"
 
         elif self.status_code == 401:
             self.reason = 'Unauthorized'
 
         elif self.status_code == 404:
             self.reason = 'Not Found'
+
+        elif self.status_code == 500:
+            self.reason = "SERVER ERROR"
 
     def json(self):
         if isinstance(self.data, dict):

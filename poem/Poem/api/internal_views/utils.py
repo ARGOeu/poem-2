@@ -5,9 +5,10 @@ from Poem.api.models import MyAPIKey
 from Poem.helpers.history_helpers import create_profile_history
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from rest_framework.response import Response
 from django_tenants.utils import schema_context, get_public_schema_name
+from rest_framework.response import Response
 
 
 def error_response(status_code=None, detail=''):
@@ -156,6 +157,52 @@ def sync_webapi(api, model):
                 instance.name = p['name']
                 instance.description = p.get('description', '')
             instance.save()
+
+
+class WebApiException(Exception):
+    def __init__(self, msg):
+        self.msg = msg
+
+    def __str__(self):
+        return f"Error syncing metric tags: {str(self.msg)}"
+
+
+def sync_tags_webapi():
+    mts = admin_models.MetricTemplate.objects.all()
+    token = MyAPIKey.objects.get(name="WEB-API-ADMIN")
+
+    data2send = list()
+    for mt in mts:
+        tags = sorted([tag.name for tag in mt.tags.all()])
+        data2send.append({"name": mt.name, "tags": tags})
+
+    try:
+        response = requests.put(
+            settings.WEBAPI_METRICSTAGS,
+            headers={"x-api-key": token.token, "Accept": "application/json"},
+            data=json.dumps(data2send)
+        )
+
+        if not response.ok:
+            error_msg = f"{response.status_code} {response.reason}"
+
+            try:
+                error_msg = \
+                    f"{error_msg}: {response.json()['errors'][0]['details']}"
+
+            except (ValueError, TypeError, KeyError):
+                pass
+
+            raise WebApiException(error_msg)
+
+    except (
+        requests.exceptions.HTTPError,
+        requests.exceptions.ConnectionError,
+        requests.exceptions.RequestException,
+        ValueError,
+        KeyError
+    ) as error:
+        raise WebApiException(error)
 
 
 def get_tenant_resources(schema_name):

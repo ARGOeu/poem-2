@@ -320,9 +320,9 @@ describe('Test user changeview on SuperAdmin POEM', () => {
     expect(emailField.value).toBe('alan.ford@tnt.com');
     expect(emailField).toBeEnabled();
     expect(lastLoginField.value).toBe('');
-    expect(lastLoginField).toHaveAttribute('readonly');
+    expect(lastLoginField).toBeDisabled()
     expect(dateJoinedField.value).toBe('2020-02-02 15:17:23');
-    expect(dateJoinedField).toHaveAttribute('readonly');
+    expect(dateJoinedField).toBeDisabled()
     expect(superUserCheckbox.checked).toBeFalsy();
     expect(activeCheckbox.checked).toBeTruthy();
 
@@ -367,9 +367,9 @@ describe('Test user changeview on SuperAdmin POEM', () => {
     expect(emailField.value).toBe('test@email.com');
     expect(emailField).toBeEnabled();
     expect(lastLoginField.value).toBe('2020-02-15 14:51:42');
-    expect(lastLoginField).toHaveAttribute('readonly');
+    expect(lastLoginField).toBeDisabled()
     expect(dateJoinedField.value).toBe('2019-07-08 12:58:08');
-    expect(dateJoinedField).toHaveAttribute('readonly');
+    expect(dateJoinedField).toBeDisabled()
     expect(superUserCheckbox.checked).toBeTruthy();
     expect(activeCheckbox.checked).toBeTruthy();
 
@@ -925,9 +925,9 @@ describe('Tests for user changeview on tenant POEM', () => {
     expect(emailField.value).toBe('alan.ford@tnt.com');
     expect(emailField).toBeEnabled();
     expect(lastLoginField.value).toBe('');
-    expect(lastLoginField).toHaveAttribute('readonly');
+    expect(lastLoginField).toBeDisabled()
     expect(dateJoinedField.value).toBe('2020-02-02 15:17:23');
-    expect(dateJoinedField).toHaveAttribute('readonly');
+    expect(dateJoinedField).toBeDisabled()
 
     expect(superUserCheckbox.checked).toBeFalsy();
     expect(activeCheckbox.checked).toBeTruthy();

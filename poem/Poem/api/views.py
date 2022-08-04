@@ -1,4 +1,5 @@
 import requests
+import json
 from Poem.api.internal_views.utils import one_value_inline, \
     two_value_inline_dict
 from Poem.api.models import MyAPIKey
@@ -297,3 +298,92 @@ class ListMetricTemplates(APIView):
 
         else:
             return Response(build_metricconfigs(templates=True))
+
+
+class ListMetricOverrides(APIView):
+    permission_classes = (MyHasAPIKey,)
+
+    @staticmethod
+    def _get_global_attributes(db_entry):
+        results = []
+        if db_entry:
+            data = json.loads(db_entry)
+
+            for item in data:
+                split = item.split(" ")
+                results.append({
+                    "attribute": split[0],
+                    "value": split[1]
+                })
+
+        return results
+
+    @staticmethod
+    def _get_host_attributes(db_entry):
+        results = []
+
+        if db_entry:
+            data = json.loads(db_entry)
+
+            for item in data:
+                split = item.split(" ")
+
+                if len(split) == 2:
+                    value = ""
+
+                else:
+                    value = split[2]
+
+                results.append({
+                    "hostname": split[0],
+                    "attribute": split[1],
+                    "value": value
+                })
+
+        return results
+
+    @staticmethod
+    def _get_metric_parameters(db_entry):
+        results = []
+
+        if db_entry:
+            data = json.loads(db_entry)
+
+            for item in data:
+                split = item.split(" ")
+
+                if len(split) == 3:
+                    value = ""
+
+                else:
+                    value = split[3]
+
+                results.append({
+                    "hostname": split[0],
+                    "metric": split[1],
+                    "parameter": split[2],
+                    "value": value
+                })
+
+        return results
+
+    def get(self, request):
+        data = models.MetricConfiguration.objects.all()
+
+        overrides = dict()
+        for item in data:
+            overrides.update({
+                item.name: {
+                    "global_attributes": self._get_global_attributes(
+                        item.globalattribute
+                    ),
+                    "host_attributes": self._get_host_attributes(
+                        item.hostattribute
+                    ),
+                    "metric_parameters": self._get_metric_parameters(
+                        item.metricparameter
+                    )
+                }
+            })
+
+        return Response(overrides)

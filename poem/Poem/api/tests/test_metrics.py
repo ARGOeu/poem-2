@@ -1144,46 +1144,6 @@ class ListMetricAPIViewTests(TenantTestCase):
         self.assertEqual(poem_models.Metric.objects.all().count(), 3)
 
     @patch('Poem.api.internal_views.metrics.inline_metric_for_db')
-    def test_put_nonexisting_metric_superuser(self, func):
-        func.side_effect = mocked_inline_metric_for_db
-        conf = [
-            {'key': 'maxCheckAttempts', 'value': '4'},
-            {'key': 'timeout', 'value': '70'},
-            {'key': 'path',
-             'value': '/usr/libexec/argo-monitoring/probes/argo'},
-            {'key': 'interval', 'value': '6'},
-            {'key': 'retryInterval', 'value': '4'}
-        ]
-        attribute = [
-            {'key': 'argo.ams_TOKEN2', 'value': '--token'},
-            {'key': 'mock_attribute', 'value': 'attr'}
-        ]
-        data = {
-            'name': 'nonexisting.AMS-Check',
-            'mtype': 'Active',
-            'tags': ['test_tag1', 'test_tag2'],
-            'group': 'EUDAT',
-            'description': 'New description of argo.AMS-Check',
-            'parent': '',
-            'probeversion': 'ams-probe (0.1.11)',
-            'probeexecutable': 'ams-probe',
-            'config': json.dumps(conf),
-            'attribute': json.dumps(attribute),
-            'dependancy': '[{"key": "", "value": ""}]',
-            'flags': '[{"key": "OBSESS", "value": "1"}]',
-            'files': '[{"key": "", "value": ""}]',
-            'parameter': '[{"key": "", "value": ""}]',
-            'fileparameter': '[{"key": "", "value": ""}]'
-        }
-        content, content_type = encode_data(data)
-        request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.superuser)
-        response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data['detail'], 'Metric does not exist.')
-        self.assertEqual(poem_models.Metric.objects.all().count(), 3)
-
-    @patch('Poem.api.internal_views.metrics.inline_metric_for_db')
     def test_put_nonexisting_metric_regular_user(self, func):
         func.side_effect = mocked_inline_metric_for_db
         conf = [
@@ -3579,3 +3539,944 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         )
         mock_get.assert_called_once()
         self.assertFalse(mock_update.called)
+
+
+class ListMetricConfigurationAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.ListMetricConfiguration.as_view()
+        self.url = '/api/v2/internal/metricconfiguration'
+        self.user = CustUser.objects.create_user(
+            username='testuser', is_superuser=True
+        )
+        self.regular_user = CustUser.objects.create_user(username='test')
+
+        self.configuration1 = poem_models.MetricConfiguration.objects.create(
+            name="local",
+            globalattribute=json.dumps(
+                [
+                    "NAGIOS_ACTUAL_HOST_CERT /etc/nagios/globus/hostcert.pem",
+                    "NAGIOS_ACTUAL_HOST_KEY /etc/nagios/globus/hostkey.pem"
+                ]
+            ),
+            hostattribute=json.dumps(["mock.host.name attr1 some-new-value"]),
+            metricparameter=json.dumps(
+                [
+                    "eosccore.ui.argo.grnet.gr org.nagios.ARGOWeb-AR "
+                    "-r EOSC_Monitoring",
+                    "argo.eosc-portal.eu org.nagios.ARGOWeb-Status -u "
+                    "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
+                ]
+            )
+        )
+        self.configuration2 = poem_models.MetricConfiguration.objects.create(
+            name="consumer",
+            globalattribute="",
+            hostattribute="",
+            metricparameter=json.dumps([
+                "eosccore.mon.devel.argo.grnet.gr argo.AMSPublisher-Check "
+                "-q w:metrics+g:published180"
+            ])
+        )
+
+    def test_get_configurations_super_user(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    "id": self.configuration2.id,
+                    "name": "consumer",
+                    "global_attributes": [],
+                    "host_attributes": [],
+                    "metric_parameters": [
+                        {
+                            "hostname": "eosccore.mon.devel.argo.grnet.gr",
+                            "metric": "argo.AMSPublisher-Check",
+                            "parameter": "-q",
+                            "value": "w:metrics+g:published180"
+                        }
+                    ]
+                },
+                {
+                    "id": self.configuration1.id,
+                    "name": "local",
+                    "global_attributes": [
+                        {
+                            "attribute": "NAGIOS_ACTUAL_HOST_CERT",
+                            "value": "/etc/nagios/globus/hostcert.pem"
+                        },
+                        {
+                            "attribute": "NAGIOS_ACTUAL_HOST_KEY",
+                            "value": "/etc/nagios/globus/hostkey.pem"
+                        }
+                    ],
+                    "host_attributes": [
+                        {
+                            "hostname": "mock.host.name",
+                            "attribute": "attr1",
+                            "value": "some-new-value"
+                        }
+                    ],
+                    "metric_parameters": [
+                        {
+                            "hostname": "eosccore.ui.argo.grnet.gr",
+                            "metric": "org.nagios.ARGOWeb-AR",
+                            "parameter": "-r",
+                            "value": "EOSC_Monitoring"
+                        },
+                        {
+                            "hostname": "argo.eosc-portal.eu",
+                            "metric": "org.nagios.ARGOWeb-Status",
+                            "parameter": "-u",
+                            "value": "/eosc/report-status/Default/SERVICEGROUPS"
+                                     "?accept=csv"
+                        }
+                    ]
+                }
+            ]
+        )
+
+    def test_get_configurations_regular_user(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.regular_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to view metric configuration "
+            "overrides."
+        )
+
+    def test_get_configuration_super_user(self):
+        request = self.factory.get(self.url + "local")
+        force_authenticate(request, user=self.user)
+        response = self.view(request, "local")
+        self.assertEqual(
+            response.data,
+            {
+                "id": self.configuration1.id,
+                "name": "local",
+                "global_attributes": [
+                    {
+                        "attribute": "NAGIOS_ACTUAL_HOST_CERT",
+                        "value": "/etc/nagios/globus/hostcert.pem"
+                    },
+                    {
+                        "attribute": "NAGIOS_ACTUAL_HOST_KEY",
+                        "value": "/etc/nagios/globus/hostkey.pem"
+                    }
+                ],
+                "host_attributes": [
+                    {
+                        "hostname": "mock.host.name",
+                        "attribute": "attr1",
+                        "value": "some-new-value"
+                    }
+                ],
+                "metric_parameters": [
+                    {
+                        "hostname": "eosccore.ui.argo.grnet.gr",
+                        "metric": "org.nagios.ARGOWeb-AR",
+                        "parameter": "-r",
+                        "value": "EOSC_Monitoring"
+                    },
+                    {
+                        "hostname": "argo.eosc-portal.eu",
+                        "metric": "org.nagios.ARGOWeb-Status",
+                        "parameter": "-u",
+                        "value": "/eosc/report-status/Default/SERVICEGROUPS"
+                                 "?accept=csv"
+                    }
+                ]
+            }
+        )
+
+    def test_get_configuration_regular_user(self):
+        request = self.factory.get(self.url + "local")
+        force_authenticate(request, user=self.regular_user)
+        response = self.view(request, "local")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to view metric configuration "
+            "overrides."
+        )
+
+    def test_get_configuration_nonexisting_name_super_user(self):
+        request = self.factory.get(self.url + "nonexisting")
+        force_authenticate(request, user=self.user)
+        response = self.view(request, "nonexisting")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data["detail"], "Metric configuration not found."
+        )
+
+    def test_get_configuration_nonexisting_name_regular_user(self):
+        request = self.factory.get(self.url + "nonexisting")
+        force_authenticate(request, user=self.regular_user)
+        response = self.view(request, "nonexisting")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to view metric configuration "
+            "overrides."
+        )
+
+    def test_put_configuration_super_user(self):
+        data = {
+            "id": self.configuration1.id,
+            "name": "local_updated",
+            "global_attributes": [
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_CERT",
+                    "value": "/etc/nagios/globus/hostcert.pem"
+                },
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_KEY",
+                    "value": "/etc/nagios/globus/hostcert.key"
+                }
+            ],
+            "host_attributes": [
+                {
+                    "hostname": "mock2.host.name",
+                    "attribute": "attr3",
+                    "value": "value"
+                }
+            ],
+            "metric_parameters": [
+                {
+                    "hostname": "eosccore.ui.argo.grnet.gr",
+                    "metric": "generic.http.ar-argoui",
+                    "parameter": "-r",
+                    "value": "EOSC"
+                }
+            ]
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        conf = poem_models.MetricConfiguration.objects.get(
+            id=self.configuration1.id
+        )
+        self.assertEqual(conf.name, "local_updated")
+        self.assertEqual(
+            conf.globalattribute,
+            json.dumps([
+                "NAGIOS_ACTUAL_HOST_CERT /etc/nagios/globus/hostcert.pem",
+                "NAGIOS_ACTUAL_HOST_KEY /etc/nagios/globus/hostcert.key"
+            ])
+        )
+        self.assertEqual(
+            conf.hostattribute, json.dumps(["mock2.host.name attr3 value"])
+        )
+        self.assertEqual(
+            conf.metricparameter,
+            json.dumps([
+                "eosccore.ui.argo.grnet.gr generic.http.ar-argoui -r EOSC"
+            ])
+        )
+
+    def test_put_configuration_regular_user(self):
+        data = {
+            "id": self.configuration1.id,
+            "name": "local_updated",
+            "global_attributes": [
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_CERT",
+                    "value": "/etc/nagios/globus/hostcert.pem"
+                },
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_KEY",
+                    "value": "/etc/nagios/globus/hostcert.key"
+                }
+            ],
+            "host_attributes": [
+                {
+                    "hostname": "mock2.host.name",
+                    "attribute": "attr3",
+                    "value": "value"
+                }
+            ],
+            "metric_parameters": [
+                {
+                    "hostname": "eosccore.ui.argo.grnet.gr",
+                    "metric": "generic.http.ar-argoui",
+                    "parameter": "-r",
+                    "value": "EOSC"
+                }
+            ]
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.regular_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to change metric configuration "
+            "overrides."
+        )
+        conf = poem_models.MetricConfiguration.objects.get(
+            id=self.configuration1.id
+        )
+        self.assertEqual(conf.name, "local")
+        self.assertEqual(
+            conf.globalattribute,
+            json.dumps([
+                "NAGIOS_ACTUAL_HOST_CERT /etc/nagios/globus/hostcert.pem",
+                "NAGIOS_ACTUAL_HOST_KEY /etc/nagios/globus/hostkey.pem"
+            ])
+        )
+        self.assertEqual(
+            conf.hostattribute,
+            json.dumps(["mock.host.name attr1 some-new-value"])
+        )
+        self.assertEqual(
+            conf.metricparameter,
+            json.dumps([
+                "eosccore.ui.argo.grnet.gr org.nagios.ARGOWeb-AR "
+                "-r EOSC_Monitoring",
+                "argo.eosc-portal.eu org.nagios.ARGOWeb-Status -u "
+                "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
+            ])
+        )
+
+    def test_put_configuration_with_existing_name_super_user(self):
+        data = {
+            "id": self.configuration1.id,
+            "name": "consumer",
+            "global_attributes": [
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_CERT",
+                    "value": "/etc/nagios/globus/hostcert.pem"
+                },
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_KEY",
+                    "value": "/etc/nagios/globus/hostcert.key"
+                }
+            ],
+            "host_attributes": [
+                {
+                    "hostname": "mock2.host.name",
+                    "attribute": "attr3",
+                    "value": "value"
+                }
+            ],
+            "metric_parameters": [
+                {
+                    "hostname": "eosccore.ui.argo.grnet.gr",
+                    "metric": "generic.http.ar-argoui",
+                    "parameter": "-r",
+                    "value": "EOSC"
+                }
+            ]
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["detail"],
+            "Metric configuration override with this name already exists."
+        )
+
+    def test_put_configuration_with_existing_name_regular_user(self):
+        data = {
+            "id": self.configuration1.id,
+            "name": "consumer",
+            "global_attributes": [
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_CERT",
+                    "value": "/etc/nagios/globus/hostcert.pem"
+                },
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_KEY",
+                    "value": "/etc/nagios/globus/hostcert.key"
+                }
+            ],
+            "host_attributes": [
+                {
+                    "hostname": "mock2.host.name",
+                    "attribute": "attr3",
+                    "value": "value"
+                }
+            ],
+            "metric_parameters": [
+                {
+                    "hostname": "eosccore.ui.argo.grnet.gr",
+                    "metric": "generic.http.ar-argoui",
+                    "parameter": "-r",
+                    "value": "EOSC"
+                }
+            ]
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.regular_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to change metric configuration "
+            "overrides."
+        )
+        conf = poem_models.MetricConfiguration.objects.get(
+            id=self.configuration1.id
+        )
+        self.assertEqual(conf.name, "local")
+        self.assertEqual(
+            conf.globalattribute,
+            json.dumps([
+                "NAGIOS_ACTUAL_HOST_CERT /etc/nagios/globus/hostcert.pem",
+                "NAGIOS_ACTUAL_HOST_KEY /etc/nagios/globus/hostkey.pem"
+            ])
+        )
+        self.assertEqual(
+            conf.hostattribute,
+            json.dumps(["mock.host.name attr1 some-new-value"])
+        )
+        self.assertEqual(
+            conf.metricparameter,
+            json.dumps([
+                "eosccore.ui.argo.grnet.gr org.nagios.ARGOWeb-AR "
+                "-r EOSC_Monitoring",
+                "argo.eosc-portal.eu org.nagios.ARGOWeb-Status -u "
+                "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
+            ])
+        )
+
+    def test_put_configuration_with_wrong_id_super_user(self):
+        data = {
+            "id": 100,
+            "name": "consumer",
+            "global_attributes": [
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_CERT",
+                    "value": "/etc/nagios/globus/hostcert.pem"
+                },
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_KEY",
+                    "value": "/etc/nagios/globus/hostcert.key"
+                }
+            ],
+            "host_attributes": [
+                {
+                    "hostname": "mock2.host.name",
+                    "attribute": "attr3",
+                    "value": "value"
+                }
+            ],
+            "metric_parameters": [
+                {
+                    "hostname": "eosccore.ui.argo.grnet.gr",
+                    "metric": "generic.http.ar-argoui",
+                    "parameter": "-r",
+                    "value": "EOSC"
+                }
+            ]
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data["detail"],
+            "Metric configuration override with requested id does not exist."
+        )
+
+    def test_put_configuration_with_wrong_id_regular_user(self):
+        data = {
+            "id": 100,
+            "name": "consumer",
+            "global_attributes": [
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_CERT",
+                    "value": "/etc/nagios/globus/hostcert.pem"
+                },
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_KEY",
+                    "value": "/etc/nagios/globus/hostcert.key"
+                }
+            ],
+            "host_attributes": [
+                {
+                    "hostname": "mock2.host.name",
+                    "attribute": "attr3",
+                    "value": "value"
+                }
+            ],
+            "metric_parameters": [
+                {
+                    "hostname": "eosccore.ui.argo.grnet.gr",
+                    "metric": "generic.http.ar-argoui",
+                    "parameter": "-r",
+                    "value": "EOSC"
+                }
+            ]
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.regular_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to change metric configuration "
+            "overrides."
+        )
+
+    def test_put_configuration_with_missing_keys_super_user(self):
+        data = {
+            "id": self.configuration1.id,
+            "global_attributes": [
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_CERT",
+                    "value": "/etc/nagios/globus/hostcert.pem"
+                },
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_KEY",
+                    "value": "/etc/nagios/globus/hostcert.key"
+                }
+            ],
+            "host_attributes": [
+                {
+                    "hostname": "mock2.host.name",
+                    "attribute": "attr3",
+                    "value": "value"
+                }
+            ],
+            "metric_parameters": [
+                {
+                    "hostname": "eosccore.ui.argo.grnet.gr",
+                    "metric": "generic.http.ar-argoui",
+                    "parameter": "-r",
+                    "value": "EOSC"
+                }
+            ]
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["detail"], "Missing data key: name")
+
+    def test_put_configuration_with_missing_keys_regular_user(self):
+        data = {
+            "id": self.configuration1.id,
+            "global_attributes": [
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_CERT",
+                    "value": "/etc/nagios/globus/hostcert.pem"
+                },
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_KEY",
+                    "value": "/etc/nagios/globus/hostcert.key"
+                }
+            ],
+            "host_attributes": [
+                {
+                    "hostname": "mock2.host.name",
+                    "attribute": "attr3",
+                    "value": "value"
+                }
+            ],
+            "metric_parameters": [
+                {
+                    "hostname": "eosccore.ui.argo.grnet.gr",
+                    "metric": "generic.http.ar-argoui",
+                    "parameter": "-r",
+                    "value": "EOSC"
+                }
+            ]
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.regular_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to change metric configuration "
+            "overrides."
+        )
+
+    def test_post_configuration_super_user(self):
+        data = {
+            "name": "new",
+            "global_attributes": [
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_CERT",
+                    "value": "/etc/nagios/globus/hostcert.pem"
+                },
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_KEY",
+                    "value": "/etc/nagios/globus/hostcert.key"
+                }
+            ],
+            "host_attributes": [
+                {
+                    "hostname": "mock2.host.name",
+                    "attribute": "attr3",
+                    "value": "value"
+                }
+            ],
+            "metric_parameters": [
+                {
+                    "hostname": "eosccore.ui.argo.grnet.gr",
+                    "metric": "generic.http.ar-argoui",
+                    "parameter": "-r",
+                    "value": "EOSC"
+                }
+            ]
+        }
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+        request = self.factory.post(self.url, data, format="json")
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 3
+        )
+        conf = poem_models.MetricConfiguration.objects.get(name="new")
+        self.assertEqual(
+            conf.globalattribute,
+            json.dumps([
+                "NAGIOS_ACTUAL_HOST_CERT /etc/nagios/globus/hostcert.pem",
+                "NAGIOS_ACTUAL_HOST_KEY /etc/nagios/globus/hostcert.key"
+            ])
+        )
+        self.assertEqual(
+            conf.hostattribute, json.dumps(["mock2.host.name attr3 value"])
+        )
+        self.assertEqual(
+            conf.metricparameter,
+            json.dumps([
+                "eosccore.ui.argo.grnet.gr generic.http.ar-argoui -r EOSC"
+            ])
+        )
+
+    def test_post_configuration_regular_user(self):
+        data = {
+            "name": "new",
+            "global_attributes": [
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_CERT",
+                    "value": "/etc/nagios/globus/hostcert.pem"
+                },
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_KEY",
+                    "value": "/etc/nagios/globus/hostcert.key"
+                }
+            ],
+            "host_attributes": [
+                {
+                    "hostname": "mock2.host.name",
+                    "attribute": "attr3",
+                    "value": "value"
+                }
+            ],
+            "metric_parameters": [
+                {
+                    "hostname": "eosccore.ui.argo.grnet.gr",
+                    "metric": "generic.http.ar-argoui",
+                    "parameter": "-r",
+                    "value": "EOSC"
+                }
+            ]
+        }
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+        request = self.factory.post(self.url, data, format="json")
+        force_authenticate(request, user=self.regular_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add metric configuration "
+            "overrides."
+        )
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+        self.assertRaises(
+            poem_models.MetricConfiguration.DoesNotExist,
+            poem_models.MetricConfiguration.objects.get,
+            name="new"
+        )
+
+    def test_post_configuration_with_existing_name_super_user(self):
+        data = {
+            "name": "local",
+            "global_attributes": [
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_CERT",
+                    "value": "/etc/nagios/globus/hostcert.pem"
+                },
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_KEY",
+                    "value": "/etc/nagios/globus/hostcert.key"
+                }
+            ],
+            "host_attributes": [
+                {
+                    "hostname": "mock2.host.name",
+                    "attribute": "attr3",
+                    "value": "value"
+                }
+            ],
+            "metric_parameters": [
+                {
+                    "hostname": "eosccore.ui.argo.grnet.gr",
+                    "metric": "generic.http.ar-argoui",
+                    "parameter": "-r",
+                    "value": "EOSC"
+                }
+            ]
+        }
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+        request = self.factory.post(self.url, data, format="json")
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["detail"],
+            "Local metric configuration with this name already exists."
+        )
+
+    def test_post_configuration_with_existing_name_regular_user(self):
+        data = {
+            "name": "local",
+            "global_attributes": [
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_CERT",
+                    "value": "/etc/nagios/globus/hostcert.pem"
+                },
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_KEY",
+                    "value": "/etc/nagios/globus/hostcert.key"
+                }
+            ],
+            "host_attributes": [
+                {
+                    "hostname": "mock2.host.name",
+                    "attribute": "attr3",
+                    "value": "value"
+                }
+            ],
+            "metric_parameters": [
+                {
+                    "hostname": "eosccore.ui.argo.grnet.gr",
+                    "metric": "generic.http.ar-argoui",
+                    "parameter": "-r",
+                    "value": "EOSC"
+                }
+            ]
+        }
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+        request = self.factory.post(self.url, data, format="json")
+        force_authenticate(request, user=self.regular_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add metric configuration "
+            "overrides."
+        )
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+
+    def test_post_configuration_with_missing_key_super_user(self):
+        data = {
+            "name": "new",
+            "global_attributes": [
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_CERT",
+                    "value": "/etc/nagios/globus/hostcert.pem"
+                },
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_KEY",
+                    "value": "/etc/nagios/globus/hostcert.key"
+                }
+            ],
+            "metric_parameters": [
+                {
+                    "hostname": "eosccore.ui.argo.grnet.gr",
+                    "metric": "generic.http.ar-argoui",
+                    "parameter": "-r",
+                    "value": "EOSC"
+                }
+            ]
+        }
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+        request = self.factory.post(self.url, data, format="json")
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+        self.assertEqual(
+            response.data["detail"], "Missing data key: host_attributes"
+        )
+        self.assertRaises(
+            poem_models.MetricConfiguration.DoesNotExist,
+            poem_models.MetricConfiguration.objects.get,
+            name="new"
+        )
+
+    def test_post_configuration_with_missing_key_regular_user(self):
+        data = {
+            "name": "new",
+            "global_attributes": [
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_CERT",
+                    "value": "/etc/nagios/globus/hostcert.pem"
+                },
+                {
+                    "attribute": "NAGIOS_ACTUAL_HOST_KEY",
+                    "value": "/etc/nagios/globus/hostcert.key"
+                }
+            ],
+            "metric_parameters": [
+                {
+                    "hostname": "eosccore.ui.argo.grnet.gr",
+                    "metric": "generic.http.ar-argoui",
+                    "parameter": "-r",
+                    "value": "EOSC"
+                }
+            ]
+        }
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+        request = self.factory.post(self.url, data, format="json")
+        force_authenticate(request, user=self.regular_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add metric configuration "
+            "overrides."
+        )
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+        self.assertRaises(
+            poem_models.MetricConfiguration.DoesNotExist,
+            poem_models.MetricConfiguration.objects.get,
+            name="new"
+        )
+
+    def test_delete_configuration_superuser(self):
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+        request = self.factory.delete(self.url + "consumer")
+        force_authenticate(request, user=self.user)
+        response = self.view(request, "consumer")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 1
+        )
+        self.assertRaises(
+            poem_models.MetricConfiguration.DoesNotExist,
+            poem_models.MetricConfiguration.objects.get,
+            name="consumer"
+        )
+
+    def test_delete_configuration_regular_user(self):
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+        request = self.factory.delete(self.url + "consumer")
+        force_authenticate(request, user=self.regular_user)
+        response = self.view(request, "consumer")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to delete local metric configurations."
+        )
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+
+    def test_delete_configuration_if_nonexisting_name_superuser(self):
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+        request = self.factory.delete(self.url + "nonexisting")
+        force_authenticate(request, user=self.user)
+        response = self.view(request, "nonexisting")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data["detail"], "Metric configuration not found."
+        )
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+
+    def test_delete_configuration_if_nonexisting_name_regular_user(self):
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+        request = self.factory.delete(self.url + "nonexisting")
+        force_authenticate(request, user=self.regular_user)
+        response = self.view(request, "nonexisting")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to delete local metric configurations."
+        )
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+
+    def test_delete_configuration_name_not_defined_superuser(self):
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["detail"],
+            "Metric configuration name must be defined."
+        )
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+
+    def test_delete_configuration_name_not_defined_regular_user(self):
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.regular_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to delete local metric configurations."
+        )
+        self.assertEqual(
+            poem_models.MetricConfiguration.objects.all().count(), 2
+        )

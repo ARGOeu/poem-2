@@ -430,7 +430,7 @@ describe('Tests for operations profiles detail view', () => {
     const orOpsTbl = within(screen.getByTestId('tbl-operations-OR'));
 
     expect(nameField.value).toBe('egi_ops');
-    expect(nameField).toHaveAttribute('readonly');
+    expect(nameField).toBeDisabled()
 
     const stateTblRows = stateTbl.getAllByRole('row');
     expect(stateTblRows).toHaveLength(7);
@@ -518,7 +518,7 @@ describe('Tests for operations profiles detail view', () => {
     const orOpsTbl = within(screen.getByTestId('tbl-operations-OR'));
 
     expect(nameField.value).toBe('egi_ops');
-    expect(nameField).toHaveAttribute('readonly');
+    expect(nameField).toBeDisabled()
 
     const stateTblRows = stateTbl.getAllByRole('row');
     expect(stateTblRows).toHaveLength(7);

@@ -90,11 +90,13 @@ urlpatterns = [
     path('metrictags/<str:name>', views_internal.ListMetricTags.as_view(), name='metrictags'),
     path('public_metrictags/', views_internal.ListPublicMetricTags.as_view(), name='metrictags'),
     path("metrics4tags/<str:tag>", views_internal.ListMetricTemplates4Tag.as_view(), name="metrics4tags"),
-    path("public_metrics4tags/<str:tag>", views_internal.ListMetricTemplates4Tag.as_view(), name="metrics4tags"),
+    path("public_metrics4tags/<str:tag>", views_internal.ListPublicMetricTemplates4Tag.as_view(), name="metrics4tags"),
     path('reports/', views_internal.ListReports.as_view(), name='reports'),
     path('public_reports/', views_internal.ListPublicReports.as_view(), name='reports'),
     path('reports/<str:report_name>', views_internal.ListReports.as_view(), name='reports'),
     path('public_reports/<str:report_name>', views_internal.ListPublicReports.as_view(), name='reports'),
     path('reportsgroup/', views_internal.ListReportsInGroup.as_view(), name='reports'),
-    path('reportsgroup/<str:group>', views_internal.ListReportsInGroup.as_view(), name='reports')
+    path('reportsgroup/<str:group>', views_internal.ListReportsInGroup.as_view(), name='reports'),
+    path("metricconfiguration/", views_internal.ListMetricConfiguration.as_view(), name="metricconfiguration"),
+    path("metricconfiguration/<str:name>", views_internal.ListMetricConfiguration.as_view(), name="metricconfiguration")
 ]

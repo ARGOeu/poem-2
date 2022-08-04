@@ -197,7 +197,7 @@ const CommonUser = ({add, ...props}) =>
                     name='last_login'
                     data-testid='last_login'
                     className='form-control'
-                    readOnly
+                    disabled={true}
                   />
                 </InputGroup>
               </Col>
@@ -211,7 +211,7 @@ const CommonUser = ({add, ...props}) =>
                     name='date_joined'
                     data-testid='date_joined'
                     className='form-control'
-                    readOnly
+                    disabled={true}
                   />
                 </InputGroup>
               </Col>

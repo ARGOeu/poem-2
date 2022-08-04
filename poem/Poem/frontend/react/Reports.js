@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Backend, WebApi } from './DataManager';
 
 import { useMutation, useQuery, useQueryClient } from 'react-query';
@@ -150,6 +150,17 @@ export const ReportsList = (props) => {
 };
 
 
+const sortStr = (a, b) => {
+  if (a.toLowerCase() < b.toLowerCase()) return -1;
+  if (a.toLowerCase() > b.toLowerCase()) return 1;
+  if (a.toLowerCase() === b.toLowerCase()) {
+    if (a.toLowerCase() < b.toLowerCase()) return -1;
+    if (a.toLowerCase() > b.toLowerCase()) return 1;
+    if (a.toLowerCase() === b.toLowerCase()) return 0;
+  }
+}
+
+
 function preProcessTagValue(data) {
   if (data === '1')
     return 'yes'
@@ -182,6 +193,89 @@ const entityInitValues = (matchWhat, formvalue) => {
   return tmp
 }
 
+const formatFilteredSelectEntities = (data, {entitiesGroups, entitiesEndpoints}, topoMaps, lookkey) => {
+  let selectedTop = new Array()
+  let selectedMiddle = new Array()
+
+  let selectedEntitiesTop = entitiesGroups[0]
+  let selectedEntitiesMiddle = entitiesEndpoints[0] && entitiesEndpoints[0]['value'] ? entitiesEndpoints[0] : entitiesGroups[1]
+
+  if (selectedEntitiesTop && selectedEntitiesTop['value']) {
+    if (selectedEntitiesTop['value'].includes('|'))
+      selectedTop = selectedEntitiesTop['value'].split('|')
+    else
+      selectedTop = [selectedEntitiesTop['value']]
+  }
+
+  if (selectedEntitiesMiddle && selectedEntitiesMiddle['value']) {
+    if (selectedEntitiesMiddle['value'].includes('|'))
+      selectedMiddle = selectedEntitiesMiddle['value'].split('|')
+    else
+      selectedMiddle = [selectedEntitiesMiddle['value']]
+  }
+
+  if (selectedTop.length > 0 || selectedMiddle.length > 0) {
+    let topoTypeMeta = new Array(
+      new Object({
+        'middleKey': 'entitiesSites',
+        'lowerKey': 'serviceTypesSitesEndpoints',
+        'topMapKey': 'ngi_sites',
+        'middleMapKey': 'site_services'
+      }),
+      new Object({
+        'middleKey': 'entitiesServiceGroups',
+        'lowerKey': 'serviceTypesServiceGroupsEndpoints',
+        'topMapKey': 'project_servicegroups',
+        'middleMapKey': 'servicegroup_services'
+      })
+    )
+
+    for (var tt of topoTypeMeta) {
+      if (lookkey.includes(tt['middleKey'])) {
+        let choices = new Array()
+        if (selectedTop.length > 0)
+          selectedTop.forEach(sel => {
+            let sels = topoMaps[tt['topMapKey']].get(sel)
+            if (sels)
+              choices.push(...sels)
+          })
+        else
+          choices = data
+        return formatSelectEntities(choices.sort(sortStr))
+      }
+
+      else if (lookkey.includes(tt['lowerKey'])) {
+        let services = new Set()
+        if (selectedMiddle.length > 0) {
+          selectedMiddle.forEach(sel => {
+            let sels = topoMaps[tt['middleMapKey']].get(sel)
+            if (sels)
+              for (var ser of sels)
+                services.add(ser)
+          })
+          return formatSelectEntities(Array.from(services).sort(sortStr))
+        }
+        else if (selectedTop.length > 0) {
+          let sites = new Array()
+          selectedTop.forEach(sel => {
+            let sels = topoMaps[tt['topMapKey']].get(sel)
+            if (sels)
+              sites.push(...sels)
+          })
+          sites.forEach(sel => {
+            let sels = topoMaps[tt['middleMapKey']].get(sel)
+            if (sels)
+              for (var ser of sels)
+                services.add(ser)
+          })
+          return formatSelectEntities(Array.from(services).sort(sortStr))
+        }
+      }
+    }
+  }
+  else
+    return formatSelectEntities(data.sort(sortStr))
+}
 
 const formatSelectEntities = (data) => {
   let formatted = new Array()
@@ -467,7 +561,7 @@ const EntitySelect = ({field, label, entitiesOptions, onChangeHandler, entitiesI
 }
 
 
-const TopologyConfGroupsEntityFields = ({topoGroups, addview, publicView, form}) => {
+const TopologyConfGroupsEntityFields = ({topoGroups, addview, topoMaps, publicView, form}) => {
   let topoType = form.values.topologyType
   let label1 = undefined
   let label2 = undefined
@@ -538,7 +632,7 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, publicView, form})
             className="pt-2"
             id="topoEntityGroup2"
             component={EntitySelect}
-            entitiesOptions={formatSelectEntities(topoGroups[key2])}
+            entitiesOptions={formatFilteredSelectEntities(topoGroups[key2], form.values, topoMaps, key2)}
             onChangeHandler={(e) => {
               let joinedValues = ''
               for (let event of e)
@@ -555,7 +649,7 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, publicView, form})
 }
 
 
-const TopologyConfEndpointsEntityFields = ({topoGroups, addview, publicView, form}) => {
+const TopologyConfEndpointsEntityFields = ({topoGroups, addview, topoMaps, publicView, form}) => {
   let topoType = form.values.topologyType
   let label1 = undefined
   let label2 = undefined
@@ -598,7 +692,10 @@ const TopologyConfEndpointsEntityFields = ({topoGroups, addview, publicView, for
             name="entitiesEndpoints.0.value"
             id="topoEntityEndoint1"
             component={EntitySelect}
-            entitiesOptions={formatSelectEntities(topoGroups[key1])}
+            entitiesOptions={
+              formatFilteredSelectEntities(
+                topoGroups[key1], form.values, topoMaps, key1
+            )}
             onChangeHandler={(e) => {
               let joinedValues = ''
               for (let event of e)
@@ -626,7 +723,13 @@ const TopologyConfEndpointsEntityFields = ({topoGroups, addview, publicView, for
             className="pt-2"
             id="topoEntityEndoint2"
             component={EntitySelect}
-            entitiesOptions={formatSelectEntities(topoGroups[key2])}
+            entitiesOptions={
+              formatFilteredSelectEntities(
+                topoGroups[key2],
+                form.values,
+                topoMaps,
+                key2
+            )}
             onChangeHandler={(e) => {
               let joinedValues = ''
               for (let event of e)
@@ -689,7 +792,6 @@ export const ReportsComponent = (props) => {
   const [formikValues, setFormikValues] = useState({})
   const topologyTypes = ['Sites', 'ServiceGroups']
 
-
   const [tagsState, setTagsState] = useState(new Object({
     'groups': undefined,
     'endpoints': undefined
@@ -700,6 +802,8 @@ export const ReportsComponent = (props) => {
       endpoints: undefined
     })
   )
+
+  let topologyMaps = new Object();
 
   const webapi = new WebApi({
     token: props.webapitoken,
@@ -773,16 +877,6 @@ export const ReportsComponent = (props) => {
     [`${publicView ? 'public_' : ''}thresholdsprofile`, 'webapi'], () => fetchThresholdsProfiles(webapi),
     { enabled: !publicView && !!userDetails }
   )
-
-  const sortStr = (a, b) => {
-    if (a.toLowerCase() < b.toLowerCase()) return -1;
-    if (a.toLowerCase() > b.toLowerCase()) return 1;
-    if (a.toLowerCase() === b.toLowerCase()) {
-      if (a.toLowerCase() < b.toLowerCase()) return -1;
-      if (a.toLowerCase() > b.toLowerCase()) return 1;
-      if (a.toLowerCase() === b.toLowerCase()) return 0;
-    }
-  }
 
   const extractProfileNames = (profiles) => {
     let tmp = new Array();
@@ -1003,9 +1097,9 @@ export const ReportsComponent = (props) => {
     else if (context.indexOf('argo.endpoint') !== 1) {
       if (entities.length === 1) {
         let only_type = entities[0].name.toLowerCase()
-        if (only_type.indexOf('site') !== -1 || only_type.indexOf('servicegroup') !== -1)
+        if (only_type.startsWith('site') || only_type.startsWith('servicegroup'))
           final_entities = [entities[0], default_empty]
-        else if (only_type.indexOf('servicetypessites') !== -1 || only_type.indexOf('servicetypesservicegroups') !== -1)
+        else if (only_type.startsWith('servicetypessites') || only_type.startsWith('servicetypesservicegroups'))
           final_entities = [default_empty, entities[0]]
       }
       else
@@ -1268,7 +1362,7 @@ export const ReportsComponent = (props) => {
 
     let entitiesSites = new Array()
     let entitiesNgi = new Array()
-    let entitiesProjects= new Array()
+    let entitiesProjects = new Array()
     let entitiesServiceGroups = new Array()
     let serviceTypesServiceGroupsEndpoints = new Array()
     let serviceTypesSitesEndpoints = new Array()
@@ -1278,6 +1372,59 @@ export const ReportsComponent = (props) => {
     let endpointsTags = undefined
     let groupsExtensions = undefined
     let endpointsExtensions = undefined
+
+    if (topologyEndpoints && topologyGroups
+      && Object.keys(topologyMaps).length === 0) {
+      topologyMaps['project_servicegroups'] = new Map()
+      topologyMaps['ngi_sites'] = new Map()
+      topologyMaps['site_services'] = new Map()
+      topologyMaps['servicegroup_services'] = new Map()
+
+      for (let group of topologyGroups) {
+        let key = group['group']
+        let value = group['subgroup']
+        if (group['type'] === 'PROJECT') {
+          if (topologyMaps['project_servicegroups'].has(key)) {
+            let values = topologyMaps['project_servicegroups'].get(key)
+            if (values.indexOf(value) === -1)
+              topologyMaps['project_servicegroups'].set(key, [value, ...values])
+          }
+          else
+            topologyMaps['project_servicegroups'].set(key, new Array(value))
+        }
+        else if (group['type'] === 'NGI') {
+          if (topologyMaps['ngi_sites'].has(key)) {
+            let values = topologyMaps['ngi_sites'].get(key)
+            if (values.indexOf(value) === -1)
+              topologyMaps['ngi_sites'].set(key, [value, ...values])
+          }
+          else
+            topologyMaps['ngi_sites'].set(key, new Array(value))
+        }
+      }
+      for (let endpoint of topologyEndpoints) {
+        let key = endpoint['group']
+        let value = endpoint['service']
+        if (endpoint['type'] === 'SITES') {
+          if (topologyMaps['site_services'].has(key)) {
+            let values = topologyMaps['site_services'].get(key)
+            if (values.indexOf(value) === -1)
+              topologyMaps['site_services'].set(key, [value, ...values])
+          }
+          else
+            topologyMaps['site_services'].set(key, new Array(value))
+        }
+        else if (endpoint['type'] === 'SERVICEGROUPS') {
+          if (topologyMaps['servicegroup_services'].has(key)) {
+            let values = topologyMaps['servicegroup_services'].get(key)
+            if (values.indexOf(value) === -1)
+              topologyMaps['servicegroup_services'].set(key, [value, ...values])
+          }
+          else
+            topologyMaps['servicegroup_services'].set(key, new Array(value))
+        }
+      }
+    }
 
     if (webApiReport && webApiReport.profiles) {
       webApiReport.profiles.forEach(profile => {
@@ -1790,7 +1937,7 @@ export const ReportsComponent = (props) => {
                         </>
                       :
                         <CustomReactSelect
-                          id='topologyType'
+                         id='topologyType'
                           name='topologyType'
                           error={props.errors.topologyType}
                           label='Topology type:'
@@ -1867,6 +2014,7 @@ export const ReportsComponent = (props) => {
                                 entitiesNgi, entitiesSites,
                                 entitiesProjects, entitiesServiceGroups
                               }}
+                              topoMaps={topologyMaps}
                               addview={addview}
                               publicView={publicView}
                               {...props}
@@ -1934,6 +2082,7 @@ export const ReportsComponent = (props) => {
                                 entitiesSites, entitiesServiceGroups,
                                 serviceTypesSitesEndpoints, serviceTypesServiceGroupsEndpoints
                               }}
+                              topoMaps={topologyMaps}
                               addview={addview}
                               publicView={publicView}
                               {...props}
