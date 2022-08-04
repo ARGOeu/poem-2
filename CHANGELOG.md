@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.4.3] - 2022-08-04
+
+### Changed
+
+* ARGO-3950 Bump Django version
+* ARGO-3951 Update webpack, loaders, eslint and babel stuff
+* ARGO-3952 Refine loading of custom Bootstrap options
+
+### Fixed
+
+* ARGO-3909 Wrong error message during tag syncing when adding/cloning metric template
+* ARGO-3954 Fields in metric page enabled due to a package upgrade when they should be disabled
+
 ## [3.4.2] - 2022-06-09
 
 ### Added
