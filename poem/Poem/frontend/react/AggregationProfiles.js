@@ -1192,13 +1192,6 @@ export const AggregationProfilesList = (props) => {
   const location = props.location;
   const publicView = props.publicView
 
-  const webapi = new WebApi({
-    token: props.webapitoken,
-    metricProfiles: props.webapimetric,
-    aggregationProfiles: props.webapiaggregation
-  })
-  const queryClient = useQueryClient();
-
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
     'userdetails', () => fetchUserDetails(true)
   );
@@ -1221,16 +1214,6 @@ export const AggregationProfilesList = (props) => {
       accessor: e =>
         <Link
           to={`/ui/${publicView ? 'public_' : ''}aggregationprofiles/` + e.name}
-          onMouseEnter={ async () => {
-            await queryClient.prefetchQuery(
-              [`${publicView ? 'public_' : ''}aggregationprofile`, 'webapi', e.name],
-              () => fetchAP(webapi, e.apiid)
-            );
-            await queryClient.prefetchQuery(
-              [`${publicView ? 'public_' : ''}metricprofile`, 'webapi'],
-              () => fetchMetricProfiles(webapi)
-            );
-          } }
         >
           {e.name}
         </Link>,
