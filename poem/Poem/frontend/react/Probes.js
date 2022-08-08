@@ -424,7 +424,6 @@ export const ProbeComponent = (props) => {
   const [modalTitle, setModalTitle] = useState(undefined);
   const [modalMsg, setModalMsg] = useState(undefined);
   const [formValues, setFormValues] = useState(undefined);
-  //const [packages, setPackages] = useState(new Array())
 
   const { data: probe, error: probeError, isLoading: probeLoading } = useQuery(
     [`${publicView ? 'public_' : ''}probe`, name], () => fetchProbe(publicView, name),
@@ -539,7 +538,6 @@ export const ProbeComponent = (props) => {
   }
 
   const loading = probeLoading || metricTemplatesLoading || packagesLoading;
-  const error = probeError || metricTemplatesError || packagesError;
 
   if (loading)
     return(<LoadingAnim/>)
@@ -553,7 +551,7 @@ export const ProbeComponent = (props) => {
   else if (packagesError)
     return (<ErrorComponent error={packagesError.error}/>);
 
-  else if (!error && !loading) {
+  else if ((addview || (probe && metricTemplates)) && packages) {
     if (!isTenantSchema) {
       return (
         <BaseArgoView
