@@ -684,7 +684,16 @@ export const AggregationProfilesChange = (props) => {
   const { data: webApiAP, error: errorWebApiAP, isLoading: loadingWebApiAP } = useQuery(
     [`${publicView ? 'public_' : ''}aggregationprofile`, 'webapi', profile_name],
     () => fetchAP(webapi, backendAP.apiid),
-    { enabled: !!backendAP }
+    {
+      enabled: !!backendAP,
+      initialData: () => {
+        return queryClient.getQueryData(
+          [`${publicView ? "public_" : ""}aggregationprofile`, "webapi"]
+        )?.find(
+          profile => profile.id == backendAP.apiid
+        )
+      }
+    }
   )
 
   const { data: metricProfiles, error: errorMetricProfiles, isLoading: loadingMetricProfiles } = useQuery(
@@ -996,7 +1005,7 @@ export const AggregationProfilesChange = (props) => {
   else if (errorMetricProfiles)
     return (<ErrorComponent error={errorMetricProfiles} />)
 
-  else if (!loadingUserDetails && metricProfiles) {
+  else if ((addview || (backendAP && webApiAP) && metricProfiles)) {
     if (!listServices && !publicView && !addview)
       setListServices(!addview ? extractListOfServices(webApiAP.metric_profile, metricProfiles) : [])
 
