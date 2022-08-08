@@ -51,8 +51,7 @@ import {
   fetchUserDetails,
   fetchUserGroups,
   fetchMetrics,
-  fetchMetricTypes,
-  fetchProbeVersions
+  fetchMetricTypes
 } from './QueryFunctions';
 
 
@@ -470,33 +469,7 @@ export const ListOfMetrics = (props) => {
         accessor: 'name',
         column_width: '39%',
         Cell: row =>
-          <Link
-            to={`${metriclink}${row.value}`}
-            onMouseEnter={ async () => {
-              if (type === 'metrics') {
-                if (row.original.probeversion) {
-                  const metricProbeVersion = row.original.probeversion.split(' ')[0];
-                  await queryClient.prefetchQuery(
-                    [`${publicView ? 'public_' : ''}probe`, 'version', metricProbeVersion],
-                    () => fetchProbeVersion(publicView, metricProbeVersion)
-                  )
-                }
-              } else {
-                await queryClient.prefetchQuery(
-                  `${publicView ? 'public_' : ''}metrictemplatestypes`,
-                  () => fetchMetricTemplateTypes(publicView)
-                );
-                await queryClient.prefetchQuery(
-                  `${publicView ? 'public_' : ''}metrictags`,
-                  () => fetchMetricTags(publicView)
-                );
-                await queryClient.prefetchQuery(
-                  [`${publicView ? 'public_' : ''}probe`, 'version'],
-                  () => fetchProbeVersions(publicView)
-                );
-              }
-            } }
-          >
+          <Link to={`${metriclink}${row.value}`} >
             {row.value}
           </Link>,
         Filter: DefaultColumnFilter
@@ -1277,6 +1250,8 @@ export const MetricChange = (props) => {
     })
     mutation.mutate(sendValues, {
       onSuccess: () => {
+        queryClient.invalidateQueries("public_metric")
+        queryClient.invalidateQueries("metric")
         NotifyOk({
           msg: 'Metric successfully changed',
           title: 'Changed',
@@ -1295,6 +1270,8 @@ export const MetricChange = (props) => {
   async function doDelete() {
     deleteMutation.mutate(undefined, {
       onSuccess: () => {
+        queryClient.invalidateQueries("public_metric")
+        queryClient.invalidateQueries("metric")
         NotifyOk({
           msg: 'Metric successfully deleted',
           title: 'Deleted',
