@@ -370,7 +370,7 @@ export const MetricProfilesComponent = (props) => {
     {
       enabled: (publicView || !addview),
       initialData: () => {
-        return queryClient.getQueryData(`${publicView ? 'public_' : ''}metricprofile`)?.find(mpr => mpr.name === profile_name)
+        return queryClient.getQueryData([`${publicView ? 'public_' : ''}metricprofile`, "backend"])?.find(mpr => mpr.name === profile_name)
       }
     }
   )
@@ -378,7 +378,12 @@ export const MetricProfilesComponent = (props) => {
   const { data: webApiMP, error: errorWebApiMP, isLoading: loadingWebApiMP } = useQuery(
     [`${publicView ? 'public_' : ''}metricprofile`, 'webapi', profile_name],
     () => fetchMetricProfile(webapi, backendMP.apiid),
-    { enabled: !!backendMP }
+    {
+      enabled: !!backendMP,
+      initialData: () => {
+        return queryClient.getQueryData([`${publicView ? "public_" : ""}metricprofile`, "webapi"])?.find(profile => profile.id == backendMP.apiid)
+      }
+    }
   )
 
   const { data: metricsAll, error: errorMetricsAll, isLoading: loadingMetricsAll } = useQuery(
@@ -828,7 +833,7 @@ export const MetricProfilesComponent = (props) => {
   else if (errorServiceFlavoursAll)
     return (<ErrorComponent error={errorServiceFlavoursAll} />)
 
-  else if (!loadingUserDetails && !loadingBackendMP && !loadingWebApiMP && !loadingMetricsAll && !loadingServiceFlavoursAll)
+  else if (addview || (backendMP && webApiMP) && (publicView || (metricsAll && serviceFlavoursAll)))
   {
     let write_perm = undefined
 
@@ -1116,12 +1121,6 @@ export const MetricProfilesList = (props) => {
   const location = props.location;
   const publicView = props.publicView
 
-  const webapi = new WebApi({
-    token: props.webapitoken,
-    metricProfiles: props.webapimetric
-  })
-  const queryClient = useQueryClient();
-
   const { data: userDetails, error: errorUserDetails, status: statusUserDetails } = useQuery(
     'userdetails', () => fetchUserDetails(true)
   );
@@ -1144,21 +1143,6 @@ export const MetricProfilesList = (props) => {
       accessor: e =>
         <Link
           to={`/ui/${publicView ? 'public_' : ''}metricprofiles/` + e.name}
-          onMouseEnter={ async () => {
-            await queryClient.prefetchQuery(
-              [`${publicView ? 'public_' : ''}metricprofile`, 'webapi', e.name],
-              () => fetchMetricProfile(webapi, e.apiid)
-            );
-            if (!publicView) {
-              await queryClient.prefetchQuery(
-                'metricsall', () => fetchAllMetrics()
-              );
-
-              await queryClient.prefetchQuery(
-                'serviceflavoursall', () => fetchServiceFlavours()
-              );
-            }
-          } }
         >
           {e.name}
         </Link>,
