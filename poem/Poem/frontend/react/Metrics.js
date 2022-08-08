@@ -1250,6 +1250,8 @@ export const MetricChange = (props) => {
     })
     mutation.mutate(sendValues, {
       onSuccess: () => {
+        queryClient.invalidateQueries("public_metric")
+        queryClient.invalidateQueries("metric")
         NotifyOk({
           msg: 'Metric successfully changed',
           title: 'Changed',
@@ -1268,6 +1270,8 @@ export const MetricChange = (props) => {
   async function doDelete() {
     deleteMutation.mutate(undefined, {
       onSuccess: () => {
+        queryClient.invalidateQueries("public_metric")
+        queryClient.invalidateQueries("metric")
         NotifyOk({
           msg: 'Metric successfully deleted',
           title: 'Deleted',
