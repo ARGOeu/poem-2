@@ -424,7 +424,7 @@ export const ProbeComponent = (props) => {
   const [modalTitle, setModalTitle] = useState(undefined);
   const [modalMsg, setModalMsg] = useState(undefined);
   const [formValues, setFormValues] = useState(undefined);
-  const [packages, setPackages] = useState(new Array())
+  //const [packages, setPackages] = useState(new Array())
 
   const { data: probe, error: probeError, isLoading: probeLoading } = useQuery(
     [`${publicView ? 'public_' : ''}probe`, name], () => fetchProbe(publicView, name),
@@ -441,16 +441,9 @@ export const ProbeComponent = (props) => {
     { enabled: !!probe }
   );
 
-  const { error: packagesError, isLoading: packagesLoading } = useQuery(
+  const { data: packages, error: packagesError, isLoading: packagesLoading } = useQuery(
     `${publicView ? 'public_' : ''}package`, () => fetchPackages(publicView),
-    {
-      onSuccess: (data) => {
-        let listPackages = new Array()
-        data.forEach(pkg => listPackages.push(`${pkg.name} (${pkg.version})`))
-        setPackages(listPackages)
-      }
-    }
-  );
+  )
 
   function toggleAreYouSure() {
     setAreYouSureModal(!areYouSureModal);
@@ -608,7 +601,7 @@ export const ProbeComponent = (props) => {
                   addview={addview}
                   cloneview={cloneview}
                   publicView={publicView}
-                  list_packages={packages}
+                  list_packages={packages.map(pkg => `${pkg.name} (${pkg.version})`)}
                   metrictemplatelist={metricTemplates}
                 />
                 {
