@@ -344,17 +344,6 @@ export const ProbeList = (props) => {
       Cell: e =>
         <Link
           to={`/ui/${publicView ? 'public_' : ''}probes/${e.value}`}
-          onMouseEnter={ async () => {
-            await queryClient.prefetchQuery(
-              [`${publicView ? 'public_' : ''}probe`, e.value], () => fetchProbe(publicView, e.value)
-            );
-            await queryClient.prefetchQuery(
-              [`${publicView ? 'public_' : ''}probe`, 'metrics', e.value], () => fetchMetrics(publicView, e.value, e.row.original.version)
-            );
-            await queryClient.prefetchQuery(
-              `${publicView ? 'public_' : ''}package`, () => fetchPackages(publicView)
-            )
-          } }
         >
           {e.value}
         </Link>,
