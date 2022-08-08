@@ -692,7 +692,7 @@ class ListMetricAPIViewTests(TenantTestCase):
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
         versions = poem_models.TenantHistory.objects.filter(
             object_id=metric.id, content_type=self.ct
-        )
+        ).order_by("-date_created")
         self.assertEqual(versions.count(), 2)
         serialized_data = json.loads(
             versions[0].serialized_data
@@ -781,7 +781,7 @@ class ListMetricAPIViewTests(TenantTestCase):
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
         versions = poem_models.TenantHistory.objects.filter(
             object_id=metric.id, content_type=self.ct
-        )
+        ).order_by("-date_created")
         self.assertEqual(versions.count(), 2)
         serialized_data = json.loads(
             versions[0].serialized_data
@@ -1622,7 +1622,7 @@ class ListMetricAPIViewTests(TenantTestCase):
         metric = poem_models.Metric.objects.get(name='org.apel.APEL-Pub')
         versions = poem_models.TenantHistory.objects.filter(
             object_id=metric.id, content_type=self.ct
-        )
+        ).order_by("-date_created")
         self.assertEqual(versions.count(), 2)
         serialized_data = json.loads(
             versions[0].serialized_data
@@ -1691,7 +1691,7 @@ class ListMetricAPIViewTests(TenantTestCase):
         metric = poem_models.Metric.objects.get(name='org.apel.APEL-Pub')
         versions = poem_models.TenantHistory.objects.filter(
             object_id=metric.id, content_type=self.ct
-        )
+        ).order_by("-date_created")
         self.assertEqual(versions.count(), 2)
         serialized_data = json.loads(
             versions[0].serialized_data
