@@ -962,23 +962,6 @@ const ThresholdsProfilesForm = ({
 )
 
 
-const fetchThresholdsProfile = async ({ addview=false, publicView, name, webapi }) => {
-  const backend = new Backend();
-
-  if (!addview) {
-    let json = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}thresholdsprofiles/${name}`);
-    let thresholdsprofile = await webapi.fetchThresholdsProfile(json.apiid);
-    let tp = {
-      'apiid': thresholdsprofile.id,
-      'name': thresholdsprofile.name,
-      'groupname': json['groupname'],
-      'rules': thresholdsToValues(thresholdsprofile.rules)
-    };
-    return tp;
-  }
-}
-
-
 const fetchTopologyEndpoints = async ( webapi ) => {
   return await webapi.fetchReportsTopologyEndpoints()
 }
@@ -989,15 +972,6 @@ export const ThresholdsProfilesList = (props) => {
   const publicView = props.publicView;
   const webapitoken = props.webapitoken;
   const webapithresholds = props.webapithresholds;
-  const webapimetric = props.webapimetric;
-  const webapireports = props.webapireports;
-
-  const webapi = new WebApi({
-    token: webapitoken,
-    thresholdsProfiles: webapithresholds,
-    metricProfiles: webapimetric,
-    reportsConfigurations: webapireports
-  })
 
   const queryClient = useQueryClient();
 
@@ -1025,25 +999,6 @@ export const ThresholdsProfilesList = (props) => {
       accessor: e =>
         <Link
           to={`/ui/${publicView ? 'public_' : ''}thresholdsprofiles/${e.name}`}
-          onMouseEnter={ async () => {
-            await queryClient.prefetchQuery(
-              [`${publicView ? 'public_' : ''}thresholdsprofile`, e.name],
-              () => fetchThresholdsProfile({
-                publicView: publicView,
-                name: e.name,
-                webapi: webapi
-              })
-            );
-            await queryClient.prefetchQuery(
-              'metricsall', () => fetchAllMetrics(publicView)
-            )
-            await queryClient.prefetchQuery(
-              ['metricprofile', 'webapi'], () => fetchMetricProfiles(webapi)
-            )
-            await queryClient.prefetchQuery(
-              'topologyendpoints', () => fetchTopologyEndpoints(webapi)
-            )
-          } }
         >
           {e.name}
         </Link>,
@@ -1098,7 +1053,7 @@ export const ThresholdsProfilesList = (props) => {
 
 
 export const ThresholdsProfilesChange = (props) => {
-  const name = props.match.params.name;
+  const profile_name = props.match.params.name;
   const addview = props.addview;
   const history = props.history;
   const location = props.location;
@@ -1135,21 +1090,43 @@ export const ThresholdsProfilesChange = (props) => {
   const [popoverCriticalOpen, setPopoverCriticalOpen] = useState(false);
 
   const { data: userDetails, isLoading: loadingUserDetails } = useQuery(
-    'userdetails', () => fetchUserDetails(true)
+    'userdetails', () => fetchUserDetails(true),
+    { enabled: !publicView }
   );
 
-  const { data: thresholdsProfile, error: errorThresholdsProfile, isLoading: loadingThresholdsProfile } = useQuery(
-    [`${publicView ? 'public_' : ''}thresholdsprofile`, name], () => fetchThresholdsProfile({
-      addview: addview,
-      publicView: publicView,
-      name: name,
-      webapi: webapi
-    }),
-    { enabled: !publicView ? !addview && !!userDetails : true }
-  );
+  const { data: backendTP, error: errorBackendTP, isLoading: loadingBackendTP } = useQuery(
+    [`${publicView ? 'public_' : ''}thresholdsprofile`, "backend", profile_name],
+    async () => {
+      return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}thresholdsprofiles/${profile_name}`);
+    },
+    {
+      enabled: !addview && (!publicView ? !!userDetails : true),
+      initialData: () => {
+        return queryClient.getQueryData(
+          [`${publicView ? 'public_' : ''}thresholdsprofile`, "backend"]
+        )?.find(
+          profile => profile.name === profile_name
+        )
+      }
+    }
+  )
+
+  const { data: webApiTP, error: errorWebApiTP, isLoading: loadingWebApiTP } = useQuery(
+    [`${publicView ? 'public_' : ''}thresholdsprofile`, "webapi", profile_name],
+    async () => {
+      return webapi.fetchThresholdsProfile(backendTP.apiid)
+    },
+    {
+      enabled: !!backendTP,
+      initialData: () => {
+        return queryClient.getQueryData([`${publicView ? "public_" : ""}thresholdsprofile`, "webapi"])?.find(profile => profile.id === backendTP.apiid)
+      }
+    }
+  )
 
   const { data: allMetrics, error: errorAllMetrics, isLoading: loadingAllMetrics } = useQuery(
-    'metricsall', () => fetchAllMetrics(publicView)
+    'metricsall', () => fetchAllMetrics(publicView),
+    { enabled: !publicView }
   );
 
   const { data: topologyEndpoints, error: errorTopologyEndpoints, isLoading: loadingTopologyEndpoints } = useQuery(
@@ -1268,12 +1245,12 @@ export const ThresholdsProfilesChange = (props) => {
       )
     } else {
       webapiChangeMutation.mutate({
-        id: values_send.id, name: name, rules: thresholdsToString(values_send.rules)
+        id: values_send.id, name: profile_name, rules: thresholdsToString(values_send.rules)
       }, {
         onSuccess: () => {
           backendChangeMutation.mutate({
             apiid: values_send.id,
-            name: name,
+            name: profile_name,
             groupname: formValues.groupname,
             rules: values_send.rules
           }, {
@@ -1334,13 +1311,16 @@ export const ThresholdsProfilesChange = (props) => {
     })
   }
 
-  const loading = loadingThresholdsProfile || loadingUserDetails || loadingAllMetrics || loadingMetricProfiles || loadingTopologyEndpoints
+  const loading = loadingBackendTP || loadingWebApiTP || loadingUserDetails || loadingAllMetrics || loadingMetricProfiles || loadingTopologyEndpoints
 
   if (loading)
     return (<LoadingAnim/>);
 
-  else if (errorThresholdsProfile)
-    return (<ErrorComponent error={errorThresholdsProfile}/>);
+  else if (errorBackendTP)
+    return (<ErrorComponent error={errorBackendTP}/>);
+
+  else if (errorWebApiTP)
+    return (<ErrorComponent error={webApiTP} />)
 
   else if (errorAllMetrics)
     return (<ErrorComponent error={errorAllMetrics}/>);
@@ -1351,12 +1331,12 @@ export const ThresholdsProfilesChange = (props) => {
   else if (errorTopologyEndpoints)
     return ( <ErrorComponent error={errorTopologyEndpoints} /> )
 
-  else if (!loading) {
+  else if ((addview || (backendTP && webApiTP)) && (publicView || (allMetrics && topologyEndpoints && metricProfiles))) {
     let write_perm = userDetails ?
       addview ?
         userDetails.is_superuser || userDetails.groups.thresholdsprofiles.length > 0
       :
-        userDetails.is_superuser || userDetails.groups.thresholdsprofiles.indexOf(thresholdsProfile.groupname) >= 0
+        userDetails.is_superuser || userDetails.groups.thresholdsprofiles.indexOf(backendTP.groupname) >= 0
     :
       false;
 
@@ -1390,10 +1370,10 @@ export const ThresholdsProfilesChange = (props) => {
       >
         <Formik
           initialValues = {{
-            id: thresholdsProfile ? thresholdsProfile.apiid : '',
-            name: thresholdsProfile ? thresholdsProfile.name : '',
-            groupname: thresholdsProfile ? thresholdsProfile.groupname : '',
-            rules: thresholdsProfile ? thresholdsProfile.rules : []
+            id: webApiTP ? webApiTP.id : '',
+            name: webApiTP ? webApiTP.name : '',
+            groupname: backendTP ? backendTP.groupname : '',
+            rules: webApiTP ? thresholdsToValues(webApiTP.rules) : []
           }}
           validationSchema={ThresholdsSchema}
           onSubmit = {(values) => onSubmitHandle(values)}
