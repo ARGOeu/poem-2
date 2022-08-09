@@ -312,23 +312,7 @@ export const UsersList = (props) => {
       accessor: 'username',
       column_width: '26%',
       Cell: e =>
-        <Link
-          to={`/ui/administration/users/${e.value}`}
-          onMouseEnter={ async () => {
-            await queryClient.prefetchQuery(
-              ['user', e.value], () => fetchUser(e.value)
-            );
-            await queryClient.prefetchQuery(
-              ['userprofile', e.value], () => fetchUserProfile(isTenantSchema, e.value)
-            );
-            await queryClient.prefetchQuery(
-              ['usergroups', e.value], () => fetchGroupsForUser(isTenantSchema, e.value)
-            );
-            await queryClient.prefetchQuery(
-              'usergroups', () => fetchUserGroups(isTenantSchema)
-            );
-          }}
-        >
+        <Link to={`/ui/administration/users/${e.value}`}>
           {e.value}
         </Link>
     },
