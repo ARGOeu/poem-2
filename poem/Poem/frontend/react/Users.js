@@ -634,7 +634,7 @@ export const UserChange = (props) => {
   else if (statusUserDetails === 'error')
     return (<ErrorComponent error={errorUserDetails}/>);
 
-  else {
+  else if (addview || (user) && (!isTenantSchema || allGroups && (addview || (userProfile && userGroups)))) {
     if (isTenantSchema) {
       return (
         <BaseArgoView
@@ -931,8 +931,9 @@ export const UserChange = (props) => {
         </React.Fragment>
       )
     }
-  }
-};
+  } else
+    return null
+}
 
 
 export const ChangePassword = (props) => {
@@ -1013,15 +1014,13 @@ export const ChangePassword = (props) => {
   if (loading)
     return (<LoadingAnim/>);
 
-  else if (!loading && userDetails) {
-    let write_perm = userDetails.username === name;
-
+  else if (userDetails) {
     return (
       <BaseArgoView
         resourcename='password'
         location={location}
         history={false}
-        submitperm={write_perm}
+        submitperm={userDetails.username === name}
         modal={true}
         state={{areYouSureModal, modalTitle, modalMsg, 'modalFunc': doChange}}
         toggle={toggleAreYouSure}
@@ -1067,7 +1066,7 @@ export const ChangePassword = (props) => {
                 </Col>
               </Row>
               {
-                write_perm &&
+                (userDetails.username === name) &&
                   <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
                     <div></div>
                     <Button
