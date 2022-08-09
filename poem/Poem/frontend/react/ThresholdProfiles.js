@@ -989,15 +989,6 @@ export const ThresholdsProfilesList = (props) => {
   const publicView = props.publicView;
   const webapitoken = props.webapitoken;
   const webapithresholds = props.webapithresholds;
-  const webapimetric = props.webapimetric;
-  const webapireports = props.webapireports;
-
-  const webapi = new WebApi({
-    token: webapitoken,
-    thresholdsProfiles: webapithresholds,
-    metricProfiles: webapimetric,
-    reportsConfigurations: webapireports
-  })
 
   const queryClient = useQueryClient();
 
@@ -1025,25 +1016,6 @@ export const ThresholdsProfilesList = (props) => {
       accessor: e =>
         <Link
           to={`/ui/${publicView ? 'public_' : ''}thresholdsprofiles/${e.name}`}
-          onMouseEnter={ async () => {
-            await queryClient.prefetchQuery(
-              [`${publicView ? 'public_' : ''}thresholdsprofile`, e.name],
-              () => fetchThresholdsProfile({
-                publicView: publicView,
-                name: e.name,
-                webapi: webapi
-              })
-            );
-            await queryClient.prefetchQuery(
-              'metricsall', () => fetchAllMetrics(publicView)
-            )
-            await queryClient.prefetchQuery(
-              ['metricprofile', 'webapi'], () => fetchMetricProfiles(webapi)
-            )
-            await queryClient.prefetchQuery(
-              'topologyendpoints', () => fetchTopologyEndpoints(webapi)
-            )
-          } }
         >
           {e.name}
         </Link>,

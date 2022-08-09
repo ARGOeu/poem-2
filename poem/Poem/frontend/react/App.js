@@ -243,7 +243,6 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         {...props}
         webapithresholds={webApiThresholds}
         webapimetric={webApiMetric}
-        webapireports={webApiReports}
         webapitoken={token}
       /> }
     />
@@ -443,7 +442,6 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         {...props}
         webapithresholds={webApiThresholds}
         webapimetric={webApiMetric}
-        webapireports={webApiReports}
         webapitoken={token}
       /> }
     />
@@ -1015,7 +1013,6 @@ const App = () => {
                       publicView={true}
                       webapithresholds={webApiThresholds}
                       webapimetric={webApiMetric}
-                      webapireports={webApiReports}
                       webapitoken={token}
                     />
                   </PublicPage>
