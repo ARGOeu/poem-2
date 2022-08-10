@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Backend } from './DataManager';
+import { Backend, WebApi } from './DataManager';
 import { Link } from 'react-router-dom';
 import {
   LoadingAnim,
@@ -51,7 +51,8 @@ import {
   fetchUserDetails,
   fetchUserGroups,
   fetchMetrics,
-  fetchMetricTypes
+  fetchMetricTypes,
+  fetchMetricProfiles
 } from './QueryFunctions';
 
 
@@ -320,6 +321,13 @@ export const ListOfMetrics = (props) => {
   const [modalMsg, setModalMsg] = useState(undefined);
 
   const backend = new Backend();
+  const webapi = type === "metrics" ?
+    new WebApi({
+      token: props.webapitoken,
+      metricProfiles: props.webapimetric
+    })
+  :
+    undefined
 
   const queryClient = useQueryClient();
 
@@ -350,6 +358,12 @@ export const ListOfMetrics = (props) => {
     type === 'metrics' ? [`${publicView ? 'public_' : ''}metric`, 'usergroups'] : `${publicView ? 'public_' : ''}ostags`,
     () =>  type === 'metrics' ? fetchUserGroups(isTenantSchema, publicView, 'metrics') : fetchOStags(publicView)
   );
+
+  const { data: metricProfiles, error: errorMP, isLoading: loadingMP } = useQuery(
+    [`${publicView ? "public_" : ""}metricprofile`, "webapi"],
+    () => fetchMetricProfiles(webapi),
+    { enabled: type === "metrics" && (publicView || !!userDetails) }
+  )
 
   function toggleAreYouSure() {
     setAreYouSureModal(!areYouSureModal);
@@ -434,6 +448,21 @@ export const ListOfMetrics = (props) => {
     })
   }
 
+  function MP4metric(metric) {
+    let mps = []
+
+    metricProfiles.forEach(profile => {
+      let metrics = []
+      profile.services.forEach(service => {
+        service.metrics.forEach(metric => metrics.push(metric))
+      })
+      if (metrics.includes(metric))
+        mps.push(profile.name)
+    })
+
+    return mps
+  }
+
   let metriclink = `/ui/${(type === 'metrictemplates' && isTenantSchema && !publicView) ? 'administration/' : ''}${publicView ? 'public_' : ''}${type}/`;
 
   const memoized_columns = React.useMemo(() => {
@@ -467,7 +496,7 @@ export const ListOfMetrics = (props) => {
       {
         Header: 'Name',
         accessor: 'name',
-        column_width: '39%',
+        column_width: `${type === "metrics" ? "35%" : "39%"}`,
         Cell: row =>
           <Link to={`${metriclink}${row.value}`} >
             {row.value}
@@ -495,7 +524,7 @@ export const ListOfMetrics = (props) => {
       },
       {
         Header: 'Type',
-        column_width: `${isTenantSchema ? '12%' : '18%'}`,
+        column_width: `${isTenantSchema ? type === "metrics" ? "10%" : "12%" : "18%"}`,
         accessor: 'mtype',
         Cell: row =>
           <div style={{textAlign: 'center'}}>
@@ -506,7 +535,7 @@ export const ListOfMetrics = (props) => {
       },
       {
         Header: 'Tag',
-        column_width: `${isTenantSchema ? '12%' : '18%'}`,
+        column_width: `${isTenantSchema ?  type === "metrics" ? "10%" : "12%" : "18%"}`,
         accessor: 'tags',
         Cell: row =>
           <div style={{textAlign: 'center'}}>
@@ -585,7 +614,7 @@ export const ListOfMetrics = (props) => {
         0,
         {
           Header: 'Group',
-          column_width: '12%',
+          column_width: '10%',
           accessor: 'group',
           Cell: row =>
             <div style={{textAlign: 'center'}}>
@@ -595,6 +624,31 @@ export const ListOfMetrics = (props) => {
           Filter: SelectColumnFilter
         }
       );
+      columns.splice(
+        6,
+        0,
+        {
+          Header: "Metric profile",
+          column_width: "10%",
+          accessor: "profiles",
+          Cell: row =>
+            <div style={{textAlign: "center"}}>
+              {
+                row.value.length === 0 ?
+                  <Badge color="dark">none</Badge>
+
+                :
+                  row.value.map((profile, i) =>
+                    <Badge className="me-1" key={i} color="info">
+                      {profile}
+                    </Badge>
+                  )
+              }
+            </div>,
+          filterList: metricProfiles ? metricProfiles.map(profile => profile.name) : [],
+          Filter: SelectColumnFilter
+        }
+      )
     } else {
       if (isTenantSchema) {
         columns.splice(
@@ -602,7 +656,7 @@ export const ListOfMetrics = (props) => {
           0,
           {
             Header: 'OS',
-            column_width: '12%',
+            column_width: `${type === "metrics" ? "10%" : "12%"}`,
             accessor: 'ostag',
             Cell: row =>
               <div style={{textAlign: 'center'}}>
@@ -616,9 +670,13 @@ export const ListOfMetrics = (props) => {
     }
 
     return columns;
-  }, [isTenantSchema, OSGroups, tags, types, metriclink, publicView, selectAll, selected, type, userDetails, disabled])
+  }, type === "metrics" ?
+      [isTenantSchema, OSGroups, tags, types, metriclink, publicView, selectAll, selected, type, userDetails, disabled, metricProfiles]
+    :
+      [isTenantSchema, OSGroups, tags, types, metriclink, publicView, selectAll, selected, type, userDetails, disabled]
+  )
 
-  if (metricsLoading || typesLoading || tagsLoading || OSGroupsLoading || userDetailsLoading)
+  if (metricsLoading || typesLoading || tagsLoading || OSGroupsLoading || userDetailsLoading || loadingMP)
     return (<LoadingAnim />);
 
   else if (metricsError)
@@ -633,12 +691,16 @@ export const ListOfMetrics = (props) => {
   else if (OSGroupsError)
     return (<ErrorComponent error={OSGroupsError.message}/>);
 
+  else if (errorMP)
+    return ( <ErrorComponent error={errorMP} /> )
+
   else if (userDetailsError)
     return (<ErrorComponent error={userDetailsError.message}/>);
 
-  else if (metrics && types && tags && OSGroups) {
+  else if (metrics && types && tags && OSGroups && (type === "metrictemplates" || metricProfiles)) {
     if (type === 'metrics') {
       OSGroups = OSGroups['metrics'];
+      const data = metrics.map(metric => Object.assign(metric, { profiles: MP4metric(metric.name) }))
       return (
         <BaseArgoView
           resourcename='metric'
@@ -647,7 +709,7 @@ export const ListOfMetrics = (props) => {
           addnew={false}
         >
           <BaseArgoTable
-            data={metrics}
+            data={data}
             columns={memoized_columns}
             page_size={50}
             resourcename='metrics'

@@ -4,7 +4,7 @@ import { createMemoryHistory } from 'history';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { Route, Router } from 'react-router-dom';
 import { CompareMetrics, ListOfMetrics, MetricChange, MetricVersionDetails } from '../Metrics';
-import { Backend } from '../DataManager';
+import { Backend, WebApi } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
 import { QueryClientProvider, QueryClient, setLogger } from 'react-query';
 import  selectEvent from 'react-select-event';
@@ -277,12 +277,45 @@ const mockMetricTags = [
   }
 ]
 
+const mockMetricProfiles = [
+  {
+    id: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+    date: "2022-08-10",
+    name: "ARGO_MON",
+    description: "Central ARGO-MON profile",
+    services: [
+      {
+        service: "argo.ams",
+        metrics: [
+          "argo.AMS-Check",
+          "argo.AMS-Publisher"
+        ]
+      }
+    ]
+  },
+  {
+    id: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+    date: "2022-08-10",
+    name: "TEST_PROFILE",
+    description: "Profile for testing",
+    services: [
+      {
+        service: "argo.test",
+        metrics: [
+          "argo.AMS-Check"
+        ]
+      }
+    ]
+  }
+]
+
 const mockChangeObject = jest.fn();
 const mockDeleteObject = jest.fn();
 
 jest.mock('../DataManager', () => {
   return {
-    Backend: jest.fn()
+    Backend: jest.fn(),
+    WebApi: jest.fn()
   }
 })
 
@@ -309,7 +342,15 @@ function renderListView(publicView=false) {
         <QueryClientProvider client={queryClient}>
           <Router history={history}>
             <Route
-              render={props => <ListOfMetrics {...props} type='metrics' isTenantSchema={true} publicView={true} />}
+              render={
+                props => <ListOfMetrics
+                  {...props}
+                  type='metrics'
+                  isTenantSchema={true}
+                  publicView={true}
+                  webapimetric='https://mock.metrics.com'
+                  webapitoken='token'
+                />}
             />
           </Router>
         </QueryClientProvider>
@@ -320,7 +361,17 @@ function renderListView(publicView=false) {
       ...render(
         <QueryClientProvider client={queryClient}>
           <Router history={history}>
-            <Route render={props => <ListOfMetrics {...props} type='metrics' isTenantSchema={true} />} />
+            <Route
+              render={
+                props => <ListOfMetrics
+                  {...props}
+                  type='metrics'
+                  isTenantSchema={true}
+                  webapimetric='https://mock.metrics.com'
+                  webapitoken='token'
+                />
+              }
+            />
           </Router>
         </QueryClientProvider>
       )
@@ -432,6 +483,11 @@ describe('Tests for metrics listview', () => {
         isActiveSession: () => Promise.resolve(mockActiveSession)
       }
     })
+    WebApi.mockImplementation(() => {
+      return {
+        fetchMetricProfiles: () => Promise.resolve(mockMetricProfiles)
+      }
+    })
   })
 
   test('Test that metrics listview renders properly', async () => {
@@ -443,27 +499,30 @@ describe('Tests for metrics listview', () => {
       expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric for details')
     })
     // double column header length because search fields are also th
-    expect(screen.getAllByRole('columnheader')).toHaveLength(12);
+    expect(screen.getAllByRole('columnheader')).toHaveLength(14);
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /name/i }).textContent).toBe('Name');
     expect(screen.getByRole('columnheader', { name: /probe/i }).textContent).toBe('Probe version');
     expect(screen.getByRole('columnheader', { name: /type/i }).textContent).toBe('Type');
     expect(screen.getByRole('columnheader', { name: /group/i }).textContent).toBe('Group');
     expect(screen.getByRole('columnheader', { name: /tag/i }).textContent).toBe('Tag');
+    expect(screen.getByRole('columnheader', { name: /profile/i }).textContent).toBe('Metric profile');
     expect(screen.getAllByPlaceholderText('Search')).toHaveLength(2);
-    expect(screen.getAllByRole('columnheader', { name: 'Show all' })).toHaveLength(3);
-    expect(screen.getAllByRole('option', { name: 'Show all' })).toHaveLength(3);
+    expect(screen.getAllByRole('columnheader', { name: 'Show all' })).toHaveLength(4);
+    expect(screen.getAllByRole('option', { name: 'Show all' })).toHaveLength(4);
     expect(screen.getByRole('option', { name: /active/i })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: /passive/i })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: /egi/i })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: /argotest/i })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: /internal/i })).toBeInTheDocument();
     expect(screen.getAllByRole('option', { name: /test_tag/i })).toHaveLength(2);
+    expect(screen.getByRole("option", { name: /argo_mon/i })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: /test_profile/i })).toBeInTheDocument()
     expect(screen.getAllByRole('row')).toHaveLength(52);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(47);
-    expect(screen.getByRole('row', { name: /ams-check/i }).textContent).toBe('1argo.AMS-Checkams-probe (0.1.12)ActiveEGItest_tag1test_tag2')
-    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('2argo.AMS-Publisherams-publisher-probe (0.1.12)ActiveEGIinternal')
-    expect(screen.getByRole('row', { name: /apel/i }).textContent).toBe('3org.apel.APEL-PubPassiveARGOTESTnone')
+    expect(screen.getByRole('row', { name: /ams-check/i }).textContent).toBe('1argo.AMS-Checkams-probe (0.1.12)ActiveEGItest_tag1test_tag2ARGO_MONTEST_PROFILE')
+    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('2argo.AMS-Publisherams-publisher-probe (0.1.12)ActiveEGIinternalARGO_MON')
+    expect(screen.getByRole('row', { name: /apel/i }).textContent).toBe('3org.apel.APEL-PubPassiveARGOTESTnonenone')
     expect(screen.getByRole('link', { name: /argo.ams-check/i }).closest('a')).toHaveAttribute('href', '/ui/metrics/argo.AMS-Check');
     expect(screen.getByRole('link', { name: /ams-probe/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-probe/history/0.1.12')
     expect(screen.getByRole('link', { name: /argo.ams-publisher/i }).closest('a')).toHaveAttribute('href', '/ui/metrics/argo.AMS-Publisher');
@@ -483,8 +542,8 @@ describe('Tests for metrics listview', () => {
     fireEvent.change(screen.getAllByPlaceholderText('Search')[0], { target: { value: 'argo' } });
     expect(screen.getAllByRole('row')).toHaveLength(52);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(48);
-    expect(screen.getByRole('row', { name: /ams-check/i }).textContent).toBe('1argo.AMS-Checkams-probe (0.1.12)ActiveEGItest_tag1test_tag2')
-    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('2argo.AMS-Publisherams-publisher-probe (0.1.12)ActiveEGIinternal')
+    expect(screen.getByRole('row', { name: /ams-check/i }).textContent).toBe('1argo.AMS-Checkams-probe (0.1.12)ActiveEGItest_tag1test_tag2ARGO_MONTEST_PROFILE')
+    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('2argo.AMS-Publisherams-publisher-probe (0.1.12)ActiveEGIinternalARGO_MON')
     expect(screen.getByRole('link', { name: /argo.ams-check/i }).closest('a')).toHaveAttribute('href', '/ui/metrics/argo.AMS-Check');
     expect(screen.getByRole('link', { name: /ams-probe/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-probe/history/0.1.12')
     expect(screen.getByRole('link', { name: /argo.ams-publisher/i }).closest('a')).toHaveAttribute('href', '/ui/metrics/argo.AMS-Publisher');
@@ -493,7 +552,7 @@ describe('Tests for metrics listview', () => {
     fireEvent.change(screen.getAllByDisplayValue('Show all')[2], { target: { value: 'internal' } })
     expect(screen.getAllByRole('row')).toHaveLength(52);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(49);
-    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('1argo.AMS-Publisherams-publisher-probe (0.1.12)ActiveEGIinternal')
+    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('1argo.AMS-Publisherams-publisher-probe (0.1.12)ActiveEGIinternalARGO_MON')
     expect(screen.getByRole('link', { name: /argo.ams-publisher/i }).closest('a')).toHaveAttribute('href', '/ui/metrics/argo.AMS-Publisher');
     expect(screen.getByRole('link', { name: /ams-publisher-probe/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-publisher-probe/history/0.1.12')
   })
@@ -505,27 +564,30 @@ describe('Tests for metrics listview', () => {
       expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric for details')
     })
     // double column header length because search fields are also th
-    expect(screen.getAllByRole('columnheader')).toHaveLength(12);
+    expect(screen.getAllByRole('columnheader')).toHaveLength(14);
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /name/i }).textContent).toBe('Name');
     expect(screen.getByRole('columnheader', { name: /probe/i }).textContent).toBe('Probe version');
     expect(screen.getByRole('columnheader', { name: /type/i }).textContent).toBe('Type');
     expect(screen.getByRole('columnheader', { name: /group/i }).textContent).toBe('Group');
     expect(screen.getByRole('columnheader', { name: /tag/i }).textContent).toBe('Tag');
+    expect(screen.getByRole('columnheader', { name: /profile/i }).textContent).toBe('Metric profile');
     expect(screen.getAllByPlaceholderText('Search')).toHaveLength(2);
-    expect(screen.getAllByRole('columnheader', { name: 'Show all' })).toHaveLength(3);
-    expect(screen.getAllByRole('option', { name: 'Show all' })).toHaveLength(3);
+    expect(screen.getAllByRole('columnheader', { name: 'Show all' })).toHaveLength(4);
+    expect(screen.getAllByRole('option', { name: 'Show all' })).toHaveLength(4);
     expect(screen.getByRole('option', { name: /active/i })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: /passive/i })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: /egi/i })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: /argotest/i })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: /internal/i })).toBeInTheDocument();
     expect(screen.getAllByRole('option', { name: /test_tag/i })).toHaveLength(2);
+    expect(screen.getByRole("option", { name: "ARGO_MON" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "TEST_PROFILE" })).toBeInTheDocument()
     expect(screen.getAllByRole('row')).toHaveLength(52);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(47);
-    expect(screen.getByRole('row', { name: /ams-check/i }).textContent).toBe('1argo.AMS-Checkams-probe (0.1.12)ActiveEGItest_tag1test_tag2')
-    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('2argo.AMS-Publisherams-publisher-probe (0.1.12)ActiveEGIinternal')
-    expect(screen.getByRole('row', { name: /apel/i }).textContent).toBe('3org.apel.APEL-PubPassiveARGOTESTnone')
+    expect(screen.getByRole('row', { name: /ams-check/i }).textContent).toBe('1argo.AMS-Checkams-probe (0.1.12)ActiveEGItest_tag1test_tag2ARGO_MONTEST_PROFILE')
+    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('2argo.AMS-Publisherams-publisher-probe (0.1.12)ActiveEGIinternalARGO_MON')
+    expect(screen.getByRole('row', { name: /apel/i }).textContent).toBe('3org.apel.APEL-PubPassiveARGOTESTnonenone')
     expect(screen.getByRole('link', { name: /argo.ams-check/i }).closest('a')).toHaveAttribute('href', '/ui/public_metrics/argo.AMS-Check');
     expect(screen.getByRole('link', { name: /ams-probe/i }).closest('a')).toHaveAttribute('href', '/ui/public_probes/ams-probe/history/0.1.12')
     expect(screen.getByRole('link', { name: /argo.ams-publisher/i }).closest('a')).toHaveAttribute('href', '/ui/public_metrics/argo.AMS-Publisher');
@@ -545,8 +607,8 @@ describe('Tests for metrics listview', () => {
     fireEvent.change(screen.getAllByPlaceholderText('Search')[0], { target: { value: 'argo' } });
     expect(screen.getAllByRole('row')).toHaveLength(52);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(48);
-    expect(screen.getByRole('row', { name: /ams-check/i }).textContent).toBe('1argo.AMS-Checkams-probe (0.1.12)ActiveEGItest_tag1test_tag2')
-    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('2argo.AMS-Publisherams-publisher-probe (0.1.12)ActiveEGIinternal')
+    expect(screen.getByRole('row', { name: /ams-check/i }).textContent).toBe('1argo.AMS-Checkams-probe (0.1.12)ActiveEGItest_tag1test_tag2ARGO_MONTEST_PROFILE')
+    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('2argo.AMS-Publisherams-publisher-probe (0.1.12)ActiveEGIinternalARGO_MON')
     expect(screen.getByRole('link', { name: /argo.ams-check/i }).closest('a')).toHaveAttribute('href', '/ui/public_metrics/argo.AMS-Check');
     expect(screen.getByRole('link', { name: /ams-probe/i }).closest('a')).toHaveAttribute('href', '/ui/public_probes/ams-probe/history/0.1.12')
     expect(screen.getByRole('link', { name: /argo.ams-publisher/i }).closest('a')).toHaveAttribute('href', '/ui/public_metrics/argo.AMS-Publisher');
@@ -555,7 +617,7 @@ describe('Tests for metrics listview', () => {
     fireEvent.change(screen.getAllByDisplayValue('Show all')[2], { target: { value: 'internal' } })
     expect(screen.getAllByRole('row')).toHaveLength(52);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(49);
-    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('1argo.AMS-Publisherams-publisher-probe (0.1.12)ActiveEGIinternal')
+    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('1argo.AMS-Publisherams-publisher-probe (0.1.12)ActiveEGIinternalARGO_MON')
     expect(screen.getByRole('link', { name: /argo.ams-publisher/i }).closest('a')).toHaveAttribute('href', '/ui/public_metrics/argo.AMS-Publisher');
     expect(screen.getByRole('link', { name: /ams-publisher-probe/i }).closest('a')).toHaveAttribute('href', '/ui/public_probes/ams-publisher-probe/history/0.1.12')
   })
@@ -581,27 +643,36 @@ describe('Tests for metrics listview', () => {
       }
     })
 
+    WebApi.mockImplementation(() => {
+      return {
+        fetchMetricProfiles: () => Promise.resolve(mockMetricProfiles)
+      }
+    })
+
     renderListView();
 
     await waitFor(() => {
       expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric for details')
     })
-    expect(screen.getAllByRole('columnheader')).toHaveLength(12);
+    expect(screen.getAllByRole('columnheader')).toHaveLength(14);
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /name/i }).textContent).toBe('Name');
     expect(screen.getByRole('columnheader', { name: /probe/i }).textContent).toBe('Probe version');
     expect(screen.getByRole('columnheader', { name: /type/i }).textContent).toBe('Type');
     expect(screen.getByRole('columnheader', { name: /group/i }).textContent).toBe('Group');
     expect(screen.getByRole('columnheader', { name: /tag/i }).textContent).toBe('Tag');
+    expect(screen.getByRole('columnheader', { name: /profile/i }).textContent).toBe('Metric profile')
     expect(screen.getAllByPlaceholderText('Search')).toHaveLength(2);
-    expect(screen.getAllByRole('columnheader', { name: 'Show all' })).toHaveLength(3);
-    expect(screen.getAllByRole('option', { name: 'Show all' })).toHaveLength(3);
+    expect(screen.getAllByRole('columnheader', { name: 'Show all' })).toHaveLength(4);
+    expect(screen.getAllByRole('option', { name: 'Show all' })).toHaveLength(4);
     expect(screen.getByRole('option', { name: /active/i })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: /passive/i })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: /egi/i })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: /argotest/i })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: /internal/i })).toBeInTheDocument();
     expect(screen.getAllByRole('option', { name: /test_tag/i })).toHaveLength(2);
+    expect(screen.getByRole("option", { name: "ARGO_MON" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "TEST_PROFILE" })).toBeInTheDocument()
     expect(screen.getAllByRole('row')).toHaveLength(52);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(49);
     expect(screen.getByRole('row', { name: /no/i }).textContent).toBe('No metrics');
