@@ -645,7 +645,7 @@ export const ListOfMetrics = (props) => {
                   )
               }
             </div>,
-          filterList: metricProfiles ? metricProfiles.map(profile => profile.name) : [],
+          filterList: metricProfiles ? metricProfiles.map(profile => profile.name).sort() : [],
           Filter: SelectColumnFilter
         }
       )
