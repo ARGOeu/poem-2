@@ -53,43 +53,49 @@ class ListMetric(APIView):
 
         results = []
         for metric in metrics:
-            config = two_value_inline(metric.config)
-            parent = one_value_inline(metric.parent)
-            probeexecutable = one_value_inline(metric.probeexecutable)
-            attribute = two_value_inline(metric.attribute)
-            dependancy = two_value_inline(metric.dependancy)
-            flags = two_value_inline(metric.flags)
-            files = two_value_inline(metric.files)
-            parameter = two_value_inline(metric.parameter)
-            fileparameter = two_value_inline(metric.fileparameter)
+            if metric.probeversion:
+                metric_probe = metric.probeversion.split(" (")
+                probe_name = metric_probe[0]
+                probe_version = metric_probe[1][:-1]
 
-            if metric.probekey:
-                probeversion = metric.probekey.__str__()
+                mt = admin_models.MetricTemplateHistory.objects.get(
+                    name=metric.name, probekey__name=probe_name,
+                    probekey__package__version=probe_version
+                )
+
             else:
-                probeversion = ''
+                mt = admin_models.MetricTemplateHistory.objects.get(
+                    name=metric.name
+                )
+
+            config = two_value_inline(metric.config)
+            parent = one_value_inline(mt.parent)
+            probeexecutable = one_value_inline(mt.probeexecutable)
+            attribute = two_value_inline(mt.attribute)
+            dependency = two_value_inline(mt.dependency)
+            flags = two_value_inline(mt.flags)
+            files = two_value_inline(mt.files)
+            parameter = two_value_inline(mt.parameter)
+            fileparameter = two_value_inline(mt.fileparameter)
 
             if metric.group:
                 group = metric.group.name
             else:
                 group = ''
 
-            mt = admin_models.MetricTemplateHistory.objects.get(
-                name=metric.name, probekey=metric.probekey
-            )
-
             results.append(dict(
                 id=metric.id,
                 name=metric.name,
-                mtype=metric.mtype.name,
+                mtype=mt.mtype.name,
                 tags=[tag.name for tag in mt.tags.all()],
-                probeversion=probeversion,
+                probeversion=metric.probeversion if metric.probeversion else "",
                 group=group,
-                description=metric.description,
+                description=mt.description,
                 parent=parent,
                 probeexecutable=probeexecutable,
                 config=config,
                 attribute=attribute,
-                dependancy=dependancy,
+                dependancy=dependency,
                 flags=flags,
                 files=files,
                 parameter=parameter,
@@ -126,75 +132,43 @@ class ListMetric(APIView):
                 )
 
             else:
-                if request.data['parent']:
-                    parent = json.dumps([request.data['parent']])
-                else:
-                    parent = ''
-
-                if request.data['probeexecutable']:
-                    probeexecutable = json.dumps(
-                        [request.data['probeexecutable']]
-                    )
-                else:
-                    probeexecutable = ''
-
-                if request.data['description']:
-                    description = request.data['description']
-                else:
-                    description = ''
-
                 metric_group = poem_models.GroupOfMetrics.objects.get(
                     name=request.data['group']
-                )
-
-                metric_type = poem_models.MetricType.objects.get(
-                    name=request.data['mtype']
                 )
 
                 user_perm = request.user.is_superuser or \
                     metric_group in userprofile.groupsofmetrics.all()
 
                 if user_perm:
-                    metric.name = request.data['name']
-                    metric.mtype = metric_type
                     metric.group = poem_models.GroupOfMetrics.objects.get(
                         name=request.data['group']
                     )
-                    metric.description = description
-                    metric.parent = parent
-                    metric.flags = inline_metric_for_db(request.data['flags'])
 
                     if request.data['mtype'] == 'Active':
-                        metric.probekey = admin_models.ProbeHistory.objects.get(
-                            name=request.data['probeversion'].split(' ')[0],
-                            package__version=request.data[
-                                                 'probeversion'
-                                             ].split(' ')[1][1:-1]
-                        )
-                        metric.probeexecutable = probeexecutable
                         metric.config = inline_metric_for_db(
                             request.data['config']
                         )
-                        metric.attribute = inline_metric_for_db(
-                            request.data['attribute'])
-                        metric.dependancy = inline_metric_for_db(
-                            request.data['dependancy'])
-                        metric.files = inline_metric_for_db(
-                            request.data['files']
-                        )
-                        metric.parameter = inline_metric_for_db(
-                            request.data['parameter'])
-                        metric.fileparameter = inline_metric_for_db(
-                            request.data['fileparameter']
+                        metric.probeversion = request.data["probeversion"]
+
+                        metric_probe = request.data["probeversion"].split(" (")
+                        probe_name = metric_probe[0].strip()
+                        probe_version = metric_probe[1][:-1].strip()
+
+                        mt = admin_models.MetricTemplateHistory.objects.get(
+                            name=metric.name, probekey__name=probe_name,
+                            probekey__package__version=probe_version
                         )
 
-                    metric.save()
-                    mt = admin_models.MetricTemplateHistory.objects.get(
-                        name=metric.name, probekey=metric.probekey
-                    )
+                    else:
+                        mt = admin_models.MetricTemplateHistory.objects.get(
+                            name=metric.name
+                        )
+
                     create_history(
                         metric, request.user.username, tags=mt.tags.all()
                     )
+
+                    metric.save()
 
                     return Response(status=status.HTTP_201_CREATED)
 
@@ -221,12 +195,6 @@ class ListMetric(APIView):
             return error_response(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail='Group of metrics does not exist.'
-            )
-
-        except poem_models.MetricType.DoesNotExist:
-            return error_response(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail='Metric type does not exist.'
             )
 
         except KeyError as e:
