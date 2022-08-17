@@ -306,6 +306,34 @@ export const ProbeVersionLink = ({probeversion, publicView=false}) => (
 )
 
 
+const MPColumnFilter = ({column: { filterValue, setFilter, filterList }}) => {
+  const options = React.useMemo(() => filterList)
+
+  return (
+    <select
+      className="form-control form-select"
+      style={{width: "100%"}}
+      value={filterValue}
+      onChange={e => setFilter(e.target.value || undefined)}
+    >
+      <option value="">Show all</option>
+      {
+        options.map((option, i) => (
+          <option key={i} value={option.value}>{option.label}</option>
+        ))
+      }
+    </select>
+  )
+}
+
+
+const sortMP = (a, b) => {
+  if (a.label.toLowerCase() < b.label.toLowerCase()) return -1;
+  if (a.label.toLowerCase() > b.label.toLowerCase()) return 1;
+  if (a.label.toLowerCase() === b.label.toLowerCase()) return 0;
+}
+
+
 export const ListOfMetrics = (props) => {
   const location = props.location;
   const type = props.type;
@@ -354,9 +382,15 @@ export const ListOfMetrics = (props) => {
     `${publicView ? 'public_' : ''}metrictags`, () => fetchMetricTags(publicView)
   );
 
-  var { data: OSGroups, error: OSGroupsError, isLoading: OSGroupsLoading } = useQuery(
+  const { data: OSGroups, error: OSGroupsError, isLoading: OSGroupsLoading } = useQuery(
     type === 'metrics' ? [`${publicView ? 'public_' : ''}metric`, 'usergroups'] : `${publicView ? 'public_' : ''}ostags`,
-    () =>  type === 'metrics' ? fetchUserGroups(isTenantSchema, publicView, 'metrics') : fetchOStags(publicView)
+    () =>  type === 'metrics' ? fetchUserGroups(isTenantSchema, publicView, 'metrics') : fetchOStags(publicView),
+    {
+      onSuccess: (data) => {
+        if (type === "metrics")
+          return data["metrics"]
+      }
+    }
   );
 
   const { data: metricProfiles, error: errorMP, isLoading: loadingMP } = useQuery(
@@ -461,6 +495,20 @@ export const ListOfMetrics = (props) => {
     })
 
     return mps
+  }
+
+  function metric4MP(profile) {
+    let metrics = []
+
+    metricProfiles.forEach(mprofile => {
+      if (mprofile.name == profile) {
+        mprofile.services.forEach(service => {
+          service.metrics.forEach(metric => metrics.push(metric))
+        })
+      }
+    })
+
+    return metrics
   }
 
   let metriclink = `/ui/${(type === 'metrictemplates' && isTenantSchema && !publicView) ? 'administration/' : ''}${publicView ? 'public_' : ''}${type}/`;
@@ -631,25 +679,34 @@ export const ListOfMetrics = (props) => {
           Header: "Metric profile",
           column_width: "10%",
           accessor: "profiles",
-          Cell: row =>
-            <div style={{textAlign: "center"}}>
-              {
-                row.value.length === 0 ?
-                  <Badge color="dark">none</Badge>
+          Cell: row => {
+            let original = row.cell.row.original
+            let mps = MP4metric(original.name)
+            return (
+              <div style={{textAlign: "center"}}>
+                {
+                  mps.length === 0 ?
+                    <Badge color="dark">none</Badge>
 
-                :
-                  row.value.map((profile, i) =>
-                    <Badge className="me-1" key={i} color="info">
-                      {profile}
-                    </Badge>
-                  )
-              }
-            </div>,
-          filterList: metricProfiles ? metricProfiles.map(profile => profile.name).sort() : [],
-          filterMethod: (filter, row) => {
-            return row[filter.id].includes(filter.value)
+                  :
+                    mps.map((profile, i) =>
+                      <Badge className="me-1" key={i} color="info">
+                        {profile}
+                      </Badge>
+                    )
+                }
+              </div>
+            )
           },
-          Filter: SelectColumnFilter
+          filterList: metricProfiles ? metricProfiles.map(profile => Object({label: profile.name, value: metric4MP(profile.name)})).sort(sortMP) : [Object({label: "", value: ""})],
+          // id needs to be declared, even though it's not used; filter doesn't work otherwise
+          filter: (rows, id, filterValue) => {
+            return rows.filter(row => {
+              const rowValue = row.values.name
+              return filterValue.includes(rowValue)
+            })
+          },
+          Filter: MPColumnFilter
         }
       )
     } else {
@@ -702,8 +759,6 @@ export const ListOfMetrics = (props) => {
 
   else if (metrics && types && tags && OSGroups && (type === "metrictemplates" || metricProfiles)) {
     if (type === 'metrics') {
-      OSGroups = OSGroups['metrics'];
-      const data = metrics.map(metric => Object.assign(metric, { profiles: MP4metric(metric.name) }))
       return (
         <BaseArgoView
           resourcename='metric'
@@ -712,7 +767,7 @@ export const ListOfMetrics = (props) => {
           addnew={false}
         >
           <BaseArgoTable
-            data={data}
+            data={metrics}
             columns={memoized_columns}
             page_size={50}
             resourcename='metrics'
