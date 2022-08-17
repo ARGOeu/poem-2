@@ -407,63 +407,72 @@ class UpdateMetricsVersions(APIView):
             updated = []
             profile_warning = []
             for metric in poem_models.Metric.objects.all():
-                if metric.probekey and \
-                        metric.probekey.package.name == package.name:
-                    mts_history = \
-                        admin_models.MetricTemplateHistory.objects.filter(
-                            name=metric.name
-                        )
-                    if len(mts_history) > 0:
-                        mts = admin_models.MetricTemplateHistory.objects.filter(
-                            object_id=mts_history[0].object_id
-                        )
-                        metrictemplate = None
-                        for mt in mts:
-                            if mt.probekey.package == package:
-                                metrictemplate = mt
-                                break
+                if metric.probeversion:
+                    metric_probe = metric.probeversion.split(" (")
+                    probe_name = metric_probe[0].strip()
+                    probe_version = metric_probe[1][:-1].strip()
+                    probekey = admin_models.ProbeHistory.objects.filter(
+                        name=probe_name,
+                        package__version=probe_version
+                    )
+                    if len(probekey) == 1 and \
+                            probekey[0].package.name == package.name:
+                        mts_history = \
+                            admin_models.MetricTemplateHistory.objects.filter(
+                                name=metric.name,
+                                probekey__package__name=package.name
+                            )
+                        if len(mts_history) > 0:
+                            mts = admin_models.MetricTemplateHistory.objects.filter(
+                                object_id=mts_history[0].object_id
+                            )
+                            metrictemplate = None
+                            for mt in mts:
+                                if mt.probekey.package == package:
+                                    metrictemplate = mt
+                                    break
 
-                        if metrictemplate:
-                            if not dry_run:
-                                update_metric_in_schema(
-                                    mt_id=metrictemplate.id,
-                                    name=metric.name,
-                                    pk_id=metric.probekey.id,
-                                    schema=schema,
-                                    update_from_history=True,
-                                    user=user
-                                )
-                            updated.append(metric.name)
-
-                        else:
-                            if dry_run:
-                                for key, value in metrics.items():
-                                    if metric.name == key:
-                                        if len(value) == 1:
-                                            profile_warning.append(
-                                                'Metric {} is part of {} '
-                                                'metric profile.'.format(
-                                                    metric.name, value[0]
-                                                )
-                                            )
-
-                                        else:
-                                            profile_warning.append(
-                                                'Metric {} is part of {} '
-                                                'metric profiles.'.format(
-                                                    metric.name, ', '.join(
-                                                        value
-                                                    )
-                                                )
-                                            )
+                            if metrictemplate:
+                                if not dry_run:
+                                    update_metric_in_schema(
+                                        mt_id=metrictemplate.id,
+                                        name=metric.name,
+                                        pk_id=probekey[0].id,
+                                        schema=schema,
+                                        update_from_history=True,
+                                        user=user
+                                    )
+                                updated.append(metric.name)
 
                             else:
-                                metric.delete()
+                                if dry_run:
+                                    for key, value in metrics.items():
+                                        if metric.name == key:
+                                            if len(value) == 1:
+                                                profile_warning.append(
+                                                    'Metric {} is part of {} '
+                                                    'metric profile.'.format(
+                                                        metric.name, value[0]
+                                                    )
+                                                )
 
-                            deleted_not_in_package.append(metric.name)
+                                            else:
+                                                profile_warning.append(
+                                                    'Metric {} is part of {} '
+                                                    'metric profiles.'.format(
+                                                        metric.name, ', '.join(
+                                                            value
+                                                        )
+                                                    )
+                                                )
 
-                    else:
-                        warning_no_tbh.append(metric.name)
+                                else:
+                                    metric.delete()
+
+                                deleted_not_in_package.append(metric.name)
+
+                        else:
+                            warning_no_tbh.append(metric.name)
 
             msg = dict()
             if deleted_not_in_package:

@@ -11,6 +11,7 @@ from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
 from Poem.users.models import CustUser
 from django.contrib.contenttypes.models import ContentType
+from django.core import serializers
 from django_tenants.test.cases import TenantTestCase
 from django_tenants.test.client import TenantRequestFactory
 from django_tenants.utils import get_public_schema_name, schema_context, \
@@ -2076,12 +2077,10 @@ class UpdateMetricsVersionsTests(TenantTestCase):
                 domain='public', tenant=tenant, is_primary=True
             )
 
-        self.mtype1 = poem_models.MetricType.objects.create(name='Active')
-        self.mtype2 = poem_models.MetricType.objects.create(name='Passive')
-        self.mttype1 = admin_models.MetricTemplateType.objects.create(
+        self.mtype1 = admin_models.MetricTemplateType.objects.create(
             name='Active'
         )
-        self.mttype2 = admin_models.MetricTemplateType.objects.create(
+        self.mtype2 = admin_models.MetricTemplateType.objects.create(
             name='Passive'
         )
 
@@ -2230,7 +2229,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             attribute='["argo.ams_TOKEN --token"]',
             parameter='["--project EGI"]',
             flags='["OBSESS 1"]',
-            mtype=self.mttype1,
+            mtype=self.mtype1,
             probekey=self.probehistory1
         )
         self.mt1.tags.add(self.mtag1, self.mtag2)
@@ -2287,7 +2286,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
                    '"path /usr/libexec/argo-monitoring/probes/argo", '
                    '"retryInterval 1", "timeout 130"]',
             flags='["NOHOSTNAME 1"]',
-            mtype=self.mttype1,
+            mtype=self.mtype1,
             probekey=self.probehistory3
         )
         mt2.tags.add(self.mtag2)
@@ -2338,7 +2337,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         mt3 = admin_models.MetricTemplate.objects.create(
             name='org.apel.APEL-Pub',
             flags='["OBSESS 1", "PASSIVE 1"]',
-            mtype=self.mttype2
+            mtype=self.mtype2
         )
 
         admin_models.MetricTemplateHistory.objects.create(
@@ -2362,51 +2361,33 @@ class UpdateMetricsVersionsTests(TenantTestCase):
 
         metric1 = poem_models.Metric.objects.create(
             name='argo.AMS-Check',
-            description='Description of argo.AMS-Check.',
-            probeexecutable='["ams-probe"]',
             config='["interval 180", "maxCheckAttempts 1", '
                    '"path /usr/libexec/argo-monitoring/probes/argo", '
                    '"retryInterval 1", "timeout 120"]',
-            attribute='["argo.ams_TOKEN --token"]',
-            parameter='["--project EGI"]',
-            flags='["OBSESS 1"]',
-            mtype=self.mtype1,
-            probekey=self.probehistory1,
+            probeversion=self.probehistory1.__str__(),
             group=self.group
         )
 
         metric2 = poem_models.Metric.objects.create(
             name='argo.AMSPublisher-Check',
-            description='Description of argo.AMSPublisher-Check.',
-            probeexecutable='["ams-publisher-probe"]',
             config='["interval 180", "maxCheckAttempts 3", '
                    '"path /usr/libexec/argo-monitoring/probes/argo", '
                    '"retryInterval 1", "timeout 130"]',
-            flags='["NOHOSTNAME 1"]',
-            mtype=self.mtype1,
-            probekey=self.probehistory3,
+            probeversion=self.probehistory3.__str__(),
             group=self.group
         )
 
         metric3 = poem_models.Metric.objects.create(
             name='emi.unicore.Gateway',
-            description='',
-            probeexecutable='["pl.plgrid/UNICORE/umi2/check_gateway/'
-                            'check_gateway.pl"]',
             config='["interval 20", "maxCheckAttempts 2", '
                    '"path /usr/libexec/grid-monitoring/probes", '
                    '"retryInterval 5", "timeout 60"]',
-            attribute='["METRIC_CONFIG_FILE -f"]',
-            flags='["OBSESS 1", "NOHOSTNAME 1", "NOLBNODE 1"]',
-            mtype=self.mtype1,
-            probekey=self.probehistory5,
+            probeversion=self.probehistory5.__str__(),
             group=self.group
         )
 
         metric4 = poem_models.Metric.objects.create(
             name='org.apel.APEL-Pub',
-            flags='["OBSESS 1", "PASSIVE 1"]',
-            mtype=self.mtype2,
             group=self.group
         )
 
@@ -2432,9 +2413,30 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             user=self.user.username
         )
 
+        metric3_serialized = serializers.serialize(
+            "json", [metric3],
+            use_natural_foreign_keys=True,
+            use_natural_primary_keys=True
+        )
+        metric3_unserialized = json.loads(metric3_serialized)[0]
+        metric3_unserialized["fields"].update({
+            "tags": [self.mtag1.name],
+            "mtype": ["Active"],
+            "description": "",
+            "parent": "",
+            "probeexecutable": '["pl.plgrid/UNICORE/umi2/check_gateway/'
+                               'check_gateway.pl"]',
+            "attribute": '["METRIC_CONFIG_FILE -f"]',
+            "dependancy": "",
+            "flags": '["OBSESS 1", "NOHOSTNAME 1", "NOLBNODE 1"]',
+            "files": "",
+            "parameter": "",
+            "fileparameter": ""
+        })
+
         poem_models.TenantHistory.objects.create(
             object_id=metric3.id,
-            serialized_data=serialize_metric(metric3, tags=[self.mtag1]),
+            serialized_data=json.dumps([metric3_unserialized]),
             object_repr=metric3.__str__(),
             content_type=ct,
             date_created=datetime.datetime.now(),
@@ -2756,16 +2758,10 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         mt1_history3.tags.add(self.mtag1, self.mtag2, self.mtag3)
         poem_models.Metric.objects.create(
             name='test.AMS-Check',
-            description='Description of test.AMS-Check.',
-            probeexecutable='["ams-probe"]',
             config='["interval 180", "maxCheckAttempts 1", '
                    '"path /usr/libexec/argo-monitoring/probes/argo", '
                    '"retryInterval 1", "timeout 120"]',
-            attribute='["argo.ams_TOKEN --token"]',
-            parameter='["--project EGI"]',
-            flags='["OBSESS 1"]',
-            mtype=self.mtype1,
-            probekey=self.probehistory1,
+            probeversion=self.probehistory1.__str__(),
             group=self.group
         )
         data = {
@@ -2855,16 +2851,10 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         mt1_history3.tags.add(self.mtag1, self.mtag2, self.mtag3)
         poem_models.Metric.objects.create(
             name='test.AMS-Check',
-            description='Description of test.AMS-Check.',
-            probeexecutable='["ams-probe"]',
             config='["interval 180", "maxCheckAttempts 1", '
                    '"path /usr/libexec/argo-monitoring/probes/argo", '
                    '"retryInterval 1", "timeout 120"]',
-            attribute='["argo.ams_TOKEN --token"]',
-            parameter='["--project EGI"]',
-            flags='["OBSESS 1"]',
-            mtype=self.mtype1,
-            probekey=self.probehistory1,
+            probeversion=self.probehistory1.__str__(),
             group=self.group
         )
         data = {
@@ -2957,16 +2947,10 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         mt1_history3.tags.add(self.mtag1, self.mtag2, self.mtag3)
         poem_models.Metric.objects.create(
             name='test.AMS-Check',
-            description='Description of test.AMS-Check.',
-            probeexecutable='["ams-probe"]',
             config='["interval 180", "maxCheckAttempts 1", '
                    '"path /usr/libexec/argo-monitoring/probes/argo", '
                    '"retryInterval 1", "timeout 120"]',
-            attribute='["argo.ams_TOKEN --token"]',
-            parameter='["--project EGI"]',
-            flags='["OBSESS 1"]',
-            mtype=self.mtype1,
-            probekey=self.probehistory1,
+            probeversion=self.probehistory1.__str__(),
             group=self.group
         )
         data = {
@@ -3261,16 +3245,10 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         mt1_history3.tags.add(self.mtag1, self.mtag2, self.mtag3)
         poem_models.Metric.objects.create(
             name='test.AMS-Check',
-            description='Description of test.AMS-Check.',
-            probeexecutable='["ams-probe"]',
             config='["interval 180", "maxCheckAttempts 1", '
                    '"path /usr/libexec/argo-monitoring/probes/argo", '
                    '"retryInterval 1", "timeout 120"]',
-            attribute='["argo.ams_TOKEN --token"]',
-            parameter='["--project EGI"]',
-            flags='["OBSESS 1"]',
-            mtype=self.mtype1,
-            probekey=self.probehistory1,
+            probeversion=self.probehistory1.__str__(),
             group=self.group
         )
         request = self.factory.get(self.url + 'nagios-plugins-argo-0.1.9')
