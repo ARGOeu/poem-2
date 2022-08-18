@@ -613,6 +613,7 @@ const App = () => {
   const [webApiMetric, setWebApiMetric] = useState(undefined);
   const [webApiThresholds, setWebApiThresholds] = useState(undefined);
   const [webApiOperations, setWebApiOperations] = useState(undefined);
+  const [webApiServiceTypes, setWebApiServiceTypes] = useState(undefined);
   const [webApiReports, setWebApiReports] = useState(undefined);
   const [publicView, setPublicView] = useState(undefined);
   const [tenantName, setTenantName] = useState(undefined);
@@ -657,6 +658,7 @@ const App = () => {
       setWebApiThresholds(options && options.result.webapithresholds);
       setWebApiOperations(options && options.result.webapioperations);
       setWebApiReports(options && options.result.webapireports);
+      setWebApiServiceTypes(options && options.result.webapiservicetypes);
       setTenantName(options && options.result.tenant_name);
     }
     options && prefetchData(false, poemType, options, poemType ? response.userdetails.token : null)
@@ -675,6 +677,7 @@ const App = () => {
     setWebApiThresholds(options && options.result.webapithresholds);
     setWebApiOperations(options && options.result.webapioperations);
     setWebApiReports(options && options.result.webapireports);
+    setWebApiServiceTypes(options && options.result.webapiservicetypes);
     setPrivacyLink(options && options.result.terms_privacy_links.privacy);
     setTermsLink(options && options.result.terms_privacy_links.terms);
     setTenantName(options && options.result.tenant_name);
