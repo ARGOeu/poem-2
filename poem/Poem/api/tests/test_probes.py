@@ -2,12 +2,12 @@ import datetime
 import json
 
 from Poem.api import views_internal as views
+from Poem.helpers.history_helpers import serialize_metric
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
 from Poem.users.models import CustUser
 from django.contrib.contenttypes.models import ContentType
-from django.core import serializers
 from django_tenants.test.cases import TenantTestCase
 from django_tenants.test.client import TenantRequestFactory
 from django_tenants.utils import schema_context, get_public_schema_name, \
@@ -147,7 +147,6 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
 
         mtype = admin_models.MetricTemplateType.objects.create(name='Active')
-        metrictype = poem_models.MetricType.objects.create(name='Active')
 
         metrictag1 = admin_models.MetricTags.objects.create(name='test_tag1')
         metrictag2 = admin_models.MetricTags.objects.create(name='test_tag2')
@@ -169,6 +168,26 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
         mt1.tags.add(metrictag1, metrictag2)
 
+        mth1 = admin_models.MetricTemplateHistory.objects.create(
+            object_id=mt1,
+            name=mt1.name,
+            mtype=mt1.mtype,
+            probekey=mt1.probekey,
+            parent=mt1.parent,
+            probeexecutable=mt1.probeexecutable,
+            config=mt1.config,
+            attribute=mt1.attribute,
+            dependency=mt1.dependency,
+            flags=mt1.flags,
+            files=mt1.files,
+            parameter=mt1.parameter,
+            fileparameter=mt1.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_comment='Initial version.',
+            version_user=self.user.username
+        )
+        mth1.tags.add(metrictag1, metrictag2)
+
         mt2 = admin_models.MetricTemplate.objects.create(
             name='argo.AMS-Check',
             mtype=mtype,
@@ -183,40 +202,47 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
         mt2.tags.add(metrictag1)
 
+        mth2 = admin_models.MetricTemplateHistory.objects.create(
+            object_id=mt2,
+            name=mt2.name,
+            mtype=mt2.mtype,
+            probekey=mt2.probekey,
+            parent=mt2.parent,
+            probeexecutable=mt2.probeexecutable,
+            config=mt2.config,
+            attribute=mt2.attribute,
+            dependency=mt2.dependency,
+            flags=mt2.flags,
+            files=mt2.files,
+            parameter=mt2.parameter,
+            fileparameter=mt2.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_comment='Initial version.',
+            version_user=self.user.username
+        )
+        mth2.tags.add(metrictag1)
+
         metric1 = poem_models.Metric.objects.create(
             name='argo.API-Check',
-            mtype=metrictype,
             group=group,
-            probekey=pv,
-            probeexecutable='["web-api"]',
+            probeversion=pv.__str__(),
             config='["maxCheckAttempts 3", "timeout 120", '
                    '"path /usr/libexec/argo-monitoring/probes/argo", '
-                   '"interval 5", "retryInterval 3"]',
-            attribute='["argo.api_TOKEN --token"]',
-            flags='["OBSESS 1"]'
+                   '"interval 5", "retryInterval 3"]'
         )
 
         metric2 = poem_models.Metric.objects.create(
             name='argo.AMS-Check',
             group=group,
-            mtype=metrictype,
-            probekey=pv2,
-            probeexecutable='["ams-probe"]',
+            probeversion=pv2.__str__(),
             config='["maxCheckAttempts 3", "timeout 60", '
                    '"path /usr/libexec/argo-monitoring/probes/argo", '
-                   '"interval 5", "retryInterval 3"]',
-            attribute='["argo.ams_TOKEN --token"]',
-            flags='["OBSESS 1"]',
-            parameter='["--project EGI"]'
+                   '"interval 5", "retryInterval 3"]'
         )
 
         poem_models.TenantHistory.objects.create(
             object_id=metric1.id,
-            serialized_data=serializers.serialize(
-                'json', [metric1],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
-            ),
+            serialized_data=serialize_metric(metric1, [metrictag1, metrictag2]),
             object_repr=metric1.__str__(),
             content_type=ct,
             date_created=datetime.datetime.now(),
@@ -226,11 +252,7 @@ class ListProbesAPIViewTests(TenantTestCase):
 
         poem_models.TenantHistory.objects.create(
             object_id=metric2.id,
-            serialized_data=serializers.serialize(
-                'json', [metric2],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
-            ),
+            serialized_data=serialize_metric(metric2, [metrictag1]),
             object_repr=metric2.__str__(),
             content_type=ct,
             date_created=datetime.datetime.now(),
@@ -1457,28 +1479,18 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.probekey, version)
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
         self.assertEqual(metric.group.name, 'TEST')
-        self.assertEqual(metric.parent, '')
-        self.assertEqual(metric.probeexecutable, '["ams-probe"]')
-        self.assertEqual(metric.probekey, version)
+        self.assertEqual(metric.probeversion, version.__str__())
         self.assertEqual(
             metric.config,
             '["maxCheckAttempts 3", "timeout 60", '
             '"path /usr/libexec/argo-monitoring/probes/argo", '
             '"interval 5", "retryInterval 3"]'
         )
-        self.assertEqual(metric.attribute, '["argo.ams_TOKEN --token"]')
-        self.assertEqual(metric.dependancy, '')
-        self.assertEqual(metric.flags, '["OBSESS 1"]')
-        self.assertEqual(metric.files, '')
-        self.assertEqual(metric.parameter, '["--project EGI"]')
-        self.assertEqual(metric.fileparameter, '')
         mt_history = poem_models.TenantHistory.objects.filter(
             object_repr='argo.AMS-Check'
         ).order_by('-date_created')
         self.assertEqual(mt_history.count(), 1)
-        self.assertEqual(
-            mt_history[0].comment, 'Initial version.'
-        )
+        self.assertEqual(mt_history[0].comment, 'Initial version.')
         serialized_data = json.loads(mt_history[0].serialized_data)[0]['fields']
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], ['Active'])
@@ -1486,17 +1498,17 @@ class ListProbesAPIViewTests(TenantTestCase):
             serialized_data['probekey'], ['ams-probe-new', '0.1.11']
         )
         self.assertEqual(serialized_data['group'], ['TEST'])
-        self.assertEqual(serialized_data['parent'], metric.parent)
-        self.assertEqual(
-            serialized_data['probeexecutable'], metric.probeexecutable
-        )
+        self.assertEqual(serialized_data['parent'], "")
+        self.assertEqual(serialized_data['probeexecutable'], '["ams-probe"]')
         self.assertEqual(serialized_data['config'], metric.config)
-        self.assertEqual(serialized_data['attribute'], metric.attribute)
-        self.assertEqual(serialized_data['dependancy'], metric.dependancy)
-        self.assertEqual(serialized_data['flags'], metric.flags)
-        self.assertEqual(serialized_data['files'], metric.files)
-        self.assertEqual(serialized_data['parameter'], metric.parameter)
-        self.assertEqual(serialized_data['fileparameter'], metric.fileparameter)
+        self.assertEqual(
+            serialized_data['attribute'], '["argo.ams_TOKEN --token"]'
+        )
+        self.assertEqual(serialized_data['dependancy'], "")
+        self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
+        self.assertEqual(serialized_data['files'], "")
+        self.assertEqual(serialized_data['parameter'], '["--project EGI"]')
+        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_without_new_version_sp_user(self):
         data = {
@@ -1556,46 +1568,34 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.probekey, version)
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
         self.assertEqual(metric.group.name, 'TEST')
-        self.assertEqual(metric.parent, '')
-        self.assertEqual(metric.probeexecutable, '["ams-probe"]')
-        self.assertEqual(metric.probekey, version)
+        self.assertEqual(metric.probeversion, version.__str__())
         self.assertEqual(
             metric.config,
             '["maxCheckAttempts 3", "timeout 60", '
             '"path /usr/libexec/argo-monitoring/probes/argo", '
             '"interval 5", "retryInterval 3"]'
         )
-        self.assertEqual(metric.attribute, '["argo.ams_TOKEN --token"]')
-        self.assertEqual(metric.dependancy, '')
-        self.assertEqual(metric.flags, '["OBSESS 1"]')
-        self.assertEqual(metric.files, '')
-        self.assertEqual(metric.parameter, '["--project EGI"]')
-        self.assertEqual(metric.fileparameter, '')
         mt_history = poem_models.TenantHistory.objects.filter(
             object_repr='argo.AMS-Check'
         ).order_by('-date_created')
         self.assertEqual(mt_history.count(), 1)
-        self.assertEqual(
-            mt_history[0].comment, 'Initial version.'
-        )
+        self.assertEqual(mt_history[0].comment, 'Initial version.')
         serialized_data = json.loads(mt_history[0].serialized_data)[0]['fields']
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], ['Active'])
-        self.assertEqual(
-            serialized_data['probekey'], ['ams-probe', '0.1.11']
-        )
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
         self.assertEqual(serialized_data['group'], ['TEST'])
-        self.assertEqual(serialized_data['parent'], metric.parent)
-        self.assertEqual(
-            serialized_data['probeexecutable'], metric.probeexecutable
-        )
+        self.assertEqual(serialized_data['parent'], "")
+        self.assertEqual(serialized_data['probeexecutable'], '["ams-probe"]')
         self.assertEqual(serialized_data['config'], metric.config)
-        self.assertEqual(serialized_data['attribute'], metric.attribute)
-        self.assertEqual(serialized_data['dependancy'], metric.dependancy)
-        self.assertEqual(serialized_data['flags'], metric.flags)
-        self.assertEqual(serialized_data['files'], metric.files)
-        self.assertEqual(serialized_data['parameter'], metric.parameter)
-        self.assertEqual(serialized_data['fileparameter'], metric.fileparameter)
+        self.assertEqual(
+            serialized_data['attribute'], '["argo.ams_TOKEN --token"]'
+        )
+        self.assertEqual(serialized_data['dependancy'], "")
+        self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
+        self.assertEqual(serialized_data['files'], "")
+        self.assertEqual(serialized_data['parameter'], '["--project EGI"]')
+        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_without_new_version_tenant_superuser(self):
         data = {
@@ -1655,46 +1655,34 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.probekey, version)
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
         self.assertEqual(metric.group.name, 'TEST')
-        self.assertEqual(metric.parent, '')
-        self.assertEqual(metric.probeexecutable, '["ams-probe"]')
-        self.assertEqual(metric.probekey, version)
+        self.assertEqual(metric.probeversion, version.__str__())
         self.assertEqual(
             metric.config,
             '["maxCheckAttempts 3", "timeout 60", '
             '"path /usr/libexec/argo-monitoring/probes/argo", '
             '"interval 5", "retryInterval 3"]'
         )
-        self.assertEqual(metric.attribute, '["argo.ams_TOKEN --token"]')
-        self.assertEqual(metric.dependancy, '')
-        self.assertEqual(metric.flags, '["OBSESS 1"]')
-        self.assertEqual(metric.files, '')
-        self.assertEqual(metric.parameter, '["--project EGI"]')
-        self.assertEqual(metric.fileparameter, '')
         mt_history = poem_models.TenantHistory.objects.filter(
             object_repr='argo.AMS-Check'
         ).order_by('-date_created')
         self.assertEqual(mt_history.count(), 1)
-        self.assertEqual(
-            mt_history[0].comment, 'Initial version.'
-        )
+        self.assertEqual(mt_history[0].comment, 'Initial version.')
         serialized_data = json.loads(mt_history[0].serialized_data)[0]['fields']
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], ['Active'])
-        self.assertEqual(
-            serialized_data['probekey'], ['ams-probe', '0.1.11']
-        )
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
         self.assertEqual(serialized_data['group'], ['TEST'])
-        self.assertEqual(serialized_data['parent'], metric.parent)
-        self.assertEqual(
-            serialized_data['probeexecutable'], metric.probeexecutable
-        )
+        self.assertEqual(serialized_data['parent'], "")
+        self.assertEqual(serialized_data['probeexecutable'], '["ams-probe"]')
         self.assertEqual(serialized_data['config'], metric.config)
-        self.assertEqual(serialized_data['attribute'], metric.attribute)
-        self.assertEqual(serialized_data['dependancy'], metric.dependancy)
-        self.assertEqual(serialized_data['flags'], metric.flags)
-        self.assertEqual(serialized_data['files'], metric.files)
-        self.assertEqual(serialized_data['parameter'], metric.parameter)
-        self.assertEqual(serialized_data['fileparameter'], metric.fileparameter)
+        self.assertEqual(
+            serialized_data['attribute'], '["argo.ams_TOKEN --token"]'
+        )
+        self.assertEqual(serialized_data['dependancy'], "")
+        self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
+        self.assertEqual(serialized_data['files'], "")
+        self.assertEqual(serialized_data['parameter'], '["--project EGI"]')
+        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_without_new_version_tenant_user(self):
         data = {
@@ -1754,46 +1742,34 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.probekey, version)
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
         self.assertEqual(metric.group.name, 'TEST')
-        self.assertEqual(metric.parent, '')
-        self.assertEqual(metric.probeexecutable, '["ams-probe"]')
-        self.assertEqual(metric.probekey, version)
+        self.assertEqual(metric.probeversion, version.__str__())
         self.assertEqual(
             metric.config,
             '["maxCheckAttempts 3", "timeout 60", '
             '"path /usr/libexec/argo-monitoring/probes/argo", '
             '"interval 5", "retryInterval 3"]'
         )
-        self.assertEqual(metric.attribute, '["argo.ams_TOKEN --token"]')
-        self.assertEqual(metric.dependancy, '')
-        self.assertEqual(metric.flags, '["OBSESS 1"]')
-        self.assertEqual(metric.files, '')
-        self.assertEqual(metric.parameter, '["--project EGI"]')
-        self.assertEqual(metric.fileparameter, '')
         mt_history = poem_models.TenantHistory.objects.filter(
             object_repr='argo.AMS-Check'
         ).order_by('-date_created')
         self.assertEqual(mt_history.count(), 1)
-        self.assertEqual(
-            mt_history[0].comment, 'Initial version.'
-        )
+        self.assertEqual(mt_history[0].comment, 'Initial version.')
         serialized_data = json.loads(mt_history[0].serialized_data)[0]['fields']
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], ['Active'])
-        self.assertEqual(
-            serialized_data['probekey'], ['ams-probe', '0.1.11']
-        )
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
         self.assertEqual(serialized_data['group'], ['TEST'])
-        self.assertEqual(serialized_data['parent'], metric.parent)
-        self.assertEqual(
-            serialized_data['probeexecutable'], metric.probeexecutable
-        )
+        self.assertEqual(serialized_data['parent'], "")
+        self.assertEqual(serialized_data['probeexecutable'], '["ams-probe"]')
         self.assertEqual(serialized_data['config'], metric.config)
-        self.assertEqual(serialized_data['attribute'], metric.attribute)
-        self.assertEqual(serialized_data['dependancy'], metric.dependancy)
-        self.assertEqual(serialized_data['flags'], metric.flags)
-        self.assertEqual(serialized_data['files'], metric.files)
-        self.assertEqual(serialized_data['parameter'], metric.parameter)
-        self.assertEqual(serialized_data['fileparameter'], metric.fileparameter)
+        self.assertEqual(
+            serialized_data['attribute'], '["argo.ams_TOKEN --token"]'
+        )
+        self.assertEqual(serialized_data['dependancy'], "")
+        self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
+        self.assertEqual(serialized_data['files'], "")
+        self.assertEqual(serialized_data['parameter'], '["--project EGI"]')
+        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_no_new_name_metric_history_without_new_version_sp_spusr(
             self
@@ -1852,46 +1828,34 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.probekey, version)
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
         self.assertEqual(metric.group.name, 'TEST')
-        self.assertEqual(metric.parent, '')
-        self.assertEqual(metric.probeexecutable, '["ams-probe"]')
-        self.assertEqual(metric.probekey, version)
+        self.assertEqual(metric.probeversion, version.__str__())
         self.assertEqual(
             metric.config,
             '["maxCheckAttempts 3", "timeout 60", '
             '"path /usr/libexec/argo-monitoring/probes/argo", '
             '"interval 5", "retryInterval 3"]'
         )
-        self.assertEqual(metric.attribute, '["argo.ams_TOKEN --token"]')
-        self.assertEqual(metric.dependancy, '')
-        self.assertEqual(metric.flags, '["OBSESS 1"]')
-        self.assertEqual(metric.files, '')
-        self.assertEqual(metric.parameter, '["--project EGI"]')
-        self.assertEqual(metric.fileparameter, '')
         mt_history = poem_models.TenantHistory.objects.filter(
             object_repr='argo.AMS-Check'
         ).order_by('-date_created')
         self.assertEqual(mt_history.count(), 1)
-        self.assertEqual(
-            mt_history[0].comment, 'Initial version.'
-        )
+        self.assertEqual(mt_history[0].comment, 'Initial version.')
         serialized_data = json.loads(mt_history[0].serialized_data)[0]['fields']
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], ['Active'])
-        self.assertEqual(
-            serialized_data['probekey'], ['ams-probe', '0.1.11']
-        )
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
         self.assertEqual(serialized_data['group'], ['TEST'])
-        self.assertEqual(serialized_data['parent'], metric.parent)
-        self.assertEqual(
-            serialized_data['probeexecutable'], metric.probeexecutable
-        )
+        self.assertEqual(serialized_data['parent'], "")
+        self.assertEqual(serialized_data['probeexecutable'], '["ams-probe"]')
         self.assertEqual(serialized_data['config'], metric.config)
-        self.assertEqual(serialized_data['attribute'], metric.attribute)
-        self.assertEqual(serialized_data['dependancy'], metric.dependancy)
-        self.assertEqual(serialized_data['flags'], metric.flags)
-        self.assertEqual(serialized_data['files'], metric.files)
-        self.assertEqual(serialized_data['parameter'], metric.parameter)
-        self.assertEqual(serialized_data['fileparameter'], metric.fileparameter)
+        self.assertEqual(
+            serialized_data['attribute'], '["argo.ams_TOKEN --token"]'
+        )
+        self.assertEqual(serialized_data['dependancy'], "")
+        self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
+        self.assertEqual(serialized_data['files'], "")
+        self.assertEqual(serialized_data['parameter'], '["--project EGI"]')
+        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_no_new_name_metric_history_without_new_version_sp_user(
             self
@@ -1953,46 +1917,34 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.probekey, version)
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
         self.assertEqual(metric.group.name, 'TEST')
-        self.assertEqual(metric.parent, '')
-        self.assertEqual(metric.probeexecutable, '["ams-probe"]')
-        self.assertEqual(metric.probekey, version)
+        self.assertEqual(metric.probeversion, version.__str__())
         self.assertEqual(
             metric.config,
             '["maxCheckAttempts 3", "timeout 60", '
             '"path /usr/libexec/argo-monitoring/probes/argo", '
             '"interval 5", "retryInterval 3"]'
         )
-        self.assertEqual(metric.attribute, '["argo.ams_TOKEN --token"]')
-        self.assertEqual(metric.dependancy, '')
-        self.assertEqual(metric.flags, '["OBSESS 1"]')
-        self.assertEqual(metric.files, '')
-        self.assertEqual(metric.parameter, '["--project EGI"]')
-        self.assertEqual(metric.fileparameter, '')
         mt_history = poem_models.TenantHistory.objects.filter(
             object_repr='argo.AMS-Check'
         ).order_by('-date_created')
         self.assertEqual(mt_history.count(), 1)
-        self.assertEqual(
-            mt_history[0].comment, 'Initial version.'
-        )
+        self.assertEqual(mt_history[0].comment, 'Initial version.')
         serialized_data = json.loads(mt_history[0].serialized_data)[0]['fields']
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], ['Active'])
-        self.assertEqual(
-            serialized_data['probekey'], ['ams-probe', '0.1.11']
-        )
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
         self.assertEqual(serialized_data['group'], ['TEST'])
-        self.assertEqual(serialized_data['parent'], metric.parent)
-        self.assertEqual(
-            serialized_data['probeexecutable'], metric.probeexecutable
-        )
+        self.assertEqual(serialized_data['parent'], "")
+        self.assertEqual(serialized_data['probeexecutable'], '["ams-probe"]')
         self.assertEqual(serialized_data['config'], metric.config)
-        self.assertEqual(serialized_data['attribute'], metric.attribute)
-        self.assertEqual(serialized_data['dependancy'], metric.dependancy)
-        self.assertEqual(serialized_data['flags'], metric.flags)
-        self.assertEqual(serialized_data['files'], metric.files)
-        self.assertEqual(serialized_data['parameter'], metric.parameter)
-        self.assertEqual(serialized_data['fileparameter'], metric.fileparameter)
+        self.assertEqual(
+            serialized_data['attribute'], '["argo.ams_TOKEN --token"]'
+        )
+        self.assertEqual(serialized_data['dependancy'], "")
+        self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
+        self.assertEqual(serialized_data['files'], "")
+        self.assertEqual(serialized_data['parameter'], '["--project EGI"]')
+        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_no_new_name_metric_history_without_new_version_tn_spusr(
             self
@@ -2054,21 +2006,13 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.probekey, version)
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
         self.assertEqual(metric.group.name, 'TEST')
-        self.assertEqual(metric.parent, '')
-        self.assertEqual(metric.probeexecutable, '["ams-probe"]')
-        self.assertEqual(metric.probekey, version)
+        self.assertEqual(metric.probeversion, version.__str__())
         self.assertEqual(
             metric.config,
             '["maxCheckAttempts 3", "timeout 60", '
             '"path /usr/libexec/argo-monitoring/probes/argo", '
             '"interval 5", "retryInterval 3"]'
         )
-        self.assertEqual(metric.attribute, '["argo.ams_TOKEN --token"]')
-        self.assertEqual(metric.dependancy, '')
-        self.assertEqual(metric.flags, '["OBSESS 1"]')
-        self.assertEqual(metric.files, '')
-        self.assertEqual(metric.parameter, '["--project EGI"]')
-        self.assertEqual(metric.fileparameter, '')
         mt_history = poem_models.TenantHistory.objects.filter(
             object_repr='argo.AMS-Check'
         ).order_by('-date_created')
@@ -2079,21 +2023,19 @@ class ListProbesAPIViewTests(TenantTestCase):
         serialized_data = json.loads(mt_history[0].serialized_data)[0]['fields']
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], ['Active'])
-        self.assertEqual(
-            serialized_data['probekey'], ['ams-probe', '0.1.11']
-        )
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
         self.assertEqual(serialized_data['group'], ['TEST'])
-        self.assertEqual(serialized_data['parent'], metric.parent)
-        self.assertEqual(
-            serialized_data['probeexecutable'], metric.probeexecutable
-        )
+        self.assertEqual(serialized_data['parent'], "")
+        self.assertEqual(serialized_data['probeexecutable'], '["ams-probe"]')
         self.assertEqual(serialized_data['config'], metric.config)
-        self.assertEqual(serialized_data['attribute'], metric.attribute)
-        self.assertEqual(serialized_data['dependancy'], metric.dependancy)
-        self.assertEqual(serialized_data['flags'], metric.flags)
-        self.assertEqual(serialized_data['files'], metric.files)
-        self.assertEqual(serialized_data['parameter'], metric.parameter)
-        self.assertEqual(serialized_data['fileparameter'], metric.fileparameter)
+        self.assertEqual(
+            serialized_data['attribute'], '["argo.ams_TOKEN --token"]'
+        )
+        self.assertEqual(serialized_data['dependancy'], "")
+        self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
+        self.assertEqual(serialized_data['files'], "")
+        self.assertEqual(serialized_data['parameter'], '["--project EGI"]')
+        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_no_new_name_metric_history_without_new_version_tn_user(
             self
@@ -2155,46 +2097,34 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.probekey, version)
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
         self.assertEqual(metric.group.name, 'TEST')
-        self.assertEqual(metric.parent, '')
-        self.assertEqual(metric.probeexecutable, '["ams-probe"]')
-        self.assertEqual(metric.probekey, version)
+        self.assertEqual(metric.probeversion, version.__str__())
         self.assertEqual(
             metric.config,
             '["maxCheckAttempts 3", "timeout 60", '
             '"path /usr/libexec/argo-monitoring/probes/argo", '
             '"interval 5", "retryInterval 3"]'
         )
-        self.assertEqual(metric.attribute, '["argo.ams_TOKEN --token"]')
-        self.assertEqual(metric.dependancy, '')
-        self.assertEqual(metric.flags, '["OBSESS 1"]')
-        self.assertEqual(metric.files, '')
-        self.assertEqual(metric.parameter, '["--project EGI"]')
-        self.assertEqual(metric.fileparameter, '')
         mt_history = poem_models.TenantHistory.objects.filter(
             object_repr='argo.AMS-Check'
         ).order_by('-date_created')
         self.assertEqual(mt_history.count(), 1)
-        self.assertEqual(
-            mt_history[0].comment, 'Initial version.'
-        )
+        self.assertEqual(mt_history[0].comment, 'Initial version.')
         serialized_data = json.loads(mt_history[0].serialized_data)[0]['fields']
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], ['Active'])
-        self.assertEqual(
-            serialized_data['probekey'], ['ams-probe', '0.1.11']
-        )
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
         self.assertEqual(serialized_data['group'], ['TEST'])
-        self.assertEqual(serialized_data['parent'], metric.parent)
-        self.assertEqual(
-            serialized_data['probeexecutable'], metric.probeexecutable
-        )
+        self.assertEqual(serialized_data['parent'], "")
+        self.assertEqual(serialized_data['probeexecutable'], '["ams-probe"]')
         self.assertEqual(serialized_data['config'], metric.config)
-        self.assertEqual(serialized_data['attribute'], metric.attribute)
-        self.assertEqual(serialized_data['dependancy'], metric.dependancy)
-        self.assertEqual(serialized_data['flags'], metric.flags)
-        self.assertEqual(serialized_data['files'], metric.files)
-        self.assertEqual(serialized_data['parameter'], metric.parameter)
-        self.assertEqual(serialized_data['fileparameter'], metric.fileparameter)
+        self.assertEqual(
+            serialized_data['attribute'], '["argo.ams_TOKEN --token"]'
+        )
+        self.assertEqual(serialized_data['dependancy'], "")
+        self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
+        self.assertEqual(serialized_data['files'], "")
+        self.assertEqual(serialized_data['parameter'], '["--project EGI"]')
+        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_with_new_version_without_metrictemplate_update_sp_spusr(
             self
@@ -2261,13 +2191,11 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
         metric = poem_models.Metric.objects.get(name='argo.API-Check')
         self.assertEqual(metric.group.name, 'TEST')
-        self.assertEqual(metric.parent, '')
-        self.assertEqual(metric.probeexecutable, '["web-api"]')
         self.assertEqual(
-            metric.probekey,
+            metric.probeversion,
             admin_models.ProbeHistory.objects.filter(
                 object_id=probe
-            ).order_by('-date_created')[1]
+            ).order_by('-date_created')[1].__str__()
         )
         self.assertEqual(
             metric.config,
@@ -2275,37 +2203,27 @@ class ListProbesAPIViewTests(TenantTestCase):
             '"path /usr/libexec/argo-monitoring/probes/argo", '
             '"interval 5", "retryInterval 3"]'
         )
-        self.assertEqual(metric.attribute, '["argo.api_TOKEN --token"]')
-        self.assertEqual(metric.dependancy, '')
-        self.assertEqual(metric.flags, '["OBSESS 1"]')
-        self.assertEqual(metric.files, '')
-        self.assertEqual(metric.parameter, '')
-        self.assertEqual(metric.fileparameter, '')
         mt_history = poem_models.TenantHistory.objects.filter(
             object_repr='argo.API-Check'
         ).order_by('-date_created')
         self.assertEqual(mt_history.count(), 1)
-        self.assertEqual(
-            mt_history[0].comment, 'Initial version.'
-        )
+        self.assertEqual(mt_history[0].comment, 'Initial version.')
         serialized_data = json.loads(mt_history[0].serialized_data)[0]['fields']
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], ['Active'])
-        self.assertEqual(
-            serialized_data['probekey'], ['argo-web-api', '0.1.7']
-        )
+        self.assertEqual(serialized_data['probekey'], ['argo-web-api', '0.1.7'])
         self.assertEqual(serialized_data['group'], ['TEST'])
-        self.assertEqual(serialized_data['parent'], metric.parent)
-        self.assertEqual(
-            serialized_data['probeexecutable'], metric.probeexecutable
-        )
+        self.assertEqual(serialized_data['parent'], "")
+        self.assertEqual(serialized_data['probeexecutable'], '["web-api"]')
         self.assertEqual(serialized_data['config'], metric.config)
-        self.assertEqual(serialized_data['attribute'], metric.attribute)
-        self.assertEqual(serialized_data['dependancy'], metric.dependancy)
-        self.assertEqual(serialized_data['flags'], metric.flags)
-        self.assertEqual(serialized_data['files'], metric.files)
-        self.assertEqual(serialized_data['parameter'], metric.parameter)
-        self.assertEqual(serialized_data['fileparameter'], metric.fileparameter)
+        self.assertEqual(
+            serialized_data['attribute'], '["argo.api_TOKEN --token"]'
+        )
+        self.assertEqual(serialized_data['dependancy'], "")
+        self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
+        self.assertEqual(serialized_data['files'], "")
+        self.assertEqual(serialized_data['parameter'], "")
+        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_with_new_version_without_metrictemplate_update_sp_user(
             self
@@ -2367,46 +2285,34 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.probekey, version)
         metric = poem_models.Metric.objects.get(name='argo.API-Check')
         self.assertEqual(metric.group.name, 'TEST')
-        self.assertEqual(metric.parent, '')
-        self.assertEqual(metric.probeexecutable, '["web-api"]')
-        self.assertEqual(metric.probekey, version)
+        self.assertEqual(metric.probeversion, version.__str__())
         self.assertEqual(
             metric.config,
             '["maxCheckAttempts 3", "timeout 120", '
             '"path /usr/libexec/argo-monitoring/probes/argo", '
             '"interval 5", "retryInterval 3"]'
         )
-        self.assertEqual(metric.attribute, '["argo.api_TOKEN --token"]')
-        self.assertEqual(metric.dependancy, '')
-        self.assertEqual(metric.flags, '["OBSESS 1"]')
-        self.assertEqual(metric.files, '')
-        self.assertEqual(metric.parameter, '')
-        self.assertEqual(metric.fileparameter, '')
         mt_history = poem_models.TenantHistory.objects.filter(
             object_repr='argo.API-Check'
         ).order_by('-date_created')
         self.assertEqual(mt_history.count(), 1)
-        self.assertEqual(
-            mt_history[0].comment, 'Initial version.'
-        )
+        self.assertEqual(mt_history[0].comment, 'Initial version.')
         serialized_data = json.loads(mt_history[0].serialized_data)[0]['fields']
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], ['Active'])
-        self.assertEqual(
-            serialized_data['probekey'], ['argo-web-api', '0.1.7']
-        )
+        self.assertEqual(serialized_data['probekey'], ['argo-web-api', '0.1.7'])
         self.assertEqual(serialized_data['group'], ['TEST'])
-        self.assertEqual(serialized_data['parent'], metric.parent)
-        self.assertEqual(
-            serialized_data['probeexecutable'], metric.probeexecutable
-        )
+        self.assertEqual(serialized_data['parent'], "")
+        self.assertEqual(serialized_data['probeexecutable'], '["web-api"]')
         self.assertEqual(serialized_data['config'], metric.config)
-        self.assertEqual(serialized_data['attribute'], metric.attribute)
-        self.assertEqual(serialized_data['dependancy'], metric.dependancy)
-        self.assertEqual(serialized_data['flags'], metric.flags)
-        self.assertEqual(serialized_data['files'], metric.files)
-        self.assertEqual(serialized_data['parameter'], metric.parameter)
-        self.assertEqual(serialized_data['fileparameter'], metric.fileparameter)
+        self.assertEqual(
+            serialized_data['attribute'], '["argo.api_TOKEN --token"]'
+        )
+        self.assertEqual(serialized_data['dependancy'], "")
+        self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
+        self.assertEqual(serialized_data['files'], "")
+        self.assertEqual(serialized_data['parameter'], "")
+        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_with_new_version_without_metrictemplate_update_tn_sprusr(
             self
@@ -2468,46 +2374,34 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.probekey, version)
         metric = poem_models.Metric.objects.get(name='argo.API-Check')
         self.assertEqual(metric.group.name, 'TEST')
-        self.assertEqual(metric.parent, '')
-        self.assertEqual(metric.probeexecutable, '["web-api"]')
-        self.assertEqual(metric.probekey, version)
+        self.assertEqual(metric.probeversion, version.__str__())
         self.assertEqual(
             metric.config,
             '["maxCheckAttempts 3", "timeout 120", '
             '"path /usr/libexec/argo-monitoring/probes/argo", '
             '"interval 5", "retryInterval 3"]'
         )
-        self.assertEqual(metric.attribute, '["argo.api_TOKEN --token"]')
-        self.assertEqual(metric.dependancy, '')
-        self.assertEqual(metric.flags, '["OBSESS 1"]')
-        self.assertEqual(metric.files, '')
-        self.assertEqual(metric.parameter, '')
-        self.assertEqual(metric.fileparameter, '')
         mt_history = poem_models.TenantHistory.objects.filter(
             object_repr='argo.API-Check'
         ).order_by('-date_created')
         self.assertEqual(mt_history.count(), 1)
-        self.assertEqual(
-            mt_history[0].comment, 'Initial version.'
-        )
+        self.assertEqual(mt_history[0].comment, 'Initial version.')
         serialized_data = json.loads(mt_history[0].serialized_data)[0]['fields']
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], ['Active'])
-        self.assertEqual(
-            serialized_data['probekey'], ['argo-web-api', '0.1.7']
-        )
+        self.assertEqual(serialized_data['probekey'], ['argo-web-api', '0.1.7'])
         self.assertEqual(serialized_data['group'], ['TEST'])
-        self.assertEqual(serialized_data['parent'], metric.parent)
-        self.assertEqual(
-            serialized_data['probeexecutable'], metric.probeexecutable
-        )
+        self.assertEqual(serialized_data['parent'], "")
+        self.assertEqual(serialized_data['probeexecutable'], '["web-api"]')
         self.assertEqual(serialized_data['config'], metric.config)
-        self.assertEqual(serialized_data['attribute'], metric.attribute)
-        self.assertEqual(serialized_data['dependancy'], metric.dependancy)
-        self.assertEqual(serialized_data['flags'], metric.flags)
-        self.assertEqual(serialized_data['files'], metric.files)
-        self.assertEqual(serialized_data['parameter'], metric.parameter)
-        self.assertEqual(serialized_data['fileparameter'], metric.fileparameter)
+        self.assertEqual(
+            serialized_data['attribute'], '["argo.api_TOKEN --token"]'
+        )
+        self.assertEqual(serialized_data['dependancy'], "")
+        self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
+        self.assertEqual(serialized_data['files'], "")
+        self.assertEqual(serialized_data['parameter'], "")
+        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_with_new_version_without_metrictemplate_update_tn_user(
             self
@@ -2569,46 +2463,34 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.probekey, version)
         metric = poem_models.Metric.objects.get(name='argo.API-Check')
         self.assertEqual(metric.group.name, 'TEST')
-        self.assertEqual(metric.parent, '')
-        self.assertEqual(metric.probeexecutable, '["web-api"]')
-        self.assertEqual(metric.probekey, version)
+        self.assertEqual(metric.probeversion, version.__str__())
         self.assertEqual(
             metric.config,
             '["maxCheckAttempts 3", "timeout 120", '
             '"path /usr/libexec/argo-monitoring/probes/argo", '
             '"interval 5", "retryInterval 3"]'
         )
-        self.assertEqual(metric.attribute, '["argo.api_TOKEN --token"]')
-        self.assertEqual(metric.dependancy, '')
-        self.assertEqual(metric.flags, '["OBSESS 1"]')
-        self.assertEqual(metric.files, '')
-        self.assertEqual(metric.parameter, '')
-        self.assertEqual(metric.fileparameter, '')
         mt_history = poem_models.TenantHistory.objects.filter(
             object_repr='argo.API-Check'
         ).order_by('-date_created')
         self.assertEqual(mt_history.count(), 1)
-        self.assertEqual(
-            mt_history[0].comment, 'Initial version.'
-        )
+        self.assertEqual(mt_history[0].comment, 'Initial version.')
         serialized_data = json.loads(mt_history[0].serialized_data)[0]['fields']
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], ['Active'])
-        self.assertEqual(
-            serialized_data['probekey'], ['argo-web-api', '0.1.7']
-        )
+        self.assertEqual(serialized_data['probekey'], ['argo-web-api', '0.1.7'])
         self.assertEqual(serialized_data['group'], ['TEST'])
-        self.assertEqual(serialized_data['parent'], metric.parent)
-        self.assertEqual(
-            serialized_data['probeexecutable'], metric.probeexecutable
-        )
+        self.assertEqual(serialized_data['parent'], "")
+        self.assertEqual(serialized_data['probeexecutable'], '["web-api"]')
         self.assertEqual(serialized_data['config'], metric.config)
-        self.assertEqual(serialized_data['attribute'], metric.attribute)
-        self.assertEqual(serialized_data['dependancy'], metric.dependancy)
-        self.assertEqual(serialized_data['flags'], metric.flags)
-        self.assertEqual(serialized_data['files'], metric.files)
-        self.assertEqual(serialized_data['parameter'], metric.parameter)
-        self.assertEqual(serialized_data['fileparameter'], metric.fileparameter)
+        self.assertEqual(
+            serialized_data['attribute'], '["argo.api_TOKEN --token"]'
+        )
+        self.assertEqual(serialized_data['dependancy'], "")
+        self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
+        self.assertEqual(serialized_data['files'], "")
+        self.assertEqual(serialized_data['parameter'], "")
+        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_with_new_version_with_metrictemplate_update_sp_spruser(
             self
@@ -2665,46 +2547,34 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.probekey, versions[0])
         metric = poem_models.Metric.objects.get(name='argo.API-Check')
         self.assertEqual(metric.group.name, 'TEST')
-        self.assertEqual(metric.parent, '')
-        self.assertEqual(metric.probeexecutable, '["web-api"]')
-        self.assertEqual(metric.probekey, versions[1])
+        self.assertEqual(metric.probeversion, versions[1].__str__())
         self.assertEqual(
             metric.config,
             '["maxCheckAttempts 3", "timeout 120", '
             '"path /usr/libexec/argo-monitoring/probes/argo", '
             '"interval 5", "retryInterval 3"]'
         )
-        self.assertEqual(metric.attribute, '["argo.api_TOKEN --token"]')
-        self.assertEqual(metric.dependancy, '')
-        self.assertEqual(metric.flags, '["OBSESS 1"]')
-        self.assertEqual(metric.files, '')
-        self.assertEqual(metric.parameter, '')
-        self.assertEqual(metric.fileparameter, '')
         mt_history = poem_models.TenantHistory.objects.filter(
             object_repr='argo.API-Check'
         ).order_by('-date_created')
         self.assertEqual(mt_history.count(), 1)
-        self.assertEqual(
-            mt_history[0].comment, 'Initial version.'
-        )
+        self.assertEqual(mt_history[0].comment, 'Initial version.')
         serialized_data = json.loads(mt_history[0].serialized_data)[0]['fields']
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], ['Active'])
-        self.assertEqual(
-            serialized_data['probekey'], ['argo-web-api', '0.1.7']
-        )
+        self.assertEqual(serialized_data['probekey'], ['argo-web-api', '0.1.7'])
         self.assertEqual(serialized_data['group'], ['TEST'])
-        self.assertEqual(serialized_data['parent'], metric.parent)
-        self.assertEqual(
-            serialized_data['probeexecutable'], metric.probeexecutable
-        )
+        self.assertEqual(serialized_data['parent'], "")
+        self.assertEqual(serialized_data['probeexecutable'], '["web-api"]')
         self.assertEqual(serialized_data['config'], metric.config)
-        self.assertEqual(serialized_data['attribute'], metric.attribute)
-        self.assertEqual(serialized_data['dependancy'], metric.dependancy)
-        self.assertEqual(serialized_data['flags'], metric.flags)
-        self.assertEqual(serialized_data['files'], metric.files)
-        self.assertEqual(serialized_data['parameter'], metric.parameter)
-        self.assertEqual(serialized_data['fileparameter'], metric.fileparameter)
+        self.assertEqual(
+            serialized_data['attribute'], '["argo.api_TOKEN --token"]'
+        )
+        self.assertEqual(serialized_data['dependancy'], "")
+        self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
+        self.assertEqual(serialized_data['files'], "")
+        self.assertEqual(serialized_data['parameter'], "")
+        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_with_new_version_with_metrictemplate_update_sp_user(
             self
@@ -2766,46 +2636,34 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.probekey, versions[0])
         metric = poem_models.Metric.objects.get(name='argo.API-Check')
         self.assertEqual(metric.group.name, 'TEST')
-        self.assertEqual(metric.parent, '')
-        self.assertEqual(metric.probeexecutable, '["web-api"]')
-        self.assertEqual(metric.probekey, versions[0])
+        self.assertEqual(metric.probeversion, versions[0].__str__())
         self.assertEqual(
             metric.config,
             '["maxCheckAttempts 3", "timeout 120", '
             '"path /usr/libexec/argo-monitoring/probes/argo", '
             '"interval 5", "retryInterval 3"]'
         )
-        self.assertEqual(metric.attribute, '["argo.api_TOKEN --token"]')
-        self.assertEqual(metric.dependancy, '')
-        self.assertEqual(metric.flags, '["OBSESS 1"]')
-        self.assertEqual(metric.files, '')
-        self.assertEqual(metric.parameter, '')
-        self.assertEqual(metric.fileparameter, '')
         mt_history = poem_models.TenantHistory.objects.filter(
             object_repr='argo.API-Check'
         ).order_by('-date_created')
         self.assertEqual(mt_history.count(), 1)
-        self.assertEqual(
-            mt_history[0].comment, 'Initial version.'
-        )
+        self.assertEqual(mt_history[0].comment, 'Initial version.')
         serialized_data = json.loads(mt_history[0].serialized_data)[0]['fields']
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], ['Active'])
-        self.assertEqual(
-            serialized_data['probekey'], ['argo-web-api', '0.1.7']
-        )
+        self.assertEqual(serialized_data['probekey'], ['argo-web-api', '0.1.7'])
         self.assertEqual(serialized_data['group'], ['TEST'])
-        self.assertEqual(serialized_data['parent'], metric.parent)
-        self.assertEqual(
-            serialized_data['probeexecutable'], metric.probeexecutable
-        )
+        self.assertEqual(serialized_data['parent'], "")
+        self.assertEqual(serialized_data['probeexecutable'], '["web-api"]')
         self.assertEqual(serialized_data['config'], metric.config)
-        self.assertEqual(serialized_data['attribute'], metric.attribute)
-        self.assertEqual(serialized_data['dependancy'], metric.dependancy)
-        self.assertEqual(serialized_data['flags'], metric.flags)
-        self.assertEqual(serialized_data['files'], metric.files)
-        self.assertEqual(serialized_data['parameter'], metric.parameter)
-        self.assertEqual(serialized_data['fileparameter'], metric.fileparameter)
+        self.assertEqual(
+            serialized_data['attribute'], '["argo.api_TOKEN --token"]'
+        )
+        self.assertEqual(serialized_data['dependancy'], "")
+        self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
+        self.assertEqual(serialized_data['files'], "")
+        self.assertEqual(serialized_data['parameter'], "")
+        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_with_new_version_with_metrictemplate_update_tennt_sprusr(
             self
@@ -2867,46 +2725,34 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.probekey, versions[0])
         metric = poem_models.Metric.objects.get(name='argo.API-Check')
         self.assertEqual(metric.group.name, 'TEST')
-        self.assertEqual(metric.parent, '')
-        self.assertEqual(metric.probeexecutable, '["web-api"]')
-        self.assertEqual(metric.probekey, versions[0])
+        self.assertEqual(metric.probeversion, versions[0].__str__())
         self.assertEqual(
             metric.config,
             '["maxCheckAttempts 3", "timeout 120", '
             '"path /usr/libexec/argo-monitoring/probes/argo", '
             '"interval 5", "retryInterval 3"]'
         )
-        self.assertEqual(metric.attribute, '["argo.api_TOKEN --token"]')
-        self.assertEqual(metric.dependancy, '')
-        self.assertEqual(metric.flags, '["OBSESS 1"]')
-        self.assertEqual(metric.files, '')
-        self.assertEqual(metric.parameter, '')
-        self.assertEqual(metric.fileparameter, '')
         mt_history = poem_models.TenantHistory.objects.filter(
             object_repr='argo.API-Check'
         ).order_by('-date_created')
         self.assertEqual(mt_history.count(), 1)
-        self.assertEqual(
-            mt_history[0].comment, 'Initial version.'
-        )
+        self.assertEqual(mt_history[0].comment, 'Initial version.')
         serialized_data = json.loads(mt_history[0].serialized_data)[0]['fields']
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], ['Active'])
-        self.assertEqual(
-            serialized_data['probekey'], ['argo-web-api', '0.1.7']
-        )
+        self.assertEqual(serialized_data['probekey'], ['argo-web-api', '0.1.7'])
         self.assertEqual(serialized_data['group'], ['TEST'])
-        self.assertEqual(serialized_data['parent'], metric.parent)
-        self.assertEqual(
-            serialized_data['probeexecutable'], metric.probeexecutable
-        )
+        self.assertEqual(serialized_data['parent'], "")
+        self.assertEqual(serialized_data['probeexecutable'], '["web-api"]')
         self.assertEqual(serialized_data['config'], metric.config)
-        self.assertEqual(serialized_data['attribute'], metric.attribute)
-        self.assertEqual(serialized_data['dependancy'], metric.dependancy)
-        self.assertEqual(serialized_data['flags'], metric.flags)
-        self.assertEqual(serialized_data['files'], metric.files)
-        self.assertEqual(serialized_data['parameter'], metric.parameter)
-        self.assertEqual(serialized_data['fileparameter'], metric.fileparameter)
+        self.assertEqual(
+            serialized_data['attribute'], '["argo.api_TOKEN --token"]'
+        )
+        self.assertEqual(serialized_data['dependancy'], "")
+        self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
+        self.assertEqual(serialized_data['files'], "")
+        self.assertEqual(serialized_data['parameter'], "")
+        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_with_new_version_with_metrictemplate_update_tenant_user(
             self
@@ -2968,46 +2814,34 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.probekey, versions[0])
         metric = poem_models.Metric.objects.get(name='argo.API-Check')
         self.assertEqual(metric.group.name, 'TEST')
-        self.assertEqual(metric.parent, '')
-        self.assertEqual(metric.probeexecutable, '["web-api"]')
-        self.assertEqual(metric.probekey, versions[0])
+        self.assertEqual(metric.probeversion, versions[0].__str__())
         self.assertEqual(
             metric.config,
             '["maxCheckAttempts 3", "timeout 120", '
             '"path /usr/libexec/argo-monitoring/probes/argo", '
             '"interval 5", "retryInterval 3"]'
         )
-        self.assertEqual(metric.attribute, '["argo.api_TOKEN --token"]')
-        self.assertEqual(metric.dependancy, '')
-        self.assertEqual(metric.flags, '["OBSESS 1"]')
-        self.assertEqual(metric.files, '')
-        self.assertEqual(metric.parameter, '')
-        self.assertEqual(metric.fileparameter, '')
         mt_history = poem_models.TenantHistory.objects.filter(
             object_repr='argo.API-Check'
         ).order_by('-date_created')
         self.assertEqual(mt_history.count(), 1)
-        self.assertEqual(
-            mt_history[0].comment, 'Initial version.'
-        )
+        self.assertEqual(mt_history[0].comment, 'Initial version.')
         serialized_data = json.loads(mt_history[0].serialized_data)[0]['fields']
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], ['Active'])
-        self.assertEqual(
-            serialized_data['probekey'], ['argo-web-api', '0.1.7']
-        )
+        self.assertEqual(serialized_data['probekey'], ['argo-web-api', '0.1.7'])
         self.assertEqual(serialized_data['group'], ['TEST'])
-        self.assertEqual(serialized_data['parent'], metric.parent)
-        self.assertEqual(
-            serialized_data['probeexecutable'], metric.probeexecutable
-        )
+        self.assertEqual(serialized_data['parent'], "")
+        self.assertEqual(serialized_data['probeexecutable'], '["web-api"]')
         self.assertEqual(serialized_data['config'], metric.config)
-        self.assertEqual(serialized_data['attribute'], metric.attribute)
-        self.assertEqual(serialized_data['dependancy'], metric.dependancy)
-        self.assertEqual(serialized_data['flags'], metric.flags)
-        self.assertEqual(serialized_data['files'], metric.files)
-        self.assertEqual(serialized_data['parameter'], metric.parameter)
-        self.assertEqual(serialized_data['fileparameter'], metric.fileparameter)
+        self.assertEqual(
+            serialized_data['attribute'], '["argo.api_TOKEN --token"]'
+        )
+        self.assertEqual(serialized_data['dependancy'], "")
+        self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
+        self.assertEqual(serialized_data['files'], "")
+        self.assertEqual(serialized_data['parameter'], "")
+        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_with_nonexisting_probe_sp_superuser(self):
         data = {
@@ -3161,21 +2995,13 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.probekey, version)
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
         self.assertEqual(metric.group.name, 'TEST')
-        self.assertEqual(metric.parent, '')
-        self.assertEqual(metric.probeexecutable, '["ams-probe"]')
-        self.assertEqual(metric.probekey, version)
+        self.assertEqual(metric.probeversion, version.__str__())
         self.assertEqual(
             metric.config,
             '["maxCheckAttempts 3", "timeout 60", '
             '"path /usr/libexec/argo-monitoring/probes/argo", '
             '"interval 5", "retryInterval 3"]'
         )
-        self.assertEqual(metric.attribute, '["argo.ams_TOKEN --token"]')
-        self.assertEqual(metric.dependancy, '')
-        self.assertEqual(metric.flags, '["OBSESS 1"]')
-        self.assertEqual(metric.files, '')
-        self.assertEqual(metric.parameter, '["--project EGI"]')
-        self.assertEqual(metric.fileparameter, '')
         mt_history = poem_models.TenantHistory.objects.filter(
             object_repr='argo.AMS-Check'
         ).order_by('-date_created')
@@ -3186,21 +3012,19 @@ class ListProbesAPIViewTests(TenantTestCase):
         serialized_data = json.loads(mt_history[0].serialized_data)[0]['fields']
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], ['Active'])
-        self.assertEqual(
-            serialized_data['probekey'], ['ams-probe', '0.1.11']
-        )
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
         self.assertEqual(serialized_data['group'], ['TEST'])
-        self.assertEqual(serialized_data['parent'], metric.parent)
-        self.assertEqual(
-            serialized_data['probeexecutable'], metric.probeexecutable
-        )
+        self.assertEqual(serialized_data['parent'], "")
+        self.assertEqual(serialized_data['probeexecutable'], '["ams-probe"]')
         self.assertEqual(serialized_data['config'], metric.config)
-        self.assertEqual(serialized_data['attribute'], metric.attribute)
-        self.assertEqual(serialized_data['dependancy'], metric.dependancy)
-        self.assertEqual(serialized_data['flags'], metric.flags)
-        self.assertEqual(serialized_data['files'], metric.files)
-        self.assertEqual(serialized_data['parameter'], metric.parameter)
-        self.assertEqual(serialized_data['fileparameter'], metric.fileparameter)
+        self.assertEqual(
+            serialized_data['attribute'], '["argo.ams_TOKEN --token"]'
+        )
+        self.assertEqual(serialized_data['dependancy'], "")
+        self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
+        self.assertEqual(serialized_data['files'], "")
+        self.assertEqual(serialized_data['parameter'], '["--project EGI"]')
+        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_missing_data_key_sp_user(self):
         data = {
@@ -3258,21 +3082,13 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.probekey, version)
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
         self.assertEqual(metric.group.name, 'TEST')
-        self.assertEqual(metric.parent, '')
-        self.assertEqual(metric.probeexecutable, '["ams-probe"]')
-        self.assertEqual(metric.probekey, version)
+        self.assertEqual(metric.probeversion, version.__str__())
         self.assertEqual(
             metric.config,
             '["maxCheckAttempts 3", "timeout 60", '
             '"path /usr/libexec/argo-monitoring/probes/argo", '
             '"interval 5", "retryInterval 3"]'
         )
-        self.assertEqual(metric.attribute, '["argo.ams_TOKEN --token"]')
-        self.assertEqual(metric.dependancy, '')
-        self.assertEqual(metric.flags, '["OBSESS 1"]')
-        self.assertEqual(metric.files, '')
-        self.assertEqual(metric.parameter, '["--project EGI"]')
-        self.assertEqual(metric.fileparameter, '')
         mt_history = poem_models.TenantHistory.objects.filter(
             object_repr='argo.AMS-Check'
         ).order_by('-date_created')
@@ -3283,21 +3099,19 @@ class ListProbesAPIViewTests(TenantTestCase):
         serialized_data = json.loads(mt_history[0].serialized_data)[0]['fields']
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], ['Active'])
-        self.assertEqual(
-            serialized_data['probekey'], ['ams-probe', '0.1.11']
-        )
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
         self.assertEqual(serialized_data['group'], ['TEST'])
-        self.assertEqual(serialized_data['parent'], metric.parent)
-        self.assertEqual(
-            serialized_data['probeexecutable'], metric.probeexecutable
-        )
+        self.assertEqual(serialized_data['parent'], "")
+        self.assertEqual(serialized_data['probeexecutable'], '["ams-probe"]')
         self.assertEqual(serialized_data['config'], metric.config)
-        self.assertEqual(serialized_data['attribute'], metric.attribute)
-        self.assertEqual(serialized_data['dependancy'], metric.dependancy)
-        self.assertEqual(serialized_data['flags'], metric.flags)
-        self.assertEqual(serialized_data['files'], metric.files)
-        self.assertEqual(serialized_data['parameter'], metric.parameter)
-        self.assertEqual(serialized_data['fileparameter'], metric.fileparameter)
+        self.assertEqual(
+            serialized_data['attribute'], '["argo.ams_TOKEN --token"]'
+        )
+        self.assertEqual(serialized_data['dependancy'], "")
+        self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
+        self.assertEqual(serialized_data['files'], "")
+        self.assertEqual(serialized_data['parameter'], '["--project EGI"]')
+        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_missing_data_key_tenant_superuser(self):
         data = {
@@ -3355,21 +3169,13 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.probekey, version)
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
         self.assertEqual(metric.group.name, 'TEST')
-        self.assertEqual(metric.parent, '')
-        self.assertEqual(metric.probeexecutable, '["ams-probe"]')
-        self.assertEqual(metric.probekey, version)
+        self.assertEqual(metric.probeversion, version.__str__())
         self.assertEqual(
             metric.config,
             '["maxCheckAttempts 3", "timeout 60", '
             '"path /usr/libexec/argo-monitoring/probes/argo", '
             '"interval 5", "retryInterval 3"]'
         )
-        self.assertEqual(metric.attribute, '["argo.ams_TOKEN --token"]')
-        self.assertEqual(metric.dependancy, '')
-        self.assertEqual(metric.flags, '["OBSESS 1"]')
-        self.assertEqual(metric.files, '')
-        self.assertEqual(metric.parameter, '["--project EGI"]')
-        self.assertEqual(metric.fileparameter, '')
         mt_history = poem_models.TenantHistory.objects.filter(
             object_repr='argo.AMS-Check'
         ).order_by('-date_created')
@@ -3380,21 +3186,19 @@ class ListProbesAPIViewTests(TenantTestCase):
         serialized_data = json.loads(mt_history[0].serialized_data)[0]['fields']
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], ['Active'])
-        self.assertEqual(
-            serialized_data['probekey'], ['ams-probe', '0.1.11']
-        )
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
         self.assertEqual(serialized_data['group'], ['TEST'])
-        self.assertEqual(serialized_data['parent'], metric.parent)
-        self.assertEqual(
-            serialized_data['probeexecutable'], metric.probeexecutable
-        )
+        self.assertEqual(serialized_data['parent'], "")
+        self.assertEqual(serialized_data['probeexecutable'], '["ams-probe"]')
         self.assertEqual(serialized_data['config'], metric.config)
-        self.assertEqual(serialized_data['attribute'], metric.attribute)
-        self.assertEqual(serialized_data['dependancy'], metric.dependancy)
-        self.assertEqual(serialized_data['flags'], metric.flags)
-        self.assertEqual(serialized_data['files'], metric.files)
-        self.assertEqual(serialized_data['parameter'], metric.parameter)
-        self.assertEqual(serialized_data['fileparameter'], metric.fileparameter)
+        self.assertEqual(
+            serialized_data['attribute'], '["argo.ams_TOKEN --token"]'
+        )
+        self.assertEqual(serialized_data['dependancy'], "")
+        self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
+        self.assertEqual(serialized_data['files'], "")
+        self.assertEqual(serialized_data['parameter'], '["--project EGI"]')
+        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_missing_data_key_tenant_user(self):
         data = {
@@ -3452,46 +3256,34 @@ class ListProbesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.probekey, version)
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
         self.assertEqual(metric.group.name, 'TEST')
-        self.assertEqual(metric.parent, '')
-        self.assertEqual(metric.probeexecutable, '["ams-probe"]')
-        self.assertEqual(metric.probekey, version)
+        self.assertEqual(metric.probeversion, version.__str__())
         self.assertEqual(
             metric.config,
             '["maxCheckAttempts 3", "timeout 60", '
             '"path /usr/libexec/argo-monitoring/probes/argo", '
             '"interval 5", "retryInterval 3"]'
         )
-        self.assertEqual(metric.attribute, '["argo.ams_TOKEN --token"]')
-        self.assertEqual(metric.dependancy, '')
-        self.assertEqual(metric.flags, '["OBSESS 1"]')
-        self.assertEqual(metric.files, '')
-        self.assertEqual(metric.parameter, '["--project EGI"]')
-        self.assertEqual(metric.fileparameter, '')
         mt_history = poem_models.TenantHistory.objects.filter(
             object_repr='argo.AMS-Check'
         ).order_by('-date_created')
         self.assertEqual(mt_history.count(), 1)
-        self.assertEqual(
-            mt_history[0].comment, 'Initial version.'
-        )
+        self.assertEqual(mt_history[0].comment, 'Initial version.')
         serialized_data = json.loads(mt_history[0].serialized_data)[0]['fields']
         self.assertEqual(serialized_data['name'], metric.name)
         self.assertEqual(serialized_data['mtype'], ['Active'])
-        self.assertEqual(
-            serialized_data['probekey'], ['ams-probe', '0.1.11']
-        )
+        self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
         self.assertEqual(serialized_data['group'], ['TEST'])
-        self.assertEqual(serialized_data['parent'], metric.parent)
-        self.assertEqual(
-            serialized_data['probeexecutable'], metric.probeexecutable
-        )
+        self.assertEqual(serialized_data['parent'], "")
+        self.assertEqual(serialized_data['probeexecutable'], '["ams-probe"]')
         self.assertEqual(serialized_data['config'], metric.config)
-        self.assertEqual(serialized_data['attribute'], metric.attribute)
-        self.assertEqual(serialized_data['dependancy'], metric.dependancy)
-        self.assertEqual(serialized_data['flags'], metric.flags)
-        self.assertEqual(serialized_data['files'], metric.files)
-        self.assertEqual(serialized_data['parameter'], metric.parameter)
-        self.assertEqual(serialized_data['fileparameter'], metric.fileparameter)
+        self.assertEqual(
+            serialized_data['attribute'], '["argo.ams_TOKEN --token"]'
+        )
+        self.assertEqual(serialized_data['dependancy'], "")
+        self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
+        self.assertEqual(serialized_data['files'], "")
+        self.assertEqual(serialized_data['parameter'], '["--project EGI"]')
+        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_post_probe_sp_superuser(self):
         data = {
