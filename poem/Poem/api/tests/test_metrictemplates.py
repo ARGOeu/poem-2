@@ -49,9 +49,6 @@ def mock_db():
     mttype1 = admin_models.MetricTemplateType.objects.create(name="Active")
     mttype2 = admin_models.MetricTemplateType.objects.create(name="Passive")
 
-    mtype1 = poem_models.MetricType.objects.create(name="Active")
-    mtype2 = poem_models.MetricType.objects.create(name="Passive")
-
     ostag1 = admin_models.OSTag.objects.create(name="CentOS 6")
     ostag2 = admin_models.OSTag.objects.create(name="CentOS 7")
 
@@ -536,17 +533,8 @@ def mock_db():
 
     metric1 = poem_models.Metric.objects.create(
         name=mt4.name,
-        mtype=mtype1,
-        probekey=mt4.probekey,
-        description=mt4.description,
-        probeexecutable=mt4.probeexecutable,
+        probeversion=mt4.probekey.__str__(),
         config=mt4.config,
-        attribute=mt4.attribute,
-        dependancy=mt4.dependency,
-        flags=mt4.flags,
-        files=mt4.files,
-        parameter=mt4.parameter,
-        fileparameter=mt4.fileparameter,
         group=group
     )
 
@@ -562,17 +550,7 @@ def mock_db():
 
     metric2 = poem_models.Metric.objects.create(
         name=mt2.name,
-        mtype=mtype2,
-        probekey=mt2.probekey,
-        description=mt2.description,
-        probeexecutable=mt2.probeexecutable,
         config=mt2.config,
-        attribute=mt2.attribute,
-        dependancy=mt2.dependency,
-        flags=mt2.flags,
-        files=mt2.files,
-        parameter=mt2.parameter,
-        fileparameter=mt2.fileparameter,
         group=group
     )
 
@@ -588,17 +566,8 @@ def mock_db():
 
     metric3 = poem_models.Metric.objects.create(
         name=mt1.name,
-        mtype=mtype1,
-        probekey=mt1.probekey,
-        description=mt1.description,
-        probeexecutable=mt1.probeexecutable,
+        probeversion=mt1.probekey.__str__(),
         config=mt1.config,
-        attribute=mt1.attribute,
-        dependancy=mt1.dependency,
-        flags=mt1.flags,
-        files=mt1.files,
-        parameter=mt1.parameter,
-        fileparameter=mt1.fileparameter,
         group=group
     )
 
@@ -2360,7 +2329,9 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
-    def test_post_metric_template_sync_error_sp_user(self, mocked_inline, mock_sync):
+    def test_post_metric_template_sync_error_sp_user(
+            self, mocked_inline, mock_sync
+    ):
         mocked_inline.side_effect = mocked_inline_metric_for_db
         mock_sync.side_effect = mocked_syncer_error
         conf = [
