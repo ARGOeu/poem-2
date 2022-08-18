@@ -1,7 +1,11 @@
-from Poem.poem_super_admin.models import ProbeHistory, MetricTags
+from Poem.poem_super_admin import models as admin_models
+from Poem.tenants.models import Tenant
 from django.contrib.auth.models import GroupManager, Permission
 from django.db import models
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
+from django_tenants.utils import schema_context, get_public_schema_name
 
 
 class MetricTypeManager(models.Manager):
@@ -74,3 +78,21 @@ class MetricConfiguration(models.Model):
     def __str__(self):
         return u"%s" % self.name
 
+
+@receiver(pre_save, sender=admin_models.Package)
+def update_metrics(sender, instance, **kwargs):
+    schemas = list(
+        Tenant.objects.all().values_list('schema_name', flat=True)
+    )
+    schemas.remove(get_public_schema_name())
+    probes = admin_models.ProbeHistory.objects.filter(package=instance)
+
+    for schema in schemas:
+        with schema_context(schema):
+            for probe in probes:
+                metrics = Metric.objects.filter(
+                    probeversion=f"{probe.name} ({probe.package.version})"
+                )
+                for metric in metrics:
+                    metric.probeversion = f"{probe.name} ({instance.version})"
+                    metric.save()

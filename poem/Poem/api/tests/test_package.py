@@ -99,7 +99,6 @@ class ListPackagesAPIViewTests(TenantTestCase):
         )
 
         mtype = admin_models.MetricTemplateType.objects.create(name='Active')
-        metrictype = poem_models.MetricType.objects.create(name='Active')
 
         group = poem_models.GroupOfMetrics.objects.create(name='TEST')
 
@@ -144,15 +143,10 @@ class ListPackagesAPIViewTests(TenantTestCase):
         metric1 = poem_models.Metric.objects.create(
             name='argo.AMS-Check',
             group=group,
-            mtype=metrictype,
-            probekey=pv1,
-            probeexecutable='["ams-probe"]',
+            probeversion=pv1.__str__(),
             config='["maxCheckAttempts 3", "timeout 60", '
                    '"path /usr/libexec/argo-monitoring/probes/argo", '
-                   '"interval 5", "retryInterval 3"]',
-            attribute='["argo.ams_TOKEN --token"]',
-            flags='["OBSESS 1"]',
-            parameter='["--project EGI"]'
+                   '"interval 5", "retryInterval 3"]'
         )
 
         poem_models.TenantHistory.objects.create(
@@ -956,7 +950,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         self.assertEqual(mt_history.count(), 1)
         self.assertEqual(mt_history[0].probekey, probe_history[0])
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
-        self.assertEqual(metric.probekey, probe_history[0])
+        self.assertEqual(metric.probeversion, probe_history[0].__str__())
         metric_history = poem_models.TenantHistory.objects.filter(
             object_repr=metric.__str__()
         ).order_by('-date_created')
@@ -1004,7 +998,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         self.assertEqual(mt_history.count(), 1)
         self.assertEqual(mt_history[0].probekey, probe_history[0])
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
-        self.assertEqual(metric.probekey, probe_history[0])
+        self.assertEqual(metric.probeversion, probe_history[0].__str__())
         metric_history = poem_models.TenantHistory.objects.filter(
             object_repr=metric.__str__()
         ).order_by('-date_created')
@@ -1052,7 +1046,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         self.assertEqual(mt_history.count(), 1)
         self.assertEqual(mt_history[0].probekey, probe_history[0])
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
-        self.assertEqual(metric.probekey, probe_history[0])
+        self.assertEqual(metric.probeversion, probe_history[0].__str__())
         metric_history = poem_models.TenantHistory.objects.filter(
             object_repr=metric.__str__()
         ).order_by('-date_created')
@@ -1100,7 +1094,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         self.assertEqual(mt_history.count(), 1)
         self.assertEqual(mt_history[0].probekey, probe_history[0])
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
-        self.assertEqual(metric.probekey, probe_history[0])
+        self.assertEqual(metric.probeversion, probe_history[0].__str__())
         metric_history = poem_models.TenantHistory.objects.filter(
             object_repr=metric.__str__()
         ).order_by('-date_created')
@@ -1143,7 +1137,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         self.assertEqual(mt_history.count(), 1)
         self.assertEqual(mt_history[0].probekey, probe_history[0])
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
-        self.assertEqual(metric.probekey, probe_history[0])
+        self.assertEqual(metric.probeversion, probe_history[0].__str__())
         metric_history = poem_models.TenantHistory.objects.filter(
             object_repr=metric.__str__()
         ).order_by('-date_created')
@@ -1191,7 +1185,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         self.assertEqual(mt_history.count(), 1)
         self.assertEqual(mt_history[0].probekey, probe_history[0])
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
-        self.assertEqual(metric.probekey, probe_history[0])
+        self.assertEqual(metric.probeversion, probe_history[0].__str__())
         metric_history = poem_models.TenantHistory.objects.filter(
             object_repr=metric.__str__()
         ).order_by('-date_created')
@@ -1239,7 +1233,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         self.assertEqual(mt_history.count(), 1)
         self.assertEqual(mt_history[0].probekey, probe_history[0])
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
-        self.assertEqual(metric.probekey, probe_history[0])
+        self.assertEqual(metric.probeversion, probe_history[0].__str__())
         metric_history = poem_models.TenantHistory.objects.filter(
             object_repr=metric.__str__()
         ).order_by('-date_created')
@@ -1287,7 +1281,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         self.assertEqual(mt_history.count(), 1)
         self.assertEqual(mt_history[0].probekey, probe_history[0])
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
-        self.assertEqual(metric.probekey, probe_history[0])
+        self.assertEqual(metric.probeversion, probe_history[0].__str__())
         metric_history = poem_models.TenantHistory.objects.filter(
             object_repr=metric.__str__()
         ).order_by('-date_created')
@@ -1332,7 +1326,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         self.assertEqual(mt_history.count(), 1)
         self.assertEqual(mt_history[0].probekey, probe_history[0])
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
-        self.assertEqual(metric.probekey, probe_history[0])
+        self.assertEqual(metric.probeversion, probe_history[0].__str__())
         metric_history = poem_models.TenantHistory.objects.filter(
             object_repr=metric.__str__()
         ).order_by('-date_created')
@@ -1380,7 +1374,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         self.assertEqual(mt_history.count(), 1)
         self.assertEqual(mt_history[0].probekey, probe_history[0])
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
-        self.assertEqual(metric.probekey, probe_history[0])
+        self.assertEqual(metric.probeversion, probe_history[0].__str__())
         metric_history = poem_models.TenantHistory.objects.filter(
             object_repr=metric.__str__()
         ).order_by('-date_created')
@@ -1428,7 +1422,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         self.assertEqual(mt_history.count(), 1)
         self.assertEqual(mt_history[0].probekey, probe_history[0])
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
-        self.assertEqual(metric.probekey, probe_history[0])
+        self.assertEqual(metric.probeversion, probe_history[0].__str__())
         metric_history = poem_models.TenantHistory.objects.filter(
             object_repr=metric.__str__()
         ).order_by('-date_created')
@@ -1476,7 +1470,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         self.assertEqual(mt_history.count(), 1)
         self.assertEqual(mt_history[0].probekey, probe_history[0])
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
-        self.assertEqual(metric.probekey, probe_history[0])
+        self.assertEqual(metric.probeversion, probe_history[0].__str__())
         metric_history = poem_models.TenantHistory.objects.filter(
             object_repr=metric.__str__()
         ).order_by('-date_created')
@@ -1614,7 +1608,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         self.assertEqual(mt_history.count(), 1)
         self.assertEqual(mt_history[0].probekey, probe_history[0])
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
-        self.assertEqual(metric.probekey, probe_history[0])
+        self.assertEqual(metric.probeversion, probe_history[0].__str__())
         metric_history = poem_models.TenantHistory.objects.filter(
             object_repr=metric.__str__()
         ).order_by('-date_created')
@@ -1662,7 +1656,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         self.assertEqual(mt_history.count(), 1)
         self.assertEqual(mt_history[0].probekey, probe_history[0])
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
-        self.assertEqual(metric.probekey, probe_history[0])
+        self.assertEqual(metric.probeversion, probe_history[0].__str__())
         metric_history = poem_models.TenantHistory.objects.filter(
             object_repr=metric.__str__()
         ).order_by('-date_created')
@@ -1710,7 +1704,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         self.assertEqual(mt_history.count(), 1)
         self.assertEqual(mt_history[0].probekey, probe_history[0])
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
-        self.assertEqual(metric.probekey, probe_history[0])
+        self.assertEqual(metric.probeversion, probe_history[0].__str__())
         metric_history = poem_models.TenantHistory.objects.filter(
             object_repr=metric.__str__()
         ).order_by('-date_created')
@@ -1758,7 +1752,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         self.assertEqual(mt_history.count(), 1)
         self.assertEqual(mt_history[0].probekey, probe_history[0])
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
-        self.assertEqual(metric.probekey, probe_history[0])
+        self.assertEqual(metric.probeversion, probe_history[0].__str__())
         metric_history = poem_models.TenantHistory.objects.filter(
             object_repr=metric.__str__()
         ).order_by('-date_created')
@@ -1803,7 +1797,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         self.assertEqual(mt_history.count(), 1)
         self.assertEqual(mt_history[0].probekey, probe_history[0])
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
-        self.assertEqual(metric.probekey, probe_history[0])
+        self.assertEqual(metric.probeversion, probe_history[0].__str__())
         metric_history = poem_models.TenantHistory.objects.filter(
             object_repr=metric.__str__()
         ).order_by('-date_created')
@@ -1812,7 +1806,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
             json.loads(metric_history[0].serialized_data)[0]['fields']
         self.assertEqual(serialized_data['probekey'], ['ams-probe', '0.1.11'])
 
-    def test_put_packageh_with_nonexisting_repo_sp_user(self):
+    def test_put_package_with_nonexisting_repo_sp_user(self):
         data = {
             'id': self.package1.id,
             'name': 'nagios-plugins-argo',
@@ -1851,7 +1845,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         self.assertEqual(mt_history.count(), 1)
         self.assertEqual(mt_history[0].probekey, probe_history[0])
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
-        self.assertEqual(metric.probekey, probe_history[0])
+        self.assertEqual(metric.probeversion, probe_history[0].__str__())
         metric_history = poem_models.TenantHistory.objects.filter(
             object_repr=metric.__str__()
         ).order_by('-date_created')
@@ -1899,7 +1893,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         self.assertEqual(mt_history.count(), 1)
         self.assertEqual(mt_history[0].probekey, probe_history[0])
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
-        self.assertEqual(metric.probekey, probe_history[0])
+        self.assertEqual(metric.probeversion, probe_history[0].__str__())
         metric_history = poem_models.TenantHistory.objects.filter(
             object_repr=metric.__str__()
         ).order_by('-date_created')
@@ -1947,7 +1941,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         self.assertEqual(mt_history.count(), 1)
         self.assertEqual(mt_history[0].probekey, probe_history[0])
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
-        self.assertEqual(metric.probekey, probe_history[0])
+        self.assertEqual(metric.probeversion, probe_history[0].__str__())
         metric_history = poem_models.TenantHistory.objects.filter(
             object_repr=metric.__str__()
         ).order_by('-date_created')
@@ -1992,7 +1986,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         self.assertEqual(mt_history.count(), 1)
         self.assertEqual(mt_history[0].probekey, probe_history[0])
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
-        self.assertEqual(metric.probekey, probe_history[0])
+        self.assertEqual(metric.probeversion, probe_history[0].__str__())
         metric_history = poem_models.TenantHistory.objects.filter(
             object_repr=metric.__str__()
         ).order_by('-date_created')
@@ -2040,7 +2034,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         self.assertEqual(mt_history.count(), 1)
         self.assertEqual(mt_history[0].probekey, probe_history[0])
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
-        self.assertEqual(metric.probekey, probe_history[0])
+        self.assertEqual(metric.probeversion, probe_history[0].__str__())
         metric_history = poem_models.TenantHistory.objects.filter(
             object_repr=metric.__str__()
         ).order_by('-date_created')
@@ -2088,7 +2082,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         self.assertEqual(mt_history.count(), 1)
         self.assertEqual(mt_history[0].probekey, probe_history[0])
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
-        self.assertEqual(metric.probekey, probe_history[0])
+        self.assertEqual(metric.probeversion, probe_history[0].__str__())
         metric_history = poem_models.TenantHistory.objects.filter(
             object_repr=metric.__str__()
         ).order_by('-date_created')
@@ -2136,7 +2130,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         self.assertEqual(mt_history.count(), 1)
         self.assertEqual(mt_history[0].probekey, probe_history[0])
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
-        self.assertEqual(metric.probekey, probe_history[0])
+        self.assertEqual(metric.probeversion, probe_history[0].__str__())
         metric_history = poem_models.TenantHistory.objects.filter(
             object_repr=metric.__str__()
         ).order_by('-date_created')
@@ -2180,7 +2174,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         self.assertEqual(mt_history.count(), 1)
         self.assertEqual(mt_history[0].probekey, probe_history[0])
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
-        self.assertEqual(metric.probekey, probe_history[0])
+        self.assertEqual(metric.probeversion, probe_history[0].__str__())
         metric_history = poem_models.TenantHistory.objects.filter(
             object_repr=metric.__str__()
         ).order_by('-date_created')
@@ -2227,7 +2221,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         self.assertEqual(mt_history.count(), 1)
         self.assertEqual(mt_history[0].probekey, probe_history[0])
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
-        self.assertEqual(metric.probekey, probe_history[0])
+        self.assertEqual(metric.probeversion, probe_history[0].__str__())
         metric_history = poem_models.TenantHistory.objects.filter(
             object_repr=metric.__str__()
         ).order_by('-date_created')
@@ -2274,7 +2268,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         self.assertEqual(mt_history.count(), 1)
         self.assertEqual(mt_history[0].probekey, probe_history[0])
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
-        self.assertEqual(metric.probekey, probe_history[0])
+        self.assertEqual(metric.probeversion, probe_history[0].__str__())
         metric_history = poem_models.TenantHistory.objects.filter(
             object_repr=metric.__str__()
         ).order_by('-date_created')
@@ -2321,7 +2315,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
         self.assertEqual(mt_history.count(), 1)
         self.assertEqual(mt_history[0].probekey, probe_history[0])
         metric = poem_models.Metric.objects.get(name='argo.AMS-Check')
-        self.assertEqual(metric.probekey, probe_history[0])
+        self.assertEqual(metric.probeversion, probe_history[0].__str__())
         metric_history = poem_models.TenantHistory.objects.filter(
             object_repr=metric.__str__()
         ).order_by('-date_created')
