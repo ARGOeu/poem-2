@@ -807,20 +807,21 @@ const App = () => {
     localStorage.setItem('referrer', JSON.stringify(stackUrls));
   }
 
+  async function fetchData() {
+    if (isPublicUrl()) {
+      initalizePublicState()
+    }
+    else {
+      let isTenantSchema = await backend.isTenantSchema();
+      let response = await backend.isActiveSession(isTenantSchema);
+      response.active && initalizeState(isTenantSchema, response);
+    }
+
+    getAndSetReferrer()
+  }
+
   useEffect(() => {
     fetchData();
-    async function fetchData() {
-      if (isPublicUrl()) {
-        initalizePublicState()
-      }
-      else {
-        let isTenantSchema = await backend.isTenantSchema();
-        let response = await backend.isActiveSession(isTenantSchema);
-        response.active && initalizeState(isTenantSchema, response);
-      }
-
-      getAndSetReferrer()
-    }
   }, [])
 
   if (publicView && privacyLink && termsLink && isTenantSchema !== undefined) {
