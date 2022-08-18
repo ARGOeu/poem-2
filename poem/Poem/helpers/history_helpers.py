@@ -77,6 +77,8 @@ def serialize_metric(metric_instance, tags=None):
     else:
         probekey = None
 
+    unserialized["fields"].pop("probeversion")
+
     unserialized["fields"].update({
         "tags": tags_list,
         "mtype": [mt_instance.mtype.name],
@@ -471,7 +473,8 @@ def create_profile_history(instance, data, user, description=None):
         })
 
     elif isinstance(
-            instance, (poem_models.Aggregation, poem_models.ThresholdsProfiles, poem_models.Reports)
+            instance, (poem_models.Aggregation, poem_models.ThresholdsProfiles,
+                       poem_models.Reports)
     ):
         serialized_data[0]['fields'].update(**data)
 
