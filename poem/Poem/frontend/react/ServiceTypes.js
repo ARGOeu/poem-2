@@ -9,12 +9,20 @@ import {
   BaseArgoTable,
   DefaultColumnFilter
 } from './UIElements';
+import {
+  fetchUserDetails,
+} from './QueryFunctions';
 
 
 export const ServiceTypesList = (props) => {
   const publicView = props.publicView;
 
   const backend = new Backend();
+
+  const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
+    'userdetails', () => fetchUserDetails(true),
+    { enabled: !publicView }
+  );
 
   const { data: serviceTypesDescriptions, error, status } = useQuery(
     `${publicView ? 'public_' : ''}servicetypedesc`, async () => {

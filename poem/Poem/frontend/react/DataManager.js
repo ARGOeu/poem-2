@@ -262,7 +262,8 @@ export class WebApi {
       aggregationProfiles=undefined,
       thresholdsProfiles=undefined,
       operationsProfiles=undefined,
-      reportsConfigurations=undefined
+      reportsConfigurations=undefined,
+      serviceTypes=undefined
     }) {
     this.token = token;
     this.metricprofiles = metricProfiles;
@@ -270,6 +271,7 @@ export class WebApi {
     this.thresholdsprofiles = thresholdsProfiles;
     this.operationsprofiles = operationsProfiles;
     this.reports = reportsConfigurations;
+    this.servicetypes = serviceTypes;
   }
 
   async fetchProfiles(url) {
@@ -332,6 +334,10 @@ export class WebApi {
 
   async fetchReportsTopologyTags() {
     return this.fetchProfiles(this.reports['tags']);
+  }
+
+  async fetchServiceTypes() {
+    return this.fetchProfiles(this.servicetypes);
   }
 
   fetchMetricProfile(id) {

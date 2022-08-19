@@ -80,7 +80,8 @@ import {
   fetchThresholdsProfiles,
   fetchTopologyTags,
   fetchTopologyGroups,
-  fetchTopologyEndpoints
+  fetchTopologyEndpoints,
+  fetchServiceTypes
 } from './QueryFunctions';
 import { MetricTagsComponent, MetricTagsList } from './MetricTags';
 import { MetricOverrideChange, MetricOverrideList } from './MetricOverrides';
@@ -727,7 +728,8 @@ const App = () => {
         aggregationProfiles: options.result.webapiaggregation,
         thresholdsProfiles: options.result.webapithresholds,
         operationsProfiles: options.result.webapioperations,
-        reportsConfigurations: options.result.webapireports
+        reportsConfigurations: options.result.webapireports,
+        serviceTypes: options.result.webapiservicetypes
       })
 
       if (!isPublic)
@@ -767,6 +769,9 @@ const App = () => {
       );
       queryClient.prefetchQuery(
         [`${isPublic ? 'public_' : ''}thresholdsprofile`, 'webapi'], () => fetchThresholdsProfiles(webapi)
+      )
+      queryClient.prefetchQuery(
+        [`${isPublic ? 'public_' : ''}servicetypes`, 'webapi'], () => fetchServiceTypes(webapi)
       )
       queryClient.prefetchQuery(
         `${isPublic ? 'public_' : ''}operationsprofile`, () => fetchOperationsProfiles(webapi)

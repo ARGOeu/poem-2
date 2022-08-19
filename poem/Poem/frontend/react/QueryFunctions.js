@@ -195,3 +195,8 @@ export const fetchTopologyGroups = async (webapi) => {
 export const fetchTopologyEndpoints = async (webapi) => {
   return await webapi.fetchReportsTopologyEndpoints()
 }
+
+
+export const fetchServiceTypes = async (webapi) => {
+  return await webapi.fetchServiceTypes()
+}
