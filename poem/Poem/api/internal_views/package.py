@@ -59,7 +59,7 @@ class ListPackages(APIView):
                     'name': package.name,
                     'version': package.version,
                     'use_present_version': package.use_present_version,
-                    'repos': repos
+                    'repos': sorted(repos)
                 }
 
                 return Response(result)
