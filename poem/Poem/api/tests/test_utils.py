@@ -2,15 +2,18 @@ import datetime
 import json
 from unittest.mock import patch
 
+import factory.django
 from Poem.api.internal_views.utils import sync_webapi, \
     get_tenant_resources, sync_tags_webapi, WebApiException
 from Poem.api.models import MyAPIKey
 from Poem.helpers.history_helpers import create_comment
+from Poem.helpers.history_helpers import serialize_metric
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from Poem.users.models import CustUser
 from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
+from django.db.models.signals import pre_save
 from django_tenants.test.cases import TenantTestCase
 from django_tenants.utils import get_public_schema_name
 
@@ -385,15 +388,13 @@ class SyncWebApiTagsTests(TenantTestCase):
             )
 
 
+@factory.django.mute_signals(pre_save)
 class BasicResourceInfoTests(TenantTestCase):
-    def setUp(self) -> None:
+    def setUp(self):
         user = CustUser.objects.create_user(username='testuser')
 
         mtype1 = admin_models.MetricTemplateType.objects.create(name='Active')
         mtype2 = admin_models.MetricTemplateType.objects.create(name='Passive')
-
-        mtype3 = poem_models.MetricType.objects.create(name='Active')
-        mtype4 = poem_models.MetricType.objects.create(name='Passive')
 
         ct = ContentType.objects.get_for_model(poem_models.Metric)
 
@@ -527,6 +528,7 @@ class BasicResourceInfoTests(TenantTestCase):
             name=metrictemplate1.name,
             mtype=metrictemplate1.mtype,
             probekey=metrictemplate1.probekey,
+            parent=metrictemplate1.parent,
             description=metrictemplate1.description,
             probeexecutable=metrictemplate1.probeexecutable,
             config=metrictemplate1.config,
@@ -547,6 +549,7 @@ class BasicResourceInfoTests(TenantTestCase):
             mtype=metrictemplate2.mtype,
             description=metrictemplate2.description,
             probekey=metrictemplate2.probekey,
+            parent=metrictemplate2.parent,
             probeexecutable=metrictemplate2.probeexecutable,
             config=metrictemplate2.config,
             attribute=metrictemplate2.attribute,
@@ -603,6 +606,7 @@ class BasicResourceInfoTests(TenantTestCase):
             mtype=metrictemplate3.mtype,
             description=metrictemplate3.description,
             probekey=metrictemplate3.probekey,
+            parent=metrictemplate3.parent,
             probeexecutable=metrictemplate3.probeexecutable,
             config=metrictemplate3.config,
             attribute=metrictemplate3.attribute,
@@ -621,27 +625,14 @@ class BasicResourceInfoTests(TenantTestCase):
         metric1 = poem_models.Metric.objects.create(
             name=metrictemplate1.name,
             group=group,
-            mtype=mtype3,
-            description=metrictemplate1.description,
-            probekey=metrictemplate1.probekey,
-            probeexecutable=metrictemplate1.probeexecutable,
-            config=metrictemplate1.config,
-            attribute=metrictemplate1.attribute,
-            dependancy=metrictemplate1.dependency,
-            flags=metrictemplate1.flags,
-            files=metrictemplate1.files,
-            parameter=metrictemplate1.parameter,
-            fileparameter=metrictemplate1.fileparameter,
+            probeversion=metrictemplate1.probekey.__str__(),
+            config=metrictemplate1.config
         )
 
         poem_models.TenantHistory.objects.create(
             object_id=metric1.id,
             object_repr=metric1.__str__(),
-            serialized_data=serializers.serialize(
-                'json', [metric1],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
-            ),
+            serialized_data=serialize_metric(metric1),
             content_type=ct,
             date_created=datetime.datetime.now(),
             comment='Initial version.',
@@ -651,27 +642,14 @@ class BasicResourceInfoTests(TenantTestCase):
         metric2 = poem_models.Metric.objects.create(
             name=metrictemplate2.name,
             group=group,
-            mtype=mtype4,
-            description=metrictemplate2.description,
-            probekey=metrictemplate2.probekey,
-            probeexecutable=metrictemplate2.probeexecutable,
-            config=metrictemplate2.config,
-            attribute=metrictemplate2.attribute,
-            dependancy=metrictemplate2.dependency,
-            flags=metrictemplate2.flags,
-            files=metrictemplate2.files,
-            parameter=metrictemplate2.parameter,
-            fileparameter=metrictemplate2.fileparameter,
+            probeversion=metrictemplate2.probekey.__str__(),
+            config=metrictemplate2.config
         )
 
         poem_models.TenantHistory.objects.create(
             object_id=metric2.id,
             object_repr=metric2.__str__(),
-            serialized_data=serializers.serialize(
-                'json', [metric2],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
-            ),
+            serialized_data=serialize_metric(metric2),
             content_type=ct,
             date_created=datetime.datetime.now(),
             comment='Initial version.',
