@@ -63,7 +63,6 @@ import {
   fetchMetricTags,
   fetchMetricTemplates,
   fetchMetricTemplateTypes,
-  fetchMetricTypes,
   fetchOperationsProfiles,
   fetchOStags,
   fetchPackages,
@@ -734,9 +733,6 @@ const App = () => {
 
       queryClient.prefetchQuery(
         `${isPublic ? 'public_' : ''}metric`, () => fetchMetrics(isPublic)
-      );
-      queryClient.prefetchQuery(
-        `${isPublic ? 'public_' : ''}metricstypes`, () => fetchMetricTypes(isPublic)
       );
       queryClient.prefetchQuery(
         [`${isPublic ? 'public_' : ''}metric`, 'usergroups'], () => fetchUserGroups(isTenant, isPublic, 'metrics')

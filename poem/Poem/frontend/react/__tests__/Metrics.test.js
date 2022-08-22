@@ -460,7 +460,7 @@ describe('Tests for metrics listview', () => {
       return {
         fetchData: (path) => {
           switch (path) {
-            case '/api/v2/internal/mtypes':
+            case '/api/v2/internal/mttypes':
               return Promise.resolve(['Active', 'Passive'])
 
             case '/api/v2/internal/metrictags':
@@ -472,7 +472,7 @@ describe('Tests for metrics listview', () => {
             case '/api/v2/internal/public_metric':
               return Promise.resolve(mockListOfMetrics)
 
-            case '/api/v2/internal/public_mtypes':
+            case '/api/v2/internal/public_mttypes':
               return Promise.resolve(['Active', 'Passive'])
 
             case '/api/v2/internal/public_metrictags':
@@ -627,7 +627,7 @@ describe('Tests for metrics listview', () => {
       return {
         fetchData: (path) => {
           switch (path) {
-            case '/api/v2/internal/mtypes':
+            case '/api/v2/internal/mttypes':
               return Promise.resolve(['Active', 'Passive'])
 
             case '/api/v2/internal/metrictags':
