@@ -8,27 +8,6 @@ from django.utils.translation import ugettext_lazy as _
 from django_tenants.utils import schema_context, get_public_schema_name
 
 
-class MetricTypeManager(models.Manager):
-    def get_by_natural_key(self, name):
-        return self.get(name=name)
-
-
-class MetricType(models.Model):
-    id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=128)
-
-    objects = MetricTypeManager()
-
-    class Meta:
-        app_label = 'poem'
-
-    def __str__(self):
-        return u'%s' % self.name
-
-    def natural_key(self):
-        return (self.name,)
-
-
 class GroupOfMetrics(models.Model):
     name = models.CharField(_('name'), max_length=80, unique=True)
     permissions = models.ManyToManyField(Permission,
