@@ -1785,29 +1785,6 @@ class ListMetricAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
-class ListMetricTypesAPIViewTests(TenantTestCase):
-    def setUp(self):
-        self.factory = TenantRequestFactory(self.tenant)
-        self.view = views.ListMetricTypes.as_view()
-        self.url = '/api/v2/internal/mtypes/'
-        self.user = CustUser.objects.create(username='testuser')
-
-        poem_models.MetricType.objects.create(name='Active')
-        poem_models.MetricType.objects.create(name='Passive')
-
-    def test_get_tags(self):
-        request = self.factory.get(self.url)
-        force_authenticate(request, user=self.user)
-        response = self.view(request)
-        self.assertEqual(
-            [r for r in response.data],
-            [
-                'Active',
-                'Passive',
-            ]
-        )
-
-
 class ImportMetricsAPIViewTests(TenantTestCase):
     def setUp(self):
         self.factory = TenantRequestFactory(self.tenant)

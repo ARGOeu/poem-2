@@ -268,21 +268,6 @@ class ListPublicMetric(ListMetric):
         return self._denied()
 
 
-class ListMetricTypes(APIView):
-    authentication_classes = (SessionAuthentication,)
-
-    def get(self, request):
-        types = poem_models.MetricType.objects.all().values_list(
-            'name', flat=True
-        )
-        return Response(types)
-
-
-class ListPublicMetricTypes(ListMetricTypes):
-    authentication_classes = ()
-    permission_classes = ()
-
-
 class ImportMetrics(APIView):
     authentication_classes = (SessionAuthentication,)
 
