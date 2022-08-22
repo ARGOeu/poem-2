@@ -211,17 +211,15 @@ def get_tenant_resources(schema_name):
     with schema_context(schema_name):
         if schema_name == get_public_schema_name():
             metrics = admin_models.MetricTemplate.objects.all()
+            probes = [metric.probekey for metric in metrics if metric.probekey]
             met_key = 'metric_templates'
         else:
             metrics = poem_models.Metric.objects.all()
+            probes = [
+                metric.probeversion for metric in metrics if metric.probeversion
+            ]
             met_key = 'metrics'
         n_met = metrics.count()
-
-        probes = set()
-        for metric in metrics:
-            if metric.probekey:
-                probes.add(metric.probekey)
-
-        n_probe = len(probes)
+        n_probe = len(set(probes))
 
         return {met_key: n_met, 'probes': n_probe}
