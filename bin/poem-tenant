@@ -70,7 +70,5 @@ su -m -s /bin/sh $RUNASUSER -c \
 if [[ $name != 'all' ]]
 then
     su -m -s /bin/sh $RUNASUSER -c \
-    "poem-manage tenant_command loaddata initial_data.json --schema=$schema"
-    su -m -s /bin/sh $RUNASUSER -c \
     "poem-manage tenant_command import_internal_metrics --schema=$schema"
 fi
