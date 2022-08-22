@@ -2,6 +2,7 @@ import datetime
 import json
 from unittest.mock import patch, call
 
+import factory
 import requests
 from Poem.api.models import MyAPIKey
 from Poem.helpers.history_helpers import create_comment, update_comment, \
@@ -19,6 +20,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
 from django.core.management import call_command
 from django.db import connection
+from django.db.models.signals import pre_save
 from django.test.testcases import TransactionTestCase
 from django_tenants.test.cases import TenantTestCase
 from django_tenants.utils import get_tenant_model, get_public_schema_name, \
@@ -1045,6 +1047,7 @@ def mock_db(tenant, tenant2=False):
             )
 
 
+@factory.django.mute_signals(pre_save)
 class HistoryHelpersTests(TenantTestCase):
     def setUp(self):
         tag = admin_models.OSTag.objects.create(name='CentOS 6')

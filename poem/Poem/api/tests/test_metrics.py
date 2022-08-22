@@ -2,6 +2,7 @@ import datetime
 import json
 from unittest.mock import patch, call
 
+import factory
 import requests
 from Poem.api import views_internal as views
 from Poem.api.internal_views.utils import inline_metric_for_db
@@ -12,6 +13,7 @@ from Poem.tenants.models import Tenant
 from Poem.users.models import CustUser
 from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
+from django.db.models.signals import pre_save
 from django_tenants.test.cases import TenantTestCase
 from django_tenants.test.client import TenantRequestFactory
 from django_tenants.utils import get_public_schema_name, schema_context, \
@@ -23,6 +25,7 @@ from .utils_test import mocked_func, encode_data, mocked_inline_metric_for_db, \
     MockResponse
 
 
+@factory.django.mute_signals(pre_save)
 def mock_db():
     superuser = CustUser.objects.create_user(
         username='poem', is_superuser=True
@@ -312,6 +315,7 @@ def mock_db():
 
 
 class ListAllMetricsAPIViewTests(TenantTestCase):
+    @factory.django.mute_signals(pre_save)
     def setUp(self):
         self.factory = TenantRequestFactory(self.tenant)
         self.view = views.ListAllMetrics.as_view()

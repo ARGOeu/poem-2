@@ -1,12 +1,14 @@
 import datetime
 import json
 
+import factory
 from Poem.api import views_internal as views
 from Poem.helpers.history_helpers import serialize_metric
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from Poem.users.models import CustUser
 from django.contrib.contenttypes.models import ContentType
+from django.db.models.signals import pre_save
 from django_tenants.test.cases import TenantTestCase
 from django_tenants.test.client import TenantRequestFactory
 from rest_framework import status
@@ -15,6 +17,7 @@ from rest_framework.test import force_authenticate
 from .utils_test import encode_data
 
 
+@factory.django.mute_signals(pre_save)
 class ListMetricsInGroupAPIViewTests(TenantTestCase):
     def setUp(self):
         self.factory = TenantRequestFactory(self.tenant)
@@ -969,7 +972,7 @@ class ListMetricProfilesInGroupAPIViewTests(TenantTestCase):
 
     def test_remove_metric_profile_from_group(self):
         self.group.metricprofiles.add(self.mp2)
-        self.mp2.groupname='EGI'
+        self.mp2.groupname = 'EGI'
         self.mp2.save()
         self.assertEqual(self.group.metricprofiles.all().count(), 2)
         data = {
