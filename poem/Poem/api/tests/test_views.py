@@ -364,7 +364,7 @@ def mock_db_for_metrics_tests():
     )
 
 
-@factory.django.mute_signals(post_save)
+@factory.django.mute_signals(pre_save, post_save)
 def mock_db_for_repos_tests():
     tag1 = admin_models.OSTag.objects.create(name='CentOS 6')
     tag2 = admin_models.OSTag.objects.create(name='CentOS 7')
@@ -705,111 +705,53 @@ def mock_db_for_repos_tests():
 
     group = poem_models.GroupOfMetrics.objects.create(name='TEST')
 
-    metric_type = poem_models.MetricType.objects.create(name='Active')
-
     poem_models.Metric.objects.create(
         name=mt1.name,
         group=group,
-        mtype=metric_type,
-        probekey=mt1.probekey,
-        probeexecutable=mt1.probeexecutable,
-        config=mt1.config,
-        attribute=mt1.attribute,
-        dependancy=mt1.dependency,
-        flags=mt1.flags,
-        files=mt1.files,
-        parameter=mt1.parameter,
-        fileparameter=mt1.fileparameter
+        probeversion=mt1.probekey.__str__(),
+        config=mt1.config
     )
 
     poem_models.Metric.objects.create(
         name=mt2.name,
         group=group,
-        mtype=metric_type,
-        probekey=mt2.probekey,
-        probeexecutable=mt2.probeexecutable,
-        config=mt2.config,
-        attribute=mt2.attribute,
-        dependancy=mt2.dependency,
-        flags=mt2.flags,
-        files=mt2.files,
-        parameter=mt2.parameter,
-        fileparameter=mt2.fileparameter
+        probeversion=mt2.probekey.__str__(),
+        config=mt2.config
     )
 
     poem_models.Metric.objects.create(
         name=mt3.name,
         group=group,
-        mtype=metric_type,
-        probekey=mt3.probekey,
-        probeexecutable=mt3.probeexecutable,
-        config=mt3.config,
-        attribute=mt3.attribute,
-        dependancy=mt3.dependency,
-        flags=mt3.flags,
-        files=mt3.files,
-        parameter=mt3.parameter,
-        fileparameter=mt3.fileparameter
+        probeversion=mt3.probekey.__str__(),
+        config=mt3.config
     )
 
     poem_models.Metric.objects.create(
         name=mt4.name,
         group=group,
-        mtype=metric_type,
-        probekey=mt4.probekey,
-        probeexecutable=mt4.probeexecutable,
-        config=mt4.config,
-        attribute=mt4.attribute,
-        dependancy=mt4.dependency,
-        flags=mt4.flags,
-        files=mt4.files,
-        parameter=mt4.parameter,
-        fileparameter=mt4.fileparameter
+        probeversion=mt4.probekey.__str__(),
+        config=mt4.config
     )
 
     poem_models.Metric.objects.create(
         name=mt5.name,
         group=group,
-        mtype=metric_type,
-        probekey=mt5.probekey,
-        probeexecutable=mt5.probeexecutable,
-        config=mt5.config,
-        attribute=mt5.attribute,
-        dependancy=mt5.dependency,
-        flags=mt5.flags,
-        files=mt5.files,
-        parameter=mt5.parameter,
-        fileparameter=mt5.fileparameter
+        probeversion=None,
+        config=mt5.config
     )
 
     poem_models.Metric.objects.create(
         name=mt6.name,
         group=group,
-        mtype=metric_type,
-        probekey=probehistory5,
-        probeexecutable=mt6.probeexecutable,
-        config=mt6.config,
-        attribute=mt6.attribute,
-        dependancy=mt6.dependency,
-        flags=mt6.flags,
-        files=mt6.files,
-        parameter=mt6.parameter,
-        fileparameter=mt6.fileparameter
+        probeversion=probehistory5.__str__(),
+        config=mt6.config
     )
 
     poem_models.Metric.objects.create(
         name=mt7.name,
         group=group,
-        mtype=metric_type,
-        probekey=probehistory7,
-        probeexecutable=mt7.probeexecutable,
-        config=mt7.config,
-        attribute=mt7.attribute,
-        dependancy=mt7.dependency,
-        flags=mt7.flags,
-        files=mt7.files,
-        parameter=mt7.parameter,
-        fileparameter=mt7.fileparameter
+        probeversion=probehistory7.__str__(),
+        config=mt7.config
     )
 
 
