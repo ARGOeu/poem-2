@@ -24,7 +24,7 @@ export const ServiceTypesList = (props) => {
     { enabled: !publicView }
   );
 
-  const { data: serviceTypesDescriptions, error, status } = useQuery(
+  const { data: serviceTypesDescriptions, errorServiceTypesDescriptions, isLoading: loadingServiceTypesDescriptions} = useQuery(
     `${publicView ? 'public_' : ''}servicetypedesc`, async () => {
       return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}servicetypesdesc`);
     }
@@ -52,13 +52,16 @@ export const ServiceTypesList = (props) => {
     ], []
   )
 
-  if (status === 'loading')
+  if (loadingUserDetails || loadingServiceTypesDescriptions)
     return (<LoadingAnim/>);
 
-  else if (status === 'error')
-    return (<ErrorComponent error={error}/>);
+  else if (errorUserDetails)
+    return (<ErrorComponent error={errorUserDetails}/>);
 
-  else if (serviceTypesDescriptions) {
+  else if (errorServiceTypesDescriptions)
+    return (<ErrorComponent error={errorServiceTypesDescriptions}/>);
+
+  else if (serviceTypesDescriptions && !userDetails.is_superuser) {
     return (
       <BaseArgoView
         resourcename='Services types'
@@ -73,4 +76,8 @@ export const ServiceTypesList = (props) => {
       </BaseArgoView>
     )
   }
+  else if (serviceTypesDescriptions && userDetails.is_superuser)
+    return (
+      <div>Foobar</div>
+    )
 }
