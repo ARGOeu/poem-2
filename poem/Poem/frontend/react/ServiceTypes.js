@@ -61,7 +61,7 @@ export const ServiceTypesList = (props) => {
   else if (errorServiceTypesDescriptions)
     return (<ErrorComponent error={errorServiceTypesDescriptions}/>);
 
-  else if (serviceTypesDescriptions && !userDetails.is_superuser) {
+  else if (serviceTypesDescriptions && !userDetails?.is_superuser) {
     return (
       <BaseArgoView
         resourcename='Services types'
@@ -76,8 +76,10 @@ export const ServiceTypesList = (props) => {
       </BaseArgoView>
     )
   }
-  else if (serviceTypesDescriptions && userDetails.is_superuser)
+  else if (serviceTypesDescriptions &&  userDetails?.is_superuser)
     return (
       <div>Foobar</div>
     )
+  else
+    return null
 }

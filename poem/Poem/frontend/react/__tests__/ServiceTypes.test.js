@@ -5,6 +5,7 @@ import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { ServiceTypesList } from '../ServiceTypes';
 import { Backend } from '../DataManager';
+import { fetchUserDetails } from '../QueryFunctions';
 import { QueryClient, QueryClientProvider } from 'react-query';
 
 
@@ -14,12 +15,36 @@ jest.mock('../DataManager', () => {
   }
 })
 
-
 const queryClient = new QueryClient();
 
 beforeEach(() => {
   jest.clearAllMocks();
   queryClient.clear();
+})
+
+const mockUserDetails = {
+  "first_name": "",
+  "last_name": "",
+  "username": "servtype",
+  "is_active": true,
+  "is_superuser": false,
+  "email": "servtype@example.com",
+  "date_joined":"2022-08-23T14:06:28.359916",
+  "pk":17,
+  "groups": {
+    "aggregations": ["EGI"],
+    "metrics": ["EGI"],
+    "metricprofiles": ["EGI"],
+    "thresholdsprofiles": ["EGI"],
+    "reports": ["EGI"]
+  },
+  "token": "TOKEN"
+}
+
+jest.mock('../QueryFunctions', () => {
+  return {
+    fetchUserDetails : jest.fn()
+  }
 })
 
 
@@ -88,9 +113,10 @@ describe('Test service types list', () => {
   beforeAll(() => {
     Backend.mockImplementation(() => {
       return {
-        fetchData: () => Promise.resolve(mockServTypes)
+        fetchData: () => Promise.resolve(mockServTypes),
       }
     })
+    fetchUserDetails.mockImplementation(() => Promise.resolve(mockUserDetails))
   })
 
   test('Test that page renders properly', async () => {
