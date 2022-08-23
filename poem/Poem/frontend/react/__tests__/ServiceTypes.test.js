@@ -22,7 +22,7 @@ beforeEach(() => {
   queryClient.clear();
 })
 
-const mockUserDetails = {
+const mockUserDetailsTenantUser = {
   "first_name": "",
   "last_name": "",
   "username": "servtype",
@@ -109,14 +109,14 @@ function renderView(publicView=undefined) {
 }
 
 
-describe('Test service types list', () => {
+describe('Test service types list - Read Only', () => {
   beforeAll(() => {
     Backend.mockImplementation(() => {
       return {
         fetchData: () => Promise.resolve(mockServTypes),
       }
     })
-    fetchUserDetails.mockImplementation(() => Promise.resolve(mockUserDetails))
+    fetchUserDetails.mockReturnValue(mockUserDetailsTenantUser)
   })
 
   test('Test that page renders properly', async () => {
