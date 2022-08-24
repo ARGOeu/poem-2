@@ -41,6 +41,25 @@ const mockUserDetailsTenantUser = {
   "token": "TOKEN"
 }
 
+const mockUserDetailsTenantAdmin = {
+  "first_name": "",
+  "last_name": "",
+  "username": "servtype",
+  "is_active": true,
+  "is_superuser": true,
+  "email": "servtype@example.com",
+  "date_joined":"2022-08-23T14:06:28.359916",
+  "pk":17,
+  "groups": {
+    "aggregations": ["EGI"],
+    "metrics": ["EGI"],
+    "metricprofiles": ["EGI"],
+    "thresholdsprofiles": ["EGI"],
+    "reports": ["EGI"]
+  },
+  "token": "TOKEN"
+}
+
 jest.mock('../QueryFunctions', () => {
   return {
     fetchUserDetails : jest.fn()
@@ -221,5 +240,27 @@ describe('Test service types list - Read Only', () => {
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(14);
     expect(screen.getByRole('row', { name: /1/ }).textContent).toBe('1argo.consumerARGO Consumer collects monitoring metrics from monitoring engines.')
     expect(screen.queryByRole('row', { name: /2/ })).not.toBeInTheDocument();
+  })
+})
+
+
+describe('Test service types list - Read Write', () => {
+  beforeAll(() => {
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: () => Promise.resolve(mockServTypes),
+      }
+    })
+    fetchUserDetails.mockReturnValue(mockUserDetailsTenantAdmin)
+  })
+
+  test('Test that page renders properly', async () => {
+    renderView();
+
+    expect(screen.getByRole('heading', {'level': 4})).toHaveTextContent(/loading data/i)
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Services types');
+    })
   })
 })

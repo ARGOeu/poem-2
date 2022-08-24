@@ -78,7 +78,10 @@ export const ServiceTypesList = (props) => {
   }
   else if (serviceTypesDescriptions &&  userDetails?.is_superuser)
     return (
-      <div>Foobar</div>
+      <BaseArgoView
+        resourcename='Services types'
+        infoview={true}>
+      </BaseArgoView>
     )
   else
     return null
