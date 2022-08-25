@@ -15,18 +15,18 @@ def error_response(status_code=None, detail=''):
     return Response({'detail': detail}, status=status_code)
 
 
-def one_value_inline(input):
-    if input:
-        return json.loads(input)[0]
+def one_value_inline(input_data):
+    if input_data:
+        return json.loads(input_data)[0]
     else:
         return ''
 
 
-def two_value_inline(input):
+def two_value_inline(input_data):
     results = []
 
-    if input:
-        data = json.loads(input)
+    if input_data:
+        data = json.loads(input_data)
 
         for item in data:
             if len(item.split(' ')) == 1:
@@ -56,11 +56,11 @@ def inline_metric_for_db(data):
         return ''
 
 
-def two_value_inline_dict(input):
+def two_value_inline_dict(input_data):
     results = dict()
 
-    if input:
-        data = json.loads(input)
+    if input_data:
+        data = json.loads(input_data)
 
         for item in data:
             if len(item.split(' ')) == 1:
@@ -92,13 +92,14 @@ def sync_webapi(api, model):
         if p['id'] in entries_not_indb:
             if p.get('info', False):
                 new_entries.append(
-                    dict(name=p['info']['name'], description=p['info'].get('description', ''),
-                        apiid=p['id'], groupname='')
+                    dict(name=p['info']['name'], description=p['info'].get(
+                        'description', ''
+                    ), apiid=p['id'], groupname='')
                 )
             else:
                 new_entries.append(
                     dict(name=p['name'], description=p.get('description', ''),
-                        apiid=p['id'], groupname='')
+                         apiid=p['id'], groupname='')
                 )
 
     if new_entries:
@@ -107,6 +108,7 @@ def sync_webapi(api, model):
 
             if isinstance(instance, poem_models.MetricProfiles):
                 services = []
+                description = ""
                 for item in data:
                     if item['id'] == instance.apiid:
                         for service in item['services']:
@@ -180,7 +182,7 @@ def sync_tags_webapi():
         response = requests.put(
             settings.WEBAPI_METRICSTAGS,
             headers={"x-api-key": token.token, "Accept": "application/json"},
-            data=json.dumps(data2send)
+            data=json.dumps(sorted(data2send, key=lambda d: d["name"]))
         )
 
         if not response.ok:
