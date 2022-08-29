@@ -1,7 +1,7 @@
 import React from 'react';
 import { useQuery } from 'react-query';
 import { Backend } from './DataManager';
-import { Table } from 'reactstrap';
+import { Table, Row, Col, Pagination, PaginationItem, PaginationLink } from 'reactstrap';
 import {
   LoadingAnim,
   BaseArgoView,
@@ -19,37 +19,94 @@ import { useTable, usePagination } from 'react-table';
 const ServiceTypesCRUDTable = ({columns, data}) => {
   const {
     headerGroups,
-    rows,
-    prepareRow
-  } = useTable({ columns, data })
+    prepareRow,
+    page,
+    canPreviousPage,
+    canNextPage,
+    pageCount,
+    gotoPage,
+    nextPage,
+    previousPage,
+    setPageSize,
+    state: { pageIndex, pageSize },
+  } = useTable({ columns, data, initialState: { pageIndex: 0, pageSize: 15 }}, usePagination)
 
   return (
-    <Table className="table table-bordered table-hover">
-      <thead className="table-active align-middle text-center">
-        {headerGroups.map((headerGroup, thi) => (
-          <tr key={thi}>
-            {headerGroup.headers.map((column, tri) => (
-              <th key={tri}>{column.render('Header')}</th>
-            ))}
-          </tr>
-        ))}
-      </thead>
-      <tbody>
-        {rows.map((row, row_index) => {
-          prepareRow(row)
-          return (
-            <tr key={row_index}>
-              {row.cells.map((cell, cell_index) => {
-                if (cell_index === 0)
-                  return <td key={cell_index} className="align-middle text-center table-light">{row_index + 1}</td>
-                else
-                  return <td key={cell_index} className="align-middle table-light">{cell.render('Cell')}</td>
+    <>
+      <Row>
+        <Col>
+          <Table className="table table-bordered table-hover">
+            <thead className="table-active align-middle text-center">
+              {headerGroups.map((headerGroup, thi) => (
+                <tr key={thi}>
+                  {headerGroup.headers.map((column, tri) => (
+                    <th key={tri}>{column.render('Header')}</th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {page.map((row, row_index) => {
+                prepareRow(row)
+                return (
+                  <tr key={row_index}>
+                    {row.cells.map((cell, cell_index) => {
+                      if (cell_index === 0)
+                        return <td key={cell_index} className="align-middle text-center table-light">{(row_index + 1) + (pageIndex * pageSize)}</td>
+                      else
+                        return <td key={cell_index} className="align-middle table-light">{cell.render('Cell')}</td>
+                    })}
+                  </tr>
+                )
               })}
-            </tr>
-          )
-        })}
-      </tbody>
-    </Table>
+            </tbody>
+          </Table>
+        </Col>
+      </Row>
+      <Row>
+        <Col className="d-flex justify-content-center">
+          <Pagination>
+            <PaginationItem disabled={!canPreviousPage}>
+              <PaginationLink first onClick={() => gotoPage(0)}/>
+            </PaginationItem>
+            <PaginationItem disabled={!canPreviousPage}>
+              <PaginationLink previous onClick={() => previousPage()}/>
+            </PaginationItem>
+            {
+              [...Array(pageCount)].map((e, i) =>
+                <PaginationItem active={ pageIndex === i ? true : false } key={i}>
+                  <PaginationLink onClick={() => gotoPage(i)}>
+                    { i + 1}
+                  </PaginationLink>
+                </PaginationItem>
+              )
+            }
+            <PaginationItem disabled={!canNextPage}>
+              <PaginationLink next onClick={() => nextPage()}/>
+            </PaginationItem>
+            <PaginationItem disabled={!canNextPage}>
+              <PaginationLink last onClick={() => gotoPage(pageCount - 1)}/>
+            </PaginationItem>
+            <PaginationItem className="ps-2">
+              <select
+                style={{width: '180px'}}
+                className="form-select text-primary"
+                value={pageSize}
+                onChange={e => {
+                  setPageSize(Number(e.target.value))
+                }}
+              >
+                {[15, 30, 50, 100].map(pageSize => (
+                  <option key={pageSize} value={pageSize}>
+                    {pageSize} service types
+                  </option>
+                ))}
+              </select>
+            </PaginationItem>
+          </Pagination>
+        </Col>
+      </Row>
+    </>
   )
 }
 
