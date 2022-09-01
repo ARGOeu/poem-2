@@ -1,5 +1,21 @@
 # Changelog
 
+## [3.4.4] - 2022-09-01
+
+### Added
+
+* ARGO-3663 Add info on profile in which metrics are used
+
+### Changed
+
+* ARGO-3612 Improve fetching and caching data in probe page
+* ARGO-3613 Improve fetching and caching data in metrics page
+* ARGO-3614 Improve fetching and caching data on metric profiles page
+* ARGO-3615 Improve fetching and caching data on aggregations profile page
+* ARGO-3616 Improve fetching and caching data on thresholds profile page
+* ARGO-3617 Improve fetching and caching data in users page
+* ARGO-3959 Bump Django version to 3.2.15
+
 ## [3.4.3] - 2022-08-04
 
 ### Changed
