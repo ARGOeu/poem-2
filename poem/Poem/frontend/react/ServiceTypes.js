@@ -13,10 +13,17 @@ import {
 import {
   fetchUserDetails,
 } from './QueryFunctions';
-import { useTable, usePagination } from 'react-table';
+import { useTable, usePagination, useFilters } from 'react-table';
 
 
 const ServiceTypesCRUDTable = ({columns, data}) => {
+  const defaultColumn = React.useMemo(
+    () => ({
+      Filter: DefaultColumnFilter,
+    }),
+    []
+  )
+
   const {
     headerGroups,
     prepareRow,
@@ -29,7 +36,13 @@ const ServiceTypesCRUDTable = ({columns, data}) => {
     previousPage,
     setPageSize,
     state: { pageIndex, pageSize },
-  } = useTable({ columns, data, initialState: { pageIndex: 0, pageSize: 15 }}, usePagination)
+  } = useTable({
+      columns, data,
+      initialState: { pageIndex: 0, pageSize: 15 },
+      defaultColumn
+    },
+    useFilters,
+    usePagination);
 
   return (
     <>
