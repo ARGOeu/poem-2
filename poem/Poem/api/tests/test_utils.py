@@ -247,13 +247,6 @@ class SyncWebApiTagsTests(TenantTestCase):
                 },
                 data=json.dumps([
                     {
-                        "name": "test.AMS-Check",
-                        "tags": [
-                            "test_tag1",
-                            "test_tag2"
-                        ]
-                    },
-                    {
                         "name": "argo.AMSPublisher-Check",
                         "tags": [
                             "internal",
@@ -269,6 +262,13 @@ class SyncWebApiTagsTests(TenantTestCase):
                     {
                         "name": "org.apel.APEL-Pub",
                         "tags": []
+                    },
+                    {
+                        "name": "test.AMS-Check",
+                        "tags": [
+                            "test_tag1",
+                            "test_tag2"
+                        ]
                     },
                     {
                         "name": "test.EMPTY-metric",
@@ -295,13 +295,6 @@ class SyncWebApiTagsTests(TenantTestCase):
                 },
                 data=json.dumps([
                     {
-                        "name": "test.AMS-Check",
-                        "tags": [
-                            "test_tag1",
-                            "test_tag2"
-                        ]
-                    },
-                    {
                         "name": "argo.AMSPublisher-Check",
                         "tags": [
                             "internal",
@@ -317,6 +310,13 @@ class SyncWebApiTagsTests(TenantTestCase):
                     {
                         "name": "org.apel.APEL-Pub",
                         "tags": []
+                    },
+                    {
+                        "name": "test.AMS-Check",
+                        "tags": [
+                            "test_tag1",
+                            "test_tag2"
+                        ]
                     },
                     {
                         "name": "test.EMPTY-metric",
@@ -349,13 +349,6 @@ class SyncWebApiTagsTests(TenantTestCase):
                 },
                 data=json.dumps([
                     {
-                        "name": "test.AMS-Check",
-                        "tags": [
-                            "test_tag1",
-                            "test_tag2"
-                        ]
-                    },
-                    {
                         "name": "argo.AMSPublisher-Check",
                         "tags": [
                             "internal",
@@ -371,6 +364,13 @@ class SyncWebApiTagsTests(TenantTestCase):
                     {
                         "name": "org.apel.APEL-Pub",
                         "tags": []
+                    },
+                    {
+                        "name": "test.AMS-Check",
+                        "tags": [
+                            "test_tag1",
+                            "test_tag2"
+                        ]
                     },
                     {
                         "name": "test.EMPTY-metric",

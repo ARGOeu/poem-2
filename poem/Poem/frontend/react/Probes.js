@@ -344,17 +344,6 @@ export const ProbeList = (props) => {
       Cell: e =>
         <Link
           to={`/ui/${publicView ? 'public_' : ''}probes/${e.value}`}
-          onMouseEnter={ async () => {
-            await queryClient.prefetchQuery(
-              [`${publicView ? 'public_' : ''}probe`, e.value], () => fetchProbe(publicView, e.value)
-            );
-            await queryClient.prefetchQuery(
-              [`${publicView ? 'public_' : ''}probe`, 'metrics', e.value], () => fetchMetrics(publicView, e.value, e.row.original.version)
-            );
-            await queryClient.prefetchQuery(
-              `${publicView ? 'public_' : ''}package`, () => fetchPackages(publicView)
-            )
-          } }
         >
           {e.value}
         </Link>,
@@ -435,7 +424,6 @@ export const ProbeComponent = (props) => {
   const [modalTitle, setModalTitle] = useState(undefined);
   const [modalMsg, setModalMsg] = useState(undefined);
   const [formValues, setFormValues] = useState(undefined);
-  const [packages, setPackages] = useState(new Array())
 
   const { data: probe, error: probeError, isLoading: probeLoading } = useQuery(
     [`${publicView ? 'public_' : ''}probe`, name], () => fetchProbe(publicView, name),
@@ -452,16 +440,9 @@ export const ProbeComponent = (props) => {
     { enabled: !!probe }
   );
 
-  const { error: packagesError, isLoading: packagesLoading } = useQuery(
+  const { data: packages, error: packagesError, isLoading: packagesLoading } = useQuery(
     `${publicView ? 'public_' : ''}package`, () => fetchPackages(publicView),
-    {
-      onSuccess: (data) => {
-        let listPackages = new Array()
-        data.forEach(pkg => listPackages.push(`${pkg.name} (${pkg.version})`))
-        setPackages(listPackages)
-      }
-    }
-  );
+  )
 
   function toggleAreYouSure() {
     setAreYouSureModal(!areYouSureModal);
@@ -557,7 +538,6 @@ export const ProbeComponent = (props) => {
   }
 
   const loading = probeLoading || metricTemplatesLoading || packagesLoading;
-  const error = probeError || metricTemplatesError || packagesError;
 
   if (loading)
     return(<LoadingAnim/>)
@@ -571,7 +551,7 @@ export const ProbeComponent = (props) => {
   else if (packagesError)
     return (<ErrorComponent error={packagesError.error}/>);
 
-  else if (!error && !loading) {
+  else if ((addview || (probe && metricTemplates)) && packages) {
     if (!isTenantSchema) {
       return (
         <BaseArgoView
@@ -619,7 +599,7 @@ export const ProbeComponent = (props) => {
                   addview={addview}
                   cloneview={cloneview}
                   publicView={publicView}
-                  list_packages={packages}
+                  list_packages={packages.map(pkg => `${pkg.name} (${pkg.version})`)}
                   metrictemplatelist={metricTemplates}
                 />
                 {

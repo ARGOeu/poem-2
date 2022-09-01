@@ -64,13 +64,15 @@ export const MetricTemplateComponent = (props) => {
 
   const { data: types, error: typesError, isLoading: typesLoading } = useQuery(
     `${publicView ? 'public_' : ''}metrictemplatestypes`,
-    () => fetchMetricTemplateTypes(publicView)
+    () => fetchMetricTemplateTypes(publicView),
+    { enabled: !publicView && !tenantview }
   );
 
   const { data: tags, error: tagsError, isLoading: tagsLoading } = useQuery(
     `${publicView ? 'public_' : ''}metrictags`,
-    () => fetchMetricTags(publicView)
-  );
+    () => fetchMetricTags(publicView),
+    { enabled: !publicView && !tenantview }
+  )
 
   const { data: probeVersions, error: probeVersionsError, isLoading: probeVersionsLoading } = useQuery(
     [`${publicView ? 'public_' : ''}probe`, 'version'],
@@ -79,7 +81,8 @@ export const MetricTemplateComponent = (props) => {
 
   const { data: metricTemplates, error: metricTemplatesError, isLoading: metricTemplatesLoading } = useQuery(
     `${publicView ? 'public_' : ''}metrictemplate`,
-    () => fetchMetricTemplates(publicView)
+    () => fetchMetricTemplates(publicView),
+    { enabled: !publicView && !tenantview }
   );
 
   const {data: metricTemplate, error: metricTemplateError, isLoading: metricTemplateLoading } = useQuery(
@@ -243,7 +246,7 @@ export const MetricTemplateComponent = (props) => {
   else if (metricTemplatesError)
     return (<ErrorComponent error={metricTemplatesError.message}/>);
 
-  else {
+  else if ((addview || metricTemplate) && (publicView || tenantview || (metricTemplates && types && tags)) && probeVersions) {
     return (
       <BaseArgoView
         resourcename={(tenantview || publicView) ? 'Metric template details' : 'metric template'}
@@ -286,7 +289,7 @@ export const MetricTemplateComponent = (props) => {
             file_attributes: metricTemplate && metricTemplate.files.length > 0 ? metricTemplate.files : emptyEntry,
             file_parameters: metricTemplate && metricTemplate.fileparameter.length > 0 ? metricTemplate.fileparameter : emptyEntry,
             tags: metricTemplate ? metricTemplate.tags.map(item => new Object({ value: item, label: item })) : [],
-            probe: metricTemplate && metricTemplate.probeversion  ? probeVersions.find(prv => prv.object_repr === metricTemplate.probeversion).fields : {'package': ''}
+            probe: metricTemplate && metricTemplate.probeversion ? probeVersions.find(prv => prv.object_repr === metricTemplate.probeversion).fields : {'package': ''}
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
           validationSchema={MetricTemplateSchema}
@@ -302,10 +305,10 @@ export const MetricTemplateComponent = (props) => {
                 addview={addview}
                 popoverOpen={popoverOpen}
                 togglePopOver={togglePopOver}
-                types={types}
-                alltags={tags.map(tag => new Object({ value: tag.name, label: tag.name }))}
+                types={types ? types : []}
+                alltags={tags ? tags.map(tag => new Object({ value: tag.name, label: tag.name })) : []}
                 probeversions={probeVersions}
-                metrictemplatelist={metricTemplates.map(met => met.name)}
+                metrictemplatelist={metricTemplates ? metricTemplates.map(met => met.name) : []}
               />
               {
                 (!tenantview && !publicView) &&
@@ -334,7 +337,8 @@ export const MetricTemplateComponent = (props) => {
         </Formik>
       </BaseArgoView>
     );
-  }
+  } else
+    return null
 }
 
 

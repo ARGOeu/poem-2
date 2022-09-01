@@ -684,7 +684,16 @@ export const AggregationProfilesChange = (props) => {
   const { data: webApiAP, error: errorWebApiAP, isLoading: loadingWebApiAP } = useQuery(
     [`${publicView ? 'public_' : ''}aggregationprofile`, 'webapi', profile_name],
     () => fetchAP(webapi, backendAP.apiid),
-    { enabled: !!backendAP }
+    {
+      enabled: !!backendAP,
+      initialData: () => {
+        return queryClient.getQueryData(
+          [`${publicView ? "public_" : ""}aggregationprofile`, "webapi"]
+        )?.find(
+          profile => profile.id == backendAP.apiid
+        )
+      }
+    }
   )
 
   const { data: metricProfiles, error: errorMetricProfiles, isLoading: loadingMetricProfiles } = useQuery(
@@ -996,7 +1005,7 @@ export const AggregationProfilesChange = (props) => {
   else if (errorMetricProfiles)
     return (<ErrorComponent error={errorMetricProfiles} />)
 
-  else if (!loadingUserDetails && metricProfiles) {
+  else if ((addview || (backendAP && webApiAP) && metricProfiles)) {
     if (!listServices && !publicView && !addview)
       setListServices(!addview ? extractListOfServices(webApiAP.metric_profile, metricProfiles) : [])
 
@@ -1192,13 +1201,6 @@ export const AggregationProfilesList = (props) => {
   const location = props.location;
   const publicView = props.publicView
 
-  const webapi = new WebApi({
-    token: props.webapitoken,
-    metricProfiles: props.webapimetric,
-    aggregationProfiles: props.webapiaggregation
-  })
-  const queryClient = useQueryClient();
-
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
     'userdetails', () => fetchUserDetails(true)
   );
@@ -1221,16 +1223,6 @@ export const AggregationProfilesList = (props) => {
       accessor: e =>
         <Link
           to={`/ui/${publicView ? 'public_' : ''}aggregationprofiles/` + e.name}
-          onMouseEnter={ async () => {
-            await queryClient.prefetchQuery(
-              [`${publicView ? 'public_' : ''}aggregationprofile`, 'webapi', e.name],
-              () => fetchAP(webapi, e.apiid)
-            );
-            await queryClient.prefetchQuery(
-              [`${publicView ? 'public_' : ''}metricprofile`, 'webapi'],
-              () => fetchMetricProfiles(webapi)
-            );
-          } }
         >
           {e.name}
         </Link>,

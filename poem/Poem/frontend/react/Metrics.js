@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Backend } from './DataManager';
+import { Backend, WebApi } from './DataManager';
 import { Link } from 'react-router-dom';
 import {
   LoadingAnim,
@@ -52,7 +52,7 @@ import {
   fetchUserGroups,
   fetchMetrics,
   fetchMetricTypes,
-  fetchProbeVersions
+  fetchMetricProfiles
 } from './QueryFunctions';
 
 
@@ -306,6 +306,34 @@ export const ProbeVersionLink = ({probeversion, publicView=false}) => (
 )
 
 
+const MPColumnFilter = ({column: { filterValue, setFilter, filterList }}) => {
+  const options = React.useMemo(() => filterList)
+
+  return (
+    <select
+      className="form-control form-select"
+      style={{width: "100%"}}
+      value={filterValue}
+      onChange={e => setFilter(e.target.value || undefined)}
+    >
+      <option value="">Show all</option>
+      {
+        options.map((option, i) => (
+          <option key={i} value={option.value}>{option.label}</option>
+        ))
+      }
+    </select>
+  )
+}
+
+
+const sortMP = (a, b) => {
+  if (a.label.toLowerCase() < b.label.toLowerCase()) return -1;
+  if (a.label.toLowerCase() > b.label.toLowerCase()) return 1;
+  if (a.label.toLowerCase() === b.label.toLowerCase()) return 0;
+}
+
+
 export const ListOfMetrics = (props) => {
   const location = props.location;
   const type = props.type;
@@ -321,6 +349,13 @@ export const ListOfMetrics = (props) => {
   const [modalMsg, setModalMsg] = useState(undefined);
 
   const backend = new Backend();
+  const webapi = type === "metrics" ?
+    new WebApi({
+      token: props.webapitoken,
+      metricProfiles: props.webapimetric
+    })
+  :
+    undefined
 
   const queryClient = useQueryClient();
 
@@ -347,10 +382,22 @@ export const ListOfMetrics = (props) => {
     `${publicView ? 'public_' : ''}metrictags`, () => fetchMetricTags(publicView)
   );
 
-  var { data: OSGroups, error: OSGroupsError, isLoading: OSGroupsLoading } = useQuery(
+  const { data: OSGroups, error: OSGroupsError, isLoading: OSGroupsLoading } = useQuery(
     type === 'metrics' ? [`${publicView ? 'public_' : ''}metric`, 'usergroups'] : `${publicView ? 'public_' : ''}ostags`,
-    () =>  type === 'metrics' ? fetchUserGroups(isTenantSchema, publicView, 'metrics') : fetchOStags(publicView)
+    () =>  type === 'metrics' ? fetchUserGroups(isTenantSchema, publicView, 'metrics') : fetchOStags(publicView),
+    {
+      onSuccess: (data) => {
+        if (type === "metrics")
+          return data["metrics"]
+      }
+    }
   );
+
+  const { data: metricProfiles, error: errorMP, isLoading: loadingMP } = useQuery(
+    [`${publicView ? "public_" : ""}metricprofile`, "webapi"],
+    () => fetchMetricProfiles(webapi),
+    { enabled: type === "metrics" && (publicView || !!userDetails) }
+  )
 
   function toggleAreYouSure() {
     setAreYouSureModal(!areYouSureModal);
@@ -435,6 +482,35 @@ export const ListOfMetrics = (props) => {
     })
   }
 
+  function MP4metric(metric) {
+    let mps = []
+
+    metricProfiles.forEach(profile => {
+      let metrics = []
+      profile.services.forEach(service => {
+        service.metrics.forEach(metric => metrics.push(metric))
+      })
+      if (metrics.includes(metric))
+        mps.push(profile.name)
+    })
+
+    return mps
+  }
+
+  function metric4MP(profile) {
+    let metrics = []
+
+    metricProfiles.forEach(mprofile => {
+      if (mprofile.name == profile) {
+        mprofile.services.forEach(service => {
+          service.metrics.forEach(metric => metrics.push(metric))
+        })
+      }
+    })
+
+    return metrics
+  }
+
   let metriclink = `/ui/${(type === 'metrictemplates' && isTenantSchema && !publicView) ? 'administration/' : ''}${publicView ? 'public_' : ''}${type}/`;
 
   const memoized_columns = React.useMemo(() => {
@@ -468,35 +544,9 @@ export const ListOfMetrics = (props) => {
       {
         Header: 'Name',
         accessor: 'name',
-        column_width: '39%',
+        column_width: `${type === "metrics" ? "35%" : "39%"}`,
         Cell: row =>
-          <Link
-            to={`${metriclink}${row.value}`}
-            onMouseEnter={ async () => {
-              if (type === 'metrics') {
-                if (row.original.probeversion) {
-                  const metricProbeVersion = row.original.probeversion.split(' ')[0];
-                  await queryClient.prefetchQuery(
-                    [`${publicView ? 'public_' : ''}probe`, 'version', metricProbeVersion],
-                    () => fetchProbeVersion(publicView, metricProbeVersion)
-                  )
-                }
-              } else {
-                await queryClient.prefetchQuery(
-                  `${publicView ? 'public_' : ''}metrictemplatestypes`,
-                  () => fetchMetricTemplateTypes(publicView)
-                );
-                await queryClient.prefetchQuery(
-                  `${publicView ? 'public_' : ''}metrictags`,
-                  () => fetchMetricTags(publicView)
-                );
-                await queryClient.prefetchQuery(
-                  [`${publicView ? 'public_' : ''}probe`, 'version'],
-                  () => fetchProbeVersions(publicView)
-                );
-              }
-            } }
-          >
+          <Link to={`${metriclink}${row.value}`} >
             {row.value}
           </Link>,
         Filter: DefaultColumnFilter
@@ -522,7 +572,7 @@ export const ListOfMetrics = (props) => {
       },
       {
         Header: 'Type',
-        column_width: `${isTenantSchema ? '12%' : '18%'}`,
+        column_width: `${isTenantSchema ? type === "metrics" ? "10%" : "12%" : "18%"}`,
         accessor: 'mtype',
         Cell: row =>
           <div style={{textAlign: 'center'}}>
@@ -533,7 +583,7 @@ export const ListOfMetrics = (props) => {
       },
       {
         Header: 'Tag',
-        column_width: `${isTenantSchema ? '12%' : '18%'}`,
+        column_width: `${isTenantSchema ?  type === "metrics" ? "10%" : "12%" : "18%"}`,
         accessor: 'tags',
         Cell: row =>
           <div style={{textAlign: 'center'}}>
@@ -612,7 +662,7 @@ export const ListOfMetrics = (props) => {
         0,
         {
           Header: 'Group',
-          column_width: '12%',
+          column_width: '10%',
           accessor: 'group',
           Cell: row =>
             <div style={{textAlign: 'center'}}>
@@ -622,6 +672,43 @@ export const ListOfMetrics = (props) => {
           Filter: SelectColumnFilter
         }
       );
+      columns.splice(
+        6,
+        0,
+        {
+          Header: "Metric profile",
+          column_width: "10%",
+          accessor: "profiles",
+          Cell: row => {
+            let original = row.cell.row.original
+            let mps = MP4metric(original.name)
+            return (
+              <div style={{textAlign: "center"}}>
+                {
+                  mps.length === 0 ?
+                    <Badge color="dark">none</Badge>
+
+                  :
+                    mps.map((profile, i) =>
+                      <Badge className="me-1" key={i} color="info">
+                        {profile}
+                      </Badge>
+                    )
+                }
+              </div>
+            )
+          },
+          filterList: metricProfiles ? metricProfiles.map(profile => Object({label: profile.name, value: metric4MP(profile.name)})).sort(sortMP) : [Object({label: "", value: ""})],
+          // id needs to be declared, even though it's not used; filter doesn't work otherwise
+          filter: (rows, id, filterValue) => {
+            return rows.filter(row => {
+              const rowValue = row.values.name
+              return filterValue.includes(rowValue)
+            })
+          },
+          Filter: MPColumnFilter
+        }
+      )
     } else {
       if (isTenantSchema) {
         columns.splice(
@@ -629,7 +716,7 @@ export const ListOfMetrics = (props) => {
           0,
           {
             Header: 'OS',
-            column_width: '12%',
+            column_width: `${type === "metrics" ? "10%" : "12%"}`,
             accessor: 'ostag',
             Cell: row =>
               <div style={{textAlign: 'center'}}>
@@ -643,9 +730,13 @@ export const ListOfMetrics = (props) => {
     }
 
     return columns;
-  }, [isTenantSchema, OSGroups, tags, types, metriclink, publicView, selectAll, selected, type, userDetails, disabled])
+  }, type === "metrics" ?
+      [isTenantSchema, OSGroups, tags, types, metriclink, publicView, selectAll, selected, type, userDetails, disabled, metricProfiles]
+    :
+      [isTenantSchema, OSGroups, tags, types, metriclink, publicView, selectAll, selected, type, userDetails, disabled]
+  )
 
-  if (metricsLoading || typesLoading || tagsLoading || OSGroupsLoading || userDetailsLoading)
+  if (metricsLoading || typesLoading || tagsLoading || OSGroupsLoading || userDetailsLoading || loadingMP)
     return (<LoadingAnim />);
 
   else if (metricsError)
@@ -660,12 +751,14 @@ export const ListOfMetrics = (props) => {
   else if (OSGroupsError)
     return (<ErrorComponent error={OSGroupsError.message}/>);
 
+  else if (errorMP)
+    return ( <ErrorComponent error={errorMP} /> )
+
   else if (userDetailsError)
     return (<ErrorComponent error={userDetailsError.message}/>);
 
-  else if (metrics && types && tags && OSGroups) {
+  else if (metrics && types && tags && OSGroups && (type === "metrictemplates" || metricProfiles)) {
     if (type === 'metrics') {
-      OSGroups = OSGroups['metrics'];
       return (
         <BaseArgoView
           resourcename='metric'
@@ -1277,6 +1370,8 @@ export const MetricChange = (props) => {
     })
     mutation.mutate(sendValues, {
       onSuccess: () => {
+        queryClient.invalidateQueries("public_metric")
+        queryClient.invalidateQueries("metric")
         NotifyOk({
           msg: 'Metric successfully changed',
           title: 'Changed',
@@ -1295,6 +1390,8 @@ export const MetricChange = (props) => {
   async function doDelete() {
     deleteMutation.mutate(undefined, {
       onSuccess: () => {
+        queryClient.invalidateQueries("public_metric")
+        queryClient.invalidateQueries("metric")
         NotifyOk({
           msg: 'Metric successfully deleted',
           title: 'Deleted',

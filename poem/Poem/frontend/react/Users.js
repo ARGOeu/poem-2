@@ -312,23 +312,7 @@ export const UsersList = (props) => {
       accessor: 'username',
       column_width: '26%',
       Cell: e =>
-        <Link
-          to={`/ui/administration/users/${e.value}`}
-          onMouseEnter={ async () => {
-            await queryClient.prefetchQuery(
-              ['user', e.value], () => fetchUser(e.value)
-            );
-            await queryClient.prefetchQuery(
-              ['userprofile', e.value], () => fetchUserProfile(isTenantSchema, e.value)
-            );
-            await queryClient.prefetchQuery(
-              ['usergroups', e.value], () => fetchGroupsForUser(isTenantSchema, e.value)
-            );
-            await queryClient.prefetchQuery(
-              'usergroups', () => fetchUserGroups(isTenantSchema)
-            );
-          }}
-        >
+        <Link to={`/ui/administration/users/${e.value}`}>
           {e.value}
         </Link>
     },
@@ -650,7 +634,7 @@ export const UserChange = (props) => {
   else if (statusUserDetails === 'error')
     return (<ErrorComponent error={errorUserDetails}/>);
 
-  else {
+  else if (addview || (user) && (!isTenantSchema || allGroups && (addview || (userProfile && userGroups)))) {
     if (isTenantSchema) {
       return (
         <BaseArgoView
@@ -947,8 +931,9 @@ export const UserChange = (props) => {
         </React.Fragment>
       )
     }
-  }
-};
+  } else
+    return null
+}
 
 
 export const ChangePassword = (props) => {
@@ -1029,15 +1014,13 @@ export const ChangePassword = (props) => {
   if (loading)
     return (<LoadingAnim/>);
 
-  else if (!loading && userDetails) {
-    let write_perm = userDetails.username === name;
-
+  else if (userDetails) {
     return (
       <BaseArgoView
         resourcename='password'
         location={location}
         history={false}
-        submitperm={write_perm}
+        submitperm={userDetails.username === name}
         modal={true}
         state={{areYouSureModal, modalTitle, modalMsg, 'modalFunc': doChange}}
         toggle={toggleAreYouSure}
@@ -1083,7 +1066,7 @@ export const ChangePassword = (props) => {
                 </Col>
               </Row>
               {
-                write_perm &&
+                (userDetails.username === name) &&
                   <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
                     <div></div>
                     <Button

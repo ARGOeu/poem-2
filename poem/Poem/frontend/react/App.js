@@ -161,7 +161,15 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
       />}
     />
     <Route exact path="/ui/probes/:name" render={props => <ProbeComponent {...props} isTenantSchema={true} />}/>
-    <Route exact path="/ui/metrics" render={props => <ListOfMetrics {...props} type='metrics' isTenantSchema={true} />} />
+    <Route exact path="/ui/metrics"
+      render={ props => <ListOfMetrics
+        {...props}
+        type='metrics'
+        isTenantSchema={true}
+        webapimetric={webApiMetric}
+        webapitoken={token}
+      /> }
+    />
     <Route exact path="/ui/metrics/:name/history" render={props => <HistoryComponent {...props} object='metric'/>}/>
     <Route exact path="/ui/metrics/:name/history/compare/:id1/:id2" render={props => <CompareMetrics {...props} type='metric'/>}/>
     <Route exact path="/ui/metrics/:name/history/:version" render={props => <MetricVersionDetails {...props}/>}/>
@@ -243,7 +251,6 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         {...props}
         webapithresholds={webApiThresholds}
         webapimetric={webApiMetric}
-        webapireports={webApiReports}
         webapitoken={token}
       /> }
     />
@@ -443,7 +450,6 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         {...props}
         webapithresholds={webApiThresholds}
         webapimetric={webApiMetric}
-        webapireports={webApiReports}
         webapitoken={token}
       /> }
     />
@@ -912,7 +918,14 @@ const App = () => {
               <Route exact path="/ui/public_metrics"
                 render={props =>
                   <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
-                    <ListOfMetrics type='metrics' publicView={true} isTenantSchema={true} {...props}/>
+                    <ListOfMetrics
+                      type='metrics'
+                      publicView={true}
+                      isTenantSchema={true}
+                      webapitoken={token}
+                      webapimetric={webApiMetric}
+                      {...props}
+                    />
                   </PublicPage>
                 }
               />
@@ -1015,7 +1028,6 @@ const App = () => {
                       publicView={true}
                       webapithresholds={webApiThresholds}
                       webapimetric={webApiMetric}
-                      webapireports={webApiReports}
                       webapitoken={token}
                     />
                   </PublicPage>
