@@ -23,6 +23,8 @@ import {
 } from './QueryFunctions';
 import {
   faSearch,
+  faPlus,
+  faTimes
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useForm, Controller, useFieldArray, useWatch } from "react-hook-form";
@@ -83,7 +85,7 @@ const ServiceTypesCRUDTable = ({data}) => {
                 <th>
                   Description of service
                 </th>
-                <th>
+                <th style={{'width': '98px'}}>
                   Action
                 </th>
               </tr>
@@ -152,14 +154,12 @@ const ServiceTypesCRUDTable = ({data}) => {
                       />
                     </td>
                     <td className="text-center align-middle">
-                      <ButtonGroup size='sm'>
-                        <Button className="fw-bold" color="success" onClick={() => insert(index + 1, {name: '', description: ''})}>
-                          +
-                        </Button>
-                        <Button className="fw-bold" color="danger" onClick={() => remove(index)}>
-                          -
-                        </Button>
-                      </ButtonGroup>
+                      <Button size="sm" className="fw-bold" color="light" onClick={() => remove(index)}>
+                        <FontAwesomeIcon icon={faTimes}/>
+                      </Button>
+                      <Button size="sm" className="fw-bold" color="light" onClick={() => insert(index + 1, {name: '', description: ''})}>
+                        <FontAwesomeIcon icon={faPlus}/>
+                      </Button>
                     </td>
                   </tr>
                 )
