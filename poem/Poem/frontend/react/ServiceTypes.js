@@ -38,6 +38,13 @@ const ServiceTypesCRUDTable = ({data}) => {
     }
   })
 
+  function longestName(data) {
+    let tmpArray = new Array()
+    data.forEach(entry => tmpArray.push(entry.name.length))
+    return Math.max(...tmpArray)
+  }
+  let maxNamePx = longestName(data) * 8 + 10
+
   const searchService = useWatch({control, name: "searchService"})
   const searchDesc = useWatch({control, name: "searchDesc"})
 
@@ -57,14 +64,17 @@ const ServiceTypesCRUDTable = ({data}) => {
   if (searchDesc)
     fieldsView = fields.filter(e => e.name.includes(searchDesc))
 
+  console.log('VRDEL DEBUG', maxNamePx)
+
   return (
+
     <Form onSubmit={ handleSubmit(onSubmit) } className="needs-validation">
       <Row>
         <Col>
           <Table responsive hover size="sm">
             <thead className="table-active align-middle text-center">
               <tr>
-                <th>
+                <th style={{'width': '54px'}}>
                   #
                 </th>
                 <th>
@@ -83,7 +93,7 @@ const ServiceTypesCRUDTable = ({data}) => {
                 <td className="align-middle text-center">
                   <FontAwesomeIcon icon={faSearch}/>
                 </td>
-                <td className="align-middle text-center">
+                <td className="align-middle text-center" style={{'width': `${maxNamePx}px`}}>
                   <Controller
                     name="searchService"
                     control={control}
@@ -114,7 +124,7 @@ const ServiceTypesCRUDTable = ({data}) => {
               {
                 fieldsView.map((entry, index) =>
                   <tr key={entry.id}>
-                    <td>
+                    <td className="align-middle text-center">
                       {index + 1}
                     </td>
                     <td>
