@@ -136,7 +136,7 @@ const ServiceTypesCRUDTable = ({data}) => {
                         render={ ({field}) =>
                           <Input
                             {...field}
-                            className='form-control'
+                            className={ entry.isNew ? "fw-bold border border-success form-control" : "fw-bold form-control"}
                           />
                         }
                       />
@@ -148,7 +148,7 @@ const ServiceTypesCRUDTable = ({data}) => {
                         render={ ({field}) =>
                           <Input
                             {...field}
-                            className='form-control'
+                            className={ entry.isNew ? "border border-success form-control" : "form-control"}
                           />
                         }
                       />
@@ -157,7 +157,7 @@ const ServiceTypesCRUDTable = ({data}) => {
                       <Button size="sm" className="fw-bold" color="light" onClick={() => remove(index)}>
                         <FontAwesomeIcon icon={faTimes}/>
                       </Button>
-                      <Button size="sm" className="fw-bold" color="light" onClick={() => insert(index + 1, {name: '', description: ''})}>
+                      <Button size="sm" className="fw-bold" color="light" onClick={() => insert(index + 1, {name: '', description: '', isNew: true})}>
                         <FontAwesomeIcon icon={faPlus}/>
                       </Button>
                     </td>
