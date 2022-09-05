@@ -61,15 +61,12 @@ const ServiceTypesCRUDTable = ({data}) => {
   }
 
   if (searchService)
-    fieldsView = fields.filter(e => e.name.includes(searchService))
+    fieldsView = fieldsView.filter(e => e.name.includes(searchService))
 
   if (searchDesc)
-    fieldsView = fields.filter(e => e.name.includes(searchDesc))
-
-  console.log('VRDEL DEBUG', maxNamePx)
+    fieldsView = fieldsView.filter(e => e.name.includes(searchDesc))
 
   return (
-
     <Form onSubmit={ handleSubmit(onSubmit) } className="needs-validation">
       <Row>
         <Col>
@@ -157,7 +154,10 @@ const ServiceTypesCRUDTable = ({data}) => {
                       <Button size="sm" className="fw-bold" color="light" onClick={() => remove(index)}>
                         <FontAwesomeIcon icon={faTimes}/>
                       </Button>
-                      <Button size="sm" className="fw-bold" color="light" onClick={() => insert(index + 1, {name: '', description: '', isNew: true})}>
+                      <Button size="sm" className="fw-bold" color="light" onClick={() => {
+                        let newEntry = new Object({name: '', description: '', isNew: true})
+                        insert(index + 1, newEntry)
+                      }}>
                         <FontAwesomeIcon icon={faPlus}/>
                       </Button>
                     </td>
