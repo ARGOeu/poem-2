@@ -71,8 +71,8 @@ const ServiceTypesCRUDTable = ({data}) => {
     <Form onSubmit={ handleSubmit(onSubmit) } className="needs-validation">
       <Row>
         <Col>
-          <Table responsive hover size="sm">
-            <thead className="table-active align-middle text-center">
+          <Table bordered responsive hover size="sm">
+            <thead className="table-active table-bordered align-middle text-center">
               <tr>
                 <th style={{'width': '54px'}}>
                   #
