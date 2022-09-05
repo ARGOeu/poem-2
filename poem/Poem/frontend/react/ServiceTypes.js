@@ -1,7 +1,15 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
 import { Backend } from './DataManager';
-import { Table, Row, Col, Pagination, PaginationItem, PaginationLink } from 'reactstrap';
+import {
+  Button,
+  ButtonGroup,
+  Col,
+  Form,
+  Input,
+  Row,
+  Table,
+} from 'reactstrap';
 import {
   LoadingAnim,
   BaseArgoView,
@@ -13,113 +21,151 @@ import {
 import {
   fetchUserDetails,
 } from './QueryFunctions';
-import { useTable, usePagination, useFilters } from 'react-table';
+import {
+  faSearch,
+} from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useForm, Controller, useFieldArray, useWatch } from "react-hook-form";
 
 
-const ServiceTypesCRUDTable = ({columns, data}) => {
-  const defaultColumn = React.useMemo(
-    () => ({
-      Filter: DefaultColumnFilter,
-    }),
-    []
-  )
 
-  const {
-    headerGroups,
-    prepareRow,
-    page,
-    canPreviousPage,
-    canNextPage,
-    pageCount,
-    gotoPage,
-    nextPage,
-    previousPage,
-    setPageSize,
-    state: { pageIndex, pageSize },
-  } = useTable({
-      columns, data,
-      initialState: { pageIndex: 0, pageSize: 15 },
-      defaultColumn
-    },
-    useFilters,
-    usePagination);
+const ServiceTypesCRUDTable = ({data}) => {
+  const { control, handleSubmit, formState: {errors} } = useForm({
+    defaultValues: {
+      serviceTypes: data,
+      searchService: '',
+      searchDesc: ''
+    }
+  })
+
+  const searchService = useWatch({control, name: "searchService"})
+  const searchDesc = useWatch({control, name: "searchDesc"})
+
+  const { fields, insert, remove } = useFieldArray({
+    control,
+    name: "serviceTypes"
+  })
+  let fieldsView = fields
+
+  const onSubmit = data => {
+    console.log('VRDEL DEBUG', data)
+  }
+
+  if (searchService)
+    fieldsView = fields.filter(e => e.name.includes(searchService))
+
+  if (searchDesc)
+    fieldsView = fields.filter(e => e.name.includes(searchDesc))
 
   return (
-    <>
+    <Form onSubmit={ handleSubmit(onSubmit) } className="needs-validation">
       <Row>
         <Col>
-          <Table className="table table-bordered table-hover">
+          <Table responsive hover size="sm">
             <thead className="table-active align-middle text-center">
-              {headerGroups.map((headerGroup, thi) => (
-                <tr key={thi}>
-                  {headerGroup.headers.map((column, tri) => (
-                    <th key={tri}>{column.render('Header')}</th>
-                  ))}
-                </tr>
-              ))}
+              <tr>
+                <th>
+                  #
+                </th>
+                <th>
+                  Name of service
+                </th>
+                <th>
+                  Description of service
+                </th>
+                <th>
+                  Action
+                </th>
+              </tr>
             </thead>
             <tbody>
-              {page.map((row, row_index) => {
-                prepareRow(row)
-                return (
-                  <tr key={row_index}>
-                    {row.cells.map((cell, cell_index) => {
-                      if (cell_index === 0)
-                        return <td key={cell_index} className="align-middle text-center table-light">{(row_index + 1) + (pageIndex * pageSize)}</td>
-                      else
-                        return <td key={cell_index} className="align-middle table-light">{cell.render('Cell')}</td>
-                    })}
+              <tr style={{ background: '#ECECEC' }}>
+                <td className="align-middle text-center">
+                  <FontAwesomeIcon icon={faSearch}/>
+                </td>
+                <td className="align-middle text-center">
+                  <Controller
+                    name="searchService"
+                    control={control}
+                    render={ ({field}) =>
+                      <Input
+                        {...field}
+                        className='form-control'
+                        // onChange={(e) => field.onChange(searchHandler('searchService', e.target.value))}
+                      />
+                    }
+                  />
+                </td>
+                <td className="align-middle text-center">
+                  <Controller
+                    name="searchDesc"
+                    control={control}
+                    render={ ({field}) =>
+                      <Input
+                        {...field}
+                        className='form-control'
+                      />
+                    }
+                  />
+                </td>
+                <td className="align-middle text-center">
+                </td>
+              </tr>
+              {
+                fieldsView.map((entry, index) =>
+                  <tr key={entry.id}>
+                    <td>
+                      {index + 1}
+                    </td>
+                    <td>
+                      <Controller
+                        name={`serviceTypes.${index}.name`}
+                        control={control}
+                        render={ ({field}) =>
+                          <Input
+                            {...field}
+                            className='form-control'
+                          />
+                        }
+                      />
+                    </td>
+                    <td>
+                      <Controller
+                        name={`serviceTypes.${index}.description`}
+                        control={control}
+                        render={ ({field}) =>
+                          <Input
+                            {...field}
+                            className='form-control'
+                          />
+                        }
+                      />
+                    </td>
+                    <td className="text-center align-middle">
+                      <ButtonGroup size='sm'>
+                        <Button className="fw-bold" color="success" onClick={() => insert(index + 1, {name: '', description: ''})}>
+                          +
+                        </Button>
+                        <Button className="fw-bold" color="danger" onClick={() => remove(index)}>
+                          -
+                        </Button>
+                      </ButtonGroup>
+                    </td>
                   </tr>
                 )
-              })}
+              }
             </tbody>
           </Table>
         </Col>
       </Row>
       <Row>
-        <Col className="d-flex justify-content-center">
-          <Pagination>
-            <PaginationItem disabled={!canPreviousPage}>
-              <PaginationLink first onClick={() => gotoPage(0)}/>
-            </PaginationItem>
-            <PaginationItem disabled={!canPreviousPage}>
-              <PaginationLink previous onClick={() => previousPage()}/>
-            </PaginationItem>
-            {
-              [...Array(pageCount)].map((e, i) =>
-                <PaginationItem active={ pageIndex === i ? true : false } key={i}>
-                  <PaginationLink onClick={() => gotoPage(i)}>
-                    { i + 1}
-                  </PaginationLink>
-                </PaginationItem>
-              )
-            }
-            <PaginationItem disabled={!canNextPage}>
-              <PaginationLink next onClick={() => nextPage()}/>
-            </PaginationItem>
-            <PaginationItem disabled={!canNextPage}>
-              <PaginationLink last onClick={() => gotoPage(pageCount - 1)}/>
-            </PaginationItem>
-            <PaginationItem className="ps-2">
-              <select
-                style={{width: '180px'}}
-                className="form-select text-primary"
-                value={pageSize}
-                onChange={e => {
-                  setPageSize(Number(e.target.value))
-                }}
-              >
-                {[15, 30, 50, 100].map(pageSize => (
-                  <option key={pageSize} value={pageSize}>
-                    {pageSize} service types
-                  </option>
-                ))}
-              </select>
-            </PaginationItem>
-          </Pagination>
+        <Col className="position-relative text-center">
+          <Button className="mt-4 mb-3" color="success" type="submit">
+            Submit
+          </Button>
         </Col>
       </Row>
-    </>
+    </Form>
   )
 }
 
@@ -162,33 +208,6 @@ export const ServiceTypesList = (props) => {
     ], []
   )
 
-  const columnsCRUD = React.useMemo(
-    () => [
-      {
-        Header: '#',
-        accessor: null,
-        column_width: '2%'
-      },
-      {
-        Header: <div><Icon i="servicetypes"/> Service type</div>,
-        accessor: 'name',
-        column_width: '25%',
-        Filter: DefaultColumnFilter
-      },
-      {
-        Header: 'Description',
-        accessor: 'description',
-        column_width: '63%',
-        Filter: DefaultColumnFilter
-      },
-      {
-        Header: 'Action',
-        accessor: 'action',
-        column_width: '10%',
-      }
-    ], []
-  )
-
   if (loadingUserDetails || loadingServiceTypesDescriptions)
     return (<LoadingAnim/>);
 
@@ -218,11 +237,7 @@ export const ServiceTypesList = (props) => {
       <BaseArgoView
         resourcename='Services types'
         infoview={true}>
-        <ServiceTypesCRUDTable
-          columns={columnsCRUD}
-          data={serviceTypesDescriptions}
-        >
-        </ServiceTypesCRUDTable>
+        <ServiceTypesCRUDTable data={serviceTypesDescriptions}/>
       </BaseArgoView>
     )
   else
