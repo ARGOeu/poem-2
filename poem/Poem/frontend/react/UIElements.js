@@ -916,7 +916,10 @@ export const BaseArgoView = ({resourcename='', location=undefined,
                 }
                 {
                   (addnew && addperm) &&
-                  <Link className="btn btn-secondary" to={location.pathname + "/add"} role="button">Add</Link>
+                    <>
+                      { extra_button }
+                      <Link className="btn btn-secondary" to={location.pathname + "/add"} role="button">Add</Link>
+                    </>
                 }
                 {
                   (addnew && !addperm) &&

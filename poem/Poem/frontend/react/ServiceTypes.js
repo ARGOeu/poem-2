@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import { Backend } from './DataManager';
 import {
@@ -93,111 +94,127 @@ const ServiceTypesCRUDTable = ({data}) => {
     fieldsView = controlledFields.filter(e => e.name.includes(searchDesc))
 
   return (
-    <Form onSubmit={ handleSubmit(onSubmit) } className="needs-validation">
-      <Row>
-        <Col>
-          <Table bordered responsive hover size="sm">
-            <thead className="table-active table-bordered align-middle text-center">
-              <tr>
-                <th style={{'width': '54px'}}>
-                  #
-                </th>
-                <th>
-                  Name of service
-                </th>
-                <th>
-                  Description of service
-                </th>
-                <th style={{'width': '98px'}}>
-                  Action
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr style={{ background: '#ECECEC' }}>
-                <td className="align-middle text-center">
-                  <FontAwesomeIcon icon={faSearch}/>
-                </td>
-                <td className="align-middle text-center" style={{'width': `${maxNamePx}px`}}>
-                  <Controller
-                    name="searchService"
-                    control={control}
-                    render={ ({field}) =>
-                      <Input
-                        {...field}
-                        className='form-control'
-                      />
-                    }
-                  />
-                </td>
-                <td className="align-middle text-center">
-                  <Controller
-                    name="searchDesc"
-                    control={control}
-                    render={ ({field}) =>
-                      <Input
-                        {...field}
-                        className='form-control'
-                      />
-                    }
-                  />
-                </td>
-                <td className="align-middle text-center">
-                </td>
-              </tr>
-              {
-                fieldsView.map((entry, index) =>
-                  <tr key={entry.id}>
+    <>
+      <div className="d-flex align-items-center justify-content-between">
+        <h2 className="ms-3 mt-1 mb-4">Service types</h2>
+        <span>
+          <Button
+            color="secondary"
+            disabled={!_.valuesIn(checkedFieldIds).includes(true)}
+            className="me-3">
+            Delete selected
+          </Button>
+          <Link className="btn btn-secondary" to="/servicetypes/add" role="button">Add</Link>
+        </span>
+      </div>
+      <div id="argo-contentwrap" className="ms-2 mb-2 mt-2 p-3 border rounded">
+        <Form onSubmit={ handleSubmit(onSubmit) } className="needs-validation">
+          <Row>
+            <Col>
+              <Table bordered responsive hover size="sm">
+                <thead className="table-active table-bordered align-middle text-center">
+                  <tr>
+                    <th style={{'width': '54px'}}>
+                      #
+                    </th>
+                    <th>
+                      Name of service
+                    </th>
+                    <th>
+                      Description of service
+                    </th>
+                    <th style={{'width': '98px'}}>
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style={{ background: '#ECECEC' }}>
                     <td className="align-middle text-center">
-                      {index + 1}
+                      <FontAwesomeIcon icon={faSearch}/>
                     </td>
-                    <td>
+                    <td className="align-middle text-center" style={{'width': `${maxNamePx}px`}}>
                       <Controller
-                        name={`serviceTypes.${index}.name`}
+                        name="searchService"
                         control={control}
                         render={ ({field}) =>
                           <Input
                             {...field}
-                            className={ entry.isNew ? "fw-bold border border-success form-control" : "fw-bold form-control"}
+                            className='form-control'
                           />
                         }
                       />
                     </td>
-                    <td>
+                    <td className="align-middle text-center">
                       <Controller
-                        name={`serviceTypes.${index}.description`}
+                        name="searchDesc"
                         control={control}
                         render={ ({field}) =>
                           <Input
                             {...field}
-                            className={ entry.isNew ? "border border-success form-control" : "form-control"}
+                            className='form-control'
                           />
                         }
                       />
                     </td>
-                    <td className="text-center align-middle">
-                      <Button size="sm" className="fw-bold" color="light" onClick={() => onSave(entry.id)}>
-                        <FontAwesomeIcon icon={faSave}/>
-                      </Button>
-                      <Button size="sm" color="light" className="ms-1">
-                        <Input type="checkbox" className="fw-bold" onClick={() => onCheck(entry.id)}/>
-                      </Button>
+                    <td className="align-middle text-center">
                     </td>
                   </tr>
-                )
-              }
-            </tbody>
-          </Table>
-        </Col>
-      </Row>
-      <Row>
-        <Col className="position-relative text-center">
-          <Button className="mt-4 mb-3" color="success" type="submit">
-            Submit
-          </Button>
-        </Col>
-      </Row>
-    </Form>
+                  {
+                    fieldsView.map((entry, index) =>
+                      <tr key={entry.id}>
+                        <td className="align-middle text-center">
+                          {index + 1}
+                        </td>
+                        <td>
+                          <Controller
+                            name={`serviceTypes.${index}.name`}
+                            control={control}
+                            render={ ({field}) =>
+                              <Input
+                                {...field}
+                                className={ entry.isNew ? "fw-bold border border-success form-control" : "fw-bold form-control"}
+                              />
+                            }
+                          />
+                        </td>
+                        <td>
+                          <Controller
+                            name={`serviceTypes.${index}.description`}
+                            control={control}
+                            render={ ({field}) =>
+                              <Input
+                                {...field}
+                                className={ entry.isNew ? "border border-success form-control" : "form-control"}
+                              />
+                            }
+                          />
+                        </td>
+                        <td className="text-center align-middle">
+                          <Button size="sm" className="fw-bold" color="light" onClick={() => onSave(entry.id)}>
+                            <FontAwesomeIcon icon={faSave}/>
+                          </Button>
+                          <Button size="sm" color="light" className="ms-1">
+                            <Input type="checkbox" className="fw-bold" onClick={() => onCheck(entry.id)}/>
+                          </Button>
+                        </td>
+                      </tr>
+                    )
+                  }
+                </tbody>
+              </Table>
+            </Col>
+          </Row>
+          <Row>
+            <Col className="position-relative text-center">
+              <Button className="mt-4 mb-3" color="success" type="submit">
+                Submit
+              </Button>
+            </Col>
+          </Row>
+        </Form>
+      </div>
+    </>
   )
 }
 
@@ -267,13 +284,7 @@ export const ServiceTypesList = (props) => {
   }
   else if (serviceTypesDescriptions &&  userDetails?.is_superuser)
     return (
-      <BaseArgoView
-        resourcename='Services types'
-        location={location}
-        title='Service types'
-        listview={true}>
-        <ServiceTypesCRUDTable data={serviceTypesDescriptions}/>
-      </BaseArgoView>
+      <ServiceTypesCRUDTable data={serviceTypesDescriptions}/>
     )
   else
     return null
