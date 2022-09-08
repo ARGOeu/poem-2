@@ -881,7 +881,8 @@ export const PublicPage = ({privacyLink, termsLink, children}) => {
 export const BaseArgoView = ({resourcename='', location=undefined,
   infoview=false, addview=false, listview=false, modal=false, state=undefined,
   toggle=undefined, submitperm=true, history=true, addnew=true, clone=false,
-  cloneview=false, tenantview=false, publicview=false, addperm=true, extra_button=undefined,
+  cloneview=false, tenantview=false, publicview=false, addperm=true,
+  extra_button=undefined, title=undefined,
   children}) =>
 (
   <React.Fragment>
@@ -909,7 +910,7 @@ export const BaseArgoView = ({resourcename='', location=undefined,
               <React.Fragment>
                 {
                   addnew ?
-                    <h2 className="ms-3 mt-1 mb-4">{`Select ${resourcename} to change`}</h2>
+                    <h2 className="ms-3 mt-1 mb-4">{ title ? title : `Select ${resourcename} to change`}</h2>
                   :
                     <h2 className='ms-3 mt-1 mb-4'>{`Select ${resourcename} for details`}</h2>
                 }

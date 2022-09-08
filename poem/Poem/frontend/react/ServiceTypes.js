@@ -254,6 +254,7 @@ export const ServiceTypesList = (props) => {
       <BaseArgoView
         resourcename='Services types'
         location={location}
+        title='Service types'
         listview={true}>
         <ServiceTypesCRUDTable data={serviceTypesDescriptions}/>
       </BaseArgoView>
