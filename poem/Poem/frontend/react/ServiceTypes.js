@@ -91,7 +91,7 @@ const ServiceTypesCRUDTable = ({data}) => {
     fieldsView = controlledFields.filter(e => e.name.includes(searchService))
 
   if (searchDesc)
-    fieldsView = controlledFields.filter(e => e.name.includes(searchDesc))
+    fieldsView = controlledFields.filter(e => e.description.includes(searchDesc))
 
   return (
     <>
@@ -99,7 +99,7 @@ const ServiceTypesCRUDTable = ({data}) => {
         <h2 className="ms-3 mt-1 mb-4">Service types</h2>
         <span>
           <Button
-            color="secondary"
+            color="danger"
             disabled={!_.valuesIn(checkedFieldIds).includes(true)}
             className="me-3">
             Delete selected
@@ -166,35 +166,27 @@ const ServiceTypesCRUDTable = ({data}) => {
                         <td className="align-middle text-center">
                           {index + 1}
                         </td>
-                        <td>
-                          <Controller
-                            name={`serviceTypes.${index}.name`}
-                            control={control}
-                            render={ ({field}) =>
-                              <Input
-                                {...field}
-                                className={ entry.isNew ? "fw-bold border border-success form-control" : "fw-bold form-control"}
-                              />
-                            }
-                          />
+                        <td className="align-middle text-left fw-bold">
+                          <span className="ms-2">{ entry.name }</span>
                         </td>
                         <td>
                           <Controller
                             name={`serviceTypes.${index}.description`}
                             control={control}
                             render={ ({field}) =>
-                              <Input
+                              <textarea
                                 {...field}
-                                className={ entry.isNew ? "border border-success form-control" : "form-control"}
+                                rows="2"
+                                className="form-control"
                               />
                             }
                           />
                         </td>
                         <td className="text-center align-middle">
-                          <Button size="sm" className="fw-bold" color="light" onClick={() => onSave(entry.id)}>
+                          <Button className="fw-bold" color="light" onClick={() => onSave(entry.id)}>
                             <FontAwesomeIcon icon={faSave}/>
                           </Button>
-                          <Button size="sm" color="light" className="ms-1">
+                          <Button color="light" className="ms-1">
                             <Input type="checkbox" className="fw-bold" checked={checkedFieldIds[entry.id]} onClick={() => onCheck(entry.id)}/>
                           </Button>
                         </td>
@@ -203,13 +195,6 @@ const ServiceTypesCRUDTable = ({data}) => {
                   }
                 </tbody>
               </Table>
-            </Col>
-          </Row>
-          <Row>
-            <Col className="position-relative text-center">
-              <Button className="mt-4 mb-3" color="success" type="submit">
-                Submit
-              </Button>
             </Col>
           </Row>
         </Form>
