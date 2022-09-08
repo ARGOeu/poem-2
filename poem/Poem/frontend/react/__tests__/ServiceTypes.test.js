@@ -261,6 +261,7 @@ describe('Test service types list - Read Write', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Service types');
+      expect(screen.getAllByTestId(/serviceTypes\.[0-9]*/)).toHaveLength(6)
     })
   })
 })
