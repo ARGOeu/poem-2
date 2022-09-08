@@ -32,7 +32,7 @@ import { useForm, Controller, useFieldArray, useWatch } from "react-hook-form";
 
 
 const ServiceTypesCRUDTable = ({data}) => {
-  const { control, handleSubmit, formState: {errors} } = useForm({
+  const { control, getValues, handleSubmit, formState: {errors} } = useForm({
     defaultValues: {
       serviceTypes: data,
       searchService: '',
@@ -47,6 +47,7 @@ const ServiceTypesCRUDTable = ({data}) => {
   }
   let maxNamePx = longestName(data) * 8 + 10
 
+  const watchedServiceTypes = useWatch({control, name: "serviceTypes"})
   const searchService = useWatch({control, name: "searchService"})
   const searchDesc = useWatch({control, name: "searchDesc"})
 
@@ -54,17 +55,23 @@ const ServiceTypesCRUDTable = ({data}) => {
     control,
     name: "serviceTypes"
   })
-  let fieldsView = fields
+  const controlledFields = fields.map((field, index) => {
+    return {
+      ...field,
+      ...watchedServiceTypes[index]
+    }
+  })
 
   const onSubmit = data => {
-    console.log('VRDEL DEBUG', data)
+    console.log('VRDEL DEBUG', getValues("serviceTypes"))
   }
 
+  let fieldsView = controlledFields
   if (searchService)
-    fieldsView = fieldsView.filter(e => e.name.includes(searchService))
+    fieldsView = controlledFields.filter(e => e.name.includes(searchService))
 
   if (searchDesc)
-    fieldsView = fieldsView.filter(e => e.name.includes(searchDesc))
+    fieldsView = controlledFields.filter(e => e.name.includes(searchDesc))
 
   return (
     <Form onSubmit={ handleSubmit(onSubmit) } className="needs-validation">
@@ -100,7 +107,6 @@ const ServiceTypesCRUDTable = ({data}) => {
                       <Input
                         {...field}
                         className='form-control'
-                        // onChange={(e) => field.onChange(searchHandler('searchService', e.target.value))}
                       />
                     }
                   />
