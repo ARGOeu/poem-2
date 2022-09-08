@@ -187,7 +187,7 @@ const ServiceTypesCRUDTable = ({data}) => {
                             <FontAwesomeIcon icon={faSave}/>
                           </Button>
                           <Button color="light" className="ms-1">
-                            <Input type="checkbox" className="fw-bold" checked={checkedFieldIds[entry.id]} onClick={() => onCheck(entry.id)}/>
+                            <Input type="checkbox" className="fw-bold" checked={checkedFieldIds[entry.id]} onChange={() => onCheck(entry.id)}/>
                           </Button>
                         </td>
                       </tr>

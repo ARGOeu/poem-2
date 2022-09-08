@@ -260,7 +260,7 @@ describe('Test service types list - Read Write', () => {
     expect(screen.getByRole('heading', {'level': 4})).toHaveTextContent(/loading data/i)
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Services types');
+      expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Service types');
     })
   })
 })
