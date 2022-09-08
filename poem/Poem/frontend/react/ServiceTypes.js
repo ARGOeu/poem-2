@@ -188,6 +188,7 @@ const ServiceTypesCRUDTable = ({data}) => {
 
 export const ServiceTypesList = (props) => {
   const publicView = props.publicView;
+  const location = props.location;
 
   const backend = new Backend();
 
@@ -252,7 +253,8 @@ export const ServiceTypesList = (props) => {
     return (
       <BaseArgoView
         resourcename='Services types'
-        infoview={true}>
+        location={location}
+        listview={true}>
         <ServiceTypesCRUDTable data={serviceTypesDescriptions}/>
       </BaseArgoView>
     )

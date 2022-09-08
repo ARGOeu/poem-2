@@ -538,7 +538,11 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
     />
     <Route
       exact path="/ui/servicetypes/"
-      component={ServiceTypesList}
+      render={props => <ServiceTypesList
+        {...props}
+        webapitoken={token}
+        addview={true}
+      />}
     />
     <Route component={NotFound} />
   </Switch>
