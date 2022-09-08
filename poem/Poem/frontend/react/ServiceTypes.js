@@ -66,6 +66,9 @@ const ServiceTypesCRUDTable = ({data}) => {
   const onSave = (id) => {
   }
 
+  const onCheck = (id) => {
+  }
+
   const onSubmit = data => {
     console.log('VRDEL DEBUG', getValues("serviceTypes"))
   }
@@ -163,6 +166,9 @@ const ServiceTypesCRUDTable = ({data}) => {
                     <td className="text-center align-middle">
                       <Button size="sm" className="fw-bold" color="light" onClick={() => onSave(entry.id)}>
                         <FontAwesomeIcon icon={faSave}/>
+                      </Button>
+                      <Button size="sm" color="light" className="ms-1">
+                        <Input type="checkbox" className="fw-bold" onClick={() => onCheck(entry.id)}/>
                       </Button>
                     </td>
                   </tr>
