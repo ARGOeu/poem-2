@@ -22,6 +22,7 @@ import {
   fetchUserDetails,
 } from './QueryFunctions';
 import {
+  faSave,
   faSearch,
   faPlus,
   faTimes
@@ -61,6 +62,9 @@ const ServiceTypesCRUDTable = ({data}) => {
       ...watchedServiceTypes[index]
     }
   })
+
+  const onSave = (id) => {
+  }
 
   const onSubmit = data => {
     console.log('VRDEL DEBUG', getValues("serviceTypes"))
@@ -157,14 +161,8 @@ const ServiceTypesCRUDTable = ({data}) => {
                       />
                     </td>
                     <td className="text-center align-middle">
-                      <Button size="sm" className="fw-bold" color="light" onClick={() => remove(index)}>
-                        <FontAwesomeIcon icon={faTimes}/>
-                      </Button>
-                      <Button size="sm" className="fw-bold" color="light" onClick={() => {
-                        let newEntry = new Object({name: '', description: '', isNew: true})
-                        insert(index + 1, newEntry)
-                      }}>
-                        <FontAwesomeIcon icon={faPlus}/>
+                      <Button size="sm" className="fw-bold" color="light" onClick={() => onSave(entry.id)}>
+                        <FontAwesomeIcon icon={faSave}/>
                       </Button>
                     </td>
                   </tr>
