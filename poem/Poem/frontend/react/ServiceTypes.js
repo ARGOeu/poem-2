@@ -29,6 +29,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useForm, Controller, useFieldArray, useWatch } from "react-hook-form";
+import _ from 'lodash';
 
 
 
@@ -52,7 +53,7 @@ const ServiceTypesCRUDTable = ({data}) => {
   const searchService = useWatch({control, name: "searchService"})
   const searchDesc = useWatch({control, name: "searchDesc"})
 
-  const { fields, insert, remove } = useFieldArray({
+  const { fields, update } = useFieldArray({
     control,
     name: "serviceTypes"
   })
@@ -63,10 +64,21 @@ const ServiceTypesCRUDTable = ({data}) => {
     }
   })
 
+  const [checkedFieldIds, setCheckFieldIds] = useState(
+    _.fromPairs(fields.map(e => [e.id, false]))
+  )
+  useEffect(() => {
+    setCheckFieldIds(_.fromPairs(
+      fields.map(e => [e.id, checkedFieldIds[e.id] ? true : false]))
+    )
+  }, [fields])
+
   const onSave = (id) => {
   }
 
   const onCheck = (id) => {
+    checkedFieldIds[id] = !checkedFieldIds[id]
+    setCheckFieldIds(checkedFieldIds)
   }
 
   const onSubmit = data => {
