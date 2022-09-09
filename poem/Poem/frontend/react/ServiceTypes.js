@@ -162,7 +162,7 @@ const ServiceTypesCRUDTable = ({data}) => {
                   </tr>
                   {
                     fieldsView.map((entry, index) =>
-                      <tr key={entry.id} data-testid={`serviceTypes.${index}`}>
+                      <tr key={entry.id} data-testid={`rows-serviceTypes.${index}`}>
                         <td className="align-middle text-center">
                           {index + 1}
                         </td>

@@ -261,7 +261,11 @@ describe('Test service types list - Read Write', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Service types');
-      expect(screen.getAllByTestId(/serviceTypes\.[0-9]*/)).toHaveLength(6)
     })
+
+    expect(screen.getAllByTestId(/rows-serviceTypes\.[0-9]*/)).toHaveLength(mockServTypes.length)
+    expect(screen.getByText(/Name of service/)).toBeVisible()
+    expect(screen.getByText(/Description of service/)).toBeVisible()
+    expect(screen.getByText(/Delete selected/)).toBeDisabled()
   })
 })
