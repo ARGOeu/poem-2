@@ -88,6 +88,11 @@ const ServiceTypesCRUDTable = ({data}) => {
     })
   }
 
+  const onDelete = () => {
+    let cleaned = fields.filter(e => !e.checked)
+    setValue("serviceTypes", cleaned)
+  }
+
   let fieldsView = fields
   if (searchService)
     fieldsView = fields.filter(e => e.name.includes(searchService))
@@ -103,6 +108,7 @@ const ServiceTypesCRUDTable = ({data}) => {
           <Button
             color="danger"
             disabled={![...fields.map(e => e.checked)].includes(true)}
+            onClick={() => onDelete()}
             className="me-3">
             Delete selected
           </Button>
