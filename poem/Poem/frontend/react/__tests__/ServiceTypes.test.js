@@ -267,5 +267,6 @@ describe('Test service types list - Read Write', () => {
     expect(screen.getByText(/Name of service/)).toBeVisible()
     expect(screen.getByText(/Description of service/)).toBeVisible()
     expect(screen.getByText(/Delete selected/)).toBeDisabled()
+    expect(screen.getAllByRole('checkbox', {checked: false})).toBeTruthy()
   })
 })
