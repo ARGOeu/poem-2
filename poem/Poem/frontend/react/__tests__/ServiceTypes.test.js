@@ -275,5 +275,7 @@ describe('Test service types list - Read Write', () => {
     fireEvent.click(firstCheckbox)
     expect(firstCheckbox.checked).toBe(true)
     expect(screen.getByText(/Delete selected/)).toBeEnabled()
+    fireEvent.click(screen.getByText(/Delete selected/));
+    expect(screen.getAllByTestId(/rows-serviceTypes\.[0-9]*/)).toHaveLength(mockServTypes.length - 1)
   })
 })
