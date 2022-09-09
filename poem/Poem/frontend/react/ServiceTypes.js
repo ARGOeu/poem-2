@@ -35,11 +35,19 @@ import _ from 'lodash';
 
 
 const ServiceTypesCRUDTable = ({data}) => {
-  const { control, getValues, handleSubmit, formState: {errors} } = useForm({
+  const dataWithChecked = data.map(e => {
+    return {
+      ...e,
+      checked: false
+    }
+
+  })
+
+  const { control, setValue, getValues, handleSubmit, formState: {errors} } = useForm({
     defaultValues: {
-      serviceTypes: data,
+      serviceTypes: dataWithChecked,
       searchService: '',
-      searchDesc: ''
+      searchDesc: '',
     }
   })
 
@@ -50,7 +58,6 @@ const ServiceTypesCRUDTable = ({data}) => {
   }
   let maxNamePx = longestName(data) * 8 + 10
 
-  const watchedServiceTypes = useWatch({control, name: "serviceTypes"})
   const searchService = useWatch({control, name: "searchService"})
   const searchDesc = useWatch({control, name: "searchDesc"})
 
@@ -58,40 +65,35 @@ const ServiceTypesCRUDTable = ({data}) => {
     control,
     name: "serviceTypes"
   })
-  const controlledFields = fields.map((field, index) => {
-    return {
-      ...field,
-      ...watchedServiceTypes[index]
-    }
-  })
 
-  const [checkedFieldIds, setCheckFieldIds] = useState(
-    _.fromPairs(fields.map(e => [e.id, false]))
-  )
-  useEffect(() => {
-    setCheckFieldIds(_.fromPairs(
-      fields.map(e => [e.id, checkedFieldIds[e.id] ? true : false]))
-    )
-  }, [fields])
-
-  const onSave = (id) => {
+  const onSave = (entryid) => {
+    let values = getValues('serviceTypes')
+    let index = fields.findIndex(field => field.id === entryid)
+    update(index, {
+      name: values[index].name,
+      description: values[index].description,
+      checked: values[index].checked
+    })
   }
 
-  const onCheck = (id) => {
-    checkedFieldIds[id] = !checkedFieldIds[id]
-    setCheckFieldIds(checkedFieldIds)
+  const onChange = (event, entryid) => {
+    let value = event.target.checked ? true : false
+    let values = getValues('serviceTypes')
+    let index = fields.findIndex(field => field.id === entryid)
+    setValue(`serviceTypes.${index}.checked`, value)
+    update(index, {
+      name: values[index].name,
+      description: values[index].description,
+      checked: value
+    })
   }
 
-  const onSubmit = data => {
-    console.log('VRDEL DEBUG', getValues("serviceTypes"))
-  }
-
-  let fieldsView = controlledFields
+  let fieldsView = fields
   if (searchService)
-    fieldsView = controlledFields.filter(e => e.name.includes(searchService))
+    fieldsView = fields.filter(e => e.name.includes(searchService))
 
   if (searchDesc)
-    fieldsView = controlledFields.filter(e => e.description.includes(searchDesc))
+    fieldsView = fields.filter(e => e.description.includes(searchDesc))
 
   return (
     <>
@@ -100,7 +102,7 @@ const ServiceTypesCRUDTable = ({data}) => {
         <span>
           <Button
             color="danger"
-            disabled={!_.valuesIn(checkedFieldIds).includes(true)}
+            disabled={![...fields.map(e => e.checked)].includes(true)}
             className="me-3">
             Delete selected
           </Button>
@@ -108,7 +110,7 @@ const ServiceTypesCRUDTable = ({data}) => {
         </span>
       </div>
       <div id="argo-contentwrap" className="ms-2 mb-2 mt-2 p-3 border rounded">
-        <Form onSubmit={ handleSubmit(onSubmit) } className="needs-validation">
+        <Form onSubmit={handleSubmit((data) => {})} className="needs-validation">
           <Row>
             <Col>
               <Table bordered responsive hover size="sm">
@@ -187,13 +189,19 @@ const ServiceTypesCRUDTable = ({data}) => {
                             <FontAwesomeIcon icon={faSave}/>
                           </Button>
                           <Button color="light" className="ms-1">
-                            {
-                              // with checked=true,false ServiceTypes.test.js fails
-                              checkedFieldIds[entry.id] ?
-                                <Input type="checkbox" className="fw-bold" checked onChange={() => onCheck(entry.id)}/>
-                              :
-                                <Input type="checkbox" className="fw-bold" onChange={() => onCheck(entry.id)}/>
-                            }
+                            <Controller
+                              name={`serviceTypes.${index}.checked`}
+                              control={control}
+                              render={ ({field}) => {
+                                // with checked=true,false ServiceTypes.test.js fails
+                                return (
+                                  entry.checked ?
+                                    <Input {...field} type="checkbox" className="fw-bold" checked={entry.checked} onChange={(e) => onChange(e, entry.id)}/>
+                                  :
+                                    <Input {...field} type="checkbox" className="fw-bold" onChange={(e) => onChange(e, entry.id)}/>
+                                )
+                              }}
+                            />
                           </Button>
                         </td>
                       </tr>

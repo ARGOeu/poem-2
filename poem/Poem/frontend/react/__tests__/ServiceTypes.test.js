@@ -263,18 +263,17 @@ describe('Test service types list - Read Write', () => {
       expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Service types');
     })
 
+
     expect(screen.getAllByTestId(/rows-serviceTypes\.[0-9]*/)).toHaveLength(mockServTypes.length)
     expect(screen.getByText(/Name of service/)).toBeVisible()
     expect(screen.getByText(/Description of service/)).toBeVisible()
     expect(screen.getByText(/Delete selected/)).toBeDisabled()
     expect(screen.getAllByRole('checkbox', {checked: false})).toBeTruthy()
 
+
     let firstCheckbox = screen.getAllByRole('checkbox', {checked: false})[0]
     fireEvent.click(firstCheckbox)
-    await waitFor(() => {
-      expect(firstCheckbox.checked).toBe(true)
-      screen.debug(screen.getByText(/Delete selected/))
-      expect(screen.getByText(/Delete selected/)).toBeEnabled()
-    })
+    expect(firstCheckbox.checked).toBe(true)
+    expect(screen.getByText(/Delete selected/)).toBeEnabled()
   })
 })
