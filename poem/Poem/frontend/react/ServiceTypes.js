@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import { Backend } from './DataManager';
 import {
   Button,
-  ButtonGroup,
   Col,
   Form,
   Input,
@@ -12,12 +11,13 @@ import {
   Table,
 } from 'reactstrap';
 import {
-  LoadingAnim,
+  BaseArgoTable,
   BaseArgoView,
+  DefaultColumnFilter,
   ErrorComponent,
   Icon,
-  BaseArgoTable,
-  DefaultColumnFilter
+  LoadingAnim,
+  ModalAreYouSure,
 } from './UIElements';
 import {
   fetchUserDetails,
@@ -25,12 +25,9 @@ import {
 import {
   faSave,
   faSearch,
-  faPlus,
-  faTimes
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useForm, Controller, useFieldArray, useWatch } from "react-hook-form";
-import _ from 'lodash';
 
 
 
@@ -42,6 +39,15 @@ const ServiceTypesCRUDTable = ({data}) => {
     }
 
   })
+
+  const [areYouSureModal, setAreYouSureModal] = React.useState(false)
+  const [modalTitle, setModalTitle] = React.useState('')
+  const [modalMsg, setModalMsg] = React.useState('')
+  const [modalFunc, setModalFunc] = React.useState(undefined)
+
+  function toggleModal() {
+    setAreYouSureModal(!areYouSureModal)
+  }
 
   const { control, setValue, getValues, handleSubmit, formState: {errors} } = useForm({
     defaultValues: {
@@ -88,9 +94,18 @@ const ServiceTypesCRUDTable = ({data}) => {
     })
   }
 
-  const onDelete = () => {
+  const doDelete = () => {
     let cleaned = fields.filter(e => !e.checked)
     setValue("serviceTypes", cleaned)
+  }
+
+  const onDelete = () => {
+    let cleaned = fields.filter(e => !e.checked)
+
+    setModalMsg(`Are you sure you want to delete ${fields.length - cleaned.length} Service types?`)
+    setModalTitle('Delete service types')
+    setModalFunc(() => doDelete)
+    setAreYouSureModal(!areYouSureModal);
   }
 
   let fieldsView = fields
@@ -102,6 +117,13 @@ const ServiceTypesCRUDTable = ({data}) => {
 
   return (
     <>
+      <ModalAreYouSure
+        isOpen={areYouSureModal}
+        toggle={toggleModal}
+        title={modalTitle}
+        msg={modalMsg}
+        onYes={modalFunc}
+      />
       <div className="d-flex align-items-center justify-content-between">
         <h2 className="ms-3 mt-1 mb-4">Service types</h2>
         <span>
