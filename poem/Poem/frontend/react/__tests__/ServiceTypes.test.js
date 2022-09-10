@@ -296,6 +296,13 @@ describe('Test service types list - Read Write', () => {
     expect(secondCheckbox.checked).toBe(true)
     expect(screen.getByText(/Delete selected/)).toBeEnabled()
     fireEvent.click(screen.getByText(/Delete selected/));
+
+    await waitFor(() => {
+      expect(screen.getByText('Are you sure you want to delete 2 Service types?')).toBeInTheDocument()
+      const yesButton = screen.getByText(/Yes/)
+      fireEvent.click(yesButton);
+    })
+
     expect(screen.getAllByTestId(/rows-serviceTypes\.[0-9]*/)).toHaveLength(mockServTypes.length - 2)
     const tbodyFiltered = screen.getAllByRole('rowgroup')[1]
     const tableRowsFiltered = within(tbodyFiltered).getAllByRole('row')
@@ -303,5 +310,6 @@ describe('Test service types list - Read Write', () => {
     expect(tableRowsFiltered[2]).toHaveTextContent('2argo.monARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.')
     expect(tableRowsFiltered[3]).toHaveTextContent('3argo.poemPOEM is system for managing profiles of probes and metrics in ARGO system.')
     expect(tableRowsFiltered[4]).toHaveTextContent('4argo.webuiARGO web user interface for metric A/R visualization and recalculation management.')
+
   })
 })
