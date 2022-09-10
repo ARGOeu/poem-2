@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
@@ -263,19 +263,45 @@ describe('Test service types list - Read Write', () => {
       expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Service types');
     })
 
-
     expect(screen.getAllByTestId(/rows-serviceTypes\.[0-9]*/)).toHaveLength(mockServTypes.length)
     expect(screen.getByText(/Name of service/)).toBeVisible()
     expect(screen.getByText(/Description of service/)).toBeVisible()
     expect(screen.getByText(/Delete selected/)).toBeDisabled()
     expect(screen.getAllByRole('checkbox', {checked: false})).toBeTruthy()
 
+    const tbody = screen.getAllByRole('rowgroup')[1]
+    const tableRows = within(tbody).getAllByRole('row')
+    expect(tableRows[1]).toHaveTextContent('1argo.apiARGO API service for retrieving status and A/R results.')
+    expect(tableRows[2]).toHaveTextContent('2argo.computeengineARGO Compute Engine computes availability and reliability of services.')
+    expect(tableRows[3]).toHaveTextContent('3argo.consumerARGO Consumer collects monitoring metrics from monitoring engines.')
+    expect(tableRows[4]).toHaveTextContent('4argo.monARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.')
+    expect(tableRows[5]).toHaveTextContent('5argo.poemPOEM is system for managing profiles of probes and metrics in ARGO system.')
+    expect(tableRows[6]).toHaveTextContent('6argo.webuiARGO web user interface for metric A/R visualization and recalculation management.')
+  })
 
-    let firstCheckbox = screen.getAllByRole('checkbox', {checked: false})[0]
+  test('Test bulk delete', async () => {
+    renderView();
+
+    expect(screen.getByRole('heading', {'level': 4})).toHaveTextContent(/loading data/i)
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Service types');
+    })
+
+    const firstCheckbox = screen.getAllByRole('checkbox', {checked: false})[0]
+    const secondCheckbox = screen.getAllByRole('checkbox', {checked: false})[1]
     fireEvent.click(firstCheckbox)
+    fireEvent.click(secondCheckbox)
     expect(firstCheckbox.checked).toBe(true)
+    expect(secondCheckbox.checked).toBe(true)
     expect(screen.getByText(/Delete selected/)).toBeEnabled()
     fireEvent.click(screen.getByText(/Delete selected/));
-    expect(screen.getAllByTestId(/rows-serviceTypes\.[0-9]*/)).toHaveLength(mockServTypes.length - 1)
+    expect(screen.getAllByTestId(/rows-serviceTypes\.[0-9]*/)).toHaveLength(mockServTypes.length - 2)
+    const tbodyFiltered = screen.getAllByRole('rowgroup')[1]
+    const tableRowsFiltered = within(tbodyFiltered).getAllByRole('row')
+    expect(tableRowsFiltered[1]).toHaveTextContent('1argo.consumerARGO Consumer collects monitoring metrics from monitoring engines.')
+    expect(tableRowsFiltered[2]).toHaveTextContent('2argo.monARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.')
+    expect(tableRowsFiltered[3]).toHaveTextContent('3argo.poemPOEM is system for managing profiles of probes and metrics in ARGO system.')
+    expect(tableRowsFiltered[4]).toHaveTextContent('4argo.webuiARGO web user interface for metric A/R visualization and recalculation management.')
   })
 })
