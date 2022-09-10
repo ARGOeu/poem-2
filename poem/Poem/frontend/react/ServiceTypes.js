@@ -18,6 +18,8 @@ import {
   Icon,
   LoadingAnim,
   ModalAreYouSure,
+  NotifyError,
+  NotifyOk,
 } from './UIElements';
 import {
   fetchUserDetails,
@@ -97,6 +99,11 @@ const ServiceTypesCRUDTable = ({data}) => {
   const doDelete = () => {
     let cleaned = fields.filter(e => !e.checked)
     setValue("serviceTypes", cleaned)
+    NotifyOk({
+      msg: 'Service types successfully deleted',
+      title: 'Deleted',
+      callback: null
+    });
   }
 
   const onDelete = () => {
