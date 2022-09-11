@@ -46,6 +46,7 @@ const ServiceTypesCRUDTable = ({data}) => {
   const [modalTitle, setModalTitle] = React.useState('')
   const [modalMsg, setModalMsg] = React.useState('')
   const [modalFunc, setModalFunc] = React.useState(undefined)
+  const [modalCallbackArg, setModalCallbackArg] = React.useState(undefined)
 
   function toggleModal() {
     setAreYouSureModal(!areYouSureModal)
@@ -74,7 +75,7 @@ const ServiceTypesCRUDTable = ({data}) => {
     name: "serviceTypes"
   })
 
-  const onSave = (entryid) => {
+  const doSave = (entryid) => {
     let values = getValues('serviceTypes')
     let index = fields.findIndex(field => field.id === entryid)
     update(index, {
@@ -82,6 +83,14 @@ const ServiceTypesCRUDTable = ({data}) => {
       description: values[index].description,
       checked: values[index].checked
     })
+  }
+
+  const onSave = (entryid) => {
+    setModalMsg(`Are you sure you want to change Service type?`)
+    setModalTitle('Change service type')
+    setModalFunc(() => doSave)
+    setModalCallbackArg(entryid)
+    setAreYouSureModal(!areYouSureModal);
   }
 
   const onChange = (event, entryid) => {
@@ -94,6 +103,11 @@ const ServiceTypesCRUDTable = ({data}) => {
       description: values[index].description,
       checked: value
     })
+    NotifyOk({
+      msg: 'Service types successfully changed',
+      title: 'Deleted',
+      callback: null
+    });
   }
 
   const doDelete = () => {
@@ -130,6 +144,7 @@ const ServiceTypesCRUDTable = ({data}) => {
         title={modalTitle}
         msg={modalMsg}
         onYes={modalFunc}
+        callbackOnYesArg={modalCallbackArg}
       />
       <div className="d-flex align-items-center justify-content-between">
         <h2 className="ms-3 mt-1 mb-4">Service types</h2>

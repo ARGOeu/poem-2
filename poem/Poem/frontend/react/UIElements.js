@@ -330,7 +330,7 @@ const doLogout = async (history, onLogout) =>
 }
 
 
-export const ModalAreYouSure = ({isOpen, toggle, title, msg, onYes}) =>
+export const ModalAreYouSure = ({isOpen, toggle, title, msg, onYes, callbackOnYesArg=undefined}) =>
 (
   <Modal isOpen={isOpen} toggle={toggle}>
     <ModalHeader toggle={toggle}>{title}</ModalHeader>
@@ -339,7 +339,7 @@ export const ModalAreYouSure = ({isOpen, toggle, title, msg, onYes}) =>
     </ModalBody>
     <ModalFooter>
       <Button color="primary" onClick={() => {
-        onYes();
+        callbackOnYesArg ? onYes(callbackOnYesArg) : onYes(callbackOnYesArg);
         toggle();
       }}>Yes</Button>{' '}
       <Button color="secondary" onClick={toggle}>No</Button>
