@@ -319,5 +319,20 @@ describe('Test service types list - Read Write', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Service types');
     })
+
+    const tbody = screen.getAllByRole('rowgroup')[1]
+    const tableRows = within(tbody).getAllByRole('row')
+    expect(tableRows[1]).toHaveTextContent('1argo.apiARGO API service for retrieving status and A/R results.')
+
+    const inputFirstDesc = screen.getByText('ARGO API service for retrieving status and A/R results.')
+    fireEvent.change(inputFirstDesc, {target: {value: 'CHANGED DESCRIPTION'}})
+    const saveButton = within(tableRows[1]).getAllByRole('button')[0]
+    fireEvent.click(saveButton);
+    await waitFor(() => {
+      expect(screen.getByText('Are you sure you want to change Service type?')).toBeInTheDocument()
+      const yesButton = screen.getByText(/Yes/)
+      fireEvent.click(yesButton);
+      expect(screen.getByText('CHANGED DESCRIPTION'))
+    })
   })
 })
