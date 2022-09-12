@@ -66,6 +66,8 @@ jest.mock('../QueryFunctions', () => {
   }
 })
 
+const mockAddServiceTypes = jest.fn()
+
 
 const mockServTypes = [
   {
@@ -248,7 +250,7 @@ describe('Test service types list - Read Write', () => {
   beforeAll(() => {
     WebApi.mockImplementation(() => Object({
       fetchServiceTypes: () => Promise.resolve(mockServTypes),
-      addServiceTypes: jest.fn(),
+      addServiceTypes: mockAddServiceTypes,
     })),
     fetchUserDetails.mockReturnValue(mockUserDetailsTenantAdmin)
   })
@@ -332,6 +334,37 @@ describe('Test service types list - Read Write', () => {
       const yesButton = screen.getByText(/Yes/)
       fireEvent.click(yesButton);
       expect(screen.getByText('CHANGED DESCRIPTION'))
+    })
+
+    await waitFor(() => {
+      expect(mockAddServiceTypes).toHaveBeenCalledWith(
+        [
+          {
+            "description": "CHANGED DESCRIPTION",
+            "name": "argo.api"
+          },
+          {
+            "description": "ARGO Compute Engine computes availability and reliability of services.",
+            "name": "argo.computeengine"
+          },
+          {
+            "description": "ARGO Consumer collects monitoring metrics from monitoring engines.",
+            "name": "argo.consumer"
+          },
+          {
+            "description": "ARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.",
+            "name": "argo.mon"
+          },
+          {
+            "description": "POEM is system for managing profiles of probes and metrics in ARGO system.",
+            "name": "argo.poem"
+          },
+          {
+            "description": "ARGO web user interface for metric A/R visualization and recalculation management.",
+            "name": "argo.webui"
+          }
+        ]
+      )
     })
   })
 })

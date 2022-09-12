@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import {Backend, WebApi} from './DataManager';
+import { WebApi } from './DataManager';
 import { useQuery, useQueryClient, useMutation } from 'react-query';
 import {
   Button,
@@ -34,7 +34,7 @@ import { useForm, Controller, useFieldArray, useWatch } from "react-hook-form";
 
 
 
-const ServiceTypesCRUDTable = ({data, webapi}) => {
+const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
   const dataWithChecked = data.map(e => {
     return {
       ...e,
@@ -106,7 +106,13 @@ const ServiceTypesCRUDTable = ({data, webapi}) => {
       description: values[index].description,
       checked: values[index].checked
     })
-    postServiceTypesWebApi(values, 'changed', 'Change')
+    postServiceTypesWebApi([...values.map(
+      e => Object(
+        {
+          'name': e.name, 'description': e.description
+        }
+      ))],
+      'changed', 'Change')
   }
 
   const onSave = (entryid) => {
@@ -356,7 +362,7 @@ export const ServiceTypesList = (props) => {
   }
   else if (serviceTypesDescriptions &&  userDetails?.is_superuser)
     return (
-      <ServiceTypesCRUDTable data={serviceTypesDescriptions} webapi={webapi} {...props}/>
+      <ServiceTypesBulkDeleteChange data={serviceTypesDescriptions} webapi={webapi} {...props}/>
     )
   else
     return null
