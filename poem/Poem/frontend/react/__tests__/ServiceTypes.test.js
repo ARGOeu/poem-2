@@ -4,14 +4,14 @@ import '@testing-library/jest-dom/extend-expect';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { ServiceTypesList } from '../ServiceTypes';
-import { Backend } from '../DataManager';
+import { WebApi } from '../DataManager';
 import { fetchUserDetails } from '../QueryFunctions';
 import { QueryClient, QueryClientProvider } from 'react-query';
 
 
 jest.mock('../DataManager', () => {
   return {
-    Backend: jest.fn()
+    WebApi: jest.fn()
   }
 })
 
@@ -130,9 +130,9 @@ function renderView(publicView=undefined) {
 
 describe('Test service types list - Read Only', () => {
   beforeAll(() => {
-    Backend.mockImplementation(() => {
+    WebApi.mockImplementation(() => {
       return {
-        fetchData: () => Promise.resolve(mockServTypes),
+        fetchServiceTypes: () => Promise.resolve(mockServTypes),
       }
     })
     fetchUserDetails.mockReturnValue(mockUserDetailsTenantUser)
@@ -246,11 +246,10 @@ describe('Test service types list - Read Only', () => {
 
 describe('Test service types list - Read Write', () => {
   beforeAll(() => {
-    Backend.mockImplementation(() => {
-      return {
-        fetchData: () => Promise.resolve(mockServTypes),
-      }
-    })
+    WebApi.mockImplementation(() => Object({
+      fetchServiceTypes: () => Promise.resolve(mockServTypes),
+      addServiceTypes: jest.fn(),
+    })),
     fetchUserDetails.mockReturnValue(mockUserDetailsTenantAdmin)
   })
 
