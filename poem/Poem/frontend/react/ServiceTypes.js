@@ -78,14 +78,14 @@ const ServiceTypesCRUDTable = ({data, webapi}) => {
     name: "serviceTypes"
   })
 
-  const postServiceTypesWebApi = (data) => {
+  const postServiceTypesWebApi = (data, action, title) => {
     webapiAddMutation.mutate(data, {
       onSuccess: () => {
         queryClient.invalidateQueries('servicetypes');
         queryClient.invalidateQueries('public_servicetypes');
         NotifyOk({
-          msg: 'Service types successfully added',
-          title: 'Added',
+          msg: 'Service types successfully ' + action,
+          title: title,
           callback: null
         });
       },
@@ -106,7 +106,7 @@ const ServiceTypesCRUDTable = ({data, webapi}) => {
       description: values[index].description,
       checked: values[index].checked
     })
-    postServiceTypesWebApi(values)
+    postServiceTypesWebApi(values, 'changed', 'Change')
   }
 
   const onSave = (entryid) => {
@@ -127,21 +127,18 @@ const ServiceTypesCRUDTable = ({data, webapi}) => {
       description: values[index].description,
       checked: value
     })
-    //NotifyOk({
-      //msg: 'Service types successfully changed',
-      //title: 'Changed',
-      //callback: null
-    //});
   }
 
   const doDelete = () => {
     let cleaned = fields.filter(e => !e.checked)
     setValue("serviceTypes", cleaned)
-    //NotifyOk({
-      //msg: 'Service types successfully deleted',
-      //title: 'Deleted',
-      //callback: null
-    //});
+    postServiceTypesWebApi([...cleaned.map(
+      e => Object(
+        {
+          'name': e.name, 'description': e.description
+        }
+      ))],
+      'deleted', 'Delete')
   }
 
   const onDelete = () => {
