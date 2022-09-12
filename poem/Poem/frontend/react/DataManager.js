@@ -337,7 +337,7 @@ export class WebApi {
   }
 
   async fetchServiceTypes() {
-    this.fetchProfiles(this.servicetypes);
+    return this.fetchProfiles(this.servicetypes);
   }
 
   fetchMetricProfile(id) {

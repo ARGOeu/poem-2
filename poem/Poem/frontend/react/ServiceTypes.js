@@ -34,7 +34,7 @@ import { useForm, Controller, useFieldArray, useWatch } from "react-hook-form";
 
 
 
-const ServiceTypesCRUDTable = ({data, ...props}) => {
+const ServiceTypesCRUDTable = ({data, webapi}) => {
   const dataWithChecked = data.map(e => {
     return {
       ...e,
@@ -47,11 +47,6 @@ const ServiceTypesCRUDTable = ({data, ...props}) => {
   const [modalMsg, setModalMsg] = React.useState('')
   const [modalFunc, setModalFunc] = React.useState(undefined)
   const [modalCallbackArg, setModalCallbackArg] = React.useState(undefined)
-
-  const webapi = new WebApi({
-    token: props.webapitoken,
-    serviceTypes: props.webapiservicetypes
-  })
 
   const queryClient = useQueryClient();
   const webapiAddMutation = useMutation(async (values) => await webapi.addServiceTypes(values));
@@ -83,15 +78,8 @@ const ServiceTypesCRUDTable = ({data, ...props}) => {
     name: "serviceTypes"
   })
 
-  const doSave = (entryid) => {
-    let values = getValues('serviceTypes')
-    let index = fields.findIndex(field => field.id === entryid)
-    update(index, {
-      name: values[index].name,
-      description: values[index].description,
-      checked: values[index].checked
-    })
-    webapiAddMutation.mutate(values, {
+  const postServiceTypesWebApi = (data) => {
+    webapiAddMutation.mutate(data, {
       onSuccess: () => {
         queryClient.invalidateQueries('servicetypes');
         queryClient.invalidateQueries('public_servicetypes');
@@ -108,6 +96,17 @@ const ServiceTypesCRUDTable = ({data, ...props}) => {
         })
       }
     })
+  }
+
+  const doSave = (entryid) => {
+    let values = getValues('serviceTypes')
+    let index = fields.findIndex(field => field.id === entryid)
+    update(index, {
+      name: values[index].name,
+      description: values[index].description,
+      checked: values[index].checked
+    })
+    postServiceTypesWebApi(values)
   }
 
   const onSave = (entryid) => {
@@ -296,7 +295,10 @@ const ServiceTypesCRUDTable = ({data, ...props}) => {
 export const ServiceTypesList = (props) => {
   const publicView = props.publicView;
 
-  const backend = new Backend();
+  const webapi = new WebApi({
+    token: props.webapitoken,
+    serviceTypes: props.webapiservicetypes
+  })
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
     'userdetails', () => fetchUserDetails(true),
@@ -304,8 +306,8 @@ export const ServiceTypesList = (props) => {
   );
 
   const { data: serviceTypesDescriptions, errorServiceTypesDescriptions, isLoading: loadingServiceTypesDescriptions} = useQuery(
-    `${publicView ? 'public_' : ''}servicetypedesc`, async () => {
-      return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}servicetypesdesc`);
+    `${publicView ? 'public_' : ''}servicetypes`, async () => {
+      return await webapi.fetchServiceTypes();
     }
   )
 
@@ -357,7 +359,7 @@ export const ServiceTypesList = (props) => {
   }
   else if (serviceTypesDescriptions &&  userDetails?.is_superuser)
     return (
-      <ServiceTypesCRUDTable data={serviceTypesDescriptions} {...props}/>
+      <ServiceTypesCRUDTable data={serviceTypesDescriptions} webapi={webapi} {...props}/>
     )
   else
     return null
