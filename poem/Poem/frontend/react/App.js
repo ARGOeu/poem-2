@@ -144,7 +144,7 @@ const RedirectAfterLogin = ({isSuperUser}) => {
 }
 
 
-const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, webApiOperations, webApiReports, token, tenantName, isSuperUser, userGroups}) => (
+const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, webApiOperations, webApiReports, webApiServiceTypes, token, tenantName, isSuperUser, userGroups}) => (
   <Switch>
     <Route exact path="/ui/login" render={props => <RedirectAfterLogin isSuperUser={isSuperUser} {...props}/>}/>
     <Route exact path="/ui/home" component={Home} />
@@ -541,6 +541,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
       render={props => <ServiceTypesList
         {...props}
         webapitoken={token}
+        webapiservicetypes={webApiServiceTypes}
         addview={true}
       />}
     />
@@ -1269,6 +1270,7 @@ const App = () => {
                     webApiThresholds={webApiThresholds}
                     webApiOperations={webApiOperations}
                     webApiReports={webApiReports}
+                    webApiServiceTypes={webApiServiceTypes}
                     token={token}
                     tenantName={tenantName}
                     isSuperUser={userDetails.is_superuser}
