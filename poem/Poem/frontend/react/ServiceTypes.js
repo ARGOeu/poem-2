@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery } from 'react-query';
-import { Backend } from './DataManager';
+import {Backend, WebApi} from './DataManager';
+import { useQuery, useQueryClient, useMutation } from 'react-query';
 import {
   Button,
   Col,
@@ -33,13 +33,13 @@ import { useForm, Controller, useFieldArray, useWatch } from "react-hook-form";
 
 
 
-const ServiceTypesCRUDTable = ({data}) => {
+
+const ServiceTypesCRUDTable = ({data, ...props}) => {
   const dataWithChecked = data.map(e => {
     return {
       ...e,
       checked: false
     }
-
   })
 
   const [areYouSureModal, setAreYouSureModal] = React.useState(false)
@@ -47,6 +47,14 @@ const ServiceTypesCRUDTable = ({data}) => {
   const [modalMsg, setModalMsg] = React.useState('')
   const [modalFunc, setModalFunc] = React.useState(undefined)
   const [modalCallbackArg, setModalCallbackArg] = React.useState(undefined)
+
+  const webapi = new WebApi({
+    token: props.webapitoken,
+    serviceTypes: props.webapiservicetypes
+  })
+
+  const queryClient = useQueryClient();
+  const webapiAddMutation = useMutation(async (values) => await webapi.addServiceTypes(values));
 
   function toggleModal() {
     setAreYouSureModal(!areYouSureModal)
@@ -83,6 +91,23 @@ const ServiceTypesCRUDTable = ({data}) => {
       description: values[index].description,
       checked: values[index].checked
     })
+    webapiAddMutation.mutate(values, {
+      onSuccess: () => {
+        queryClient.invalidateQueries('servicetypes');
+        queryClient.invalidateQueries('public_servicetypes');
+        NotifyOk({
+          msg: 'Service types successfully added',
+          title: 'Added',
+          callback: null
+        });
+      },
+      onError: (error) => {
+        NotifyError({
+          title: 'Web API error',
+          msg: error.message ? error.message : 'Web API error adding service types'
+        })
+      }
+    })
   }
 
   const onSave = (entryid) => {
@@ -103,21 +128,21 @@ const ServiceTypesCRUDTable = ({data}) => {
       description: values[index].description,
       checked: value
     })
-    NotifyOk({
-      msg: 'Service types successfully changed',
-      title: 'Deleted',
-      callback: null
-    });
+    //NotifyOk({
+      //msg: 'Service types successfully changed',
+      //title: 'Changed',
+      //callback: null
+    //});
   }
 
   const doDelete = () => {
     let cleaned = fields.filter(e => !e.checked)
     setValue("serviceTypes", cleaned)
-    NotifyOk({
-      msg: 'Service types successfully deleted',
-      title: 'Deleted',
-      callback: null
-    });
+    //NotifyOk({
+      //msg: 'Service types successfully deleted',
+      //title: 'Deleted',
+      //callback: null
+    //});
   }
 
   const onDelete = () => {
@@ -270,7 +295,6 @@ const ServiceTypesCRUDTable = ({data}) => {
 
 export const ServiceTypesList = (props) => {
   const publicView = props.publicView;
-  const location = props.location;
 
   const backend = new Backend();
 
@@ -333,7 +357,7 @@ export const ServiceTypesList = (props) => {
   }
   else if (serviceTypesDescriptions &&  userDetails?.is_superuser)
     return (
-      <ServiceTypesCRUDTable data={serviceTypesDescriptions}/>
+      <ServiceTypesCRUDTable data={serviceTypesDescriptions} {...props}/>
     )
   else
     return null
