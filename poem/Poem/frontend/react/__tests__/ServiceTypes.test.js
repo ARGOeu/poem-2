@@ -135,6 +135,7 @@ describe('Test service types list - Read Only', () => {
     WebApi.mockImplementation(() => {
       return {
         fetchServiceTypes: () => Promise.resolve(mockServTypes),
+        addServiceTypes: mockAddServiceTypes,
       }
     })
     fetchUserDetails.mockReturnValue(mockUserDetailsTenantUser)
@@ -310,6 +311,29 @@ describe('Test service types list - Read Write', () => {
     expect(tableRowsFiltered[2]).toHaveTextContent('2argo.monARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.')
     expect(tableRowsFiltered[3]).toHaveTextContent('3argo.poemPOEM is system for managing profiles of probes and metrics in ARGO system.')
     expect(tableRowsFiltered[4]).toHaveTextContent('4argo.webuiARGO web user interface for metric A/R visualization and recalculation management.')
+
+    await waitFor(() => {
+      expect(mockAddServiceTypes).toHaveBeenCalledWith(
+        [
+          {
+            "description": "ARGO Consumer collects monitoring metrics from monitoring engines.",
+            "name": "argo.consumer"
+          },
+          {
+            "description": "ARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.",
+            "name": "argo.mon"
+          },
+          {
+            "description": "POEM is system for managing profiles of probes and metrics in ARGO system.",
+            "name": "argo.poem"
+          },
+          {
+            "description": "ARGO web user interface for metric A/R visualization and recalculation management.",
+            "name": "argo.webui"
+          }
+        ]
+      )
+    })
   })
 
   test('Test change description', async () => {
