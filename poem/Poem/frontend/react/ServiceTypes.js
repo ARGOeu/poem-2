@@ -183,7 +183,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
             className="me-3">
             Delete selected
           </Button>
-          <Link className="btn btn-secondary" to="/servicetypes/add" role="button">Add</Link>
+          <Link className="btn btn-secondary disabled" to="/servicetypes/add" role="button">Add</Link>
         </span>
       </div>
       <div id="argo-contentwrap" className="ms-2 mb-2 mt-2 p-3 border rounded">
