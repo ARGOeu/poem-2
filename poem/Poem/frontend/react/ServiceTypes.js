@@ -37,20 +37,18 @@ import _ from 'lodash-es';
 
 
 const ServiceTypesListAdded = ({data, setCallback, webapi}) => {
-  const [addedServices, setAddedServices] = useState(data)
 
   const { control, setValue } = useForm({
     defaultValues: {
-      serviceTypes: addedServices,
+      serviceTypes: data,
     }
   })
 
   useEffect(() => {
-    setAddedServices(data)
     setValue("serviceTypes", data)
   }, [data])
 
-  const { fields, remove, update } = useFieldArray({
+  const { fields, remove } = useFieldArray({
     control,
     name: "serviceTypes"
   })
@@ -100,10 +98,8 @@ const ServiceTypesListAdded = ({data, setCallback, webapi}) => {
                 </td>
                 <td>
                   <Button className="fw-bold" color="danger" onClick={() => {
-                    let tmp = [...addedServices]
-                    tmp = tmp.splice(index, 1)
-                    console.log('VRDEL DEBUG', tmp)
-                    setAddedServices(tmp)
+                    let tmp = [...fields]
+                    tmp = tmp.filter((e, i) => i !== index)
                     setCallback(tmp)
                     remove(index)
                   }}>
