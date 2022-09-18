@@ -37,7 +37,6 @@ import _ from 'lodash-es';
 
 
 const ServiceTypesListAdded = ({data, setCallback, webapi}) => {
-
   const { control, setValue } = useForm({
     defaultValues: {
       serviceTypes: data,
@@ -111,6 +110,11 @@ const ServiceTypesListAdded = ({data, setCallback, webapi}) => {
           }
         </tbody>
       </Table>
+      <div className="submit-row d-flex justify-content-end bg-light p-3">
+        <Button color="success" type="submit">
+          Save
+        </Button>
+      </div>
     </div>
   )
 }
