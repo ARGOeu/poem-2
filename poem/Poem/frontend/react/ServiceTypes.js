@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { WebApi } from './DataManager';
 import { useQuery, useQueryClient, useMutation } from 'react-query';
@@ -7,6 +7,8 @@ import {
   Col,
   Form,
   Input,
+  InputGroup,
+  Label,
   Row,
   Table,
 } from 'reactstrap';
@@ -32,6 +34,157 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useForm, Controller, useFieldArray, useWatch } from "react-hook-form";
 
 
+const ServiceTypesListAdded = ({data, webapi}) => {
+  const { control, setValue, getValues, handleSubmit, formState: {errors} } = useForm({
+    defaultValues: {
+      serviceTypes: data,
+    }
+  })
+
+  const { fields, update } = useFieldArray({
+    control,
+    name: "serviceTypes"
+  })
+
+
+  return (
+    <Table bordered responsive hover size="sm">
+      <thead className="table-active table-bordered align-middle text-center">
+        <tr>
+          <th style={{'width': '54px'}}>
+            #
+          </th>
+          <th>
+            Name of service
+          </th>
+          <th>
+            Description of service
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {
+          fields.map((entry, index) =>
+            <tr key={entry.id} data-testid={`rows-serviceTypes.${index}`}>
+              <td className="align-middle text-center">
+                {index + 1}
+              </td>
+              <td className="align-middle text-left fw-bold">
+                <span className="ms-2">{ entry.name }</span>
+              </td>
+              <td>
+                <Controller
+                  name={`serviceTypes.${index}.description`}
+                  control={control}
+                  render={ ({field}) =>
+                    <textarea
+                      {...field}
+                      rows="2"
+                      className="form-control"
+                    />
+                  }
+                />
+              </td>
+            </tr>
+          )
+        }
+      </tbody>
+    </Table>
+  )
+}
+
+
+export const ServiceTypesBulkAdd = ({data, webapi}) => {
+  const [addedServices, setAddedServices] = useState([])
+
+  const { control, setValue, getValues, handleSubmit, formState: {errors} } = useForm({
+    defaultValues: {
+      name: '',
+      description: '',
+    }
+  })
+
+  const [areYouSureModal, setAreYouSureModal] = React.useState(false)
+  const [modalTitle, setModalTitle] = React.useState('')
+  const [modalMsg, setModalMsg] = React.useState('')
+  const [modalFunc, setModalFunc] = React.useState(undefined)
+  const [modalCallbackArg, setModalCallbackArg] = React.useState(undefined)
+
+  const onSubmit = data => {
+    let tmpArray = [...addedServices]
+    tmpArray.push(data)
+    setAddedServices(tmpArray)
+  }
+
+  function toggleModal() {
+    setAreYouSureModal(!areYouSureModal)
+  }
+
+  return (
+    <>
+      <ModalAreYouSure
+        isOpen={areYouSureModal}
+        toggle={toggleModal}
+        title={modalTitle}
+        msg={modalMsg}
+        onYes={modalFunc}
+        callbackOnYesArg={modalCallbackArg}
+      />
+      <div className="d-flex align-items-center justify-content-between">
+        <h2 className="ms-3 mt-1 mb-4">Add service types</h2>
+      </div>
+      <div id="argo-contentwrap" className="ms-2 mb-2 mt-2 p-3 border rounded">
+        <Form onSubmit={handleSubmit(onSubmit)} className="needs-validation">
+          <Row>
+            <Col sm={{size: 4}}>
+              <Label for="name">
+                Name
+              </Label>
+              <InputGroup>
+                <Controller
+                  name="name"
+                  control={control}
+                  rules={{required: true}}
+                  render={ ({field}) =>
+                    <Input
+                      {...field}
+                      className="form-control"
+                    />
+                  }
+                />
+              </InputGroup>
+            </Col>
+            <Col sm={{size: 7}}>
+              <Label for="description">
+                Description
+              </Label>
+              <InputGroup>
+                <Controller
+                  name="description"
+                  control={control}
+                  rules={{required: true}}
+                  render={ ({field}) =>
+                    <textarea
+                      {...field}
+                      rows="3"
+                      className="form-control"
+                    />
+                  }
+                />
+              </InputGroup>
+            </Col>
+            <Col sm={{size: 1}} className="text-center">
+              <Button className="mt-3" color="success" type="submit">
+                Add new
+              </Button>
+            </Col>
+          </Row>
+        </Form>
+      </div>
+      <ServiceTypesListAdded data={addedServices}/>
+    </>
+  )
+}
 
 
 const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
@@ -183,7 +336,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
             className="me-3">
             Delete selected
           </Button>
-          <Link className="btn btn-secondary disabled" to="/servicetypes/add" role="button">Add</Link>
+          <Link className="btn btn-secondary" to="/ui/servicetypes/add" role="button">Add</Link>
         </span>
       </div>
       <div id="argo-contentwrap" className="ms-2 mb-2 mt-2 p-3 border rounded">
