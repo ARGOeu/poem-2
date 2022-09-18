@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { WebApi } from './DataManager';
 import { useQuery, useQueryClient, useMutation } from 'react-query';
@@ -34,12 +34,19 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useForm, Controller, useFieldArray, useWatch } from "react-hook-form";
 
 
-const ServiceTypesListAdded = ({data, webapi}) => {
-  const { control, setValue, getValues, handleSubmit, formState: {errors} } = useForm({
+const ServiceTypesListAdded = ({data, setCallback, webapi}) => {
+  const [addedServices, setAddedServices] = useState(data)
+
+  const { control, setValue } = useForm({
     defaultValues: {
-      serviceTypes: data,
+      serviceTypes: addedServices,
     }
   })
+
+  useEffect(() => {
+    setAddedServices(data)
+    setValue("serviceTypes", data)
+  }, [data])
 
   const { fields, update } = useFieldArray({
     control,
@@ -181,7 +188,7 @@ export const ServiceTypesBulkAdd = ({data, webapi}) => {
           </Row>
         </Form>
       </div>
-      <ServiceTypesListAdded data={addedServices}/>
+      <ServiceTypesListAdded data={addedServices} setCallback={setAddedServices}/>
     </>
   )
 }
