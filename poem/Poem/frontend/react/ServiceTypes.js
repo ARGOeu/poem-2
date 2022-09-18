@@ -29,9 +29,11 @@ import {
 import {
   faSave,
   faSearch,
+  faTimes,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useForm, Controller, useFieldArray, useWatch } from "react-hook-form";
+import _ from 'lodash-es';
 
 
 const ServiceTypesListAdded = ({data, setCallback, webapi}) => {
@@ -48,55 +50,72 @@ const ServiceTypesListAdded = ({data, setCallback, webapi}) => {
     setValue("serviceTypes", data)
   }, [data])
 
-  const { fields, update } = useFieldArray({
+  const { fields, remove, update } = useFieldArray({
     control,
     name: "serviceTypes"
   })
 
 
   return (
-    <Table bordered responsive hover size="sm">
-      <thead className="table-active table-bordered align-middle text-center">
-        <tr>
-          <th style={{'width': '54px'}}>
-            #
-          </th>
-          <th>
-            Name of service
-          </th>
-          <th>
-            Description of service
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {
-          fields.map((entry, index) =>
-            <tr key={entry.id} data-testid={`rows-serviceTypes.${index}`}>
-              <td className="align-middle text-center">
-                {index + 1}
-              </td>
-              <td className="align-middle text-left fw-bold">
-                <span className="ms-2">{ entry.name }</span>
-              </td>
-              <td>
-                <Controller
-                  name={`serviceTypes.${index}.description`}
-                  control={control}
-                  render={ ({field}) =>
-                    <textarea
-                      {...field}
-                      rows="2"
-                      className="form-control"
-                    />
-                  }
-                />
-              </td>
-            </tr>
-          )
-        }
-      </tbody>
-    </Table>
+    <div id="argo-contentwrap" className="ms-2 mb-2 mt-2 p-3 border rounded">
+      <Table bordered responsive hover size="sm">
+        <thead className="table-active table-bordered align-middle text-center">
+          <tr>
+            <th style={{'width': '54px'}}>
+              #
+            </th>
+            <th>
+              Name of service
+            </th>
+            <th>
+              Description of service
+            </th>
+            <th>
+              Action
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            fields.map((entry, index) =>
+              <tr key={entry.id} data-testid={`rows-serviceTypes.${index}`}>
+                <td className="align-middle text-center">
+                  {index + 1}
+                </td>
+                <td className="align-middle text-left fw-bold">
+                  <span className="ms-2">{ entry.name }</span>
+                </td>
+                <td>
+                  <Controller
+                    name={`serviceTypes.${index}.description`}
+                    control={control}
+                    render={ ({field}) =>
+                      <textarea
+                        {...field}
+                        rows="2"
+                        className="form-control"
+                      />
+                    }
+                  />
+                </td>
+                <td>
+                  <Button className="fw-bold" color="danger" onClick={() => {
+                    let tmp = [...addedServices]
+                    tmp = tmp.splice(index, 1)
+                    console.log('VRDEL DEBUG', tmp)
+                    setAddedServices(tmp)
+                    setCallback(tmp)
+                    remove(index)
+                  }}>
+                    <FontAwesomeIcon icon={faTimes}/>
+                  </Button>
+                </td>
+              </tr>
+            )
+          }
+        </tbody>
+      </Table>
+    </div>
   )
 }
 
