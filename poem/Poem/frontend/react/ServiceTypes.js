@@ -22,6 +22,7 @@ import {
   ModalAreYouSure,
   NotifyError,
   NotifyOk,
+  ParagraphTitle,
 } from './UIElements';
 import {
   fetchUserDetails,
@@ -33,7 +34,6 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useForm, Controller, useFieldArray, useWatch } from "react-hook-form";
-import _ from 'lodash-es';
 
 
 const ServiceTypesListAdded = ({data, setCallback, webapi}) => {
@@ -55,6 +55,7 @@ const ServiceTypesListAdded = ({data, setCallback, webapi}) => {
 
   return (
     <div id="argo-contentwrap" className="ms-2 mb-2 mt-2 p-3 border rounded">
+      <ParagraphTitle title='Service types prepared for submission'/>
       <Table bordered responsive hover size="sm">
         <thead className="table-active table-bordered align-middle text-center">
           <tr>
@@ -67,7 +68,7 @@ const ServiceTypesListAdded = ({data, setCallback, webapi}) => {
             <th>
               Description of service
             </th>
-            <th>
+            <th style={{'width': '60px'}}>
               Action
             </th>
           </tr>
@@ -76,7 +77,7 @@ const ServiceTypesListAdded = ({data, setCallback, webapi}) => {
             fields.length === 0 ?
               <tbody>
                 <tr key="0" data-testid="rows-add-serviceTypes.0">
-                  <td colSpan="4" className="text-muted text-center bd-highlight p-3 fs-3">
+                  <td colSpan="4" className="table-light text-muted text-center p-3 fs-3">
                     Empty data
                   </td>
                 </tr>
@@ -106,8 +107,8 @@ const ServiceTypesListAdded = ({data, setCallback, webapi}) => {
                           }
                         />
                       </td>
-                      <td>
-                        <Button className="fw-bold" color="danger" onClick={() => {
+                      <td className="text-center align-middle">
+                        <Button size="sm" className="fw-bold" color="danger" onClick={() => {
                           let tmp = [...fields]
                           tmp = tmp.filter((e, i) => i !== index)
                           setCallback(tmp)
@@ -182,7 +183,7 @@ export const ServiceTypesBulkAdd = ({data, webapi}) => {
           <Row>
             <Col sm={{size: 4}}>
               <Label for="name">
-                Name
+                Name:
               </Label>
               <InputGroup>
                 <Controller
@@ -200,7 +201,7 @@ export const ServiceTypesBulkAdd = ({data, webapi}) => {
             </Col>
             <Col sm={{size: 7}}>
               <Label for="description">
-                Description
+                Description:
               </Label>
               <InputGroup>
                 <Controller
