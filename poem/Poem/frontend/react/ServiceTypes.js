@@ -6,6 +6,7 @@ import {
   Button,
   Col,
   Form,
+  FormFeedback,
   Input,
   InputGroup,
   Label,
@@ -34,6 +35,16 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useForm, Controller, useFieldArray, useWatch } from "react-hook-form";
+import { yupResolver } from '@hookform/resolvers/yup';
+import { ErrorMessage } from '@hookform/error-message';
+import * as yup from "yup";
+
+
+const validationSchema = yup.object().shape({
+  name: yup.string().required(),
+  description: yup.string().required()
+}).required();
+
 
 
 const ServiceTypesListAdded = ({data, setCallback, webapi}) => {
@@ -68,7 +79,7 @@ const ServiceTypesListAdded = ({data, setCallback, webapi}) => {
             <th>
               Description of service
             </th>
-            <th style={{'width': '60px'}}>
+            <th style={{'width': '62px'}}>
               Action
             </th>
           </tr>
@@ -142,7 +153,8 @@ const ServiceTypesListAdded = ({data, setCallback, webapi}) => {
 export const ServiceTypesBulkAdd = ({data, webapi}) => {
   const [addedServices, setAddedServices] = useState([])
 
-  const { control, setValue, getValues, handleSubmit, formState: {errors} } = useForm({
+  const { control, handleSubmit, formState: {errors} } = useForm({
+    resolver: yupResolver(validationSchema),
     defaultValues: {
       name: '',
       description: '',
@@ -182,38 +194,54 @@ export const ServiceTypesBulkAdd = ({data, webapi}) => {
         <Form onSubmit={handleSubmit(onSubmit)} className="needs-validation">
           <Row>
             <Col sm={{size: 4}}>
-              <Label for="name">
+              <Label className="fw-bold" for="name">
                 Name:
               </Label>
               <InputGroup>
                 <Controller
                   name="name"
                   control={control}
-                  rules={{required: true}}
                   render={ ({field}) =>
                     <Input
                       {...field}
-                      className="form-control"
+                      className={`form-control ${errors?.name && "is-invalid"}`}
                     />
+                  }
+                />
+                <ErrorMessage
+                  errors={errors}
+                  name="name"
+                  render={({ message }) =>
+                    <FormFeedback tooltip invalid className="end-0">
+                      { message }
+                    </FormFeedback>
                   }
                 />
               </InputGroup>
             </Col>
             <Col sm={{size: 7}}>
-              <Label for="description">
+              <Label className="fw-bold" for="description">
                 Description:
               </Label>
               <InputGroup>
                 <Controller
                   name="description"
                   control={control}
-                  rules={{required: true}}
                   render={ ({field}) =>
                     <textarea
                       {...field}
                       rows="3"
-                      className="form-control"
+                      className={`form-control ${errors?.description && "is-invalid"}`}
                     />
+                  }
+                />
+                <ErrorMessage
+                  errors={errors}
+                  name="description"
+                  render={({ message }) =>
+                    <FormFeedback tooltip invalid className="end-0">
+                      { message }
+                    </FormFeedback>
                   }
                 />
               </InputGroup>
