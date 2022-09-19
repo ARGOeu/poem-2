@@ -204,7 +204,7 @@ export const ServiceTypesBulkAdd = ({data, webapi}) => {
                   render={ ({field}) =>
                     <Input
                       {...field}
-                      className={`form-control ${errors?.name && "is-invalid"}`}
+                      className={`form-control ${errors && errors.name ? "is-invalid" : ""}`}
                     />
                   }
                 />
@@ -231,7 +231,7 @@ export const ServiceTypesBulkAdd = ({data, webapi}) => {
                     <textarea
                       {...field}
                       rows="3"
-                      className={`form-control ${errors?.description && "is-invalid"}`}
+                      className={`form-control ${errors && errors.description ? "is-invalid" : ""}`}
                     />
                   }
                 />
