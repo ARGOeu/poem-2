@@ -441,4 +441,40 @@ describe('Test service types list - Bulk add', () => {
     tableRows = within(tbody).getAllByRole('row')
     expect(tableRows[0]).toHaveTextContent('Empty data')
   })
+
+  test('Test add', async () => {
+    renderAddView();
+
+    expect(screen.getByRole('heading', {'level': 2})).toHaveTextContent(/Add service types/i)
+    expect(screen.getByText(/Name:/)).toBeVisible()
+    expect(screen.getByText(/Description:/)).toBeVisible()
+
+    expect(screen.getByTestId('input-name')).toBeVisible()
+    expect(screen.getByTestId('input-description')).toBeVisible()
+
+    const inputName = screen.getByTestId('input-name')
+    fireEvent.change(inputName, {target: {value: 'service.name.1'}})
+
+    const inputDesc = screen.getByTestId('input-description')
+    fireEvent.change(inputDesc, {target: {value: 'service description 1'}})
+
+    const addNew = screen.getByText(/Add new/)
+    fireEvent.click(addNew);
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId(/rows-add-serviceTypes\.[0-9]*/)).toHaveLength(1)
+    })
+
+    const inputName2 = screen.getByTestId('input-name')
+    fireEvent.change(inputName2, {target: {value: 'service.name.2'}})
+    const inputDesc2 = screen.getByTestId('input-description')
+    fireEvent.change(inputDesc2, {target: {value: 'service description 2'}})
+    const addNew2 = screen.getByText(/Add new/)
+    fireEvent.click(addNew2);
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId(/rows-add-serviceTypes\.[0-9]*/)).toHaveLength(2)
+    })
+
+  })
 })

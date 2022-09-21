@@ -103,55 +103,52 @@ const ServiceTypesListAdded = ({data, setCallback, webapi, ...modal}) => {
           </tr>
         </thead>
         {
-            fields.length === 0 ?
-              <tbody>
-                <tr key="0" data-testid="rows-add-serviceTypes.0">
-                  <td colSpan="4" className="table-light text-muted text-center p-3 fs-3">
-                    Empty data
-                  </td>
-                </tr>
-              </tbody>
-            :
-              <tbody>
-                {
+          fields.length === 0 ?
+            <tbody>
+              <tr key="0" data-testid="rows-add-serviceTypes.0">
+                <td colSpan="4" className="table-light text-muted text-center p-3 fs-3">
+                  Empty data
+                </td>
+              </tr>
+            </tbody>
+          :
+            <tbody>
+              {
                 fields.map((entry, index) =>
-                  <>
-                    <tr key={entry.id} data-testid={`rows-add-serviceTypes.${index}`}>
-                      <td className="align-middle text-center">
-                        {index + 1}
-                      </td>
-                      <td className="align-middle text-left fw-bold">
-                        <span className="ms-2">{ entry.name }</span>
-                      </td>
-                      <td>
-                        <Controller
-                          name={`serviceTypes.${index}.description`}
-                          control={control}
-                          render={ ({field}) =>
-                            <textarea
-                              {...field}
-                              rows="2"
-                              className="form-control"
-                            />
-                          }
-                        />
-                      </td>
-                      <td className="text-center align-middle">
-                        <Button size="sm" className="fw-bold" color="danger" onClick={() => {
-                          let tmp = [...fields]
-                          tmp = tmp.filter((e, i) => i !== index)
-                          setCallback(tmp)
-                          remove(index)
-                        }}>
-                          <FontAwesomeIcon icon={faTimes}/>
-                        </Button>
-                      </td>
-                    </tr>
-                  </>
-                )
+                  <tr key={entry.id} data-testid={`rows-add-serviceTypes.${index}`}>
+                    <td className="align-middle text-center">
+                      {index + 1}
+                    </td>
+                    <td className="align-middle text-left fw-bold">
+                      <span className="ms-2">{ entry.name }</span>
+                    </td>
+                    <td>
+                      <Controller
+                        name={`serviceTypes.${index}.description`}
+                        control={control}
+                        render={ ({field}) =>
+                          <textarea
+                            {...field}
+                            rows="2"
+                            className="form-control"
+                          />
+                        }
+                      />
+                    </td>
+                    <td className="text-center align-middle">
+                      <Button size="sm" className="fw-bold" color="danger" onClick={() => {
+                        let tmp = [...fields]
+                        tmp = tmp.filter((e, i) => i !== index)
+                        setCallback(tmp)
+                        remove(index)
+                      }}>
+                        <FontAwesomeIcon icon={faTimes}/>
+                      </Button>
+                    </td>
+                  </tr>)
               }
-              </tbody>
-          }
+            </tbody>
+        }
       </Table>
       {
         fields.length > 0 ?
