@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import '@testing-library/jest-dom/extend-expect';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
-import { ServiceTypesList } from '../ServiceTypes';
+import { ServiceTypesList, ServiceTypesBulkAdd } from '../ServiceTypes';
 import { WebApi } from '../DataManager';
 import { fetchUserDetails } from '../QueryFunctions';
 import { QueryClient, QueryClientProvider } from 'react-query';
@@ -97,7 +97,26 @@ const mockServTypes = [
 ];
 
 
-function renderView(publicView=undefined) {
+function renderAddView() {
+  const route = `/ui/servicetypes/add`;
+  const history = createMemoryHistory({ initialEntries: [route] });
+
+  return {
+    ...render(
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/servicetypes/'
+            component={ServiceTypesBulkAdd}
+          />
+        </Router>
+      </QueryClientProvider>
+    )
+  }
+}
+
+
+function renderListView(publicView=undefined) {
   const route = `/ui/${publicView ? 'public_' : ''}servicetypes`;
   const history = createMemoryHistory({ initialEntries: [route] });
 
@@ -142,7 +161,7 @@ describe('Test service types list - Read Only', () => {
   })
 
   test('Test that page renders properly', async () => {
-    renderView();
+    renderListView();
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
@@ -170,7 +189,7 @@ describe('Test service types list - Read Only', () => {
   })
 
   test('Test filtering service types', async () => {
-    renderView();
+    renderListView();
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
@@ -194,7 +213,7 @@ describe('Test service types list - Read Only', () => {
   })
 
   test('Test that public page renders properly', async () => {
-    renderView(true);
+    renderListView(true);
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
@@ -222,7 +241,7 @@ describe('Test service types list - Read Only', () => {
   })
 
   test('Test filtering public service types', async () => {
-    renderView(true);
+    renderListView(true);
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
@@ -247,7 +266,7 @@ describe('Test service types list - Read Only', () => {
 })
 
 
-describe('Test service types list - Read Write', () => {
+describe('Test service types list - Bulk change and delete', () => {
   beforeAll(() => {
     WebApi.mockImplementation(() => Object({
       fetchServiceTypes: () => Promise.resolve(mockServTypes),
@@ -257,7 +276,7 @@ describe('Test service types list - Read Write', () => {
   })
 
   test('Test that page renders properly', async () => {
-    renderView();
+    renderListView();
 
     expect(screen.getByRole('heading', {'level': 4})).toHaveTextContent(/loading data/i)
 
@@ -282,7 +301,7 @@ describe('Test service types list - Read Write', () => {
   })
 
   test('Test bulk delete', async () => {
-    renderView();
+    renderListView();
 
     expect(screen.getByRole('heading', {'level': 4})).toHaveTextContent(/loading data/i)
 
@@ -337,7 +356,7 @@ describe('Test service types list - Read Write', () => {
   })
 
   test('Test change description', async () => {
-    renderView();
+    renderListView();
 
     expect(screen.getByRole('heading', {'level': 4})).toHaveTextContent(/loading data/i)
 
@@ -390,5 +409,36 @@ describe('Test service types list - Read Write', () => {
         ]
       )
     })
+  })
+})
+
+describe('Test service types list - Bulk add', () => {
+  beforeAll(() => {
+    WebApi.mockImplementation(() => Object({
+      fetchServiceTypes: () => Promise.resolve(mockServTypes),
+      addServiceTypes: mockAddServiceTypes,
+    })),
+    fetchUserDetails.mockReturnValue(mockUserDetailsTenantAdmin)
+  })
+
+  test('Test that page renders properly', async () => {
+    renderAddView();
+
+    expect(screen.getByRole('heading', {'level': 2})).toHaveTextContent(/Add service types/i)
+    expect(screen.getByText(/Name:/)).toBeVisible()
+    expect(screen.getByText(/Description:/)).toBeVisible()
+
+    expect(screen.getByTestId('input-name')).toBeVisible()
+    expect(screen.getByTestId('input-description')).toBeVisible()
+
+    expect(screen.getByRole('heading', {'level': 4})).toHaveTextContent(/Service types prepared for submission/i)
+
+    const thead = screen.getAllByRole('rowgroup')[0]
+    let tableRows = within(thead).getAllByRole('row')
+    expect(tableRows[0]).toHaveTextContent('#Name of serviceDescription of serviceAction')
+
+    const tbody = screen.getAllByRole('rowgroup')[1]
+    tableRows = within(tbody).getAllByRole('row')
+    expect(tableRows[0]).toHaveTextContent('Empty data')
   })
 })
