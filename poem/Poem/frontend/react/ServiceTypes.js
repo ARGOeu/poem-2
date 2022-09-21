@@ -47,7 +47,9 @@ const validationSchema = yup.object().shape({
 
 
 
-const ServiceTypesListAdded = ({data, setCallback, webapi}) => {
+const ServiceTypesListAdded = ({data, setCallback,
+  areYouSureModal, setAreYouSureModal, setModalMsg, setModalCallbackArg,
+  setModalFunc, setModalTitle, webapi}) => {
   const { control, setValue } = useForm({
     defaultValues: {
       serviceTypes: data,
@@ -62,6 +64,19 @@ const ServiceTypesListAdded = ({data, setCallback, webapi}) => {
     control,
     name: "serviceTypes"
   })
+
+  const doSave = () => {
+    console.log('VRDEL DEBUG', 'im submitted')
+    console.log('VRDEL DEBUG', data)
+  }
+
+  const onSubmit = (event) => {
+    event.preventDefault()
+    setModalMsg(`Are you sure you want to add Service types?`)
+    setModalTitle('Add service types')
+    setModalFunc(() => doSave)
+    setAreYouSureModal(!areYouSureModal);
+  }
 
 
   return (
@@ -138,7 +153,7 @@ const ServiceTypesListAdded = ({data, setCallback, webapi}) => {
       {
         fields.length > 0 ?
           <div className="submit-row d-flex justify-content-end bg-light p-3">
-            <Button color="success" type="submit">
+            <Button color="success" type="submit" onClick={(e) => onSubmit(e)}>
               Save
             </Button>
           </div>
@@ -150,8 +165,13 @@ const ServiceTypesListAdded = ({data, setCallback, webapi}) => {
 }
 
 
-export const ServiceTypesBulkAdd = ({data, webapi}) => {
+export const ServiceTypesBulkAdd = (props) => {
   const [addedServices, setAddedServices] = useState([])
+
+  const webapi = new WebApi({
+    token: props.webapitoken,
+    serviceTypes: props.webapiservicetypes
+  })
 
   const { control, handleSubmit, formState: {errors} } = useForm({
     resolver: yupResolver(validationSchema),
@@ -203,6 +223,7 @@ export const ServiceTypesBulkAdd = ({data, webapi}) => {
                   control={control}
                   render={ ({field}) =>
                     <Input
+                      data-testid="input-name"
                       {...field}
                       className={`form-control ${errors && errors.name ? "is-invalid" : ""}`}
                     />
@@ -231,6 +252,7 @@ export const ServiceTypesBulkAdd = ({data, webapi}) => {
                     <textarea
                       {...field}
                       rows="3"
+                      data-testid="input-description"
                       className={`form-control ${errors && errors.description ? "is-invalid" : ""}`}
                     />
                   }
@@ -254,7 +276,11 @@ export const ServiceTypesBulkAdd = ({data, webapi}) => {
           </Row>
         </Form>
       </div>
-      <ServiceTypesListAdded data={addedServices} setCallback={setAddedServices}/>
+      <ServiceTypesListAdded data={addedServices}
+        setCallback={setAddedServices}
+        areYouSureModal={areYouSureModal} setAreYouSureModal={setAreYouSureModal}
+        setModalMsg={setModalMsg} setModalCallbackArg={setModalCallbackArg}
+        setModalFunc={setModalFunc} setModalTitle={setModalTitle}/>
     </>
   )
 }
