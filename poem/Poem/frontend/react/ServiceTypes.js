@@ -47,14 +47,17 @@ const validationSchema = yup.object().shape({
 
 
 
-const ServiceTypesListAdded = ({data, setCallback,
-  areYouSureModal, setAreYouSureModal, setModalMsg, setModalCallbackArg,
-  setModalFunc, setModalTitle, webapi}) => {
+const ServiceTypesListAdded = ({data, setCallback, webapi, ...modal}) => {
   const { control, setValue } = useForm({
     defaultValues: {
       serviceTypes: data,
     }
   })
+
+  const {setModalMsg, setModalTitle,
+    setModalFunc, setAreYouSureModal,
+    areYouSureModal} = modal
+
 
   useEffect(() => {
     setValue("serviceTypes", data)
@@ -276,8 +279,7 @@ export const ServiceTypesBulkAdd = (props) => {
           </Row>
         </Form>
       </div>
-      <ServiceTypesListAdded data={addedServices}
-        setCallback={setAddedServices}
+      <ServiceTypesListAdded data={addedServices} setCallback={setAddedServices} webapi={webapi}
         areYouSureModal={areYouSureModal} setAreYouSureModal={setAreYouSureModal}
         setModalMsg={setModalMsg} setModalCallbackArg={setModalCallbackArg}
         setModalFunc={setModalFunc} setModalTitle={setModalTitle}/>
