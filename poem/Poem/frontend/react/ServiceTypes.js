@@ -49,7 +49,7 @@ const validationSchema = yup.object().shape({
 
 const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
   serviceTypesDescriptions, ...modal}) => {
-  const { control, setValue, getValues } = useForm({
+  const { control, setValue, getValues, reset } = useForm({
     defaultValues: {
       serviceTypes: data,
     }
@@ -71,6 +71,12 @@ const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
     setModalFunc, setAreYouSureModal,
     areYouSureModal} = modal
 
+  const resetFields = () => {
+    reset({
+      serviceTypes: Array()
+    })
+  }
+
   const postServiceTypesWebApi = (data, action, title) => {
     webapiAddMutation.mutate(data, {
       onSuccess: () => {
@@ -79,7 +85,7 @@ const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
         NotifyOk({
           msg: 'Service types successfully ' + action,
           title: title,
-          callback: null
+          callback: () => resetFields()
         });
       },
       onError: (error) => {
