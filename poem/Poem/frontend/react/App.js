@@ -49,7 +49,7 @@ import { ThresholdsProfilesList, ThresholdsProfilesChange, ThresholdsProfileVers
 
 import './App.css';
 import { PackageList, PackageComponent } from './Package';
-import { ServiceTypesList } from './ServiceTypes';
+import { ServiceTypesList, ServiceTypesBulkAdd } from './ServiceTypes';
 import { TenantList, TenantChange } from './Tenants';
 import { OperationsProfilesList, OperationsProfileDetails } from './OperationsProfiles';
 import { CookiePolicy } from './CookiePolicy';
@@ -542,7 +542,15 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         {...props}
         webapitoken={token}
         webapiservicetypes={webApiServiceTypes}
-        addview={true}
+      />}
+    />
+    <SuperUserRoute
+      isSuperUser={isSuperUser}
+      exact path="/ui/servicetypes/add"
+      render={props => <ServiceTypesBulkAdd
+        {...props}
+        webapitoken={token}
+        webapiservicetypes={webApiServiceTypes}
       />}
     />
     <Route component={NotFound} />
