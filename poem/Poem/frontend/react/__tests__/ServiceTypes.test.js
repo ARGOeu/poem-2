@@ -486,5 +486,50 @@ describe('Test service types list - Bulk add', () => {
       expect(screen.getAllByTestId(/rows-add-serviceTypes\.[0-9]*/)).toHaveLength(2)
     })
 
+    fireEvent.click(screen.getByText(/Save/));
+    await waitFor(() => {
+      expect(screen.getByText('Are you sure you want to add 2 Service types?')).toBeInTheDocument()
+      const yesButton = screen.getByText(/Yes/)
+      fireEvent.click(yesButton);
+    })
+
+    await waitFor(() => {
+      expect(mockAddServiceTypes).toHaveBeenCalledWith(
+        [
+          {
+            'name': 'argo.api',
+            'description': 'ARGO API service for retrieving status and A/R results.'
+          },
+          {
+            "description": "ARGO Compute Engine computes availability and reliability of services.",
+            "name": "argo.computeengine",
+          },
+          {
+            "description": "ARGO Consumer collects monitoring metrics from monitoring engines.",
+            "name": "argo.consumer"
+          },
+          {
+            "description": "ARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.",
+            "name": "argo.mon"
+          },
+          {
+            "description": "POEM is system for managing profiles of probes and metrics in ARGO system.",
+            "name": "argo.poem"
+          },
+          {
+            "description": "ARGO web user interface for metric A/R visualization and recalculation management.",
+            "name": "argo.webui"
+          },
+          {
+            "description": "service description 1",
+            "name": "service.name.1"
+          },
+          {
+            "description": "service description 2",
+            "name": "service.name.2"
+          }
+        ]
+      )
+    })
   })
 })
