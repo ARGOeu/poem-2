@@ -212,6 +212,15 @@ export const ServiceTypesBulkAdd = (props) => {
     setAreYouSureModal(!areYouSureModal)
   }
 
+  if (loadingUserDetails || loadingServiceTypesDescriptions)
+    return (<LoadingAnim/>);
+
+  else if (errorUserDetails)
+    return (<ErrorComponent error={errorUserDetails}/>);
+
+  else if (errorServiceTypesDescriptions)
+    return (<ErrorComponent error={errorServiceTypesDescriptions}/>);
+
   if (userDetails?.is_superuser && serviceTypesDescriptions) {
     return (
       <>
