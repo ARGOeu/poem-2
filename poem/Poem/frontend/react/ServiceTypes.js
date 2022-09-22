@@ -47,7 +47,6 @@ const validationSchema = yup.object().shape({
 }).required();
 
 
-
 const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
   serviceTypesDescriptions, ...modal}) => {
   const { control, setValue, getValues } = useForm({
@@ -67,7 +66,6 @@ const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
   useEffect(() => {
     setValue("serviceTypes", data)
   }, [data])
-
 
   const {setModalMsg, setModalTitle,
     setModalFunc, setAreYouSureModal,
@@ -218,7 +216,7 @@ export const ServiceTypesBulkAdd = (props) => {
     }
   )
 
-  const { control, handleSubmit, formState: {errors} } = useForm({
+  const { control, handleSubmit, reset, formState: {errors} } = useForm({
     resolver: yupResolver(validationSchema),
     defaultValues: {
       name: '',
@@ -236,6 +234,10 @@ export const ServiceTypesBulkAdd = (props) => {
     let tmpArray = [...addedServices]
     tmpArray.push(data)
     setAddedServices(tmpArray)
+    reset({
+      name: '',
+      description: ''
+    })
   }
 
   function toggleModal() {
