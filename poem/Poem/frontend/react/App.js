@@ -544,7 +544,8 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         webapiservicetypes={webApiServiceTypes}
       />}
     />
-    <Route
+    <SuperUserRoute
+      isSuperUser={isSuperUser}
       exact path="/ui/servicetypes/add"
       render={props => <ServiceTypesBulkAdd
         {...props}

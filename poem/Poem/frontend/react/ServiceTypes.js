@@ -47,26 +47,27 @@ const validationSchema = yup.object().shape({
 
 
 
-const ServiceTypesListAdded = ({data, setCallback, webapi, ...modal}) => {
+const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
+  serviceTypesDescriptions, ...modal}) => {
   const { control, setValue } = useForm({
     defaultValues: {
       serviceTypes: data,
     }
   })
 
-  const {setModalMsg, setModalTitle,
-    setModalFunc, setAreYouSureModal,
-    areYouSureModal} = modal
-
+  const { fields, remove } = useFieldArray({
+    control,
+    name: "serviceTypes"
+  })
 
   useEffect(() => {
     setValue("serviceTypes", data)
   }, [data])
 
-  const { fields, remove } = useFieldArray({
-    control,
-    name: "serviceTypes"
-  })
+
+  const {setModalMsg, setModalTitle,
+    setModalFunc, setAreYouSureModal,
+    areYouSureModal} = modal
 
   const doSave = () => {
     console.log('VRDEL DEBUG', 'im submitted')
@@ -75,93 +76,97 @@ const ServiceTypesListAdded = ({data, setCallback, webapi, ...modal}) => {
 
   const onSubmit = (event) => {
     event.preventDefault()
-    setModalMsg(`Are you sure you want to add Service types?`)
+    setModalMsg(`Are you sure you want to add ${data.length} Service types?`)
     setModalTitle('Add service types')
     setModalFunc(() => doSave)
     setAreYouSureModal(!areYouSureModal);
   }
 
-
-  return (
-    <div id="argo-contentwrap" className="ms-2 mb-2 mt-2 p-3 border rounded">
-      <ParagraphTitle title='Service types prepared for submission'/>
-      <Table bordered responsive hover size="sm">
-        <thead className="table-active table-bordered align-middle text-center">
-          <tr>
-            <th style={{'width': '54px'}}>
-              #
-            </th>
-            <th>
-              Name of service
-            </th>
-            <th>
-              Description of service
-            </th>
-            <th style={{'width': '62px'}}>
-              Action
-            </th>
-          </tr>
-        </thead>
+  if (userDetails?.is_superuser && serviceTypesDescriptions) {
+    console.log('VRDEL DEBUG', userDetails, serviceTypesDescriptions)
+    return (
+      <div id="argo-contentwrap" className="ms-2 mb-2 mt-2 p-3 border rounded">
+        <ParagraphTitle title='Service types prepared for submission'/>
+        <Table bordered responsive hover size="sm">
+          <thead className="table-active table-bordered align-middle text-center">
+            <tr>
+              <th style={{'width': '54px'}}>
+                #
+              </th>
+              <th>
+                Name of service
+              </th>
+              <th>
+                Description of service
+              </th>
+              <th style={{'width': '62px'}}>
+                Action
+              </th>
+            </tr>
+          </thead>
+          {
+            fields.length === 0 ?
+              <tbody>
+                <tr key="0" data-testid="rows-add-serviceTypes.0">
+                  <td colSpan="4" className="table-light text-muted text-center p-3 fs-3">
+                    Empty data
+                  </td>
+                </tr>
+              </tbody>
+            :
+              <tbody>
+                {
+                  fields.map((entry, index) =>
+                    <tr key={entry.id} data-testid={`rows-add-serviceTypes.${index}`}>
+                      <td className="align-middle text-center">
+                        {index + 1}
+                      </td>
+                      <td className="align-middle text-left fw-bold">
+                        <span className="ms-2">{ entry.name }</span>
+                      </td>
+                      <td>
+                        <Controller
+                          name={`serviceTypes.${index}.description`}
+                          control={control}
+                          render={ ({field}) =>
+                            <textarea
+                              {...field}
+                              rows="2"
+                              className="form-control"
+                            />
+                          }
+                        />
+                      </td>
+                      <td className="text-center align-middle">
+                        <Button size="sm" className="fw-bold" color="danger" onClick={() => {
+                          let tmp = [...fields]
+                          tmp = tmp.filter((e, i) => i !== index)
+                          setCallback(tmp)
+                          remove(index)
+                        }}>
+                          <FontAwesomeIcon icon={faTimes}/>
+                        </Button>
+                      </td>
+                    </tr>)
+                }
+              </tbody>
+          }
+        </Table>
         {
-          fields.length === 0 ?
-            <tbody>
-              <tr key="0" data-testid="rows-add-serviceTypes.0">
-                <td colSpan="4" className="table-light text-muted text-center p-3 fs-3">
-                  Empty data
-                </td>
-              </tr>
-            </tbody>
+          fields.length > 0 ?
+            <div className="submit-row d-flex justify-content-end bg-light p-3">
+              <Button color="success" type="submit" onClick={(e) => onSubmit(e)}>
+                Save
+              </Button>
+            </div>
           :
-            <tbody>
-              {
-                fields.map((entry, index) =>
-                  <tr key={entry.id} data-testid={`rows-add-serviceTypes.${index}`}>
-                    <td className="align-middle text-center">
-                      {index + 1}
-                    </td>
-                    <td className="align-middle text-left fw-bold">
-                      <span className="ms-2">{ entry.name }</span>
-                    </td>
-                    <td>
-                      <Controller
-                        name={`serviceTypes.${index}.description`}
-                        control={control}
-                        render={ ({field}) =>
-                          <textarea
-                            {...field}
-                            rows="2"
-                            className="form-control"
-                          />
-                        }
-                      />
-                    </td>
-                    <td className="text-center align-middle">
-                      <Button size="sm" className="fw-bold" color="danger" onClick={() => {
-                        let tmp = [...fields]
-                        tmp = tmp.filter((e, i) => i !== index)
-                        setCallback(tmp)
-                        remove(index)
-                      }}>
-                        <FontAwesomeIcon icon={faTimes}/>
-                      </Button>
-                    </td>
-                  </tr>)
-              }
-            </tbody>
+            ''
         }
-      </Table>
-      {
-        fields.length > 0 ?
-          <div className="submit-row d-flex justify-content-end bg-light p-3">
-            <Button color="success" type="submit" onClick={(e) => onSubmit(e)}>
-              Save
-            </Button>
-          </div>
-        :
-          ''
-      }
-    </div>
-  )
+      </div>
+    )
+  }
+  else
+    return null
 }
 
 
@@ -172,6 +177,16 @@ export const ServiceTypesBulkAdd = (props) => {
     token: props.webapitoken,
     serviceTypes: props.webapiservicetypes
   })
+
+  const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
+    'userdetails', () => fetchUserDetails(true)
+  );
+
+  const { data: serviceTypesDescriptions, errorServiceTypesDescriptions, isLoading: loadingServiceTypesDescriptions} = useQuery(
+    'servicetypes', async () => {
+      return await webapi.fetchServiceTypes();
+    }
+  )
 
   const { control, handleSubmit, formState: {errors} } = useForm({
     resolver: yupResolver(validationSchema),
@@ -197,91 +212,96 @@ export const ServiceTypesBulkAdd = (props) => {
     setAreYouSureModal(!areYouSureModal)
   }
 
-  return (
-    <>
-      <ModalAreYouSure
-        isOpen={areYouSureModal}
-        toggle={toggleModal}
-        title={modalTitle}
-        msg={modalMsg}
-        onYes={modalFunc}
-        callbackOnYesArg={modalCallbackArg}
-      />
-      <div className="d-flex align-items-center justify-content-between">
-        <h2 className="ms-3 mt-1 mb-4">Add service types</h2>
-      </div>
-      <div id="argo-contentwrap" className="ms-2 mb-2 mt-2 p-3 border rounded">
-        <Form onSubmit={handleSubmit(onSubmit)} className="needs-validation">
-          <Row>
-            <Col sm={{size: 4}}>
-              <Label className="fw-bold" for="name">
-                Name:
-              </Label>
-              <InputGroup>
-                <Controller
-                  name="name"
-                  control={control}
-                  render={ ({field}) =>
-                    <Input
-                      data-testid="input-name"
-                      {...field}
-                      className={`form-control ${errors && errors.name ? "is-invalid" : ""}`}
-                    />
-                  }
-                />
-                <ErrorMessage
-                  errors={errors}
-                  name="name"
-                  render={({ message }) =>
-                    <FormFeedback tooltip invalid className="end-0">
-                      { message }
-                    </FormFeedback>
-                  }
-                />
-              </InputGroup>
-            </Col>
-            <Col sm={{size: 7}}>
-              <Label className="fw-bold" for="description">
-                Description:
-              </Label>
-              <InputGroup>
-                <Controller
-                  name="description"
-                  control={control}
-                  render={ ({field}) =>
-                    <textarea
-                      {...field}
-                      rows="3"
-                      data-testid="input-description"
-                      className={`form-control ${errors && errors.description ? "is-invalid" : ""}`}
-                    />
-                  }
-                />
-                <ErrorMessage
-                  errors={errors}
-                  name="description"
-                  render={({ message }) =>
-                    <FormFeedback tooltip invalid className="end-0">
-                      { message }
-                    </FormFeedback>
-                  }
-                />
-              </InputGroup>
-            </Col>
-            <Col sm={{size: 1}} className="text-center">
-              <Button className="mt-3" color="success" type="submit">
-                Add new
-              </Button>
-            </Col>
-          </Row>
-        </Form>
-      </div>
-      <ServiceTypesListAdded data={addedServices} setCallback={setAddedServices} webapi={webapi}
-        areYouSureModal={areYouSureModal} setAreYouSureModal={setAreYouSureModal}
-        setModalMsg={setModalMsg} setModalCallbackArg={setModalCallbackArg}
-        setModalFunc={setModalFunc} setModalTitle={setModalTitle}/>
-    </>
-  )
+  if (userDetails?.is_superuser && serviceTypesDescriptions) {
+    return (
+      <>
+        <ModalAreYouSure
+          isOpen={areYouSureModal}
+          toggle={toggleModal}
+          title={modalTitle}
+          msg={modalMsg}
+          onYes={modalFunc}
+          callbackOnYesArg={modalCallbackArg}
+        />
+        <div className="d-flex align-items-center justify-content-between">
+          <h2 className="ms-3 mt-1 mb-4">Add service types</h2>
+        </div>
+        <div id="argo-contentwrap" className="ms-2 mb-2 mt-2 p-3 border rounded">
+          <Form onSubmit={handleSubmit(onSubmit)} className="needs-validation">
+            <Row>
+              <Col sm={{size: 4}}>
+                <Label className="fw-bold" for="name">
+                  Name:
+                </Label>
+                <InputGroup>
+                  <Controller
+                    name="name"
+                    control={control}
+                    render={ ({field}) =>
+                      <Input
+                        data-testid="input-name"
+                        {...field}
+                        className={`form-control ${errors && errors.name ? "is-invalid" : ""}`}
+                      />
+                    }
+                  />
+                  <ErrorMessage
+                    errors={errors}
+                    name="name"
+                    render={({ message }) =>
+                      <FormFeedback tooltip invalid className="end-0">
+                        { message }
+                      </FormFeedback>
+                    }
+                  />
+                </InputGroup>
+              </Col>
+              <Col sm={{size: 7}}>
+                <Label className="fw-bold" for="description">
+                  Description:
+                </Label>
+                <InputGroup>
+                  <Controller
+                    name="description"
+                    control={control}
+                    render={ ({field}) =>
+                      <textarea
+                        {...field}
+                        rows="3"
+                        data-testid="input-description"
+                        className={`form-control ${errors && errors.description ? "is-invalid" : ""}`}
+                      />
+                    }
+                  />
+                  <ErrorMessage
+                    errors={errors}
+                    name="description"
+                    render={({ message }) =>
+                      <FormFeedback tooltip invalid className="end-0">
+                        { message }
+                      </FormFeedback>
+                    }
+                  />
+                </InputGroup>
+              </Col>
+              <Col sm={{size: 1}} className="text-center">
+                <Button className="mt-3" color="success" type="submit">
+                  Add new
+                </Button>
+              </Col>
+            </Row>
+          </Form>
+        </div>
+        <ServiceTypesListAdded data={addedServices} setCallback={setAddedServices} webapi={webapi}
+          userDetails={userDetails} serviceTypesDescriptions={serviceTypesDescriptions}
+          areYouSureModal={areYouSureModal} setAreYouSureModal={setAreYouSureModal}
+          setModalMsg={setModalMsg} setModalCallbackArg={setModalCallbackArg}
+          setModalFunc={setModalFunc} setModalTitle={setModalTitle}/>
+      </>
+    )
+  }
+  else
+    return null
 }
 
 
