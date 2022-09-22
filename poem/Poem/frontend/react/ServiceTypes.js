@@ -38,6 +38,7 @@ import { useForm, Controller, useFieldArray, useWatch } from "react-hook-form";
 import { yupResolver } from '@hookform/resolvers/yup';
 import { ErrorMessage } from '@hookform/error-message';
 import * as yup from "yup";
+import _ from "lodash";
 
 
 const validationSchema = yup.object().shape({
@@ -49,11 +50,14 @@ const validationSchema = yup.object().shape({
 
 const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
   serviceTypesDescriptions, ...modal}) => {
-  const { control, setValue } = useForm({
+  const { control, setValue, getValues } = useForm({
     defaultValues: {
       serviceTypes: data,
     }
   })
+
+  const queryClient = useQueryClient();
+  const webapiAddMutation = useMutation(async (values) => await webapi.addServiceTypes(values));
 
   const { fields, remove } = useFieldArray({
     control,
@@ -69,9 +73,36 @@ const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
     setModalFunc, setAreYouSureModal,
     areYouSureModal} = modal
 
+  const postServiceTypesWebApi = (data, action, title) => {
+    webapiAddMutation.mutate(data, {
+      onSuccess: () => {
+        queryClient.invalidateQueries('servicetypes');
+        queryClient.invalidateQueries('public_servicetypes');
+        NotifyOk({
+          msg: 'Service types successfully ' + action,
+          title: title,
+          callback: null
+        });
+      },
+      onError: (error) => {
+        NotifyError({
+          title: 'Web API error',
+          msg: error.message ? error.message : 'Web API error adding service types'
+        })
+      }
+    })
+  }
+
   const doSave = () => {
-    console.log('VRDEL DEBUG', 'im submitted')
-    console.log('VRDEL DEBUG', data)
+    let tmpArray = [...getValues('serviceTypes'), ...serviceTypesDescriptions]
+    let pairs = _.orderBy(tmpArray, ['name'], ['asc'])
+    postServiceTypesWebApi([...pairs.map(
+      e => Object(
+        {
+          'name': e.name, 'description': e.description
+        }
+      ))],
+      'added', 'Add')
   }
 
   const onSubmit = (event) => {
