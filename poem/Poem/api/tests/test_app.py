@@ -167,6 +167,7 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
         self.view = views.GetConfigOptions.as_view()
         self.url = '/api/v2/internal/config_options/'
         self.user = CustUser.objects.create(username='testuser')
+        self.maxDiff = None
 
     @patch('Poem.api.internal_views.app.saml_login_string',
            return_value='Log in using B2ACCESS')
@@ -182,6 +183,7 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
                 WEBAPI_REPORTSTAGS='https://reports-tags.com',
                 WEBAPI_REPORTSTOPOLOGYGROUPS='https://topology-groups.com',
                 WEBAPI_REPORTSTOPOLOGYENDPOINTS='https://endpoints.com',
+                WEBAPI_SERVICETYPES='https://topology-servicetypes.com',
                 LINKS_TERMS_PRIVACY={
                     'tenant': {
                         'terms': 'https://terms.of.use.com',
@@ -209,6 +211,7 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
                             'topologygroups': 'https://topology-groups.com',
                             'topologyendpoints': 'https://endpoints.com'
                         },
+                        'webapiservicetypes': 'https://topology-servicetypes.com',
                         'tenant_name': 'tenant',
                         'terms_privacy_links': {
                             'terms': 'https://terms.of.use.com',

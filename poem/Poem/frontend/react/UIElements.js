@@ -330,7 +330,7 @@ const doLogout = async (history, onLogout) =>
 }
 
 
-export const ModalAreYouSure = ({isOpen, toggle, title, msg, onYes}) =>
+export const ModalAreYouSure = ({isOpen, toggle, title, msg, onYes, callbackOnYesArg=undefined}) =>
 (
   <Modal isOpen={isOpen} toggle={toggle}>
     <ModalHeader toggle={toggle}>{title}</ModalHeader>
@@ -339,7 +339,7 @@ export const ModalAreYouSure = ({isOpen, toggle, title, msg, onYes}) =>
     </ModalBody>
     <ModalFooter>
       <Button color="primary" onClick={() => {
-        onYes();
+        callbackOnYesArg ? onYes(callbackOnYesArg) : onYes(callbackOnYesArg);
         toggle();
       }}>Yes</Button>{' '}
       <Button color="secondary" onClick={toggle}>No</Button>
@@ -881,7 +881,8 @@ export const PublicPage = ({privacyLink, termsLink, children}) => {
 export const BaseArgoView = ({resourcename='', location=undefined,
   infoview=false, addview=false, listview=false, modal=false, state=undefined,
   toggle=undefined, submitperm=true, history=true, addnew=true, clone=false,
-  cloneview=false, tenantview=false, publicview=false, addperm=true, extra_button=undefined,
+  cloneview=false, tenantview=false, publicview=false, addperm=true,
+  extra_button=undefined, title=undefined,
   children}) =>
 (
   <React.Fragment>
@@ -909,13 +910,16 @@ export const BaseArgoView = ({resourcename='', location=undefined,
               <React.Fragment>
                 {
                   addnew ?
-                    <h2 className="ms-3 mt-1 mb-4">{`Select ${resourcename} to change`}</h2>
+                    <h2 className="ms-3 mt-1 mb-4">{ title ? title : `Select ${resourcename} to change`}</h2>
                   :
                     <h2 className='ms-3 mt-1 mb-4'>{`Select ${resourcename} for details`}</h2>
                 }
                 {
                   (addnew && addperm) &&
-                  <Link className="btn btn-secondary" to={location.pathname + "/add"} role="button">Add</Link>
+                    <>
+                      { extra_button }
+                      <Link className="btn btn-secondary" to={location.pathname + "/add"} role="button">Add</Link>
+                    </>
                 }
                 {
                   (addnew && !addperm) &&

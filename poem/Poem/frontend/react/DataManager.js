@@ -262,7 +262,8 @@ export class WebApi {
       aggregationProfiles=undefined,
       thresholdsProfiles=undefined,
       operationsProfiles=undefined,
-      reportsConfigurations=undefined
+      reportsConfigurations=undefined,
+      serviceTypes=undefined
     }) {
     this.token = token;
     this.metricprofiles = metricProfiles;
@@ -270,6 +271,7 @@ export class WebApi {
     this.thresholdsprofiles = thresholdsProfiles;
     this.operationsprofiles = operationsProfiles;
     this.reports = reportsConfigurations;
+    this.servicetypes = serviceTypes;
   }
 
   async fetchProfiles(url) {
@@ -334,6 +336,10 @@ export class WebApi {
     return this.fetchProfiles(this.reports['tags']);
   }
 
+  async fetchServiceTypes() {
+    return this.fetchProfiles(this.servicetypes);
+  }
+
   fetchMetricProfile(id) {
     return this.fetchProfile(`${this.metricprofiles}/${id}`);
   }
@@ -392,6 +398,22 @@ export class WebApi {
 
   addReport(report) {
     return this.addProfile(this.reports['main'], report);
+  }
+
+  async addServiceTypes(service_types) {
+    try {
+      await this.addProfile(this.servicetypes, service_types);
+    }
+    catch (err) {
+      if (err.message.includes('409'))
+        try {
+          await this.deleteProfile(this.servicetypes);
+          await this.addProfile(this.servicetypes, service_types);
+        }
+        catch (err2) {
+          throw Error(err2)
+        }
+    }
   }
 
   changeReport(report) {

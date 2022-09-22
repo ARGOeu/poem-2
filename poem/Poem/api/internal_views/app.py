@@ -107,6 +107,7 @@ class GetConfigOptions(APIView):
         options.update(webapiaggregation=settings.WEBAPI_AGGREGATION)
         options.update(webapithresholds=settings.WEBAPI_THRESHOLDS)
         options.update(webapioperations=settings.WEBAPI_OPERATIONS)
+        options.update(webapiservicetypes=settings.WEBAPI_SERVICETYPES)
         options.update(version=version)
         options.update(webapireports=dict(
             main=settings.WEBAPI_REPORTS,
