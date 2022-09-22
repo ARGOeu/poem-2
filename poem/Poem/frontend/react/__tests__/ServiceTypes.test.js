@@ -106,7 +106,7 @@ function renderAddView() {
       <QueryClientProvider client={queryClient}>
         <Router history={history}>
           <Route
-            path='/ui/servicetypes/'
+            path='/ui/servicetypes/add'
             component={ServiceTypesBulkAdd}
           />
         </Router>
@@ -424,7 +424,12 @@ describe('Test service types list - Bulk add', () => {
   test('Test that page renders properly', async () => {
     renderAddView();
 
-    expect(screen.getByRole('heading', {'level': 2})).toHaveTextContent(/Add service types/i)
+    expect(screen.getByRole('heading', {'level': 4})).toHaveTextContent(/loading data/i)
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', {'level': 2})).toHaveTextContent(/Add service types/i)
+    })
+
     expect(screen.getByText(/Name:/)).toBeVisible()
     expect(screen.getByText(/Description:/)).toBeVisible()
 
@@ -445,7 +450,12 @@ describe('Test service types list - Bulk add', () => {
   test('Test add', async () => {
     renderAddView();
 
-    expect(screen.getByRole('heading', {'level': 2})).toHaveTextContent(/Add service types/i)
+    expect(screen.getByRole('heading', {'level': 4})).toHaveTextContent(/loading data/i)
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', {'level': 2})).toHaveTextContent(/Add service types/i)
+    })
+
     expect(screen.getByText(/Name:/)).toBeVisible()
     expect(screen.getByText(/Description:/)).toBeVisible()
 

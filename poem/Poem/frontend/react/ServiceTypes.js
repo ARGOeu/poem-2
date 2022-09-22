@@ -83,7 +83,6 @@ const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
   }
 
   if (userDetails?.is_superuser && serviceTypesDescriptions) {
-    console.log('VRDEL DEBUG', userDetails, serviceTypesDescriptions)
     return (
       <div id="argo-contentwrap" className="ms-2 mb-2 mt-2 p-3 border rounded">
         <ParagraphTitle title='Service types prepared for submission'/>
