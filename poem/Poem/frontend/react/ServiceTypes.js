@@ -24,6 +24,7 @@ import {
   NotifyError,
   NotifyOk,
   ParagraphTitle,
+  SearchField,
 } from './UIElements';
 import {
   fetchUserDetails,
@@ -537,7 +538,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                         name="searchService"
                         control={control}
                         render={ ({field}) =>
-                          <Input
+                          <SearchField
                             {...field}
                             className='form-control'
                           />
@@ -549,7 +550,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                         name="searchDesc"
                         control={control}
                         render={ ({field}) =>
-                          <Input
+                          <SearchField
                             {...field}
                             className='form-control'
                           />
