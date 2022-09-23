@@ -529,6 +529,11 @@ def mock_db():
         version_comment='Initial version.',
     )
 
+    admin_models.DefaultPort.objects.create(name="SITE_BDII_PORT", value="2170")
+    admin_models.DefaultPort.objects.create(name="BDII_PORT", value="2170")
+    admin_models.DefaultPort.objects.create(name="GRAM_PORT", value="2119")
+    admin_models.DefaultPort.objects.create(name="MYPROXY_PORT", value="7512")
+
     group = poem_models.GroupOfMetrics.objects.create(name="TEST")
 
     metric1 = poem_models.Metric.objects.create(
@@ -14410,4 +14415,56 @@ class ListMetricTemplates4Tag(TenantTestCase):
         self.assertEqual(
             response.data,
             ["argo.AMS-Check", "org.apel.APEL-Pub"]
+        )
+
+
+class ListDefaultPortsTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.ListDefaultPorts.as_view()
+        self.url = '/api/v2/internal/default_ports/'
+
+        mock_db()
+
+        self.tenant_superuser = CustUser.objects.get(username="tenant_poem")
+        self.tenant_user = CustUser.objects.get(username="tenant_user")
+
+        with schema_context(get_public_schema_name()):
+            self.superuser = CustUser.objects.get(username="poem")
+            self.user = CustUser.objects.get(username='admin_user')
+
+            self.public_tenant = Tenant.objects.get(name="public")
+
+        self.port1 = admin_models.DefaultPort.objects.get(name="SITE_BDII_PORT")
+        self.port2 = admin_models.DefaultPort.objects.get(name="BDII_PORT")
+        self.port3 = admin_models.DefaultPort.objects.get(name="GRAM_PORT")
+        self.port4 = admin_models.DefaultPort.objects.get(name="MYPROXY_PORT")
+
+    def test_get_ports(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(
+            response.data, [
+                {
+                    "id": self.port2.id,
+                    "name": "BDII_PORT",
+                    "value": "2170"
+                },
+                {
+                    "id": self.port3.id,
+                    "name": "GRAM_PORT",
+                    "value": "2119"
+                },
+                {
+                    "id": self.port4.id,
+                    "name": "MYPROXY_PORT",
+                    "value": "7512"
+                },
+                {
+                    "id": self.port1.id,
+                    "name": "SITE_BDII_PORT",
+                    "value": "2170"
+                }
+            ]
         )

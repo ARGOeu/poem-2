@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from Poem.poem import models
-from Poem.poem_super_admin.models import Probe, MetricTags
+from Poem.poem_super_admin.models import Probe, MetricTags, DefaultPort
 from Poem.users.models import CustUser
 
 
@@ -63,4 +63,10 @@ class ThresholdsProfileSerializer(serializers.ModelSerializer):
 class MetricTagsSerializer(serializers.ModelSerializer):
     class Meta:
         model = MetricTags
+        fields = "__all__"
+
+
+class DefaultPortsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DefaultPort
         fields = "__all__"

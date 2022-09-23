@@ -1063,3 +1063,12 @@ class ListPublicMetricTags(ListMetricTags):
 class ListPublicMetricTemplates4Tag(ListMetricTemplates4Tag):
     authentication_classes = ()
     permission_classes = ()
+
+
+class ListDefaultPorts(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request):
+        ports = admin_models.DefaultPort.objects.all().order_by("name")
+        serializer = serializers.DefaultPortsSerializer(ports, many=True)
+        return Response(serializer.data)
