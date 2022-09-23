@@ -84,6 +84,7 @@ import {
 } from './QueryFunctions';
 import { MetricTagsComponent, MetricTagsList } from './MetricTags';
 import { MetricOverrideChange, MetricOverrideList } from './MetricOverrides';
+import { DefaultPortsList } from './DefaultPorts';
 
 
 const NavigationBarWithRouter = withRouter(NavigationBar);
@@ -587,6 +588,7 @@ const SuperAdminRouteSwitch = () => (
     <Route exact path='/ui/packages/:nameversion' render={props => <PackageComponent {...props}/>}/>
     <Route exact path='/ui/packages/:nameversion/clone' render={props => <PackageComponent {...props} cloneview={true}/>}/>
     <Route exact path="/ui/administration" component={SuperAdminAdministration}/>
+    <Route exact path="/ui/administration/default_ports" component={DefaultPortsList} />
     <Route exact path="/ui/administration/users" component={UsersList} />
     <Route exact path="/ui/administration/users/add"
       render={props => <UserChange
