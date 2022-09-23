@@ -454,16 +454,6 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     })
   }
 
-  const onChangeDesc = (event, entryid, field) => {
-    event.preventDefault()
-    let index = fields.findIndex(field => field.id === entryid)
-    setValue(`serviceTypes.${index}.description`, event.target.value)
-    setValue(`serviceTypes.${index}.isChanged`, true)
-    field.onChange(event.target.value)
-    let values = getValues('serviceTypes')
-    console.log('VRDEL DEBUG', values[index].description, fields[index].description)
-  }
-
   const doDelete = () => {
     let cleaned = fields.filter(e => !e.checked)
     setValue("serviceTypes", cleaned)
@@ -591,7 +581,6 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                                 <textarea
                                   {...field}
                                   rows="2"
-                                  onChange={(e) => onChangeDesc(e, entry.id, field)}
                                   className={`${isChanged ? 'border border-danger form-control' : 'form-control'}`}
                                 />
                               )
