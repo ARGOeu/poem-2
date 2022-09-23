@@ -478,10 +478,10 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
 
   let fieldsView = fields
   if (searchService)
-    fieldsView = fields.filter(e => e.name.includes(searchService))
+    fieldsView = fields.filter(e => e.name.toLowerCase().includes(searchService.toLowerCase()))
 
   if (searchDesc)
-    fieldsView = fields.filter(e => e.description.includes(searchDesc))
+    fieldsView = fields.filter(e => e.description.toLowerCase().includes(searchDesc.toLowerCase()))
 
   return (
     <>
