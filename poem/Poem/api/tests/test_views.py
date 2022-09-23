@@ -1,13 +1,13 @@
 import datetime
-from unittest.mock import patch, call
 import json
+from unittest.mock import patch, call
 
 import factory
 from Poem.api import views
 from Poem.api.models import MyAPIKey
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 from django_tenants.test.cases import TenantTestCase
 from django_tenants.test.client import TenantRequestFactory
 from rest_framework import status
@@ -39,17 +39,10 @@ def mock_function(profile):
         return {'eu.egi.cloud.OCCI-Categories'}
 
 
-@factory.django.mute_signals(post_save)
+@factory.django.mute_signals(pre_save, post_save)
 def mock_db_for_metrics_tests():
-    active_template = admin_models.MetricTemplateType.objects.create(
-        name='Active'
-    )
-    passive_template = admin_models.MetricTemplateType.objects.create(
-        name='Passive'
-    )
-
-    active = poem_models.MetricType.objects.create(name='Active')
-    passive = poem_models.MetricType.objects.create(name='Passive')
+    active = admin_models.MetricTemplateType.objects.create(name='Active')
+    passive = admin_models.MetricTemplateType.objects.create(name='Passive')
 
     tag = admin_models.OSTag.objects.create(name='CentOS 6')
     repo = admin_models.YumRepo.objects.create(name='repo-1', tag=tag)
@@ -148,7 +141,7 @@ def mock_db_for_metrics_tests():
 
     mt1 = admin_models.MetricTemplate.objects.create(
         name='test.AMS-Check',
-        mtype=active_template,
+        mtype=active,
         probekey=probekey1,
         parent='["org.nagios.CDMI-TCP"]',
         probeexecutable='["ams-probe"]',
@@ -164,27 +157,39 @@ def mock_db_for_metrics_tests():
     )
     mt1.tags.add(mtag1, mtag2)
 
+    mt1_version1 = admin_models.MetricTemplateHistory.objects.create(
+        object_id=mt1,
+        name=mt1.name,
+        mtype=mt1.mtype,
+        probekey=mt1.probekey,
+        parent=mt1.parent,
+        description=mt1.description,
+        probeexecutable=mt1.probeexecutable,
+        config=mt1.config,
+        attribute=mt1.attribute,
+        dependency=mt1.dependency,
+        flags=mt1.flags,
+        files=mt1.files,
+        parameter=mt1.parameter,
+        fileparameter=mt1.fileparameter,
+        date_created=datetime.datetime.now(),
+        version_user="poem",
+        version_comment="Initial version."
+    )
+    mt1_version1.tags.add(mtag1, mtag2)
+
     poem_models.Metric.objects.create(
         name='test.AMS-Check',
-        mtype=active,
         group=group,
-        probekey=probekey1,
-        parent='["org.nagios.CDMI-TCP"]',
-        probeexecutable='["ams-probe"]',
+        probeversion=probekey1.__str__(),
         config='["maxCheckAttempts 3", "timeout 60", '
                '"path /usr/libexec/argo-monitoring/probes/argo", "interval 5", '
-               '"retryInterval 3"]',
-        attribute='["argo.ams_TOKEN --token"]',
-        dependancy='["argo.AMS-Check 1"]',
-        flags='["OBSESS 1"]',
-        files='["UCC_CONFIG UCC_CONFIG"]',
-        parameter='["--project EGI"]',
-        fileparameter='["FILE_SIZE_KBS 1000"]'
+               '"retryInterval 3"]'
     )
 
     mt2 = admin_models.MetricTemplate.objects.create(
         name='argo.AMSPublisher-Check',
-        mtype=active_template,
+        mtype=active,
         probekey=probekey2,
         probeexecutable='["ams-publisher-probe"]',
         config='["maxCheckAttempts 1", "timeout 120", '
@@ -196,23 +201,39 @@ def mock_db_for_metrics_tests():
     )
     mt2.tags.add(mtag1, mtag3)
 
+    mt2_version1 = admin_models.MetricTemplateHistory.objects.create(
+        object_id=mt2,
+        name=mt2.name,
+        mtype=mt2.mtype,
+        probekey=mt2.probekey,
+        parent=mt2.parent,
+        description=mt2.description,
+        probeexecutable=mt2.probeexecutable,
+        config=mt2.config,
+        attribute=mt2.attribute,
+        dependency=mt2.dependency,
+        flags=mt2.flags,
+        files=mt2.files,
+        parameter=mt2.parameter,
+        fileparameter=mt2.fileparameter,
+        date_created=datetime.datetime.now(),
+        version_user="poem",
+        version_comment="Initial version."
+    )
+    mt2_version1.tags.add(mtag1, mtag3)
+
     poem_models.Metric.objects.create(
         name='argo.AMSPublisher-Check',
-        mtype=active,
         group=group,
-        probekey=probekey2,
-        probeexecutable='["ams-publisher-probe"]',
+        probeversion=probekey2.__str__(),
         config='["maxCheckAttempts 1", "timeout 120", '
                '"path /usr/libexec/argo-monitoring/probes/argo", '
-               '"interval 180", "retryInterval 1"]',
-        parameter='["-s /var/run/argo-nagios-ams-publisher/sock", '
-                  '"-q w:metrics+g:published180"]',
-        flags='["NOHOSTNAME 1", "NOTIMEOUT 1", "NOPUBLISH 1"]'
+               '"interval 180", "retryInterval 1"]'
     )
 
     mt3 = admin_models.MetricTemplate.objects.create(
         name='hr.srce.CertLifetime-Local',
-        mtype=active_template,
+        mtype=active,
         probekey=probekey3,
         probeexecutable='["CertLifetime-probe"]',
         config='["maxCheckAttempts 2", "timeout 60", '
@@ -223,40 +244,94 @@ def mock_db_for_metrics_tests():
     )
     mt3.tags.add(mtag3)
 
+    mt3_version1 = admin_models.MetricTemplateHistory.objects.create(
+        object_id=mt3,
+        name=mt3.name,
+        mtype=mt3.mtype,
+        probekey=mt3.probekey,
+        parent=mt3.parent,
+        description=mt3.description,
+        probeexecutable=mt3.probeexecutable,
+        config=mt3.config,
+        attribute=mt3.attribute,
+        dependency=mt3.dependency,
+        flags=mt3.flags,
+        files=mt3.files,
+        parameter=mt3.parameter,
+        fileparameter=mt3.fileparameter,
+        date_created=datetime.datetime.now(),
+        version_user="poem",
+        version_comment="Initial version."
+    )
+    mt3_version1.tags.add(mtag3)
+
     poem_models.Metric.objects.create(
         name='hr.srce.CertLifetime-Local',
-        mtype=active,
         group=group,
-        probekey=probekey3,
-        probeexecutable='["CertLifetime-probe"]',
+        probeversion=probekey3.__str__(),
         config='["maxCheckAttempts 2", "timeout 60", '
                '"path /usr/libexec/argo-monitoring/probes/cert", '
-               '"interval 240", "retryInterval 30"]',
-        attribute='["NAGIOS_HOST_CERT -f"]',
-        flags='["NOHOSTNAME 1", "NOPUBLISH 1"]'
+               '"interval 240", "retryInterval 30"]'
     )
 
-    admin_models.MetricTemplate.objects.create(
-        name='org.apel.APEL-Pub',
-        mtype=passive_template,
-        flags='["OBSESS 1", "PASSIVE 1"]'
-    )
-
-    poem_models.Metric.objects.create(
+    mt4 = admin_models.MetricTemplate.objects.create(
         name='org.apel.APEL-Pub',
         mtype=passive,
-        group=group,
         flags='["OBSESS 1", "PASSIVE 1"]'
     )
 
-    admin_models.MetricTemplate.objects.create(
-        name='test.EMPTY-metric',
-        mtype=active_template
+    admin_models.MetricTemplateHistory.objects.create(
+        object_id=mt4,
+        name=mt4.name,
+        mtype=mt4.mtype,
+        probekey=mt4.probekey,
+        parent=mt4.parent,
+        description=mt4.description,
+        probeexecutable=mt4.probeexecutable,
+        config=mt4.config,
+        attribute=mt4.attribute,
+        dependency=mt4.dependency,
+        flags=mt4.flags,
+        files=mt4.files,
+        parameter=mt4.parameter,
+        fileparameter=mt4.fileparameter,
+        date_created=datetime.datetime.now(),
+        version_user="poem",
+        version_comment="Initial version."
     )
 
     poem_models.Metric.objects.create(
+        name='org.apel.APEL-Pub',
+        group=group
+    )
+
+    mt5 = admin_models.MetricTemplate.objects.create(
         name='test.EMPTY-metric',
         mtype=active
+    )
+
+    admin_models.MetricTemplateHistory.objects.create(
+        object_id=mt5,
+        name=mt5.name,
+        mtype=mt5.mtype,
+        probekey=mt5.probekey,
+        parent=mt5.parent,
+        description=mt5.description,
+        probeexecutable=mt5.probeexecutable,
+        config=mt5.config,
+        attribute=mt5.attribute,
+        dependency=mt5.dependency,
+        flags=mt5.flags,
+        files=mt5.files,
+        parameter=mt5.parameter,
+        fileparameter=mt5.fileparameter,
+        date_created=datetime.datetime.now(),
+        version_user="poem",
+        version_comment="Initial version."
+    )
+
+    poem_models.Metric.objects.create(
+        name='test.EMPTY-metric'
     )
 
     poem_models.MetricConfiguration.objects.create(
@@ -289,7 +364,7 @@ def mock_db_for_metrics_tests():
     )
 
 
-@factory.django.mute_signals(post_save)
+@factory.django.mute_signals(pre_save, post_save)
 def mock_db_for_repos_tests():
     tag1 = admin_models.OSTag.objects.create(name='CentOS 6')
     tag2 = admin_models.OSTag.objects.create(name='CentOS 7')
@@ -630,111 +705,53 @@ def mock_db_for_repos_tests():
 
     group = poem_models.GroupOfMetrics.objects.create(name='TEST')
 
-    metric_type = poem_models.MetricType.objects.create(name='Active')
-
     poem_models.Metric.objects.create(
         name=mt1.name,
         group=group,
-        mtype=metric_type,
-        probekey=mt1.probekey,
-        probeexecutable=mt1.probeexecutable,
-        config=mt1.config,
-        attribute=mt1.attribute,
-        dependancy=mt1.dependency,
-        flags=mt1.flags,
-        files=mt1.files,
-        parameter=mt1.parameter,
-        fileparameter=mt1.fileparameter
+        probeversion=mt1.probekey.__str__(),
+        config=mt1.config
     )
 
     poem_models.Metric.objects.create(
         name=mt2.name,
         group=group,
-        mtype=metric_type,
-        probekey=mt2.probekey,
-        probeexecutable=mt2.probeexecutable,
-        config=mt2.config,
-        attribute=mt2.attribute,
-        dependancy=mt2.dependency,
-        flags=mt2.flags,
-        files=mt2.files,
-        parameter=mt2.parameter,
-        fileparameter=mt2.fileparameter
+        probeversion=mt2.probekey.__str__(),
+        config=mt2.config
     )
 
     poem_models.Metric.objects.create(
         name=mt3.name,
         group=group,
-        mtype=metric_type,
-        probekey=mt3.probekey,
-        probeexecutable=mt3.probeexecutable,
-        config=mt3.config,
-        attribute=mt3.attribute,
-        dependancy=mt3.dependency,
-        flags=mt3.flags,
-        files=mt3.files,
-        parameter=mt3.parameter,
-        fileparameter=mt3.fileparameter
+        probeversion=mt3.probekey.__str__(),
+        config=mt3.config
     )
 
     poem_models.Metric.objects.create(
         name=mt4.name,
         group=group,
-        mtype=metric_type,
-        probekey=mt4.probekey,
-        probeexecutable=mt4.probeexecutable,
-        config=mt4.config,
-        attribute=mt4.attribute,
-        dependancy=mt4.dependency,
-        flags=mt4.flags,
-        files=mt4.files,
-        parameter=mt4.parameter,
-        fileparameter=mt4.fileparameter
+        probeversion=mt4.probekey.__str__(),
+        config=mt4.config
     )
 
     poem_models.Metric.objects.create(
         name=mt5.name,
         group=group,
-        mtype=metric_type,
-        probekey=mt5.probekey,
-        probeexecutable=mt5.probeexecutable,
-        config=mt5.config,
-        attribute=mt5.attribute,
-        dependancy=mt5.dependency,
-        flags=mt5.flags,
-        files=mt5.files,
-        parameter=mt5.parameter,
-        fileparameter=mt5.fileparameter
+        probeversion=None,
+        config=mt5.config
     )
 
     poem_models.Metric.objects.create(
         name=mt6.name,
         group=group,
-        mtype=metric_type,
-        probekey=probehistory5,
-        probeexecutable=mt6.probeexecutable,
-        config=mt6.config,
-        attribute=mt6.attribute,
-        dependancy=mt6.dependency,
-        flags=mt6.flags,
-        files=mt6.files,
-        parameter=mt6.parameter,
-        fileparameter=mt6.fileparameter
+        probeversion=probehistory5.__str__(),
+        config=mt6.config
     )
 
     poem_models.Metric.objects.create(
         name=mt7.name,
         group=group,
-        mtype=metric_type,
-        probekey=probehistory7,
-        probeexecutable=mt7.probeexecutable,
-        config=mt7.config,
-        attribute=mt7.attribute,
-        dependancy=mt7.dependency,
-        flags=mt7.flags,
-        files=mt7.files,
-        parameter=mt7.parameter,
-        fileparameter=mt7.fileparameter
+        probeversion=probehistory7.__str__(),
+        config=mt7.config
     )
 
 

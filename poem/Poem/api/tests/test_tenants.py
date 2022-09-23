@@ -33,9 +33,6 @@ class ListTenantsTests(TenantTestCase):
         self.view = views.ListTenants.as_view()
         self.url = '/api/v2/internal/tenants/'
         self.user = CustUser.objects.create_user(username='testuser')
-        # get_tenant_domain_model().objects.create(
-        #     domain='test.domain.url', tenant=self.tenant, is_primary=True
-        # )
 
         with schema_context(get_public_schema_name()):
             self.tenant1 = Tenant(name='TEST1', schema_name='test1')

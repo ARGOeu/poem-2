@@ -1,7 +1,4 @@
 import datetime
-
-from django.db import IntegrityError
-
 import json
 
 from Poem.api.views import NotFound
@@ -9,13 +6,13 @@ from Poem.helpers.history_helpers import create_history, update_comment
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
-
+from django.db import IntegrityError
+from django_tenants.utils import schema_context, get_public_schema_name
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from django_tenants.utils import schema_context, get_public_schema_name
 from .utils import error_response
 
 
@@ -132,7 +129,6 @@ class ListProbes(APIView):
                     history = admin_models.ProbeHistory.objects.filter(
                         name=old_name, package__version=old_version
                     )
-                    probekey = history[0]
                     new_data = {
                         'name': request.data['name'],
                         'package': package,
@@ -156,15 +152,20 @@ class ListProbes(APIView):
                     })
                     history.update(**new_data)
 
-                    # update Metric history in case probekey name has changed:
+                    # update Metric history in case probe name has changed:
                     if request.data['name'] != old_name:
                         for schema in schemas:
                             with schema_context(schema):
                                 metrics = poem_models.Metric.objects.filter(
-                                    probekey=probekey
+                                    probeversion=f"{old_name} ({old_version})"
                                 )
 
                                 for metric in metrics:
+                                    metric.probeversion = \
+                                        f"{request.data['name']} " \
+                                        f"({old_version})"
+                                    metric.save()
+
                                     vers = \
                                         poem_models.TenantHistory.objects.filter(
                                             object_id=metric.id
@@ -364,4 +365,3 @@ class ListPublicProbes(ListProbes):
 
     def delete(self, request, name):
         return self._denied()
-

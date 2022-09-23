@@ -51,7 +51,6 @@ import {
   fetchUserDetails,
   fetchUserGroups,
   fetchMetrics,
-  fetchMetricTypes,
   fetchMetricProfiles
 } from './QueryFunctions';
 
@@ -374,9 +373,8 @@ export const ListOfMetrics = (props) => {
   );
 
   const { data: types, error: typesError, isLoading: typesLoading } = useQuery(
-    `${publicView ? 'public_' : ''}${type}types`,
-    () => type === 'metrics' ? fetchMetricTypes(publicView) : fetchMetricTemplateTypes(publicView)
-  );
+    `${publicView ? 'public_' : ''}metrictemplatestypes`, () => fetchMetricTemplateTypes(publicView)
+  )
 
   const { data: tags, error: tagsError, isLoading: tagsLoading } = useQuery(
     `${publicView ? 'public_' : ''}metrictags`, () => fetchMetricTags(publicView)

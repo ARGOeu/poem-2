@@ -20,15 +20,21 @@ def import_metrics(metrictemplates, tenant, user):
     for template in metrictemplates:
         imported_different_version = False
         mt = admin_models.MetricTemplate.objects.get(name=template)
-        mtype = poem_models.MetricType.objects.get(name=mt.mtype.name)
         gr = poem_models.GroupOfMetrics.objects.get(
             name=tenant.name.upper()
         )
 
         packages = []
         for m in poem_models.Metric.objects.all():
-            if m.probekey:
-                packages.append(m.probekey.package)
+            if m.probeversion:
+                metric_probe = m.probeversion.split(" (")
+                probe_name = metric_probe[0].strip()
+                probe_version = metric_probe[1][:-1].strip()
+                probe = admin_models.ProbeHistory.objects.get(
+                    name=probe_name,
+                    package__version=probe_version
+                )
+                packages.append(probe.package)
 
         package_names = [package.name for package in packages]
 
@@ -64,28 +70,14 @@ def import_metrics(metrictemplates, tenant, user):
 
                 metric = poem_models.Metric.objects.create(
                     name=mt.name,
-                    mtype=mtype,
-                    probekey=ver,
-                    description=mt.description,
-                    parent=mt.parent,
+                    probeversion=f"{ver.name} ({ver.package.version})",
                     group=gr,
-                    probeexecutable=mt.probeexecutable,
-                    config=mt.config,
-                    attribute=mt.attribute,
-                    dependancy=mt.dependency,
-                    flags=mt.flags,
-                    files=mt.files,
-                    parameter=mt.parameter,
-                    fileparameter=mt.fileparameter
+                    config=mt.config
                 )
 
             else:
                 metric = poem_models.Metric.objects.create(
                     name=mt.name,
-                    mtype=mtype,
-                    description=mt.description,
-                    parent=mt.parent,
-                    flags=mt.flags,
                     group=gr
                 )
 
@@ -167,20 +159,20 @@ def update_metric_in_schema(
     msgs = ''
     with schema_context(schema):
         try:
-            met = poem_models.Metric.objects.get(
-                name=name, probekey=probekey
-            )
+            if probekey:
+                met = poem_models.Metric.objects.get(
+                    name=name, probeversion=probekey.__str__()
+                )
+
+            else:
+                met = poem_models.Metric.objects.get(name=name)
+
             met.name = metrictemplate.name
-            met.probekey = metrictemplate.probekey
-            met.probeexecutable = metrictemplate.probeexecutable
-            met.description = metrictemplate.description
-            met.parent = metrictemplate.parent
-            met.attribute = metrictemplate.attribute
-            met.dependancy = metrictemplate.dependency
-            met.flags = metrictemplate.flags
-            met.files = metrictemplate.files
-            met.parameter = metrictemplate.parameter
-            met.fileparameter = metrictemplate.fileparameter
+            if metrictemplate.probekey:
+                met.probeversion = metrictemplate.probekey.__str__()
+
+            else:
+                met.probeversion = None
 
             if metrictemplate.config:
                 if update_from_history:
@@ -204,7 +196,9 @@ def update_metric_in_schema(
 
             tags = [tag for tag in metrictemplate.tags.all()]
 
-            if update_from_history or met.probekey != probekey:
+            if update_from_history or (
+                    probekey and met.probeversion != probekey.__str__()
+            ):
                 create_history(met, user, tags=tags)
 
             else:

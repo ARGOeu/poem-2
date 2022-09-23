@@ -1,9 +1,11 @@
 import datetime
 import json
 
+import factory
 from Poem.api import views_internal as views
 from Poem.poem_super_admin import models as admin_models
 from Poem.users.models import CustUser
+from django.db.models.signals import pre_save
 from django_tenants.test.cases import TenantTestCase
 from django_tenants.test.client import TenantRequestFactory
 from rest_framework import status
@@ -11,6 +13,7 @@ from rest_framework.test import force_authenticate
 
 
 class ListVersionsAPIViewTests(TenantTestCase):
+    @factory.django.mute_signals(pre_save)
     def setUp(self):
         self.factory = TenantRequestFactory(self.tenant)
         self.view = views.ListVersions.as_view()

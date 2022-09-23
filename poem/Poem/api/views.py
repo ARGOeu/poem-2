@@ -1,5 +1,6 @@
-import requests
 import json
+
+import requests
 from Poem.api.internal_views.utils import one_value_inline, \
     two_value_inline_dict
 from Poem.api.models import MyAPIKey
@@ -34,33 +35,54 @@ def build_metricconfigs(templates=False):
         mdict.update({m.name: dict()})
 
         config = two_value_inline_dict(m.config)
-        parent = one_value_inline(m.parent)
-        probeexecutable = one_value_inline(m.probeexecutable)
-        attribute = two_value_inline_dict(m.attribute)
+
         if templates:
+            parent = one_value_inline(m.parent)
+            probeexecutable = one_value_inline(m.probeexecutable)
+            attribute = two_value_inline_dict(m.attribute)
             dependency = two_value_inline_dict(m.dependency)
-        else:
-            dependency = two_value_inline_dict(m.dependancy)
-        flags = two_value_inline_dict(m.flags)
-        files = two_value_inline_dict(m.files)
-        parameter = two_value_inline_dict(m.parameter)
-        fileparameter = two_value_inline_dict(m.fileparameter)
+            flags = two_value_inline_dict(m.flags)
+            files = two_value_inline_dict(m.files)
+            parameter = two_value_inline_dict(m.parameter)
+            fileparameter = two_value_inline_dict(m.fileparameter)
 
-        if templates:
-            mdict[m.name].update(
-                {'tags': sorted([tag.name for tag in m.tags.all()])}
-            )
+            tags = sorted([tag.name for tag in m.tags.all()])
+
+            docurl = m.probekey.docurl if m.probekey else ""
 
         else:
-            tags = []
             try:
-                mt = admin_models.MetricTemplate.objects.get(name=m.name)
+                if m.probeversion:
+                    probeversion = m.probeversion.split("(")
+                    probe_name = probeversion[0].strip()
+                    probe_version = probeversion[1][:-1].strip()
+                    probe = admin_models.ProbeHistory.objects.get(
+                        name=probe_name, package__version=probe_version
+                    )
+                    mt = admin_models.MetricTemplateHistory.objects.get(
+                        name=m.name, probekey=probe
+                    )
+
+                else:
+                    mt = admin_models.MetricTemplate.objects.get(name=m.name)
+
+                parent = one_value_inline(mt.parent)
+                probeexecutable = one_value_inline(mt.probeexecutable)
+                attribute = two_value_inline_dict(mt.attribute)
+                dependency = two_value_inline_dict(mt.dependency)
+                flags = two_value_inline_dict(mt.flags)
+                files = two_value_inline_dict(mt.files)
+                parameter = two_value_inline_dict(mt.parameter)
+                fileparameter = two_value_inline_dict(mt.fileparameter)
+
                 tags = sorted([tag.name for tag in mt.tags.all()])
 
-            except admin_models.MetricTemplate.DoesNotExist:
-                pass
+                docurl = mt.probekey.docurl if mt.probekey else ""
 
-            mdict[m.name].update({"tags": tags})
+            except admin_models.MetricTemplateHistory.DoesNotExist:
+                continue
+
+        mdict[m.name].update({"tags": tags})
 
         if probeexecutable:
             mdict[m.name].update({'probe': probeexecutable})
@@ -107,11 +129,8 @@ def build_metricconfigs(templates=False):
         else:
             mdict[m.name].update({'parent': ''})
 
-        if m.probekey:
-            docurl_field = m.probekey.docurl
-            mdict[m.name].update(
-                {'docurl': docurl_field}
-            )
+        if docurl:
+            mdict[m.name].update({'docurl': docurl})
         else:
             mdict[m.name].update({'docurl': ''})
 
@@ -221,8 +240,14 @@ class ListRepos(APIView):
             for metric in metrics:
                 try:
                     m = models.Metric.objects.get(name=metric)
-                    if m.probekey:
-                        packages.add(m.probekey.package)
+                    if m.probeversion:
+                        probeversion = m.probeversion.split("(")
+                        probe_name = probeversion[0].strip()
+                        probe_version = probeversion[1][:-1].strip()
+                        probe = admin_models.ProbeHistory.objects.get(
+                            name=probe_name, package__version=probe_version
+                        )
+                        packages.add(probe.package)
 
                 except models.Metric.DoesNotExist:
                     pass
