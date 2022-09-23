@@ -454,6 +454,16 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     })
   }
 
+  const onChangeDesc = (event, entryid, field) => {
+    event.preventDefault()
+    let index = fields.findIndex(field => field.id === entryid)
+    setValue(`serviceTypes.${index}.description`, event.target.value)
+    setValue(`serviceTypes.${index}.isChanged`, true)
+    field.onChange(event.target.value)
+    let values = getValues('serviceTypes')
+    console.log('VRDEL DEBUG', values[index].description, fields[index].description)
+  }
+
   const doDelete = () => {
     let cleaned = fields.filter(e => !e.checked)
     setValue("serviceTypes", cleaned)
@@ -573,13 +583,19 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                           <Controller
                             name={`serviceTypes.${lookupIndexes[entry.id]}.description`}
                             control={control}
-                            render={ ({field}) =>
-                              <textarea
-                                {...field}
-                                rows="2"
-                                className="form-control"
-                              />
-                            }
+                            render={ ({field}) => {
+                              let formval = getValues('serviceTypes')[lookupIndexes[entry.id]].description
+                              let initval = fields[lookupIndexes[entry.id]].description
+                              let isChanged = formval !== initval
+                              return (
+                                <textarea
+                                  {...field}
+                                  rows="2"
+                                  onChange={(e) => onChangeDesc(e, entry.id, field)}
+                                  className={`${isChanged ? 'border border-danger form-control' : 'form-control'}`}
+                                />
+                              )
+                            }}
                           />
                         </td>
                         <td className="text-center align-middle">
