@@ -474,6 +474,8 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     setAreYouSureModal(!areYouSureModal);
   }
 
+  let lookupIndexes = _.fromPairs(fields.map((e, index) => [e.id, index]))
+
   let fieldsView = fields
   if (searchService)
     fieldsView = fields.filter(e => e.name.includes(searchService))
@@ -568,7 +570,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                         </td>
                         <td>
                           <Controller
-                            name={`serviceTypes.${index}.description`}
+                            name={`serviceTypes.${lookupIndexes[entry.id]}.description`}
                             control={control}
                             render={ ({field}) =>
                               <textarea
@@ -585,7 +587,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                           </Button>
                           <Button color="light" className="ms-1">
                             <Controller
-                              name={`serviceTypes.${index}.checked`}
+                              name={`serviceTypes.${lookupIndexes[entry.id]}.checked`}
                               control={control}
                               render={ ({field}) => {
                                 // with checked=true,false ServiceTypes.test.js fails
