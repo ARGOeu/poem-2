@@ -9,6 +9,9 @@ services:
     hostname: poem-react
     tty: true
     stdin_open: true
+    ports:
+      - "8000:8000"
+      - "3000:3000"
     depends_on:
       - db-poem
     volumes:
@@ -19,6 +22,7 @@ services:
       - ../docker/syncsite.sh:/home/user/syncsite.sh
       - ../docker/safety.sh:/home/user/safety.sh
       - ../docker/collectstatic.sh:/home/user/collectstatic.sh
+      - ../docker/run-django-server.sh:/home/user/run-django-server.sh
       - ../docker/restarthttpd.sh:/home/user/restarthttpd.sh
       - ../:/home/user/poem-source
       - ../poem/Poem/:$VENV/lib/python3.6/site-packages/Poem
