@@ -221,8 +221,11 @@ SESSION_COOKIE_SECURE = True
 
 WEBPACK_LOADER = {
     'DEFAULT': {
+        'CACHE': not DEBUG,
+        'POLL_INTERVAL': 0.1,
         'BUNDLE_DIR_NAME': 'reactbundle/',
-        'STATS_FILE': os.path.join(APP_PATH, 'webpack-stats.json')
+        'STATS_FILE': os.path.join(APP_PATH, 'webpack-stats.json'),
+        'IGNORE': [r'.+\.hot-update.js', r'.+\.map'],
     }
 }
 
