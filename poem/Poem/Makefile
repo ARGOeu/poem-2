@@ -9,6 +9,12 @@ devel-watch:
 	rm -rf frontend/bundles/reactbundle/* ; \
 	node_modules/.bin/webpack --config webpack.config.js --progress --mode development --watch
 
+devel-django-server:
+	docker exec -t $(container_name) ./run-django-server.sh
+
+devel-hmr:
+	node server.js
+
 devel:
 	rm -rf frontend/bundles/reactbundle/* ; \
 		node_modules/.bin/webpack --config webpack.config.js --progress --mode development
