@@ -9,7 +9,7 @@ module.exports = {
   mode: "development",
   output: {
     path: path.resolve("./frontend/bundles/reactbundle/"),
-    publicPath: 'http://localhost:3000/jsbundle/',
+    publicPath: 'http://localhost:3000/',
     filename: "[name]-[fullhash].js",
     chunkFilename: "[name]-[fullhash].js"
   },
