@@ -7,15 +7,19 @@ const webpackConfig = require('./webpack.config.js');
 const compiler = Webpack(webpackConfig);
 const devServerOptions = {
   ...webpackConfig.devServer,
-  open: true,
+  open: false,
   port: 3000,
+  server: {
+    type: 'https',
+    options: {
+      key: './hostkey.pem',
+      cert: './hostcert.pem',
+      requestCert: true,
+    },
+  },
   hot: true,
   historyApiFallback: true,
   allowedHosts: 'all',
-  static: {
-    directory: path.join(__dirname, '../static/'),
-    publicPath: '/static/',
-  },
   headers: { 'Access-Control-Allow-Origin': '*' },
 };
 const server = new WebpackDevServer(devServerOptions, compiler);
