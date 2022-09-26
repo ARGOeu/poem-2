@@ -1,4 +1,5 @@
-var path = require("path");
+const fs = require('fs');
+const path = require("path");
 var webpack = require('webpack');
 var BundleTracker = require('webpack-bundle-tracker');
 
@@ -8,6 +9,7 @@ module.exports = {
   mode: "development",
   output: {
     path: path.resolve("./frontend/bundles/reactbundle/"),
+    publicPath: 'http://localhost:3000/jsbundle/',
     filename: "[name]-[fullhash].js",
     chunkFilename: "[name]-[fullhash].js"
   },
