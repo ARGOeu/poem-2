@@ -1,27 +1,19 @@
-var path = require("path");
-var webpack = require('webpack');
 var BundleTracker = require('webpack-bundle-tracker');
 
 module.exports = {
   context: __dirname,
   entry: "./frontend/react/index.js",
+  mode: "development",
   output: {
-    path: path.resolve("./frontend/bundles/reactbundle/"),
-    filename: "[name]-[fullhash].js",
-    chunkFilename: "[name]-[fullhash].js"
+    publicPath: 'http://localhost:3000/',
   },
-  optimization: {
-    runtimeChunk: 'single',
-    moduleIds: 'deterministic',
-    splitChunks: {
-      cacheGroups: {
-        vendor: {
-          test: /[\\/]node_modules[\\/]/,
-          name: 'vendors',
-          chunks: 'all'
-        }
-      }
-    }
+  devServer: {
+    open: false,
+    port: 3000,
+    hot: true,
+    historyApiFallback: true,
+    allowedHosts: 'all',
+    headers: { 'Access-Control-Allow-Origin': '*' },
   },
   plugins: [
     new BundleTracker({filename: './webpack-stats.json'}),
