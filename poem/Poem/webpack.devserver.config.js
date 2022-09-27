@@ -11,6 +11,7 @@ module.exports = {
     open: false,
     port: 3000,
     hot: true,
+    liveReload: false,
     historyApiFallback: true,
     allowedHosts: 'all',
     headers: { 'Access-Control-Allow-Origin': '*' },
