@@ -297,7 +297,7 @@ export const ServiceTypesBulkAdd = (props) => {
                     errors={errors}
                     name="name"
                     render={({ message }) =>
-                      <FormFeedback invalid className="end-0">
+                      <FormFeedback invalid="true" className="end-0">
                         { message }
                       </FormFeedback>
                     }
@@ -325,7 +325,7 @@ export const ServiceTypesBulkAdd = (props) => {
                     errors={errors}
                     name="description"
                     render={({ message }) =>
-                      <FormFeedback invalid className="end-0">
+                      <FormFeedback invalid="true" className="end-0">
                         { message }
                       </FormFeedback>
                     }
