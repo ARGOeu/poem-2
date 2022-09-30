@@ -637,7 +637,8 @@ export const ServiceTypesList = (props) => {
   const { data: serviceTypesDescriptions, errorServiceTypesDescriptions, isLoading: loadingServiceTypesDescriptions} = useQuery(
     `${publicView ? 'public_' : ''}servicetypes`, async () => {
       return await webapi.fetchServiceTypes();
-    }
+    },
+    { enabled: !publicView && !!userDetails }
   )
 
   const columns = React.useMemo(
