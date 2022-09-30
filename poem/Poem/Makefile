@@ -18,11 +18,11 @@ devel-webpack-server:
 devel-webpack-server-hmr:
 	node_modules/.bin/webpack-dev-server --config webpack.devserver.config.js --progress --hot
 
-devel:
+devel-bundle:
 	rm -rf frontend/bundles/reactbundle/* ; \
 		node_modules/.bin/webpack --config webpack.config.js --progress --mode development
 
-prod:
+prod-bundle:
 	rm -rf frontend/bundles/reactbundle/* ; \
 		node_modules/.bin/webpack --config webpack.config.js --progress --mode production
 
