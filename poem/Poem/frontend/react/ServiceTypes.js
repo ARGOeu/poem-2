@@ -235,7 +235,6 @@ export const ServiceTypesBulkAdd = (props) => {
   const [modalTitle, setModalTitle] = React.useState('')
   const [modalMsg, setModalMsg] = React.useState('')
   const [modalFunc, setModalFunc] = React.useState(undefined)
-  const [modalCallbackArg, setModalCallbackArg] = React.useState(undefined)
 
   const onSubmit = data => {
     let tmpArray = [...addedServices]
@@ -269,7 +268,6 @@ export const ServiceTypesBulkAdd = (props) => {
           title={modalTitle}
           msg={modalMsg}
           onYes={modalFunc}
-          callbackOnYesArg={modalCallbackArg}
         />
         <div className="d-flex align-items-center justify-content-between">
           <h2 className="ms-3 mt-1 mb-4">Add service types</h2>
@@ -392,7 +390,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
   const searchService = useWatch({control, name: "searchService"})
   const searchDesc = useWatch({control, name: "searchDesc"})
 
-  const { fields, update } = useFieldArray({
+  const { fields, update, replace } = useFieldArray({
     control,
     name: "serviceTypes"
   })
@@ -417,14 +415,9 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     })
   }
 
-  const doSave = (entryid) => {
+  const doSave = () => {
     let values = getValues('serviceTypes')
-    let index = fields.findIndex(field => field.id === entryid)
-    update(index, {
-      name: values[index].name,
-      description: values[index].description,
-      checked: values[index].checked
-    })
+    replace(values)
     postServiceTypesWebApi([...values.map(
       e => Object(
         {
@@ -434,11 +427,10 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
       'changed', 'Change')
   }
 
-  const onSave = (entryid) => {
+  const onSave = () => {
     setModalMsg(`Are you sure you want to change Service type?`)
     setModalTitle('Change service type')
     setModalFunc(() => doSave)
-    setModalCallbackArg(entryid)
     setAreYouSureModal(!areYouSureModal);
   }
 
@@ -476,6 +468,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
   }
 
   let lookupIndexes = _.fromPairs(fields.map((e, index) => [e.id, index]))
+  let lookupChanged = _.fromPairs(fields.map((e) => [e.id, false]))
 
   let fieldsView = fields
   if (searchService)
@@ -503,6 +496,13 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
             onClick={() => onDelete()}
             className="me-3">
             Delete selected
+          </Button>
+          <Button
+            color="success"
+            disabled={[...fields.map(e => e.isChanged)].includes(true)}
+            onClick={() => onSave()}
+            className="me-3">
+            Save
           </Button>
           <Link className="btn btn-secondary" to="/ui/servicetypes/add" role="button">Add</Link>
         </span>
@@ -579,6 +579,8 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                               let formval = getValues('serviceTypes')[lookupIndexes[entry.id]].description
                               let initval = fields[lookupIndexes[entry.id]].description
                               let isChanged = formval !== initval
+                              lookupChanged[entry.id] = isChanged
+
                               return (
                                 <textarea
                                   {...field}
@@ -590,9 +592,6 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                           />
                         </td>
                         <td className="text-center align-middle">
-                          <Button className="fw-bold" color="light" onClick={() => onSave(entry.id)}>
-                            <FontAwesomeIcon icon={faSave}/>
-                          </Button>
                           <Button color="light" className="ms-1">
                             <Controller
                               name={`serviceTypes.${lookupIndexes[entry.id]}.checked`}
