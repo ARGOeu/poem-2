@@ -435,6 +435,42 @@ Starting of multi-container application:
 docker/ $ docker-compose up
 ```
 
+### Web server
+
+In development enviroment, application can be served via Apache web server or internal Django web server coupled with Webpack's dev server for the Hot Module Reload functionality (HMR). Helper make target rules are provided in [poem/Poem/Makefile](poem/Poem/Makefile).
+
+#### Apache
+
+For the Apache web serving, bundle created by the Webpack need to be manually planted as Django's staticfile everytime bundle is recreated. Webpack can monitor the changes in the React's code and recreate the bundle on the fly.
+
+Start Webpack's watch mode:
+```
+make devel-watch
+```
+
+After changes are done and developer wants to see how they are reflected, he needs to place newly created bundle as Django staticfile and restart the Apache within container enviroment. For that purpose, make target rule is prepared:
+```
+make place-new-bundle
+```
+
+#### Django web server
+
+Advantage of using Django's web server is that backend code can be easily debugged as developer can use debugger and breakpoints and trace the execution of code. Django web server is automatically reloaded for every change of the backend code. Webpack's bundles are automatically placed as they are picked up from `webpack-dev-server` running at `localhost:3000`. Moreover, developer can use HMR functionality as `webpack-dev-server` is able to trigger browser reload for every change in the frontend code.
+
+Start Django web server at `0.0.0.0:8000`:
+```
+make devel-django-server
+```
+
+Start `webpack-dev-server` as `localhost:3000`:
+```
+make devel-webpack-server
+```
+Or use HMR:
+```
+make devel-webpack-server-hmr
+```
+
 ### Packaging
 
 Deployment of new versions is done with wheel packages that contain both backend Python and frontend Javascript code. Packages are build using setuptools and helper make target rules are provided in [Makefile](Makefile) and in [poem/Poem/Makefile](poem/Poem/Makefile). Latter is used to create a devel or production bundle of frontend Javascript code and place it as Django staticfiles, while the former is used to create Python wheel package.
