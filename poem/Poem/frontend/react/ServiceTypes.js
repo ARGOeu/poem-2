@@ -43,8 +43,8 @@ import _ from "lodash";
 
 
 const validationSchema = yup.object().shape({
-  name: yup.string().required(),
-  description: yup.string().required()
+  name: yup.string().matches(/^[A-Za-z0-9\\.\\-_]+$/g, {message: 'No empty names and only names without whitespaces allowed.', excludeEmptyString: false}),
+  description: yup.string().required('Description can not be empty.')
 }).required();
 
 
