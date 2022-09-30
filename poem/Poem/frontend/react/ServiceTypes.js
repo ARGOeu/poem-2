@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef } from 'react';
 import { Link } from 'react-router-dom';
 import { WebApi } from './DataManager';
 import { useQuery, useQueryClient, useMutation } from 'react-query';
@@ -539,7 +539,8 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                         control={control}
                         render={ ({field}) =>
                           <SearchField
-                            {...field}
+                            field={field}
+                            forwardedRef={field.ref}
                             className='form-control'
                           />
                         }
@@ -551,7 +552,8 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                         control={control}
                         render={ ({field}) =>
                           <SearchField
-                            {...field}
+                            field={field}
+                            forwardedRef={field.ref}
                             className='form-control'
                           />
                         }

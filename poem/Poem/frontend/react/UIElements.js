@@ -299,9 +299,9 @@ export const DropDown = ({field, data=[], prefix="", class_name="", isnew=false,
   </Field>
 
 
-export const SearchField = ({field, ...rest}) =>
+export const SearchField = ({field, forwardedRef=undefined, ...rest}) =>
   <div className="input-group">
-    <input type="text" placeholder="Search" {...field} {...rest}/>
+    <input type="text" placeholder="Search" ref={forwardedRef ? forwardedRef : null} {...field} {...rest}/>
     <span className="input-group-text" id="basic-addon">
       <FontAwesomeIcon icon={faSearch}/>
     </span>
