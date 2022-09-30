@@ -14,7 +14,7 @@ distlib==0.3.0
 dj-rest-auth==2.2.2
 Django==3.2.15
 django-tenants==3.4.2
-django-webpack-loader==1.4.1
+django-webpack-loader==1.6.0
 djangorestframework==3.13.1
 djangorestframework-api-key==2.0.0
 djangosaml2==1.0.7
