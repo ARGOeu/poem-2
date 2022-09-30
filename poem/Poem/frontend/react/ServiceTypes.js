@@ -363,7 +363,6 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
   const [modalTitle, setModalTitle] = React.useState('')
   const [modalMsg, setModalMsg] = React.useState('')
   const [modalFunc, setModalFunc] = React.useState(undefined)
-  const [modalCallbackArg, setModalCallbackArg] = React.useState(undefined)
 
   const queryClient = useQueryClient();
   const webapiAddMutation = useMutation(async (values) => await webapi.addServiceTypes(values));
@@ -468,7 +467,6 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
   }
 
   let lookupIndexes = _.fromPairs(fields.map((e, index) => [e.id, index]))
-  let lookupChanged = _.fromPairs(fields.map((e) => [e.id, false]))
 
   let fieldsView = fields
   if (searchService)
@@ -476,6 +474,16 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
 
   if (searchDesc)
     fieldsView = fields.filter(e => e.description.toLowerCase().includes(searchDesc.toLowerCase()))
+
+  const [lookupChanged, setLookupChanged] = React.useState(_.fromPairs(fields.map((e) => [e.id, false])))
+
+  const onDescriptionChange = (entryid, isChanged) => {
+    let tmp = JSON.parse(JSON.stringify(lookupChanged))
+    if (tmp[entryid] != isChanged) {
+      tmp[entryid] = isChanged
+      setLookupChanged(tmp)
+    }
+  }
 
   return (
     <>
@@ -485,7 +493,6 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
         title={modalTitle}
         msg={modalMsg}
         onYes={modalFunc}
-        callbackOnYesArg={modalCallbackArg}
       />
       <div className="d-flex align-items-center justify-content-between">
         <h2 className="ms-3 mt-1 mb-4">Service types</h2>
@@ -499,7 +506,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
           </Button>
           <Button
             color="success"
-            disabled={[...fields.map(e => e.isChanged)].includes(true)}
+            disabled={!_.valuesIn(lookupChanged).includes(true)}
             onClick={() => onSave()}
             className="me-3">
             Save
@@ -579,11 +586,12 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                               let formval = getValues('serviceTypes')[lookupIndexes[entry.id]].description
                               let initval = fields[lookupIndexes[entry.id]].description
                               let isChanged = formval !== initval
-                              lookupChanged[entry.id] = isChanged
 
                               return (
                                 <textarea
                                   {...field}
+                                  onChange={(e) => {field.onChange(e); onDescriptionChange(entry.id, isChanged)}}
+                                  onBlur={(e) => {field.onBlur(e); onDescriptionChange(entry.id, isChanged)}}
                                   rows="2"
                                   className={`${isChanged ? 'border border-danger form-control' : 'form-control'}`}
                                 />
