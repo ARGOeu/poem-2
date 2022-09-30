@@ -246,6 +246,9 @@ Part of the REST API is protected by token so for tenants that consume those API
     ReportsTopologyTags = https://api.devel.argo.grnet.gr/api/v2/topology/tags
     ReportsTopologyGroups = https://api.devel.argo.grnet.gr/api/v2/topology/groups
     ReportsTopologyEndpoints = https://api.devel.argo.grnet.gr/api/v2/topology/endpoints
+    ServiceTypes = https://api.devel.argo.grnet.gr/api/v2/topology/service-types
+    Metrics = https://api.devel.argo.grnet.gr/api/v4/admin/metrics
+
 
 This section lists WEB-API methods for the resources that are not stored in
 POEM's PostgreSQL DB, but instead are consumed from ARGO WEB-API services. POEM
