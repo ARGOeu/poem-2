@@ -532,4 +532,36 @@ describe('Test service types list - Bulk add', () => {
       )
     })
   })
+
+  test('Test add validation', async () => {
+    renderAddView();
+
+    expect(screen.getByRole('heading', {'level': 4})).toHaveTextContent(/loading data/i)
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', {'level': 2})).toHaveTextContent(/Add service types/i)
+    })
+
+    expect(screen.getByText(/Name:/)).toBeVisible()
+    expect(screen.getByText(/Description:/)).toBeVisible()
+
+    expect(screen.getByTestId('input-name')).toBeVisible()
+    expect(screen.getByTestId('input-description')).toBeVisible()
+
+    const inputName = screen.getByTestId('input-name')
+    fireEvent.change(inputName, {target: {value: 'service name 1'}})
+
+    const inputDesc = screen.getByTestId('input-description')
+    fireEvent.change(inputDesc, {target: {value: ''}})
+
+    const addNew = screen.getByText(/Add new/)
+    fireEvent.click(addNew);
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId(/rows-add-serviceTypes\.[0-9]*/)).toHaveLength(1)
+      expect(screen.getByText(/Empty data/)).toBeVisible()
+      expect(screen.getByText(/Description can not be empty/)).toBeVisible()
+      expect(screen.getByText(/No empty names and only names without whitespaces allowed/)).toBeVisible()
+    })
+  })
 })
