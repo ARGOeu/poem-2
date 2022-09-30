@@ -530,7 +530,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                     <th>
                       Description of service
                     </th>
-                    <th style={{'width': '98px'}}>
+                    <th style={{'width': '60px'}}>
                       Action
                     </th>
                   </tr>
