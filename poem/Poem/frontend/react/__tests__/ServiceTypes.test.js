@@ -216,8 +216,6 @@ describe('Test service types list - Read Only', () => {
   test('Test that public page renders properly', async () => {
     renderListView(true);
 
-    screen.debug()
-
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {

@@ -220,7 +220,8 @@ export const ServiceTypesBulkAdd = (props) => {
   const { data: serviceTypesDescriptions, errorServiceTypesDescriptions, isLoading: loadingServiceTypesDescriptions} = useQuery(
     'servicetypes', async () => {
       return await webapi.fetchServiceTypes();
-    }
+    },
+    { enabled: !!userDetails }
   )
 
   const { control, handleSubmit, reset, formState: {errors} } = useForm({
@@ -692,8 +693,6 @@ export const ServiceTypesListPublic = (props) => {
 
 
 export const ServiceTypesList = (props) => {
-  const publicView = props.publicView;
-
   const webapi = new WebApi({
     token: props.webapitoken,
     serviceTypes: props.webapiservicetypes
@@ -701,14 +700,13 @@ export const ServiceTypesList = (props) => {
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
     'userdetails', () => fetchUserDetails(true),
-    { enabled: !publicView }
   );
 
   const { data: serviceTypesDescriptions, errorServiceTypesDescriptions, isLoading: loadingServiceTypesDescriptions} = useQuery(
-    `${publicView ? 'public_' : ''}servicetypes`, async () => {
+    'servicetypes', async () => {
       return await webapi.fetchServiceTypes();
     },
-    { enabled: !publicView && !!userDetails }
+    { enabled: !!userDetails }
   )
 
   const columns = React.useMemo(
