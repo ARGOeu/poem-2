@@ -216,6 +216,8 @@ describe('Test service types list - Read Only', () => {
   test('Test that public page renders properly', async () => {
     renderListView(true);
 
+    screen.debug()
+
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
@@ -358,7 +360,7 @@ describe('Test service types list - Bulk change and delete', () => {
   })
 
   test('Test change description', async () => {
-    const user = userEvent.setup()
+    //const user = userEvent.setup()
     renderListView();
 
     expect(screen.getByRole('heading', {'level': 4})).toHaveTextContent(/loading data/i)
@@ -379,12 +381,12 @@ describe('Test service types list - Bulk change and delete', () => {
     //fireEvent.change(inputFirstDesc, {target: {value: 'CHANGED DESCRIPTION'}})
     //fireEvent.change(inputSecondDesc, {target: {value: 'CHANGED DESCRIPTION 2'}})
 
-    await user.clear(inputFirstDesc)
-    await user.type(inputFirstDesc, 'CHANGED DESCRIPTION')
+    await userEvent.clear(inputFirstDesc)
+    await userEvent.type(inputFirstDesc, 'CHANGED DESCRIPTION')
     await expect(inputFirstDesc).toHaveTextContent('CHANGED DESCRIPTION')
 
-    await user.clear(inputSecondDesc)
-    await user.type(inputSecondDesc, 'CHANGED DESCRIPTION 2')
+    await userEvent.clear(inputSecondDesc)
+    await userEvent.type(inputSecondDesc, 'CHANGED DESCRIPTION 2')
     await expect(inputSecondDesc).toHaveTextContent('CHANGED DESCRIPTION 2')
 
     await waitFor(() => {
