@@ -235,6 +235,7 @@ export const ServiceTypesBulkAdd = (props) => {
   const [modalTitle, setModalTitle] = React.useState('')
   const [modalMsg, setModalMsg] = React.useState('')
   const [modalFunc, setModalFunc] = React.useState(undefined)
+  const [modalCallbackArg, setModalCallbackArg] = React.useState(undefined)
 
   const onSubmit = data => {
     let tmpArray = [...addedServices]
@@ -268,6 +269,7 @@ export const ServiceTypesBulkAdd = (props) => {
           title={modalTitle}
           msg={modalMsg}
           onYes={modalFunc}
+          callbackOnYesArg={modalCallbackArg}
         />
         <div className="d-flex align-items-center justify-content-between">
           <h2 className="ms-3 mt-1 mb-4">Add service types</h2>
@@ -479,7 +481,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
 
   const onDescriptionChange = (entryid, isChanged) => {
     let tmp = JSON.parse(JSON.stringify(lookupChanged))
-    if (tmp[entryid] != isChanged) {
+    if (tmp[entryid] !== isChanged) {
       tmp[entryid] = isChanged
       setLookupChanged(tmp)
     }
@@ -590,8 +592,8 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                               return (
                                 <textarea
                                   {...field}
-                                  onChange={(e) => {field.onChange(e); onDescriptionChange(entry.id, isChanged)}}
-                                  onBlur={(e) => {field.onBlur(e); onDescriptionChange(entry.id, isChanged)}}
+                                  onChange={(e) => {onDescriptionChange(entry.id, isChanged) ; field.onChange(e)}}
+                                  onBlur={(e) => {onDescriptionChange(entry.id, isChanged); field.onBlur(e)}}
                                   rows="2"
                                   className={`${isChanged ? 'border border-danger form-control' : 'form-control'}`}
                                 />
