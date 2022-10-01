@@ -631,6 +631,65 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
   )
 }
 
+export const ServiceTypesListPublic = (props) => {
+  const webapi = new WebApi({
+    token: props.webapitoken,
+    serviceTypes: props.webapiservicetypes
+  })
+
+  const { data: serviceTypesDescriptions, errorServiceTypesDescriptions, isLoading: loadingServiceTypesDescriptions} = useQuery(
+    'public_servicetypes', async () => {
+      return await webapi.fetchServiceTypes();
+    },
+  )
+
+  const columns = React.useMemo(
+    () => [
+      {
+        Header: '#',
+        accessor: null,
+        column_width: '2%'
+      },
+      {
+        Header: <div><Icon i="servicetypes"/> Service type</div>,
+        accessor: 'name',
+        column_width: '25%',
+        Filter: DefaultColumnFilter
+      },
+      {
+        Header: 'Description',
+        accessor: 'description',
+        column_width: '73%',
+        Filter: DefaultColumnFilter
+      }
+    ], []
+  )
+
+  if (loadingServiceTypesDescriptions)
+    return (<LoadingAnim/>);
+
+  else if (errorServiceTypesDescriptions)
+    return (<ErrorComponent error={errorServiceTypesDescriptions}/>);
+
+  else if (serviceTypesDescriptions) {
+    return (
+      <BaseArgoView
+        resourcename='Services types'
+        infoview={true}>
+        <BaseArgoTable
+          columns={columns}
+          data={serviceTypesDescriptions}
+          filter={true}
+          resourcename='service types'
+          page_size={15}
+        />
+      </BaseArgoView>
+    )
+  }
+  else
+    return null
+}
+
 
 export const ServiceTypesList = (props) => {
   const publicView = props.publicView;

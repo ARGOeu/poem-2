@@ -49,7 +49,7 @@ import { ThresholdsProfilesList, ThresholdsProfilesChange, ThresholdsProfileVers
 
 import './App.css';
 import { PackageList, PackageComponent } from './Package';
-import { ServiceTypesList, ServiceTypesBulkAdd } from './ServiceTypes';
+import { ServiceTypesListPublic, ServiceTypesList, ServiceTypesBulkAdd } from './ServiceTypes';
 import { TenantList, TenantChange } from './Tenants';
 import { OperationsProfilesList, OperationsProfileDetails } from './OperationsProfiles';
 import { CookiePolicy } from './CookiePolicy';
@@ -1092,9 +1092,10 @@ const App = () => {
               <Route exact path="/ui/public_servicetypes"
                 render={props =>
                   <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
-                    <ServiceTypesList
+                    <ServiceTypesListPublic
                       {...props}
-                      publicView={true}
+                      webapitoken={token}
+                      webapiservicetypes={webApiServiceTypes}
                     />
                   </PublicPage>
                 }
