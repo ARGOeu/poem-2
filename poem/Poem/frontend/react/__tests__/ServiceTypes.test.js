@@ -1,6 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
+import userEvent from '@testing-library/user-event';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { ServiceTypesList, ServiceTypesBulkAdd } from '../ServiceTypes';
@@ -288,6 +289,7 @@ describe('Test service types list - Bulk change and delete', () => {
     expect(screen.getByText(/Name of service/)).toBeVisible()
     expect(screen.getByText(/Description of service/)).toBeVisible()
     expect(screen.getByText(/Delete selected/)).toBeDisabled()
+    expect(screen.getByText(/Save/)).toBeDisabled()
     expect(screen.getAllByRole('checkbox', {checked: false})).toBeTruthy()
 
     const tbody = screen.getAllByRole('rowgroup')[1]
@@ -356,6 +358,7 @@ describe('Test service types list - Bulk change and delete', () => {
   })
 
   test('Test change description', async () => {
+    const user = userEvent.setup()
     renderListView();
 
     expect(screen.getByRole('heading', {'level': 4})).toHaveTextContent(/loading data/i)
@@ -367,16 +370,32 @@ describe('Test service types list - Bulk change and delete', () => {
     const tbody = screen.getAllByRole('rowgroup')[1]
     const tableRows = within(tbody).getAllByRole('row')
     expect(tableRows[1]).toHaveTextContent('1argo.apiARGO API service for retrieving status and A/R results.')
+    expect(tableRows[2]).toHaveTextContent('2argo.computeengineARGO Compute Engine computes availability and reliability of services.')
 
     const inputFirstDesc = screen.getByText('ARGO API service for retrieving status and A/R results.')
-    fireEvent.change(inputFirstDesc, {target: {value: 'CHANGED DESCRIPTION'}})
-    const saveButton = within(tableRows[1]).getAllByRole('button')[0]
-    fireEvent.click(saveButton);
+    const inputSecondDesc = screen.getByText('ARGO Compute Engine computes availability and reliability of services.')
+
+    // fireEvent does not trigger onChange on react-hook-form Controller fields so using userEvent
+    //fireEvent.change(inputFirstDesc, {target: {value: 'CHANGED DESCRIPTION'}})
+    //fireEvent.change(inputSecondDesc, {target: {value: 'CHANGED DESCRIPTION 2'}})
+
+    await user.clear(inputFirstDesc)
+    await user.type(inputFirstDesc, 'CHANGED DESCRIPTION')
+    await expect(inputFirstDesc).toHaveTextContent('CHANGED DESCRIPTION')
+
+    await user.clear(inputSecondDesc)
+    await user.type(inputSecondDesc, 'CHANGED DESCRIPTION 2')
+    await expect(inputSecondDesc).toHaveTextContent('CHANGED DESCRIPTION 2')
+
+    await waitFor(() => {
+      expect(screen.getByText('Save')).toBeEnabled()
+    })
+
+    fireEvent.click(screen.getByText(/Save/));
     await waitFor(() => {
       expect(screen.getByText('Are you sure you want to change Service type?')).toBeInTheDocument()
       const yesButton = screen.getByText(/Yes/)
       fireEvent.click(yesButton);
-      expect(screen.getByText('CHANGED DESCRIPTION'))
     })
 
     await waitFor(() => {
@@ -387,7 +406,7 @@ describe('Test service types list - Bulk change and delete', () => {
             "name": "argo.api"
           },
           {
-            "description": "ARGO Compute Engine computes availability and reliability of services.",
+            "description": "CHANGED DESCRIPTION 2",
             "name": "argo.computeengine"
           },
           {
