@@ -389,6 +389,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
   }
   let maxNamePx = longestName(data) * 8 + 10
 
+
   const searchService = useWatch({control, name: "searchService"})
   const searchDesc = useWatch({control, name: "searchDesc"})
 
@@ -396,6 +397,11 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     control,
     name: "serviceTypes"
   })
+
+  function initChangedDesc() {
+    return _.fromPairs(fields.map((e) => [e.id, false]))
+  }
+  const [lookupChanged, setLookupChanged] = React.useState(initChangedDesc())
 
   const postServiceTypesWebApi = (data, action, title) => {
     webapiAddMutation.mutate(data, {
@@ -427,6 +433,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
         }
       ))],
       'changed', 'Change')
+    setLookupChanged(initChangedDesc())
   }
 
   const onSave = () => {
@@ -478,7 +485,6 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
   if (searchDesc)
     fieldsView = fields.filter(e => e.description.toLowerCase().includes(searchDesc.toLowerCase()))
 
-  const [lookupChanged, setLookupChanged] = React.useState(_.fromPairs(fields.map((e) => [e.id, false])))
 
   const onDescriptionChange = (entryid, isChanged) => {
     let tmp = JSON.parse(JSON.stringify(lookupChanged))
@@ -631,6 +637,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     </>
   )
 }
+
 
 export const ServiceTypesListPublic = (props) => {
   const webapi = new WebApi({
