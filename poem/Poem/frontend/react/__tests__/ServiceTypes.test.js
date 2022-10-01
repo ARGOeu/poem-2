@@ -4,7 +4,7 @@ import '@testing-library/jest-dom/extend-expect';
 import userEvent from '@testing-library/user-event';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
-import { ServiceTypesList, ServiceTypesBulkAdd } from '../ServiceTypes';
+import { ServiceTypesList, ServiceTypesListPublic, ServiceTypesBulkAdd } from '../ServiceTypes';
 import { WebApi } from '../DataManager';
 import { fetchUserDetails } from '../QueryFunctions';
 import { QueryClient, QueryClientProvider } from 'react-query';
@@ -117,36 +117,41 @@ function renderAddView() {
 }
 
 
-function renderListView(publicView=undefined) {
-  const route = `/ui/${publicView ? 'public_' : ''}servicetypes`;
+function renderListView() {
+  const route = '/ui/servicetypes';
   const history = createMemoryHistory({ initialEntries: [route] });
 
-  if (publicView)
-    return {
-      ...render(
-        <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              render={ props => <ServiceTypesList {...props} publicView={true} /> }
-            />
-          </Router>
-        </QueryClientProvider>
-      )
-    }
+  return {
+    ...render(
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/servicetypes/'
+            component={ServiceTypesList}
+          />
+        </Router>
+      </QueryClientProvider>
+    )
+  }
+}
 
-  else
-    return {
-      ...render(
-        <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/servicetypes/'
-              component={ServiceTypesList}
-            />
-          </Router>
-        </QueryClientProvider>
-      )
-    }
+
+function renderListViewPublic() {
+  const route = '/ui/public_servicetypes';
+  const history = createMemoryHistory({ initialEntries: [route] });
+
+  return {
+    ...render(
+      <QueryClientProvider client={queryClient}>
+        <Router history={history}>
+          <Route
+            path='/ui/public_servicetypes/'
+            component={ServiceTypesListPublic}
+          />
+        </Router>
+      </QueryClientProvider>
+    )
+  }
 }
 
 
@@ -214,7 +219,7 @@ describe('Test service types list - Read Only', () => {
   })
 
   test('Test that public page renders properly', async () => {
-    renderListView(true);
+    renderListViewPublic();
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
