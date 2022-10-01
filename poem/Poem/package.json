@@ -45,7 +45,7 @@
     "@hookform/resolvers": "^2.9.8",
     "@testing-library/jest-dom": "^5.16.1",
     "@testing-library/react": "^12.1.2",
-    "@testing-library/user-event": "^14.4.3",
+    "@testing-library/user-event": "^13.5.0",
     "acorn": "^8.7.0",
     "autoprefixer": "^10.4.7",
     "babel-loader": "^8.2.5",
