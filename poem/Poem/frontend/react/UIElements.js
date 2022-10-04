@@ -67,7 +67,8 @@ import {
   faUser,
   faWrench,
   faNewspaper,
-  faTags
+  faTags,
+  faPlug
 } from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
 import { Field } from 'formik';
@@ -122,6 +123,7 @@ link_title.set('thresholdsprofiles', 'Thresholds profiles');
 link_title.set('users', 'Users');
 link_title.set('yumrepos', 'YUM repos');
 link_title.set("metricoverrides", "Metric configuration overrides")
+link_title.set("default_ports", "Default ports")
 
 
 export const Icon = props =>
@@ -149,6 +151,7 @@ export const Icon = props =>
   link_icon.set('argodoc', faLink);
   link_icon.set('documentation', faBook);
   link_icon.set('privacy', faNewspaper);
+  link_icon.set("default_ports", faPlug)
 
   if (props.i.startsWith('groupof'))
     return (
