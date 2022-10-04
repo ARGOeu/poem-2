@@ -14468,3 +14468,219 @@ class ListDefaultPortsTests(TenantTestCase):
                 }
             ]
         )
+
+    def test_post_port_superuser(self):
+        self.assertEqual(admin_models.DefaultPort.objects.all().count(), 4)
+        data = {
+            "ports": json.dumps([{"name": "HTCondorCE_PORT", "value": "9619"}])
+        }
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(admin_models.DefaultPort.objects.all().count(), 5)
+        port = admin_models.DefaultPort.objects.get(name="HTCondorCE_PORT")
+        self.assertEqual(port.value, "9619")
+
+    def test_post_port_regular_user(self):
+        self.assertEqual(admin_models.DefaultPort.objects.all().count(), 4)
+        data = {
+            "ports": json.dumps([{"name": "HTCondorCE_PORT", "value": "9619"}])
+        }
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"], "You do not have permission to add ports"
+        )
+        self.assertEqual(admin_models.DefaultPort.objects.all().count(), 4)
+        self.assertRaises(
+            admin_models.DefaultPort.DoesNotExist,
+            admin_models.DefaultPort.objects.get,
+            name="HTCondorCE_PORT"
+        )
+
+    def test_post_port_tenant_superuser(self):
+        self.assertEqual(admin_models.DefaultPort.objects.all().count(), 4)
+        data = {
+            "ports": json.dumps([{"name": "HTCondorCE_PORT", "value": "9619"}])
+        }
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"], "You do not have permission to add ports"
+        )
+        self.assertEqual(admin_models.DefaultPort.objects.all().count(), 4)
+        self.assertRaises(
+            admin_models.DefaultPort.DoesNotExist,
+            admin_models.DefaultPort.objects.get,
+            name="HTCondorCE_PORT"
+        )
+
+    def test_post_port_tenant_regular_user(self):
+        self.assertEqual(admin_models.DefaultPort.objects.all().count(), 4)
+        data = {
+            "ports": json.dumps([{"name": "HTCondorCE_PORT", "value": "9619"}])
+        }
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"], "You do not have permission to add ports"
+        )
+        self.assertEqual(admin_models.DefaultPort.objects.all().count(), 4)
+        self.assertRaises(
+            admin_models.DefaultPort.DoesNotExist,
+            admin_models.DefaultPort.objects.get,
+            name="HTCondorCE_PORT"
+        )
+
+    def test_post_multiple_ports(self):
+        self.assertEqual(admin_models.DefaultPort.objects.all().count(), 4)
+        data = {
+            "ports": json.dumps([
+                {"name": "HTCondorCE_PORT", "value": "9619"},
+                {"name": "FTS_PORT", "value": "8446"}
+            ])
+        }
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(admin_models.DefaultPort.objects.all().count(), 6)
+        port1 = admin_models.DefaultPort.objects.get(name="HTCondorCE_PORT")
+        port2 = admin_models.DefaultPort.objects.get(name="FTS_PORT")
+        self.assertEqual(port1.value, "9619")
+        self.assertEqual(port2.value, "8446")
+
+    def test_post_port_wrong_json_format_superuser(self):
+        self.assertEqual(admin_models.DefaultPort.objects.all().count(), 4)
+        data = {
+            "ports": json.dumps([{"name": "HTCondorCE_PORT", "val": "9619"}])
+        }
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["detail"], "Wrong JSON format: Missing key 'value'"
+        )
+        self.assertEqual(admin_models.DefaultPort.objects.all().count(), 4)
+        self.assertRaises(
+            admin_models.DefaultPort.DoesNotExist,
+            admin_models.DefaultPort.objects.get,
+            name="HTCondorCE_PORT"
+        )
+
+    def test_post_port_wrong_json_format_regular_user(self):
+        self.assertEqual(admin_models.DefaultPort.objects.all().count(), 4)
+        data = {
+            "ports": json.dumps([{"name": "HTCondorCE_PORT", "val": "9619"}])
+        }
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"], "You do not have permission to add ports"
+        )
+        self.assertEqual(admin_models.DefaultPort.objects.all().count(), 4)
+        self.assertRaises(
+            admin_models.DefaultPort.DoesNotExist,
+            admin_models.DefaultPort.objects.get,
+            name="HTCondorCE_PORT"
+        )
+
+    def test_post_port_wrong_json_format_tenant_superuser(self):
+        self.assertEqual(admin_models.DefaultPort.objects.all().count(), 4)
+        data = {
+            "ports": json.dumps([{"name": "HTCondorCE_PORT", "val": "9619"}])
+        }
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"], "You do not have permission to add ports"
+        )
+        self.assertEqual(admin_models.DefaultPort.objects.all().count(), 4)
+        self.assertRaises(
+            admin_models.DefaultPort.DoesNotExist,
+            admin_models.DefaultPort.objects.get,
+            name="HTCondorCE_PORT"
+        )
+
+    def test_post_port_wrong_json_format_tenant_regular_user(self):
+        self.assertEqual(admin_models.DefaultPort.objects.all().count(), 4)
+        data = {
+            "ports": json.dumps([{"name": "HTCondorCE_PORT", "val": "9619"}])
+        }
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"], "You do not have permission to add ports"
+        )
+        self.assertEqual(admin_models.DefaultPort.objects.all().count(), 4)
+        self.assertRaises(
+            admin_models.DefaultPort.DoesNotExist,
+            admin_models.DefaultPort.objects.get,
+            name="HTCondorCE_PORT"
+        )
+
+    def test_post_port_wrong_json_format_for_one_port_superuser(self):
+        self.assertEqual(admin_models.DefaultPort.objects.all().count(), 4)
+        data = {
+            "ports": json.dumps([
+                {"name": "FTS_PORT", "value": "8446"},
+                {"name": "HTCondorCE_PORT", "val": "9619"}
+            ])
+        }
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["detail"], "Wrong JSON format: Missing key 'value'"
+        )
+        self.assertEqual(admin_models.DefaultPort.objects.all().count(), 4)
+        self.assertRaises(
+            admin_models.DefaultPort.DoesNotExist,
+            admin_models.DefaultPort.objects.get,
+            name="HTCondorCE_PORT"
+        )
+
+    def test_post_port_wrong_json_format(self):
+        self.assertEqual(admin_models.DefaultPort.objects.all().count(), 4)
+        data = {
+            "prts": json.dumps([{"name": "HTCondorCE_PORT", "value": "9619"}])
+        }
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["detail"], "Wrong JSON format: Missing key 'ports'"
+        )
+        self.assertEqual(admin_models.DefaultPort.objects.all().count(), 4)
+        self.assertRaises(
+            admin_models.DefaultPort.DoesNotExist,
+            admin_models.DefaultPort.objects.get,
+            name="HTCondorCE_PORT"
+        )

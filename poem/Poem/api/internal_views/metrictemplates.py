@@ -1072,3 +1072,32 @@ class ListDefaultPorts(APIView):
         ports = admin_models.DefaultPort.objects.all().order_by("name")
         serializer = serializers.DefaultPortsSerializer(ports, many=True)
         return Response(serializer.data)
+
+    def post(self, request):
+        if request.tenant.schema_name == get_public_schema_name() and \
+                request.user.is_superuser:
+            try:
+                ports = json.loads(request.data["ports"])
+                for port in ports:
+                    assert port["name"]
+                    assert port["value"]
+
+            except KeyError as e:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Wrong JSON format: Missing key '{e.args[0]}'"
+                )
+
+            else:
+                for port in ports:
+                    admin_models.DefaultPort.objects.create(
+                        name=port["name"], value=port["value"]
+                    )
+
+                return Response(status=status.HTTP_201_CREATED)
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You do not have permission to add ports"
+            )
