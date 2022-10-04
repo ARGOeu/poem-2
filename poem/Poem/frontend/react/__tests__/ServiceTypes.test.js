@@ -561,7 +561,7 @@ describe('Test service types list - Bulk add', () => {
       expect(screen.getAllByTestId(/rows-add-serviceTypes\.[0-9]*/)).toHaveLength(1)
       expect(screen.getByText(/Empty data/)).toBeVisible()
       expect(screen.getByText(/Description can not be empty/)).toBeVisible()
-      expect(screen.getByText(/No empty names and only names without whitespaces allowed/)).toBeVisible()
+      expect(screen.getByText(/Name can only contain alphanumeric characters, punctuations, underscores and minuses/)).toBeVisible()
     })
   })
 })
