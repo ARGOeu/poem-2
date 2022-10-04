@@ -43,8 +43,8 @@ import _ from "lodash";
 
 
 const validationSchema = yup.object().shape({
-  name: yup.string().required(),
-  description: yup.string().required()
+  name: yup.string().matches(/^[A-Za-z0-9\\.\-_]+$/g, {message: 'Name can only contain alphanumeric characters, punctuations, underscores and minuses', excludeEmptyString: false}),
+  description: yup.string().required('Description can not be empty.')
 }).required();
 
 
@@ -297,7 +297,7 @@ export const ServiceTypesBulkAdd = (props) => {
                     errors={errors}
                     name="name"
                     render={({ message }) =>
-                      <FormFeedback invalid className="end-0">
+                      <FormFeedback invalid="true" className="end-0">
                         { message }
                       </FormFeedback>
                     }
@@ -325,7 +325,7 @@ export const ServiceTypesBulkAdd = (props) => {
                     errors={errors}
                     name="description"
                     render={({ message }) =>
-                      <FormFeedback invalid className="end-0">
+                      <FormFeedback invalid="true" className="end-0">
                         { message }
                       </FormFeedback>
                     }
@@ -539,7 +539,8 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                         control={control}
                         render={ ({field}) =>
                           <SearchField
-                            {...field}
+                            field={field}
+                            forwardedRef={field.ref}
                             className='form-control'
                           />
                         }
@@ -551,7 +552,8 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                         control={control}
                         render={ ({field}) =>
                           <SearchField
-                            {...field}
+                            field={field}
+                            forwardedRef={field.ref}
                             className='form-control'
                           />
                         }
@@ -637,7 +639,8 @@ export const ServiceTypesList = (props) => {
   const { data: serviceTypesDescriptions, errorServiceTypesDescriptions, isLoading: loadingServiceTypesDescriptions} = useQuery(
     `${publicView ? 'public_' : ''}servicetypes`, async () => {
       return await webapi.fetchServiceTypes();
-    }
+    },
+    { enabled: !publicView && !!userDetails }
   )
 
   const columns = React.useMemo(
