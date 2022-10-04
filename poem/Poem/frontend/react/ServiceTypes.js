@@ -220,7 +220,8 @@ export const ServiceTypesBulkAdd = (props) => {
   const { data: serviceTypesDescriptions, errorServiceTypesDescriptions, isLoading: loadingServiceTypesDescriptions} = useQuery(
     'servicetypes', async () => {
       return await webapi.fetchServiceTypes();
-    }
+    },
+    { enabled: !!userDetails }
   )
 
   const { control, handleSubmit, reset, formState: {errors} } = useForm({
@@ -365,7 +366,6 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
   const [modalTitle, setModalTitle] = React.useState('')
   const [modalMsg, setModalMsg] = React.useState('')
   const [modalFunc, setModalFunc] = React.useState(undefined)
-  const [modalCallbackArg, setModalCallbackArg] = React.useState(undefined)
 
   const queryClient = useQueryClient();
   const webapiAddMutation = useMutation(async (values) => await webapi.addServiceTypes(values));
@@ -389,13 +389,19 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
   }
   let maxNamePx = longestName(data) * 8 + 10
 
+
   const searchService = useWatch({control, name: "searchService"})
   const searchDesc = useWatch({control, name: "searchDesc"})
 
-  const { fields, update } = useFieldArray({
+  const { fields, update, replace } = useFieldArray({
     control,
     name: "serviceTypes"
   })
+
+  function initChangedDesc() {
+    return _.fromPairs(fields.map((e) => [e.id, false]))
+  }
+  const [lookupChanged, setLookupChanged] = React.useState(initChangedDesc())
 
   const postServiceTypesWebApi = (data, action, title) => {
     webapiAddMutation.mutate(data, {
@@ -417,14 +423,9 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     })
   }
 
-  const doSave = (entryid) => {
+  const doSave = () => {
     let values = getValues('serviceTypes')
-    let index = fields.findIndex(field => field.id === entryid)
-    update(index, {
-      name: values[index].name,
-      description: values[index].description,
-      checked: values[index].checked
-    })
+    replace(values)
     postServiceTypesWebApi([...values.map(
       e => Object(
         {
@@ -432,13 +433,13 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
         }
       ))],
       'changed', 'Change')
+    setLookupChanged(initChangedDesc())
   }
 
-  const onSave = (entryid) => {
+  const onSave = () => {
     setModalMsg(`Are you sure you want to change Service type?`)
     setModalTitle('Change service type')
     setModalFunc(() => doSave)
-    setModalCallbackArg(entryid)
     setAreYouSureModal(!areYouSureModal);
   }
 
@@ -484,6 +485,15 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
   if (searchDesc)
     fieldsView = fields.filter(e => e.description.toLowerCase().includes(searchDesc.toLowerCase()))
 
+
+  const onDescriptionChange = (entryid, isChanged) => {
+    let tmp = JSON.parse(JSON.stringify(lookupChanged))
+    if (tmp[entryid] !== isChanged) {
+      tmp[entryid] = isChanged
+      setLookupChanged(tmp)
+    }
+  }
+
   return (
     <>
       <ModalAreYouSure
@@ -492,7 +502,6 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
         title={modalTitle}
         msg={modalMsg}
         onYes={modalFunc}
-        callbackOnYesArg={modalCallbackArg}
       />
       <div className="d-flex align-items-center justify-content-between">
         <h2 className="ms-3 mt-1 mb-4">Service types</h2>
@@ -503,6 +512,13 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
             onClick={() => onDelete()}
             className="me-3">
             Delete selected
+          </Button>
+          <Button
+            color="success"
+            disabled={!_.valuesIn(lookupChanged).includes(true)}
+            onClick={() => onSave()}
+            className="me-3">
+            Save
           </Button>
           <Link className="btn btn-secondary" to="/ui/servicetypes/add" role="button">Add</Link>
         </span>
@@ -523,7 +539,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                     <th>
                       Description of service
                     </th>
-                    <th style={{'width': '98px'}}>
+                    <th style={{'width': '60px'}}>
                       Action
                     </th>
                   </tr>
@@ -579,9 +595,12 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                               let formval = getValues('serviceTypes')[lookupIndexes[entry.id]].description
                               let initval = fields[lookupIndexes[entry.id]].description
                               let isChanged = formval !== initval
+
                               return (
                                 <textarea
                                   {...field}
+                                  onChange={(e) => {onDescriptionChange(entry.id, isChanged) ; field.onChange(e)}}
+                                  onBlur={(e) => {onDescriptionChange(entry.id, isChanged); field.onBlur(e)}}
                                   rows="2"
                                   className={`${isChanged ? 'border border-danger form-control' : 'form-control'}`}
                                 />
@@ -590,9 +609,6 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                           />
                         </td>
                         <td className="text-center align-middle">
-                          <Button className="fw-bold" color="light" onClick={() => onSave(entry.id)}>
-                            <FontAwesomeIcon icon={faSave}/>
-                          </Button>
                           <Button color="light" className="ms-1">
                             <Controller
                               name={`serviceTypes.${lookupIndexes[entry.id]}.checked`}
@@ -623,9 +639,67 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
 }
 
 
-export const ServiceTypesList = (props) => {
-  const publicView = props.publicView;
+export const ServiceTypesListPublic = (props) => {
+  const webapi = new WebApi({
+    token: props.webapitoken,
+    serviceTypes: props.webapiservicetypes
+  })
 
+  const { data: serviceTypesDescriptions, errorServiceTypesDescriptions, isLoading: loadingServiceTypesDescriptions} = useQuery(
+    'public_servicetypes', async () => {
+      return await webapi.fetchServiceTypes();
+    },
+  )
+
+  const columns = React.useMemo(
+    () => [
+      {
+        Header: '#',
+        accessor: null,
+        column_width: '2%'
+      },
+      {
+        Header: <div><Icon i="servicetypes"/> Service type</div>,
+        accessor: 'name',
+        column_width: '25%',
+        Filter: DefaultColumnFilter
+      },
+      {
+        Header: 'Description',
+        accessor: 'description',
+        column_width: '73%',
+        Filter: DefaultColumnFilter
+      }
+    ], []
+  )
+
+  if (loadingServiceTypesDescriptions)
+    return (<LoadingAnim/>);
+
+  else if (errorServiceTypesDescriptions)
+    return (<ErrorComponent error={errorServiceTypesDescriptions}/>);
+
+  else if (serviceTypesDescriptions) {
+    return (
+      <BaseArgoView
+        resourcename='Services types'
+        infoview={true}>
+        <BaseArgoTable
+          columns={columns}
+          data={serviceTypesDescriptions}
+          filter={true}
+          resourcename='service types'
+          page_size={15}
+        />
+      </BaseArgoView>
+    )
+  }
+  else
+    return null
+}
+
+
+export const ServiceTypesList = (props) => {
   const webapi = new WebApi({
     token: props.webapitoken,
     serviceTypes: props.webapiservicetypes
@@ -633,14 +707,13 @@ export const ServiceTypesList = (props) => {
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
     'userdetails', () => fetchUserDetails(true),
-    { enabled: !publicView }
   );
 
   const { data: serviceTypesDescriptions, errorServiceTypesDescriptions, isLoading: loadingServiceTypesDescriptions} = useQuery(
-    `${publicView ? 'public_' : ''}servicetypes`, async () => {
+    'servicetypes', async () => {
       return await webapi.fetchServiceTypes();
     },
-    { enabled: !publicView && !!userDetails }
+    { enabled: !!userDetails }
   )
 
   const columns = React.useMemo(
