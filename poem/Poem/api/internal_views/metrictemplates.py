@@ -1074,6 +1074,9 @@ class ListDefaultPorts(APIView):
         return Response(serializer.data)
 
     def post(self, request):
+        db_ports = admin_models.DefaultPort.objects.all().values_list(
+            "name", flat=True
+        )
         if request.tenant.schema_name == get_public_schema_name() and \
                 request.user.is_superuser:
             try:
@@ -1090,9 +1093,18 @@ class ListDefaultPorts(APIView):
 
             else:
                 for port in ports:
-                    admin_models.DefaultPort.objects.create(
-                        name=port["name"], value=port["value"]
-                    )
+                    if port["name"] in db_ports:
+                        stored_port = admin_models.DefaultPort.objects.get(
+                            name=port["name"]
+                        )
+                        if stored_port.value != port["value"]:
+                            stored_port.value = port["value"]
+                            stored_port.save()
+
+                    else:
+                        admin_models.DefaultPort.objects.create(
+                            name=port["name"], value=port["value"]
+                        )
 
                 return Response(status=status.HTTP_201_CREATED)
 

@@ -14684,3 +14684,25 @@ class ListDefaultPortsTests(TenantTestCase):
             admin_models.DefaultPort.objects.get,
             name="HTCondorCE_PORT"
         )
+
+    def test_post_multiple_ports_when_one_exists(self):
+        self.assertEqual(admin_models.DefaultPort.objects.all().count(), 4)
+        data = {
+            "ports": json.dumps([
+                {"name": "HTCondorCE_PORT", "value": "9619"},
+                {"name": "GRAM_PORT", "value": "9000"},
+                {"name": "FTS_PORT", "value": "8446"}
+            ])
+        }
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(admin_models.DefaultPort.objects.all().count(), 6)
+        port1 = admin_models.DefaultPort.objects.get(name="HTCondorCE_PORT")
+        port2 = admin_models.DefaultPort.objects.get(name="GRAM_PORT")
+        port3 = admin_models.DefaultPort.objects.get(name="FTS_PORT")
+        self.assertEqual(port1.value, "9619")
+        self.assertEqual(port2.value, "9000")
+        self.assertEqual(port3.value, "8446")
