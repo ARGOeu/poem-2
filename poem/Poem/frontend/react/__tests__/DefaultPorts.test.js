@@ -84,15 +84,13 @@ describe("Test default ports list", () => {
       expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
     })
 
-    expect(screen.getAllByRole("columnheader")).toHaveLength(6)
+    expect(screen.getAllByRole("columnheader")).toHaveLength(3)
     expect(screen.getByRole("columnheader", { name: "#" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: "Port name" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: "Port value" })).toBeInTheDocument()
 
     const rows = screen.getAllByRole("row")
-    expect(rows).toHaveLength(17)
     expect(screen.getAllByPlaceholderText(/search/i)).toHaveLength(2)
-    expect(screen.getAllByRole("row", { name: "" })).toHaveLength(12)
     expect(rows[0].textContent).toBe("#Port namePort value")
     // row 1 is the one with search fields
     expect(rows[2].textContent).toBe("1BDII_PORT2170")
