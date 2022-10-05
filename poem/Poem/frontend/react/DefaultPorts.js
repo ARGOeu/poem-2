@@ -49,7 +49,7 @@ const PortsList = ({ data }) => {
     fieldsView = fields.filter(e => e.name.toLowerCase().includes(searchPortName.toLowerCase()))
 
   if (searchPortValue)
-    fieldsView = fields.filter(e => e.name.toLowerCase().includes(searchPortValue.toLowerCase()))
+    fieldsView = fields.filter(e => e.value.toLowerCase().includes(searchPortValue.toLowerCase()))
 
   return (
     <>

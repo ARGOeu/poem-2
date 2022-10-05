@@ -1,5 +1,11 @@
 import React from 'react';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within
+} from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
@@ -105,8 +111,53 @@ describe("Test default ports list", () => {
     expect(table.getAllByTestId(/insert-/i)).toHaveLength(4)
   })
 
+  test("Test filter page by port name", async () => {
+    renderView();
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
+    })
+
+    fireEvent.change(screen.getAllByPlaceholderText(/search/i)[0], { target: { value: "BDII" } })
+
+    const table = within(screen.getByRole("table"))
+
+    const rows = table.getAllByRole("row")
+    expect(rows).toHaveLength(4)
+    expect(screen.getAllByPlaceholderText(/search/i)).toHaveLength(2)
+    expect(rows[0].textContent).toBe("#Port namePort valueAction")
+    // row 1 is the one with search fields
+    expect(rows[2].textContent).toBe("1BDII_PORT2170")
+    expect(rows[3].textContent).toBe("2SITE_BDII_PORT2170")
+
+    expect(table.getAllByTestId(/remove-/i)).toHaveLength(2)
+    expect(table.getAllByTestId(/insert-/i)).toHaveLength(2)
+  })
+
+  test("Test filter page by port value", async () => {
+    renderView();
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
+    })
+
+    fireEvent.change(screen.getAllByPlaceholderText(/search/i)[1], { target: { value: "75" } })
+
+    const table = within(screen.getByRole("table"))
+
+    const rows = table.getAllByRole("row")
+    expect(rows).toHaveLength(3)
+    expect(screen.getAllByPlaceholderText(/search/i)).toHaveLength(2)
+    expect(rows[0].textContent).toBe("#Port namePort valueAction")
+    // row 1 is the one with search fields
+    expect(rows[2].textContent).toBe("1MYPROXY_PORT7512")
+
+    expect(table.getAllByTestId(/remove-/i)).toHaveLength(1)
+    expect(table.getAllByTestId(/insert-/i)).toHaveLength(1)
+  })
+
   test("Test that page renders properly if no data", async () => {
-    Backend.mockImplementation(() => {
+    Backend.mockImplementationOnce(() => {
       return {
         fetchData: () => Promise.resolve([])
       }
