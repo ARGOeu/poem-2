@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
@@ -84,18 +84,23 @@ describe("Test default ports list", () => {
       expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
     })
 
-    expect(screen.getAllByRole("columnheader")).toHaveLength(3)
-    expect(screen.getByRole("columnheader", { name: "#" })).toBeInTheDocument()
-    expect(screen.getByRole("columnheader", { name: "Port name" })).toBeInTheDocument()
-    expect(screen.getByRole("columnheader", { name: "Port value" })).toBeInTheDocument()
+    const table = within(screen.getByRole("table"))
+    expect(table.getAllByRole("columnheader")).toHaveLength(4)
+    expect(table.getByRole("columnheader", { name: "#" })).toBeInTheDocument()
+    expect(table.getByRole("columnheader", { name: "Port name" })).toBeInTheDocument()
+    expect(table.getByRole("columnheader", { name: "Port value" })).toBeInTheDocument()
+    expect(table.getByRole("columnheader", { name: "Action" })).toBeInTheDocument()
 
-    const rows = screen.getAllByRole("row")
+    const rows = table.getAllByRole("row")
     expect(screen.getAllByPlaceholderText(/search/i)).toHaveLength(2)
-    expect(rows[0].textContent).toBe("#Port namePort value")
+    expect(rows[0].textContent).toBe("#Port namePort valueAction")
     // row 1 is the one with search fields
     expect(rows[2].textContent).toBe("1BDII_PORT2170")
     expect(rows[3].textContent).toBe("2GRAM_PORT2119")
     expect(rows[4].textContent).toBe("3MYPROXY_PORT7512")
     expect(rows[5].textContent).toBe("4SITE_BDII_PORT2170")
+
+    expect(table.getAllByTestId(/remove-/i)).toHaveLength(4)
+    expect(table.getAllByTestId(/insert-/i)).toHaveLength(4)
   })
 })

@@ -5,7 +5,8 @@ import {
   Form,
   Row,
   Col,
-  Table
+  Table,
+  Button
 } from 'reactstrap';
 import { Backend } from './DataManager';
 import {
@@ -13,7 +14,11 @@ import {
   ErrorComponent,
   SearchField
 } from './UIElements';
-import { faSearch } from '@fortawesome/free-solid-svg-icons';
+import {
+  faSearch,
+  faTimes,
+  faPlus
+} from '@fortawesome/free-solid-svg-icons';
 import {
   Controller,
   useFieldArray,
@@ -56,9 +61,10 @@ const PortsList = ({ data }) => {
               <Table bordered responsive hover size="sm">
                 <thead className="table-active table-bordered align-middle text-center">
                   <tr>
-                    <th style={{width: "54px"}}>#</th>
+                    <th style={{width: "5%"}}>#</th>
                     <th>Port name</th>
                     <th>Port value</th>
+                    <th style={{ width: "5%" }}>Action</th>
                   </tr>
                 </thead>
                 <tbody style={{ lineHeight: "2.0" }}>
@@ -92,6 +98,7 @@ const PortsList = ({ data }) => {
                         }
                       />
                     </td>
+                    <td></td>
                   </tr>
                   {
                     fieldsView.map((entry, index) =>
@@ -104,6 +111,24 @@ const PortsList = ({ data }) => {
                         </td>
                         <td className="align-middle text-left">
                           <span className="ms-2">{ entry.value }</span>
+                        </td>
+                        <td className="align-middle text-center">
+                          <Button
+                            size="sm"
+                            color="light"
+                            type="button"
+                            data-testid={`remove-${index}`}
+                          >
+                            <FontAwesomeIcon icon={faTimes} />
+                          </Button>
+                          <Button
+                            size="sm"
+                            color="light"
+                            type="button"
+                            data-testid={`insert-${index}`}
+                          >
+                            <FontAwesomeIcon icon={faPlus} />
+                          </Button>
                         </td>
                       </tr>
                     )
