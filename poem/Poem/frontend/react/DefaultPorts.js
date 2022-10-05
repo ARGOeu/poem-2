@@ -28,9 +28,11 @@ import {
 
 
 const PortsList = ({ data }) => {
+  const inputData = data.length > 0 ? data : [{ id: 0, name: "", value: "" }]
+
   const { control } = useForm({
     defaultValues: {
-      defaultPorts: data,
+      defaultPorts: inputData,
       searchPortName: "",
       searchPortValue: ""
     }
@@ -106,7 +108,7 @@ const PortsList = ({ data }) => {
                         <td className="align-middle text-center">
                           { index + 1 }
                         </td>
-                        <td className="align-middle text-left">
+                        <td className="align-middle text-left fw-bold">
                           <span className="ms-2">{ entry.name }</span>
                         </td>
                         <td className="align-middle text-left">

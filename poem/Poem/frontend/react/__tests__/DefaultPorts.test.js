@@ -92,6 +92,7 @@ describe("Test default ports list", () => {
     expect(table.getByRole("columnheader", { name: "Action" })).toBeInTheDocument()
 
     const rows = table.getAllByRole("row")
+    expect(rows).toHaveLength(6)
     expect(screen.getAllByPlaceholderText(/search/i)).toHaveLength(2)
     expect(rows[0].textContent).toBe("#Port namePort valueAction")
     // row 1 is the one with search fields
@@ -102,5 +103,37 @@ describe("Test default ports list", () => {
 
     expect(table.getAllByTestId(/remove-/i)).toHaveLength(4)
     expect(table.getAllByTestId(/insert-/i)).toHaveLength(4)
+  })
+
+  test("Test that page renders properly if no data", async () => {
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: () => Promise.resolve([])
+      }
+    })
+
+    renderView();
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
+    })
+
+    const table = within(screen.getByRole("table"))
+    expect(table.getAllByRole("columnheader")).toHaveLength(4)
+    expect(table.getByRole("columnheader", { name: "#" })).toBeInTheDocument()
+    expect(table.getByRole("columnheader", { name: "Port name" })).toBeInTheDocument()
+    expect(table.getByRole("columnheader", { name: "Port value" })).toBeInTheDocument()
+    expect(table.getByRole("columnheader", { name: "Action" })).toBeInTheDocument()
+
+    const rows = table.getAllByRole("row")
+    expect(rows).toHaveLength(3)
+    expect(screen.getAllByPlaceholderText(/search/i)).toHaveLength(2)
+    expect(rows[0].textContent).toBe("#Port namePort valueAction")
+    expect(rows[2].textContent).toBe("1")
+
+    expect(table.getAllByTestId(/remove-/i)).toHaveLength(1)
+    expect(table.getAllByTestId(/insert-/i)).toHaveLength(1)
   })
 })
