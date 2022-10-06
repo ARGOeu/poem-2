@@ -18,7 +18,7 @@ django-webpack-loader==1.4.1
 djangorestframework==3.13.1
 djangorestframework-api-key==2.0.0
 djangosaml2==1.0.7
-dparse==0.5.1
+dparse==0.5.2
 elementpath==2.4.0
 filelock==3.0.12
 idna==3.3
