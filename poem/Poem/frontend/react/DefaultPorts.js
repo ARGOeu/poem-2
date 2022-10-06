@@ -1,12 +1,13 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useQuery } from 'react-query';
 import {
   Form,
   Row,
   Col,
   Table,
-  Button
+  Button,
+  Input
 } from 'reactstrap';
 import { Backend } from './DataManager';
 import {
@@ -28,11 +29,9 @@ import {
 
 
 const PortsList = ({ data }) => {
-  const inputData = data.length > 0 ? data : [{ id: 0, name: "", value: "" }]
-
-  const { control } = useForm({
+  const { control, setValue } = useForm({
     defaultValues: {
-      defaultPorts: inputData,
+      defaultPorts: data.length > 0 ? data : [{ id: 0, name: "", value: "" }],
       searchPortName: "",
       searchPortValue: ""
     }
@@ -41,7 +40,11 @@ const PortsList = ({ data }) => {
   const searchPortName = useWatch({ control, name: "searchPortName" })
   const searchPortValue = useWatch({ control, name: "searchPortValue" })
 
-  const { fields } = useFieldArray({ control, name: "defaultPorts" })
+  const { fields, insert } = useFieldArray({ control, name: "defaultPorts" })
+
+  useEffect(() => {
+    setValue("defaultPorts", data.length > 0 ? data : [{ id: 0, name: "", value: "" }])
+  }, [data])
 
   let fieldsView = fields
 
@@ -109,10 +112,40 @@ const PortsList = ({ data }) => {
                           { index + 1 }
                         </td>
                         <td className="align-middle text-left fw-bold">
-                          <span className="ms-2">{ entry.name }</span>
+                          {
+                            entry.name == "" ?
+                              <Controller
+                                name={`defaultPorts.${index}.name`}
+                                control={control}
+                                render={({field}) =>
+                                  <Input
+                                    {...field}
+                                    data-testid={`defaultPorts.${index}.name`}
+                                    className="form-control"
+                                  />
+                                }
+                              />
+                            :
+                              <span className="ms-2">{ entry.name }</span>
+                          }
                         </td>
                         <td className="align-middle text-left">
-                          <span className="ms-2">{ entry.value }</span>
+                          {
+                            entry.value == "" ?
+                              <Controller
+                                name={`defaultPorts.${index}.value`}
+                                control={control}
+                                render={({field}) =>
+                                  <Input
+                                    {...field}
+                                    data-testid={`defaultPorts.${index}.value`}
+                                    className="form-control"
+                                  />
+                                }
+                              />
+                            :
+                              <span className="ms-2">{ entry.value }</span>
+                          }
                         </td>
                         <td className="align-middle text-center">
                           <Button
@@ -128,6 +161,9 @@ const PortsList = ({ data }) => {
                             color="light"
                             type="button"
                             data-testid={`insert-${index}`}
+                            onClick={() => {
+                              insert(index + 1, {id: "0", name: "", value: ""})
+                            }}
                           >
                             <FontAwesomeIcon icon={faPlus} />
                           </Button>

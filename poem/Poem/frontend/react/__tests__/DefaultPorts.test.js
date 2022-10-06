@@ -156,6 +156,33 @@ describe("Test default ports list", () => {
     expect(table.getAllByTestId(/insert-/i)).toHaveLength(1)
   })
 
+  test("Test adding new port", async () => {
+    renderView();
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
+    })
+
+    fireEvent.click(screen.getByTestId("insert-1"))
+
+    fireEvent.change(screen.getByTestId("defaultPorts.2.name"), { target: { value: "GRIDFTP_PORT" } });
+    fireEvent.change(screen.getByTestId("defaultPorts.2.value"), { target: { value: "2811" } })
+
+    const rows = screen.getAllByRole("row")
+    expect(rows).toHaveLength(7)
+    const row4 = within(rows[4]).getAllByRole("textbox")
+    // row 1 is the one with search fields
+    expect(rows[2].textContent).toBe("1BDII_PORT2170")
+    expect(rows[3].textContent).toBe("2GRAM_PORT2119")
+    expect(row4[0].value).toBe("GRIDFTP_PORT")
+    expect(row4[1].value).toBe("2811")
+    expect(rows[5].textContent).toBe("4MYPROXY_PORT7512")
+    expect(rows[6].textContent).toBe("5SITE_BDII_PORT2170")
+
+    expect(screen.getAllByTestId(/remove-/i)).toHaveLength(5)
+    expect(screen.getAllByTestId(/insert-/i)).toHaveLength(5)
+  })
+
   test("Test that page renders properly if no data", async () => {
     Backend.mockImplementationOnce(() => {
       return {
