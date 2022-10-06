@@ -1080,7 +1080,12 @@ class ListDefaultPorts(APIView):
         if request.tenant.schema_name == get_public_schema_name() and \
                 request.user.is_superuser:
             try:
-                ports = json.loads(request.data["ports"])
+                if isinstance(request.data["ports"], str):
+                    ports = json.loads(request.data["ports"])
+
+                else:
+                    ports = request.data["ports"]
+
                 for port in ports:
                     assert port["name"]
                     assert port["value"]
