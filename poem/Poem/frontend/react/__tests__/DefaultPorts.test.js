@@ -183,6 +183,26 @@ describe("Test default ports list", () => {
     expect(screen.getAllByTestId(/insert-/i)).toHaveLength(5)
   })
 
+  test("Test removing a port", async () => {
+    renderView();
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
+    })
+
+    fireEvent.click(screen.getByTestId("remove-1"))
+
+    const rows = screen.getAllByRole("row")
+    expect(rows).toHaveLength(5)
+    // row 1 is the one with search fields
+    expect(rows[2].textContent).toBe("1BDII_PORT2170")
+    expect(rows[3].textContent).toBe("2MYPROXY_PORT7512")
+    expect(rows[4].textContent).toBe("3SITE_BDII_PORT2170")
+
+    expect(screen.getAllByTestId(/remove-/i)).toHaveLength(3)
+    expect(screen.getAllByTestId(/insert-/i)).toHaveLength(3)
+  })
+
   test("Test that page renders properly if no data", async () => {
     Backend.mockImplementationOnce(() => {
       return {

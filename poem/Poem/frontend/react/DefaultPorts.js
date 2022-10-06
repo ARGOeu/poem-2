@@ -40,7 +40,7 @@ const PortsList = ({ data }) => {
   const searchPortName = useWatch({ control, name: "searchPortName" })
   const searchPortValue = useWatch({ control, name: "searchPortValue" })
 
-  const { fields, insert } = useFieldArray({ control, name: "defaultPorts" })
+  const { fields, insert, remove } = useFieldArray({ control, name: "defaultPorts" })
 
   useEffect(() => {
     setValue("defaultPorts", data.length > 0 ? data : [{ id: 0, name: "", value: "" }])
@@ -153,6 +153,7 @@ const PortsList = ({ data }) => {
                             color="light"
                             type="button"
                             data-testid={`remove-${index}`}
+                            onClick={() => remove(index)}
                           >
                             <FontAwesomeIcon icon={faTimes} />
                           </Button>
