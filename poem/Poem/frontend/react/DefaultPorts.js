@@ -102,7 +102,7 @@ const PortsList = ({ data }) => {
         setIsDeleted(false)
         NotifyOk({
           msg: "Default ports successfully changed",
-          title: "Changed",
+          title: "Changed"
         })
       }
     })
@@ -128,7 +128,14 @@ const PortsList = ({ data }) => {
       <div className="d-flex align-items-center justify-content-between">
         <h2 className="ms-3 mt-1 mb-4">Default ports</h2>
         <span>
-          <Button color="success" type="submit" onClick={(e) => onSubmit(e)}>Save</Button>
+          <Button
+            color="success"
+            disabled={!(isDeleted || [...fields.map(e => e.new)].includes(true))}
+            type="submit"
+            onClick={(e) => onSubmit(e)}
+          >
+            Save
+          </Button>
         </span>
       </div>
       <div id="argo-contentwrap" className="ms-2 mb-2 mt-2 p-3 border rounded">
@@ -258,8 +265,7 @@ const PortsList = ({ data }) => {
                             data-testid={`remove-${index}`}
                             onClick={() => {
                               remove(index)
-                              if (!isDeleted)
-                                setIsDeleted(true)
+                              setIsDeleted(true)
                             }}
                           >
                             <FontAwesomeIcon icon={faTimes} />
