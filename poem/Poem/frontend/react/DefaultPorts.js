@@ -7,7 +7,9 @@ import {
   Col,
   Table,
   Button,
-  Input
+  Input,
+  InputGroup,
+  FormFeedback
 } from 'reactstrap';
 import { Backend } from './DataManager';
 import {
@@ -28,6 +30,20 @@ import {
   useForm,
   useWatch
 } from 'react-hook-form';
+import { ErrorMessage } from '@hookform/error-message';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as Yup from "yup";
+
+
+const validationSchema = Yup.object().shape({
+  defaultPorts: Yup.array().of(
+    Yup.object().shape({
+      name: Yup.string().required("This field is required").matches(/^[a-zA-Z][A-Za-z0-9\-_]*$/, "Name can contain alphanumeric characters, dash and underscore, but must always begin with a letter"),
+      value: Yup.string().required("This field is required").matches(/^[0-9]*$/, "Value must contain numeric characters")
+    })
+  )
+})
+
 
 
 const PortsList = ({ data }) => {
@@ -35,12 +51,14 @@ const PortsList = ({ data }) => {
 
   const queryClient = useQueryClient()
 
-  const { control, setValue, getValues, handleSubmit } = useForm({
+  const { control, setValue, getValues, handleSubmit, formState: {errors} } = useForm({
     defaultValues: {
       defaultPorts: data.length > 0 ? data : [{ id: 0, name: "", value: "" }],
       searchPortName: "",
       searchPortValue: ""
-    }
+    },
+    mode: "onChange",
+    resolver: yupResolver(validationSchema)
   })
 
   const mutation = useMutation(async (values) => await backend.addObject("/api/v2/internal/default_ports/", values))
@@ -110,15 +128,15 @@ const PortsList = ({ data }) => {
         </span>
       </div>
       <div id="argo-contentwrap" className="ms-2 mb-2 mt-2 p-3 border rounded">
-        <Form onSubmit={handleSubmit(onSubmit)}>
+        <Form onSubmit={handleSubmit(onSubmit)} className="needs-validation">
           <Row>
             <Col>
               <Table bordered responsive hover size="sm">
                 <thead className="table-active table-bordered align-middle text-center">
                   <tr>
                     <th style={{width: "5%"}}>#</th>
-                    <th>Port name</th>
-                    <th>Port value</th>
+                    <th style={{width: "45%"}}>Port name</th>
+                    <th style={{width: "45%"}}>Port value</th>
                     <th style={{ width: "5%" }}>Action</th>
                   </tr>
                 </thead>
@@ -164,17 +182,28 @@ const PortsList = ({ data }) => {
                         <td className="align-middle text-left fw-bold">
                           {
                             entry.name == "" ?
-                              <Controller
-                                name={`defaultPorts.${index}.name`}
-                                control={control}
-                                render={({field}) =>
-                                  <Input
-                                    {...field}
-                                    data-testid={`defaultPorts.${index}.name`}
-                                    className="form-control"
-                                  />
-                                }
-                              />
+                              <InputGroup>
+                                <Controller
+                                  name={`defaultPorts.${index}.name`}
+                                  control={control}
+                                  render={({field}) =>
+                                    <Input
+                                      {...field}
+                                      data-testid={`defaultPorts.${index}.name`}
+                                      className={`form-control ${errors?.defaultPorts?.[index]?.name && "is-invalid"}`}
+                                    />
+                                  }
+                                />
+                                <ErrorMessage
+                                  errors={errors}
+                                  name={`defaultPorts.${index}.name`}
+                                  render={({ message }) =>
+                                    <FormFeedback invalid="true" className="end-0">
+                                      { message }
+                                    </FormFeedback>
+                                  }
+                                />
+                              </InputGroup>
                             :
                               <span className="ms-2">{ entry.name }</span>
                           }
@@ -182,17 +211,28 @@ const PortsList = ({ data }) => {
                         <td className="align-middle text-left">
                           {
                             entry.value == "" ?
-                              <Controller
-                                name={`defaultPorts.${index}.value`}
-                                control={control}
-                                render={({field}) =>
-                                  <Input
-                                    {...field}
-                                    data-testid={`defaultPorts.${index}.value`}
-                                    className="form-control"
-                                  />
-                                }
-                              />
+                              <InputGroup>
+                                <Controller
+                                  name={`defaultPorts.${index}.value`}
+                                  control={control}
+                                  render={({field}) =>
+                                    <Input
+                                      {...field}
+                                      data-testid={`defaultPorts.${index}.value`}
+                                      className={`form-control ${errors?.defaultPorts?.[index]?.value && "is-invalid"}`}
+                                    />
+                                  }
+                                />
+                                <ErrorMessage
+                                  errors={errors}
+                                  name={`defaultPorts.${index}.value`}
+                                  render={({ message }) =>
+                                    <FormFeedback invalid="true" className="end-0">
+                                      { message }
+                                    </FormFeedback>
+                                  }
+                                />
+                              </InputGroup>
                             :
                               <span className="ms-2">{ entry.value }</span>
                           }
