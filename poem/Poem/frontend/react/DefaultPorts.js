@@ -1,6 +1,6 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React, { useEffect } from 'react';
-import { useQuery } from 'react-query';
+import React, { useEffect, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
 import {
   Form,
   Row,
@@ -13,7 +13,9 @@ import { Backend } from './DataManager';
 import {
   LoadingAnim,
   ErrorComponent,
-  SearchField
+  SearchField,
+  NotifyOk,
+  ModalAreYouSure
 } from './UIElements';
 import {
   faSearch,
@@ -29,13 +31,24 @@ import {
 
 
 const PortsList = ({ data }) => {
-  const { control, setValue } = useForm({
+  const backend = new Backend()
+
+  const queryClient = useQueryClient()
+
+  const { control, setValue, getValues, handleSubmit } = useForm({
     defaultValues: {
       defaultPorts: data.length > 0 ? data : [{ id: 0, name: "", value: "" }],
       searchPortName: "",
       searchPortValue: ""
     }
   })
+
+  const mutation = useMutation(async (values) => await backend.addObject("/api/v2/internal/default_ports/", values))
+
+  const [areYouSureModal, setAreYouSureModal] = useState(false)
+  const [modalTitle, setModalTitle] = useState('')
+  const [modalMsg, setModalMsg] = useState('')
+  const [modalFunc, setModalFunc] = useState(undefined)
 
   const searchPortName = useWatch({ control, name: "searchPortName" })
   const searchPortValue = useWatch({ control, name: "searchPortValue" })
@@ -45,6 +58,33 @@ const PortsList = ({ data }) => {
   useEffect(() => {
     setValue("defaultPorts", data.length > 0 ? data : [{ id: 0, name: "", value: "" }])
   }, [data])
+
+  const toggleModal = () => {
+    setAreYouSureModal(!areYouSureModal)
+  }
+
+  const onSubmit = () => {
+    setModalMsg("Are you sure you want to change default ports?")
+    setModalTitle("Change default ports")
+    setModalFunc(() => doSave)
+    setAreYouSureModal(!areYouSureModal)
+  }
+
+  const doSave = () => {
+    let sendData = {
+      ports: [...getValues("defaultPorts").map((e) => new Object({ name: e.name, value: e.value }))]
+    }
+
+    mutation.mutate(sendData, {
+      onSuccess: () => {
+        queryClient.invalidateQueries("defaultports")
+        NotifyOk({
+          msg: "Default ports successfully changed",
+          title: "Changed",
+        })
+      }
+    })
+  }
 
   let fieldsView = fields
 
@@ -56,11 +96,21 @@ const PortsList = ({ data }) => {
 
   return (
     <>
+      <ModalAreYouSure
+        isOpen={areYouSureModal}
+        toggle={toggleModal}
+        title={modalTitle}
+        msg={modalMsg}
+        onYes={modalFunc}
+      />
       <div className="d-flex align-items-center justify-content-between">
         <h2 className="ms-3 mt-1 mb-4">Default ports</h2>
+        <span>
+          <Button color="success" type="submit" onClick={(e) => onSubmit(e)}>Save</Button>
+        </span>
       </div>
       <div id="argo-contentwrap" className="ms-2 mb-2 mt-2 p-3 border rounded">
-        <Form>
+        <Form onSubmit={handleSubmit(onSubmit)}>
           <Row>
             <Col>
               <Table bordered responsive hover size="sm">
