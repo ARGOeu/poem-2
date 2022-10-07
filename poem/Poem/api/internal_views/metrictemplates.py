@@ -1111,6 +1111,14 @@ class ListDefaultPorts(APIView):
                             name=port["name"], value=port["value"]
                         )
 
+                for name in set(db_ports).difference(
+                        set([p["name"] for p in ports])
+                ):
+                    stored_port = admin_models.DefaultPort.objects.get(
+                        name=name
+                    )
+                    stored_port.delete()
+
                 return Response(status=status.HTTP_201_CREATED)
 
         else:

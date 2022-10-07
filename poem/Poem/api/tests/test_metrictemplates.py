@@ -14472,7 +14472,13 @@ class ListDefaultPortsTests(TenantTestCase):
     def test_post_port_superuser(self):
         self.assertEqual(admin_models.DefaultPort.objects.all().count(), 4)
         data = {
-            "ports": json.dumps([{"name": "HTCondorCE_PORT", "value": "9619"}])
+            "ports": json.dumps([
+                {"name": "HTCondorCE_PORT", "value": "9619"},
+                {"name": "BDII_PORT", "value": "2170"},
+                {"name": "GRAM_PORT", "value": "2119"},
+                {"name": "MYPROXY_PORT", "value": "7512"},
+                {"name": "SITE_BDII_PORT", "value": "2170"}
+            ])
         }
         request = self.factory.post(self.url, data, format="json")
         request.tenant = self.public_tenant
@@ -14486,7 +14492,13 @@ class ListDefaultPortsTests(TenantTestCase):
     def test_post_port_regular_user(self):
         self.assertEqual(admin_models.DefaultPort.objects.all().count(), 4)
         data = {
-            "ports": json.dumps([{"name": "HTCondorCE_PORT", "value": "9619"}])
+            "ports": json.dumps([
+                {"name": "HTCondorCE_PORT", "value": "9619"},
+                {"name": "BDII_PORT", "value": "2170"},
+                {"name": "GRAM_PORT", "value": "2119"},
+                {"name": "MYPROXY_PORT", "value": "7512"},
+                {"name": "SITE_BDII_PORT", "value": "2170"}
+            ])
         }
         request = self.factory.post(self.url, data, format="json")
         request.tenant = self.public_tenant
@@ -14506,7 +14518,13 @@ class ListDefaultPortsTests(TenantTestCase):
     def test_post_port_tenant_superuser(self):
         self.assertEqual(admin_models.DefaultPort.objects.all().count(), 4)
         data = {
-            "ports": json.dumps([{"name": "HTCondorCE_PORT", "value": "9619"}])
+            "ports": json.dumps([
+                {"name": "HTCondorCE_PORT", "value": "9619"},
+                {"name": "BDII_PORT", "value": "2170"},
+                {"name": "GRAM_PORT", "value": "2119"},
+                {"name": "MYPROXY_PORT", "value": "7512"},
+                {"name": "SITE_BDII_PORT", "value": "2170"}
+            ])
         }
         request = self.factory.post(self.url, data, format="json")
         request.tenant = self.tenant
@@ -14526,7 +14544,13 @@ class ListDefaultPortsTests(TenantTestCase):
     def test_post_port_tenant_regular_user(self):
         self.assertEqual(admin_models.DefaultPort.objects.all().count(), 4)
         data = {
-            "ports": json.dumps([{"name": "HTCondorCE_PORT", "value": "9619"}])
+            "ports": json.dumps([
+                {"name": "HTCondorCE_PORT", "value": "9619"},
+                {"name": "BDII_PORT", "value": "2170"},
+                {"name": "GRAM_PORT", "value": "2119"},
+                {"name": "MYPROXY_PORT", "value": "7512"},
+                {"name": "SITE_BDII_PORT", "value": "2170"}
+            ])
         }
         request = self.factory.post(self.url, data, format="json")
         request.tenant = self.tenant
@@ -14548,7 +14572,11 @@ class ListDefaultPortsTests(TenantTestCase):
         data = {
             "ports": json.dumps([
                 {"name": "HTCondorCE_PORT", "value": "9619"},
-                {"name": "FTS_PORT", "value": "8446"}
+                {"name": "FTS_PORT", "value": "8446"},
+                {"name": "BDII_PORT", "value": "2170"},
+                {"name": "GRAM_PORT", "value": "2119"},
+                {"name": "MYPROXY_PORT", "value": "7512"},
+                {"name": "SITE_BDII_PORT", "value": "2170"}
             ])
         }
         request = self.factory.post(self.url, data, format="json")
@@ -14565,7 +14593,13 @@ class ListDefaultPortsTests(TenantTestCase):
     def test_post_port_wrong_json_format_superuser(self):
         self.assertEqual(admin_models.DefaultPort.objects.all().count(), 4)
         data = {
-            "ports": json.dumps([{"name": "HTCondorCE_PORT", "val": "9619"}])
+            "ports": json.dumps([
+                {"name": "HTCondorCE_PORT", "val": "9619"},
+                {"name": "BDII_PORT", "value": "2170"},
+                {"name": "GRAM_PORT", "value": "2119"},
+                {"name": "MYPROXY_PORT", "value": "7512"},
+                {"name": "SITE_BDII_PORT", "value": "2170"}
+            ])
         }
         request = self.factory.post(self.url, data, format="json")
         request.tenant = self.public_tenant
@@ -14585,7 +14619,13 @@ class ListDefaultPortsTests(TenantTestCase):
     def test_post_port_wrong_json_format_regular_user(self):
         self.assertEqual(admin_models.DefaultPort.objects.all().count(), 4)
         data = {
-            "ports": json.dumps([{"name": "HTCondorCE_PORT", "val": "9619"}])
+            "ports": json.dumps([
+                {"name": "HTCondorCE_PORT", "val": "9619"},
+                {"name": "BDII_PORT", "value": "2170"},
+                {"name": "GRAM_PORT", "value": "2119"},
+                {"name": "MYPROXY_PORT", "value": "7512"},
+                {"name": "SITE_BDII_PORT", "value": "2170"}
+            ])
         }
         request = self.factory.post(self.url, data, format="json")
         request.tenant = self.public_tenant
@@ -14605,7 +14645,13 @@ class ListDefaultPortsTests(TenantTestCase):
     def test_post_port_wrong_json_format_tenant_superuser(self):
         self.assertEqual(admin_models.DefaultPort.objects.all().count(), 4)
         data = {
-            "ports": json.dumps([{"name": "HTCondorCE_PORT", "val": "9619"}])
+            "ports": json.dumps([
+                {"name": "HTCondorCE_PORT", "val": "9619"},
+                {"name": "BDII_PORT", "value": "2170"},
+                {"name": "GRAM_PORT", "value": "2119"},
+                {"name": "MYPROXY_PORT", "value": "7512"},
+                {"name": "SITE_BDII_PORT", "value": "2170"}
+            ])
         }
         request = self.factory.post(self.url, data, format="json")
         request.tenant = self.tenant
@@ -14625,7 +14671,13 @@ class ListDefaultPortsTests(TenantTestCase):
     def test_post_port_wrong_json_format_tenant_regular_user(self):
         self.assertEqual(admin_models.DefaultPort.objects.all().count(), 4)
         data = {
-            "ports": json.dumps([{"name": "HTCondorCE_PORT", "val": "9619"}])
+            "ports": json.dumps([
+                {"name": "HTCondorCE_PORT", "val": "9619"},
+                {"name": "BDII_PORT", "value": "2170"},
+                {"name": "GRAM_PORT", "value": "2119"},
+                {"name": "MYPROXY_PORT", "value": "7512"},
+                {"name": "SITE_BDII_PORT", "value": "2170"}
+            ])
         }
         request = self.factory.post(self.url, data, format="json")
         request.tenant = self.tenant
@@ -14647,7 +14699,11 @@ class ListDefaultPortsTests(TenantTestCase):
         data = {
             "ports": json.dumps([
                 {"name": "FTS_PORT", "value": "8446"},
-                {"name": "HTCondorCE_PORT", "val": "9619"}
+                {"name": "HTCondorCE_PORT", "val": "9619"},
+                {"name": "BDII_PORT", "value": "2170"},
+                {"name": "GRAM_PORT", "value": "2119"},
+                {"name": "MYPROXY_PORT", "value": "7512"},
+                {"name": "SITE_BDII_PORT", "value": "2170"}
             ])
         }
         request = self.factory.post(self.url, data, format="json")
@@ -14668,7 +14724,13 @@ class ListDefaultPortsTests(TenantTestCase):
     def test_post_port_wrong_json_format(self):
         self.assertEqual(admin_models.DefaultPort.objects.all().count(), 4)
         data = {
-            "prts": json.dumps([{"name": "HTCondorCE_PORT", "value": "9619"}])
+            "prts": json.dumps([
+                {"name": "HTCondorCE_PORT", "value": "9619"},
+                {"name": "BDII_PORT", "value": "2170"},
+                {"name": "GRAM_PORT", "value": "2119"},
+                {"name": "MYPROXY_PORT", "value": "7512"},
+                {"name": "SITE_BDII_PORT", "value": "2170"}
+            ])
         }
         request = self.factory.post(self.url, data, format="json")
         request.tenant = self.public_tenant
@@ -14685,13 +14747,13 @@ class ListDefaultPortsTests(TenantTestCase):
             name="HTCondorCE_PORT"
         )
 
-    def test_post_multiple_ports_when_one_exists(self):
+    def test_post_port_with_deletion_superuser(self):
         self.assertEqual(admin_models.DefaultPort.objects.all().count(), 4)
         data = {
             "ports": json.dumps([
-                {"name": "HTCondorCE_PORT", "value": "9619"},
-                {"name": "GRAM_PORT", "value": "9000"},
-                {"name": "FTS_PORT", "value": "8446"}
+                {"name": "BDII_PORT", "value": "2170"},
+                {"name": "MYPROXY_PORT", "value": "7512"},
+                {"name": "SITE_BDII_PORT", "value": "2170"}
             ])
         }
         request = self.factory.post(self.url, data, format="json")
@@ -14699,10 +14761,9 @@ class ListDefaultPortsTests(TenantTestCase):
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(admin_models.DefaultPort.objects.all().count(), 6)
-        port1 = admin_models.DefaultPort.objects.get(name="HTCondorCE_PORT")
-        port2 = admin_models.DefaultPort.objects.get(name="GRAM_PORT")
-        port3 = admin_models.DefaultPort.objects.get(name="FTS_PORT")
-        self.assertEqual(port1.value, "9619")
-        self.assertEqual(port2.value, "9000")
-        self.assertEqual(port3.value, "8446")
+        self.assertEqual(admin_models.DefaultPort.objects.all().count(), 3)
+        self.assertRaises(
+            admin_models.DefaultPort.DoesNotExist,
+            admin_models.DefaultPort.objects.get,
+            name="GRAM_PORT"
+        )
