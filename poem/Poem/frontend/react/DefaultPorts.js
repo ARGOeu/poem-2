@@ -9,7 +9,8 @@ import {
   Button,
   Input,
   InputGroup,
-  FormFeedback
+  FormFeedback,
+  Alert
 } from 'reactstrap';
 import { Backend } from './DataManager';
 import {
@@ -22,7 +23,8 @@ import {
 import {
   faSearch,
   faTimes,
-  faPlus
+  faPlus,
+  faInfoCircle
 } from '@fortawesome/free-solid-svg-icons';
 import {
   Controller,
@@ -67,6 +69,7 @@ const PortsList = ({ data }) => {
   const [modalTitle, setModalTitle] = useState('')
   const [modalMsg, setModalMsg] = useState('')
   const [modalFunc, setModalFunc] = useState(undefined)
+  const [isDeleted, setIsDeleted] = useState(false)
 
   const searchPortName = useWatch({ control, name: "searchPortName" })
   const searchPortValue = useWatch({ control, name: "searchPortValue" })
@@ -96,6 +99,7 @@ const PortsList = ({ data }) => {
     mutation.mutate(sendData, {
       onSuccess: () => {
         queryClient.invalidateQueries("defaultports")
+        setIsDeleted(false)
         NotifyOk({
           msg: "Default ports successfully changed",
           title: "Changed",
@@ -129,6 +133,15 @@ const PortsList = ({ data }) => {
       </div>
       <div id="argo-contentwrap" className="ms-2 mb-2 mt-2 p-3 border rounded">
         <Form onSubmit={handleSubmit(onSubmit)} className="needs-validation">
+          {
+            (isDeleted) &&
+              <Alert color="warning">
+                <center>
+                  <FontAwesomeIcon icon={faInfoCircle} size="lg" color="black"/> &nbsp;
+                  Some ports have been deleted. To store the change to the DB, click on the save button.
+                </center>
+              </Alert>
+          }
           <Row>
             <Col>
               <Table bordered responsive hover size="sm">
@@ -243,7 +256,11 @@ const PortsList = ({ data }) => {
                             color="light"
                             type="button"
                             data-testid={`remove-${index}`}
-                            onClick={() => remove(index)}
+                            onClick={() => {
+                              remove(index)
+                              if (!isDeleted)
+                                setIsDeleted(true)
+                            }}
                           >
                             <FontAwesomeIcon icon={faTimes} />
                           </Button>
