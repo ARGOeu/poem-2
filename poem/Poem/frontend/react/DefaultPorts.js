@@ -18,7 +18,8 @@ import {
   ErrorComponent,
   SearchField,
   NotifyOk,
-  ModalAreYouSure
+  ModalAreYouSure,
+  NotifyError
 } from './UIElements';
 import {
   faSearch,
@@ -99,13 +100,20 @@ const PortsList = ({ data }) => {
     mutation.mutate(sendData, {
       onSuccess: () => {
         queryClient.invalidateQueries("defaultports")
-        setIsDeleted(false)
         NotifyOk({
           msg: "Default ports successfully changed",
           title: "Changed"
         })
+      },
+      onError: (error) => {
+        NotifyError({
+          msg: error?.message ? error.message : "Error changing default ports",
+          title: "Error"
+        })
       }
     })
+
+    setIsDeleted(false)
   }
 
   let fieldsView = fields

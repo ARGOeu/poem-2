@@ -11,7 +11,7 @@ import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { DefaultPortsList } from '../DefaultPorts';
 import { Backend } from '../DataManager';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { QueryClient, QueryClientProvider, setLogger } from 'react-query';
 import { NotificationManager } from 'react-notifications';
 
 
@@ -24,6 +24,12 @@ jest.mock('../DataManager', () => {
 const mockAddobject = jest.fn()
 
 const queryClient = new QueryClient()
+
+setLogger({
+  log: () => {},
+  warn: () => {},
+  error: () => {}
+})
 
 beforeEach(() => {
   jest.clearAllMocks()
@@ -77,6 +83,7 @@ function renderView() {
 
 describe("Test default ports list", () => {
   jest.spyOn(NotificationManager, "success")
+  jest.spyOn(NotificationManager, "error")
   jest.spyOn(queryClient, "invalidateQueries")
 
   beforeAll(() => {
@@ -248,6 +255,100 @@ describe("Test default ports list", () => {
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith("defaultports")
     expect(NotificationManager.success).toHaveBeenCalledWith(
       "Default ports successfully changed", "Changed", 2000
+    )
+  })
+
+  test("Test error changing ports with error message", async () => {
+    mockAddobject.mockImplementationOnce(() => {
+      throw Error("400 BAD REQUEST: Something went wrong")
+    })
+
+    renderView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
+    })
+
+    fireEvent.click(screen.getByTestId("insert-1"))
+
+    fireEvent.change(screen.getByTestId("defaultPorts.2.name"), { target: { value: "GRIDFTP_PORT" } });
+    fireEvent.change(screen.getByTestId("defaultPorts.2.value"), { target: { value: "2811" } })
+    fireEvent.click(screen.getByTestId("remove-4"))
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddobject).toHaveBeenCalledWith(
+        "/api/v2/internal/default_ports/",
+        {
+          ports: [
+            { name: "BDII_PORT", value: "2170" },
+            { name: "GRAM_PORT", value: "2119" },
+            { name: "GRIDFTP_PORT", value: "2811" },
+            { name: "MYPROXY_PORT", value: "7512" }
+          ]
+        }
+      )
+    })
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled()
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>400 BAD REQUEST: Something went wrong</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      "Error",
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test("Test changing ports without error message", async () => {
+    mockAddobject.mockImplementationOnce(() => { throw Error() })
+
+    renderView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
+    })
+
+    fireEvent.click(screen.getByTestId("insert-1"))
+
+    fireEvent.change(screen.getByTestId("defaultPorts.2.name"), { target: { value: "GRIDFTP_PORT" } });
+    fireEvent.change(screen.getByTestId("defaultPorts.2.value"), { target: { value: "2811" } })
+    fireEvent.click(screen.getByTestId("remove-4"))
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddobject).toHaveBeenCalledWith(
+        "/api/v2/internal/default_ports/",
+        {
+          ports: [
+            { name: "BDII_PORT", value: "2170" },
+            { name: "GRAM_PORT", value: "2119" },
+            { name: "GRIDFTP_PORT", value: "2811" },
+            { name: "MYPROXY_PORT", value: "7512" }
+          ]
+        }
+      )
+    })
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled()
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error changing default ports</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      "Error",
+      0,
+      expect.any(Function)
     )
   })
 
