@@ -218,7 +218,7 @@ const PortsList = ({ data }) => {
                                     <Input
                                       {...field}
                                       data-testid={`defaultPorts.${index}.name`}
-                                      className={`form-control ${errors?.defaultPorts?.[index]?.name && "is-invalid"}`}
+                                      className={`form-control ${errors?.defaultPorts?.[index]?.name ? "is-invalid" : entry.new ? "border border-success" : ""}`}
                                     />
                                   }
                                 />
@@ -247,7 +247,7 @@ const PortsList = ({ data }) => {
                                     <Input
                                       {...field}
                                       data-testid={`defaultPorts.${index}.value`}
-                                      className={`form-control ${errors?.defaultPorts?.[index]?.value && "is-invalid"}`}
+                                      className={`form-control ${errors?.defaultPorts?.[index]?.value ? "is-invalid" : entry.new ? "border border-success" : ""}`}
                                     />
                                   }
                                 />
