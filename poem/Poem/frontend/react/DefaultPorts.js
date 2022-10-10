@@ -54,13 +54,13 @@ const PortsList = ({ data }) => {
 
   const queryClient = useQueryClient()
 
-  const { control, setValue, getValues, handleSubmit, formState: {errors} } = useForm({
+  const { control, setValue, getValues, handleSubmit, formState: {errors, isValid}, trigger } = useForm({
     defaultValues: {
       defaultPorts: data.length > 0 ? data.map(e => { return { ...e, new: false } }) : [{ id: 0, name: "", value: "", new: true }],
       searchPortName: "",
       searchPortValue: ""
     },
-    mode: "onChange",
+    mode: "all",
     resolver: yupResolver(validationSchema)
   })
 
@@ -86,10 +86,13 @@ const PortsList = ({ data }) => {
   }
 
   const onSubmit = () => {
-    setModalMsg("Are you sure you want to change default ports?")
-    setModalTitle("Change default ports")
-    setModalFunc(() => doSave)
-    setAreYouSureModal(!areYouSureModal)
+    trigger()
+    if (isValid) {
+      setModalMsg("Are you sure you want to change default ports?")
+      setModalTitle("Change default ports")
+      setModalFunc(() => doSave)
+      setAreYouSureModal(!areYouSureModal)
+    }
   }
 
   const doSave = () => {
