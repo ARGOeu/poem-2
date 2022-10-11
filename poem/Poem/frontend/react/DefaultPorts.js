@@ -291,7 +291,8 @@ const PortsList = ({ data }) => {
                             data-testid={`remove-${index}`}
                             onClick={() => {
                               remove(index)
-                              setIsDeleted(true)
+                              if (!("new" in fields[index]))
+                                setIsDeleted(true)
                             }}
                           >
                             <FontAwesomeIcon icon={faTimes} />
