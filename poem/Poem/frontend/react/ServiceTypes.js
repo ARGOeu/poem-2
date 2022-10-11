@@ -12,6 +12,9 @@ import {
   Label,
   Row,
   Table,
+  PaginationItem,
+  PaginationLink,
+  Pagination,
 } from 'reactstrap';
 import {
   BaseArgoTable,
@@ -630,6 +633,48 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                   }
                 </tbody>
               </Table>
+            </Col>
+          </Row>
+          <Row>
+            <Col className="d-flex justify-content-center align-self-center">
+              <Pagination className="mt-5">
+                <PaginationItem disabled={true}>
+                  <PaginationLink aria-label="First" first onClick={() => {}}/>
+                </PaginationItem>
+                <PaginationItem disabled={true}>
+                  <PaginationLink aria-label="Previous" previous onClick={() => {}}/>
+                </PaginationItem>
+                {
+                  [...Array([])].map((e, i) =>
+                    <PaginationItem active={true} key={i}>
+                      <PaginationLink onClick={() => {}}>
+                        0
+                      </PaginationLink>
+                    </PaginationItem>
+                  )
+                }
+                <PaginationItem disabled={false}>
+                  <PaginationLink aria-label="Next" next onClick={() => {}}/>
+                </PaginationItem>
+                <PaginationItem disabled={true}>
+                  <PaginationLink aria-label="Last" last onClick={() => {}}/>
+                </PaginationItem>
+                <PaginationItem>
+                  <select
+                    style={{width: '180px'}}
+                    className="form-control custom-select text-primary"
+                    aria-label="Number of service types"
+                    value={0}
+                    onChange={e => {}}
+                  >
+                    {[30, 50, 100, fields.length].map(pageSize => (
+                      <option label={`${pageSize} service types`} key={pageSize} value={pageSize}>
+                        {pageSize} service types
+                      </option>
+                    ))}
+                  </select>
+                </PaginationItem>
+              </Pagination>
             </Col>
           </Row>
         </Form>
