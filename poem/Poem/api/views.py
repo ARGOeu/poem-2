@@ -412,3 +412,17 @@ class ListMetricOverrides(APIView):
             })
 
         return Response(overrides)
+
+
+class ListDefaultPorts(APIView):
+    permission_classes = (MyHasAPIKey,)
+
+    def get(self, request):
+        data = admin_models.DefaultPort.objects.all()
+
+        results = dict()
+
+        for item in data:
+            results.update({item.name: item.value})
+
+        return Response(results)
