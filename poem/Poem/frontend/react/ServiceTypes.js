@@ -636,7 +636,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                     fieldsView.map((entry, index) =>
                       <tr key={entry.id} data-testid={`rows-serviceTypes.${index}`}>
                         <td className="align-middle text-center">
-                          {index + 1}
+                          { pageIndex === 0 ? index + 1 : index + (pageSize * pageIndex) + 1}
                         </td>
                         <td className="align-middle text-left fw-bold">
                           <span className="ms-2">{ entry.name }</span>
