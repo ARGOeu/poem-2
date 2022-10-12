@@ -689,11 +689,11 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
           <Row>
             <Col className="d-flex justify-content-center align-self-center">
               <Pagination className="mt-2">
-                <PaginationItem disabled={true}>
-                  <PaginationLink aria-label="First" first onClick={() => {}}/>
+                <PaginationItem disabled={pageIndex === 0}>
+                  <PaginationLink aria-label="First" first onClick={() => gotoPage(0)}/>
                 </PaginationItem>
-                <PaginationItem disabled={true}>
-                  <PaginationLink aria-label="Previous" previous onClick={() => {}}/>
+                <PaginationItem disabled={pageIndex === 0}>
+                  <PaginationLink aria-label="Previous" previous onClick={() => gotoPage(pageIndex - 1)}/>
                 </PaginationItem>
                 {
                   [...Array(pageCount)].map((e, i) =>
@@ -704,11 +704,11 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                     </PaginationItem>
                   )
                 }
-                <PaginationItem disabled={false}>
-                  <PaginationLink aria-label="Next" next onClick={() => {}}/>
+                <PaginationItem disabled={pageIndex === pageCount - 1}>
+                  <PaginationLink aria-label="Next" next onClick={() => gotoPage(pageIndex + 1)}/>
                 </PaginationItem>
-                <PaginationItem disabled={true}>
-                  <PaginationLink aria-label="Last" last onClick={() => {}}/>
+                <PaginationItem disabled={pageIndex === pageCount - 1}>
+                  <PaginationLink aria-label="Last" last onClick={() => gotoPage(pageCount - 1)}/>
                 </PaginationItem>
                 <PaginationItem>
                   <select
