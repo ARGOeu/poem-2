@@ -373,8 +373,8 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
   const [pageSize, setPageSize] = useState(30)
   const [pageIndex, setPageIndex] = useState(0)
 
-  const [pageCount, setStatePageCount] = useState(Math.trunc(dataWithChecked.length / pageSize) + 1)
   let startIndex = useRef(0)
+  let pageCount = useRef(Math.trunc(dataWithChecked.length / pageSize) + 1)
 
   const queryClient = useQueryClient();
   const webapiAddMutation = useMutation(async (values) => await webapi.addServiceTypes(values));
@@ -490,13 +490,13 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     let remainder = dataArray.length % pagesize
 
     if (result === 0)
-      setStatePageCount(1)
+      pageCount.current = 1
 
     else {
       if (remainder)
-        setStatePageCount(result + 1)
+        pageCount.current = result + 1
       else
-        setStatePageCount(result)
+        pageCount.current = result
     }
   }
 
@@ -678,7 +678,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                   <PaginationLink aria-label="Previous" previous onClick={() => gotoPage(pageIndex - 1)}/>
                 </PaginationItem>
                 {
-                  [...Array(pageCount)].map((e, i) =>
+                  [...Array(pageCount.current)].map((e, i) =>
                     <PaginationItem active={pageIndex === i ? true : false} key={i}>
                       <PaginationLink onClick={() => gotoPage(i)}>
                         { i + 1 }
