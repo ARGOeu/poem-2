@@ -372,7 +372,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
 
   const [pageSize, setPageSize] = useState(30)
   const [pageIndex, setPageIndex] = useState(0)
-  const [pageCount, setStatePageCount] = useState(Math.trunc(data.length / 30))
+  const [pageCount, setStatePageCount] = useState(Math.trunc(data.length / 30) + 1)
   let startIndex = useRef(0)
 
   const queryClient = useQueryClient();
@@ -516,7 +516,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
       indexTo = indexFrom + pageSize
 
     console.log('VRDEL DEBUG', indexTo, indexFrom)
-    startIndex.current = indexTo
+    startIndex.current = indexFrom
     setPageIndex(i)
   }
 
@@ -538,7 +538,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     fieldsView = fields.filter(e => e.name.toLowerCase().includes(searchService.toLowerCase()))
 
   if (pageSize)
-    fieldsView = fieldsView.slice(startIndex.current, pageSize)
+      fieldsView = fieldsView.slice(startIndex.current, pageSize + startIndex.current)
 
   const onDescriptionChange = (entryid, isChanged) => {
     let tmp = JSON.parse(JSON.stringify(lookupChanged))
