@@ -78,7 +78,7 @@ const PortsList = ({ data }) => {
   const { fields, insert, remove } = useFieldArray({ control, name: "defaultPorts" })
 
   useEffect(() => {
-    setValue("defaultPorts", data.length > 0 ? data : [{ id: 0, name: "", value: "" }])
+    setValue("defaultPorts", data.length > 0 ? data : [{ id: 0, name: "", value: "", new: true }])
   }, [data])
 
   const toggleModal = () => {
