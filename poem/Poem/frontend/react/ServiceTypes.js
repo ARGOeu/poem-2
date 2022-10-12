@@ -374,7 +374,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
   const [pageIndex, setPageIndex] = useState(0)
 
   let startIndex = useRef(0)
-  let pageCount = useRef(Math.trunc(dataWithChecked.length / pageSize) + 1)
+  let pageCount = useRef(1)
 
   const queryClient = useQueryClient();
   const webapiAddMutation = useMutation(async (values) => await webapi.addServiceTypes(values));
@@ -513,14 +513,16 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     fieldsView = fields.filter(e => e.name.toLowerCase().includes(searchService.toLowerCase()))
     fieldsView = fieldsView.filter(e => e.description.toLowerCase().includes(searchDesc.toLowerCase()))
   }
-
   else if (searchDesc)
     fieldsView = fields.filter(e => e.description.toLowerCase().includes(searchDesc.toLowerCase()))
-
   else if (searchService)
     fieldsView = fields.filter(e => e.name.toLowerCase().includes(searchService.toLowerCase()))
 
   fieldsView = fieldsView.slice(startIndex.current, pageSize + startIndex.current)
+  if (fieldsView.length < pageSize && pageIndex + 1 !== pageCount.current)
+    pageCount.current = 1
+  else
+    pageCount.current = Math.trunc(dataWithChecked.length / pageSize) + 1
 
   const onDescriptionChange = (entryid, isChanged) => {
     let tmp = JSON.parse(JSON.stringify(lookupChanged))
