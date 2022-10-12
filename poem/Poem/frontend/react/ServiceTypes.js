@@ -411,7 +411,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
   }
   const [lookupChanged, setLookupChanged] = React.useState(initChangedDesc())
 
-  const postServiceTypesWebApi = (data, action, title) => {
+  function postServiceTypesWebApi(data, action, title) {
     webapiAddMutation.mutate(data, {
       onSuccess: () => {
         queryClient.invalidateQueries('servicetypes');
@@ -431,7 +431,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     })
   }
 
-  const doSave = () => {
+  function doSave() {
     let values = getValues('serviceTypes')
     replace(values)
     postServiceTypesWebApi([...values.map(
@@ -444,14 +444,14 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     setLookupChanged(initChangedDesc())
   }
 
-  const onSave = () => {
+  function onSave() {
     setModalMsg(`Are you sure you want to change Service type?`)
     setModalTitle('Change service type')
     setModalFunc(() => doSave)
     setAreYouSureModal(!areYouSureModal);
   }
 
-  const onChange = (event, entryid) => {
+  function onChange(event, entryid) {
     let value = event.target.checked ? true : false
     let values = getValues('serviceTypes')
     let index = fields.findIndex(field => field.id === entryid)
@@ -463,7 +463,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     })
   }
 
-  const doDelete = () => {
+  function doDelete() {
     let cleaned = fields.filter(e => !e.checked)
     setValue("serviceTypes", cleaned)
     postServiceTypesWebApi([...cleaned.map(
@@ -475,7 +475,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
       'deleted', 'Delete')
   }
 
-  const onDelete = () => {
+  function onDelete() {
     let cleaned = fields.filter(e => !e.checked)
 
     setModalMsg(`Are you sure you want to delete ${fields.length - cleaned.length} Service types?`)
