@@ -370,6 +370,10 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
   const [modalMsg, setModalMsg] = React.useState('')
   const [modalFunc, setModalFunc] = React.useState(undefined)
 
+  const [pageSize, setPageSize] = useState(30)
+  const [pageIndex, setPageIndex] = useState(0)
+  const [pageCount, setStatePageCount] = useState(undefined)
+
   const queryClient = useQueryClient();
   const webapiAddMutation = useMutation(async (values) => await webapi.addServiceTypes(values));
 
@@ -482,12 +486,17 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
   let lookupIndexes = _.fromPairs(fields.map((e, index) => [e.id, index]))
 
   let fieldsView = fields
-  if (searchService)
-    fieldsView = fields.filter(e => e.name.toLowerCase().includes(searchService.toLowerCase()))
 
-  if (searchDesc)
+  if (searchService && searchDesc) {
+    fieldsView = fields.filter(e => e.name.toLowerCase().includes(searchService.toLowerCase()))
+    fieldsView = fieldsView.filter(e => e.description.toLowerCase().includes(searchDesc.toLowerCase()))
+  }
+
+  else if (searchDesc)
     fieldsView = fields.filter(e => e.description.toLowerCase().includes(searchDesc.toLowerCase()))
 
+  else if (searchService)
+    fieldsView = fields.filter(e => e.name.toLowerCase().includes(searchService.toLowerCase()))
 
   const onDescriptionChange = (entryid, isChanged) => {
     let tmp = JSON.parse(JSON.stringify(lookupChanged))
@@ -637,7 +646,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
           </Row>
           <Row>
             <Col className="d-flex justify-content-center align-self-center">
-              <Pagination className="mt-5">
+              <Pagination className="mt-2">
                 <PaginationItem disabled={true}>
                   <PaginationLink aria-label="First" first onClick={() => {}}/>
                 </PaginationItem>
@@ -665,7 +674,13 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                     className="form-control custom-select text-primary"
                     aria-label="Number of service types"
                     value={0}
-                    onChange={e => {}}
+                    onChange={e => {
+                      setPageSize(Number(e.target.value))
+                      setStatePageCount(fields, e.target.value)
+                      setPageIndex(0)
+                      setValue('serviceTypes', fields.slice(0, Number(e.target.value)))
+                      console.log('VRDEL DEBUG', fields.slice(0, Number(e.target.value)))
+                    }}
                   >
                     {[30, 50, 100, fields.length].map(pageSize => (
                       <option label={`${pageSize} service types`} key={pageSize} value={pageSize}>
