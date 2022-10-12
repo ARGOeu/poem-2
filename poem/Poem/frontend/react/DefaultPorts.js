@@ -210,7 +210,7 @@ const PortsList = ({ data }) => {
                         <td className="align-middle text-center">
                           { index + 1 }
                         </td>
-                        <td className="align-middle text-left fw-bold">
+                        <td className="align-middle text-left">
                           {
                             entry.new ?
                               <InputGroup>
@@ -251,7 +251,7 @@ const PortsList = ({ data }) => {
                                 }
                               </InputGroup>
                             :
-                              <span className="ms-2">{ entry.name }</span>
+                              <span className="ms-2 fw-bold">{ entry.name }</span>
                           }
                         </td>
                         <td className="align-middle text-left">
