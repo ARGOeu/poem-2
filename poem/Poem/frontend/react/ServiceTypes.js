@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { WebApi } from './DataManager';
 import { useQuery, useQueryClient, useMutation } from 'react-query';
@@ -372,7 +372,8 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
 
   const [pageSize, setPageSize] = useState(30)
   const [pageIndex, setPageIndex] = useState(0)
-  const [pageCount, setStatePageCount] = useState(undefined)
+  const [pageCount, setStatePageCount] = useState(Math.trunc(data.length / 30))
+  let startIndex = useRef(0)
 
   const queryClient = useQueryClient();
   const webapiAddMutation = useMutation(async (values) => await webapi.addServiceTypes(values));
@@ -483,6 +484,44 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     setAreYouSureModal(!areYouSureModal);
   }
 
+  function setPageCount(dataArray, pagesize=undefined) {
+    let localPageSize = undefined
+
+    if (pagesize)
+      localPageSize = pagesize
+
+    let result = Math.trunc(dataArray.length / localPageSize)
+    let remainder = dataArray.length / localPageSize
+
+    if (result === 0)
+      setStatePageCount(1)
+
+    else {
+      if (remainder)
+        setStatePageCount(result + 1)
+      else
+        setStatePageCount(result)
+    }
+  }
+
+  function gotoPage(i) {
+    let indexTo = undefined
+    let indexFrom = undefined
+
+    indexFrom = i * pageSize
+
+    if (i === pageCount - 1)
+      indexTo = fields.length
+    else
+      indexTo = indexFrom + pageSize
+
+    console.log('VRDEL DEBUG', indexTo, indexFrom)
+    startIndex.current = indexTo
+    setPageIndex(i)
+  }
+
+
+
   let lookupIndexes = _.fromPairs(fields.map((e, index) => [e.id, index]))
 
   let fieldsView = fields
@@ -497,6 +536,9 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
 
   else if (searchService)
     fieldsView = fields.filter(e => e.name.toLowerCase().includes(searchService.toLowerCase()))
+
+  if (pageSize)
+    fieldsView = fieldsView.slice(startIndex.current, pageSize)
 
   const onDescriptionChange = (entryid, isChanged) => {
     let tmp = JSON.parse(JSON.stringify(lookupChanged))
@@ -654,10 +696,10 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                   <PaginationLink aria-label="Previous" previous onClick={() => {}}/>
                 </PaginationItem>
                 {
-                  [...Array([])].map((e, i) =>
-                    <PaginationItem active={true} key={i}>
-                      <PaginationLink onClick={() => {}}>
-                        0
+                  [...Array(pageCount)].map((e, i) =>
+                    <PaginationItem active={pageIndex === i ? true : false} key={i}>
+                      <PaginationLink onClick={() => gotoPage(i, setValue)}>
+                        { i + 1 }
                       </PaginationLink>
                     </PaginationItem>
                   )
@@ -673,13 +715,11 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                     style={{width: '180px'}}
                     className="form-control custom-select text-primary"
                     aria-label="Number of service types"
-                    value={0}
+                    value={30}
                     onChange={e => {
                       setPageSize(Number(e.target.value))
-                      setStatePageCount(fields, e.target.value)
+                      setPageCount(fields, e.target.value)
                       setPageIndex(0)
-                      setValue('serviceTypes', fields.slice(0, Number(e.target.value)))
-                      console.log('VRDEL DEBUG', fields.slice(0, Number(e.target.value)))
                     }}
                   >
                     {[30, 50, 100, fields.length].map(pageSize => (
