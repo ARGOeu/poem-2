@@ -698,7 +698,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                 {
                   [...Array(pageCount)].map((e, i) =>
                     <PaginationItem active={pageIndex === i ? true : false} key={i}>
-                      <PaginationLink onClick={() => gotoPage(i, setValue)}>
+                      <PaginationLink onClick={() => gotoPage(i)}>
                         { i + 1 }
                       </PaginationLink>
                     </PaginationItem>
@@ -712,10 +712,10 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                 </PaginationItem>
                 <PaginationItem>
                   <select
-                    style={{width: '180px'}}
-                    className="form-control custom-select text-primary"
+                    style={{width: '150px'}}
+                    className="ps-1 form-control custom-select text-primary"
                     aria-label="Number of service types"
-                    value={30}
+                    value={pageSize}
                     onChange={e => {
                       setPageSize(Number(e.target.value))
                       setPageCount(fields, e.target.value)
