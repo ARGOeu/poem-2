@@ -505,22 +505,9 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
   }
 
   function gotoPage(i) {
-    let indexTo = undefined
-    let indexFrom = undefined
-
-    indexFrom = i * pageSize
-
-    if (i === pageCount - 1)
-      indexTo = fields.length
-    else
-      indexTo = indexFrom + pageSize
-
-    console.log('VRDEL DEBUG', indexTo, indexFrom)
-    startIndex.current = indexFrom
+    startIndex.current = i * pageSize
     setPageIndex(i)
   }
-
-
 
   let lookupIndexes = _.fromPairs(fields.map((e, index) => [e.id, index]))
 
