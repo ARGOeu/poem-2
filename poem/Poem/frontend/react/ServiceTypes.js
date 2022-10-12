@@ -372,7 +372,8 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
 
   const [pageSize, setPageSize] = useState(30)
   const [pageIndex, setPageIndex] = useState(0)
-  const [pageCount, setStatePageCount] = useState(Math.trunc(data.length / 30) + 1)
+
+  const [pageCount, setStatePageCount] = useState(Math.trunc(dataWithChecked.length / pageSize) + 1)
   let startIndex = useRef(0)
 
   const queryClient = useQueryClient();
@@ -484,14 +485,9 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     setAreYouSureModal(!areYouSureModal);
   }
 
-  function setPageCount(dataArray, pagesize=undefined) {
-    let localPageSize = undefined
-
-    if (pagesize)
-      localPageSize = pagesize
-
-    let result = Math.trunc(dataArray.length / localPageSize)
-    let remainder = dataArray.length / localPageSize
+  function setPageCount(dataArray, pagesize) {
+    let result = Math.trunc(dataArray.length / pagesize)
+    let remainder = dataArray.length % pagesize
 
     if (result === 0)
       setStatePageCount(1)
@@ -524,8 +520,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
   else if (searchService)
     fieldsView = fields.filter(e => e.name.toLowerCase().includes(searchService.toLowerCase()))
 
-  if (pageSize)
-      fieldsView = fieldsView.slice(startIndex.current, pageSize + startIndex.current)
+  fieldsView = fieldsView.slice(startIndex.current, pageSize + startIndex.current)
 
   const onDescriptionChange = (entryid, isChanged) => {
     let tmp = JSON.parse(JSON.stringify(lookupChanged))
