@@ -41,7 +41,16 @@ import * as Yup from "yup";
 const validationSchema = Yup.object().shape({
   defaultPorts: Yup.array().of(
     Yup.object().shape({
-      name: Yup.string().required("This field is required").matches(/^[a-zA-Z][A-Za-z0-9\-_]*$/, "Name can contain alphanumeric characters, dash and underscore, but must always begin with a letter"),
+      name: Yup.string()
+      .required("This field is required")
+      .matches(/^[a-zA-Z][A-Za-z0-9\-_]*$/, "Name can contain alphanumeric characters, dash and underscore, but must always begin with a letter")
+      .test("unique", "Duplicate", function (value) {
+        if (this.options.context.map(e => e.name).includes(value))
+          return false
+
+        else
+          return true
+      }),
       value: Yup.string().required("This field is required").matches(/^[0-9]*$/, "Value must contain numeric characters")
     })
   )
@@ -53,14 +62,15 @@ const PortsList = ({ data }) => {
 
   const queryClient = useQueryClient()
 
-  const { control, setValue, getValues, handleSubmit, formState: {errors, isValid}, trigger } = useForm({
+  const { control, setValue, getValues, handleSubmit, formState: { errors } } = useForm({
     defaultValues: {
       defaultPorts: data.length > 0 ? data.map(e => { return { ...e, new: false } }) : [{ id: 0, name: "", value: "", new: true }],
       searchPortName: "",
       searchPortValue: ""
     },
     mode: "all",
-    resolver: yupResolver(validationSchema)
+    resolver: yupResolver(validationSchema),
+    context: data.length > 0 ? data.map(e => { return { ...e, new: false } }) : [{ id: 0, name: "", value: "", new: true }]
   })
 
   const mutation = useMutation(async (values) => await backend.addObject("/api/v2/internal/default_ports/", values))
@@ -70,7 +80,6 @@ const PortsList = ({ data }) => {
   const [modalMsg, setModalMsg] = useState('')
   const [modalFunc, setModalFunc] = useState(undefined)
   const [isDeleted, setIsDeleted] = useState(false)
-  const [isDuplicate, setIsDuplicate] = useState(false)
 
   const searchPortName = useWatch({ control, name: "searchPortName" })
   const searchPortValue = useWatch({ control, name: "searchPortValue" })
@@ -86,13 +95,10 @@ const PortsList = ({ data }) => {
   }
 
   const onSubmit = () => {
-    trigger()
-    if (isValid && !isDuplicate) {
-      setModalMsg("Are you sure you want to change default ports?")
-      setModalTitle("Change default ports")
-      setModalFunc(() => doSave)
-      setAreYouSureModal(!areYouSureModal)
-    }
+    setModalMsg("Are you sure you want to change default ports?")
+    setModalTitle("Change default ports")
+    setModalFunc(() => doSave)
+    setAreYouSureModal(!areYouSureModal)
   }
 
   const doSave = () => {
@@ -221,34 +227,19 @@ const PortsList = ({ data }) => {
                                     <Input
                                       {...field}
                                       data-testid={`defaultPorts.${index}.name`}
-                                      onChange={(e) => {
-                                        field.onChange(e)
-                                        if (fields.map(e => e.name).includes(e.target.value))
-                                          setIsDuplicate(true)
-
-                                        else
-                                          setIsDuplicate(false)
-                                      }}
-                                      className={`form-control ${errors?.defaultPorts?.[index]?.name || isDuplicate ? "is-invalid" : entry.new ? "border border-success" : ""}`}
+                                      className={`form-control ${errors?.defaultPorts?.[index]?.name ? "is-invalid" : entry.new ? "border border-success" : ""}`}
                                     />
                                   }
                                 />
-                                {
-                                  isDuplicate ?
+                                <ErrorMessage
+                                  errors={errors}
+                                  name={`defaultPorts.${index}.name`}
+                                  render={({ message }) =>
                                     <FormFeedback invalid="true" className="end-0">
-                                      Duplicated
+                                      { message }
                                     </FormFeedback>
-                                  :
-                                    <ErrorMessage
-                                      errors={errors}
-                                      name={`defaultPorts.${index}.name`}
-                                      render={({ message }) =>
-                                        <FormFeedback invalid="true" className="end-0">
-                                          { message }
-                                        </FormFeedback>
-                                      }
-                                    />
-                                }
+                                  }
+                                />
                               </InputGroup>
                             :
                               <span className="ms-2 fw-bold">{ entry.name }</span>
