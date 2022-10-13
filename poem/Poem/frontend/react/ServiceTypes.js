@@ -631,7 +631,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                     fieldsView.map((entry, index) =>
                       <tr key={entry.id} data-testid={`rows-serviceTypes.${index}`}>
                         <td className="align-middle text-center">
-                          { pageIndex === 0 ? index + 1 : index + (pageSize * pageIndex) + 1}
+                          { lookupIndexes[entry.id] + 1 }
                         </td>
                         <td className="align-middle text-left fw-bold">
                           <span className="ms-2">{ entry.name }</span>
@@ -714,8 +714,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                     onChange={e => {
                       setPageSize(Number(e.target.value))
                       setPageCount(fields, e.target.value)
-                      // FIXME
-                      setPageIndex(0)
+                      setPageIndex(Math.trunc(startIndex.current / e.target.value))
                     }}
                   >
                     {[30, 50, 100, fields.length].map(pageSize => (
