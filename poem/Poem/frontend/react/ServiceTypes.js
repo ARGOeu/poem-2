@@ -699,10 +699,10 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                     </PaginationItem>
                   )
                 }
-                <PaginationItem disabled={pageIndex === pageCount - 1}>
+                <PaginationItem disabled={pageIndex === pageCount.current - 1}>
                   <PaginationLink aria-label="Next" next onClick={() => gotoPage(pageIndex + 1)}/>
                 </PaginationItem>
-                <PaginationItem disabled={pageIndex === pageCount - 1}>
+                <PaginationItem disabled={pageIndex === pageCount.current - 1}>
                   <PaginationLink aria-label="Last" last onClick={() => gotoPage(pageCount.current - 1)}/>
                 </PaginationItem>
                 <PaginationItem>
