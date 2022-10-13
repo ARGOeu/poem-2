@@ -308,8 +308,13 @@ describe('Test service types list - Bulk change and delete', () => {
 
     const paginationRoot = screen.getByRole('navigation', {name: /pagination/})
     const paginationLinks = within(paginationRoot).getAllByRole('listitem')
-    screen.debug(paginationLinks)
     expect(paginationLinks).toHaveLength(6)
+    expect(paginationLinks[0]).toHaveTextContent('First')
+    expect(paginationLinks[1]).toHaveTextContent('Previous')
+    expect(paginationLinks[2]).toHaveTextContent('1')
+    expect(paginationLinks[3]).toHaveTextContent('Next')
+    expect(paginationLinks[4]).toHaveTextContent('Last')
+    expect(paginationLinks[5]).toHaveTextContent('6 service types')
   })
 
   test('Test bulk delete', async () => {
