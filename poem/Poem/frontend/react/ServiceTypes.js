@@ -536,13 +536,12 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
 
   if (endIndex - startIndex.current === fullLen)
     pageCount.current = 1
-  else if (searchLen <= pageSize && (searchService || searchDesc))
+  else if ((searchService || searchDesc) && searchLen <= pageSize)
     pageCount.current = 1
-  else if (searchLen > pageSize && (searchService || searchDesc))
+  else if ((searchService || searchDesc) && searchLen > pageSize)
     pageCount.current = Math.trunc(searchLen / pageSize) + 1
   else
     pageCount.current = Math.trunc(fullLen / pageSize) + 1
-
 
   return (
     <>
@@ -715,6 +714,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                     onChange={e => {
                       setPageSize(Number(e.target.value))
                       setPageCount(fields, e.target.value)
+                      // FIXME
                       setPageIndex(0)
                     }}
                   >
