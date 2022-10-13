@@ -314,7 +314,7 @@ describe('Test service types list - Bulk change and delete', () => {
     expect(paginationLinks[2]).toHaveTextContent('1')
     expect(paginationLinks[3]).toHaveTextContent('Next')
     expect(paginationLinks[4]).toHaveTextContent('Last')
-    expect(paginationLinks[5]).toHaveTextContent('6 service types')
+    expect(paginationLinks[5]).toHaveTextContent('30 service types')
   })
 
   test('Test bulk delete', async () => {
