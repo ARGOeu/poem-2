@@ -707,8 +707,8 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                 </PaginationItem>
                 <PaginationItem>
                   <select
-                    style={{width: '150px'}}
-                    className="ms-1 form-control custom-select text-primary"
+                    style={{width: '180px'}}
+                    className="ms-1 form-control form-select text-primary"
                     aria-label="Number of service types"
                     value={pageSize}
                     onChange={e => {
