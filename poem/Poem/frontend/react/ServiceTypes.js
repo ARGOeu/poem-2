@@ -543,6 +543,16 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
   else
     pageCount.current = Math.trunc(fullLen / pageSize) + 1
 
+  let pageNumArray = Array()
+  if (fullLen <= 30)
+    pageNumArray = [30]
+  else if (fullLen > 30 && fullLen <= 50)
+    pageNumArray = [30, 50]
+  else if (fullLen > 50 && fullLen <= 100)
+    pageNumArray = [30, 50, 100]
+  else if (fullLen > 100)
+    pageNumArray = [30, 50, 100, fullLen]
+
   return (
     <>
       <ModalAreYouSure
@@ -717,7 +727,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                       setPageIndex(Math.trunc(startIndex.current / e.target.value))
                     }}
                   >
-                    {[30, 50, 100, fields.length].map(pageSize => (
+                    {pageNumArray.map(pageSize => (
                       <option label={`${pageSize} service types`} key={pageSize} value={pageSize}>
                         {pageSize} service types
                       </option>
