@@ -508,6 +508,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
   let lookupIndexes = _.fromPairs(fields.map((e, index) => [e.id, index]))
 
   let fieldsView = fields
+  const fullLen = fieldsView.length
 
   if (searchService && searchDesc) {
     fieldsView = fields.filter(e => e.name.toLowerCase().includes(searchService.toLowerCase()))
@@ -517,12 +518,22 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     fieldsView = fields.filter(e => e.description.toLowerCase().includes(searchDesc.toLowerCase()))
   else if (searchService)
     fieldsView = fields.filter(e => e.name.toLowerCase().includes(searchService.toLowerCase()))
+  const searchLen = fieldsView.length
 
-  fieldsView = fieldsView.slice(startIndex.current, pageSize + startIndex.current)
-  if (fieldsView.length < pageSize && pageIndex + 1 !== pageCount.current)
+  let endIndex = pageSize + startIndex.current
+  if (endIndex >= fullLen)
+    endIndex = fullLen
+
+  fieldsView = fieldsView.slice(startIndex.current, endIndex)
+
+  if (endIndex - startIndex.current === fullLen)
     pageCount.current = 1
+  else if (searchLen <= pageSize && (searchService || searchDesc))
+    pageCount.current = 1
+  else if (searchLen > pageSize && (searchService || searchDesc))
+    pageCount.current = Math.trunc(searchLen / pageSize) + 1
   else
-    pageCount.current = Math.trunc(dataWithChecked.length / pageSize) + 1
+    pageCount.current = Math.trunc(fullLen / pageSize) + 1
 
   const onDescriptionChange = (entryid, isChanged) => {
     let tmp = JSON.parse(JSON.stringify(lookupChanged))
@@ -692,7 +703,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                   <PaginationLink aria-label="Next" next onClick={() => gotoPage(pageIndex + 1)}/>
                 </PaginationItem>
                 <PaginationItem disabled={pageIndex === pageCount - 1}>
-                  <PaginationLink aria-label="Last" last onClick={() => gotoPage(pageCount - 1)}/>
+                  <PaginationLink aria-label="Last" last onClick={() => gotoPage(pageCount.current - 1)}/>
                 </PaginationItem>
                 <PaginationItem>
                   <select
