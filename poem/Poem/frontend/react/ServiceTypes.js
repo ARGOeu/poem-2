@@ -505,6 +505,14 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     setPageIndex(i)
   }
 
+  function onDescriptionChange (entryid, isChanged) {
+    let tmp = JSON.parse(JSON.stringify(lookupChanged))
+    if (tmp[entryid] !== isChanged) {
+      tmp[entryid] = isChanged
+      setLookupChanged(tmp)
+    }
+  }
+
   let lookupIndexes = _.fromPairs(fields.map((e, index) => [e.id, index]))
 
   let fieldsView = fields
@@ -535,13 +543,6 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
   else
     pageCount.current = Math.trunc(fullLen / pageSize) + 1
 
-  const onDescriptionChange = (entryid, isChanged) => {
-    let tmp = JSON.parse(JSON.stringify(lookupChanged))
-    if (tmp[entryid] !== isChanged) {
-      tmp[entryid] = isChanged
-      setLookupChanged(tmp)
-    }
-  }
 
   return (
     <>
