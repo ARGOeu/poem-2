@@ -370,18 +370,23 @@ export const MetricProfilesComponent = (props) => {
     {
       enabled: (publicView || !addview),
       initialData: () => {
-        return queryClient.getQueryData([`${publicView ? 'public_' : ''}metricprofile`, "backend"])?.find(mpr => mpr.name === profile_name)
+        if (!addview)
+          return queryClient.getQueryData([`${publicView ? 'public_' : ''}metricprofile`, "backend"])?.find(mpr => mpr.name === profile_name)
       }
     }
   )
 
+
   const { data: webApiMP, error: errorWebApiMP, isLoading: loadingWebApiMP } = useQuery(
     [`${publicView ? 'public_' : ''}metricprofile`, 'webapi', profile_name],
-    () => fetchMetricProfile(webapi, backendMP.apiid),
+    async () => {
+      return fetchMetricProfile(webapi, backendMP.apiid)
+    },
     {
-      enabled: !!backendMP,
+      enabled: !!backendMP && !addview,
       initialData: () => {
-        return queryClient.getQueryData([`${publicView ? "public_" : ""}metricprofile`, "webapi"])?.find(profile => profile.id == backendMP.apiid)
+        if (!addview)
+          return queryClient.getQueryData([`${publicView ? "public_" : ""}metricprofile`, "webapi"])?.find(profile => profile.id == backendMP.apiid)
       }
     }
   )
