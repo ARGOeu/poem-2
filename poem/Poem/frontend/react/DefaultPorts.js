@@ -45,11 +45,12 @@ const validationSchema = Yup.object().shape({
       .required("This field is required")
       .matches(/^[a-zA-Z][A-Za-z0-9\-_]*$/, "Name can contain alphanumeric characters, dash and underscore, but must always begin with a letter")
       .test("unique", "Duplicate", function (value) {
-        if (this.options.context.map(e => e.name).includes(value))
-          return false
+        let arr = this.options.context.map(e => e.name)
+        if (arr.indexOf(value) === arr.lastIndexOf(value))
+          return true
 
         else
-          return true
+          return false
       }),
       value: Yup.string().required("This field is required").matches(/^[0-9]*$/, "Value must contain numeric characters")
     })
@@ -62,6 +63,15 @@ const PortsList = ({ data }) => {
 
   const queryClient = useQueryClient()
 
+  const mutation = useMutation(async (values) => await backend.addObject("/api/v2/internal/default_ports/", values))
+
+  const [areYouSureModal, setAreYouSureModal] = useState(false)
+  const [modalTitle, setModalTitle] = useState('')
+  const [modalMsg, setModalMsg] = useState('')
+  const [modalFunc, setModalFunc] = useState(undefined)
+  const [isDeleted, setIsDeleted] = useState(false)
+  const [contextData, setContextData] = useState(new Object())
+
   const { control, setValue, getValues, handleSubmit, formState: { errors } } = useForm({
     defaultValues: {
       defaultPorts: data.length > 0 ? data.map(e => { return { name: e.name, value: e.value, new: false } }) : [{ name: "", value: "", new: true }],
@@ -70,25 +80,22 @@ const PortsList = ({ data }) => {
     },
     mode: "all",
     resolver: yupResolver(validationSchema),
-    context: data.length > 0 ? data.map(e => { return { name: e.name, value: e.value, new: false } }) : [{ name: "", value: "", new: true }]
+    context: contextData
   })
-
-  const mutation = useMutation(async (values) => await backend.addObject("/api/v2/internal/default_ports/", values))
-
-  const [areYouSureModal, setAreYouSureModal] = useState(false)
-  const [modalTitle, setModalTitle] = useState('')
-  const [modalMsg, setModalMsg] = useState('')
-  const [modalFunc, setModalFunc] = useState(undefined)
-  const [isDeleted, setIsDeleted] = useState(false)
 
   const searchPortName = useWatch({ control, name: "searchPortName" })
   const searchPortValue = useWatch({ control, name: "searchPortValue" })
+  const defaultPorts = useWatch({ control, name: "defaultPorts" })
 
   const { fields, insert, remove } = useFieldArray({ control, name: "defaultPorts" })
 
   useEffect(() => {
     setValue("defaultPorts", data.length > 0 ? data.map(e => { return { name: e.name, value: e.value } }) : [{ name: "", value: "", new: true }])
   }, [data])
+
+  useEffect(() => {
+    setContextData(defaultPorts)
+  }, [defaultPorts])
 
   const toggleModal = () => {
     setAreYouSureModal(!areYouSureModal)
