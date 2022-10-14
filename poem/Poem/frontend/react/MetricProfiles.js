@@ -379,9 +379,7 @@ export const MetricProfilesComponent = (props) => {
 
   const { data: webApiMP, error: errorWebApiMP, isLoading: loadingWebApiMP } = useQuery(
     [`${publicView ? 'public_' : ''}metricprofile`, 'webapi', profile_name],
-    async () => {
-      return fetchMetricProfile(webapi, backendMP.apiid)
-    },
+    () => fetchMetricProfile(webapi, backendMP.apiid),
     {
       enabled: !!backendMP && !addview,
       initialData: () => {
