@@ -1482,3 +1482,40 @@ class ListMetricConfigurationAPIViewTests(TenantTestCase):
                 }
             }
         )
+
+
+class ListDefaultPortsTests(TenantTestCase):
+    def setUp(self):
+        self.token = create_credentials()
+        self.view = views.ListDefaultPorts.as_view()
+        self.factory = TenantRequestFactory(self.tenant)
+        self.url = '/api/v2/metricoverrides'
+
+        admin_models.DefaultPort.objects.create(
+            name="SITE_BDII_PORT", value="2170"
+        )
+        admin_models.DefaultPort.objects.create(name="BDII_PORT", value="2170")
+        admin_models.DefaultPort.objects.create(name="GRAM_PORT", value="2119")
+        admin_models.DefaultPort.objects.create(
+            name="MYPROXY_PORT", value="7512"
+        )
+
+    def test_list_default_ports_if_wrong_token(self):
+        request = self.factory.get(
+            self.url, **{'HTTP_X_API_KEY': 'wrong_token'}
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_list_default_ports(self):
+        request = self.factory.get(self.url, **{'HTTP_X_API_KEY': self.token})
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            {
+                "BDII_PORT": "2170",
+                "GRAM_PORT": "2119",
+                "MYPROXY_PORT": "7512",
+                "SITE_BDII_PORT": "2170"
+            }
+        )

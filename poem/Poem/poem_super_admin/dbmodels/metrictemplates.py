@@ -104,3 +104,18 @@ class MetricTemplateHistory(models.Model):
 
     def natural_key(self):
         return (self.name, self.probekey)
+
+
+class DefaultPort(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=128, unique=True)
+    value = models.CharField(max_length=128)
+
+    class Meta:
+        app_label = 'poem_super_admin'
+
+    def __str__(self):
+        return u'%s' % self.name
+
+    def natural_key(self):
+        return (self.name,)

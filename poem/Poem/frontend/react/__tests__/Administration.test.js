@@ -88,7 +88,7 @@ describe('Tests for super admin administration', () => {
     renderSuperAdminAdministration();
 
     expect(screen.getByRole('heading', { name: /admin/i }).textContent).toBe('Administration');
-    expect(screen.getAllByRole('link')).toHaveLength(8);
+    expect(screen.getAllByRole('link')).toHaveLength(9);
 
     expect(screen.getByRole('link', { name: 'Tenants' })).toHaveProperty('href', 'http://localhost/ui/tenants');
     expect(screen.getByRole('link', { name: 'YUM repos' })).toHaveProperty('href', 'http://localhost/ui/yumrepos');
@@ -96,6 +96,7 @@ describe('Tests for super admin administration', () => {
     expect(screen.getByRole('link', { name: 'Probes' })).toHaveProperty('href', 'http://localhost/ui/probes');
     expect(screen.getByRole('link', { name: 'Metric tags' })).toHaveProperty('href', 'http://localhost/ui/metrictags');
     expect(screen.getByRole('link', { name: 'Metric templates' })).toHaveProperty('href', 'http://localhost/ui/metrictemplates');
+    expect(screen.getByRole('link', { name: 'Default ports' })).toHaveProperty('href', 'http://localhost/ui/administration/default_ports');
 
     expect(screen.getByRole('link', { name: 'Users' })).toHaveProperty('href', 'http://localhost/ui/administration/users');
 
