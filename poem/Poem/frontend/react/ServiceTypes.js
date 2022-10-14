@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { WebApi } from './DataManager';
 import { useQuery, useQueryClient, useMutation } from 'react-query';
@@ -12,6 +12,9 @@ import {
   Label,
   Row,
   Table,
+  PaginationItem,
+  PaginationLink,
+  Pagination,
 } from 'reactstrap';
 import {
   BaseArgoTable,
@@ -367,6 +370,12 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
   const [modalMsg, setModalMsg] = React.useState('')
   const [modalFunc, setModalFunc] = React.useState(undefined)
 
+  const [pageSize, setPageSize] = useState(30)
+  const [pageIndex, setPageIndex] = useState(0)
+
+  let startIndex = useRef(0)
+  let pageCount = useRef(1)
+
   const queryClient = useQueryClient();
   const webapiAddMutation = useMutation(async (values) => await webapi.addServiceTypes(values));
 
@@ -403,7 +412,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
   }
   const [lookupChanged, setLookupChanged] = React.useState(initChangedDesc())
 
-  const postServiceTypesWebApi = (data, action, title) => {
+  function postServiceTypesWebApi(data, action, title) {
     webapiAddMutation.mutate(data, {
       onSuccess: () => {
         queryClient.invalidateQueries('servicetypes');
@@ -423,7 +432,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     })
   }
 
-  const doSave = () => {
+  function doSave() {
     let values = getValues('serviceTypes')
     replace(values)
     postServiceTypesWebApi([...values.map(
@@ -436,14 +445,14 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     setLookupChanged(initChangedDesc())
   }
 
-  const onSave = () => {
+  function onSave() {
     setModalMsg(`Are you sure you want to change Service type?`)
     setModalTitle('Change service type')
     setModalFunc(() => doSave)
     setAreYouSureModal(!areYouSureModal);
   }
 
-  const onChange = (event, entryid) => {
+  function onChange(event, entryid) {
     let value = event.target.checked ? true : false
     let values = getValues('serviceTypes')
     let index = fields.findIndex(field => field.id === entryid)
@@ -455,7 +464,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     })
   }
 
-  const doDelete = () => {
+  function doDelete() {
     let cleaned = fields.filter(e => !e.checked)
     setValue("serviceTypes", cleaned)
     postServiceTypesWebApi([...cleaned.map(
@@ -467,7 +476,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
       'deleted', 'Delete')
   }
 
-  const onDelete = () => {
+  function onDelete() {
     let cleaned = fields.filter(e => !e.checked)
 
     setModalMsg(`Are you sure you want to delete ${fields.length - cleaned.length} Service types?`)
@@ -476,23 +485,73 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     setAreYouSureModal(!areYouSureModal);
   }
 
-  let lookupIndexes = _.fromPairs(fields.map((e, index) => [e.id, index]))
+  function setPageCount(dataArray, pagesize) {
+    let result = Math.trunc(dataArray.length / pagesize)
+    let remainder = dataArray.length % pagesize
 
-  let fieldsView = fields
-  if (searchService)
-    fieldsView = fields.filter(e => e.name.toLowerCase().includes(searchService.toLowerCase()))
+    if (result === 0)
+      pageCount.current = 1
 
-  if (searchDesc)
-    fieldsView = fields.filter(e => e.description.toLowerCase().includes(searchDesc.toLowerCase()))
+    else {
+      if (remainder)
+        pageCount.current = result + 1
+      else
+        pageCount.current = result
+    }
+  }
 
+  function gotoPage(i) {
+    startIndex.current = i * pageSize
+    setPageIndex(i)
+  }
 
-  const onDescriptionChange = (entryid, isChanged) => {
+  function onDescriptionChange (entryid, isChanged) {
     let tmp = JSON.parse(JSON.stringify(lookupChanged))
     if (tmp[entryid] !== isChanged) {
       tmp[entryid] = isChanged
       setLookupChanged(tmp)
     }
   }
+
+  let lookupIndexes = _.fromPairs(fields.map((e, index) => [e.id, index]))
+
+  let fieldsView = fields
+  const fullLen = fieldsView.length
+
+  if (searchService && searchDesc) {
+    fieldsView = fields.filter(e => e.name.toLowerCase().includes(searchService.toLowerCase()))
+    fieldsView = fieldsView.filter(e => e.description.toLowerCase().includes(searchDesc.toLowerCase()))
+  }
+  else if (searchDesc)
+    fieldsView = fields.filter(e => e.description.toLowerCase().includes(searchDesc.toLowerCase()))
+  else if (searchService)
+    fieldsView = fields.filter(e => e.name.toLowerCase().includes(searchService.toLowerCase()))
+  const searchLen = fieldsView.length
+
+  let endIndex = pageSize + startIndex.current
+  if (endIndex >= fullLen)
+    endIndex = fullLen
+
+  fieldsView = fieldsView.slice(startIndex.current, endIndex)
+
+  if (endIndex - startIndex.current === fullLen)
+    pageCount.current = 1
+  else if ((searchService || searchDesc) && searchLen <= pageSize)
+    pageCount.current = 1
+  else if ((searchService || searchDesc) && searchLen > pageSize)
+    pageCount.current = Math.trunc(searchLen / pageSize) + 1
+  else
+    pageCount.current = Math.trunc(fullLen / pageSize) + 1
+
+  let pageNumArray = Array()
+  if (fullLen <= 30)
+    pageNumArray = [30]
+  else if (fullLen > 30 && fullLen <= 50)
+    pageNumArray = [30, 50]
+  else if (fullLen > 50 && fullLen <= 100)
+    pageNumArray = [30, 50, 100]
+  else if (fullLen > 100)
+    pageNumArray = [30, 50, 100, fullLen]
 
   return (
     <>
@@ -582,7 +641,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                     fieldsView.map((entry, index) =>
                       <tr key={entry.id} data-testid={`rows-serviceTypes.${index}`}>
                         <td className="align-middle text-center">
-                          {index + 1}
+                          { lookupIndexes[entry.id] + 1 }
                         </td>
                         <td className="align-middle text-left fw-bold">
                           <span className="ms-2">{ entry.name }</span>
@@ -630,6 +689,52 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                   }
                 </tbody>
               </Table>
+            </Col>
+          </Row>
+          <Row>
+            <Col className="d-flex justify-content-center align-self-center">
+              <Pagination className="mt-2">
+                <PaginationItem disabled={pageIndex === 0}>
+                  <PaginationLink aria-label="First" first onClick={() => gotoPage(0)}/>
+                </PaginationItem>
+                <PaginationItem disabled={pageIndex === 0}>
+                  <PaginationLink aria-label="Previous" previous onClick={() => gotoPage(pageIndex - 1)}/>
+                </PaginationItem>
+                {
+                  [...Array(pageCount.current)].map((e, i) =>
+                    <PaginationItem active={pageIndex === i ? true : false} key={i}>
+                      <PaginationLink onClick={() => gotoPage(i)}>
+                        { i + 1 }
+                      </PaginationLink>
+                    </PaginationItem>
+                  )
+                }
+                <PaginationItem disabled={pageIndex === pageCount.current - 1}>
+                  <PaginationLink aria-label="Next" next onClick={() => gotoPage(pageIndex + 1)}/>
+                </PaginationItem>
+                <PaginationItem disabled={pageIndex === pageCount.current - 1}>
+                  <PaginationLink aria-label="Last" last onClick={() => gotoPage(pageCount.current - 1)}/>
+                </PaginationItem>
+                <PaginationItem>
+                  <select
+                    style={{width: '180px'}}
+                    className="ms-1 form-control form-select text-primary"
+                    aria-label="Number of service types"
+                    value={pageSize}
+                    onChange={e => {
+                      setPageSize(Number(e.target.value))
+                      setPageCount(fields, e.target.value)
+                      setPageIndex(Math.trunc(startIndex.current / e.target.value))
+                    }}
+                  >
+                    {pageNumArray.map(pageSize => (
+                      <option label={`${pageSize} service types`} key={pageSize} value={pageSize}>
+                        {pageSize} service types
+                      </option>
+                    ))}
+                  </select>
+                </PaginationItem>
+              </Pagination>
             </Col>
           </Row>
         </Form>

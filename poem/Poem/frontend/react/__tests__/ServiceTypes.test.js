@@ -305,6 +305,16 @@ describe('Test service types list - Bulk change and delete', () => {
     expect(tableRows[4]).toHaveTextContent('4argo.monARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.')
     expect(tableRows[5]).toHaveTextContent('5argo.poemPOEM is system for managing profiles of probes and metrics in ARGO system.')
     expect(tableRows[6]).toHaveTextContent('6argo.webuiARGO web user interface for metric A/R visualization and recalculation management.')
+
+    const paginationRoot = screen.getByRole('navigation', {name: /pagination/})
+    const paginationLinks = within(paginationRoot).getAllByRole('listitem')
+    expect(paginationLinks).toHaveLength(6)
+    expect(paginationLinks[0]).toHaveTextContent('First')
+    expect(paginationLinks[1]).toHaveTextContent('Previous')
+    expect(paginationLinks[2]).toHaveTextContent('1')
+    expect(paginationLinks[3]).toHaveTextContent('Next')
+    expect(paginationLinks[4]).toHaveTextContent('Last')
+    expect(paginationLinks[5]).toHaveTextContent('30 service types')
   })
 
   test('Test bulk delete', async () => {
