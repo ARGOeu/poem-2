@@ -64,13 +64,13 @@ const PortsList = ({ data }) => {
 
   const { control, setValue, getValues, handleSubmit, formState: { errors } } = useForm({
     defaultValues: {
-      defaultPorts: data.length > 0 ? data.map(e => { return { ...e, new: false } }) : [{ id: 0, name: "", value: "", new: true }],
+      defaultPorts: data.length > 0 ? data.map(e => { return { name: e.name, value: e.value, new: false } }) : [{ name: "", value: "", new: true }],
       searchPortName: "",
       searchPortValue: ""
     },
     mode: "all",
     resolver: yupResolver(validationSchema),
-    context: data.length > 0 ? data.map(e => { return { ...e, new: false } }) : [{ id: 0, name: "", value: "", new: true }]
+    context: data.length > 0 ? data.map(e => { return { name: e.name, value: e.value, new: false } }) : [{ name: "", value: "", new: true }]
   })
 
   const mutation = useMutation(async (values) => await backend.addObject("/api/v2/internal/default_ports/", values))
@@ -87,7 +87,7 @@ const PortsList = ({ data }) => {
   const { fields, insert, remove } = useFieldArray({ control, name: "defaultPorts" })
 
   useEffect(() => {
-    setValue("defaultPorts", data.length > 0 ? data : [{ id: 0, name: "", value: "", new: true }])
+    setValue("defaultPorts", data.length > 0 ? data.map(e => { return { name: e.name, value: e.value } }) : [{ name: "", value: "", new: true }])
   }, [data])
 
   const toggleModal = () => {
@@ -294,7 +294,7 @@ const PortsList = ({ data }) => {
                             type="button"
                             data-testid={`insert-${index}`}
                             onClick={() => {
-                              insert(index + 1, { id: "0", name: "", value: "", new: true })
+                              insert(index + 1, { name: "", value: "", new: true })
                             }}
                           >
                             <FontAwesomeIcon icon={faPlus} />
