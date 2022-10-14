@@ -396,8 +396,9 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     data.forEach(entry => tmpArray.push(entry.name.length))
     return Math.max(...tmpArray)
   }
-  let maxNamePx = longestName(data) * 8 + 10
-
+  let columnNameWidth = longestName(data) * 8
+  columnNameWidth = Math.max(220, columnNameWidth)
+  columnNameWidth = Math.min(360, columnNameWidth)
 
   const searchService = useWatch({control, name: "searchService"})
   const searchDesc = useWatch({control, name: "searchDesc"})
@@ -608,7 +609,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                     <td className="align-middle text-center">
                       <FontAwesomeIcon icon={faSearch}/>
                     </td>
-                    <td className="align-middle text-center" style={{'width': `${maxNamePx}px`}}>
+                    <td className="align-middle text-center" style={{'width': `${columnNameWidth}px`}}>
                       <Controller
                         name="searchService"
                         control={control}
