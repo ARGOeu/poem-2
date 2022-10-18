@@ -12,7 +12,6 @@ import {
   ParagraphTitle,
   BaseArgoTable
 } from './UIElements';
-import { Formik, Form, Field } from 'formik';
 import {
   Alert,
   FormGroup,
@@ -23,11 +22,13 @@ import {
   Button,
   InputGroup,
   InputGroupText,
-  Input
+  Input,
+  Form
 } from 'reactstrap';
 import { faClipboard } from '@fortawesome/free-solid-svg-icons';
 import { useQuery, useQueryClient, useMutation } from 'react-query';
 import { fetchAPIKeys } from './QueryFunctions';
+import { Controller, useForm } from 'react-hook-form';
 
 
 const fetchAPIKey = async(name) => {
@@ -125,12 +126,7 @@ export const APIKeyList = (props) => {
 }
 
 
-export const APIKeyChange = (props) => {
-  const name = props.match.params.name;
-  const location = props.location;
-  const addview = props.addview;
-  const history = props.history;
-
+const APIKeyForm = ({ name, data, addview, history, location }) => {
   const backend = new Backend();
 
   const queryClient = useQueryClient();
@@ -143,18 +139,16 @@ export const APIKeyChange = (props) => {
   const [modalTitle, setModalTitle] = useState(undefined)
   const [modalMsg, setModalMsg] = useState(undefined)
   const [onYes, setOnYes] = useState('')
-  const [formikValues, setFormikValues] = useState({})
   const refToken = useRef(null);
 
-  const { data: key, error: error, status: status } = useQuery(
-    ['apikey', name], () => fetchAPIKey(name),
-    { enabled: !addview }
-  )
+  const { control, handleSubmit, setValue, getValues } = useForm({
+    defaultValues: !addview ? data : { name: "", revoked: false, token: "" }
+  })
 
   const doChange = (values) => {
     if (!addview) {
       changeMutation.mutate(
-        { id: key.id, revoked: values.revoked, name: values.name }, {
+        { id: values.id, revoked: values.revoked, name: values.name }, {
           onSuccess: () => {
             queryClient.invalidateQueries('apikey');
             NotifyOk({
@@ -191,7 +185,7 @@ export const APIKeyChange = (props) => {
     }
   };
 
-  const onSubmitHandle = (values) => {
+  const onSubmitHandle = () => {
     let msg = `Are you sure you want to ${addview ? 'add' : 'change'} API key?`;
     let title = `${addview ? 'Add' : 'Change'}`;
 
@@ -199,7 +193,6 @@ export const APIKeyChange = (props) => {
     setModalMsg(msg)
     setModalTitle(title)
     setOnYes('change')
-    setFormikValues(values)
   }
 
   const doDelete = () => {
@@ -225,7 +218,7 @@ export const APIKeyChange = (props) => {
     if (onYes === 'delete')
       doDelete(name);
     else if (onYes === 'change')
-      doChange(formikValues);
+      doChange(getValues());
   }
 
   const copyToClipboard = (e) => {
@@ -237,134 +230,159 @@ export const APIKeyChange = (props) => {
     });
   }
 
+  return (
+    <BaseArgoView
+      resourcename='API key'
+      location={location}
+      addview={addview}
+      history={false}
+      modal={true}
+      state={{areYouSureModal, 'modalFunc': onYesCallback, modalTitle, modalMsg}}
+      toggle={() => setAreYouSureModal(!areYouSureModal)}>
+      <Form onSubmit={ handleSubmit(onSubmitHandle) }>
+        <FormGroup>
+          <Row>
+            <Col md={6}>
+              <Label for='name'>Name</Label>
+              <Controller
+                name="name"
+                control={ control }
+                render={ ({ field }) =>
+                  <Input
+                    {...field}
+                    data-testid="name"
+                    className="form-control"
+                  />
+                }
+              />
+              <FormText color='muted'>
+                A free-form unique identifier of the client. 50 characters max.
+              </FormText>
+            </Col>
+          </Row>
+          <Row className='mt-2'>
+            <Col md={6}>
+              <Row>
+                <FormGroup check inline className='ms-3'>
+                  <Controller
+                    name="revoked"
+                    control={control}
+                    render={ ({ field }) => {
+                      return (
+                        <Input
+                          {...field}
+                          type='checkbox'
+                          onChange={e => setValue("revoked", e.target.checked)}
+                          checked={field.value}
+                        />
+
+                      )
+                    }}
+                  />
+                  <Label check for='revoked'>Revoked</Label>
+                </FormGroup>
+              </Row>
+              <Row>
+                <FormText color='muted'>
+                  If the API key is revoked, clients cannot use it any more. (This cannot be undone.)
+                </FormText>
+              </Row>
+            </Col>
+          </Row>
+        </FormGroup>
+        <FormGroup>
+          <ParagraphTitle title='Credentials'/>
+          {
+            addview &&
+              <Alert color="info" className="text-center">
+                If token field is <b>left empty</b>, value will be automatically generated on save.
+              </Alert>
+          }
+          <Row className="g-0">
+            <Col sm={6}>
+              <InputGroup>
+                <InputGroupText>Token</InputGroupText>
+                <Controller
+                  name="token"
+                  control={ control }
+                  render={ ({ field }) =>
+                    <Input
+                      {...field}
+                      data-testid="token"
+                      className="form-control"
+                      disabled={ addview ? false : true }
+                      innerRef={ refToken }
+                    />
+                  }
+                />
+              </InputGroup>
+              <FormText color='muted'>
+                A public, unique identifier for this API key.
+              </FormText>
+            </Col>
+            {
+              !addview &&
+              <Col sm={2}>
+                <Button className="btn" color="success" onClick={(e) => copyToClipboard(e)}>
+                  <FontAwesomeIcon icon={faClipboard} size="lg" color='white'/>
+                </Button>
+              </Col>
+            }
+          </Row>
+        </FormGroup>
+        {
+          <div className={!addview ? "submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5" : "submit-row d-flex align-items-center justify-content-end bg-light p-3 mt-5"}>
+            {
+              (!addview) &&
+              <Button
+                color='danger'
+                onClick={() => {
+                  setModalMsg('Are you sure you want to delete API key?')
+                  setModalTitle('Delete API key')
+                  setAreYouSureModal(!areYouSureModal);
+                  setOnYes('delete')
+                }}
+              >
+                Delete
+              </Button>
+            }
+            <Button
+              color='success'
+              id='submit-button'
+              type='submit'
+            >
+              Save
+            </Button>
+          </div>
+        }
+      </Form>
+    </BaseArgoView>
+  )
+}
+
+
+export const APIKeyChange = (props) => {
+  const name = props.match.params.name;
+  const location = props.location;
+  const addview = props.addview;
+  const history = props.history;
+
+
+  const { data: key, error: error, status: status } = useQuery(
+    ['apikey', name], () => fetchAPIKey(name),
+    { enabled: !addview }
+  )
+
   if (status === 'loading')
     return (<LoadingAnim/>);
 
   else if (status === 'error')
     return (<ErrorComponent error={error}/>);
 
-  else
+  else if (key || addview)
     return (
-      <BaseArgoView
-        resourcename='API key'
-        location={location}
-        addview={addview}
-        history={false}
-        modal={true}
-        state={{areYouSureModal, 'modalFunc': onYesCallback, modalTitle, modalMsg}}
-        toggle={() => setAreYouSureModal(!areYouSureModal)}>
-        <Formik
-          initialValues = {{
-            name: key ? key.name : '',
-            revoked: key ? key.revoked : false,
-            token: key ? key.token : ''
-          }}
-          onSubmit = {(values) => onSubmitHandle(values)}
-        >
-          {(props) => (
-            <Form>
-              <FormGroup>
-                <Row>
-                  <Col md={6}>
-                    <Label for='name'>Name</Label>
-                    <Field
-                      type='text'
-                      name='name'
-                      id='name'
-                      required={true}
-                      className='form-control'
-                    />
-                    <FormText color='muted'>
-                      A free-form unique identifier of the client. 50 characters max.
-                    </FormText>
-                  </Col>
-                </Row>
-                <Row className='mt-2'>
-                  <Col md={6}>
-                    <Row>
-                      <FormGroup check inline className='ms-3'>
-                        <Input
-                          type='checkbox'
-                          id='checkbox'
-                          name='revoked'
-                          onChange={e => props.setFieldValue('revoked', e.target.checked)}
-                          checked={props.values.revoked}
-                        />
-                        <Label check for='checkbox'>Revoked</Label>
-                      </FormGroup>
-                    </Row>
-                    <Row>
-                      <FormText color='muted'>
-                        If the API key is revoked, clients cannot use it any more. (This cannot be undone.)
-                      </FormText>
-                    </Row>
-                  </Col>
-                </Row>
-              </FormGroup>
-              <FormGroup>
-                <ParagraphTitle title='Credentials'/>
-                {
-                  addview &&
-                    <Alert color="info" className="text-center">
-                      If token field is <b>left empty</b>, value will be automatically generated on save.
-                    </Alert>
-                }
-                <Row className="g-0">
-                  <Col sm={6}>
-                    <InputGroup>
-                      <InputGroupText>Token</InputGroupText>
-                      <Field
-                        type='text'
-                        name='token'
-                        data-testid='token'
-                        id='token'
-                        disabled={addview ? false : true}
-                        className='form-control'
-                        innerRef={refToken}
-                      />
-                    </InputGroup>
-                    <FormText color='muted'>
-                      A public, unique identifier for this API key.
-                    </FormText>
-                  </Col>
-                  {
-                    !addview &&
-                    <Col sm={2}>
-                      <Button className="btn" color="success" onClick={(e) => copyToClipboard(e)}>
-                        <FontAwesomeIcon icon={faClipboard} size="lg" color='white'/>
-                      </Button>
-                    </Col>
-                  }
-                </Row>
-              </FormGroup>
-              {
-                <div className={!addview ? "submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5" : "submit-row d-flex align-items-center justify-content-end bg-light p-3 mt-5"}>
-                  {
-                    (!addview) &&
-                    <Button
-                      color='danger'
-                      onClick={() => {
-                        setModalMsg('Are you sure you want to delete API key?')
-                        setModalTitle('Delete API key')
-                        setAreYouSureModal(!areYouSureModal);
-                        setOnYes('delete')
-                      }}
-                    >
-                      Delete
-                    </Button>
-                  }
-                  <Button
-                    color='success'
-                    id='submit-button'
-                    type='submit'
-                  >
-                    Save
-                  </Button>
-                </div>
-              }
-            </Form>
-          )}
-        </Formik>
-      </BaseArgoView>
+      <APIKeyForm data={key} name={name} history={history} location={location} addview={addview} />
     )
+  else
+    return null
 }

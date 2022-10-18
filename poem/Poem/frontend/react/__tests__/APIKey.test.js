@@ -174,13 +174,47 @@ describe('Tests for API key change', () => {
       expect(screen.getByRole('heading', {name: /api/i}).textContent).toBe('Change API key')
     });
     expect(screen.getByRole('heading', {name: /credent/i}).textContent).toBe('Credentials')
-    expect(screen.getByRole('textbox', {name: /name/i}).value).toBe('FIRST_TOKEN');
-    expect(screen.getByRole('checkbox', {name: /revoked/i}).checked).toBeFalsy()
+    expect(screen.getByTestId("name").value).toBe('FIRST_TOKEN');
+    expect(screen.getByRole('checkbox').checked).toBeFalsy()
     expect(screen.getByDisplayValue(/123/i).value).toBe('123456');
     expect(screen.getByDisplayValue(/123/i)).toBeDisabled();
     expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
     expect(screen.getByRole('button', {name: /delete/i})).toBeInTheDocument();
     expect(screen.getByRole('button', {name: ''})).toBeInTheDocument();
+  })
+
+  test("Test that page renders properly if the key is revoked", async () => {
+    let mockRevokedKey = {
+      id: 2,
+      name: 'SECOND_TOKEN',
+      token: '123456789',
+      created: '2020-11-09 13:00:00',
+      revoked: true
+    }
+    Backend.mockImplementationOnce(() => {
+      return {
+        fetchData: () => Promise.resolve(mockRevokedKey)
+      }
+    })
+
+    renderWithRouterMatch(APIKeyChange)
+
+    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", {name: /api/i}).textContent).toBe("Change API key")
+    });
+
+    expect(screen.getByRole("heading", {name: /credent/i}).textContent).toBe("Credentials")
+
+    expect(screen.getByTestId("name").value).toBe("SECOND_TOKEN")
+    expect(screen.getByRole("checkbox").checked).toBeTruthy()
+    expect(screen.getByDisplayValue(/123/i).value).toBe("123456789")
+    expect(screen.getByDisplayValue(/123/i)).toBeDisabled()
+
+    expect(screen.getByRole("button", {name: /save/i})).toBeInTheDocument()
+    expect(screen.getByRole("button", {name: /delete/i})).toBeInTheDocument()
+    expect(screen.getByRole("button", {name: ''})).toBeInTheDocument()
   })
 
   it('Test copy to clipbord button', async () => {
@@ -199,7 +233,7 @@ describe('Tests for API key change', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument()
     })
-    fireEvent.change(screen.getByRole('textbox', {name: /name/i}), {target: {value: 'NEW_NAME'}})
+    fireEvent.change(screen.getByTestId("name"), {target: {value: 'NEW_NAME'}})
     fireEvent.click(screen.getByRole('button', {name: /save/i}))
     await waitFor(() => {
       expect(screen.getByRole('dialog', {title: /change/i})).toBeInTheDocument()
@@ -221,7 +255,7 @@ describe('Tests for API key change', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument()
     })
-    fireEvent.click(screen.getByRole('checkbox', {name: /revoked/i}))
+    fireEvent.click(screen.getByRole("checkbox"))
     fireEvent.click(screen.getByRole('button', {name: /save/i}))
     await waitFor(() => {
       expect(screen.getByRole('dialog', {title: /change/i})).toBeInTheDocument()
@@ -247,7 +281,7 @@ describe('Tests for API key change', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
     })
-    fireEvent.change(screen.getByRole('textbox', {name: /name/i}), {target: {value: 'SECOND_TOKEN'}})
+    fireEvent.change(screen.getByTestId("name"), {target: {value: 'SECOND_TOKEN'}})
     fireEvent.click(screen.getByRole('button', {name: /save/i}))
     await waitFor(() => {
       expect(screen.getByRole('dialog', {title: /change/i})).toBeInTheDocument()
@@ -279,7 +313,7 @@ describe('Tests for API key change', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
     })
-    fireEvent.change(screen.getByRole('textbox', {name: /name/i}), {target: {value: 'SECOND_TOKEN'}})
+    fireEvent.change(screen.getByTestId('name'), {target: {value: 'SECOND_TOKEN'}})
     fireEvent.click(screen.getByRole('button', {name: /save/i}))
     await waitFor(() => {
       expect(screen.getByRole('dialog', {title: /change/i})).toBeInTheDocument()
@@ -346,8 +380,8 @@ describe('Tests for API key addview', () => {
 
     expect(screen.getByRole('heading', {name: /api/i}).textContent).toBe('Add API key')
     expect(screen.getByRole('heading', {name: /credent/i}).textContent).toBe('Credentials')
-    expect(screen.getByRole('textbox', {name: /name/i}).value).toBe('');
-    expect(screen.getByRole('checkbox', {name: /revoked/i}).checked).toBeFalsy()
+    expect(screen.getByTestId('name').value).toBe('');
+    expect(screen.getByRole('checkbox').checked).toBeFalsy()
     expect(screen.getByRole('alert').textContent).toBe('If token field is left empty, value will be automatically generated on save.')
     expect(screen.getByTestId('token').value).toBe('');
     expect(screen.getByTestId('token')).toBeEnabled();
@@ -358,7 +392,7 @@ describe('Tests for API key addview', () => {
   it ('Test adding new API key', async () => {
     renderAddview()
 
-    fireEvent.change(screen.getByRole('textbox', {name: /name/i}), {target: {value: 'APIKEY'}});
+    fireEvent.change(screen.getByTestId('name'), {target: {value: 'APIKEY'}});
     fireEvent.click(screen.getByRole('button', {name: /save/i}))
 
     await waitFor(() => {
@@ -378,7 +412,7 @@ describe('Tests for API key addview', () => {
   it ('Test adding new API key with predefined token', async () => {
     renderAddview()
 
-    fireEvent.change(screen.getByRole('textbox', {name: /name/i}), {target: {value: 'APIKEY'}});
+    fireEvent.change(screen.getByTestId('name'), {target: {value: 'APIKEY'}});
     fireEvent.change(screen.getByTestId('token'), {target: {value: 'token123'}})
     fireEvent.click(screen.getByRole('button', {name: /save/i}))
 
@@ -403,7 +437,7 @@ describe('Tests for API key addview', () => {
 
     renderAddview()
 
-    fireEvent.change(screen.getByRole('textbox', {name: /name/i}), {target: {value: 'APIKEY'}});
+    fireEvent.change(screen.getByTestId('name'), {target: {value: 'APIKEY'}});
     fireEvent.change(screen.getByTestId('token'), {target: {value: 'token123'}})
     fireEvent.click(screen.getByRole('button', {name: /save/i}))
 
@@ -435,7 +469,7 @@ describe('Tests for API key addview', () => {
 
     renderAddview()
 
-    fireEvent.change(screen.getByRole('textbox', {name: /name/i}), {target: {value: 'APIKEY'}});
+    fireEvent.change(screen.getByTestId('name'), {target: {value: 'APIKEY'}});
     fireEvent.change(screen.getByTestId('token'), {target: {value: 'token123'}})
     fireEvent.click(screen.getByRole('button', {name: /save/i}))
 
