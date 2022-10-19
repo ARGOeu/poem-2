@@ -396,7 +396,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     data.forEach(entry => tmpArray.push(entry.name.length))
     return Math.max(...tmpArray)
   }
-  let columnNameWidth = longestName(data) * 8
+  let columnNameWidth = longestName(data) * 8 + 10
   columnNameWidth = Math.max(220, columnNameWidth)
   columnNameWidth = Math.min(360, columnNameWidth)
 
