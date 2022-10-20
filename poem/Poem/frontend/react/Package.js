@@ -151,8 +151,6 @@ export const PackageComponent = (props) => {
   const backend = new Backend();
   const queryClient = useQueryClient();
 
-  const [repos6, setRepos6] = useState(new Array())
-  const [repos7, setRepos7] = useState(new Array())
   const [probes, setProbes] = useState(new Array())
 
   const changePackage = useMutation( async (values) => await backend.changeObject('/api/v2/internal/packages/', values) );
@@ -178,24 +176,7 @@ export const PackageComponent = (props) => {
   );
 
   const { data: repos, error: errorRepos, status: statusRepos } = useQuery(
-    'yumrepo', () => fetchYumRepos(),
-    {
-      onSuccess: (data) => {
-        let listRepos6 = []
-        let listRepos7 = []
-
-        data.forEach(repo => {
-          if (repo.tag === 'CentOS 6')
-            listRepos6.push(`${repo.name} (${repo.tag})`)
-
-          else if (repo.tag === 'CentOS 7')
-            listRepos7.push(`${repo.name} (${repo.tag})`)
-        })
-
-        setRepos6(listRepos6)
-        setRepos7(listRepos7)
-      }
-    }
+    'yumrepo', () => fetchYumRepos()
   );
 
   const { error: errorProbes, status: statusProbes } = useQuery(
@@ -419,6 +400,17 @@ export const PackageComponent = (props) => {
     return (<ErrorComponent error={errorPackageVersions}/>);
 
   else if (repos) {
+    let repos6 = []
+    let repos7 = []
+
+    repos.forEach(repo => {
+      if (repo.tag === 'CentOS 6')
+        repos6.push(`${repo.name} (${repo.tag})`)
+
+      else if (repo.tag === 'CentOS 7')
+        repos7.push(`${repo.name} (${repo.tag})`)
+    })
+
     return (
       <BaseArgoView
         resourcename={disabled ? 'Package details' : 'package'}
