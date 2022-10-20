@@ -151,8 +151,6 @@ export const PackageComponent = (props) => {
   const backend = new Backend();
   const queryClient = useQueryClient();
 
-  const [probes, setProbes] = useState(new Array())
-
   const changePackage = useMutation( async (values) => await backend.changeObject('/api/v2/internal/packages/', values) );
   const addPackage = useMutation( async (values) => await backend.addObject('/api/v2/internal/packages/', values) );
   const deletePackage = useMutation( async () => await backend.deleteObject(`/api/v2/internal/packages/${nameversion}`));
@@ -173,28 +171,16 @@ export const PackageComponent = (props) => {
         }
       }
     }
-  );
+  )
 
   const { data: repos, error: errorRepos, status: statusRepos } = useQuery(
     'yumrepo', () => fetchYumRepos()
-  );
+  )
 
-  const { error: errorProbes, status: statusProbes } = useQuery(
+  const { data: probes, error: errorProbes, status: statusProbes } = useQuery(
     ['probe', 'version'], () => fetchProbeVersions(),
-    {
-      enabled: !!pkg,
-      onSuccess: (data) => {
-        let listProbes = new Array()
-        if (pkg) {
-          data.forEach(probe => {
-            if (probe.fields.package === `${pkg.name} (${pkg.version})`)
-              listProbes.push(probe.fields.name)
-          })
-        }
-        setProbes(listProbes)
-      }
-    }
-  );
+    { enabled: !!pkg }
+  )
 
   const { data: packageVersions, error: errorPackageVersions, status: statusPackageVersions } = useQuery(
     ['package', 'versions', nameversion], async () => {
@@ -399,9 +385,10 @@ export const PackageComponent = (props) => {
   else if (statusPackageVersions === 'error')
     return (<ErrorComponent error={errorPackageVersions}/>);
 
-  else if (repos) {
-    let repos6 = []
-    let repos7 = []
+  else if (repos && (addview || (pkg && probes && packageVersions))) {
+    let repos6 = new Array()
+    let repos7 = new Array()
+    let listProbes = new Array()
 
     repos.forEach(repo => {
       if (repo.tag === 'CentOS 6')
@@ -410,6 +397,13 @@ export const PackageComponent = (props) => {
       else if (repo.tag === 'CentOS 7')
         repos7.push(`${repo.name} (${repo.tag})`)
     })
+
+    if (probes) {
+      probes.forEach(probe => {
+        if (probe.fields.package === `${pkg.name} (${pkg.version})`)
+          listProbes.push(probe.fields.name)
+      })
+    }
 
     return (
       <BaseArgoView
@@ -601,7 +595,7 @@ export const PackageComponent = (props) => {
                         Probes:
                         <div>
                           {
-                            probes
+                            listProbes
                               .map((e, i) => <Link key={i} to={`/ui/probes/${e}/history/${props.values.version}`}>{e}</Link>)
                               .reduce((prev, curr) => [prev, ', ', curr])
                           }
