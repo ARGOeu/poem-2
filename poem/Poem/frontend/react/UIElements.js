@@ -191,7 +191,7 @@ export const CustomDropdownIndicator = (props) => {
 }
 
 
-export const CustomReactSelect = ({...props}) => {
+export const CustomReactSelect = ({ forwardedRef=undefined, ...props}) => {
   const customStyles = {
     control: (provided,  state) => ({
       ...provided,
@@ -250,6 +250,7 @@ export const CustomReactSelect = ({...props}) => {
         <Select
           {...props}
           inputId='select'
+          ref={ forwardedRef ? forwardedRef : null }
           components={{IndicatorSeparator: null, DropdownIndicator}}
           styles={customStyles}
         />
@@ -259,6 +260,7 @@ export const CustomReactSelect = ({...props}) => {
   return (
     <Select
       {...props}
+      ref={ forwardedRef ? forwardedRef : null }
       components={{IndicatorSeparator: null, DropdownIndicator}}
       styles={customStyles}
     />
@@ -266,11 +268,12 @@ export const CustomReactSelect = ({...props}) => {
 }
 
 
-export const DropdownWithFormText = ({ ...props }) => {
+export const DropdownWithFormText = ({ forwardedRef=undefined, ...props }) => {
   return (
     <div className='react-select form-control p-0'>
       <CustomReactSelect
         name={ props.name }
+        forwardedRef={ forwardedRef ? forwardedRef : null }
         id={ props.id ? props.id : props.name }
         isClearable={ props.isClearable }
         inputgroup={ true }
@@ -1011,6 +1014,7 @@ export const AutocompleteField = ({lists=[], field, icon, label, onselect_handle
   )
 }
 
+
 export const _AutocompleteField = ({lists=[], field, val, err, setFieldValue, icon, label, onselect_handler=undefined, hide_error=false}) => {
   const [inputValue, setInputValue] = useState(val);
   const [suggestions, setSuggestions] = useState(lists);
@@ -1084,6 +1088,7 @@ export const _AutocompleteField = ({lists=[], field, val, err, setFieldValue, ic
     </div>
   );
 };
+
 
 export const DropdownFilterComponent = ({value, onChange, data}) => (
   <select
