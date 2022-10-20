@@ -154,7 +154,6 @@ export const PackageComponent = (props) => {
   const [repos6, setRepos6] = useState(new Array())
   const [repos7, setRepos7] = useState(new Array())
   const [probes, setProbes] = useState(new Array())
-  const [presentVersion, setPresentVersion] = useState(false)
 
   const changePackage = useMutation( async (values) => await backend.changeObject('/api/v2/internal/packages/', values) );
   const addPackage = useMutation( async (values) => await backend.addObject('/api/v2/internal/packages/', values) );
@@ -184,10 +183,6 @@ export const PackageComponent = (props) => {
             return pkg;
           }
         }
-      },
-      onSuccess: (data) => {
-        if (data.version === 'present')
-          setPresentVersion(true)
       }
     }
   );
@@ -468,7 +463,7 @@ export const PackageComponent = (props) => {
             version: `${pkg ? pkg.version : ''}`,
             repo_6: `${pkg ? pkg.repo_6 : ''}`,
             repo_7: `${pkg ? pkg.repo_7 : ''}`,
-            present_version: presentVersion
+            present_version: pkg?.version === "present"
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
           validate={ packageValidate }
