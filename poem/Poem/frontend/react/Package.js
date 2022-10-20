@@ -162,12 +162,7 @@ export const PackageComponent = (props) => {
 
   const { data: pkg, error: errorPkg, status: statusPkg } = useQuery(
     ['package', nameversion], async () => {
-      let pkg = await backend.fetchData(`/api/v2/internal/packages/${nameversion}`);
-      let [repo6, repo7] = splitRepos(pkg.repos);
-      pkg.initial_version = pkg.version;
-      pkg.repo_6 = repo6;
-      pkg.repo_7 = repo7;
-      return pkg;
+      return await backend.fetchData(`/api/v2/internal/packages/${nameversion}`);
     },
     {
       enabled: !addview,
@@ -175,12 +170,7 @@ export const PackageComponent = (props) => {
         if (!addview) {
           let pkgs = queryClient.getQueryData('package');
           if (pkgs) {
-            let pkg = pkgs.find(pkg => nameversion == `${pkg.name}-${pkg.version}`)
-            let [repo6, repo7] = splitRepos(pkg.repos);
-            pkg.initial_version = pkg.version;
-            pkg.repo_6 = repo6;
-            pkg.repo_7 = repo7;
-            return pkg;
+            return pkgs.find(pkg => nameversion == `${pkg.name}-${pkg.version}`)
           }
         }
       }
@@ -262,7 +252,7 @@ export const PackageComponent = (props) => {
   }
 
   function onVersionSelect(props, value) {
-    let initial_version = pkg.initial_version;
+    let initial_version = props.values.initialVersion
     packageVersions.forEach(pkgv => {
       if (pkgv.version === value) {
         let [repo6, repo7] = splitRepos(pkgv.repos);
@@ -461,8 +451,9 @@ export const PackageComponent = (props) => {
             id: `${pkg ? pkg.id : ''}`,
             name: `${pkg ? pkg.name : ''}`,
             version: `${pkg ? pkg.version : ''}`,
-            repo_6: `${pkg ? pkg.repo_6 : ''}`,
-            repo_7: `${pkg ? pkg.repo_7 : ''}`,
+            initialVersion: `${pkg ? pkg.version : ""}`,
+            repo_6: `${pkg?.repos ? splitRepos(pkg.repos)[0] : ''}`,
+            repo_7: `${pkg?.repos ? splitRepos(pkg.repos)[1] : ''}`,
             present_version: pkg?.version === "present"
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
