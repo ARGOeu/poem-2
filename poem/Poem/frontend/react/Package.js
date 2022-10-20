@@ -184,14 +184,10 @@ export const PackageComponent = (props) => {
 
   const { data: packageVersions, error: errorPackageVersions, status: statusPackageVersions } = useQuery(
     ['package', 'versions', nameversion], async () => {
-      let pkg_versions = []
-      if (!addview)
-        pkg_versions = await backend.fetchData(`/api/v2/internal/packageversions/${pkg.name}`);
-
-      return pkg_versions
+      return await backend.fetchData(`/api/v2/internal/packageversions/${pkg.name}`);
     },
     { enabled: !!pkg }
-  );
+  )
 
   const [disabledButton, setDisabledButton] = useState(true);
   const [areYouSureModal, setAreYouSureModal] = useState(false);
