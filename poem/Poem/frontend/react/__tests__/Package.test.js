@@ -518,7 +518,7 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
     const versionField = screen.getByTestId('version');
     const repo6Field = screen.getByText('repo-1 (CentOS 6)');
     const repo7Field = screen.getByText('repo-2 (CentOS 7)');
-    const checkboxField = screen.getByRole('checkbox', { name: /version/i });
+    const checkboxField = screen.getByRole('checkbox')
 
     expect(nameField.value).toBe('nagios-plugins-argo');
     expect(nameField).toBeEnabled();
@@ -597,7 +597,7 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
 
     const nameField = screen.getByTestId('name');
     const versionField = screen.getByTestId('version');
-    const checkField = screen.getByRole('checkbox', { name: /version/i });
+    const checkField = screen.getByRole('checkbox')
     const repo6Field = screen.getByText('repo-1 (CentOS 6)');
     const repo7Field = screen.getByText('repo-2 (CentOS 7)');
 
@@ -623,7 +623,7 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
         {
           id: '5',
           name: 'new-nagios-plugins-argo',
-          version: '0.1.12',
+          version: 'present',
           use_present_version: true,
           repos: ['repo-3 (CentOS 7)']
         }
@@ -1210,7 +1210,7 @@ describe('Tests for package addview', () => {
     const repo6Field = screen.getAllByText(/select/i)[0]
     // there is word 'selected' in field description, therefore repo7Field has index 2
     const repo7Field = screen.getAllByText(/select/i)[2]
-    const checkboxField = screen.getByRole('checkbox', { name: /version/i });
+    const checkboxField = screen.getByRole('checkbox')
 
     expect(nameField.value).toBe('');
     expect(nameField).toBeEnabled();
@@ -1288,7 +1288,7 @@ describe('Tests for package addview', () => {
     })
 
     const nameField = screen.getByTestId('name');
-    const checkField = screen.getByRole('checkbox', { name: /version/i });
+    const checkField = screen.getByRole('checkbox')
     const repo6Field = screen.getAllByText(/select/i)[0]
     const repo7Field = screen.getAllByText(/select/i)[2]
 
@@ -1309,7 +1309,7 @@ describe('Tests for package addview', () => {
         '/api/v2/internal/packages/',
         {
           name: 'argo-nagios-tools',
-          version: '',
+          version: 'present',
           use_present_version: true,
           repos: ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
         }
@@ -1463,7 +1463,7 @@ describe('Tests for package cloneview', () => {
     const versionField = screen.getByTestId('version');
     const repo6Field = screen.getByText('repo-1 (CentOS 6)');
     const repo7Field = screen.getByText('repo-2 (CentOS 7)');
-    const checkboxField = screen.getByRole('checkbox', { name: /version/i });
+    const checkboxField = screen.getByRole('checkbox')
 
     expect(nameField.value).toBe('nagios-plugins-argo');
     expect(nameField).toBeEnabled();
@@ -1530,7 +1530,7 @@ describe('Tests for package cloneview', () => {
     })
 
     const nameField = screen.getByTestId('name');
-    const checkField = screen.getByRole('checkbox', { name: /version/i });
+    const checkField = screen.getByRole('checkbox')
     const repo6Field = screen.getByText('repo-1 (CentOS 6)');
 
     fireEvent.change(nameField, { target: { value: 'argo-nagios-tools' } });
@@ -1549,7 +1549,7 @@ describe('Tests for package cloneview', () => {
         '/api/v2/internal/packages/',
         {
           name: 'argo-nagios-tools',
-          version: '0.1.11',
+          version: 'present',
           use_present_version: true,
           repos: ['repo-2 (CentOS 7)']
         }
