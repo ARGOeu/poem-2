@@ -38,6 +38,8 @@ setup(name=NAME,
           'djangorestframework',
           'djangorestframework-api-key',
           'psycopg2-binary',
+          'cryptography==36.*',
+          'deepdiff',
           'safety'
       ],
       scripts=['bin/poem-syncservtype', 'bin/poem-db', 'bin/poem-genseckey',
