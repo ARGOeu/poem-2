@@ -2445,6 +2445,7 @@ describe('Tests for metric profile cloneview', () => {
     WebApi.mockImplementation(() => {
       return {
         fetchMetricProfile: () => Promise.resolve(mockWebApiMetricProfile2),
+        fetchServiceTypes: () => Promise.resolve(mockWebApiServiceTypes),
         addMetricProfile: mockAddMetricProfile,
       }
     })
@@ -2452,15 +2453,7 @@ describe('Tests for metric profile cloneview', () => {
       return {
         isActiveSession: () => Promise.resolve(mockActiveSession),
         fetchData: () => Promise.resolve(mockBackendMetricProfile2),
-        fetchListOfNames: (path) => {
-          switch (path) {
-            case '/api/v2/internal/metricsall':
-              return Promise.resolve(mockMetrics)
-
-            case '/api/v2/internal/serviceflavoursall':
-              return Promise.resolve(mockServiceTypes)
-          }
-        },
+        fetchListOfNames: () => Promise.resolve(mockMetrics),
         addObject: mockAddObject
       }
     })
