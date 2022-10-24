@@ -394,9 +394,11 @@ export const MetricProfilesComponent = (props) => {
     { enabled: !publicView }
   )
 
-  const { data: serviceFlavoursAll, error: errorServiceFlavoursAll, isLoading: loadingServiceFlavoursAll } = useQuery(
-    'serviceflavoursall', () => fetchServiceFlavours(),
-    { enabled: !publicView }
+  const { data: webApiST, errorWebApiST, isLoading: loadingWebApiST} = useQuery(
+    ['servicetypes', 'webapi'], async () => {
+      return await webapi.fetchServiceTypes();
+    },
+    { enabled: !!userDetails }
   )
 
   const onInsert = async (element, i, group, name, description) => {
@@ -818,7 +820,7 @@ export const MetricProfilesComponent = (props) => {
       );
   }
 
-  if (loadingUserDetails || loadingBackendMP || loadingWebApiMP || loadingMetricsAll || loadingServiceFlavoursAll)
+  if (loadingUserDetails || loadingBackendMP || loadingWebApiMP || loadingMetricsAll || loadingWebApiST)
     return (<LoadingAnim />)
 
   else if (errorUserDetails)
@@ -833,10 +835,10 @@ export const MetricProfilesComponent = (props) => {
   else if (errorMetricsAll)
     return (<ErrorComponent error={errorMetricsAll} />)
 
-  else if (errorServiceFlavoursAll)
-    return (<ErrorComponent error={errorServiceFlavoursAll} />)
+  else if (errorWebApiST)
+    return (<ErrorComponent error={errorWebApiST} />)
 
-  else if (addview || (backendMP && webApiMP) && (publicView || (metricsAll && serviceFlavoursAll)))
+  else if (addview || (backendMP && webApiMP) && (publicView || (metricsAll && webApiST)))
   {
     let write_perm = undefined
 
@@ -982,7 +984,7 @@ export const MetricProfilesComponent = (props) => {
             search_metric: searchMetric,
             search_serviceflavour: searchServiceFlavour,
             metrics_all: metricsAll,
-            services_all: serviceFlavoursAll
+            services_all: webApiST
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
           enableReinitialize={true}
@@ -1011,7 +1013,7 @@ export const MetricProfilesComponent = (props) => {
                     name="view_services"
                     render={props => (
                       <MetricProfilesComponentContext.Provider value={{
-                        serviceflavours_all: serviceFlavoursAll,
+                        serviceflavours_all: webApiST,
                         metrics_all: metricsAll,
                         search_handler: handleSearch,
                         remove_handler: onRemove,
