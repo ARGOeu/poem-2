@@ -542,6 +542,35 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
     expect(screen.getByRole('button', { name: /clone/i }).closest('a')).toHaveAttribute('href', '/ui/packages/nagios-plugins-argo-0.1.11/clone');
   })
 
+  test("Test change package name", async () => {
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /package/i })).toBeInTheDocument()
+    })
+
+    const nameField = screen.getByTestId("name")
+
+    expect(screen.queryByTestId("error-name")).not.toBeInTheDocument()
+
+    await waitFor(() => {
+      fireEvent.change(nameField, { target: { value: "new-nagios-plugins-argo" } })
+    })
+
+    expect(screen.queryByText("This field is required")).not.toBeInTheDocument()
+    expect(screen.queryByText("Name cannot contain white spaces")).not.toBeInTheDocument()
+
+    await waitFor(() => {
+      fireEvent.change(nameField, { target: { value: "" } })
+    })
+    expect(screen.getByText("This field is required")).toBeInTheDocument()
+
+    await waitFor(() => {
+      fireEvent.change(nameField, { target: { value: "new nagios-plugins-argo" } })
+    })
+    expect(screen.getByText("Name cannot contain white spaces")).toBeInTheDocument()
+  })
+
   test('Test successfully changing package', async () => {
     mockChangeObject.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
