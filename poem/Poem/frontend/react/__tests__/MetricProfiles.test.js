@@ -176,14 +176,35 @@ const mockMetrics = [
   "org.nagiosexchange.AppDB-WebCheck"
 ];
 
-const mockServiceTypes = [
-  "ARC-CE",
-  "argo.mon",
-  "argo.webui",
-  "Central-LFC",
-  "egi.AppDB",
-  "eu.argo.ams",
-  "org.opensciencegrid.htcondorce"
+const mockWebApiServiceTypes = [
+  {
+    "name": "ARC-CE",
+    "description": "[Site service] The Compute Element within the ARC middleware stack."
+  },
+  {
+    "name": "argo.mon",
+    "description": "ARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service."
+  },
+  {
+    "name": "argo.webui",
+    "description": "ARGO web user interface for metric A/R visualization and recalculation management."
+  },
+  {
+    "name": "Central-LFC",
+    "description": "ARGO web user interface for metric A/R visualization and recalculation management."
+  },
+  {
+    "name": "egi.AppDB",
+    "description": "EGI Applications Database"
+  },
+  {
+    "name": "eu.argo.ams",
+    "description": "The ARGO Messaging Service (AMS) is a Publish/Subscribe Service, which implements the Google PubSub protocol."
+  },
+  {
+    "name": "org.opensciencegrid.htcondorce",
+    "description": "A special configuration of the HTCondor software designed to be a job gateway solution for the OSG"
+  }
 ];
 
 const mockMetricProfileVersions = [
@@ -454,6 +475,7 @@ describe('Tests for metric profiles changeview', () => {
     WebApi.mockImplementation(() => {
       return {
         fetchMetricProfile: () => Promise.resolve(mockWebApiMetricProfile),
+        fetchServiceTypes: () => Promise.resolve(mockWebApiServiceTypes),
         changeMetricProfile: mockChangeMetricProfile,
         deleteMetricProfile: mockDeleteMetricProfile
       }
@@ -462,15 +484,7 @@ describe('Tests for metric profiles changeview', () => {
       return {
         isActiveSession: () => Promise.resolve(mockActiveSession),
         fetchData: () => Promise.resolve(mockBackendMetricProfile),
-        fetchListOfNames: (path) => {
-          switch (path) {
-            case '/api/v2/internal/metricsall':
-              return Promise.resolve(mockMetrics)
-
-            case '/api/v2/internal/serviceflavoursall':
-              return Promise.resolve(mockServiceTypes)
-          }
-        },
+        fetchListOfNames: () => Promise.resolve(mockMetrics),
         changeObject: mockChangeObject,
         deleteObject: mockDeleteObject
       }
