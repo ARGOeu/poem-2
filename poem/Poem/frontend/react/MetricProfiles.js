@@ -312,13 +312,6 @@ const fetchMetricProfile = async (webapi, apiid) => {
 }
 
 
-const fetchServiceFlavours = async () => {
-  const backend = new Backend();
-
-  return await backend.fetchListOfNames('/api/v2/internal/serviceflavoursall');
-}
-
-
 export const MetricProfilesComponent = (props) => {
   const profile_name = props.match.params.name;
   const addview = props.addview
@@ -963,6 +956,7 @@ export const MetricProfilesComponent = (props) => {
                         }))
                           item.isNew = true
                       })
+                      console.log('VRDEL DEBUG', imported)
 
                       setViewServices(ensureAlignedIndexes(imported).sort(sortServices));
                       setListServices(ensureAlignedIndexes(imported).sort(sortServices));
