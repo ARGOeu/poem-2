@@ -551,8 +551,6 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
 
     const nameField = screen.getByTestId("name")
 
-    expect(screen.queryByTestId("error-name")).not.toBeInTheDocument()
-
     await waitFor(() => {
       fireEvent.change(nameField, { target: { value: "new-nagios-plugins-argo" } })
     })
@@ -569,6 +567,67 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
       fireEvent.change(nameField, { target: { value: "new nagios-plugins-argo" } })
     })
     expect(screen.getByText("Name cannot contain white spaces")).toBeInTheDocument()
+  })
+
+  test("Test change package version", async () => {
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /package/i })).toBeInTheDocument()
+    })
+
+    const versionField = screen.getByTestId("version")
+    const presentVersionField = screen.getByRole("checkbox")
+
+    await waitFor(() => {
+      fireEvent.change(versionField, { target: { value: "0.1.12" } })
+    })
+    expect(screen.queryByText("This field is required")).not.toBeInTheDocument()
+    expect(screen.queryByText("Version cannot contain white spaces")).not.toBeInTheDocument()
+
+    expect(screen.getByTestId("form")).toHaveFormValues({
+      name: "nagios-plugins-argo",
+      version: "0.1.12",
+      present_version: false
+    })
+
+    await waitFor(() => {
+      fireEvent.change(versionField, { target: { value: "" } })
+    })
+    expect(screen.getByText("This field is required")).toBeInTheDocument()
+    expect(screen.queryByText("Version cannot contain white spaces")).not.toBeInTheDocument()
+
+    await waitFor(() => {
+      fireEvent.change(versionField, { target: { value: "1. 0.2" } })
+    })
+    expect(screen.queryByText("This field is required")).not.toBeInTheDocument()
+    expect(screen.getByText("Version cannot contain white spaces")).toBeInTheDocument()
+
+    await waitFor(() => {
+      fireEvent.click(presentVersionField)
+    })
+
+    expect(versionField).toBeDisabled()
+
+    expect(screen.getByTestId("form")).toHaveFormValues({
+      name: "nagios-plugins-argo",
+      version: "present",
+      present_version: true
+    })
+    expect(screen.queryByText("This field is required")).not.toBeInTheDocument()
+    expect(screen.queryByText("Version cannot contain white spaces")).not.toBeInTheDocument()
+
+    await waitFor(() => {
+      fireEvent.click(presentVersionField)
+    })
+    expect(versionField).toBeEnabled()
+    expect(screen.getByTestId("form")).toHaveFormValues({
+      name: "nagios-plugins-argo",
+      version: "present",
+      present_version: false
+    })
+    expect(screen.queryByText("This field is required")).not.toBeInTheDocument()
+    expect(screen.queryByText("Version cannot contain white spaces")).not.toBeInTheDocument()
   })
 
   test('Test successfully changing package', async () => {

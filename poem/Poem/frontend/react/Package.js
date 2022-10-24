@@ -41,10 +41,7 @@ const validationSchema = Yup.object().shape({
     .matches(/^\S+$/, "Name cannot contain white spaces"),
   presentVersion: Yup.boolean(),
   version: Yup.string()
-    .when("presentVersion", {
-      is: (val) => val !== true,
-      then: (schema) => schema.required("This field is required")
-    })
+    .required("This field is required")
     .matches(/^\S+$/, "Version cannot contain white spaces"),
   repo: Yup.object({
     repo_6: Yup.string(),
@@ -158,7 +155,7 @@ const PackageForm = ({
   const backend = new Backend()
   const queryClient = useQueryClient()
 
-  const { control, getValues, setValue, handleSubmit, formState: { errors } } = useForm({
+  const { control, getValues, setValue, handleSubmit, trigger, formState: { errors } } = useForm({
     defaultValues: {
       id: `${pkg?.id ? pkg.id : ''}`,
       name: `${pkg?.name ? pkg.name : ''}`,
@@ -177,6 +174,8 @@ const PackageForm = ({
   useEffect(() => {
     if (presentVersion)
       setValue("version", "present")
+      
+    trigger("version")
   }, [presentVersion, setValue])
 
   const changePackage = useMutation( async (values) => await backend.changeObject('/api/v2/internal/packages/', values) );
@@ -377,7 +376,7 @@ const PackageForm = ({
       }}
       toggle={toggleAreYouSure}
     >
-      <Form onSubmit={ handleSubmit(onSubmitHandle) }>
+      <Form onSubmit={ handleSubmit(onSubmitHandle) } data-testid="form">
         <FormGroup>
           <Row className='align-items-center'>
             <Col md={6}>
