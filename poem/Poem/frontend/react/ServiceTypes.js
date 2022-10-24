@@ -816,7 +816,7 @@ export const ServiceTypesList = (props) => {
   );
 
   const { data: serviceTypesDescriptions, errorServiceTypesDescriptions, isLoading: loadingServiceTypesDescriptions} = useQuery(
-    'servicetypes', async () => {
+    ['servicetypes', 'webapi'], async () => {
       return await webapi.fetchServiceTypes();
     },
     { enabled: !!userDetails }
