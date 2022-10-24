@@ -72,7 +72,7 @@ const MetricProfileAutocompleteField = ({suggestions, service, index, icon, tupl
         value: service[tupleType]
       }}
       getSuggestionValue={(suggestion) => suggestion}
-      suggestions={suggestionList.map(service => service.name)}
+      suggestions={suggestionList}
       renderSuggestion={(suggestion, {query, isHighlighted}) =>
         <div
           key={suggestions.indexOf(suggestion)}
@@ -224,7 +224,7 @@ const ServicesList = () => {
                 </td>
                 <td className={service.isNew ? "bg-light" : ""}>
                   <MetricProfileAutocompleteField
-                    suggestions={context.serviceflavours_all}
+                    suggestions={context.serviceflavours_all.map(service => service.name)}
                     service={service}
                     index={index}
                     icon='serviceflavour'
