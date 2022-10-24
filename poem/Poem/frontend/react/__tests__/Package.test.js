@@ -659,19 +659,14 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /package/i }).textContent).toBe('Change package');
+      expect(screen.getByRole('heading', { name: /package/i })).toBeInTheDocument()
     })
 
-    const nameField = screen.getByTestId('name');
-    const versionField = screen.getByTestId('version');
-    const repo6Field = screen.getByText('repo-1 (CentOS 6)');
-    const repo7Field = screen.getByText('repo-2 (CentOS 7)');
+    fireEvent.change(screen.getByTestId("name"), { target: { value: 'new-nagios-plugins-argo' } });
+    fireEvent.change(screen.getByTestId("version"), { target: { value: '0.1.12' } });
 
-    fireEvent.change(nameField, { target: { value: 'new-nagios-plugins-argo' } });
-    fireEvent.change(versionField, { target: { value: '0.1.12' } });
-
-    await selectEvent.clearFirst(repo6Field)
-    await selectEvent.select(repo7Field, 'repo-3 (CentOS 7)')
+    await selectEvent.clearFirst(screen.getByText("repo-1 (CentOS 6)"))
+    await selectEvent.select(screen.getByText("repo-2 (CentOS 7)"), 'repo-3 (CentOS 7)')
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
@@ -704,21 +699,13 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
       expect(screen.getByRole('heading', { name: /package/i }).textContent).toBe('Change package');
     })
 
-    const nameField = screen.getByTestId('name');
-    const versionField = screen.getByTestId('version');
-    const checkField = screen.getByRole('checkbox')
-    const repo6Field = screen.getByText('repo-1 (CentOS 6)');
-    const repo7Field = screen.getByText('repo-2 (CentOS 7)');
+    fireEvent.change(screen.getByTestId("name"), { target: { value: 'new-nagios-plugins-argo' } });
+    fireEvent.change(screen.getByTestId("version"), { target: { value: '0.1.12' } });
 
-    fireEvent.change(nameField, { target: { value: 'new-nagios-plugins-argo' } });
-    fireEvent.change(versionField, { target: { value: '0.1.12' } });
+    fireEvent.click(screen.getByRole("checkbox"))
 
-    fireEvent.click(checkField);
-    expect(versionField.value).toBe('present');
-    expect(versionField).toBeDisabled();
-
-    await selectEvent.clearAll(repo6Field)
-    await selectEvent.select(repo7Field, 'repo-3 (CentOS 7)')
+    await selectEvent.clearAll(screen.getByText("repo-1 (CentOS 6)"))
+    await selectEvent.select(screen.getByText("repo-2 (CentOS 7)"), 'repo-3 (CentOS 7)')
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
@@ -752,19 +739,14 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /package/i }).textContent).toBe('Change package');
+      expect(screen.getByRole('heading', { name: /package/i })).toBeInTheDocument()
     })
 
-    const nameField = screen.getByTestId('name');
-    const versionField = screen.getByTestId('version');
-    const repo6Field = screen.getByText('repo-1 (CentOS 6)');
-    const repo7Field = screen.getByText('repo-2 (CentOS 7)');
+    fireEvent.change(screen.getByTestId("name"), { target: { value: 'new-nagios-plugins-argo' } });
+    fireEvent.change(screen.getByTestId("version"), { target: { value: '0.1.12' } });
 
-    fireEvent.change(nameField, { target: { value: 'new-nagios-plugins-argo' } });
-    fireEvent.change(versionField, { target: { value: '0.1.12' } });
-
-    await selectEvent.clearAll(repo6Field)
-    await selectEvent.select(repo7Field, 'repo-3 (CentOS 7)')
+    await selectEvent.clearAll(screen.getByText("repo-1 (CentOS 6)"))
+    await selectEvent.select(screen.getByText("repo-2 (CentOS 7)"), 'repo-3 (CentOS 7)')
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
@@ -802,19 +784,14 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /package/i }).textContent).toBe('Change package');
+      expect(screen.getByRole('heading', { name: /package/i })).toBeInTheDocument()
     })
 
-    const nameField = screen.getByTestId('name');
-    const versionField = screen.getByTestId('version');
-    const repo6Field = screen.getByText('repo-1 (CentOS 6)');
-    const repo7Field = screen.getByText('repo-2 (CentOS 7)');
+    fireEvent.change(screen.getByTestId("name"), { target: { value: 'new-nagios-plugins-argo' } });
+    fireEvent.change(screen.getByTestId("version"), { target: { value: '0.1.12' } });
 
-    fireEvent.change(nameField, { target: { value: 'new-nagios-plugins-argo' } });
-    fireEvent.change(versionField, { target: { value: '0.1.12' } });
-
-    await selectEvent.clearAll(repo6Field)
-    await selectEvent.select(repo7Field, 'repo-3 (CentOS 7)')
+    await selectEvent.clearAll(screen.getByText("repo-1 (CentOS 6)"))
+    await selectEvent.select(screen.getByText("repo-2 (CentOS 7)"), 'repo-3 (CentOS 7)')
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
@@ -853,11 +830,8 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
       expect(screen.getByRole('heading', { name: /package/i }).textContent).toBe('Change package');
     })
 
-    const nameField = screen.getByTestId('name');
-    const versionField = screen.getByTestId('version');
-
-    fireEvent.change(nameField, { target: { value: 'new-nagios-plugins-argo' } });
-    fireEvent.change(versionField, { target: { value: '0.1.12' } });
+    fireEvent.change(screen.getByTestId("name"), { target: { value: 'new-nagios-plugins-argo' } });
+    fireEvent.change(screen.getByTestId("version"), { target: { value: '0.1.12' } });
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
     await waitFor(() => {
@@ -886,12 +860,6 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /package/i }).textContent).toBe('Change package');
     })
-
-    const nameField = screen.getByTestId('name');
-    const versionField = screen.getByTestId('version');
-
-    fireEvent.change(nameField, { target: { value: 'new-nagios-plugins-argo' } });
-    fireEvent.change(versionField, { target: { value: '0.1.12' } });
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
     await waitFor(() => {
@@ -924,12 +892,6 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /package/i }).textContent).toBe('Change package');
     })
-
-    const nameField = screen.getByTestId('name');
-    const versionField = screen.getByTestId('version');
-
-    fireEvent.change(nameField, { target: { value: 'new-nagios-plugins-argo' } });
-    fireEvent.change(versionField, { target: { value: '0.1.12' } });
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
     await waitFor(() => {
