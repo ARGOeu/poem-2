@@ -1770,21 +1770,14 @@ describe('Tests for metric profile addview', () => {
   beforeAll(() => {
     WebApi.mockImplementation(() => {
       return {
-        addMetricProfile: mockAddMetricProfile
+        addMetricProfile: mockAddMetricProfile,
+        fetchServiceTypes: () => Promise.resolve(mockWebApiServiceTypes),
       }
     })
     Backend.mockImplementation(() => {
       return {
         isActiveSession: () => Promise.resolve(mockActiveSession),
-        fetchListOfNames: (path) => {
-          switch (path) {
-            case '/api/v2/internal/metricsall':
-              return Promise.resolve(mockMetrics)
-
-            case '/api/v2/internal/serviceflavoursall':
-              return Promise.resolve(mockServiceTypes)
-          }
-        },
+        fetchListOfNames: () => Promise.resolve(mockMetrics),
         addObject: mockAddObject
       }
     })
