@@ -168,7 +168,8 @@ const PackageForm = ({
       repo_7: `${pkg?.repos ? splitRepos(pkg.repos)[1] : ''}`,
       present_version: pkg?.version === "present"
     },
-    resolver: yupResolver(validationSchema)
+    resolver: yupResolver(validationSchema),
+    mode: "all"
   })
 
   const presentVersion = useWatch({ control, name: "present_version" })
