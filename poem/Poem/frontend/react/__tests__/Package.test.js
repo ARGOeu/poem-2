@@ -630,6 +630,27 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
     expect(screen.queryByText("Version cannot contain white spaces")).not.toBeInTheDocument()
   })
 
+  test("Test change repos", async () => {
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /package/i })).toBeInTheDocument()
+    })
+
+    await selectEvent.clearFirst(screen.getByText("repo-1 (CentOS 6)"))
+    await selectEvent.select(screen.getByText("repo-2 (CentOS 7)"), "repo-3 (CentOS 7)")
+
+    expect(screen.queryByText("repo-1 (CentOS 6)")).not.toBeInTheDocument()
+    expect(screen.queryByText("repo-2 (CentOS 7)")).not.toBeInTheDocument()
+    expect(screen.getByText("repo-3 (CentOS 7)")).toBeInTheDocument()
+
+    await selectEvent.clearFirst(screen.getByText("repo-3 (CentOS 7)"))
+    expect(screen.getByRole("alert").textContent).toBe("You must provide at least one repo")
+
+    await selectEvent.select(screen.getAllByText(/select/i)[0], "repo-1 (CentOS 6)")
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+  })
+
   test('Test successfully changing package', async () => {
     mockChangeObject.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })

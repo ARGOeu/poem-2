@@ -25,7 +25,8 @@ import {
   Input,
   Label,
   Form,
-  FormFeedback
+  FormFeedback,
+  Alert
 } from 'reactstrap';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { fetchPackages, fetchProbeVersions, fetchYumRepos } from './QueryFunctions';
@@ -43,11 +44,11 @@ const validationSchema = Yup.object().shape({
   version: Yup.string()
     .required("This field is required")
     .matches(/^\S+$/, "Version cannot contain white spaces"),
-  repo: Yup.object({
-    repo_6: Yup.string(),
-    repo_7: Yup.string()
-  }).test("repo", "You must provide at least one repo", function({ repo_6, repo_7 }) {
-    return repo_6 === "" && repo_7 === "" ? false : true
+  repo_6: Yup.string().test("repo", "You must provide at least one repo", function () {
+    return this.parent.repo_6 === "" && this.parent.repo_7 === "" ? false : true
+  }),
+  repo_7: Yup.string().test("repo", "You must provide at least one repo", function () {
+    return this.parent.repo_6 === "" && this.parent.repo_7 === "" ? false : true
   })
 })
 
@@ -174,7 +175,7 @@ const PackageForm = ({
   useEffect(() => {
     if (presentVersion)
       setValue("version", "present")
-      
+
     trigger("version")
   }, [presentVersion, setValue])
 
@@ -476,6 +477,14 @@ const PackageForm = ({
         </FormGroup>
         <FormGroup>
           <ParagraphTitle title='YUM repo'/>
+          {
+            (!disabled && (errors.repo_6 || errors.repo_7)) &&
+              <Alert color='danger'>
+                <center>
+                  You must provide at least one repo
+                </center>
+              </Alert>
+          }
           <Row>
             <Col md={8}>
               <InputGroup>
@@ -496,7 +505,10 @@ const PackageForm = ({
                         forwardedRef={ field.ref }
                         error={ errors.repo_6 }
                         isClearable={ true }
-                        onChange={ e => setValue("repo_6", e ? e.value : '') }
+                        onChange={ e => {
+                          setValue("repo_6", e ? e.value : '')
+                          trigger()
+                        }}
                         options={ repos6 }
                         value={ field.value }
                       />
@@ -528,7 +540,10 @@ const PackageForm = ({
                         forwardedRef={ field.ref }
                         error={ errors.repo_7 }
                         isClearable={ true }
-                        onChange={ e => setValue("repo_7", e ? e.value : '') }
+                        onChange={ e => {
+                          setValue("repo_7", e ? e.value : '')
+                          trigger()
+                        }}
                         options={ repos7 }
                         value={ field.value }
                       />
