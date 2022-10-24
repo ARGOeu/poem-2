@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
 import{
@@ -156,6 +156,9 @@ const PackageForm = ({
   const backend = new Backend()
   const queryClient = useQueryClient()
 
+  // this ref is used to skip the version validation on the first render (in useEffect)
+  const didMountRef = useRef(false)
+
   const { control, getValues, setValue, handleSubmit, trigger, formState: { errors } } = useForm({
     defaultValues: {
       id: `${pkg?.id ? pkg.id : ''}`,
@@ -176,7 +179,10 @@ const PackageForm = ({
     if (presentVersion)
       setValue("version", "present")
 
-    trigger("version")
+    if (didMountRef.current)
+      trigger("version")
+
+    didMountRef.current = true
   }, [presentVersion, setValue])
 
   const changePackage = useMutation( async (values) => await backend.changeObject('/api/v2/internal/packages/', values) );
