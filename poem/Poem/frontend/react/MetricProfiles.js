@@ -146,7 +146,7 @@ const MetricProfileTupleValidate = ({view_services, name, groupname,
     }
     else if (i.service &&
       (i.isNew || i.serviceChanged) &&
-      services_all.indexOf(i.service) == -1) {
+      services_all.map(service => service.name).indexOf(i.service) == -1) {
       obj.service = "Must be one of predefined service types"
       empty = true
     }
@@ -956,8 +956,6 @@ export const MetricProfilesComponent = (props) => {
                         }))
                           item.isNew = true
                       })
-                      console.log('VRDEL DEBUG', imported)
-
                       setViewServices(ensureAlignedIndexes(imported).sort(sortServices));
                       setListServices(ensureAlignedIndexes(imported).sort(sortServices));
                     }
