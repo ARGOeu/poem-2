@@ -124,7 +124,7 @@ const YumRepoForm = ({ repo, tags, name, tag, addview, cloneview, disabled, loca
   const backend = new Backend()
   const queryClient = useQueryClient()
 
-  const { control, getValues, setValue, handleSubmit, formState: { errors } } = useForm({
+  const { control, getValues, setValue, handleSubmit, trigger, formState: { errors } } = useForm({
     defaultValues: {
       id: repo ? repo.id : '',
       name: repo ? repo.name : '',
@@ -133,7 +133,7 @@ const YumRepoForm = ({ repo, tags, name, tag, addview, cloneview, disabled, loca
       description: repo ? repo.description : ''
     },
     resolver: yupResolver(RepoSchema),
-    mode: "all"
+    mode: "onChange"
   })
 
   const changeMutation = useMutation(async (values) => await backend.changeObject('/api/v2/internal/yumrepos/', values))
@@ -303,22 +303,22 @@ const YumRepoForm = ({ repo, tags, name, tag, addview, cloneview, disabled, loca
                       <DropdownWithFormText
                         forwardedRef={ field.ref }
                         error={ errors.tag }
-                        onChange={ e => setValue("tag", e.value) }
+                        onChange={ e => {
+                          setValue("tag", e.value)
+                          trigger("tag")
+                        }}
                         options={ tags }
                         value={ field.value }
                       />
                   }
                 />
-                <ErrorMessage
-                  errors={ errors }
-                  name="tag"
-                  render={ ({ message }) =>
-                    <FormFeedback invalid="true" className="end-0">
-                      { message }
-                    </FormFeedback>
-                  }
-                />
               </InputGroup>
+              {
+                errors?.tag &&
+                  <div style={{ color: "#dc3545", fontSize: "small" }}>
+                    { errors.tag.message }
+                  </div>
+              }
               <FormText color='muted'>
                 OS tag.
               </FormText>
