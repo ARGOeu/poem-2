@@ -15,7 +15,7 @@ jest.mock('../DataManager', () => {
     Backend: jest.fn()
   }
 })
-jest.setTimeout(50000);
+jest.setTimeout(100000);
 
 const queryClient = new QueryClient();
 setLogger({
