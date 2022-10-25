@@ -1638,6 +1638,115 @@ describe('Tests for package cloneview', () => {
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
   })
 
+  test("Test change package name", async () => {
+    renderCloneView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /package/i })).toBeInTheDocument()
+    })
+
+    const nameField = screen.getByTestId("name")
+
+    await waitFor(() => {
+      fireEvent.change(nameField, { target: { value: "new-nagios-plugins-argo" } })
+    })
+
+    expect(screen.queryByText("This field is required")).not.toBeInTheDocument()
+    expect(screen.queryByText("Name cannot contain white spaces")).not.toBeInTheDocument()
+
+    await waitFor(() => {
+      fireEvent.change(nameField, { target: { value: "" } })
+    })
+    expect(screen.getByText("This field is required")).toBeInTheDocument()
+
+    await waitFor(() => {
+      fireEvent.change(nameField, { target: { value: "new nagios-plugins-argo" } })
+    })
+    expect(screen.getByText("Name cannot contain white spaces")).toBeInTheDocument()
+  })
+
+  test("Test change package version", async () => {
+    renderCloneView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /package/i })).toBeInTheDocument()
+    })
+
+    const versionField = screen.getByTestId("version")
+    const presentVersionField = screen.getByRole("checkbox")
+
+    await waitFor(() => {
+      fireEvent.change(versionField, { target: { value: "0.1.12" } })
+    })
+    expect(screen.queryByText("This field is required")).not.toBeInTheDocument()
+    expect(screen.queryByText("Version cannot contain white spaces")).not.toBeInTheDocument()
+
+    expect(screen.getByTestId("form")).toHaveFormValues({
+      name: "nagios-plugins-argo",
+      version: "0.1.12",
+      present_version: false
+    })
+
+    await waitFor(() => {
+      fireEvent.change(versionField, { target: { value: "" } })
+    })
+    expect(screen.getByText("This field is required")).toBeInTheDocument()
+    expect(screen.queryByText("Version cannot contain white spaces")).not.toBeInTheDocument()
+
+    await waitFor(() => {
+      fireEvent.change(versionField, { target: { value: "1. 0.2" } })
+    })
+    expect(screen.queryByText("This field is required")).not.toBeInTheDocument()
+    expect(screen.getByText("Version cannot contain white spaces")).toBeInTheDocument()
+
+    await waitFor(() => {
+      fireEvent.click(presentVersionField)
+    })
+
+    expect(versionField).toBeDisabled()
+
+    expect(screen.getByTestId("form")).toHaveFormValues({
+      name: "nagios-plugins-argo",
+      version: "present",
+      present_version: true
+    })
+    expect(screen.queryByText("This field is required")).not.toBeInTheDocument()
+    expect(screen.queryByText("Version cannot contain white spaces")).not.toBeInTheDocument()
+
+    await waitFor(() => {
+      fireEvent.click(presentVersionField)
+    })
+    expect(versionField).toBeEnabled()
+    expect(screen.getByTestId("form")).toHaveFormValues({
+      name: "nagios-plugins-argo",
+      version: "present",
+      present_version: false
+    })
+    expect(screen.queryByText("This field is required")).not.toBeInTheDocument()
+    expect(screen.queryByText("Version cannot contain white spaces")).not.toBeInTheDocument()
+  })
+
+  test("Test change repos", async () => {
+    renderCloneView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /package/i })).toBeInTheDocument()
+    })
+
+    await selectEvent.clearFirst(screen.getByText("repo-1 (CentOS 6)"))
+    await selectEvent.select(screen.getByText("repo-2 (CentOS 7)"), "repo-3 (CentOS 7)")
+
+    expect(screen.queryByText("repo-1 (CentOS 6)")).not.toBeInTheDocument()
+    expect(screen.queryByText("repo-2 (CentOS 7)")).not.toBeInTheDocument()
+    expect(screen.getByText("repo-3 (CentOS 7)")).toBeInTheDocument()
+
+    await selectEvent.clearFirst(screen.getByText("repo-3 (CentOS 7)"))
+    expect(screen.getByRole("alert").textContent).toBe("You must provide at least one repo")
+
+    await selectEvent.select(screen.getAllByText(/select/i)[0], "repo-1 (CentOS 6)")
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+  })
+
   test('Test cloning successfully new package', async () => {
     renderCloneView();
 
