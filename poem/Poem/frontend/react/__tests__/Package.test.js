@@ -15,7 +15,6 @@ jest.mock('../DataManager', () => {
     Backend: jest.fn()
   }
 })
-jest.setTimeout(100000);
 
 const queryClient = new QueryClient();
 setLogger({
@@ -647,9 +646,6 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
 
     await selectEvent.clearFirst(screen.getByText("repo-3 (CentOS 7)"))
     expect(screen.getByRole("alert").textContent).toBe("You must provide at least one repo")
-
-    await selectEvent.select(screen.getAllByText(/select/i)[0], "repo-1 (CentOS 6)")
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
   })
 
   test('Test successfully changing package', async () => {
@@ -1410,9 +1406,6 @@ describe('Tests for package addview', () => {
 
     await selectEvent.clearFirst(screen.getByText("repo-3 (CentOS 7)"))
     expect(screen.getByRole("alert").textContent).toBe("You must provide at least one repo")
-
-    await selectEvent.select(screen.getAllByText(/select/i)[0], "repo-1 (CentOS 6)")
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
   })
 
   test('Test adding successfully new package', async () => {
@@ -1743,9 +1736,6 @@ describe('Tests for package cloneview', () => {
 
     await selectEvent.clearFirst(screen.getByText("repo-3 (CentOS 7)"))
     expect(screen.getByRole("alert").textContent).toBe("You must provide at least one repo")
-
-    await selectEvent.select(screen.getAllByText(/select/i)[0], "repo-1 (CentOS 6)")
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
   })
 
   test('Test cloning successfully new package', async () => {
