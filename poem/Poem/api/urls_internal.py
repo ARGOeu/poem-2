@@ -57,7 +57,6 @@ urlpatterns = [
     path('probes/<str:name>', views_internal.ListProbes.as_view(), name='probes'),
     path('public_probes/<str:name>', views_internal.ListPublicProbes.as_view(), name='probes'),
     path('saml2login', views_internal.Saml2Login.as_view(), name='saml2login'),
-    path('serviceflavoursall/', views_internal.ListAllServiceFlavours.as_view(), name='serviceflavoursall'),
     path('servicetypesdesc/', views_internal.ListServiceTypesDescriptions.as_view(), name='servicetypesdesc'),
     path('public_servicetypesdesc/', views_internal.ListPublicServiceTypesDescriptions.as_view(), name='servicetypesdesc'),
     path('sessionactive/<str:istenant>', views_internal.IsSessionActive.as_view(), name='sessionactive'),
