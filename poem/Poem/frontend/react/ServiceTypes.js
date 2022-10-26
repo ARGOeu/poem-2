@@ -83,9 +83,9 @@ const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
 
   const postServiceTypesWebApi = (data, action, title) => {
     webapiAddMutation.mutate(data, {
-      onSuccess: () => {
-        queryClient.invalidateQueries('servicetypes');
-        queryClient.invalidateQueries('public_servicetypes');
+      onSuccess: (retdata) => {
+        queryClient.setQueryData(['servicetypes', 'webapi'], retdata);
+        queryClient.setQueryData(['public_servicetypes', 'webapi'], retdata);
         NotifyOk({
           msg: 'Service types successfully ' + action,
           title: title,
