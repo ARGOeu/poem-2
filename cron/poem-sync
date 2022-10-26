@@ -1,1 +1,0 @@
-50 * * * * root source /etc/profile.d/venv_poem.sh; workon poem; $VIRTUAL_ENV/bin/poem-syncservtype
