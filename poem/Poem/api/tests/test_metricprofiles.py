@@ -15,54 +15,6 @@ from rest_framework.test import force_authenticate
 from .utils_test import mocked_func, encode_data
 
 
-class ListServiceFlavoursAPIViewTests(TenantTestCase):
-    def setUp(self):
-        self.factory = TenantRequestFactory(self.tenant)
-        self.view = views.ListAllServiceFlavours.as_view()
-        self.url = '/api/v2/internal/serviceflavoursall/'
-        self.user = CustUser.objects.create(username='testuser')
-
-        poem_models.ServiceFlavour.objects.create(
-            name='SRM',
-            description='Storage Resource Manager.'
-        )
-
-        poem_models.ServiceFlavour.objects.create(
-            name='org.onedata.oneprovider',
-            description='Oneprovider is a Onedata component...'
-        )
-
-        poem_models.ServiceFlavour.objects.create(
-            name='CREAM-CE',
-            description='[Site service] The CREAM Compute Element is the new '
-                        'CE within the gLite middleware stack.'
-        )
-
-    def test_get_service_flavours(self):
-        request = self.factory.get(self.url)
-        force_authenticate(request, user=self.user)
-        response = self.view(request)
-        self.assertEqual(
-            response.data,
-            [
-                {
-                    'name': 'CREAM-CE',
-                    'description': '[Site service] The CREAM Compute Element '
-                                   'is the new CE within the gLite middleware '
-                                   'stack.'
-                },
-                {
-                    'name': 'org.onedata.oneprovider',
-                    'description': 'Oneprovider is a Onedata component...'
-                },
-                {
-                    'name': 'SRM',
-                    'description': 'Storage Resource Manager.'
-                }
-            ]
-        )
-
-
 class ListMetricProfilesAPIViewTests(TenantTestCase):
     def setUp(self):
         self.factory = TenantRequestFactory(self.tenant)

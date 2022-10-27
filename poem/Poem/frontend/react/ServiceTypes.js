@@ -33,7 +33,6 @@ import {
   fetchUserDetails,
 } from './QueryFunctions';
 import {
-  faSave,
   faSearch,
   faTimes,
 } from '@fortawesome/free-solid-svg-icons';
@@ -83,9 +82,9 @@ const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
 
   const postServiceTypesWebApi = (data, action, title) => {
     webapiAddMutation.mutate(data, {
-      onSuccess: () => {
-        queryClient.invalidateQueries('servicetypes');
-        queryClient.invalidateQueries('public_servicetypes');
+      onSuccess: (retdata) => {
+        queryClient.setQueryData(['servicetypes', 'webapi'], retdata);
+        queryClient.setQueryData(['public_servicetypes', 'webapi'], retdata);
         NotifyOk({
           msg: 'Service types successfully ' + action,
           title: title,
@@ -816,7 +815,7 @@ export const ServiceTypesList = (props) => {
   );
 
   const { data: serviceTypesDescriptions, errorServiceTypesDescriptions, isLoading: loadingServiceTypesDescriptions} = useQuery(
-    'servicetypes', async () => {
+    ['servicetypes', 'webapi'], async () => {
       return await webapi.fetchServiceTypes();
     },
     { enabled: !!userDetails }

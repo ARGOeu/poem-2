@@ -34,10 +34,8 @@ services:
       - ../bin/poem-clearsessions:$VENV/bin/poem-clearsessions
       - ../bin/poem-manage:$VENV/bin/poem-manage
       - ../bin/poem-genseckey:$VENV/bin/poem-genseckey
-      - ../bin/poem-syncservtype:$VENV/bin/poem-syncservtype
       - ../bin/poem-tenant:$VENV/bin/poem-tenant
       - ../bin/poem-token:$VENV/bin/poem-token
-      - ../bin/poem-importservices:$VENV/bin/poem-importservices
     networks:
       app_net:
         ipv4_address: 172.19.0.2
