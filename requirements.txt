@@ -11,7 +11,7 @@ dataclasses==0.8
 decorator==5.0.9
 deepdiff==4.3.2
 defusedxml==0.7.1
-distlib==0.3.0
+distlib==0.3.6
 dj-rest-auth==2.2.5
 Django==3.2.16
 django-tenants==3.4.5
@@ -21,7 +21,7 @@ djangorestframework-api-key==2.2.0
 djangosaml2==1.0.7
 dparse==0.6.2
 elementpath==2.4.0
-filelock==3.0.12
+filelock==3.4.1
 idna==3.4
 importlib-metadata==4.8.3
 importlib-resources==5.4.0
@@ -37,6 +37,7 @@ parso==0.7.1
 pexpect==4.8.0
 pickleshare==0.7.5
 pipenv==2022.1.8
+platformdirs==2.4.0
 prompt-toolkit==3.0.20
 psycopg2-binary==2.9.5
 ptyprocess==0.7.0
@@ -60,7 +61,7 @@ traitlets==4.3.3
 typing_extensions==4.1.1
 Unidecode==1.1.1
 urllib3==1.26.12
-virtualenv==20.0.15
+virtualenv==20.16.6
 virtualenv-clone==0.5.4
 wcwidth==0.2.5
 xmlschema==1.9.2
