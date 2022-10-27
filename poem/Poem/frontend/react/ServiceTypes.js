@@ -33,7 +33,6 @@ import {
   fetchUserDetails,
 } from './QueryFunctions';
 import {
-  faSave,
   faSearch,
   faTimes,
 } from '@fortawesome/free-solid-svg-icons';
