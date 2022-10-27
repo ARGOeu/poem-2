@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
 import{
@@ -12,7 +12,6 @@ import{
   DefaultColumnFilter,
   SelectColumnFilter,
   BaseArgoTable,
-  CustomError,
   DropdownWithFormText
 } from './UIElements';
 import {
@@ -23,39 +22,35 @@ import {
   Button,
   InputGroup,
   InputGroupText,
-  Alert,
   Input,
-  Label
+  Label,
+  Form,
+  FormFeedback,
+  Alert
 } from 'reactstrap';
-import { Formik, Form, Field } from 'formik';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { fetchPackages, fetchProbeVersions, fetchYumRepos } from './QueryFunctions';
+import { Controller, useForm, useWatch } from 'react-hook-form';
+import { ErrorMessage } from '@hookform/error-message';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as Yup from "yup";
 
 
-const packageValidate = (values) => {
-  const errors = {};
-
-  if (!values.name)
-    errors.name = 'Required';
-
-  else if (!/^\S*$/.test(values.name))
-    errors.name = 'Name cannot contain white spaces';
-
-  if (!values.present_version) {
-    if (!values.version)
-      errors.version = 'Required';
-
-    else if (!/^\S*$/.test(values.version))
-      errors.version = 'Version cannot contain white spaces'
-  }
-
-  if (!values.repo_6 && !values.repo_7) {
-    errors.repo_6 = 'You must provide at least one repo!';
-    errors.repo_7 = 'You must provide at least one repo!';
-  }
-
-  return errors;
-}
+const validationSchema = Yup.object().shape({
+  name: Yup.string()
+    .required("This field is required")
+    .matches(/^\S+$/, "Name cannot contain white spaces"),
+  presentVersion: Yup.boolean(),
+  version: Yup.string()
+    .required("This field is required")
+    .matches(/^\S+$/, "Version cannot contain white spaces"),
+  repo_6: Yup.string().test("repo", "You must provide at least one repo", function () {
+    return this.parent.repo_6 === "" && this.parent.repo_7 === "" ? false : true
+  }),
+  repo_7: Yup.string().test("repo", "You must provide at least one repo", function () {
+    return this.parent.repo_6 === "" && this.parent.repo_7 === "" ? false : true
+  })
+})
 
 
 export const PackageList = (props) => {
@@ -137,201 +132,142 @@ export const PackageList = (props) => {
     );
   } else
     return null;
-};
+}
 
 
-export const PackageComponent = (props) => {
-  const nameversion = props.match.params.nameversion;
-  const addview = props.addview;
-  const cloneview = props.cloneview;
-  const disabled = props.disabled;
-  const location = props.location;
-  const history = props.history;
+function splitRepos(repos) {
+  let repo6 = '';
+  let repo7 = '';
+  for (let i = 0; i < repos.length; i++) {
+    if (repos[i].split('(')[1].slice(0, -1) === 'CentOS 6')
+      repo6 = repos[i];
 
-  const backend = new Backend();
-  const queryClient = useQueryClient();
+    if (repos[i].split('(')[1].slice(0, -1) === 'CentOS 7')
+      repo7 = repos[i];
+  }
 
-  const [repos6, setRepos6] = useState(new Array())
-  const [repos7, setRepos7] = useState(new Array())
-  const [probes, setProbes] = useState(new Array())
-  const [presentVersion, setPresentVersion] = useState(false)
+  return [repo6, repo7];
+}
+
+
+const PackageForm = ({
+  nameversion, addview, cloneview, disabled, location, history, pkg={}, probes=[], repos6=[], repos7=[], packageVersions=[]
+}) => {
+  const backend = new Backend()
+  const queryClient = useQueryClient()
+
+  // this ref is used to skip the version validation on the first render (in useEffect)
+  const didMountRef = useRef(false)
+
+  const { control, getValues, setValue, handleSubmit, trigger, formState: { errors } } = useForm({
+    defaultValues: {
+      id: `${pkg?.id ? pkg.id : ''}`,
+      name: `${pkg?.name ? pkg.name : ''}`,
+      version: `${pkg?.version ? pkg.version : ''}`,
+      initialVersion: `${pkg?.version ? pkg.version : ""}`,
+      repo_6: `${pkg?.repos ? splitRepos(pkg.repos)[0] : ''}`,
+      repo_7: `${pkg?.repos ? splitRepos(pkg.repos)[1] : ''}`,
+      present_version: pkg?.version === "present"
+    },
+    resolver: yupResolver(validationSchema),
+    mode: "all"
+  })
+
+  const presentVersion = useWatch({ control, name: "present_version" })
+
+  useEffect(() => {
+    if (presentVersion)
+      setValue("version", "present")
+
+    if (didMountRef.current)
+      trigger("version")
+
+    didMountRef.current = true
+  }, [presentVersion, setValue])
 
   const changePackage = useMutation( async (values) => await backend.changeObject('/api/v2/internal/packages/', values) );
   const addPackage = useMutation( async (values) => await backend.addObject('/api/v2/internal/packages/', values) );
   const deletePackage = useMutation( async () => await backend.deleteObject(`/api/v2/internal/packages/${nameversion}`));
   const updateMetricsMutation = useMutation( async (values) => await backend.changeObject('/api/v2/internal/updatemetricsversions/', values) );
 
-  const { data: pkg, error: errorPkg, status: statusPkg } = useQuery(
-    ['package', nameversion], async () => {
-      let pkg = await backend.fetchData(`/api/v2/internal/packages/${nameversion}`);
-      let [repo6, repo7] = splitRepos(pkg.repos);
-      pkg.initial_version = pkg.version;
-      pkg.repo_6 = repo6;
-      pkg.repo_7 = repo7;
-      return pkg;
-    },
-    {
-      enabled: !addview,
-      initialData: () => {
-        if (!addview) {
-          let pkgs = queryClient.getQueryData('package');
-          if (pkgs) {
-            let pkg = pkgs.find(pkg => nameversion == `${pkg.name}-${pkg.version}`)
-            let [repo6, repo7] = splitRepos(pkg.repos);
-            pkg.initial_version = pkg.version;
-            pkg.repo_6 = repo6;
-            pkg.repo_7 = repo7;
-            return pkg;
-          }
-        }
-      },
-      onSuccess: (data) => {
-        if (data.version === 'present')
-          setPresentVersion(true)
-      }
-    }
-  );
-
-  const { data: repos, error: errorRepos, status: statusRepos } = useQuery(
-    'yumrepo', () => fetchYumRepos(),
-    {
-      onSuccess: (data) => {
-        let listRepos6 = []
-        let listRepos7 = []
-
-        data.forEach(repo => {
-          if (repo.tag === 'CentOS 6')
-            listRepos6.push(`${repo.name} (${repo.tag})`)
-
-          else if (repo.tag === 'CentOS 7')
-            listRepos7.push(`${repo.name} (${repo.tag})`)
-        })
-
-        setRepos6(listRepos6)
-        setRepos7(listRepos7)
-      }
-    }
-  );
-
-  const { error: errorProbes, status: statusProbes } = useQuery(
-    ['probe', 'version'], () => fetchProbeVersions(),
-    {
-      enabled: !!pkg,
-      onSuccess: (data) => {
-        let listProbes = new Array()
-        if (pkg) {
-          data.forEach(probe => {
-            if (probe.fields.package === `${pkg.name} (${pkg.version})`)
-              listProbes.push(probe.fields.name)
-          })
-        }
-        setProbes(listProbes)
-      }
-    }
-  );
-
-  const { data: packageVersions, error: errorPackageVersions, status: statusPackageVersions } = useQuery(
-    ['package', 'versions', nameversion], async () => {
-      let pkg_versions = []
-      if (!addview)
-        pkg_versions = await backend.fetchData(`/api/v2/internal/packageversions/${pkg.name}`);
-
-      return pkg_versions
-    },
-    { enabled: !!pkg }
-  );
-
   const [disabledButton, setDisabledButton] = useState(true);
   const [areYouSureModal, setAreYouSureModal] = useState(false);
   const [modalFlag, setModalFlag] = useState(undefined);
   const [modalTitle, setModalTitle] = useState(undefined);
   const [modalMsg, setModalMsg] = useState(undefined);
-  const [formValues, setFormValues] = useState(undefined);
 
   function toggleAreYouSure() {
     setAreYouSureModal(!areYouSureModal);
   }
 
-  function splitRepos(repos) {
-    let repo6 = '';
-    let repo7 = '';
-    for (let i = 0; i < repos.length; i++) {
-      if (repos[i].split('(')[1].slice(0, -1) === 'CentOS 6')
-        repo6 = repos[i];
-
-      if (repos[i].split('(')[1].slice(0, -1) === 'CentOS 7')
-        repo7 = repos[i];
-    }
-
-    return [repo6, repo7];
-  }
-
-  function onVersionSelect(props, value) {
-    let initial_version = pkg.initial_version;
+  function onVersionSelect(value) {
+    let initial_version = getValues("initialVersion")
     packageVersions.forEach(pkgv => {
       if (pkgv.version === value) {
-        let [repo6, repo7] = splitRepos(pkgv.repos);
-        props.setFieldValue('name', pkgv.name);
-        props.setFieldValue('version', pkgv.version);
-        props.setFieldValue('repo_6', repo6);
-        props.setFieldValue('repo_7', repo7);
-        props.setFieldValue('present_version', pkgv.use_present_version);
+        let [repo6, repo7] = splitRepos(pkgv.repos)
+        setValue('name', pkgv.name)
+        setValue('version', pkgv.version)
+        setValue('repo_6', repo6)
+        setValue('repo_7', repo7)
+        setValue('present_version', pkgv.use_present_version)
 
-        setDisabledButton(value === initial_version);
+        setDisabledButton(value === initial_version)
       }
-    });
+    })
   }
 
-  function onSubmitHandle(values) {
-    let msg = `Are you sure you want to ${addview || cloneview ? 'add' : 'change'} package?`;
-    let title = `${addview || cloneview ? 'Add' : 'Change'} package`;
+  function onSubmitHandle() {
+    let msg = `Are you sure you want to ${addview || cloneview ? 'add' : 'change'} package?`
+    let title = `${addview || cloneview ? 'Add' : 'Change'} package`
 
-    setFormValues(values);
-    setModalMsg(msg);
-    setModalTitle(title);
-    setModalFlag('submit');
-    toggleAreYouSure();
+    setModalMsg(msg)
+    setModalTitle(title)
+    setModalFlag('submit')
+    toggleAreYouSure()
   }
 
-  async function onTenantSubmitHandle(values) {
+  async function onTenantSubmitHandle() {
+    let values = getValues()
+
     try {
       let json = await backend.fetchData(
-        `/api/v2/internal/updatemetricsversions/${values.name}-${values.version}`,
+        `/api/v2/internal/updatemetricsversions/${values.name}-${values.version}`
       )
 
-      let msgs = [];
+      let msgs = []
       if ('updated' in json)
-        msgs.push(json['updated']);
+        msgs.push(json['updated'])
 
       if ('deleted' in json)
-        msgs.push(json['deleted']);
+        msgs.push(json['deleted'])
 
       if ('warning' in json)
-        msgs.push(json['warning']);
+        msgs.push(json['warning'])
 
-      let title = 'Update metrics';
+      let title = 'Update metrics'
 
       msgs.push('ARE YOU SURE you want to update metrics?')
 
-      setModalMsg(<div>{msgs.map((msg, i) => <p key={i}>{msg}</p>)}</div>);
-      setModalTitle(title);
-      setFormValues(values);
-      setModalFlag('update');
-      toggleAreYouSure();
+      setModalMsg(<div>{msgs.map((msg, i) => <p key={i}>{msg}</p>)}</div>)
+      setModalTitle(title)
+      setModalFlag('update')
+      toggleAreYouSure()
     } catch(error) {
       NotifyError({ title: 'Error', msg: error.message })
     }
   }
 
   function updateMetrics() {
+    let formValues = getValues()
+
     const sendValues = new Object({
       name: formValues.name,
       version: formValues.version
     })
     updateMetricsMutation.mutate(sendValues, {
       onSuccess: async (data) => {
-        queryClient.invalidateQueries('metric');
-        let json = await data.json();
+        queryClient.invalidateQueries('metric')
+        let json = await data.json()
         if ('updated' in json)
           NotifyOk({
             msg: json.updated,
@@ -339,17 +275,19 @@ export const PackageComponent = (props) => {
             callback: () => history.push('/ui/administration/packages')
           });
         if ('warning' in json)
-          NotifyWarn({msg: json.warning, title: 'Warning'});
+          NotifyWarn({msg: json.warning, title: 'Warning'})
 
         if ('deleted' in json)
-          NotifyWarn({msg: json.deleted, title: 'Deleted'});
+          NotifyWarn({msg: json.deleted, title: 'Deleted'})
       },
       onError: (error) => NotifyError({ title: 'Error', msg: error.message })
     })
   }
 
   function doChange() {
+    let formValues = getValues()
     let repos = [];
+
     if (formValues.repo_6)
       repos.push(formValues.repo_6);
 
@@ -418,6 +356,316 @@ export const PackageComponent = (props) => {
     })
   }
 
+  return (
+    <BaseArgoView
+      resourcename={disabled ? 'Package details' : 'package'}
+      infoview={disabled}
+      location={location}
+      addview={addview}
+      cloneview={cloneview}
+      clone={true}
+      history={false}
+      modal={true}
+      state={{
+        areYouSureModal,
+        modalTitle,
+        modalMsg,
+        'modalFunc': modalFlag === 'submit' ?
+          doChange
+        :
+          modalFlag === 'delete' ?
+            doDelete
+          :
+            modalFlag === 'update' ?
+              updateMetrics
+            :
+              undefined
+      }}
+      toggle={toggleAreYouSure}
+    >
+      <Form onSubmit={ handleSubmit(onSubmitHandle) } data-testid="form">
+        <FormGroup>
+          <Row className='align-items-center'>
+            <Col md={6}>
+              <InputGroup>
+                <InputGroupText>Name</InputGroupText>
+                <Controller
+                  name="name"
+                  control={ control }
+                  render={ ({ field }) =>
+                    <Input
+                      { ...field }
+                      className={`form-control ${errors?.name && 'is-invalid'}`}
+                      data-testid="name"
+                      disabled={disabled}
+                    />
+                  }
+                />
+                <ErrorMessage
+                  errors={ errors }
+                  name="name"
+                  render={ ({ message }) =>
+                    <FormFeedback invalid="true" className="end-0">
+                      { message }
+                    </FormFeedback>
+                  }
+                />
+              </InputGroup>
+              <FormText color='muted'>
+                Package name.
+              </FormText>
+            </Col>
+            <Col md={2}>
+              <Row>
+                <Col md={12}>
+                  <InputGroup>
+                    <InputGroupText>Version</InputGroupText>
+                    <Controller
+                      name="version"
+                      control={ control }
+                      render={ ({ field }) =>
+                        disabled ?
+                          <DropdownWithFormText
+                            forwardedRef={ field.ref }
+                            error={ errors.version }
+                            onChange={ e => onVersionSelect(e.value) }
+                            options={ packageVersions.map(ver => ver.version) }
+                            value={ field.value }
+                          />
+                        :
+                          <Input
+                            { ...field }
+                            data-testid="version"
+                            disabled={ getValues("present_version") }
+                            className={ `form-control ${errors?.version && 'is-invalid'}` }
+                          />
+                      }
+                    />
+                    <ErrorMessage
+                      errors={errors}
+                      name="version"
+                      render={ ({ message }) =>
+                        <FormFeedback invalid="true" className="end-0">
+                          { message }
+                        </FormFeedback>
+                      }
+                    />
+                  </InputGroup>
+                  <FormText color='muted'>
+                    Package version.
+                  </FormText>
+                </Col>
+              </Row>
+            </Col>
+            {
+              !disabled &&
+                <Col md={3}>
+                  <FormGroup check inline className='ms-3'>
+                    <Controller
+                      name="present_version"
+                      control={ control }
+                      render={ ({ field }) =>
+                        <Input
+                          { ...field }
+                          type='checkbox'
+                          onChange={ e => {
+                            setValue("present_version", e.target.checked)
+                          }}
+                          checked={ field.value }
+                        />
+                      }
+                    />
+                    <Label check for='present_version'>Use version which is present in repo</Label>
+                  </FormGroup>
+                </Col>
+            }
+          </Row>
+        </FormGroup>
+        <FormGroup>
+          <ParagraphTitle title='YUM repo'/>
+          {
+            (!disabled && (errors.repo_6 || errors.repo_7)) &&
+              <Alert color='danger'>
+                <center>
+                  You must provide at least one repo
+                </center>
+              </Alert>
+          }
+          <Row>
+            <Col md={8}>
+              <InputGroup>
+                <InputGroupText>CentOS 6 repo</InputGroupText>
+                <Controller
+                  name="repo_6"
+                  control={ control }
+                  render={ ({ field }) =>
+                    disabled ?
+                      <Input
+                        { ...field }
+                        className="form-control"
+                        data-testid="repo_6"
+                        disabled={true}
+                      />
+                    :
+                      <DropdownWithFormText
+                        forwardedRef={ field.ref }
+                        error={ errors.repo_6 }
+                        isClearable={ true }
+                        onChange={ e => {
+                          setValue("repo_6", e ? e.value : '')
+                          trigger()
+                        }}
+                        options={ repos6 }
+                        value={ field.value }
+                      />
+                    }
+                />
+              </InputGroup>
+              <FormText color='muted'>
+                Package is part of selected CentOS 6 repo.
+              </FormText>
+            </Col>
+          </Row>
+          <Row className='mt-4'>
+            <Col md={8}>
+              <InputGroup>
+                <InputGroupText>CentOS 7 repo</InputGroupText>
+                <Controller
+                  name="repo_7"
+                  control={ control }
+                  render={ ({ field }) =>
+                    disabled ?
+                      <Input
+                        { ...field }
+                        className="form-control"
+                        data-testid="repo_7"
+                        disabled={true}
+                      />
+                    :
+                      <DropdownWithFormText
+                        forwardedRef={ field.ref }
+                        error={ errors.repo_7 }
+                        isClearable={ true }
+                        onChange={ e => {
+                          setValue("repo_7", e ? e.value : '')
+                          trigger()
+                        }}
+                        options={ repos7 }
+                        value={ field.value }
+                      />
+                    }
+                />
+              </InputGroup>
+              <FormText color='muted'>
+                Package is part of selected CentOS 7 repo.
+              </FormText>
+            </Col>
+          </Row>
+          {
+            (!addview && !cloneview && probes.length > 0) &&
+              <Row className='mt-3'>
+                <Col md={8}>
+                  Probes:
+                  <div>
+                    {
+                      probes
+                        .map((e, i) => <Link key={i} to={`/ui/probes/${e}/history/${getValues("version")}`}>{e}</Link>)
+                        .reduce((prev, curr) => [prev, ', ', curr])
+                    }
+                  </div>
+                </Col>
+              </Row>
+          }
+        </FormGroup>
+        {
+          <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+            {
+              (!addview && !cloneview && !disabled) ?
+                <Button
+                  color="danger"
+                  onClick={() => {
+                    setModalMsg('Are you sure you want to delete package?');
+                    setModalTitle('Delete package')
+                    setModalFlag('delete');
+                    toggleAreYouSure();
+                  }}
+                >
+                  Delete
+                </Button>
+              :
+                <div></div>
+            }
+            {
+              disabled ?
+                <Button
+                  color='success'
+                  id='import-metrics-button'
+                  disabled={disabled && disabledButton}
+                  onClick={() => onTenantSubmitHandle()}
+                >
+                  Update metrics
+                </Button>
+              :
+                <Button
+                  color="success"
+                  id="submit-button"
+                  type="submit"
+                >
+                  Save
+                </Button>
+            }
+          </div>
+        }
+      </Form>
+    </BaseArgoView>
+  )
+}
+
+
+export const PackageComponent = (props) => {
+  const nameversion = props.match.params.nameversion;
+  const addview = props.addview;
+  const cloneview = props.cloneview;
+  const disabled = props.disabled;
+  const location = props.location;
+  const history = props.history;
+
+  const backend = new Backend();
+  const queryClient = useQueryClient();
+
+  const { data: pkg, error: errorPkg, status: statusPkg } = useQuery(
+    ['package', nameversion], async () => {
+      return await backend.fetchData(`/api/v2/internal/packages/${nameversion}`);
+    },
+    {
+      enabled: !addview,
+      initialData: () => {
+        if (!addview) {
+          let pkgs = queryClient.getQueryData('package');
+          if (pkgs) {
+            return pkgs.find(pkg => nameversion == `${pkg.name}-${pkg.version}`)
+          }
+        }
+      }
+    }
+  )
+
+  const { data: repos, error: errorRepos, status: statusRepos } = useQuery(
+    'yumrepo', () => fetchYumRepos()
+  )
+
+  const { data: probes, error: errorProbes, status: statusProbes } = useQuery(
+    ['probe', 'version'], () => fetchProbeVersions(),
+    { enabled: !!pkg }
+  )
+
+  const { data: packageVersions, error: errorPackageVersions, status: statusPackageVersions } = useQuery(
+    ['package', 'versions', nameversion], async () => {
+      return await backend.fetchData(`/api/v2/internal/packageversions/${pkg.name}`);
+    },
+    { enabled: !!pkg }
+  )
+
   if (statusPkg === 'loading' || statusRepos === 'loading' || statusProbes === 'loading' || statusPackageVersions === 'loading')
     return (<LoadingAnim/>);
 
@@ -433,249 +681,42 @@ export const PackageComponent = (props) => {
   else if (statusPackageVersions === 'error')
     return (<ErrorComponent error={errorPackageVersions}/>);
 
-  else if (repos) {
+  else if (repos && (addview || (pkg && probes && packageVersions))) {
+    let repos6 = new Array()
+    let repos7 = new Array()
+    let listProbes = new Array()
+
+    repos.forEach(repo => {
+      if (repo.tag === 'CentOS 6')
+        repos6.push(`${repo.name} (${repo.tag})`)
+
+      else if (repo.tag === 'CentOS 7')
+        repos7.push(`${repo.name} (${repo.tag})`)
+    })
+
+    if (probes) {
+      probes.forEach(probe => {
+        if (probe.fields.package === `${pkg.name} (${pkg.version})`)
+          listProbes.push(probe.fields.name)
+      })
+    }
+
     return (
-      <BaseArgoView
-        resourcename={disabled ? 'Package details' : 'package'}
-        infoview={disabled}
-        location={location}
+      <PackageForm
+        nameversion={nameversion}
+        pkg={pkg}
+        probes={listProbes}
+        repos6={repos6}
+        repos7={repos7}
+        packageVersions={packageVersions}
         addview={addview}
         cloneview={cloneview}
-        clone={true}
-        history={false}
-        modal={true}
-        state={{
-          areYouSureModal,
-          modalTitle,
-          modalMsg,
-          'modalFunc': modalFlag === 'submit' ?
-            doChange
-          :
-            modalFlag === 'delete' ?
-              doDelete
-            :
-              modalFlag === 'update' ?
-                updateMetrics
-              :
-                undefined
-        }}
-        toggle={toggleAreYouSure}
-      >
-        <Formik
-          initialValues = {{
-            id: `${pkg ? pkg.id : ''}`,
-            name: `${pkg ? pkg.name : ''}`,
-            version: `${pkg ? pkg.version : ''}`,
-            repo_6: `${pkg ? pkg.repo_6 : ''}`,
-            repo_7: `${pkg ? pkg.repo_7 : ''}`,
-            present_version: presentVersion
-          }}
-          onSubmit = {(values) => onSubmitHandle(values)}
-          validate={ packageValidate }
-          enableReinitialize={ true }
-        >
-          {props => (
-            <Form>
-              <FormGroup>
-                <Row className='align-items-center'>
-                  <Col md={6}>
-                    <InputGroup>
-                      <InputGroupText>Name</InputGroupText>
-                      <Field
-                        type='text'
-                        name='name'
-                        className={`form-control ${props.errors.name && 'border-danger'}`}
-                        id='name'
-                        data-testid='name'
-                        disabled={disabled}
-                      />
-                    </InputGroup>
-                    <CustomError error={ props.errors.name } />
-                    <FormText color='muted'>
-                      Package name.
-                    </FormText>
-                  </Col>
-                  <Col md={2}>
-                    <Row>
-                      <Col md={12}>
-                        <InputGroup>
-                          <InputGroupText>Version</InputGroupText>
-                          {
-                            disabled ?
-                              <DropdownWithFormText
-                                name='version'
-                                id='version'
-                                error={ props.errors.version }
-                                onChange={ e =>  onVersionSelect(props, e.value) }
-                                options={ packageVersions.map(ver => ver.version) }
-                                value={ props.values.version }
-                              />
-                            :
-                              <Field
-                                type='text'
-                                name='version'
-                                data-testid='version'
-                                value={ props.values.present_version ? 'present' : props.values.version }
-                                disabled={ props.values.present_version }
-                                className={ `form-control ${props.errors.version && 'border-danger'}` }
-                                id='version'
-                              />
-                          }
-                        </InputGroup>
-                        <CustomError error={ props.errors.version } />
-                        <FormText color='muted'>
-                          Package version.
-                        </FormText>
-                      </Col>
-                    </Row>
-                  </Col>
-                  {
-                    !disabled &&
-                      <Col md={3}>
-                        <FormGroup check inline className='ms-3'>
-                          <Input
-                            type='checkbox'
-                            name='present_version'
-                            id='present_version'
-                            onChange={ e => props.setFieldValue('present_version', e.target.checked) }
-                            checked={ props.values.present_version }
-                          />
-                          <Label check for='present_version'>Use version which is present in repo</Label>
-                        </FormGroup>
-                      </Col>
-                  }
-                </Row>
-              </FormGroup>
-              <FormGroup>
-                <ParagraphTitle title='YUM repo'/>
-                {
-                  (!disabled && (props.errors.repo_6 || props.errors.repo_7)) &&
-                    <Alert color='danger'>
-                      <center>
-                        You must provide at least one repo!
-                      </center>
-                    </Alert>
-                }
-                <Row>
-                  <Col md={8}>
-                    <InputGroup>
-                      <InputGroupText>CentOS 6 repo</InputGroupText>
-                      {
-                        disabled ?
-                          <Field
-                            type='text'
-                            className='form-control'
-                            name='repo_6'
-                            data-testid='repo_6'
-                            id='repo_6'
-                            disabled={true}
-                          />
-                        :
-                          <DropdownWithFormText
-                            name='repo_6'
-                            error={ props.errors.repo_6 }
-                            isClearable={ true }
-                            onChange={ e => props.setFieldValue('repo_6', e ? e.value : '') }
-                            options={ repos6 }
-                            value={ props.values.repo_6 }
-                          />
-                      }
-                    </InputGroup>
-                    <FormText color='muted'>
-                      Package is part of selected CentOS 6 repo.
-                    </FormText>
-                  </Col>
-                </Row>
-                <Row className='mt-4'>
-                  <Col md={8}>
-                    <InputGroup>
-                      <InputGroupText>CentOS 7 repo</InputGroupText>
-                      {
-                        disabled ?
-                          <Field
-                            type='text'
-                            className='form-control'
-                            name='repo_7'
-                            data-testid='repo_7'
-                            id='repo_7'
-                            disabled={true}
-                          />
-                        :
-                          <DropdownWithFormText
-                            name='repo_7'
-                            error={ props.errors.repo_7 }
-                            isClearable={ true }
-                            onChange={ e => props.setFieldValue('repo_7', e ? e.value : '') }
-                            options={ repos7 }
-                            value={ props.values.repo_7 }
-                          />
-                      }
-                    </InputGroup>
-                    <FormText color='muted'>
-                      Package is part of selected CentOS 7 repo.
-                    </FormText>
-                  </Col>
-                </Row>
-                {
-                  (!addview && !cloneview && probes.length > 0) &&
-                    <Row className='mt-3'>
-                      <Col md={8}>
-                        Probes:
-                        <div>
-                          {
-                            probes
-                              .map((e, i) => <Link key={i} to={`/ui/probes/${e}/history/${props.values.version}`}>{e}</Link>)
-                              .reduce((prev, curr) => [prev, ', ', curr])
-                          }
-                        </div>
-                      </Col>
-                    </Row>
-                }
-              </FormGroup>
-              {
-                <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                  {
-                    (!addview && !cloneview && !disabled) ?
-                      <Button
-                        color="danger"
-                        onClick={() => {
-                          setModalMsg('Are you sure you want to delete package?');
-                          setModalTitle('Delete package')
-                          setModalFlag('delete');
-                          toggleAreYouSure();
-                        }}
-                      >
-                        Delete
-                      </Button>
-                    :
-                      <div></div>
-                  }
-                  {
-                    disabled ?
-                      <Button
-                        color='success'
-                        id='import-metrics-button'
-                        disabled={disabled && disabledButton}
-                        onClick={() => onTenantSubmitHandle(props.values)}
-                      >
-                        Update metrics
-                      </Button>
-                    :
-                      <Button
-                        color="success"
-                        id="submit-button"
-                        type="submit"
-                      >
-                        Save
-                      </Button>
-                  }
-                </div>
-              }
-            </Form>
-          )}
-        </Formik>
-      </BaseArgoView>
+        disabled={disabled}
+        location={location}
+        history={history}
+      />
     )
+
   } else
-    return null;
-};
+    return null
+}
