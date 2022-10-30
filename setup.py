@@ -40,7 +40,7 @@ setup(name=NAME,
           'psycopg2-binary',
           'cryptography==36.*',
           'deepdiff==4.*',
-          'typing_extensions=4.1.*'
+          'typing_extensions==4.1.*',
           'safety'
       ],
       scripts=['bin/poem-db', 'bin/poem-genseckey', 'bin/poem-manage',
