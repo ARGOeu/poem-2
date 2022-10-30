@@ -323,7 +323,8 @@ export const MetricProfilesComponent = (props) => {
   const backend = new Backend();
   const webapi = new WebApi({
     token: props.webapitoken,
-    metricProfiles: props.webapimetric
+    metricProfiles: props.webapimetric,
+    serviceTypes: props.webapiservicetypes
   })
 
   const queryClient = useQueryClient();
