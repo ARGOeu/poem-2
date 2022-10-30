@@ -370,7 +370,6 @@ export const MetricProfilesComponent = (props) => {
     }
   )
 
-
   const { data: webApiMP, error: errorWebApiMP, isLoading: loadingWebApiMP } = useQuery(
     [`${publicView ? 'public_' : ''}metricprofile`, 'webapi', profile_name],
     () => fetchMetricProfile(webapi, backendMP.apiid),
@@ -832,7 +831,7 @@ export const MetricProfilesComponent = (props) => {
   else if (errorWebApiST)
     return (<ErrorComponent error={errorWebApiST} />)
 
-  else if (addview || (backendMP && webApiMP) && (publicView || (metricsAll && webApiST)))
+  else if ((addview && webApiST) || (backendMP && webApiMP && webApiST) || (publicView))
   {
     let write_perm = undefined
 
