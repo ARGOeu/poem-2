@@ -188,12 +188,14 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         webapimetric={webApiMetric}
         webapitoken={token}
         tenantname={tenantName}
+        webapiservicetypes={webApiServiceTypes}
         addview={true}/>}
       />
     <Route exact path="/ui/metricprofiles/:name"
       render={props => <MetricProfilesChange
         {...props}
         webapimetric={webApiMetric}
+        webapiservicetypes={webApiServiceTypes}
         webapitoken={token}
         tenantname={tenantName}/>}
     />
@@ -201,6 +203,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
       render={props => <MetricProfilesClone
         {...props}
         webapimetric={webApiMetric}
+        webapiservicetypes={webApiServiceTypes}
         webapitoken={token}
         tenantname={tenantName}/>}
     />

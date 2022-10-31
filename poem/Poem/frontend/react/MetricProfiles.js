@@ -323,7 +323,8 @@ export const MetricProfilesComponent = (props) => {
   const backend = new Backend();
   const webapi = new WebApi({
     token: props.webapitoken,
-    metricProfiles: props.webapimetric
+    metricProfiles: props.webapimetric,
+    serviceTypes: props.webapiservicetypes
   })
 
   const queryClient = useQueryClient();
@@ -368,7 +369,6 @@ export const MetricProfilesComponent = (props) => {
       }
     }
   )
-
 
   const { data: webApiMP, error: errorWebApiMP, isLoading: loadingWebApiMP } = useQuery(
     [`${publicView ? 'public_' : ''}metricprofile`, 'webapi', profile_name],
@@ -831,7 +831,7 @@ export const MetricProfilesComponent = (props) => {
   else if (errorWebApiST)
     return (<ErrorComponent error={errorWebApiST} />)
 
-  else if (addview || (backendMP && webApiMP) && (publicView || (metricsAll && webApiST)))
+  else if ((addview && webApiST) || (backendMP && webApiMP && webApiST) || (publicView))
   {
     let write_perm = undefined
 
