@@ -3357,7 +3357,9 @@ class ListMetricConfigurationAPIViewTests(TenantTestCase):
                     "eosccore.ui.argo.grnet.gr org.nagios.ARGOWeb-AR "
                     "-r EOSC_Monitoring",
                     "argo.eosc-portal.eu org.nagios.ARGOWeb-Status -u "
-                    "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
+                    "/eosc/report-status/Default/SERVICEGROUPS?accept=csv",
+                    "sensu.cro-ngi argo.AMSPublisher-Check -q "
+                    "w:metrics+g:published180 -c 10"
                 ]
             )
         )
@@ -3425,6 +3427,12 @@ class ListMetricConfigurationAPIViewTests(TenantTestCase):
                             "parameter": "-u",
                             "value": "/eosc/report-status/Default/SERVICEGROUPS"
                                      "?accept=csv"
+                        },
+                        {
+                            "hostname": "sensu.cro-ngi",
+                            "metric": "argo.AMSPublisher-Check",
+                            "parameter": "-q",
+                            "value": "w:metrics+g:published180 -c 10"
                         }
                     ]
                 }
@@ -3481,6 +3489,12 @@ class ListMetricConfigurationAPIViewTests(TenantTestCase):
                         "parameter": "-u",
                         "value": "/eosc/report-status/Default/SERVICEGROUPS"
                                  "?accept=csv"
+                    },
+                    {
+                        "hostname": "sensu.cro-ngi",
+                        "metric": "argo.AMSPublisher-Check",
+                        "parameter": "-q",
+                        "value": "w:metrics+g:published180 -c 10"
                     }
                 ]
             }
@@ -3544,6 +3558,12 @@ class ListMetricConfigurationAPIViewTests(TenantTestCase):
                     "metric": "generic.http.ar-argoui",
                     "parameter": "-r",
                     "value": "EOSC"
+                },
+                {
+                    "hostname": "sensu.cro-ngi",
+                    "metric": "argo.AMSPublisher-Check",
+                    "parameter": "-q",
+                    "value": "w:metrics+g:published180 -c 10"
                 }
             ]
         }
@@ -3569,11 +3589,14 @@ class ListMetricConfigurationAPIViewTests(TenantTestCase):
         self.assertEqual(
             conf.metricparameter,
             json.dumps([
-                "eosccore.ui.argo.grnet.gr generic.http.ar-argoui -r EOSC"
+                "eosccore.ui.argo.grnet.gr generic.http.ar-argoui -r EOSC",
+                "sensu.cro-ngi argo.AMSPublisher-Check -q "
+                "w:metrics+g:published180 -c 10"
             ])
         )
 
     def test_put_configuration_regular_user(self):
+        self.maxDiff = None
         data = {
             "id": self.configuration1.id,
             "name": "local_updated",
@@ -3634,7 +3657,9 @@ class ListMetricConfigurationAPIViewTests(TenantTestCase):
                 "eosccore.ui.argo.grnet.gr org.nagios.ARGOWeb-AR "
                 "-r EOSC_Monitoring",
                 "argo.eosc-portal.eu org.nagios.ARGOWeb-Status -u "
-                "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
+                "/eosc/report-status/Default/SERVICEGROUPS?accept=csv",
+                "sensu.cro-ngi argo.AMSPublisher-Check -q "
+                "w:metrics+g:published180 -c 10"
             ])
         )
 
@@ -3739,7 +3764,9 @@ class ListMetricConfigurationAPIViewTests(TenantTestCase):
                 "eosccore.ui.argo.grnet.gr org.nagios.ARGOWeb-AR "
                 "-r EOSC_Monitoring",
                 "argo.eosc-portal.eu org.nagios.ARGOWeb-Status -u "
-                "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
+                "/eosc/report-status/Default/SERVICEGROUPS?accept=csv",
+                "sensu.cro-ngi argo.AMSPublisher-Check -q "
+                "w:metrics+g:published180 -c 10"
             ])
         )
 

@@ -381,7 +381,7 @@ class ListMetricOverrides(APIView):
                     value = ""
 
                 else:
-                    value = split[3]
+                    value = " ".join(split[3:])
 
                 results.append({
                     "hostname": split[0],
