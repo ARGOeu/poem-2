@@ -553,6 +553,32 @@ describe("Tests for metric configuration overrides addview", () => {
       "metricParameters.0.value": "https://b2share.eudat.eu"
     })
 
+    await waitFor(() => fireEvent.click(screen.getByTestId("metricParameters.0.add")))
+
+    fireEvent.change(screen.getByTestId("metricParameters.1.hostname"), { target: { value: "sensu.cro-ngi.hr" } })
+    fireEvent.change(screen.getByTestId("metricParameters.1.metric"), { target: { value: "argo.AMSPublisher-Check" } })
+    fireEvent.change(screen.getByTestId("metricParameters.1.parameter"), { target: { value: "-q" } })
+    fireEvent.change(screen.getByTestId("metricParameters.1.value"), { target: { value: "w:metrics+g:published180 -c 10" } })
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "",
+      "globalAttributes.0.attribute": "",
+      "globalAttributes.0.value": "",
+      "hostAttributes.0.hostname": "",
+      "hostAttributes.0.attribute": "",
+      "hostAttributes.0.value": "",
+      "metricParameters.0.hostname": "b2share.eudat.eu",
+      "metricParameters.0.metric": "eudat.b2share.invenio.healthcheck",
+      "metricParameters.0.parameter": "--url",
+      "metricParameters.0.value": "https://b2share.eudat.eu",
+      "metricParameters.1.hostname": "sensu.cro-ngi.hr",
+      "metricParameters.1.metric": "argo.AMSPublisher-Check",
+      "metricParameters.1.parameter": "-q",
+      "metricParameters.1.value": "w:metrics+g:published180 -c 10"
+    })
+
+    await waitFor(() => fireEvent.click(screen.getByTestId("metricParameters.0.remove")))
+
     await waitFor(() => fireEvent.click(screen.getByTestId("metricParameters.0.remove")))
 
     expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
@@ -590,10 +616,10 @@ describe("Tests for metric configuration overrides addview", () => {
     fireEvent.change(screen.getByTestId("hostAttributes.0.attribute"), { target: { value: "FOOBAR" } })
     fireEvent.change(screen.getByTestId("hostAttributes.0.value"), { target: { value: "foo-bar" } })
 
-    fireEvent.change(screen.getByTestId("metricParameters.0.hostname"), { target: { value: "b2access.eudat.eu" } })
-    fireEvent.change(screen.getByTestId("metricParameters.0.metric"), { target: { value: "eudat.b2access.unity-cert" } })
-    fireEvent.change(screen.getByTestId("metricParameters.0.parameter"), { target: { value: "--url" } })
-    fireEvent.change(screen.getByTestId("metricParameters.0.value"), { target: { value: "https://b2access.mock.url" } })
+    fireEvent.change(screen.getByTestId("metricParameters.0.hostname"), { target: { value: "sensu.cro-ngi" } })
+    fireEvent.change(screen.getByTestId("metricParameters.0.metric"), { target: { value: "argo.AMSPublisher-Check" } })
+    fireEvent.change(screen.getByTestId("metricParameters.0.parameter"), { target: { value: "-q" } })
+    fireEvent.change(screen.getByTestId("metricParameters.0.value"), { target: { value: "w:metrics+g:published180 -c 10" } })
 
     await waitFor(() => fireEvent.click(screen.getByTestId("metricParameters.0.add")))
 
@@ -632,10 +658,10 @@ describe("Tests for metric configuration overrides addview", () => {
           ],
           metric_parameters: [
             {
-              hostname: "b2access.eudat.eu",
-              metric: "eudat.b2access.unity-cert",
-              parameter: "--url",
-              value: "https://b2access.mock.url"
+              hostname: "sensu.cro-ngi",
+              metric: "argo.AMSPublisher-Check",
+              parameter: "-q",
+              value: "w:metrics+g:published180 -c 10"
             },
             {
               hostname: "epic5.storage.surfsara.nl",
@@ -1233,10 +1259,10 @@ describe("Tests for metric configuration overrides changeview", () => {
 
     await waitFor(() => fireEvent.click(screen.getByTestId("metricParameters.0.add")))
 
-    fireEvent.change(screen.getByTestId("metricParameters.1.hostname"), { target: { value: "b2share.eudat.eu" } })
-    fireEvent.change(screen.getByTestId("metricParameters.1.metric"), { target: { value: "eudat.b2share.invenio.healthcheck" } })
-    fireEvent.change(screen.getByTestId("metricParameters.1.parameter"), { target: { value: "--url" } })
-    fireEvent.change(screen.getByTestId("metricParameters.1.value"), { target: { value: "https://b2share.eudat.eu" } })
+    fireEvent.change(screen.getByTestId("metricParameters.1.hostname"), { target: { value: "sensu.cro-ngi" } })
+    fireEvent.change(screen.getByTestId("metricParameters.1.metric"), { target: { value: "argo.AMSPublisher-Check" } })
+    fireEvent.change(screen.getByTestId("metricParameters.1.parameter"), { target: { value: "-q" } })
+    fireEvent.change(screen.getByTestId("metricParameters.1.value"), { target: { value: "w:metrics+g:published180 -c 10" } })
 
     expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
       name: "local",
@@ -1251,10 +1277,10 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.0.metric": "generic.tcp.connect",
       "metricParameters.0.parameter": "-p",
       "metricParameters.0.value": "8004",
-      "metricParameters.1.hostname": "b2share.eudat.eu",
-      "metricParameters.1.metric": "eudat.b2share.invenio.healthcheck",
-      "metricParameters.1.parameter": "--url",
-      "metricParameters.1.value": "https://b2share.eudat.eu",
+      "metricParameters.1.hostname": "sensu.cro-ngi",
+      "metricParameters.1.metric": "argo.AMSPublisher-Check",
+      "metricParameters.1.parameter": "-q",
+      "metricParameters.1.value": "w:metrics+g:published180 -c 10",
       "metricParameters.2.hostname": "argo.eosc-portal.eu",
       "metricParameters.2.metric": "org.nagios.ARGOWeb-Status",
       "metricParameters.2.parameter": "-u",
@@ -1272,10 +1298,10 @@ describe("Tests for metric configuration overrides changeview", () => {
       "hostAttributes.0.hostname": "mock.host.name",
       "hostAttributes.0.attribute": "attr1",
       "hostAttributes.0.value": "some-new-value",
-      "metricParameters.0.hostname": "b2share.eudat.eu",
-      "metricParameters.0.metric": "eudat.b2share.invenio.healthcheck",
-      "metricParameters.0.parameter": "--url",
-      "metricParameters.0.value": "https://b2share.eudat.eu",
+      "metricParameters.0.hostname": "sensu.cro-ngi",
+      "metricParameters.0.metric": "argo.AMSPublisher-Check",
+      "metricParameters.0.parameter": "-q",
+      "metricParameters.0.value": "w:metrics+g:published180 -c 10",
       "metricParameters.1.hostname": "argo.eosc-portal.eu",
       "metricParameters.1.metric": "org.nagios.ARGOWeb-Status",
       "metricParameters.1.parameter": "-u",
@@ -1325,10 +1351,10 @@ describe("Tests for metric configuration overrides changeview", () => {
     fireEvent.change(screen.getByTestId("hostAttributes.0.attribute"), { target: { value: "FOOBAR" } })
     fireEvent.change(screen.getByTestId("hostAttributes.0.value"), { target: { value: "foo-bar" } })
 
-    fireEvent.change(screen.getByTestId("metricParameters.0.hostname"), { target: { value: "b2access.eudat.eu" } })
-    fireEvent.change(screen.getByTestId("metricParameters.0.metric"), { target: { value: "eudat.b2access.unity-cert" } })
-    fireEvent.change(screen.getByTestId("metricParameters.0.parameter"), { target: { value: "--url" } })
-    fireEvent.change(screen.getByTestId("metricParameters.0.value"), { target: { value: "https://b2access.mock.url" } })
+    fireEvent.change(screen.getByTestId("metricParameters.0.hostname"), { target: { value: "sensu.cro-ngi" } })
+    fireEvent.change(screen.getByTestId("metricParameters.0.metric"), { target: { value: "argo.AMSPublisher-Check" } })
+    fireEvent.change(screen.getByTestId("metricParameters.0.parameter"), { target: { value: "-q" } })
+    fireEvent.change(screen.getByTestId("metricParameters.0.value"), { target: { value: "w:metrics+g:published180 -c 10" } })
 
     await waitFor(() => fireEvent.click(screen.getByTestId("metricParameters.0.add")))
 
@@ -1372,10 +1398,10 @@ describe("Tests for metric configuration overrides changeview", () => {
           ],
           metric_parameters: [
             {
-              hostname: "b2access.eudat.eu",
-              metric: "eudat.b2access.unity-cert",
-              parameter: "--url",
-              value: "https://b2access.mock.url"
+              hostname: "sensu.cro-ngi",
+              metric: "argo.AMSPublisher-Check",
+              parameter: "-q",
+              value: "w:metrics+g:published180 -c 10"
             },
             {
               hostname: "epic5.storage.surfsara.nl",

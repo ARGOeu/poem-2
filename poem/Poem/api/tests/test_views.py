@@ -359,7 +359,7 @@ def mock_db_for_metrics_tests():
         hostattribute="",
         metricparameter=json.dumps([
             "eosccore.mon.devel.argo.grnet.gr argo.AMSPublisher-Check "
-            "-q w:metrics+g:published180"
+            "-q w:metrics+g:published180 -c 10"
         ])
     )
 
@@ -1442,7 +1442,7 @@ class ListMetricConfigurationAPIViewTests(TenantTestCase):
                             "hostname": "eosccore.mon.devel.argo.grnet.gr",
                             "metric": "argo.AMSPublisher-Check",
                             "parameter": "-q",
-                            "value": "w:metrics+g:published180"
+                            "value": "w:metrics+g:published180 -c 10"
                         }
                     ]
                 },
