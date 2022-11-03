@@ -1,5 +1,36 @@
 # Changelog
 
+## [3.4.5] - 2022-11-03
+
+### Added
+
+* ARGO-3971 Store default ports in POEM
+* ARGO-3980 Support bulk delete of service types
+* ARGO-3981 Introduce bulk add service types view
+* ARGO-3983 Add service types pagination
+* ARGO-4009 Enable Hot Module Replacement and Django internal web server
+* ARGO-4014 Define min and max width of name column in Service Types list
+
+### Changed
+
+* ARGO-3711 Reduce Metric model to what is strictly necessary
+* ARGO-3982 Remove service types sync and related DB tables
+* ARGO-4004 Ensure that only service type names without whitespace can created from the UI
+* ARGO-4008 Have red border around changed description field
+* ARGO-4012 One common Save button instead of one in every row
+* ARGO-4031 Switch API key page to react-hook-form library
+* ARGO-4032 Switch groups page to react-hook-form library
+* ARGO-4039 Switch package page to react-hook-form library
+* ARGO-4051 Ensure POEM wheel essential dependencies installed automatically
+
+### Fixed
+
+* ARGO-4005 Marking field tuple on filtered view ends with description fields populated from neighboring tuple
+* ARGO-4006 Case insensitive search on bulk delete and placeholder missing
+* ARGO-4028 Adding of new metric profile is broken
+* ARGO-4094 Metric parameter overrides not handling space in parameter value
+* ARGO-4095 Clean requirements.txt
+
 ## [3.4.4] - 2022-09-01
 
 ### Added
