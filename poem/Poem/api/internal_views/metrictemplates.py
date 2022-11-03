@@ -1063,3 +1063,66 @@ class ListPublicMetricTags(ListMetricTags):
 class ListPublicMetricTemplates4Tag(ListMetricTemplates4Tag):
     authentication_classes = ()
     permission_classes = ()
+
+
+class ListDefaultPorts(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request):
+        ports = admin_models.DefaultPort.objects.all().order_by("name")
+        serializer = serializers.DefaultPortsSerializer(ports, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        db_ports = admin_models.DefaultPort.objects.all().values_list(
+            "name", flat=True
+        )
+        if request.tenant.schema_name == get_public_schema_name() and \
+                request.user.is_superuser:
+            try:
+                if isinstance(request.data["ports"], str):
+                    ports = json.loads(request.data["ports"])
+
+                else:
+                    ports = request.data["ports"]
+
+                for port in ports:
+                    assert port["name"]
+                    assert port["value"]
+
+            except KeyError as e:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Wrong JSON format: Missing key '{e.args[0]}'"
+                )
+
+            else:
+                for port in ports:
+                    if port["name"] in db_ports:
+                        stored_port = admin_models.DefaultPort.objects.get(
+                            name=port["name"]
+                        )
+                        if stored_port.value != port["value"]:
+                            stored_port.value = port["value"]
+                            stored_port.save()
+
+                    else:
+                        admin_models.DefaultPort.objects.create(
+                            name=port["name"], value=port["value"]
+                        )
+
+                for name in set(db_ports).difference(
+                        set([p["name"] for p in ports])
+                ):
+                    stored_port = admin_models.DefaultPort.objects.get(
+                        name=name
+                    )
+                    stored_port.delete()
+
+                return Response(status=status.HTTP_201_CREATED)
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You do not have permission to add ports"
+            )

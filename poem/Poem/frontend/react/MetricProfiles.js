@@ -146,7 +146,7 @@ const MetricProfileTupleValidate = ({view_services, name, groupname,
     }
     else if (i.service &&
       (i.isNew || i.serviceChanged) &&
-      services_all.indexOf(i.service) == -1) {
+      services_all.map(service => service.name).indexOf(i.service) == -1) {
       obj.service = "Must be one of predefined service types"
       empty = true
     }
@@ -224,7 +224,7 @@ const ServicesList = () => {
                 </td>
                 <td className={service.isNew ? "bg-light" : ""}>
                   <MetricProfileAutocompleteField
-                    suggestions={context.serviceflavours_all}
+                    suggestions={context.serviceflavours_all.map(service => service.name)}
                     service={service}
                     index={index}
                     icon='serviceflavour'
@@ -312,13 +312,6 @@ const fetchMetricProfile = async (webapi, apiid) => {
 }
 
 
-const fetchServiceFlavours = async () => {
-  const backend = new Backend();
-
-  return await backend.fetchListOfNames('/api/v2/internal/serviceflavoursall');
-}
-
-
 export const MetricProfilesComponent = (props) => {
   const profile_name = props.match.params.name;
   const addview = props.addview
@@ -330,7 +323,8 @@ export const MetricProfilesComponent = (props) => {
   const backend = new Backend();
   const webapi = new WebApi({
     token: props.webapitoken,
-    metricProfiles: props.webapimetric
+    metricProfiles: props.webapimetric,
+    serviceTypes: props.webapiservicetypes
   })
 
   const queryClient = useQueryClient();
@@ -370,7 +364,8 @@ export const MetricProfilesComponent = (props) => {
     {
       enabled: (publicView || !addview),
       initialData: () => {
-        return queryClient.getQueryData([`${publicView ? 'public_' : ''}metricprofile`, "backend"])?.find(mpr => mpr.name === profile_name)
+        if (!addview)
+          return queryClient.getQueryData([`${publicView ? 'public_' : ''}metricprofile`, "backend"])?.find(mpr => mpr.name === profile_name)
       }
     }
   )
@@ -379,9 +374,10 @@ export const MetricProfilesComponent = (props) => {
     [`${publicView ? 'public_' : ''}metricprofile`, 'webapi', profile_name],
     () => fetchMetricProfile(webapi, backendMP.apiid),
     {
-      enabled: !!backendMP,
+      enabled: !!backendMP && !addview,
       initialData: () => {
-        return queryClient.getQueryData([`${publicView ? "public_" : ""}metricprofile`, "webapi"])?.find(profile => profile.id == backendMP.apiid)
+        if (!addview)
+          return queryClient.getQueryData([`${publicView ? "public_" : ""}metricprofile`, "webapi"])?.find(profile => profile.id == backendMP.apiid)
       }
     }
   )
@@ -391,9 +387,11 @@ export const MetricProfilesComponent = (props) => {
     { enabled: !publicView }
   )
 
-  const { data: serviceFlavoursAll, error: errorServiceFlavoursAll, isLoading: loadingServiceFlavoursAll } = useQuery(
-    'serviceflavoursall', () => fetchServiceFlavours(),
-    { enabled: !publicView }
+  const { data: webApiST, errorWebApiST, isLoading: loadingWebApiST} = useQuery(
+    ['servicetypes', 'webapi'], async () => {
+      return await webapi.fetchServiceTypes();
+    },
+    { enabled: !!userDetails }
   )
 
   const onInsert = async (element, i, group, name, description) => {
@@ -815,7 +813,7 @@ export const MetricProfilesComponent = (props) => {
       );
   }
 
-  if (loadingUserDetails || loadingBackendMP || loadingWebApiMP || loadingMetricsAll || loadingServiceFlavoursAll)
+  if (loadingUserDetails || loadingBackendMP || loadingWebApiMP || loadingMetricsAll || loadingWebApiST)
     return (<LoadingAnim />)
 
   else if (errorUserDetails)
@@ -830,10 +828,10 @@ export const MetricProfilesComponent = (props) => {
   else if (errorMetricsAll)
     return (<ErrorComponent error={errorMetricsAll} />)
 
-  else if (errorServiceFlavoursAll)
-    return (<ErrorComponent error={errorServiceFlavoursAll} />)
+  else if (errorWebApiST)
+    return (<ErrorComponent error={errorWebApiST} />)
 
-  else if (addview || (backendMP && webApiMP) && (publicView || (metricsAll && serviceFlavoursAll)))
+  else if ((addview && webApiST) || (backendMP && webApiMP && webApiST) || (publicView))
   {
     let write_perm = undefined
 
@@ -958,7 +956,6 @@ export const MetricProfilesComponent = (props) => {
                         }))
                           item.isNew = true
                       })
-
                       setViewServices(ensureAlignedIndexes(imported).sort(sortServices));
                       setListServices(ensureAlignedIndexes(imported).sort(sortServices));
                     }
@@ -979,7 +976,7 @@ export const MetricProfilesComponent = (props) => {
             search_metric: searchMetric,
             search_serviceflavour: searchServiceFlavour,
             metrics_all: metricsAll,
-            services_all: serviceFlavoursAll
+            services_all: webApiST
           }}
           onSubmit = {(values) => onSubmitHandle(values)}
           enableReinitialize={true}
@@ -1008,7 +1005,7 @@ export const MetricProfilesComponent = (props) => {
                     name="view_services"
                     render={props => (
                       <MetricProfilesComponentContext.Provider value={{
-                        serviceflavours_all: serviceFlavoursAll,
+                        serviceflavours_all: webApiST,
                         metrics_all: metricsAll,
                         search_handler: handleSearch,
                         remove_handler: onRemove,

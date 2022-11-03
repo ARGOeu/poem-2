@@ -119,6 +119,9 @@ export const SuperAdminAdministration = () =>
         <div className="p-1 align-items-center">
           <Icon i="metrictemplates"/> <Link className='ps-1' to={'/ui/metrictemplates'}>Metric templates</Link>
         </div>
+        <div className="p-1 align-items-center">
+          <Icon i="default_ports"/> <Link className='ps-1' to={'/ui/administration/default_ports'}>Default ports</Link>
+        </div>
       </CardBody>
     </Card>
     <Card className='mb-2'>

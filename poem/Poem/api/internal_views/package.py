@@ -5,11 +5,11 @@ from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from django.db import IntegrityError, connection
 from django.db.models import ProtectedError
+from django_tenants.utils import get_public_schema_name
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django_tenants.utils import get_public_schema_name
 
 from .utils import error_response
 
@@ -59,7 +59,7 @@ class ListPackages(APIView):
                     'name': package.name,
                     'version': package.version,
                     'use_present_version': package.use_present_version,
-                    'repos': repos
+                    'repos': sorted(repos)
                 }
 
                 return Response(result)
@@ -71,8 +71,14 @@ class ListPackages(APIView):
             if connection.schema_name != get_public_schema_name():
                 packages = set()
                 for metric in poem_models.Metric.objects.all():
-                    if metric.probekey:
-                        packages.add(metric.probekey.package)
+                    if metric.probeversion:
+                        metric_probe = metric.probeversion.split("(")
+                        probe_name = metric_probe[0].strip()
+                        probe_version = metric_probe[1][:-1].strip()
+                        probe = admin_models.ProbeHistory.objects.get(
+                            name=probe_name, package__version=probe_version
+                        )
+                        packages.add(probe.package)
 
             else:
                 packages = admin_models.Package.objects.all()

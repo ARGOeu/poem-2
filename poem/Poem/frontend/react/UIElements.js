@@ -67,7 +67,8 @@ import {
   faUser,
   faWrench,
   faNewspaper,
-  faTags
+  faTags,
+  faPlug
 } from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
 import { Field } from 'formik';
@@ -122,6 +123,7 @@ link_title.set('thresholdsprofiles', 'Thresholds profiles');
 link_title.set('users', 'Users');
 link_title.set('yumrepos', 'YUM repos');
 link_title.set("metricoverrides", "Metric configuration overrides")
+link_title.set("default_ports", "Default ports")
 
 
 export const Icon = props =>
@@ -149,6 +151,7 @@ export const Icon = props =>
   link_icon.set('argodoc', faLink);
   link_icon.set('documentation', faBook);
   link_icon.set('privacy', faNewspaper);
+  link_icon.set("default_ports", faPlug)
 
   if (props.i.startsWith('groupof'))
     return (
@@ -188,7 +191,7 @@ export const CustomDropdownIndicator = (props) => {
 }
 
 
-export const CustomReactSelect = ({...props}) => {
+export const CustomReactSelect = ({ forwardedRef=undefined, ...props}) => {
   const customStyles = {
     control: (provided,  state) => ({
       ...provided,
@@ -247,6 +250,7 @@ export const CustomReactSelect = ({...props}) => {
         <Select
           {...props}
           inputId='select'
+          ref={ forwardedRef ? forwardedRef : null }
           components={{IndicatorSeparator: null, DropdownIndicator}}
           styles={customStyles}
         />
@@ -256,6 +260,7 @@ export const CustomReactSelect = ({...props}) => {
   return (
     <Select
       {...props}
+      ref={ forwardedRef ? forwardedRef : null }
       components={{IndicatorSeparator: null, DropdownIndicator}}
       styles={customStyles}
     />
@@ -263,11 +268,12 @@ export const CustomReactSelect = ({...props}) => {
 }
 
 
-export const DropdownWithFormText = ({ ...props }) => {
+export const DropdownWithFormText = ({ forwardedRef=undefined, ...props }) => {
   return (
     <div className='react-select form-control p-0'>
       <CustomReactSelect
         name={ props.name }
+        forwardedRef={ forwardedRef ? forwardedRef : null }
         id={ props.id ? props.id : props.name }
         isClearable={ props.isClearable }
         inputgroup={ true }
@@ -299,9 +305,9 @@ export const DropDown = ({field, data=[], prefix="", class_name="", isnew=false,
   </Field>
 
 
-export const SearchField = ({field, ...rest}) =>
+export const SearchField = ({field, forwardedRef=undefined, ...rest}) =>
   <div className="input-group">
-    <input type="text" placeholder="Search" {...field} {...rest}/>
+    <input type="text" placeholder="Search" ref={forwardedRef ? forwardedRef : null} {...field} {...rest}/>
     <span className="input-group-text" id="basic-addon">
       <FontAwesomeIcon icon={faSearch}/>
     </span>
@@ -330,7 +336,7 @@ const doLogout = async (history, onLogout) =>
 }
 
 
-export const ModalAreYouSure = ({isOpen, toggle, title, msg, onYes}) =>
+export const ModalAreYouSure = ({isOpen, toggle, title, msg, onYes, callbackOnYesArg=undefined}) =>
 (
   <Modal isOpen={isOpen} toggle={toggle}>
     <ModalHeader toggle={toggle}>{title}</ModalHeader>
@@ -339,7 +345,7 @@ export const ModalAreYouSure = ({isOpen, toggle, title, msg, onYes}) =>
     </ModalBody>
     <ModalFooter>
       <Button color="primary" onClick={() => {
-        onYes();
+        callbackOnYesArg ? onYes(callbackOnYesArg) : onYes(callbackOnYesArg);
         toggle();
       }}>Yes</Button>{' '}
       <Button color="secondary" onClick={toggle}>No</Button>
@@ -881,7 +887,8 @@ export const PublicPage = ({privacyLink, termsLink, children}) => {
 export const BaseArgoView = ({resourcename='', location=undefined,
   infoview=false, addview=false, listview=false, modal=false, state=undefined,
   toggle=undefined, submitperm=true, history=true, addnew=true, clone=false,
-  cloneview=false, tenantview=false, publicview=false, addperm=true, extra_button=undefined,
+  cloneview=false, tenantview=false, publicview=false, addperm=true,
+  extra_button=undefined, title=undefined,
   children}) =>
 (
   <React.Fragment>
@@ -909,13 +916,16 @@ export const BaseArgoView = ({resourcename='', location=undefined,
               <React.Fragment>
                 {
                   addnew ?
-                    <h2 className="ms-3 mt-1 mb-4">{`Select ${resourcename} to change`}</h2>
+                    <h2 className="ms-3 mt-1 mb-4">{ title ? title : `Select ${resourcename} to change`}</h2>
                   :
                     <h2 className='ms-3 mt-1 mb-4'>{`Select ${resourcename} for details`}</h2>
                 }
                 {
                   (addnew && addperm) &&
-                  <Link className="btn btn-secondary" to={location.pathname + "/add"} role="button">Add</Link>
+                    <>
+                      { extra_button }
+                      <Link className="btn btn-secondary" to={location.pathname + "/add"} role="button">Add</Link>
+                    </>
                 }
                 {
                   (addnew && !addperm) &&
@@ -1004,6 +1014,7 @@ export const AutocompleteField = ({lists=[], field, icon, label, onselect_handle
   )
 }
 
+
 export const _AutocompleteField = ({lists=[], field, val, err, setFieldValue, icon, label, onselect_handler=undefined, hide_error=false}) => {
   const [inputValue, setInputValue] = useState(val);
   const [suggestions, setSuggestions] = useState(lists);
@@ -1077,6 +1088,7 @@ export const _AutocompleteField = ({lists=[], field, val, err, setFieldValue, ic
     </div>
   );
 };
+
 
 export const DropdownFilterComponent = ({value, onChange, data}) => (
   <select

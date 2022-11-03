@@ -39,13 +39,6 @@ export const fetchMetrics = async (publicView) => {
 }
 
 
-export const fetchMetricTypes = async (publicView) => {
-  const backend = new Backend();
-
-  return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}mtypes`);
-}
-
-
 export const fetchAllMetrics = async (publicView) => {
   const backend = new Backend();
   return await backend.fetchListOfNames(`/api/v2/internal/${publicView ? 'public_' : ''}metricsall`);
@@ -194,4 +187,9 @@ export const fetchTopologyGroups = async (webapi) => {
 
 export const fetchTopologyEndpoints = async (webapi) => {
   return await webapi.fetchReportsTopologyEndpoints()
+}
+
+
+export const fetchServiceTypes = async (webapi) => {
+  return await webapi.fetchServiceTypes()
 }

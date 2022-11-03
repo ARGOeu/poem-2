@@ -28,7 +28,7 @@ Web application is served with Apache web server and uses PostgreSQL as database
 
 Backend: `Django`, `dj-rest-auth`, `django-tenants`, `django-webpack-loader`, `djangorestframework`, `djangorestframework-api-key`, `djangosaml2`, `psycopg2-binary`
 
-Frontend: `ReactJS`, `formik`, `react-autosuggest`, `react-diff-viewer`, `react-dom`, `react-fontawesome`, `react-helmet`, `react-notifications`, `react-popup`, `react-router`, `react-select`, `react-table`, `reactstrap`, `webpack`, `yup`
+Frontend: `ReactJS`, `formik`, `react-hook-form`, `react-autosuggest`, `react-diff-viewer`, `react-dom`, `react-fontawesome`, `react-helmet`, `react-notifications`, `react-popup`, `react-router`, `react-select`, `react-table`, `reactstrap`, `webpack`, `yup`
 
 ## User documentation and instances
 
@@ -246,6 +246,9 @@ Part of the REST API is protected by token so for tenants that consume those API
     ReportsTopologyTags = https://api.devel.argo.grnet.gr/api/v2/topology/tags
     ReportsTopologyGroups = https://api.devel.argo.grnet.gr/api/v2/topology/groups
     ReportsTopologyEndpoints = https://api.devel.argo.grnet.gr/api/v2/topology/endpoints
+    ServiceTypes = https://api.devel.argo.grnet.gr/api/v2/topology/service-types
+    Metrics = https://api.devel.argo.grnet.gr/api/v4/admin/metrics
+
 
 This section lists WEB-API methods for the resources that are not stored in
 POEM's PostgreSQL DB, but instead are consumed from ARGO WEB-API services. POEM
@@ -435,13 +438,49 @@ Starting of multi-container application:
 docker/ $ docker-compose up
 ```
 
+### Web server
+
+In development enviroment, application can be served via Apache web server or internal Django web server coupled with Webpack's dev server for the Hot Module Reload functionality (HMR). Helper make target rules are provided in [poem/Poem/Makefile](poem/Poem/Makefile).
+
+#### Apache
+
+For the Apache web serving, bundle created by the Webpack need to be manually planted as Django's staticfile everytime bundle is recreated. Webpack can monitor the changes in the React's code and recreate the bundle on the fly.
+
+Start Webpack's watch mode:
+```
+make devel-watch
+```
+
+After changes are done and developer wants to see how they are reflected, he needs to place newly created bundle as Django staticfile and restart the Apache within container enviroment. For that purpose, make target rule is prepared:
+```
+make place-new-bundle
+```
+
+#### Django web server
+
+Advantage of using Django's web server is that backend code can be easily debugged as developer can use debugger and breakpoints and trace the execution of code. Django web server is automatically reloaded for every change of the backend code. Webpack's bundles are automatically placed as they are picked up from `webpack-dev-server` running at `localhost:3000`. Moreover, developer can use HMR functionality as `webpack-dev-server` is able to trigger browser reload for every change in the frontend code.
+
+Start Django web server at `0.0.0.0:8000`:
+```
+make devel-django-server
+```
+
+Start `webpack-dev-server` as `localhost:3000`:
+```
+make devel-webpack-server
+```
+Or use HMR:
+```
+make devel-webpack-server-hmr
+```
+
 ### Packaging
 
 Deployment of new versions is done with wheel packages that contain both backend Python and frontend Javascript code. Packages are build using setuptools and helper make target rules are provided in [Makefile](Makefile) and in [poem/Poem/Makefile](poem/Poem/Makefile). Latter is used to create a devel or production bundle of frontend Javascript code and place it as Django staticfiles, while the former is used to create Python wheel package.
 
 * frontend `Makefile` package targets:
-  - `make devel` - create a development Webpack bundle
-  - `make prod` - create a production Webpack bundle
+  - `make devel-bundle` - create a development Webpack bundle
+  - `make prod-bundle` - create a production Webpack bundle
   - `make place-new-bundle` - place created bundle as Django staticfile
 * backend `Makefile` package targets:
   - `make wheel-devel` - create date-tagged wheel package

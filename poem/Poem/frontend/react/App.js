@@ -49,7 +49,7 @@ import { ThresholdsProfilesList, ThresholdsProfilesChange, ThresholdsProfileVers
 
 import './App.css';
 import { PackageList, PackageComponent } from './Package';
-import { ServiceTypesList } from './ServiceTypes';
+import { ServiceTypesListPublic, ServiceTypesList, ServiceTypesBulkAdd } from './ServiceTypes';
 import { TenantList, TenantChange } from './Tenants';
 import { OperationsProfilesList, OperationsProfileDetails } from './OperationsProfiles';
 import { CookiePolicy } from './CookiePolicy';
@@ -63,7 +63,6 @@ import {
   fetchMetricTags,
   fetchMetricTemplates,
   fetchMetricTemplateTypes,
-  fetchMetricTypes,
   fetchOperationsProfiles,
   fetchOStags,
   fetchPackages,
@@ -80,10 +79,12 @@ import {
   fetchThresholdsProfiles,
   fetchTopologyTags,
   fetchTopologyGroups,
-  fetchTopologyEndpoints
+  fetchTopologyEndpoints,
+  fetchServiceTypes
 } from './QueryFunctions';
 import { MetricTagsComponent, MetricTagsList } from './MetricTags';
 import { MetricOverrideChange, MetricOverrideList } from './MetricOverrides';
+import { DefaultPortsList } from './DefaultPorts';
 
 
 const NavigationBarWithRouter = withRouter(NavigationBar);
@@ -143,7 +144,7 @@ const RedirectAfterLogin = ({isSuperUser}) => {
 }
 
 
-const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, webApiOperations, webApiReports, token, tenantName, isSuperUser, userGroups}) => (
+const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, webApiOperations, webApiReports, webApiServiceTypes, token, tenantName, isSuperUser, userGroups}) => (
   <Switch>
     <Route exact path="/ui/login" render={props => <RedirectAfterLogin isSuperUser={isSuperUser} {...props}/>}/>
     <Route exact path="/ui/home" component={Home} />
@@ -187,12 +188,14 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         webapimetric={webApiMetric}
         webapitoken={token}
         tenantname={tenantName}
+        webapiservicetypes={webApiServiceTypes}
         addview={true}/>}
       />
     <Route exact path="/ui/metricprofiles/:name"
       render={props => <MetricProfilesChange
         {...props}
         webapimetric={webApiMetric}
+        webapiservicetypes={webApiServiceTypes}
         webapitoken={token}
         tenantname={tenantName}/>}
     />
@@ -200,6 +203,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
       render={props => <MetricProfilesClone
         {...props}
         webapimetric={webApiMetric}
+        webapiservicetypes={webApiServiceTypes}
         webapitoken={token}
         tenantname={tenantName}/>}
     />
@@ -537,7 +541,20 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
     />
     <Route
       exact path="/ui/servicetypes/"
-      component={ServiceTypesList}
+      render={props => <ServiceTypesList
+        {...props}
+        webapitoken={token}
+        webapiservicetypes={webApiServiceTypes}
+      />}
+    />
+    <SuperUserRoute
+      isSuperUser={isSuperUser}
+      exact path="/ui/servicetypes/add"
+      render={props => <ServiceTypesBulkAdd
+        {...props}
+        webapitoken={token}
+        webapiservicetypes={webApiServiceTypes}
+      />}
     />
     <Route component={NotFound} />
   </Switch>
@@ -574,6 +591,7 @@ const SuperAdminRouteSwitch = () => (
     <Route exact path='/ui/packages/:nameversion' render={props => <PackageComponent {...props}/>}/>
     <Route exact path='/ui/packages/:nameversion/clone' render={props => <PackageComponent {...props} cloneview={true}/>}/>
     <Route exact path="/ui/administration" component={SuperAdminAdministration}/>
+    <Route exact path="/ui/administration/default_ports" component={DefaultPortsList} />
     <Route exact path="/ui/administration/users" component={UsersList} />
     <Route exact path="/ui/administration/users/add"
       render={props => <UserChange
@@ -613,6 +631,7 @@ const App = () => {
   const [webApiMetric, setWebApiMetric] = useState(undefined);
   const [webApiThresholds, setWebApiThresholds] = useState(undefined);
   const [webApiOperations, setWebApiOperations] = useState(undefined);
+  const [webApiServiceTypes, setWebApiServiceTypes] = useState(undefined);
   const [webApiReports, setWebApiReports] = useState(undefined);
   const [publicView, setPublicView] = useState(undefined);
   const [tenantName, setTenantName] = useState(undefined);
@@ -657,6 +676,7 @@ const App = () => {
       setWebApiThresholds(options && options.result.webapithresholds);
       setWebApiOperations(options && options.result.webapioperations);
       setWebApiReports(options && options.result.webapireports);
+      setWebApiServiceTypes(options && options.result.webapiservicetypes);
       setTenantName(options && options.result.tenant_name);
     }
     options && prefetchData(false, poemType, options, poemType ? response.userdetails.token : null)
@@ -675,6 +695,7 @@ const App = () => {
     setWebApiThresholds(options && options.result.webapithresholds);
     setWebApiOperations(options && options.result.webapioperations);
     setWebApiReports(options && options.result.webapireports);
+    setWebApiServiceTypes(options && options.result.webapiservicetypes);
     setPrivacyLink(options && options.result.terms_privacy_links.privacy);
     setTermsLink(options && options.result.terms_privacy_links.terms);
     setTenantName(options && options.result.tenant_name);
@@ -724,7 +745,8 @@ const App = () => {
         aggregationProfiles: options.result.webapiaggregation,
         thresholdsProfiles: options.result.webapithresholds,
         operationsProfiles: options.result.webapioperations,
-        reportsConfigurations: options.result.webapireports
+        reportsConfigurations: options.result.webapireports,
+        serviceTypes: options.result.webapiservicetypes
       })
 
       if (!isPublic)
@@ -734,9 +756,6 @@ const App = () => {
 
       queryClient.prefetchQuery(
         `${isPublic ? 'public_' : ''}metric`, () => fetchMetrics(isPublic)
-      );
-      queryClient.prefetchQuery(
-        `${isPublic ? 'public_' : ''}metricstypes`, () => fetchMetricTypes(isPublic)
       );
       queryClient.prefetchQuery(
         [`${isPublic ? 'public_' : ''}metric`, 'usergroups'], () => fetchUserGroups(isTenant, isPublic, 'metrics')
@@ -764,6 +783,9 @@ const App = () => {
       );
       queryClient.prefetchQuery(
         [`${isPublic ? 'public_' : ''}thresholdsprofile`, 'webapi'], () => fetchThresholdsProfiles(webapi)
+      )
+      queryClient.prefetchQuery(
+        [`${isPublic ? 'public_' : ''}servicetypes`, 'webapi'], () => fetchServiceTypes(webapi)
       )
       queryClient.prefetchQuery(
         `${isPublic ? 'public_' : ''}operationsprofile`, () => fetchOperationsProfiles(webapi)
@@ -807,20 +829,21 @@ const App = () => {
     localStorage.setItem('referrer', JSON.stringify(stackUrls));
   }
 
+  async function fetchData() {
+    if (isPublicUrl()) {
+      initalizePublicState()
+    }
+    else {
+      let isTenantSchema = await backend.isTenantSchema();
+      let response = await backend.isActiveSession(isTenantSchema);
+      response.active && initalizeState(isTenantSchema, response);
+    }
+
+    getAndSetReferrer()
+  }
+
   useEffect(() => {
     fetchData();
-    async function fetchData() {
-      if (isPublicUrl()) {
-        initalizePublicState()
-      }
-      else {
-        let isTenantSchema = await backend.isTenantSchema();
-        let response = await backend.isActiveSession(isTenantSchema);
-        response.active && initalizeState(isTenantSchema, response);
-      }
-
-      getAndSetReferrer()
-    }
   }, [])
 
   if (publicView && privacyLink && termsLink && isTenantSchema !== undefined) {
@@ -1074,9 +1097,10 @@ const App = () => {
               <Route exact path="/ui/public_servicetypes"
                 render={props =>
                   <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
-                    <ServiceTypesList
+                    <ServiceTypesListPublic
                       {...props}
-                      publicView={true}
+                      webapitoken={token}
+                      webapiservicetypes={webApiServiceTypes}
                     />
                   </PublicPage>
                 }
@@ -1256,6 +1280,7 @@ const App = () => {
                     webApiThresholds={webApiThresholds}
                     webApiOperations={webApiOperations}
                     webApiReports={webApiReports}
+                    webApiServiceTypes={webApiServiceTypes}
                     token={token}
                     tenantName={tenantName}
                     isSuperUser={userDetails.is_superuser}

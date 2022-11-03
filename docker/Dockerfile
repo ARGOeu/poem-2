@@ -51,8 +51,7 @@ WORKDIR poem-2-devel
 RUN source /etc/profile.d/venv_poem.sh; \
     workon poem; \
     make wheel-devel; \
-    pip3 install dist/*; \
-    pip3 install -r requirements.txt
+    pip3 install dist/*;
 ADD https://cacerts.digicert.com/TERENAeScienceSSLCA3.crt.pem /etc/pki/tls/certs/
 RUN yum -y install ca-policy-egi-core; \
     rm -rf /etc/pki/ca-trust/source/anchors/*; \

@@ -17,7 +17,6 @@ cd /mnt/poem-source
 sudo make clean
 sudo make wheel-devel
 sudo pip3 install dist/*.whl
-sudo pip3 install -r requirements.txt
 sudo pip3 install -r requirements_tests.txt
 
 # prerequisites

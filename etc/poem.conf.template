@@ -27,6 +27,7 @@ Reports = https://api.devel.argo.grnet.gr/api/v2/reports
 ReportsTopologyTags = https://api.devel.argo.grnet.gr/api/v2/topology/tags
 ReportsTopologyGroups = https://api.devel.argo.grnet.gr/api/v2/topology/groups
 ReportsTopologyEndpoints = https://api.devel.argo.grnet.gr/api/v2/topology/endpoints
+ServiceTypes = https://api.devel.argo.grnet.gr/api/v2/topology/service-types
 Metrics = https://api.devel.argo.grnet.gr/api/v2/admin/metrics
 
 [GENERAL_ALL]
