@@ -69,9 +69,9 @@ class TablePagination {
     return this.pageNumArray
   }
 
-  constructSlicesArrays(num) {
+  constructSlicesArrays(num, len) {
     let slices = Array()
-    let times = Math.trunc(this.fullLen / num)
+    let times = Math.trunc(len / num)
     let start = 0
     let end = 0
     for (var i = 0; i < times; i++) {
@@ -80,7 +80,7 @@ class TablePagination {
       slices.push([start, end])
     }
     if (end)
-      slices.push([end, this.fullLen])
+      slices.push([end, len])
     return slices
   }
 
@@ -90,22 +90,26 @@ class TablePagination {
 
   buildSlices() {
     let pagesAndIndexes = Object()
+    let len = this.fullLen
 
-    if (this.fullLen <= 30)
-      pagesAndIndexes['30'] = [[1, this.fullLen]]
-    else if (this.fullLen > 30 && this.fullLen <= 50) {
-      pagesAndIndexes['30'] = this.constructSlicesArrays(30)
-      pagesAndIndexes['50'] = this.constructSlicesArrays(50)
+    if (this.searched)
+      len = this.searchLen
+
+    if (len <= 30)
+      pagesAndIndexes['30'] = [[0, len]]
+    else if (len > 30 && len <= 50) {
+      pagesAndIndexes['30'] = this.constructSlicesArrays(30, len)
+      pagesAndIndexes['50'] = this.constructSlicesArrays(50, len)
     }
-    else if (this.fullLen > 50 && this.fullLen <= 100) {
-      pagesAndIndexes['30'] = this.constructSlicesArrays(30)
-      pagesAndIndexes['50'] = this.constructSlicesArrays(50)
-      pagesAndIndexes['100'] = this.constructSlicesArrays(100)
+    else if (len > 50 && len <= 100) {
+      pagesAndIndexes['30'] = this.constructSlicesArrays(30, len)
+      pagesAndIndexes['50'] = this.constructSlicesArrays(50, len)
+      pagesAndIndexes['100'] = this.constructSlicesArrays(100, len)
     }
-    else if (this.fullLen > 100)
-      pagesAndIndexes['30'] = this.constructSlicesArrays(30)
-      pagesAndIndexes['50'] = this.constructSlicesArrays(50)
-      pagesAndIndexes['100'] = this.constructSlicesArrays(100)
+    else if (len > 100)
+      pagesAndIndexes['30'] = this.constructSlicesArrays(30, len)
+      pagesAndIndexes['50'] = this.constructSlicesArrays(50, len)
+      pagesAndIndexes['100'] = this.constructSlicesArrays(100, len)
 
     this.pagesIndexes = pagesAndIndexes
   }
@@ -120,6 +124,8 @@ class TablePagination {
 
   set isSearched(b) {
     this.searched = b
+    if (this.searched)
+      this.buildSlices()
   }
 
   set start(i) {
@@ -637,7 +643,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     fieldsView = fields.filter(e => e.name.toLowerCase().includes(searchService.toLowerCase()))
 
   paginationHelp.searchNum = fieldsView.length
-  paginationHelp.isSearched = searchService || searchDesc
+  paginationHelp.isSearched = searchService || searchDesc ? true : false
   paginationHelp.start = startIndex.current
 
   fieldsView = fieldsView.slice(startIndex.current, paginationHelp.end)
