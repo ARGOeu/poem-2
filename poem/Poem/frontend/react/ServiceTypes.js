@@ -44,14 +44,15 @@ import * as yup from "yup";
 import _ from "lodash";
 
 
-class TablePagination {
+class TablePaginationHelper {
   searchLen = 0
   startIndex = 0
 
-  constructor(fullLen, pageSize) {
+  constructor(fullLen, pageSize, pageIndex) {
     this.fullLen = fullLen
     this.pageNumArray = Array()
     this.pageSize = pageSize
+    this.pagesIndex = pageIndex
     this.buildChoices()
     this.buildSlices()
   }
@@ -111,6 +112,8 @@ class TablePagination {
       pagesAndIndexes['50'] = this.constructSlicesArrays(50, len)
       pagesAndIndexes['100'] = this.constructSlicesArrays(100, len)
 
+    pagesAndIndexes[len] = [[0, len]]
+
     this.pagesIndexes = pagesAndIndexes
   }
 
@@ -128,12 +131,16 @@ class TablePagination {
       this.buildSlices()
   }
 
-  set start(i) {
-    this.startIndex = i
+  get start() {
+    let arraySlices = this.pagesAndIndexes[this.pageSize]
+    let targetSlice = arraySlices[this.pagesIndex]
+    return targetSlice[0]
   }
 
   get end() {
-    return this.calcEndIndex()
+    let arraySlices = this.pagesAndIndexes[this.pageSize]
+    let targetSlice = arraySlices[this.pagesIndex]
+    return targetSlice[1]
   }
 
   calcEndIndex() {
@@ -631,7 +638,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
   let lookupIndexes = _.fromPairs(fields.map((e, index) => [e.id, index]))
 
   let fieldsView = fields
-  let paginationHelp = new TablePagination(fieldsView.length, pageSize)
+  let paginationHelp = new TablePaginationHelper(fieldsView.length, pageSize, pageIndex)
 
   if (searchService && searchDesc) {
     fieldsView = fields.filter(e => e.name.toLowerCase().includes(searchService.toLowerCase()))
@@ -644,9 +651,8 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
 
   paginationHelp.searchNum = fieldsView.length
   paginationHelp.isSearched = searchService || searchDesc ? true : false
-  paginationHelp.start = startIndex.current
 
-  fieldsView = fieldsView.slice(startIndex.current, paginationHelp.end)
+  fieldsView = fieldsView.slice(paginationHelp.start, paginationHelp.end)
   pageCount.current = paginationHelp.pageCount
 
   return (
@@ -820,7 +826,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                     onChange={e => {
                       setPageSize(Number(e.target.value))
                       setPageCount(fields, e.target.value)
-                      setPageIndex(Math.trunc(startIndex.current / e.target.value))
+                      setPageIndex(Math.trunc(paginationHelp.start / e.target.value))
                     }}
                   >
                     {paginationHelp.choices.map(pageSize => (
