@@ -45,9 +45,13 @@ import _ from "lodash";
 
 
 class TablePagination {
-  constructor(fullLen) {
+  searchLen = 0
+  startIndex = 0
+
+  constructor(fullLen, pageSize) {
     this.fullLen = fullLen
     this.pageNumArray = Array()
+    this.pageSize = pageSize
   }
 
   get choices() {
@@ -61,6 +65,43 @@ class TablePagination {
      this.pageNumArray = [30, 50, 100, this.fullLen]
 
     return this.pageNumArray
+  }
+
+  set searchNum(i) {
+    this.searchLen = i
+  }
+
+  set isSearched(b) {
+    this.searched = b
+  }
+
+  set start(i) {
+    this.startIndex = i
+  }
+
+  get end() {
+    return this.calcEndIndex()
+  }
+
+  calcEndIndex() {
+    return this.pageSize + this.startIndex
+  }
+
+  get pageCount() {
+    let pages = 1
+    let endIndex = this.calcEndIndex()
+
+    if (endIndex >= this.fullLen)
+      endIndex = this.fullLen
+
+    if (endIndex - this.startIndex === this.fullLen)
+      return pages
+    else if (this.searched && this.searchLen <= this.pageSize)
+      return pages
+    else if (this.searched && this.searchLen > this.pageSize)
+      return Math.trunc(this.searchLen / this.pageSize) + 1
+    else
+      return Math.trunc(this.fullLen / this.pageSize) + 1
   }
 }
 
@@ -537,7 +578,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
   let lookupIndexes = _.fromPairs(fields.map((e, index) => [e.id, index]))
 
   let fieldsView = fields
-  let paginationHelp = new TablePagination(fieldsView.length)
+  let paginationHelp = new TablePagination(fieldsView.length, pageSize)
 
   if (searchService && searchDesc) {
     fieldsView = fields.filter(e => e.name.toLowerCase().includes(searchService.toLowerCase()))
@@ -547,22 +588,13 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     fieldsView = fields.filter(e => e.description.toLowerCase().includes(searchDesc.toLowerCase()))
   else if (searchService)
     fieldsView = fields.filter(e => e.name.toLowerCase().includes(searchService.toLowerCase()))
-  const searchLen = fieldsView.length
 
-  let endIndex = pageSize + startIndex.current
-  if (endIndex >= paginationHelp.fullLen)
-    endIndex = paginationHelp.fullLen
+  paginationHelp.searchNum = fieldsView.length
+  paginationHelp.isSearched = searchService || searchDesc
+  paginationHelp.start = startIndex.current
 
-  fieldsView = fieldsView.slice(startIndex.current, endIndex)
-
-  if (endIndex - startIndex.current === paginationHelp.fullLen)
-    pageCount.current = 1
-  else if ((searchService || searchDesc) && searchLen <= pageSize)
-    pageCount.current = 1
-  else if ((searchService || searchDesc) && searchLen > pageSize)
-    pageCount.current = Math.trunc(searchLen / pageSize) + 1
-  else
-    pageCount.current = Math.trunc(paginationHelp.fullLen / pageSize) + 1
+  fieldsView = fieldsView.slice(startIndex.current, paginationHelp.end)
+  pageCount.current = paginationHelp.pageCount
 
   return (
     <>
