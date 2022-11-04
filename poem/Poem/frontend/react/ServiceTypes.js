@@ -44,6 +44,27 @@ import * as yup from "yup";
 import _ from "lodash";
 
 
+class TablePagination {
+  constructor(fullLen) {
+    this.fullLen = fullLen
+    this.pageNumArray = Array()
+  }
+
+  get choices() {
+    if (this.fullLen <= 30)
+      this.pageNumArray = [30]
+    else if (this.fullLen > 30 && this.fullLen <= 50)
+      this.pageNumArray = [30, 50]
+    else if (this.fullLen > 50 && this.fullLen <= 100)
+      this.pageNumArray = [30, 50, 100]
+    else if (this.fullLen > 100)
+     this.pageNumArray = [30, 50, 100, this.fullLen]
+
+    return this.pageNumArray
+  }
+}
+
+
 const validationSchema = yup.object().shape({
   name: yup.string().matches(/^[A-Za-z0-9\\.\-_]+$/g, {message: 'Name can only contain alphanumeric characters, punctuations, underscores and minuses', excludeEmptyString: false}),
   description: yup.string().required('Description can not be empty.')
@@ -516,7 +537,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
   let lookupIndexes = _.fromPairs(fields.map((e, index) => [e.id, index]))
 
   let fieldsView = fields
-  const fullLen = fieldsView.length
+  let paginationHelp = new TablePagination(fieldsView.length)
 
   if (searchService && searchDesc) {
     fieldsView = fields.filter(e => e.name.toLowerCase().includes(searchService.toLowerCase()))
@@ -529,29 +550,19 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
   const searchLen = fieldsView.length
 
   let endIndex = pageSize + startIndex.current
-  if (endIndex >= fullLen)
-    endIndex = fullLen
+  if (endIndex >= paginationHelp.fullLen)
+    endIndex = paginationHelp.fullLen
 
   fieldsView = fieldsView.slice(startIndex.current, endIndex)
 
-  if (endIndex - startIndex.current === fullLen)
+  if (endIndex - startIndex.current === paginationHelp.fullLen)
     pageCount.current = 1
   else if ((searchService || searchDesc) && searchLen <= pageSize)
     pageCount.current = 1
   else if ((searchService || searchDesc) && searchLen > pageSize)
     pageCount.current = Math.trunc(searchLen / pageSize) + 1
   else
-    pageCount.current = Math.trunc(fullLen / pageSize) + 1
-
-  let pageNumArray = Array()
-  if (fullLen <= 30)
-    pageNumArray = [30]
-  else if (fullLen > 30 && fullLen <= 50)
-    pageNumArray = [30, 50]
-  else if (fullLen > 50 && fullLen <= 100)
-    pageNumArray = [30, 50, 100]
-  else if (fullLen > 100)
-    pageNumArray = [30, 50, 100, fullLen]
+    pageCount.current = Math.trunc(paginationHelp.fullLen / pageSize) + 1
 
   return (
     <>
@@ -727,7 +738,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                       setPageIndex(Math.trunc(startIndex.current / e.target.value))
                     }}
                   >
-                    {pageNumArray.map(pageSize => (
+                    {paginationHelp.choices.map(pageSize => (
                       <option label={`${pageSize} service types`} key={pageSize} value={pageSize}>
                         {pageSize} service types
                       </option>
