@@ -52,9 +52,11 @@ class TablePagination {
     this.fullLen = fullLen
     this.pageNumArray = Array()
     this.pageSize = pageSize
+    this.buildChoices()
+    this.buildSlices()
   }
 
-  get choices() {
+  buildChoices() {
     if (this.fullLen <= 30)
       this.pageNumArray = [30]
     else if (this.fullLen > 30 && this.fullLen <= 50)
@@ -62,9 +64,54 @@ class TablePagination {
     else if (this.fullLen > 50 && this.fullLen <= 100)
       this.pageNumArray = [30, 50, 100]
     else if (this.fullLen > 100)
-     this.pageNumArray = [30, 50, 100, this.fullLen]
+      this.pageNumArray = [30, 50, 100, this.fullLen]
 
     return this.pageNumArray
+  }
+
+  constructSlicesArrays(num) {
+    let slices = Array()
+    let times = Math.trunc(this.fullLen / num)
+    let start = 0
+    let end = 0
+    for (var i = 0; i < times; i++) {
+      start = i * num
+      end = start + num
+      slices.push([start, end])
+    }
+    if (end)
+      slices.push([end, this.fullLen])
+    return slices
+  }
+
+  set pagesIndexes(slices) {
+    this.pagesAndIndexes = slices
+  }
+
+  buildSlices() {
+    let pagesAndIndexes = Object()
+
+    if (this.fullLen <= 30)
+      pagesAndIndexes['30'] = [[1, this.fullLen]]
+    else if (this.fullLen > 30 && this.fullLen <= 50) {
+      pagesAndIndexes['30'] = this.constructSlicesArrays(30)
+      pagesAndIndexes['50'] = this.constructSlicesArrays(50)
+    }
+    else if (this.fullLen > 50 && this.fullLen <= 100) {
+      pagesAndIndexes['30'] = this.constructSlicesArrays(30)
+      pagesAndIndexes['50'] = this.constructSlicesArrays(50)
+      pagesAndIndexes['100'] = this.constructSlicesArrays(100)
+    }
+    else if (this.fullLen > 100)
+      pagesAndIndexes['30'] = this.constructSlicesArrays(30)
+      pagesAndIndexes['50'] = this.constructSlicesArrays(50)
+      pagesAndIndexes['100'] = this.constructSlicesArrays(100)
+
+    this.pagesIndexes = pagesAndIndexes
+  }
+
+  get choices() {
+    return this.buildChoices()
   }
 
   set searchNum(i) {
