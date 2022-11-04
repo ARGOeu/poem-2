@@ -134,13 +134,19 @@ class TablePaginationHelper {
   get start() {
     let arraySlices = this.pagesAndIndexes[this.pageSize]
     let targetSlice = arraySlices[this.pagesIndex]
-    return targetSlice[0]
+    if (targetSlice)
+      return targetSlice[0]
+    else
+      return 0
   }
 
   get end() {
     let arraySlices = this.pagesAndIndexes[this.pageSize]
     let targetSlice = arraySlices[this.pagesIndex]
-    return targetSlice[1]
+    if (targetSlice)
+      return targetSlice[1]
+    else
+      return this.fullLen
   }
 
   calcEndIndex() {
