@@ -494,9 +494,6 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
   const [pageSize, setPageSize] = useState(30)
   const [pageIndex, setPageIndex] = useState(0)
 
-  let startIndex = useRef(0)
-  let pageCount = useRef(1)
-
   const queryClient = useQueryClient();
   const webapiAddMutation = useMutation(async (values) => await webapi.addServiceTypes(values));
 
@@ -607,26 +604,6 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     setAreYouSureModal(!areYouSureModal);
   }
 
-  function setPageCount(dataArray, pagesize) {
-    let result = Math.trunc(dataArray.length / pagesize)
-    let remainder = dataArray.length % pagesize
-
-    if (result === 0)
-      pageCount.current = 1
-
-    else {
-      if (remainder)
-        pageCount.current = result + 1
-      else
-        pageCount.current = result
-    }
-  }
-
-  function gotoPage(i) {
-    startIndex.current = i * pageSize
-    setPageIndex(i)
-  }
-
   function onDescriptionChange (entryid, isChanged) {
     let tmp = JSON.parse(JSON.stringify(lookupChanged))
     if (tmp[entryid] !== isChanged) {
@@ -653,7 +630,6 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
   paginationHelp.isSearched = searchService || searchDesc ? true : false
 
   fieldsView = fieldsView.slice(paginationHelp.start, paginationHelp.end)
-  pageCount.current = paginationHelp.pageCount
 
   return (
     <>
@@ -797,25 +773,25 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
             <Col className="d-flex justify-content-center align-self-center">
               <Pagination className="mt-2">
                 <PaginationItem disabled={pageIndex === 0}>
-                  <PaginationLink aria-label="First" first onClick={() => gotoPage(0)}/>
+                  <PaginationLink aria-label="First" first onClick={() => setPageIndex(0)}/>
                 </PaginationItem>
                 <PaginationItem disabled={pageIndex === 0}>
-                  <PaginationLink aria-label="Previous" previous onClick={() => gotoPage(pageIndex - 1)}/>
+                  <PaginationLink aria-label="Previous" previous onClick={() => setPageIndex(pageIndex - 1)}/>
                 </PaginationItem>
                 {
-                  [...Array(pageCount.current)].map((e, i) =>
+                  [...Array(paginationHelp.pageCount)].map((e, i) =>
                     <PaginationItem active={pageIndex === i ? true : false} key={i}>
-                      <PaginationLink onClick={() => gotoPage(i)}>
+                      <PaginationLink onClick={() => setPageIndex(i)}>
                         { i + 1 }
                       </PaginationLink>
                     </PaginationItem>
                   )
                 }
-                <PaginationItem disabled={pageIndex === pageCount.current - 1}>
-                  <PaginationLink aria-label="Next" next onClick={() => gotoPage(pageIndex + 1)}/>
+                <PaginationItem disabled={pageIndex === paginationHelp.pageCount - 1}>
+                  <PaginationLink aria-label="Next" next onClick={() => setPageIndex(pageIndex + 1)}/>
                 </PaginationItem>
-                <PaginationItem disabled={pageIndex === pageCount.current - 1}>
-                  <PaginationLink aria-label="Last" last onClick={() => gotoPage(pageCount.current - 1)}/>
+                <PaginationItem disabled={pageIndex === paginationHelp.pageCount- 1}>
+                  <PaginationLink aria-label="Last" last onClick={() => setPageIndex(paginationHelp.pageCount - 1)}/>
                 </PaginationItem>
                 <PaginationItem>
                   <select
@@ -825,7 +801,6 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                     value={pageSize}
                     onChange={e => {
                       setPageSize(Number(e.target.value))
-                      setPageCount(fields, e.target.value)
                       setPageIndex(Math.trunc(paginationHelp.start / e.target.value))
                     }}
                   >
