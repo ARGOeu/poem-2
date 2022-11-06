@@ -85,10 +85,6 @@ class TablePaginationHelper {
     return slices
   }
 
-  set pagesIndexes(slices) {
-    this.pagesAndIndexes = slices
-  }
-
   buildSlices() {
     let pagesAndIndexes = Object()
     let len = this.fullLen
@@ -117,8 +113,12 @@ class TablePaginationHelper {
     this.pagesIndexes = pagesAndIndexes
   }
 
-  get choices() {
-    return this.buildChoices()
+  calcEndIndex() {
+    return this.pageSize + this.startIndex
+  }
+
+  set pagesIndexes(slices) {
+    this.pagesAndIndexes = slices
   }
 
   set searchNum(i) {
@@ -131,13 +131,8 @@ class TablePaginationHelper {
       this.buildSlices()
   }
 
-  get start() {
-    let arraySlices = this.pagesAndIndexes[this.pageSize]
-    let targetSlice = arraySlices[this.pagesIndex]
-    if (targetSlice)
-      return targetSlice[0]
-    else
-      return 0
+  get choices() {
+    return this.buildChoices()
   }
 
   get end() {
@@ -147,10 +142,6 @@ class TablePaginationHelper {
       return targetSlice[1]
     else
       return this.fullLen
-  }
-
-  calcEndIndex() {
-    return this.pageSize + this.startIndex
   }
 
   get pageCount() {
@@ -168,6 +159,15 @@ class TablePaginationHelper {
       return Math.trunc(this.searchLen / this.pageSize) + 1
     else
       return Math.trunc(this.fullLen / this.pageSize) + 1
+  }
+
+  get start() {
+    let arraySlices = this.pagesAndIndexes[this.pageSize]
+    let targetSlice = arraySlices[this.pagesIndex]
+    if (targetSlice)
+      return targetSlice[0]
+    else
+      return 0
   }
 }
 
