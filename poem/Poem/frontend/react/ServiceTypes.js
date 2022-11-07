@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { WebApi } from './DataManager';
 import { useQuery, useQueryClient, useMutation } from 'react-query';
@@ -42,6 +42,134 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { ErrorMessage } from '@hookform/error-message';
 import * as yup from "yup";
 import _ from "lodash";
+
+
+class TablePaginationHelper {
+  searchLen = 0
+  startIndex = 0
+
+  constructor(fullLen, pageSize, pageIndex) {
+    this.fullLen = fullLen
+    this.pageNumArray = Array()
+    this.pageSize = pageSize
+    this.pagesIndex = pageIndex
+    this.buildChoices()
+    this.buildSlices()
+  }
+
+  buildChoices() {
+    if (this.fullLen <= 30)
+      this.pageNumArray = [30]
+    else if (this.fullLen > 30 && this.fullLen <= 50)
+      this.pageNumArray = [30, 50]
+    else if (this.fullLen > 50 && this.fullLen <= 100)
+      this.pageNumArray = [30, 50, 100]
+    else if (this.fullLen > 100)
+      this.pageNumArray = [30, 50, 100, this.fullLen]
+
+    return this.pageNumArray
+  }
+
+  constructSlicesArrays(num, len) {
+    let slices = Array()
+    let times = Math.trunc(len / num)
+    let start = 0
+    let end = 0
+    for (var i = 0; i < times; i++) {
+      start = i * num
+      end = start + num
+      slices.push([start, end])
+    }
+    if (end)
+      slices.push([end, len])
+    return slices
+  }
+
+  buildSlices() {
+    let pagesAndIndexes = Object()
+    let len = this.fullLen
+
+    if (this.searched)
+      len = this.searchLen
+
+    if (len <= 30)
+      pagesAndIndexes['30'] = [[0, len]]
+    else if (len > 30 && len <= 50) {
+      pagesAndIndexes['30'] = this.constructSlicesArrays(30, len)
+      pagesAndIndexes['50'] = this.constructSlicesArrays(50, len)
+    }
+    else if (len > 50 && len <= 100) {
+      pagesAndIndexes['30'] = this.constructSlicesArrays(30, len)
+      pagesAndIndexes['50'] = this.constructSlicesArrays(50, len)
+      pagesAndIndexes['100'] = this.constructSlicesArrays(100, len)
+    }
+    else if (len > 100)
+      pagesAndIndexes['30'] = this.constructSlicesArrays(30, len)
+      pagesAndIndexes['50'] = this.constructSlicesArrays(50, len)
+      pagesAndIndexes['100'] = this.constructSlicesArrays(100, len)
+
+    pagesAndIndexes[len] = [[0, len]]
+
+    this.pagesIndexes = pagesAndIndexes
+  }
+
+  calcEndIndex() {
+    return this.pageSize + this.startIndex
+  }
+
+  set pagesIndexes(slices) {
+    this.pagesAndIndexes = slices
+  }
+
+  set searchNum(i) {
+    this.searchLen = i
+  }
+
+  set isSearched(b) {
+    this.searched = b
+    if (this.searched)
+      this.buildSlices()
+  }
+
+  get choices() {
+    return this.buildChoices()
+  }
+
+  get end() {
+    let arraySlices = this.pagesAndIndexes[this.pageSize]
+    let targetSlice = arraySlices[this.pagesIndex]
+    if (targetSlice)
+      return targetSlice[1]
+    else
+      return this.fullLen
+  }
+
+  get pageCount() {
+    let pages = 1
+    let endIndex = this.calcEndIndex()
+
+    if (endIndex >= this.fullLen)
+      endIndex = this.fullLen
+
+    if (endIndex - this.startIndex === this.fullLen)
+      return pages
+    else if (this.searched && this.searchLen <= this.pageSize)
+      return pages
+    else if (this.searched && this.searchLen > this.pageSize)
+      return Math.trunc(this.searchLen / this.pageSize) + 1
+    else
+      return Math.trunc(this.fullLen / this.pageSize) + 1
+  }
+
+  get start() {
+    let arraySlices = this.pagesAndIndexes[this.pageSize]
+    let targetSlice = arraySlices[this.pagesIndex]
+    if (targetSlice)
+      return targetSlice[0]
+    else
+      return 0
+  }
+}
 
 
 const validationSchema = yup.object().shape({
@@ -372,9 +500,6 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
   const [pageSize, setPageSize] = useState(30)
   const [pageIndex, setPageIndex] = useState(0)
 
-  let startIndex = useRef(0)
-  let pageCount = useRef(1)
-
   const queryClient = useQueryClient();
   const webapiAddMutation = useMutation(async (values) => await webapi.addServiceTypes(values));
 
@@ -485,26 +610,6 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     setAreYouSureModal(!areYouSureModal);
   }
 
-  function setPageCount(dataArray, pagesize) {
-    let result = Math.trunc(dataArray.length / pagesize)
-    let remainder = dataArray.length % pagesize
-
-    if (result === 0)
-      pageCount.current = 1
-
-    else {
-      if (remainder)
-        pageCount.current = result + 1
-      else
-        pageCount.current = result
-    }
-  }
-
-  function gotoPage(i) {
-    startIndex.current = i * pageSize
-    setPageIndex(i)
-  }
-
   function onDescriptionChange (entryid, isChanged) {
     let tmp = JSON.parse(JSON.stringify(lookupChanged))
     if (tmp[entryid] !== isChanged) {
@@ -516,7 +621,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
   let lookupIndexes = _.fromPairs(fields.map((e, index) => [e.id, index]))
 
   let fieldsView = fields
-  const fullLen = fieldsView.length
+  let paginationHelp = new TablePaginationHelper(fieldsView.length, pageSize, pageIndex)
 
   if (searchService && searchDesc) {
     fieldsView = fields.filter(e => e.name.toLowerCase().includes(searchService.toLowerCase()))
@@ -526,32 +631,11 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     fieldsView = fields.filter(e => e.description.toLowerCase().includes(searchDesc.toLowerCase()))
   else if (searchService)
     fieldsView = fields.filter(e => e.name.toLowerCase().includes(searchService.toLowerCase()))
-  const searchLen = fieldsView.length
 
-  let endIndex = pageSize + startIndex.current
-  if (endIndex >= fullLen)
-    endIndex = fullLen
+  paginationHelp.searchNum = fieldsView.length
+  paginationHelp.isSearched = searchService || searchDesc ? true : false
 
-  fieldsView = fieldsView.slice(startIndex.current, endIndex)
-
-  if (endIndex - startIndex.current === fullLen)
-    pageCount.current = 1
-  else if ((searchService || searchDesc) && searchLen <= pageSize)
-    pageCount.current = 1
-  else if ((searchService || searchDesc) && searchLen > pageSize)
-    pageCount.current = Math.trunc(searchLen / pageSize) + 1
-  else
-    pageCount.current = Math.trunc(fullLen / pageSize) + 1
-
-  let pageNumArray = Array()
-  if (fullLen <= 30)
-    pageNumArray = [30]
-  else if (fullLen > 30 && fullLen <= 50)
-    pageNumArray = [30, 50]
-  else if (fullLen > 50 && fullLen <= 100)
-    pageNumArray = [30, 50, 100]
-  else if (fullLen > 100)
-    pageNumArray = [30, 50, 100, fullLen]
+  fieldsView = fieldsView.slice(paginationHelp.start, paginationHelp.end)
 
   return (
     <>
@@ -695,25 +779,25 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
             <Col className="d-flex justify-content-center align-self-center">
               <Pagination className="mt-2">
                 <PaginationItem disabled={pageIndex === 0}>
-                  <PaginationLink aria-label="First" first onClick={() => gotoPage(0)}/>
+                  <PaginationLink aria-label="First" first onClick={() => setPageIndex(0)}/>
                 </PaginationItem>
                 <PaginationItem disabled={pageIndex === 0}>
-                  <PaginationLink aria-label="Previous" previous onClick={() => gotoPage(pageIndex - 1)}/>
+                  <PaginationLink aria-label="Previous" previous onClick={() => setPageIndex(pageIndex - 1)}/>
                 </PaginationItem>
                 {
-                  [...Array(pageCount.current)].map((e, i) =>
+                  [...Array(paginationHelp.pageCount)].map((e, i) =>
                     <PaginationItem active={pageIndex === i ? true : false} key={i}>
-                      <PaginationLink onClick={() => gotoPage(i)}>
+                      <PaginationLink onClick={() => setPageIndex(i)}>
                         { i + 1 }
                       </PaginationLink>
                     </PaginationItem>
                   )
                 }
-                <PaginationItem disabled={pageIndex === pageCount.current - 1}>
-                  <PaginationLink aria-label="Next" next onClick={() => gotoPage(pageIndex + 1)}/>
+                <PaginationItem disabled={pageIndex === paginationHelp.pageCount - 1}>
+                  <PaginationLink aria-label="Next" next onClick={() => setPageIndex(pageIndex + 1)}/>
                 </PaginationItem>
-                <PaginationItem disabled={pageIndex === pageCount.current - 1}>
-                  <PaginationLink aria-label="Last" last onClick={() => gotoPage(pageCount.current - 1)}/>
+                <PaginationItem disabled={pageIndex === paginationHelp.pageCount- 1}>
+                  <PaginationLink aria-label="Last" last onClick={() => setPageIndex(paginationHelp.pageCount - 1)}/>
                 </PaginationItem>
                 <PaginationItem>
                   <select
@@ -723,11 +807,10 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                     value={pageSize}
                     onChange={e => {
                       setPageSize(Number(e.target.value))
-                      setPageCount(fields, e.target.value)
-                      setPageIndex(Math.trunc(startIndex.current / e.target.value))
+                      setPageIndex(Math.trunc(paginationHelp.start / e.target.value))
                     }}
                   >
-                    {pageNumArray.map(pageSize => (
+                    {paginationHelp.choices.map(pageSize => (
                       <option label={`${pageSize} service types`} key={pageSize} value={pageSize}>
                         {pageSize} service types
                       </option>
