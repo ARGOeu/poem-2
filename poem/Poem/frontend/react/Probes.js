@@ -92,218 +92,221 @@ const ProbeForm = ({
   list_packages=[],
   metrictemplatelist=[],
   ...props
-}) =>
-  <>
-    <FormGroup>
-      <Row>
-        <Col md={6}>
-          <InputGroup>
-            <InputGroupText>Name</InputGroupText>
+}) => {
+  return (
+    <>
+      <FormGroup>
+        <Row>
+          <Col md={6}>
+            <InputGroup>
+              <InputGroupText>Name</InputGroupText>
+              <Field
+                type='text'
+                data-testid='name'
+                name='name'
+                className={
+                  `form-control ${props.errors.name && 'border-danger'}`}
+                disabled={isTenantSchema || isHistory || publicView}
+              />
+            </InputGroup>
+            <CustomError error={props.errors.name} />
+            <FormText color="muted">
+              Name of this probe.
+            </FormText>
+          </Col>
+          <Col md={2}>
+            <InputGroup>
+              <InputGroupText>Version</InputGroupText>
+              <VersionField
+                type='text'
+                data-testid='version'
+                name='version'
+                className='form-control'
+                disabled={true}
+              />
+            </InputGroup>
+            <FormText color="muted">
+              Version of the probe.
+            </FormText>
+          </Col>
+          {
+            (!addview && !cloneview && !isTenantSchema && !isHistory && !publicView) &&
+              <Col md={2}>
+                <Row>
+                  <FormGroup check inline className='ms-3'>
+                    <Input
+                      type='checkbox'
+                      name='update_metrics'
+                      id='update_metrics'
+                      onChange={ e => props.setFieldValue('update_metrics', e.target.checked) }
+                      checked={ props.values.update_metrics }
+                    />
+                    <Label check for='update_metrics'>Update metric templates</Label>
+                  </FormGroup>
+                </Row>
+                <Row>
+                  <FormText color='muted'>
+                    Update all associated metric templates.
+                  </FormText>
+                </Row>
+              </Col>
+          }
+        </Row>
+        <Row className='mt-3'>
+          <Col md={8}>
+            <InputGroup>
+              <InputGroupText>Package</InputGroupText>
+              {
+                (isTenantSchema || isHistory || publicView) ?
+                  <Field
+                    type='text'
+                    name='pkg'
+                    data-testid='pkg'
+                    className='form-control'
+                    disabled={true}
+                  />
+                :
+                  <DropdownWithFormText
+                    name='pkg'
+                    error={ props.errors.pkg }
+                    onChange={ e => props.setFieldValue('pkg', e.value) }
+                    options={ list_packages }
+                    value={ props.values.pkg }
+                  />
+              }
+            </InputGroup>
+            <FormText color='muted'>
+              Probe is part of selected package.
+            </FormText>
+          </Col>
+        </Row>
+      </FormGroup>
+      <FormGroup>
+        <ParagraphTitle title='Probe metadata'/>
+        <Row className='mt-4 mb-3 align-items-top'>
+          <Col md={8}>
+            <InputGroup>
+              <InputGroupText>Repository</InputGroupText>
+              {
+                (isTenantSchema || isHistory || publicView) ?
+                  <Field
+                    component={LinkField}
+                    name='repository'
+                    className='form-control'
+                    disabled={true}
+                  />
+                :
+                  <Field
+                    type='text'
+                    data-testid='repository'
+                    name='repository'
+                    className={`form-control ${props.errors.repository && 'border-danger'}`}
+                  />
+              }
+            </InputGroup>
+            <CustomError error={ props.errors.repository } />
+            <FormText color='muted'>
+              Probe repository URL.
+            </FormText>
+          </Col>
+        </Row>
+        <Row className='mb-3 align-items-top'>
+          <Col md={8}>
+            <InputGroup>
+              <InputGroupText>Documentation</InputGroupText>
+              {
+                (isTenantSchema || isHistory || publicView) ?
+                  <Field
+                    component={LinkField}
+                    name='docurl'
+                    className='form-control'
+                    disabled={true}
+                  />
+                :
+                  <Field
+                    type='text'
+                    name='docurl'
+                    data-testid='docurl'
+                    className={`form-control ${props.errors.docurl && 'border-danger'}`}
+                  />
+              }
+            </InputGroup>
+            <CustomError error={ props.errors.docurl } />
+            <FormText color='muted'>
+              Documentation URL.
+            </FormText>
+          </Col>
+        </Row>
+        <Row className='mb-3 align-items-top'>
+          <Col md={8}>
+            <Label for='description'>Description</Label>
             <Field
-              type='text'
-              data-testid='name'
-              name='name'
-              className={
-                `form-control ${props.errors.name && 'border-danger'}`}
+              component='textarea'
+              name='description'
+              id='description'
+              rows='15'
+              className={`form-control ${props.errors.description && 'border-danger'}`}
               disabled={isTenantSchema || isHistory || publicView}
             />
-          </InputGroup>
-          <CustomError error={props.errors.name} />
-          <FormText color="muted">
-            Name of this probe.
-          </FormText>
-        </Col>
-        <Col md={2}>
-          <InputGroup>
-            <InputGroupText>Version</InputGroupText>
-            <VersionField
-              type='text'
-              data-testid='version'
-              name='version'
-              className='form-control'
-              disabled={true}
+            <CustomError error={ props.errors.description } />
+            <FormText color='muted'>
+              Free text description outlining the purpose of this probe.
+            </FormText>
+          </Col>
+        </Row>
+        <Row className='mb-3 align-items-top'>
+          <Col md={8}>
+            <Label for='comment'>Comment</Label>
+            <Field
+              component='textarea'
+              name='comment'
+              id='comment'
+              rows='5'
+              className={`form-control ${props.errors.comment && 'border-danger'}`}
+              disabled={isTenantSchema || isHistory || publicView}
             />
-          </InputGroup>
-          <FormText color="muted">
-            Version of the probe.
-          </FormText>
-        </Col>
+            <CustomError error={ props.errors.comment } />
+            <FormText color='muted'>
+              Short comment about this version.
+            </FormText>
+          </Col>
+        </Row>
         {
-          (!addview && !cloneview && !isTenantSchema && !isHistory && !publicView) &&
-            <Col md={2}>
-              <Row>
-                <FormGroup check inline className='ms-3'>
-                  <Input
-                    type='checkbox'
-                    name='update_metrics'
-                    id='update_metrics'
-                    onChange={ e => props.setFieldValue('update_metrics', e.target.checked) }
-                    checked={ props.values.update_metrics }
-                  />
-                  <Label check for='update_metrics'>Update metric templates</Label>
-                </FormGroup>
-              </Row>
-              <Row>
-                <FormText color='muted'>
-                  Update all associated metric templates.
-                </FormText>
-              </Row>
-            </Col>
-        }
-      </Row>
-      <Row className='mt-3'>
-        <Col md={8}>
-          <InputGroup>
-            <InputGroupText>Package</InputGroupText>
-            {
-              (isTenantSchema || isHistory || publicView) ?
-                <Field
-                  type='text'
-                  name='pkg'
-                  data-testid='pkg'
-                  className='form-control'
-                  disabled={true}
-                />
-              :
-                <DropdownWithFormText
-                  name='pkg'
-                  error={ props.errors.pkg }
-                  onChange={ e => props.setFieldValue('pkg', e.value) }
-                  options={ list_packages }
-                  value={ props.values.pkg }
-                />
-            }
-          </InputGroup>
-          <FormText color='muted'>
-            Probe is part of selected package.
-          </FormText>
-        </Col>
-      </Row>
-    </FormGroup>
-    <FormGroup>
-      <ParagraphTitle title='Probe metadata'/>
-      <Row className='mt-4 mb-3 align-items-top'>
-        <Col md={8}>
-          <InputGroup>
-            <InputGroupText>Repository</InputGroupText>
-            {
-              (isTenantSchema || isHistory || publicView) ?
-                <Field
-                  component={LinkField}
-                  name='repository'
-                  className='form-control'
-                  disabled={true}
-                />
-              :
-                <Field
-                  type='text'
-                  data-testid='repository'
-                  name='repository'
-                  className={`form-control ${props.errors.repository && 'border-danger'}`}
-                />
-            }
-          </InputGroup>
-          <CustomError error={ props.errors.repository } />
-          <FormText color='muted'>
-            Probe repository URL.
-          </FormText>
-        </Col>
-      </Row>
-      <Row className='mb-3 align-items-top'>
-        <Col md={8}>
-          <InputGroup>
-            <InputGroupText>Documentation</InputGroupText>
-            {
-              (isTenantSchema || isHistory || publicView) ?
-                <Field
-                  component={LinkField}
-                  name='docurl'
-                  className='form-control'
-                  disabled={true}
-                />
-              :
-                <Field
-                  type='text'
-                  name='docurl'
-                  data-testid='docurl'
-                  className={`form-control ${props.errors.docurl && 'border-danger'}`}
-                />
-            }
-          </InputGroup>
-          <CustomError error={ props.errors.docurl } />
-          <FormText color='muted'>
-            Documentation URL.
-          </FormText>
-        </Col>
-      </Row>
-      <Row className='mb-3 align-items-top'>
-        <Col md={8}>
-          <Label for='description'>Description</Label>
-          <Field
-            component='textarea'
-            name='description'
-            id='description'
-            rows='15'
-            className={`form-control ${props.errors.description && 'border-danger'}`}
-            disabled={isTenantSchema || isHistory || publicView}
-          />
-          <CustomError error={ props.errors.description } />
-          <FormText color='muted'>
-            Free text description outlining the purpose of this probe.
-          </FormText>
-        </Col>
-      </Row>
-      <Row className='mb-3 align-items-top'>
-        <Col md={8}>
-          <Label for='comment'>Comment</Label>
-          <Field
-            component='textarea'
-            name='comment'
-            id='comment'
-            rows='5'
-            className={`form-control ${props.errors.comment && 'border-danger'}`}
-            disabled={isTenantSchema || isHistory || publicView}
-          />
-          <CustomError error={ props.errors.comment } />
-          <FormText color='muted'>
-            Short comment about this version.
-          </FormText>
-        </Col>
-      </Row>
-      {
-        (!isHistory && !addview && !cloneview) &&
-          <Row>
-            <Col md={8}>
-              {
-                metrictemplatelist.length > 0 &&
-                <div>
-                  Metric templates:
+          (!isHistory && !addview && !cloneview) &&
+            <Row>
+              <Col md={8}>
+                {
+                  metrictemplatelist.length > 0 &&
                   <div>
-                    {
-                      metrictemplatelist
-                        .map((met, i) => <Link
-                          key={i}
-                          to={
-                            publicView ?
-                              `/ui/public_metrictemplates/${met}`
-                            :
-                              isTenantSchema ?
-                                `/ui/probes/${props.values.name}/${met}`
+                    Metric templates:
+                    <div>
+                      {
+                        metrictemplatelist
+                          .map((met, i) => <Link
+                            key={i}
+                            to={
+                              publicView ?
+                                `/ui/public_metrictemplates/${met}`
                               :
-                                `/ui/metrictemplates/${met}`
-                            }>
-                          {met}
-                        </Link>
-                        ).reduce((prev, curr) => [prev, ', ', curr])
-                    }
+                                isTenantSchema ?
+                                  `/ui/probes/${props.values.name}/${met}`
+                                :
+                                  `/ui/metrictemplates/${met}`
+                              }>
+                            {met}
+                          </Link>
+                          ).reduce((prev, curr) => [prev, ', ', curr])
+                      }
+                    </div>
                   </div>
-                </div>
-              }
-            </Col>
-          </Row>
-      }
-    </FormGroup>
-  </>
+                }
+              </Col>
+            </Row>
+        }
+      </FormGroup>
+    </>
+  )
+}
 
 
 const fetchProbe = async (publicView, name) => {
@@ -552,121 +555,90 @@ export const ProbeComponent = (props) => {
     return (<ErrorComponent error={packagesError.error}/>);
 
   else if ((addview || (probe && metricTemplates)) && packages) {
-    if (!isTenantSchema) {
-      return (
-        <BaseArgoView
-          resourcename={`${publicView ? 'Probe details' : 'probe'}`}
-          location={location}
-          addview={addview}
-          cloneview={cloneview}
-          clone={true}
-          publicview={publicView}
-          modal={true}
-          state={{
-            areYouSureModal,
-            modalTitle,
-            modalMsg,
-            'modalFunc': modalFlag === 'submit' ?
-              doChange
+    return (
+      <BaseArgoView
+        resourcename={`${(publicView || isTenantSchema) ? 'Probe details' : 'probe'}`}
+        location={location}
+        addview={addview}
+        cloneview={cloneview}
+        clone={!isTenantSchema}
+        tenantview={isTenantSchema}
+        publicview={publicView}
+        modal={!isTenantSchema}
+        state={{
+          areYouSureModal,
+          modalTitle,
+          modalMsg,
+          'modalFunc': modalFlag === 'submit' ?
+            doChange
+          :
+            modalFlag === 'delete' ?
+              doDelete
             :
-              modalFlag === 'delete' ?
-                doDelete
-              :
-                undefined
+              undefined
+        }}
+        toggle={toggleAreYouSure}
+      >
+        <Formik
+          initialValues = {{
+            id: `${probe ? probe.id : ''}`,
+            name: `${probe ? probe.name : ''}`,
+            version: `${probe ? probe.version : ''}`,
+            pkg: `${probe ? probe.package : ''}`,
+            repository: `${probe ? probe.repository : ''}`,
+            docurl: `${probe ? probe.docurl : ''}`,
+            description: `${probe ? probe.description : ''}`,
+            comment: `${probe ? probe.comment : ''}`,
+            update_metrics: false
           }}
-          toggle={toggleAreYouSure}
+          validationSchema={ProbeSchema}
+          enableReinitialize={true}
+          onSubmit = {(values) => onSubmitHandle(values)}
         >
-          <Formik
-            initialValues = {{
-              id: `${probe ? probe.id : ''}`,
-              name: `${probe ? probe.name : ''}`,
-              version: `${probe ? probe.version : ''}`,
-              pkg: `${probe ? probe.package : ''}`,
-              repository: `${probe ? probe.repository : ''}`,
-              docurl: `${probe ? probe.docurl : ''}`,
-              description: `${probe ? probe.description : ''}`,
-              comment: `${probe ? probe.comment : ''}`,
-              update_metrics: false
-            }}
-            validationSchema={ProbeSchema}
-            enableReinitialize={true}
-            onSubmit = {(values) => onSubmitHandle(values)}
-          >
-            {props => (
-              <Form>
-                <ProbeForm
-                  {...props}
-                  addview={addview}
-                  cloneview={cloneview}
-                  publicView={publicView}
-                  list_packages={packages.map(pkg => `${pkg.name} (${pkg.version})`)}
-                  metrictemplatelist={metricTemplates}
-                />
-                {
-                  !publicView &&
-                    <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                      {
-                        (!addview && !cloneview && !publicView) ?
-                          <Button
-                            color='danger'
-                            onClick={() => {
-                              setModalMsg('Are you sure you want to delete probe?');
-                              setModalTitle('Delete probe');
-                              setModalFlag('delete');
-                              toggleAreYouSure();
-                            }}
-                          >
-                            Delete
-                          </Button>
-                        :
-                          <div></div>
-                      }
-                      <Button
-                        color='success'
-                        id='submit-button'
-                        type='submit'
-                      >
-                        Save
-                      </Button>
-                    </div>
-              }
-              </Form>
-            )}
-          </Formik>
-        </BaseArgoView>
-      )
-    } else {
-      return (
-        <BaseArgoView
-          resourcename='Probe details'
-          location={location}
-          tenantview={true}
-          history={true}
-        >
-          <Formik
-            initialValues = {{
-              id: `${probe ? probe.id : ''}`,
-              name: `${probe ? probe.name : ''}`,
-              version: `${probe ? probe.version : ''}`,
-              pkg: `${probe ? probe.package : ''}`,
-              repository: `${probe ? probe.repository : ''}`,
-              docurl: `${probe ? probe.docurl : ''}`,
-              description: `${probe ? probe.description : ''}`,
-              comment: `${probe ? probe.comment : ''}`
-            }}
-          >
-            {props => (
+          {props => (
+            <Form>
               <ProbeForm
                 {...props}
-                isTenantSchema={true}
+                addview={addview}
+                cloneview={cloneview}
                 publicView={publicView}
+                isTenantSchema={isTenantSchema}
+                list_packages={packages.map(pkg => `${pkg.name} (${pkg.version})`)}
                 metrictemplatelist={metricTemplates}
               />
-            )}
-          </Formik>
-        </BaseArgoView>
-      );
-    }
+              {
+                (!publicView && !isTenantSchema) &&
+                  <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                    {
+                      (!addview && !cloneview && !publicView) ?
+                        <Button
+                          color='danger'
+                          onClick={() => {
+                            setModalMsg('Are you sure you want to delete probe?');
+                            setModalTitle('Delete probe');
+                            setModalFlag('delete');
+                            toggleAreYouSure();
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      :
+                        <div></div>
+                    }
+                    <Button
+                      color='success'
+                      id='submit-button'
+                      type='submit'
+                    >
+                      Save
+                    </Button>
+                  </div>
+            }
+            </Form>
+          )}
+        </Formik>
+      </BaseArgoView>
+    )
   } else
     return null;
 };
