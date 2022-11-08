@@ -598,7 +598,7 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
 
     const nameField = screen.getByTestId('name')
     const versionField = screen.getByTestId('version');
-    const checkField = screen.getByRole('checkbox', { name: /update/i });
+    const checkField = screen.getByRole('checkbox')
     const packageField = screen.getByText('nagios-plugins-argo (0.1.11)')
     const repositoryField = screen.getByTestId('repository');
     const docurlField = screen.getByTestId('docurl');
@@ -650,7 +650,7 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
 
     const nameField = screen.getByTestId('name')
     const versionField = screen.getByTestId('version');
-    const checkField = screen.queryByRole('checkbox', { name: /update/i });
+    const checkField = screen.queryByRole('checkbox')
     const packageField = screen.getByTestId('pkg');
     const urlField = screen.queryAllByRole('link', { name: /argoeu/i })
     const repositoryField = urlField[0];
@@ -690,7 +690,7 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
     })
 
     const nameField = screen.getByTestId('name');
-    const checkField = screen.getByRole('checkbox', { name: /update/i });
+    const checkField = screen.getByRole('checkbox')
     const packageField = screen.getByText('nagios-plugins-argo (0.1.11)');
     const commentField = screen.getByLabelText(/comment/i)
 
@@ -739,19 +739,11 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
       expect(screen.getByRole('heading', { name: /change probe/i }).textContent).toBe('Change probe')
     })
 
-    const nameField = screen.getByTestId('name');
-    const packageField = screen.getByText('nagios-plugins-argo (0.1.11)');
-    const commentField = screen.getByLabelText(/comment/i)
+    fireEvent.change(screen.getByTestId("name"), { target: { value: 'new-ams-probe' } });
 
-    fireEvent.change(nameField, { target: { value: 'new-ams-probe' } });
+    await selectEvent.select(screen.getByText("nagios-plugins-argo (0.1.11)"), 'nagios-plugins-argo (0.1.12)')
 
-    await selectEvent.select(packageField, 'nagios-plugins-argo (0.1.12)')
-
-    const versionField = screen.getByTestId('version');
-    expect(versionField.value).toBe('0.1.12');
-    expect(versionField).toBeDisabled();
-
-    fireEvent.change(commentField, { target: { value: 'Changed name with the new version.' } })
+    fireEvent.change(screen.getByLabelText(/comment/i), { target: { value: 'Changed name with the new version.' } })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
@@ -791,19 +783,11 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
       expect(screen.getByRole('heading', { name: /change probe/i }).textContent).toBe('Change probe')
     })
 
-    const nameField = screen.getByTestId('name');
-    const packageField = screen.getByText('nagios-plugins-argo (0.1.11)');
-    const commentField = screen.getByLabelText(/comment/i)
+    fireEvent.change(screen.getByTestId("name"), { target: { value: 'test-ams-probe' } });
 
-    fireEvent.change(nameField, { target: { value: 'test-ams-probe' } });
+    await selectEvent.select(screen.getByText("nagios-plugins-argo (0.1.11)"), 'nagios-plugins-argo (0.1.12)')
 
-    await selectEvent.select(packageField, 'nagios-plugins-argo (0.1.12)')
-
-    const versionField = screen.getByTestId('version');
-    expect(versionField.value).toBe('0.1.12');
-    expect(versionField).toBeDisabled();
-
-    fireEvent.change(commentField, { target: { value: 'Changed name with the new version.' } })
+    fireEvent.change(screen.getByLabelText(/comment/i), { target: { value: 'Changed name with the new version.' } })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
@@ -847,19 +831,11 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
       expect(screen.getByRole('heading', { name: /change probe/i }).textContent).toBe('Change probe')
     })
 
-    const nameField = screen.getByTestId('name');
-    const packageField = screen.getByText('nagios-plugins-argo (0.1.11)');
-    const commentField = screen.getByLabelText(/comment/i)
+    fireEvent.change(screen.getByTestId("name"), { target: { value: 'test-ams-probe' } });
 
-    fireEvent.change(nameField, { target: { value: 'test-ams-probe' } });
+    await selectEvent.select(screen.getByText("nagios-plugins-argo (0.1.11)"), 'nagios-plugins-argo (0.1.12)')
 
-    await selectEvent.select(packageField, 'nagios-plugins-argo (0.1.12)')
-
-    const versionField = screen.getByTestId('version');
-    expect(versionField.value).toBe('0.1.12');
-    expect(versionField).toBeDisabled();
-
-    fireEvent.change(commentField, { target: { value: 'Changed name with the new version.' } })
+    fireEvent.change(screen.getByLabelText(/comment/i), { target: { value: 'Changed name with the new version.' } })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
@@ -1091,7 +1067,7 @@ describe('Test probe addview', () => {
 
     const nameField = screen.getByTestId('name')
     const versionField = screen.getByTestId('version');
-    const checkField = screen.queryByRole('checkbox', { name: /update/i });
+    const checkField = screen.queryByRole('checkbox')
     const packageField = screen.getAllByText(/select/i)[0];
     const repositoryField = screen.getByTestId('repository');
     const docurlField = screen.getByTestId('docurl');
