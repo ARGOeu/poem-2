@@ -1121,9 +1121,9 @@ export const HistoryComponent = (props) => {
 
   var apiUrl = undefined;
   if (['metric', 'metricprofile', 'aggregationprofile', 'thresholdsprofile'].includes(obj))
-    apiUrl = `/api/v2/internal/${publicView ? 'public_' : ''}tenantversion/`;
+    apiUrl = `/api/v2/internal/${publicView ? 'public_' : ''}tenantversion`;
   else
-    apiUrl = `/api/v2/internal/${publicView ? 'public_' : ''}version/`;
+    apiUrl = `/api/v2/internal/${publicView ? 'public_' : ''}version`;
 
   const compareUrl = `/ui/${tenantView ? 'administration/' : ''}${publicView ? 'public_' : ''}${obj}s/${name}/history`;
 
@@ -1134,7 +1134,8 @@ export const HistoryComponent = (props) => {
     async function fetchData() {
       try {
         let json = await backend.fetchData(`${apiUrl}/${obj}/${name}`);
-          setListVersions(json);
+        setListVersions(json);
+
         if (json.length > 1) {
           setCompare1(json[0].version);
           setCompare2(json[1].version);
