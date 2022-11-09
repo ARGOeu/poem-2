@@ -19,12 +19,70 @@ import {
   Col,
   Button,
   Form,
-  Input
+  Input,
+  FormFeedback
 } from "reactstrap"
 import { ParagraphTitle } from "./UIElements"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faTimes, faPlus } from '@fortawesome/free-solid-svg-icons';
-import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form"
+import {
+  Controller,
+  useFieldArray,
+  useForm,
+  useWatch
+} from "react-hook-form"
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as Yup from "yup";
+import { ErrorMessage } from "@hookform/error-message"
+
+
+
+const validationSchema = Yup.object().shape({
+  name: Yup.string()
+    .required("Name field is required")
+    .matches(/^[a-zA-Z][A-Za-z0-9\-_]*$/, "Name can contain alphanumeric characters, dash and underscore, but must always begin with a letter"),
+  globalAttributes: Yup.array().of(
+    Yup.object().shape({
+      attribute: Yup.string().matches(/^[a-zA-Z][A-Za-z0-9\-_]*$/, "Attribute can contain alphanumeric characters, dash and underscore, but must always begin with a letter"),
+      value: Yup.string().when("attribute", {
+        is: (value) => !!value,
+        then: Yup.string().required("Attribute value is required")
+      })
+    })
+  ),
+  hostAttributes: Yup.array().of(
+    Yup.object().shape({
+      hostname: Yup.string()
+        .matches(
+          /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9-]*[A-Za-z0-9])$/,
+          "Invalid hostname"
+        ),
+      attribute: Yup.string()
+        .matches(/^[a-zA-Z][A-Za-z0-9\-_]*$/, "Attribute can contain alphanumeric characters, dash and underscore, but must always begin with a letter"),
+      value: Yup.string().when("attribute", {
+        is: (value) => !!value,
+        then: Yup.string().required("Attribute value is required")
+      })
+    })
+  ),
+  metricParameters: Yup.array().of(
+    Yup.object().shape({
+      hostname: Yup.string()
+        .matches(
+          /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9-]*[A-Za-z0-9])$/,
+          "Invalid hostname"
+        ),
+      metric: Yup.string()
+        .matches(/^[a-zA-Z][A-Za-z0-9\-_.]*$/, "Metric name can contain alphanumeric characters, dash, underscore and dot, but must always begin with a letter"),
+      parameter: Yup.string()
+        .matches(/^\S+$/, "Parameter cannot contain white space"),
+      value: Yup.string().when("parameter", {
+        is: (value) => !!value,
+        then: Yup.string().required("Parameter value is required")
+      })
+    })
+  )
+})
 
 
 const fetchOverrides = async () => {
@@ -121,7 +179,9 @@ const MetricOverrideForm = ({
       globalAttributes: override ? override.global_attributes : [{ attribute: "", value: "" }],
       hostAttributes: override ? override.host_attributes : [{ hostname: "", attribute: "", value: "" }],
       metricParameters: override ? override.metric_parameters : [{ hostname: "", metric: "", parameter: "", value: "" }]
-    }
+    },
+    mode: "all",
+    resolver: yupResolver(validationSchema)
   })
 
   const globalAttributes = useWatch({ control, name: "globalAttributes" })
@@ -280,6 +340,15 @@ const MetricOverrideForm = ({
                     />
                   }
                 />
+                <ErrorMessage
+                  errors={ errors }
+                  name="name"
+                  render={ ({ message }) =>
+                    <FormFeedback invalid="true" className="end-0">
+                      { message }
+                    </FormFeedback>
+                  }
+                />
               </InputGroup>
             </Col>
           </Row>
@@ -309,8 +378,17 @@ const MetricOverrideForm = ({
                             <Input
                               { ...field }
                               data-testid={ `globalAttributes.${index}.attribute` }
-                              className="form-control"
+                              className={ `form-control ${errors?.globalAttributes?.[index]?.attribute && "is-invalid"}` }
                             />
+                          }
+                        />
+                        <ErrorMessage
+                          errors={ errors }
+                          name={ `globalAttributes.${index}.attribute` }
+                          render={ ({ message }) =>
+                            <FormFeedback invalid="true" className="end-0">
+                              { message }
+                            </FormFeedback>
                           }
                         />
                       </td>
@@ -322,8 +400,17 @@ const MetricOverrideForm = ({
                             <Input
                               { ...field }
                               data-testid={ `globalAttributes.${index}.value` }
-                              className="form-control"
+                              className={ `form-control ${ errors?.globalAttributes?.[index]?.value && "is-invalid" }` }
                             />
+                          }
+                        />
+                        <ErrorMessage
+                          errors={ errors }
+                          name={ `globalAttributes.${index}.value` }
+                          render={ ({ message }) =>
+                            <FormFeedback invalid="true" className="end-0">
+                              { message }
+                            </FormFeedback>
                           }
                         />
                       </td>
@@ -383,9 +470,18 @@ const MetricOverrideForm = ({
                           render={ ({ field }) =>
                             <Input
                               { ...field }
-                              className="form-control"
+                              className={ `form-control ${ errors?.hostAttributes?.[index]?.hostname && "is-invalid" }` }
                               data-testid={ `hostAttributes.${index}.hostname` }
                             />
+                          }
+                        />
+                        <ErrorMessage
+                          errors={ errors }
+                          name={ `hostAttributes.${index}.hostname` }
+                          render={ ({ message }) =>
+                            <FormFeedback invalid="true" className="end-0">
+                              { message }
+                            </FormFeedback>
                           }
                         />
                       </td>
@@ -396,9 +492,18 @@ const MetricOverrideForm = ({
                           render={ ({ field }) =>
                             <Input
                               { ...field }
-                              className="form-control"
+                              className={ `form-control ${ errors?.hostAttributes?.[index]?.attribute && "is-invalid" }` }
                               data-testid={ `hostAttributes.${index}.attribute` }
                             />
+                          }
+                        />
+                        <ErrorMessage
+                          errors={ errors }
+                          name={ `hostAttributes.${index}.attribute` }
+                          render={ ({ message }) =>
+                            <FormFeedback invalid="true" className="end-0">
+                              { message }
+                            </FormFeedback>
                           }
                         />
                       </td>
@@ -409,9 +514,18 @@ const MetricOverrideForm = ({
                           render={ ({ field }) =>
                             <Input
                               { ...field }
-                              className="form-control"
+                              className={ `form-control ${ errors?.hostAttributes?.[index]?.value && "is-invalid" }` }
                               data-testid={ `hostAttributes.${index}.value` }
                             />
+                          }
+                        />
+                        <ErrorMessage
+                          errors={ errors }
+                          name={ `hostAttributes.${index}.value` }
+                          render={ ({ message }) =>
+                            <FormFeedback invalid="true" className="end-0">
+                              { message }
+                            </FormFeedback>
                           }
                         />
                       </td>
@@ -471,9 +585,18 @@ const MetricOverrideForm = ({
                         render={ ({ field }) =>
                           <Input
                             { ...field }
-                            className="form-control"
+                            className={ `form-control ${ errors?.metricParameters?.[index]?.hostname }` }
                             data-testid={ `metricParameters.${index}.hostname` }
                           />
+                        }
+                      />
+                      <ErrorMessage
+                        errors={ errors }
+                        name={ `metricParameters.${index}.hostname` }
+                        render={ ({ message }) =>
+                          <FormFeedback invalid="true" className="end-0">
+                            { message }
+                          </FormFeedback>
                         }
                       />
                     </td>
@@ -484,9 +607,18 @@ const MetricOverrideForm = ({
                         render={ ({ field }) =>
                           <Input
                             { ...field }
-                            className="form-control"
+                            className={ `form-control ${ errors?.metricParameters?.[index]?.metric && "is-invalid" }` }
                             data-testid={ `metricParameters.${index}.metric` }
                           />
+                        }
+                      />
+                      <ErrorMessage
+                        errors={ errors }
+                        name={ `metricParameters.${index}.metric` }
+                        render={ ({ message }) =>
+                          <FormFeedback invalid="true" className="end-0">
+                            { message }
+                          </FormFeedback>
                         }
                       />
                     </td>
@@ -497,9 +629,18 @@ const MetricOverrideForm = ({
                         render={ ({ field }) =>
                           <Input
                             { ...field }
-                            className="form-control"
+                            className={ `form-control ${ errors?.metricParameters?.[index]?.parameter && "is-invalid" }` }
                             data-testid={ `metricParameters.${index}.parameter` }
                           />
+                        }
+                      />
+                      <ErrorMessage
+                        errors={ errors }
+                        name={ `metricParameters.${index}.parameter` }
+                        render={ ({ message }) =>
+                          <FormFeedback invalid="true" className="end-0">
+                            { message }
+                          </FormFeedback>
                         }
                       />
                     </td>
@@ -510,9 +651,18 @@ const MetricOverrideForm = ({
                         render={ ({ field }) =>
                           <Input
                             { ...field }
-                            className="form-control"
+                            className={ `form-control ${ errors?.metricParameters?.[index]?.value && "is-invalid" }` }
                             data-testid={ `metricParameters.${index}.value` }
                           />
+                        }
+                      />
+                      <ErrorMessage
+                        errors={ errors }
+                        name={ `metricParameters.${index}.value` }
+                        render={ ({ message }) =>
+                          <FormFeedback invalid="true" className="end-0">
+                            { message }
+                          </FormFeedback>
                         }
                       />
                     </td>
