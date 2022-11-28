@@ -6,7 +6,6 @@ import {
   BaseArgoView,
   NotifyOk,
   NotifyError,
-  ModalAreYouSure,
   ErrorComponent,
   ParagraphTitle,
   BaseArgoTable,
@@ -635,302 +634,227 @@ export const UserChange = (props) => {
     return (<ErrorComponent error={errorUserDetails}/>);
 
   else if (addview || (user) && (!isTenantSchema || allGroups && (addview || (userProfile && userGroups)))) {
-    if (isTenantSchema) {
-      return (
-        <BaseArgoView
-          resourcename="user"
-          location={location}
-          addview={addview}
-          history={false}
-          modal={true}
-          state={{
-            areYouSureModal,
-            modalTitle,
-            modalMsg,
-            'modalFunc': modalFlag === 'submit' ?
-              doChange
+    return (
+      <BaseArgoView
+        resourcename="user"
+        location={location}
+        addview={addview}
+        history={false}
+        modal={true}
+        state={{
+          areYouSureModal,
+          modalTitle,
+          modalMsg,
+          'modalFunc': modalFlag === 'submit' ?
+            doChange
+          :
+            modalFlag === 'delete' ?
+              doDelete
             :
-              modalFlag === 'delete' ?
-                doDelete
-              :
-                undefined
-          }}
-          toggle={toggleAreYouSure}
-        >
-          <Formik
-            initialValues = {{
-              addview: addview,
-              pk: user ? user.pk : '',
-              first_name: user ? user.first_name : '',
-              last_name: user ? user.last_name : '',
-              username: user ? user.username : '',
-              password: '',
-              confirm_password: '',
-              is_active: user ? user.is_active : true,
-              is_superuser: user ? user.is_superuser : false,
-              email: user ? user.email : '',
-              last_login: user ? user.last_login : '',
-              date_joined: user ? user.date_joined : '',
-              groupsofaggregations: userGroups ? userGroups.aggregations : [],
-              groupsofmetrics: userGroups ? userGroups.metrics : [],
-              groupsofmetricprofiles: userGroups ? userGroups.metricprofiles : [],
-              groupsofthresholdsprofiles: userGroups ? userGroups.thresholdsprofiles : [],
-              groupsofreports: userGroups ? userGroups.reports : [],
-              displayname: userProfile ? userProfile.displayname : '',
-              subject: userProfile ? userProfile.subject : '',
-              egiid: userProfile ? userProfile.egiid : ''
-            }}
-            validationSchema={UserSchema}
-            enableReinitialize={true}
-            onSubmit = {(values) => onSubmitHandle(values)}
-          >
-            {props => (
-              <Form data-testid='form'>
-                <CommonUser
-                  {...props}
-                  add={addview}
-                />
-                {
-                  isTenantSchema &&
-                    <>
-                      <FormGroup>
-                        <ParagraphTitle title='POEM user permissions'/>
-                        <Row>
-                          <Col md={5}>
-                            <GroupSelect
-                              {...props}
-                              name='groupsofreports'
-                              label='Groups of reports'
-                              options={allGroups.reports}
-                              initValues={props.values.groupsofreports}
-                            />
-                            <FormText color="muted">
-                              The groups of reports that user will control.
-                            </FormText>
-                          </Col>
-                          <Col md={5}>
-                            <GroupSelect
-                              {...props}
-                              name='groupsofmetrics'
-                              label='Groups of metrics'
-                              options={allGroups.metrics}
-                              initValues={props.values.groupsofmetrics}
-                            />
-                            <FormText color="muted">
-                              The groups of metrics that user will control.
-                            </FormText>
-                          </Col>
-                        </Row>
-                        <Row className='mt-3'>
-                          <Col md={5}>
-                            <GroupSelect
-                              {...props}
-                              name='groupsofmetricprofiles'
-                              label='Groups of metric profiles'
-                              options={allGroups.metricprofiles}
-                              initValues={props.values.groupsofmetricprofiles}
-                            />
-                            <FormText color="muted">
-                              The groups of metric profiles that user will control.
-                            </FormText>
-                          </Col>
-                          <Col md={5}>
-                            <GroupSelect
-                              {...props}
-                              name='groupsofaggregations'
-                              label='Groups of aggregations'
-                              options={allGroups.aggregations}
-                              initValues={props.values.groupsofaggregations}
-                            />
-                            <FormText color="muted">
-                              The groups of aggregations that user will control.
-                            </FormText>
-                          </Col>
-                        </Row>
-                        <Row className='mt-3'>
-                          <Col md={5}>
-                            <GroupSelect
-                              {...props}
-                              name='groupsofthresholdsprofiles'
-                              label='Groups of thresholds profiles'
-                              options={allGroups.thresholdsprofiles}
-                              initValues={props.values.groupsofthresholdsprofiles}
-                            />
-                            <FormText color="muted">
-                              The groups of thresholds profiles that user will control.
-                            </FormText>
-                          </Col>
-                        </Row>
-                      </FormGroup>
-                      <FormGroup>
-                        <ParagraphTitle title='Additional information'/>
-                        <Row>
-                          <Col md={12}>
-                            <InputGroup>
-                              <InputGroupText>distinguishedName</InputGroupText>
-                              <Field
-                                type="text"
-                                name="subject"
-                                required={false}
-                                className="form-control"
-                                id="distinguishedname"
-                                data-testid="subject"
-                              />
-                            </InputGroup>
-                          </Col>
-                        </Row>
-                      </FormGroup>
-                      <FormGroup>
-                        <Row>
-                          <Col md={8}>
-                            <InputGroup>
-                              <InputGroupText>eduPersonUniqueId</InputGroupText>
-                              <Field
-                                type="text"
-                                name="egiid"
-                                required={false}
-                                className="form-control"
-                                id='eduid'
-                                data-testid="egiid"
-                              />
-                            </InputGroup>
-                          </Col>
-                        </Row>
-                      </FormGroup>
-                      <FormGroup>
-                        <Row>
-                          <Col md={6}>
-                            <InputGroup>
-                              <InputGroupText>displayName</InputGroupText>
-                              <Field
-                                type="text"
-                                name="displayname"
-                                required={false}
-                                className="form-control"
-                                id="displayname"
-                                data-testid="displayname"
-                              />
-                            </InputGroup>
-                          </Col>
-                        </Row>
-                      </FormGroup>
-                    </>
-                }
-                {
-                  <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                    {
-                      !addview ?
-                        <Button
-                          color="danger"
-                          onClick={() => {
-                            setModalMsg('Are you sure you want to delete user?');
-                            setModalTitle('Delete user');
-                            setModalFlag('delete');
-                            toggleAreYouSure();
-                          }}
-                        >
-                          Delete
-                        </Button>
-                      :
-                        <div></div>
-                    }
-                    <Button
-                      color="success"
-                      id="submit-button"
-                      type="submit"
-                    >
-                      Save
-                    </Button>
-                  </div>
-                }
-              </Form>
-            )}
-          </Formik>
-        </BaseArgoView>
-      )
-    } else {
-      return (
-        <React.Fragment>
-          {
-            <ModalAreYouSure
-              isOpen={areYouSureModal}
-              toggle={toggleAreYouSure}
-              title={modalTitle}
-              msg={modalMsg}
-              onYes={modalFlag === 'submit' ? doChange : modalFlag === 'delete' ? doDelete : undefined}
-            />
-          }
-          <div className='d-flex align-items-center justify-content-between'>
-            <h2 className='ms-3 mt-1 mb-4'>{`${addview ? 'Add' : 'Change'} user`}</h2>
-            {
-              (!addview && userDetails.username === user_name) &&
-                <Link
-                  className='btn btn-secondary'
-                  to={location.pathname + '/change_password'}
-                  role='button'
-                >
-                  Change password
-                </Link>
-            }
-          </div>
-          <div id='argo-contentwrap' className='ms-2 mb-2 mt-2 p-3 border rounded'>
-            <Formik
-              initialValues = {{
-                addview: addview,
-                pk: user ? user.pk : '',
-                first_name: user ? user.first_name : '',
-                last_name: user ? user.last_name : '',
-                username: user ? user.username : '',
-                password: '',
-                confirm_password: '',
-                is_active: user ? user.is_active : true,
-                is_superuser: user ? user.is_superuser : false,
-                email: user ? user.email : '',
-                last_login: user ? user.last_login : '',
-                date_joined: user ? user.date_joined : ''
-              }}
-              validationSchema={UserSchema}
-              enableReinitialize={true}
-              onSubmit = {(values, actions) => onSubmitHandle(values, actions)}
+              undefined
+        }}
+        toggle={toggleAreYouSure}
+        extra_button={
+          !isTenantSchema && !addview && userDetails.username == user_name &&
+            <Link
+              className='btn btn-secondary'
+              to={location.pathname + '/change_password'}
+              role='button'
             >
-              {props => (
-                <Form>
-                  <CommonUser
-                    {...props}
-                    add={addview}
-                  />
-                  <div className='submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5'>
-                    {
-                      !addview ?
-                        <Button
-                          color='danger'
-                          onClick={() => {
-                            setModalMsg(`Are you sure you want to delete user ${user_name}?`);
-                            setModalTitle('Delete user');
-                            setModalFlag('delete');
-                            toggleAreYouSure();
-                          }}
-                        >
-                          Delete
-                        </Button>
-                      :
-                        <div></div>
-                    }
-                    <Button
-                      color='success'
-                      id='submit-button'
-                      type='submit'
-                    >
-                      Save
-                    </Button>
-                  </div>
-                </Form>
-              )}
-            </Formik>
-          </div>
-        </React.Fragment>
-      )
-    }
+              Change password
+            </Link>
+        }
+      >
+        <Formik
+          initialValues = {{
+            pk: user ? user.pk : '',
+            first_name: user ? user.first_name : '',
+            last_name: user ? user.last_name : '',
+            username: user ? user.username : '',
+            password: '',
+            confirm_password: '',
+            is_active: user ? user.is_active : true,
+            is_superuser: user ? user.is_superuser : false,
+            email: user ? user.email : '',
+            last_login: user ? user.last_login : '',
+            date_joined: user ? user.date_joined : '',
+            groupsofaggregations: isTenantSchema && userGroups ? userGroups.aggregations : [],
+            groupsofmetrics: isTenantSchema && userGroups ? userGroups.metrics : [],
+            groupsofmetricprofiles: isTenantSchema && userGroups ? userGroups.metricprofiles : [],
+            groupsofthresholdsprofiles: isTenantSchema && userGroups ? userGroups.thresholdsprofiles : [],
+            groupsofreports: isTenantSchema && userGroups ? userGroups.reports : [],
+            displayname: isTenantSchema && userProfile ? userProfile.displayname : '',
+            subject: isTenantSchema && userProfile ? userProfile.subject : '',
+            egiid: isTenantSchema && userProfile ? userProfile.egiid : ''
+          }}
+          validationSchema={UserSchema}
+          enableReinitialize={true}
+          onSubmit = {(values) => onSubmitHandle(values)}
+        >
+          {props => (
+            <Form data-testid='form'>
+              <CommonUser
+                {...props}
+                add={addview}
+              />
+              {
+                isTenantSchema &&
+                  <>
+                    <FormGroup>
+                      <ParagraphTitle title='POEM user permissions'/>
+                      <Row>
+                        <Col md={5}>
+                          <GroupSelect
+                            {...props}
+                            name='groupsofreports'
+                            label='Groups of reports'
+                            options={allGroups.reports}
+                            initValues={props.values.groupsofreports}
+                          />
+                          <FormText color="muted">
+                            The groups of reports that user will control.
+                          </FormText>
+                        </Col>
+                        <Col md={5}>
+                          <GroupSelect
+                            {...props}
+                            name='groupsofmetrics'
+                            label='Groups of metrics'
+                            options={allGroups.metrics}
+                            initValues={props.values.groupsofmetrics}
+                          />
+                          <FormText color="muted">
+                            The groups of metrics that user will control.
+                          </FormText>
+                        </Col>
+                      </Row>
+                      <Row className='mt-3'>
+                        <Col md={5}>
+                          <GroupSelect
+                            {...props}
+                            name='groupsofmetricprofiles'
+                            label='Groups of metric profiles'
+                            options={allGroups.metricprofiles}
+                            initValues={props.values.groupsofmetricprofiles}
+                          />
+                          <FormText color="muted">
+                            The groups of metric profiles that user will control.
+                          </FormText>
+                        </Col>
+                        <Col md={5}>
+                          <GroupSelect
+                            {...props}
+                            name='groupsofaggregations'
+                            label='Groups of aggregations'
+                            options={allGroups.aggregations}
+                            initValues={props.values.groupsofaggregations}
+                          />
+                          <FormText color="muted">
+                            The groups of aggregations that user will control.
+                          </FormText>
+                        </Col>
+                      </Row>
+                      <Row className='mt-3'>
+                        <Col md={5}>
+                          <GroupSelect
+                            {...props}
+                            name='groupsofthresholdsprofiles'
+                            label='Groups of thresholds profiles'
+                            options={allGroups.thresholdsprofiles}
+                            initValues={props.values.groupsofthresholdsprofiles}
+                          />
+                          <FormText color="muted">
+                            The groups of thresholds profiles that user will control.
+                          </FormText>
+                        </Col>
+                      </Row>
+                    </FormGroup>
+                    <FormGroup>
+                      <ParagraphTitle title='Additional information'/>
+                      <Row>
+                        <Col md={12}>
+                          <InputGroup>
+                            <InputGroupText>distinguishedName</InputGroupText>
+                            <Field
+                              type="text"
+                              name="subject"
+                              required={false}
+                              className="form-control"
+                              id="distinguishedname"
+                              data-testid="subject"
+                            />
+                          </InputGroup>
+                        </Col>
+                      </Row>
+                    </FormGroup>
+                    <FormGroup>
+                      <Row>
+                        <Col md={8}>
+                          <InputGroup>
+                            <InputGroupText>eduPersonUniqueId</InputGroupText>
+                            <Field
+                              type="text"
+                              name="egiid"
+                              required={false}
+                              className="form-control"
+                              id='eduid'
+                              data-testid="egiid"
+                            />
+                          </InputGroup>
+                        </Col>
+                      </Row>
+                    </FormGroup>
+                    <FormGroup>
+                      <Row>
+                        <Col md={6}>
+                          <InputGroup>
+                            <InputGroupText>displayName</InputGroupText>
+                            <Field
+                              type="text"
+                              name="displayname"
+                              required={false}
+                              className="form-control"
+                              id="displayname"
+                              data-testid="displayname"
+                            />
+                          </InputGroup>
+                        </Col>
+                      </Row>
+                    </FormGroup>
+                  </>
+              }
+              {
+                <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                  {
+                    !addview ?
+                      <Button
+                        color="danger"
+                        onClick={() => {
+                          setModalMsg('Are you sure you want to delete user?');
+                          setModalTitle('Delete user');
+                          setModalFlag('delete');
+                          toggleAreYouSure();
+                        }}
+                      >
+                        Delete
+                      </Button>
+                    :
+                      <div></div>
+                  }
+                  <Button
+                    color="success"
+                    id="submit-button"
+                    type="submit"
+                  >
+                    Save
+                  </Button>
+                </div>
+              }
+            </Form>
+          )}
+        </Formik>
+      </BaseArgoView>
+    )
   } else
     return null
 }

@@ -64,6 +64,7 @@ const mockUsers = [
   }
 ]
 
+
 const mockUser = {
     first_name: 'Alan',
     last_name: 'Ford',
@@ -271,6 +272,7 @@ describe('Test users listview', () => {
 })
 
 const mockFetchData = jest.fn();
+
 
 describe('Test user changeview on SuperAdmin POEM', () => {
   jest.spyOn(NotificationManager, 'success');
