@@ -9,12 +9,10 @@ import {
   ErrorComponent,
   ParagraphTitle,
   BaseArgoTable,
-  CustomError,
   CustomReactSelect
 } from './UIElements';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
-import { Formik, Field } from 'formik';
 import {
   Form,
   FormGroup,
@@ -992,37 +990,44 @@ export const UserChange = (props) => {
 }
 
 
-export const ChangePassword = (props) => {
-  const name = props.match.params.user_name;
-  const location = props.locaation;
-  const history = props.history;
+const ChangePasswordForm = ({
+  name=undefined,
+  userDetails=undefined,
+  location=undefined,
+  history=undefined
+}) => {
 
-  const backend = new Backend();
-
-  const { data: userDetails, isLoading: loading} = useQuery(
-    'userdetails', () => fetchUserDetails(false)
-  );
+  const backend = new Backend()
 
   const [areYouSureModal, setAreYouSureModal] = useState(false);
   const [modalTitle, setModalTitle] = useState(undefined);
   const [modalMsg, setModalMsg] = useState(undefined);
-  const [formValues, setFormValues] = useState(undefined);
+
+  const { control, handleSubmit, getValues, formState: { errors } } = useForm({
+    defaultValues: {
+      password: "",
+      confirm_password: ""
+    },
+    mode: "all",
+    resolver: yupResolver(ChangePasswordSchema)
+  })
 
   function toggleAreYouSure() {
     setAreYouSureModal(!areYouSureModal);
   }
 
-  function onSubmitHandle(values) {
+  function onSubmitHandle() {
     let msg = 'Are you sure you want to change password?';
     let title = 'Change password';
 
     setModalMsg(msg);
     setModalTitle(title);
-    setFormValues(values);
     toggleAreYouSure();
   }
 
   async function doChange() {
+    let formValues = getValues()
+
     let response = await backend.changeObject(
       '/api/v2/internal/change_password/',
       {
@@ -1067,77 +1072,117 @@ export const ChangePassword = (props) => {
     }
   }
 
+  return (
+    <BaseArgoView
+      resourcename='password'
+      location={location}
+      history={false}
+      submitperm={userDetails.username === name}
+      modal={true}
+      state={{
+        areYouSureModal,
+        modalTitle,
+        modalMsg,
+        'modalFunc': doChange
+      }}
+      toggle={toggleAreYouSure}
+    >
+      <Form onSubmit={ handleSubmit(onSubmitHandle) }>
+        <Row>
+          <Col md={6}>
+            <InputGroup>
+              <InputGroupText>New password</InputGroupText>
+              <Controller
+                name="password"
+                control={ control }
+                render={ ({ field }) =>
+                  <input
+                    { ...field }
+                    type="password"
+                    className={ `form-control ${errors?.password && "is-invalid"}` }
+                    data-testid="password"
+                  />
+                }
+              />
+              <ErrorMessage
+                errors={ errors }
+                name="password"
+                render={ ({ message }) =>
+                  <FormFeedback invalid="true" className="end-0">
+                    { message }
+                  </FormFeedback>
+                }
+              />
+            </InputGroup>
+          </Col>
+        </Row>
+        <Row>
+          <Col md={6}>
+            <InputGroup>
+              <InputGroupText>Confirm password</InputGroupText>
+              <Controller
+                name="confirm_password"
+                control={ control }
+                render={ ({ field }) =>
+                  <input
+                    { ...field }
+                    type="password"
+                    className={ `form-control ${errors?.confirm_password && "is-invalid"}`}
+                    data-testid="confirm_password"
+                  />
+                }
+              />
+              <ErrorMessage
+                errors={ errors }
+                name="confirm_password"
+                render={ ({ message }) =>
+                  <FormFeedback invalid="true" className="end-0">
+                    { message }
+                  </FormFeedback>
+                }
+              />
+            </InputGroup>
+          </Col>
+        </Row>
+        {
+          (userDetails.username === name) &&
+            <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+              <div></div>
+              <Button
+                color='success'
+                id='submit-button'
+                type='submit'
+              >
+                Save
+              </Button>
+            </div>
+        }
+      </Form>
+    </BaseArgoView>
+  )
+}
+
+
+export const ChangePassword = (props) => {
+  const name = props.match.params.user_name;
+  const location = props.locaation;
+  const history = props.history;
+
+  const { data: userDetails, isLoading: loading} = useQuery(
+    'userdetails', () => fetchUserDetails(false)
+  );
+
   if (loading)
     return (<LoadingAnim/>);
 
   else if (userDetails) {
     return (
-      <BaseArgoView
-        resourcename='password'
-        location={location}
-        history={false}
-        submitperm={userDetails.username === name}
-        modal={true}
-        state={{areYouSureModal, modalTitle, modalMsg, 'modalFunc': doChange}}
-        toggle={toggleAreYouSure}
-      >
-        <Formik
-          initialValues = {{
-            password: '',
-            confirm_password: ''
-          }}
-          validationSchema = {ChangePasswordSchema}
-          onSubmit = {(values) => onSubmitHandle(values)}
-        >
-          {props => (
-            <Form>
-              <Row>
-                <Col md={6}>
-                  <InputGroup>
-                    <InputGroupText>New password</InputGroupText>
-                    <Field
-                      type="password"
-                      name="password"
-                      className={`form-control ${props.errors.password && 'border-danger'}`}
-                      id="password"
-                      data-testid="password"
-                    />
-                  </InputGroup>
-                  <CustomError error={ props.errors.password } />
-                </Col>
-              </Row>
-              <Row>
-                <Col md={6}>
-                  <InputGroup>
-                    <InputGroupText>Confirm password</InputGroupText>
-                    <Field
-                      type='password'
-                      name='confirm_password'
-                      className={`form-control ${props.errors.confirm_password && 'border-danger'}`}
-                      id='confirm_password'
-                      data-testid='confirm_password'
-                    />
-                  </InputGroup>
-                  <CustomError error={ props.errors.confirm_password } />
-                </Col>
-              </Row>
-              {
-                (userDetails.username === name) &&
-                  <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                    <div></div>
-                    <Button
-                      color='success'
-                      id='submit-button'
-                      type='submit'
-                    >
-                      Save
-                    </Button>
-                  </div>
-              }
-            </Form>
-          )}
-        </Formik>
-      </BaseArgoView>
+      <ChangePasswordForm
+        userDetails={ userDetails }
+        name={ name }
+        location={ location }
+        history={ history }
+      />
     )
   } else
     return null;

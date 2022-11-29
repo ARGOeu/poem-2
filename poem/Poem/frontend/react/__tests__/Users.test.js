@@ -1950,7 +1950,7 @@ describe('Tests for changing password', () => {
     fireEvent.change(screen.getByTestId('password'), { target: { value: 'foobar28' } });
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    expect(await screen.findAllByTestId('error-msg')).toHaveLength(2);
+    expect(await screen.findByText('Required')).toBeInTheDocument()
     expect(mockChangeObject).not.toHaveBeenCalled();
   })
 
@@ -1965,7 +1965,7 @@ describe('Tests for changing password', () => {
     fireEvent.change(screen.getByTestId('confirm_password'), { target: { value: 'foobar38' } })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    expect(await screen.findAllByTestId('error-msg')).toHaveLength(2);
+    expect(await screen.findByText("Passwords do not match!")).toBeInTheDocument()
     expect(mockChangeObject).not.toHaveBeenCalled();
   })
 
@@ -1980,7 +1980,7 @@ describe('Tests for changing password', () => {
     fireEvent.change(screen.getByTestId('confirm_password'), { target: { value: 'foobar' } })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    expect(await screen.findAllByTestId('error-msg')).toHaveLength(2);
+    expect(await screen.findByText("Your password must contain at least 8 characters.")).toBeInTheDocument()
     expect(mockChangeObject).not.toHaveBeenCalled();
   })
 
@@ -1992,7 +1992,7 @@ describe('Tests for changing password', () => {
     })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    expect(await screen.findAllByTestId('error-msg')).toHaveLength(2);
+    expect(await screen.findAllByText("Required")).toHaveLength(2);
     expect(mockChangeObject).not.toHaveBeenCalled();
   })
 
