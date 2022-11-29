@@ -769,8 +769,14 @@ class ListMetricTags(APIView):
         if name:
             try:
                 tag = admin_models.MetricTags.objects.get(name=name)
-                serializer = serializers.MetricTagsSerializer(tag)
-                return Response(serializer.data)
+                metrics = admin_models.MetricTemplate.objects.filter(
+                    tags__name=tag.name
+                )
+                return Response({
+                    "id": tag.id,
+                    "name": tag.name,
+                    "metrics": sorted([metric.name for metric in metrics])
+                })
 
             except admin_models.MetricTags.DoesNotExist:
                 return Response(
@@ -780,8 +786,18 @@ class ListMetricTags(APIView):
 
         else:
             tags = admin_models.MetricTags.objects.all().order_by('name')
-            serializer = serializers.MetricTagsSerializer(tags, many=True)
-            return Response(serializer.data)
+            data = list()
+            for tag in tags:
+                metrics = admin_models.MetricTemplate.objects.filter(
+                    tags__name=tag.name
+                )
+                data.append({
+                    "id": tag.id,
+                    "name": tag.name,
+                    "metrics": sorted([metric.name for metric in metrics])
+                })
+
+            return Response(data)
 
     def post(self, request):
         if request.tenant.schema_name == get_public_schema_name() and \
@@ -1038,29 +1054,7 @@ class ListMetricTags(APIView):
             )
 
 
-class ListMetricTemplates4Tag(APIView):
-    authentication_classes = (SessionAuthentication,)
-
-    def get(self, request, tag):
-        try:
-            admin_models.MetricTags.objects.get(name=tag)
-            mts = admin_models.MetricTemplate.objects.filter(tags__name=tag)
-
-            return Response(sorted([mt.name for mt in mts]))
-
-        except admin_models.MetricTags.DoesNotExist:
-            return Response(
-                {"detail": "Requested tag not found."},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-
 class ListPublicMetricTags(ListMetricTags):
-    authentication_classes = ()
-    permission_classes = ()
-
-
-class ListPublicMetricTemplates4Tag(ListMetricTemplates4Tag):
     authentication_classes = ()
     permission_classes = ()
 

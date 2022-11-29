@@ -54,12 +54,6 @@ class ThresholdsProfileSerializer(serializers.ModelSerializer):
         model = models.ThresholdsProfiles
 
 
-class MetricTagsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = MetricTags
-        fields = "__all__"
-
-
 class DefaultPortsSerializer(serializers.ModelSerializer):
     class Meta:
         model = DefaultPort

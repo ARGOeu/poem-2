@@ -9601,19 +9601,23 @@ class MetricTagsTests(TenantTestCase):
             [
                 {
                     "id": self.tag2.id,
-                    "name": "deprecated"
+                    "name": "deprecated",
+                    "metrics": []
                 },
                 {
                     "id": self.tag1.id,
-                    "name": "internal"
+                    "name": "internal",
+                    "metrics": ["argo.AMS-Check"]
                 },
                 {
                     "id": self.tag3.id,
-                    "name": "test_tag1"
+                    "name": "test_tag1",
+                    "metrics": ["argo.AMS-Check", "argo.EGI-Connectors-Check"]
                 },
                 {
                     "id": self.tag4.id,
-                    "name": "test_tag2"
+                    "name": "test_tag2",
+                    "metrics": ["argo.AMS-Check", "org.apel.APEL-Pub"]
                 }
             ]
         )
@@ -9627,19 +9631,23 @@ class MetricTagsTests(TenantTestCase):
             [
                 {
                     "id": self.tag2.id,
-                    "name": "deprecated"
+                    "name": "deprecated",
+                    "metrics": []
                 },
                 {
                     "id": self.tag1.id,
-                    "name": "internal"
+                    "name": "internal",
+                    "metrics": ["argo.AMS-Check"]
                 },
                 {
                     "id": self.tag3.id,
-                    "name": "test_tag1"
+                    "name": "test_tag1",
+                    "metrics": ["argo.AMS-Check", "argo.EGI-Connectors-Check"]
                 },
                 {
                     "id": self.tag4.id,
-                    "name": "test_tag2"
+                    "name": "test_tag2",
+                    "metrics": ["argo.AMS-Check", "org.apel.APEL-Pub"]
                 }
             ]
         )
@@ -9653,19 +9661,23 @@ class MetricTagsTests(TenantTestCase):
             [
                 {
                     "id": self.tag2.id,
-                    "name": "deprecated"
+                    "name": "deprecated",
+                    "metrics": []
                 },
                 {
                     "id": self.tag1.id,
-                    "name": "internal"
+                    "name": "internal",
+                    "metrics": ["argo.AMS-Check"]
                 },
                 {
                     "id": self.tag3.id,
-                    "name": "test_tag1"
+                    "name": "test_tag1",
+                    "metrics": ["argo.AMS-Check", "argo.EGI-Connectors-Check"]
                 },
                 {
                     "id": self.tag4.id,
-                    "name": "test_tag2"
+                    "name": "test_tag2",
+                    "metrics": ["argo.AMS-Check", "org.apel.APEL-Pub"]
                 }
             ]
         )
@@ -9679,19 +9691,23 @@ class MetricTagsTests(TenantTestCase):
             [
                 {
                     "id": self.tag2.id,
-                    "name": "deprecated"
+                    "name": "deprecated",
+                    "metrics": []
                 },
                 {
                     "id": self.tag1.id,
-                    "name": "internal"
+                    "name": "internal",
+                    "metrics": ["argo.AMS-Check"]
                 },
                 {
                     "id": self.tag3.id,
-                    "name": "test_tag1"
+                    "name": "test_tag1",
+                    "metrics": ["argo.AMS-Check", "argo.EGI-Connectors-Check"]
                 },
                 {
                     "id": self.tag4.id,
-                    "name": "test_tag2"
+                    "name": "test_tag2",
+                    "metrics": ["argo.AMS-Check", "org.apel.APEL-Pub"]
                 }
             ]
         )
@@ -9709,7 +9725,8 @@ class MetricTagsTests(TenantTestCase):
             response.data,
             {
                 "id": self.tag1.id,
-                "name": "internal"
+                "name": "internal",
+                "metrics": ["argo.AMS-Check"]
             }
         )
 
@@ -9721,7 +9738,8 @@ class MetricTagsTests(TenantTestCase):
             response.data,
             {
                 "id": self.tag1.id,
-                "name": "internal"
+                "name": "internal",
+                "metrics": ["argo.AMS-Check"]
             }
         )
 
@@ -9733,7 +9751,8 @@ class MetricTagsTests(TenantTestCase):
             response.data,
             {
                 "id": self.tag1.id,
-                "name": "internal"
+                "name": "internal",
+                "metrics": ["argo.AMS-Check"]
             }
         )
 
@@ -9745,7 +9764,8 @@ class MetricTagsTests(TenantTestCase):
             response.data,
             {
                 "id": self.tag1.id,
-                "name": "internal"
+                "name": "internal",
+                "metrics": ["argo.AMS-Check"]
             }
         )
 
@@ -14396,25 +14416,6 @@ class MetricTagsTests(TenantTestCase):
         self.assertEqual(
             sorted([tag[0] for tag in metric3_history["tags"]]),
             ["internal", "test_tag1", "test_tag2"]
-        )
-
-
-class ListMetricTemplates4Tag(TenantTestCase):
-    def setUp(self) -> None:
-        self.factory = TenantRequestFactory(self.tenant)
-        self.view = views.ListMetricTemplates4Tag.as_view()
-        self.url = '/api/v2/internal/metrictags/'
-        self.user = CustUser.objects.create_user(username='test')
-
-        mock_db()
-
-    def test_get_metrics4tag(self):
-        request = self.factory.get(self.url + "test_tag2")
-        force_authenticate(request, user=self.user)
-        response = self.view(request, "test_tag2")
-        self.assertEqual(
-            response.data,
-            ["argo.AMS-Check", "org.apel.APEL-Pub"]
         )
 
 
