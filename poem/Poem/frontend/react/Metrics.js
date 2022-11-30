@@ -53,6 +53,23 @@ import {
   fetchMetrics,
   fetchMetricProfiles
 } from './QueryFunctions';
+import * as Yup from 'yup';
+
+
+const metricValidationSchema = Yup.object().shape({
+  name: Yup.string()
+    .matches(/^\S*$/, 'Name cannot contain white spaces')
+    .required('Required'),
+  type: Yup.string(),
+  probeversion: Yup.string().when('type', {
+    is: (val) => val === 'Active',
+    then: Yup.string().required('Required')
+  }),
+  probeexecutable: Yup.string().when('type', {
+    is: (val) => val === 'Active',
+    then: Yup.string().required('Required')
+  })
+})
 
 
 function validateConfig(value) {
@@ -857,342 +874,453 @@ const styles = {
 export const MetricForm =
   ({
     obj_label='',
-    popoverOpen=undefined,
-    togglePopOver=undefined,
+    resourcename="",
+    initValues=undefined,
     isHistory=false,
     isTenantSchema=false,
-    addview=false,
     probeversions=[],
     groups=[],
     metrictemplatelist=[],
     types=[],
     alltags=[],
-    publicView=false,
+    saveFormValues=undefined,
+    doChange=undefined,
+    doDelete=undefined,
+    writePerm=undefined,
     ...props
   }) => {
+    const addview = props.addview
+    const cloneview = props.cloneview
+    const tenantview = props.tenantview
+    const publicView = props.publicView
+    const probeview = props.probeview
+    const location = props.location
+
+    const resourcename_beautify = resourcename === "metric" ? "metric" : "metric template"
+
     let list_probes = [];
     probeversions.forEach(prv => list_probes.push(prv.object_repr));
 
+    const [popoverOpen, setPopoverOpen] = useState(false);
+    const [areYouSureModal, setAreYouSureModal] = useState(false);
+    const [modalFlag, setModalFlag] = useState(undefined);
+    const [modalTitle, setModalTitle] = useState(undefined);
+    const [modalMsg, setModalMsg] = useState(undefined);
+
+    function togglePopOver() {
+      setPopoverOpen(!popoverOpen)
+    }
+
+    function toggleAreYouSure() {
+      setAreYouSureModal(!areYouSureModal)
+    }
+
+    function onSubmitHandle(values) {
+      setModalMsg(`Are you sure you want to ${addview || cloneview ? 'add' : 'change'} ${resourcename_beautify}?`)
+      setModalTitle(`${addview || cloneview ? 'Add' : 'Change'} ${resourcename_beautify}`)
+      setModalFlag('submit')
+      saveFormValues(values)
+      toggleAreYouSure()
+    }
+
     return (
-      <>
-        <FormGroup>
-          <Row className='mb-3'>
-            <Col md={6}>
-              <InputGroup>
-                <InputGroupText>Name</InputGroupText>
-                <Field
-                  type='text'
-                  name='name'
-                  className={`form-control ${props.errors.name && 'border-danger'}`}
-                  id='name'
-                  data-testid='name'
-                  disabled={isHistory || isTenantSchema || publicView}
-                />
-              </InputGroup>
-              <CustomError error={ props.errors.name } />
-              <FormText color='muted'>
-                Metric name.
-              </FormText>
-            </Col>
-            <Col md={4} className='mt-1'>
-              <InputGroup>
-                <InputGroupText>Type</InputGroupText>
-                {
-                  (isTenantSchema || isHistory || publicView) ?
-                    <Field
-                      type='text'
-                      name='type'
-                      className='form-control'
-                      id='mtype'
-                      data-testid='mtype'
-                      disabled={true}
-                    />
-                  :
-                    <DropdownWithFormText
-                      name='type'
-                      id='mtype'
-                      onChange={e => {
-                        props.setFieldValue('type', e.value)
-                        if (e.value === 'Passive') {
-                          let ind = props.values.flags.length;
-                          if (ind === 1 && props.values.flags[0].key === '') {
-                            props.setFieldValue('flags[0].key', 'PASSIVE');
-                            props.setFieldValue('flags[0].value', '1');
-                          } else {
-                            props.setFieldValue(`flags[${ind}].key`, 'PASSIVE')
-                            props.setFieldValue(`flags[${ind}].value`, '1')
-                          }
-                        } else if (e.value === 'Active') {
-                          if (!props.values.probe)
-                            props.setFieldValue('probe', {'package': ''})
-
-                          if (props.values.config.length !== 5)
-                            props.setFieldValue(
-                              'config',
-                              [
-                                { key: 'maxCheckAttempts', value: '' },
-                                { key: 'timeout', value: '' },
-                                { key: 'path', value: '' },
-                                { key: 'interval', value: '' },
-                                { key: 'retryInterval', value: '' },
-                              ]
-                            )
-
-                          let ind = undefined;
-                          props.values.flags.forEach((e, index) => {
-                            if (e.key === 'PASSIVE') {
-                              ind = index;
-                            }
-                          });
-                          if (props.values.flags.length === 1)
-                            props.values.flags.splice(ind, 1, {'key': '', 'value': ''})
-                          else
-                            props.values.flags.splice(ind, 1)
-                        }
-                      }}
-                      options={ types }
-                      value={ props.values.type }
-                      error={ props.errors.type }
-                    />
-                }
-              </InputGroup>
-              <FormText color='muted'>
-                Metric is of given type.
-              </FormText>
-            </Col>
-          </Row>
-          <Row>
-            <Col md={6}>
-              <InputGroup>
-                <InputGroupText>Probe</InputGroupText>
-                {
-                  props.values.type === 'Passive' ?
-                    <input
-                      type='text'
-                      className='form-control'
-                      disabled={true}
-                      id='passive-probeversion'
-                      data-testid='probeversion'
-                    />
-                  :
-                    (isHistory || isTenantSchema || publicView) ?
-                      <Field
-                        type='text'
-                        name='probeversion'
-                        data-testid='probeversion'
-                        className='form-control'
-                        disabled={true}
-                      />
-                    :
-                      <DropdownWithFormText
-                        name='probeversion'
-                        error={ props.errors.probeversion }
-                        onChange={ e => {
-                          props.setFieldValue('probeversion', e.value)
-                          let probeversion = probeversions.find(prv => prv.object_repr === e.value);
-                          if (probeversion)
-                            props.setFieldValue('probe', probeversion.fields)
-                          else
-                            props.setFieldValue('probe', {'package': ''})
-                        }}
-                        options={ list_probes }
-                        value={ props.values.probeversion }
-                      />
-                }
-              </InputGroup>
-              <CustomError error={ props.errors.probeversion } />
-              {
-                props.values.type === 'Active' &&
-                  <FormText color='muted'>
-                    Probe name and version&nbsp;
-                    {
-                      !isHistory &&
-                        <>
-                          <FontAwesomeIcon
-                            id='probe-popover'
-                            hidden={props.values.mtype === 'Passive' || addview}
-                            icon={faInfoCircle}
-                            style={{color: '#416090'}}
-                          />
-                          <Popover
-                            placement='bottom'
-                            isOpen={popoverOpen}
-                            target='probe-popover'
-                            toggle={togglePopOver}
-                            trigger='hover'
-                          >
-                            <PopoverHeader>
-                              <ProbeVersionLink
-                                probeversion={props.values.probeversion}
-                                publicView={publicView}
-                              />
-                            </PopoverHeader>
-                            <PopoverBody>{props.values.probe.description}</PopoverBody>
-                          </Popover>
-                        </>
-                    }
-                  </FormText>
-            }
-            </Col>
-            <Col md={4} className='mt-1'>
-              <InputGroup>
-                <InputGroupText>Package</InputGroupText>
-                <Field
-                  type='text'
-                  className='form-control'
-                  value={props.values.type === 'Active' ? props.values.probe.package : ''}
-                  disabled={true}
-                  data-testid='package'
-                />
-              </InputGroup>
-              <FormText color='muted'>
-                Package which contains probe.
-              </FormText>
-            </Col>
-          </Row>
-          {
-            (obj_label === 'metrictemplate' && (!isHistory && !isTenantSchema && !publicView)) ?
-              <Row className='mb-4 mt-2'>
-                <Col md={10}>
-                  <Label for='tags'>Tags:</Label>
-                  <CreatableSelect
-                    inputId='tags'
-                    name='tags'
-                    closeMenuOnSelect={false}
-                    isMulti
-                    onChange={(value) => props.setFieldValue('tags', value)}
-                    options={alltags}
-                    components={{ CustomDropdownIndicator }}
-                    defaultValue={props.values.tags}
-                    styles={styles}
-                  />
-                </Col>
-              </Row>
+      <BaseArgoView
+        resourcename={ resourcename }
+        location={ location }
+        addview={ addview }
+        tenantview={ tenantview }
+        publicview={ publicView }
+        history={ obj_label === "metric" ? !publicView : !probeview }
+        cloneview={ cloneview }
+        infoview={ isHistory }
+        clone={ obj_label === "metric" ? false : !publicView }
+        modal={ true }
+        state={{
+          areYouSureModal,
+          modalTitle,
+          modalMsg,
+          'modalFunc': modalFlag === 'submit' ?
+            doChange
+          :
+            modalFlag === 'delete' ?
+              doDelete
             :
-              <Row className='mb-4 mt-2'>
-                <Col md={10}>
-                  <Label>Tags:</Label>
-                  <div>
-                    {
-                      props.values.tags.length === 0 ?
-                        <Badge color='dark'>none</Badge>
-                      :
-                        (obj_label === 'metrictemplate' && !isHistory) ?
-                          props.values.tags.map((tag, i) =>
-                            <Badge className={'me-1'} key={i} color={tag.value === 'internal' ? 'success' : tag.value === 'deprecated' | tag.value === 'eol' ? 'danger' : 'secondary'}>
-                              {tag.value}
-                            </Badge>
-                          )
-                        :
-                          props.values.tags.map((tag, i) =>
-                            <Badge className={'me-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' | tag === 'eol' ? 'danger' : 'secondary'}>
-                              {tag}
-                            </Badge>
-                          )
-                    }
-                  </div>
-                </Col>
-              </Row>
-          }
-          <Row className='mb-4 mt-2'>
-            <Col md={10}>
-              <Label for='description'>Description:</Label>
-              <Field
-                className='form-control'
-                component='textarea'
-                name='description'
-                data-testid='description'
-                disabled={isTenantSchema || isHistory || publicView}
-              />
-            </Col>
-          </Row>
+              undefined
+        }}
+        toggle={ toggleAreYouSure }
+        submitperm={ writePerm }
+      >
+        <Formik
+          initialValues = {{
+            id: initValues.id ? initValues.id : undefined,
+            name: initValues.name,
+            probeversion: initValues.probeversion,
+            type: initValues.type,
+            group: initValues.group ? initValues.group: undefined,
+            description: initValues.description,
+            probeexecutable: initValues.probeexecutable,
+            parent: initValues.parent,
+            config: initValues.config,
+            attributes: initValues.attributes,
+            dependency: initValues.dependency,
+            parameter: initValues.parameter,
+            flags: initValues.flags,
+            file_attributes: initValues.file_attributes,
+            file_parameters: initValues.file_parameters,
+            tags: initValues.tags,
+            probe: initValues.probe
+          }}
+          onSubmit = {(values) => onSubmitHandle(values)}
+          validationSchema={metricValidationSchema}
+          enableReinitialize={true}
+        >
           {
-            obj_label === 'metric' &&
-              <Row className='mb-4'>
-                <Col md={3}>
-                  <InputGroup>
-                    <InputGroupText>Group</InputGroupText>
-                    {
-                      (isHistory || publicView) ?
+            props => (
+              <Form data-testid="metric-form">
+                <FormGroup>
+                  <Row className='mb-3'>
+                    <Col md={6}>
+                      <InputGroup>
+                        <InputGroupText>Name</InputGroupText>
                         <Field
                           type='text'
-                          name='group'
-                          data-testid='group'
+                          name='name'
+                          className={`form-control ${props.errors.name && 'border-danger'}`}
+                          id='name'
+                          data-testid='name'
+                          disabled={isHistory || isTenantSchema || publicView}
+                        />
+                      </InputGroup>
+                      <CustomError error={ props.errors.name } />
+                      <FormText color='muted'>
+                        Metric name.
+                      </FormText>
+                    </Col>
+                    <Col md={4} className='mt-1'>
+                      <InputGroup>
+                        <InputGroupText>Type</InputGroupText>
+                        {
+                          (isTenantSchema || isHistory || publicView) ?
+                            <Field
+                              type='text'
+                              name='type'
+                              className='form-control'
+                              id='mtype'
+                              data-testid='mtype'
+                              disabled={true}
+                            />
+                          :
+                            <DropdownWithFormText
+                              name='type'
+                              id='mtype'
+                              onChange={e => {
+                                props.setFieldValue('type', e.value)
+                                if (e.value === 'Passive') {
+                                  let ind = props.values.flags.length;
+                                  if (ind === 1 && props.values.flags[0].key === '') {
+                                    props.setFieldValue('flags[0].key', 'PASSIVE');
+                                    props.setFieldValue('flags[0].value', '1');
+                                  } else {
+                                    props.setFieldValue(`flags[${ind}].key`, 'PASSIVE')
+                                    props.setFieldValue(`flags[${ind}].value`, '1')
+                                  }
+                                } else if (e.value === 'Active') {
+                                  if (!props.values.probe)
+                                    props.setFieldValue('probe', {'package': ''})
+
+                                  if (props.values.config.length !== 5)
+                                    props.setFieldValue(
+                                      'config',
+                                      [
+                                        { key: 'maxCheckAttempts', value: '' },
+                                        { key: 'timeout', value: '' },
+                                        { key: 'path', value: '' },
+                                        { key: 'interval', value: '' },
+                                        { key: 'retryInterval', value: '' },
+                                      ]
+                                    )
+
+                                  let ind = undefined;
+                                  props.values.flags.forEach((e, index) => {
+                                    if (e.key === 'PASSIVE') {
+                                      ind = index;
+                                    }
+                                  });
+                                  if (props.values.flags.length === 1)
+                                    props.values.flags.splice(ind, 1, {'key': '', 'value': ''})
+                                  else
+                                    props.values.flags.splice(ind, 1)
+                                }
+                              }}
+                              options={ types }
+                              value={ props.values.type }
+                              error={ props.errors.type }
+                            />
+                        }
+                      </InputGroup>
+                      <FormText color='muted'>
+                        Metric is of given type.
+                      </FormText>
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col md={6}>
+                      <InputGroup>
+                        <InputGroupText>Probe</InputGroupText>
+                        {
+                          props.values.type === 'Passive' ?
+                            <input
+                              type='text'
+                              className='form-control'
+                              disabled={true}
+                              id='passive-probeversion'
+                              data-testid='probeversion'
+                            />
+                          :
+                            (isHistory || isTenantSchema || publicView) ?
+                              <Field
+                                type='text'
+                                name='probeversion'
+                                data-testid='probeversion'
+                                className='form-control'
+                                disabled={true}
+                              />
+                            :
+                              <DropdownWithFormText
+                                name='probeversion'
+                                error={ props.errors.probeversion }
+                                onChange={ e => {
+                                  props.setFieldValue('probeversion', e.value)
+                                  let probeversion = probeversions.find(prv => prv.object_repr === e.value);
+                                  if (probeversion)
+                                    props.setFieldValue('probe', probeversion.fields)
+                                  else
+                                    props.setFieldValue('probe', {'package': ''})
+                                }}
+                                options={ list_probes }
+                                value={ props.values.probeversion }
+                              />
+                        }
+                      </InputGroup>
+                      <CustomError error={ props.errors.probeversion } />
+                      {
+                        props.values.type === 'Active' &&
+                          <FormText color='muted'>
+                            Probe name and version&nbsp;
+                            {
+                              !isHistory &&
+                                <>
+                                  <FontAwesomeIcon
+                                    id='probe-popover'
+                                    hidden={props.values.mtype === 'Passive' || addview}
+                                    icon={faInfoCircle}
+                                    style={{color: '#416090'}}
+                                  />
+                                  <Popover
+                                    placement='bottom'
+                                    isOpen={popoverOpen}
+                                    target='probe-popover'
+                                    toggle={togglePopOver}
+                                    trigger='hover'
+                                  >
+                                    <PopoverHeader>
+                                      <ProbeVersionLink
+                                        probeversion={props.values.probeversion}
+                                        publicView={publicView}
+                                      />
+                                    </PopoverHeader>
+                                    <PopoverBody>{props.values.probe.description}</PopoverBody>
+                                  </Popover>
+                                </>
+                            }
+                          </FormText>
+                    }
+                    </Col>
+                    <Col md={4} className='mt-1'>
+                      <InputGroup>
+                        <InputGroupText>Package</InputGroupText>
+                        <Field
+                          type='text'
                           className='form-control'
+                          value={props.values.type === 'Active' ? props.values.probe.package : ''}
+                          disabled={true}
+                          data-testid='package'
+                        />
+                      </InputGroup>
+                      <FormText color='muted'>
+                        Package which contains probe.
+                      </FormText>
+                    </Col>
+                  </Row>
+                  {
+                    (obj_label === 'metrictemplate' && (!isHistory && !isTenantSchema && !publicView)) ?
+                      <Row className='mb-4 mt-2'>
+                        <Col md={10}>
+                          <Label for='tags'>Tags:</Label>
+                          <CreatableSelect
+                            inputId='tags'
+                            name='tags'
+                            closeMenuOnSelect={false}
+                            isMulti
+                            onChange={(value) => props.setFieldValue('tags', value)}
+                            options={alltags}
+                            components={{ CustomDropdownIndicator }}
+                            defaultValue={props.values.tags}
+                            styles={styles}
+                          />
+                        </Col>
+                      </Row>
+                    :
+                      <Row className='mb-4 mt-2'>
+                        <Col md={10}>
+                          <Label>Tags:</Label>
+                          <div>
+                            {
+                              props.values.tags.length === 0 ?
+                                <Badge color='dark'>none</Badge>
+                              :
+                                (obj_label === 'metrictemplate' && !isHistory) ?
+                                  props.values.tags.map((tag, i) =>
+                                    <Badge className={'me-1'} key={i} color={tag.value === 'internal' ? 'success' : tag.value === 'deprecated' | tag.value === 'eol' ? 'danger' : 'secondary'}>
+                                      {tag.value}
+                                    </Badge>
+                                  )
+                                :
+                                  props.values.tags.map((tag, i) =>
+                                    <Badge className={'me-1'} key={i} color={tag === 'internal' ? 'success' : tag === 'deprecated' | tag === 'eol' ? 'danger' : 'secondary'}>
+                                      {tag}
+                                    </Badge>
+                                  )
+                            }
+                          </div>
+                        </Col>
+                      </Row>
+                  }
+                  <Row className='mb-4 mt-2'>
+                    <Col md={10}>
+                      <Label for='description'>Description:</Label>
+                      <Field
+                        className='form-control'
+                        component='textarea'
+                        name='description'
+                        data-testid='description'
+                        disabled={isTenantSchema || isHistory || publicView}
+                      />
+                    </Col>
+                  </Row>
+                  {
+                    obj_label === 'metric' &&
+                      <Row className='mb-4'>
+                        <Col md={3}>
+                          <InputGroup>
+                            <InputGroupText>Group</InputGroupText>
+                            {
+                              (isHistory || publicView) ?
+                                <Field
+                                  type='text'
+                                  name='group'
+                                  data-testid='group'
+                                  className='form-control'
+                                  disabled={true}
+                                />
+                              :
+                                <DropdownWithFormText
+                                  name='group'
+                                  options={ groups }
+                                  value={ props.values.group }
+                                  onChange={ e => props.setFieldValue('group', e.value) }
+                                />
+                            }
+                          </InputGroup>
+                          <FormText color='muted'>
+                            Metric is member of selected group.
+                          </FormText>
+                        </Col>
+                      </Row>
+                }
+                </FormGroup>
+                <FormGroup>
+                  <ParagraphTitle title='Metric configuration'/>
+                  <h6 className='mt-4 font-weight-bold text-uppercase' hidden={props.values.type === 'Passive'}>probe executable</h6>
+                  {
+                    props.values.type === 'Active' &&
+                      <Row>
+                        <Col md={5}>
+                          <Field
+                            type='text'
+                            name='probeexecutable'
+                            data-testid='probeexecutable'
+                            className={`form-control ${props.errors.probeexecutable && 'border-danger'}`}
+                            disabled={isTenantSchema || isHistory || publicView}
+                          />
+                          <CustomError error={ props.errors.probeexecutable } />
+                        </Col>
+                      </Row>
+                  }
+                  <InlineFields values={props.values} errors={props.errors} field='config' addview={addview} addnew={!isTenantSchema && !isHistory} readonly={obj_label === 'metrictemplate' && isTenantSchema || isHistory || publicView}/>
+                  <InlineFields values={props.values} errors={props.errors} field='attributes' addview={addview} addnew={!isTenantSchema && !isHistory && !publicView}/>
+                  <InlineFields values={props.values} errors={props.errors} field='dependency' addview={addview} addnew={!isTenantSchema && !isHistory && !publicView}/>
+                  <InlineFields values={props.values} errors={props.errors} field='parameter' addview={addview} addnew={!isTenantSchema && !isHistory && !publicView}/>
+                  <InlineFields values={props.values} errors={props.errors} field='flags' addview={addview} addnew={!isTenantSchema && !isHistory && !publicView}/>
+                  <h6 className='mt-4 font-weight-bold text-uppercase'>parent</h6>
+                  <Row>
+                    <Col md={5}>
+                      {
+                      (isTenantSchema || isHistory || publicView) ?
+                        <Field
+                          type='text'
+                          name='parent'
+                          className='form-control'
+                          data-testid='parent'
                           disabled={true}
                         />
                       :
-                        <DropdownWithFormText
-                          name='group'
-                          options={ groups }
-                          value={ props.values.group }
-                          onChange={ e => props.setFieldValue('group', e.value) }
+                        <CustomReactSelect
+                          name='parent'
+                          isClearable={ true }
+                          onChange={ e => {
+                            if (e)
+                              props.setFieldValue('parent', e.value)
+                            else
+                            props.setFieldValue('parent', '')
+                          }}
+                          options={ metrictemplatelist.map(templ => new Object({ label: templ, value: templ })) }
+                          value={ props.values.parent ?
+                            new Object({ label: props.values.parent, value: props.values.parent })
+                            : undefined
+                          }
                         />
                     }
-                  </InputGroup>
-                  <FormText color='muted'>
-                    Metric is member of selected group.
-                  </FormText>
-                </Col>
-              </Row>
-        }
-        </FormGroup>
-        <FormGroup>
-          <ParagraphTitle title='Metric configuration'/>
-          <h6 className='mt-4 font-weight-bold text-uppercase' hidden={props.values.type === 'Passive'}>probe executable</h6>
-          {
-            props.values.type === 'Active' &&
-              <Row>
-                <Col md={5}>
-                  <Field
-                    type='text'
-                    name='probeexecutable'
-                    data-testid='probeexecutable'
-                    className={`form-control ${props.errors.probeexecutable && 'border-danger'}`}
-                    disabled={isTenantSchema || isHistory || publicView}
-                  />
-                  <CustomError error={ props.errors.probeexecutable } />
-                </Col>
-              </Row>
+                    </Col>
+                  </Row>
+                </FormGroup>
+                {
+                  ( obj_label === "metric" ? writePerm && !publicView : !tenantview && !publicView && !isHistory) &&
+                    <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                      {
+                        (!addview && !cloneview) ?
+                          <Button
+                            color="danger"
+                            onClick={() => {
+                              setModalMsg(`Are you sure you want to delete ${resourcename_beautify}?`)
+                              setModalTitle(`Delete ${resourcename_beautify}`)
+                              setModalFlag('delete')
+                              toggleAreYouSure()
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        :
+                          <div></div>
+                      }
+                      <Button color="success" id="submit-button" type="submit">Save</Button>
+                    </div>
+                }
+              </Form>
+            )
           }
-          <InlineFields values={props.values} errors={props.errors} field='config' addview={addview} addnew={!isTenantSchema && !isHistory} readonly={obj_label === 'metrictemplate' && isTenantSchema || isHistory || publicView}/>
-          <InlineFields values={props.values} errors={props.errors} field='attributes' addview={addview} addnew={!isTenantSchema && !isHistory && !publicView}/>
-          <InlineFields values={props.values} errors={props.errors} field='dependency' addview={addview} addnew={!isTenantSchema && !isHistory && !publicView}/>
-          <InlineFields values={props.values} errors={props.errors} field='parameter' addview={addview} addnew={!isTenantSchema && !isHistory && !publicView}/>
-          <InlineFields values={props.values} errors={props.errors} field='flags' addview={addview} addnew={!isTenantSchema && !isHistory && !publicView}/>
-          <h6 className='mt-4 font-weight-bold text-uppercase'>parent</h6>
-          <Row>
-            <Col md={5}>
-              {
-              (isTenantSchema || isHistory || publicView) ?
-                <Field
-                  type='text'
-                  name='parent'
-                  className='form-control'
-                  data-testid='parent'
-                  disabled={true}
-                />
-              :
-                <CustomReactSelect
-                  name='parent'
-                  isClearable={ true }
-                  onChange={ e => {
-                    if (e)
-                      props.setFieldValue('parent', e.value)
-                    else
-                    props.setFieldValue('parent', '')
-                  }}
-                  options={ metrictemplatelist.map(templ => new Object({ label: templ, value: templ })) }
-                  value={ props.values.parent ?
-                    new Object({ label: props.values.parent, value: props.values.parent })
-                    : undefined
-                  }
-                />
-            }
-            </Col>
-          </Row>
-        </FormGroup>
-      </>
+        </Formik>
+      </BaseArgoView>
     )
   }
 
@@ -1292,7 +1420,6 @@ export const CompareMetrics = (props) => {
 
 export const MetricChange = (props) => {
   const name = props.match.params.name;
-  const location = props.location;
   const history = props.history;
   const publicView = props.publicView;
 
@@ -1302,11 +1429,6 @@ export const MetricChange = (props) => {
   const mutation = useMutation(async (values) => await backend.changeObject('/api/v2/internal/metric/', values));
   const deleteMutation = useMutation(async () => await backend.deleteObject(`/api/v2/internal/metric/${name}`));
 
-  const [popoverOpen, setPopoverOpen] = useState(false);
-  const [areYouSureModal, setAreYouSureModal] = useState(false);
-  const [modalTitle, setModalTitle] = useState(undefined);
-  const [modalMsg, setModalMsg] = useState(undefined);
-  const [modalFlag, setModalFlag] = useState(undefined);
   const [formValues, setFormValues] = useState(undefined);
 
   const { data: userDetails, error: userDetailsError, isLoading: userDetailsLoading } = useQuery(
@@ -1333,20 +1455,8 @@ export const MetricChange = (props) => {
     { enabled: !!metricProbeVersion }
   );
 
-  function togglePopOver() {
-    setPopoverOpen(!popoverOpen);
-  }
-
-  function toggleAreYouSure() {
-    setAreYouSureModal(!areYouSureModal);
-  }
-
-  function onSubmitHandle(values) {
-    setModalMsg('Are you sure you want to change metric?');
-    setModalTitle('Change metric');
-    setFormValues(values);
-    setModalFlag('submit');
-    toggleAreYouSure();
+  const saveFormValues = (values) => {
+    setFormValues(values)
   }
 
   async function doChange() {
@@ -1437,83 +1547,37 @@ export const MetricChange = (props) => {
     const probe = probes ? probes.find(prb => prb.object_repr === metric.probeversion).fields : {};
 
     return (
-      <BaseArgoView
-        resourcename={(publicView) ? 'Metric details' : 'metric'}
-        location={location}
-        history={!publicView}
-        publicview={publicView}
-        modal={true}
-        state={{
-          areYouSureModal,
-          modalTitle,
-          modalMsg,
-          'modalFunc': modalFlag === 'submit' ?
-            doChange
-          :
-            modalFlag === 'delete' ?
-              doDelete
-            :
-              undefined
+      <MetricForm
+        {...props}
+        obj_label="metric"
+        resourcename={ publicView ? 'Metric details' : 'metric' }
+        initValues={{
+          name: metric.name,
+          probeversion: metric.probeversion,
+          description: metric.description,
+          type: metric.mtype,
+          group: metric.group,
+          probeexecutable: metric.probeexecutable,
+          parent: metric.parent,
+          config: metric.config,
+          attributes: metric.attribute,
+          dependency: metric.dependancy,
+          parameter: metric.parameter,
+          flags: metric.flags,
+          files: metric.files,
+          file_attributes: metric.files,
+          file_parameters: metric.fileparameter,
+          probe: probe,
+          tags: metric.tags
         }}
-        toggle={toggleAreYouSure}
-        submitperm={writePerm}>
-        <Formik
-          enableReinitialize={true}
-          initialValues = {{
-            name: metric.name,
-            probeversion: metric.probeversion,
-            description: metric.description,
-            type: metric.mtype,
-            group: metric.group,
-            probeexecutable: metric.probeexecutable,
-            parent: metric.parent,
-            config: metric.config,
-            attributes: metric.attribute,
-            dependency: metric.dependancy,
-            parameter: metric.parameter,
-            flags: metric.flags,
-            files: metric.files,
-            file_attributes: metric.files,
-            file_parameters: metric.fileparameter,
-            probe: probe,
-            tags: metric.tags
-          }}
-          onSubmit = {(values) => onSubmitHandle(values)}
-        >
-          {props => (
-            <Form>
-              <MetricForm
-                {...props}
-                obj_label='metric'
-                isTenantSchema={true}
-                popoverOpen={popoverOpen}
-                togglePopOver={togglePopOver}
-                groups={groups}
-                publicView={publicView}
-              />
-              {
-                (writePerm && !publicView) &&
-                  <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                    <Button
-                      color="danger"
-                      onClick={() => {
-                        setModalMsg('Are you sure you want to delete metric?')
-                        setModalTitle('Delete metric')
-                        setModalFlag('delete');
-                        toggleAreYouSure();
-                      }}
-                    >
-                      Delete
-                    </Button>
-                    <Button color="success" id="submit-button" type="submit">Save</Button>
-                  </div>
-              }
-            </Form>
-          )}
-
-        </Formik>
-      </BaseArgoView>
-    );
+        isTenantSchema={ true }
+        groups={ groups }
+        writePerm={ writePerm }
+        saveFormValues={ (val) => saveFormValues(val) }
+        doChange={ doChange }
+        doDelete={ doDelete }
+      />
+    )
   }
 };
 
@@ -1559,42 +1623,31 @@ export const MetricVersionDetails = (props) => {
     const probe = probes ? probes.find(prb => prb.object_repr === metric.probeversion).fields : {};
 
     return (
-      <BaseArgoView
-        resourcename={`${name} (${metric.date_created})`}
-        infoview={true}
-      >
-        <Formik
-          initialValues = {{
-            name: name,
-            probeversion: metric.probeversion,
-            type: metric.mtype,
-            group: metric.group,
-            description: metric.description,
-            probeexecutable: metric.probeexecutable,
-            parent: metric.parent,
-            config: metric.config,
-            attributes: metric.attribute,
-            dependency: metric.dependancy,
-            parameter: metric.parameter,
-            flags: metric.flags,
-            files: metric.files,
-            fileparameter: metric.fileparameter,
-            probe: probe,
-            tags: metric.tags
-          }}
-        >
-          {props => (
-            <Form>
-              <MetricForm
-                {...props}
-                obj_label='metric'
-                isHistory={true}
-              />
-            </Form>
-          )}
-        </Formik>
-      </BaseArgoView>
-    );
+      <MetricForm
+        {...props}
+        obj_label="metric"
+        resourcename={ `${name} (${metric.date_created})` }
+        initValues={{
+          name: name,
+          probeversion: metric.probeversion,
+          type: metric.mtype,
+          group: metric.group,
+          description: metric.description,
+          probeexecutable: metric.probeexecutable,
+          parent: metric.parent,
+          config: metric.config,
+          attributes: metric.attribute,
+          dependency: metric.dependancy,
+          parameter: metric.parameter,
+          flags: metric.flags,
+          file_attributes: metric.files,
+          file_parameters: metric.fileparameter,
+          probe: probe,
+          tags: metric.tags
+        }}
+        isHistory={ true }
+      />
+    )
   } else
     return null;
 };

@@ -813,6 +813,7 @@ describe('Tests for metric change', () => {
     expect(parentField.value).toBe('');
     expect(parentField).toBeDisabled()
     expect(screen.getByRole('button', { name: /history/i }).closest('a')).toHaveAttribute('href', '/ui/metrics/argo.AMS-Check/history')
+    expect(screen.queryByRole("button", { name: /clone/i })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
   })
@@ -930,6 +931,7 @@ describe('Tests for metric change', () => {
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /clone/i })).not.toBeInTheDocument()
   })
 
   test('Test that passive metric changeview renders properly', async () => {
