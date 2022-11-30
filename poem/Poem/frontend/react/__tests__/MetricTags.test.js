@@ -39,20 +39,28 @@ beforeEach(() => {
 const mockListTags = [
   {
     id: "1",
-    name: "deprecated"
-  },
-  {
-    id: "2",
-    name: "eol"
+    name: "deprecated",
+    metrics: []
   },
   {
     id: "3",
-    name: "internal"
+    name: "internal",
+    metrics: ["argo.AMSPublisher-Check"]
   },
   {
     id: "4",
-    name: "test"
-  }
+    name: "harmonized",
+    metrics: [
+      "generic.certificate.validity",
+      "generic.http.connect",
+      "generic.tcp.connect",
+    ]
+  },
+  {
+    id: "2",
+    name: "messaging",
+    metrics: ["argo.AMS-Check", "argo.AMSPublisher-Check"]
+  },
 ]
 
 
@@ -255,7 +263,7 @@ function renderListView(publicView) {
 
 
 function renderChangeView(publicView) {
-  const route = `/ui/${publicView ? "public_" : ""}metrictags/internal`
+  const route = `/ui/${publicView ? "public_" : ""}metrictags/harmonized`
   const history = createMemoryHistory({ initialEntries: [route] })
 
   if (publicView)
@@ -325,21 +333,22 @@ describe("Test list of metric tags", () => {
       expect(screen.getByRole("heading", { name: /metric tag/i }).textContent).toBe("Select metric tag to change")
     })
 
-    expect(screen.getAllByRole("columnheader")).toHaveLength(4)
+    expect(screen.getAllByRole("columnheader")).toHaveLength(6)
     expect(screen.getByRole("columnheader", { name: "#" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: /name/i })).toBeInTheDocument()
-    expect(screen.getAllByPlaceholderText("Search")).toHaveLength(1)
+    expect(screen.getByRole("columnheader", { name: /metrics/i })).toBeInTheDocument()
+    expect(screen.getAllByPlaceholderText("Search")).toHaveLength(2)
 
     expect(screen.getAllByRole("row")).toHaveLength(22)
-    expect(screen.getByRole("row", { name: /deprecated/i }).textContent).toBe("1deprecated")
-    expect(screen.getByRole("row", { name: /eol/i }).textContent).toBe("2eol")
-    expect(screen.getByRole("row", { name: /internal/ }).textContent).toBe("3internal")
-    expect(screen.getByRole("row", { name: /test/i }).textContent).toBe("4test")
+    expect(screen.getByRole("row", { name: /deprecated/i }).textContent).toBe("1deprecatednone")
+    expect(screen.getByRole("row", { name: /internal/ }).textContent).toBe("2internalargo.AMSPublisher-Check")
+    expect(screen.getByRole("row", { name: /harmonized/i }).textContent).toBe("3harmonizedgeneric.certificate.validitygeneric.http.connectgeneric.tcp.connect")
+    expect(screen.getByRole("row", { name: /messaging/i }).textContent).toBe("4messagingargo.AMS-Checkargo.AMSPublisher-Check")
 
     expect(screen.getByRole("link", { name: /deprecated/i }).closest("a")).toHaveAttribute("href", "/ui/metrictags/deprecated")
-    expect(screen.getByRole("link", { name: /eol/i }).closest("a")).toHaveAttribute("href", "/ui/metrictags/eol")
     expect(screen.getByRole("link", { name: /internal/i }).closest("a")).toHaveAttribute("href", "/ui/metrictags/internal")
-    expect(screen.getByRole("link", { name: /test/i }).closest("a")).toHaveAttribute("href", "/ui/metrictags/test")
+    expect(screen.getByRole("link", { name: /harmonized/i }).closest("a")).toHaveAttribute("href", "/ui/metrictags/harmonized")
+    expect(screen.getByRole("link", { name: /messaging/i }).closest("a")).toHaveAttribute("href", "/ui/metrictags/messaging")
 
     expect(screen.getByRole("button", { name: /add/i })).toBeInTheDocument()
   })
@@ -353,21 +362,22 @@ describe("Test list of metric tags", () => {
       expect(screen.getByRole("heading", { name: /metric tag/i }).textContent).toBe("Select metric tag for details")
     })
 
-    expect(screen.getAllByRole("columnheader")).toHaveLength(4)
+    expect(screen.getAllByRole("columnheader")).toHaveLength(6)
     expect(screen.getByRole("columnheader", { name: "#" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: /name/i })).toBeInTheDocument()
-    expect(screen.getAllByPlaceholderText("Search")).toHaveLength(1)
+    expect(screen.getByRole("columnheader", { name: /metrics/i })).toBeInTheDocument()
+    expect(screen.getAllByPlaceholderText("Search")).toHaveLength(2)
 
     expect(screen.getAllByRole("row")).toHaveLength(22)
-    expect(screen.getByRole("row", { name: /deprecated/i }).textContent).toBe("1deprecated")
-    expect(screen.getByRole("row", { name: /eol/i }).textContent).toBe("2eol")
-    expect(screen.getByRole("row", { name: /internal/ }).textContent).toBe("3internal")
-    expect(screen.getByRole("row", { name: /test/i }).textContent).toBe("4test")
+    expect(screen.getByRole("row", { name: /deprecated/i }).textContent).toBe("1deprecatednone")
+    expect(screen.getByRole("row", { name: /internal/ }).textContent).toBe("2internalargo.AMSPublisher-Check")
+    expect(screen.getByRole("row", { name: /harmonized/i }).textContent).toBe("3harmonizedgeneric.certificate.validitygeneric.http.connectgeneric.tcp.connect")
+    expect(screen.getByRole("row", { name: /messaging/i }).textContent).toBe("4messagingargo.AMS-Checkargo.AMSPublisher-Check")
 
     expect(screen.getByRole("link", { name: /deprecated/i }).closest("a")).toHaveAttribute("href", "/ui/public_metrictags/deprecated")
-    expect(screen.getByRole("link", { name: /eol/i }).closest("a")).toHaveAttribute("href", "/ui/public_metrictags/eol")
     expect(screen.getByRole("link", { name: /internal/i }).closest("a")).toHaveAttribute("href", "/ui/public_metrictags/internal")
-    expect(screen.getByRole("link", { name: /test/i }).closest("a")).toHaveAttribute("href", "/ui/public_metrictags/test")
+    expect(screen.getByRole("link", { name: /harmonized/i }).closest("a")).toHaveAttribute("href", "/ui/public_metrictags/harmonized")
+    expect(screen.getByRole("link", { name: /messaging/i }).closest("a")).toHaveAttribute("href", "/ui/public_metrictags/messaging")
 
     expect(screen.queryByRole("button", { name: /add/i })).not.toBeInTheDocument()
   })
@@ -385,17 +395,11 @@ describe("Test metric tags changeview", () => {
       return {
         fetchData: (path) => {
           switch (path) {
-            case "/api/v2/internal/metrictags/internal":
-              return Promise.resolve({id: "3", name: "internal"})
+            case "/api/v2/internal/metrictags/harmonized":
+              return Promise.resolve(mockListTags[2])
 
-            case "/api/v2/internal/public_metrictags/internal":
-              return Promise.resolve({id: "3", name: "internal"})
-
-            case "/api/v2/internal/metrics4tags/internal":
-              return Promise.resolve(["argo.AMS-Check", "argo.AMSPublisher-Check"])
-
-            case "/api/v2/internal/public_metrics4tags/internal":
-              return Promise.resolve(["argo.AMS-Check", "argo.AMSPublisher-Check"])
+            case "/api/v2/internal/public_metrictags/harmonized":
+              return Promise.resolve(mockListTags[2])
 
             case "/api/v2/internal/metrictemplates":
               return Promise.resolve(mockMetricTemplates)
@@ -418,12 +422,12 @@ describe("Test metric tags changeview", () => {
     })
 
     expect(screen.getByTestId("form")).toHaveFormValues({
-      "name": "internal"
+      "name": "harmonized"
     })
 
     const nameField = screen.getByTestId("name")
 
-    expect(nameField.value).toBe("internal")
+    expect(nameField.value).toBe("harmonized")
     expect(nameField).toBeEnabled()
 
     expect(screen.getByPlaceholderText(/search/i)).toBeInTheDocument()
@@ -434,19 +438,20 @@ describe("Test metric tags changeview", () => {
     expect(table.getByRole("columnheader", { name: /metric/i }).textContent).toBe("Metric template")
     expect(table.getByRole("columnheader", { name: /action/i }).textContent).toBe("Actions")
 
-    expect(table.getAllByRole("row")).toHaveLength(4)
-    expect(table.getAllByTestId(/remove-/i)).toHaveLength(2)
-    expect(table.getAllByTestId(/insert-/i)).toHaveLength(2)
-    expect(table.getByText("argo.AMS-Check")).toBeInTheDocument()
-    expect(table.getByText("argo.AMSPublisher-Check")).toBeInTheDocument()
-
-    expect(table.queryByText(/generic/i)).not.toBeInTheDocument()
-    selectEvent.openMenu(table.getByText("argo.AMS-Check"))
+    expect(table.getAllByRole("row")).toHaveLength(5)
+    expect(table.getAllByTestId(/remove-/i)).toHaveLength(3)
+    expect(table.getAllByTestId(/insert-/i)).toHaveLength(3)
     expect(table.getByText("generic.certificate.validity")).toBeInTheDocument()
     expect(table.getByText("generic.http.connect")).toBeInTheDocument()
     expect(table.getByText("generic.tcp.connect")).toBeInTheDocument()
-    expect(table.getAllByText("argo.AMS-Check")).toHaveLength(1)
-    expect(table.getAllByText("argo.AMSPublisher-Check")).toHaveLength(1)
+
+    expect(table.queryByText(/ams/i)).not.toBeInTheDocument()
+    selectEvent.openMenu(table.getByText("generic.tcp.connect"))
+    expect(table.getAllByText("generic.certificate.validity")).toHaveLength(1)
+    expect(table.getAllByText("generic.http.connect")).toHaveLength(1)
+    expect(table.getAllByText("generic.tcp.connect")).toHaveLength(1)
+    expect(table.getByText("argo.AMS-Check")).toBeInTheDocument()
+    expect(table.getByText("argo.AMSPublisher-Check")).toBeInTheDocument()
 
     expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /delete/i })).toBeInTheDocument()
@@ -460,12 +465,13 @@ describe("Test metric tags changeview", () => {
       expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
     })
 
-    fireEvent.change(screen.getByPlaceholderText(/search/i), { target: { value: "publisher" } })
+    fireEvent.change(screen.getByPlaceholderText(/search/i), { target: { value: "certificate" } })
 
     const table = within(screen.getByRole("table"))
     expect(table.getAllByRole("row")).toHaveLength(3)
-    expect(table.getByText("argo.AMSPublisher-Check")).toBeInTheDocument()
-    expect(table.queryByText("argo.AMS-Check")).not.toBeInTheDocument()
+    expect(table.getByText("generic.certificate.validity")).toBeInTheDocument()
+    expect(table.queryByText("generic.http.connect")).not.toBeInTheDocument()
+    expect(table.queryByText("generic.tcp.connect")).not.toBeInTheDocument()
     expect(table.getAllByTestId(/remove-/i)).toHaveLength(1)
     expect(table.getAllByTestId(/insert-/i)).toHaveLength(1)
 
@@ -485,7 +491,7 @@ describe("Test metric tags changeview", () => {
 
     const nameField = screen.getByTestId("name")
 
-    expect(nameField.value).toBe("internal")
+    expect(nameField.value).toBe("harmonized")
     expect(nameField).toBeDisabled()
 
     expect(screen.getByPlaceholderText(/search/i)).toBeInTheDocument()
@@ -495,9 +501,10 @@ describe("Test metric tags changeview", () => {
     expect(table.getByRole("columnheader", { name: "#" })).toBeInTheDocument()
     expect(table.getByRole("columnheader", { name: /metric/i }).textContent).toBe("Metric template")
 
-    expect(table.getAllByRole("row")).toHaveLength(4)
-    expect(table.getByRole("row", { name: /1/i }).textContent).toBe("1argo.AMS-Check")
-    expect(table.getByRole("row", { name: /2/i }).textContent).toBe("2argo.AMSPublisher-Check")
+    expect(table.getAllByRole("row")).toHaveLength(5)
+    expect(table.getByRole("row", { name: /1/i }).textContent).toBe("1generic.certificate.validity")
+    expect(table.getByRole("row", { name: /2/i }).textContent).toBe("2generic.http.connect")
+    expect(table.getByRole("row", { name: /3/i }).textContent).toBe("3generic.tcp.connect")
 
     expect(table.queryByTestId(/remove-/i)).not.toBeInTheDocument()
     expect(table.queryByTestId(/insert-/i)).not.toBeInTheDocument()
@@ -514,11 +521,11 @@ describe("Test metric tags changeview", () => {
       expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
     })
 
-    fireEvent.change(screen.getByPlaceholderText(/search/i), { target: { value: "publisher" } })
+    fireEvent.change(screen.getByPlaceholderText(/search/i), { target: { value: "certificate" } })
 
     const table = within(screen.getByRole("table"))
     expect(table.getAllByRole("row")).toHaveLength(3)
-    expect(table.getByRole("row", { name: /1/i }).textContent).toBe("1argo.AMSPublisher-Check")
+    expect(table.getByRole("row", { name: /1/i }).textContent).toBe("1generic.certificate.validity")
 
     expect(screen.queryByRole("button", { name: /save/i })).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /delete/i })).not.toBeInTheDocument()
@@ -551,7 +558,7 @@ describe("Test metric tags changeview", () => {
     await waitFor(() => {
       expect(mockChangeObject).toHaveBeenCalledWith(
         "/api/v2/internal/metrictags/",
-        { id: "3", name: "test_tag", metrics: ["argo.AMS-Check", "argo.AMSPublisher-Check"] }
+        { id: "4", name: "test_tag", metrics: ["generic.certificate.validity", "generic.http.connect", "generic.tcp.connect"] }
       )
     })
 
@@ -561,63 +568,6 @@ describe("Test metric tags changeview", () => {
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictags")
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metric")
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictemplate")
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith(["metrics4tags", "internal"])
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith(["public_metrics4tags", "internal"])
-    expect(NotificationManager.success).toHaveBeenCalledWith(
-      "Metric tag successfully changed", "Changed", 2000
-    )
-  })
-
-  test("Test change metrics for metric tag", async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 201, statusText: "CREATED" })
-    )
-
-    renderChangeView()
-
-    await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
-    })
-
-    await selectEvent.select(screen.getByText("argo.AMS-Check"), "generic.certificate.validity")
-
-    fireEvent.click(screen.getByTestId("remove-1"))
-
-    fireEvent.click(screen.getByTestId("insert-0"))
-
-    const table = within(screen.getByRole("table"))
-
-    const row2 = table.getAllByRole("row")[3]
-
-    await selectEvent.select(within(row2).getByRole("combobox"), "generic.http.connect")
-
-    fireEvent.click(screen.getByTestId("insert-1"))
-
-    const row3 = table.getAllByRole("row")[4]
-
-    await selectEvent.select(within(row3).getByRole("combobox"), "generic.tcp.connect")
-
-    fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    await waitFor(() => {
-      expect(mockChangeObject).toHaveBeenCalledWith(
-        "/api/v2/internal/metrictags/",
-        { id: "3", name: "internal", metrics: ["generic.certificate.validity", "generic.http.connect", "generic.tcp.connect"] }
-      )
-    })
-
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictags")
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metric")
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictemplate")
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictags")
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metric")
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictemplate")
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith(["metrics4tags", "internal"])
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith(["public_metrics4tags", "internal"])
     expect(NotificationManager.success).toHaveBeenCalledWith(
       "Metric tag successfully changed", "Changed", 2000
     )
@@ -649,7 +599,7 @@ describe("Test metric tags changeview", () => {
     await waitFor(() => {
       expect(mockChangeObject).toHaveBeenCalledWith(
         "/api/v2/internal/metrictags/",
-        { id: "3", name: "test_tag", metrics: ["argo.AMS-Check", "argo.AMSPublisher-Check"] }
+        { id: "4", name: "test_tag", metrics: ["generic.certificate.validity", "generic.http.connect", "generic.tcp.connect"] }
       )
     })
 
@@ -689,7 +639,7 @@ describe("Test metric tags changeview", () => {
     await waitFor(() => {
       expect(mockChangeObject).toHaveBeenCalledWith(
         "/api/v2/internal/metrictags/",
-        { id: "3", name: "test_tag", metrics: ["argo.AMS-Check", "argo.AMSPublisher-Check"] }
+        { id: "4", name: "test_tag", metrics: ["generic.certificate.validity", "generic.http.connect", "generic.tcp.connect"] }
       )
     })
 
@@ -705,14 +655,9 @@ describe("Test metric tags changeview", () => {
     )
   })
 
-  test("Test display warning messages", async () => {
+  test("Test change metrics for metric tag", async () => {
     mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({
-        ok: true,
-        status: 201,
-        statusText: "CREATED",
-        detail: "Metric generic.tcp.connect does not exist."
-      })
+      Promise.resolve({ ok: true, status: 201, statusText: "CREATED" })
     )
 
     renderChangeView()
@@ -721,7 +666,7 @@ describe("Test metric tags changeview", () => {
       expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
     })
 
-    await selectEvent.select(screen.getByText("argo.AMS-Check"), "generic.certificate.validity")
+    await selectEvent.select(screen.getByText("generic.certificate.validity"), "argo.AMS-Check")
 
     fireEvent.click(screen.getByTestId("remove-1"))
 
@@ -731,13 +676,7 @@ describe("Test metric tags changeview", () => {
 
     const row2 = table.getAllByRole("row")[3]
 
-    await selectEvent.select(within(row2).getByRole("combobox"), "generic.http.connect")
-
-    fireEvent.click(screen.getByTestId("insert-1"))
-
-    const row3 = table.getAllByRole("row")[4]
-
-    await selectEvent.select(within(row3).getByRole("combobox"), "generic.tcp.connect")
+    await selectEvent.select(within(row2).getByRole("combobox"), "argo.AMSPublisher-Check")
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
@@ -748,7 +687,7 @@ describe("Test metric tags changeview", () => {
     await waitFor(() => {
       expect(mockChangeObject).toHaveBeenCalledWith(
         "/api/v2/internal/metrictags/",
-        { id: "3", name: "internal", metrics: ["generic.certificate.validity", "generic.http.connect", "generic.tcp.connect"] }
+        { id: "4", name: "harmonized", metrics: ["argo.AMS-Check", "argo.AMSPublisher-Check", "generic.tcp.connect"] }
       )
     })
 
@@ -758,14 +697,64 @@ describe("Test metric tags changeview", () => {
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictags")
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metric")
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictemplate")
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith(["metrics4tags", "internal"])
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith(["public_metrics4tags", "internal"])
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Metric tag successfully changed", "Changed", 2000
+    )
+  })
+
+  test("Test display warning messages", async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({
+        ok: true,
+        status: 201,
+        statusText: "CREATED",
+        detail: "Metric argo.AMSPublisher-Check does not exist."
+      })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
+    })
+
+    await selectEvent.select(screen.getByText("generic.certificate.validity"), "argo.AMS-Check")
+
+    fireEvent.click(screen.getByTestId("remove-1"))
+
+    fireEvent.click(screen.getByTestId("insert-0"))
+
+    const table = within(screen.getByRole("table"))
+
+    const row2 = table.getAllByRole("row")[3]
+
+    await selectEvent.select(within(row2).getByRole("combobox"), "argo.AMSPublisher-Check")
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metrictags/",
+        { id: "4", name: "harmonized", metrics: ["argo.AMS-Check", "argo.AMSPublisher-Check", "generic.tcp.connect"] }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictemplate")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictemplate")
     expect(NotificationManager.success).toHaveBeenCalledWith(
       "Metric tag successfully changed", "Changed", 2000
     )
     expect(NotificationManager.warning).toHaveBeenCalledWith(
       <div>
-        <p>Metric generic.tcp.connect does not exist.</p>
+        <p>Metric argo.AMSPublisher-Check does not exist.</p>
         <p>Click to dismiss.</p>
       </div>,
       "Warning",
@@ -780,7 +769,7 @@ describe("Test metric tags changeview", () => {
         ok: true,
         status: 201,
         statusText: "CREATED",
-        detail: "Error syncing metric tags\nMetric generic.tcp.connect does not exist."
+        detail: "Error syncing metric tags\nMetric argo.AMSPublisher-Check does not exist."
       })
     )
 
@@ -790,7 +779,7 @@ describe("Test metric tags changeview", () => {
       expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
     })
 
-    await selectEvent.select(screen.getByText("argo.AMS-Check"), "generic.certificate.validity")
+    await selectEvent.select(screen.getByText("generic.certificate.validity"), "argo.AMS-Check")
 
     fireEvent.click(screen.getByTestId("remove-1"))
 
@@ -800,13 +789,7 @@ describe("Test metric tags changeview", () => {
 
     const row2 = table.getAllByRole("row")[3]
 
-    await selectEvent.select(within(row2).getByRole("combobox"), "generic.http.connect")
-
-    fireEvent.click(screen.getByTestId("insert-1"))
-
-    const row3 = table.getAllByRole("row")[4]
-
-    await selectEvent.select(within(row3).getByRole("combobox"), "generic.tcp.connect")
+    await selectEvent.select(within(row2).getByRole("combobox"), "argo.AMSPublisher-Check")
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
@@ -817,7 +800,7 @@ describe("Test metric tags changeview", () => {
     await waitFor(() => {
       expect(mockChangeObject).toHaveBeenCalledWith(
         "/api/v2/internal/metrictags/",
-        { id: "3", name: "internal", metrics: ["generic.certificate.validity", "generic.http.connect", "generic.tcp.connect"] }
+        { id: "4", name: "harmonized", metrics: ["argo.AMS-Check", "argo.AMSPublisher-Check", "generic.tcp.connect"] }
       )
     })
 
@@ -827,14 +810,12 @@ describe("Test metric tags changeview", () => {
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictags")
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metric")
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictemplate")
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith(["metrics4tags", "internal"])
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith(["public_metrics4tags", "internal"])
     expect(NotificationManager.success).toHaveBeenCalledWith(
       "Metric tag successfully changed", "Changed", 2000
     )
     expect(NotificationManager.warning).toHaveBeenCalledWith(
       <div>
-        <p>Metric generic.tcp.connect does not exist.</p>
+        <p>Metric argo.AMSPublisher-Check does not exist.</p>
         <p>Click to dismiss.</p>
       </div>,
       "Warning",
@@ -872,7 +853,7 @@ describe("Test metric tags changeview", () => {
 
     await waitFor(() => {
       expect(mockDeleteObject).toHaveBeenCalledWith(
-        "/api/v2/internal/metrictags/internal"
+        "/api/v2/internal/metrictags/harmonized"
       )
     })
 
@@ -882,8 +863,6 @@ describe("Test metric tags changeview", () => {
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictags")
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metric")
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictemplate")
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith(["metrics4tags", "internal"])
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith(["public_metrics4tags", "internal"])
     expect(NotificationManager.success).toHaveBeenCalledWith(
       "Metric tag successfully deleted", "Deleted", 2000
     )
@@ -910,7 +889,7 @@ describe("Test metric tags changeview", () => {
 
     await waitFor(() => {
       expect(mockDeleteObject).toHaveBeenCalledWith(
-        "/api/v2/internal/metrictags/internal"
+        "/api/v2/internal/metrictags/harmonized"
       )
     })
 
@@ -920,8 +899,6 @@ describe("Test metric tags changeview", () => {
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictags")
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metric")
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictemplate")
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith(["metrics4tags", "internal"])
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith(["public_metrics4tags", "internal"])
     expect(NotificationManager.success).toHaveBeenCalledWith(
       "Metric tag successfully deleted", "Deleted", 2000
     )
@@ -946,7 +923,7 @@ describe("Test metric tags changeview", () => {
 
     await waitFor(() => {
       expect(mockDeleteObject).toHaveBeenCalledWith(
-        "/api/v2/internal/metrictags/internal"
+        "/api/v2/internal/metrictags/harmonized"
       )
     })
 
@@ -979,7 +956,7 @@ describe("Test metric tags changeview", () => {
 
     await waitFor(() => {
       expect(mockDeleteObject).toHaveBeenCalledWith(
-        "/api/v2/internal/metrictags/internal"
+        "/api/v2/internal/metrictags/harmonized"
       )
     })
 

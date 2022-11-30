@@ -25,7 +25,8 @@ import {
   InputGroupText,
   Row,
   Col,
-  Button
+  Button,
+  Badge
  } from "reactstrap"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faSearch,faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -51,7 +52,26 @@ export const MetricTagsList = (props) => {
       accessor: "name",
       Cell: row =>
         <Link to={`/ui/${publicView ? "public_" : ""}metrictags/${row.value}`}>{row.value}</Link>,
-      column_width: "95%",
+      column_width: "20%",
+      Filter: DefaultColumnFilter
+    },
+    {
+      Header: "Metrics",
+      accessor: "metrics",
+      Cell: row =>
+        <div>
+          {
+            row.value.length === 0 ?
+              <Badge pill color="dark">none</Badge>
+            :
+              row.value.map((metric, i) =>
+                <Badge pill className="me-1" key={ i } color="info">
+                  { metric }
+                </Badge>
+              )
+          }
+        </div>,
+      column_width: "75%",
       Filter: DefaultColumnFilter
     }
   ], [])
@@ -115,13 +135,6 @@ export const MetricTagsComponent = (props) => {
     { enabled: !addview }
   )
 
-  const { data: metrics, error: errorMetrics, isLoading: loadingMetrics } = useQuery(
-    [`${publicView ? "public_" : ""}metrics4tags`, name], async () => {
-      return await backend.fetchData(`/api/v2/internal/${publicView ? "public_" : ""}metrics4tags/${name}`)
-    },
-    { enabled: !addview }
-  )
-
   const { data: allMetrics, error: errorAllMetrics, isLoading: loadingAllMetrics } = useQuery(
     "metrictemplate", () => fetchMetricTemplates(publicView),
     { enabled: !publicView }
@@ -179,9 +192,7 @@ export const MetricTagsComponent = (props) => {
       changeMutation.mutate({ ...sendValues, id: formValues.id }, {
         onSuccess: (response) => {
           queryClient.invalidateQueries("public_metrictags")
-          queryClient.invalidateQueries(["public_metrics4tags", name])
           queryClient.invalidateQueries("metrictags")
-          queryClient.invalidateQueries(["metrics4tags", name])
           queryClient.invalidateQueries("metric")
           queryClient.invalidateQueries("public_metric")
           queryClient.invalidateQueries("metrictemplate")
@@ -209,9 +220,7 @@ export const MetricTagsComponent = (props) => {
     deleteMutation.mutate(undefined, {
       onSuccess: () => {
         queryClient.invalidateQueries("public_metrictags")
-        queryClient.invalidateQueries(["public_metrics4tags", name])
         queryClient.invalidateQueries("metrictags")
-        queryClient.invalidateQueries(["metrics4tags", name])
         queryClient.invalidateQueries("metric")
         queryClient.invalidateQueries("public_metric")
         queryClient.invalidateQueries("metrictemplate")
@@ -232,7 +241,7 @@ export const MetricTagsComponent = (props) => {
 
   }
 
-  if (loadingUserDetails || loadingTag || loadingMetrics || loadingAllMetrics)
+  if (loadingUserDetails || loadingTag || loadingAllMetrics)
     return (<LoadingAnim/>)
 
   else if (errorUserDetails)
@@ -241,13 +250,10 @@ export const MetricTagsComponent = (props) => {
   else if (errorTag)
     return (<ErrorComponent error={errorTag} />)
 
-  else if (errorMetrics)
-    return (<ErrorComponent error={errorMetrics} />)
-
   else if (errorAllMetrics)
     return (<ErrorComponent error={errorAllMetrics} />)
 
-  else if ((addview || (tag && metrics)) && (publicView || (allMetrics && userDetails))) {
+  else if ((addview || tag ) && (publicView || (allMetrics && userDetails))) {
     return (
       <BaseArgoView
         resourcename={publicView ? "Metric tag details" : "metric tag"}
@@ -273,8 +279,8 @@ export const MetricTagsComponent = (props) => {
         <Formik
           initialValues={{
             id: `${tag ? tag.id : ""}`,
-            name: `${tag ? tag.name: ""}`,
-            metrics4tag: metrics ? metrics : [""],
+            name: `${tag ? tag.name : ""}`,
+            metrics4tag: tag?.metrics.length > 0 ? tag.metrics : [""]
           }}
         >
           {
