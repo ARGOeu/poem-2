@@ -26,11 +26,20 @@ import {
   Col,
   Button,
   Badge,
-  Input
+  Input,
+  FormFeedback
  } from "reactstrap"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faSearch,faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Controller, useForm, useWatch } from "react-hook-form"
+import { ErrorMessage } from '@hookform/error-message'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as Yup from "yup"
+
+
+const validationSchema = Yup.object().shape({
+  name: Yup.string().required("This field is required")
+})
 
 
 export const MetricTagsList = (props) => {
@@ -125,13 +134,15 @@ const MetricTagsForm = ({
   const addMutation = useMutation(async (values) => await backend.addObject('/api/v2/internal/metrictags/', values));
   const deleteMutation = useMutation(async () => await backend.deleteObject(`/api/v2/internal/metrictags/${name}`))
 
-  const { control, getValues, setValue, handleSubmit } = useForm({
+  const { control, getValues, setValue, handleSubmit, formState: { errors } } = useForm({
     defaultValues: {
       id: `${tag ? tag.id : ""}`,
       name: `${tag ? tag.name : ""}`,
       metrics4tag: tag?.metrics.length > 0 ? tag.metrics : [""],
       searchItem: ""
-    }
+    },
+    mode: "all",
+    resolver: yupResolver(validationSchema)
   })
 
   const searchItem = useWatch({ control, name: "searchItem" })
@@ -274,8 +285,17 @@ const MetricTagsForm = ({
                       { ...field }
                       data-testid="name"
                       disabled={ publicView }
-                      className="form-control"
+                      className={ `form-control ${errors?.name && "is-invalid"}` }
                     />
+                  }
+                />
+                <ErrorMessage
+                  errors={ errors }
+                  name="name"
+                  render={ ({ message }) =>
+                    <FormFeedback invalid="true" className="end-0">
+                      { message }
+                    </FormFeedback>
                   }
                 />
               </InputGroup>
