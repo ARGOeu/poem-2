@@ -30,6 +30,7 @@ setLogger({
   error: () => {}
 })
 
+
 beforeEach(() => {
   jest.clearAllMocks()
   queryClient.clear()
@@ -63,7 +64,6 @@ const mockListTags = [
   },
 ]
 
-
 const mockActiveSession = {
   active: true,
   userdetails: {
@@ -76,8 +76,7 @@ const mockActiveSession = {
     date_joined: '2019-07-08T12:58:08',
     id: '1'
   }
-};
-
+}
 
 const mockMetricTemplates = [
   {
