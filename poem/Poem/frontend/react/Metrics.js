@@ -73,14 +73,14 @@ const metricValidationSchema = Yup.object().shape({
     is: (val) => val === 'Active',
     then: Yup.string().required('Required')
   }),
-  config: Yup.array().of(
-    Yup.object().shape({
-      value: Yup.string().when("type", {
-        is: (val) => val === "Active",
-        then: Yup.string().required("Required")
+  config: Yup.array().when("type", {
+    is: (val) => val === "Active",
+    then: Yup.array().of(
+      Yup.object().shape({
+        value: Yup.string().required("Required")
       })
-    })
-  )
+    )
+  })
 })
 
 
