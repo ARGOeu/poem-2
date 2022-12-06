@@ -4,7 +4,6 @@ import {
   LoadingAnim,
   BaseArgoView,
   NotifyOk,
-  DropDown,
   Icon,
   DiffElement,
   ProfileMainInfo,
@@ -75,6 +74,24 @@ const AggregationProfilesSchema = Yup.object().shape({
     )
   }))
 })
+
+
+const DropDown = ({field, data=[], prefix="", class_name="", isnew=false, errors=undefined}) =>
+  <Field component="select"
+    name={prefix ? `${prefix}.${field.name}` : field.name}
+    data-testid={prefix ? `${prefix}.${field.name}` : field.name}
+    required={true}
+    className={`form-control ${class_name} ${isnew ? 'border-success' : `${errors && errors[field.name] ? 'border-danger' : ''}`}`}
+  >
+    {
+      data.map((name, i) => (
+        i === 0 ?
+          <option key={i} value='' hidden color='text-muted'>{name}</option>
+        :
+          <option key={i} value={name}>{name}</option>
+      ))
+    }
+  </Field>
 
 
 function insertSelectPlaceholder(data, text) {

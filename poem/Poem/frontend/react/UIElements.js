@@ -287,24 +287,6 @@ export const DropdownWithFormText = ({ forwardedRef=undefined, ...props }) => {
 }
 
 
-export const DropDown = ({field, data=[], prefix="", class_name="", isnew=false, errors=undefined}) =>
-  <Field component="select"
-    name={prefix ? `${prefix}.${field.name}` : field.name}
-    data-testid={prefix ? `${prefix}.${field.name}` : field.name}
-    required={true}
-    className={`form-control ${class_name} ${isnew ? 'border-success' : `${errors && errors[field.name] ? 'border-danger' : ''}`}`}
-  >
-    {
-      data.map((name, i) => (
-        i === 0 ?
-          <option key={i} value='' hidden color='text-muted'>{name}</option>
-        :
-          <option key={i} value={name}>{name}</option>
-      ))
-    }
-  </Field>
-
-
 export const SearchField = ({field, forwardedRef=undefined, ...rest}) =>
   <div className="input-group">
     <input type="text" placeholder="Search" ref={forwardedRef ? forwardedRef : null} {...field} {...rest}/>
