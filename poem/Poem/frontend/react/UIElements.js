@@ -34,7 +34,9 @@ import {
   Table,
   Pagination,
   PaginationItem,
-  PaginationLink
+  PaginationLink,
+  Input,
+  FormFeedback
 } from 'reactstrap';
 import { Link } from 'react-router-dom';
 import ArgoLogo from './argologo_color.svg';
@@ -79,6 +81,8 @@ import { CookiePolicy } from './CookiePolicy';
 import { useTable, usePagination, useFilters } from 'react-table';
 import { Helmet } from 'react-helmet';
 import Select, { components } from 'react-select';
+import { Controller, useFormContext } from 'react-hook-form';
+import { ErrorMessage } from '@hookform/error-message';
 
 
 var list_pages = ['administration', 'probes',
@@ -1269,6 +1273,117 @@ export const DiffElement = ({title, item1, item2}) => {
     </div>
   );
 };
+
+
+export const ProfileMain = ({
+  grouplist=undefined,
+  description=undefined,
+  fieldsdisable=false,
+  profiletype=undefined,
+  addview=false
+}) => {
+  const { control, setValue, formState: { errors } } = useFormContext()
+
+  return (
+    <FormGroup>
+      <Row>
+        <Col md={6}>
+          <InputGroup>
+            <InputGroupText>Name</InputGroupText>
+            <Controller
+              name="name"
+              control={ control }
+              render={ ({ field }) =>
+                <Input
+                  { ...field }
+                  data-testid="name"
+                  className={ `form-control form-control-lg ${errors?.name && "is-invalid"}` }
+                  disabled={ !addview }
+                />
+              }
+            />
+            <ErrorMessage
+              errors={ errors }
+              name="name"
+              render={ ({ message }) =>
+                <FormFeedback invalid="true" className="end-0">
+                  { message }
+                </FormFeedback>
+              }
+            />
+          </InputGroup>
+          <FormText color='text-muted'>
+            { `Name of ${profiletype} profile` }
+          </FormText>
+        </Col>
+      </Row>
+      {
+        description &&
+          <Row className='mt-3'>
+            <Col md={10}>
+              <Label for="profileDescription">Description:</Label>
+              <Controller
+                name={ description }
+                control={ control }
+                render={ ({ field }) =>
+                  <textarea
+                    { ...field }
+                    id="profileDescription"
+                    className="form-control"
+                    rows={ 4 }
+                    disabled={ fieldsdisable }
+                  />
+                }
+              />
+              <FormText color="muted">
+                Free text description outlining the purpose of this profile.
+              </FormText>
+            </Col>
+          </Row>
+      }
+      <Row className='mt-4'>
+        <Col md={3}>
+          <InputGroup>
+            <InputGroupText>Group</InputGroupText>
+            <Controller
+              name="groupname"
+              control={ control }
+              render={ ({ field }) =>
+                fieldsdisable ?
+                  <Input
+                    { ...field }
+                    data-testid="groupname"
+                    className="form-control"
+                    disabled={ true }
+                  />
+                :
+                  <DropdownWithFormText
+                    forwardedRef={ field.ref }
+                    error={ errors?.groupname }
+                    options={ grouplist }
+                    value={ field.value }
+                    onChange={ e => setValue("groupname", e.value) }
+                  />
+              }
+            />
+            <ErrorMessage
+              errors={ errors }
+              name="groupname"
+              render={ ({ message }) =>
+                <FormFeedback invalid="true" className="end-0">
+                  { message }
+                </FormFeedback>
+              }
+            />
+          </InputGroup>
+          <FormText color="muted">
+            { `${profiletype.charAt(0).toUpperCase() + profiletype.slice(1)} profile is member of given group.` }
+          </FormText>
+        </Col>
+      </Row>
+    </FormGroup>
+  )
+}
 
 
 export const ProfileMainInfo = ({grouplist=undefined, description=undefined,
