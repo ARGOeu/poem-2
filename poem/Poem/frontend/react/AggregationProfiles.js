@@ -84,7 +84,8 @@ const DropDown = ({
   options,
   class_name="",
   isnew=false,
-  errors=undefined
+  errors=undefined,
+  ...props
 }) => {
   const { control } = useFormContext()
 
@@ -95,6 +96,7 @@ const DropDown = ({
       render={ ({ field }) =>
         <select
           { ...field }
+          { ...props }
           data-testid={ name }
           className={ `form-control ${class_name} ${isnew ? 'border-success' : `${errors && 'is-invalid'}`}` }
         >
@@ -221,6 +223,7 @@ const Group = ({ group, groupindex, remove, insert, last }) => {
                       <Input
                         { ...field }
                         placeholder="Name of service group"
+                        data-testid={ `groups.${groupindex}.name` }
                         required={ true }
                         className={ `form-control ${errors?.groups?.[groupindex]?.name && "is-invalid"}` }
                       />
@@ -228,10 +231,13 @@ const Group = ({ group, groupindex, remove, insert, last }) => {
                   />
                 </Col>
                 <Col sm={{size: 2}} md={{size: 1}} className="ps-1">
-                  <Button size="sm" color="danger"
-                    data-testid='remove-group'
+                  <Button
+                    size="sm"
+                    color="danger"
+                    data-testid={`remove-group-${groupindex}`}
                     type="button"
-                    onClick={() => (context.write_perm) && remove(groupindex)}>
+                    onClick={() => (context.write_perm) && remove(groupindex)}
+                  >
                     <FontAwesomeIcon icon={faTimes}/>
                   </Button>
                 </Col>
@@ -247,6 +253,7 @@ const Group = ({ group, groupindex, remove, insert, last }) => {
               <div className='col-2' data-testid='operation'>
                 <DropDown
                   name={ `groups.${groupindex}.operation` }
+                  data-testid={ `groups.${groupindex}.operation` }
                   options={ insertSelectPlaceholder(context.logic_operations, 'Select') }
                   class_name="form-select form-control"
                   errors={ errors?.groups?.[groupindex]?.operation }
@@ -259,6 +266,7 @@ const Group = ({ group, groupindex, remove, insert, last }) => {
           <div className="group-operation" key={groupindex} data-testid={`group-operation-${groupindex}`}>
             <DropDown
               name="profile_operation"
+              data-testid={`profile_operation-${groupindex}`}
               options={ insertSelectPlaceholder(context.logic_operations, 'Select') }
               class_name='form-select'
             />
@@ -296,7 +304,7 @@ const ServiceList = ({groupindex, groupnew=false}) =>
   return (
     services.map((service, i) =>
       <Service
-        key={ i }
+        key={ service.id }
         service={ service }
         groupindex={ groupindex }
         groupnew={ groupnew }
@@ -357,6 +365,7 @@ const Service = ({
           <div className="input-group" data-testid={`operation-${index}`}>
             <DropDown
               name={ `groups.${groupindex}.services.${index}.operation` }
+              data-testid={ `groups.${groupindex}.services.${index}.operation` }
               options={ insertSelectPlaceholder(context.logic_operations, 'Select') }
               class_name="form-select service-operation"
               isnew={ service.isNew && !groupnew }
@@ -366,15 +375,26 @@ const Service = ({
         <Col md={2} className="ps-2">
           <Button size="sm" color="light"
             type="button"
-            data-testid={`remove-${index}`}
+            data-testid={`remove-service-${index}`}
             onClick={() => serviceRemove(index)}
           >
             <FontAwesomeIcon icon={faTimes}/>
           </Button>
-          <Button size="sm" color="light"
+          <Button
+            size="sm"
+            color="light"
             type="button"
             data-testid={`insert-${index}`}
-            onClick={() => serviceInsert(index + 1, {name: '', operation: insertOperationFromPrevious(index, getValues(`groups.${groupindex}.services`)), isNew: true})}
+            onClick={() => {
+              serviceInsert(
+                index + 1,
+                {
+                  name: '',
+                  operation: insertOperationFromPrevious(index, getValues(`groups.${groupindex}.services`)),
+                  isNew: true
+                }
+              )
+            }}
           >
             <FontAwesomeIcon icon={faPlus}/>
           </Button>
@@ -578,15 +598,15 @@ const AggregationProfilesForm = ({
       }
     >
       <FormProvider { ...methods }>
-        <Form onSubmit={ methods.handleSubmit(val => onSubmitHandle(val)) }>
+        <Form onSubmit={ methods.handleSubmit(val => onSubmitHandle(val)) } data-testid="aggregation-form" >
           {
             (isServiceMissing && !(publicView || historyview)) &&
-            <Alert color='danger'>
-              <center data-testid='alert-missing'>
-                <FontAwesomeIcon icon={faInfoCircle} size="lg" color="black"/> &nbsp;
-                Some Service Flavours used in Aggregation profile are not presented in associated Metric profile meaning that two profiles are out of sync. Check below for Service Flavours in blue borders.
-              </center>
-            </Alert>
+              <Alert color='danger'>
+                <center data-testid='alert-missing'>
+                  <FontAwesomeIcon icon={faInfoCircle} size="lg" color="black"/> &nbsp;
+                  Some Service Flavours used in Aggregation profile are not presented in associated Metric profile meaning that two profiles are out of sync. Check below for Service Flavours in blue borders.
+                </center>
+              </Alert>
           }
           {
             (extraServices.length > 0 && !(publicView || historyview)) &&
@@ -973,6 +993,7 @@ const removeDummyGroup = (values) => {
     values.groups.pop()
   }
 }
+
 
 const removeIsNewFlag = (values) => {
   for (let group of values.groups) {
