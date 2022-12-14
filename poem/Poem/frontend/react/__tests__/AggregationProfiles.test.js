@@ -314,7 +314,6 @@ const mockBackendProfile = {
   apiid: '00000000-oooo-kkkk-aaaa-aaeekkccnnee'
 };
 
-
 const mockAggregationVersions = [
   {
     id: '7',
@@ -859,6 +858,8 @@ describe('Tests for aggregation profiles changeview', () => {
     expect(screen.getByText("EGI")).toBeInTheDocument()
     expect(screen.queryByText("ARGO")).not.toBeInTheDocument()
 
+    expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument();
+
     await selectEvent.select(screen.getByText("EGI"), "ARGO")
 
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
@@ -867,6 +868,8 @@ describe('Tests for aggregation profiles changeview', () => {
 
     expect(screen.queryByText("EGI")).not.toBeInTheDocument()
     expect(screen.getByText("ARGO")).toBeInTheDocument()
+
+    expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument();
   })
 
   test("Test changing endpoint group and metric profile", async () => {
@@ -890,6 +893,8 @@ describe('Tests for aggregation profiles changeview', () => {
     expect(screen.queryByText("FEDCLOUD")).not.toBeInTheDocument()
     expect(screen.queryByText("ARGO_MON_TEST")).not.toBeInTheDocument()
 
+    expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument();
+
     await selectEvent.select(screen.getByText("ARGO_MON_CRITICAL"), "ARGO_MON_TEST")
 
     expect(screen.queryByText("servicegroups")).not.toBeInTheDocument()
@@ -897,6 +902,26 @@ describe('Tests for aggregation profiles changeview', () => {
     expect(screen.queryByText("ARGO_MON_CRITICAL")).not.toBeInTheDocument()
     expect(screen.queryByText("FEDCLOUD")).not.toBeInTheDocument()
     expect(screen.getByText("ARGO_MON_TEST")).toBeInTheDocument()
+
+    expect(screen.queryByTestId('alert-missing')).not.toBeInTheDocument()
+    expect(screen.getByTestId('alert-extra')).toBeInTheDocument()
+
+    await selectEvent.select(screen.getByText('ARGO_MON_TEST'), 'FEDCLOUD')
+
+    expect(screen.queryByText("ARGO_MON_CRITICAL")).not.toBeInTheDocument()
+    expect(screen.queryByText("FEDCLOUD")).toBeInTheDocument()
+    expect(screen.queryByText("ARGO_MON_TEST")).not.toBeInTheDocument()
+
+    expect(screen.getByTestId('alert-missing')).toBeInTheDocument()
+    expect(screen.queryByTestId('alert-extra')).not.toBeInTheDocument()
+
+    await selectEvent.select(screen.getByText('FEDCLOUD'), 'ARGO_MON_CRITICAL')
+
+    expect(screen.queryByText("ARGO_MON_CRITICAL")).toBeInTheDocument()
+    expect(screen.queryByText("FEDCLOUD")).not.toBeInTheDocument()
+    expect(screen.queryByText("ARGO_MON_TEST")).not.toBeInTheDocument()
+
+    expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
   })
 
   test("Test changing group", async () => {
@@ -936,6 +961,8 @@ describe('Tests for aggregation profiles changeview', () => {
 
     fireEvent.change(screen.getByTestId("groups.0.name"), { target: { value: "compute2" } })
 
+    expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
+
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
       "groups.0.name": "compute2",
       "groups.0.operation": "OR",
@@ -961,6 +988,8 @@ describe('Tests for aggregation profiles changeview', () => {
 
     fireEvent.change(screen.getByTestId("groups.0.operation"), { target: { value: "AND" } })
 
+    expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
+
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
       "groups.0.name": "compute2",
       "groups.0.operation": "AND",
@@ -984,62 +1013,56 @@ describe('Tests for aggregation profiles changeview', () => {
     expect(serviceFields0[ 3 ].value).toBe('QCG.Computing')
     expect(serviceFields0[ 4 ].value).toBe('org.opensciencegrid.htcondorce')
 
-    fireEvent.change(serviceFields0[ 1 ], { target: { value: "webdav" } })
-
-    expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
-      "groups.0.name": "compute2",
-      "groups.0.operation": "AND",
-      "groups.0.services.0.operation": "OR",
-      "groups.0.services.1.operation": "OR",
-      "groups.0.services.2.operation": "OR",
-      "groups.0.services.3.operation": "OR",
-      "groups.1.name": "storage",
-      "groups.1.operation": "OR",
-      "groups.1.services.0.operation": "OR",
-      "groups.2.name": "information",
-      "groups.2.operation": "OR",
-      "groups.2.services.0.operation": "OR",
-      "groups.3.name": "cloud",
-      "groups.3.operation": "OR",
-      "groups.3.services.0.operation": "OR"
-    })
-
-    expect(serviceFields0[ 1 ].value).toBe("webdav")
-    expect(serviceFields0[ 2 ].value).toBe('GRAM5')
-    expect(serviceFields0[ 3 ].value).toBe('QCG.Computing')
-    expect(serviceFields0[ 4 ].value).toBe('org.opensciencegrid.htcondorce')
-
     fireEvent.click(card0.getByTestId("insert-0"))
+
+    expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
 
     const serviceFields0a = card0.getAllByRole("textbox")
 
-    expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
-      "groups.0.name": "compute2",
-      "groups.0.operation": "AND",
-      "groups.0.services.0.operation": "OR",
-      "groups.0.services.1.operation": "OR",
-      "groups.0.services.2.operation": "OR",
-      "groups.0.services.3.operation": "OR",
-      "groups.0.services.4.operation": "OR",
-      "groups.1.name": "storage",
-      "groups.1.operation": "OR",
-      "groups.1.services.0.operation": "OR",
-      "groups.2.name": "information",
-      "groups.2.operation": "OR",
-      "groups.2.services.0.operation": "OR",
-      "groups.3.name": "cloud",
-      "groups.3.operation": "OR",
-      "groups.3.services.0.operation": "OR"
-    })
-
     expect(serviceFields0a).toHaveLength(6)
-    expect(serviceFields0a[ 1 ].value).toBe("webdav")
+    expect(serviceFields0a[ 1 ].value).toBe("ARC-CE")
     expect(serviceFields0a[ 2 ].value).toBe("")
     expect(serviceFields0a[ 3 ].value).toBe('GRAM5')
     expect(serviceFields0a[ 4 ].value).toBe('QCG.Computing')
     expect(serviceFields0a[ 5 ].value).toBe('org.opensciencegrid.htcondorce')
 
+    fireEvent.change(serviceFields0a[ 2 ], { target: { value: "webdav" } })
+
+    expect(serviceFields0a[ 1 ].value).toBe("ARC-CE")
+    expect(serviceFields0a[ 2 ].value).toBe("webdav")
+    expect(serviceFields0a[ 3 ].value).toBe('GRAM5')
+    expect(serviceFields0a[ 4 ].value).toBe('QCG.Computing')
+    expect(serviceFields0a[ 5 ].value).toBe('org.opensciencegrid.htcondorce')
+
+    expect(screen.queryByTestId('alert-missing')).toBeInTheDocument()
+    expect(screen.queryByTestId('alert-extra')).not.toBeInTheDocument()
+
+    await selectEvent.select(screen.getByText("ARGO_MON_CRITICAL"), "ARGO_MON_TEST")
+
+    expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
+
+    expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
+      "groups.0.name": "compute2",
+      "groups.0.operation": "AND",
+      "groups.0.services.0.operation": "OR",
+      "groups.0.services.1.operation": "OR",
+      "groups.0.services.2.operation": "OR",
+      "groups.0.services.3.operation": "OR",
+      "groups.1.name": "storage",
+      "groups.1.operation": "OR",
+      "groups.1.services.0.operation": "OR",
+      "groups.2.name": "information",
+      "groups.2.operation": "OR",
+      "groups.2.services.0.operation": "OR",
+      "groups.3.name": "cloud",
+      "groups.3.operation": "OR",
+      "groups.3.services.0.operation": "OR"
+    })
+
     fireEvent.change(serviceFields0a[ 2 ], { target: { value: "test-service" } })
+
+    expect(screen.queryByTestId('alert-missing')).toBeInTheDocument()
+    expect(screen.queryByTestId('alert-extra')).toBeInTheDocument()
 
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
       "groups.0.name": "compute2",
@@ -1061,13 +1084,20 @@ describe('Tests for aggregation profiles changeview', () => {
     })
 
     expect(serviceFields0a).toHaveLength(6)
-    expect(serviceFields0a[ 1 ].value).toBe("webdav")
+    expect(serviceFields0a[ 1 ].value).toBe("ARC-CE")
     expect(serviceFields0a[ 2 ].value).toBe("test-service")
     expect(serviceFields0a[ 3 ].value).toBe('GRAM5')
     expect(serviceFields0a[ 4 ].value).toBe('QCG.Computing')
     expect(serviceFields0a[ 5 ].value).toBe('org.opensciencegrid.htcondorce')
 
+    await selectEvent.select(screen.getByText("ARGO_MON_TEST"), "ARGO_MON_CRITICAL")
+
+    expect(screen.queryByTestId('alert-missing')).toBeInTheDocument()
+    expect(screen.queryByTestId('alert-extra')).not.toBeInTheDocument()
+
     fireEvent.click(card0.getByTestId("remove-service-1"))
+
+    expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
 
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
       "groups.0.name": "compute2",
@@ -1089,12 +1119,15 @@ describe('Tests for aggregation profiles changeview', () => {
 
     expect(card0.getAllByRole("textbox")).toHaveLength(5)
     const serviceFields0b = card0.getAllByRole("textbox")
-    expect(serviceFields0b[ 1 ].value).toBe("webdav")
+    expect(serviceFields0b[ 1 ].value).toBe("ARC-CE")
     expect(serviceFields0b[ 2 ].value).toBe('GRAM5')
     expect(serviceFields0b[ 3 ].value).toBe('QCG.Computing')
     expect(serviceFields0b[ 4 ].value).toBe('org.opensciencegrid.htcondorce')
 
     fireEvent.click(card0.getByTestId("remove-service-0"))
+
+    expect(screen.queryByTestId('alert-missing')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('alert-extra')).toBeInTheDocument()
 
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
       "groups.0.name": "compute2",
@@ -1149,6 +1182,9 @@ describe('Tests for aggregation profiles changeview', () => {
 
     fireEvent.click(screen.getByTestId("remove-group-1"))
 
+    expect(screen.queryByTestId("alert-missing")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("alert-extra")).toBeInTheDocument()
+
     expect(screen.getAllByTestId(/card/i)).toHaveLength(3)
 
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
@@ -1167,6 +1203,9 @@ describe('Tests for aggregation profiles changeview', () => {
     })
 
     fireEvent.click(screen.getByRole("button", { name: /add new group/i }))
+
+    expect(screen.queryByTestId("alert-missing")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("alert-extra")).toBeInTheDocument()
 
     expect(screen.getAllByTestId(/card/i)).toHaveLength(4)
 
@@ -1194,33 +1233,6 @@ describe('Tests for aggregation profiles changeview', () => {
     expect(screen.getByTestId("groups.3.services.0.operation").value).toBe("")
   })
 
-  test('Test alert if metric profile is missing service types', async () => {
-    renderChangeView();
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change aggregation profile');
-    })
-
-    await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'FEDCLOUD')
-
-    expect(screen.getByTestId('alert-missing')).toBeInTheDocument();
-    expect(screen.queryByTestId('alert-extra')).not.toBeInTheDocument()
-  })
-
-  test('Test alert if metric profile has extra service types', async () => {
-    renderChangeView()
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change aggregation profile')
-    })
-
-    await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'ARGO_MON_TEST')
-
-    expect(screen.queryByTestId('alert-missing')).not.toBeInTheDocument()
-    expect(screen.getByTestId('alert-extra')).toBeInTheDocument()
-  })
-
-  /*
   test('Test import json successfully', async () => {
     renderChangeView();
 
@@ -1318,7 +1330,6 @@ describe('Tests for aggregation profiles changeview', () => {
     expect(card0.getAllByTestId(/insert/i)).toHaveLength(3);
     expect(card0.getByTestId('operation').firstChild.value).toBe('OR');
   })
-  */
 
   test('Test export json successfully', async () => {
     const helpers = require('../FileDownload');
@@ -2681,11 +2692,15 @@ describe('Tests for aggregation profile addview', () => {
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: "TEST_PROFILE" } })
 
+    expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
+
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
       name: "TEST_PROFILE"
     })
 
     await selectEvent.select(screen.getAllByText(/select/i)[0], 'ARGO')
+
+    expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
 
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
       name: "TEST_PROFILE"
@@ -2709,7 +2724,13 @@ describe('Tests for aggregation profile addview', () => {
     expect(screen.queryByText("ARGO_MON_TEST")).not.toBeInTheDocument()
 
     await selectEvent.select(screen.getAllByText(/select/i)[3], "servicegroups")
+
+    expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
+
     await selectEvent.select(screen.getAllByText(/select/i)[3], "ARGO_MON_CRITICAL")
+
+    expect(screen.queryByTestId("alert-missing")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("alert-extra")).toBeInTheDocument()
 
     expect(screen.queryByText("servicegroups")).toBeInTheDocument()
     expect(screen.queryByText("sites")).not.toBeInTheDocument()
@@ -2727,7 +2748,19 @@ describe('Tests for aggregation profile addview', () => {
 
     expect(screen.queryAllByTestId(/card-/i)).toHaveLength(0)
 
+    expect(screen.getByRole("button", { name: /add new group/i })).toBeDisabled()
+
+    await selectEvent.select(screen.getAllByText(/select/i)[4], "FEDCLOUD")
+
+    expect(screen.queryByTestId("alert-missing")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("alert-extra")).toBeInTheDocument()
+
+    expect(screen.getByRole("button", { name: /add new group/i })).toBeEnabled()
+
     fireEvent.click(screen.getByRole("button", { name: /add new group/i }))
+
+    expect(screen.queryByTestId("alert-missing")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("alert-extra")).toBeInTheDocument()
 
     expect(screen.getAllByTestId(/card-/i)).toHaveLength(1)
 
@@ -2742,10 +2775,13 @@ describe('Tests for aggregation profile addview', () => {
     const serviceFields = group.getAllByRole("textbox")
     expect(serviceFields).toHaveLength(2)
 
-    expect(serviceFields[0].value).toBe("")
+    expect(serviceFields[1].value).toBe("")
     expect(group.getByTestId("groups.0.services.0.operation").value).toBe("")
 
     fireEvent.change(group.getByTestId("groups.0.name"), { target: { value: "Group1" } })
+
+    expect(screen.queryByTestId("alert-missing")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("alert-extra")).toBeInTheDocument()
 
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
       "groups.0.name": "Group1",
@@ -2755,13 +2791,37 @@ describe('Tests for aggregation profile addview', () => {
 
     fireEvent.change(group.getByTestId("groups.0.operation"), { target: { value: "OR" } })
 
+    expect(screen.queryByTestId("alert-missing")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("alert-extra")).toBeInTheDocument()
+
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
       "groups.0.name": "Group1",
       "groups.0.operation": "OR",
       "groups.0.services.0.operation": ""
     })
 
+    fireEvent.change(serviceFields[1], { target: { value: "org.opensciencegrid.htcondorce" } })
+
+    expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
+
+    fireEvent.click(group.getByTestId("insert-0"))
+
+    expect(group.getAllByRole("textbox")).toHaveLength(3)
+
+    expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
+
+    fireEvent.change(group.getAllByRole("textbox")[2], { target: { value: "test" } })
+
+    expect(screen.queryByTestId("alert-missing")).toBeInTheDocument()
+    expect(screen.queryByTestId("alert-extra")).not.toBeInTheDocument()
+
+    fireEvent.click(group.getByTestId("remove-service-1"))
+
+    expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
+
     fireEvent.click(screen.getByRole("button", { name: /add new group/i }))
+
+    expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
 
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
       "groups.0.name": "Group1",
@@ -2775,6 +2835,8 @@ describe('Tests for aggregation profile addview', () => {
     fireEvent.change(screen.getByTestId("groups.1.name"), { target: { value: "Group2" } })
     fireEvent.change(screen.getByTestId("groups.1.operation"), { target: { value: "AND" } })
 
+    expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
+
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
       "groups.0.name": "Group1",
       "groups.0.operation": "OR",
@@ -2785,6 +2847,8 @@ describe('Tests for aggregation profile addview', () => {
     })
 
     fireEvent.click(screen.getByRole("button", { name: /add new group/i }))
+
+    expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
 
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
       "groups.0.name": "Group1",
@@ -2801,6 +2865,8 @@ describe('Tests for aggregation profile addview', () => {
     fireEvent.change(screen.getByTestId("groups.2.name"), { target: { value: "Group3" } })
     fireEvent.change(screen.getByTestId("groups.2.operation"), { target: { value: "AND" } })
 
+    expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
+
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
       "groups.0.name": "Group1",
       "groups.0.operation": "OR",
@@ -2815,6 +2881,8 @@ describe('Tests for aggregation profile addview', () => {
 
     fireEvent.click(screen.getByTestId("remove-group-1"))
 
+    expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
+
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
       "groups.0.name": "Group1",
       "groups.0.operation": "OR",
@@ -2822,6 +2890,16 @@ describe('Tests for aggregation profile addview', () => {
       "groups.1.name": "Group3",
       "groups.1.operation": "AND",
       "groups.1.services.0.operation": ""
+    })
+
+    fireEvent.click(screen.getByTestId("remove-group-1"))
+
+    expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
+
+    expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
+      "groups.0.name": "Group1",
+      "groups.0.operation": "OR",
+      "groups.0.services.0.operation": "",
     })
   })
 

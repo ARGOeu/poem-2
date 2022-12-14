@@ -281,7 +281,7 @@ const Group = ({ group, groupindex, remove, insert, last }) => {
         outline
         color="secondary"
         size='lg'
-        disabled={ !context.write_perm || !context.list_services ? true : false }
+        disabled={ !context.write_perm || context.list_services.length === 0 ? true : false }
         onClick={
           () => context.write_perm && insert(groupindex, {name: '', operation: '', isNew: true, services: [{name: '', operation: ''}]})
         }
@@ -443,6 +443,8 @@ const AggregationProfilesForm = ({
   const context = useContext(AggregationProfilesChangeContext)
 
   const [listServices, setListServices] = useState([])
+  const [isServiceMissing, setIsServiceMissing] = useState(false)
+  const [extraServices, setExtraServices] = useState([])
   const [areYouSureModal, setAreYouSureModal] = useState(false)
   const [modalMsg, setModalMsg] = useState(undefined);
   const [modalTitle, setModalTitle] = useState(undefined);
@@ -495,11 +497,18 @@ const AggregationProfilesForm = ({
   const { control } = methods
 
   const metric_profile = useWatch({ control, name: "metric_profile" })
+  const groups = useWatch({ control, name: "groups" })
 
   useEffect(() => {
-    if (!addview && !publicView && !historyview)
+    if (!publicView && !historyview)
       setListServices(extractListOfServices(metric_profile, context.metric_profiles))
   }, [metric_profile])
+
+  useEffect(() => {
+    setIsServiceMissing(checkIfServiceMissingInMetricProfile(listServices, groups))
+    setExtraServices(checkIfServiceExtraInMetricProfile(listServices, groups))
+  }, [groups, listServices])
+
 
   const checkIfServiceMissingInMetricProfile = (servicesMetricProfile, serviceGroupsAggregationProfile) => {
     let servicesInMetricProfiles = new Set(servicesMetricProfile)
@@ -507,7 +516,7 @@ const AggregationProfilesForm = ({
 
     serviceGroupsAggregationProfile.forEach(group => {
       for (let service of group.services) {
-        if (service.name !== "dummy")
+        if (!["dummy", ""].includes(service.name))
           if (!servicesInMetricProfiles.has(service.name)) {
             isMissing = true
             break
@@ -533,7 +542,7 @@ const AggregationProfilesForm = ({
       _difference.delete(elem)
     }
 
-    return  Array.from(_difference).sort(sortServices)
+    return Array.from(_difference).sort(sortServices)
   }
 
   const onSubmitHandle = () => {
@@ -542,9 +551,6 @@ const AggregationProfilesForm = ({
     setModalTitle(`${addview ? "Add" : "Change"} aggregation profile`)
     setOnYes('change')
   }
-
-  let isServiceMissing = checkIfServiceMissingInMetricProfile(listServices, !addview ? methods.getValues("groups") : [])
-  let extraServices = checkIfServiceExtraInMetricProfile(listServices, methods.getValues("groups"))
 
   return (
     <BaseArgoView
