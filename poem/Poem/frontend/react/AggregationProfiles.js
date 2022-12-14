@@ -472,7 +472,8 @@ const AggregationProfilesForm = ({
     let groups = insertDummyGroup(
       insertEmptyServiceForNoServices(jsonData.groups)
     )
-    methods.setValue('groups', groups);
+    methods.resetField("groups")
+    methods.setValue('groups', groups)
   }
 
   const handleFileChosen = (file) => {
