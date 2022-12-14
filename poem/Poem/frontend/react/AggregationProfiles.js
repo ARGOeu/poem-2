@@ -141,7 +141,7 @@ const AggregationProfileAutocompleteField = ({
   return (
     <Autosuggest
       inputProps={{
-        className: `"form-control form-select " ${isNew && !groupNew ? "border-success" : ""} ${isMissing ? "border-primary": ""}`,
+        className: `form-control form-select ${isNew && !groupNew && "border-success"} ${isMissing && "border-primary"}`,
         placeholder: '',
         onChange: (_, {newValue}) => setValue(`groups.${groupIndex}.services.${index}.name`, newValue),
         value: value
@@ -305,9 +305,9 @@ const ServiceList = ({groupindex, groupnew=false}) =>
     services.map((service, i) =>
       <Service
         key={ service.id }
-        service={ service }
         groupindex={ groupindex }
         groupnew={ groupnew }
+        isnew={ service.isNew }
         index={ i }
         serviceRemove={ remove }
         serviceInsert={ insert }
@@ -319,9 +319,9 @@ const ServiceList = ({groupindex, groupnew=false}) =>
 
 
 const Service = ({
-  service,
   groupindex,
   groupnew,
+  isnew,
   index,
   serviceInsert,
   serviceRemove,
@@ -352,7 +352,7 @@ const Service = ({
               <AggregationProfileAutocompleteField
                 forwardedRef={ field.id }
                 index={ index }
-                isNew={ service.isNew }
+                isNew={ isnew }
                 groupNew={ groupnew }
                 groupIndex={ groupindex }
                 isMissing={ ismissing }
@@ -368,7 +368,7 @@ const Service = ({
               data-testid={ `groups.${groupindex}.services.${index}.operation` }
               options={ insertSelectPlaceholder(context.logic_operations, 'Select') }
               class_name="form-select service-operation"
-              isnew={ service.isNew && !groupnew }
+              isnew={ isnew && !groupnew }
           />
           </div>
         </Col>
@@ -506,16 +506,16 @@ const AggregationProfilesForm = ({
   }, [metric_profile])
 
   useEffect(() => {
-    setIsServiceMissing(checkIfServiceMissingInMetricProfile(listServices, groups))
+    setIsServiceMissing(checkIfServiceMissingInMetricProfile())
     setExtraServices(checkIfServiceExtraInMetricProfile(listServices, groups))
   }, [groups, listServices])
 
 
-  const checkIfServiceMissingInMetricProfile = (servicesMetricProfile, serviceGroupsAggregationProfile) => {
-    let servicesInMetricProfiles = new Set(servicesMetricProfile)
+  const checkIfServiceMissingInMetricProfile = () => {
+    let servicesInMetricProfiles = new Set(listServices)
     let isMissing = false
 
-    serviceGroupsAggregationProfile.forEach(group => {
+    groups.forEach(group => {
       for (let service of group.services) {
         if (!["dummy", ""].includes(service.name))
           if (!servicesInMetricProfiles.has(service.name)) {
@@ -528,11 +528,11 @@ const AggregationProfilesForm = ({
     return isMissing
   }
 
-  const checkIfServiceExtraInMetricProfile = (servicesMetricProfile, serviceGroupsAggregationProfile) => {
+  const checkIfServiceExtraInMetricProfile = () => {
     let serviceGroupsInAggregationProfile = new Set()
-    let _difference = new Set(servicesMetricProfile)
+    let _difference = new Set(listServices)
 
-    serviceGroupsAggregationProfile.forEach(group => {
+    groups.forEach(group => {
       for (let service of group.services) {
         if (service.name !== "dummy")
           serviceGroupsInAggregationProfile.add(service.name)
