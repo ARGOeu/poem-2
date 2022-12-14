@@ -11,7 +11,8 @@ import {
   ErrorComponent,
   ParagraphTitle,
   ProfilesListTable,
-  CustomReactSelect
+  CustomReactSelect,
+  CustomError
 } from './UIElements';
 import Autosuggest from 'react-autosuggest';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -98,7 +99,7 @@ const DropDown = ({
           { ...field }
           { ...props }
           data-testid={ name }
-          className={ `form-control ${class_name} ${isnew ? 'border-success' : `${errors && 'is-invalid'}`}` }
+          className={ `form-control ${class_name} ${isnew ? 'border-success' : `${errors && 'border-danger'}`}` }
         >
           {
             options.map((name, i) => (
@@ -111,7 +112,6 @@ const DropDown = ({
         </select>
       }
     />
-
   )
 }
 
@@ -130,18 +130,19 @@ const AggregationProfileAutocompleteField = ({
   groupNew,
   groupIndex,
   isMissing,
-  value
+  value,
+  error
 }) => {
   const context = useContext(AggregationProfilesChangeContext);
 
-  const { setValue } = useFormContext()
+  const { setValue, clearErrors } = useFormContext()
 
   const [suggestionList, setSuggestions] = useState(context.list_services)
 
   return (
     <Autosuggest
       inputProps={{
-        className: `form-control form-select ${isNew && !groupNew && "border-success"} ${isMissing && "border-primary"}`,
+        className: `form-control form-select ${error && "is-invalid"} ${isNew && !groupNew && "border-success"} ${isMissing && "border-primary"}`,
         placeholder: '',
         onChange: (_, {newValue}) => setValue(`groups.${groupIndex}.services.${index}.name`, newValue),
         value: value
@@ -168,6 +169,7 @@ const AggregationProfileAutocompleteField = ({
       }}
       onSuggestionSelected={(_, {suggestion}) => {
         setValue(`groups.${groupIndex}.services.${index}.name`, suggestion)
+        clearErrors(`groups.${groupIndex}.services.${index}.name`)
       }}
       shouldRenderSuggestions={() => true}
       theme={{
@@ -224,9 +226,17 @@ const Group = ({ group, groupindex, remove, insert, last }) => {
                         { ...field }
                         placeholder="Name of service group"
                         data-testid={ `groups.${groupindex}.name` }
-                        required={ true }
                         className={ `form-control ${errors?.groups?.[groupindex]?.name && "is-invalid"}` }
                       />
+                    }
+                  />
+                  <ErrorMessage
+                    errors={ errors }
+                    name={ `groups.${groupindex}.name` }
+                    render={ ({ message }) =>
+                      <FormFeedback invalid="true" className="end-0">
+                        { message }
+                      </FormFeedback>
                     }
                   />
                 </Col>
@@ -255,9 +265,10 @@ const Group = ({ group, groupindex, remove, insert, last }) => {
                   name={ `groups.${groupindex}.operation` }
                   data-testid={ `groups.${groupindex}.operation` }
                   options={ insertSelectPlaceholder(context.logic_operations, 'Select') }
-                  class_name="form-select form-control"
+                  class_name={ `form-select form-control ${errors?.groups?.[groupindex]?.operation && "border-danger"}` }
                   errors={ errors?.groups?.[groupindex]?.operation }
                 />
+                <CustomError error={ errors?.groups?.[groupindex]?.operation?.message } />
               </div>
             </CardFooter>
           </Card>
@@ -357,9 +368,11 @@ const Service = ({
                 groupIndex={ groupindex }
                 isMissing={ ismissing }
                 value={ field.value }
+                error={ errors?.groups?.[groupindex]?.services?.[index]?.name }
               />
             }
           />
+          <CustomError error={ errors?.groups?.[groupindex]?.services?.[index]?.name?.message } />
         </Col>
         <Col md={2}>
           <div className="input-group" data-testid={`operation-${index}`}>
@@ -369,8 +382,10 @@ const Service = ({
               options={ insertSelectPlaceholder(context.logic_operations, 'Select') }
               class_name="form-select service-operation"
               isnew={ isnew && !groupnew }
+              errors={ errors?.groups?.[groupindex]?.services?.[index]?.operation }
           />
           </div>
+          <CustomError error={ errors?.groups?.[groupindex]?.services?.[index]?.operation?.message } />
         </Col>
         <Col md={2} className="ps-2">
           <Button size="sm" color="light"
@@ -667,9 +682,10 @@ const AggregationProfilesForm = ({
                         :
                           <CustomReactSelect
                             forwardedRef={ field.ref }
-                            onChange={
-                              e => methods.setValue("metric_operation", e.value)
-                            }
+                            onChange={ e => {
+                              methods.setValue("metric_operation", e.value)
+                              methods.clearErrors("metric_operation")
+                            }}
                             options={
                               context.logic_operations.map(operation => new Object({
                                 label: operation, value: operation
@@ -681,19 +697,11 @@ const AggregationProfilesForm = ({
                           />
                       }
                     />
+                    <CustomError error={ methods.formState.errors.metric_operation?.message } />
                   </Col>
                 </Row>
                 <Row>
                   <Col md={12}>
-                    <ErrorMessage
-                      errors={ methods.formState.errors }
-                      name="metric_operation"
-                      render={ ({ message }) =>
-                        <FormFeedback invalid="true" className="end-0">
-                          { message }
-                        </FormFeedback>
-                      }
-                    />
                     <FormText>
                       Logical operation that will be applied between metrics of each service flavour
                     </FormText>
@@ -725,7 +733,10 @@ const AggregationProfilesForm = ({
                         :
                           <CustomReactSelect
                             forwardedRef={ field.ref }
-                            onChange={e => methods.setValue("profile_operation", e.value)}
+                            onChange={e => {
+                              methods.setValue("profile_operation", e.value)
+                              methods.clearErrors("profile_operation")
+                            }}
                             options={
                               context.logic_operations.map(operation => new Object({
                                 label: operation, value: operation
@@ -741,15 +752,7 @@ const AggregationProfilesForm = ({
                 </Row>
                 <Row>
                   <Col md={12}>
-                    <ErrorMessage
-                      errors={ methods.formState.errors }
-                      name="profile_operation"
-                      render={ ({ message }) =>
-                        <FormFeedback invalid="true" className="end-0">
-                          { message }
-                        </FormFeedback>
-                      }
-                    />
+                    <CustomError error={ methods.formState.errors.profile_operation?.message } />
                     <FormText>
                       Logical operation that will be applied between defined service flavour groups
                     </FormText>
@@ -782,9 +785,10 @@ const AggregationProfilesForm = ({
                         :
                           <CustomReactSelect
                             forwardedRef={ field.ref }
-                            onChange={
-                              e => methods.setValue("endpoint_group", e.value)
-                            }
+                            onChange={ e => {
+                              methods.setValue("endpoint_group", e.value)
+                              methods.clearErrors("endpoint_group")
+                            }}
                             options={
                               context.endpoint_groups.map(group => new Object({
                                 label: group, value: group
@@ -797,15 +801,7 @@ const AggregationProfilesForm = ({
                       }
                     />
                   </Col>
-                  <ErrorMessage
-                    errors={ methods.formState.errors }
-                    name="endpoint_group"
-                    render={ ({ message }) =>
-                      <FormFeedback invalid="true" className="end-0">
-                        { message }
-                      </FormFeedback>
-                    }
-                  />
+                  <CustomError error={ methods.formState.errors.endpoint_group?.message } />
                 </Row>
               </FormGroup>
             </Col>
@@ -830,7 +826,10 @@ const AggregationProfilesForm = ({
                       />
                     :
                       <CustomReactSelect
-                        onChange={e => methods.setValue("metric_profile", e.value)}
+                        onChange={ e => {
+                          methods.setValue("metric_profile", e.value)
+                          methods.clearErrors("metric_profile")
+                        }}
                         options={
                           extractListOfMetricsProfiles(context.metric_profiles).map(profile => new Object({
                             label: profile.name, value: profile.name
@@ -842,15 +841,7 @@ const AggregationProfilesForm = ({
                       />
                   }
                 />
-                <ErrorMessage
-                  errors={ methods.formState.errors }
-                  name="metric_profile"
-                  render={ ({ message }) =>
-                    <FormFeedback invalid="true" className="end-0">
-                      { message }
-                    </FormFeedback>
-                  }
-                />
+                <CustomError error={ methods.formState.errors?.metric_profile?.message } />
                 <FormText>
                   Metric profile associated to Aggregation profile. Service flavours defined in service flavour groups originate from selected metric profile.
                 </FormText>

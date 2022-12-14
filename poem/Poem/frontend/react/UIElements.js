@@ -208,7 +208,7 @@ export const CustomReactSelect = ({ forwardedRef=undefined, ...props}) => {
       textShadow: 'none',
       textAlign: 'start',
       textIndent: 0,
-      borderColor: props.error ? '#FF0000' : state.selectProps.menuIsOpen ? '#66afe9' : '#ced4da',
+      borderColor: props.error ? '#dc3545' : state.selectProps.menuIsOpen ? '#66afe9' : '#ced4da',
       transition: 'border-color .15s ease-in-out, box-shadow .15s ease-in-out',
       boxShadow: state.selectProps.menuIsOpen ? '0 0 0 .2rem rgba(0, 123, 255, .25)' : 'none',
       ':focus': {
@@ -980,7 +980,7 @@ export const BaseArgoView = ({resourcename='', location=undefined,
 
 
 export const CustomError = (props) => (
-  <div data-testid='error-msg' style={{color: '#FF0000', fontSize: 'small'}}>{props.error}</div>
+  <div data-testid='error-msg' className="end-0" style={{color: '#dc3545', fontSize: 'small'}}>{props.error}</div>
 )
 
 
@@ -1282,7 +1282,7 @@ export const ProfileMain = ({
   profiletype=undefined,
   addview=false
 }) => {
-  const { control, setValue, formState: { errors } } = useFormContext()
+  const { control, setValue, clearErrors, formState: { errors } } = useFormContext()
 
   return (
     <FormGroup>
@@ -1362,20 +1362,15 @@ export const ProfileMain = ({
                     error={ errors?.groupname }
                     options={ grouplist }
                     value={ field.value }
-                    onChange={ e => setValue("groupname", e.value) }
+                    onChange={ e => {
+                      setValue("groupname", e.value)
+                      clearErrors("groupname")
+                    }}
                   />
               }
             />
-            <ErrorMessage
-              errors={ errors }
-              name="groupname"
-              render={ ({ message }) =>
-                <FormFeedback invalid="true" className="end-0">
-                  { message }
-                </FormFeedback>
-              }
-            />
           </InputGroup>
+          <CustomError error={ errors.groupname?.message } />
           <FormText color="muted">
             { `${profiletype.charAt(0).toUpperCase() + profiletype.slice(1)} profile is member of given group.` }
           </FormText>
