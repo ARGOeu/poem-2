@@ -4,7 +4,6 @@ import {
   LoadingAnim,
   BaseArgoView,
   NotifyOk,
-  Icon,
   DiffElement,
   ProfileMain,
   NotifyError,
@@ -14,7 +13,6 @@ import {
   CustomReactSelect,
   CustomError
 } from './UIElements';
-import Autosuggest from 'react-autosuggest';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimes, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import {Backend, WebApi} from './DataManager';
@@ -116,52 +114,32 @@ const AggregationProfileAutocompleteField = ({
   groupNew,
   groupIndex,
   isMissing,
-  value,
   error
 }) => {
   const context = useContext(AggregationProfilesChangeContext);
 
-  const { setValue, clearErrors } = useFormContext()
+  const { control, setValue, clearErrors } = useFormContext()
 
-  const [suggestionList, setSuggestions] = useState(context.list_services)
+  const name = `groups.${groupIndex}.services.${index}.name`
 
   return (
-    <Autosuggest
-      inputProps={{
-        className: `form-control form-select ${error && "is-invalid"} ${isNew && !groupNew && "border-success"} ${isMissing && "border-primary"}`,
-        placeholder: '',
-        onChange: (_, {newValue}) => setValue(`groups.${groupIndex}.services.${index}.name`, newValue),
-        value: value
-      }}
-      getSuggestionValue={(suggestion) => suggestion}
-      suggestions={suggestionList}
-      renderSuggestion={(suggestion, {_, isHighlighted}) =>
-        <div
-          key={context.list_services.indexOf(suggestion)}
-          className={`aggregation-autocomplete-entries ${isHighlighted ?
-              "aggregation-autocomplete-entries-highlighted"
-              : ""}`
-          }>
-          {suggestion ? <Icon i='serviceflavour'/> : ''} {suggestion}
-        </div>}
-      onSuggestionsFetchRequested={({ value }) =>
-        {
-          let result = context.list_services.filter(service => service.toLowerCase().includes(value.trim().toLowerCase()))
-          setSuggestions(result)
+    <Controller
+      name={ name }
+      control={ control }
+      render={ ({ field }) =>
+        <CustomReactSelect
+          forwardedRef={ field.ref }
+          onChange={ e => {
+            setValue(name, e.value)
+            clearErrors(name)
+          }}
+          options={ context.list_services.map(option => new Object({ label: option, value: option })) }
+          value={ field.value ? { label: field.value, value: field.value } : undefined }
+          error={ error }
+          isnew={ isNew && !groupNew }
+          ismissing={ isMissing }
+        />
       }
-      }
-      onSuggestionsClearRequested={() => {
-        setSuggestions([])
-      }}
-      onSuggestionSelected={(_, {suggestion}) => {
-        setValue(`groups.${groupIndex}.services.${index}.name`, suggestion)
-        clearErrors(`groups.${groupIndex}.services.${index}.name`)
-      }}
-      shouldRenderSuggestions={() => true}
-      theme={{
-        suggestionsContainerOpen: 'aggregation-autocomplete-menu',
-        suggestionsList: 'aggregation-autocomplete-list'
-      }}
     />
   )
 }

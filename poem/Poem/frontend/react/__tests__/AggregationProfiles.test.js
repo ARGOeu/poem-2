@@ -676,41 +676,31 @@ describe('Tests for aggregation profiles changeview', () => {
     const card2 = within(screen.getByTestId('card-2'));
     const card3 = within(screen.getByTestId('card-3'));
 
-    expect(screen.getAllByTestId(/group-operation/i)).toHaveLength(4);
     expect(screen.getAllByText("AND")).toHaveLength(6)
 
     expect(card0.getByPlaceholderText(/service group/i).value).toBe('compute')
-    const serviceFields0 = card0.getAllByRole('textbox')
-    expect(serviceFields0).toHaveLength(5);
-    // the first serviceFields0 element is the title of the group
-    expect(serviceFields0[ 1 ].value).toBe('ARC-CE');
-    expect(serviceFields0[ 2 ].value).toBe('GRAM5');
-    expect(serviceFields0[ 3 ].value).toBe('QCG.Computing');
-    expect(serviceFields0[ 4 ].value).toBe('org.opensciencegrid.htcondorce');
+    expect(card0.getByText("ARC-CE")).toBeInTheDocument()
+    expect(card0.getByText("GRAM5")).toBeInTheDocument()
+    expect(card0.getByText("QCG.Computing")).toBeInTheDocument()
+    expect(card0.getByText("org.opensciencegrid.htcondorce")).toBeInTheDocument()
     expect(card0.getAllByText("OR")).toHaveLength(5)
     expect(card0.getAllByTestId(/remove/i)).toHaveLength(5);
     expect(card0.getAllByTestId(/insert/i)).toHaveLength(4);
 
     expect(card1.getByPlaceholderText(/service group/i).value).toBe('storage')
-    const serviceFields1 = card1.getAllByRole('textbox')
-    expect(serviceFields1).toHaveLength(2);
-    expect(serviceFields1[ 1 ].value).toBe('SRM');
+    expect(card1.getByText("SRM")).toBeInTheDocument()
     expect(card1.getAllByText("OR")).toHaveLength(2)
     expect(card1.getAllByTestId(/remove/i)).toHaveLength(2);
     expect(card1.getAllByTestId(/insert/i)).toHaveLength(1);
 
     expect(card2.getByPlaceholderText(/service group/i).value).toBe('information')
-    const serviceFields2 = card2.getAllByRole('textbox')
-    expect(serviceFields2).toHaveLength(2);
-    expect(serviceFields2[ 1 ].value).toBe('Site-BDII');
+    expect(card2.getByText("Site-BDII")).toBeInTheDocument()
     expect(card2.getAllByText("OR")).toHaveLength(2)
     expect(card2.getAllByTestId(/remove/i)).toHaveLength(2);
     expect(card2.getAllByTestId(/insert/i)).toHaveLength(1);
 
     expect(card3.getByPlaceholderText(/service group/i).value).toBe('cloud')
-    const serviceFields3 = card3.getAllByRole('textbox')
-    expect(serviceFields3).toHaveLength(2);
-    expect(serviceFields3[ 1 ].value).toBe('org.openstack.nova');
+    expect(card3.getByText("org.openstack.nova")).toBeInTheDocument()
     expect(card3.getAllByText("OR")).toHaveLength(2)
     expect(card3.getAllByTestId(/remove/i)).toHaveLength(2);
     expect(card3.getAllByTestId(/insert/i)).toHaveLength(1);
@@ -926,14 +916,6 @@ describe('Tests for aggregation profiles changeview', () => {
 
     const card0 = within(screen.getByTestId("card-0"))
 
-    const serviceFields0 = card0.getAllByRole("textbox")
-    expect(serviceFields0).toHaveLength(5)
-    // the first serviceFields0 element is the title of the group
-    expect(serviceFields0[ 1 ].value).toBe('ARC-CE');
-    expect(serviceFields0[ 2 ].value).toBe('GRAM5');
-    expect(serviceFields0[ 3 ].value).toBe('QCG.Computing');
-    expect(serviceFields0[ 4 ].value).toBe('org.opensciencegrid.htcondorce');
-
     fireEvent.change(screen.getByTestId("groups.0.name"), { target: { value: "compute2" } })
 
     expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
@@ -945,10 +927,10 @@ describe('Tests for aggregation profiles changeview', () => {
       "groups.3.name": "cloud"
     })
 
-    expect(serviceFields0[ 1 ].value).toBe('ARC-CE')
-    expect(serviceFields0[ 2 ].value).toBe('GRAM5')
-    expect(serviceFields0[ 3 ].value).toBe('QCG.Computing')
-    expect(serviceFields0[ 4 ].value).toBe('org.opensciencegrid.htcondorce')
+    expect(card0.getByText("ARC-CE")).toBeInTheDocument()
+    expect(card0.getByText("GRAM5")).toBeInTheDocument()
+    expect(card0.getByText("QCG.Computing")).toBeInTheDocument()
+    expect(card0.getByText("org.opensciencegrid.htcondorce")).toBeInTheDocument()
 
     await selectEvent.select(within(screen.getByTestId("card-0")).getAllByText("OR")[4], "AND")
 
@@ -961,36 +943,32 @@ describe('Tests for aggregation profiles changeview', () => {
       "groups.3.name": "cloud"
     })
 
-    expect(serviceFields0[ 1 ].value).toBe('ARC-CE')
-    expect(serviceFields0[ 2 ].value).toBe('GRAM5')
-    expect(serviceFields0[ 3 ].value).toBe('QCG.Computing')
-    expect(serviceFields0[ 4 ].value).toBe('org.opensciencegrid.htcondorce')
+    expect(card0.getByText("ARC-CE")).toBeInTheDocument()
+    expect(card0.getByText("GRAM5")).toBeInTheDocument()
+    expect(card0.getByText("QCG.Computing")).toBeInTheDocument()
+    expect(card0.getByText("org.opensciencegrid.htcondorce")).toBeInTheDocument()
 
     fireEvent.click(card0.getByTestId("insert-0"))
 
     expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
 
-    const serviceFields0a = card0.getAllByRole("textbox")
-
-    expect(serviceFields0a).toHaveLength(6)
-    expect(serviceFields0a[ 1 ].value).toBe("ARC-CE")
-    expect(serviceFields0a[ 2 ].value).toBe("")
-    expect(serviceFields0a[ 3 ].value).toBe('GRAM5')
-    expect(serviceFields0a[ 4 ].value).toBe('QCG.Computing')
-    expect(serviceFields0a[ 5 ].value).toBe('org.opensciencegrid.htcondorce')
-
-    fireEvent.change(serviceFields0a[ 2 ], { target: { value: "webdav" } })
-
-    expect(serviceFields0a[ 1 ].value).toBe("ARC-CE")
-    expect(serviceFields0a[ 2 ].value).toBe("webdav")
-    expect(serviceFields0a[ 3 ].value).toBe('GRAM5')
-    expect(serviceFields0a[ 4 ].value).toBe('QCG.Computing')
-    expect(serviceFields0a[ 5 ].value).toBe('org.opensciencegrid.htcondorce')
-
-    expect(screen.queryByTestId('alert-missing')).toBeInTheDocument()
-    expect(screen.queryByTestId('alert-extra')).not.toBeInTheDocument()
+    expect(card0.getByText("ARC-CE")).toBeInTheDocument()
+    expect(card0.getByText("GRAM5")).toBeInTheDocument()
+    expect(card0.getByText("QCG.Computing")).toBeInTheDocument()
+    expect(card0.getByText("org.opensciencegrid.htcondorce")).toBeInTheDocument()
 
     await selectEvent.select(screen.getByText("ARGO_MON_CRITICAL"), "ARGO_MON_TEST")
+
+    expect(screen.queryByTestId('alert-missing')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('alert-extra')).toBeInTheDocument()
+
+    await selectEvent.select(card0.getAllByText(/select/i)[0], "webdav")
+
+    expect(card0.getByText("ARC-CE")).toBeInTheDocument()
+    expect(card0.getByText("GRAM5")).toBeInTheDocument()
+    expect(card0.getByText("QCG.Computing")).toBeInTheDocument()
+    expect(card0.getByText("org.opensciencegrid.htcondorce")).toBeInTheDocument()
+    expect(card0.getByText("webdav")).toBeInTheDocument()
 
     expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
 
@@ -1000,25 +978,6 @@ describe('Tests for aggregation profiles changeview', () => {
       "groups.2.name": "information",
       "groups.3.name": "cloud"
     })
-
-    fireEvent.change(serviceFields0a[ 2 ], { target: { value: "test-service" } })
-
-    expect(screen.queryByTestId('alert-missing')).toBeInTheDocument()
-    expect(screen.queryByTestId('alert-extra')).toBeInTheDocument()
-
-    expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
-      "groups.0.name": "compute2",
-      "groups.1.name": "storage",
-      "groups.2.name": "information",
-      "groups.3.name": "cloud"
-    })
-
-    expect(serviceFields0a).toHaveLength(6)
-    expect(serviceFields0a[ 1 ].value).toBe("ARC-CE")
-    expect(serviceFields0a[ 2 ].value).toBe("test-service")
-    expect(serviceFields0a[ 3 ].value).toBe('GRAM5')
-    expect(serviceFields0a[ 4 ].value).toBe('QCG.Computing')
-    expect(serviceFields0a[ 5 ].value).toBe('org.opensciencegrid.htcondorce')
 
     await selectEvent.select(screen.getByText("ARGO_MON_TEST"), "ARGO_MON_CRITICAL")
 
@@ -1036,12 +995,12 @@ describe('Tests for aggregation profiles changeview', () => {
       "groups.3.name": "cloud"
     })
 
-    expect(card0.getAllByRole("textbox")).toHaveLength(5)
-    const serviceFields0b = card0.getAllByRole("textbox")
-    expect(serviceFields0b[ 1 ].value).toBe("ARC-CE")
-    expect(serviceFields0b[ 2 ].value).toBe('GRAM5')
-    expect(serviceFields0b[ 3 ].value).toBe('QCG.Computing')
-    expect(serviceFields0b[ 4 ].value).toBe('org.opensciencegrid.htcondorce')
+    expect(card0.getByText("ARC-CE")).toBeInTheDocument()
+    expect(card0.getByText("GRAM5")).toBeInTheDocument()
+    expect(card0.getByText("QCG.Computing")).toBeInTheDocument()
+    expect(card0.getByText("org.opensciencegrid.htcondorce")).toBeInTheDocument()
+    expect(card0.queryByText("webdav")).not.toBeInTheDocument()
+    expect(card0.queryByText("test-service")).not.toBeInTheDocument()
 
     fireEvent.click(card0.getByTestId("remove-service-0"))
 
@@ -1055,11 +1014,12 @@ describe('Tests for aggregation profiles changeview', () => {
       "groups.3.name": "cloud"
     })
 
-    const serviceFields0c = card0.getAllByRole("textbox")
-    expect(serviceFields0c).toHaveLength(4)
-    expect(serviceFields0c[ 1 ].value).toBe('GRAM5')
-    expect(serviceFields0c[ 2 ].value).toBe('QCG.Computing')
-    expect(serviceFields0c[ 3 ].value).toBe('org.opensciencegrid.htcondorce')
+    expect(card0.getByText("GRAM5")).toBeInTheDocument()
+    expect(card0.getByText("QCG.Computing")).toBeInTheDocument()
+    expect(card0.getByText("org.opensciencegrid.htcondorce")).toBeInTheDocument()
+    expect(card0.queryByText("webdav")).not.toBeInTheDocument()
+    expect(card0.queryByText("test-service")).not.toBeInTheDocument()
+    expect(card0.queryByText("ARC-CE")).not.toBeInTheDocument()
   })
 
   test("Test add/remove group", async () => {
@@ -1106,9 +1066,7 @@ describe('Tests for aggregation profiles changeview', () => {
     })
 
     const newCard = within(screen.getByTestId("card-3"))
-    const serviceFields = newCard.getAllByRole("textbox")
-    expect(serviceFields).toHaveLength(2)
-    expect(serviceFields[ 0 ].value).toBe("")
+    expect(newCard.getAllByText(/select/i)).toHaveLength(3)
   })
 
   test('Test import json successfully', async () => {
@@ -1193,12 +1151,9 @@ describe('Tests for aggregation profiles changeview', () => {
     expect(screen.getAllByTestId(/group-operation/i)).toHaveLength(1);
 
     expect(card0.getByPlaceholderText(/service group/i).value).toBe('compute')
-    const serviceFields0 = card0.getAllByRole('textbox')
-    expect(serviceFields0).toHaveLength(4);
-    // the first serviceFields0 element is the title of the group
-    expect(serviceFields0[1].value).toBe('ARC-CE');
-    expect(serviceFields0[2].value).toBe('GRAM5');
-    expect(serviceFields0[3].value).toBe('org.opensciencegrid.htcondorce');
+    expect(card0.getByText("ARC-CE")).toBeInTheDocument()
+    expect(card0.getByText("GRAM5")).toBeInTheDocument()
+    expect(card0.getByText("org.opensciencegrid.htcondorce")).toBeInTheDocument()
     expect(card0.getAllByText("OR")).toHaveLength(3)
     expect(card0.getAllByText("AND")).toHaveLength(1)
     expect(card0.getAllByTestId(/remove/i)).toHaveLength(4);
@@ -1303,7 +1258,7 @@ describe('Tests for aggregation profiles changeview', () => {
     await selectEvent.select(metricOperation, 'OR')
     await selectEvent.select(aggregationOperation, 'OR')
     await selectEvent.select(endpointGroup, 'sites')
-    await selectEvent.select(metricProfile, 'FEDCLOUD')
+    await selectEvent.select(metricProfile, 'ARGO_MON_TEST')
 
     const card0 = within(screen.getByTestId('card-0'));
     const card1 = within(screen.getByTestId('card-1'));
@@ -1312,8 +1267,7 @@ describe('Tests for aggregation profiles changeview', () => {
     await selectEvent.select(card0.getAllByText("OR")[1], "AND")
 
     fireEvent.click(card1.getByTestId('insert-0'));
-    const serviceFields = within(screen.getByTestId('card-1')).getAllByRole('textbox');
-    fireEvent.change(serviceFields[ 2 ], { target: { value: 'webdav' } });
+    await selectEvent.select(card1.getAllByText(/select/i)[0], "webdav")
 
     await selectEvent.select(within(screen.getByTestId('card-3')).getAllByText("OR")[1], "AND")
 
@@ -1370,7 +1324,7 @@ describe('Tests for aggregation profiles changeview', () => {
           name: 'cloud'
         }
       ],
-      metric_profile: 'FEDCLOUD'
+      metric_profile: 'ARGO_MON_TEST'
     };
 
     expect(helpers.downloadJSON).toHaveBeenCalledTimes(1);
@@ -1393,7 +1347,7 @@ describe('Tests for aggregation profiles changeview', () => {
     await selectEvent.select(screen.getAllByText('AND')[ 0 ], 'OR')
     await selectEvent.select(screen.getAllByText('AND')[ 0 ], 'OR')
     await selectEvent.select(screen.getByText('servicegroups'), 'sites')
-    await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'FEDCLOUD')
+    await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'ARGO_MON_TEST')
 
     const card0 = within(screen.getByTestId('card-0'));
     const card1 = within(screen.getByTestId('card-1'));
@@ -1402,8 +1356,7 @@ describe('Tests for aggregation profiles changeview', () => {
     await selectEvent.select(card0.getAllByText("OR")[1], "AND")
 
     fireEvent.click(card1.getByTestId('insert-0'));
-    const serviceFields = within(screen.getByTestId('card-1')).getAllByRole('textbox');
-    fireEvent.change(serviceFields[ 2 ], { target: { value: 'webdav' } });
+    await selectEvent.select(card1.getAllByText(/select/i)[0], "webdav")
 
     await selectEvent.select(within(screen.getByTestId("card-3")).getAllByText("OR")[1], "AND")
 
@@ -1468,8 +1421,8 @@ describe('Tests for aggregation profiles changeview', () => {
           }
         ],
         metric_profile: {
-          name: 'FEDCLOUD',
-          id: '56785678-oooo-kkkk-aaaa-aaeekkccnnee'
+          name: 'ARGO_MON_TEST',
+          id: 'Eitaew8t-gSk6-nW8Q-Z3aF-quo0Saevooze'
         },
         id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee'
       })
@@ -1505,7 +1458,7 @@ describe('Tests for aggregation profiles changeview', () => {
     await selectEvent.select(screen.getAllByText('AND')[ 0 ], 'OR')
     await selectEvent.select(screen.getAllByText('AND')[ 0 ], 'OR')
     await selectEvent.select(screen.getByText('servicegroups'), 'sites')
-    await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'FEDCLOUD')
+    await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'ARGO_MON_TEST')
 
     const card0 = within(screen.getByTestId('card-0'));
     const card1 = within(screen.getByTestId('card-1'));
@@ -1514,8 +1467,7 @@ describe('Tests for aggregation profiles changeview', () => {
     await selectEvent.select(card0.getAllByText("OR")[1], "AND")
 
     fireEvent.click(card1.getByTestId('insert-0'));
-    const serviceFields = within(screen.getByTestId('card-1')).getAllByRole('textbox');
-    fireEvent.change(serviceFields[ 2 ], { target: { value: 'webdav' } });
+    await selectEvent.select(card1.getAllByText(/select/i)[0], "webdav")
 
     await selectEvent.select(within(screen.getByTestId("card-3")).getAllByText("OR")[1], "AND")
 
@@ -1580,8 +1532,8 @@ describe('Tests for aggregation profiles changeview', () => {
           }
         ],
         metric_profile: {
-          name: 'FEDCLOUD',
-          id: '56785678-oooo-kkkk-aaaa-aaeekkccnnee'
+          name: 'ARGO_MON_TEST',
+          id: 'Eitaew8t-gSk6-nW8Q-Z3aF-quo0Saevooze'
         },
         id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee'
       })
@@ -1622,7 +1574,7 @@ describe('Tests for aggregation profiles changeview', () => {
     await selectEvent.select(screen.getAllByText('AND')[ 0 ], 'OR')
     await selectEvent.select(screen.getAllByText('AND')[ 0 ], 'OR')
     await selectEvent.select(screen.getByText('servicegroups'), 'sites')
-    await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'FEDCLOUD')
+    await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'ARGO_MON_TEST')
 
     const card0 = within(screen.getByTestId('card-0'));
     const card1 = within(screen.getByTestId('card-1'));
@@ -1631,8 +1583,7 @@ describe('Tests for aggregation profiles changeview', () => {
     await selectEvent.select(card0.getAllByText("OR")[1], "AND")
 
     fireEvent.click(card1.getByTestId('insert-0'));
-    const serviceFields = within(screen.getByTestId('card-1')).getAllByRole('textbox');
-    fireEvent.change(serviceFields[ 2 ], { target: { value: 'webdav' } });
+    await selectEvent.select(card1.getAllByText(/select/i)[0], "webdav")
 
     await selectEvent.select(within(screen.getByTestId('card-3')).getAllByText("OR")[1], "AND")
 
@@ -1697,8 +1648,8 @@ describe('Tests for aggregation profiles changeview', () => {
           }
         ],
         metric_profile: {
-          name: 'FEDCLOUD',
-          id: '56785678-oooo-kkkk-aaaa-aaeekkccnnee'
+          name: 'ARGO_MON_TEST',
+          id: 'Eitaew8t-gSk6-nW8Q-Z3aF-quo0Saevooze'
         },
         id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee'
       })
@@ -1714,7 +1665,7 @@ describe('Tests for aggregation profiles changeview', () => {
           endpoint_group: 'sites',
           metric_operation: 'OR',
           profile_operation: 'OR',
-          metric_profile: 'FEDCLOUD',
+          metric_profile: 'ARGO_MON_TEST',
           groups: JSON.stringify([
             {
               name: 'compute',
@@ -1790,7 +1741,7 @@ describe('Tests for aggregation profiles changeview', () => {
     await selectEvent.select(screen.getAllByText('AND')[ 0 ], 'OR')
     await selectEvent.select(screen.getAllByText('AND')[ 0 ], 'OR')
     await selectEvent.select(screen.getByText('servicegroups'), 'sites')
-    await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'FEDCLOUD')
+    await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'ARGO_MON_TEST')
 
     const card0 = within(screen.getByTestId('card-0'));
     const card1 = within(screen.getByTestId('card-1'));
@@ -1799,8 +1750,7 @@ describe('Tests for aggregation profiles changeview', () => {
     await selectEvent.select(card0.getAllByText("OR")[1], "AND")
 
     fireEvent.click(card1.getByTestId('insert-0'));
-    const serviceFields = within(screen.getByTestId('card-1')).getAllByRole('textbox');
-    fireEvent.change(serviceFields[ 2 ], { target: { value: 'webdav' } });
+    await selectEvent.select(card1.getAllByText(/select/i)[0], "webdav")
 
     await selectEvent.select(within(screen.getByTestId('card-3')).getAllByText("OR")[1], "AND")
 
@@ -1865,8 +1815,8 @@ describe('Tests for aggregation profiles changeview', () => {
           }
         ],
         metric_profile: {
-          name: 'FEDCLOUD',
-          id: '56785678-oooo-kkkk-aaaa-aaeekkccnnee'
+          name: 'ARGO_MON_TEST',
+          id: 'Eitaew8t-gSk6-nW8Q-Z3aF-quo0Saevooze'
         },
         id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee'
       })
@@ -1882,7 +1832,7 @@ describe('Tests for aggregation profiles changeview', () => {
           endpoint_group: 'sites',
           metric_operation: 'OR',
           profile_operation: 'OR',
-          metric_profile: 'FEDCLOUD',
+          metric_profile: 'ARGO_MON_TEST',
           groups: JSON.stringify([
             {
               name: 'compute',
@@ -1957,7 +1907,7 @@ describe('Tests for aggregation profiles changeview', () => {
     await selectEvent.select(screen.getAllByText('AND')[ 0 ], 'OR')
     await selectEvent.select(screen.getAllByText('AND')[ 0 ], 'OR')
     await selectEvent.select(screen.getByText('servicegroups'), 'sites')
-    await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'FEDCLOUD')
+    await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'ARGO_MON_TEST')
 
     const card0 = within(screen.getByTestId('card-0'));
     const card1 = within(screen.getByTestId('card-1'));
@@ -1966,8 +1916,7 @@ describe('Tests for aggregation profiles changeview', () => {
     await selectEvent.select(card0.getAllByText("OR")[1], "AND")
 
     fireEvent.click(card1.getByTestId('insert-0'));
-    const serviceFields = within(screen.getByTestId('card-1')).getAllByRole('textbox');
-    fireEvent.change(serviceFields[ 2 ], { target: { value: 'webdav' } });
+    await selectEvent.select(card1.getAllByText(/select/i)[0], "webdav")
 
     await selectEvent.select(within(screen.getByTestId('card-3')).getAllByText('OR')[1], "AND")
 
@@ -2032,8 +1981,8 @@ describe('Tests for aggregation profiles changeview', () => {
           }
         ],
         metric_profile: {
-          name: 'FEDCLOUD',
-          id: '56785678-oooo-kkkk-aaaa-aaeekkccnnee'
+          name: 'ARGO_MON_TEST',
+          id: 'Eitaew8t-gSk6-nW8Q-Z3aF-quo0Saevooze'
         },
         id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee'
       })
@@ -2049,7 +1998,7 @@ describe('Tests for aggregation profiles changeview', () => {
           endpoint_group: 'sites',
           metric_operation: 'OR',
           profile_operation: 'OR',
-          metric_profile: 'FEDCLOUD',
+          metric_profile: 'ARGO_MON_TEST',
           groups: JSON.stringify([
             {
               name: 'compute',
@@ -2141,7 +2090,7 @@ describe('Tests for aggregation profiles changeview', () => {
           name: 'compute'
         }
       ],
-      metric_profile: 'FEDCLOUD'
+      metric_profile: 'ARGO_MON_TEST'
     }) ], { type: 'application/json' });
 
     const file = new File([ content ], 'profile.json', { type: 'application/json' });
@@ -2162,13 +2111,13 @@ describe('Tests for aggregation profiles changeview', () => {
 
     const card0 = within(screen.getByTestId('card-0'));
     fireEvent.click(card0.getByTestId('insert-2'));
-    fireEvent.change(within(screen.getByTestId('card-0')).getAllByRole('textbox')[ 4 ], { target: { value: 'webdav' } })
+    await selectEvent.select(card0.getAllByText(/select/i)[0], "webdav")
 
     fireEvent.click(screen.getByRole('button', { name: /add new group/i }));
 
     const card1 = within(screen.getByTestId('card-1'));
     fireEvent.change(card1.getByPlaceholderText(/service group/i), { target: { value: 'cloud' } })
-    fireEvent.change(card1.getAllByRole('textbox')[ 1 ], { target: { value: 'org.openstack.nova' } })
+    await selectEvent.select(card1.getAllByText(/select/i)[0], "org.openstack.nova")
     await selectEvent.select(card1.getAllByText(/select/i)[1], "OR")
     await selectEvent.select(card1.getByText(/select/i), "OR")
 
@@ -2221,8 +2170,8 @@ describe('Tests for aggregation profiles changeview', () => {
           }
         ],
         metric_profile: {
-          name: 'FEDCLOUD',
-          id: '56785678-oooo-kkkk-aaaa-aaeekkccnnee'
+          name: 'ARGO_MON_TEST',
+          id: 'Eitaew8t-gSk6-nW8Q-Z3aF-quo0Saevooze'
         },
         id: '00000000-oooo-kkkk-aaaa-aaeekkccnnee'
       })
@@ -2238,7 +2187,7 @@ describe('Tests for aggregation profiles changeview', () => {
           endpoint_group: 'sites',
           metric_operation: 'AND',
           profile_operation: 'OR',
-          metric_profile: 'FEDCLOUD',
+          metric_profile: 'ARGO_MON_TEST',
           groups: JSON.stringify([
             {
               services: [
@@ -2642,11 +2591,7 @@ describe('Tests for aggregation profile addview', () => {
 
     const group = within(screen.getByTestId("card-0"))
 
-    const serviceFields = group.getAllByRole("textbox")
-    expect(serviceFields).toHaveLength(2)
-
-    expect(serviceFields[1].value).toBe("")
-    expect(group.getAllByText(/select/i)).toHaveLength(2)
+    expect(group.getAllByText(/select/i)).toHaveLength(3)
 
     fireEvent.change(group.getByTestId("groups.0.name"), { target: { value: "Group1" } })
 
@@ -2666,25 +2611,14 @@ describe('Tests for aggregation profile addview', () => {
       "groups.0.name": "Group1"
     })
 
-    expect(group.getAllByText(/select/i)).toHaveLength(1)
+    expect(group.getAllByText(/select/i)).toHaveLength(2)
     expect(group.getAllByText("OR")).toHaveLength(1)
 
-    fireEvent.change(serviceFields[1], { target: { value: "org.opensciencegrid.htcondorce" } })
+    await selectEvent.select(group.getAllByText(/select/i)[0], "org.opensciencegrid.htcondorce")
 
     expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
 
     fireEvent.click(group.getByTestId("insert-0"))
-
-    expect(group.getAllByRole("textbox")).toHaveLength(3)
-
-    expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
-
-    fireEvent.change(group.getAllByRole("textbox")[2], { target: { value: "test" } })
-
-    expect(screen.queryByTestId("alert-missing")).toBeInTheDocument()
-    expect(screen.queryByTestId("alert-extra")).not.toBeInTheDocument()
-
-    fireEvent.click(group.getByTestId("remove-service-1"))
 
     expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
 
@@ -2697,7 +2631,7 @@ describe('Tests for aggregation profile addview', () => {
       "groups.1.name": ""
     })
 
-    expect(within(screen.getByTestId("card-1")).getAllByText(/select/i)).toHaveLength(2)
+    expect(within(screen.getByTestId("card-1")).getAllByText(/select/i)).toHaveLength(3)
 
     fireEvent.change(screen.getByTestId("groups.1.name"), { target: { value: "Group2" } })
     await selectEvent.select(within(screen.getByTestId("card-1")).getAllByText(/select/i)[1], "AND")
@@ -2709,7 +2643,7 @@ describe('Tests for aggregation profile addview', () => {
       "groups.1.name": "Group2"
     })
 
-    expect(within(screen.getByTestId("card-1")).getAllByText(/select/i)).toHaveLength(1)
+    expect(within(screen.getByTestId("card-1")).getAllByText(/select/i)).toHaveLength(2)
     expect(within(screen.getByTestId("card-1")).getAllByText("AND")).toHaveLength(1)
 
     fireEvent.click(screen.getByRole("button", { name: /add new group/i }))
@@ -2722,10 +2656,10 @@ describe('Tests for aggregation profile addview', () => {
       "groups.2.name": ""
     })
 
-    expect(within(screen.getByTestId("card-2")).getAllByText(/select/i)).toHaveLength(2)
+    expect(within(screen.getByTestId("card-2")).getAllByText(/select/i)).toHaveLength(3)
 
     fireEvent.change(screen.getByTestId("groups.2.name"), { target: { value: "Group3" } })
-    await selectEvent.select(within(screen.getByTestId("card-2")).getAllByText(/select/i)[0], "AND")
+    await selectEvent.select(within(screen.getByTestId("card-2")).getAllByText(/select/i)[1], "AND")
 
     expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
 
@@ -2735,7 +2669,7 @@ describe('Tests for aggregation profile addview', () => {
       "groups.2.name": "Group3"
     })
 
-    expect(within(screen.getByTestId("card-2")).getAllByText(/select/i)).toHaveLength(1)
+    expect(within(screen.getByTestId("card-2")).getAllByText(/select/i)).toHaveLength(2)
     expect(within(screen.getByTestId("card-2")).getAllByText("AND")).toHaveLength(1)
 
     fireEvent.click(screen.getByTestId("remove-group-1"))
@@ -2789,21 +2723,21 @@ describe('Tests for aggregation profile addview', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
     const card0 = within(screen.getByTestId('card-0'));
-    const textFields0 = card0.getAllByRole('textbox');
-    fireEvent.change(textFields0[0], { target: { value: 'Group 1' } });
-    fireEvent.change(textFields0[1], { target: { value: 'ARC-CE' } });
-    await selectEvent.select(card0.getAllByText(/select/i)[0], "OR")
+    const selectFields0 = card0.getAllByText(/select/i);
+    fireEvent.change(card0.getByTestId("groups.0.name"), { target: { value: 'Group 1' } })
+    await selectEvent.select(selectFields0[0], "ARC-CE")
+    await selectEvent.select(selectFields0[1], "OR")
+    await selectEvent.select(selectFields0[2], "OR")
     fireEvent.click(card0.getByTestId('insert-0'));
-    fireEvent.change(card0.getAllByRole('textbox')[2], { target: { value: 'GRAM5' } });
-    await selectEvent.select(card0.getAllByText(/select/i)[1], "OR")
+    await selectEvent.select(card0.getAllByText(/select/i)[0], "GRAM5")
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
     const card1 = within(screen.getByTestId('card-1'))
-    const textFields1 = card1.getAllByRole('textbox');
-    fireEvent.change(textFields1[0], { target: { value: 'cloud' } });
-    fireEvent.change(textFields1[1], { target: { value: 'org.openstack.nova' } });
-    await selectEvent.select(within(screen.getByTestId("card-1")).getAllByText(/select/i)[0], "OR")
-    await selectEvent.select(within(screen.getByTestId("card-1")).getByText(/select/i), "OR")
+    const selectFields1 = card1.getAllByText(/select/i)
+    fireEvent.change(card1.getByTestId("groups.1.name"), { target: { value: 'cloud' } });
+    await selectEvent.select(selectFields1[0], "org.openstack.nova")
+    await selectEvent.select(selectFields1[1], "OR")
+    await selectEvent.select(selectFields1[2], "OR")
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -2923,22 +2857,21 @@ describe('Tests for aggregation profile addview', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
     const card0 = within(screen.getByTestId('card-0'));
-    const textFields0 = card0.getAllByRole('textbox');
-    fireEvent.change(textFields0[0], { target: { value: 'Group 1' } });
-    fireEvent.change(textFields0[1], { target: { value: 'ARC-CE' } });
-    await selectEvent.select(within(screen.getByTestId("card-0")).getAllByText(/select/i)[0], "OR")
+    const selectFields0 = card0.getAllByText(/select/i)
+    fireEvent.change(card0.getByTestId("groups.0.name"), { target: { value: 'Group 1' } });
+    await selectEvent.select(selectFields0[0], "ARC-CE")
+    await selectEvent.select(selectFields0[1], "OR")
+    await selectEvent.select(selectFields0[2], "OR")
     fireEvent.click(card0.getByTestId('insert-0'));
-    fireEvent.change(card0.getAllByRole('textbox')[2], { target: { value: 'GRAM5' } });
-    await selectEvent.select(within(screen.getByTestId("card-0")).getAllByText(/select/i)[1], "OR")
+    await selectEvent.select(card0.getAllByText(/select/i)[0], "GRAM5")
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
     const card1 = within(screen.getByTestId('card-1'))
-    const textFields1 = card1.getAllByRole('textbox');
     const selectFields1 = card1.getAllByText(/select/i)
-    fireEvent.change(textFields1[0], { target: { value: 'cloud' } });
-    fireEvent.change(textFields1[1], { target: { value: 'org.openstack.nova' } });
-    await selectEvent.select(selectFields1[0], "OR")
+    fireEvent.change(card1.getByTestId("groups.1.name"), { target: { value: 'cloud' } });
+    await selectEvent.select(selectFields1[0], "org.openstack.nova")
     await selectEvent.select(selectFields1[1], "OR")
+    await selectEvent.select(selectFields1[2], "OR")
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -3024,22 +2957,21 @@ describe('Tests for aggregation profile addview', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
     const card0 = within(screen.getByTestId('card-0'));
-    const textFields0 = card0.getAllByRole('textbox');
-    fireEvent.change(textFields0[0], { target: { value: 'Group 1' } });
-    fireEvent.change(textFields0[1], { target: { value: 'ARC-CE' } });
-    await selectEvent.select(card0.getAllByText(/select/i)[0], "OR")
+    const selectFields0 = card0.getAllByText(/select/i)
+    fireEvent.change(card0.getByTestId("groups.0.name"), { target: { value: 'Group 1' } });
+    await selectEvent.select(selectFields0[0], "ARC-CE")
+    await selectEvent.select(selectFields0[1], "OR")
+    await selectEvent.select(selectFields0[2], "OR")
     fireEvent.click(card0.getByTestId('insert-0'));
-    fireEvent.change(card0.getAllByRole('textbox')[2], { target: { value: 'GRAM5' } });
-    await selectEvent.select(card0.getAllByText(/select/i)[1], "OR")
+    await selectEvent.select(card0.getAllByText(/select/i)[0], "GRAM5")
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
     const card1 = within(screen.getByTestId('card-1'))
-    const textFields1 = card1.getAllByRole('textbox');
     const selectFields1 = card1.getAllByText(/select/i)
-    fireEvent.change(textFields1[0], { target: { value: 'cloud' } });
-    fireEvent.change(textFields1[1], { target: { value: 'org.openstack.nova' } });
-    await selectEvent.select(selectFields1[0], "OR")
+    fireEvent.change(card1.getByTestId("groups.1.name"), { target: { value: 'cloud' } });
+    await selectEvent.select(selectFields1[0], "org.openstack.nova")
     await selectEvent.select(selectFields1[1], "OR")
+    await selectEvent.select(selectFields1[2], "OR")
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -3141,22 +3073,21 @@ describe('Tests for aggregation profile addview', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
     const card0 = within(screen.getByTestId('card-0'));
-    const textFields0 = card0.getAllByRole('textbox');
-    fireEvent.change(textFields0[0], { target: { value: 'Group 1' } });
-    fireEvent.change(textFields0[1], { target: { value: 'ARC-CE' } });
-    await selectEvent.select(card0.getAllByText(/select/i)[0], "OR")
+    const selectFields0 = card0.getAllByText(/select/i)
+    fireEvent.change(card0.getByTestId("groups.0.name"), { target: { value: 'Group 1' } });
+    await selectEvent.select(selectFields0[0], "ARC-CE")
+    await selectEvent.select(selectFields0[1], "OR")
+    await selectEvent.select(selectFields0[2], "OR")
     fireEvent.click(card0.getByTestId('insert-0'));
-    fireEvent.change(card0.getAllByRole('textbox')[2], { target: { value: 'GRAM5' } });
-    await selectEvent.select(card0.getAllByText(/select/i)[1], "OR")
+    await selectEvent.select(card0.getAllByText(/select/i)[0], "GRAM5")
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
     const card1 = within(screen.getByTestId('card-1'))
-    const textFields1 = card1.getAllByRole('textbox');
     const selectFields1 = card1.getAllByText(/select/i)
-    fireEvent.change(textFields1[0], { target: { value: 'cloud' } });
-    fireEvent.change(textFields1[1], { target: { value: 'org.openstack.nova' } });
-    await selectEvent.select(selectFields1[0], "OR")
+    fireEvent.change(card1.getByTestId("groups.1.name"), { target: { value: 'cloud' } });
+    await selectEvent.select(selectFields1[0], "org.openstack.nova")
     await selectEvent.select(selectFields1[1], "OR")
+    await selectEvent.select(selectFields1[2], "OR")
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -3293,22 +3224,21 @@ describe('Tests for aggregation profile addview', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
     const card0 = within(screen.getByTestId('card-0'));
-    const textFields0 = card0.getAllByRole('textbox');
-    fireEvent.change(textFields0[0], { target: { value: 'Group 1' } });
-    fireEvent.change(textFields0[1], { target: { value: 'ARC-CE' } });
-    await selectEvent.select(card0.getAllByText(/select/i)[0], "OR")
+    const selectFields0 = card0.getAllByText(/select/i)
+    fireEvent.change(card0.getByTestId("groups.0.name"), { target: { value: 'Group 1' } });
+    await selectEvent.select(selectFields0[0], "ARC-CE")
+    await selectEvent.select(selectFields0[1], "OR")
+    await selectEvent.select(selectFields0[2], "OR")
     fireEvent.click(card0.getByTestId('insert-0'));
-    fireEvent.change(card0.getAllByRole('textbox')[2], { target: { value: 'GRAM5' } });
-    await selectEvent.select(card0.getAllByText(/select/i)[1], "OR")
+    await selectEvent.select(card0.getAllByText(/select/i)[0], "GRAM5")
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
     const card1 = within(screen.getByTestId('card-1'))
-    const textFields1 = card1.getAllByRole('textbox');
     const selectFields1 = card1.getAllByText(/select/i)
-    fireEvent.change(textFields1[0], { target: { value: 'cloud' } });
-    fireEvent.change(textFields1[1], { target: { value: 'org.openstack.nova' } });
-    await selectEvent.select(selectFields1[0], "OR")
+    fireEvent.change(card1.getByTestId("groups.1.name"), { target: { value: 'cloud' } });
+    await selectEvent.select(selectFields1[0], "org.openstack.nova")
     await selectEvent.select(selectFields1[1], "OR")
+    await selectEvent.select(selectFields1[2], "OR")
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
