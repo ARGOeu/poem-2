@@ -677,10 +677,7 @@ describe('Tests for aggregation profiles changeview', () => {
     const card3 = within(screen.getByTestId('card-3'));
 
     expect(screen.getAllByTestId(/group-operation/i)).toHaveLength(4);
-    expect(screen.getByTestId('group-operation-0').firstChild.value).toBe('AND');
-    expect(screen.getByTestId('group-operation-1').firstChild.value).toBe('AND');
-    expect(screen.getByTestId('group-operation-2').firstChild.value).toBe('AND');
-    expect(screen.getByTestId('group-operation-3').firstChild.value).toBe('AND');
+    expect(screen.getAllByText("AND")).toHaveLength(6)
 
     expect(card0.getByPlaceholderText(/service group/i).value).toBe('compute')
     const serviceFields0 = card0.getAllByRole('textbox')
@@ -690,44 +687,33 @@ describe('Tests for aggregation profiles changeview', () => {
     expect(serviceFields0[ 2 ].value).toBe('GRAM5');
     expect(serviceFields0[ 3 ].value).toBe('QCG.Computing');
     expect(serviceFields0[ 4 ].value).toBe('org.opensciencegrid.htcondorce');
-    expect(card0.getAllByTestId(/operation-/i)).toHaveLength(4);
-    expect(card0.getByTestId('groups.0.services.0.operation').value).toBe('OR');
-    expect(card0.getByTestId('groups.0.services.1.operation').value).toBe('OR');
-    expect(card0.getByTestId('groups.0.services.2.operation').value).toBe('OR');
-    expect(card0.getByTestId('groups.0.services.3.operation').value).toBe('OR');
+    expect(card0.getAllByText("OR")).toHaveLength(5)
     expect(card0.getAllByTestId(/remove/i)).toHaveLength(5);
     expect(card0.getAllByTestId(/insert/i)).toHaveLength(4);
-    expect(card0.getByTestId('operation').firstChild.value).toBe('OR');
 
     expect(card1.getByPlaceholderText(/service group/i).value).toBe('storage')
     const serviceFields1 = card1.getAllByRole('textbox')
     expect(serviceFields1).toHaveLength(2);
     expect(serviceFields1[ 1 ].value).toBe('SRM');
-    expect(card1.getAllByTestId(/operation-/i)).toHaveLength(1);
-    expect(card1.getByTestId('operation-0').firstChild.value).toBe('OR');
+    expect(card1.getAllByText("OR")).toHaveLength(2)
     expect(card1.getAllByTestId(/remove/i)).toHaveLength(2);
     expect(card1.getAllByTestId(/insert/i)).toHaveLength(1);
-    expect(card1.getByTestId('operation').firstChild.value).toBe('OR');
 
     expect(card2.getByPlaceholderText(/service group/i).value).toBe('information')
     const serviceFields2 = card2.getAllByRole('textbox')
     expect(serviceFields2).toHaveLength(2);
     expect(serviceFields2[ 1 ].value).toBe('Site-BDII');
-    expect(card2.getAllByTestId(/operation-/i)).toHaveLength(1);
-    expect(card2.getByTestId('operation-0').firstChild.value).toBe('OR');
+    expect(card2.getAllByText("OR")).toHaveLength(2)
     expect(card2.getAllByTestId(/remove/i)).toHaveLength(2);
     expect(card2.getAllByTestId(/insert/i)).toHaveLength(1);
-    expect(card2.getByTestId('operation').firstChild.value).toBe('OR');
 
     expect(card3.getByPlaceholderText(/service group/i).value).toBe('cloud')
     const serviceFields3 = card3.getAllByRole('textbox')
     expect(serviceFields3).toHaveLength(2);
     expect(serviceFields3[ 1 ].value).toBe('org.openstack.nova');
-    expect(card3.getAllByTestId(/operation-/i)).toHaveLength(1);
-    expect(card3.getByTestId('operation-0').firstChild.value).toBe('OR');
+    expect(card3.getAllByText("OR")).toHaveLength(2)
     expect(card3.getAllByTestId(/remove/i)).toHaveLength(2);
     expect(card3.getAllByTestId(/insert/i)).toHaveLength(1);
-    expect(card3.getByTestId('operation').firstChild.value).toBe('OR');
 
     expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
@@ -933,20 +919,9 @@ describe('Tests for aggregation profiles changeview', () => {
 
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
       "groups.0.name": "compute",
-      "groups.0.operation": "OR",
-      "groups.0.services.0.operation": "OR",
-      "groups.0.services.1.operation": "OR",
-      "groups.0.services.2.operation": "OR",
-      "groups.0.services.3.operation": "OR",
       "groups.1.name": "storage",
-      "groups.1.operation": "OR",
-      "groups.1.services.0.operation": "OR",
       "groups.2.name": "information",
-      "groups.2.operation": "OR",
-      "groups.2.services.0.operation": "OR",
       "groups.3.name": "cloud",
-      "groups.3.operation": "OR",
-      "groups.3.services.0.operation": "OR"
     })
 
     const card0 = within(screen.getByTestId("card-0"))
@@ -965,20 +940,9 @@ describe('Tests for aggregation profiles changeview', () => {
 
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
       "groups.0.name": "compute2",
-      "groups.0.operation": "OR",
-      "groups.0.services.0.operation": "OR",
-      "groups.0.services.1.operation": "OR",
-      "groups.0.services.2.operation": "OR",
-      "groups.0.services.3.operation": "OR",
       "groups.1.name": "storage",
-      "groups.1.operation": "OR",
-      "groups.1.services.0.operation": "OR",
       "groups.2.name": "information",
-      "groups.2.operation": "OR",
-      "groups.2.services.0.operation": "OR",
-      "groups.3.name": "cloud",
-      "groups.3.operation": "OR",
-      "groups.3.services.0.operation": "OR"
+      "groups.3.name": "cloud"
     })
 
     expect(serviceFields0[ 1 ].value).toBe('ARC-CE')
@@ -986,26 +950,15 @@ describe('Tests for aggregation profiles changeview', () => {
     expect(serviceFields0[ 3 ].value).toBe('QCG.Computing')
     expect(serviceFields0[ 4 ].value).toBe('org.opensciencegrid.htcondorce')
 
-    fireEvent.change(screen.getByTestId("groups.0.operation"), { target: { value: "AND" } })
+    await selectEvent.select(within(screen.getByTestId("card-0")).getAllByText("OR")[4], "AND")
 
     expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
 
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
       "groups.0.name": "compute2",
-      "groups.0.operation": "AND",
-      "groups.0.services.0.operation": "OR",
-      "groups.0.services.1.operation": "OR",
-      "groups.0.services.2.operation": "OR",
-      "groups.0.services.3.operation": "OR",
       "groups.1.name": "storage",
-      "groups.1.operation": "OR",
-      "groups.1.services.0.operation": "OR",
       "groups.2.name": "information",
-      "groups.2.operation": "OR",
-      "groups.2.services.0.operation": "OR",
-      "groups.3.name": "cloud",
-      "groups.3.operation": "OR",
-      "groups.3.services.0.operation": "OR"
+      "groups.3.name": "cloud"
     })
 
     expect(serviceFields0[ 1 ].value).toBe('ARC-CE')
@@ -1043,20 +996,9 @@ describe('Tests for aggregation profiles changeview', () => {
 
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
       "groups.0.name": "compute2",
-      "groups.0.operation": "AND",
-      "groups.0.services.0.operation": "OR",
-      "groups.0.services.1.operation": "OR",
-      "groups.0.services.2.operation": "OR",
-      "groups.0.services.3.operation": "OR",
       "groups.1.name": "storage",
-      "groups.1.operation": "OR",
-      "groups.1.services.0.operation": "OR",
       "groups.2.name": "information",
-      "groups.2.operation": "OR",
-      "groups.2.services.0.operation": "OR",
-      "groups.3.name": "cloud",
-      "groups.3.operation": "OR",
-      "groups.3.services.0.operation": "OR"
+      "groups.3.name": "cloud"
     })
 
     fireEvent.change(serviceFields0a[ 2 ], { target: { value: "test-service" } })
@@ -1066,21 +1008,9 @@ describe('Tests for aggregation profiles changeview', () => {
 
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
       "groups.0.name": "compute2",
-      "groups.0.operation": "AND",
-      "groups.0.services.0.operation": "OR",
-      "groups.0.services.1.operation": "OR",
-      "groups.0.services.2.operation": "OR",
-      "groups.0.services.3.operation": "OR",
-      "groups.0.services.4.operation": "OR",
       "groups.1.name": "storage",
-      "groups.1.operation": "OR",
-      "groups.1.services.0.operation": "OR",
       "groups.2.name": "information",
-      "groups.2.operation": "OR",
-      "groups.2.services.0.operation": "OR",
-      "groups.3.name": "cloud",
-      "groups.3.operation": "OR",
-      "groups.3.services.0.operation": "OR"
+      "groups.3.name": "cloud"
     })
 
     expect(serviceFields0a).toHaveLength(6)
@@ -1101,20 +1031,9 @@ describe('Tests for aggregation profiles changeview', () => {
 
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
       "groups.0.name": "compute2",
-      "groups.0.operation": "AND",
-      "groups.0.services.0.operation": "OR",
-      "groups.0.services.1.operation": "OR",
-      "groups.0.services.2.operation": "OR",
-      "groups.0.services.3.operation": "OR",
       "groups.1.name": "storage",
-      "groups.1.operation": "OR",
-      "groups.1.services.0.operation": "OR",
       "groups.2.name": "information",
-      "groups.2.operation": "OR",
-      "groups.2.services.0.operation": "OR",
-      "groups.3.name": "cloud",
-      "groups.3.operation": "OR",
-      "groups.3.services.0.operation": "OR"
+      "groups.3.name": "cloud"
     })
 
     expect(card0.getAllByRole("textbox")).toHaveLength(5)
@@ -1131,19 +1050,9 @@ describe('Tests for aggregation profiles changeview', () => {
 
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
       "groups.0.name": "compute2",
-      "groups.0.operation": "AND",
-      "groups.0.services.0.operation": "OR",
-      "groups.0.services.1.operation": "OR",
-      "groups.0.services.2.operation": "OR",
       "groups.1.name": "storage",
-      "groups.1.operation": "OR",
-      "groups.1.services.0.operation": "OR",
       "groups.2.name": "information",
-      "groups.2.operation": "OR",
-      "groups.2.services.0.operation": "OR",
-      "groups.3.name": "cloud",
-      "groups.3.operation": "OR",
-      "groups.3.services.0.operation": "OR"
+      "groups.3.name": "cloud"
     })
 
     const serviceFields0c = card0.getAllByRole("textbox")
@@ -1164,20 +1073,9 @@ describe('Tests for aggregation profiles changeview', () => {
 
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
       "groups.0.name": "compute",
-      "groups.0.operation": "OR",
-      "groups.0.services.0.operation": "OR",
-      "groups.0.services.1.operation": "OR",
-      "groups.0.services.2.operation": "OR",
-      "groups.0.services.3.operation": "OR",
       "groups.1.name": "storage",
-      "groups.1.operation": "OR",
-      "groups.1.services.0.operation": "OR",
       "groups.2.name": "information",
-      "groups.2.operation": "OR",
-      "groups.2.services.0.operation": "OR",
-      "groups.3.name": "cloud",
-      "groups.3.operation": "OR",
-      "groups.3.services.0.operation": "OR"
+      "groups.3.name": "cloud"
     })
 
     fireEvent.click(screen.getByTestId("remove-group-1"))
@@ -1189,17 +1087,8 @@ describe('Tests for aggregation profiles changeview', () => {
 
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
       "groups.0.name": "compute",
-      "groups.0.operation": "OR",
-      "groups.0.services.0.operation": "OR",
-      "groups.0.services.1.operation": "OR",
-      "groups.0.services.2.operation": "OR",
-      "groups.0.services.3.operation": "OR",
       "groups.1.name": "information",
-      "groups.1.operation": "OR",
-      "groups.1.services.0.operation": "OR",
-      "groups.2.name": "cloud",
-      "groups.2.operation": "OR",
-      "groups.2.services.0.operation": "OR"
+      "groups.2.name": "cloud"
     })
 
     fireEvent.click(screen.getByRole("button", { name: /add new group/i }))
@@ -1211,26 +1100,15 @@ describe('Tests for aggregation profiles changeview', () => {
 
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
       "groups.0.name": "compute",
-      "groups.0.operation": "OR",
-      "groups.0.services.0.operation": "OR",
-      "groups.0.services.1.operation": "OR",
-      "groups.0.services.2.operation": "OR",
-      "groups.0.services.3.operation": "OR",
       "groups.1.name": "information",
-      "groups.1.operation": "OR",
-      "groups.1.services.0.operation": "OR",
       "groups.2.name": "cloud",
-      "groups.2.operation": "OR",
-      "groups.2.services.0.operation": "OR",
-      "groups.3.name": "",
-      "groups.3.operation": ""
+      "groups.3.name": ""
     })
 
     const newCard = within(screen.getByTestId("card-3"))
     const serviceFields = newCard.getAllByRole("textbox")
     expect(serviceFields).toHaveLength(2)
     expect(serviceFields[ 0 ].value).toBe("")
-    expect(screen.getByTestId("groups.3.services.0.operation").value).toBe("")
   })
 
   test('Test import json successfully', async () => {
@@ -1313,7 +1191,6 @@ describe('Tests for aggregation profiles changeview', () => {
     const card0 = within(screen.getByTestId('card-0'));
 
     expect(screen.getAllByTestId(/group-operation/i)).toHaveLength(1);
-    expect(screen.getByTestId('group-operation-0').firstChild.value).toBe('OR');
 
     expect(card0.getByPlaceholderText(/service group/i).value).toBe('compute')
     const serviceFields0 = card0.getAllByRole('textbox')
@@ -1322,13 +1199,10 @@ describe('Tests for aggregation profiles changeview', () => {
     expect(serviceFields0[1].value).toBe('ARC-CE');
     expect(serviceFields0[2].value).toBe('GRAM5');
     expect(serviceFields0[3].value).toBe('org.opensciencegrid.htcondorce');
-    expect(card0.getAllByTestId(/operation-/i)).toHaveLength(3);
-    expect(card0.getByTestId('operation-0').firstChild.value).toBe('OR');
-    expect(card0.getByTestId('operation-1').firstChild.value).toBe('AND');
-    expect(card0.getByTestId('operation-2').firstChild.value).toBe('OR');
+    expect(card0.getAllByText("OR")).toHaveLength(3)
+    expect(card0.getAllByText("AND")).toHaveLength(1)
     expect(card0.getAllByTestId(/remove/i)).toHaveLength(4);
     expect(card0.getAllByTestId(/insert/i)).toHaveLength(3);
-    expect(card0.getByTestId('operation').firstChild.value).toBe('OR');
   })
 
   test('Test export json successfully', async () => {
@@ -1435,13 +1309,13 @@ describe('Tests for aggregation profiles changeview', () => {
     const card1 = within(screen.getByTestId('card-1'));
 
     fireEvent.click(card0.getByTestId('remove-service-2'));
-    fireEvent.change(card0.getByTestId('operation-1').firstChild, { target: { value: 'AND' } })
+    await selectEvent.select(card0.getAllByText("OR")[1], "AND")
 
     fireEvent.click(card1.getByTestId('insert-0'));
     const serviceFields = within(screen.getByTestId('card-1')).getAllByRole('textbox');
     fireEvent.change(serviceFields[ 2 ], { target: { value: 'webdav' } });
 
-    fireEvent.change(within(screen.getByTestId('card-3')).getByTestId('operation').firstChild, { target: { value: 'AND' } })
+    await selectEvent.select(within(screen.getByTestId('card-3')).getAllByText("OR")[1], "AND")
 
     fireEvent.click(within(screen.getByTestId('card-2')).getByTestId('remove-group-2'));
 
@@ -1525,13 +1399,13 @@ describe('Tests for aggregation profiles changeview', () => {
     const card1 = within(screen.getByTestId('card-1'));
 
     fireEvent.click(card0.getByTestId('remove-service-2'));
-    fireEvent.change(card0.getByTestId('operation-1').firstChild, { target: { value: 'AND' } })
+    await selectEvent.select(card0.getAllByText("OR")[1], "AND")
 
     fireEvent.click(card1.getByTestId('insert-0'));
     const serviceFields = within(screen.getByTestId('card-1')).getAllByRole('textbox');
     fireEvent.change(serviceFields[ 2 ], { target: { value: 'webdav' } });
 
-    fireEvent.change(within(screen.getByTestId('card-3')).getByTestId('operation').firstChild, { target: { value: 'AND' } })
+    await selectEvent.select(within(screen.getByTestId("card-3")).getAllByText("OR")[1], "AND")
 
     fireEvent.click(within(screen.getByTestId('card-2')).getByTestId('remove-group-2'));
 
@@ -1637,13 +1511,13 @@ describe('Tests for aggregation profiles changeview', () => {
     const card1 = within(screen.getByTestId('card-1'));
 
     fireEvent.click(card0.getByTestId('remove-service-2'));
-    fireEvent.change(card0.getByTestId('operation-1').firstChild, { target: { value: 'AND' } })
+    await selectEvent.select(card0.getAllByText("OR")[1], "AND")
 
     fireEvent.click(card1.getByTestId('insert-0'));
     const serviceFields = within(screen.getByTestId('card-1')).getAllByRole('textbox');
     fireEvent.change(serviceFields[ 2 ], { target: { value: 'webdav' } });
 
-    fireEvent.change(within(screen.getByTestId('card-3')).getByTestId('operation').firstChild, { target: { value: 'AND' } })
+    await selectEvent.select(within(screen.getByTestId("card-3")).getAllByText("OR")[1], "AND")
 
     fireEvent.click(within(screen.getByTestId('card-2')).getByTestId('remove-group-2'));
 
@@ -1754,13 +1628,13 @@ describe('Tests for aggregation profiles changeview', () => {
     const card1 = within(screen.getByTestId('card-1'));
 
     fireEvent.click(card0.getByTestId('remove-service-2'));
-    fireEvent.change(card0.getByTestId('operation-1').firstChild, { target: { value: 'AND' } })
+    await selectEvent.select(card0.getAllByText("OR")[1], "AND")
 
     fireEvent.click(card1.getByTestId('insert-0'));
     const serviceFields = within(screen.getByTestId('card-1')).getAllByRole('textbox');
     fireEvent.change(serviceFields[ 2 ], { target: { value: 'webdav' } });
 
-    fireEvent.change(within(screen.getByTestId('card-3')).getByTestId('operation').firstChild, { target: { value: 'AND' } })
+    await selectEvent.select(within(screen.getByTestId('card-3')).getAllByText("OR")[1], "AND")
 
     fireEvent.click(within(screen.getByTestId('card-2')).getByTestId('remove-group-2'));
 
@@ -1922,13 +1796,13 @@ describe('Tests for aggregation profiles changeview', () => {
     const card1 = within(screen.getByTestId('card-1'));
 
     fireEvent.click(card0.getByTestId('remove-service-2'));
-    fireEvent.change(card0.getByTestId('operation-1').firstChild, { target: { value: 'AND' } })
+    await selectEvent.select(card0.getAllByText("OR")[1], "AND")
 
     fireEvent.click(card1.getByTestId('insert-0'));
     const serviceFields = within(screen.getByTestId('card-1')).getAllByRole('textbox');
     fireEvent.change(serviceFields[ 2 ], { target: { value: 'webdav' } });
 
-    fireEvent.change(within(screen.getByTestId('card-3')).getByTestId('operation').firstChild, { target: { value: 'AND' } })
+    await selectEvent.select(within(screen.getByTestId('card-3')).getAllByText("OR")[1], "AND")
 
     fireEvent.click(within(screen.getByTestId('card-2')).getByTestId('remove-group-2'));
 
@@ -2089,13 +1963,13 @@ describe('Tests for aggregation profiles changeview', () => {
     const card1 = within(screen.getByTestId('card-1'));
 
     fireEvent.click(card0.getByTestId('remove-service-2'));
-    fireEvent.change(card0.getByTestId('operation-1').firstChild, { target: { value: 'AND' } })
+    await selectEvent.select(card0.getAllByText("OR")[1], "AND")
 
     fireEvent.click(card1.getByTestId('insert-0'));
     const serviceFields = within(screen.getByTestId('card-1')).getAllByRole('textbox');
     fireEvent.change(serviceFields[ 2 ], { target: { value: 'webdav' } });
 
-    fireEvent.change(within(screen.getByTestId('card-3')).getByTestId('operation').firstChild, { target: { value: 'AND' } })
+    await selectEvent.select(within(screen.getByTestId('card-3')).getAllByText('OR')[1], "AND")
 
     fireEvent.click(within(screen.getByTestId('card-2')).getByTestId('remove-group-2'));
 
@@ -2284,21 +2158,19 @@ describe('Tests for aggregation profiles changeview', () => {
       fireEvent.load(screen.getByTestId('file_input'))
     })
 
-
     await selectEvent.select(screen.getByLabelText('Metric operation:'), 'AND')
 
     const card0 = within(screen.getByTestId('card-0'));
     fireEvent.click(card0.getByTestId('insert-2'));
     fireEvent.change(within(screen.getByTestId('card-0')).getAllByRole('textbox')[ 4 ], { target: { value: 'webdav' } })
-    fireEvent.change(within(screen.getByTestId('card-0')).getByTestId('operation-3').firstChild, { target: { value: 'OR' } });
 
     fireEvent.click(screen.getByRole('button', { name: /add new group/i }));
 
     const card1 = within(screen.getByTestId('card-1'));
     fireEvent.change(card1.getByPlaceholderText(/service group/i), { target: { value: 'cloud' } })
     fireEvent.change(card1.getAllByRole('textbox')[ 1 ], { target: { value: 'org.openstack.nova' } })
-    fireEvent.change(card1.getByTestId('operation').firstChild, { target: { value: 'OR' } })
-    fireEvent.change(card1.getByTestId('operation-0').firstChild, { target: { value: 'OR' } });
+    await selectEvent.select(card1.getAllByText(/select/i)[1], "OR")
+    await selectEvent.select(card1.getByText(/select/i), "OR")
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -2765,9 +2637,7 @@ describe('Tests for aggregation profile addview', () => {
     expect(screen.getAllByTestId(/card-/i)).toHaveLength(1)
 
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
-      "groups.0.name": "",
-      "groups.0.operation": "",
-      "groups.0.services.0.operation": ""
+      "groups.0.name": ""
     })
 
     const group = within(screen.getByTestId("card-0"))
@@ -2776,7 +2646,7 @@ describe('Tests for aggregation profile addview', () => {
     expect(serviceFields).toHaveLength(2)
 
     expect(serviceFields[1].value).toBe("")
-    expect(group.getByTestId("groups.0.services.0.operation").value).toBe("")
+    expect(group.getAllByText(/select/i)).toHaveLength(2)
 
     fireEvent.change(group.getByTestId("groups.0.name"), { target: { value: "Group1" } })
 
@@ -2784,21 +2654,20 @@ describe('Tests for aggregation profile addview', () => {
     expect(screen.queryByTestId("alert-extra")).toBeInTheDocument()
 
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
-      "groups.0.name": "Group1",
-      "groups.0.operation": "",
-      "groups.0.services.0.operation": ""
+      "groups.0.name": "Group1"
     })
 
-    fireEvent.change(group.getByTestId("groups.0.operation"), { target: { value: "OR" } })
+    await selectEvent.select(group.getAllByText(/select/i)[1], "OR")
 
     expect(screen.queryByTestId("alert-missing")).not.toBeInTheDocument()
     expect(screen.queryByTestId("alert-extra")).toBeInTheDocument()
 
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
-      "groups.0.name": "Group1",
-      "groups.0.operation": "OR",
-      "groups.0.services.0.operation": ""
+      "groups.0.name": "Group1"
     })
+
+    expect(group.getAllByText(/select/i)).toHaveLength(1)
+    expect(group.getAllByText("OR")).toHaveLength(1)
 
     fireEvent.change(serviceFields[1], { target: { value: "org.opensciencegrid.htcondorce" } })
 
@@ -2825,26 +2694,23 @@ describe('Tests for aggregation profile addview', () => {
 
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
       "groups.0.name": "Group1",
-      "groups.0.operation": "OR",
-      "groups.0.services.0.operation": "",
-      "groups.1.name": "",
-      "groups.1.operation": "",
-      "groups.1.services.0.operation": ""
+      "groups.1.name": ""
     })
 
+    expect(within(screen.getByTestId("card-1")).getAllByText(/select/i)).toHaveLength(2)
+
     fireEvent.change(screen.getByTestId("groups.1.name"), { target: { value: "Group2" } })
-    fireEvent.change(screen.getByTestId("groups.1.operation"), { target: { value: "AND" } })
+    await selectEvent.select(within(screen.getByTestId("card-1")).getAllByText(/select/i)[1], "AND")
 
     expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
 
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
       "groups.0.name": "Group1",
-      "groups.0.operation": "OR",
-      "groups.0.services.0.operation": "",
-      "groups.1.name": "Group2",
-      "groups.1.operation": "AND",
-      "groups.1.services.0.operation": ""
+      "groups.1.name": "Group2"
     })
+
+    expect(within(screen.getByTestId("card-1")).getAllByText(/select/i)).toHaveLength(1)
+    expect(within(screen.getByTestId("card-1")).getAllByText("AND")).toHaveLength(1)
 
     fireEvent.click(screen.getByRole("button", { name: /add new group/i }))
 
@@ -2852,32 +2718,25 @@ describe('Tests for aggregation profile addview', () => {
 
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
       "groups.0.name": "Group1",
-      "groups.0.operation": "OR",
-      "groups.0.services.0.operation": "",
       "groups.1.name": "Group2",
-      "groups.1.operation": "AND",
-      "groups.1.services.0.operation": "",
-      "groups.2.name": "",
-      "groups.2.operation": "",
-      "groups.2.services.0.operation": ""
+      "groups.2.name": ""
     })
+
+    expect(within(screen.getByTestId("card-2")).getAllByText(/select/i)).toHaveLength(2)
 
     fireEvent.change(screen.getByTestId("groups.2.name"), { target: { value: "Group3" } })
-    fireEvent.change(screen.getByTestId("groups.2.operation"), { target: { value: "AND" } })
+    await selectEvent.select(within(screen.getByTestId("card-2")).getAllByText(/select/i)[0], "AND")
 
     expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
 
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
       "groups.0.name": "Group1",
-      "groups.0.operation": "OR",
-      "groups.0.services.0.operation": "",
       "groups.1.name": "Group2",
-      "groups.1.operation": "AND",
-      "groups.1.services.0.operation": "",
-      "groups.2.name": "Group3",
-      "groups.2.operation": "AND",
-      "groups.2.services.0.operation": ""
+      "groups.2.name": "Group3"
     })
+
+    expect(within(screen.getByTestId("card-2")).getAllByText(/select/i)).toHaveLength(1)
+    expect(within(screen.getByTestId("card-2")).getAllByText("AND")).toHaveLength(1)
 
     fireEvent.click(screen.getByTestId("remove-group-1"))
 
@@ -2885,11 +2744,7 @@ describe('Tests for aggregation profile addview', () => {
 
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
       "groups.0.name": "Group1",
-      "groups.0.operation": "OR",
-      "groups.0.services.0.operation": "",
-      "groups.1.name": "Group3",
-      "groups.1.operation": "AND",
-      "groups.1.services.0.operation": ""
+      "groups.1.name": "Group3"
     })
 
     fireEvent.click(screen.getByTestId("remove-group-1"))
@@ -2897,9 +2752,7 @@ describe('Tests for aggregation profile addview', () => {
     expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
 
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
-      "groups.0.name": "Group1",
-      "groups.0.operation": "OR",
-      "groups.0.services.0.operation": "",
+      "groups.0.name": "Group1"
     })
   })
 
@@ -2939,19 +2792,18 @@ describe('Tests for aggregation profile addview', () => {
     const textFields0 = card0.getAllByRole('textbox');
     fireEvent.change(textFields0[0], { target: { value: 'Group 1' } });
     fireEvent.change(textFields0[1], { target: { value: 'ARC-CE' } });
-    fireEvent.change(card0.getByTestId('operation-0').firstChild, { target: { value: 'OR' } });
+    await selectEvent.select(card0.getAllByText(/select/i)[0], "OR")
     fireEvent.click(card0.getByTestId('insert-0'));
     fireEvent.change(card0.getAllByRole('textbox')[2], { target: { value: 'GRAM5' } });
-    fireEvent.change(card0.getByTestId('operation-1').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(card0.getByTestId('operation').firstChild, { target: { value: 'OR' } });
+    await selectEvent.select(card0.getAllByText(/select/i)[1], "OR")
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
     const card1 = within(screen.getByTestId('card-1'))
     const textFields1 = card1.getAllByRole('textbox');
     fireEvent.change(textFields1[0], { target: { value: 'cloud' } });
     fireEvent.change(textFields1[1], { target: { value: 'org.openstack.nova' } });
-    fireEvent.change(card1.getByTestId('operation-0').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(card1.getByTestId('operation').firstChild, { target: { value: 'OR' } })
+    await selectEvent.select(within(screen.getByTestId("card-1")).getAllByText(/select/i)[0], "OR")
+    await selectEvent.select(within(screen.getByTestId("card-1")).getByText(/select/i), "OR")
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -3074,19 +2926,19 @@ describe('Tests for aggregation profile addview', () => {
     const textFields0 = card0.getAllByRole('textbox');
     fireEvent.change(textFields0[0], { target: { value: 'Group 1' } });
     fireEvent.change(textFields0[1], { target: { value: 'ARC-CE' } });
-    fireEvent.change(card0.getByTestId('operation-0').firstChild, { target: { value: 'OR' } });
+    await selectEvent.select(within(screen.getByTestId("card-0")).getAllByText(/select/i)[0], "OR")
     fireEvent.click(card0.getByTestId('insert-0'));
     fireEvent.change(card0.getAllByRole('textbox')[2], { target: { value: 'GRAM5' } });
-    fireEvent.change(card0.getByTestId('operation-1').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(card0.getByTestId('operation').firstChild, { target: { value: 'OR' } });
+    await selectEvent.select(within(screen.getByTestId("card-0")).getAllByText(/select/i)[1], "OR")
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
     const card1 = within(screen.getByTestId('card-1'))
     const textFields1 = card1.getAllByRole('textbox');
+    const selectFields1 = card1.getAllByText(/select/i)
     fireEvent.change(textFields1[0], { target: { value: 'cloud' } });
     fireEvent.change(textFields1[1], { target: { value: 'org.openstack.nova' } });
-    fireEvent.change(card1.getByTestId('operation-0').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(card1.getByTestId('operation').firstChild, { target: { value: 'OR' } })
+    await selectEvent.select(selectFields1[0], "OR")
+    await selectEvent.select(selectFields1[1], "OR")
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -3175,19 +3027,19 @@ describe('Tests for aggregation profile addview', () => {
     const textFields0 = card0.getAllByRole('textbox');
     fireEvent.change(textFields0[0], { target: { value: 'Group 1' } });
     fireEvent.change(textFields0[1], { target: { value: 'ARC-CE' } });
-    fireEvent.change(card0.getByTestId('operation-0').firstChild, { target: { value: 'OR' } });
+    await selectEvent.select(card0.getAllByText(/select/i)[0], "OR")
     fireEvent.click(card0.getByTestId('insert-0'));
     fireEvent.change(card0.getAllByRole('textbox')[2], { target: { value: 'GRAM5' } });
-    fireEvent.change(card0.getByTestId('operation-1').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(card0.getByTestId('operation').firstChild, { target: { value: 'OR' } });
+    await selectEvent.select(card0.getAllByText(/select/i)[1], "OR")
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
     const card1 = within(screen.getByTestId('card-1'))
     const textFields1 = card1.getAllByRole('textbox');
+    const selectFields1 = card1.getAllByText(/select/i)
     fireEvent.change(textFields1[0], { target: { value: 'cloud' } });
     fireEvent.change(textFields1[1], { target: { value: 'org.openstack.nova' } });
-    fireEvent.change(card1.getByTestId('operation-0').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(card1.getByTestId('operation').firstChild, { target: { value: 'OR' } })
+    await selectEvent.select(selectFields1[0], "OR")
+    await selectEvent.select(selectFields1[1], "OR")
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -3292,19 +3144,19 @@ describe('Tests for aggregation profile addview', () => {
     const textFields0 = card0.getAllByRole('textbox');
     fireEvent.change(textFields0[0], { target: { value: 'Group 1' } });
     fireEvent.change(textFields0[1], { target: { value: 'ARC-CE' } });
-    fireEvent.change(card0.getByTestId('operation-0').firstChild, { target: { value: 'OR' } });
+    await selectEvent.select(card0.getAllByText(/select/i)[0], "OR")
     fireEvent.click(card0.getByTestId('insert-0'));
     fireEvent.change(card0.getAllByRole('textbox')[2], { target: { value: 'GRAM5' } });
-    fireEvent.change(card0.getByTestId('operation-1').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(card0.getByTestId('operation').firstChild, { target: { value: 'OR' } });
+    await selectEvent.select(card0.getAllByText(/select/i)[1], "OR")
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
     const card1 = within(screen.getByTestId('card-1'))
     const textFields1 = card1.getAllByRole('textbox');
+    const selectFields1 = card1.getAllByText(/select/i)
     fireEvent.change(textFields1[0], { target: { value: 'cloud' } });
     fireEvent.change(textFields1[1], { target: { value: 'org.openstack.nova' } });
-    fireEvent.change(card1.getByTestId('operation-0').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(card1.getByTestId('operation').firstChild, { target: { value: 'OR' } })
+    await selectEvent.select(selectFields1[0], "OR")
+    await selectEvent.select(selectFields1[1], "OR")
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -3444,19 +3296,19 @@ describe('Tests for aggregation profile addview', () => {
     const textFields0 = card0.getAllByRole('textbox');
     fireEvent.change(textFields0[0], { target: { value: 'Group 1' } });
     fireEvent.change(textFields0[1], { target: { value: 'ARC-CE' } });
-    fireEvent.change(card0.getByTestId('operation-0').firstChild, { target: { value: 'OR' } });
+    await selectEvent.select(card0.getAllByText(/select/i)[0], "OR")
     fireEvent.click(card0.getByTestId('insert-0'));
     fireEvent.change(card0.getAllByRole('textbox')[2], { target: { value: 'GRAM5' } });
-    fireEvent.change(card0.getByTestId('operation-1').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(card0.getByTestId('operation').firstChild, { target: { value: 'OR' } });
+    await selectEvent.select(card0.getAllByText(/select/i)[1], "OR")
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
     const card1 = within(screen.getByTestId('card-1'))
     const textFields1 = card1.getAllByRole('textbox');
+    const selectFields1 = card1.getAllByText(/select/i)
     fireEvent.change(textFields1[0], { target: { value: 'cloud' } });
     fireEvent.change(textFields1[1], { target: { value: 'org.openstack.nova' } });
-    fireEvent.change(card1.getByTestId('operation-0').firstChild, { target: { value: 'OR' } });
-    fireEvent.change(card1.getByTestId('operation').firstChild, { target: { value: 'OR' } })
+    await selectEvent.select(selectFields1[0], "OR")
+    await selectEvent.select(selectFields1[1], "OR")
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {

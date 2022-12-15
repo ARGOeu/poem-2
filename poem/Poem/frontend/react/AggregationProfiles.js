@@ -83,44 +83,30 @@ const AggregationProfilesSchema = Yup.object().shape({
 const DropDown = ({
   name,
   options,
-  class_name="",
   isnew=false,
-  errors=undefined,
-  ...props
+  errors=undefined
 }) => {
-  const { control } = useFormContext()
+  const { control, setValue, clearErrors } = useFormContext()
 
   return (
     <Controller
       name={ name }
       control={ control }
       render={ ({ field }) =>
-        <select
-          { ...field }
-          { ...props }
-          data-testid={ name }
-          className={ `form-control ${class_name} ${isnew ? 'border-success' : `${errors && 'border-danger'}`}` }
-        >
-          {
-            options.map((name, i) => (
-              i === 0 ?
-                <option key={i} value='' hidden color='text-muted'>{name}</option>
-              :
-                <option key={i} value={name}>{name}</option>
-            ))
-          }
-        </select>
+        <CustomReactSelect
+          forwardedRef={ field.ref }
+          onChange={ e => {
+            setValue(name, e.value)
+            clearErrors(name)
+          }}
+          options={ options.map(option => new Object({ label: option, value: option })) }
+          value={ field.value ? { label: field.value, value: field.value } : undefined }
+          error={ errors }
+          isnew={ isnew }
+        />
       }
     />
   )
-}
-
-
-function insertSelectPlaceholder(data, text) {
-  if (data)
-    return [text, ...data]
-  else
-    return [text]
 }
 
 
@@ -264,8 +250,7 @@ const Group = ({ group, groupindex, remove, insert, last }) => {
                 <DropDown
                   name={ `groups.${groupindex}.operation` }
                   data-testid={ `groups.${groupindex}.operation` }
-                  options={ insertSelectPlaceholder(context.logic_operations, 'Select') }
-                  class_name={ `form-select form-control ${errors?.groups?.[groupindex]?.operation && "border-danger"}` }
+                  options={ context.logic_operations }
                   errors={ errors?.groups?.[groupindex]?.operation }
                 />
                 <CustomError error={ errors?.groups?.[groupindex]?.operation?.message } />
@@ -278,8 +263,7 @@ const Group = ({ group, groupindex, remove, insert, last }) => {
             <DropDown
               name="profile_operation"
               data-testid={`profile_operation-${groupindex}`}
-              options={ insertSelectPlaceholder(context.logic_operations, 'Select') }
-              class_name='form-select'
+              options={ context.logic_operations }
             />
           </div>
         </Col>
@@ -375,12 +359,11 @@ const Service = ({
           <CustomError error={ errors?.groups?.[groupindex]?.services?.[index]?.name?.message } />
         </Col>
         <Col md={2}>
-          <div className="input-group" data-testid={`operation-${index}`}>
+          <div className="group-operation" data-testid={`operation-${index}`}>
             <DropDown
               name={ `groups.${groupindex}.services.${index}.operation` }
               data-testid={ `groups.${groupindex}.services.${index}.operation` }
-              options={ insertSelectPlaceholder(context.logic_operations, 'Select') }
-              class_name="form-select service-operation"
+              options={ context.logic_operations }
               isnew={ isnew && !groupnew }
               errors={ errors?.groups?.[groupindex]?.services?.[index]?.operation }
           />

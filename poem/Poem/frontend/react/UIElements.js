@@ -208,7 +208,7 @@ export const CustomReactSelect = ({ forwardedRef=undefined, ...props}) => {
       textShadow: 'none',
       textAlign: 'start',
       textIndent: 0,
-      borderColor: props.error ? '#dc3545' : state.selectProps.menuIsOpen ? '#66afe9' : '#ced4da',
+      borderColor: props.error ? '#dc3545' : props.isnew ? '#198754' : state.selectProps.menuIsOpen ? '#66afe9' : '#ced4da',
       transition: 'border-color .15s ease-in-out, box-shadow .15s ease-in-out',
       boxShadow: state.selectProps.menuIsOpen ? '0 0 0 .2rem rgba(0, 123, 255, .25)' : 'none',
       ':focus': {
