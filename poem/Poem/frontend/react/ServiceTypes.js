@@ -687,7 +687,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                       Description of service
                     </th>
                     <th style={{'width': '60px'}}>
-                      Action
+                      Source
                     </th>
                   </tr>
                 </thead>
@@ -780,24 +780,30 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                                   </Badge>
                                 :
                                   entry.checked ?
-                                    <Button color="light" className="ms-1">
+                                    <div className="d-flex flex-column align-self-center align-items-center">
+                                      <Badge color="success">
+                                        poem
+                                      </Badge>
                                       <Input {...field}
                                         type="checkbox"
-                                        className="fw-bold"
+                                        className="mt-2 fw-bold"
                                         disabled={isDisabled}
                                         checked={entry.checked}
                                         onChange={(e) => onChange(e, entry.id)}
                                       />
-                                    </Button>
+                                    </div>
                                   :
-                                    <Button color="light" className="ms-1">
+                                    <div className="d-flex flex-column align-self-center align-items-center">
+                                      <Badge color="success">
+                                        poem
+                                      </Badge>
                                       <Input {...field}
                                         type="checkbox"
                                         disabled={isDisabled}
-                                        className="fw-bold"
+                                        className="mt-2 fw-bold"
                                         onChange={(e) => onChange(e, entry.id)}
                                       />
-                                    </Button>
+                                    </div>
                               )
                             }}
                           />
