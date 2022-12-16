@@ -744,6 +744,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                                   {...field}
                                   onChange={(e) => {onDescriptionChange(entry.id, isChanged) ; field.onChange(e)}}
                                   onBlur={(e) => {onDescriptionChange(entry.id, isChanged); field.onBlur(e)}}
+                                  disabled={entry.tags.indexOf('connectors') !== -1}
                                   rows="2"
                                   className={`${isChanged ? 'border border-danger form-control' : 'form-control'}`}
                                 />
@@ -758,11 +759,24 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                               control={control}
                               render={ ({field}) => {
                                 // with checked=true,false ServiceTypes.test.js fails
+                                let isDisabled = entry.tags.indexOf('connectors') !== -1
+
                                 return (
                                   entry.checked ?
-                                    <Input {...field} type="checkbox" className="fw-bold" checked={entry.checked} onChange={(e) => onChange(e, entry.id)}/>
+                                    <Input {...field}
+                                      type="checkbox"
+                                      className="fw-bold"
+                                      disabled={isDisabled}
+                                      checked={entry.checked}
+                                      onChange={(e) => onChange(e, entry.id)}
+                                  />
                                   :
-                                    <Input {...field} type="checkbox" className="fw-bold" onChange={(e) => onChange(e, entry.id)}/>
+                                    <Input {...field}
+                                      type="checkbox"
+                                      disabled={isDisabled}
+                                      className="fw-bold"
+                                      onChange={(e) => onChange(e, entry.id)}
+                                  />
                                 )
                               }}
                             />
