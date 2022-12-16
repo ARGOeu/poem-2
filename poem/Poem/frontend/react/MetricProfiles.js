@@ -312,29 +312,22 @@ const fetchMetricProfile = async (webapi, apiid) => {
 }
 
 
-export const MetricProfilesComponent = (props) => {
+const MetricProfilesForm = ({
+  metricProfile,
+  userDetails,
+  metricsAll,
+  webApiST,
+  doChange,
+  doDelete,
+  ...props
+}) => {
   const profile_name = props.match.params.name;
   const addview = props.addview
-  const history = props.history;
   const location = props.location;
   const cloneview = props.cloneview;
   const publicView = props.publicView;
 
-  const backend = new Backend();
-  const webapi = new WebApi({
-    token: props.webapitoken,
-    metricProfiles: props.webapimetric,
-    serviceTypes: props.webapiservicetypes
-  })
-
-  const queryClient = useQueryClient();
-  const webapiChangeMutation = useMutation(async (values) => await webapi.changeMetricProfile(values));
-  const backendChangeMutation = useMutation(async (values) => await backend.changeObject('/api/v2/internal/metricprofiles/', values));
-  const webapiAddMutation = useMutation(async (values) => await webapi.addMetricProfile(values));
-  const backendAddMutation = useMutation(async (values) => await backend.addObject('/api/v2/internal/metricprofiles/', values));
-  const webapiDeleteMutation = useMutation(async (idProfile) => await webapi.deleteMetricProfile(idProfile));
-  const backendDeleteMutation = useMutation(async (idProfile) => await backend.deleteObject(`/api/v2/internal/metricprofiles/${idProfile}`));
-
+  let write_perm = undefined
 
   const [listServices, setListServices] = useState(undefined);
   const [viewServices, setViewServices] = useState(undefined);
@@ -345,54 +338,12 @@ export const MetricProfilesComponent = (props) => {
   const [modalMsg, setModalMsg] = useState(undefined);
   const [modalTitle, setModalTitle] = useState(undefined);
   const [onYes, setOnYes] = useState('')
+  const [formikValues, setFormikValues] = useState({})
   const [searchMetric, setSearchMetric] = useState("");
   const [searchServiceFlavour, setSearchServiceFlavour] = useState("");
-  const [formikValues, setFormikValues] = useState({})
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const hiddenFileInput = React.useRef(null);
   const formikRef = React.useRef();
-
-  const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
-    'userdetails', () => fetchUserDetails(true),
-    { enabled: !publicView }
-  );
-
-  const { data: backendMP, error: errorBackendMP, isLoading: loadingBackendMP } = useQuery(
-    [`${publicView ? 'public_' : ''}metricprofile`, 'backend', profile_name], async () => {
-      return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metricprofiles/${profile_name}`);
-    },
-    {
-      enabled: (publicView || !addview),
-      initialData: () => {
-        if (!addview)
-          return queryClient.getQueryData([`${publicView ? 'public_' : ''}metricprofile`, "backend"])?.find(mpr => mpr.name === profile_name)
-      }
-    }
-  )
-
-  const { data: webApiMP, error: errorWebApiMP, isLoading: loadingWebApiMP } = useQuery(
-    [`${publicView ? 'public_' : ''}metricprofile`, 'webapi', profile_name],
-    () => fetchMetricProfile(webapi, backendMP.apiid),
-    {
-      enabled: !!backendMP && !addview,
-      initialData: () => {
-        if (!addview)
-          return queryClient.getQueryData([`${publicView ? "public_" : ""}metricprofile`, "webapi"])?.find(profile => profile.id == backendMP.apiid)
-      }
-    }
-  )
-
-  const { data: metricsAll, error: errorMetricsAll, isLoading: loadingMetricsAll } = useQuery(
-    'metricsall', () => fetchAllMetrics(),
-    { enabled: !publicView }
-  )
-
-  const { data: webApiST, errorWebApiST, isLoading: loadingWebApiST} = useQuery(
-    ['servicetypes', 'webapi'], async () => {
-      return await webapi.fetchServiceTypes();
-    },
-    { enabled: !!userDetails }
-  )
 
   const onInsert = async (element, i, group, name, description) => {
     // full list of services
@@ -498,36 +449,6 @@ export const MetricProfilesComponent = (props) => {
 
     setViewServices(filtered);
     setListServices(tmp_list_services);
-  }
-
-  const doDelete = (idProfile) => {
-    webapiDeleteMutation.mutate(idProfile, {
-      onSuccess: () => {
-        backendDeleteMutation.mutate(idProfile, {
-          onSuccess: () => {
-            queryClient.invalidateQueries('metricprofile');
-            queryClient.invalidateQueries('public_metricprofile');
-            NotifyOk({
-              msg: 'Metric profile successfully deleted',
-              title: 'Deleted',
-              callback: () => history.push('/ui/metricprofiles')
-            });
-          },
-          onError: (error) => {
-            NotifyError({
-              title: 'Internal API error',
-              msg: error.message ? error.message : 'Internal API error deleting metric profile'
-            })
-          }
-        })
-      },
-      onError: (error) => {
-        NotifyError({
-          title: 'Web API error',
-          msg: error.message ? error.message : 'Web API error deleting metric profile'
-        })
-      }
-    })
   }
 
   const onRemove = async (element, group, name, description) => {
@@ -640,6 +561,421 @@ export const MetricProfilesComponent = (props) => {
     setViewServices(tmp_view_services);
   }
 
+  const onSubmitHandle = async (formValues) => {
+    let msg = `Are you sure you want to ${(addview || cloneview) ? "add" : "change"} metric profile?`
+    let title = `${(addview || cloneview) ? "Add" : "Change"} metric profile`
+
+    setAreYouSureModal(!areYouSureModal);
+    setModalMsg(msg)
+    setModalTitle(title)
+    setOnYes('change')
+    setFormikValues(formValues)
+  }
+
+  const onYesCallback = () => {
+    if (onYes === 'delete')
+      doDelete(formikValues.id);
+    else if (onYes === 'change')
+      doChange({
+          formValues: formikValues,
+          servicesList: listServices
+        }
+      );
+  }
+
+  const flattenServices = (services) => {
+    let flat_services = [];
+    let index = 0;
+
+    services.forEach((service_element) => {
+      let service = service_element.service;
+      service_element.metrics.forEach((metric) => {
+        flat_services.push({index, service, metric})
+        index += 1;
+      })
+    })
+    return flat_services
+  }
+
+  const sortServices = (a, b) => {
+    if (a.service.toLowerCase() < b.service.toLowerCase()) return -1;
+    if (a.service.toLowerCase() > b.service.toLowerCase()) return 1;
+    if (a.service.toLowerCase() === b.service.toLowerCase()) {
+      if (a.metric.toLowerCase() < b.metric.toLowerCase()) return -1;
+      if (a.metric.toLowerCase() > b.metric.toLowerCase()) return 1;
+      if (a.metric.toLowerCase() === b.metric.toLowerCase()) return 0;
+    }
+  }
+
+  const ensureAlignedIndexes = (list) => {
+    let i = 0
+
+    list.forEach(e => {
+      e.index = i
+      i += 1
+    })
+
+    return list
+  }
+
+  if (metricProfile.profile.name) {
+    if (publicView && !addview && !cloneview && !listServices && !viewServices) {
+      setMetricProfileName(metricProfile.profile.name);
+      setMetricProfileDescription(metricProfile.profile.description);
+      setGroupname(metricProfile.groupname);
+      setViewServices(flattenServices(metricProfile.profile.services).sort(sortServices));
+      setListServices(flattenServices(metricProfile.profile.services).sort(sortServices));
+    }
+    else if (!addview && !cloneview && !listServices && !viewServices) {
+      setMetricProfileName(metricProfile.profile.name);
+      setMetricProfileDescription(metricProfile.profile.description);
+      setGroupname(metricProfile.groupname);
+      setViewServices(ensureAlignedIndexes(flattenServices(metricProfile.profile.services).sort(sortServices)));
+      setListServices(ensureAlignedIndexes(flattenServices(metricProfile.profile.services).sort(sortServices)));
+    }
+    else if (cloneview && !viewServices && !listServices) {
+      setMetricProfileName('Cloned ' + metricProfile.profile.name);
+      metricProfile.profile.id = ''
+      setMetricProfileDescription(metricProfile.profile.description);
+      if (userDetails.groups.metricprofiles.indexOf(metricProfile.groupname) != -1)
+        setGroupname(metricProfile.groupname)
+      setViewServices(ensureAlignedIndexes(flattenServices(metricProfile.profile.services).sort(sortServices)));
+      setListServices(ensureAlignedIndexes(flattenServices(metricProfile.profile.services).sort(sortServices)));
+    }
+  } else {
+    if (addview && !cloneview && !viewServices && !listServices) {
+      setMetricProfileName('');
+      setMetricProfileDescription('');
+      setGroupname('')
+      setViewServices([{service: '', metric: '', index: 0, isNew: true}]);
+      setListServices([{service: '', metric: '', index: 0, isNew: true}]);
+    }
+  }
+
+  if (publicView) {
+    write_perm = false
+  }
+  else if (cloneview) {
+    write_perm = userDetails.is_superuser ||
+      userDetails.groups.metricprofiles.length > 0;
+  }
+  else if (!addview) {
+    write_perm = userDetails.is_superuser ||
+          userDetails.groups.metricprofiles.indexOf(metricProfile.groupname) >= 0;
+  }
+  else {
+    write_perm = userDetails.is_superuser ||
+      userDetails.groups.metricprofiles.length > 0;
+  }
+
+  return (
+    <BaseArgoView
+      resourcename={publicView ? 'Metric profile details' : 'metric profile'}
+      location={location}
+      modal={true}
+      cloneview={cloneview}
+      clone={true}
+      history={!publicView}
+      state={{areYouSureModal, 'modalFunc': onYesCallback, modalTitle, modalMsg}}
+      toggle={() => setAreYouSureModal(!areYouSureModal)}
+      addview={publicView ? !publicView : addview}
+      publicview={publicView}
+      submitperm={write_perm}
+      extra_button={
+        !addview &&
+          <ButtonDropdown isOpen={dropdownOpen} toggle={() => setDropdownOpen(!dropdownOpen)}>
+            <DropdownToggle caret color='secondary'>CSV</DropdownToggle>
+            <DropdownMenu>
+              <DropdownItem
+                onClick={() => {
+                  let csvContent = [];
+                  viewServices.forEach((service) => {
+                    csvContent.push({service: service.service, metric: service.metric})
+                  })
+                  const content = PapaParse.unparse(csvContent);
+                  let filename = `${profile_name}.csv`;
+                  downloadCSV(content, filename)
+                }}
+                disabled={addview}
+              >
+                Export
+              </DropdownItem>
+              <DropdownItem
+                onClick={() => {hiddenFileInput.current.click()}}
+              >
+                Import
+              </DropdownItem>
+            </DropdownMenu>
+            <input
+              type='file'
+              data-testid='file_input'
+              ref={hiddenFileInput}
+              onChange={(e) => {
+                PapaParse.parse(e.target.files[0], {
+                  header: true,
+                  complete: (results) => {
+                    var imported = results.data;
+                    // remove entries without keys if there is any
+                    imported = imported.filter(
+                      obj => {
+                        return 'service' in obj && 'metric' in obj
+                      }
+                    )
+                    imported.forEach(item => {
+                      if (!viewServices.some(service => {
+                        return service.service === item.service && service.metric == item.metric
+                      }))
+                        item.isNew = true
+                    })
+                    setViewServices(ensureAlignedIndexes(imported).sort(sortServices));
+                    setListServices(ensureAlignedIndexes(imported).sort(sortServices));
+                  }
+                })
+              }}
+              style={{display: 'none'}}
+            />
+          </ButtonDropdown>
+      }
+    >
+      <Formik
+        initialValues = {{
+          id: metricProfile.profile.id,
+          name: metricProfileName,
+          description: metricProfileDescription,
+          groupname: groupName,
+          view_services: viewServices,
+          search_metric: searchMetric,
+          search_serviceflavour: searchServiceFlavour,
+          metrics_all: metricsAll,
+          services_all: webApiST
+        }}
+        onSubmit = {(values) => onSubmitHandle(values)}
+        enableReinitialize={true}
+        validate={MetricProfileTupleValidate}
+        innerRef={formikRef}
+      >
+        {props => (
+          <Form>
+            <ProfileMainInfo
+              {...props}
+              description="description"
+              grouplist={
+                write_perm ?
+                  userDetails.groups.metricprofiles
+                :
+                  [groupName]
+              }
+              profiletype='metric'
+              fieldsdisable={publicView}
+              addview={addview || cloneview}
+            />
+            <ParagraphTitle title='Metric instances'/>
+            {
+              !publicView ?
+                <FieldArray
+                  name="view_services"
+                  render={props => (
+                    <MetricProfilesComponentContext.Provider value={{
+                      serviceflavours_all: webApiST,
+                      metrics_all: metricsAll,
+                      search_handler: handleSearch,
+                      remove_handler: onRemove,
+                      insert_handler: onInsert,
+                      onselect_handler: onSelect,
+                      formikBag: {
+                        form: props.form,
+                        remove: props.remove,
+                        insert: props.insert
+                      }
+                    }}>
+                      <ServicesList/>
+                    </MetricProfilesComponentContext.Provider>
+                  )}
+                />
+              :
+                <FieldArray
+                  name='metricinstances'
+                  render={() => (
+                    <table className='table table-bordered table-sm'>
+                      <thead className='table-active'>
+                        <tr>
+                          <th className='align-middle text-center' style={{width: '5%'}}>#</th>
+                          <th style={{width: '47.5%'}}><Icon i='serviceflavour'/>Service flavour</th>
+                          <th style={{width: '47.5%'}}><Icon i='metrics'/>Metric</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr style={{background: "#ECECEC"}}>
+                          <td className="align-middle text-center">
+                            <FontAwesomeIcon icon={faSearch}/>
+                          </td>
+                          <td>
+                            <Field
+                              type="text"
+                              name="search_serviceflavour"
+                              required={false}
+                              className="form-control"
+                              id="searchServiceFlavour"
+                              onChange={(e) => handleSearch(e,
+                                'searchServiceFlavour', 'service',
+                                'searchMetric', 'metric')}
+                              component={SearchField}
+                            />
+                          </td>
+                          <td>
+                            <Field
+                              type="text"
+                              name="search_metric"
+                              required={false}
+                              className="form-control"
+                              id="searchMetric"
+                              onChange={(e) => handleSearch(e,
+                                'searchMetric', 'metric',
+                                'searchServiceFlavour', 'service')}
+                              component={SearchField}
+                            />
+                          </td>
+                        </tr>
+                        {
+                          props.values.view_services.map((service, index) =>
+                            <tr key={index}>
+                              <td className='align-middle text-center'>{index + 1}</td>
+                              <td>{service.service}</td>
+                              <td>{service.metric}</td>
+                            </tr>
+                          )
+                        }
+                      </tbody>
+                    </table>
+                  )}
+                />
+            }
+            {
+              (write_perm) &&
+                <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                  {
+                    !addview && !cloneview ?
+                      <Button
+                        color="danger"
+                        onClick={() => {
+                          setModalMsg('Are you sure you want to delete Metric profile?')
+                          setModalTitle('Delete metric profile')
+                          setAreYouSureModal(!areYouSureModal);
+                          setFormikValues(props.values)
+                          setOnYes('delete')
+                        }}
+                      >
+                        Delete
+                      </Button>
+                    :
+                      <div></div>
+                  }
+                  <Button color="success" id="submit-button" type="submit">Save</Button>
+                </div>
+            }
+          </Form>
+        )}
+      </Formik>
+    </BaseArgoView>
+  )
+}
+
+
+export const MetricProfilesComponent = (props) => {
+  const profile_name = props.match.params.name;
+  const addview = props.addview
+  const history = props.history;
+  const cloneview = props.cloneview;
+  const publicView = props.publicView;
+
+  const backend = new Backend();
+  const webapi = new WebApi({
+    token: props.webapitoken,
+    metricProfiles: props.webapimetric,
+    serviceTypes: props.webapiservicetypes
+  })
+
+
+  const queryClient = useQueryClient();
+  const webapiChangeMutation = useMutation(async (values) => await webapi.changeMetricProfile(values));
+  const backendChangeMutation = useMutation(async (values) => await backend.changeObject('/api/v2/internal/metricprofiles/', values));
+  const webapiAddMutation = useMutation(async (values) => await webapi.addMetricProfile(values));
+  const backendAddMutation = useMutation(async (values) => await backend.addObject('/api/v2/internal/metricprofiles/', values));
+  const webapiDeleteMutation = useMutation(async (idProfile) => await webapi.deleteMetricProfile(idProfile));
+  const backendDeleteMutation = useMutation(async (idProfile) => await backend.deleteObject(`/api/v2/internal/metricprofiles/${idProfile}`));
+
+  const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
+    'userdetails', () => fetchUserDetails(true),
+    { enabled: !publicView }
+  );
+
+  const { data: backendMP, error: errorBackendMP, isLoading: loadingBackendMP } = useQuery(
+    [`${publicView ? 'public_' : ''}metricprofile`, 'backend', profile_name], async () => {
+      return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}metricprofiles/${profile_name}`);
+    },
+    {
+      enabled: (publicView || !addview),
+      initialData: () => {
+        if (!addview)
+          return queryClient.getQueryData([`${publicView ? 'public_' : ''}metricprofile`, "backend"])?.find(mpr => mpr.name === profile_name)
+      }
+    }
+  )
+
+  const { data: webApiMP, error: errorWebApiMP, isLoading: loadingWebApiMP } = useQuery(
+    [`${publicView ? 'public_' : ''}metricprofile`, 'webapi', profile_name],
+    () => fetchMetricProfile(webapi, backendMP.apiid),
+    {
+      enabled: !!backendMP && !addview,
+      initialData: () => {
+        if (!addview)
+          return queryClient.getQueryData([`${publicView ? "public_" : ""}metricprofile`, "webapi"])?.find(profile => profile.id == backendMP.apiid)
+      }
+    }
+  )
+
+  const { data: metricsAll, error: errorMetricsAll, isLoading: loadingMetricsAll } = useQuery(
+    'metricsall', () => fetchAllMetrics(),
+    { enabled: !publicView }
+  )
+
+  const { data: webApiST, errorWebApiST, isLoading: loadingWebApiST} = useQuery(
+    ['servicetypes', 'webapi'], async () => {
+      return await webapi.fetchServiceTypes();
+    },
+    { enabled: !!userDetails }
+  )
+
+  const doDelete = (idProfile) => {
+    webapiDeleteMutation.mutate(idProfile, {
+      onSuccess: () => {
+        backendDeleteMutation.mutate(idProfile, {
+          onSuccess: () => {
+            queryClient.invalidateQueries('metricprofile');
+            queryClient.invalidateQueries('public_metricprofile');
+            NotifyOk({
+              msg: 'Metric profile successfully deleted',
+              title: 'Deleted',
+              callback: () => history.push('/ui/metricprofiles')
+            });
+          },
+          onError: (error) => {
+            NotifyError({
+              title: 'Internal API error',
+              msg: error.message ? error.message : 'Internal API error deleting metric profile'
+            })
+          }
+        })
+      },
+      onError: (error) => {
+        NotifyError({
+          title: 'Web API error',
+          msg: error.message ? error.message : 'Web API error deleting metric profile'
+        })
+      }
+    })
+  }
+
   const groupMetricsByServices = (servicesFlat) => {
     let services = [];
 
@@ -748,71 +1084,6 @@ export const MetricProfilesComponent = (props) => {
     }
   }
 
-  const flattenServices = (services) => {
-    let flat_services = [];
-    let index = 0;
-
-    services.forEach((service_element) => {
-      let service = service_element.service;
-      service_element.metrics.forEach((metric) => {
-        flat_services.push({index, service, metric})
-        index += 1;
-      })
-    })
-    return flat_services
-  }
-
-  const sortServices = (a, b) => {
-    if (a.service.toLowerCase() < b.service.toLowerCase()) return -1;
-    if (a.service.toLowerCase() > b.service.toLowerCase()) return 1;
-    if (a.service.toLowerCase() === b.service.toLowerCase()) {
-      if (a.metric.toLowerCase() < b.metric.toLowerCase()) return -1;
-      if (a.metric.toLowerCase() > b.metric.toLowerCase()) return 1;
-      if (a.metric.toLowerCase() === b.metric.toLowerCase()) return 0;
-    }
-  }
-
-  const ensureAlignedIndexes = (list) => {
-    let i = 0
-
-    list.forEach(e => {
-      e.index = i
-      i += 1
-    })
-
-    return list
-  }
-
-  const onSubmitHandle = async (formValues) => {
-    let msg = undefined;
-    let title = undefined;
-
-    if (addview || cloneview) {
-      msg = 'Are you sure you want to add Metric profile?'
-      title = 'Add metric profile'
-    }
-    else {
-      msg = 'Are you sure you want to change Metric profile?'
-      title = 'Change metric profile'
-    }
-    setAreYouSureModal(!areYouSureModal);
-    setModalMsg(msg)
-    setModalTitle(title)
-    setOnYes('change')
-    setFormikValues(formValues)
-  }
-
-  const onYesCallback = () => {
-    if (onYes === 'delete')
-      doDelete(formikValues.id);
-    else if (onYes === 'change')
-      doChange({
-          formValues: formikValues,
-          servicesList: listServices
-        }
-      );
-  }
-
   if (loadingUserDetails || loadingBackendMP || loadingWebApiMP || loadingMetricsAll || loadingWebApiST)
     return (<LoadingAnim />)
 
@@ -833,8 +1104,6 @@ export const MetricProfilesComponent = (props) => {
 
   else if ((addview && webApiST) || (backendMP && webApiMP && webApiST) || (publicView))
   {
-    let write_perm = undefined
-
     var metricProfile = {
       profile: {
         name: '',
@@ -846,266 +1115,20 @@ export const MetricProfilesComponent = (props) => {
     }
 
     if (backendMP && webApiMP) {
-      metricProfile.profile = webApiMP;
-      metricProfile.groupname = backendMP.groupname;
-      if (publicView && !addview && !cloneview && !listServices && !viewServices) {
-        setMetricProfileName(metricProfile.profile.name);
-        setMetricProfileDescription(metricProfile.profile.description);
-        setGroupname(metricProfile.groupname);
-        setViewServices(flattenServices(metricProfile.profile.services).sort(sortServices));
-        setListServices(flattenServices(metricProfile.profile.services).sort(sortServices));
-      }
-      else if (!addview && !cloneview && !listServices && !viewServices) {
-        setMetricProfileName(metricProfile.profile.name);
-        setMetricProfileDescription(metricProfile.profile.description);
-        setGroupname(metricProfile.groupname);
-        setViewServices(ensureAlignedIndexes(flattenServices(metricProfile.profile.services).sort(sortServices)));
-        setListServices(ensureAlignedIndexes(flattenServices(metricProfile.profile.services).sort(sortServices)));
-      }
-      else if (cloneview && !viewServices && !listServices) {
-        setMetricProfileName('Cloned ' + metricProfile.profile.name);
-        metricProfile.profile.id = ''
-        setMetricProfileDescription(metricProfile.profile.description);
-        if (userDetails.groups.metricprofiles.indexOf(metricProfile.groupname) != -1)
-          setGroupname(metricProfile.groupname)
-        setViewServices(ensureAlignedIndexes(flattenServices(metricProfile.profile.services).sort(sortServices)));
-        setListServices(ensureAlignedIndexes(flattenServices(metricProfile.profile.services).sort(sortServices)));
-      }
-    } else {
-      if (addview && !cloneview && !viewServices && !listServices) {
-        setMetricProfileName('');
-        setMetricProfileDescription('');
-        setGroupname('')
-        setViewServices([{service: '', metric: '', index: 0, isNew: true}]);
-        setListServices([{service: '', metric: '', index: 0, isNew: true}]);
-      }
-    }
-
-    if (publicView) {
-      write_perm = false
-    }
-    else if (cloneview) {
-      write_perm = userDetails.is_superuser ||
-        userDetails.groups.metricprofiles.length > 0;
-    }
-    else if (!addview) {
-      write_perm = userDetails.is_superuser ||
-            userDetails.groups.metricprofiles.indexOf(metricProfile.groupname) >= 0;
-    }
-    else {
-      write_perm = userDetails.is_superuser ||
-        userDetails.groups.metricprofiles.length > 0;
+      metricProfile.profile = webApiMP
+      metricProfile.groupname = backendMP.groupname
     }
 
     return (
-      <BaseArgoView
-        resourcename={publicView ? 'Metric profile details' : 'metric profile'}
-        location={location}
-        modal={true}
-        cloneview={cloneview}
-        clone={true}
-        history={!publicView}
-        state={{areYouSureModal, 'modalFunc': onYesCallback, modalTitle, modalMsg}}
-        toggle={() => setAreYouSureModal(!areYouSureModal)}
-        addview={publicView ? !publicView : addview}
-        publicview={publicView}
-        submitperm={write_perm}
-        extra_button={
-          !addview &&
-            <ButtonDropdown isOpen={dropdownOpen} toggle={() => setDropdownOpen(!dropdownOpen)}>
-              <DropdownToggle caret color='secondary'>CSV</DropdownToggle>
-              <DropdownMenu>
-                <DropdownItem
-                  onClick={() => {
-                    let csvContent = [];
-                    viewServices.forEach((service) => {
-                      csvContent.push({service: service.service, metric: service.metric})
-                    })
-                    const content = PapaParse.unparse(csvContent);
-                    let filename = `${profile_name}.csv`;
-                    downloadCSV(content, filename)
-                  }}
-                  disabled={addview}
-                >
-                  Export
-                </DropdownItem>
-                <DropdownItem
-                  onClick={() => {hiddenFileInput.current.click()}}
-                >
-                  Import
-                </DropdownItem>
-              </DropdownMenu>
-              <input
-                type='file'
-                data-testid='file_input'
-                ref={hiddenFileInput}
-                onChange={(e) => {
-                  PapaParse.parse(e.target.files[0], {
-                    header: true,
-                    complete: (results) => {
-                      var imported = results.data;
-                      // remove entries without keys if there is any
-                      imported = imported.filter(
-                        obj => {
-                          return 'service' in obj && 'metric' in obj
-                        }
-                      )
-                      imported.forEach(item => {
-                        if (!viewServices.some(service => {
-                          return service.service === item.service && service.metric == item.metric
-                        }))
-                          item.isNew = true
-                      })
-                      setViewServices(ensureAlignedIndexes(imported).sort(sortServices));
-                      setListServices(ensureAlignedIndexes(imported).sort(sortServices));
-                    }
-                  })
-                }}
-                style={{display: 'none'}}
-              />
-            </ButtonDropdown>
-        }
-      >
-        <Formik
-          initialValues = {{
-            id: metricProfile.profile.id,
-            name: metricProfileName,
-            description: metricProfileDescription,
-            groupname: groupName,
-            view_services: viewServices,
-            search_metric: searchMetric,
-            search_serviceflavour: searchServiceFlavour,
-            metrics_all: metricsAll,
-            services_all: webApiST
-          }}
-          onSubmit = {(values) => onSubmitHandle(values)}
-          enableReinitialize={true}
-          validate={MetricProfileTupleValidate}
-          innerRef={formikRef}
-        >
-          {props => (
-            <Form>
-              <ProfileMainInfo
-                {...props}
-                description="description"
-                grouplist={
-                  write_perm ?
-                    userDetails.groups.metricprofiles
-                  :
-                    [groupName]
-                }
-                profiletype='metric'
-                fieldsdisable={publicView}
-                addview={addview || cloneview}
-              />
-              <ParagraphTitle title='Metric instances'/>
-              {
-                !publicView ?
-                  <FieldArray
-                    name="view_services"
-                    render={props => (
-                      <MetricProfilesComponentContext.Provider value={{
-                        serviceflavours_all: webApiST,
-                        metrics_all: metricsAll,
-                        search_handler: handleSearch,
-                        remove_handler: onRemove,
-                        insert_handler: onInsert,
-                        onselect_handler: onSelect,
-                        formikBag: {
-                          form: props.form,
-                          remove: props.remove,
-                          insert: props.insert
-                        }
-                      }}>
-                        <ServicesList/>
-                      </MetricProfilesComponentContext.Provider>
-                    )}
-                  />
-                :
-                  <FieldArray
-                    name='metricinstances'
-                    render={() => (
-                      <table className='table table-bordered table-sm'>
-                        <thead className='table-active'>
-                          <tr>
-                            <th className='align-middle text-center' style={{width: '5%'}}>#</th>
-                            <th style={{width: '47.5%'}}><Icon i='serviceflavour'/>Service flavour</th>
-                            <th style={{width: '47.5%'}}><Icon i='metrics'/>Metric</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr style={{background: "#ECECEC"}}>
-                            <td className="align-middle text-center">
-                              <FontAwesomeIcon icon={faSearch}/>
-                            </td>
-                            <td>
-                              <Field
-                                type="text"
-                                name="search_serviceflavour"
-                                required={false}
-                                className="form-control"
-                                id="searchServiceFlavour"
-                                onChange={(e) => handleSearch(e,
-                                  'searchServiceFlavour', 'service',
-                                  'searchMetric', 'metric')}
-                                component={SearchField}
-                              />
-                            </td>
-                            <td>
-                              <Field
-                                type="text"
-                                name="search_metric"
-                                required={false}
-                                className="form-control"
-                                id="searchMetric"
-                                onChange={(e) => handleSearch(e,
-                                  'searchMetric', 'metric',
-                                  'searchServiceFlavour', 'service')}
-                                component={SearchField}
-                              />
-                            </td>
-                          </tr>
-                          {
-                            props.values.view_services.map((service, index) =>
-                              <tr key={index}>
-                                <td className='align-middle text-center'>{index + 1}</td>
-                                <td>{service.service}</td>
-                                <td>{service.metric}</td>
-                              </tr>
-                            )
-                          }
-                        </tbody>
-                      </table>
-                    )}
-                  />
-              }
-              {
-                (write_perm) &&
-                  <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                    {
-                      !addview && !cloneview ?
-                        <Button
-                          color="danger"
-                          onClick={() => {
-                            setModalMsg('Are you sure you want to delete Metric profile?')
-                            setModalTitle('Delete metric profile')
-                            setAreYouSureModal(!areYouSureModal);
-                            setFormikValues(props.values)
-                            setOnYes('delete')
-                          }}
-                        >
-                          Delete
-                        </Button>
-                      :
-                        <div></div>
-                    }
-                    <Button color="success" id="submit-button" type="submit">Save</Button>
-                  </div>
-              }
-            </Form>
-          )}
-        </Formik>
-      </BaseArgoView>
+      <MetricProfilesForm
+        { ...props }
+        metricProfile={ metricProfile }
+        userDetails={ userDetails }
+        metricsAll={ metricsAll }
+        webApiST={ webApiST }
+        doChange={ doChange }
+        doDelete={ doDelete }
+      />
     )
   }
 

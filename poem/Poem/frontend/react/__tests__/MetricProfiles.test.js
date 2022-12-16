@@ -83,7 +83,6 @@ const mockActiveSession = {
   }
 };
 
-
 const mockWebApiMetricProfile = {
   id: "va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv",
   date: "2021-02-03",
