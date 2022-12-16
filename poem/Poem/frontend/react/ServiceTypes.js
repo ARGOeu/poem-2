@@ -232,7 +232,7 @@ const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
 
   const doSave = () => {
     let tmpArray = [...getValues('serviceTypes'), ...serviceTypesDescriptions]
-    let pairs = _.orderBy(tmpArray, ['name'], ['asc'])
+    let pairs = _.orderBy(tmpArray, [service => service.name.toLowerCase()], ['asc'])
     postServiceTypesWebApi([...pairs.map(
       e => Object(
         {
