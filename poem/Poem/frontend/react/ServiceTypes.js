@@ -234,7 +234,7 @@ const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
     postServiceTypesWebApi([...pairs.map(
       e => Object(
         {
-          'name': e.name, 'description': e.description
+          'name': e.name, 'description': e.description, 'tags': e.tags
         }
       ))],
       'added', 'Add')
@@ -359,6 +359,7 @@ export const ServiceTypesBulkAdd = (props) => {
     defaultValues: {
       name: '',
       description: '',
+      tags: ['poem']
     }
   })
 
@@ -374,7 +375,8 @@ export const ServiceTypesBulkAdd = (props) => {
     setAddedServices(tmpArray)
     reset({
       name: '',
-      description: ''
+      description: '',
+      tags: ['poem']
     })
   }
 
@@ -563,7 +565,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     postServiceTypesWebApi([...values.map(
       e => Object(
         {
-          'name': e.name, 'description': e.description
+          'name': e.name, 'description': e.description, 'tags': e.tags
         }
       ))],
       'changed', 'Change')
@@ -738,13 +740,18 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                               let formval = getValues('serviceTypes')[lookupIndexes[entry.id]].description
                               let initval = fields[lookupIndexes[entry.id]].description
                               let isChanged = formval !== initval
+                              let isDisabled = undefined
+                              if (entry.tags && entry.tags.indexOf('connectors') !== -1)
+                                isDisabled = true
+                              else
+                                isDisabled = false
 
                               return (
                                 <textarea
                                   {...field}
                                   onChange={(e) => {onDescriptionChange(entry.id, isChanged) ; field.onChange(e)}}
                                   onBlur={(e) => {onDescriptionChange(entry.id, isChanged); field.onBlur(e)}}
-                                  disabled={entry.tags.indexOf('connectors') !== -1}
+                                  disabled={isDisabled}
                                   rows="2"
                                   className={`${isChanged ? 'border border-danger form-control' : 'form-control'}`}
                                 />
@@ -759,9 +766,13 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                               control={control}
                               render={ ({field}) => {
                                 // with checked=true,false ServiceTypes.test.js fails
-                                let isDisabled = entry.tags.indexOf('connectors') !== -1
+                                let isDisabled = undefined
+                                if (entry.tags && entry.tags.indexOf('connectors') !== -1)
+                                  isDisabled = true
+                                else
+                                  isDisabled = false
 
-                                return (
+                                return(
                                   entry.checked ?
                                     <Input {...field}
                                       type="checkbox"
