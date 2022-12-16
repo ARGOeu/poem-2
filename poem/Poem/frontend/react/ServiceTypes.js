@@ -4,6 +4,7 @@ import { WebApi } from './DataManager';
 import { useQuery, useQueryClient, useMutation } from 'react-query';
 import {
   Button,
+  Badge,
   Col,
   Form,
   FormFeedback,
@@ -15,6 +16,7 @@ import {
   PaginationItem,
   PaginationLink,
   Pagination,
+
 } from 'reactstrap';
 import {
   BaseArgoTable,
@@ -597,7 +599,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     postServiceTypesWebApi([...cleaned.map(
       e => Object(
         {
-          'name': e.name, 'description': e.description
+          'name': e.name, 'description': e.description, 'tags': e.tags
         }
       ))],
       'deleted', 'Delete')
@@ -760,38 +762,45 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                           />
                         </td>
                         <td className="text-center align-middle">
-                          <Button color="light" className="ms-1">
-                            <Controller
-                              name={`serviceTypes.${lookupIndexes[entry.id]}.checked`}
-                              control={control}
-                              render={ ({field}) => {
-                                // with checked=true,false ServiceTypes.test.js fails
-                                let isDisabled = undefined
-                                if (entry.tags && entry.tags.indexOf('connectors') !== -1)
-                                  isDisabled = true
-                                else
-                                  isDisabled = false
+                          <Controller
+                            name={`serviceTypes.${lookupIndexes[entry.id]}.checked`}
+                            control={control}
+                            render={ ({field}) => {
+                              // with checked=true,false ServiceTypes.test.js fails
+                              let isDisabled = undefined
+                              if (entry.tags && entry.tags.indexOf('connectors') !== -1)
+                                isDisabled = true
+                              else
+                                isDisabled = false
 
-                                return(
+                              return(
+                                isDisabled ?
+                                  <Badge color="secondary">
+                                    topology
+                                  </Badge>
+                                :
                                   entry.checked ?
-                                    <Input {...field}
-                                      type="checkbox"
-                                      className="fw-bold"
-                                      disabled={isDisabled}
-                                      checked={entry.checked}
-                                      onChange={(e) => onChange(e, entry.id)}
-                                  />
+                                    <Button color="light" className="ms-1">
+                                      <Input {...field}
+                                        type="checkbox"
+                                        className="fw-bold"
+                                        disabled={isDisabled}
+                                        checked={entry.checked}
+                                        onChange={(e) => onChange(e, entry.id)}
+                                      />
+                                    </Button>
                                   :
-                                    <Input {...field}
-                                      type="checkbox"
-                                      disabled={isDisabled}
-                                      className="fw-bold"
-                                      onChange={(e) => onChange(e, entry.id)}
-                                  />
-                                )
-                              }}
-                            />
-                          </Button>
+                                    <Button color="light" className="ms-1">
+                                      <Input {...field}
+                                        type="checkbox"
+                                        disabled={isDisabled}
+                                        className="fw-bold"
+                                        onChange={(e) => onChange(e, entry.id)}
+                                      />
+                                    </Button>
+                              )
+                            }}
+                          />
                         </td>
                       </tr>
                     )
