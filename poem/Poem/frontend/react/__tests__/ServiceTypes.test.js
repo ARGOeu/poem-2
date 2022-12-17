@@ -204,7 +204,7 @@ describe('Test service types list - Read Only', () => {
     const rows = screen.getAllByRole('row');
     expect(rows).toHaveLength(17);
     expect(screen.getAllByPlaceholderText(/search/i)).toHaveLength(2);
-    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(10);
+    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(7);
     expect(rows[0].textContent).toBe('# Service typeDescription');
     // row 1 is the one with search fields
     expect(rows[2].textContent).toBe('1argo.apiARGO API service for retrieving status and A/R results.')
@@ -224,7 +224,7 @@ describe('Test service types list - Read Only', () => {
       expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Services types');
     })
 
-    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(10);
+    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(7);
     const searchFields = screen.getAllByPlaceholderText(/search/i);
 
     fireEvent.change(searchFields[0], { target: { value: 'co' } });
@@ -256,7 +256,7 @@ describe('Test service types list - Read Only', () => {
     const rows = screen.getAllByRole('row');
     expect(rows).toHaveLength(17);
     expect(screen.getAllByPlaceholderText(/search/i)).toHaveLength(2);
-    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(10);
+    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(7);
     expect(rows[0].textContent).toBe('# Service typeDescription');
     // row 1 is the one with search fields
     expect(rows[2].textContent).toBe('1argo.apiARGO API service for retrieving status and A/R results.')
@@ -276,7 +276,7 @@ describe('Test service types list - Read Only', () => {
       expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Services types');
     })
 
-    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(10);
+    expect(screen.getAllByRole('row', { name: '' })).toHaveLength(7);
     const searchFields = screen.getAllByPlaceholderText(/search/i);
 
     fireEvent.change(searchFields[0], { target: { value: 'co' } });
@@ -516,6 +516,7 @@ describe('Test service types list - Bulk change and delete', () => {
   })
 })
 
+
 describe('Test service types list - Bulk add', () => {
   beforeAll(() => {
     WebApi.mockImplementation(() => Object({
@@ -603,32 +604,47 @@ describe('Test service types list - Bulk add', () => {
           {
             'name': 'argo.api',
             'description': 'ARGO API service for retrieving status and A/R results.',
-            'tags': ['connectors']
+            'tags': ['topology']
           },
           {
             "description": "ARGO Compute Engine computes availability and reliability of services.",
             "name": "argo.computeengine",
-            "tags": ['connectors']
+            "tags": ['topology']
           },
           {
             "description": "ARGO Consumer collects monitoring metrics from monitoring engines.",
             "name": "argo.consumer",
-            "tags": ['connectors']
+            "tags": ['topology']
           },
           {
             "description": "ARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.",
             "name": "argo.mon",
-            "tags": ['connectors']
+            "tags": ['topology']
           },
           {
             "description": "POEM is system for managing profiles of probes and metrics in ARGO system.",
             "name": "argo.poem",
-            "tags": ['connectors']
+            "tags": ['topology']
           },
           {
             "description": "ARGO web user interface for metric A/R visualization and recalculation management.",
             "name": "argo.webui",
-            "tags": ['connectors']
+            "tags": ['topology']
+          },
+          {
+            "name": 'poem.added.one',
+            "description": 'Service type created from POEM UI and POSTed on WEB-API.',
+            "tags": ['poem']
+          },
+          {
+            "name": 'poem.added.three',
+            "description": 'Service type created from POEM UI and POSTed on WEB-API.',
+            "tags": ['poem']
+          },
+          {
+            "name": 'poem.added.two',
+            "description": 'Service type created from POEM UI and POSTed on WEB-API.',
+            "tags": ['poem']
           },
           {
             "description": "service description 1",
