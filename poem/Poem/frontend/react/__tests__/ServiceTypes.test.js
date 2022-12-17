@@ -74,32 +74,47 @@ const mockServTypes = [
   {
     name: 'argo.api',
     description: 'ARGO API service for retrieving status and A/R results.',
-    tags: ['connectors']
+    tags: ['topology']
   },
   {
     name: 'argo.computeengine',
     description: 'ARGO Compute Engine computes availability and reliability of services.',
-    tags: ['connectors']
+    tags: ['topology']
   },
   {
     name: 'argo.consumer',
     description: 'ARGO Consumer collects monitoring metrics from monitoring engines.',
-    tags: ['connectors']
+    tags: ['topology']
   },
   {
     name: 'argo.mon',
     description: 'ARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.',
-    tags: ['connectors']
+    tags: ['topology']
   },
   {
     name: 'argo.poem',
     description: 'POEM is system for managing profiles of probes and metrics in ARGO system.',
-    tags: ['connectors']
+    tags: ['topology']
   },
   {
     name: 'argo.webui',
     description: 'ARGO web user interface for metric A/R visualization and recalculation management.',
-    tags: ['connectors']
+    tags: ['topology']
+  },
+  {
+    name: 'poem.added.one',
+    description: 'Service type created from POEM UI and POSTed on WEB-API.',
+    tags: ['poem']
+  },
+  {
+    name: 'poem.added.two',
+    description: 'Service type created from POEM UI and POSTed on WEB-API.',
+    tags: ['poem']
+  },
+  {
+    name: 'poem.added.three',
+    description: 'Service type created from POEM UI and POSTed on WEB-API.',
+    tags: ['poem']
   }
 ];
 
@@ -301,7 +316,6 @@ describe('Test service types list - Bulk change and delete', () => {
     expect(screen.getByText(/Description of service/)).toBeVisible()
     expect(screen.getByText(/Delete selected/)).toBeDisabled()
     expect(screen.getByText(/Save/)).toBeDisabled()
-    expect(screen.getAllByRole('checkbox', {checked: false})).toBeTruthy()
 
     const tbody = screen.getAllByRole('rowgroup')[1]
     const tableRows = within(tbody).getAllByRole('row')
@@ -349,29 +363,51 @@ describe('Test service types list - Bulk change and delete', () => {
     expect(screen.getAllByTestId(/rows-serviceTypes\.[1-9]*/)).toHaveLength(mockServTypes.length - 2)
     const tbodyFiltered = screen.getAllByRole('rowgroup')[1]
     const tableRowsFiltered = within(tbodyFiltered).getAllByRole('row')
-    expect(tableRowsFiltered[1]).toHaveTextContent('1argo.consumerARGO Consumer collects monitoring metrics from monitoring engines.')
-    expect(tableRowsFiltered[2]).toHaveTextContent('2argo.monARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.')
-    expect(tableRowsFiltered[3]).toHaveTextContent('3argo.poemPOEM is system for managing profiles of probes and metrics in ARGO system.')
-    expect(tableRowsFiltered[4]).toHaveTextContent('4argo.webuiARGO web user interface for metric A/R visualization and recalculation management.')
+    expect(tableRowsFiltered[1]).toHaveTextContent('1argo.apiARGO API service for retrieving status and A/R results.topology')
+    expect(tableRowsFiltered[2]).toHaveTextContent('2argo.computeengineARGO Compute Engine computes availability and reliability of services.topology')
+    expect(tableRowsFiltered[3]).toHaveTextContent('3argo.consumerARGO Consumer collects monitoring metrics from monitoring engines.topology')
+    expect(tableRowsFiltered[4]).toHaveTextContent('4argo.monARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.topology')
+    expect(tableRowsFiltered[5]).toHaveTextContent('5argo.poemPOEM is system for managing profiles of probes and metrics in ARGO system.topology')
+    expect(tableRowsFiltered[6]).toHaveTextContent('6argo.webuiARGO web user interface for metric A/R visualization and recalculation management.topology')
+    expect(tableRowsFiltered[7]).toHaveTextContent('7poem.added.threeService type created from POEM UI and POSTed on WEB-API.poem')
 
     await waitFor(() => {
       expect(mockAddServiceTypes).toHaveBeenCalledWith(
         [
           {
+            "description": "ARGO API service for retrieving status and A/R results.",
+            "name": "argo.api",
+            "tags": ["topology"]
+          },
+          {
+            "description": "ARGO Compute Engine computes availability and reliability of services.",
+            "name": "argo.computeengine",
+            "tags": ["topology"]
+          },
+          {
             "description": "ARGO Consumer collects monitoring metrics from monitoring engines.",
-            "name": "argo.consumer"
+            "name": "argo.consumer",
+            "tags": ["topology"]
           },
           {
             "description": "ARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.",
-            "name": "argo.mon"
+            "name": "argo.mon",
+            "tags": ["topology"]
           },
           {
             "description": "POEM is system for managing profiles of probes and metrics in ARGO system.",
-            "name": "argo.poem"
+            "name": "argo.poem",
+            "tags": ["topology"]
           },
           {
             "description": "ARGO web user interface for metric A/R visualization and recalculation management.",
-            "name": "argo.webui"
+            "name": "argo.webui",
+            "tags": ["topology"]
+          },
+          {
+            "description": "Service type created from POEM UI and POSTed on WEB-API.",
+            "name": "poem.added.three",
+            "tags": ["poem"]
           }
         ]
       )
