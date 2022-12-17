@@ -3,33 +3,13 @@ import { MetricForm} from './Metrics';
 import { Backend } from './DataManager';
 import {
   LoadingAnim,
-  BaseArgoView,
   NotifyOk,
   NotifyError,
   NotifyWarn,
   ErrorComponent
 } from './UIElements';
-import { Formik, Form } from 'formik';
-import { Button } from 'reactstrap';
-import * as Yup from 'yup';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { fetchMetricTags, fetchMetricTemplates, fetchMetricTemplateTypes, fetchMetricTemplateVersion, fetchProbeVersion, fetchProbeVersions } from './QueryFunctions';
-
-
-const MetricTemplateSchema = Yup.object().shape({
-  name: Yup.string()
-    .matches(/^\S*$/, 'Name cannot contain white spaces')
-    .required('Required'),
-  type: Yup.string(),
-  probeversion: Yup.string().when('type', {
-    is: (val) => val === 'Active',
-    then: Yup.string().required('Required')
-  }),
-  probeexecutable: Yup.string().when('type', {
-    is: (val) => val === 'Active',
-    then: Yup.string().required('Required')
-  })
-});
 
 
 export const MetricTemplateComponent = (props) => {
@@ -41,7 +21,6 @@ export const MetricTemplateComponent = (props) => {
   else
     name = props.match.params.name;
 
-  const location = props.location;
   const addview = props.addview;
   const cloneview = props.cloneview;
   const publicView = props.publicView;
@@ -55,12 +34,21 @@ export const MetricTemplateComponent = (props) => {
   const changeMutation = useMutation(async (values) => await backend.changeObject('/api/v2/internal/metrictemplates/', values));
   const deleteMutation = useMutation(async () => await backend.deleteObject(`/api/v2/internal/metrictemplates/${name}`));
 
-  const [popoverOpen, setPopoverOpen] = useState(false);
-  const [areYouSureModal, setAreYouSureModal] = useState(false);
-  const [modalFlag, setModalFlag] = useState(undefined);
-  const [modalTitle, setModalTitle] = useState(undefined);
-  const [modalMsg, setModalMsg] = useState(undefined);
   const [formValues, setFormValues] = useState(undefined);
+
+  const saveFormValues = (values) => {
+    setFormValues(values)
+  }
+
+  const emptyConfig = [
+    { 'key': 'maxCheckAttempts', 'value': '' },
+    { 'key': 'timeout', 'value': '' },
+    { 'key': 'path', 'value': '' },
+    { 'key': 'interval', 'value': '' },
+    { 'key': 'retryInterval', 'value': '' }
+  ];
+
+  const emptyEntry = [ { 'key': '', 'value': '' }];
 
   const { data: types, error: typesError, isLoading: typesLoading } = useQuery(
     `${publicView ? 'public_' : ''}metrictemplatestypes`,
@@ -96,32 +84,6 @@ export const MetricTemplateComponent = (props) => {
       }
     }
   );
-
-  const emptyConfig = [
-    { 'key': 'maxCheckAttempts', 'value': '' },
-    { 'key': 'timeout', 'value': '' },
-    { 'key': 'path', 'value': '' },
-    { 'key': 'interval', 'value': '' },
-    { 'key': 'retryInterval', 'value': '' }
-  ];
-
-  const emptyEntry = [ { 'key': '', 'value': '' }];
-
-  function togglePopOver() {
-    setPopoverOpen(!popoverOpen);
-  }
-
-  function toggleAreYouSure() {
-    setAreYouSureModal(!areYouSureModal);
-  }
-
-  function onSubmitHandle(values) {
-    setModalMsg(`Are you sure you want to ${addview || cloneview ? 'add' : 'change'} metric template?`)
-    setModalTitle(`${addview || cloneview ? 'Add' : 'Change'} metric template`)
-    setModalFlag('submit');
-    setFormValues(values);
-    toggleAreYouSure();
-  }
 
   function doChange() {
     function onlyUnique(value, index, self) {
@@ -248,94 +210,37 @@ export const MetricTemplateComponent = (props) => {
 
   else if ((addview || metricTemplate) && (publicView || tenantview || (metricTemplates && types && tags)) && probeVersions) {
     return (
-      <BaseArgoView
-        resourcename={(tenantview || publicView) ? 'Metric template details' : 'metric template'}
-        location={location}
-        addview={addview}
-        tenantview={tenantview}
-        publicview={publicView}
-        history={!probeview}
-        cloneview={cloneview}
-        clone={!publicView}
-        modal={true}
-        state={{
-          areYouSureModal,
-          modalTitle,
-          modalMsg,
-          'modalFunc': modalFlag === 'submit' ?
-            doChange
-          :
-            modalFlag === 'delete' ?
-              doDelete
-            :
-              undefined
+      <MetricForm
+        { ...props }
+        obj_label='metrictemplate'
+        resourcename={ (tenantview || publicView) ? 'Metric template details' : 'metric template' }
+        initValues = {{
+          id: metricTemplate ? metricTemplate.id : '',
+          name: metricTemplate ? metricTemplate.name : '',
+          probeversion: metricTemplate ? metricTemplate.probeversion : '',
+          type: metricTemplate ? metricTemplate.mtype : 'Active',
+          description: metricTemplate ? metricTemplate.description : '',
+          probeexecutable: metricTemplate ? metricTemplate.probeexecutable : '',
+          parent: metricTemplate ? metricTemplate.parent : '',
+          config: metricTemplate ? metricTemplate.config : emptyConfig,
+          attributes: metricTemplate && metricTemplate.attribute.length > 0 ? metricTemplate.attribute : emptyEntry,
+          dependency: metricTemplate && metricTemplate.dependency.length > 0 ? metricTemplate.dependency : emptyEntry,
+          parameter: metricTemplate && metricTemplate.parameter.length > 0 ? metricTemplate.parameter : emptyEntry,
+          flags: metricTemplate && metricTemplate.flags.length > 0 ? metricTemplate.flags : emptyEntry,
+          file_attributes: metricTemplate && metricTemplate.files.length > 0 ? metricTemplate.files : emptyEntry,
+          file_parameters: metricTemplate && metricTemplate.fileparameter.length > 0 ? metricTemplate.fileparameter : emptyEntry,
+          tags: metricTemplate ? metricTemplate.tags.map(item => new Object({ value: item, label: item })) : [],
+          probe: metricTemplate && metricTemplate.probeversion ? probeVersions.find(prv => prv.object_repr === metricTemplate.probeversion).fields : {'package': ''}
         }}
-        toggle={toggleAreYouSure}
-      >
-        <Formik
-          initialValues = {{
-            id: metricTemplate ? metricTemplate.id : '',
-            name: metricTemplate ? metricTemplate.name : '',
-            probeversion: metricTemplate ? metricTemplate.probeversion : '',
-            type: metricTemplate ? metricTemplate.mtype : 'Active',
-            description: metricTemplate ? metricTemplate.description : '',
-            probeexecutable: metricTemplate ? metricTemplate.probeexecutable : '',
-            parent: metricTemplate ? metricTemplate.parent : '',
-            config: metricTemplate ? metricTemplate.config : emptyConfig,
-            attributes: metricTemplate && metricTemplate.attribute.length > 0 ? metricTemplate.attribute : emptyEntry,
-            dependency: metricTemplate && metricTemplate.dependency.length > 0 ? metricTemplate.dependency : emptyEntry,
-            parameter: metricTemplate && metricTemplate.parameter.length > 0 ? metricTemplate.parameter : emptyEntry,
-            flags: metricTemplate && metricTemplate.flags.length > 0 ? metricTemplate.flags : emptyEntry,
-            file_attributes: metricTemplate && metricTemplate.files.length > 0 ? metricTemplate.files : emptyEntry,
-            file_parameters: metricTemplate && metricTemplate.fileparameter.length > 0 ? metricTemplate.fileparameter : emptyEntry,
-            tags: metricTemplate ? metricTemplate.tags.map(item => new Object({ value: item, label: item })) : [],
-            probe: metricTemplate && metricTemplate.probeversion ? probeVersions.find(prv => prv.object_repr === metricTemplate.probeversion).fields : {'package': ''}
-          }}
-          onSubmit = {(values) => onSubmitHandle(values)}
-          validationSchema={MetricTemplateSchema}
-          enableReinitialize={true}
-        >
-          {props => (
-            <Form data-testid='metric-form'>
-              <MetricForm
-                {...props}
-                obj_label='metrictemplate'
-                isTenantSchema={tenantview}
-                publicView={publicView}
-                addview={addview}
-                popoverOpen={popoverOpen}
-                togglePopOver={togglePopOver}
-                types={types ? types : []}
-                alltags={tags ? tags.map(tag => new Object({ value: tag.name, label: tag.name })) : []}
-                probeversions={probeVersions}
-                metrictemplatelist={metricTemplates ? metricTemplates.map(met => met.name) : []}
-              />
-              {
-                (!tenantview && !publicView) &&
-                  <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                    {
-                      (!addview && !cloneview) ?
-                        <Button
-                          color="danger"
-                          onClick={() => {
-                            setModalMsg('Are you sure you want to delete metric template?');
-                            setModalTitle('Delete metric template');
-                            setModalFlag('delete');
-                            toggleAreYouSure();
-                          }}
-                        >
-                          Delete
-                        </Button>
-                      :
-                        <div></div>
-                    }
-                    <Button color="success" id="submit-button" type="submit">Save</Button>
-                  </div>
-              }
-            </Form>
-          )}
-        </Formik>
-      </BaseArgoView>
+        isTenantSchema={ tenantview }
+        saveFormValues={ (val) => saveFormValues(val) }
+        doChange={ doChange }
+        doDelete={ doDelete }
+        types={ types ? types : [] }
+        alltags={ tags ? tags.map(tag => new Object({ value: tag.name, label: tag.name })) : [] }
+        probeversions={ probeVersions }
+        metrictemplatelist={ metricTemplates ? metricTemplates.map(met => met.name) : [] }
+      />
     );
   } else
     return null
@@ -381,41 +286,30 @@ export const MetricTemplateVersionDetails = (props) => {
       { package : '' };
 
     return (
-      <BaseArgoView
-        resourcename={`${name} ${metricTemplate.probeversion && `[${metricTemplate.probeversion}]`}`}
-        infoview={true}
-      >
-        <Formik
-          initialValues = {{
-            name: metricTemplate.name,
-            probeversion: metricTemplate.probeversion,
-            type: metricTemplate.mtype,
-            probeexecutable: metricTemplate.probeexecutable,
-            description: metricTemplate.description,
-            parent: metricTemplate.parent,
-            config: metricTemplate.config,
-            attributes: metricTemplate.attribute,
-            dependency: metricTemplate.dependency,
-            parameter: metricTemplate.parameter,
-            flags: metricTemplate.flags,
-            file_attributes: metricTemplate.files,
-            file_parameters: metricTemplate.fileparameter,
-            probe: probe,
-            tags: metricTemplate.tags
-          }}
-        >
-          {props => (
-            <Form>
-              <MetricForm
-                {...props}
-                obj_label='metrictemplate'
-                isHistory={true}
-              />
-            </Form>
-          )}
-        </Formik>
-      </BaseArgoView>
-    );
+      <MetricForm
+        {...props}
+        initValues={{
+          name: metricTemplate.name,
+          probeversion: metricTemplate.probeversion,
+          type: metricTemplate.mtype,
+          probeexecutable: metricTemplate.probeexecutable,
+          description: metricTemplate.description,
+          parent: metricTemplate.parent,
+          config: metricTemplate.config,
+          attributes: metricTemplate.attribute,
+          dependency: metricTemplate.dependency,
+          parameter: metricTemplate.parameter,
+          flags: metricTemplate.flags,
+          file_attributes: metricTemplate.files,
+          file_parameters: metricTemplate.fileparameter,
+          probe: probe,
+          tags: metricTemplate.tags
+        }}
+        obj_label='metrictemplate'
+        resourcename={ `${name} ${metricTemplate.probeversion && `[${metricTemplate.probeversion}]`}` }
+        isHistory={ true }
+      />
+    )
   } else
     return null;
 };

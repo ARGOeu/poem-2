@@ -1731,10 +1731,16 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(packageField).toBeDisabled();
     expect(descriptionField.value).toBe('Some description of argo.AMS-Check metric template.');
     expect(groupField).not.toBeInTheDocument();
-    expect(tagsElement).toBeInTheDocument()
-    expect(screen.getByTestId('metric-form')).toHaveFormValues({ tags: ['test_tag1', 'test_tag2'] })
 
+    expect(tagsElement).toBeInTheDocument()
+    expect(screen.getByText("test_tag1")).toBeInTheDocument()
+    expect(screen.getByText("test_tag2")).toBeInTheDocument()
+    expect(screen.queryByText("internal")).not.toBeInTheDocument()
+    expect(screen.queryByText("deprecated")).not.toBeInTheDocument()
+
+    expect(screen.getByRole("heading", { name: /probe executable/i })).toBeInTheDocument()
     expect(executableField.value).toBe('ams-probe');
+    expect(screen.getByRole("heading", { name: "config" })).toBeInTheDocument()
     expect(configKey1.value).toBe('maxCheckAttempts');
     expect(configKey1).toBeDisabled()
     expect(configVal1.value).toBe('4');
@@ -1755,12 +1761,16 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(configKey5).toBeDisabled()
     expect(configVal5.value).toBe('3');
     expect(configVal5).toBeEnabled()
+    expect(screen.getByRole("heading", { name: /attributes/i })).toBeInTheDocument()
     expect(attributeKey.value).toBe('argo.ams_TOKEN');
     expect(attributeVal.value).toBe('--token');
+    expect(screen.getByRole("heading", { name: /dependency/i })).toBeInTheDocument()
     expect(dependencyKey.value).toBe('');
     expect(dependencyVal.value).toBe('');
+    expect(screen.getByRole("heading", { name: /parameter/i })).toBeInTheDocument()
     expect(parameterKey.value).toBe('--project');
     expect(parameterVal.value).toBe('EGI');
+    expect(screen.getByRole("heading", { name: /flags/i })).toBeInTheDocument()
     expect(flagKey.value).toBe('OBSESS');
     expect(flagVal.value).toBe('1');
 
@@ -1771,6 +1781,19 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(screen.queryByTestId('config.4.remove')).not.toBeInTheDocument();
     expect(screen.queryByTestId('config.addnew')).not.toBeInTheDocument();
 
+    expect(screen.getByTestId("attributes.0.remove")).toBeInTheDocument()
+    expect(screen.getByTestId("attributes.addnew"))
+
+    expect(screen.queryByTestId("dependency")).not.toBeInTheDocument()
+    expect(screen.getByTestId("dependency.addnew")).toBeInTheDocument()
+
+    expect(screen.getByTestId("parameter.0.remove")).toBeInTheDocument()
+    expect(screen.getByTestId("parameter.addnew")).toBeInTheDocument()
+
+    expect(screen.getByTestId("flags.0.remove")).toBeInTheDocument()
+    expect(screen.getByTestId("flags.addnew")).toBeInTheDocument()
+
+    expect(screen.getByRole("heading", { name: /parent/i })).toBeInTheDocument()
     expect(screen.queryByText('argo.AMS-Publisher')).not.toBeInTheDocument()
     expect(screen.queryByText('org.apel.APEL-Pub')).not.toBeInTheDocument()
     selectEvent.openMenu(parentField)
@@ -1798,9 +1821,14 @@ describe('Test metric template changeview on SuperPOEM', () => {
     const packageField = screen.getByTestId('package');
     const descriptionField = screen.getByTestId('description');
     const groupField = screen.queryByText(/group/i);
+
     const tagBadge1 = screen.getByText(/test_tag1/i);
     const tagBadge2 = screen.getByText(/test_tag2/i);
+    const tagBadge3 = screen.queryByText("internal")
+    const tagBadge4 = screen.queryByText("deprecated")
+
     const executableField = screen.getByTestId('probeexecutable');
+
     const configKey1 = screen.getByTestId('config.0.key');
     const configKey2 = screen.getByTestId('config.1.key');
     const configKey3 = screen.getByTestId('config.2.key');
@@ -1811,33 +1839,50 @@ describe('Test metric template changeview on SuperPOEM', () => {
     const configVal3 = screen.getByTestId('config.2.value');
     const configVal4 = screen.getByTestId('config.3.value');
     const configVal5 = screen.getByTestId('config.4.value');
+
     const attributeKey = screen.getByTestId('attributes.0.key');
     const attributeVal = screen.getByTestId('attributes.0.value')
+
     const dependencyKey = screen.getByTestId('dependency.0.key');
     const dependencyVal = screen.getByTestId('dependency.0.value');
+
     const parameterKey = screen.getByTestId('parameter.0.key');
     const parameterVal = screen.getByTestId('parameter.0.value');
+
     const flagKey = screen.getByTestId('flags.0.key');
     const flagVal = screen.getByTestId('flags.0.value');
+
     const parentField = screen.getByTestId('parent');
 
     expect(nameField.value).toBe('argo.AMS-Check');
     expect(nameField).toBeDisabled()
+
     expect(typeField.value).toBe('Active');
     expect(typeField).toBeDisabled()
     expect(screen.queryByRole('option', { name: /active/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('option', { name: /passive/i })).not.toBeInTheDocument()
+
     expect(probeField.value).toBe('ams-probe (0.1.12)');
     expect(probeField).toBeDisabled();
+
     expect(packageField.value).toBe('nagios-plugins-argo (0.1.12)')
     expect(packageField).toBeDisabled();
+
     expect(descriptionField.value).toBe('Some description of argo.AMS-Check metric template.');
     expect(descriptionField).toBeDisabled();
+
     expect(groupField).not.toBeInTheDocument();
+
     expect(tagBadge1.textContent).toBe('test_tag1');
     expect(tagBadge2.textContent).toBe('test_tag2');
+    expect(tagBadge3).not.toBeInTheDocument()
+    expect(tagBadge4).not.toBeInTheDocument()
+
+    expect(screen.getByRole("heading", { name: /probe executable/i })).toBeInTheDocument()
     expect(executableField.value).toBe('ams-probe');
     expect(executableField).toBeDisabled()
+
+    expect(screen.getByRole("heading", { name: "config" })).toBeInTheDocument()
     expect(configKey1.value).toBe('maxCheckAttempts');
     expect(configKey1).toBeDisabled()
     expect(configVal1.value).toBe('4');
@@ -1865,32 +1910,43 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(configVal5).toBeDisabled()
     expect(screen.queryByTestId('config.4.remove')).not.toBeInTheDocument();
     expect(screen.queryByTestId('config.addnew')).not.toBeInTheDocument();
+
+    expect(screen.getByRole("heading", { name: /attributes/i })).toBeInTheDocument()
     expect(attributeKey.value).toBe('argo.ams_TOKEN');
     expect(attributeKey).toBeDisabled()
     expect(attributeVal.value).toBe('--token');
     expect(attributeVal).toBeDisabled()
     expect(screen.queryByTestId('attributes.0.remove')).not.toBeInTheDocument();
     expect(screen.queryByTestId('attributes.addnew')).not.toBeInTheDocument();
+
+    expect(screen.getByRole("heading", { name: /dependency/i })).toBeInTheDocument()
     expect(dependencyKey.value).toBe('');
     expect(dependencyKey).toBeDisabled()
     expect(dependencyVal.value).toBe('');
     expect(dependencyVal).toBeDisabled()
     expect(screen.queryByTestId('dependency.0.remove')).not.toBeInTheDocument();
     expect(screen.queryByTestId('dependency.addnew')).not.toBeInTheDocument();
+
+    expect(screen.getByRole("heading", { name: /parameter/i })).toBeInTheDocument()
     expect(parameterKey.value).toBe('--project');
     expect(parameterKey).toBeDisabled()
     expect(parameterVal.value).toBe('EGI');
     expect(parameterVal).toBeDisabled()
     expect(screen.queryByTestId('parameter.0.remove')).not.toBeInTheDocument();
     expect(screen.queryByTestId('parameter.addnew')).not.toBeInTheDocument();
+
+    expect(screen.getByRole("heading", { name: /flags/i })).toBeInTheDocument()
     expect(flagKey.value).toBe('OBSESS');
     expect(flagKey).toBeDisabled()
     expect(flagVal.value).toBe('1');
     expect(flagVal).toBeDisabled()
     expect(screen.queryByTestId('flags.0.remove')).not.toBeInTheDocument();
     expect(screen.queryByTestId('flags.addnew')).not.toBeInTheDocument();
+
+    expect(screen.getByRole("heading", { name: /parent/i })).toBeInTheDocument()
     expect(parentField.value).toBe('');
     expect(parentField).toBeDisabled()
+
     expect(screen.getByRole('button', { name: /history/i }).closest('a')).toHaveAttribute('href', '/ui/public_metrictemplates/argo.AMS-Check/history');
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
@@ -1898,6 +1954,10 @@ describe('Test metric template changeview on SuperPOEM', () => {
   })
 
   test("Test change main metric template info", async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200 })
+    )
+
     renderChangeView();
 
     await waitFor(() => {
@@ -1911,162 +1971,72 @@ describe('Test metric template changeview on SuperPOEM', () => {
     const tagsField = screen.getByLabelText('Tags:');
     const executableField = screen.getByTestId('probeexecutable');
 
-    expect(screen.getByTestId("metric-form")).toHaveFormValues({
-      name: "argo.AMS-Check",
-      probeversion: "ams-probe (0.1.12)",
-      type: "Active",
-      description: "Some description of argo.AMS-Check metric template.",
-      probeexecutable: "ams-probe",
-      parent: "",
-      "config.0.key": "maxCheckAttempts",
-      "config.0.value": "4",
-      "config.1.key": "timeout",
-      "config.1.value": "70",
-      "config.2.key": "path",
-      "config.2.value": "/usr/libexec/argo-monitoring/",
-      "config.3.key": "interval",
-      "config.3.value": "5",
-      "config.4.key": "retryInterval",
-      "config.4.value": "3",
-      "attributes.0.key": "argo.ams_TOKEN",
-      "attributes.0.value": "--token",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
-      "parameter.0.key": "--project",
-      "parameter.0.value": "EGI",
-      "flags.0.key": "OBSESS",
-      "flags.0.value": "1",
-      tags: ["test_tag1", "test_tag2"]
-    })
-
     fireEvent.change(nameField, { target: { value: 'argo.AMS-Check-new' } })
     await selectEvent.select(probeField, 'ams-probe-new (0.1.13)')
     expect(packageField.value).toBe('nagios-plugins-argo (0.1.13)')
     expect(packageField).toBeDisabled();
 
-    expect(screen.getByTestId("metric-form")).toHaveFormValues({
-      name: "argo.AMS-Check-new",
-      probeversion: "ams-probe-new (0.1.13)",
-      type: "Active",
-      description: "Some description of argo.AMS-Check metric template.",
-      probeexecutable: "ams-probe",
-      parent: "",
-      "config.0.key": "maxCheckAttempts",
-      "config.0.value": "4",
-      "config.1.key": "timeout",
-      "config.1.value": "70",
-      "config.2.key": "path",
-      "config.2.value": "/usr/libexec/argo-monitoring/",
-      "config.3.key": "interval",
-      "config.3.value": "5",
-      "config.4.key": "retryInterval",
-      "config.4.value": "3",
-      "attributes.0.key": "argo.ams_TOKEN",
-      "attributes.0.value": "--token",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
-      "parameter.0.key": "--project",
-      "parameter.0.value": "EGI",
-      "flags.0.key": "OBSESS",
-      "flags.0.value": "1",
-      tags: ["test_tag1", "test_tag2"]
-    })
-
     fireEvent.change(descriptionField, { target: { value: 'New description for metric template.' } });
     fireEvent.change(executableField, { target: { value: 'ams-probe-new' } })
 
-    expect(screen.getByTestId("metric-form")).toHaveFormValues({
-      name: "argo.AMS-Check-new",
-      probeversion: "ams-probe-new (0.1.13)",
-      type: "Active",
-      description: "New description for metric template.",
-      probeexecutable: "ams-probe-new",
-      parent: "",
-      "config.0.key": "maxCheckAttempts",
-      "config.0.value": "4",
-      "config.1.key": "timeout",
-      "config.1.value": "70",
-      "config.2.key": "path",
-      "config.2.value": "/usr/libexec/argo-monitoring/",
-      "config.3.key": "interval",
-      "config.3.value": "5",
-      "config.4.key": "retryInterval",
-      "config.4.value": "3",
-      "attributes.0.key": "argo.ams_TOKEN",
-      "attributes.0.value": "--token",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
-      "parameter.0.key": "--project",
-      "parameter.0.value": "EGI",
-      "flags.0.key": "OBSESS",
-      "flags.0.value": "1",
-      tags: ["test_tag1", "test_tag2"]
-    })
-
     await selectEvent.create(tagsField, 'test_tag3')
 
-    expect(screen.getByTestId("metric-form")).toHaveFormValues({
-      name: "argo.AMS-Check-new",
-      probeversion: "ams-probe-new (0.1.13)",
-      type: "Active",
-      description: "New description for metric template.",
-      probeexecutable: "ams-probe-new",
-      parent: "",
-      "config.0.key": "maxCheckAttempts",
-      "config.0.value": "4",
-      "config.1.key": "timeout",
-      "config.1.value": "70",
-      "config.2.key": "path",
-      "config.2.value": "/usr/libexec/argo-monitoring/",
-      "config.3.key": "interval",
-      "config.3.value": "5",
-      "config.4.key": "retryInterval",
-      "config.4.value": "3",
-      "attributes.0.key": "argo.ams_TOKEN",
-      "attributes.0.value": "--token",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
-      "parameter.0.key": "--project",
-      "parameter.0.value": "EGI",
-      "flags.0.key": "OBSESS",
-      "flags.0.value": "1",
-      tags: ["test_tag1", "test_tag2", "test_tag3"]
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
     })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/metrictemplates/',
+        {
+          'id': '1',
+          'name': 'argo.AMS-Check-new',
+          'mtype': 'Active',
+          'tags': ['test_tag1', 'test_tag2', 'test_tag3'],
+          'description': 'New description for metric template.',
+          'probeversion': 'ams-probe-new (0.1.13)',
+          'parent': '',
+          'probeexecutable': 'ams-probe-new',
+          'config': [
+            { key: 'maxCheckAttempts', value: '4' },
+            { key: 'timeout', value: '70' },
+            { key: 'path', value: '/usr/libexec/argo-monitoring/' },
+            { key: 'interval', value: '5' },
+            { key: 'retryInterval', value: '3' }
+          ],
+          'attribute': [
+            { key: 'argo.ams_TOKEN', value: '--token' }
+          ],
+          'dependency': [{ key: '', value: '' }],
+          'parameter': [
+            { key: '--project', value: 'EGI' }
+          ],
+          'flags': [
+            { key: 'OBSESS', value: '1' }
+          ],
+          'files': [{ key: '', value: '' }],
+          'fileparameter': [{ key: '', value: '' }]
+        }
+      )
+    })
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metrictemplate');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metrictemplate');
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Metric template successfully changed', 'Changed', 2000
+    )
   })
 
   test("Test change config", async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200 })
+    )
+
     renderChangeView();
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template');
-    })
-
-    expect(screen.getByTestId("metric-form")).toHaveFormValues({
-      name: "argo.AMS-Check",
-      probeversion: "ams-probe (0.1.12)",
-      type: "Active",
-      description: "Some description of argo.AMS-Check metric template.",
-      probeexecutable: "ams-probe",
-      parent: "",
-      "config.0.key": "maxCheckAttempts",
-      "config.0.value": "4",
-      "config.1.key": "timeout",
-      "config.1.value": "70",
-      "config.2.key": "path",
-      "config.2.value": "/usr/libexec/argo-monitoring/",
-      "config.3.key": "interval",
-      "config.3.value": "5",
-      "config.4.key": "retryInterval",
-      "config.4.value": "3",
-      "attributes.0.key": "argo.ams_TOKEN",
-      "attributes.0.value": "--token",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
-      "parameter.0.key": "--project",
-      "parameter.0.value": "EGI",
-      "flags.0.key": "OBSESS",
-      "flags.0.value": "1",
-      tags: ["test_tag1", "test_tag2"]
     })
 
     fireEvent.change(screen.getByTestId("config.0.value"), { target: { value: '5' } });
@@ -2074,648 +2044,327 @@ describe('Test metric template changeview on SuperPOEM', () => {
     fireEvent.change(screen.getByTestId("config.3.value"), { target: { value: '6' } });
     fireEvent.change(screen.getByTestId("config.4.value"), { target: { value: '4' } });
 
-    expect(screen.getByTestId("metric-form")).toHaveFormValues({
-      name: "argo.AMS-Check",
-      probeversion: "ams-probe (0.1.12)",
-      type: "Active",
-      description: "Some description of argo.AMS-Check metric template.",
-      probeexecutable: "ams-probe",
-      parent: "",
-      "config.0.key": "maxCheckAttempts",
-      "config.0.value": "5",
-      "config.1.key": "timeout",
-      "config.1.value": "80",
-      "config.2.key": "path",
-      "config.2.value": "/usr/libexec/argo-monitoring/",
-      "config.3.key": "interval",
-      "config.3.value": "6",
-      "config.4.key": "retryInterval",
-      "config.4.value": "4",
-      "attributes.0.key": "argo.ams_TOKEN",
-      "attributes.0.value": "--token",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
-      "parameter.0.key": "--project",
-      "parameter.0.value": "EGI",
-      "flags.0.key": "OBSESS",
-      "flags.0.value": "1",
-      tags: ["test_tag1", "test_tag2"]
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
     })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metrictemplates/",
+        {
+          id: "1",
+          name: "argo.AMS-Check",
+          mtype: "Active",
+          tags: ["test_tag1", "test_tag2"],
+          description: "Some description of argo.AMS-Check metric template.",
+          probeversion: "ams-probe (0.1.12)",
+          parent: "",
+          probeexecutable: "ams-probe",
+          config: [
+            { key: "maxCheckAttempts", value: "5" },
+            { key: "timeout", value: "80" },
+            { key: "path", value: "/usr/libexec/argo-monitoring/" },
+            { key: "interval", value: "6" },
+            { key: "retryInterval", value: "4" }
+          ],
+          attribute: [
+            { key: "argo.ams_TOKEN", value: "--token" }
+          ],
+          dependency: [{ key: "", value: "" }],
+          parameter: [
+            { key: "--project", value: "EGI" }
+          ],
+          flags: [
+            { key: "OBSESS", value: "1" }
+          ],
+          files: [{ key: "", value: "" }],
+          fileparameter: [{ key: "", value: "" }]
+        }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metrictemplate');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metrictemplate');
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Metric template successfully changed', 'Changed', 2000
+    )
   })
 
   test("Test change attributes", async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200 })
+    )
+
     renderChangeView();
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template');
-    })
-
-    expect(screen.getByTestId("metric-form")).toHaveFormValues({
-      name: "argo.AMS-Check",
-      probeversion: "ams-probe (0.1.12)",
-      type: "Active",
-      description: "Some description of argo.AMS-Check metric template.",
-      probeexecutable: "ams-probe",
-      parent: "",
-      "config.0.key": "maxCheckAttempts",
-      "config.0.value": "4",
-      "config.1.key": "timeout",
-      "config.1.value": "70",
-      "config.2.key": "path",
-      "config.2.value": "/usr/libexec/argo-monitoring/",
-      "config.3.key": "interval",
-      "config.3.value": "5",
-      "config.4.key": "retryInterval",
-      "config.4.value": "3",
-      "attributes.0.key": "argo.ams_TOKEN",
-      "attributes.0.value": "--token",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
-      "parameter.0.key": "--project",
-      "parameter.0.value": "EGI",
-      "flags.0.key": "OBSESS",
-      "flags.0.value": "1",
-      tags: ["test_tag1", "test_tag2"]
     })
 
     fireEvent.click(screen.getByTestId('attributes.addnew'));
     fireEvent.change(screen.getByTestId('attributes.1.key'), { target: { value: 'ATTRIBUTE' } });
     fireEvent.change(screen.getByTestId('attributes.1.value'), { target: { value: '--meh' } });
 
-    expect(screen.getByTestId("metric-form")).toHaveFormValues({
-      name: "argo.AMS-Check",
-      probeversion: "ams-probe (0.1.12)",
-      type: "Active",
-      description: "Some description of argo.AMS-Check metric template.",
-      probeexecutable: "ams-probe",
-      parent: "",
-      "config.0.key": "maxCheckAttempts",
-      "config.0.value": "4",
-      "config.1.key": "timeout",
-      "config.1.value": "70",
-      "config.2.key": "path",
-      "config.2.value": "/usr/libexec/argo-monitoring/",
-      "config.3.key": "interval",
-      "config.3.value": "5",
-      "config.4.key": "retryInterval",
-      "config.4.value": "3",
-      "attributes.0.key": "argo.ams_TOKEN",
-      "attributes.0.value": "--token",
-      "attributes.1.key": "ATTRIBUTE",
-      "attributes.1.value": "--meh",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
-      "parameter.0.key": "--project",
-      "parameter.0.value": "EGI",
-      "flags.0.key": "OBSESS",
-      "flags.0.value": "1",
-      tags: ["test_tag1", "test_tag2"]
-    })
-
     fireEvent.click(screen.getByTestId("attributes.0.remove"))
 
-    expect(screen.getByTestId("metric-form")).toHaveFormValues({
-      name: "argo.AMS-Check",
-      probeversion: "ams-probe (0.1.12)",
-      type: "Active",
-      description: "Some description of argo.AMS-Check metric template.",
-      probeexecutable: "ams-probe",
-      parent: "",
-      "config.0.key": "maxCheckAttempts",
-      "config.0.value": "4",
-      "config.1.key": "timeout",
-      "config.1.value": "70",
-      "config.2.key": "path",
-      "config.2.value": "/usr/libexec/argo-monitoring/",
-      "config.3.key": "interval",
-      "config.3.value": "5",
-      "config.4.key": "retryInterval",
-      "config.4.value": "3",
-      "attributes.0.key": "ATTRIBUTE",
-      "attributes.0.value": "--meh",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
-      "parameter.0.key": "--project",
-      "parameter.0.value": "EGI",
-      "flags.0.key": "OBSESS",
-      "flags.0.value": "1",
-      tags: ["test_tag1", "test_tag2"]
+    fireEvent.click(screen.getByTestId('attributes.addnew'));
+    fireEvent.change(screen.getByTestId('attributes.1.key'), { target: { value: 'SOME_ATTRIBUTE' } });
+    fireEvent.change(screen.getByTestId('attributes.1.value'), { target: { value: '--yes' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metrictemplates/",
+        {
+          id: "1",
+          name: "argo.AMS-Check",
+          mtype: "Active",
+          tags: ["test_tag1", "test_tag2"],
+          description: "Some description of argo.AMS-Check metric template.",
+          probeversion: "ams-probe (0.1.12)",
+          parent: "",
+          probeexecutable: "ams-probe",
+          config: [
+            { key: "maxCheckAttempts", value: "4" },
+            { key: "timeout", value: "70" },
+            { key: "path", value: "/usr/libexec/argo-monitoring/" },
+            { key: "interval", value: "5" },
+            { key: "retryInterval", value: "3" }
+          ],
+          attribute: [
+            { key: "ATTRIBUTE", value: "--meh", isNew: true },
+            { key: "SOME_ATTRIBUTE", value: "--yes", isNew: true }
+          ],
+          dependency: [{ key: "", value: "" }],
+          parameter: [
+            { key: "--project", value: "EGI" }
+          ],
+          flags: [
+            { key: "OBSESS", value: "1" }
+          ],
+          files: [{ key: "", value: "" }],
+          fileparameter: [{ key: "", value: "" }]
+        }
+      )
     })
 
-    fireEvent.click(screen.getByTestId("attributes.0.remove"))
-
-    expect(screen.getByTestId("metric-form")).toHaveFormValues({
-      name: "argo.AMS-Check",
-      probeversion: "ams-probe (0.1.12)",
-      type: "Active",
-      description: "Some description of argo.AMS-Check metric template.",
-      probeexecutable: "ams-probe",
-      parent: "",
-      "config.0.key": "maxCheckAttempts",
-      "config.0.value": "4",
-      "config.1.key": "timeout",
-      "config.1.value": "70",
-      "config.2.key": "path",
-      "config.2.value": "/usr/libexec/argo-monitoring/",
-      "config.3.key": "interval",
-      "config.3.value": "5",
-      "config.4.key": "retryInterval",
-      "config.4.value": "3",
-      "attributes.0.key": "",
-      "attributes.0.value": "",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
-      "parameter.0.key": "--project",
-      "parameter.0.value": "EGI",
-      "flags.0.key": "OBSESS",
-      "flags.0.value": "1",
-      tags: ["test_tag1", "test_tag2"]
-    })
-
-    fireEvent.change(screen.getByTestId('attributes.0.key'), { target: { value: 'SOME_ATTRIBUTE' } });
-    fireEvent.change(screen.getByTestId('attributes.0.value'), { target: { value: '--yes' } });
-
-    expect(screen.getByTestId("metric-form")).toHaveFormValues({
-      name: "argo.AMS-Check",
-      probeversion: "ams-probe (0.1.12)",
-      type: "Active",
-      description: "Some description of argo.AMS-Check metric template.",
-      probeexecutable: "ams-probe",
-      parent: "",
-      "config.0.key": "maxCheckAttempts",
-      "config.0.value": "4",
-      "config.1.key": "timeout",
-      "config.1.value": "70",
-      "config.2.key": "path",
-      "config.2.value": "/usr/libexec/argo-monitoring/",
-      "config.3.key": "interval",
-      "config.3.value": "5",
-      "config.4.key": "retryInterval",
-      "config.4.value": "3",
-      "attributes.0.key": "SOME_ATTRIBUTE",
-      "attributes.0.value": "--yes",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
-      "parameter.0.key": "--project",
-      "parameter.0.value": "EGI",
-      "flags.0.key": "OBSESS",
-      "flags.0.value": "1",
-      tags: ["test_tag1", "test_tag2"]
-    })
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metrictemplate');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metrictemplate');
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Metric template successfully changed', 'Changed', 2000
+    )
   })
 
   test("Test change dependency", async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200 })
+    )
+
     renderChangeView();
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template');
-    })
-
-    expect(screen.getByTestId("metric-form")).toHaveFormValues({
-      name: "argo.AMS-Check",
-      probeversion: "ams-probe (0.1.12)",
-      type: "Active",
-      description: "Some description of argo.AMS-Check metric template.",
-      probeexecutable: "ams-probe",
-      parent: "",
-      "config.0.key": "maxCheckAttempts",
-      "config.0.value": "4",
-      "config.1.key": "timeout",
-      "config.1.value": "70",
-      "config.2.key": "path",
-      "config.2.value": "/usr/libexec/argo-monitoring/",
-      "config.3.key": "interval",
-      "config.3.value": "5",
-      "config.4.key": "retryInterval",
-      "config.4.value": "3",
-      "attributes.0.key": "argo.ams_TOKEN",
-      "attributes.0.value": "--token",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
-      "parameter.0.key": "--project",
-      "parameter.0.value": "EGI",
-      "flags.0.key": "OBSESS",
-      "flags.0.value": "1",
-      tags: ["test_tag1", "test_tag2"]
     })
 
     fireEvent.change(screen.getByTestId('dependency.0.key'), { target: { value: 'test.AMS-Check' } });
     fireEvent.change(screen.getByTestId('dependency.0.value'), { target: { value: '1' } });
 
-    expect(screen.getByTestId("metric-form")).toHaveFormValues({
-      name: "argo.AMS-Check",
-      probeversion: "ams-probe (0.1.12)",
-      type: "Active",
-      description: "Some description of argo.AMS-Check metric template.",
-      probeexecutable: "ams-probe",
-      parent: "",
-      "config.0.key": "maxCheckAttempts",
-      "config.0.value": "4",
-      "config.1.key": "timeout",
-      "config.1.value": "70",
-      "config.2.key": "path",
-      "config.2.value": "/usr/libexec/argo-monitoring/",
-      "config.3.key": "interval",
-      "config.3.value": "5",
-      "config.4.key": "retryInterval",
-      "config.4.value": "3",
-      "attributes.0.key": "argo.ams_TOKEN",
-      "attributes.0.value": "--token",
-      "dependency.0.key": "test.AMS-Check",
-      "dependency.0.value": "1",
-      "parameter.0.key": "--project",
-      "parameter.0.value": "EGI",
-      "flags.0.key": "OBSESS",
-      "flags.0.value": "1",
-      tags: ["test_tag1", "test_tag2"]
-    })
-
     fireEvent.click(screen.getByTestId("dependency.addnew"))
     fireEvent.change(screen.getByTestId('dependency.1.key'), { target: { value: 'test2.AMS-Check' } });
     fireEvent.change(screen.getByTestId('dependency.1.value'), { target: { value: '0' } });
 
-    expect(screen.getByTestId("metric-form")).toHaveFormValues({
-      name: "argo.AMS-Check",
-      probeversion: "ams-probe (0.1.12)",
-      type: "Active",
-      description: "Some description of argo.AMS-Check metric template.",
-      probeexecutable: "ams-probe",
-      parent: "",
-      "config.0.key": "maxCheckAttempts",
-      "config.0.value": "4",
-      "config.1.key": "timeout",
-      "config.1.value": "70",
-      "config.2.key": "path",
-      "config.2.value": "/usr/libexec/argo-monitoring/",
-      "config.3.key": "interval",
-      "config.3.value": "5",
-      "config.4.key": "retryInterval",
-      "config.4.value": "3",
-      "attributes.0.key": "argo.ams_TOKEN",
-      "attributes.0.value": "--token",
-      "dependency.0.key": "test.AMS-Check",
-      "dependency.0.value": "1",
-      "dependency.1.key": "test2.AMS-Check",
-      "dependency.1.value": "0",
-      "parameter.0.key": "--project",
-      "parameter.0.value": "EGI",
-      "flags.0.key": "OBSESS",
-      "flags.0.value": "1",
-      tags: ["test_tag1", "test_tag2"]
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metrictemplates/",
+        {
+          id: "1",
+          name: "argo.AMS-Check",
+          mtype: "Active",
+          tags: ["test_tag1", "test_tag2"],
+          description: "Some description of argo.AMS-Check metric template.",
+          probeversion: "ams-probe (0.1.12)",
+          parent: "",
+          probeexecutable: "ams-probe",
+          config: [
+            { key: "maxCheckAttempts", value: "4" },
+            { key: "timeout", value: "70" },
+            { key: "path", value: "/usr/libexec/argo-monitoring/" },
+            { key: "interval", value: "5" },
+            { key: "retryInterval", value: "3" }
+          ],
+          attribute: [
+            { key: "argo.ams_TOKEN", value: "--token" }
+          ],
+          dependency: [
+            { key: "test.AMS-Check", value: "1" },
+            { key: "test2.AMS-Check", value: "0", isNew: true }
+          ],
+          parameter: [
+            { key: "--project", value: "EGI" }
+          ],
+          flags: [
+            { key: "OBSESS", value: "1" }
+          ],
+          files: [{ key: "", value: "" }],
+          fileparameter: [{ key: "", value: "" }]
+        }
+      )
     })
 
-    fireEvent.click(screen.getByTestId("dependency.0.remove"))
-
-    expect(screen.getByTestId("metric-form")).toHaveFormValues({
-      name: "argo.AMS-Check",
-      probeversion: "ams-probe (0.1.12)",
-      type: "Active",
-      description: "Some description of argo.AMS-Check metric template.",
-      probeexecutable: "ams-probe",
-      parent: "",
-      "config.0.key": "maxCheckAttempts",
-      "config.0.value": "4",
-      "config.1.key": "timeout",
-      "config.1.value": "70",
-      "config.2.key": "path",
-      "config.2.value": "/usr/libexec/argo-monitoring/",
-      "config.3.key": "interval",
-      "config.3.value": "5",
-      "config.4.key": "retryInterval",
-      "config.4.value": "3",
-      "attributes.0.key": "argo.ams_TOKEN",
-      "attributes.0.value": "--token",
-      "dependency.0.key": "test2.AMS-Check",
-      "dependency.0.value": "0",
-      "parameter.0.key": "--project",
-      "parameter.0.value": "EGI",
-      "flags.0.key": "OBSESS",
-      "flags.0.value": "1",
-      tags: ["test_tag1", "test_tag2"]
-    })
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metrictemplate');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metrictemplate');
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Metric template successfully changed', 'Changed', 2000
+    )
   })
 
   test("Test change parameter", async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200 })
+    )
+
     renderChangeView();
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template');
     })
 
-    expect(screen.getByTestId("metric-form")).toHaveFormValues({
-      name: "argo.AMS-Check",
-      probeversion: "ams-probe (0.1.12)",
-      type: "Active",
-      description: "Some description of argo.AMS-Check metric template.",
-      probeexecutable: "ams-probe",
-      parent: "",
-      "config.0.key": "maxCheckAttempts",
-      "config.0.value": "4",
-      "config.1.key": "timeout",
-      "config.1.value": "70",
-      "config.2.key": "path",
-      "config.2.value": "/usr/libexec/argo-monitoring/",
-      "config.3.key": "interval",
-      "config.3.value": "5",
-      "config.4.key": "retryInterval",
-      "config.4.value": "3",
-      "attributes.0.key": "argo.ams_TOKEN",
-      "attributes.0.value": "--token",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
-      "parameter.0.key": "--project",
-      "parameter.0.value": "EGI",
-      "flags.0.key": "OBSESS",
-      "flags.0.value": "1",
-      tags: ["test_tag1", "test_tag2"]
-    })
-
     fireEvent.change(screen.getByTestId('parameter.0.value'), { target: { value: 'TEST' } });
-
-    expect(screen.getByTestId("metric-form")).toHaveFormValues({
-      name: "argo.AMS-Check",
-      probeversion: "ams-probe (0.1.12)",
-      type: "Active",
-      description: "Some description of argo.AMS-Check metric template.",
-      probeexecutable: "ams-probe",
-      parent: "",
-      "config.0.key": "maxCheckAttempts",
-      "config.0.value": "4",
-      "config.1.key": "timeout",
-      "config.1.value": "70",
-      "config.2.key": "path",
-      "config.2.value": "/usr/libexec/argo-monitoring/",
-      "config.3.key": "interval",
-      "config.3.value": "5",
-      "config.4.key": "retryInterval",
-      "config.4.value": "3",
-      "attributes.0.key": "argo.ams_TOKEN",
-      "attributes.0.value": "--token",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
-      "parameter.0.key": "--project",
-      "parameter.0.value": "TEST",
-      "flags.0.key": "OBSESS",
-      "flags.0.value": "1",
-      tags: ["test_tag1", "test_tag2"]
-    })
 
     fireEvent.click(screen.getByTestId("parameter.addnew"))
     fireEvent.change(screen.getByTestId('parameter.1.key'), { target: { value: '--key' } });
     fireEvent.change(screen.getByTestId('parameter.1.value'), { target: { value: 'value' } });
 
-    expect(screen.getByTestId("metric-form")).toHaveFormValues({
-      name: "argo.AMS-Check",
-      probeversion: "ams-probe (0.1.12)",
-      type: "Active",
-      description: "Some description of argo.AMS-Check metric template.",
-      probeexecutable: "ams-probe",
-      parent: "",
-      "config.0.key": "maxCheckAttempts",
-      "config.0.value": "4",
-      "config.1.key": "timeout",
-      "config.1.value": "70",
-      "config.2.key": "path",
-      "config.2.value": "/usr/libexec/argo-monitoring/",
-      "config.3.key": "interval",
-      "config.3.value": "5",
-      "config.4.key": "retryInterval",
-      "config.4.value": "3",
-      "attributes.0.key": "argo.ams_TOKEN",
-      "attributes.0.value": "--token",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
-      "parameter.0.key": "--project",
-      "parameter.0.value": "TEST",
-      "parameter.1.key": "--key",
-      "parameter.1.value": "value",
-      "flags.0.key": "OBSESS",
-      "flags.0.value": "1",
-      tags: ["test_tag1", "test_tag2"]
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metrictemplates/",
+        {
+          id: "1",
+          name: "argo.AMS-Check",
+          mtype: "Active",
+          tags: ["test_tag1", "test_tag2"],
+          description: "Some description of argo.AMS-Check metric template.",
+          probeversion: "ams-probe (0.1.12)",
+          parent: "",
+          probeexecutable: "ams-probe",
+          config: [
+            { key: "maxCheckAttempts", value: "4" },
+            { key: "timeout", value: "70" },
+            { key: "path", value: "/usr/libexec/argo-monitoring/" },
+            { key: "interval", value: "5" },
+            { key: "retryInterval", value: "3" }
+          ],
+          attribute: [
+            { key: "argo.ams_TOKEN", value: "--token" }
+          ],
+          dependency: [{ key: "", value: "" }],
+          parameter: [
+            { key: "--project", value: "TEST" },
+            { key: "--key", value: "value", isNew: true }
+          ],
+          flags: [
+            { key: "OBSESS", value: "1" }
+          ],
+          files: [{ key: "", value: "" }],
+          fileparameter: [{ key: "", value: "" }]
+        }
+      )
     })
 
-    fireEvent.click(screen.getByTestId("parameter.0.remove"))
-
-    expect(screen.getByTestId("metric-form")).toHaveFormValues({
-      name: "argo.AMS-Check",
-      probeversion: "ams-probe (0.1.12)",
-      type: "Active",
-      description: "Some description of argo.AMS-Check metric template.",
-      probeexecutable: "ams-probe",
-      parent: "",
-      "config.0.key": "maxCheckAttempts",
-      "config.0.value": "4",
-      "config.1.key": "timeout",
-      "config.1.value": "70",
-      "config.2.key": "path",
-      "config.2.value": "/usr/libexec/argo-monitoring/",
-      "config.3.key": "interval",
-      "config.3.value": "5",
-      "config.4.key": "retryInterval",
-      "config.4.value": "3",
-      "attributes.0.key": "argo.ams_TOKEN",
-      "attributes.0.value": "--token",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
-      "parameter.0.key": "--key",
-      "parameter.0.value": "value",
-      "flags.0.key": "OBSESS",
-      "flags.0.value": "1",
-      tags: ["test_tag1", "test_tag2"]
-    })
-
-    fireEvent.click(screen.getByTestId("parameter.0.remove"))
-
-    expect(screen.getByTestId("metric-form")).toHaveFormValues({
-      name: "argo.AMS-Check",
-      probeversion: "ams-probe (0.1.12)",
-      type: "Active",
-      description: "Some description of argo.AMS-Check metric template.",
-      probeexecutable: "ams-probe",
-      parent: "",
-      "config.0.key": "maxCheckAttempts",
-      "config.0.value": "4",
-      "config.1.key": "timeout",
-      "config.1.value": "70",
-      "config.2.key": "path",
-      "config.2.value": "/usr/libexec/argo-monitoring/",
-      "config.3.key": "interval",
-      "config.3.value": "5",
-      "config.4.key": "retryInterval",
-      "config.4.value": "3",
-      "attributes.0.key": "argo.ams_TOKEN",
-      "attributes.0.value": "--token",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
-      "parameter.0.key": "",
-      "parameter.0.value": "",
-      "flags.0.key": "OBSESS",
-      "flags.0.value": "1",
-      tags: ["test_tag1", "test_tag2"]
-    })
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metrictemplate');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metrictemplate');
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Metric template successfully changed', 'Changed', 2000
+    )
   })
 
   test("Test change flags", async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200 })
+    )
+
     renderChangeView();
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template');
-    })
-
-    expect(screen.getByTestId("metric-form")).toHaveFormValues({
-      name: "argo.AMS-Check",
-      probeversion: "ams-probe (0.1.12)",
-      type: "Active",
-      description: "Some description of argo.AMS-Check metric template.",
-      probeexecutable: "ams-probe",
-      parent: "",
-      "config.0.key": "maxCheckAttempts",
-      "config.0.value": "4",
-      "config.1.key": "timeout",
-      "config.1.value": "70",
-      "config.2.key": "path",
-      "config.2.value": "/usr/libexec/argo-monitoring/",
-      "config.3.key": "interval",
-      "config.3.value": "5",
-      "config.4.key": "retryInterval",
-      "config.4.value": "3",
-      "attributes.0.key": "argo.ams_TOKEN",
-      "attributes.0.value": "--token",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
-      "parameter.0.key": "--project",
-      "parameter.0.value": "EGI",
-      "flags.0.key": "OBSESS",
-      "flags.0.value": "1",
-      tags: ["test_tag1", "test_tag2"]
     })
 
     fireEvent.click(screen.getByTestId("flags.addnew"))
     fireEvent.change(screen.getByTestId("flags.1.key"), { target: { value: "NOHOSTNAME" } })
     fireEvent.change(screen.getByTestId("flags.1.value"), { target: { value: "1" } })
 
-    expect(screen.getByTestId("metric-form")).toHaveFormValues({
-      name: "argo.AMS-Check",
-      probeversion: "ams-probe (0.1.12)",
-      type: "Active",
-      description: "Some description of argo.AMS-Check metric template.",
-      probeexecutable: "ams-probe",
-      parent: "",
-      "config.0.key": "maxCheckAttempts",
-      "config.0.value": "4",
-      "config.1.key": "timeout",
-      "config.1.value": "70",
-      "config.2.key": "path",
-      "config.2.value": "/usr/libexec/argo-monitoring/",
-      "config.3.key": "interval",
-      "config.3.value": "5",
-      "config.4.key": "retryInterval",
-      "config.4.value": "3",
-      "attributes.0.key": "argo.ams_TOKEN",
-      "attributes.0.value": "--token",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
-      "parameter.0.key": "--project",
-      "parameter.0.value": "EGI",
-      "flags.0.key": "OBSESS",
-      "flags.0.value": "1",
-      "flags.1.key": "NOHOSTNAME",
-      "flags.1.value": "1",
-      tags: ["test_tag1", "test_tag2"]
-    })
-
-    fireEvent.change(screen.getByTestId('flags.0.key'), { target: { value: 'NOARGS' } });
-    fireEvent.change(screen.getByTestId('flags.0.value'), { target: { value: '0' } });
-
-    expect(screen.getByTestId("metric-form")).toHaveFormValues({
-      name: "argo.AMS-Check",
-      probeversion: "ams-probe (0.1.12)",
-      type: "Active",
-      description: "Some description of argo.AMS-Check metric template.",
-      probeexecutable: "ams-probe",
-      parent: "",
-      "config.0.key": "maxCheckAttempts",
-      "config.0.value": "4",
-      "config.1.key": "timeout",
-      "config.1.value": "70",
-      "config.2.key": "path",
-      "config.2.value": "/usr/libexec/argo-monitoring/",
-      "config.3.key": "interval",
-      "config.3.value": "5",
-      "config.4.key": "retryInterval",
-      "config.4.value": "3",
-      "attributes.0.key": "argo.ams_TOKEN",
-      "attributes.0.value": "--token",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
-      "parameter.0.key": "--project",
-      "parameter.0.value": "EGI",
-      "flags.0.key": "NOARGS",
-      "flags.0.value": "0",
-      "flags.1.key": "NOHOSTNAME",
-      "flags.1.value": "1",
-      tags: ["test_tag1", "test_tag2"]
-    })
+    fireEvent.click(screen.getByTestId("flags.addnew"))
+    fireEvent.change(screen.getByTestId('flags.2.key'), { target: { value: 'NOARGS' } });
+    fireEvent.change(screen.getByTestId('flags.2.value'), { target: { value: '0' } });
 
     fireEvent.click(screen.getByTestId("flags.0.remove"))
 
-    expect(screen.getByTestId("metric-form")).toHaveFormValues({
-      name: "argo.AMS-Check",
-      probeversion: "ams-probe (0.1.12)",
-      type: "Active",
-      description: "Some description of argo.AMS-Check metric template.",
-      probeexecutable: "ams-probe",
-      parent: "",
-      "config.0.key": "maxCheckAttempts",
-      "config.0.value": "4",
-      "config.1.key": "timeout",
-      "config.1.value": "70",
-      "config.2.key": "path",
-      "config.2.value": "/usr/libexec/argo-monitoring/",
-      "config.3.key": "interval",
-      "config.3.value": "5",
-      "config.4.key": "retryInterval",
-      "config.4.value": "3",
-      "attributes.0.key": "argo.ams_TOKEN",
-      "attributes.0.value": "--token",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
-      "parameter.0.key": "--project",
-      "parameter.0.value": "EGI",
-      "flags.0.key": "NOHOSTNAME",
-      "flags.0.value": "1",
-      tags: ["test_tag1", "test_tag2"]
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metrictemplates/",
+        {
+          id: "1",
+          name: "argo.AMS-Check",
+          mtype: "Active",
+          tags: ["test_tag1", "test_tag2"],
+          description: "Some description of argo.AMS-Check metric template.",
+          probeversion: "ams-probe (0.1.12)",
+          parent: "",
+          probeexecutable: "ams-probe",
+          config: [
+            { key: "maxCheckAttempts", value: "4" },
+            { key: "timeout", value: "70" },
+            { key: "path", value: "/usr/libexec/argo-monitoring/" },
+            { key: "interval", value: "5" },
+            { key: "retryInterval", value: "3" }
+          ],
+          attribute: [
+            { key: "argo.ams_TOKEN", value: "--token" }
+          ],
+          dependency: [{ key: "", value: "" }],
+          parameter: [
+            { key: "--project", value: "EGI" }
+          ],
+          flags: [
+            { key: "NOHOSTNAME", value: "1", isNew: true },
+            { key: "NOARGS", value: "0", isNew: true }
+          ],
+          files: [{ key: "", value: "" }],
+          fileparameter: [{ key: "", value: "" }]
+        }
+      )
     })
 
-    fireEvent.click(screen.getByTestId("flags.0.remove"))
-
-    expect(screen.getByTestId("metric-form")).toHaveFormValues({
-      name: "argo.AMS-Check",
-      probeversion: "ams-probe (0.1.12)",
-      type: "Active",
-      description: "Some description of argo.AMS-Check metric template.",
-      probeexecutable: "ams-probe",
-      parent: "",
-      "config.0.key": "maxCheckAttempts",
-      "config.0.value": "4",
-      "config.1.key": "timeout",
-      "config.1.value": "70",
-      "config.2.key": "path",
-      "config.2.value": "/usr/libexec/argo-monitoring/",
-      "config.3.key": "interval",
-      "config.3.value": "5",
-      "config.4.key": "retryInterval",
-      "config.4.value": "3",
-      "attributes.0.key": "argo.ams_TOKEN",
-      "attributes.0.value": "--token",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
-      "parameter.0.key": "--project",
-      "parameter.0.value": "EGI",
-      "flags.0.key": "",
-      "flags.0.value": "",
-      tags: ["test_tag1", "test_tag2"]
-    })
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metrictemplate');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metrictemplate');
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Metric template successfully changed', 'Changed', 2000
+    )
   })
 
   test('Test change metric template and save', async () => {
@@ -2802,6 +2451,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(NotificationManager.success).toHaveBeenCalledWith(
       'Metric template successfully changed', 'Changed', 2000
     )
+
   })
 
   test('Test change metric template with warning', async () => {
@@ -3146,7 +2796,10 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(descriptionField.value).toBe('');
     expect(groupField).not.toBeInTheDocument();
     expect(tagsField).toBeInTheDocument();
-    expect(screen.getByTestId('metric-form')).toHaveFormValues({ tags: '' });
+    expect(screen.queryByText("test_tag1")).not.toBeInTheDocument()
+    expect(screen.queryByText("test_tag2")).not.toBeInTheDocument()
+    expect(screen.queryByText("internal")).not.toBeInTheDocument()
+    expect(screen.queryByText("deprecated")).not.toBeInTheDocument()
 
     expect(executableField).not.toBeInTheDocument();
     expect(configKey1).not.toBeInTheDocument();
@@ -3352,7 +3005,10 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(descriptionField.value).toBe('');
     expect(groupField).not.toBeInTheDocument();
     expect(tagsField).toBeInTheDocument();
-    expect(screen.getByTestId('metric-form')).toHaveFormValues({ tags: '', parent: '' });
+    expect(screen.queryByText("test_tag1")).not.toBeInTheDocument()
+    expect(screen.queryByText("test_tag2")).not.toBeInTheDocument()
+    expect(screen.queryByText("internal")).not.toBeInTheDocument()
+    expect(screen.queryByText("deprecated")).not.toBeInTheDocument()
 
     expect(executableField.value).toBe('');
     expect(executableField).not.toHaveAttribute('hidden');
@@ -3451,7 +3107,11 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(descriptionField.value).toBe('Some description of argo.AMS-Check metric template.');
     expect(groupField).not.toBeInTheDocument();
     expect(tagsField).toBeInTheDocument();
-    expect(screen.getByTestId('metric-form')).toHaveFormValues({ tags: ['test_tag1', 'test_tag2'], parent: '' });
+    expect(screen.queryByText("test_tag1")).toBeInTheDocument()
+    expect(screen.queryByText("test_tag2")).toBeInTheDocument()
+    expect(screen.queryByText("internal")).not.toBeInTheDocument()
+    expect(screen.queryByText("deprecated")).not.toBeInTheDocument()
+
     expect(executableField).not.toBeInTheDocument();
     expect(configKey1).not.toBeInTheDocument();
     expect(configVal1).not.toBeInTheDocument();
@@ -3484,7 +3144,10 @@ describe('Test metric template changeview on SuperPOEM', () => {
     const descriptionField2 = screen.getByTestId('description');
     const groupField2 = screen.queryByText(/group/i)
     const tagsField2 = screen.getByLabelText('Tags:');
-    expect(screen.getByTestId('metric-form')).toHaveFormValues({ tags: ['test_tag1', 'test_tag2'] });
+    expect(screen.queryByText("test_tag1")).toBeInTheDocument()
+    expect(screen.queryByText("test_tag2")).toBeInTheDocument()
+    expect(screen.queryByText("internal")).not.toBeInTheDocument()
+    expect(screen.queryByText("deprecated")).not.toBeInTheDocument()
 
     const executableField2 = screen.getByTestId('probeexecutable');
     const configKey1a = screen.getByTestId('config.0.key');
@@ -3527,7 +3190,11 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(descriptionField2.value).toBe('Some description of argo.AMS-Check metric template.');
     expect(groupField2).not.toBeInTheDocument();
     expect(tagsField2).toBeInTheDocument();
-    expect(screen.getByTestId('metric-form')).toHaveFormValues({ tags: ['test_tag1', 'test_tag2'] });
+    expect(screen.queryByText("test_tag1")).toBeInTheDocument()
+    expect(screen.queryByText("test_tag2")).toBeInTheDocument()
+    expect(screen.queryByText("internal")).not.toBeInTheDocument()
+    expect(screen.queryByText("deprecated")).not.toBeInTheDocument()
+
     expect(executableField2.value).toBe('ams-probe');
     expect(configKey1a.value).toBe('maxCheckAttempts');
     expect(configKey1a).toBeDisabled()
@@ -3623,6 +3290,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
 
 describe('Test metric template addview on SuperPOEM', () => {
   jest.spyOn(NotificationManager, 'success');
+  jest.spyOn(NotificationManager, 'warning');
   jest.spyOn(NotificationManager, 'error');
   jest.spyOn(queryClient, 'invalidateQueries');
 
@@ -3713,7 +3381,11 @@ describe('Test metric template addview on SuperPOEM', () => {
     expect(descriptionField.value).toBe('');
     expect(groupField).not.toBeInTheDocument();
     expect(tagsField).toBeInTheDocument();
-    expect(screen.getByTestId('metric-form')).toHaveFormValues({ tags: '', parent: '' })
+    expect(screen.queryByText("test_tag1")).not.toBeInTheDocument()
+    expect(screen.queryByText("test_tag2")).not.toBeInTheDocument()
+    expect(screen.queryByText("internal")).not.toBeInTheDocument()
+    expect(screen.queryByText("deprecated")).not.toBeInTheDocument()
+
     expect(executableField.value).toBe('');
     expect(configKey1.value).toBe('maxCheckAttempts');
     expect(configKey1).toBeDisabled()
@@ -3767,11 +3439,8 @@ describe('Test metric template addview on SuperPOEM', () => {
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
       name: "",
-      probeversion: "",
-      type: "Active",
       description: "",
       probeexecutable: "",
-      parent: "",
       "config.0.key": "maxCheckAttempts",
       "config.0.value": "",
       "config.1.key": "timeout",
@@ -3789,8 +3458,7 @@ describe('Test metric template addview on SuperPOEM', () => {
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
-      "flags.0.value": "",
-      tags: ""
+      "flags.0.value": ""
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: 'argo.AMSPublisher-Check' } })
@@ -3798,19 +3466,12 @@ describe('Test metric template addview on SuperPOEM', () => {
     await selectEvent.select(screen.getAllByText(/select/i)[0], 'ams-publisher-probe (0.1.12)')
     expect(screen.getByTestId("package").value).toBe('nagios-plugins-argo (0.1.12)')
 
-    const tagsField = screen.getByLabelText('Tags:');
-    await selectEvent.select(tagsField, ['internal', 'test_tag1']);
-    await selectEvent.create(tagsField, 'test_tag3');
-
-    fireEvent.change(screen.getByTestId("probeexecutable"), { target: { value: 'ams-publisher-probe' } })
+    fireEvent.change(screen.getByTestId("probeexecutable"), { target: { value: "ams-publisher-probe" } })
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
       name: "argo.AMSPublisher-Check",
-      probeversion: "ams-publisher-probe (0.1.12)",
-      type: "Active",
       description: "",
       probeexecutable: "ams-publisher-probe",
-      parent: "",
       "config.0.key": "maxCheckAttempts",
       "config.0.value": "",
       "config.1.key": "timeout",
@@ -3828,8 +3489,7 @@ describe('Test metric template addview on SuperPOEM', () => {
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
-      "flags.0.value": "",
-      tags: ["internal", "test_tag1", "test_tag3"]
+      "flags.0.value": ""
     })
   })
 
@@ -3842,11 +3502,8 @@ describe('Test metric template addview on SuperPOEM', () => {
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
       name: "",
-      probeversion: "",
-      type: "Active",
       description: "",
       probeexecutable: "",
-      parent: "",
       "config.0.key": "maxCheckAttempts",
       "config.0.value": "",
       "config.1.key": "timeout",
@@ -3864,8 +3521,7 @@ describe('Test metric template addview on SuperPOEM', () => {
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
-      "flags.0.value": "",
-      tags: ""
+      "flags.0.value": ""
     })
 
     fireEvent.change(screen.getByTestId("config.0.value"), { target: { value: '1' } });
@@ -3876,11 +3532,8 @@ describe('Test metric template addview on SuperPOEM', () => {
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
       name: "",
-      probeversion: "",
-      type: "Active",
       description: "",
       probeexecutable: "",
-      parent: "",
       "config.0.key": "maxCheckAttempts",
       "config.0.value": "1",
       "config.1.key": "timeout",
@@ -3898,8 +3551,7 @@ describe('Test metric template addview on SuperPOEM', () => {
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
-      "flags.0.value": "",
-      tags: ""
+      "flags.0.value": ""
     })
   })
 
@@ -3912,11 +3564,8 @@ describe('Test metric template addview on SuperPOEM', () => {
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
       name: "",
-      probeversion: "",
-      type: "Active",
       description: "",
       probeexecutable: "",
-      parent: "",
       "config.0.key": "maxCheckAttempts",
       "config.0.value": "",
       "config.1.key": "timeout",
@@ -3934,8 +3583,7 @@ describe('Test metric template addview on SuperPOEM', () => {
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
-      "flags.0.value": "",
-      tags: ""
+      "flags.0.value": ""
     })
 
     fireEvent.change(screen.getByTestId("attributes.0.key"), { target: { value: 'attribute1' } });
@@ -3943,11 +3591,8 @@ describe('Test metric template addview on SuperPOEM', () => {
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
       name: "",
-      probeversion: "",
-      type: "Active",
       description: "",
       probeexecutable: "",
-      parent: "",
       "config.0.key": "maxCheckAttempts",
       "config.0.value": "",
       "config.1.key": "timeout",
@@ -3965,8 +3610,7 @@ describe('Test metric template addview on SuperPOEM', () => {
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
-      "flags.0.value": "",
-      tags: ""
+      "flags.0.value": ""
     })
 
     fireEvent.click(screen.getByTestId("attributes.addnew"))
@@ -3975,11 +3619,8 @@ describe('Test metric template addview on SuperPOEM', () => {
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
       name: "",
-      probeversion: "",
-      type: "Active",
       description: "",
       probeexecutable: "",
-      parent: "",
       "config.0.key": "maxCheckAttempts",
       "config.0.value": "",
       "config.1.key": "timeout",
@@ -3999,19 +3640,15 @@ describe('Test metric template addview on SuperPOEM', () => {
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
-      "flags.0.value": "",
-      tags: ""
+      "flags.0.value": ""
     })
 
     fireEvent.click(screen.getByTestId("attributes.1.remove"))
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
       name: "",
-      probeversion: "",
-      type: "Active",
       description: "",
       probeexecutable: "",
-      parent: "",
       "config.0.key": "maxCheckAttempts",
       "config.0.value": "",
       "config.1.key": "timeout",
@@ -4029,8 +3666,7 @@ describe('Test metric template addview on SuperPOEM', () => {
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
-      "flags.0.value": "",
-      tags: ""
+      "flags.0.value": ""
     })
 
     fireEvent.change(screen.getByTestId("attributes.0.key"), { target: { value: 'ATTRIBUTE' } }); fireEvent.change(screen.getByTestId("attributes.0.value"), { target: { value: 'ATTRIBUTE' } });
@@ -4038,11 +3674,8 @@ describe('Test metric template addview on SuperPOEM', () => {
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
       name: "",
-      probeversion: "",
-      type: "Active",
       description: "",
       probeexecutable: "",
-      parent: "",
       "config.0.key": "maxCheckAttempts",
       "config.0.value": "",
       "config.1.key": "timeout",
@@ -4060,19 +3693,15 @@ describe('Test metric template addview on SuperPOEM', () => {
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
-      "flags.0.value": "",
-      tags: ""
+      "flags.0.value": ""
     })
 
     fireEvent.click(screen.getByTestId("attributes.0.remove"))
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
       name: "",
-      probeversion: "",
-      type: "Active",
       description: "",
       probeexecutable: "",
-      parent: "",
       "config.0.key": "maxCheckAttempts",
       "config.0.value": "",
       "config.1.key": "timeout",
@@ -4090,8 +3719,7 @@ describe('Test metric template addview on SuperPOEM', () => {
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
-      "flags.0.value": "",
-      tags: ""
+      "flags.0.value": ""
     })
   })
 
@@ -4104,11 +3732,8 @@ describe('Test metric template addview on SuperPOEM', () => {
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
       name: "",
-      probeversion: "",
-      type: "Active",
       description: "",
       probeexecutable: "",
-      parent: "",
       "config.0.key": "maxCheckAttempts",
       "config.0.value": "",
       "config.1.key": "timeout",
@@ -4126,8 +3751,7 @@ describe('Test metric template addview on SuperPOEM', () => {
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
-      "flags.0.value": "",
-      tags: ""
+      "flags.0.value": ""
     })
 
     fireEvent.change(screen.getByTestId("dependency.0.key"), { target: { value: 'test.AMS-Check' } });
@@ -4135,11 +3759,8 @@ describe('Test metric template addview on SuperPOEM', () => {
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
       name: "",
-      probeversion: "",
-      type: "Active",
       description: "",
       probeexecutable: "",
-      parent: "",
       "config.0.key": "maxCheckAttempts",
       "config.0.value": "",
       "config.1.key": "timeout",
@@ -4157,8 +3778,7 @@ describe('Test metric template addview on SuperPOEM', () => {
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
-      "flags.0.value": "",
-      tags: ""
+      "flags.0.value": ""
     })
 
     fireEvent.click(screen.getByTestId("dependency.addnew"))
@@ -4167,11 +3787,8 @@ describe('Test metric template addview on SuperPOEM', () => {
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
       name: "",
-      probeversion: "",
-      type: "Active",
       description: "",
       probeexecutable: "",
-      parent: "",
       "config.0.key": "maxCheckAttempts",
       "config.0.value": "",
       "config.1.key": "timeout",
@@ -4191,19 +3808,15 @@ describe('Test metric template addview on SuperPOEM', () => {
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
-      "flags.0.value": "",
-      tags: ""
+      "flags.0.value": ""
     })
 
     fireEvent.click(screen.getByTestId("dependency.0.remove"))
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
       name: "",
-      probeversion: "",
-      type: "Active",
       description: "",
       probeexecutable: "",
-      parent: "",
       "config.0.key": "maxCheckAttempts",
       "config.0.value": "",
       "config.1.key": "timeout",
@@ -4221,19 +3834,15 @@ describe('Test metric template addview on SuperPOEM', () => {
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
-      "flags.0.value": "",
-      tags: ""
+      "flags.0.value": ""
     })
 
     fireEvent.change(screen.getByTestId("dependency.0.value"), { target: { value: '1' } });
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
       name: "",
-      probeversion: "",
-      type: "Active",
       description: "",
       probeexecutable: "",
-      parent: "",
       "config.0.key": "maxCheckAttempts",
       "config.0.value": "",
       "config.1.key": "timeout",
@@ -4251,19 +3860,15 @@ describe('Test metric template addview on SuperPOEM', () => {
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
-      "flags.0.value": "",
-      tags: ""
+      "flags.0.value": ""
     })
 
     fireEvent.click(screen.getByTestId("dependency.0.remove"))
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
       name: "",
-      probeversion: "",
-      type: "Active",
       description: "",
       probeexecutable: "",
-      parent: "",
       "config.0.key": "maxCheckAttempts",
       "config.0.value": "",
       "config.1.key": "timeout",
@@ -4281,8 +3886,7 @@ describe('Test metric template addview on SuperPOEM', () => {
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
-      "flags.0.value": "",
-      tags: ""
+      "flags.0.value": ""
     })
   })
 
@@ -4295,11 +3899,8 @@ describe('Test metric template addview on SuperPOEM', () => {
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
       name: "",
-      probeversion: "",
-      type: "Active",
       description: "",
       probeexecutable: "",
-      parent: "",
       "config.0.key": "maxCheckAttempts",
       "config.0.value": "",
       "config.1.key": "timeout",
@@ -4317,8 +3918,7 @@ describe('Test metric template addview on SuperPOEM', () => {
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
-      "flags.0.value": "",
-      tags: ""
+      "flags.0.value": ""
     })
 
     fireEvent.change(screen.getByTestId("parameter.0.key"), { target: { value: '-vv' } });
@@ -4326,11 +3926,8 @@ describe('Test metric template addview on SuperPOEM', () => {
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
       name: "",
-      probeversion: "",
-      type: "Active",
       description: "",
       probeexecutable: "",
-      parent: "",
       "config.0.key": "maxCheckAttempts",
       "config.0.value": "",
       "config.1.key": "timeout",
@@ -4348,8 +3945,7 @@ describe('Test metric template addview on SuperPOEM', () => {
       "parameter.0.key": "-vv",
       "parameter.0.value": "",
       "flags.0.key": "",
-      "flags.0.value": "",
-      tags: ""
+      "flags.0.value": ""
     })
 
     fireEvent.click(screen.getByTestId("parameter.addnew"))
@@ -4358,11 +3954,8 @@ describe('Test metric template addview on SuperPOEM', () => {
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
       name: "",
-      probeversion: "",
-      type: "Active",
       description: "",
       probeexecutable: "",
-      parent: "",
       "config.0.key": "maxCheckAttempts",
       "config.0.value": "",
       "config.1.key": "timeout",
@@ -4382,19 +3975,15 @@ describe('Test metric template addview on SuperPOEM', () => {
       "parameter.1.key": "-p",
       "parameter.1.value": "443",
       "flags.0.key": "",
-      "flags.0.value": "",
-      tags: ""
+      "flags.0.value": ""
     })
 
     fireEvent.click(screen.getByTestId("parameter.0.remove"))
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
       name: "",
-      probeversion: "",
-      type: "Active",
       description: "",
       probeexecutable: "",
-      parent: "",
       "config.0.key": "maxCheckAttempts",
       "config.0.value": "",
       "config.1.key": "timeout",
@@ -4412,19 +4001,15 @@ describe('Test metric template addview on SuperPOEM', () => {
       "parameter.0.key": "-p",
       "parameter.0.value": "443",
       "flags.0.key": "",
-      "flags.0.value": "",
-      tags: ""
+      "flags.0.value": ""
     })
 
     fireEvent.change(screen.getByTestId("parameter.0.value"), { target: { value: '80' } });
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
       name: "",
-      probeversion: "",
-      type: "Active",
       description: "",
       probeexecutable: "",
-      parent: "",
       "config.0.key": "maxCheckAttempts",
       "config.0.value": "",
       "config.1.key": "timeout",
@@ -4442,19 +4027,15 @@ describe('Test metric template addview on SuperPOEM', () => {
       "parameter.0.key": "-p",
       "parameter.0.value": "80",
       "flags.0.key": "",
-      "flags.0.value": "",
-      tags: ""
+      "flags.0.value": ""
     })
 
     fireEvent.click(screen.getByTestId("parameter.0.remove"))
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
       name: "",
-      probeversion: "",
-      type: "Active",
       description: "",
       probeexecutable: "",
-      parent: "",
       "config.0.key": "maxCheckAttempts",
       "config.0.value": "",
       "config.1.key": "timeout",
@@ -4472,8 +4053,7 @@ describe('Test metric template addview on SuperPOEM', () => {
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
-      "flags.0.value": "",
-      tags: ""
+      "flags.0.value": ""
     })
   })
 
@@ -4486,11 +4066,8 @@ describe('Test metric template addview on SuperPOEM', () => {
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
       name: "",
-      probeversion: "",
-      type: "Active",
       description: "",
       probeexecutable: "",
-      parent: "",
       "config.0.key": "maxCheckAttempts",
       "config.0.value": "",
       "config.1.key": "timeout",
@@ -4508,8 +4085,7 @@ describe('Test metric template addview on SuperPOEM', () => {
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
-      "flags.0.value": "",
-      tags: ""
+      "flags.0.value": ""
     })
 
     fireEvent.change(screen.getByTestId("flags.0.key"), { target: { value: 'OBSESS' } });
@@ -4517,11 +4093,8 @@ describe('Test metric template addview on SuperPOEM', () => {
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
       name: "",
-      probeversion: "",
-      type: "Active",
       description: "",
       probeexecutable: "",
-      parent: "",
       "config.0.key": "maxCheckAttempts",
       "config.0.value": "",
       "config.1.key": "timeout",
@@ -4539,8 +4112,7 @@ describe('Test metric template addview on SuperPOEM', () => {
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "OBSESS",
-      "flags.0.value": "1",
-      tags: ""
+      "flags.0.value": "1"
     })
 
     fireEvent.click(screen.getByTestId("flags.addnew"))
@@ -4549,11 +4121,8 @@ describe('Test metric template addview on SuperPOEM', () => {
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
       name: "",
-      probeversion: "",
-      type: "Active",
       description: "",
       probeexecutable: "",
-      parent: "",
       "config.0.key": "maxCheckAttempts",
       "config.0.value": "",
       "config.1.key": "timeout",
@@ -4573,19 +4142,15 @@ describe('Test metric template addview on SuperPOEM', () => {
       "flags.0.key": "OBSESS",
       "flags.0.value": "1",
       "flags.1.key": "NOHOSTNAME",
-      "flags.1.value": "1",
-      tags: ""
+      "flags.1.value": "1"
     })
 
     fireEvent.click(screen.getByTestId("flags.0.remove"))
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
       name: "",
-      probeversion: "",
-      type: "Active",
       description: "",
       probeexecutable: "",
-      parent: "",
       "config.0.key": "maxCheckAttempts",
       "config.0.value": "",
       "config.1.key": "timeout",
@@ -4603,19 +4168,15 @@ describe('Test metric template addview on SuperPOEM', () => {
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "NOHOSTNAME",
-      "flags.0.value": "1",
-      tags: ""
+      "flags.0.value": "1"
     })
 
     fireEvent.change(screen.getByTestId("flags.0.value"), { target: { value: "0" } });
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
       name: "",
-      probeversion: "",
-      type: "Active",
       description: "",
       probeexecutable: "",
-      parent: "",
       "config.0.key": "maxCheckAttempts",
       "config.0.value": "",
       "config.1.key": "timeout",
@@ -4633,19 +4194,15 @@ describe('Test metric template addview on SuperPOEM', () => {
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "NOHOSTNAME",
-      "flags.0.value": "0",
-      tags: ""
+      "flags.0.value": "0"
     })
 
     fireEvent.click(screen.getByTestId("flags.0.remove"))
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
       name: "",
-      probeversion: "",
-      type: "Active",
       description: "",
       probeexecutable: "",
-      parent: "",
       "config.0.key": "maxCheckAttempts",
       "config.0.value": "",
       "config.1.key": "timeout",
@@ -4663,8 +4220,7 @@ describe('Test metric template addview on SuperPOEM', () => {
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
-      "flags.0.value": "",
-      tags: ""
+      "flags.0.value": ""
     })
   })
 
@@ -4825,7 +4381,6 @@ describe('Test metric template addview on SuperPOEM', () => {
     expect(dependencyVal).not.toBeInTheDocument();
     expect(parameterKey).not.toBeInTheDocument();
     expect(parameterVal).not.toBeInTheDocument();
-    expect(screen.getByTestId('metric-form')).toHaveFormValues({ parent: '' })
 
     fireEvent.change(nameField, { target: { value: 'org.apel.APEL-Sync' } });
 
@@ -5272,8 +4827,12 @@ describe('Test metric template cloneview on SuperPOEM', () => {
     expect(packageField).toBeDisabled();
     expect(descriptionField.value).toBe('Some description of argo.AMS-Check metric template.');
     expect(groupField).not.toBeInTheDocument();
+
     expect(tagsElement).toBeInTheDocument()
-    expect(screen.getByTestId('metric-form')).toHaveFormValues({ tags: ['test_tag1', 'test_tag2'], parent: '' })
+    expect(screen.queryByText("test_tag1")).toBeInTheDocument()
+    expect(screen.queryByText("test_tag2")).toBeInTheDocument()
+    expect(screen.queryByText("internal")).not.toBeInTheDocument()
+    expect(screen.queryByText("deprecated")).not.toBeInTheDocument()
 
     expect(executableField.value).toBe('ams-probe');
     expect(configKey1.value).toBe('maxCheckAttempts');
@@ -5767,8 +5326,8 @@ describe('Test metric template version detail view', () => {
     const configVal5 = screen.getByTestId('config.4.value');
     const attributeKey = screen.getByTestId('attributes.0.key');
     const attributeVal = screen.getByTestId('attributes.0.value')
-    const dependencyKey = screen.getByTestId('empty-key.dependency');
-    const dependencyVal = screen.getByTestId('empty-value.dependency');
+    const dependencyKey = screen.getByTestId('dependency.0.key');
+    const dependencyVal = screen.getByTestId('dependency.0.value');
     const parameterKey = screen.getByTestId('parameter.0.key');
     const parameterVal = screen.getByTestId('parameter.0.value');
     const flagKey = screen.getByTestId('flags.0.key');
