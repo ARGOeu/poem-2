@@ -888,7 +888,8 @@ export const ServiceTypesListPublic = (props) => {
       },
       {
         Header: <div><Icon i="servicetypes"/> Service type</div>,
-        accessor: 'name',
+        id: 'name',
+        accessor: e => <span className="fw-bold">{e.name}</span>,
         column_width: '25%',
         Filter: DefaultColumnFilter
       },
@@ -963,7 +964,8 @@ export const ServiceTypesList = (props) => {
       },
       {
         Header: <div><Icon i="servicetypes"/> Service type</div>,
-        accessor: 'name',
+        id: 'name',
+        accessor: e => <span className="fw-bold">{e.name}</span>,
         column_width: '25%',
         Filter: DefaultColumnFilter
       },
