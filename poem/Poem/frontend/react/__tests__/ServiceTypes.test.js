@@ -432,19 +432,24 @@ describe('Test service types list - Bulk change and delete', () => {
     const inputFirstDesc = screen.getByText('ARGO API service for retrieving status and A/R results.')
     const inputSecondDesc = screen.getByText('ARGO Compute Engine computes availability and reliability of services.')
     expect(inputFirstDesc).toBeDisabled()
-    expect(inputFirstDesc).toBeDisabled()
+    expect(inputSecondDesc).toBeDisabled()
 
     // fireEvent does not trigger onChange on react-hook-form Controller fields so using userEvent
     //fireEvent.change(inputFirstDesc, {target: {value: 'CHANGED DESCRIPTION'}})
     //fireEvent.change(inputSecondDesc, {target: {value: 'CHANGED DESCRIPTION 2'}})
 
-    await userEvent.clear(inputFirstDesc)
-    await userEvent.type(inputFirstDesc, 'CHANGED DESCRIPTION')
-    await expect(inputFirstDesc).toHaveTextContent('CHANGED DESCRIPTION')
+    const inputSeventhDesc = within(tableRows[7]).getAllByRole('textbox')[0]
+    const inputEightDesc = within(tableRows[8]).getAllByRole('textbox')[0]
+    expect(inputSeventhDesc).toBeEnabled()
+    expect(inputEightDesc).toBeEnabled()
 
-    await userEvent.clear(inputSecondDesc)
-    await userEvent.type(inputSecondDesc, 'CHANGED DESCRIPTION 2')
-    await expect(inputSecondDesc).toHaveTextContent('CHANGED DESCRIPTION 2')
+    await userEvent.clear(inputSeventhDesc)
+    await userEvent.type(inputSeventhDesc, 'CHANGED DESCRIPTION')
+    await expect(inputSeventhDesc).toHaveTextContent('CHANGED DESCRIPTION')
+
+    await userEvent.clear(inputEightDesc)
+    await userEvent.type(inputEightDesc, 'CHANGED DESCRIPTION 2')
+    await expect(inputEightDesc).toHaveTextContent('CHANGED DESCRIPTION 2')
 
     await waitFor(() => {
       expect(screen.getByText('Save')).toBeEnabled()
@@ -461,29 +466,50 @@ describe('Test service types list - Bulk change and delete', () => {
       expect(mockAddServiceTypes).toHaveBeenCalledWith(
         [
           {
-            "description": "CHANGED DESCRIPTION",
-            "name": "argo.api"
+            "description": "ARGO API service for retrieving status and A/R results.",
+            "name": "argo.api",
+            "tags": ["topology"]
           },
           {
-            "description": "CHANGED DESCRIPTION 2",
-            "name": "argo.computeengine"
+            "description": "ARGO Compute Engine computes availability and reliability of services.",
+            "name": "argo.computeengine",
+            "tags": ["topology"]
           },
           {
             "description": "ARGO Consumer collects monitoring metrics from monitoring engines.",
-            "name": "argo.consumer"
+            "name": "argo.consumer",
+            "tags": ["topology"]
           },
           {
             "description": "ARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.",
-            "name": "argo.mon"
+            "name": "argo.mon",
+            "tags": ["topology"]
           },
           {
             "description": "POEM is system for managing profiles of probes and metrics in ARGO system.",
-            "name": "argo.poem"
+            "name": "argo.poem",
+            "tags": ["topology"]
           },
           {
             "description": "ARGO web user interface for metric A/R visualization and recalculation management.",
-            "name": "argo.webui"
-          }
+            "name": "argo.webui",
+            "tags": ["topology"]
+          },
+          {
+            "description": "CHANGED DESCRIPTION",
+            "name": "poem.added.one",
+            "tags": ["poem"]
+          },
+          {
+            "description": "CHANGED DESCRIPTION 2",
+            "name": "poem.added.two",
+            "tags": ["poem"]
+          },
+          {
+            "description": "Service type created from POEM UI and POSTed on WEB-API.",
+            "name": "poem.added.three",
+            "tags": ["poem"]
+          },
         ]
       )
     })
