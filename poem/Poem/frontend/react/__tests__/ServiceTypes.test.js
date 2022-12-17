@@ -426,11 +426,13 @@ describe('Test service types list - Bulk change and delete', () => {
 
     const tbody = screen.getAllByRole('rowgroup')[1]
     const tableRows = within(tbody).getAllByRole('row')
-    expect(tableRows[1]).toHaveTextContent('1argo.apiARGO API service for retrieving status and A/R results.')
-    expect(tableRows[2]).toHaveTextContent('2argo.computeengineARGO Compute Engine computes availability and reliability of services.')
+    expect(tableRows[1]).toHaveTextContent('1argo.apiARGO API service for retrieving status and A/R results.topology')
+    expect(tableRows[2]).toHaveTextContent('2argo.computeengineARGO Compute Engine computes availability and reliability of services.topology')
 
     const inputFirstDesc = screen.getByText('ARGO API service for retrieving status and A/R results.')
     const inputSecondDesc = screen.getByText('ARGO Compute Engine computes availability and reliability of services.')
+    expect(inputFirstDesc).toBeDisabled()
+    expect(inputFirstDesc).toBeDisabled()
 
     // fireEvent does not trigger onChange on react-hook-form Controller fields so using userEvent
     //fireEvent.change(inputFirstDesc, {target: {value: 'CHANGED DESCRIPTION'}})
