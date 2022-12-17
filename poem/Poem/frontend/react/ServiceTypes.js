@@ -895,8 +895,18 @@ export const ServiceTypesListPublic = (props) => {
       {
         Header: 'Description',
         accessor: 'description',
-        column_width: '73%',
+        column_width: '70%',
         Filter: DefaultColumnFilter
+      },
+      {
+        Header: 'Source',
+        id: 'tags',
+        accessor: e =>
+          <Badge color={`${e.tags[0] === 'poem' ? 'success' : 'secondary'}`}>
+            {e.tags[0]}
+          </Badge>,
+        column_width: '3%',
+        Filter: ''
       }
     ], []
   )
@@ -960,8 +970,18 @@ export const ServiceTypesList = (props) => {
       {
         Header: 'Description',
         accessor: 'description',
-        column_width: '73%',
+        column_width: '70%',
         Filter: DefaultColumnFilter
+      },
+      {
+        Header: 'Source',
+        id: 'tags',
+        accessor: e =>
+          <Badge color={`${e.tags[0] === 'poem' ? 'success' : 'secondary'}`}>
+            {e.tags[0]}
+          </Badge>,
+        column_width: '3%',
+        Filter: ''
       }
     ], []
   )
