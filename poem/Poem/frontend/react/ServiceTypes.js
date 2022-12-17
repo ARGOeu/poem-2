@@ -743,7 +743,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                               let initval = fields[lookupIndexes[entry.id]].description
                               let isChanged = formval !== initval
                               let isDisabled = undefined
-                              if (entry.tags && entry.tags.indexOf('connectors') !== -1)
+                              if (entry.tags && entry.tags.indexOf('topology') !== -1)
                                 isDisabled = true
                               else
                                 isDisabled = false
@@ -768,7 +768,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                             render={ ({field}) => {
                               // with checked=true,false ServiceTypes.test.js fails
                               let isDisabled = undefined
-                              if (entry.tags && entry.tags.indexOf('connectors') !== -1)
+                              if (entry.tags && entry.tags.indexOf('topology') !== -1)
                                 isDisabled = true
                               else
                                 isDisabled = false
