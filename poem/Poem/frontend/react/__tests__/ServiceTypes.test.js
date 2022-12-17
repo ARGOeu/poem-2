@@ -73,27 +73,33 @@ const mockAddServiceTypes = jest.fn()
 const mockServTypes = [
   {
     name: 'argo.api',
-    description: 'ARGO API service for retrieving status and A/R results.'
+    description: 'ARGO API service for retrieving status and A/R results.',
+    tags: ['connectors']
   },
   {
     name: 'argo.computeengine',
-    description: 'ARGO Compute Engine computes availability and reliability of services.'
+    description: 'ARGO Compute Engine computes availability and reliability of services.',
+    tags: ['connectors']
   },
   {
     name: 'argo.consumer',
-    description: 'ARGO Consumer collects monitoring metrics from monitoring engines.'
+    description: 'ARGO Consumer collects monitoring metrics from monitoring engines.',
+    tags: ['connectors']
   },
   {
     name: 'argo.mon',
-    description: 'ARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.'
+    description: 'ARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.',
+    tags: ['connectors']
   },
   {
     name: 'argo.poem',
-    description: 'POEM is system for managing profiles of probes and metrics in ARGO system.'
+    description: 'POEM is system for managing profiles of probes and metrics in ARGO system.',
+    tags: ['connectors']
   },
   {
     name: 'argo.webui',
-    description: 'ARGO web user interface for metric A/R visualization and recalculation management.'
+    description: 'ARGO web user interface for metric A/R visualization and recalculation management.',
+    tags: ['connectors']
   }
 ];
 
@@ -532,35 +538,43 @@ describe('Test service types list - Bulk add', () => {
         [
           {
             'name': 'argo.api',
-            'description': 'ARGO API service for retrieving status and A/R results.'
+            'description': 'ARGO API service for retrieving status and A/R results.',
+            'tags': ['connectors']
           },
           {
             "description": "ARGO Compute Engine computes availability and reliability of services.",
             "name": "argo.computeengine",
+            "tags": ['connectors']
           },
           {
             "description": "ARGO Consumer collects monitoring metrics from monitoring engines.",
-            "name": "argo.consumer"
+            "name": "argo.consumer",
+            "tags": ['connectors']
           },
           {
             "description": "ARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.",
-            "name": "argo.mon"
+            "name": "argo.mon",
+            "tags": ['connectors']
           },
           {
             "description": "POEM is system for managing profiles of probes and metrics in ARGO system.",
-            "name": "argo.poem"
+            "name": "argo.poem",
+            "tags": ['connectors']
           },
           {
             "description": "ARGO web user interface for metric A/R visualization and recalculation management.",
-            "name": "argo.webui"
+            "name": "argo.webui",
+            "tags": ['connectors']
           },
           {
             "description": "service description 1",
-            "name": "service.name.1"
+            "name": "service.name.1",
+            "tags": ['poem']
           },
           {
             "description": "service description 2",
-            "name": "service.name.2"
+            "name": "service.name.2",
+            "tags": ['poem']
           }
         ]
       )
