@@ -921,7 +921,7 @@ export const ServiceTypesListPublic = (props) => {
   else if (serviceTypesDescriptions) {
     return (
       <BaseArgoView
-        resourcename='Services types'
+        resourcename='Service types'
         infoview={true}>
         <BaseArgoTable
           columns={columns}
@@ -964,9 +964,9 @@ export const ServiceTypesList = (props) => {
       },
       {
         Header: <div><Icon i="servicetypes"/> Service type</div>,
-        id: 'name',
-        accessor: e => <span className="fw-bold">{e.name}</span>,
+        accessor: 'name',
         column_width: '25%',
+        Cell: ({value}) => <span className="fw-bold">{value}</span>,
         Filter: DefaultColumnFilter
       },
       {
@@ -1000,7 +1000,7 @@ export const ServiceTypesList = (props) => {
   else if (serviceTypesDescriptions && !userDetails?.is_superuser) {
     return (
       <BaseArgoView
-        resourcename='Services types'
+        resourcename='Service types'
         infoview={true}>
         <BaseArgoTable
           columns={columns}
