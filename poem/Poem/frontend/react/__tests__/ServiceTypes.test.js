@@ -193,7 +193,7 @@ describe('Test service types list - Read Only', () => {
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Services types');
+      expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Service types');
     })
 
     expect(screen.getAllByRole('columnheader')).toHaveLength(8);
@@ -225,7 +225,7 @@ describe('Test service types list - Read Only', () => {
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Services types');
+      expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Service types');
     })
 
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(7);
@@ -249,7 +249,7 @@ describe('Test service types list - Read Only', () => {
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Services types');
+      expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Service types');
     })
 
     expect(screen.getAllByRole('columnheader')).toHaveLength(8);
@@ -270,6 +270,9 @@ describe('Test service types list - Read Only', () => {
     expect(rows[5].textContent).toBe('4argo.monARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.topology');
     expect(rows[6].textContent).toBe('5argo.poemPOEM is system for managing profiles of probes and metrics in ARGO system.topology')
     expect(rows[7].textContent).toBe('6argo.webuiARGO web user interface for metric A/R visualization and recalculation management.topology')
+    expect(rows[8].textContent).toBe('7poem.added.oneService type created from POEM UI and POSTed on WEB-API.poem')
+    expect(rows[9].textContent).toBe('8poem.added.twoService type created from POEM UI and POSTed on WEB-API.poem')
+    expect(rows[10].textContent).toBe('9poem.added.threeService type created from POEM UI and POSTed on WEB-API.poem')
   })
 
   test('Test filtering public service types', async () => {
@@ -278,7 +281,7 @@ describe('Test service types list - Read Only', () => {
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Services types');
+      expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Service types');
     })
 
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(7);
