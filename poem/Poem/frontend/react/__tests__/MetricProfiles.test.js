@@ -820,7 +820,6 @@ describe('Tests for metric profiles changeview', () => {
       fireEvent.click(metricInstances.getByTestId('remove-5'))
     })
 
-
     await waitFor(() => {
       fireEvent.click(metricInstances.getByTestId('remove-4'))
     })
@@ -1498,10 +1497,6 @@ describe('Tests for metric profiles changeview', () => {
     await waitFor(() => {
       fireEvent.load(screen.getByTestId('file_input'))
     })
-
-    await selectEvent.select(screen.getByText('ARGO'), 'TEST')
-
-    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
@@ -3172,6 +3167,7 @@ describe('Test for metric profile version detail page', () => {
   beforeAll(() => {
     Backend.mockImplementation(() => {
       return {
+        isActiveSession: () => Promise.resolve(mockActiveSession),
         fetchData: () => Promise.resolve(mockMetricProfileVersions)
       }
     })
@@ -3199,17 +3195,17 @@ describe('Test for metric profile version detail page', () => {
 
     const metricInstances = within(screen.getByRole('table'));
     const rows = metricInstances.getAllByRole('row');
-    expect(rows).toHaveLength(4);
+    expect(rows).toHaveLength(5);
 
-    expect(within(rows[1]).queryAllByRole('textbox')).toHaveLength(0);
     expect(within(rows[2]).queryAllByRole('textbox')).toHaveLength(0);
     expect(within(rows[3]).queryAllByRole('textbox')).toHaveLength(0);
+    expect(within(rows[4]).queryAllByRole('textbox')).toHaveLength(0);
     expect(metricInstances.queryAllByTestId(/remove-/i)).toHaveLength(0);
     expect(metricInstances.queryAllByTestId(/insert-/i)).toHaveLength(0);
 
-    expect(rows[1].textContent).toBe('1AMGAorg.nagios.SAML-SP');
-    expect(rows[2].textContent).toBe('2APELorg.apel.APEL-Pub');
-    expect(rows[3].textContent).toBe('3APELorg.apel.APEL-Sync')
+    expect(rows[2].textContent).toBe('1AMGAorg.nagios.SAML-SP');
+    expect(rows[3].textContent).toBe('2APELorg.apel.APEL-Pub');
+    expect(rows[4].textContent).toBe('3APELorg.apel.APEL-Sync')
 
     expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
