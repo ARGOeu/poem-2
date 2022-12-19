@@ -1007,11 +1007,12 @@ export const AggregationProfilesChange = (props) => {
     {
       enabled: !addview && (!publicView ? !!userDetails : true),
       initialData: () => {
-        return queryClient.getQueryData(
-          [`${publicView ? 'public_' : ''}aggregationprofile`, 'backend']
-        )?.find(
-          profile => profile.name === profile_name
-        )
+        if (!addview)
+          return queryClient.getQueryData(
+            [`${publicView ? 'public_' : ''}aggregationprofile`, 'backend']
+          )?.find(
+            profile => profile.name === profile_name
+          )
       }
     }
   )
@@ -1022,11 +1023,12 @@ export const AggregationProfilesChange = (props) => {
     {
       enabled: !!backendAP,
       initialData: () => {
-        return queryClient.getQueryData(
-          [`${publicView ? "public_" : ""}aggregationprofile`, "webapi"]
-        )?.find(
-          profile => profile.id == backendAP.apiid
-        )
+        if (!addview)
+          return queryClient.getQueryData(
+            [`${publicView ? "public_" : ""}aggregationprofile`, "webapi"]
+          )?.find(
+            profile => profile.id == backendAP.apiid
+          )
       }
     }
   )
