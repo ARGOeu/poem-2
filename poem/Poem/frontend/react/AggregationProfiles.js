@@ -592,7 +592,7 @@ const AggregationProfilesForm = ({
               </Alert>
           }
           {
-            (groups.length > 1 && extraServices.length > 0 && !(publicView || historyview)) &&
+            (groups.length > 1 && extraServices.length > 0 && !(publicView || historyview || addview)) &&
               <Alert color='danger'>
                 <center data-testid='alert-extra'>
                   <p>

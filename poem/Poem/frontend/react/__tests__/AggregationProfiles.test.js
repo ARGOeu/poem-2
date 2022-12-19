@@ -2578,8 +2578,7 @@ describe('Tests for aggregation profile addview', () => {
 
     fireEvent.click(screen.getByRole("button", { name: /add new group/i }))
 
-    expect(screen.queryByTestId("alert-missing")).not.toBeInTheDocument()
-    expect(screen.queryByTestId("alert-extra")).toBeInTheDocument()
+    expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
 
     expect(screen.getAllByTestId(/card-/i)).toHaveLength(1)
 
@@ -2593,8 +2592,7 @@ describe('Tests for aggregation profile addview', () => {
 
     fireEvent.change(group.getByTestId("groups.0.name"), { target: { value: "Group1" } })
 
-    expect(screen.queryByTestId("alert-missing")).not.toBeInTheDocument()
-    expect(screen.queryByTestId("alert-extra")).toBeInTheDocument()
+    expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
 
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
       "groups.0.name": "Group1"
@@ -2602,8 +2600,7 @@ describe('Tests for aggregation profile addview', () => {
 
     await selectEvent.select(group.getAllByText(/select/i)[1], "OR")
 
-    expect(screen.queryByTestId("alert-missing")).not.toBeInTheDocument()
-    expect(screen.queryByTestId("alert-extra")).toBeInTheDocument()
+    expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
 
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
       "groups.0.name": "Group1"
