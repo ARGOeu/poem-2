@@ -4,6 +4,7 @@ import { WebApi } from './DataManager';
 import { useQuery, useQueryClient, useMutation } from 'react-query';
 import {
   Button,
+  Badge,
   Col,
   Form,
   FormFeedback,
@@ -15,6 +16,7 @@ import {
   PaginationItem,
   PaginationLink,
   Pagination,
+
 } from 'reactstrap';
 import {
   BaseArgoTable,
@@ -230,11 +232,11 @@ const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
 
   const doSave = () => {
     let tmpArray = [...getValues('serviceTypes'), ...serviceTypesDescriptions]
-    let pairs = _.orderBy(tmpArray, ['name'], ['asc'])
+    let pairs = _.orderBy(tmpArray, [service => service.name.toLowerCase()], ['asc'])
     postServiceTypesWebApi([...pairs.map(
       e => Object(
         {
-          'name': e.name, 'description': e.description
+          'name': e.name, 'description': e.description, 'tags': e.tags
         }
       ))],
       'added', 'Add')
@@ -359,6 +361,7 @@ export const ServiceTypesBulkAdd = (props) => {
     defaultValues: {
       name: '',
       description: '',
+      tags: ['poem']
     }
   })
 
@@ -374,7 +377,8 @@ export const ServiceTypesBulkAdd = (props) => {
     setAddedServices(tmpArray)
     reset({
       name: '',
-      description: ''
+      description: '',
+      tags: ['poem']
     })
   }
 
@@ -563,7 +567,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     postServiceTypesWebApi([...values.map(
       e => Object(
         {
-          'name': e.name, 'description': e.description
+          'name': e.name, 'description': e.description, 'tags': e.tags
         }
       ))],
       'changed', 'Change')
@@ -595,7 +599,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     postServiceTypesWebApi([...cleaned.map(
       e => Object(
         {
-          'name': e.name, 'description': e.description
+          'name': e.name, 'description': e.description, 'tags': e.tags
         }
       ))],
       'deleted', 'Delete')
@@ -683,7 +687,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                       Description of service
                     </th>
                     <th style={{'width': '60px'}}>
-                      Action
+                      Source
                     </th>
                   </tr>
                 </thead>
@@ -738,12 +742,18 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                               let formval = getValues('serviceTypes')[lookupIndexes[entry.id]].description
                               let initval = fields[lookupIndexes[entry.id]].description
                               let isChanged = formval !== initval
+                              let isDisabled = undefined
+                              if (entry.tags && entry.tags.indexOf('topology') !== -1)
+                                isDisabled = true
+                              else
+                                isDisabled = false
 
                               return (
                                 <textarea
                                   {...field}
                                   onChange={(e) => {onDescriptionChange(entry.id, isChanged) ; field.onChange(e)}}
                                   onBlur={(e) => {onDescriptionChange(entry.id, isChanged); field.onBlur(e)}}
+                                  disabled={isDisabled}
                                   rows="2"
                                   className={`${isChanged ? 'border border-danger form-control' : 'form-control'}`}
                                 />
@@ -752,21 +762,51 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                           />
                         </td>
                         <td className="text-center align-middle">
-                          <Button color="light" className="ms-1">
-                            <Controller
-                              name={`serviceTypes.${lookupIndexes[entry.id]}.checked`}
-                              control={control}
-                              render={ ({field}) => {
-                                // with checked=true,false ServiceTypes.test.js fails
-                                return (
+                          <Controller
+                            name={`serviceTypes.${lookupIndexes[entry.id]}.checked`}
+                            control={control}
+                            render={ ({field}) => {
+                              // with checked=true,false ServiceTypes.test.js fails
+                              let isDisabled = undefined
+                              if (entry.tags && entry.tags.indexOf('topology') !== -1)
+                                isDisabled = true
+                              else
+                                isDisabled = false
+
+                              return(
+                                isDisabled ?
+                                  <Badge color="secondary">
+                                    topology
+                                  </Badge>
+                                :
                                   entry.checked ?
-                                    <Input {...field} type="checkbox" className="fw-bold" checked={entry.checked} onChange={(e) => onChange(e, entry.id)}/>
+                                    <div className="d-flex flex-column align-self-center align-items-center">
+                                      <Badge color="success">
+                                        poem
+                                      </Badge>
+                                      <Input {...field}
+                                        type="checkbox"
+                                        className="mt-2 fw-bold"
+                                        disabled={isDisabled}
+                                        checked={entry.checked}
+                                        onChange={(e) => onChange(e, entry.id)}
+                                      />
+                                    </div>
                                   :
-                                    <Input {...field} type="checkbox" className="fw-bold" onChange={(e) => onChange(e, entry.id)}/>
-                                )
-                              }}
-                            />
-                          </Button>
+                                    <div className="d-flex flex-column align-self-center align-items-center">
+                                      <Badge color="success">
+                                        poem
+                                      </Badge>
+                                      <Input {...field}
+                                        type="checkbox"
+                                        disabled={isDisabled}
+                                        className="mt-2 fw-bold"
+                                        onChange={(e) => onChange(e, entry.id)}
+                                      />
+                                    </div>
+                              )
+                            }}
+                          />
                         </td>
                       </tr>
                     )
@@ -848,15 +888,26 @@ export const ServiceTypesListPublic = (props) => {
       },
       {
         Header: <div><Icon i="servicetypes"/> Service type</div>,
-        accessor: 'name',
+        id: 'name',
+        accessor: e => <span className="fw-bold">{e.name}</span>,
         column_width: '25%',
         Filter: DefaultColumnFilter
       },
       {
         Header: 'Description',
         accessor: 'description',
-        column_width: '73%',
+        column_width: '70%',
         Filter: DefaultColumnFilter
+      },
+      {
+        Header: 'Source',
+        id: 'tags',
+        accessor: e =>
+          <Badge color={`${e.tags[0] === 'poem' ? 'success' : 'secondary'}`}>
+            {e.tags[0]}
+          </Badge>,
+        column_width: '3%',
+        Filter: ''
       }
     ], []
   )
@@ -870,7 +921,7 @@ export const ServiceTypesListPublic = (props) => {
   else if (serviceTypesDescriptions) {
     return (
       <BaseArgoView
-        resourcename='Services types'
+        resourcename='Service types'
         infoview={true}>
         <BaseArgoTable
           columns={columns}
@@ -915,13 +966,24 @@ export const ServiceTypesList = (props) => {
         Header: <div><Icon i="servicetypes"/> Service type</div>,
         accessor: 'name',
         column_width: '25%',
+        Cell: ({value}) => <span className="fw-bold">{value}</span>,
         Filter: DefaultColumnFilter
       },
       {
         Header: 'Description',
         accessor: 'description',
-        column_width: '73%',
+        column_width: '70%',
         Filter: DefaultColumnFilter
+      },
+      {
+        Header: 'Source',
+        id: 'tags',
+        accessor: e =>
+          <Badge color={`${e.tags[0] === 'poem' ? 'success' : 'secondary'}`}>
+            {e.tags[0]}
+          </Badge>,
+        column_width: '3%',
+        Filter: ''
       }
     ], []
   )
@@ -938,7 +1000,7 @@ export const ServiceTypesList = (props) => {
   else if (serviceTypesDescriptions && !userDetails?.is_superuser) {
     return (
       <BaseArgoView
-        resourcename='Services types'
+        resourcename='Service types'
         infoview={true}>
         <BaseArgoTable
           columns={columns}
