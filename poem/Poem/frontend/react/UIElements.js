@@ -34,7 +34,9 @@ import {
   Table,
   Pagination,
   PaginationItem,
-  PaginationLink
+  PaginationLink,
+  Input,
+  FormFeedback
 } from 'reactstrap';
 import { Link } from 'react-router-dom';
 import ArgoLogo from './argologo_color.svg';
@@ -79,6 +81,8 @@ import { CookiePolicy } from './CookiePolicy';
 import { useTable, usePagination, useFilters } from 'react-table';
 import { Helmet } from 'react-helmet';
 import Select, { components } from 'react-select';
+import { Controller, useFormContext } from 'react-hook-form';
+import { ErrorMessage } from '@hookform/error-message';
 
 
 var list_pages = ['administration', 'probes',
@@ -204,7 +208,7 @@ export const CustomReactSelect = ({ forwardedRef=undefined, ...props}) => {
       textShadow: 'none',
       textAlign: 'start',
       textIndent: 0,
-      borderColor: props.error ? '#FF0000' : state.selectProps.menuIsOpen ? '#66afe9' : '#ced4da',
+      borderColor: props.error ? '#dc3545' : props.isnew ? '#198754' : props.ismissing ? '#0d6efd' : state.selectProps.menuIsOpen ? '#66afe9' : '#ced4da',
       transition: 'border-color .15s ease-in-out, box-shadow .15s ease-in-out',
       boxShadow: state.selectProps.menuIsOpen ? '0 0 0 .2rem rgba(0, 123, 255, .25)' : 'none',
       ':focus': {
@@ -285,24 +289,6 @@ export const DropdownWithFormText = ({ forwardedRef=undefined, ...props }) => {
     </div>
   )
 }
-
-
-export const DropDown = ({field, data=[], prefix="", class_name="", isnew=false, errors=undefined}) =>
-  <Field component="select"
-    name={prefix ? `${prefix}.${field.name}` : field.name}
-    data-testid={prefix ? `${prefix}.${field.name}` : field.name}
-    required={true}
-    className={`form-control ${class_name} ${isnew ? 'border-success' : `${errors && errors[field.name] ? 'border-danger' : ''}`}`}
-  >
-    {
-      data.map((name, i) => (
-        i === 0 ?
-          <option key={i} value='' hidden color='text-muted'>{name}</option>
-        :
-          <option key={i} value={name}>{name}</option>
-      ))
-    }
-  </Field>
 
 
 export const SearchField = ({field, forwardedRef=undefined, ...rest}) =>
@@ -994,7 +980,7 @@ export const BaseArgoView = ({resourcename='', location=undefined,
 
 
 export const CustomError = (props) => (
-  <div data-testid='error-msg' style={{color: '#FF0000', fontSize: 'small'}}>{props.error}</div>
+  <div data-testid='error-msg' className="end-0" style={{color: '#dc3545', fontSize: 'small'}}>{props.error}</div>
 )
 
 
@@ -1287,6 +1273,112 @@ export const DiffElement = ({title, item1, item2}) => {
     </div>
   );
 };
+
+
+export const ProfileMain = ({
+  grouplist=undefined,
+  description=undefined,
+  fieldsdisable=false,
+  profiletype=undefined,
+  addview=false
+}) => {
+  const { control, setValue, clearErrors, formState: { errors } } = useFormContext()
+
+  return (
+    <FormGroup>
+      <Row>
+        <Col md={6}>
+          <InputGroup>
+            <InputGroupText>Name</InputGroupText>
+            <Controller
+              name="name"
+              control={ control }
+              render={ ({ field }) =>
+                <Input
+                  { ...field }
+                  data-testid="name"
+                  className={ `form-control form-control-lg ${errors?.name && "is-invalid"}` }
+                  disabled={ !addview }
+                />
+              }
+            />
+            <ErrorMessage
+              errors={ errors }
+              name="name"
+              render={ ({ message }) =>
+                <FormFeedback invalid="true" className="end-0">
+                  { message }
+                </FormFeedback>
+              }
+            />
+          </InputGroup>
+          <FormText color='text-muted'>
+            { `Name of ${profiletype} profile` }
+          </FormText>
+        </Col>
+      </Row>
+      {
+        description &&
+          <Row className='mt-3'>
+            <Col md={10}>
+              <Label for="profileDescription">Description:</Label>
+              <Controller
+                name={ description }
+                control={ control }
+                render={ ({ field }) =>
+                  <textarea
+                    { ...field }
+                    id="profileDescription"
+                    className="form-control"
+                    rows={ 4 }
+                    disabled={ fieldsdisable }
+                  />
+                }
+              />
+              <FormText color="muted">
+                Free text description outlining the purpose of this profile.
+              </FormText>
+            </Col>
+          </Row>
+      }
+      <Row className='mt-4'>
+        <Col md={3}>
+          <InputGroup>
+            <InputGroupText>Group</InputGroupText>
+            <Controller
+              name="groupname"
+              control={ control }
+              render={ ({ field }) =>
+                fieldsdisable ?
+                  <Input
+                    { ...field }
+                    data-testid="groupname"
+                    className="form-control"
+                    disabled={ true }
+                  />
+                :
+                  <DropdownWithFormText
+                    forwardedRef={ field.ref }
+                    error={ errors?.groupname }
+                    options={ grouplist }
+                    value={ field.value }
+                    onChange={ e => {
+                      setValue("groupname", e.value)
+                      clearErrors("groupname")
+                    }}
+                  />
+              }
+            />
+          </InputGroup>
+          <CustomError error={ errors.groupname?.message } />
+          <FormText color="muted">
+            { `${profiletype.charAt(0).toUpperCase() + profiletype.slice(1)} profile is member of given group.` }
+          </FormText>
+        </Col>
+      </Row>
+    </FormGroup>
+  )
+}
 
 
 export const ProfileMainInfo = ({grouplist=undefined, description=undefined,
