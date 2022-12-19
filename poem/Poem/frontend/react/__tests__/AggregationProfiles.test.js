@@ -2550,8 +2550,7 @@ describe('Tests for aggregation profile addview', () => {
 
     await selectEvent.select(screen.getAllByText(/select/i)[3], "ARGO_MON_CRITICAL")
 
-    expect(screen.queryByTestId("alert-missing")).not.toBeInTheDocument()
-    expect(screen.queryByTestId("alert-extra")).toBeInTheDocument()
+    expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
 
     expect(screen.queryByText("servicegroups")).toBeInTheDocument()
     expect(screen.queryByText("sites")).not.toBeInTheDocument()
@@ -2573,8 +2572,7 @@ describe('Tests for aggregation profile addview', () => {
 
     await selectEvent.select(screen.getAllByText(/select/i)[4], "FEDCLOUD")
 
-    expect(screen.queryByTestId("alert-missing")).not.toBeInTheDocument()
-    expect(screen.queryByTestId("alert-extra")).toBeInTheDocument()
+    expect(screen.queryByTestId(/alert/i)).not.toBeInTheDocument()
 
     expect(screen.getByRole("button", { name: /add new group/i })).toBeEnabled()
 
