@@ -545,7 +545,7 @@ const MetricProfilesForm = ({
               write_perm ?
                 userDetails.groups.metricprofiles
               :
-                [metricProfile.groupname]
+                [ methods.getValues("groupname") ]
             }
             profiletype="metric"
             fieldsdisable={ publicView || historyview }
