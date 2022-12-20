@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useContext, useEffect } from 'react';
 import {Link} from 'react-router-dom';
 import {Backend, WebApi} from './DataManager';
-import Autosuggest from 'react-autosuggest';
 import {
   LoadingAnim,
   BaseArgoView,
@@ -14,7 +13,8 @@ import {
   ParagraphTitle,
   ProfilesListTable,
   CustomError,
-  ProfileMain
+  ProfileMain,
+  CustomReactSelect
 } from './UIElements';
 import {
   Button,
@@ -65,51 +65,46 @@ const MetricProfilesSchema = yup.object().shape({
 })
 
 
-const MetricProfileAutocompleteField = ({suggestions, service, index, icon, tupleType, id}) => {
-  const { setValue } = useFormContext()
+const MetricProfileAutocompleteField = ({
+  tupleType,
+  index,
+  error,
+  isNew
+}) => {
+  const context = useContext(MetricProfilesComponentContext)
 
-  const [suggestionList, setSuggestions] = useState(suggestions);
+  const { control, getValues, setValue, clearErrors } = useFormContext()
+
+  const name = `view_services.${index}.${tupleType}`
+
+  const options = tupleType === "service" ?
+    context.serviceflavours_all.map(service => service.name)
+  :
+    tupleType === "metric" ?
+      context.metrics_all
+    :
+      undefined
 
   const changeFieldValue = (newValue) => {
-    setValue(`view_services.${index}.${tupleType}`, newValue)
-    setValue(`view_services.${index}.${tupleType}Changed`, true)
+    setValue(name, newValue)
+    setValue(`${name}Changed`, true)
+    clearErrors(name)
   }
 
   return (
-    <Autosuggest
-      inputProps={{
-        className: `"form-control form-select " ${service.isNew ? "border border-success" : service[tupleType + 'Changed'] ? "border border-danger" : ""}`,
-        placeholder: '',
-        onChange: (_, {newValue}) => changeFieldValue(newValue),
-        value: service[tupleType]
-      }}
-      getSuggestionValue={(suggestion) => suggestion}
-      suggestions={suggestionList}
-      renderSuggestion={(suggestion, {query, isHighlighted}) =>
-        <div
-          key={suggestions.indexOf(suggestion)}
-          className={`metricprofiles-autocomplete-entries ${isHighlighted ?
-              "metricprofiles-autocomplete-entries-highlighted"
-              : ""}`
-          }>
-          {suggestion ? <Icon i={icon}/> : ''} {suggestion}
-        </div>}
-      onSuggestionsFetchRequested={({ value }) =>
-        {
-          let result = suggestions.filter(service => service.toLowerCase().includes(value.trim().toLowerCase()))
-          setSuggestions(result)
+    <Controller
+      name={ name }
+      control={ control }
+      render={ ({ field }) =>
+        <CustomReactSelect
+          forwardedRef={ field.ref }
+          onChange={ e => changeFieldValue(e.value) }
+          options={ options.map(option => new Object({ label: option, value: option })) }
+          value={ field.value ? { label: field.value, value: field.value } : undefined }
+          error={ error || getValues("view_services")?.[index]?.[`${tupleType}Changed`] }
+          isnew={ isNew }
+        />
       }
-      }
-      onSuggestionsClearRequested={() => {
-        setSuggestions([])
-      }}
-      onSuggestionSelected={(_, {suggestion}) => changeFieldValue(suggestion) }
-      shouldRenderSuggestions={() => true}
-      theme={{
-        containerOpen: 'metricprofiles-autocomplete-menu',
-        suggestionsList: 'metricprofiles-autocomplete-list'
-      }}
-      id={id}
     />
   )
 }
@@ -141,7 +136,7 @@ const ensureAlignedIndexes = (list) => {
 const ServicesList = () => {
   const context = useContext(MetricProfilesComponentContext);
 
-  const { control, setValue, formState: { errors } } = useFormContext()
+  const { control, setValue, getValues, formState: { errors } } = useFormContext()
 
   const { fields, insert, remove } = useFieldArray({ control, name: "view_services" })
 
@@ -256,12 +251,10 @@ const ServicesList = () => {
                       render={ ({ field }) =>
                         <MetricProfileAutocompleteField
                           forwardedRef={ field.id }
-                          suggestions={context.serviceflavours_all.map(service => service.name)}
-                          service={service}
-                          index={index}
-                          icon='serviceflavour'
                           tupleType='service'
-                          id={`autosuggest-metric-${index}`}
+                          index={ index }
+                          isNew={ service.isNew }
+                          error={ errors?.view_services?.[index]?.service || errors?.view_services?.[index]?.dup }
                         />
                       }
                     />
@@ -277,12 +270,10 @@ const ServicesList = () => {
                       render={ ({ field }) =>
                         <MetricProfileAutocompleteField
                           forwardedRef={ field.id }
-                          suggestions={context.metrics_all}
-                          service={service}
-                          index={index}
-                          icon='metrics'
                           tupleType='metric'
-                          id={`autosuggest-metric-${index}`}
+                          index={ index }
+                          isNew={ service.isNew }
+                          error={ errors?.view_services?.[index]?.metric || errors?.view_services?.[index]?.dup }
                         />
                       }
                     />
@@ -296,9 +287,7 @@ const ServicesList = () => {
                       size="sm"
                       color="light"
                       data-testid={`remove-${index}`}
-                      onClick={() => {
-                        remove(index)
-                      }}
+                      onClick={() => { remove(index) }}
                     >
                       <FontAwesomeIcon icon={faTimes}/>
                     </Button>
@@ -317,7 +306,7 @@ const ServicesList = () => {
                 </tr>
                 {
                   errors?.view_services?.[index]?.dup &&
-                    <tr key={index + context.formikBag.form.values.view_services.length}>
+                    <tr key={index + getValues("view_services").length}>
                       <td className="bg-light"></td>
                       <td colSpan="2" className="bg-light text-center">
                         <CustomError error={ errors?.view_services?.[index]?.dup?.message } />
@@ -430,6 +419,7 @@ const MetricProfilesForm = ({
   const listServices = useWatch({ control, name: "view_services" })
 
   useEffect(() => {
+    methods.clearErrors("view_services")
     for (var i of listServices)
       for (var j of listServices)
         if (i.index !== j.index && i.service === j.service && i.metric === j.metric && (i.isNew || i.serviceChanged || i.metricChanged)) {
@@ -442,6 +432,10 @@ const MetricProfilesForm = ({
       else if (i.metric && (i.isNew || i.metricChanged) && metricsAll.indexOf(i.metric) == -1) {
         methods.setError(`view_services.[${i.index}].metric`, { type: "custom", "message": "Must be one of predefined metrics" })
       }
+    }
+
+    if (listServices.length === 0) {
+      methods.setValue("view_services", [{ service: "", metric: "" }])
     }
   }, [listServices])
 
@@ -538,7 +532,7 @@ const MetricProfilesForm = ({
       }
     >
       <FormProvider { ...methods }>
-        <Form onSubmit={ methods.handleSubmit(val => onSubmitHandle(val)) }>
+        <Form onSubmit={ methods.handleSubmit(val => onSubmitHandle(val)) } data-testid="metricprofiles-form">
           <ProfileMain
             description="description"
             grouplist={
