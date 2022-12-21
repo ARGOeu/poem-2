@@ -59,8 +59,25 @@ const MetricProfilesSchema = yup.object().shape({
   groupname: yup.string().required("Required"),
   view_services: yup.array()
   .of(yup.object().shape({
-    service: yup.string().required("Required"),
-    metric: yup.string().required("Required")
+    service: yup.string()
+      .required("Required")
+      .test("predefined_services", "Must be one of predefined service types", function (value) {
+        let arr = this.options.context.allServices.map(service => service.name)
+        if (arr.indexOf(value) === -1)
+          return false
+
+        else
+          return true
+      }),
+    metric: yup.string()
+      .required("Required")
+      .test("predefined_metrics", "Must be one of predefined metrics", function (value) {
+        if (this.options.context.allMetrics.indexOf(value) == -1)
+          return false
+
+        else
+          return true
+      })
   }))
 })
 
@@ -414,7 +431,8 @@ const MetricProfilesForm = ({
       services_all: servicesAll
     },
     mode: "all",
-    resolver: yupResolver(MetricProfilesSchema)
+    resolver: yupResolver(MetricProfilesSchema),
+    context: { allServices: servicesAll, allMetrics: metricsAll }
   })
 
   const { control } = methods
@@ -424,20 +442,11 @@ const MetricProfilesForm = ({
   const listServices = useWatch({ control, name: "view_services" })
 
   useEffect(() => {
-    methods.clearErrors("view_services")
     for (var i of listServices)
       for (var j of listServices)
         if (i.index !== j.index && i.service === j.service && i.metric === j.metric && (i.isNew || i.serviceChanged || i.metricChanged)) {
           methods.setError(`view_services.[${i.index}].dup`, { type: "custom", message: "Duplicated" })
         }
-
-    for (let i of listServices) {
-      if (i.service && (i.isNew || i.serviceChanged) && servicesAll.map(service => service.name).indexOf(i.service) == -1)
-        methods.setError(`view_services.[${i.index}].service`, { type: "custom", message: "Must be one of predefined service types" })
-      else if (i.metric && (i.isNew || i.metricChanged) && metricsAll.indexOf(i.metric) == -1) {
-        methods.setError(`view_services.[${i.index}].metric`, { type: "custom", "message": "Must be one of predefined metrics" })
-      }
-    }
 
     if (listServices.length === 0) {
       methods.setValue("view_services", [{ service: "", metric: "" }])
@@ -528,6 +537,7 @@ const MetricProfilesForm = ({
                     })
                     methods.resetField("view_services")
                     methods.setValue("view_services", ensureAlignedIndexes(imported).sort(sortServices))
+                    methods.trigger()
                   }
                 })
               }}
