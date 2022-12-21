@@ -86,8 +86,13 @@ const MetricProfileAutocompleteField = ({
       undefined
 
   const changeFieldValue = (newValue) => {
+    if (getValues("view_services").length === 1 && getValues(name) == "")
+      setValue(`view_services.${index}.isNew`, true)
+
+    else
+      setValue(`${name}Changed`, true)
+
     setValue(name, newValue)
-    setValue(`${name}Changed`, true)
     clearErrors(name)
   }
 
@@ -101,7 +106,7 @@ const MetricProfileAutocompleteField = ({
           onChange={ e => changeFieldValue(e.value) }
           options={ options.map(option => new Object({ label: option, value: option })) }
           value={ field.value ? { label: field.value, value: field.value } : undefined }
-          error={ error || getValues("view_services")?.[index]?.[`${tupleType}Changed`] }
+          error={ error || (!isNew && getValues("view_services")?.[index]?.[`${tupleType}Changed`]) }
           isnew={ isNew }
         />
       }
