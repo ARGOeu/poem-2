@@ -740,9 +740,13 @@ class ListMetricConfiguration(ListMetricOverrides):
                         "{hostname} {metric} {parameter} {value}".format(**item)
                     )
 
-                conf.globalattribute = json.dumps(global_attrs)
-                conf.hostattribute = json.dumps(host_attrs)
-                conf.metricparameter = json.dumps(metric_params)
+                conf.globalattribute = json.dumps(global_attrs) if \
+                    len(global_attrs) >= 1 and global_attrs[0] != " " else ""
+                conf.hostattribute = json.dumps(host_attrs) \
+                    if len(host_attrs) >= 1 and host_attrs[0] != "  " else ""
+                conf.metricparameter = json.dumps(metric_params) \
+                    if len(metric_params) >= 1 and metric_params[0] != "   " \
+                    else ""
 
                 conf.save()
 
