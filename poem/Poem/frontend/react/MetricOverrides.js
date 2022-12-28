@@ -43,7 +43,7 @@ const validationSchema = Yup.object().shape({
     .matches(/^[a-zA-Z][A-Za-z0-9\-_]*$/, "Name can contain alphanumeric characters, dash and underscore, but must always begin with a letter"),
   globalAttributes: Yup.array().of(
     Yup.object().shape({
-      attribute: Yup.string().matches(/^[a-zA-Z][A-Za-z0-9\-_]*$/, "Attribute can contain alphanumeric characters, dash and underscore, but must always begin with a letter"),
+      attribute: Yup.string().matches(/^[a-zA-Z][A-Za-z0-9\-_.]*$/, "Attribute can contain alphanumeric characters, dash, underscore and dot, but must always begin with a letter"),
       value: Yup.string().when("attribute", {
         is: (value) => !!value,
         then: Yup.string().required("Attribute value is required")
@@ -58,7 +58,7 @@ const validationSchema = Yup.object().shape({
           "Invalid hostname"
         ),
       attribute: Yup.string()
-        .matches(/^[a-zA-Z][A-Za-z0-9\-_]*$/, "Attribute can contain alphanumeric characters, dash and underscore, but must always begin with a letter"),
+        .matches(/^[a-zA-Z][A-Za-z0-9\-_.]*$/, "Attribute can contain alphanumeric characters, dash, underscore and dot, but must always begin with a letter"),
       value: Yup.string().when("attribute", {
         is: (value) => !!value,
         then: Yup.string().required("Attribute value is required")

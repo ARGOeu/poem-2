@@ -323,7 +323,7 @@ describe("Tests for metric configuration overrides addview", () => {
       expect(screen.getByRole("heading", { name: /override/i })).toBeInTheDocument()
     })
 
-    const attrMsg = "Attribute can contain alphanumeric characters, dash and underscore, but must always begin with a letter"
+    const attrMsg = "Attribute can contain alphanumeric characters, dash, underscore and dot, but must always begin with a letter"
     const attrValMsg = "Attribute value is required"
 
     expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
@@ -464,7 +464,7 @@ describe("Tests for metric configuration overrides addview", () => {
     })
 
     const hostnameMsg = "Invalid hostname"
-    const attrMsg = "Attribute can contain alphanumeric characters, dash and underscore, but must always begin with a letter"
+    const attrMsg = "Attribute can contain alphanumeric characters, dash, underscore and dot, but must always begin with a letter"
     const attrValMsg = "Attribute value is required"
 
     expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
@@ -519,9 +519,10 @@ describe("Tests for metric configuration overrides addview", () => {
     expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
 
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.1.hostname"), { target: { value: "host.name.com" } }))
-    await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.1.attribute"), { target: { value: "ATTRIBUTE" } }))
+    await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.1.attribute"), { target: { value: "mock.ATTRIBUTE" } }))
 
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.1.value"), { target: { value: "" } }))
+    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
     expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
 
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.1.value"), { target: { value: "some-value" } }))
@@ -534,7 +535,7 @@ describe("Tests for metric configuration overrides addview", () => {
       "hostAttributes.0.attribute": "FOOBAR",
       "hostAttributes.0.value": "foo-bar",
       "hostAttributes.1.hostname": "host.name.com",
-      "hostAttributes.1.attribute": "ATTRIBUTE",
+      "hostAttributes.1.attribute": "mock.ATTRIBUTE",
       "hostAttributes.1.value": "some-value",
       "metricParameters.0.hostname": "",
       "metricParameters.0.metric": "",
@@ -549,7 +550,7 @@ describe("Tests for metric configuration overrides addview", () => {
       "globalAttributes.0.attribute": "",
       "globalAttributes.0.value": "",
       "hostAttributes.0.hostname": "host.name.com",
-      "hostAttributes.0.attribute": "ATTRIBUTE",
+      "hostAttributes.0.attribute": "mock.ATTRIBUTE",
       "hostAttributes.0.value": "some-value",
       "metricParameters.0.hostname": "",
       "metricParameters.0.metric": "",
@@ -1134,7 +1135,7 @@ describe("Tests for metric configuration overrides changeview", () => {
       expect(screen.getByRole("heading", { name: /override/i }).textContent).toBe("Change metric configuration override")
     })
 
-    const attrMsg = "Attribute can contain alphanumeric characters, dash and underscore, but must always begin with a letter"
+    const attrMsg = "Attribute can contain alphanumeric characters, dash, underscore and dot, but must always begin with a letter"
     const attrValMsg = "Attribute value is required"
 
     expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
@@ -1272,7 +1273,7 @@ describe("Tests for metric configuration overrides changeview", () => {
     })
 
     const hostnameMsg = "Invalid hostname"
-    const attrMsg = "Attribute can contain alphanumeric characters, dash and underscore, but must always begin with a letter"
+    const attrMsg = "Attribute can contain alphanumeric characters, dash, underscore and dot, but must always begin with a letter"
     const attrValMsg = "Attribute value is required"
 
     expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
@@ -1314,7 +1315,7 @@ describe("Tests for metric configuration overrides changeview", () => {
     expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
 
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.0.hostname"), { target: { value: "foo.bar.hr" } }))
-    await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.0.attribute"), { target: { value: "FOOBAR" } }))
+    await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.0.attribute"), { target: { value: "baz.FOOBAR" } }))
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.0.value"), { target: { value: "foo-bar" } }))
 
     expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
@@ -1324,7 +1325,7 @@ describe("Tests for metric configuration overrides changeview", () => {
       "globalAttributes.1.attribute": "NAGIOS_ACTUAL_HOST_KEY",
       "globalAttributes.1.value": "/etc/nagios/globus/hostkey.pem",
       "hostAttributes.0.hostname": "foo.bar.hr",
-      "hostAttributes.0.attribute": "FOOBAR",
+      "hostAttributes.0.attribute": "baz.FOOBAR",
       "hostAttributes.0.value": "foo-bar",
       "metricParameters.0.hostname": "eosccore.ui.argo.grnet.gr",
       "metricParameters.0.metric": "org.nagios.ARGOWeb-AR",
@@ -1353,7 +1354,7 @@ describe("Tests for metric configuration overrides changeview", () => {
       "globalAttributes.1.attribute": "NAGIOS_ACTUAL_HOST_KEY",
       "globalAttributes.1.value": "/etc/nagios/globus/hostkey.pem",
       "hostAttributes.0.hostname": "foo.bar.hr",
-      "hostAttributes.0.attribute": "FOOBAR",
+      "hostAttributes.0.attribute": "baz.FOOBAR",
       "hostAttributes.0.value": "foo-bar",
       "hostAttributes.1.hostname": "host.name.com",
       "hostAttributes.1.attribute": "ATTRIBUTE",
