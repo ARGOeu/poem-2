@@ -358,15 +358,72 @@ describe("Tests for metric configuration overrides addview", () => {
     expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
 
     await waitFor(() => fireEvent.change(screen.getByTestId("globalAttributes.0.attribute"), { target: { value: "NAGIOS_ACTUAL_HOST_CERT" } }))
+
+    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
+
     await waitFor(() => fireEvent.change(screen.getByTestId("globalAttributes.0.value"), { target: { value: "/etc/nagios/globus/cert.pem" } }))
 
     expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
     expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
 
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "local",
+      "globalAttributes.0.attribute": "NAGIOS_ACTUAL_HOST_CERT",
+      "globalAttributes.0.value": "/etc/nagios/globus/cert.pem",
+      "hostAttributes.0.hostname": "",
+      "hostAttributes.0.attribute": "",
+      "hostAttributes.0.value": "",
+      "metricParameters.0.hostname": "",
+      "metricParameters.0.metric": "",
+      "metricParameters.0.parameter": "",
+      "metricParameters.0.value": "",
+    })
+
     await waitFor(() => fireEvent.click(screen.getByTestId("globalAttributes.0.add")))
 
-    await waitFor(() => fireEvent.change(screen.getByTestId("globalAttributes.1.attribute"), { target: { value: "NAGIOS_ACTUAL_HOST_KEY" } }))
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "local",
+      "globalAttributes.0.attribute": "NAGIOS_ACTUAL_HOST_CERT",
+      "globalAttributes.0.value": "/etc/nagios/globus/cert.pem",
+      "globalAttributes.1.attribute": "",
+      "globalAttributes.1.value": "",
+      "hostAttributes.0.hostname": "",
+      "hostAttributes.0.attribute": "",
+      "hostAttributes.0.value": "",
+      "metricParameters.0.hostname": "",
+      "metricParameters.0.metric": "",
+      "metricParameters.0.parameter": "",
+      "metricParameters.0.value": "",
+    })
+
+    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+
     await waitFor(() => fireEvent.change(screen.getByTestId("globalAttributes.1.value"), { target: { value: "/etc/nagios/globus/cert.key" } }))
+
+    expect(screen.queryByText(attrMsg)).toBeInTheDocument()
+    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+
+    await waitFor(() => fireEvent.change(screen.getByTestId("globalAttributes.1.attribute"), { target: { value: "NAGIOS_ACTUAL_HOST_KEY" } }))
+
+    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "local",
+      "globalAttributes.0.attribute": "NAGIOS_ACTUAL_HOST_CERT",
+      "globalAttributes.0.value": "/etc/nagios/globus/cert.pem",
+      "globalAttributes.1.attribute": "NAGIOS_ACTUAL_HOST_KEY",
+      "globalAttributes.1.value": "/etc/nagios/globus/cert.key",
+      "hostAttributes.0.hostname": "",
+      "hostAttributes.0.attribute": "",
+      "hostAttributes.0.value": "",
+      "metricParameters.0.hostname": "",
+      "metricParameters.0.metric": "",
+      "metricParameters.0.parameter": "",
+      "metricParameters.0.value": "",
+    })
 
     expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
     expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
@@ -396,52 +453,15 @@ describe("Tests for metric configuration overrides addview", () => {
       "metricParameters.0.value": ""
     })
 
-    await waitFor(() => fireEvent.click(screen.getByTestId("globalAttributes.1.add")))
-
-    await waitFor(() => fireEvent.change(screen.getByTestId("globalAttributes.2.attribute"), { target: { value: "3MOCK_ATTRIBUTE" } }))
-    await waitFor(() => fireEvent.change(screen.getByTestId("globalAttributes.2.value"), { target: { value: "some-value" } }))
-
-    expect(screen.queryByText(attrMsg)).toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
-
-    await waitFor(() => fireEvent.change(screen.getByTestId("globalAttributes.2.attribute"), { target: { value: "MOCK_ATTRIBUTE" } }))
+    await waitFor(() => fireEvent.click(screen.getByTestId("globalAttributes.1.remove")))
 
     expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
     expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
 
-    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
-      name: "local",
-      "globalAttributes.0.attribute": "NAGIOS_ACTUAL_HOST_CERT",
-      "globalAttributes.0.value": "/etc/nagios/globus/cert.pem",
-      "globalAttributes.1.attribute": "NAGIOS_ACTUAL_HOST_KEY",
-      "globalAttributes.1.value": "/etc/nagios/globus/cert.key",
-      "globalAttributes.2.attribute": "MOCK_ATTRIBUTE",
-      "globalAttributes.2.value": "some-value",
-      "hostAttributes.0.hostname": "",
-      "hostAttributes.0.attribute": "",
-      "hostAttributes.0.value": "",
-      "metricParameters.0.hostname": "",
-      "metricParameters.0.metric": "",
-      "metricParameters.0.parameter": "",
-      "metricParameters.0.value": ""
-    })
-
-    await waitFor(() => fireEvent.click(screen.getByTestId("globalAttributes.1.remove")))
     await waitFor(() => fireEvent.click(screen.getByTestId("globalAttributes.0.remove")))
 
-    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
-      name: "local",
-      "globalAttributes.0.attribute": "MOCK_ATTRIBUTE",
-      "globalAttributes.0.value": "some-value",
-      "hostAttributes.0.hostname": "",
-      "hostAttributes.0.attribute": "",
-      "hostAttributes.0.value": "",
-      "metricParameters.0.hostname": "",
-      "metricParameters.0.metric": "",
-      "metricParameters.0.parameter": "",
-    })
-
-    await waitFor(() => fireEvent.click(screen.getByTestId("globalAttributes.0.remove")))
+    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
 
     expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
       name: "local",
@@ -483,12 +503,18 @@ describe("Tests for metric configuration overrides addview", () => {
     await waitFor(() => fireEvent.change(screen.getByTestId("name"), { target: { value: "local" } }))
 
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.0.hostname"), { target: { value: "foo.bar.hr" } }))
+
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrMsg)).toBeInTheDocument()
+    expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
+
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.0.attribute"), { target: { value: "FOOBAR" } }))
-    await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.0.value"), { target: { value: "foo-bar" } }))
 
     expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
     expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
+
+    await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.0.value"), { target: { value: "foo-bar" } }))
 
     expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
       name: "local",
@@ -503,10 +529,44 @@ describe("Tests for metric configuration overrides addview", () => {
       "metricParameters.0.value": "",
     })
 
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+
     await waitFor(() => fireEvent.click(screen.getByTestId("hostAttributes.0.add")))
 
-    await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.1.hostname"), { target: { value: "-hostnamecom" } }))
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "local",
+      "globalAttributes.0.attribute": "",
+      "globalAttributes.0.value": "",
+      "hostAttributes.0.hostname": "foo.bar.hr",
+      "hostAttributes.0.attribute": "FOOBAR",
+      "hostAttributes.0.value": "foo-bar",
+      "hostAttributes.1.hostname": "",
+      "hostAttributes.1.attribute": "",
+      "hostAttributes.1.value": "",
+      "metricParameters.0.hostname": "",
+      "metricParameters.0.metric": "",
+      "metricParameters.0.parameter": "",
+      "metricParameters.0.value": "",
+    })
+
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.1.attribute"), { target: { value: "ATTRIBUTE" } }))
+
+    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
+
+    await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.1.hostname"), { target: { value: "-hostnamecom" } }))
+
+    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
+
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.1.value"), { target: { value: "some-value" } }))
 
     expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
@@ -515,17 +575,17 @@ describe("Tests for metric configuration overrides addview", () => {
 
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.1.attribute"), { target: { value: "" } }))
 
+    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
     expect(screen.queryByText(attrMsg)).toBeInTheDocument()
     expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
 
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.1.hostname"), { target: { value: "host.name.com" } }))
+
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrMsg)).toBeInTheDocument()
+    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.1.attribute"), { target: { value: "mock.ATTRIBUTE" } }))
-
-    await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.1.value"), { target: { value: "" } }))
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
-
-    await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.1.value"), { target: { value: "some-value" } }))
 
     expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
       name: "local",
@@ -543,6 +603,10 @@ describe("Tests for metric configuration overrides addview", () => {
       "metricParameters.0.value": "",
     })
 
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+
     await waitFor(() => fireEvent.click(screen.getByTestId("hostAttributes.0.remove")))
 
     expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
@@ -558,6 +622,10 @@ describe("Tests for metric configuration overrides addview", () => {
       "metricParameters.0.value": "",
     })
 
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+
     await waitFor(() => fireEvent.click(screen.getByTestId("hostAttributes.0.remove")))
 
     expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
@@ -572,6 +640,10 @@ describe("Tests for metric configuration overrides addview", () => {
       "metricParameters.0.parameter": "",
       "metricParameters.0.value": "",
     })
+
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
   })
 
   test("Test add metric parameters", async () => {
@@ -605,8 +677,26 @@ describe("Tests for metric configuration overrides addview", () => {
     expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.hostname"), { target: { value: "epic5.storage.surfsara.nl" } }))
+
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).toBeInTheDocument()
+    expect(screen.queryByText(paramMsg)).toBeInTheDocument()
+    expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.metric"), { target: { value: "generic.tcp.connect" } }))
+
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramMsg)).toBeInTheDocument()
+    expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.parameter"), { target: { value: "-p" } }))
+
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.value"), { target: { value: "8004" } }))
 
     expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
@@ -629,54 +719,29 @@ describe("Tests for metric configuration overrides addview", () => {
 
     await waitFor(() => fireEvent.click(screen.getByTestId("metricParameters.0.add")))
 
-    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.hostname"), { target: { value: "b2share.eudat.eu" } }))
-    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.metric"), { target: { value: "eudat.b2share.invenio.healthcheck" } }))
-    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.parameter"), { target: { value: "--url" } }))
-    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.value"), { target: { value: "https://b2share.eudat.eu" } }))
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "",
+      "globalAttributes.0.attribute": "",
+      "globalAttributes.0.value": "",
+      "hostAttributes.0.hostname": "",
+      "hostAttributes.0.attribute": "",
+      "hostAttributes.0.value": "",
+      "metricParameters.0.hostname": "epic5.storage.surfsara.nl",
+      "metricParameters.0.metric": "generic.tcp.connect",
+      "metricParameters.0.parameter": "-p",
+      "metricParameters.0.value": "8004",
+      "metricParameters.1.hostname": "",
+      "metricParameters.1.metric": "",
+      "metricParameters.1.parameter": "",
+      "metricParameters.1.value": ""
+    })
 
     expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
     expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
     expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
     expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
 
-    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.hostname"), { target: { value: "-b2shareeudat" } }))
-
-    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
-
-    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.metric"), { target: { value: "" } }))
-
-    expect(screen.queryByText(metricMsg)).toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
-
-    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.metric"), { target: { value: "generic@tcp.connect" } }))
-
-    expect(screen.queryByText(metricMsg)).toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
-
-    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.parameter"), { target: { value: "" } }))
-
-    expect(screen.queryByText(paramMsg)).toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
-
-    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.parameter"), { target: { value: "--url" } }))
-    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.value"), { target: { value: "" } }))
-
-    expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
-
-    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.hostname"), { target: { value: "b2share.eudat.eu" } }))
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.metric"), { target: { value: "eudat.b2share.invenio.healthcheck" } }))
-    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.parameter"), { target: { value: "--url" } }))
-    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.value"), { target: { value: "https://b2share.eudat.eu" } }))
-
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
 
     expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
       name: "",
@@ -689,13 +754,145 @@ describe("Tests for metric configuration overrides addview", () => {
       "metricParameters.0.metric": "generic.tcp.connect",
       "metricParameters.0.parameter": "-p",
       "metricParameters.0.value": "8004",
-      "metricParameters.1.hostname": "b2share.eudat.eu",
+      "metricParameters.1.hostname": "",
       "metricParameters.1.metric": "eudat.b2share.invenio.healthcheck",
+      "metricParameters.1.parameter": "",
+      "metricParameters.1.value": ""
+    })
+
+    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramMsg)).toBeInTheDocument()
+    expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+
+    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.metric"), { target: { value: "" } }))
+
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+
+    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.parameter"), { target: { value: "--url" } }))
+
+    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).toBeInTheDocument()
+    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "",
+      "globalAttributes.0.attribute": "",
+      "globalAttributes.0.value": "",
+      "hostAttributes.0.hostname": "",
+      "hostAttributes.0.attribute": "",
+      "hostAttributes.0.value": "",
+      "metricParameters.0.hostname": "epic5.storage.surfsara.nl",
+      "metricParameters.0.metric": "generic.tcp.connect",
+      "metricParameters.0.parameter": "-p",
+      "metricParameters.0.value": "8004",
+      "metricParameters.1.hostname": "",
+      "metricParameters.1.metric": "",
       "metricParameters.1.parameter": "--url",
+      "metricParameters.1.value": ""
+    })
+
+    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.parameter"), { target: { value: "" } }))
+
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+
+    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.value"), { target: { value: "https://b2share.eudat.eu" } }))
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "",
+      "globalAttributes.0.attribute": "",
+      "globalAttributes.0.value": "",
+      "hostAttributes.0.hostname": "",
+      "hostAttributes.0.attribute": "",
+      "hostAttributes.0.value": "",
+      "metricParameters.0.hostname": "epic5.storage.surfsara.nl",
+      "metricParameters.0.metric": "generic.tcp.connect",
+      "metricParameters.0.parameter": "-p",
+      "metricParameters.0.value": "8004",
+      "metricParameters.1.hostname": "",
+      "metricParameters.1.metric": "",
+      "metricParameters.1.parameter": "",
       "metricParameters.1.value": "https://b2share.eudat.eu"
     })
 
-    await waitFor(() => fireEvent.click(screen.getByTestId("metricParameters.0.remove")))
+    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).toBeInTheDocument()
+    expect(screen.queryByText(paramMsg)).toBeInTheDocument()
+    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByTestId("metricParameters.1.remove"))
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "",
+      "globalAttributes.0.attribute": "",
+      "globalAttributes.0.value": "",
+      "hostAttributes.0.hostname": "",
+      "hostAttributes.0.attribute": "",
+      "hostAttributes.0.value": "",
+      "metricParameters.0.hostname": "epic5.storage.surfsara.nl",
+      "metricParameters.0.metric": "generic.tcp.connect",
+      "metricParameters.0.parameter": "-p",
+      "metricParameters.0.value": "8004"
+    })
+
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+
+    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.hostname"), { target: { value: "-b2shareeudat" } }))
+
+    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+
+    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.metric"), { target: { value: "" } }))
+
+    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).toBeInTheDocument()
+    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+
+    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.metric"), { target: { value: "generic@tcp.connect" } }))
+
+    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).toBeInTheDocument()
+    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+
+    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.parameter"), { target: { value: "" } }))
+
+    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).toBeInTheDocument()
+    expect(screen.queryByText(paramMsg)).toBeInTheDocument()
+    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+
+    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.parameter"), { target: { value: "--url" } }))
+
+    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).toBeInTheDocument()
+    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+
+    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.value"), { target: { value: "" } }))
+
+    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).toBeInTheDocument()
+    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+
+    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.hostname"), { target: { value: "b2share.eudat.eu" } }))
+    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.metric"), { target: { value: "eudat.b2share.invenio.healthcheck" } }))
+    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.parameter"), { target: { value: "--url" } }))
+    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.value"), { target: { value: "https://b2share.eudat.eu" } }))
 
     expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
       name: "",
@@ -710,31 +907,10 @@ describe("Tests for metric configuration overrides addview", () => {
       "metricParameters.0.value": "https://b2share.eudat.eu"
     })
 
-    await waitFor(() => fireEvent.click(screen.getByTestId("metricParameters.0.add")))
-
-    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.hostname"), { target: { value: "sensu.cro-ngi.hr" } }))
-    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.metric"), { target: { value: "argo.AMSPublisher-Check" } }))
-    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.parameter"), { target: { value: "-q" } }))
-    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.value"), { target: { value: "w:metrics+g:published180 -c 10" } }))
-
-    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
-      name: "",
-      "globalAttributes.0.attribute": "",
-      "globalAttributes.0.value": "",
-      "hostAttributes.0.hostname": "",
-      "hostAttributes.0.attribute": "",
-      "hostAttributes.0.value": "",
-      "metricParameters.0.hostname": "b2share.eudat.eu",
-      "metricParameters.0.metric": "eudat.b2share.invenio.healthcheck",
-      "metricParameters.0.parameter": "--url",
-      "metricParameters.0.value": "https://b2share.eudat.eu",
-      "metricParameters.1.hostname": "sensu.cro-ngi.hr",
-      "metricParameters.1.metric": "argo.AMSPublisher-Check",
-      "metricParameters.1.parameter": "-q",
-      "metricParameters.1.value": "w:metrics+g:published180 -c 10"
-    })
-
-    await waitFor(() => fireEvent.click(screen.getByTestId("metricParameters.0.remove")))
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
 
     await waitFor(() => fireEvent.click(screen.getByTestId("metricParameters.0.remove")))
 
@@ -750,6 +926,62 @@ describe("Tests for metric configuration overrides addview", () => {
       "metricParameters.0.parameter": "",
       "metricParameters.0.value": ""
     })
+
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+  })
+
+  test("Test save metric override with just name", async () => {
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /override/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "local" } })
+
+    fireEvent.click(screen.getByRole("button", { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metricconfiguration/",
+        {
+          name: "local",
+          global_attributes: [
+            {
+              attribute: "",
+              value: ""
+            }
+          ],
+          host_attributes: [
+            {
+              hostname: "",
+              attribute: "",
+              value: ""
+            }
+          ],
+          metric_parameters: [
+            {
+              hostname: "",
+              metric: "",
+              parameter: "",
+              value: ""
+            }
+          ]
+        }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metricoverride")
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Metric configuration override successfully added", "Added", 2000
+    )
   })
 
   test("Test save metric override successfully", async () => {
@@ -1163,17 +1395,74 @@ describe("Tests for metric configuration overrides changeview", () => {
     await waitFor(() => fireEvent.change(screen.getByTestId("globalAttributes.0.attribute"), { target: { value: "NAGIOS_REAL_HOST_CERT" } }))
     await waitFor(() => fireEvent.change(screen.getByTestId("globalAttributes.0.value"), { target: { value: "/etc/nagios/globus/cert.pem" } }))
 
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "local",
+      "globalAttributes.0.attribute": "NAGIOS_REAL_HOST_CERT",
+      "globalAttributes.0.value": "/etc/nagios/globus/cert.pem",
+      "globalAttributes.1.attribute": "NAGIOS_ACTUAL_HOST_KEY",
+      "globalAttributes.1.value": "/etc/nagios/globus/hostkey.pem",
+      "hostAttributes.0.hostname": "mock.host.name",
+      "hostAttributes.0.attribute": "attr1",
+      "hostAttributes.0.value": "some-new-value",
+      "metricParameters.0.hostname": "eosccore.ui.argo.grnet.gr",
+      "metricParameters.0.metric": "org.nagios.ARGOWeb-AR",
+      "metricParameters.0.parameter": "-r",
+      "metricParameters.0.value": "EOSC_Monitoring",
+      "metricParameters.1.hostname": "argo.eosc-portal.eu",
+      "metricParameters.1.metric": "org.nagios.ARGOWeb-Status",
+      "metricParameters.1.parameter": "-u",
+      "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
+    })
+
     expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
     expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
 
     await waitFor(() => fireEvent.change(screen.getByTestId("globalAttributes.1.attribute"), { target: { value: "1NAGIOS_REAL_HOST_KEY" } }))
     await waitFor(() => fireEvent.change(screen.getByTestId("globalAttributes.1.value"), { target: { value: "/etc/nagios/globus/cert.key" } }))
 
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "local",
+      "globalAttributes.0.attribute": "NAGIOS_REAL_HOST_CERT",
+      "globalAttributes.0.value": "/etc/nagios/globus/cert.pem",
+      "globalAttributes.1.attribute": "1NAGIOS_REAL_HOST_KEY",
+      "globalAttributes.1.value": "/etc/nagios/globus/cert.key",
+      "hostAttributes.0.hostname": "mock.host.name",
+      "hostAttributes.0.attribute": "attr1",
+      "hostAttributes.0.value": "some-new-value",
+      "metricParameters.0.hostname": "eosccore.ui.argo.grnet.gr",
+      "metricParameters.0.metric": "org.nagios.ARGOWeb-AR",
+      "metricParameters.0.parameter": "-r",
+      "metricParameters.0.value": "EOSC_Monitoring",
+      "metricParameters.1.hostname": "argo.eosc-portal.eu",
+      "metricParameters.1.metric": "org.nagios.ARGOWeb-Status",
+      "metricParameters.1.parameter": "-u",
+      "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
+    })
+
     expect(screen.queryByText(attrMsg)).toBeInTheDocument()
     expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
 
     await waitFor(() => fireEvent.change(screen.getByTestId("globalAttributes.1.attribute"), { target: { value: "NAGIOS_REAL_HOST_KEY" } }))
     await waitFor(() => fireEvent.change(screen.getByTestId("globalAttributes.1.value"), { target: { value: "" } }))
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "local",
+      "globalAttributes.0.attribute": "NAGIOS_REAL_HOST_CERT",
+      "globalAttributes.0.value": "/etc/nagios/globus/cert.pem",
+      "globalAttributes.1.attribute": "NAGIOS_REAL_HOST_KEY",
+      "globalAttributes.1.value": "",
+      "hostAttributes.0.hostname": "mock.host.name",
+      "hostAttributes.0.attribute": "attr1",
+      "hostAttributes.0.value": "some-new-value",
+      "metricParameters.0.hostname": "eosccore.ui.argo.grnet.gr",
+      "metricParameters.0.metric": "org.nagios.ARGOWeb-AR",
+      "metricParameters.0.parameter": "-r",
+      "metricParameters.0.value": "EOSC_Monitoring",
+      "metricParameters.1.hostname": "argo.eosc-portal.eu",
+      "metricParameters.1.metric": "org.nagios.ARGOWeb-Status",
+      "metricParameters.1.parameter": "-u",
+      "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
+    })
 
     expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
     expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
@@ -1201,6 +1490,30 @@ describe("Tests for metric configuration overrides changeview", () => {
 
     await waitFor(() => fireEvent.click(screen.getByTestId("globalAttributes.1.add")))
 
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "local",
+      "globalAttributes.0.attribute": "NAGIOS_REAL_HOST_CERT",
+      "globalAttributes.0.value": "/etc/nagios/globus/cert.pem",
+      "globalAttributes.1.attribute": "NAGIOS_REAL_HOST_KEY",
+      "globalAttributes.1.value": "/etc/nagios/globus/cert.key",
+      "globalAttributes.2.attribute": "",
+      "globalAttributes.2.value": "",
+      "hostAttributes.0.hostname": "mock.host.name",
+      "hostAttributes.0.attribute": "attr1",
+      "hostAttributes.0.value": "some-new-value",
+      "metricParameters.0.hostname": "eosccore.ui.argo.grnet.gr",
+      "metricParameters.0.metric": "org.nagios.ARGOWeb-AR",
+      "metricParameters.0.parameter": "-r",
+      "metricParameters.0.value": "EOSC_Monitoring",
+      "metricParameters.1.hostname": "argo.eosc-portal.eu",
+      "metricParameters.1.metric": "org.nagios.ARGOWeb-Status",
+      "metricParameters.1.parameter": "-u",
+      "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
+    })
+
+    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+
     await waitFor(() => fireEvent.change(screen.getByTestId("globalAttributes.2.attribute"), { target: { value: "MOCK_ATTRIBUTE" } }))
     await waitFor(() => fireEvent.change(screen.getByTestId("globalAttributes.2.value"), { target: { value: "some-value" } }))
 
@@ -1225,8 +1538,14 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
+    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+
     await waitFor(() => fireEvent.click(screen.getByTestId("globalAttributes.1.remove")))
-    await waitFor(() => fireEvent.click(screen.getByTestId("globalAttributes.0.remove")))
+    fireEvent.click(screen.getByTestId("globalAttributes.0.remove"))
+
+    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
 
     expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
       name: "local",
@@ -1247,6 +1566,9 @@ describe("Tests for metric configuration overrides changeview", () => {
 
     await waitFor(() => fireEvent.click(screen.getByTestId("globalAttributes.0.remove")))
 
+    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+
     expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
       name: "local",
       "globalAttributes.0.attribute": "",
@@ -1263,6 +1585,14 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.parameter": "-u",
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
+
+    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+
+    await waitFor(() => fireEvent.change(screen.getByTestId("globalAttributes.0.value"), { target: { value: "test_value" } }))
+
+    expect(screen.queryByText(attrMsg)).toBeInTheDocument()
+    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
   })
 
   test("Test change host attributes", async () => {
@@ -1301,17 +1631,77 @@ describe("Tests for metric configuration overrides changeview", () => {
 
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.0.hostname"), { target: { value: "-foo" } }))
 
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "local",
+      "globalAttributes.0.attribute": "NAGIOS_ACTUAL_HOST_CERT",
+      "globalAttributes.0.value": "/etc/nagios/globus/hostcert.pem",
+      "globalAttributes.1.attribute": "NAGIOS_ACTUAL_HOST_KEY",
+      "globalAttributes.1.value": "/etc/nagios/globus/hostkey.pem",
+      "hostAttributes.0.hostname": "-foo",
+      "hostAttributes.0.attribute": "attr1",
+      "hostAttributes.0.value": "some-new-value",
+      "metricParameters.0.hostname": "eosccore.ui.argo.grnet.gr",
+      "metricParameters.0.metric": "org.nagios.ARGOWeb-AR",
+      "metricParameters.0.parameter": "-r",
+      "metricParameters.0.value": "EOSC_Monitoring",
+      "metricParameters.1.hostname": "argo.eosc-portal.eu",
+      "metricParameters.1.metric": "org.nagios.ARGOWeb-Status",
+      "metricParameters.1.parameter": "-u",
+      "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
+    })
+
     expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
     expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
     expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
 
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.0.attribute"), { target: { value: "@test" } }))
 
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "local",
+      "globalAttributes.0.attribute": "NAGIOS_ACTUAL_HOST_CERT",
+      "globalAttributes.0.value": "/etc/nagios/globus/hostcert.pem",
+      "globalAttributes.1.attribute": "NAGIOS_ACTUAL_HOST_KEY",
+      "globalAttributes.1.value": "/etc/nagios/globus/hostkey.pem",
+      "hostAttributes.0.hostname": "-foo",
+      "hostAttributes.0.attribute": "@test",
+      "hostAttributes.0.value": "some-new-value",
+      "metricParameters.0.hostname": "eosccore.ui.argo.grnet.gr",
+      "metricParameters.0.metric": "org.nagios.ARGOWeb-AR",
+      "metricParameters.0.parameter": "-r",
+      "metricParameters.0.value": "EOSC_Monitoring",
+      "metricParameters.1.hostname": "argo.eosc-portal.eu",
+      "metricParameters.1.metric": "org.nagios.ARGOWeb-Status",
+      "metricParameters.1.parameter": "-u",
+      "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
+    })
+
+    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
     expect(screen.queryByText(attrMsg)).toBeInTheDocument()
     expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
 
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.0.value"), { target: { value: "" } }))
 
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "local",
+      "globalAttributes.0.attribute": "NAGIOS_ACTUAL_HOST_CERT",
+      "globalAttributes.0.value": "/etc/nagios/globus/hostcert.pem",
+      "globalAttributes.1.attribute": "NAGIOS_ACTUAL_HOST_KEY",
+      "globalAttributes.1.value": "/etc/nagios/globus/hostkey.pem",
+      "hostAttributes.0.hostname": "-foo",
+      "hostAttributes.0.attribute": "@test",
+      "hostAttributes.0.value": "",
+      "metricParameters.0.hostname": "eosccore.ui.argo.grnet.gr",
+      "metricParameters.0.metric": "org.nagios.ARGOWeb-AR",
+      "metricParameters.0.parameter": "-r",
+      "metricParameters.0.value": "EOSC_Monitoring",
+      "metricParameters.1.hostname": "argo.eosc-portal.eu",
+      "metricParameters.1.metric": "org.nagios.ARGOWeb-Status",
+      "metricParameters.1.parameter": "-u",
+      "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
+    })
+
+    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    expect(screen.queryByText(attrMsg)).toBeInTheDocument()
     expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
 
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.0.hostname"), { target: { value: "foo.bar.hr" } }))
@@ -1343,9 +1733,45 @@ describe("Tests for metric configuration overrides changeview", () => {
 
     await waitFor(() => fireEvent.click(screen.getByTestId("hostAttributes.0.add")))
 
-    fireEvent.change(screen.getByTestId("hostAttributes.1.hostname"), { target: { value: "host.name.com" } })
-    fireEvent.change(screen.getByTestId("hostAttributes.1.attribute"), { target: { value: "ATTRIBUTE" } })
-    fireEvent.change(screen.getByTestId("hostAttributes.1.value"), { target: { value: "some-value" } })
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "local",
+      "globalAttributes.0.attribute": "NAGIOS_ACTUAL_HOST_CERT",
+      "globalAttributes.0.value": "/etc/nagios/globus/hostcert.pem",
+      "globalAttributes.1.attribute": "NAGIOS_ACTUAL_HOST_KEY",
+      "globalAttributes.1.value": "/etc/nagios/globus/hostkey.pem",
+      "hostAttributes.0.hostname": "foo.bar.hr",
+      "hostAttributes.0.attribute": "baz.FOOBAR",
+      "hostAttributes.0.value": "foo-bar",
+      "hostAttributes.1.hostname": "",
+      "hostAttributes.1.attribute": "",
+      "hostAttributes.1.value": "",
+      "metricParameters.0.hostname": "eosccore.ui.argo.grnet.gr",
+      "metricParameters.0.metric": "org.nagios.ARGOWeb-AR",
+      "metricParameters.0.parameter": "-r",
+      "metricParameters.0.value": "EOSC_Monitoring",
+      "metricParameters.1.hostname": "argo.eosc-portal.eu",
+      "metricParameters.1.metric": "org.nagios.ARGOWeb-Status",
+      "metricParameters.1.parameter": "-u",
+      "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
+    })
+
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+
+    await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.1.hostname"), { target: { value: "host.name.com" } }))
+
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrMsg)).toBeInTheDocument()
+    expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
+
+    await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.1.attribute"), { target: { value: "ATTRIBUTE" } }))
+
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
+
+    await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.1.value"), { target: { value: "some-value" } }))
 
     expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
       name: "local",
@@ -1369,6 +1795,10 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+
     await waitFor(() => fireEvent.click(screen.getByTestId("hostAttributes.0.remove")))
 
     expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
@@ -1390,6 +1820,10 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+
     await waitFor(() => fireEvent.click(screen.getByTestId("hostAttributes.0.remove")))
 
     expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
@@ -1410,13 +1844,148 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.parameter": "-u",
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
+
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+
+    await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.0.attribute"), { target: { value: "SOME_ATTRIBUTE" } }))
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "local",
+      "globalAttributes.0.attribute": "NAGIOS_ACTUAL_HOST_CERT",
+      "globalAttributes.0.value": "/etc/nagios/globus/hostcert.pem",
+      "globalAttributes.1.attribute": "NAGIOS_ACTUAL_HOST_KEY",
+      "globalAttributes.1.value": "/etc/nagios/globus/hostkey.pem",
+      "hostAttributes.0.hostname": "",
+      "hostAttributes.0.attribute": "SOME_ATTRIBUTE",
+      "hostAttributes.0.value": "",
+      "metricParameters.0.hostname": "eosccore.ui.argo.grnet.gr",
+      "metricParameters.0.metric": "org.nagios.ARGOWeb-AR",
+      "metricParameters.0.parameter": "-r",
+      "metricParameters.0.value": "EOSC_Monitoring",
+      "metricParameters.1.hostname": "argo.eosc-portal.eu",
+      "metricParameters.1.metric": "org.nagios.ARGOWeb-Status",
+      "metricParameters.1.parameter": "-u",
+      "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
+    })
+
+    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
+
+    await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.0.value"), { target: { value: "some_value" } }))
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "local",
+      "globalAttributes.0.attribute": "NAGIOS_ACTUAL_HOST_CERT",
+      "globalAttributes.0.value": "/etc/nagios/globus/hostcert.pem",
+      "globalAttributes.1.attribute": "NAGIOS_ACTUAL_HOST_KEY",
+      "globalAttributes.1.value": "/etc/nagios/globus/hostkey.pem",
+      "hostAttributes.0.hostname": "",
+      "hostAttributes.0.attribute": "SOME_ATTRIBUTE",
+      "hostAttributes.0.value": "some_value",
+      "metricParameters.0.hostname": "eosccore.ui.argo.grnet.gr",
+      "metricParameters.0.metric": "org.nagios.ARGOWeb-AR",
+      "metricParameters.0.parameter": "-r",
+      "metricParameters.0.value": "EOSC_Monitoring",
+      "metricParameters.1.hostname": "argo.eosc-portal.eu",
+      "metricParameters.1.metric": "org.nagios.ARGOWeb-Status",
+      "metricParameters.1.parameter": "-u",
+      "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
+    })
+
+    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+
+    await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.0.hostname"), { target: { value: "host.name.net" } }))
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "local",
+      "globalAttributes.0.attribute": "NAGIOS_ACTUAL_HOST_CERT",
+      "globalAttributes.0.value": "/etc/nagios/globus/hostcert.pem",
+      "globalAttributes.1.attribute": "NAGIOS_ACTUAL_HOST_KEY",
+      "globalAttributes.1.value": "/etc/nagios/globus/hostkey.pem",
+      "hostAttributes.0.hostname": "host.name.net",
+      "hostAttributes.0.attribute": "SOME_ATTRIBUTE",
+      "hostAttributes.0.value": "some_value",
+      "metricParameters.0.hostname": "eosccore.ui.argo.grnet.gr",
+      "metricParameters.0.metric": "org.nagios.ARGOWeb-AR",
+      "metricParameters.0.parameter": "-r",
+      "metricParameters.0.value": "EOSC_Monitoring",
+      "metricParameters.1.hostname": "argo.eosc-portal.eu",
+      "metricParameters.1.metric": "org.nagios.ARGOWeb-Status",
+      "metricParameters.1.parameter": "-u",
+      "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
+    })
+
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByTestId("hostAttributes.0.add"))
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "local",
+      "globalAttributes.0.attribute": "NAGIOS_ACTUAL_HOST_CERT",
+      "globalAttributes.0.value": "/etc/nagios/globus/hostcert.pem",
+      "globalAttributes.1.attribute": "NAGIOS_ACTUAL_HOST_KEY",
+      "globalAttributes.1.value": "/etc/nagios/globus/hostkey.pem",
+      "hostAttributes.0.hostname": "host.name.net",
+      "hostAttributes.0.attribute": "SOME_ATTRIBUTE",
+      "hostAttributes.0.value": "some_value",
+      "hostAttributes.1.hostname": "",
+      "hostAttributes.1.attribute": "",
+      "hostAttributes.1.value": "",
+      "metricParameters.0.hostname": "eosccore.ui.argo.grnet.gr",
+      "metricParameters.0.metric": "org.nagios.ARGOWeb-AR",
+      "metricParameters.0.parameter": "-r",
+      "metricParameters.0.value": "EOSC_Monitoring",
+      "metricParameters.1.hostname": "argo.eosc-portal.eu",
+      "metricParameters.1.metric": "org.nagios.ARGOWeb-Status",
+      "metricParameters.1.parameter": "-u",
+      "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
+    })
+
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+
+    await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.1.value"), { target: { value: "another_value" } }))
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "local",
+      "globalAttributes.0.attribute": "NAGIOS_ACTUAL_HOST_CERT",
+      "globalAttributes.0.value": "/etc/nagios/globus/hostcert.pem",
+      "globalAttributes.1.attribute": "NAGIOS_ACTUAL_HOST_KEY",
+      "globalAttributes.1.value": "/etc/nagios/globus/hostkey.pem",
+      "hostAttributes.0.hostname": "host.name.net",
+      "hostAttributes.0.attribute": "SOME_ATTRIBUTE",
+      "hostAttributes.0.value": "some_value",
+      "hostAttributes.1.hostname": "",
+      "hostAttributes.1.attribute": "",
+      "hostAttributes.1.value": "another_value",
+      "metricParameters.0.hostname": "eosccore.ui.argo.grnet.gr",
+      "metricParameters.0.metric": "org.nagios.ARGOWeb-AR",
+      "metricParameters.0.parameter": "-r",
+      "metricParameters.0.value": "EOSC_Monitoring",
+      "metricParameters.1.hostname": "argo.eosc-portal.eu",
+      "metricParameters.1.metric": "org.nagios.ARGOWeb-Status",
+      "metricParameters.1.parameter": "-u",
+      "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
+    })
+
+    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    expect(screen.queryByText(attrMsg)).toBeInTheDocument()
+    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
   })
 
   test("Test change metric parameters", async () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /override/i }).textContent).toBe("Change metric configuration override")
+      expect(screen.getByRole("heading", { name: /override/i })).toBeInTheDocument()
     })
 
     const hostnameMsg = "Invalid hostname"
@@ -1450,6 +2019,25 @@ describe("Tests for metric configuration overrides changeview", () => {
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.hostname"), { target: { value: "-storagenl" } }))
 
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "local",
+      "globalAttributes.0.attribute": "NAGIOS_ACTUAL_HOST_CERT",
+      "globalAttributes.0.value": "/etc/nagios/globus/hostcert.pem",
+      "globalAttributes.1.attribute": "NAGIOS_ACTUAL_HOST_KEY",
+      "globalAttributes.1.value": "/etc/nagios/globus/hostkey.pem",
+      "hostAttributes.0.hostname": "mock.host.name",
+      "hostAttributes.0.attribute": "attr1",
+      "hostAttributes.0.value": "some-new-value",
+      "metricParameters.0.hostname": "-storagenl",
+      "metricParameters.0.metric": "org.nagios.ARGOWeb-AR",
+      "metricParameters.0.parameter": "-r",
+      "metricParameters.0.value": "EOSC_Monitoring",
+      "metricParameters.1.hostname": "argo.eosc-portal.eu",
+      "metricParameters.1.metric": "org.nagios.ARGOWeb-Status",
+      "metricParameters.1.parameter": "-u",
+      "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
+    })
+
     expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
     expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
     expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
@@ -1457,28 +2045,86 @@ describe("Tests for metric configuration overrides changeview", () => {
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.metric"), { target: { value: "generic.tcp@connect" } }))
 
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "local",
+      "globalAttributes.0.attribute": "NAGIOS_ACTUAL_HOST_CERT",
+      "globalAttributes.0.value": "/etc/nagios/globus/hostcert.pem",
+      "globalAttributes.1.attribute": "NAGIOS_ACTUAL_HOST_KEY",
+      "globalAttributes.1.value": "/etc/nagios/globus/hostkey.pem",
+      "hostAttributes.0.hostname": "mock.host.name",
+      "hostAttributes.0.attribute": "attr1",
+      "hostAttributes.0.value": "some-new-value",
+      "metricParameters.0.hostname": "-storagenl",
+      "metricParameters.0.metric": "generic.tcp@connect",
+      "metricParameters.0.parameter": "-r",
+      "metricParameters.0.value": "EOSC_Monitoring",
+      "metricParameters.1.hostname": "argo.eosc-portal.eu",
+      "metricParameters.1.metric": "org.nagios.ARGOWeb-Status",
+      "metricParameters.1.parameter": "-u",
+      "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
+    })
+
+    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
     expect(screen.queryByText(metricMsg)).toBeInTheDocument()
     expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
     expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.parameter"), { target: { value: " p" } }))
 
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "local",
+      "globalAttributes.0.attribute": "NAGIOS_ACTUAL_HOST_CERT",
+      "globalAttributes.0.value": "/etc/nagios/globus/hostcert.pem",
+      "globalAttributes.1.attribute": "NAGIOS_ACTUAL_HOST_KEY",
+      "globalAttributes.1.value": "/etc/nagios/globus/hostkey.pem",
+      "hostAttributes.0.hostname": "mock.host.name",
+      "hostAttributes.0.attribute": "attr1",
+      "hostAttributes.0.value": "some-new-value",
+      "metricParameters.0.hostname": "-storagenl",
+      "metricParameters.0.metric": "generic.tcp@connect",
+      "metricParameters.0.parameter": " p",
+      "metricParameters.0.value": "EOSC_Monitoring",
+      "metricParameters.1.hostname": "argo.eosc-portal.eu",
+      "metricParameters.1.metric": "org.nagios.ARGOWeb-Status",
+      "metricParameters.1.parameter": "-u",
+      "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
+    })
+
+    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).toBeInTheDocument()
     expect(screen.queryByText(paramMsg)).toBeInTheDocument()
     expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.value"), { target: { value: "" } }))
 
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "local",
+      "globalAttributes.0.attribute": "NAGIOS_ACTUAL_HOST_CERT",
+      "globalAttributes.0.value": "/etc/nagios/globus/hostcert.pem",
+      "globalAttributes.1.attribute": "NAGIOS_ACTUAL_HOST_KEY",
+      "globalAttributes.1.value": "/etc/nagios/globus/hostkey.pem",
+      "hostAttributes.0.hostname": "mock.host.name",
+      "hostAttributes.0.attribute": "attr1",
+      "hostAttributes.0.value": "some-new-value",
+      "metricParameters.0.hostname": "-storagenl",
+      "metricParameters.0.metric": "generic.tcp@connect",
+      "metricParameters.0.parameter": " p",
+      "metricParameters.0.value": "",
+      "metricParameters.1.hostname": "argo.eosc-portal.eu",
+      "metricParameters.1.metric": "org.nagios.ARGOWeb-Status",
+      "metricParameters.1.parameter": "-u",
+      "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
+    })
+
+    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).toBeInTheDocument()
+    expect(screen.queryByText(paramMsg)).toBeInTheDocument()
     expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.hostname"), { target: { value: "epic5.storage.surfsara.nl" } }))
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.metric"), { target: { value: "generic.tcp.connect" } }))
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.parameter"), { target: { value: "-p" } }))
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.value"), { target: { value: "8004" } }))
-
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
 
     expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
       name: "local",
@@ -1499,12 +2145,63 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+
     await waitFor(() => fireEvent.click(screen.getByTestId("metricParameters.0.add")))
 
-    fireEvent.change(screen.getByTestId("metricParameters.1.hostname"), { target: { value: "sensu.cro-ngi" } })
-    fireEvent.change(screen.getByTestId("metricParameters.1.metric"), { target: { value: "argo.AMSPublisher-Check" } })
-    fireEvent.change(screen.getByTestId("metricParameters.1.parameter"), { target: { value: "-q" } })
-    fireEvent.change(screen.getByTestId("metricParameters.1.value"), { target: { value: "w:metrics+g:published180 -c 10" } })
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "local",
+      "globalAttributes.0.attribute": "NAGIOS_ACTUAL_HOST_CERT",
+      "globalAttributes.0.value": "/etc/nagios/globus/hostcert.pem",
+      "globalAttributes.1.attribute": "NAGIOS_ACTUAL_HOST_KEY",
+      "globalAttributes.1.value": "/etc/nagios/globus/hostkey.pem",
+      "hostAttributes.0.hostname": "mock.host.name",
+      "hostAttributes.0.attribute": "attr1",
+      "hostAttributes.0.value": "some-new-value",
+      "metricParameters.0.hostname": "epic5.storage.surfsara.nl",
+      "metricParameters.0.metric": "generic.tcp.connect",
+      "metricParameters.0.parameter": "-p",
+      "metricParameters.0.value": "8004",
+      "metricParameters.1.hostname": "",
+      "metricParameters.1.metric": "",
+      "metricParameters.1.parameter": "",
+      "metricParameters.1.value": "",
+      "metricParameters.2.hostname": "argo.eosc-portal.eu",
+      "metricParameters.2.metric": "org.nagios.ARGOWeb-Status",
+      "metricParameters.2.parameter": "-u",
+      "metricParameters.2.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
+    })
+
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+
+    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.hostname"), { target: { value: "sensu.cro-ngi" } }))
+
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).toBeInTheDocument()
+    expect(screen.queryByText(paramMsg)).toBeInTheDocument()
+    expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+
+    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.metric"), { target: { value: "argo.AMSPublisher-Check" } }))
+
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramMsg)).toBeInTheDocument()
+    expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+
+    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.parameter"), { target: { value: "-q" } }))
+
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+
+    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.value"), { target: { value: "w:metrics+g:published180 -c 10" } }))
 
     expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
       name: "local",
@@ -1529,6 +2226,11 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.2.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+
     await waitFor(() => fireEvent.click(screen.getByTestId("metricParameters.0.remove")))
 
     expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
@@ -1550,6 +2252,11 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+
     await waitFor(() => fireEvent.click(screen.getByTestId("metricParameters.0.remove")))
     await waitFor(() => fireEvent.click(screen.getByTestId("metricParameters.0.remove")))
 
@@ -1566,6 +2273,189 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.0.metric": "",
       "metricParameters.0.parameter": "",
       "metricParameters.0.value": ""
+    })
+
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+
+    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.parameter"), { target: { value: "-p" } }))
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "local",
+      "globalAttributes.0.attribute": "NAGIOS_ACTUAL_HOST_CERT",
+      "globalAttributes.0.value": "/etc/nagios/globus/hostcert.pem",
+      "globalAttributes.1.attribute": "NAGIOS_ACTUAL_HOST_KEY",
+      "globalAttributes.1.value": "/etc/nagios/globus/hostkey.pem",
+      "hostAttributes.0.hostname": "mock.host.name",
+      "hostAttributes.0.attribute": "attr1",
+      "hostAttributes.0.value": "some-new-value",
+      "metricParameters.0.hostname": "",
+      "metricParameters.0.metric": "",
+      "metricParameters.0.parameter": "-p",
+      "metricParameters.0.value": ""
+    })
+
+    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).toBeInTheDocument()
+    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+
+    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.parameter"), { target: { value: "" } }))
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "local",
+      "globalAttributes.0.attribute": "NAGIOS_ACTUAL_HOST_CERT",
+      "globalAttributes.0.value": "/etc/nagios/globus/hostcert.pem",
+      "globalAttributes.1.attribute": "NAGIOS_ACTUAL_HOST_KEY",
+      "globalAttributes.1.value": "/etc/nagios/globus/hostkey.pem",
+      "hostAttributes.0.hostname": "mock.host.name",
+      "hostAttributes.0.attribute": "attr1",
+      "hostAttributes.0.value": "some-new-value",
+      "metricParameters.0.hostname": "",
+      "metricParameters.0.metric": "",
+      "metricParameters.0.parameter": "",
+      "metricParameters.0.value": ""
+    })
+
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+
+    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.value"), { target: { value: "some-value" } }))
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "local",
+      "globalAttributes.0.attribute": "NAGIOS_ACTUAL_HOST_CERT",
+      "globalAttributes.0.value": "/etc/nagios/globus/hostcert.pem",
+      "globalAttributes.1.attribute": "NAGIOS_ACTUAL_HOST_KEY",
+      "globalAttributes.1.value": "/etc/nagios/globus/hostkey.pem",
+      "hostAttributes.0.hostname": "mock.host.name",
+      "hostAttributes.0.attribute": "attr1",
+      "hostAttributes.0.value": "some-new-value",
+      "metricParameters.0.hostname": "",
+      "metricParameters.0.metric": "",
+      "metricParameters.0.parameter": "",
+      "metricParameters.0.value": "some-value"
+    })
+
+    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).toBeInTheDocument()
+    expect(screen.queryByText(paramMsg)).toBeInTheDocument()
+    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+
+    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.value"), { target: { value: "" } }))
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "local",
+      "globalAttributes.0.attribute": "NAGIOS_ACTUAL_HOST_CERT",
+      "globalAttributes.0.value": "/etc/nagios/globus/hostcert.pem",
+      "globalAttributes.1.attribute": "NAGIOS_ACTUAL_HOST_KEY",
+      "globalAttributes.1.value": "/etc/nagios/globus/hostkey.pem",
+      "hostAttributes.0.hostname": "mock.host.name",
+      "hostAttributes.0.attribute": "attr1",
+      "hostAttributes.0.value": "some-new-value",
+      "metricParameters.0.hostname": "",
+      "metricParameters.0.metric": "",
+      "metricParameters.0.parameter": "",
+      "metricParameters.0.value": ""
+    })
+
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+
+    await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.metric"), { target: { value: "argo.ams-check" } }))
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "local",
+      "globalAttributes.0.attribute": "NAGIOS_ACTUAL_HOST_CERT",
+      "globalAttributes.0.value": "/etc/nagios/globus/hostcert.pem",
+      "globalAttributes.1.attribute": "NAGIOS_ACTUAL_HOST_KEY",
+      "globalAttributes.1.value": "/etc/nagios/globus/hostkey.pem",
+      "hostAttributes.0.hostname": "mock.host.name",
+      "hostAttributes.0.attribute": "attr1",
+      "hostAttributes.0.value": "some-new-value",
+      "metricParameters.0.hostname": "",
+      "metricParameters.0.metric": "argo.ams-check",
+      "metricParameters.0.parameter": "",
+      "metricParameters.0.value": ""
+    })
+
+    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramMsg)).toBeInTheDocument()
+    expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+  })
+
+  test("Test save metric override with only name", async () => {
+    renderChangeView()
+
+    const hostnameMsg = "Invalid hostname"
+    const metricMsg = "Metric name can contain alphanumeric characters, dash, underscore and dot, but must always begin with a letter"
+    const paramMsg = "Parameter cannot contain white space"
+    const paramValMsg = "Parameter value is required"
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /override/i }).textContent).toBe("Change metric configuration override")
+    })
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "local_new" } })
+
+    fireEvent.click(screen.getByTestId("globalAttributes.1.remove"))
+    fireEvent.click(screen.getByTestId("globalAttributes.0.remove"))
+    fireEvent.click(screen.getByTestId("hostAttributes.0.remove"))
+    fireEvent.click(screen.getByTestId("metricParameters.1.remove"))
+    fireEvent.click(screen.getByTestId("metricParameters.0.remove"))
+
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("button", { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metricconfiguration/",
+        {
+          id: "1",
+          name: "local_new",
+          global_attributes: [
+            {
+              attribute: "",
+              value: ""
+            }
+          ],
+          host_attributes: [
+            {
+              hostname: "",
+              attribute: "",
+              value: ""
+            }
+          ],
+          metric_parameters: [
+            {
+              hostname: "",
+              metric: "",
+              parameter: "",
+              value: ""
+            }
+          ]
+        }
+      )
     })
   })
 

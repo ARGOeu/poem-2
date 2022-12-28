@@ -43,44 +43,80 @@ const validationSchema = Yup.object().shape({
     .matches(/^[a-zA-Z][A-Za-z0-9\-_]*$/, "Name can contain alphanumeric characters, dash and underscore, but must always begin with a letter"),
   globalAttributes: Yup.array().of(
     Yup.object().shape({
-      attribute: Yup.string().matches(/^[a-zA-Z][A-Za-z0-9\-_.]*$/, "Attribute can contain alphanumeric characters, dash, underscore and dot, but must always begin with a letter"),
+      attribute: Yup.string().matches(
+        /^[a-zA-Z][A-Za-z0-9\-_.]*$/, {
+          excludeEmptyString: true,
+          message: "Attribute can contain alphanumeric characters, dash, underscore and dot, but must always begin with a letter"
+        }
+      ).when("value", {
+        is: (value) => !!value,
+        then: Yup.string().matches(/^[a-zA-Z][A-Za-z0-9\-_.]*$/, "Attribute can contain alphanumeric characters, dash, underscore and dot, but must always begin with a letter")
+      }),
       value: Yup.string().when("attribute", {
         is: (value) => !!value,
         then: Yup.string().required("Attribute value is required")
       })
-    })
+    }, [[ "attribute", "value" ]])
   ),
   hostAttributes: Yup.array().of(
     Yup.object().shape({
       hostname: Yup.string()
-        .matches(
-          /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9-]*[A-Za-z0-9])$/,
-          "Invalid hostname"
-        ),
-      attribute: Yup.string()
-        .matches(/^[a-zA-Z][A-Za-z0-9\-_.]*$/, "Attribute can contain alphanumeric characters, dash, underscore and dot, but must always begin with a letter"),
-      value: Yup.string().when("attribute", {
-        is: (value) => !!value,
+        .when(["attribute", "value"], {
+          is: (attribute, value) => !!value || !!attribute,
+          then: Yup.string().matches(/^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9-]*[A-Za-z0-9])$/, "Invalid hostname"),
+          otherwise: Yup.string().matches(
+            /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9-]*[A-Za-z0-9])$/, {
+              excludeEmptyString: true,
+              message: "Invalid hostname"
+            }
+          )
+        }),
+      attribute: Yup.string().when(["hostname", "value"], {
+        is: (hostname, value) => !!hostname || !!value,
+        then: Yup.string().matches(/^[a-zA-Z][A-Za-z0-9\-_.]*$/, "Attribute can contain alphanumeric characters, dash, underscore and dot, but must always begin with a letter")
+      }),
+      value: Yup.string().when(["hostname", "attribute"], {
+        is: (hostname, attribute) => !!hostname || !!attribute,
         then: Yup.string().required("Attribute value is required")
       })
-    })
+    }, [
+      [ "hostname", "attribute" ],
+      [ "hostname", "value" ],
+      [ "attribute", "value" ]
+    ] )
   ),
   metricParameters: Yup.array().of(
     Yup.object().shape({
-      hostname: Yup.string()
-        .matches(
-          /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9-]*[A-Za-z0-9])$/,
-          "Invalid hostname"
-        ),
-      metric: Yup.string()
-        .matches(/^[a-zA-Z][A-Za-z0-9\-_.]*$/, "Metric name can contain alphanumeric characters, dash, underscore and dot, but must always begin with a letter"),
-      parameter: Yup.string()
-        .matches(/^\S+$/, "Parameter cannot contain white space"),
-      value: Yup.string().when("parameter", {
-        is: (value) => !!value,
+      hostname: Yup.string().when(["metric", "parameter", "value"], {
+        is: (metric, parameter, value) => !!metric || !!parameter || !!value,
+        then: Yup.string().matches(/^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9-]*[A-Za-z0-9])$/, "Invalid hostname"),
+        otherwise: Yup.string().matches(
+          /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9-]*[A-Za-z0-9])$/, {
+            excludeEmptyString: true,
+            message: "Invalid hostname"
+          }
+        )
+      }),
+      metric: Yup.string().when(["hostname", "parameter", "value"], {
+        is: (hostname, parameter, value) => !!hostname || !!parameter || !!value,
+        then: Yup.string().matches(/^[a-zA-Z][A-Za-z0-9\-_.]*$/, "Metric name can contain alphanumeric characters, dash, underscore and dot, but must always begin with a letter")
+      }),
+      parameter: Yup.string().when(["hostname", "metric", "value"], {
+        is: (hostname, metric, value) => !!hostname || !!metric || !!value,
+        then: Yup.string().matches(/^\S+$/, "Parameter cannot contain white space")
+      }),
+      value: Yup.string().when(["hostname", "metric", "parameter"], {
+        is: (hostname, metric, parameter) => !!hostname || !!metric || !!parameter,
         then: Yup.string().required("Parameter value is required")
       })
-    })
+    }, [
+      [ "hostname", "metric" ],
+      [ "hostname", "parameter" ],
+      [ "hostname", "value" ],
+      [ "metric", "parameter" ],
+      [ "metric", "value" ],
+      [ "parameter", "value" ]
+    ])
   )
 })
 
@@ -172,7 +208,7 @@ const MetricOverrideForm = ({
   const [modalTitle, setModalTitle] = useState(undefined);
   const [modalFlag, setModalFlag] = useState(undefined);
 
-  const { control, handleSubmit, setValue, getValues, formState: { errors } } = useForm({
+  const { control, handleSubmit, setValue, getValues, trigger, formState: { errors } } = useForm({
     defaultValues: {
       id: override ? override.id : undefined,
       name: override ? override.name : "",
@@ -206,16 +242,22 @@ const MetricOverrideForm = ({
   useEffect(() => {
     if (attrFields.length == 0)
       setValue("globalAttributes", [{ attribute: "", value: "" }])
+
+    trigger("globalAttributes")
   }, [globalAttributes])
 
   useEffect(() => {
     if (hostAttrFields.length == 0)
       setValue("hostAttributes", [{ hostname: "", attribute: "", value: "" }])
+
+    trigger("hostAttributes")
   }, [hostAttributes])
 
   useEffect(() => {
     if (mpFields.length == 0)
       setValue("metricParameters", [{ hostname: "", metric: "", parameter: "", value: "" }])
+
+    trigger("metricParameters")
   }, [metricParameters])
 
   const toggleAreYouSure = () => {
