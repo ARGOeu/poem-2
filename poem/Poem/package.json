@@ -93,6 +93,7 @@
     "@popperjs/core": "^2.11.2",
     "async": "^2.6.4",
     "caniuse-lite": "^1.0.30001366",
+    "decode-uri-component": "^0.2.2",
     "formik": "^2.2.9",
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.21",
