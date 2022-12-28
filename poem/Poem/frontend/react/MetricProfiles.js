@@ -143,22 +143,10 @@ const sortServices = (a, b) => {
 }
 
 
-const ensureAlignedIndexes = (list) => {
-  let i = 0
-
-  list.forEach(e => {
-    e.index = i
-    i += 1
-  })
-
-  return list
-}
-
-
 const ServicesList = () => {
   const context = useContext(MetricProfilesComponentContext);
 
-  const { control, setValue, getValues, formState: { errors } } = useFormContext()
+  const { control, setValue, getValues, clearErrors, trigger, formState: { errors } } = useFormContext()
 
   const { fields, insert, remove } = useFieldArray({ control, name: "view_services" })
 
@@ -187,7 +175,6 @@ const ServicesList = () => {
       filtered = context.listServices.filter((elem) => matchItem(elem[field], value))
 
       tmp_list_services.sort(sortServices);
-      tmp_list_services = ensureAlignedIndexes(tmp_list_services)
     }
     else if (value !== '') {
       filtered = context.listServices.filter((elem) =>
@@ -309,7 +296,11 @@ const ServicesList = () => {
                       size="sm"
                       color="light"
                       data-testid={`remove-${index}`}
-                      onClick={() => { remove(index) }}
+                      onClick={() => {
+                        remove(index)
+                        clearErrors("view_services")
+                        trigger("view_services")
+                      }}
                     >
                       <FontAwesomeIcon icon={faTimes}/>
                     </Button>
@@ -420,9 +411,9 @@ const MetricProfilesForm = ({
       groupname: metricProfile.groupname,
       view_services: metricProfile.profile.services.length > 0 ?
         historyview ?
-          ensureAlignedIndexes(metricProfile.profile.services).sort(sortServices)
+          metricProfile.profile.services.sort(sortServices)
         :
-          ensureAlignedIndexes(flattenServices(metricProfile.profile.services).sort(sortServices))
+          flattenServices(metricProfile.profile.services).sort(sortServices)
       :
         [{ service: "", metric: "" }],
       search_metric: "",
@@ -442,10 +433,10 @@ const MetricProfilesForm = ({
   const listServices = useWatch({ control, name: "view_services" })
 
   useEffect(() => {
-    for (var i of listServices)
-      for (var j of listServices)
-        if (i.index !== j.index && i.service === j.service && i.metric === j.metric && (i.isNew || i.serviceChanged || i.metricChanged)) {
-          methods.setError(`view_services.[${i.index}].dup`, { type: "custom", message: "Duplicated" })
+    for (var i=0; i < listServices.length; i++)
+      for (var j=0; j < listServices.length; j++)
+        if (i !== j && listServices[i].service === listServices[j].service && listServices[i].metric === listServices[j].metric && (listServices[i].isNew || listServices[i].serviceChanged || listServices[i].metricChanged)) {
+          methods.setError(`view_services.[${i}].dup`, { type: "custom", message: "Duplicated" })
         }
 
     if (listServices.length === 0) {
@@ -536,7 +527,7 @@ const MetricProfilesForm = ({
                         item.isNew = true
                     })
                     methods.resetField("view_services")
-                    methods.setValue("view_services", ensureAlignedIndexes(imported).sort(sortServices))
+                    methods.setValue("view_services", imported.sort(sortServices))
                     methods.trigger()
                   }
                 })
@@ -592,7 +583,14 @@ const MetricProfilesForm = ({
                   :
                     <div></div>
                 }
-                <Button color="success" id="submit-button" type="submit">Save</Button>
+                <Button
+                  color="success"
+                  id="submit-button"
+                  type="submit"
+                  disabled={ methods.formState.errors?.view_services?.length > 0 }
+                >
+                  Save
+                </Button>
               </div>
           }
         </Form>

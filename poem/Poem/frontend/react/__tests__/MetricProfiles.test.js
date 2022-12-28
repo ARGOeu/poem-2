@@ -2016,13 +2016,13 @@ describe('Tests for metric profile addview', () => {
     await selectEvent.select(row3.getAllByText("Select...")[0], "argo.mon")
     await selectEvent.select(row3.getAllByText("Select...")[0], "eu.egi.CertValidity")
 
-    expect(screen.queryByText(/duplicated/i)).toBeInTheDocument()
+    expect(screen.queryAllByText(/duplicated/i)).toHaveLength(2)
 
     rows = metricInstances.getAllByRole("row")
-    expect(rows).toHaveLength(6)
+    expect(rows).toHaveLength(7)
     row1 = within(rows[2])
-    row2 = within(rows[3])
-    row3 = within(rows[4])
+    row2 = within(rows[4])
+    row3 = within(rows[5])
     expect(row1.getByText("argo.mon")).toBeInTheDocument()
     expect(row1.getByText("eu.egi.CertValidity")).toBeInTheDocument()
     expect(row2.getByText("eu.argo.ams")).toBeInTheDocument()
