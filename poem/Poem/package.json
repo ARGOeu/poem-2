@@ -48,7 +48,7 @@
     "@testing-library/user-event": "^13.5.0",
     "acorn": "^8.8.1",
     "autoprefixer": "^10.4.13",
-    "babel-loader": "^8.2.5",
+    "babel-loader": "^8.3.0",
     "babel-preset-react": "^6.24.1",
     "bootstrap": "^5.2.3",
     "css-loader": "^6.7.1",
