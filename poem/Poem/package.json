@@ -43,7 +43,7 @@
     "@getify/eslint-plugin-proper-arrows": "^11.0.3",
     "@hookform/error-message": "^2.0.1",
     "@hookform/resolvers": "^2.9.8",
-    "@testing-library/jest-dom": "^5.16.1",
+    "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^12.1.5",
     "@testing-library/user-event": "^13.5.0",
     "acorn": "^8.7.0",
