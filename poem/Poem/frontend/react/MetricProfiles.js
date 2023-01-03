@@ -46,11 +46,6 @@ export const MetricProfilesClone = (props) => <MetricProfilesComponent cloneview
 export const MetricProfilesChange = (props) => <MetricProfilesComponent {...props}/>;
 
 
-function matchItem(item, value) {
-  return item.toLowerCase().indexOf(value.toLowerCase()) !== -1;
-}
-
-
 const MetricProfilesComponentContext = React.createContext();
 
 
@@ -146,51 +141,9 @@ const sortServices = (a, b) => {
 const ServicesList = () => {
   const context = useContext(MetricProfilesComponentContext);
 
-  const { control, setValue, getValues, clearErrors, trigger, formState: { errors } } = useFormContext()
+  const { control, getValues, clearErrors, trigger, formState: { errors } } = useFormContext()
 
   const { fields, insert, remove } = useFieldArray({ control, name: "view_services" })
-
-  const handleSearch = (field, value) => {
-    let filtered = context.listServices
-    let tmp_list_services = [...context.listServices];
-
-    let statefieldsearch = undefined
-    let alternatestatefield = undefined
-    let alternatefield = ""
-
-    if (field === "service") {
-      statefieldsearch = context.searchServiceFlavour
-      alternatestatefield = context.searchMetric
-      alternatefield = "metric"
-    }
-
-    else if (field === "metric") {
-      statefieldsearch = context.searchMetric
-      alternatestatefield = context.searchServiceFlavour
-      alternatefield = "service"
-    }
-
-    if (statefieldsearch.length > value.length) {
-      // handle remove of characters of search term
-      filtered = context.listServices.filter((elem) => matchItem(elem[field], value))
-
-      tmp_list_services.sort(sortServices);
-    }
-    else if (value !== '') {
-      filtered = context.listServices.filter((elem) =>
-        matchItem(elem[field], value))
-    }
-
-    // handle multi search
-    if (alternatestatefield.length) {
-      filtered = filtered.filter((elem) =>
-        matchItem(elem[alternatefield], alternatestatefield))
-    }
-
-    filtered.sort(sortServices);
-
-    setValue("view_services", filtered)
-  }
 
   return (
     <table className="table table-bordered table-sm table-hover">
@@ -219,7 +172,6 @@ const ServicesList = () => {
                   field={ field }
                   forwardedRef={ field.ref }
                   className="form-control"
-                  onChange={ e => handleSearch("service", e.target.value) }
                 />
               }
             />
@@ -233,7 +185,6 @@ const ServicesList = () => {
                   field={ field }
                   forwardedRef={ field.ref }
                   className="form-control"
-                  onChange={ e => handleSearch("metric", e.target.value) }
               />
               }
             />
@@ -401,23 +352,24 @@ const MetricProfilesForm = ({
       userDetails.groups.metricprofiles.length > 0;
   }
 
+  const defaultServices = metricProfile.profile.services.length > 0 ?
+    historyview ?
+      metricProfile.profile.services.sort(sortServices)
+    :
+      flattenServices(metricProfile.profile.services).sort(sortServices)
+  :
+    [{ service: "", metric: "" }]
+
   const methods = useForm({
     defaultValues: {
       id: metricProfile.profile.id,
       name: metricProfile.profile.name,
       description: metricProfile.profile.description,
       groupname: metricProfile.groupname,
-      view_services: metricProfile.profile.services.length > 0 ?
-        historyview ?
-          metricProfile.profile.services.sort(sortServices)
-        :
-          flattenServices(metricProfile.profile.services).sort(sortServices)
-      :
-        [{ service: "", metric: "" }],
+      services: defaultServices,
+      view_services: defaultServices,
       search_metric: "",
-      search_serviceflavour: "",
-      metrics_all: metricsAll,
-      services_all: servicesAll
+      search_serviceflavour: ""
     },
     mode: "all",
     resolver: yupResolver(MetricProfilesSchema),
@@ -428,19 +380,24 @@ const MetricProfilesForm = ({
 
   const searchMetric = useWatch({ control, name: "search_metric" })
   const searchServiceFlavour = useWatch({ control, name: "search_serviceflavour" })
-  const listServices = useWatch({ control, name: "view_services" })
+  const viewServices = useWatch({ control, name: "view_services" })
+  const listServices = useWatch({ control, name: "services" })
 
   useEffect(() => {
-    for (var i=0; i < listServices.length; i++)
-      for (var j=0; j < listServices.length; j++)
-        if (i !== j && listServices[i].service === listServices[j].service && listServices[i].metric === listServices[j].metric && (listServices[i].isNew || listServices[i].serviceChanged || listServices[i].metricChanged)) {
+    for (var i=0; i < viewServices.length; i++)
+      for (var j=0; j < viewServices.length; j++)
+        if (i !== j && viewServices[i].service === viewServices[j].service && viewServices[i].metric === viewServices[j].metric && (viewServices[i].isNew || viewServices[i].serviceChanged || viewServices[i].metricChanged)) {
           methods.setError(`view_services.[${i}].dup`, { type: "custom", message: "Duplicated" })
         }
 
-    if (listServices.length === 0) {
+    if (viewServices.length === 0) {
       methods.setValue("view_services", [{ service: "", metric: "" }])
     }
-  }, [listServices])
+  }, [viewServices])
+
+  useEffect(() => {
+    methods.setValue("view_services", listServices.filter(e => e.service.toLowerCase().includes(searchServiceFlavour.toLowerCase()) && e.metric.toLowerCase().includes(searchMetric.toLowerCase())))
+  }, [searchMetric, searchServiceFlavour])
 
   const onSubmitHandle = async (formValues) => {
     let msg = `Are you sure you want to ${(addview || cloneview) ? "add" : "change"} metric profile?`
@@ -526,6 +483,10 @@ const MetricProfilesForm = ({
                     })
                     methods.resetField("view_services")
                     methods.setValue("view_services", imported.sort(sortServices))
+                    methods.resetField("search_metric")
+                    methods.resetField("search_serviceflavour")
+                    methods.resetField("services")
+                    methods.setValue("services", imported.sort(sortServices))
                     methods.trigger()
                   }
                 })
@@ -845,8 +806,8 @@ export const MetricProfilesComponent = (props) => {
         { ...props }
         metricProfile={ metricProfile }
         userDetails={ userDetails }
-        metricsAll={ metricsAll }
-        servicesAll={ webApiST }
+        metricsAll={ metricsAll ? metricsAll : [] }
+        servicesAll={ webApiST ? webApiST : [] }
         doChange={ doChange }
         doDelete={ doDelete }
       />
