@@ -309,7 +309,7 @@ const ServicesList = () => {
                       color="light"
                       data-testid={`insert-${index}`}
                       onClick={() => {
-                        let new_element = { index: index + 1, service: '', metric: '', isNew: true }
+                        let new_element = { service: '', metric: '', isNew: true }
                         insert(index + 1, new_element)
                       }}
                     >
@@ -373,13 +373,11 @@ const MetricProfilesForm = ({
 
   const flattenServices = (services) => {
     let flat_services = [];
-    let index = 0;
 
     services.forEach((service_element) => {
       let service = service_element.service;
       service_element.metrics.forEach((metric) => {
-        flat_services.push({index, service, metric})
-        index += 1;
+        flat_services.push({ service, metric })
       })
     })
     return flat_services
