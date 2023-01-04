@@ -78,9 +78,9 @@ describe('Test for login page on SuperAdmin POEM', () => {
     expect(screen.getAllByRole('button')).toHaveLength(1);
     expect(screen.getByRole('button', { name: /login using username and password/i })).toBeInTheDocument();
 
-    expect(screen.getByRole('link', { name: /recherche/i }).closest('a')).toHaveAttribute('href', 'http://www.cnrs.fr/');
-    expect(screen.getByRole('link', { name: /greek/i }).closest('a')).toHaveAttribute('href', 'https://grnet.gr/');
-    expect(screen.getByRole('link', { name: /university/i }).closest('a')).toHaveAttribute('href', 'http://www.srce.unizg.hr/');
+    expect(screen.getByRole('link', { title: /cnrs/i }).closest('a')).toHaveAttribute('href', 'http://www.cnrs.fr/');
+    expect(screen.getByRole('link', { name: /grnet/i }).closest('a')).toHaveAttribute('href', 'https://grnet.gr/');
+    expect(screen.getByRole('link', { name: /srce/i }).closest('a')).toHaveAttribute('href', 'http://www.srce.unizg.hr/');
     expect(screen.getByRole('link', { name: /eosc-hub/i }).closest('a')).toHaveAttribute('href', 'https://www.eosc-hub.eu');
     expect(screen.getByRole('link', { name: /egi/i }).closest('a')).toHaveAttribute('href', 'http://www.egi.eu/');
     expect(screen.getByRole('link', { name: /terms/i }).closest('a')).toHaveAttribute('href', 'https://ui.argo.grnet.gr/egi/termsofUse');
@@ -114,9 +114,9 @@ describe('Test for login page on tenant POEM', () => {
     expect(screen.getByRole('button', { name: /login using username and password/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /egi checkin/i}).textContent).toBe('Log in using EGI CheckIn');
 
-    expect(screen.getByRole('link', { name: /recherche/i }).closest('a')).toHaveAttribute('href', 'http://www.cnrs.fr/');
-    expect(screen.getByRole('link', { name: /greek/i }).closest('a')).toHaveAttribute('href', 'https://grnet.gr/');
-    expect(screen.getByRole('link', { name: /university/i }).closest('a')).toHaveAttribute('href', 'http://www.srce.unizg.hr/');
+    expect(screen.getByRole('link', { name: /cnrs/i }).closest('a')).toHaveAttribute('href', 'http://www.cnrs.fr/');
+    expect(screen.getByRole('link', { name: /grnet/i }).closest('a')).toHaveAttribute('href', 'https://grnet.gr/');
+    expect(screen.getByRole('link', { name: /srce/i }).closest('a')).toHaveAttribute('href', 'http://www.srce.unizg.hr/');
     expect(screen.getByRole('link', { name: /eosc-hub/i }).closest('a')).toHaveAttribute('href', 'https://www.eosc-hub.eu');
     expect(screen.getByRole('link', { name: /egi/i }).closest('a')).toHaveAttribute('href', 'http://www.egi.eu/');
     expect(screen.getByRole('link', { name: /terms/i }).closest('a')).toHaveAttribute('href', 'https://ui.argo.grnet.gr/egi/termsofUse');
