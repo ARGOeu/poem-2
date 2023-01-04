@@ -98,12 +98,19 @@ const MetricProfileAutocompleteField = ({
       undefined
 
   const changeFieldValue = (newValue) => {
-    if (getValues("view_services").length === 1 && getValues(name) == "")
+    const origIndex = context.listServices.findIndex(e => e.service === getValues(`view_services.${index}.service`) && e.metric === getValues(`view_services.${index}.metric`) && e.index === getValues(`view_services.${index}.index`))
+
+    if (getValues("view_services").length === 1 && getValues(name) == "") {
       setValue(`view_services.${index}.isNew`, true)
+      setValue(`services.${origIndex}.isNew`, true)
+    }
 
-    else
+    else {
       setValue(`${name}Changed`, true)
+      setValue(`services.${origIndex}.${tupleType}Changed`, true)
+    }
 
+    setValue(`services.${origIndex}.${tupleType}`, newValue)
     setValue(name, newValue)
     clearErrors(name)
   }
@@ -141,9 +148,30 @@ const sortServices = (a, b) => {
 const ServicesList = () => {
   const context = useContext(MetricProfilesComponentContext);
 
-  const { control, getValues, clearErrors, trigger, formState: { errors } } = useFormContext()
+  const { control, getValues, setValue, resetField, clearErrors, trigger, formState: { errors } } = useFormContext()
 
   const { fields, insert, remove } = useFieldArray({ control, name: "view_services" })
+
+  const onRemove = (index) => {
+    let tmpListServices = [ ...context.listServices ]
+    let origIndex = tmpListServices.findIndex(e => e.service == getValues(`view_services.${index}.service`) && e.metric == getValues(`view_services.${index}.metric`))
+    tmpListServices.splice(origIndex, 1)
+    resetField("services")
+    setValue("services", tmpListServices)
+    remove(index)
+    clearErrors("view_services")
+    trigger("view_services")
+  }
+
+  const onInsert = (index) => {
+    let tmpListServices = [ ...context.listServices ]
+    let origIndex = tmpListServices.findIndex(e => e.service === getValues(`view_services.${index}.service`) && e.metric === getValues(`view_services.${index}.metric`))
+    let new_element = { service: "", metric: "", isNew: true }
+    tmpListServices.splice(origIndex, 0, new_element)
+    resetField("services")
+    setValue("services", tmpListServices)
+    insert(index + 1, new_element)
+  }
 
   return (
     <table className="table table-bordered table-sm table-hover">
@@ -205,18 +233,11 @@ const ServicesList = () => {
                     {index + 1}
                   </td>
                   <td className={service.isNew ? "bg-light" : ""}>
-                    <Controller
-                      name={ `view_services.${index}.service` }
-                      control={ control }
-                      render={ ({ field }) =>
-                        <MetricProfileAutocompleteField
-                          forwardedRef={ field.id }
-                          tupleType='service'
-                          index={ index }
-                          isNew={ service.isNew }
-                          error={ errors?.view_services?.[index]?.service || errors?.view_services?.[index]?.dup }
-                        />
-                      }
+                    <MetricProfileAutocompleteField
+                      tupleType='service'
+                      index={ index }
+                      isNew={ service.isNew }
+                      error={ errors?.view_services?.[index]?.service || errors?.view_services?.[index]?.dup }
                     />
                     {
                       errors?.view_services?.[index]?.service &&
@@ -224,18 +245,11 @@ const ServicesList = () => {
                     }
                   </td>
                   <td className={service.isNew ? "bg-light" : ""}>
-                    <Controller
-                      name={ `view_services.${index}.metric` }
-                      control={ control }
-                      render={ ({ field }) =>
-                        <MetricProfileAutocompleteField
-                          forwardedRef={ field.id }
-                          tupleType='metric'
-                          index={ index }
-                          isNew={ service.isNew }
-                          error={ errors?.view_services?.[index]?.metric || errors?.view_services?.[index]?.dup }
-                        />
-                      }
+                    <MetricProfileAutocompleteField
+                      tupleType='metric'
+                      index={ index }
+                      isNew={ service.isNew }
+                      error={ errors?.view_services?.[index]?.metric || errors?.view_services?.[index]?.dup }
                     />
                     {
                       errors?.view_services?.[index]?.metric &&
@@ -247,11 +261,7 @@ const ServicesList = () => {
                       size="sm"
                       color="light"
                       data-testid={`remove-${index}`}
-                      onClick={() => {
-                        remove(index)
-                        clearErrors("view_services")
-                        trigger("view_services")
-                      }}
+                      onClick={ () => onRemove(index) }
                     >
                       <FontAwesomeIcon icon={faTimes}/>
                     </Button>
@@ -259,10 +269,7 @@ const ServicesList = () => {
                       size="sm"
                       color="light"
                       data-testid={`insert-${index}`}
-                      onClick={() => {
-                        let new_element = { service: '', metric: '', isNew: true }
-                        insert(index + 1, new_element)
-                      }}
+                      onClick={ () => onInsert(index) }
                     >
                       <FontAwesomeIcon icon={faPlus}/>
                     </Button>
@@ -416,7 +423,7 @@ const MetricProfilesForm = ({
     else if (onYes === 'change')
       doChange({
           formValues: formikValues,
-          servicesList: listServices
+          servicesList: listServices.sort(sortServices)
         }
       );
   }
@@ -443,7 +450,7 @@ const MetricProfilesForm = ({
               <DropdownItem
                 onClick={() => {
                   let csvContent = [];
-                  listServices.forEach((service) => {
+                  listServices.sort(sortServices).forEach((service) => {
                     csvContent.push({service: service.service, metric: service.metric})
                   })
                   const content = PapaParse.unparse(csvContent);

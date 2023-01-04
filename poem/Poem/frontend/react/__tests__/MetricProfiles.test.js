@@ -1102,18 +1102,6 @@ describe('Tests for metric profiles changeview', () => {
             ]
           },
           {
-            service: 'eu.argo.ams',
-            metrics: [
-              'argo.AMS-Check'
-            ]
-          },
-          {
-            service: 'egi.AppDB',
-            metrics: [
-              'org.nagiosexchange.AppDB-WebCheck'
-            ]
-          },
-          {
             service: 'argo.webui',
             metrics: [
               'org.nagios.ARGOWeb-AR',
@@ -1126,6 +1114,18 @@ describe('Tests for metric profiles changeview', () => {
               'ch.cern.LFC-Ping',
               'ch.cern.LFC-Read',
               'ch.cern.LFC-Write'
+            ]
+          },
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check'
             ]
           }
         ]
@@ -1199,18 +1199,6 @@ describe('Tests for metric profiles changeview', () => {
             ]
           },
           {
-            service: 'eu.argo.ams',
-            metrics: [
-              'argo.AMS-Check'
-            ]
-          },
-          {
-            service: 'egi.AppDB',
-            metrics: [
-              'org.nagiosexchange.AppDB-WebCheck'
-            ]
-          },
-          {
             service: 'argo.webui',
             metrics: [
               'org.nagios.ARGOWeb-AR',
@@ -1223,6 +1211,18 @@ describe('Tests for metric profiles changeview', () => {
               'ch.cern.LFC-Ping',
               'ch.cern.LFC-Read',
               'ch.cern.LFC-Write'
+            ]
+          },
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check'
             ]
           }
         ]
@@ -1300,18 +1300,6 @@ describe('Tests for metric profiles changeview', () => {
             ]
           },
           {
-            service: 'eu.argo.ams',
-            metrics: [
-              'argo.AMS-Check'
-            ]
-          },
-          {
-            service: 'egi.AppDB',
-            metrics: [
-              'org.nagiosexchange.AppDB-WebCheck'
-            ]
-          },
-          {
             service: 'argo.webui',
             metrics: [
               'org.nagios.ARGOWeb-AR',
@@ -1324,6 +1312,18 @@ describe('Tests for metric profiles changeview', () => {
               'ch.cern.LFC-Ping',
               'ch.cern.LFC-Read',
               'ch.cern.LFC-Write'
+            ]
+          },
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check'
             ]
           }
         ]
@@ -1417,18 +1417,6 @@ describe('Tests for metric profiles changeview', () => {
             ]
           },
           {
-            service: 'eu.argo.ams',
-            metrics: [
-              'argo.AMS-Check'
-            ]
-          },
-          {
-            service: 'egi.AppDB',
-            metrics: [
-              'org.nagiosexchange.AppDB-WebCheck'
-            ]
-          },
-          {
             service: 'argo.webui',
             metrics: [
               'org.nagios.ARGOWeb-AR',
@@ -1441,6 +1429,18 @@ describe('Tests for metric profiles changeview', () => {
               'ch.cern.LFC-Ping',
               'ch.cern.LFC-Read',
               'ch.cern.LFC-Write'
+            ]
+          },
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check'
             ]
           }
         ]
@@ -1536,18 +1536,6 @@ describe('Tests for metric profiles changeview', () => {
             ]
           },
           {
-            service: 'eu.argo.ams',
-            metrics: [
-              'argo.AMS-Check'
-            ]
-          },
-          {
-            service: 'egi.AppDB',
-            metrics: [
-              'org.nagiosexchange.AppDB-WebCheck'
-            ]
-          },
-          {
             service: 'argo.webui',
             metrics: [
               'org.nagios.ARGOWeb-AR',
@@ -1560,6 +1548,18 @@ describe('Tests for metric profiles changeview', () => {
               'ch.cern.LFC-Ping',
               'ch.cern.LFC-Read',
               'ch.cern.LFC-Write'
+            ]
+          },
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check'
             ]
           }
         ]
@@ -1652,16 +1652,16 @@ describe('Tests for metric profiles changeview', () => {
         name: 'ARGO_MON',
         services: [
           {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check'
+            ]
+          },
+          {
             service: 'org.opensciencegrid.htcondorce',
             metrics: [
               'ch.cern.HTCondorCE-JobState',
               'ch.cern.HTCondorCE-JobSubmit'
-            ]
-          },
-          {
-            service: 'eu.argo.ams',
-            metrics: [
-              'argo.AMS-Check'
             ]
           }
         ]
@@ -2123,16 +2123,16 @@ describe('Tests for metric profile addview', () => {
         name: 'NEW_PROFILE',
         services: [
           {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
             service: 'eu.argo.ams',
             metrics: [
               'argo.AMS-Check',
               'argo.AMSPublisher-Check'
-            ]
-          },
-          {
-            service: 'egi.AppDB',
-            metrics: [
-              'org.nagiosexchange.AppDB-WebCheck'
             ]
           }
         ]
@@ -2223,16 +2223,16 @@ describe('Tests for metric profile addview', () => {
         name: 'NEW_PROFILE',
         services: [
           {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
             service: 'eu.argo.ams',
             metrics: [
               'argo.AMS-Check',
               'argo.AMSPublisher-Check'
-            ]
-          },
-          {
-            service: 'egi.AppDB',
-            metrics: [
-              'org.nagiosexchange.AppDB-WebCheck'
             ]
           }
         ]
@@ -2314,16 +2314,16 @@ describe('Tests for metric profile addview', () => {
         name: 'NEW_PROFILE',
         services: [
           {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
             service: 'eu.argo.ams',
             metrics: [
               'argo.AMS-Check',
               'argo.AMSPublisher-Check'
-            ]
-          },
-          {
-            service: 'egi.AppDB',
-            metrics: [
-              'org.nagiosexchange.AppDB-WebCheck'
             ]
           }
         ]
@@ -2422,16 +2422,16 @@ describe('Tests for metric profile addview', () => {
         name: 'NEW_PROFILE',
         services: [
           {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
             service: 'eu.argo.ams',
             metrics: [
               'argo.AMS-Check',
               'argo.AMSPublisher-Check'
-            ]
-          },
-          {
-            service: 'egi.AppDB',
-            metrics: [
-              'org.nagiosexchange.AppDB-WebCheck'
             ]
           }
         ]
@@ -2540,16 +2540,16 @@ describe('Tests for metric profile addview', () => {
         name: 'NEW_PROFILE',
         services: [
           {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
             service: 'eu.argo.ams',
             metrics: [
               'argo.AMS-Check',
               'argo.AMSPublisher-Check'
-            ]
-          },
-          {
-            service: 'egi.AppDB',
-            metrics: [
-              'org.nagiosexchange.AppDB-WebCheck'
             ]
           }
         ]
@@ -2937,18 +2937,6 @@ describe('Tests for metric profile cloneview', () => {
             ]
           },
           {
-            service: 'eu.argo.ams',
-            metrics: [
-              'argo.AMS-Check'
-            ]
-          },
-          {
-            service: 'egi.AppDB',
-            metrics: [
-              'org.nagiosexchange.AppDB-WebCheck'
-            ]
-          },
-          {
             service: 'argo.webui',
             metrics: [
               'org.nagios.ARGOWeb-AR',
@@ -2961,6 +2949,18 @@ describe('Tests for metric profile cloneview', () => {
               'ch.cern.LFC-Ping',
               'ch.cern.LFC-Read',
               'ch.cern.LFC-Write'
+            ]
+          },
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check'
             ]
           }
         ]
@@ -3049,18 +3049,6 @@ describe('Tests for metric profile cloneview', () => {
             ]
           },
           {
-            service: 'eu.argo.ams',
-            metrics: [
-              'argo.AMS-Check'
-            ]
-          },
-          {
-            service: 'egi.AppDB',
-            metrics: [
-              'org.nagiosexchange.AppDB-WebCheck'
-            ]
-          },
-          {
             service: 'argo.webui',
             metrics: [
               'org.nagios.ARGOWeb-AR',
@@ -3073,6 +3061,18 @@ describe('Tests for metric profile cloneview', () => {
               'ch.cern.LFC-Ping',
               'ch.cern.LFC-Read',
               'ch.cern.LFC-Write'
+            ]
+          },
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check'
             ]
           }
         ]
@@ -3146,18 +3146,6 @@ describe('Tests for metric profile cloneview', () => {
             ]
           },
           {
-            service: 'eu.argo.ams',
-            metrics: [
-              'argo.AMS-Check'
-            ]
-          },
-          {
-            service: 'egi.AppDB',
-            metrics: [
-              'org.nagiosexchange.AppDB-WebCheck'
-            ]
-          },
-          {
             service: 'argo.webui',
             metrics: [
               'org.nagios.ARGOWeb-AR',
@@ -3170,6 +3158,18 @@ describe('Tests for metric profile cloneview', () => {
               'ch.cern.LFC-Ping',
               'ch.cern.LFC-Read',
               'ch.cern.LFC-Write'
+            ]
+          },
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check'
             ]
           }
         ]
@@ -3259,18 +3259,6 @@ describe('Tests for metric profile cloneview', () => {
             ]
           },
           {
-            service: 'eu.argo.ams',
-            metrics: [
-              'argo.AMS-Check'
-            ]
-          },
-          {
-            service: 'egi.AppDB',
-            metrics: [
-              'org.nagiosexchange.AppDB-WebCheck'
-            ]
-          },
-          {
             service: 'argo.webui',
             metrics: [
               'org.nagios.ARGOWeb-AR',
@@ -3283,6 +3271,18 @@ describe('Tests for metric profile cloneview', () => {
               'ch.cern.LFC-Ping',
               'ch.cern.LFC-Read',
               'ch.cern.LFC-Write'
+            ]
+          },
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check'
             ]
           }
         ]
@@ -3388,18 +3388,6 @@ describe('Tests for metric profile cloneview', () => {
             ]
           },
           {
-            service: 'eu.argo.ams',
-            metrics: [
-              'argo.AMS-Check'
-            ]
-          },
-          {
-            service: 'egi.AppDB',
-            metrics: [
-              'org.nagiosexchange.AppDB-WebCheck'
-            ]
-          },
-          {
             service: 'argo.webui',
             metrics: [
               'org.nagios.ARGOWeb-AR',
@@ -3412,6 +3400,18 @@ describe('Tests for metric profile cloneview', () => {
               'ch.cern.LFC-Ping',
               'ch.cern.LFC-Read',
               'ch.cern.LFC-Write'
+            ]
+          },
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check'
             ]
           }
         ]
