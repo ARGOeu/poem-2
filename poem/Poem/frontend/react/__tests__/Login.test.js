@@ -78,7 +78,7 @@ describe('Test for login page on SuperAdmin POEM', () => {
     expect(screen.getAllByRole('button')).toHaveLength(1);
     expect(screen.getByRole('button', { name: /login using username and password/i })).toBeInTheDocument();
 
-    expect(screen.getByRole('link', { title: /cnrs/i }).closest('a')).toHaveAttribute('href', 'http://www.cnrs.fr/');
+    expect(screen.getByRole('link', { name: /cnrs/i }).closest('a')).toHaveAttribute('href', 'http://www.cnrs.fr/');
     expect(screen.getByRole('link', { name: /grnet/i }).closest('a')).toHaveAttribute('href', 'https://grnet.gr/');
     expect(screen.getByRole('link', { name: /srce/i }).closest('a')).toHaveAttribute('href', 'http://www.srce.unizg.hr/');
     expect(screen.getByRole('link', { name: /eosc-hub/i }).closest('a')).toHaveAttribute('href', 'https://www.eosc-hub.eu');
