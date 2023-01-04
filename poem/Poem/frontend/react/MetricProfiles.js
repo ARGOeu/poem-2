@@ -682,7 +682,7 @@ export const MetricProfilesComponent = (props) => {
     let services = [];
     let dataToSend = new Object()
     const backend_services = [];
-    formValues.view_services.forEach((service) => backend_services.push({ service: service.service, metric: service.metric }));
+    servicesList.forEach((service) => backend_services.push({ service: service.service, metric: service.metric }));
 
     if (!addview && !cloneview) {
       const { id } = webApiMP

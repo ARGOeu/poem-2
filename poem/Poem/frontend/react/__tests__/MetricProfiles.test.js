@@ -1340,13 +1340,13 @@ describe('Tests for metric profiles changeview', () => {
           description: 'New central ARGO_MON profile.',
           services: [
             { service: 'argo.mon', metric: 'eu.egi.CertValidity' },
-            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
-            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
             { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-AR' },
             { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-Status' },
             { service: 'Central-LFC', metric: 'ch.cern.LFC-Ping' },
             { service: 'Central-LFC', metric: 'ch.cern.LFC-Read' },
-            { service: 'Central-LFC', metric: 'ch.cern.LFC-Write' }
+            { service: 'Central-LFC', metric: 'ch.cern.LFC-Write' },
+            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
+            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' }
           ]
         }
       )
@@ -1457,13 +1457,13 @@ describe('Tests for metric profiles changeview', () => {
           description: 'New central ARGO_MON profile.',
           services: [
             { service: 'argo.mon', metric: 'eu.egi.CertValidity' },
-            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
-            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
             { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-AR' },
             { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-Status' },
             { service: 'Central-LFC', metric: 'ch.cern.LFC-Ping' },
             { service: 'Central-LFC', metric: 'ch.cern.LFC-Read' },
-            { service: 'Central-LFC', metric: 'ch.cern.LFC-Write' }
+            { service: 'Central-LFC', metric: 'ch.cern.LFC-Write' },
+            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
+            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' }
           ]
         }
       )
@@ -1576,13 +1576,13 @@ describe('Tests for metric profiles changeview', () => {
           description: 'New central ARGO_MON profile.',
           services: [
             { service: 'argo.mon', metric: 'eu.egi.CertValidity' },
-            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
-            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
             { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-AR' },
             { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-Status' },
             { service: 'Central-LFC', metric: 'ch.cern.LFC-Ping' },
             { service: 'Central-LFC', metric: 'ch.cern.LFC-Read' },
-            { service: 'Central-LFC', metric: 'ch.cern.LFC-Write' }
+            { service: 'Central-LFC', metric: 'ch.cern.LFC-Write' },
+            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
+            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' }
           ]
         }
       )
@@ -1677,9 +1677,103 @@ describe('Tests for metric profiles changeview', () => {
           groupname: 'TEST',
           description: 'New central ARGO_MON profile.',
           services: [
-            { service: 'org.opensciencegrid.htcondorce', metric: 'ch.cern.HTCondorCE-JobState' },
             { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
+            { service: 'org.opensciencegrid.htcondorce', metric: 'ch.cern.HTCondorCE-JobState' },
             { service: 'org.opensciencegrid.htcondorce', metric: 'ch.cern.HTCondorCE-JobSubmit' }
+          ]
+        }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metricprofile');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metricprofile');
+  })
+
+  test("Test save data if view filtered", async () => {
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /profile/i })).toBeInTheDocument()
+    })
+
+    const metricInstances = within(screen.getByRole('table'))
+    var rows = metricInstances.getAllByRole('row')
+
+    const searchRow = within(rows[1]).getAllByRole('textbox')
+    const searchServiceFlavour = searchRow[0]
+    await waitFor(() => {
+      fireEvent.change(searchServiceFlavour, { target: { value: 'lfc' } });
+    })
+
+    fireEvent.click(metricInstances.getByTestId("remove-1"))
+
+    fireEvent.click(metricInstances.getByTestId("insert-1"))
+
+    rows = metricInstances.getAllByRole("row")
+    const row2 = within(rows[4])
+
+    await selectEvent.select(row2.getAllByText("Select...")[0], "ARC-CE")
+    await selectEvent.select(row2.getAllByText("Select...")[0], "argo.AMS-Check")
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeMetricProfile).toHaveBeenCalledWith({
+        id: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
+        description: 'Central ARGO-MON profile',
+        name: 'ARGO_MON',
+        services: [
+          {
+            service: "ARC-CE",
+            metrics: [
+              "argo.AMS-Check"
+            ]
+          },
+          {
+            service: "argo.mon",
+            metrics: [
+              "eu.egi.CertValidity",
+              "org.nagios.NagiosWebInterface"
+            ]
+          },
+          {
+            service: "argo.webui",
+            metrics: [
+              "org.nagios.ARGOWeb-AR",
+              "org.nagios.ARGOWeb-Status"
+            ]
+          },
+          {
+            service: "Central-LFC",
+            metrics: [
+              "ch.cern.LFC-Ping",
+              "ch.cern.LFC-Write"
+            ]
+          }
+        ]
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/metricprofiles/',
+        {
+          name: 'ARGO_MON',
+          apiid: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
+          groupname: 'ARGO',
+          description: 'Central ARGO-MON profile',
+          services: [
+            { service: "ARC-CE", metric: "argo.AMS-Check" },
+            { service: "argo.mon", metric: "eu.egi.CertValidity" },
+            { service: "argo.mon", metric: "org.nagios.NagiosWebInterface" },
+            { service: "argo.webui", metric: "org.nagios.ARGOWeb-AR" },
+            { service: "argo.webui", metric: "org.nagios.ARGOWeb-Status" },
+            { service: "Central-LFC", metric: "ch.cern.LFC-Ping" },
+            { service: "Central-LFC", metric: "ch.cern.LFC-Write" },
           ]
         }
       )
@@ -2148,8 +2242,8 @@ describe('Tests for metric profile addview', () => {
           groupname: 'ARGO',
           description: 'New central ARGO_MON profile.',
           services: [
-            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
             { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
+            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
             { service: 'eu.argo.ams', metric: 'argo.AMSPublisher-Check' }
           ]
         }
@@ -2447,8 +2541,8 @@ describe('Tests for metric profile addview', () => {
           groupname: 'ARGO',
           description: 'New central ARGO_MON profile.',
           services: [
-            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
             { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
+            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
             { service: 'eu.argo.ams', metric: 'argo.AMSPublisher-Check' }
           ]
         }
@@ -2565,8 +2659,8 @@ describe('Tests for metric profile addview', () => {
           groupname: 'ARGO',
           description: 'New central ARGO_MON profile.',
           services: [
-            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
             { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
+            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
             { service: 'eu.argo.ams', metric: 'argo.AMSPublisher-Check' }
           ]
         }
@@ -2977,13 +3071,13 @@ describe('Tests for metric profile cloneview', () => {
           description: 'New central ARGO_MON profile.',
           services: [
             { service: 'argo.mon', metric: 'eu.egi.CertValidity' },
-            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
-            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
             { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-AR' },
             { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-Status' },
             { service: 'Central-LFC', metric: 'ch.cern.LFC-Ping' },
             { service: 'Central-LFC', metric: 'ch.cern.LFC-Read' },
-            { service: 'Central-LFC', metric: 'ch.cern.LFC-Write' }
+            { service: 'Central-LFC', metric: 'ch.cern.LFC-Write' },
+            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
+            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' }
           ]
         }
       )
@@ -3299,13 +3393,13 @@ describe('Tests for metric profile cloneview', () => {
           description: 'New central ARGO_MON profile.',
           services: [
             { service: 'argo.mon', metric: 'eu.egi.CertValidity' },
-            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
-            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
             { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-AR' },
             { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-Status' },
             { service: 'Central-LFC', metric: 'ch.cern.LFC-Ping' },
             { service: 'Central-LFC', metric: 'ch.cern.LFC-Read' },
-            { service: 'Central-LFC', metric: 'ch.cern.LFC-Write' }
+            { service: 'Central-LFC', metric: 'ch.cern.LFC-Write' },
+            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
+            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' }
           ]
         }
       )
@@ -3428,13 +3522,13 @@ describe('Tests for metric profile cloneview', () => {
           description: 'New central ARGO_MON profile.',
           services: [
             { service: 'argo.mon', metric: 'eu.egi.CertValidity' },
-            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
-            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
             { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-AR' },
             { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-Status' },
             { service: 'Central-LFC', metric: 'ch.cern.LFC-Ping' },
             { service: 'Central-LFC', metric: 'ch.cern.LFC-Read' },
-            { service: 'Central-LFC', metric: 'ch.cern.LFC-Write' }
+            { service: 'Central-LFC', metric: 'ch.cern.LFC-Write' },
+            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
+            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' }
           ]
         }
       )
