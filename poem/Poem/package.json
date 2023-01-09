@@ -33,7 +33,7 @@
   "license": "ISC",
   "homepage": "https://github.com/ARGOeu/poem-2",
   "devDependencies": {
-    "@babel/core": "^7.20.7",
+    "@babel/core": "^7.20.12",
     "@babel/eslint-parser": "^7.19.1",
     "@babel/plugin-proposal-object-rest-spread": "^7.20.7",
     "@babel/plugin-transform-runtime": "^7.19.6",
