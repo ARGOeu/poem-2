@@ -83,7 +83,6 @@ const mockActiveSession = {
   }
 };
 
-
 const mockWebApiMetricProfile = {
   id: "va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv",
   date: "2021-02-03",
@@ -518,32 +517,27 @@ describe('Tests for metric profiles changeview', () => {
     const metricInstances = within(screen.getByRole('table'));
     const rows = metricInstances.getAllByRole('row');
     expect(rows).toHaveLength(9);
-
-    const row1 = within(rows[2]).getAllByRole('textbox');
-    const row2 = within(rows[3]).getAllByRole('textbox');
-    const row3 = within(rows[4]).getAllByRole('textbox');
-    const row4 = within(rows[5]).getAllByRole('textbox');
-    const row5 = within(rows[6]).getAllByRole('textbox');
-    const row6 = within(rows[7]).getAllByRole('textbox');
-    const row7 = within(rows[8]).getAllByRole('textbox');
-    expect(metricInstances.getAllByTestId(/remove-/i)).toHaveLength(7);
-    expect(metricInstances.getAllByTestId(/insert-/i)).toHaveLength(7);
-    expect(row1[0].value).toBe('argo.mon');
-    expect(row1[1].value).toBe('eu.egi.CertValidity');
-    expect(row2[0].value).toBe('argo.mon');
-    expect(row2[1].value).toBe('org.nagios.NagiosWebInterface');
-    expect(row2[0].value).toBe('argo.mon');
-    expect(row2[1].value).toBe('org.nagios.NagiosWebInterface');
-    expect(row3[0].value).toBe('argo.webui');
-    expect(row3[1].value).toBe('org.nagios.ARGOWeb-AR');
-    expect(row4[0].value).toBe('argo.webui');
-    expect(row4[1].value).toBe('org.nagios.ARGOWeb-Status');
-    expect(row5[0].value).toBe('Central-LFC');
-    expect(row5[1].value).toBe('ch.cern.LFC-Ping');
-    expect(row6[0].value).toBe('Central-LFC');
-    expect(row6[1].value).toBe('ch.cern.LFC-Read');
-    expect(row7[0].value).toBe('Central-LFC');
-    expect(row7[1].value).toBe('ch.cern.LFC-Write');
+    const row1 = within(rows[2])
+    const row2 = within(rows[3])
+    const row3 = within(rows[4])
+    const row4 = within(rows[5])
+    const row5 = within(rows[6])
+    const row6 = within(rows[7])
+    const row7 = within(rows[8])
+    expect(row1.getByText("argo.mon")).toBeInTheDocument()
+    expect(row1.getByText("eu.egi.CertValidity")).toBeInTheDocument()
+    expect(row2.getByText("argo.mon")).toBeInTheDocument()
+    expect(row2.getByText("org.nagios.NagiosWebInterface")).toBeInTheDocument()
+    expect(row3.getByText("argo.webui")).toBeInTheDocument()
+    expect(row3.getByText("org.nagios.ARGOWeb-AR")).toBeInTheDocument()
+    expect(row4.getByText("argo.webui")).toBeInTheDocument()
+    expect(row4.getByText("org.nagios.ARGOWeb-Status")).toBeInTheDocument()
+    expect(row5.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row5.getByText("ch.cern.LFC-Ping")).toBeInTheDocument()
+    expect(row6.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row6.getByText("ch.cern.LFC-Read")).toBeInTheDocument()
+    expect(row7.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row7.getByText("ch.cern.LFC-Write")).toBeInTheDocument()
 
     expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
@@ -577,11 +571,11 @@ describe('Tests for metric profiles changeview', () => {
     const newRows = metricInstances.getAllByRole('row');
     expect(newRows).toHaveLength(3);
 
-    const row1 = within(newRows[2]).getAllByRole('textbox');
+    const row1 = within(newRows[2])
     expect(metricInstances.getAllByTestId(/remove-/i)).toHaveLength(1);
     expect(metricInstances.getAllByTestId(/insert-/i)).toHaveLength(1);
-    expect(row1[0].value).toBe('Central-LFC');
-    expect(row1[1].value).toBe('ch.cern.LFC-Write');
+    expect(row1.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row1.getByText("ch.cern.LFC-Write")).toBeInTheDocument()
   })
 
   test('Test that public page renders properly', async () => {
@@ -662,11 +656,224 @@ describe('Tests for metric profiles changeview', () => {
     expect(newRows[2].textContent).toBe('1Central-LFCch.cern.LFC-Write');
   })
 
+  test("Test change main profile info", async () => {
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+    })
+
+    const nameField = screen.getByTestId("name")
+    const descriptionField = screen.getByLabelText(/description/i);
+
+    expect(screen.getByTestId("metricprofiles-form")).toHaveFormValues({
+      name: "ARGO_MON",
+      description: "Central ARGO-MON profile"
+    })
+
+    fireEvent.change(nameField, { target: { value: "ARGO_MON_TEST" } })
+
+    expect(screen.getByTestId("metricprofiles-form")).toHaveFormValues({
+      name: "ARGO_MON_TEST",
+      description: "Central ARGO-MON profile"
+    })
+
+    expect(screen.getByText("ARGO")).toBeInTheDocument()
+    expect(screen.queryByText("TEST")).not.toBeInTheDocument()
+
+    fireEvent.change(descriptionField, { target: { value: "Now it is used for testing" } })
+
+    expect(screen.getByTestId("metricprofiles-form")).toHaveFormValues({
+      name: "ARGO_MON_TEST",
+      description: "Now it is used for testing"
+    })
+
+    expect(screen.getByText("ARGO")).toBeInTheDocument()
+    expect(screen.queryByText("TEST")).not.toBeInTheDocument()
+
+    await selectEvent.select(screen.getByText("ARGO"), "TEST")
+
+    expect(screen.getByTestId("metricprofiles-form")).toHaveFormValues({
+      name: "ARGO_MON_TEST",
+      description: "Now it is used for testing"
+    })
+
+    expect(screen.queryByText("ARGO")).not.toBeInTheDocument()
+    expect(screen.queryByText("TEST")).toBeInTheDocument()
+  })
+
+  test("Test changing tuples", async () => {
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+    })
+
+    const metricInstances = within(screen.getByRole("table"))
+
+    fireEvent.click(screen.getByTestId("remove-2"))
+
+    expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+
+    var rows = metricInstances.getAllByRole("row")
+    expect(rows).toHaveLength(8)
+    var row1 = within(rows[2])
+    var row2 = within(rows[3])
+    var row3 = within(rows[4])
+    var row4 = within(rows[5])
+    var row5 = within(rows[6])
+    var row6 = within(rows[7])
+    expect(row1.getByText("argo.mon")).toBeInTheDocument()
+    expect(row1.getByText("eu.egi.CertValidity")).toBeInTheDocument()
+    expect(row2.getByText("argo.mon")).toBeInTheDocument()
+    expect(row2.getByText("org.nagios.NagiosWebInterface")).toBeInTheDocument()
+    expect(row3.getByText("argo.webui")).toBeInTheDocument()
+    expect(row3.getByText("org.nagios.ARGOWeb-Status")).toBeInTheDocument()
+    expect(row4.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row4.getByText("ch.cern.LFC-Ping")).toBeInTheDocument()
+    expect(row5.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row5.getByText("ch.cern.LFC-Read")).toBeInTheDocument()
+    expect(row6.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row6.getByText("ch.cern.LFC-Write")).toBeInTheDocument()
+
+    fireEvent.click(screen.getByTestId("insert-3"))
+
+    expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+
+    rows = metricInstances.getAllByRole("row")
+    expect(rows).toHaveLength(9)
+    row1 = within(rows[2])
+    row2 = within(rows[3])
+    row3 = within(rows[4])
+    row4 = within(rows[5])
+    row5 = within(rows[6])
+    row6 = within(rows[7])
+    var row7 = within(rows[8])
+    expect(row1.getByText("argo.mon")).toBeInTheDocument()
+    expect(row1.getByText("eu.egi.CertValidity")).toBeInTheDocument()
+    expect(row2.getByText("argo.mon")).toBeInTheDocument()
+    expect(row2.getByText("org.nagios.NagiosWebInterface")).toBeInTheDocument()
+    expect(row3.getByText("argo.webui")).toBeInTheDocument()
+    expect(row3.getByText("org.nagios.ARGOWeb-Status")).toBeInTheDocument()
+    expect(row4.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row4.getByText("ch.cern.LFC-Ping")).toBeInTheDocument()
+    expect(row5.getAllByText("Select...")).toHaveLength(2)
+    expect(row6.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row6.getByText("ch.cern.LFC-Read")).toBeInTheDocument()
+    expect(row7.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row7.getByText("ch.cern.LFC-Write")).toBeInTheDocument()
+
+    await selectEvent.select(row5.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row5.getAllByText("Select...")[0], "argo.AMS-Check")
+
+    expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+
+    rows = metricInstances.getAllByRole("row")
+    expect(rows).toHaveLength(9)
+    row1 = within(rows[2])
+    row2 = within(rows[3])
+    row3 = within(rows[4])
+    row4 = within(rows[5])
+    row5 = within(rows[6])
+    row6 = within(rows[7])
+    row7 = within(rows[8])
+    expect(row1.getByText("argo.mon")).toBeInTheDocument()
+    expect(row1.getByText("eu.egi.CertValidity")).toBeInTheDocument()
+    expect(row2.getByText("argo.mon")).toBeInTheDocument()
+    expect(row2.getByText("org.nagios.NagiosWebInterface")).toBeInTheDocument()
+    expect(row3.getByText("argo.webui")).toBeInTheDocument()
+    expect(row3.getByText("org.nagios.ARGOWeb-Status")).toBeInTheDocument()
+    expect(row4.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row4.getByText("ch.cern.LFC-Ping")).toBeInTheDocument()
+    expect(row5.getByText("eu.argo.ams")).toBeInTheDocument()
+    expect(row5.getByText("argo.AMS-Check")).toBeInTheDocument()
+    expect(row6.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row6.getByText("ch.cern.LFC-Read")).toBeInTheDocument()
+    expect(row7.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row7.getByText("ch.cern.LFC-Write")).toBeInTheDocument()
+
+    fireEvent.click(metricInstances.getByTestId("insert-0"))
+
+    expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+
+    rows = metricInstances.getAllByRole("row")
+    expect(rows).toHaveLength(10)
+    row1 = within(rows[2])
+    row2 = within(rows[3])
+    row3 = within(rows[4])
+    row4 = within(rows[5])
+    row5 = within(rows[6])
+    row6 = within(rows[7])
+    row7 = within(rows[8])
+    var row8 = within(rows[9])
+    expect(row1.getByText("argo.mon")).toBeInTheDocument()
+    expect(row1.getByText("eu.egi.CertValidity")).toBeInTheDocument()
+    expect(row2.getAllByText("Select...")).toHaveLength(2)
+    expect(row3.getByText("argo.mon")).toBeInTheDocument()
+    expect(row3.getByText("org.nagios.NagiosWebInterface")).toBeInTheDocument()
+    expect(row4.getByText("argo.webui")).toBeInTheDocument()
+    expect(row4.getByText("org.nagios.ARGOWeb-Status")).toBeInTheDocument()
+    expect(row5.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row5.getByText("ch.cern.LFC-Ping")).toBeInTheDocument()
+    expect(row6.getByText("eu.argo.ams")).toBeInTheDocument()
+    expect(row6.getByText("argo.AMS-Check")).toBeInTheDocument()
+    expect(row7.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row7.getByText("ch.cern.LFC-Read")).toBeInTheDocument()
+    expect(row8.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row8.getByText("ch.cern.LFC-Write")).toBeInTheDocument()
+
+    await selectEvent.select(row2.getAllByText("Select...")[0], "Central-LFC")
+    await selectEvent.select(row2.getAllByText("Select...")[0], "ch.cern.LFC-Write")
+
+    expect(screen.queryByText(/duplicated/i)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByTestId("remove-7"))
+
+    expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+
+    rows = metricInstances.getAllByRole("row")
+    expect(rows).toHaveLength(9)
+    row1 = within(rows[2])
+    row2 = within(rows[3])
+    row3 = within(rows[4])
+    row4 = within(rows[5])
+    row5 = within(rows[6])
+    row6 = within(rows[7])
+    row7 = within(rows[8])
+    expect(row1.getByText("argo.mon")).toBeInTheDocument()
+    expect(row1.getByText("eu.egi.CertValidity")).toBeInTheDocument()
+    expect(row2.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row2.getByText("ch.cern.LFC-Write")).toBeInTheDocument()
+    expect(row3.getByText("argo.mon")).toBeInTheDocument()
+    expect(row3.getByText("org.nagios.NagiosWebInterface")).toBeInTheDocument()
+    expect(row4.getByText("argo.webui")).toBeInTheDocument()
+    expect(row4.getByText("org.nagios.ARGOWeb-Status")).toBeInTheDocument()
+    expect(row5.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row5.getByText("ch.cern.LFC-Ping")).toBeInTheDocument()
+    expect(row6.getByText("eu.argo.ams")).toBeInTheDocument()
+    expect(row6.getByText("argo.AMS-Check")).toBeInTheDocument()
+    expect(row7.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row7.getByText("ch.cern.LFC-Read")).toBeInTheDocument()
+
+    fireEvent.click(screen.getByTestId("remove-6"))
+    fireEvent.click(screen.getByTestId("remove-5"))
+    fireEvent.click(screen.getByTestId("remove-4"))
+    fireEvent.click(screen.getByTestId("remove-3"))
+    fireEvent.click(screen.getByTestId("remove-2"))
+    fireEvent.click(screen.getByTestId("remove-1"))
+    fireEvent.click(screen.getByTestId("remove-0"))
+
+    rows = metricInstances.getAllByRole("row")
+    expect(rows).toHaveLength(3)
+    row1 = within(rows[2])
+    expect(row1.getAllByText("Select...")).toHaveLength(2)
+  })
+
   test('Test import csv successfully', async () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change metric profile');
+      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /csv/i }));
@@ -707,17 +914,16 @@ describe('Tests for metric profiles changeview', () => {
     const metricInstances = within(screen.getByRole('table'));
     const rows = metricInstances.getAllByRole('row');
     expect(rows).toHaveLength(4);
+    const row1 = within(rows[2])
+    const row2 = within(rows[3])
 
-    const row1 = within(rows[2]).getAllByRole('textbox');
-    const row2 = within(rows[3]).getAllByRole('textbox');
+    expect(row1.getByText("org.opensciencegrid.htcondorce")).toBeInTheDocument()
+    expect(row1.getByText("ch.cern.HTCondorCE-JobState")).toBeInTheDocument()
+    expect(row2.getByText("org.opensciencegrid.htcondorce")).toBeInTheDocument()
+    expect(row2.getByText("ch.cern.HTCondorCE-JobSubmit")).toBeInTheDocument()
 
     expect(metricInstances.getAllByTestId(/remove-/i)).toHaveLength(2);
     expect(metricInstances.getAllByTestId(/insert-/i)).toHaveLength(2);
-
-    expect(row1[0].value).toBe('org.opensciencegrid.htcondorce');
-    expect(row1[1].value).toBe('ch.cern.HTCondorCE-JobState');
-    expect(row2[0].value).toBe('org.opensciencegrid.htcondorce');
-    expect(row2[1].value).toBe('ch.cern.HTCondorCE-JobSubmit');
 
     expect(screen.queryByText('Must be one of predefined metrics')).not.toBeInTheDocument()
   })
@@ -726,7 +932,7 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change metric profile');
+      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /csv/i }));
@@ -767,17 +973,15 @@ describe('Tests for metric profiles changeview', () => {
     const metricInstances = within(screen.getByRole('table'));
     const rows = metricInstances.getAllByRole('row');
     expect(rows).toHaveLength(4);
-
-    const row1 = within(rows[2]).getAllByRole('textbox');
-    const row2 = within(rows[3]).getAllByRole('textbox');
+    const row1 = within(rows[2])
+    const row2 = within(rows[3])
+    expect(row1.getByText("org.opensciencegrid.htcondorce")).toBeInTheDocument()
+    expect(row1.getByText("ch.cern.HTCondorCE-CertValidity")).toBeInTheDocument()
+    expect(row2.getByText("org.opensciencegrid.htcondorce")).toBeInTheDocument()
+    expect(row2.getByText("ch.cern.HTCondorCE-JobSubmit")).toBeInTheDocument()
 
     expect(metricInstances.getAllByTestId(/remove-/i)).toHaveLength(2);
     expect(metricInstances.getAllByTestId(/insert-/i)).toHaveLength(2);
-
-    expect(row1[0].value).toBe('org.opensciencegrid.htcondorce');
-    expect(row1[1].value).toBe('ch.cern.HTCondorCE-CertValidity');
-    expect(row2[0].value).toBe('org.opensciencegrid.htcondorce');
-    expect(row2[1].value).toBe('ch.cern.HTCondorCE-JobSubmit');
 
     expect(screen.getByText('Must be one of predefined metrics')).toBeInTheDocument()
   })
@@ -789,7 +993,7 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change metric profile');
+      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /csv/i }));
@@ -808,7 +1012,7 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change metric profile');
+      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
     })
 
     const metricInstances = within(screen.getByRole('table'));
@@ -821,7 +1025,6 @@ describe('Tests for metric profiles changeview', () => {
       fireEvent.click(metricInstances.getByTestId('remove-5'))
     })
 
-
     await waitFor(() => {
       fireEvent.click(metricInstances.getByTestId('remove-4'))
     })
@@ -831,20 +1034,16 @@ describe('Tests for metric profiles changeview', () => {
     })
 
     const rows = metricInstances.getAllByRole('row');
-    const row4 = within(rows[6]).getAllByRole('textbox');
+    const row4 = within(rows[6])
 
-    await waitFor(() => {
-      fireEvent.change(row4[0], { target: { value: 'org.openstack.nova' } });
-    })
+    await selectEvent.select(row4.getAllByText("Select...")[0], "org.opensciencegrid.htcondorce")
 
-    await waitFor(() => {
-      fireEvent.change(row4[1], { target: { value: 'eu.egi.cloud.InfoProvider' } });
-    })
+    await selectEvent.select(row4.getAllByText("Select...")[0], "ch.cern.HTCondorCE-JobState")
 
     fireEvent.click(screen.getByRole('button', { name: /csv/i }));
     fireEvent.click(screen.getByRole('menuitem', { name: /export/i }));
 
-    const content = 'service,metric\r\nargo.mon,eu.egi.CertValidity\r\nargo.mon,org.nagios.NagiosWebInterface\r\nargo.webui,org.nagios.ARGOWeb-AR\r\nargo.webui,org.nagios.ARGOWeb-Status\r\norg.openstack.nova,eu.egi.cloud.InfoProvider';
+    const content = 'service,metric\r\nargo.mon,eu.egi.CertValidity\r\nargo.mon,org.nagios.NagiosWebInterface\r\nargo.webui,org.nagios.ARGOWeb-AR\r\nargo.webui,org.nagios.ARGOWeb-Status\r\norg.opensciencegrid.htcondorce,ch.cern.HTCondorCE-JobState'
 
     expect(helpers.downloadCSV).toHaveBeenCalledTimes(1);
     expect(helpers.downloadCSV).toHaveBeenCalledWith(content, 'ARGO_MON.csv')
@@ -858,45 +1057,31 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change metric profile');
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
     })
 
     await selectEvent.select(screen.getByText('ARGO'), 'TEST')
 
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
+    fireEvent.click(screen.getByTestId('remove-1'));
+
+    fireEvent.click(screen.getByTestId('insert-0'));
+
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
+    const row1 = within(rows[3])
 
-    await waitFor(() => {
-      fireEvent.click(metricInstances.getByTestId('remove-1'));
-    })
+    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
 
-    await waitFor(() => {
-      fireEvent.click(metricInstances.getByTestId('insert-0'));
-    })
+    fireEvent.click(screen.getByTestId('insert-1'));
 
     rows = metricInstances.getAllByRole('row');
+    const row2 = within(rows[4])
 
-    const row1 = within(rows[3]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row1[0], { target: { value: 'eu.argo.ams' } });
-    })
-
-    await waitFor(() => {
-      fireEvent.change(row1[1], { target: { value: 'argo.AMS-Check' } });
-    })
-
-    fireEvent.click(metricInstances.getByTestId('insert-1'));
-    rows = metricInstances.getAllByRole('row');
-    const row2 = within(rows[4]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row2[0], { target: { value: 'egi.AppDB' } });
-    })
-
-    await waitFor(() => {
-      fireEvent.change(row2[1], { target: { value: 'org.nagiosexchange.AppDB-WebCheck' } });
-    })
+    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -917,18 +1102,6 @@ describe('Tests for metric profiles changeview', () => {
             ]
           },
           {
-            service: 'eu.argo.ams',
-            metrics: [
-              'argo.AMS-Check'
-            ]
-          },
-          {
-            service: 'egi.AppDB',
-            metrics: [
-              'org.nagiosexchange.AppDB-WebCheck'
-            ]
-          },
-          {
             service: 'argo.webui',
             metrics: [
               'org.nagios.ARGOWeb-AR',
@@ -941,6 +1114,18 @@ describe('Tests for metric profiles changeview', () => {
               'ch.cern.LFC-Ping',
               'ch.cern.LFC-Read',
               'ch.cern.LFC-Write'
+            ]
+          },
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check'
             ]
           }
         ]
@@ -969,44 +1154,31 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change metric profile');
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
     })
 
     await selectEvent.select(screen.getByText('ARGO'), 'TEST')
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
+    fireEvent.click(screen.getByTestId('remove-1'));
+
+    fireEvent.click(screen.getByTestId('insert-0'));
+
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
 
-    await waitFor(() => {
-      fireEvent.click(metricInstances.getByTestId('remove-1'));
-    })
+    const row1 = within(rows[3])
 
-    await waitFor(() => {
-      fireEvent.click(metricInstances.getByTestId('insert-0'));
-    })
+    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+
+    fireEvent.click(screen.getByTestId('insert-1'));
 
     rows = metricInstances.getAllByRole('row');
+    const row2 = within(rows[4])
 
-    const row1 = within(rows[3]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row1[0], { target: { value: 'eu.argo.ams' } });
-    })
-
-    await waitFor(() => {
-      fireEvent.change(row1[1], { target: { value: 'argo.AMS-Check' } });
-    })
-
-    fireEvent.click(metricInstances.getByTestId('insert-1'));
-    rows = metricInstances.getAllByRole('row');
-    const row2 = within(rows[4]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row2[0], { target: { value: 'egi.AppDB' } });
-    })
-
-    await waitFor(() => {
-      fireEvent.change(row2[1], { target: { value: 'org.nagiosexchange.AppDB-WebCheck' } });
-    })
+    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -1027,18 +1199,6 @@ describe('Tests for metric profiles changeview', () => {
             ]
           },
           {
-            service: 'eu.argo.ams',
-            metrics: [
-              'argo.AMS-Check'
-            ]
-          },
-          {
-            service: 'egi.AppDB',
-            metrics: [
-              'org.nagiosexchange.AppDB-WebCheck'
-            ]
-          },
-          {
             service: 'argo.webui',
             metrics: [
               'org.nagios.ARGOWeb-AR',
@@ -1051,6 +1211,18 @@ describe('Tests for metric profiles changeview', () => {
               'ch.cern.LFC-Ping',
               'ch.cern.LFC-Read',
               'ch.cern.LFC-Write'
+            ]
+          },
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check'
             ]
           }
         ]
@@ -1084,44 +1256,30 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change metric profile');
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
     })
 
     await selectEvent.select(screen.getByText('ARGO'), 'TEST')
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
+    fireEvent.click(screen.getByTestId('remove-1'));
+
+    fireEvent.click(screen.getByTestId('insert-0'));
+
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
 
-    await waitFor(() => {
-      fireEvent.click(metricInstances.getByTestId('remove-1'));
-    })
-
-    await waitFor(() => {
-      fireEvent.click(metricInstances.getByTestId('insert-0'));
-    })
-
-    rows = metricInstances.getAllByRole('row');
-
-    const row1 = within(rows[3]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row1[0], { target: { value: 'eu.argo.ams' } });
-    })
-
-    await waitFor(() => {
-      fireEvent.change(row1[1], { target: { value: 'argo.AMS-Check' } });
-    })
+    const row1 = within(rows[3])
+    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
 
     fireEvent.click(metricInstances.getByTestId('insert-1'));
-    rows = metricInstances.getAllByRole('row');
-    const row2 = within(rows[4]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row2[0], { target: { value: 'egi.AppDB' } });
-    })
 
-    await waitFor(() => {
-      fireEvent.change(row2[1], { target: { value: 'org.nagiosexchange.AppDB-WebCheck' } });
-    })
+    rows = metricInstances.getAllByRole('row');
+    const row2 = within(rows[4])
+
+    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -1142,18 +1300,6 @@ describe('Tests for metric profiles changeview', () => {
             ]
           },
           {
-            service: 'eu.argo.ams',
-            metrics: [
-              'argo.AMS-Check'
-            ]
-          },
-          {
-            service: 'egi.AppDB',
-            metrics: [
-              'org.nagiosexchange.AppDB-WebCheck'
-            ]
-          },
-          {
             service: 'argo.webui',
             metrics: [
               'org.nagios.ARGOWeb-AR',
@@ -1166,6 +1312,18 @@ describe('Tests for metric profiles changeview', () => {
               'ch.cern.LFC-Ping',
               'ch.cern.LFC-Read',
               'ch.cern.LFC-Write'
+            ]
+          },
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check'
             ]
           }
         ]
@@ -1182,13 +1340,13 @@ describe('Tests for metric profiles changeview', () => {
           description: 'New central ARGO_MON profile.',
           services: [
             { service: 'argo.mon', metric: 'eu.egi.CertValidity' },
-            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
-            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
             { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-AR' },
             { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-Status' },
             { service: 'Central-LFC', metric: 'ch.cern.LFC-Ping' },
             { service: 'Central-LFC', metric: 'ch.cern.LFC-Read' },
-            { service: 'Central-LFC', metric: 'ch.cern.LFC-Write' }
+            { service: 'Central-LFC', metric: 'ch.cern.LFC-Write' },
+            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
+            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' }
           ]
         }
       )
@@ -1215,44 +1373,30 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change metric profile');
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
     })
 
     await selectEvent.select(screen.getByText('ARGO'), 'TEST')
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
+    fireEvent.click(screen.getByTestId('remove-1'))
+
+    fireEvent.click(screen.getByTestId('insert-0'))
+
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
+    const row1 = within(rows[3])
 
-    await waitFor(() => {
-      fireEvent.click(metricInstances.getByTestId('remove-1'));
-    })
+    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
 
-    await waitFor(() => {
-      fireEvent.click(metricInstances.getByTestId('insert-0'));
-    })
+    fireEvent.click(screen.getByTestId('insert-1'));
 
     rows = metricInstances.getAllByRole('row');
+    const row2 = within(rows[4])
 
-    const row1 = within(rows[3]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row1[0], { target: { value: 'eu.argo.ams' } });
-    })
-
-    await waitFor(() => {
-      fireEvent.change(row1[1], { target: { value: 'argo.AMS-Check' } });
-    })
-
-    fireEvent.click(metricInstances.getByTestId('insert-1'));
-    rows = metricInstances.getAllByRole('row');
-    const row2 = within(rows[4]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row2[0], { target: { value: 'egi.AppDB' } });
-    })
-
-    await waitFor(() => {
-      fireEvent.change(row2[1], { target: { value: 'org.nagiosexchange.AppDB-WebCheck' } });
-    })
+    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -1273,18 +1417,6 @@ describe('Tests for metric profiles changeview', () => {
             ]
           },
           {
-            service: 'eu.argo.ams',
-            metrics: [
-              'argo.AMS-Check'
-            ]
-          },
-          {
-            service: 'egi.AppDB',
-            metrics: [
-              'org.nagiosexchange.AppDB-WebCheck'
-            ]
-          },
-          {
             service: 'argo.webui',
             metrics: [
               'org.nagios.ARGOWeb-AR',
@@ -1297,6 +1429,18 @@ describe('Tests for metric profiles changeview', () => {
               'ch.cern.LFC-Ping',
               'ch.cern.LFC-Read',
               'ch.cern.LFC-Write'
+            ]
+          },
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check'
             ]
           }
         ]
@@ -1313,13 +1457,13 @@ describe('Tests for metric profiles changeview', () => {
           description: 'New central ARGO_MON profile.',
           services: [
             { service: 'argo.mon', metric: 'eu.egi.CertValidity' },
-            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
-            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
             { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-AR' },
             { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-Status' },
             { service: 'Central-LFC', metric: 'ch.cern.LFC-Ping' },
             { service: 'Central-LFC', metric: 'ch.cern.LFC-Read' },
-            { service: 'Central-LFC', metric: 'ch.cern.LFC-Write' }
+            { service: 'Central-LFC', metric: 'ch.cern.LFC-Write' },
+            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
+            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' }
           ]
         }
       )
@@ -1348,44 +1492,30 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change metric profile');
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
     })
 
     await selectEvent.select(screen.getByText('ARGO'), 'TEST')
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
+    fireEvent.click(screen.getByTestId('remove-1'));
+
+    fireEvent.click(screen.getByTestId('insert-0'));
+
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
+    const row1 = within(rows[3])
 
-    await waitFor(() => {
-      fireEvent.click(metricInstances.getByTestId('remove-1'));
-    })
+    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
 
-    await waitFor(() => {
-      fireEvent.click(metricInstances.getByTestId('insert-0'));
-    })
+    fireEvent.click(screen.getByTestId('insert-1'));
 
     rows = metricInstances.getAllByRole('row');
+    const row2 = within(rows[4])
 
-    const row1 = within(rows[3]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row1[0], { target: { value: 'eu.argo.ams' } });
-    })
-
-    await waitFor(() => {
-      fireEvent.change(row1[1], { target: { value: 'argo.AMS-Check' } });
-    })
-
-    fireEvent.click(metricInstances.getByTestId('insert-1'));
-    rows = metricInstances.getAllByRole('row');
-    const row2 = within(rows[4]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row2[0], { target: { value: 'egi.AppDB' } });
-    })
-
-    await waitFor(() => {
-      fireEvent.change(row2[1], { target: { value: 'org.nagiosexchange.AppDB-WebCheck' } });
-    })
+    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -1406,18 +1536,6 @@ describe('Tests for metric profiles changeview', () => {
             ]
           },
           {
-            service: 'eu.argo.ams',
-            metrics: [
-              'argo.AMS-Check'
-            ]
-          },
-          {
-            service: 'egi.AppDB',
-            metrics: [
-              'org.nagiosexchange.AppDB-WebCheck'
-            ]
-          },
-          {
             service: 'argo.webui',
             metrics: [
               'org.nagios.ARGOWeb-AR',
@@ -1430,6 +1548,18 @@ describe('Tests for metric profiles changeview', () => {
               'ch.cern.LFC-Ping',
               'ch.cern.LFC-Read',
               'ch.cern.LFC-Write'
+            ]
+          },
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check'
             ]
           }
         ]
@@ -1446,13 +1576,13 @@ describe('Tests for metric profiles changeview', () => {
           description: 'New central ARGO_MON profile.',
           services: [
             { service: 'argo.mon', metric: 'eu.egi.CertValidity' },
-            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
-            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
             { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-AR' },
             { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-Status' },
             { service: 'Central-LFC', metric: 'ch.cern.LFC-Ping' },
             { service: 'Central-LFC', metric: 'ch.cern.LFC-Read' },
-            { service: 'Central-LFC', metric: 'ch.cern.LFC-Write' }
+            { service: 'Central-LFC', metric: 'ch.cern.LFC-Write' },
+            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
+            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' }
           ]
         }
       )
@@ -1476,7 +1606,7 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change metric profile');
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
     })
 
     await selectEvent.select(screen.getByText('ARGO'), 'TEST')
@@ -1500,27 +1630,14 @@ describe('Tests for metric profiles changeview', () => {
       fireEvent.load(screen.getByTestId('file_input'))
     })
 
-    await selectEvent.select(screen.getByText('ARGO'), 'TEST')
-
-    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
+    fireEvent.click(screen.getByTestId('insert-0'));
 
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
+    const row1 = within(rows[3])
 
-    await waitFor(() => {
-      fireEvent.click(metricInstances.getByTestId('insert-0'));
-    })
-
-    rows = metricInstances.getAllByRole('row');
-
-    const row1 = within(rows[3]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row1[0], { target: { value: 'eu.argo.ams' } });
-    })
-
-    await waitFor(() => {
-      fireEvent.change(row1[1], { target: { value: 'argo.AMS-Check' } });
-    })
+    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -1535,16 +1652,16 @@ describe('Tests for metric profiles changeview', () => {
         name: 'ARGO_MON',
         services: [
           {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check'
+            ]
+          },
+          {
             service: 'org.opensciencegrid.htcondorce',
             metrics: [
               'ch.cern.HTCondorCE-JobState',
               'ch.cern.HTCondorCE-JobSubmit'
-            ]
-          },
-          {
-            service: 'eu.argo.ams',
-            metrics: [
-              'argo.AMS-Check'
             ]
           }
         ]
@@ -1560,9 +1677,103 @@ describe('Tests for metric profiles changeview', () => {
           groupname: 'TEST',
           description: 'New central ARGO_MON profile.',
           services: [
-            { service: 'org.opensciencegrid.htcondorce', metric: 'ch.cern.HTCondorCE-JobState' },
             { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
+            { service: 'org.opensciencegrid.htcondorce', metric: 'ch.cern.HTCondorCE-JobState' },
             { service: 'org.opensciencegrid.htcondorce', metric: 'ch.cern.HTCondorCE-JobSubmit' }
+          ]
+        }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metricprofile');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metricprofile');
+  })
+
+  test("Test save data if view filtered", async () => {
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /profile/i })).toBeInTheDocument()
+    })
+
+    const metricInstances = within(screen.getByRole('table'))
+    var rows = metricInstances.getAllByRole('row')
+
+    const searchRow = within(rows[1]).getAllByRole('textbox')
+    const searchServiceFlavour = searchRow[0]
+    await waitFor(() => {
+      fireEvent.change(searchServiceFlavour, { target: { value: 'lfc' } });
+    })
+
+    fireEvent.click(metricInstances.getByTestId("remove-1"))
+
+    fireEvent.click(metricInstances.getByTestId("insert-1"))
+
+    rows = metricInstances.getAllByRole("row")
+    const row2 = within(rows[4])
+
+    await selectEvent.select(row2.getAllByText("Select...")[0], "ARC-CE")
+    await selectEvent.select(row2.getAllByText("Select...")[0], "argo.AMS-Check")
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeMetricProfile).toHaveBeenCalledWith({
+        id: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
+        description: 'Central ARGO-MON profile',
+        name: 'ARGO_MON',
+        services: [
+          {
+            service: "ARC-CE",
+            metrics: [
+              "argo.AMS-Check"
+            ]
+          },
+          {
+            service: "argo.mon",
+            metrics: [
+              "eu.egi.CertValidity",
+              "org.nagios.NagiosWebInterface"
+            ]
+          },
+          {
+            service: "argo.webui",
+            metrics: [
+              "org.nagios.ARGOWeb-AR",
+              "org.nagios.ARGOWeb-Status"
+            ]
+          },
+          {
+            service: "Central-LFC",
+            metrics: [
+              "ch.cern.LFC-Ping",
+              "ch.cern.LFC-Write"
+            ]
+          }
+        ]
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/metricprofiles/',
+        {
+          name: 'ARGO_MON',
+          apiid: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
+          groupname: 'ARGO',
+          description: 'Central ARGO-MON profile',
+          services: [
+            { service: "ARC-CE", metric: "argo.AMS-Check" },
+            { service: "argo.mon", metric: "eu.egi.CertValidity" },
+            { service: "argo.mon", metric: "org.nagios.NagiosWebInterface" },
+            { service: "argo.webui", metric: "org.nagios.ARGOWeb-AR" },
+            { service: "argo.webui", metric: "org.nagios.ARGOWeb-Status" },
+            { service: "Central-LFC", metric: "ch.cern.LFC-Ping" },
+            { service: "Central-LFC", metric: "ch.cern.LFC-Write" },
           ]
         }
       )
@@ -1580,7 +1791,7 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change metric profile');
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -1614,7 +1825,7 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change metric profile');
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -1649,7 +1860,7 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change metric profile');
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -1689,7 +1900,7 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change metric profile');
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -1729,7 +1940,7 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change metric profile');
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -1792,7 +2003,7 @@ describe('Tests for metric profile addview', () => {
 
     const nameField = screen.getByTestId('name');
     const descriptionField = screen.getByLabelText(/description/i);
-    const groupField = screen.getByText(/select/i);
+    const groupField = screen.getAllByText("Select...")[0]
 
     expect(nameField.value).toBe('');
     expect(nameField).toBeEnabled();
@@ -1806,13 +2017,134 @@ describe('Tests for metric profile addview', () => {
     expect(screen.getByText('TEST')).toBeInTheDocument()
 
     const metricInstances = within(screen.getByRole('table'));
-    expect(metricInstances.getAllByRole('row')).toHaveLength(3);
-    expect(metricInstances.getAllByRole('row', { name: '' })).toHaveLength(1);
+    const rows = metricInstances.getAllByRole("row")
+    expect(rows).toHaveLength(3)
+    expect(within(rows[2]).getAllByText("Select...")).toHaveLength(2)
 
     expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /csv/i })).not.toBeInTheDocument();
+  })
+
+  test("Test add main profile info", async () => {
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "ARGO_MON_TEST" } })
+
+    expect(screen.getByTestId("metricprofiles-form")).toHaveFormValues({
+      name: "ARGO_MON_TEST",
+      description: ""
+    })
+
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: "Profile used for testing" } })
+
+    expect(screen.getByTestId("metricprofiles-form")).toHaveFormValues({
+      name: "ARGO_MON_TEST",
+      description: "Profile used for testing"
+    })
+
+    await selectEvent.select(screen.getAllByText("Select...")[0], "TEST")
+
+    expect(screen.getByTestId("metricprofiles-form")).toHaveFormValues({
+      name: "ARGO_MON_TEST",
+      description: "Profile used for testing"
+    })
+
+    expect(screen.getByText("TEST")).toBeInTheDocument()
+    expect(screen.queryByText("ARGO")).not.toBeInTheDocument()
+  })
+
+  test("Test adding tuples", async () => {
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+    })
+
+    const metricInstances = within(screen.getByRole("table"))
+    var rows = metricInstances.getAllByRole("row")
+    var row1 = within(rows[2])
+
+    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.mon")
+    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.egi.CertValidity")
+
+    expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+
+    rows = metricInstances.getAllByRole("row")
+    expect(rows).toHaveLength(3)
+    row1 = within(rows[2])
+    expect(row1.getByText("argo.mon")).toBeInTheDocument()
+    expect(row1.getByText("eu.egi.CertValidity")).toBeInTheDocument()
+
+    fireEvent.click(screen.getByTestId("insert-0"))
+
+    rows = metricInstances.getAllByRole("row")
+    expect(rows).toHaveLength(4)
+    var row2 = within(rows[3])
+
+    await selectEvent.select(row2.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row2.getAllByText("Select...")[0], "argo.AMS-Check")
+
+    rows = metricInstances.getAllByRole("row")
+    expect(rows).toHaveLength(4)
+    row1 = within(rows[2])
+    row2 = within(rows[3])
+    expect(row1.getByText("argo.mon")).toBeInTheDocument()
+    expect(row1.getByText("eu.egi.CertValidity")).toBeInTheDocument()
+    expect(row2.getByText("eu.argo.ams")).toBeInTheDocument()
+    expect(row2.getByText("argo.AMS-Check")).toBeInTheDocument()
+
+    expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByTestId("insert-1"))
+
+    rows = metricInstances.getAllByRole("row")
+    expect(rows).toHaveLength(5)
+    var row3 = within(rows[4])
+
+    await selectEvent.select(row3.getAllByText("Select...")[0], "argo.mon")
+    await selectEvent.select(row3.getAllByText("Select...")[0], "eu.egi.CertValidity")
+
+    expect(screen.queryAllByText(/duplicated/i)).toHaveLength(2)
+
+    rows = metricInstances.getAllByRole("row")
+    expect(rows).toHaveLength(7)
+    row1 = within(rows[2])
+    row2 = within(rows[4])
+    row3 = within(rows[5])
+    expect(row1.getByText("argo.mon")).toBeInTheDocument()
+    expect(row1.getByText("eu.egi.CertValidity")).toBeInTheDocument()
+    expect(row2.getByText("eu.argo.ams")).toBeInTheDocument()
+    expect(row2.getByText("argo.AMS-Check")).toBeInTheDocument()
+    expect(row3.getByText("argo.mon")).toBeInTheDocument()
+    expect(row3.getByText("eu.egi.CertValidity")).toBeInTheDocument()
+
+    fireEvent.click(screen.getByTestId("remove-2"))
+
+    expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+
+    rows = metricInstances.getAllByRole("row")
+    expect(rows).toHaveLength(4)
+    row1 = within(rows[2])
+    row2 = within(rows[3])
+    expect(row1.getByText("argo.mon")).toBeInTheDocument()
+    expect(row1.getByText("eu.egi.CertValidity")).toBeInTheDocument()
+    expect(row2.getByText("eu.argo.ams")).toBeInTheDocument()
+    expect(row2.getByText("argo.AMS-Check")).toBeInTheDocument()
+
+    fireEvent.click(screen.getByTestId("remove-1"))
+
+    fireEvent.click(screen.getByTestId("remove-0"))
+
+    rows = metricInstances.getAllByRole("row")
+    expect(rows).toHaveLength(3)
+    row1 = within(rows[2])
+    expect(row1.getAllByText("Select...")).toHaveLength(2)
   })
 
   test('Test successfully adding a metric profile', async () => {
@@ -1834,61 +2166,42 @@ describe('Tests for metric profile addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Add metric profile');
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
-    await selectEvent.select(screen.getByText(/select/i), 'ARGO')
+    await selectEvent.select(screen.getAllByText("Select...")[0], 'ARGO')
 
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
+    var row1 = within(rows[2])
 
-    const row1 = within(rows[2]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row1[0], { target: { value: 'eu.argo.ams' } });
-    })
+    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
 
-    await waitFor(() => {
-      fireEvent.change(row1[1], { target: { value: 'argo.AMS-Check' } });
-    })
-
-    await waitFor(() => {
-      fireEvent.click(metricInstances.getByTestId('insert-0'));
-    })
+    fireEvent.click(screen.getByTestId('insert-0'));
 
     rows = metricInstances.getAllByRole('row');
-    const row2 = within(rows[3]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row2[0], { target: { value: 'egi.AppDB' } });
-    })
+    var row2 = within(rows[3])
 
-    await waitFor(() => {
-      fireEvent.change(row2[1], { target: { value: 'org.nagiosexchange.AppDB-WebCheck' } });
-    })
+    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
 
-    fireEvent.click(metricInstances.getByTestId('insert-1'));
+    fireEvent.click(screen.getByTestId('insert-1'));
     rows = metricInstances.getAllByRole('row');
-    const row3 = within(rows[4]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row3[0], { target: { value: 'eu.argo.ams' } });
-    })
+    const row3 = within(rows[4])
 
-    await waitFor(() => {
-      fireEvent.change(row3[1], { target: { value: 'argo.AMSPublisher-Check' } });
-    })
+    await selectEvent.select(row3.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row3.getAllByText("Select...")[0], "argo.AMSPublisher-Check")
 
-    fireEvent.click(metricInstances.getByTestId('insert-2'));
+    fireEvent.click(screen.getByTestId('insert-2'));
     rows = metricInstances.getAllByRole('row');
-    const row4 = within(rows[5]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row4[0], { target: { value: 'argo.mon' } });
-    })
+    const row4 = within(rows[5])
 
-    await waitFor(() => {
-      fireEvent.change(row4[1], { target: { value: 'eu.egi.CertValidity' } });
-    })
+    await selectEvent.select(row4.getAllByText("Select...")[0], "argo.mon")
+    await selectEvent.select(row4.getAllByText("Select...")[0], "eu.egi.CertValidity")
 
     fireEvent.click(metricInstances.getByTestId('remove-3'));
 
@@ -1904,16 +2217,16 @@ describe('Tests for metric profile addview', () => {
         name: 'NEW_PROFILE',
         services: [
           {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
             service: 'eu.argo.ams',
             metrics: [
               'argo.AMS-Check',
               'argo.AMSPublisher-Check'
-            ]
-          },
-          {
-            service: 'egi.AppDB',
-            metrics: [
-              'org.nagiosexchange.AppDB-WebCheck'
             ]
           }
         ]
@@ -1929,8 +2242,8 @@ describe('Tests for metric profile addview', () => {
           groupname: 'ARGO',
           description: 'New central ARGO_MON profile.',
           services: [
-            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
             { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
+            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
             { service: 'eu.argo.ams', metric: 'argo.AMSPublisher-Check' }
           ]
         }
@@ -1952,63 +2265,45 @@ describe('Tests for metric profile addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Add metric profile');
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
-    await selectEvent.select(screen.getByText(/select/i), 'ARGO')
+    await selectEvent.select(screen.getAllByText("Select...")[0], 'ARGO')
 
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
+    const row1 = within(rows[2])
 
-    const row1 = within(rows[2]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row1[0], { target: { value: 'eu.argo.ams' } });
-    })
+    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
 
-    await waitFor(() => {
-      fireEvent.change(row1[1], { target: { value: 'argo.AMS-Check' } });
-    })
-
-    await waitFor(() => {
-      fireEvent.click(metricInstances.getByTestId('insert-0'));
-    })
+    fireEvent.click(screen.getByTestId('insert-0'));
 
     rows = metricInstances.getAllByRole('row');
-    const row2 = within(rows[3]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row2[0], { target: { value: 'egi.AppDB' } });
-    })
+    const row2 = within(rows[3])
 
-    await waitFor(() => {
-      fireEvent.change(row2[1], { target: { value: 'org.nagiosexchange.AppDB-WebCheck' } });
-    })
+    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
 
-    fireEvent.click(metricInstances.getByTestId('insert-1'));
+    fireEvent.click(screen.getByTestId('insert-1'));
+
     rows = metricInstances.getAllByRole('row');
-    const row3 = within(rows[4]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row3[0], { target: { value: 'eu.argo.ams' } });
-    })
+    const row3 = within(rows[4])
 
-    await waitFor(() => {
-      fireEvent.change(row3[1], { target: { value: 'argo.AMSPublisher-Check' } });
-    })
+    await selectEvent.select(row3.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row3.getAllByText("Select...")[0], "argo.AMSPublisher-Check")
 
-    fireEvent.click(metricInstances.getByTestId('insert-2'));
+    fireEvent.click(screen.getByTestId('insert-2'));
     rows = metricInstances.getAllByRole('row');
-    const row4 = within(rows[5]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row4[0], { target: { value: 'argo.mon' } });
-    })
+    const row4 = within(rows[5])
 
-    await waitFor(() => {
-      fireEvent.change(row4[1], { target: { value: 'eu.egi.CertValidity' } });
-    })
+    await selectEvent.select(row4.getAllByText("Select...")[0], "argo.mon")
+    await selectEvent.select(row4.getAllByText("Select...")[0], "eu.egi.CertValidity")
 
-    fireEvent.click(metricInstances.getByTestId('remove-3'));
+    fireEvent.click(screen.getByTestId('remove-3'));
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -2022,16 +2317,16 @@ describe('Tests for metric profile addview', () => {
         name: 'NEW_PROFILE',
         services: [
           {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
             service: 'eu.argo.ams',
             metrics: [
               'argo.AMS-Check',
               'argo.AMSPublisher-Check'
-            ]
-          },
-          {
-            service: 'egi.AppDB',
-            metrics: [
-              'org.nagiosexchange.AppDB-WebCheck'
             ]
           }
         ]
@@ -2060,61 +2355,44 @@ describe('Tests for metric profile addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Add metric profile');
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
-    await selectEvent.select(screen.getByText(/select/i), 'ARGO')
+    await selectEvent.select(screen.getAllByText("Select...")[0], 'ARGO')
 
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
+    const row1 = within(rows[2])
 
-    const row1 = within(rows[2]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row1[0], { target: { value: 'eu.argo.ams' } });
-    })
+    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
 
-    await waitFor(() => {
-      fireEvent.change(row1[1], { target: { value: 'argo.AMS-Check' } });
-    })
-
-    await waitFor(() => {
-      fireEvent.click(metricInstances.getByTestId('insert-0'));
-    })
+    fireEvent.click(screen.getByTestId('insert-0'));
 
     rows = metricInstances.getAllByRole('row');
-    const row2 = within(rows[3]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row2[0], { target: { value: 'egi.AppDB' } });
-    })
+    const row2 = within(rows[3])
 
-    await waitFor(() => {
-      fireEvent.change(row2[1], { target: { value: 'org.nagiosexchange.AppDB-WebCheck' } });
-    })
+    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
 
-    fireEvent.click(metricInstances.getByTestId('insert-1'));
+    fireEvent.click(screen.getByTestId('insert-1'));
+
     rows = metricInstances.getAllByRole('row');
-    const row3 = within(rows[4]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row3[0], { target: { value: 'eu.argo.ams' } });
-    })
+    const row3 = within(rows[4])
 
-    await waitFor(() => {
-      fireEvent.change(row3[1], { target: { value: 'argo.AMSPublisher-Check' } });
-    })
+    await selectEvent.select(row3.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row3.getAllByText("Select...")[0], "argo.AMSPublisher-Check")
 
-    fireEvent.click(metricInstances.getByTestId('insert-2'));
+    fireEvent.click(screen.getByTestId('insert-2'));
+
     rows = metricInstances.getAllByRole('row');
-    const row4 = within(rows[5]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row4[0], { target: { value: 'argo.mon' } });
-    })
+    const row4 = within(rows[5])
 
-    await waitFor(() => {
-      fireEvent.change(row4[1], { target: { value: 'eu.egi.CertValidity' } });
-    })
+    await selectEvent.select(row4.getAllByText("Select...")[0], "argo.mon")
+    await selectEvent.select(row4.getAllByText("Select...")[0], "eu.egi.CertValidity")
 
     fireEvent.click(metricInstances.getByTestId('remove-3'));
 
@@ -2130,16 +2408,16 @@ describe('Tests for metric profile addview', () => {
         name: 'NEW_PROFILE',
         services: [
           {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
             service: 'eu.argo.ams',
             metrics: [
               'argo.AMS-Check',
               'argo.AMSPublisher-Check'
-            ]
-          },
-          {
-            service: 'egi.AppDB',
-            metrics: [
-              'org.nagiosexchange.AppDB-WebCheck'
             ]
           }
         ]
@@ -2184,61 +2462,45 @@ describe('Tests for metric profile addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Add metric profile');
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
-    await selectEvent.select(screen.getByText(/select/i), 'ARGO')
+    await selectEvent.select(screen.getAllByText("Select...")[0], 'ARGO')
 
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
 
-    const row1 = within(rows[2]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row1[0], { target: { value: 'eu.argo.ams' } });
-    })
+    const row1 = within(rows[2])
 
-    await waitFor(() => {
-      fireEvent.change(row1[1], { target: { value: 'argo.AMS-Check' } });
-    })
+    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
 
-    await waitFor(() => {
-      fireEvent.click(metricInstances.getByTestId('insert-0'));
-    })
+    fireEvent.click(screen.getByTestId('insert-0'));
 
     rows = metricInstances.getAllByRole('row');
-    const row2 = within(rows[3]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row2[0], { target: { value: 'egi.AppDB' } });
-    })
+    const row2 = within(rows[3])
 
-    await waitFor(() => {
-      fireEvent.change(row2[1], { target: { value: 'org.nagiosexchange.AppDB-WebCheck' } });
-    })
+    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
 
-    fireEvent.click(metricInstances.getByTestId('insert-1'));
+    fireEvent.click(screen.getByTestId('insert-1'));
+
     rows = metricInstances.getAllByRole('row');
-    const row3 = within(rows[4]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row3[0], { target: { value: 'eu.argo.ams' } });
-    })
+    const row3 = within(rows[4])
 
-    await waitFor(() => {
-      fireEvent.change(row3[1], { target: { value: 'argo.AMSPublisher-Check' } });
-    })
+    await selectEvent.select(row3.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row3.getAllByText("Select...")[0], "argo.AMSPublisher-Check")
 
-    fireEvent.click(metricInstances.getByTestId('insert-2'));
+    fireEvent.click(screen.getByTestId('insert-2'));
+
     rows = metricInstances.getAllByRole('row');
-    const row4 = within(rows[5]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row4[0], { target: { value: 'argo.mon' } });
-    })
+    const row4 = within(rows[5])
 
-    await waitFor(() => {
-      fireEvent.change(row4[1], { target: { value: 'eu.egi.CertValidity' } });
-    })
+    await selectEvent.select(row4.getAllByText("Select...")[0], "argo.mon")
+    await selectEvent.select(row4.getAllByText("Select...")[0], "eu.egi.CertValidity")
 
     fireEvent.click(metricInstances.getByTestId('remove-3'));
 
@@ -2254,16 +2516,16 @@ describe('Tests for metric profile addview', () => {
         name: 'NEW_PROFILE',
         services: [
           {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
             service: 'eu.argo.ams',
             metrics: [
               'argo.AMS-Check',
               'argo.AMSPublisher-Check'
-            ]
-          },
-          {
-            service: 'egi.AppDB',
-            metrics: [
-              'org.nagiosexchange.AppDB-WebCheck'
             ]
           }
         ]
@@ -2279,8 +2541,8 @@ describe('Tests for metric profile addview', () => {
           groupname: 'ARGO',
           description: 'New central ARGO_MON profile.',
           services: [
-            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
             { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
+            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
             { service: 'eu.argo.ams', metric: 'argo.AMSPublisher-Check' }
           ]
         }
@@ -2319,63 +2581,46 @@ describe('Tests for metric profile addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Add metric profile');
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
-    await selectEvent.select(screen.getByText(/select/i), 'ARGO')
+    await selectEvent.select(screen.getAllByText("Select...")[0], 'ARGO')
 
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
+    const row1 = within(rows[2])
 
-    const row1 = within(rows[2]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row1[0], { target: { value: 'eu.argo.ams' } });
-    })
+    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
 
-    await waitFor(() => {
-      fireEvent.change(row1[1], { target: { value: 'argo.AMS-Check' } });
-    })
-
-    await waitFor(() => {
-      fireEvent.click(metricInstances.getByTestId('insert-0'));
-    })
+    fireEvent.click(metricInstances.getByTestId('insert-0'));
 
     rows = metricInstances.getAllByRole('row');
-    const row2 = within(rows[3]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row2[0], { target: { value: 'egi.AppDB' } });
-    })
+    const row2 = within(rows[3])
 
-    await waitFor(() => {
-      fireEvent.change(row2[1], { target: { value: 'org.nagiosexchange.AppDB-WebCheck' } });
-    })
+    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
 
-    fireEvent.click(metricInstances.getByTestId('insert-1'));
+    fireEvent.click(screen.getByTestId('insert-1'));
+
     rows = metricInstances.getAllByRole('row');
-    const row3 = within(rows[4]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row3[0], { target: { value: 'eu.argo.ams' } });
-    })
+    const row3 = within(rows[4])
 
-    await waitFor(() => {
-      fireEvent.change(row3[1], { target: { value: 'argo.AMSPublisher-Check' } });
-    })
+    await selectEvent.select(row3.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row3.getAllByText("Select...")[0], "argo.AMSPublisher-Check")
 
-    fireEvent.click(metricInstances.getByTestId('insert-2'));
+    fireEvent.click(screen.getByTestId('insert-2'));
+
     rows = metricInstances.getAllByRole('row');
-    const row4 = within(rows[5]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row4[0], { target: { value: 'argo.mon' } });
-    })
+    const row4 = within(rows[5])
 
-    await waitFor(() => {
-      fireEvent.change(row4[1], { target: { value: 'eu.egi.CertValidity' } });
-    })
+    await selectEvent.select(row4.getAllByText("Select...")[0], "argo.mon")
+    await selectEvent.select(row4.getAllByText("Select...")[0], "eu.egi.CertValidity")
 
-    fireEvent.click(metricInstances.getByTestId('remove-3'));
+    fireEvent.click(screen.getByTestId('remove-3'));
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -2389,16 +2634,16 @@ describe('Tests for metric profile addview', () => {
         name: 'NEW_PROFILE',
         services: [
           {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
             service: 'eu.argo.ams',
             metrics: [
               'argo.AMS-Check',
               'argo.AMSPublisher-Check'
-            ]
-          },
-          {
-            service: 'egi.AppDB',
-            metrics: [
-              'org.nagiosexchange.AppDB-WebCheck'
             ]
           }
         ]
@@ -2414,8 +2659,8 @@ describe('Tests for metric profile addview', () => {
           groupname: 'ARGO',
           description: 'New central ARGO_MON profile.',
           services: [
-            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
             { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
+            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
             { service: 'eu.argo.ams', metric: 'argo.AMSPublisher-Check' }
           ]
         }
@@ -2485,37 +2730,241 @@ describe('Tests for metric profile cloneview', () => {
     const metricInstances = within(screen.getByRole('table'));
     const rows = metricInstances.getAllByRole('row');
     expect(rows).toHaveLength(9);
+    const row1 = within(rows[2])
+    const row2 = within(rows[3])
+    const row3 = within(rows[4])
+    const row4 = within(rows[5])
+    const row5 = within(rows[6])
+    const row6 = within(rows[7])
+    const row7 = within(rows[8])
 
-    const row1 = within(rows[2]).getAllByRole('textbox');
-    const row2 = within(rows[3]).getAllByRole('textbox');
-    const row3 = within(rows[4]).getAllByRole('textbox');
-    const row4 = within(rows[5]).getAllByRole('textbox');
-    const row5 = within(rows[6]).getAllByRole('textbox');
-    const row6 = within(rows[7]).getAllByRole('textbox');
-    const row7 = within(rows[8]).getAllByRole('textbox');
+    expect(row1.getByText("argo.mon")).toBeInTheDocument()
+    expect(row1.getByText("eu.egi.CertValidity")).toBeInTheDocument()
+    expect(row2.getByText("argo.mon")).toBeInTheDocument()
+    expect(row2.getByText("org.nagios.NagiosWebInterface")).toBeInTheDocument()
+    expect(row3.getByText("argo.webui")).toBeInTheDocument()
+    expect(row3.getByText("org.nagios.ARGOWeb-AR")).toBeInTheDocument()
+    expect(row4.getByText("argo.webui")).toBeInTheDocument()
+    expect(row4.getByText("org.nagios.ARGOWeb-Status")).toBeInTheDocument()
+    expect(row5.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row5.getByText("ch.cern.LFC-Ping")).toBeInTheDocument()
+    expect(row6.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row6.getByText("ch.cern.LFC-Read")).toBeInTheDocument()
+    expect(row7.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row7.getByText("ch.cern.LFC-Write")).toBeInTheDocument()
+
     expect(metricInstances.getAllByTestId(/remove-/i)).toHaveLength(7);
     expect(metricInstances.getAllByTestId(/insert-/i)).toHaveLength(7);
-    expect(row1[0].value).toBe('argo.mon');
-    expect(row1[1].value).toBe('eu.egi.CertValidity');
-    expect(row2[0].value).toBe('argo.mon');
-    expect(row2[1].value).toBe('org.nagios.NagiosWebInterface');
-    expect(row2[0].value).toBe('argo.mon');
-    expect(row2[1].value).toBe('org.nagios.NagiosWebInterface');
-    expect(row3[0].value).toBe('argo.webui');
-    expect(row3[1].value).toBe('org.nagios.ARGOWeb-AR');
-    expect(row4[0].value).toBe('argo.webui');
-    expect(row4[1].value).toBe('org.nagios.ARGOWeb-Status');
-    expect(row5[0].value).toBe('Central-LFC');
-    expect(row5[1].value).toBe('ch.cern.LFC-Ping');
-    expect(row6[0].value).toBe('Central-LFC');
-    expect(row6[1].value).toBe('ch.cern.LFC-Read');
-    expect(row7[0].value).toBe('Central-LFC');
-    expect(row7[1].value).toBe('ch.cern.LFC-Write');
 
     expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /csv/i })).not.toBeInTheDocument();
+  })
+
+  test("Test change main profile info", async () => {
+    renderCloneView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "ARGO_MON_TEST" } })
+
+    expect(screen.getByTestId("metricprofiles-form")).toHaveFormValues({
+      name: "ARGO_MON_TEST",
+      description: "Central ARGO-MON profile"
+    })
+
+    expect(screen.queryByText("ARGO")).toBeInTheDocument()
+    expect(screen.queryByText("TEST")).not.toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: "Now it is used for testing" } })
+
+    expect(screen.getByTestId("metricprofiles-form")).toHaveFormValues({
+      name: "ARGO_MON_TEST",
+      description: "Now it is used for testing"
+    })
+
+    expect(screen.queryByText("ARGO")).toBeInTheDocument()
+    expect(screen.queryByText("TEST")).not.toBeInTheDocument()
+
+    await selectEvent.select(screen.getByText("ARGO"), "TEST")
+
+    expect(screen.getByTestId("metricprofiles-form")).toHaveFormValues({
+      name: "ARGO_MON_TEST",
+      description: "Now it is used for testing"
+    })
+
+    expect(screen.queryByText("ARGO")).not.toBeInTheDocument()
+    expect(screen.queryByText("TEST")).toBeInTheDocument()
+  })
+
+  test("Test changing tuples", async () => {
+    renderCloneView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+    })
+
+    const metricInstances = within(screen.getByRole("table"))
+
+    fireEvent.click(screen.getByTestId("remove-2"))
+
+    expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+
+    var rows = metricInstances.getAllByRole("row")
+    expect(rows).toHaveLength(8)
+    var row1 = within(rows[2])
+    var row2 = within(rows[3])
+    var row3 = within(rows[4])
+    var row4 = within(rows[5])
+    var row5 = within(rows[6])
+    var row6 = within(rows[7])
+    expect(row1.getByText("argo.mon")).toBeInTheDocument()
+    expect(row1.getByText("eu.egi.CertValidity")).toBeInTheDocument()
+    expect(row2.getByText("argo.mon")).toBeInTheDocument()
+    expect(row2.getByText("org.nagios.NagiosWebInterface")).toBeInTheDocument()
+    expect(row3.getByText("argo.webui")).toBeInTheDocument()
+    expect(row3.getByText("org.nagios.ARGOWeb-Status")).toBeInTheDocument()
+    expect(row4.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row4.getByText("ch.cern.LFC-Ping")).toBeInTheDocument()
+    expect(row5.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row5.getByText("ch.cern.LFC-Read")).toBeInTheDocument()
+    expect(row6.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row6.getByText("ch.cern.LFC-Write")).toBeInTheDocument()
+
+    fireEvent.click(screen.getByTestId("insert-3"))
+
+    expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+
+    rows = metricInstances.getAllByRole("row")
+    expect(rows).toHaveLength(9)
+    row1 = within(rows[2])
+    row2 = within(rows[3])
+    row3 = within(rows[4])
+    row4 = within(rows[5])
+    row5 = within(rows[6])
+    row6 = within(rows[7])
+    var row7 = within(rows[8])
+    expect(row1.getByText("argo.mon")).toBeInTheDocument()
+    expect(row1.getByText("eu.egi.CertValidity")).toBeInTheDocument()
+    expect(row2.getByText("argo.mon")).toBeInTheDocument()
+    expect(row2.getByText("org.nagios.NagiosWebInterface")).toBeInTheDocument()
+    expect(row3.getByText("argo.webui")).toBeInTheDocument()
+    expect(row3.getByText("org.nagios.ARGOWeb-Status")).toBeInTheDocument()
+    expect(row4.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row4.getByText("ch.cern.LFC-Ping")).toBeInTheDocument()
+    expect(row5.getAllByText("Select...")).toHaveLength(2)
+    expect(row6.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row6.getByText("ch.cern.LFC-Read")).toBeInTheDocument()
+    expect(row7.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row7.getByText("ch.cern.LFC-Write")).toBeInTheDocument()
+
+    await selectEvent.select(row5.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row5.getAllByText("Select...")[0], "argo.AMS-Check")
+
+    expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+
+    rows = metricInstances.getAllByRole("row")
+    expect(rows).toHaveLength(9)
+    row1 = within(rows[2])
+    row2 = within(rows[3])
+    row3 = within(rows[4])
+    row4 = within(rows[5])
+    row5 = within(rows[6])
+    row6 = within(rows[7])
+    row7 = within(rows[8])
+    expect(row1.getByText("argo.mon")).toBeInTheDocument()
+    expect(row1.getByText("eu.egi.CertValidity")).toBeInTheDocument()
+    expect(row2.getByText("argo.mon")).toBeInTheDocument()
+    expect(row2.getByText("org.nagios.NagiosWebInterface")).toBeInTheDocument()
+    expect(row3.getByText("argo.webui")).toBeInTheDocument()
+    expect(row3.getByText("org.nagios.ARGOWeb-Status")).toBeInTheDocument()
+    expect(row4.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row4.getByText("ch.cern.LFC-Ping")).toBeInTheDocument()
+    expect(row5.getByText("eu.argo.ams")).toBeInTheDocument()
+    expect(row5.getByText("argo.AMS-Check")).toBeInTheDocument()
+    expect(row6.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row6.getByText("ch.cern.LFC-Read")).toBeInTheDocument()
+    expect(row7.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row7.getByText("ch.cern.LFC-Write")).toBeInTheDocument()
+
+    fireEvent.click(metricInstances.getByTestId("insert-0"))
+
+    expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+
+    rows = metricInstances.getAllByRole("row")
+    expect(rows).toHaveLength(10)
+    row1 = within(rows[2])
+    row2 = within(rows[3])
+    row3 = within(rows[4])
+    row4 = within(rows[5])
+    row5 = within(rows[6])
+    row6 = within(rows[7])
+    row7 = within(rows[8])
+    var row8 = within(rows[9])
+    expect(row1.getByText("argo.mon")).toBeInTheDocument()
+    expect(row1.getByText("eu.egi.CertValidity")).toBeInTheDocument()
+    expect(row2.getAllByText("Select...")).toHaveLength(2)
+    expect(row3.getByText("argo.mon")).toBeInTheDocument()
+    expect(row3.getByText("org.nagios.NagiosWebInterface")).toBeInTheDocument()
+    expect(row4.getByText("argo.webui")).toBeInTheDocument()
+    expect(row4.getByText("org.nagios.ARGOWeb-Status")).toBeInTheDocument()
+    expect(row5.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row5.getByText("ch.cern.LFC-Ping")).toBeInTheDocument()
+    expect(row6.getByText("eu.argo.ams")).toBeInTheDocument()
+    expect(row6.getByText("argo.AMS-Check")).toBeInTheDocument()
+    expect(row7.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row7.getByText("ch.cern.LFC-Read")).toBeInTheDocument()
+    expect(row8.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row8.getByText("ch.cern.LFC-Write")).toBeInTheDocument()
+
+    await selectEvent.select(row2.getAllByText("Select...")[0], "Central-LFC")
+    await selectEvent.select(row2.getAllByText("Select...")[0], "ch.cern.LFC-Write")
+
+    expect(screen.queryByText(/duplicated/i)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByTestId("remove-7"))
+
+    expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+
+    rows = metricInstances.getAllByRole("row")
+    expect(rows).toHaveLength(9)
+    row1 = within(rows[2])
+    row2 = within(rows[3])
+    row3 = within(rows[4])
+    row4 = within(rows[5])
+    row5 = within(rows[6])
+    row6 = within(rows[7])
+    row7 = within(rows[8])
+    expect(row1.getByText("argo.mon")).toBeInTheDocument()
+    expect(row1.getByText("eu.egi.CertValidity")).toBeInTheDocument()
+    expect(row2.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row2.getByText("ch.cern.LFC-Write")).toBeInTheDocument()
+    expect(row3.getByText("argo.mon")).toBeInTheDocument()
+    expect(row3.getByText("org.nagios.NagiosWebInterface")).toBeInTheDocument()
+    expect(row4.getByText("argo.webui")).toBeInTheDocument()
+    expect(row4.getByText("org.nagios.ARGOWeb-Status")).toBeInTheDocument()
+    expect(row5.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row5.getByText("ch.cern.LFC-Ping")).toBeInTheDocument()
+    expect(row6.getByText("eu.argo.ams")).toBeInTheDocument()
+    expect(row6.getByText("argo.AMS-Check")).toBeInTheDocument()
+    expect(row7.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row7.getByText("ch.cern.LFC-Read")).toBeInTheDocument()
+
+    fireEvent.click(screen.getByTestId("remove-6"))
+    fireEvent.click(screen.getByTestId("remove-5"))
+    fireEvent.click(screen.getByTestId("remove-4"))
+    fireEvent.click(screen.getByTestId("remove-3"))
+    fireEvent.click(screen.getByTestId("remove-2"))
+    fireEvent.click(screen.getByTestId("remove-1"))
+    fireEvent.click(screen.getByTestId("remove-0"))
+
+    rows = metricInstances.getAllByRole("row")
+    expect(rows).toHaveLength(3)
+    row1 = within(rows[2])
+    expect(row1.getAllByText("Select...")).toHaveLength(2)
   })
 
   test('Test successfully cloning a metric profile', async () => {
@@ -2537,7 +2986,7 @@ describe('Tests for metric profile cloneview', () => {
     renderCloneView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Clone metric profile');
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'ARGO_MON' } });
@@ -2545,38 +2994,24 @@ describe('Tests for metric profile cloneview', () => {
 
     await selectEvent.select(screen.getByText('ARGO'), 'TEST')
 
+    fireEvent.click(screen.getByTestId('remove-1'));
+
+    fireEvent.click(screen.getByTestId('insert-0'));
+
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
+    const row1 = within(rows[3])
 
-    await waitFor(() => {
-      fireEvent.click(metricInstances.getByTestId('remove-1'));
-    })
+    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
 
-    await waitFor(() => {
-      fireEvent.click(metricInstances.getByTestId('insert-0'));
-    })
+    fireEvent.click(screen.getByTestId('insert-1'));
 
     rows = metricInstances.getAllByRole('row');
+    const row2 = within(rows[4])
 
-    const row1 = within(rows[3]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row1[0], { target: { value: 'eu.argo.ams' } });
-    })
-
-    await waitFor(() => {
-      fireEvent.change(row1[1], { target: { value: 'argo.AMS-Check' } });
-    })
-
-    fireEvent.click(metricInstances.getByTestId('insert-1'));
-    rows = metricInstances.getAllByRole('row');
-    const row2 = within(rows[4]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row2[0], { target: { value: 'egi.AppDB' } });
-    })
-
-    await waitFor(() => {
-      fireEvent.change(row2[1], { target: { value: 'org.nagiosexchange.AppDB-WebCheck' } });
-    })
+    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -2596,18 +3031,6 @@ describe('Tests for metric profile cloneview', () => {
             ]
           },
           {
-            service: 'eu.argo.ams',
-            metrics: [
-              'argo.AMS-Check'
-            ]
-          },
-          {
-            service: 'egi.AppDB',
-            metrics: [
-              'org.nagiosexchange.AppDB-WebCheck'
-            ]
-          },
-          {
             service: 'argo.webui',
             metrics: [
               'org.nagios.ARGOWeb-AR',
@@ -2620,6 +3043,18 @@ describe('Tests for metric profile cloneview', () => {
               'ch.cern.LFC-Ping',
               'ch.cern.LFC-Read',
               'ch.cern.LFC-Write'
+            ]
+          },
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check'
             ]
           }
         ]
@@ -2636,13 +3071,13 @@ describe('Tests for metric profile cloneview', () => {
           description: 'New central ARGO_MON profile.',
           services: [
             { service: 'argo.mon', metric: 'eu.egi.CertValidity' },
-            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
-            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
             { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-AR' },
             { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-Status' },
             { service: 'Central-LFC', metric: 'ch.cern.LFC-Ping' },
             { service: 'Central-LFC', metric: 'ch.cern.LFC-Read' },
-            { service: 'Central-LFC', metric: 'ch.cern.LFC-Write' }
+            { service: 'Central-LFC', metric: 'ch.cern.LFC-Write' },
+            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
+            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' }
           ]
         }
       )
@@ -2663,7 +3098,7 @@ describe('Tests for metric profile cloneview', () => {
     renderCloneView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Clone metric profile');
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'ARGO_MON' } });
@@ -2671,38 +3106,24 @@ describe('Tests for metric profile cloneview', () => {
 
     await selectEvent.select(screen.getByText('ARGO'), 'TEST')
 
+    fireEvent.click(screen.getByTestId('remove-1'));
+
+    fireEvent.click(screen.getByTestId('insert-0'));
+
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
+    const row1 = within(rows[3])
 
-    await waitFor(() => {
-      fireEvent.click(metricInstances.getByTestId('remove-1'));
-    })
+    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
 
-    await waitFor(() => {
-      fireEvent.click(metricInstances.getByTestId('insert-0'));
-    })
+    fireEvent.click(screen.getByTestId('insert-1'));
 
     rows = metricInstances.getAllByRole('row');
+    const row2 = within(rows[4])
 
-    const row1 = within(rows[3]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row1[0], { target: { value: 'eu.argo.ams' } });
-    })
-
-    await waitFor(() => {
-      fireEvent.change(row1[1], { target: { value: 'argo.AMS-Check' } });
-    })
-
-    fireEvent.click(metricInstances.getByTestId('insert-1'));
-    rows = metricInstances.getAllByRole('row');
-    const row2 = within(rows[4]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row2[0], { target: { value: 'egi.AppDB' } });
-    })
-
-    await waitFor(() => {
-      fireEvent.change(row2[1], { target: { value: 'org.nagiosexchange.AppDB-WebCheck' } });
-    })
+    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -2722,18 +3143,6 @@ describe('Tests for metric profile cloneview', () => {
             ]
           },
           {
-            service: 'eu.argo.ams',
-            metrics: [
-              'argo.AMS-Check'
-            ]
-          },
-          {
-            service: 'egi.AppDB',
-            metrics: [
-              'org.nagiosexchange.AppDB-WebCheck'
-            ]
-          },
-          {
             service: 'argo.webui',
             metrics: [
               'org.nagios.ARGOWeb-AR',
@@ -2746,6 +3155,18 @@ describe('Tests for metric profile cloneview', () => {
               'ch.cern.LFC-Ping',
               'ch.cern.LFC-Read',
               'ch.cern.LFC-Write'
+            ]
+          },
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check'
             ]
           }
         ]
@@ -2774,7 +3195,7 @@ describe('Tests for metric profile cloneview', () => {
     renderCloneView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Clone metric profile');
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'ARGO_MON' } })
@@ -2782,38 +3203,24 @@ describe('Tests for metric profile cloneview', () => {
 
     await selectEvent.select(screen.getByText('ARGO'), 'TEST')
 
+    fireEvent.click(screen.getByTestId('remove-1'));
+
+    fireEvent.click(screen.getByTestId('insert-0'));
+
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
+    const row1 = within(rows[3])
 
-    await waitFor(() => {
-      fireEvent.click(metricInstances.getByTestId('remove-1'));
-    })
+    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
 
-    await waitFor(() => {
-      fireEvent.click(metricInstances.getByTestId('insert-0'));
-    })
+    fireEvent.click(screen.getByTestId('insert-1'));
 
     rows = metricInstances.getAllByRole('row');
+    const row2 = within(rows[4])
 
-    const row1 = within(rows[3]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row1[0], { target: { value: 'eu.argo.ams' } });
-    })
-
-    await waitFor(() => {
-      fireEvent.change(row1[1], { target: { value: 'argo.AMS-Check' } });
-    })
-
-    fireEvent.click(metricInstances.getByTestId('insert-1'));
-    rows = metricInstances.getAllByRole('row');
-    const row2 = within(rows[4]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row2[0], { target: { value: 'egi.AppDB' } });
-    })
-
-    await waitFor(() => {
-      fireEvent.change(row2[1], { target: { value: 'org.nagiosexchange.AppDB-WebCheck' } });
-    })
+    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -2833,18 +3240,6 @@ describe('Tests for metric profile cloneview', () => {
             ]
           },
           {
-            service: 'eu.argo.ams',
-            metrics: [
-              'argo.AMS-Check'
-            ]
-          },
-          {
-            service: 'egi.AppDB',
-            metrics: [
-              'org.nagiosexchange.AppDB-WebCheck'
-            ]
-          },
-          {
             service: 'argo.webui',
             metrics: [
               'org.nagios.ARGOWeb-AR',
@@ -2857,6 +3252,18 @@ describe('Tests for metric profile cloneview', () => {
               'ch.cern.LFC-Ping',
               'ch.cern.LFC-Read',
               'ch.cern.LFC-Write'
+            ]
+          },
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check'
             ]
           }
         ]
@@ -2901,7 +3308,7 @@ describe('Tests for metric profile cloneview', () => {
     renderCloneView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Clone metric profile');
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'ARGO_MON' } });
@@ -2909,38 +3316,24 @@ describe('Tests for metric profile cloneview', () => {
 
     await selectEvent.select(screen.getByText('ARGO'), 'TEST')
 
+    fireEvent.click(screen.getByTestId('remove-1'));
+
+    fireEvent.click(screen.getByTestId('insert-0'));
+
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
+    const row1 = within(rows[3])
 
-    await waitFor(() => {
-      fireEvent.click(metricInstances.getByTestId('remove-1'));
-    })
+    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
 
-    await waitFor(() => {
-      fireEvent.click(metricInstances.getByTestId('insert-0'));
-    })
+    fireEvent.click(screen.getByTestId('insert-1'));
 
     rows = metricInstances.getAllByRole('row');
+    const row2 = within(rows[4])
 
-    const row1 = within(rows[3]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row1[0], { target: { value: 'eu.argo.ams' } });
-    })
-
-    await waitFor(() => {
-      fireEvent.change(row1[1], { target: { value: 'argo.AMS-Check' } });
-    })
-
-    fireEvent.click(metricInstances.getByTestId('insert-1'));
-    rows = metricInstances.getAllByRole('row');
-    const row2 = within(rows[4]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row2[0], { target: { value: 'egi.AppDB' } });
-    })
-
-    await waitFor(() => {
-      fireEvent.change(row2[1], { target: { value: 'org.nagiosexchange.AppDB-WebCheck' } });
-    })
+    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -2960,18 +3353,6 @@ describe('Tests for metric profile cloneview', () => {
             ]
           },
           {
-            service: 'eu.argo.ams',
-            metrics: [
-              'argo.AMS-Check'
-            ]
-          },
-          {
-            service: 'egi.AppDB',
-            metrics: [
-              'org.nagiosexchange.AppDB-WebCheck'
-            ]
-          },
-          {
             service: 'argo.webui',
             metrics: [
               'org.nagios.ARGOWeb-AR',
@@ -2984,6 +3365,18 @@ describe('Tests for metric profile cloneview', () => {
               'ch.cern.LFC-Ping',
               'ch.cern.LFC-Read',
               'ch.cern.LFC-Write'
+            ]
+          },
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check'
             ]
           }
         ]
@@ -3000,13 +3393,13 @@ describe('Tests for metric profile cloneview', () => {
           description: 'New central ARGO_MON profile.',
           services: [
             { service: 'argo.mon', metric: 'eu.egi.CertValidity' },
-            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
-            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
             { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-AR' },
             { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-Status' },
             { service: 'Central-LFC', metric: 'ch.cern.LFC-Ping' },
             { service: 'Central-LFC', metric: 'ch.cern.LFC-Read' },
-            { service: 'Central-LFC', metric: 'ch.cern.LFC-Write' }
+            { service: 'Central-LFC', metric: 'ch.cern.LFC-Write' },
+            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
+            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' }
           ]
         }
       )
@@ -3044,7 +3437,7 @@ describe('Tests for metric profile cloneview', () => {
     renderCloneView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Clone metric profile');
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'ARGO_MON' } });
@@ -3052,38 +3445,24 @@ describe('Tests for metric profile cloneview', () => {
 
     await selectEvent.select(screen.getByText('ARGO'), 'TEST')
 
+    fireEvent.click(screen.getByTestId('remove-1'));
+
+    fireEvent.click(screen.getByTestId('insert-0'));
+
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
+    const row1 = within(rows[3])
 
-    await waitFor(() => {
-      fireEvent.click(metricInstances.getByTestId('remove-1'));
-    })
+    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
 
-    await waitFor(() => {
-      fireEvent.click(metricInstances.getByTestId('insert-0'));
-    })
+    fireEvent.click(screen.getByTestId('insert-1'));
 
     rows = metricInstances.getAllByRole('row');
+    const row2 = within(rows[4])
 
-    const row1 = within(rows[3]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row1[0], { target: { value: 'eu.argo.ams' } });
-    })
-
-    await waitFor(() => {
-      fireEvent.change(row1[1], { target: { value: 'argo.AMS-Check' } });
-    })
-
-    fireEvent.click(metricInstances.getByTestId('insert-1'));
-    rows = metricInstances.getAllByRole('row');
-    const row2 = within(rows[4]).getAllByRole('textbox');
-    await waitFor(() => {
-      fireEvent.change(row2[0], { target: { value: 'egi.AppDB' } });
-    })
-
-    await waitFor(() => {
-      fireEvent.change(row2[1], { target: { value: 'org.nagiosexchange.AppDB-WebCheck' } });
-    })
+    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -3103,18 +3482,6 @@ describe('Tests for metric profile cloneview', () => {
             ]
           },
           {
-            service: 'eu.argo.ams',
-            metrics: [
-              'argo.AMS-Check'
-            ]
-          },
-          {
-            service: 'egi.AppDB',
-            metrics: [
-              'org.nagiosexchange.AppDB-WebCheck'
-            ]
-          },
-          {
             service: 'argo.webui',
             metrics: [
               'org.nagios.ARGOWeb-AR',
@@ -3127,6 +3494,18 @@ describe('Tests for metric profile cloneview', () => {
               'ch.cern.LFC-Ping',
               'ch.cern.LFC-Read',
               'ch.cern.LFC-Write'
+            ]
+          },
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check'
             ]
           }
         ]
@@ -3143,13 +3522,13 @@ describe('Tests for metric profile cloneview', () => {
           description: 'New central ARGO_MON profile.',
           services: [
             { service: 'argo.mon', metric: 'eu.egi.CertValidity' },
-            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
-            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
             { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-AR' },
             { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-Status' },
             { service: 'Central-LFC', metric: 'ch.cern.LFC-Ping' },
             { service: 'Central-LFC', metric: 'ch.cern.LFC-Read' },
-            { service: 'Central-LFC', metric: 'ch.cern.LFC-Write' }
+            { service: 'Central-LFC', metric: 'ch.cern.LFC-Write' },
+            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
+            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' }
           ]
         }
       )
@@ -3173,6 +3552,7 @@ describe('Test for metric profile version detail page', () => {
   beforeAll(() => {
     Backend.mockImplementation(() => {
       return {
+        isActiveSession: () => Promise.resolve(mockActiveSession),
         fetchData: () => Promise.resolve(mockMetricProfileVersions)
       }
     })
@@ -3200,17 +3580,17 @@ describe('Test for metric profile version detail page', () => {
 
     const metricInstances = within(screen.getByRole('table'));
     const rows = metricInstances.getAllByRole('row');
-    expect(rows).toHaveLength(4);
+    expect(rows).toHaveLength(5);
 
-    expect(within(rows[1]).queryAllByRole('textbox')).toHaveLength(0);
     expect(within(rows[2]).queryAllByRole('textbox')).toHaveLength(0);
     expect(within(rows[3]).queryAllByRole('textbox')).toHaveLength(0);
+    expect(within(rows[4]).queryAllByRole('textbox')).toHaveLength(0);
     expect(metricInstances.queryAllByTestId(/remove-/i)).toHaveLength(0);
     expect(metricInstances.queryAllByTestId(/insert-/i)).toHaveLength(0);
 
-    expect(rows[1].textContent).toBe('1AMGAorg.nagios.SAML-SP');
-    expect(rows[2].textContent).toBe('2APELorg.apel.APEL-Pub');
-    expect(rows[3].textContent).toBe('3APELorg.apel.APEL-Sync')
+    expect(rows[2].textContent).toBe('1AMGAorg.nagios.SAML-SP');
+    expect(rows[3].textContent).toBe('2APELorg.apel.APEL-Pub');
+    expect(rows[4].textContent).toBe('3APELorg.apel.APEL-Sync')
 
     expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();

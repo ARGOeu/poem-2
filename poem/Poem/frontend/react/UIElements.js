@@ -76,7 +76,6 @@ import { NotificationManager } from 'react-notifications';
 import { Field } from 'formik';
 import { Backend } from './DataManager';
 import ReactDiffViewer from 'react-diff-viewer';
-import Autosuggest from 'react-autosuggest';
 import { CookiePolicy } from './CookiePolicy';
 import { useTable, usePagination, useFilters } from 'react-table';
 import { Helmet } from 'react-helmet';
@@ -982,98 +981,6 @@ export const BaseArgoView = ({resourcename='', location=undefined,
 export const CustomError = (props) => (
   <div data-testid='error-msg' className="end-0" style={{color: '#dc3545', fontSize: 'small'}}>{props.error}</div>
 )
-
-
-export const AutocompleteField = ({lists=[], field, icon, label, onselect_handler=undefined, hide_error=false, ...props}) => {
-  return (
-    <_AutocompleteField
-      lists={lists}
-      field={field}
-      icon={icon}
-      label={label}
-      val={props.values[field]}
-      err={props.errors[field]}
-      setFieldValue={props.setFieldValue}
-      onselect_handler={onselect_handler}
-      hide_error={hide_error}
-    />
-  )
-}
-
-
-export const _AutocompleteField = ({lists=[], field, val, err, setFieldValue, icon, label, onselect_handler=undefined, hide_error=false}) => {
-  const [inputValue, setInputValue] = useState(val);
-  const [suggestions, setSuggestions] = useState(lists);
-  const [touched, setTouched] = useState(false);
-
-  const getSuggestions = value => {
-    setTouched(true);
-    return (
-      lists.filter(suggestion =>
-        suggestion.toLowerCase().includes(value.trim().toLowerCase())
-      )
-    );
-  };
-
-  const getSuggestionValue = suggestion => suggestion;
-
-  const renderSuggestion = (suggestion, {isHighlighted}) => (
-    <div
-      key={lists.indexOf(suggestion)}
-      className={`argo-autocomplete-entries ${isHighlighted ?
-        'argo-autocomplete-entries-highlighted' : ''}`}
-    >
-      {suggestion ? <Icon i={icon}/> : ''} {suggestion}
-    </div>
-  );
-
-  const renderInputComponent = inputProps => {
-    if (label)
-      return (
-        <div>
-          <div className='input-group mb-3'>
-            <div className='input-group-prepend'>
-              <span className='input-group-text' id='basic-addon1'>{label}</span>
-            </div>
-            <input {...inputProps} type='text' data-testid={`autocomplete-${field}`}
-            className={`form-control ${err && touched && 'border-danger'}`} aria-label='label' />
-          </div>
-          {!hide_error && err && touched && <div style={{color: '#FF0000', fontSize: 'small'}}>{err}</div>}
-        </div>
-      );
-    else
-      return (<input {...inputProps} type='text' data-testid={`autocomplete-${field}`} className='form-control'/>);
-  }
-
-  return (
-    <div>
-      <Autosuggest
-        suggestions={suggestions}
-        onSuggestionsClearRequested={() => setSuggestions([])}
-        onSuggestionsFetchRequested={({ value }) => {
-          setInputValue(value);
-          setSuggestions(getSuggestions(value));
-        }}
-        getSuggestionValue={getSuggestionValue}
-        renderSuggestion={renderSuggestion}
-        inputProps={{
-          value: inputValue,
-          onChange: (_, { newValue }) => {
-            setInputValue(newValue);
-            setFieldValue(field, newValue);
-            onselect_handler && onselect_handler(field, newValue);
-          }
-        }}
-        renderInputComponent={renderInputComponent}
-        shouldRenderSuggestions={() => true}
-        theme={{
-          containerOpen: 'argo-autocomplete-menu',
-          suggestionsList: 'argo-autocomplete-list'
-        }}
-      />
-    </div>
-  );
-};
 
 
 export const DropdownFilterComponent = ({value, onChange, data}) => (
