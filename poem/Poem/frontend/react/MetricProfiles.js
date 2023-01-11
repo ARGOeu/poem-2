@@ -110,6 +110,7 @@ const MetricProfileAutocompleteField = ({
       setValue(`services.${origIndex}.${tupleType}Changed`, true)
     }
 
+    clearErrors("view_services")
     setValue(`services.${origIndex}.${tupleType}`, newValue)
     setValue(name, newValue)
     clearErrors(name)
