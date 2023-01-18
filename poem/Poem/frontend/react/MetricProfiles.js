@@ -578,6 +578,7 @@ export const MetricProfilesComponent = (props) => {
   const webapi = new WebApi({
     token: props.webapitoken,
     metricProfiles: props.webapimetric,
+    aggregationProfiles: props.webapiaggregation,
     serviceTypes: props.webapiservicetypes
   })
 
@@ -632,34 +633,52 @@ export const MetricProfilesComponent = (props) => {
     { enabled: !!userDetails }
   )
 
+  const { data: aggregationProfiles, error: errorAggrProfiles, isLoading: loadingAggrProfiles } = useQuery(
+    [`${publicView ? "public_" : ""}aggregationprofile`, "webapi"],
+    async () => await webapi.fetchAggregationProfiles(),
+    { enabled: !publicView && !!userDetails }
+  )
+
+  const checkIfMetricProfileInAggregationProfile = (profileId) => {
+    return aggregationProfiles.filter(profile => profile.metric_profile.id === profileId).map(profile => profile.name)
+  }
+
   const doDelete = (idProfile) => {
-    webapiDeleteMutation.mutate(idProfile, {
-      onSuccess: () => {
-        backendDeleteMutation.mutate(idProfile, {
-          onSuccess: () => {
-            queryClient.invalidateQueries('metricprofile');
-            queryClient.invalidateQueries('public_metricprofile');
-            NotifyOk({
-              msg: 'Metric profile successfully deleted',
-              title: 'Deleted',
-              callback: () => history.push('/ui/metricprofiles')
-            });
-          },
-          onError: (error) => {
-            NotifyError({
-              title: 'Internal API error',
-              msg: error.message ? error.message : 'Internal API error deleting metric profile'
-            })
-          }
-        })
-      },
-      onError: (error) => {
-        NotifyError({
-          title: 'Web API error',
-          msg: error.message ? error.message : 'Web API error deleting metric profile'
-        })
-      }
-    })
+    let aggrProfiles = checkIfMetricProfileInAggregationProfile(idProfile)
+
+    if (aggrProfiles.length === 0)
+      webapiDeleteMutation.mutate(idProfile, {
+        onSuccess: () => {
+          backendDeleteMutation.mutate(idProfile, {
+            onSuccess: () => {
+              queryClient.invalidateQueries('metricprofile');
+              queryClient.invalidateQueries('public_metricprofile');
+              NotifyOk({
+                msg: 'Metric profile successfully deleted',
+                title: 'Deleted',
+                callback: () => history.push('/ui/metricprofiles')
+              });
+            },
+            onError: (error) => {
+              NotifyError({
+                title: 'Internal API error',
+                msg: error.message ? error.message : 'Internal API error deleting metric profile'
+              })
+            }
+          })
+        },
+        onError: (error) => {
+          NotifyError({
+            title: 'Web API error',
+            msg: error.message ? error.message : 'Web API error deleting metric profile'
+          })
+        }
+      })
+    else
+      NotifyError({
+        title: "Unable to delete",
+        msg: `Metric profile is associated with aggregation profile(s): ${aggrProfiles.join(", ")}`
+      })
   }
 
   const groupMetricsByServices = (servicesFlat) => {
@@ -770,7 +789,7 @@ export const MetricProfilesComponent = (props) => {
     }
   }
 
-  if (loadingUserDetails || loadingBackendMP || loadingWebApiMP || loadingMetricsAll || loadingWebApiST)
+  if (loadingUserDetails || loadingBackendMP || loadingWebApiMP || loadingMetricsAll || loadingWebApiST || loadingAggrProfiles)
     return (<LoadingAnim />)
 
   else if (errorUserDetails)
@@ -787,6 +806,9 @@ export const MetricProfilesComponent = (props) => {
 
   else if (errorWebApiST)
     return (<ErrorComponent error={errorWebApiST} />)
+
+  else if (errorAggrProfiles)
+    return (<ErrorComponent error={errorAggrProfiles} />)
 
   else if ((addview && webApiST) || (backendMP && webApiMP && webApiST) || (publicView))
   {
