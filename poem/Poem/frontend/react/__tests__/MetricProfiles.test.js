@@ -32,6 +32,7 @@ const mockDeleteMetricProfile = jest.fn();
 const mockAddObject = jest.fn();
 const mockAddMetricProfile = jest.fn();
 const mockFetchAggregationProfiles = jest.fn()
+const mockFetchReports = jest.fn()
 
 
 const queryClient = new QueryClient();
@@ -326,6 +327,115 @@ const mockAggregationProfiles = [
   }
 ]
 
+const mockReports = [
+  {
+    id: "aaaa1111-1111-2222-3333-4444-000000000000",
+    tenant: "TENANT",
+    disabled: false,
+    info: {
+      name: "CORE",
+      description: "Some report",
+      created: "2022-05-25 17:59:54",
+      updated: "2022-12-28 10:46:30"
+    },
+    computations: {
+      ar: true,
+      status: true,
+      trends: [
+        "flapping",
+        "status",
+        "tags"
+      ]
+    },
+    thresholds: {
+      availability: 80,
+      reliability: 90,
+      uptime: 0.8,
+      unknown: 0.1,
+      downtime: 0.1
+    },
+    topology_schema: {
+      group: {
+        type: "PROJECT",
+        group: {
+          type: "SERVICEGROUPS"
+        }
+      }
+    },
+    profiles: [
+      {
+        id: "va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv",
+        name: "ARGO_MON",
+        type: "metric"
+      },
+      {
+        id: "00000000-1111-1111-1111-222222222222",
+        name: "aggr1",
+        type: "aggregation"
+      },
+      {
+        id: "11111111-1111-1111-1111-111111111111",
+        name: "ops",
+        type: "operations"
+      }
+    ],
+    filter_tags: []
+  },
+  {
+    id: "aaaa1111-1111-2222-3333-4444-999999999999",
+    tenant: "TENANT",
+    disabled: false,
+    info: {
+      name: "ANOTHER",
+      description: "Some report",
+      created: "2022-05-25 17:59:54",
+      updated: "2022-12-28 10:46:30"
+    },
+    computations: {
+      ar: true,
+      status: true,
+      trends: [
+        "flapping",
+        "status",
+        "tags"
+      ]
+    },
+    thresholds: {
+      availability: 80,
+      reliability: 90,
+      uptime: 0.8,
+      unknown: 0.1,
+      downtime: 0.1
+    },
+    topology_schema: {
+      group: {
+        type: "PROJECT",
+        group: {
+          type: "SERVICEGROUPS"
+        }
+      }
+    },
+    profiles: [
+      {
+        id: "uiwee7um-cq51-pez2-6g85-aeghei1yeeph",
+        name: "ARGO_MON2",
+        type: "metric"
+      },
+      {
+        id: "99999999-1111-1111-1111-222222222222",
+        name: "aggr2",
+        type: "aggregation"
+      },
+      {
+        id: "11111111-1111-1111-1111-111111111111",
+        name: "ops",
+        type: "operations"
+      }
+    ],
+    filter_tags: []
+  }
+]
+
 
 function renderListView(publicView=false) {
   const route = `/ui/${publicView ? 'public_' : ''}metricprofiles`;
@@ -404,6 +514,12 @@ function renderChangeView(publicView=false) {
                 {...props}
                 webapimetric='https://mock.metrics.com'
                 webapiaggregation="https://mock.aggregation.com"
+                webapireports={{
+                  main: 'https://reports.com',
+                  tags: 'https://reports-tags.com',
+                  topologygroups: 'https://topology-groups.com',
+                  topologyendpoints: 'https://endpoints.com'
+                }}
                 webapitoken='token'
                 tenantname='TENANT'
               /> }
@@ -553,11 +669,13 @@ describe('Tests for metric profiles changeview', () => {
 
   beforeEach(() => {
     mockFetchAggregationProfiles.mockImplementation(() => Promise.resolve([mockAggregationProfiles[1]]))
+    mockFetchReports.mockImplementation(() => Promise.resolve([mockReports[1]]))
     WebApi.mockImplementation(() => {
       return {
         fetchMetricProfile: () => Promise.resolve(mockWebApiMetricProfile),
         fetchServiceTypes: () => Promise.resolve(mockWebApiServiceTypes),
         fetchAggregationProfiles: mockFetchAggregationProfiles,
+        fetchReports: mockFetchReports,
         changeMetricProfile: mockChangeMetricProfile,
         deleteMetricProfile: mockDeleteMetricProfile
       }
@@ -1968,9 +2086,96 @@ describe('Tests for metric profiles changeview', () => {
 
     expect(queryClient.invalidateQueries).not.toHaveBeenCalled()
     expect(NotificationManager.success).not.toHaveBeenCalled()
+    expect(NotificationManager.error).toHaveBeenCalledTimes(1)
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
         <p>Metric profile is associated with aggregation profile(s): aggr1</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      "Unable to delete",
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test("Test delete metric profile when associated with report", async () => {
+    mockFetchReports.mockReturnValueOnce(mockReports)
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /profile/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: /delete/i }))
+    await waitFor(() => {
+      expect(screen.getByRole("dialog", { title: /delete/i })).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole("button", { name: /yes/i }))
+
+    await waitFor(() => {
+      expect(mockDeleteMetricProfile).not.toHaveBeenCalled()
+    })
+
+    await waitFor(() => {
+      expect(mockDeleteObject).not.toHaveBeenCalled()
+    })
+
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled()
+    expect(NotificationManager.success).not.toHaveBeenCalled()
+    expect(NotificationManager.error).toHaveBeenCalledTimes(1)
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Metric profile is associated with report(s): CORE</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      "Unable to delete",
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test("Test delete metric profile when associated both with aggregation profile and report", async () => {
+    mockFetchAggregationProfiles.mockReturnValueOnce(mockAggregationProfiles)
+    mockFetchReports.mockReturnValueOnce(mockReports)
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /profile/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: /delete/i }))
+    await waitFor(() => {
+      expect(screen.getByRole("dialog", { title: /delete/i })).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole("button", { name: /yes/i }))
+
+    await waitFor(() => {
+      expect(mockDeleteMetricProfile).not.toHaveBeenCalled()
+    })
+
+    await waitFor(() => {
+      expect(mockDeleteObject).not.toHaveBeenCalled()
+    })
+
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled()
+    expect(NotificationManager.success).not.toHaveBeenCalled()
+    expect(NotificationManager.error).toHaveBeenCalledTimes(2)
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Metric profile is associated with aggregation profile(s): aggr1</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      "Unable to delete",
+      0,
+      expect.any(Function)
+    )
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Metric profile is associated with report(s): CORE</p>
         <p>Click to dismiss.</p>
       </div>,
       "Unable to delete",
@@ -2145,7 +2350,8 @@ describe('Tests for metric profile addview', () => {
       return {
         addMetricProfile: mockAddMetricProfile,
         fetchServiceTypes: () => Promise.resolve(mockWebApiServiceTypes),
-        fetchAggregationProfiles: () => Promise.resolve(mockAggregationProfiles)
+        fetchAggregationProfiles: () => Promise.resolve(mockAggregationProfiles),
+        fetchReports: () => Promise.resolve(mockReports)
       }
     })
     Backend.mockImplementation(() => {
@@ -2855,6 +3061,7 @@ describe('Tests for metric profile cloneview', () => {
         fetchMetricProfile: () => Promise.resolve(mockWebApiMetricProfile2),
         fetchServiceTypes: () => Promise.resolve(mockWebApiServiceTypes),
         fetchAggregationProfiles: () => Promise.resolve(mockAggregationProfiles),
+        fetchReports: () => Promise.resolve(mockReports),
         addMetricProfile: mockAddMetricProfile,
       }
     })

@@ -579,9 +579,9 @@ export const MetricProfilesComponent = (props) => {
     token: props.webapitoken,
     metricProfiles: props.webapimetric,
     aggregationProfiles: props.webapiaggregation,
+    reportsConfigurations: props.webapireports,
     serviceTypes: props.webapiservicetypes
   })
-
 
   const queryClient = useQueryClient();
   const webapiChangeMutation = useMutation(async (values) => await webapi.changeMetricProfile(values));
@@ -636,17 +636,34 @@ export const MetricProfilesComponent = (props) => {
   const { data: aggregationProfiles, error: errorAggrProfiles, isLoading: loadingAggrProfiles } = useQuery(
     [`${publicView ? "public_" : ""}aggregationprofile`, "webapi"],
     async () => await webapi.fetchAggregationProfiles(),
-    { enabled: !publicView && !!userDetails }
+    { enabled: !publicView && !cloneview && !addview && !!userDetails }
+  )
+
+  const { data: reports, error: errorReports, isLoading: loadingReports } = useQuery(
+    [`${publicView ? "public_" : ""}report`, "webapi"], async () => await webapi.fetchReports(),
+    { enabled: !publicView && !cloneview && !addview && !!userDetails }
   )
 
   const checkIfMetricProfileInAggregationProfile = (profileId) => {
     return aggregationProfiles.filter(profile => profile.metric_profile.id === profileId).map(profile => profile.name)
   }
 
+  const checkIfMetricProfileInReport = (profileId) => {
+    let reportsNames = new Array()
+    reports.forEach(report => {
+      report.profiles.forEach(profile => {
+        if (profile.type === "metric" && profile.id === profileId)
+          reportsNames.push(report.info.name)
+      })
+    })
+    return reportsNames
+  }
+
   const doDelete = (idProfile) => {
     let aggrProfiles = checkIfMetricProfileInAggregationProfile(idProfile)
+    let rprts = checkIfMetricProfileInReport(idProfile)
 
-    if (aggrProfiles.length === 0)
+    if (aggrProfiles.length === 0 && rprts.length === 0)
       webapiDeleteMutation.mutate(idProfile, {
         onSuccess: () => {
           backendDeleteMutation.mutate(idProfile, {
@@ -674,10 +691,17 @@ export const MetricProfilesComponent = (props) => {
           })
         }
       })
-    else
+
+    if (aggrProfiles.length >= 1)
       NotifyError({
         title: "Unable to delete",
         msg: `Metric profile is associated with aggregation profile(s): ${aggrProfiles.join(", ")}`
+      })
+
+    if (rprts.length >=1 )
+      NotifyError({
+        title: "Unable to delete",
+        msg: `Metric profile is associated with report(s): ${rprts.join(", ")}`
       })
   }
 
@@ -789,7 +813,7 @@ export const MetricProfilesComponent = (props) => {
     }
   }
 
-  if (loadingUserDetails || loadingBackendMP || loadingWebApiMP || loadingMetricsAll || loadingWebApiST || loadingAggrProfiles)
+  if (loadingUserDetails || loadingBackendMP || loadingWebApiMP || loadingMetricsAll || loadingWebApiST || loadingAggrProfiles || loadingReports)
     return (<LoadingAnim />)
 
   else if (errorUserDetails)
@@ -809,6 +833,9 @@ export const MetricProfilesComponent = (props) => {
 
   else if (errorAggrProfiles)
     return (<ErrorComponent error={errorAggrProfiles} />)
+
+  else if (errorReports)
+    return (<ErrorComponent error={errorReports} />)
 
   else if ((addview && webApiST) || (backendMP && webApiMP && webApiST) || (publicView))
   {
