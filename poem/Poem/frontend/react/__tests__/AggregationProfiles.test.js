@@ -30,6 +30,7 @@ const mockDeleteObject = jest.fn();
 const mockDeleteAggregation = jest.fn();
 const mockAddAggregation = jest.fn();
 const mockAddObject = jest.fn();
+const mockFetchReports = jest.fn()
 
 const queryClient = new QueryClient();
 
@@ -409,6 +410,168 @@ const mockAggregationVersions = [
   }
 ];
 
+const mockReports = [
+  {
+    id: "aaaa1111-1111-2222-3333-4444-000000000000",
+    tenant: "TENANT",
+    disabled: false,
+    info: {
+      name: "CORE",
+      description: "Some report",
+      created: "2022-05-25 17:59:54",
+      updated: "2022-12-28 10:46:30"
+    },
+    computations: {
+      ar: true,
+      status: true,
+      trends: [
+        "flapping",
+        "status",
+        "tags"
+      ]
+    },
+    thresholds: {
+      availability: 80,
+      reliability: 90,
+      uptime: 0.8,
+      unknown: 0.1,
+      downtime: 0.1
+    },
+    topology_schema: {
+      group: {
+        type: "PROJECT",
+        group: {
+          type: "SERVICEGROUPS"
+        }
+      }
+    },
+    profiles: [
+      {
+        id: "va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv",
+        name: "ARGO_MON",
+        type: "metric"
+      },
+      {
+        id: "00000000-1111-1111-1111-222222222222",
+        name: "aggr1",
+        type: "aggregation"
+      },
+      {
+        id: "11111111-1111-1111-1111-111111111111",
+        name: "ops",
+        type: "operations"
+      }
+    ],
+    filter_tags: []
+  },
+  {
+    id: "aaaa1111-1111-2222-3333-4444-999999999999",
+    tenant: "TENANT",
+    disabled: false,
+    info: {
+      name: "ANOTHER",
+      description: "Some report",
+      created: "2022-05-25 17:59:54",
+      updated: "2022-12-28 10:46:30"
+    },
+    computations: {
+      ar: true,
+      status: true,
+      trends: [
+        "flapping",
+        "status",
+        "tags"
+      ]
+    },
+    thresholds: {
+      availability: 80,
+      reliability: 90,
+      uptime: 0.8,
+      unknown: 0.1,
+      downtime: 0.1
+    },
+    topology_schema: {
+      group: {
+        type: "PROJECT",
+        group: {
+          type: "SERVICEGROUPS"
+        }
+      }
+    },
+    profiles: [
+      {
+        id: "uiwee7um-cq51-pez2-6g85-aeghei1yeeph",
+        name: "ARGO_MON2",
+        type: "metric"
+      },
+      {
+        id: "99999999-1111-1111-1111-222222222222",
+        name: "aggr2",
+        type: "aggregation"
+      },
+      {
+        id: "11111111-1111-1111-1111-111111111111",
+        name: "ops",
+        type: "operations"
+      }
+    ],
+    filter_tags: []
+  },
+  {
+    id: "bbbb1111-1111-2222-3333-4444-000000000000",
+    tenant: "TENANT",
+    disabled: false,
+    info: {
+      name: "TEST",
+      description: "Some report",
+      created: "2022-05-25 17:59:54",
+      updated: "2022-12-28 10:46:30"
+    },
+    computations: {
+      ar: true,
+      status: true,
+      trends: [
+        "flapping",
+        "status",
+        "tags"
+      ]
+    },
+    thresholds: {
+      availability: 80,
+      reliability: 90,
+      uptime: 0.8,
+      unknown: 0.1,
+      downtime: 0.1
+    },
+    topology_schema: {
+      group: {
+        type: "PROJECT",
+        group: {
+          type: "SERVICEGROUPS"
+        }
+      }
+    },
+    profiles: [
+      {
+        id: "va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv",
+        name: "ARGO_MON",
+        type: "metric"
+      },
+      {
+        id: "00000000-oooo-kkkk-aaaa-aaeekkccnnee",
+        name: "aggr1",
+        type: "aggregation"
+      },
+      {
+        id: "11111111-1111-1111-1111-111111111111",
+        name: "ops",
+        type: "operations"
+      }
+    ],
+    filter_tags: []
+  }
+]
+
 
 function renderListView(publicView = false) {
   const route = `/ui/${publicView ? 'public_' : ''}aggregationprofiles`;
@@ -468,6 +631,12 @@ function renderChangeView(publicView = false) {
                 {...props}
                 webapimetric='https://mock.metrics.com'
                 webapiaggregation='https://mock.aggregations.com'
+                webapireports={{
+                  main: 'https://reports.com',
+                  tags: 'https://reports-tags.com',
+                  topologygroups: 'https://topology-groups.com',
+                  topologyendpoints: 'https://endpoints.com'
+                }}
                 webapitoken='token'
                 tenantname='TENANT'
                 publicView={true}
@@ -611,11 +780,13 @@ describe('Tests for aggregation profiles changeview', () => {
   jest.spyOn(NotificationManager, 'error');
   jest.spyOn(queryClient, 'invalidateQueries');
 
-  beforeAll(() => {
+  beforeEach(() => {
+    mockFetchReports.mockReturnValue([mockReports[0], mockReports[1]])
     WebApi.mockImplementation(() => {
       return {
         fetchMetricProfiles: () => Promise.resolve(mockWebApiMetricProfiles),
         fetchAggregationProfile: () => Promise.resolve(mockWebApiProfile),
+        fetchReports: () => mockFetchReports,
         changeAggregation: mockChangeAggregation,
         deleteAggregation: mockDeleteAggregation
       }
@@ -2264,6 +2435,42 @@ describe('Tests for aggregation profiles changeview', () => {
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_aggregationprofile');
     expect(NotificationManager.success).toHaveBeenCalledWith(
       'Aggregation profile successfully deleted', 'Deleted', 2000
+    )
+  })
+
+  test("Test delete aggregation profile associated with report", async () => {
+    mockFetchReports.mockReturnValueOnce(mockReports)
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /change/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: /delete/i }))
+    await waitFor(() => {
+      expect(screen.getByRole("dialog", { title: /delete/i })).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole("button", { name: /yes/i }))
+
+    await waitFor(() => {
+      expect(mockDeleteAggregation).not.toHaveBeenCalled()
+    })
+
+    await waitFor(() => {
+      expect(mockDeleteObject).not.toHaveBeenCalled()
+    })
+
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled()
+    expect(NotificationManager.success).not.toHaveBeenCalled()
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Aggregation profile is associated with report(s): TEST</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      "Unable to delete",
+      0,
+      expect.any(Function)
     )
   })
 

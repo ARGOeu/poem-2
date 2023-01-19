@@ -980,8 +980,9 @@ export const AggregationProfilesChange = (props) => {
   const webapi = new WebApi({
     token: props.webapitoken,
     metricProfiles: props.webapimetric,
-    aggregationProfiles: props.webapiaggregation}
-  )
+    aggregationProfiles: props.webapiaggregation,
+    reportsConfigurations: props.webapireports
+  })
 
   const queryClient = useQueryClient();
   const webapiChangeMutation = useMutation(async (values) => await webapi.changeAggregation(values));
@@ -1039,6 +1040,12 @@ export const AggregationProfilesChange = (props) => {
     { enabled: !publicView ? !!userDetails : true }
   )
 
+  const { data: reports, error: errorReports, isLoading: loadingReports } = useQuery(
+    [`${publicView ? "public_" : ""}report`, "webapi"],
+    async () => await webapi.fetchReports(),
+    { enabled: !publicView && !addview && !!userDetails }
+  )
+
   const correctMetricProfileName = (metricProfileId, listMetricProfilesWebApi) => {
     let targetProfile = listMetricProfilesWebApi.filter(profile => profile.id === metricProfileId)
 
@@ -1066,6 +1073,17 @@ export const AggregationProfilesChange = (props) => {
     })
 
     return list_profiles.sort(sortMetricProfiles)
+  }
+
+  const checkIfAggregationInReport = (profileId) => {
+    let reportsNames = new Array()
+    reports.forEach(report => {
+      report.profiles.forEach(profile => {
+        if (profile.type === "aggregation" && profile.id === profileId)
+          reportsNames.push(report.info.name)
+      })
+    })
+    return reportsNames
   }
 
   const doChange = (values) => {
@@ -1160,36 +1178,45 @@ export const AggregationProfilesChange = (props) => {
   }
 
   const doDelete = (idProfile) => {
-    webapiDeleteMutation.mutate(idProfile, {
-      onSuccess: () => {
-        backendDeleteMutation.mutate(idProfile, {
-          onSuccess: () => {
-            queryClient.invalidateQueries('aggregationprofile');
-            queryClient.invalidateQueries('public_aggregationprofile');
-            NotifyOk({
-              msg: 'Aggregation profile successfully deleted',
-              title: 'Deleted',
-              callback: () => history.push('/ui/aggregationprofiles')
-            });
-          },
-          onError: (error) => {
-            NotifyError({
-              title: 'Internal API error',
-              msg: error.message ? error.message : 'Internal API error deleting aggregation profile'
-            })
-          }
-        })
-      },
-      onError: (error) => {
-        NotifyError({
-          title: 'Web API error',
-          msg: error.message ? error.message : 'Web API error deleting aggregation profile'
-        })
-      }
-    })
+    let reportNames = checkIfAggregationInReport(idProfile)
+
+    if (reportNames.length === 0)
+      webapiDeleteMutation.mutate(idProfile, {
+        onSuccess: () => {
+          backendDeleteMutation.mutate(idProfile, {
+            onSuccess: () => {
+              queryClient.invalidateQueries('aggregationprofile');
+              queryClient.invalidateQueries('public_aggregationprofile');
+              NotifyOk({
+                msg: 'Aggregation profile successfully deleted',
+                title: 'Deleted',
+                callback: () => history.push('/ui/aggregationprofiles')
+              });
+            },
+            onError: (error) => {
+              NotifyError({
+                title: 'Internal API error',
+                msg: error.message ? error.message : 'Internal API error deleting aggregation profile'
+              })
+            }
+          })
+        },
+        onError: (error) => {
+          NotifyError({
+            title: 'Web API error',
+            msg: error.message ? error.message : 'Web API error deleting aggregation profile'
+          })
+        }
+      })
+
+    else
+      NotifyError({
+        title: "Unable to delete",
+        msg: `Aggregation profile is associated with report(s): ${reportNames.join(", ")}`
+      })
   }
 
-  if (loadingUserDetails || loadingBackendAP || loadingWebApiAP || loadingMetricProfiles)
+  if (loadingUserDetails || loadingBackendAP || loadingWebApiAP || loadingMetricProfiles || loadingReports)
     return (<LoadingAnim />)
 
   else if (errorBackendAP)
@@ -1200,6 +1227,9 @@ export const AggregationProfilesChange = (props) => {
 
   else if (errorMetricProfiles)
     return (<ErrorComponent error={errorMetricProfiles} />)
+
+  else if (errorReports)
+    return (<ErrorComponent error={errorReports} />)
 
   else if ((addview || (backendAP && webApiAP) && metricProfiles)) {
     let write_perm = undefined

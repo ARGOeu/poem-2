@@ -240,6 +240,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         {...props}
         webapiaggregation={webApiAggregation}
         webapimetric={webApiMetric}
+        webapireports={webApiReports}
         webapitoken={token}
         tenantname={tenantName}/>}
       />
