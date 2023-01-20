@@ -1139,6 +1139,11 @@ export const ThresholdsProfilesChange = (props) => {
     { enabled: !publicView }
   )
 
+  const { data: reports, error: errorReports, isLoading: loadingReports } = useQuery(
+    ["report", "webapi"], async () => webapi.fetchReports(),
+    { enabled: !publicView && !addview && !!userDetails }
+  )
+
   function toggleAreYouSure() {
     setAreYouSureModal(!areYouSureModal);
   }
@@ -1193,6 +1198,18 @@ export const ThresholdsProfilesChange = (props) => {
     })
 
     return endpoints.filter(onlyUnique).sort()
+  }
+
+  function getAssociatedReports (profileId) {
+    let reportsNames = new Array()
+    reports.forEach(report => {
+      report.profiles.forEach(profile => {
+        if (profile.type === "thresholds" && profile.id === profileId)
+          reportsNames.push(report.info.name)
+      })
+    })
+
+    return reportsNames
   }
 
   function onSubmitHandle(values) {
@@ -1282,36 +1299,44 @@ export const ThresholdsProfilesChange = (props) => {
   }
 
   function doDelete() {
-    webapiDeleteMutation.mutate(undefined, {
-      onSuccess: () => {
-        backendDeleteMutation.mutate(undefined, {
-          onSuccess: () => {
-            queryClient.invalidateQueries('thresholdsprofile');
-            queryClient.invalidateQueries('public_thresholdsprofile');
-            NotifyOk({
-              msg: 'Thresholds profile successfully deleted',
-              title: 'Deleted',
-              callback: () => history.push('/ui/thresholdsprofiles')
-            })
-          },
-          onError: (error) => {
-            NotifyError({
-              title: 'Internal API error',
-              msg: error.message ? error.message : 'Internal API error deleting thresholds profile'
-            })
-          }
-        })
-      },
-      onError: (error) => {
-        NotifyError({
-          title: 'Web API error',
-          msg: error.message ? error.message : 'Web API error deleting thresholds profile'
-        })
-      }
-    })
+    let reportsWithThreshold = getAssociatedReports(profileId)
+    if (reportsWithThreshold.length === 0)
+      webapiDeleteMutation.mutate(undefined, {
+        onSuccess: () => {
+          backendDeleteMutation.mutate(undefined, {
+            onSuccess: () => {
+              queryClient.invalidateQueries('thresholdsprofile');
+              queryClient.invalidateQueries('public_thresholdsprofile');
+              NotifyOk({
+                msg: 'Thresholds profile successfully deleted',
+                title: 'Deleted',
+                callback: () => history.push('/ui/thresholdsprofiles')
+              })
+            },
+            onError: (error) => {
+              NotifyError({
+                title: 'Internal API error',
+                msg: error.message ? error.message : 'Internal API error deleting thresholds profile'
+              })
+            }
+          })
+        },
+        onError: (error) => {
+          NotifyError({
+            title: 'Web API error',
+            msg: error.message ? error.message : 'Web API error deleting thresholds profile'
+          })
+        }
+      })
+
+    else
+      NotifyError({
+        title: "Unable to delete",
+        msg: `Thresholds profile is associated with report(s): ${reportsWithThreshold.join(", ")}`
+      })
   }
 
-  const loading = loadingBackendTP || loadingWebApiTP || loadingUserDetails || loadingAllMetrics || loadingMetricProfiles || loadingTopologyEndpoints
+  const loading = loadingBackendTP || loadingWebApiTP || loadingUserDetails || loadingAllMetrics || loadingMetricProfiles || loadingTopologyEndpoints || loadingReports
 
   if (loading)
     return (<LoadingAnim/>);
@@ -1330,6 +1355,9 @@ export const ThresholdsProfilesChange = (props) => {
 
   else if (errorTopologyEndpoints)
     return ( <ErrorComponent error={errorTopologyEndpoints} /> )
+
+  else if (errorReports)
+    return (<ErrorComponent error={errorReports} />)
 
   else if ((addview || (backendTP && webApiTP)) && (publicView || (allMetrics && topologyEndpoints && metricProfiles))) {
     let write_perm = userDetails ?
