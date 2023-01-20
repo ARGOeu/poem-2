@@ -78,14 +78,14 @@ describe('Test for login page on SuperAdmin POEM', () => {
     expect(screen.getAllByRole('button')).toHaveLength(1);
     expect(screen.getByRole('button', { name: /login using username and password/i })).toBeInTheDocument();
 
-    expect(screen.getByRole('link', { name: /cnrs/i }).closest('a')).toHaveAttribute('href', 'http://www.cnrs.fr/');
-    expect(screen.getByRole('link', { name: /grnet/i }).closest('a')).toHaveAttribute('href', 'https://grnet.gr/');
-    expect(screen.getByRole('link', { name: /srce/i }).closest('a')).toHaveAttribute('href', 'http://www.srce.unizg.hr/');
-    expect(screen.getByRole('link', { name: /eosc-hub/i }).closest('a')).toHaveAttribute('href', 'https://www.eosc-hub.eu');
-    expect(screen.getByRole('link', { name: /egi/i }).closest('a')).toHaveAttribute('href', 'http://www.egi.eu/');
-    expect(screen.getByRole('link', { name: /terms/i }).closest('a')).toHaveAttribute('href', 'https://ui.argo.grnet.gr/egi/termsofUse');
-    expect(screen.getByRole('link', { name: /cookie/i }).closest('a')).toHaveAttribute('href', '#')
-    expect(screen.getByRole('link', { name: /privacy/i }).closest('a')).toHaveAttribute('href', 'https://argo.egi.eu/egi/policies');
+    expect(screen.getByText(/cnrs/i).closest('a')).toHaveAttribute('href', 'http://www.cnrs.fr/');
+    expect(screen.getByText(/grnet/i).closest('a')).toHaveAttribute('href', 'https://grnet.gr/');
+    expect(screen.getByText(/srce/i).closest('a')).toHaveAttribute('href', 'http://www.srce.unizg.hr/');
+    expect(screen.getByText(/eosc-hub/i).closest('a')).toHaveAttribute('href', 'https://www.eosc-hub.eu');
+    expect(screen.getByText(/egi.eu/i).closest('a')).toHaveAttribute('href', 'http://www.egi.eu/');
+    expect(screen.getByText(/terms/i).closest('a')).toHaveAttribute('href', 'https://ui.argo.grnet.gr/egi/termsofUse');
+    expect(screen.getByText(/cookie/i).closest('a')).toHaveAttribute('href', '#')
+    expect(screen.getByText(/privacy/i).closest('a')).toHaveAttribute('href', 'https://argo.egi.eu/egi/policies');
   })
 })
 
@@ -114,12 +114,12 @@ describe('Test for login page on tenant POEM', () => {
     expect(screen.getByRole('button', { name: /login using username and password/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /egi checkin/i}).textContent).toBe('Log in using EGI CheckIn');
 
-    expect(screen.getByRole('link', { name: /cnrs/i }).closest('a')).toHaveAttribute('href', 'http://www.cnrs.fr/');
-    expect(screen.getByRole('link', { name: /grnet/i }).closest('a')).toHaveAttribute('href', 'https://grnet.gr/');
-    expect(screen.getByRole('link', { name: /srce/i }).closest('a')).toHaveAttribute('href', 'http://www.srce.unizg.hr/');
-    expect(screen.getByRole('link', { name: /eosc-hub/i }).closest('a')).toHaveAttribute('href', 'https://www.eosc-hub.eu');
-    expect(screen.getByRole('link', { name: /egi/i }).closest('a')).toHaveAttribute('href', 'http://www.egi.eu/');
-    expect(screen.getByRole('link', { name: /terms/i }).closest('a')).toHaveAttribute('href', 'https://ui.argo.grnet.gr/egi/termsofUse');
-    expect(screen.getByRole('link', { name: /cookie/i }).closest('a')).toHaveAttribute('href', '#')
+    expect(screen.getByText(/cnrs/i).closest('a')).toHaveAttribute('href', 'http://www.cnrs.fr/');
+    expect(screen.getByText(/grnet/i).closest('a')).toHaveAttribute('href', 'https://grnet.gr/');
+    expect(screen.getByText(/srce/i).closest('a')).toHaveAttribute('href', 'http://www.srce.unizg.hr/');
+    expect(screen.getByText(/eosc-hub/i).closest('a')).toHaveAttribute('href', 'https://www.eosc-hub.eu');
+    expect(screen.getByText(/egi.eu/i).closest('a')).toHaveAttribute('href', 'http://www.egi.eu/');
+    expect(screen.getByText(/terms/i).closest('a')).toHaveAttribute('href', 'https://ui.argo.grnet.gr/egi/termsofUse');
+    expect(screen.getByText(/cookie/i).closest('a')).toHaveAttribute('href', '#')
   })
 })
