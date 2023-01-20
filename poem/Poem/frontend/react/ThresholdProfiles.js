@@ -1332,7 +1332,7 @@ export const ThresholdsProfilesChange = (props) => {
     else
       NotifyError({
         title: "Unable to delete",
-        msg: `Thresholds profile is associated with report(s): ${reportsWithThreshold.join(", ")}`
+        msg: `Thresholds profile is associated with report${reportsWithThreshold.length > 1 ? "s" : ""}: ${reportsWithThreshold.join(", ")}`
       })
   }
 

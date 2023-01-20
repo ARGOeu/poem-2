@@ -2513,7 +2513,7 @@ describe('Tests for threshols profile changeview', () => {
     expect(NotificationManager.success).not.toHaveBeenCalled()
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>Thresholds profile is associated with report(s): CORE, TEST</p>
+        <p>Thresholds profile is associated with reports: CORE, TEST</p>
         <p>Click to dismiss.</p>
       </div>,
       "Unable to delete",

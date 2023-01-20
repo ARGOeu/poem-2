@@ -1075,7 +1075,7 @@ export const AggregationProfilesChange = (props) => {
     return list_profiles.sort(sortMetricProfiles)
   }
 
-  const checkIfAggregationInReport = (profileId) => {
+  const getAssociatedReports = (profileId) => {
     let reportsNames = new Array()
     reports.forEach(report => {
       report.profiles.forEach(profile => {
@@ -1178,7 +1178,7 @@ export const AggregationProfilesChange = (props) => {
   }
 
   const doDelete = (idProfile) => {
-    let reportNames = checkIfAggregationInReport(idProfile)
+    let reportNames = getAssociatedReports(idProfile)
 
     if (reportNames.length === 0)
       webapiDeleteMutation.mutate(idProfile, {
@@ -1212,7 +1212,7 @@ export const AggregationProfilesChange = (props) => {
     else
       NotifyError({
         title: "Unable to delete",
-        msg: `Aggregation profile is associated with report(s): ${reportNames.join(", ")}`
+        msg: `Aggregation profile is associated with report${reportNames.length > 1 ? "s" : ""}: ${reportNames.join(", ")}`
       })
   }
 

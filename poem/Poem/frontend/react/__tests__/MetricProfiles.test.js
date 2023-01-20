@@ -2089,7 +2089,7 @@ describe('Tests for metric profiles changeview', () => {
     expect(NotificationManager.error).toHaveBeenCalledTimes(1)
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>Metric profile is associated with aggregation profile(s): aggr1</p>
+        <p>Metric profile is associated with aggregation profile: aggr1</p>
         <p>Click to dismiss.</p>
       </div>,
       "Unable to delete",
@@ -2126,7 +2126,7 @@ describe('Tests for metric profiles changeview', () => {
     expect(NotificationManager.error).toHaveBeenCalledTimes(1)
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>Metric profile is associated with report(s): CORE</p>
+        <p>Metric profile is associated with report: CORE</p>
         <p>Click to dismiss.</p>
       </div>,
       "Unable to delete",
@@ -2165,7 +2165,7 @@ describe('Tests for metric profiles changeview', () => {
 
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>Metric profile is associated with aggregation profile(s): aggr1</p>
+        <p>Metric profile is associated with aggregation profile: aggr1</p>
         <p>Click to dismiss.</p>
       </div>,
       "Unable to delete",
@@ -2175,7 +2175,7 @@ describe('Tests for metric profiles changeview', () => {
 
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>Metric profile is associated with report(s): CORE</p>
+        <p>Metric profile is associated with report: CORE</p>
         <p>Click to dismiss.</p>
       </div>,
       "Unable to delete",

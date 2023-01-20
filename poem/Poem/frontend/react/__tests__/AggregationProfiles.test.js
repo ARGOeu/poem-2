@@ -2465,7 +2465,7 @@ describe('Tests for aggregation profiles changeview', () => {
     expect(NotificationManager.success).not.toHaveBeenCalled()
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>Aggregation profile is associated with report(s): TEST</p>
+        <p>Aggregation profile is associated with report: TEST</p>
         <p>Click to dismiss.</p>
       </div>,
       "Unable to delete",

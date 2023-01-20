@@ -644,11 +644,11 @@ export const MetricProfilesComponent = (props) => {
     { enabled: !publicView && !cloneview && !addview && !!userDetails }
   )
 
-  const checkIfMetricProfileInAggregationProfile = (profileId) => {
+  const getAssociatedAggregations = (profileId) => {
     return aggregationProfiles.filter(profile => profile.metric_profile.id === profileId).map(profile => profile.name)
   }
 
-  const checkIfMetricProfileInReport = (profileId) => {
+  const getAssociatedReports = (profileId) => {
     let reportsNames = new Array()
     reports.forEach(report => {
       report.profiles.forEach(profile => {
@@ -660,8 +660,8 @@ export const MetricProfilesComponent = (props) => {
   }
 
   const doDelete = (idProfile) => {
-    let aggrProfiles = checkIfMetricProfileInAggregationProfile(idProfile)
-    let rprts = checkIfMetricProfileInReport(idProfile)
+    let aggrProfiles = getAssociatedAggregations(idProfile)
+    let rprts = getAssociatedReports(idProfile)
 
     if (aggrProfiles.length === 0 && rprts.length === 0)
       webapiDeleteMutation.mutate(idProfile, {
@@ -695,13 +695,13 @@ export const MetricProfilesComponent = (props) => {
     if (aggrProfiles.length >= 1)
       NotifyError({
         title: "Unable to delete",
-        msg: `Metric profile is associated with aggregation profile(s): ${aggrProfiles.join(", ")}`
+        msg: `Metric profile is associated with aggregation profile${aggrProfiles.length > 1 ? "s" : ""}: ${aggrProfiles.join(", ")}`
       })
 
     if (rprts.length >=1 )
       NotifyError({
         title: "Unable to delete",
-        msg: `Metric profile is associated with report(s): ${rprts.join(", ")}`
+        msg: `Metric profile is associated with report${rprts.length > 1 ? "s" : ""}: ${rprts.join(", ")}`
       })
   }
 
