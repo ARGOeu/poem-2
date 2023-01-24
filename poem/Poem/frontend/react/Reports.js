@@ -1,6 +1,5 @@
-import React, { useState, useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { Backend, WebApi } from './DataManager';
-
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import {
   BaseArgoTable,
@@ -10,13 +9,11 @@ import {
   NotifyError,
   NotifyOk,
   ParagraphTitle,
-  CustomReactSelect,
-  CustomError
+  CustomReactSelect
  } from './UIElements';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
-import { Formik, Field, FieldArray, Form } from 'formik';
 import {
   Button,
   FormGroup,
@@ -30,7 +27,9 @@ import {
   InputGroupText,
   FormText,
   Label,
-  Input
+  Input,
+  Form,
+  FormFeedback
 } from 'reactstrap';
 import * as Yup from 'yup';
 import {
@@ -44,6 +43,12 @@ import {
   fetchTopologyGroups,
   fetchTopologyEndpoints,
 } from './QueryFunctions';
+import { Controller, FormProvider, useFieldArray, useForm, useFormContext, useWatch } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { ErrorMessage } from '@hookform/error-message';
+
+
+const ReportsChangeContext = React.createContext()
 
 
 const ReportsSchema = Yup.object().shape({
@@ -170,6 +175,7 @@ function preProcessTagValue(data) {
   return data
 }
 
+
 const entityInitValues = (matchWhat, formvalue) => {
   let tmp = new Array()
   for (let entity of formvalue) {
@@ -193,7 +199,8 @@ const entityInitValues = (matchWhat, formvalue) => {
   return tmp
 }
 
-const formatFilteredSelectEntities = (data, {entitiesGroups, entitiesEndpoints}, topoMaps, lookkey) => {
+
+const formatFilteredSelectEntities = (data, entitiesGroups, entitiesEndpoints, topoMaps, lookkey) => {
   let selectedTop = new Array()
   let selectedMiddle = new Array()
 
@@ -277,6 +284,7 @@ const formatFilteredSelectEntities = (data, {entitiesGroups, entitiesEndpoints},
     return formatSelectEntities(data.sort(sortStr))
 }
 
+
 const formatSelectEntities = (data) => {
   let formatted = new Array()
   for (var e of [...data])
@@ -293,7 +301,7 @@ const TagSelect = ({field, tagOptions, onChangeHandler, isMulti,
   if (tagInitials) {
     return (
       <CustomReactSelect
-        name={field.name}
+        forwardedRef={field.ref}
         closeMenuOnSelect={closeMenuOnSelect}
         isMulti={isMulti}
         isClearable={false}
@@ -306,7 +314,7 @@ const TagSelect = ({field, tagOptions, onChangeHandler, isMulti,
   else
     return (
       <CustomReactSelect
-        name={field.name}
+        forwardedRef={field.ref}
         closeMenuOnSelect={closeMenuOnSelect}
         isMulti={isMulti}
         isClearable={false}
@@ -317,9 +325,10 @@ const TagSelect = ({field, tagOptions, onChangeHandler, isMulti,
 }
 
 
-const TopologyTagList = ({ part, fieldName, tagsState, setTagsState, tagsAll, addview, publicView, push, form, remove }) => {
+const TopologyTagList = ({ part, fieldName, tagsAll, addview, publicView }) => {
   const extractTags = (which, filter=false) => {
     let selected = new Array()
+    let tagsState = getValues(fieldName.toLowerCase().endsWith("tags") ? "tagsState" : "extensionsState")
 
     if (filter)
       if (tagsState[part])
@@ -344,7 +353,7 @@ const TopologyTagList = ({ part, fieldName, tagsState, setTagsState, tagsAll, ad
       newState[part] = new Object()
       newState[part][index] = value
     }
-    setTagsState(newState)
+    setValue(tagsStateName, newState)
   }
 
   const isMultiValuesTags = (data) => {
@@ -391,134 +400,151 @@ const TopologyTagList = ({ part, fieldName, tagsState, setTagsState, tagsAll, ad
     return []
   }
 
+  const { control, getValues, setValue } = useFormContext()
+
+  const { fields, append, remove } = useFieldArray({ control, name: fieldName })
+
+  const tagsStateName = fieldName.toLowerCase().endsWith("tags") ? "tagsState" : "extensionsState"
+
+  const tagsState = useWatch({ control, name: tagsStateName })
+
   return (
     <React.Fragment>
       {
-        form.values[fieldName].length === 0 && publicView ?
+        fields.length === 0 && publicView ?
           <Row className="g-0">
             <Col md={4}>
-              <Field
-                name={`${fieldName}.0.name`}
+              <Input
                 data-testid={`${fieldName}.0.name`}
-                className='form-control'
-                disabled={true}
-                value=''
+                className="form-control"
+                disabled={ true }
+                value=""
               />
             </Col>
             <Col md={7}>
-              <Field
-                name={`${fieldName}.0.value`}
+              <Input
                 data-testid={`${fieldName}.0.value`}
-                className='form-control'
-                disabled={true}
-                value=''
+                className="form-control"
+                disabled={ true }
+                value=""
               />
             </Col>
           </Row>
         :
-        form.values[fieldName].map((tags, index) => (
-          <React.Fragment key={index}>
-            <Row key={index} className="g-0">
-              <Col md={4}>
-                {
-                    publicView ?
-                      <Field
-                        name={`${fieldName}.${index}.name`}
-                        data-testid={`${fieldName}.${index}.name`}
-                        className='form-control'
-                        disabled={true}
-                        value={form.values[fieldName][index].name}
-                      />
-                    :
-                      <Field
-                        name={`${fieldName}.${index}.name`}
-                        data-testid={`${fieldName}.${index}.name`}
-                        component={TagSelect}
-                        tagOptions={extractTags(part, true).map((e) => new Object({
-                          'label': e.name,
-                          'value': e.name
-                        }))}
-                        onChangeHandler={(e) => {
-                          form.setFieldValue(`${fieldName}.${index}.name`, e.value)
-                          recordSelectedTagKeys(index, e.value)
-                        }}
-                        isMulti={false}
-                        closeMenuOnSelect={true}
-                        tagInitials={!addview ? tagsInitValues('name', tags) : undefined}
-                      />
-                  }
-              </Col>
-              <Col md={7}>
-                {
-                    publicView ?
-                      <Field
-                        name={`${fieldName}.${index}.value`}
-                        data-testid={`${fieldName}.${index}.value`}
-                        className='form-control'
-                        disabled={true}
-                        value={preProcessTagValue(tags.value.replace(new RegExp('\\|', 'g'), ', '))}
-                      />
-                    :
-                      <Field
-                        name={`${fieldName}.${index}.value`}
-                        data-testid={`${fieldName}.${index}.value`}
-                        component={TagSelect}
-                        tagOptions={extractValuesTags(index, true)}
-                        onChangeHandler={(e) => {
-                          if (Array.isArray(e)) {
-                            let joinedValues = ''
-                            e.forEach((e) => {
-                              joinedValues += e.value + '|'
-                            })
-                            form.setFieldValue(`${fieldName}.${index}.value`, joinedValues.replace(/\|$/, ''))
-                          }
-                          else
-                            form.setFieldValue(`${fieldName}.${index}.value`, e.value.trim())
-                        }}
-                        isMulti={isMultiValuesTags(extractValuesTags(index))}
-                        closeMenuOnSelect={!isMultiValuesTags(extractValuesTags(index))}
-                        tagInitials={!addview ? tagsInitValues('value', tags, true) : undefined}
-                      />
-                  }
-              </Col>
-              <Col md={1} className="ps-2 pt-1">
-                {
-                    !publicView &&
-                      <Button size="sm" color="danger"
-                        type="button"
-                        data-testid={`remove${fieldName.toLowerCase().endsWith('tags') ? 'Tag' : 'Extension'}-${index}`}
-                        onClick={() => {
-                          let newState = JSON.parse(JSON.stringify(tagsState))
-                          let renumNewState = JSON.parse(JSON.stringify(tagsState))
+          fields.map((tags, index) => (
+            <React.Fragment key={index}>
+              <Row key={ tags.id } className="g-0">
+                <Col md={4}>
+                  <Controller
+                    name={ `${fieldName}.${index}.name` }
+                    control={ control }
+                    render={ ({ field }) =>
+                      publicView ?
+                        <Input
+                          { ...field }
+                          data-testid={`${fieldName}.${index}.name`}
+                          className="form-control"
+                          disabled={ true }
+                          value={ getValues(`${fieldName}.${index}.name`) }
+                        />
+                      :
+                        <TagSelect
+                          field={ field }
+                          data-testid={ `${fieldName}.${index}.name` }
+                          tagOptions={ extractTags(part, true).map((e) => new Object({
+                            'label': e.name,
+                            'value': e.name
+                          })) }
+                          onChangeHandler={(e) => {
+                            setValue(`${fieldName}.${index}.name`, e.value)
+                            recordSelectedTagKeys(index, e.value)
+                          }}
+                          isMulti={false}
+                          closeMenuOnSelect={true}
+                          tagInitials={!addview ? tagsInitValues('name', tags) : undefined}
+                        />
+                    }
+                  />
+                </Col>
+                <Col md={7}>
+                  <Controller
+                    name={ `${fieldName}.${index}.value` }
+                    control={ control }
+                    render={ ({ field }) =>
+                      publicView ?
+                        <Input
+                          { ...field }
+                          data-testid={`${fieldName}.${index}.value`}
+                          className='form-control'
+                          disabled={true}
+                          value={preProcessTagValue(tags.value.replace(new RegExp('\\|', 'g'), ', '))}
+                        />
+                      :
+                        <TagSelect
+                          field={ field }
+                          data-testid={`${fieldName}.${index}.value`}
+                          tagOptions={extractValuesTags(index, true)}
+                          onChangeHandler={(e) => {
+                            if (Array.isArray(e)) {
+                              let joinedValues = ''
+                              e.forEach((e) => {
+                                joinedValues += e.value + '|'
+                              })
+                              setValue(`${fieldName}.${index}.value`, joinedValues.replace(/\|$/, ''))
+                            }
+                            else
+                              setValue(`${fieldName}.${index}.value`, e.value.trim())
+                          }}
+                          isMulti={isMultiValuesTags(extractValuesTags(index))}
+                          closeMenuOnSelect={!isMultiValuesTags(extractValuesTags(index))}
+                          tagInitials={!addview ? tagsInitValues('value', tags, true) : undefined}
+                        />
+                    }
+                  />
+                </Col>
+                <Col md={1} className="ps-2 pt-1">
+                  {
+                      !publicView &&
+                        <Button
+                          size="sm"
+                          color="danger"
+                          type="button"
+                          data-testid={`remove${fieldName.toLowerCase().endsWith('tags') ? 'Tag' : 'Extension'}-${index}`}
+                          onClick={() => {
+                            let newState = JSON.parse(JSON.stringify(tagsState))
+                            let renumNewState = JSON.parse(JSON.stringify(tagsState))
 
-                          delete newState[part][index]
-                          delete renumNewState[part]
-                          renumNewState[part] = new Object()
+                            delete newState[part][index]
+                            delete renumNewState[part]
+                            renumNewState[part] = new Object()
 
-                          let i = 0
-                          for (var tag in newState[part]) {
-                            renumNewState[part][i] = newState[part][tag]
-                            i += 1
-                          }
+                            let i = 0
+                            for (var tag in newState[part]) {
+                              renumNewState[part][i] = newState[part][tag]
+                              i += 1
+                            }
 
-                          remove(index)
-                          setTagsState(renumNewState)
-                        }}>
-                        <FontAwesomeIcon icon={faTimes}/>
-                      </Button>
-                  }
-              </Col>
-            </Row>
-          </React.Fragment>
-          ))
+                            remove(index)
+                            setValue(tagsStateName, renumNewState)
+                          }}
+                        >
+                          <FontAwesomeIcon icon={faTimes}/>
+                        </Button>
+                    }
+                </Col>
+              </Row>
+            </React.Fragment>
+            ))
       }
       <Row>
         <Col className="pt-4 d-flex justify-content-center">
           {
             !publicView &&
-              <Button color="success"
+              <Button
+                color="success"
                 type="button"
-                onClick={() => {push({'name': '', 'value': ''})}}>
+                onClick={ () => { append({name: '', value: ''}) } }
+              >
                 {`Add new ${fieldName.toLowerCase().endsWith('tags') ? 'tag' : 'extension'}`}
               </Button>
           }
@@ -533,7 +559,7 @@ const EntitySelect = ({field, label, entitiesOptions, onChangeHandler, entitiesI
   if (entitiesInitials) {
     return (
       <CustomReactSelect
-        name={field.name}
+        forwardedRef={field.ref}
         closeMenuOnSelect={false}
         placeholder="Search..."
         isClearable={false}
@@ -548,7 +574,7 @@ const EntitySelect = ({field, label, entitiesOptions, onChangeHandler, entitiesI
   else
     return (
       <CustomReactSelect
-        name={field.name}
+        forwardedRef={field.ref}
         closeMenuOnSelect={false}
         placeholder="Search..."
         isClearable={false}
@@ -561,8 +587,13 @@ const EntitySelect = ({field, label, entitiesOptions, onChangeHandler, entitiesI
 }
 
 
-const TopologyConfGroupsEntityFields = ({topoGroups, addview, topoMaps, publicView, form}) => {
-  let topoType = form.values.topologyType
+const TopologyConfGroupsEntityFields = ({topoGroups, addview, topoMaps, publicView}) => {
+  const { control, getValues, setValue } = useFormContext()
+
+  const topoType = useWatch({ control, name: "topologyType" })
+  const entitiesGroups = useWatch({ control, name: "entitiesGroups" })
+  const entitiesEndpoints = useWatch({ control, name: "entitiesEndpoints" })
+
   let label1 = undefined
   let label2 = undefined
   let key1 = undefined
@@ -590,67 +621,78 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, topoMaps, publicVi
   return (
     <React.Fragment>
       <Label for='topoEntityGroup1'>{label1}</Label>
-      {
-        publicView ?
-          <Field
-            name='entitiesGroups.0.value'
-            id='topoEntityGroup1'
-            className='form-control'
-            disabled={true}
-            value={form.values.entitiesGroups[0] ? form.values.entitiesGroups[0].value ? form.values.entitiesGroups[0].value.replace(new RegExp('\\|', 'g'), ', ') : '' : ''}
-          />
-        :
-          <Field
-            name="entitiesGroups.0.value"
-            id="topoEntityGroup1"
-            component={EntitySelect}
-            entitiesOptions={formatSelectEntities(topoGroups[key1])}
-            onChangeHandler={(e) => {
-              let joinedValues = ''
-              for (let event of e)
-                joinedValues += event.value + '|'
-              joinedValues = joinedValues.replace(/\|$/, '')
-              form.setFieldValue("entitiesGroups.0.name", key1)
-              form.setFieldValue("entitiesGroups.0.value", joinedValues)
-            }}
-            entitiesInitials={!addview ? entityInitValues(["entitiesNgi", "entitiesProjects"], form.values.entitiesGroups) : undefined}
-           />
-       }
+      <Controller
+        name="entitiesGroups.0.value"
+        control={ control }
+        render={ ({ field }) =>
+          publicView ?
+            <Input
+              { ...field }
+              id='topoEntityGroup1'
+              className='form-control'
+              disabled={true}
+              value={field.value?.replace(new RegExp('\\|', 'g'), ', ')}
+            />
+          :
+            <EntitySelect
+              field={field}
+              id="topoEntityGroup1"
+              entitiesOptions={formatSelectEntities(topoGroups[key1])}
+              onChangeHandler={(e) => {
+                let joinedValues = ''
+                for (let event of e)
+                  joinedValues += event.value + '|'
+                joinedValues = joinedValues.replace(/\|$/, '')
+                setValue("entitiesGroups.0.name", key1)
+                setValue("entitiesGroups.0.value", joinedValues)
+              }}
+              entitiesInitials={!addview ? entityInitValues(["entitiesNgi", "entitiesProjects"], getValues("entitiesGroups")) : undefined}
+            />
+        }
+      />
       <Label for='topoEntityGroup2' className='pt-2'>{label2}</Label>
-      {
-        publicView ?
-          <Field
-            name='entitiesGroups.1.value'
-            id='topoEntityGroup2'
-            className='form-control'
-            disabled={true}
-            value={form.values.entitiesGroups[1] ? form.values.entitiesGroups[1].value ? form.values.entitiesGroups[1].value.replace(new RegExp('\\|', 'g'), ', ') : '' : ''}
-          />
-        :
-          <Field
-            name="entitiesGroups.1.value"
-            className="pt-2"
-            id="topoEntityGroup2"
-            component={EntitySelect}
-            entitiesOptions={formatFilteredSelectEntities(topoGroups[key2], form.values, topoMaps, key2)}
-            onChangeHandler={(e) => {
-              let joinedValues = ''
-              for (let event of e)
-                joinedValues += event.value + '|'
-              joinedValues = joinedValues.replace(/\|$/, '')
-              form.setFieldValue("entitiesGroups.1.name", key2)
-              form.setFieldValue("entitiesGroups.1.value", joinedValues)
-            }}
-            entitiesInitials={!addview ? entityInitValues(["entitiesSites", "entitiesServiceGroups"], form.values.entitiesGroups) : undefined}
-          />
-      }
+      <Controller
+        name="entitiesGroups.1.value"
+        control={ control }
+        render={ ({ field }) =>
+          publicView ?
+            <Input
+              { ...field }
+              id='topoEntityGroup2'
+              className='form-control'
+              disabled={true}
+              value={field.value?.replace(new RegExp('\\|', 'g'), ', ')}
+            />
+          :
+            <EntitySelect
+              field={field}
+              className="pt-2"
+              id="topoEntityGroup2"
+              entitiesOptions={formatFilteredSelectEntities(topoGroups[key2], entitiesGroups, entitiesEndpoints, topoMaps, key2)}
+              onChangeHandler={(e) => {
+                let joinedValues = ''
+                for (let event of e)
+                  joinedValues += event.value + '|'
+                joinedValues = joinedValues.replace(/\|$/, '')
+                setValue("entitiesGroups.1.name", key2)
+                setValue("entitiesGroups.1.value", joinedValues)
+              }}
+              entitiesInitials={!addview ? entityInitValues(["entitiesSites", "entitiesServiceGroups"], getValues("entitiesGroups")) : undefined}
+            />
+        }
+      />
     </React.Fragment>
   )
 }
 
 
-const TopologyConfEndpointsEntityFields = ({topoGroups, addview, topoMaps, publicView, form}) => {
-  let topoType = form.values.topologyType
+const TopologyConfEndpointsEntityFields = ({topoGroups, addview, topoMaps, publicView}) => {
+  const { control, getValues, setValue } = useFormContext()
+
+  const topoType = useWatch({ control, name: "topologyType" })
+  const entitiesGroups = useWatch({ control, name: "entitiesGroups" })
+  const entitiesEndpoints = useWatch({ control, name: "entitiesEndpoints" })
+
   let label1 = undefined
   let label2 = undefined
   let key1 = undefined
@@ -678,69 +720,76 @@ const TopologyConfEndpointsEntityFields = ({topoGroups, addview, topoMaps, publi
   return (
     <React.Fragment>
       <Label for='topoEntityEndoint1'>{label1}</Label>
-      {
-        publicView ?
-          <Field
-            name='entitiesEndpoints.0.value'
-            id='topoEntityEndoint1'
-            className='form-control'
-            disabled={true}
-            value={form.values.entitiesEndpoints[0] ? form.values.entitiesEndpoints[0].value ? form.values.entitiesEndpoints[0].value.replace(new RegExp('\\|', 'g'), ', ') : '' : ''}
-          />
-        :
-          <Field
-            name="entitiesEndpoints.0.value"
-            id="topoEntityEndoint1"
-            component={EntitySelect}
-            entitiesOptions={
-              formatFilteredSelectEntities(
-                topoGroups[key1], form.values, topoMaps, key1
-            )}
-            onChangeHandler={(e) => {
-              let joinedValues = ''
-              for (let event of e)
-                joinedValues += event.value + '|'
-              joinedValues = joinedValues.replace(/\|$/, '')
-              form.setFieldValue("entitiesEndpoints.0.name", key1)
-              form.setFieldValue("entitiesEndpoints.0.value", joinedValues)
-            }}
-            entitiesInitials={!addview ? entityInitValues(["entitiesSites", "entitiesServiceGroups"], form.values.entitiesEndpoints) : undefined}
-           />
-       }
+      <Controller
+        name="entitiesEndpoints.0.value"
+        control={ control }
+        render={ ({ field }) =>
+          publicView ?
+            <Input
+              { ...field }
+              id='topoEntityEndoint1'
+              className='form-control'
+              disabled={true}
+              value={field.value?.replace(new RegExp('\\|', 'g'), ', ')}
+            />
+          :
+            <EntitySelect
+              field={field}
+              id="topoEntityEndoint1"
+              entitiesOptions={
+                formatFilteredSelectEntities(
+                  topoGroups[key1], entitiesGroups, entitiesEndpoints, topoMaps, key1
+              )}
+              onChangeHandler={(e) => {
+                let joinedValues = ''
+                for (let event of e)
+                  joinedValues += event.value + '|'
+                joinedValues = joinedValues.replace(/\|$/, '')
+                setValue("entitiesEndpoints.0.name", key1)
+                setValue("entitiesEndpoints.0.value", joinedValues)
+              }}
+              entitiesInitials={!addview ? entityInitValues(["entitiesSites", "entitiesServiceGroups"], getValues("entitiesEndpoints")) : undefined}
+            />
+        }
+      />
       <Label for='topoEntityEndoint2' className='pt-2'>{label2}</Label>
-      {
-        publicView ?
-          <Field
-            name='entitiesEndpoints.1.value'
-            id='topoEntityEndoint2'
-            className='form-control'
-            disabled={true}
-            value={form.values.entitiesEndpoints[1] ? form.values.entitiesEndpoints[1].value ? form.values.entitiesEndpoints[1].value.replace(new RegExp('\\|', 'g'), ', ') : '' : ''}
-          />
-        :
-          <Field
-            name="entitiesEndpoints.1.value"
-            className="pt-2"
-            id="topoEntityEndoint2"
-            component={EntitySelect}
-            entitiesOptions={
-              formatFilteredSelectEntities(
-                topoGroups[key2],
-                form.values,
-                topoMaps,
-                key2
-            )}
-            onChangeHandler={(e) => {
-              let joinedValues = ''
-              for (let event of e)
-                joinedValues += event.value + '|'
-              joinedValues = joinedValues.replace(/\|$/, '')
-              form.setFieldValue("entitiesEndpoints.1.name", key2)
-              form.setFieldValue("entitiesEndpoints.1.value", joinedValues)
-            }}
-            entitiesInitials={!addview ? entityInitValues(["serviceTypesSitesEndpoints", "serviceTypesServiceGroupsEndpoints"], form.values.entitiesEndpoints) : undefined}
-          />
-      }
+      <Controller
+        name="entitiesEndpoints.1.value"
+        control={ control }
+        render={ ({ field }) =>
+          publicView ?
+            <Input
+              { ...field }
+              id='topoEntityEndoint2'
+              className='form-control'
+              disabled={true}
+              value={field.value?.replace(new RegExp('\\|', 'g'), ', ')}
+            />
+          :
+            <EntitySelect
+              field={field}
+              className="pt-2"
+              id="topoEntityEndoint2"
+              entitiesOptions={
+                formatFilteredSelectEntities(
+                  topoGroups[key2],
+                  entitiesGroups,
+                  entitiesEndpoints,
+                  topoMaps,
+                  key2
+              )}
+              onChangeHandler={(e) => {
+                let joinedValues = ''
+                for (let event of e)
+                  joinedValues += event.value + '|'
+                joinedValues = joinedValues.replace(/\|$/, '')
+                setValue("entitiesEndpoints.1.name", key2)
+                setValue("entitiesEndpoints.1.value", joinedValues)
+              }}
+              entitiesInitials={!addview ? entityInitValues(["serviceTypesSitesEndpoints", "serviceTypesServiceGroupsEndpoints"], getValues("entitiesEndpoints")) : undefined}
+            />
+          }
+      />
     </React.Fragment>
   )
 }
@@ -750,7 +799,7 @@ const ProfileSelect = ({ field, error, label, options, onChangeHandler, initVal 
   if (initVal)
     return (
       <CustomReactSelect
-        name={ field.name }
+        forwardedRef={ field.ref }
         label={ label }
         error={ error }
         closeMenuOnSelect={ true }
@@ -763,7 +812,7 @@ const ProfileSelect = ({ field, error, label, options, onChangeHandler, initVal 
   else
     return (
       <CustomReactSelect
-        name={ field.name }
+        forwardedRef={ field.ref }
         label={ label }
         error={ error }
         closeMenuOnSelect={ true }
@@ -775,36 +824,706 @@ const ProfileSelect = ({ field, error, label, options, onChangeHandler, initVal 
 }
 
 
-export const ReportsComponent = (props) => {
-  const report_name = props.match.params.name;
+const ReportsForm = ({
+  initValues,
+  userDetails,
+  doChange=undefined,
+  doDelete=undefined,
+  ...props
+}) => {
+  const context = useContext(ReportsChangeContext)
+
   const addview = props.addview
   const publicView = props.publicView
-  const location = props.location;
-  const history = props.history;
+  const location = props.location
 
-  const backend = new Backend();
-  const queryClient = useQueryClient();
+  const entitiesNgi = context.entitiesNgi
+  const entitiesSites = context.entitiesSites
+  const entitiesProjects = context.entitiesProjects
+  const entitiesServiceGroups = context.entitiesServiceGroups
+  const serviceTypesSitesEndpoints = context.serviceTypesSitesEndpoints
+  const serviceTypesServiceGroupsEndpoints = context.serviceTypesServiceGroupsEndpoints
 
   const [areYouSureModal, setAreYouSureModal] = useState(false)
   const [modalMsg, setModalMsg] = useState(undefined);
   const [modalTitle, setModalTitle] = useState(undefined);
   const [onYes, setOnYes] = useState('')
-  const [formikValues, setFormikValues] = useState({})
-  const topologyTypes = ['Sites', 'ServiceGroups']
 
-  const [tagsState, setTagsState] = useState(new Object({
-    'groups': undefined,
-    'endpoints': undefined
-  }))
-  const [extensionsState, setExtensionsState] = useState(
-    new Object({
-      groups: undefined,
-      endpoints: undefined
-    })
+  const methods = useForm({
+    defaultValues: initValues,
+    mode: "all",
+    resolver: yupResolver(ReportsSchema)
+  })
+
+  const extractProfileNames = (profiles) => {
+    let tmp = new Array();
+
+    for (let profile of profiles)
+      tmp.push(profile.name)
+
+    tmp = tmp.sort(sortStr)
+
+    return tmp;
+  }
+
+  const onSubmitHandle = async () => {
+    let msg = `Are you sure you want to ${addview ? "add" : "change"} report?`
+    let title = `${addview ? "Add" : "Change"} report`
+
+    setAreYouSureModal(!areYouSureModal);
+    setModalMsg(msg)
+    setModalTitle(title)
+    setOnYes('change')
+  }
+
+  const onYesCallback = () => {
+    if (onYes === 'delete')
+      doDelete(methods.getValues("id"))
+    else if (onYes === 'change')
+      doChange(methods.getValues())
+  }
+
+  let write_perm = undefined;
+
+  if (!publicView) {
+    if (!addview) {
+      write_perm = userDetails.is_superuser ||
+            userDetails.groups.reports.indexOf(initValues.groupname) >= 0;
+    }
+    else {
+      write_perm = userDetails.is_superuser ||
+        userDetails.groups.reports.length > 0;
+    }
+  }
+
+  let grouplist = undefined;
+
+  if (write_perm)
+    grouplist = userDetails.groups.reports
+  else
+    grouplist = [initValues.groupname]
+
+
+  return (
+    <BaseArgoView
+      resourcename={publicView ? 'Report details' : 'report'}
+      location={location}
+      modal={true}
+      state={{areYouSureModal, 'modalFunc': onYesCallback, modalTitle, modalMsg}}
+      toggle={() => setAreYouSureModal(!areYouSureModal)}
+      submitperm={write_perm}
+      addview={addview}
+      publicview={publicView}
+      history={false}
+    >
+      <FormProvider { ...methods }>
+        <Form onSubmit={ methods.handleSubmit(onSubmitHandle) } data-testid='form'>
+          <FormGroup>
+            <Row className='align-items-center'>
+              <Col md={6}>
+                <InputGroup>
+                  <InputGroupText>Name</InputGroupText>
+                  <Controller
+                    name="name"
+                    control={ methods.control }
+                    render={ ({ field }) =>
+                      <Input
+                        { ...field }
+                        data-testid="name"
+                        className={`form-control form-control-lg ${ methods.formState.errors?.name && "is-invalid" }`}
+                        disabled={ publicView }
+                      />
+                    }
+                  />
+                  <ErrorMessage
+                    errors={ methods.formState.errors }
+                    name="name"
+                    render={ ({ message }) =>
+                      <FormFeedback invalid="true" className="end-0">
+                        { message }
+                      </FormFeedback>
+                    }
+                  />
+                </InputGroup>
+                <FormText color='muted'>
+                  Report name
+                </FormText>
+              </Col>
+              <Col md={2}>
+                <Row>
+                  <FormGroup check inline className='ms-3'>
+                    <Controller
+                      name="disabled"
+                      control={ methods.control }
+                      render={ ({ field }) =>
+                        <Input
+                          { ...field }
+                          type="checkbox"
+                          id="disabled"
+                          disabled={ publicView }
+                          onChange={ e => methods.setValue("disabled", e.target.checked) }
+                          checked={ field.value }
+                        />
+                      }
+                    />
+                    <Label check for='disabled'>Disabled</Label>
+                  </FormGroup>
+                </Row>
+                <Row>
+                  <FormText color='muted'>
+                    Mark report as disabled.
+                  </FormText>
+                </Row>
+              </Col>
+            </Row>
+            <Row className='mt-3'>
+              <Col md={10}>
+                <Label for='description'>Description:</Label>
+                <Controller
+                  name="description"
+                  control={ methods.control }
+                  render={ ({ field }) =>
+                    <textarea
+                      { ...field }
+                      rows={ 4 }
+                      id="description"
+                      className="form-control"
+                      disabled={ publicView }
+                    />
+                  }
+                />
+                <FormText color='muted'>
+                  Free text report description.
+                </FormText>
+              </Col>
+            </Row>
+            <Row className='mt-4'>
+              <Col md={3}>
+                <InputGroup>
+                  <InputGroupText>Group</InputGroupText>
+                  <Controller
+                    name="groupname"
+                    control={ methods.control }
+                    render={ ({ field }) =>
+                      publicView ?
+                        <Input
+                          { ...field }
+                          data-testid="groupname"
+                          className="form-control"
+                          disabled={ true }
+                        />
+                      :
+                        <div className='react-select form-control p-0'>
+                          <CustomReactSelect
+                            forwardedRef={ field.ref }
+                            inputgroup={ true }
+                            error={ methods.formState.errors.groupname }
+                            options={
+                              grouplist.map((group) => new Object({
+                                label: group, value: group
+                              }))
+                            }
+                            value={
+                              methods.getValues("groupname") ?
+                              { label: methods.getValues("groupname"), value: methods.getValues("groupname") }
+                              : undefined
+                            }
+                            onChange={ e => methods.setValue("groupname", e.value) }
+                          />
+                        </div>
+                    }
+                  />
+                  {
+                    !publicView &&
+                      <ErrorMessage
+                        errors={ methods.formState.errors }
+                        name="groupname"
+                        render={ ({ message }) =>
+                          <FormFeedback invalid="true" className="end-0">
+                            { message }
+                          </FormFeedback>
+                        }
+                      />
+                  }
+                </InputGroup>
+                <FormText color='muted'>
+                  Report is member of given group
+                </FormText>
+              </Col>
+            </Row>
+          </FormGroup>
+          <FormGroup className='mt-4'>
+            <ParagraphTitle title='Profiles'/>
+            <Row className='mt-2'>
+              <Col md={4}>
+                {
+                  publicView &&
+                    <Label for="metricProfile">Metric profile:</Label>
+                }
+                <Controller
+                  name="metricProfile"
+                  control={ methods.control }
+                  render={ ({ field }) =>
+                    publicView ?
+                      <Input
+                        { ...field }
+                        id="metricProfile"
+                        className="form-control"
+                        disabled={ true }
+                      />
+                    :
+                      <ProfileSelect
+                        field={ field }
+                        error={ methods.formState.errors?.metricProfile }
+                        options={
+                          extractProfileNames(context.listMetricProfiles).map((profile) => new Object({
+                            label: profile, value: profile
+                          }))
+                        }
+                        onChangeHandler={(e) => methods.setValue("metricProfile", e.value)}
+                        label="Metric profile:"
+                        initVal={ !addview ? methods.getValues("metricProfile") : undefined }
+                      />
+                  }
+                />
+                <ErrorMessage
+                  errors={ methods.formState.errors }
+                  name="metricProfile"
+                  render={ ({ message }) =>
+                    <FormFeedback invalid="true" className="end-0">
+                      { message }
+                    </FormFeedback>
+                  }
+                />
+              </Col>
+              <Col md={4}>
+                {
+                  publicView && <Label for="aggregationProfile">Aggregation profile:</Label>
+                }
+                <Controller
+                  name="aggregationProfile"
+                  control={ methods.control }
+                  render={ ({ field }) =>
+                    publicView ?
+                      <Input
+                        { ...field }
+                        id="aggregationProfile"
+                        className="form-control"
+                        disabled={ true }
+                      />
+                    :
+                      <ProfileSelect
+                        field={ field }
+                        error={ methods.formState.errors?.aggregationProfile }
+                        options={
+                          extractProfileNames(context.listAggregationProfiles).map((profile) => new Object({
+                            label: profile, value: profile
+                          }))
+                        }
+                        onChangeHandler={ e => methods.setValue("aggregationProfile", e.value) }
+                        label="Aggregation profile:"
+                        initVal={ !addview ? methods.getValues("aggregationProfile") : undefined }
+                      />
+                  }
+                />
+                <ErrorMessage
+                  errors={ methods.formState.errors }
+                  name="aggregationProfile"
+                  render={ ({ message }) =>
+                    <FormFeedback invalid="true" className="end-0">
+                      { message }
+                    </FormFeedback>
+                  }
+                />
+              </Col>
+              <Col md={4}>
+                {
+                  publicView && <Label for="operationsProfile">Operations profile:</Label>
+                }
+                <Controller
+                  name="operationsProfile"
+                  control={ methods.control }
+                  render={ ({ field }) =>
+                    publicView ?
+                      <Input
+                        { ...field }
+                        id="operationsProfile"
+                        className="form-control"
+                        disabled={ true }
+                      />
+                    :
+                      <ProfileSelect
+                        field={ field }
+                        error={ methods.formState.errors?.operationsProfile }
+                        options={
+                          extractProfileNames(context.listOperationsProfiles).map((profile) => new Object({
+                            label: profile, value: profile
+                          }))
+                        }
+                        onChangeHandler={ (e) =>
+                          methods.setValue("operationsProfile", e.value)
+                        }
+                        label="Operations profile:"
+                        initVal={ !addview ? methods.getValues("operationsProfile") : undefined }
+                      />
+                  }
+                />
+                <ErrorMessage
+                  errors={ methods.formState.errors }
+                  name="operationsProfile"
+                  render={ ({ message }) =>
+                    <FormFeedback invalid="true" className="end-0">
+                      { message }
+                    </FormFeedback>
+                  }
+                />
+              </Col>
+            </Row>
+            <Row className='mt-4'>
+              <Col md={4}>
+                {
+                  publicView &&
+                    <Label for="thresholdsProfile">Thresholds profile:</Label>
+                }
+                <Controller
+                  name="thresholdsProfile"
+                  control={ methods.control }
+                  render={ ({ field }) =>
+                    publicView ?
+                      <Input
+                        { ...field }
+                        id="thresholdsProfile"
+                        className="form-control"
+                        disabled={ true }
+                      />
+                    :
+                      <ProfileSelect
+                        field={ field }
+                        options={
+                          extractProfileNames(context.listThresholdsProfiles).map((profile) => new Object({
+                            label: profile, value: profile
+                          }))
+                        }
+                        onChangeHandler={ e => {
+                          if (e)
+                            methods.setValue("thresholdsProfile", e.value)
+                          else
+                            methods.setValue("thresholdsProfile", null)
+                        }}
+                        label="Thresholds profile:"
+                        initVal={ !addview ? methods.getValues("thresholdsProfile") : null }
+                      />
+                  }
+                />
+              </Col>
+            </Row>
+          </FormGroup>
+          <FormGroup className='mt-4'>
+            <ParagraphTitle title='Topology configuration'/>
+            <Row>
+              <Col md={2}>
+                {
+                  publicView &&
+                    <Label for="topologyType">Topology type:</Label>
+                }
+                <Controller
+                  name="topologyType"
+                  control={ methods.control }
+                  render={ ({ field }) =>
+                    publicView ?
+                      <Input
+                        { ...field }
+                        id="topologyType"
+                        className="form-control"
+                        disabled={ true }
+                      />
+                    :
+                      <CustomReactSelect
+                        forwardedRef={ field.ref }
+                        error={ methods.formState.errors?.topologyType }
+                        label="Topology type:"
+                        onChange={ e => methods.setValue("topologyType", e.value) }
+                        options={
+                          context.topologyTypes.map(type => new Object({
+                            label: type, value: type
+                          }))
+                        }
+                        value={
+                          methods.getValues("topologyType") ?
+                            { label: methods.getValues("topologyType"), value: methods.getValues("topologyType") }
+                          : undefined
+                        }
+                      />
+                  }
+                />
+                <ErrorMessage
+                  errors={ methods.formState.errors }
+                  name="topologyType"
+                  render={ ({ message }) =>
+                    <FormFeedback invalid="true" className="end-0">
+                      { message }
+                    </FormFeedback>
+                  }
+                />
+              </Col>
+            </Row>
+            <Row>
+              <Col md={6}>
+                <Card className="mt-3" data-testid="card-group-of-groups">
+                  <CardHeader>
+                    <strong>Group of groups</strong>
+                  </CardHeader>
+                  <CardBody>
+                    <CardTitle className="mb-2">
+                      <strong>Tags</strong>
+                    </CardTitle>
+                    <TopologyTagList
+                      part="groups"
+                      fieldName="groupsTags"
+                      tagsAll={context.allTags}
+                      publicView={publicView}
+                    />
+                    <div>
+                      <hr style={{'borderTop': '1px solid #b5c4d1'}}/>
+                    </div>
+                    <CardTitle className="mb-2">
+                      <strong>Extensions</strong>
+                    </CardTitle>
+                    <TopologyTagList
+                      {...props}
+                      part="groups"
+                      fieldName="groupsExtensions"
+                      tagsAll={context.allExtensions}
+                      publicView={publicView}
+                    />
+                    <div>
+                      <hr style={{'borderTop': '1px solid #b5c4d1'}}/>
+                    </div>
+                    <CardTitle className="mb-2">
+                      <strong>Entities</strong>
+                    </CardTitle>
+                    <TopologyConfGroupsEntityFields
+                      topoGroups={{
+                        entitiesNgi, entitiesSites,
+                        entitiesProjects, entitiesServiceGroups
+                      }}
+                      topoMaps={context.topologyMaps}
+                      addview={addview}
+                      publicView={publicView}
+                    />
+                  </CardBody>
+                </Card>
+              </Col>
+              <Col md={6}>
+                <Card className="mt-3" data-testid='card-group-of-endpoints'>
+                  <CardHeader>
+                    <strong>Group of endpoints</strong>
+                  </CardHeader>
+                  <CardBody>
+                    <CardTitle className="mb-2">
+                      <strong>Tags</strong>
+                    </CardTitle>
+                    <TopologyTagList
+                      part="endpoints"
+                      fieldName="endpointsTags"
+                      tagsAll={context.allTags}
+                      addview={addview}
+                      publicView={publicView}
+                    />
+                    <div>
+                      <hr style={{'borderTop': '1px solid #b5c4d1'}}/>
+                    </div>
+                    <CardTitle className="mb-2">
+                      <strong>Extensions</strong>
+                    </CardTitle>
+                    <TopologyTagList
+                      part="endpoints"
+                      fieldName="endpointsExtensions"
+                      tagsAll={context.allExtensions}
+                      addview={addview}
+                      publicView={publicView}
+                    />
+                    <div>
+                      <hr style={{'borderTop': '1px solid #b5c4d1'}}/>
+                    </div>
+                    <CardTitle className="mb-2">
+                      <strong>Entities</strong>
+                    </CardTitle>
+                    <TopologyConfEndpointsEntityFields
+                      topoGroups={{
+                        entitiesSites, entitiesServiceGroups,
+                        serviceTypesSitesEndpoints, serviceTypesServiceGroupsEndpoints
+                      }}
+                      topoMaps={context.topologyMaps}
+                      addview={addview}
+                      publicView={publicView}
+                      {...props}
+                    />
+                  </CardBody>
+                </Card>
+              </Col>
+            </Row>
+          </FormGroup>
+          <FormGroup className='mt-4'>
+            <ParagraphTitle title='Thresholds'/>
+            <Row>
+              <Col md={2} className='me-4'>
+                <Label for='availabilityThreshold'>Availability:</Label>
+                <Controller
+                  name="availabilityThreshold"
+                  control={ methods.control }
+                  render={ ({ field }) =>
+                    <Input
+                      { ...field }
+                      id='availabilityThreshold'
+                      className={`form-control ${methods.formState.errors?.availabilityThreshold && "is-invalid"}`}
+                      disabled={publicView}
+                    />
+                  }
+                />
+                <ErrorMessage
+                  errors={ methods.formState.errors }
+                  name="availabilityThreshold"
+                  render={ ({ message }) =>
+                    <FormFeedback invalid="true" className="end-0">
+                      { message }
+                    </FormFeedback>
+                  }
+                />
+              </Col>
+              <Col md={2} className='me-4'>
+                <Label for='reliabilityThreshold'>Reliability:</Label>
+                <Controller
+                  name="reliabilityThreshold"
+                  control={ methods.control }
+                  render={ ({ field }) =>
+                    <Input
+                      { ...field }
+                      id='reliabilityThreshold'
+                      className={`form-control ${methods.formState.errors?.reliabilityThreshold && "is-invalid"}`}
+                      disabled={publicView}
+                    />
+                  }
+                />
+                <ErrorMessage
+                  errors={ methods.formState.errors }
+                  name="reliabilityThreshold"
+                  render={ ({ message }) =>
+                    <FormFeedback invalid="true" className="end-0">
+                      { message }
+                    </FormFeedback>
+                  }
+                />
+              </Col>
+              <Col md={2} className='me-4'>
+                <Label for='uptimeThreshold'>Uptime:</Label>
+                <Controller
+                  name="uptimeThreshold"
+                  control={ methods.control }
+                  render={ ({ field }) =>
+                    <Input
+                      { ...field }
+                      id='uptimeThreshold'
+                      className={`form-control ${methods.formState.errors?.uptimeThreshold && "is-invalid"}`}
+                      disabled={publicView}
+                    />
+                  }
+                />
+                <ErrorMessage
+                  errors={ methods.formState.errors }
+                  name="uptimeThreshold"
+                  render={ ({ message }) =>
+                    <FormFeedback invalid="true" className="end-0">
+                      { message }
+                    </FormFeedback>
+                  }
+                />
+              </Col>
+              <Col md={2} className='me-4'>
+                <Label for='unknownThreshold'>Unknown:</Label>
+                <Controller
+                  name="unknownThreshold"
+                  control={ methods.control }
+                  render={ ({ field }) =>
+                    <Input
+                      { ...field }
+                      id='unknownThreshold'
+                      className={`form-control ${methods.formState.errors?.unknownThreshold && "is-invalid"}`}
+                      disabled={publicView}
+                    />
+                  }
+                />
+                <ErrorMessage
+                  errors={ methods.formState.errors }
+                  name="unknownThreshold"
+                  render={ ({ message }) =>
+                    <FormFeedback invalid="true" className="end-0">
+                      { message }
+                    </FormFeedback>
+                  }
+                />
+              </Col>
+              <Col md={2} className='me-4'>
+                <Label for='downtimeThreshold'>Downtime:</Label>
+                <Controller
+                  name="downtimeThreshold"
+                  control={ methods.control }
+                  render={ ({ field }) =>
+                    <Input
+                      { ...field }
+                      id='downtimeThreshold'
+                      className={`form-control ${methods.formState.errors?.downtimeThreshold && "is-invalid"}`}
+                      disabled={publicView}
+                    />
+                  }
+                />
+                <ErrorMessage
+                  errors={ methods.formState.errors }
+                  name="downtimeThreshold"
+                  render={ ({ message }) =>
+                    <FormFeedback invalid="true" className="end-0">
+                      { message }
+                    </FormFeedback>
+                  }
+                />
+              </Col>
+            </Row>
+          </FormGroup>
+          {
+            (!publicView && write_perm) &&
+            <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+              {
+                !addview ?
+                  <Button
+                    color="danger"
+                    onClick={() => {
+                      setModalMsg('Are you sure you want to delete report?')
+                      setModalTitle('Delete report')
+                      setAreYouSureModal(!areYouSureModal);
+                      setOnYes('delete')
+                    }}>
+                    Delete
+                  </Button>
+                :
+                  <div></div>
+              }
+              <Button color="success" id="submit-button" type="submit">Save</Button>
+            </div>
+          }
+        </Form>
+      </FormProvider>
+    </BaseArgoView>
   )
+}
 
-  let topologyMaps = new Object();
 
+export const ReportsComponent = (props) => {
+  const report_name = props.match.params.name;
+  const addview = props.addview
+  const publicView = props.publicView
+  const history = props.history;
+
+  const backend = new Backend();
   const webapi = new WebApi({
     token: props.webapitoken,
     reportsConfigurations: props.webapireports,
@@ -813,6 +1532,12 @@ export const ReportsComponent = (props) => {
     operationsProfiles: props.webapioperations,
     thresholdsProfiles: props.webapithresholds
   });
+
+  const queryClient = useQueryClient();
+
+  const topologyTypes = ['Sites', 'ServiceGroups']
+
+  let topologyMaps = new Object();
 
   const webapiAddMutation = useMutation(async (values) => await webapi.addReport(values));
   const backendAddMutation = useMutation(async (values) => await backend.addObject('/api/v2/internal/reports/', values));
@@ -877,47 +1602,6 @@ export const ReportsComponent = (props) => {
     [`${publicView ? 'public_' : ''}thresholdsprofile`, 'webapi'], () => fetchThresholdsProfiles(webapi),
     { enabled: !publicView && !!userDetails }
   )
-
-  const extractProfileNames = (profiles) => {
-    let tmp = new Array();
-
-    for (let profile of profiles)
-      tmp.push(profile.name)
-
-    tmp = tmp.sort(sortStr)
-
-    return tmp;
-  }
-
-  const whichTopologyType = (schema) => {
-    if (!addview) {
-      if (schema.group.group.type.toLowerCase() === topologyTypes[0].toLowerCase())
-        return topologyTypes[0]
-      else
-        return topologyTypes[1]
-    }
-    else
-      return ''
-  }
-
-  const onSubmitHandle = async (formValues) => {
-    let msg = undefined;
-    let title = undefined;
-
-    if (addview) {
-      msg = 'Are you sure you want to add Report?'
-      title = 'Add report'
-    }
-    else {
-      msg = 'Are you sure you want to change Report?'
-      title = 'Change report'
-    }
-    setAreYouSureModal(!areYouSureModal);
-    setModalMsg(msg)
-    setModalTitle(title)
-    setOnYes('change')
-    setFormikValues(formValues)
-  }
 
   const formatToReportTags = (tagsContext, formikTags, formikExtensions) => {
     const formatTag = (tag, prefix='') => {
@@ -1234,8 +1918,8 @@ export const ReportsComponent = (props) => {
     dataToSend['profiles'].push(extractedOperationProfile)
     if (extractedThresholdsProfile)
       dataToSend['profiles'].push(extractedThresholdsProfile)
-    let groupTagsFormatted = formatToReportTags('argo.group.filter.tags', formValues.groupsTags, formikValues.groupsExtensions)
-    let endpointTagsFormatted = formatToReportTags('argo.endpoint.filter.tags', formValues.endpointsTags, formikValues.endpointsExtensions)
+    let groupTagsFormatted = formatToReportTags('argo.group.filter.tags', formValues.groupsTags, formValues.groupsExtensions)
+    let endpointTagsFormatted = formatToReportTags('argo.endpoint.filter.tags', formValues.endpointsTags, formValues.endpointsExtensions)
     let groupEntitiesFormatted = formatToReportEntities('argo.group.filter.fields', formValues.entitiesGroups)
     let endpointEntitiesFormatted = formatToReportEntities('argo.endpoint.filter.fields', formValues.entitiesEndpoints)
     dataToSend['filter_tags'] = [...groupTagsFormatted,
@@ -1309,11 +1993,15 @@ export const ReportsComponent = (props) => {
     }
   }
 
-  const onYesCallback = () => {
-    if (onYes === 'delete')
-      doDelete(formikValues.id)
-    else if (onYes === 'change')
-      doChange(formikValues)
+  const whichTopologyType = (schema) => {
+    if (!addview) {
+      if (schema.group.group.type.toLowerCase() === topologyTypes[0].toLowerCase())
+        return topologyTypes[0]
+      else
+        return topologyTypes[1]
+    }
+    else
+      return ''
   }
 
   const loading = publicView ?
@@ -1533,25 +2221,6 @@ export const ReportsComponent = (props) => {
         })
       )
 
-    let write_perm = undefined;
-    let grouplist = undefined;
-
-    if (!publicView) {
-      if (!addview) {
-        write_perm = userDetails.is_superuser ||
-              userDetails.groups.reports.indexOf(backendReport.groupname) >= 0;
-      }
-      else {
-        write_perm = userDetails.is_superuser ||
-          userDetails.groups.reports.length > 0;
-      }
-    }
-
-    if (write_perm)
-      grouplist = userDetails.groups.reports
-    else
-      grouplist = [backendReport.groupname]
-
     var allTags = new Array()
     var allExtensions = new Array()
 
@@ -1586,6 +2255,15 @@ export const ReportsComponent = (props) => {
       }
     }
 
+    let preselectedtags = new Object({
+      "groups": undefined,
+      "endpoints": undefined
+    })
+    let preselectedexts = new Object({
+      "groups": undefined,
+      "endpoints": undefined
+    })
+
     if (!addview && groupsTags === undefined && endpointsTags == undefined
       && groupsExtensions === undefined && endpointsExtensions === undefined ) {
       let [gt, ge] = formatFromReportTags([
@@ -1595,8 +2273,6 @@ export const ReportsComponent = (props) => {
         'argo.endpoint.filter.tags', 'argo.endpoint.filter.tags.array'],
         webApiReport['filter_tags'])
 
-      let preselectedtags = JSON.parse(JSON.stringify(tagsState))
-      let preselectedexts = JSON.parse(JSON.stringify(extensionsState))
       preselectedtags['groups'] = new Object()
       preselectedtags['endpoints'] = new Object()
       preselectedexts['groups'] = new Object()
@@ -1619,16 +2295,6 @@ export const ReportsComponent = (props) => {
       endpointsExtensions && endpointsExtensions.forEach((e, i) => {
         preselectedexts['endpoints'][i] = e.name
       })
-
-      if (tagsState['groups'] === undefined
-        && tagsState['endpoints'] === undefined)
-        setTagsState(preselectedtags)
-
-      if (
-        extensionsState['groups'] === undefined &&
-        extensionsState['endpoints'] == undefined
-      )
-        setExtensionsState(preselectedexts)
     }
     else if ((addview || publicView) && groupsTags === undefined
       && endpointsTags == undefined && groupsExtensions === undefined
@@ -1640,20 +2306,24 @@ export const ReportsComponent = (props) => {
     }
 
     return (
-      <BaseArgoView
-        resourcename={publicView ? 'Report details' : 'report'}
-        location={location}
-        modal={true}
-        state={{areYouSureModal, 'modalFunc': onYesCallback, modalTitle, modalMsg}}
-        toggle={() => setAreYouSureModal(!areYouSureModal)}
-        submitperm={write_perm}
-        addview={addview}
-        publicview={publicView}
-        history={false}
-      >
-        <Formik
-          validationSchema={ReportsSchema}
-          initialValues = {{
+      <ReportsChangeContext.Provider value={{
+        listMetricProfiles: listMetricProfiles,
+        listAggregationProfiles: listAggregationProfiles,
+        listOperationsProfiles: listOperationsProfiles,
+        listThresholdsProfiles: listThresholdsProfiles,
+        topologyTypes: topologyTypes,
+        allTags: allTags,
+        allExtensions: allExtensions,
+        entitiesNgi: entitiesNgi,
+        entitiesSites: entitiesSites,
+        entitiesProjects: entitiesProjects,
+        entitiesServiceGroups: entitiesServiceGroups,
+        topologyMaps: topologyMaps,
+        serviceTypesSitesEndpoints: serviceTypesSitesEndpoints,
+        serviceTypesServiceGroupsEndpoints: serviceTypesServiceGroupsEndpoints
+      }}>
+        <ReportsForm
+          initValues={{
             id: webApiReport ? webApiReport.id : '',
             disabled: webApiReport ? webApiReport.disabled : false,
             name: webApiReport ? webApiReport.info ? webApiReport.info.name : '' : '',
@@ -1674,507 +2344,16 @@ export const ReportsComponent = (props) => {
             groupsExtensions: groupsExtensions,
             endpointsExtensions: endpointsExtensions,
             entitiesGroups: entitiesGroupsFormik,
-            entitiesEndpoints: entitiesEndpointsFormik
+            entitiesEndpoints: entitiesEndpointsFormik,
+            tagsState: preselectedtags,
+            extensionsState: preselectedexts
           }}
-          enableReinitialize={true}
-          onSubmit = {(values) => onSubmitHandle(values)}
-        >
-          {(props) => (
-            <Form data-testid='form'>
-              <FormGroup>
-                <Row className='align-items-center'>
-                  <Col md={6}>
-                    <InputGroup>
-                      <InputGroupText>Name</InputGroupText>
-                      <Field
-                        type='text'
-                        name='name'
-                        data-testid='name'
-                        className={`form-control form-control-lg ${props.errors.name && 'border-danger'}`}
-                        disabled={publicView}
-                      />
-                    </InputGroup>
-                    <CustomError error={props.errors.name} />
-                    <FormText color='muted'>
-                      Report name
-                    </FormText>
-                  </Col>
-                  <Col md={2}>
-                    <Row>
-                      <FormGroup check inline className='ms-3'>
-                        <Input
-                          type='checkbox'
-                          id='disabled'
-                          name='disabled'
-                          disabled={publicView}
-                          onChange={e => props.setFieldValue('disabled', e.target.checked)}
-                          checked={props.values.disabled}
-                        />
-                        <Label check for='disabled'>Disabled</Label>
-                      </FormGroup>
-                    </Row>
-                    <Row>
-                      <FormText color='muted'>
-                        Mark report as disabled.
-                      </FormText>
-                    </Row>
-                  </Col>
-                </Row>
-                <Row className='mt-3'>
-                  <Col md={10}>
-                    <Label for='description'>Description:</Label>
-                    <Field
-                      id='description'
-                      className='form-control'
-                      component='textarea'
-                      rows={4}
-                      name='description'
-                      disabled={publicView}
-                    />
-                    <FormText color='muted'>
-                      Free text report description.
-                    </FormText>
-                  </Col>
-                </Row>
-                <Row className='mt-4'>
-                  <Col md={3}>
-                    <InputGroup>
-                      <InputGroupText>Group</InputGroupText>
-                      {
-                        publicView ?
-                          <Field
-                            type='text'
-                            name='groupname'
-                            data-testid='groupname'
-                            className='form-control'
-                            disabled={true}
-                          />
-                        :
-                          <div className='react-select form-control p-0'>
-                            <CustomReactSelect
-                              name='groupname'
-                              inputgroup={ true }
-                              error={props.errors.groupname}
-                              options={
-                                grouplist.map((group) => new Object({
-                                  label: group, value: group
-                                }))
-                               }
-                               value={
-                                 props.values.groupname ?
-                                  { label: props.values.groupname, value: props.values.groupname }
-                                  : undefined
-                               }
-                               onChange={ e => props.setFieldValue('groupname', e.value) }
-                            />
-                          </div>
-                      }
-                    </InputGroup>
-                    {
-                      !publicView &&
-                        <CustomError error={props.errors.groupname} />
-                    }
-                    <FormText color='muted'>
-                      Report is member of given group
-                    </FormText>
-                  </Col>
-                </Row>
-              </FormGroup>
-              <FormGroup className='mt-4'>
-                <ParagraphTitle title='Profiles'/>
-                <Row className='mt-2'>
-                  <Col md={4}>
-                    {
-                      publicView ?
-                        <>
-                          <Label for='metricProfile'>Metric profile:</Label>
-                          <Field
-                            type='text'
-                            id='metricProfile'
-                            name='metricProfile'
-                            className='form-control'
-                            disabled={true}
-                          />
-                        </>
-                      :
-                        <Field
-                          id='metricProfile'
-                          name='metricProfile'
-                          component={ProfileSelect}
-                          error={props.errors.metricProfile}
-                          options={
-                            extractProfileNames(listMetricProfiles).map((profile) => new Object({
-                              label: profile, value: profile
-                            }))
-                          }
-                          onChangeHandler={(e) => props.setFieldValue('metricProfile', e.value)}
-                          label='Metric profile:'
-                          initVal={ !addview ? props.values.metricProfile : null }
-                          required={true}
-                        />
-                    }
-                    <CustomError error={props.errors.metricProfile} />
-                  </Col>
-                  <Col md={4}>
-                    {
-                      publicView ?
-                        <>
-                          <Label for='aggregationProfile'>Aggregation profile:</Label>
-                          <Field
-                            type='text'
-                            id='aggregationProfile'
-                            name='aggregationProfile'
-                            className='form-control'
-                            disabled={true}
-                          />
-                        </>
-                      :
-                        <Field
-                          id='aggregationProfile'
-                          name='aggregationProfile'
-                          component={ProfileSelect}
-                          error={props.errors.aggregationProfile}
-                          options={
-                            extractProfileNames(listAggregationProfiles).map((profile) => new Object({
-                              label: profile, value: profile
-                            }))
-                          }
-                          onChangeHandler={ (e) => props.setFieldValue('aggregationProfile', e.value) }
-                          label='Aggregation profile:'
-                          initVal={ !addview ? props.values.aggregationProfile : null }
-                          required={true}
-                        />
-                    }
-                    <CustomError error={props.errors.aggregationProfile} />
-                  </Col>
-                  <Col md={4}>
-                    {
-                      publicView ?
-                        <>
-                          <Label for='operationsProfile'>Operations profile:</Label>
-                          <Field
-                            type='text'
-                            id='operationsProfile'
-                            name='operationsProfile'
-                            className='form-control'
-                            disabled={true}
-                          />
-                        </>
-                      :
-                        <Field
-                          name='operationsProfile'
-                          id='operationsProfile'
-                          component={ProfileSelect}
-                          error={props.errors.operationsProfile}
-                          options={
-                            extractProfileNames(listOperationsProfiles).map((profile) => new Object({
-                              label: profile, value: profile
-                            }))
-                          }
-                          onChangeHandler={ (e) =>
-                            props.setFieldValue('operationsProfile', e.value)
-                          }
-                          label='Operations profile:'
-                          initVal={ !addview ? props.values.operationsProfile : null }
-                          required={true}
-                        />
-                    }
-                    <CustomError error={props.errors.operationsProfile} />
-                  </Col>
-                </Row>
-                <Row className='mt-4'>
-                  <Col md={4}>
-                    {
-                      publicView ?
-                        <>
-                          <Label for='thresholdsProfile'>Thresholds profile:</Label>
-                          <Field
-                            type='text'
-                            id='thresholdsProfile'
-                            name='thresholdsProfile'
-                            className='form-control'
-                            disabled={true}
-                          />
-                        </>
-                      :
-                        <Field
-                          name='thresholdsProfile'
-                          id='thresholdsProfile'
-                          component={ProfileSelect}
-                          options={
-                            extractProfileNames(listThresholdsProfiles).map((profile) => new Object({
-                              label: profile, value: profile
-                            }))
-                          }
-                          onChangeHandler={ (e) => {
-                            if (e)
-                              props.setFieldValue('thresholdsProfile', e.value)
-                            else
-                              props.setFieldValue('thresholdsProfile', null)
-                          }}
-                          label='Thresholds profile:'
-                          initVal={ !addview ? props.values.thresholdsProfile : null }
-                        />
-                    }
-                  </Col>
-                </Row>
-              </FormGroup>
-              <FormGroup className='mt-4'>
-                <ParagraphTitle title='Topology configuration'/>
-                <Row>
-                  <Col md={2}>
-                    {
-                      publicView ?
-                        <>
-                          <Label for='topologyType'>Topology type:</Label>
-                          <Field
-                            type='text'
-                            id='topologyType'
-                            name='topologyType'
-                            className='form-control'
-                            disabled={true}
-                          />
-                        </>
-                      :
-                        <CustomReactSelect
-                         id='topologyType'
-                          name='topologyType'
-                          error={props.errors.topologyType}
-                          label='Topology type:'
-                          onChange={ e => props.setFieldValue('topologyType', e.value) }
-                          options={
-                            topologyTypes.map(type => new Object({
-                              label: type, value: type
-                            }))
-                          }
-                          value={
-                            props.values.topologyType ?
-                              { label: props.values.topologyType, value: props.values.topologyType }
-                            : undefined
-                          }
-                        />
-                    }
-                    <CustomError error={props.errors.topologyType} />
-                  </Col>
-                </Row>
-                <Row>
-                  <Col md={6}>
-                    <Card className="mt-3" data-testid="card-group-of-groups">
-                      <CardHeader>
-                        <strong>Group of groups</strong>
-                      </CardHeader>
-                      <CardBody>
-                        <CardTitle className="mb-2">
-                          <strong>Tags</strong>
-                        </CardTitle>
-                        <FieldArray
-                          name="groupsTags"
-                          render={props => (
-                            <TopologyTagList
-                              part="groups"
-                              fieldName="groupsTags"
-                              tagsState={tagsState}
-                              setTagsState={setTagsState}
-                              tagsAll={allTags}
-                              publicView={publicView}
-                              {...props}/>
-                          )}
-                        />
-                        <div>
-                          <hr style={{'borderTop': '1px solid #b5c4d1'}}/>
-                        </div>
-                        <CardTitle className="mb-2">
-                          <strong>Extensions</strong>
-                        </CardTitle>
-                        <FieldArray
-                            name="groupsExtensions"
-                            render={ props => (
-                              <TopologyTagList
-                                {...props}
-                                part="groups"
-                                fieldName="groupsExtensions"
-                                tagsState={extensionsState}
-                                setTagsState={setExtensionsState}
-                                tagsAll={allExtensions}
-                                publicView={publicView}
-                              />
-                            ) }
-                          />
-                        <div>
-                          <hr style={{'borderTop': '1px solid #b5c4d1'}}/>
-                        </div>
-                        <CardTitle className="mb-2">
-                          <strong>Entities</strong>
-                        </CardTitle>
-                        <FieldArray
-                          name="entitiesGroups"
-                          render={props => (
-                            <TopologyConfGroupsEntityFields
-                              topoGroups={{
-                                entitiesNgi, entitiesSites,
-                                entitiesProjects, entitiesServiceGroups
-                              }}
-                              topoMaps={topologyMaps}
-                              addview={addview}
-                              publicView={publicView}
-                              {...props}
-                            />
-                          )}
-                        />
-                      </CardBody>
-                    </Card>
-                  </Col>
-                  <Col md={6}>
-                    <Card className="mt-3" data-testid='card-group-of-endpoints'>
-                      <CardHeader>
-                        <strong>Group of endpoints</strong>
-                      </CardHeader>
-                      <CardBody>
-                        <CardTitle className="mb-2">
-                          <strong>Tags</strong>
-                        </CardTitle>
-                        <FieldArray
-                          name="endpointsTags"
-                          render={propsLocal => (
-                            <TopologyTagList
-                              part="endpoints"
-                              fieldName="endpointsTags"
-                              tagsState={tagsState}
-                              setTagsState={setTagsState}
-                              tagsAll={allTags}
-                              addview={addview}
-                              publicView={publicView}
-                              {...propsLocal}/>
-                          )}
-                        />
-                        <div>
-                          <hr style={{'borderTop': '1px solid #b5c4d1'}}/>
-                        </div>
-                        <CardTitle className="mb-2">
-                          <strong>Extensions</strong>
-                        </CardTitle>
-                        <FieldArray
-                            name="endpointsExtensions"
-                            render={ propsLocal => (
-                              <TopologyTagList
-                                {...propsLocal}
-                                part="endpoints"
-                                fieldName="endpointsExtensions"
-                                tagsState={extensionsState}
-                                setTagsState={setExtensionsState}
-                                tagsAll={allExtensions}
-                                addview={addview}
-                                publicView={publicView}
-                              />
-                            ) }
-                          />
-                        <div>
-                          <hr style={{'borderTop': '1px solid #b5c4d1'}}/>
-                        </div>
-                        <CardTitle className="mb-2">
-                          <strong>Entities</strong>
-                        </CardTitle>
-                        <FieldArray
-                          name="entitiesEndpoints"
-                          render={props => (
-                            <TopologyConfEndpointsEntityFields
-                              topoGroups={{
-                                entitiesSites, entitiesServiceGroups,
-                                serviceTypesSitesEndpoints, serviceTypesServiceGroupsEndpoints
-                              }}
-                              topoMaps={topologyMaps}
-                              addview={addview}
-                              publicView={publicView}
-                              {...props}
-                            />
-                          )}
-                        />
-                      </CardBody>
-                    </Card>
-                  </Col>
-                </Row>
-              </FormGroup>
-              <FormGroup className='mt-4'>
-                <ParagraphTitle title='Thresholds'/>
-                <Row>
-                  <Col md={2} className='me-4'>
-                    <Label for='availabilityThreshold'>Availability:</Label>
-                    <Field
-                      id='availabilityThreshold'
-                      name='availabilityThreshold'
-                      className={`form-control ${props.errors.availabilityThreshold && 'border-danger'}`}
-                      disabled={publicView}
-                    />
-                    <CustomError error={props.errors.availabilityThreshold} />
-                  </Col>
-                  <Col md={2} className='me-4'>
-                    <Label for='reliabilityThreshold'>Reliability:</Label>
-                    <Field
-                      id='reliabilityThreshold'
-                      name='reliabilityThreshold'
-                      className={`form-control ${props.errors.reliabilityThreshold && 'border-danger'}`}
-                      disabled={publicView}
-                    />
-                    <CustomError error={props.errors.reliabilityThreshold} />
-                  </Col>
-                  <Col md={2} className='me-4'>
-                    <Label for='uptimeThreshold'>Uptime:</Label>
-                    <Field
-                      id='uptimeThreshold'
-                      name='uptimeThreshold'
-                      className={`form-control ${props.errors.uptimeThreshold && 'border-danger'}`}
-                      disabled={publicView}
-                    />
-                    <CustomError error={props.errors.uptimeThreshold} />
-                  </Col>
-                  <Col md={2} className='me-4'>
-                    <Label for='unknownThreshold'>Unknown:</Label>
-                    <Field
-                      id='unknownThreshold'
-                      name='unknownThreshold'
-                      className={`form-control ${props.errors.unknownThreshold && 'border-danger'}`}
-                      disabled={publicView}
-                    />
-                    <CustomError error={props.errors.unknownThreshold} />
-                  </Col>
-                  <Col md={2} className='me-4'>
-                    <Label for='downtimeThreshold'>Downtime:</Label>
-                    <Field
-                      id='downtimeThreshold'
-                      name='downtimeThreshold'
-                      className={`form-control ${props.errors.downtimeThreshold && 'border-danger'}`}
-                      disabled={publicView}
-                    />
-                    <CustomError error={props.errors.downtimeThreshold} />
-                  </Col>
-                </Row>
-              </FormGroup>
-              {
-                (!publicView && write_perm) &&
-                <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                  {
-                    !addview ?
-                      <Button
-                        color="danger"
-                        onClick={() => {
-                          setModalMsg('Are you sure you want to delete Report?')
-                          setModalTitle('Delete report')
-                          setAreYouSureModal(!areYouSureModal);
-                          setFormikValues(props.values)
-                          setOnYes('delete')
-                        }}>
-                        Delete
-                      </Button>
-                    :
-                      <div></div>
-                  }
-                  <Button color="success" id="submit-button" type="submit">Save</Button>
-                </div>
-              }
-            </Form>
-          )}
-        </Formik>
-      </BaseArgoView>
+          userDetails={ userDetails }
+          doChange={ doChange }
+          doDelete={ doDelete }
+          { ...props }
+        />
+      </ReportsChangeContext.Provider>
     )
   }
 
