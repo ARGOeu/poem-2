@@ -9,7 +9,8 @@ import {
   NotifyError,
   NotifyOk,
   ParagraphTitle,
-  CustomReactSelect
+  CustomReactSelect,
+  CustomDropdownIndicator
  } from './UIElements';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -46,6 +47,7 @@ import {
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext, useWatch } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { ErrorMessage } from '@hookform/error-message';
+import CreatableSelect from 'react-select/creatable';
 
 
 const ReportsChangeContext = React.createContext()
@@ -296,12 +298,12 @@ const formatSelectEntities = (data) => {
 }
 
 
-const TagSelect = ({field, tagOptions, onChangeHandler, isMulti,
+const TagSelect = ({forwardedRef, tagOptions, onChangeHandler, isMulti,
   closeMenuOnSelect, tagInitials}) => {
   if (tagInitials) {
     return (
       <CustomReactSelect
-        forwardedRef={field.ref}
+        forwardedRef={ forwardedRef }
         closeMenuOnSelect={closeMenuOnSelect}
         isMulti={isMulti}
         isClearable={false}
@@ -314,7 +316,7 @@ const TagSelect = ({field, tagOptions, onChangeHandler, isMulti,
   else
     return (
       <CustomReactSelect
-        forwardedRef={field.ref}
+        forwardedRef={ forwardedRef }
         closeMenuOnSelect={closeMenuOnSelect}
         isMulti={isMulti}
         isClearable={false}
@@ -322,6 +324,39 @@ const TagSelect = ({field, tagOptions, onChangeHandler, isMulti,
         options={tagOptions}
       />
     )
+  }
+
+
+const TagCreatable = ({
+  forwardedRef,
+  tagOptions,
+  onChangeHandler,
+  tagInitials
+}) => {
+  if (tagInitials) {
+    return (
+      <CreatableSelect
+        forwardedRef={ forwardedRef }
+        closeMenuOnSelect={ false }
+        isMulti={ true }
+        onChange={ (e) => onChangeHandler(e) }
+        options={ tagOptions }
+        components={{ CustomDropdownIndicator }}
+        defaultValue={ tagInitials }
+      />
+    )
+  } else {
+    return (
+      <CreatableSelect
+        forwardedRef={ forwardedRef }
+        closeMenuOnSelect={ false }
+        isMulti={ true }
+        onChange={ (e) => onChangeHandler(e) }
+        options={ tagOptions }
+        components={{ CustomDropdownIndicator }}
+      />
+    )
+  }
 }
 
 
@@ -449,7 +484,7 @@ const TopologyTagList = ({ part, fieldName, tagsAll, addview, publicView }) => {
                         />
                       :
                         <TagSelect
-                          field={ field }
+                          forwardedRef={ field.ref }
                           data-testid={ `${fieldName}.${index}.name` }
                           tagOptions={ extractTags(part, true).map((e) => new Object({
                             'label': e.name,
@@ -480,25 +515,43 @@ const TopologyTagList = ({ part, fieldName, tagsAll, addview, publicView }) => {
                           value={preProcessTagValue(tags.value.replace(new RegExp('\\|', 'g'), ', '))}
                         />
                       :
-                        <TagSelect
-                          field={ field }
-                          data-testid={`${fieldName}.${index}.value`}
-                          tagOptions={extractValuesTags(index, true)}
-                          onChangeHandler={(e) => {
-                            if (Array.isArray(e)) {
-                              let joinedValues = ''
-                              e.forEach((e) => {
-                                joinedValues += e.value + '|'
-                              })
-                              setValue(`${fieldName}.${index}.value`, joinedValues.replace(/\|$/, ''))
-                            }
-                            else
-                              setValue(`${fieldName}.${index}.value`, e.value.trim())
-                          }}
-                          isMulti={isMultiValuesTags(extractValuesTags(index))}
-                          closeMenuOnSelect={!isMultiValuesTags(extractValuesTags(index))}
-                          tagInitials={!addview ? tagsInitValues('value', tags, true) : undefined}
-                        />
+                        isMultiValuesTags(extractValuesTags(index)) ?
+                          <TagCreatable
+                            forwardedRef={ field.ref }
+                            tagOptions={extractValuesTags(index, true)}
+                            onChangeHandler={(e) => {
+                              if (Array.isArray(e)) {
+                                let joinedValues = ''
+                                e.forEach((e) => {
+                                  joinedValues += e.value + '|'
+                                })
+                                setValue(`${fieldName}.${index}.value`, joinedValues.replace(/\|$/, ''))
+                              }
+                              else
+                                setValue(`${fieldName}.${index}.value`, e.value.trim())
+                            }}
+                            tagInitials={!addview ? tagsInitValues('value', tags, true) : undefined}
+                          />
+                        :
+                          <TagSelect
+                            forwardedRef={ field.ref }
+                            data-testid={`${fieldName}.${index}.value`}
+                            tagOptions={extractValuesTags(index, true)}
+                            onChangeHandler={(e) => {
+                              if (Array.isArray(e)) {
+                                let joinedValues = ''
+                                e.forEach((e) => {
+                                  joinedValues += e.value + '|'
+                                })
+                                setValue(`${fieldName}.${index}.value`, joinedValues.replace(/\|$/, ''))
+                              }
+                              else
+                                setValue(`${fieldName}.${index}.value`, e.value.trim())
+                            }}
+                            isMulti={isMultiValuesTags(extractValuesTags(index))}
+                            closeMenuOnSelect={!isMultiValuesTags(extractValuesTags(index))}
+                            tagInitials={!addview ? tagsInitValues('value', tags, true) : undefined}
+                          />
                     }
                   />
                 </Col>
@@ -555,35 +608,45 @@ const TopologyTagList = ({ part, fieldName, tagsAll, addview, publicView }) => {
 }
 
 
-const EntitySelect = ({field, label, entitiesOptions, onChangeHandler, entitiesInitials }) => {
-  if (entitiesInitials) {
+const EntitySelect = ({
+  forwardedRef,
+  label,
+  entitiesOptions,
+  onChangeHandler,
+  entitiesInitials
+}) => {
+  if (entitiesInitials)
     return (
-      <CustomReactSelect
-        forwardedRef={field.ref}
-        closeMenuOnSelect={false}
-        placeholder="Search..."
-        isClearable={false}
-        isMulti
-        onChange={(e) => onChangeHandler(e)}
-        options={entitiesOptions}
-        value={entitiesInitials}
-        label={label}
-      />
+      <>
+        { label && <Label for="entity-creatable">{ label }</Label> }
+        <CreatableSelect
+          forwardedRef={ forwardedRef }
+          closeMenuOnSelect={ false }
+          placeholder="Search..."
+          isMulti={ true }
+          onChange={ (e) => onChangeHandler(e) }
+          options={ entitiesOptions }
+          value={ entitiesInitials }
+          inputId="entity-creatable"
+        />
+      </>
     )
-  }
   else
     return (
-      <CustomReactSelect
-        forwardedRef={field.ref}
-        closeMenuOnSelect={false}
-        placeholder="Search..."
-        isClearable={false}
-        isMulti
-        onChange={(e) => onChangeHandler(e)}
-        options={entitiesOptions}
-        label={label}
-      />
+      <>
+        { label && <Label for="entity-creatable">{ label }</Label> }
+        <CreatableSelect
+          forwardedRef={ forwardedRef }
+          closeMenuOnSelect={ false }
+          placeholder="Search..."
+          isMulti={ true }
+          onChange={ (e) => onChangeHandler(e) }
+          options={ entitiesOptions }
+          inputId="entity-creatable"
+        />
+      </>
     )
+
 }
 
 
@@ -635,7 +698,7 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, topoMaps, publicVi
             />
           :
             <EntitySelect
-              field={field}
+              forwardedRef={ field.ref }
               id="topoEntityGroup1"
               entitiesOptions={formatSelectEntities(topoGroups[key1])}
               onChangeHandler={(e) => {
@@ -665,7 +728,7 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, topoMaps, publicVi
             />
           :
             <EntitySelect
-              field={field}
+              forwardedRef={ field.ref }
               className="pt-2"
               id="topoEntityGroup2"
               entitiesOptions={formatFilteredSelectEntities(topoGroups[key2], entitiesGroups, entitiesEndpoints, topoMaps, key2)}
@@ -734,7 +797,7 @@ const TopologyConfEndpointsEntityFields = ({topoGroups, addview, topoMaps, publi
             />
           :
             <EntitySelect
-              field={field}
+              forwardedRef={ field.ref }
               id="topoEntityEndoint1"
               entitiesOptions={
                 formatFilteredSelectEntities(
@@ -767,7 +830,7 @@ const TopologyConfEndpointsEntityFields = ({topoGroups, addview, topoMaps, publi
             />
           :
             <EntitySelect
-              field={field}
+              forwardedRef={ field.ref }
               className="pt-2"
               id="topoEntityEndoint2"
               entitiesOptions={
