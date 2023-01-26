@@ -339,6 +339,7 @@ const TagCreatable = ({
         forwardedRef={ forwardedRef }
         closeMenuOnSelect={ false }
         isMulti={ true }
+        isClearable={ false }
         onChange={ (e) => onChangeHandler(e) }
         options={ tagOptions }
         components={{ CustomDropdownIndicator }}
@@ -351,6 +352,7 @@ const TagCreatable = ({
         forwardedRef={ forwardedRef }
         closeMenuOnSelect={ false }
         isMulti={ true }
+        isClearable={ false }
         onChange={ (e) => onChangeHandler(e) }
         options={ tagOptions }
         components={{ CustomDropdownIndicator }}
@@ -624,6 +626,7 @@ const EntitySelect = ({
           closeMenuOnSelect={ false }
           placeholder="Search..."
           isMulti={ true }
+          isClearable={ false }
           onChange={ (e) => onChangeHandler(e) }
           options={ entitiesOptions }
           value={ entitiesInitials }
@@ -640,6 +643,7 @@ const EntitySelect = ({
           closeMenuOnSelect={ false }
           placeholder="Search..."
           isMulti={ true }
+          isClearable={ false }
           onChange={ (e) => onChangeHandler(e) }
           options={ entitiesOptions }
           inputId="entity-creatable"
