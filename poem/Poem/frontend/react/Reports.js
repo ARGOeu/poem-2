@@ -10,7 +10,8 @@ import {
   NotifyOk,
   ParagraphTitle,
   CustomReactSelect,
-  CustomDropdownIndicator
+  CustomDropdownIndicator,
+  CustomReactCreatable
  } from './UIElements';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -47,7 +48,6 @@ import {
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext, useWatch } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { ErrorMessage } from '@hookform/error-message';
-import CreatableSelect from 'react-select/creatable';
 
 
 const ReportsChangeContext = React.createContext()
@@ -335,7 +335,7 @@ const TagCreatable = ({
 }) => {
   if (tagInitials) {
     return (
-      <CreatableSelect
+      <CustomReactCreatable
         forwardedRef={ forwardedRef }
         closeMenuOnSelect={ false }
         isMulti={ true }
@@ -348,7 +348,7 @@ const TagCreatable = ({
     )
   } else {
     return (
-      <CreatableSelect
+      <CustomReactCreatable
         forwardedRef={ forwardedRef }
         closeMenuOnSelect={ false }
         isMulti={ true }
@@ -621,7 +621,7 @@ const EntitySelect = ({
     return (
       <>
         { label && <Label for="entity-creatable">{ label }</Label> }
-        <CreatableSelect
+        <CustomReactCreatable
           forwardedRef={ forwardedRef }
           closeMenuOnSelect={ false }
           placeholder="Search..."
@@ -638,7 +638,7 @@ const EntitySelect = ({
     return (
       <>
         { label && <Label for="entity-creatable">{ label }</Label> }
-        <CreatableSelect
+        <CustomReactCreatable
           forwardedRef={ forwardedRef }
           closeMenuOnSelect={ false }
           placeholder="Search..."

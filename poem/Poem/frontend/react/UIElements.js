@@ -80,6 +80,7 @@ import { CookiePolicy } from './CookiePolicy';
 import { useTable, usePagination, useFilters } from 'react-table';
 import { Helmet } from 'react-helmet';
 import Select, { components } from 'react-select';
+import CreatableSelect from 'react-select/creatable';
 import { Controller, useFormContext } from 'react-hook-form';
 import { ErrorMessage } from '@hookform/error-message';
 
@@ -270,6 +271,68 @@ export const CustomReactSelect = ({ forwardedRef=undefined, ...props}) => {
   )
 }
 
+
+export const CustomReactCreatable = ({ forwardedRef=undefined, ...props}) => {
+  const customStyles = {
+    control: (provided,  state) => ({
+      ...provided,
+      margin: 0,
+      backgroundColor: '#fff',
+      overflow: 'visible',
+      borderRadius: '.25rem',
+      fontWeight: 400,
+      backgroundClip: 'padding-box',
+      textShadow: 'none',
+      textAlign: 'start',
+      textIndent: 0,
+      borderColor: props.error ? '#dc3545' : "#ced4da",
+      transition: 'border-color .15s ease-in-out, box-shadow .15s ease-in-out',
+      boxShadow: state.selectProps.menuIsOpen ? '0 0 0 .2rem rgba(0, 123, 255, .25)' : 'none',
+      ':focus': {
+        outline: 0,
+      }
+    }),
+    option: (provided) => ({
+      ...provided,
+      padding: '.25rem 1.5rem',
+      cursor: 'pointer',
+      whiteSpace: 'nowrap',
+      clear: 'both',
+      color: '#16181b',
+      backgroundColor: 'transparent',
+      ':hover:not(:active)': {
+        color: '#fff',
+        backgroundColor: '#4a90d9'
+      },
+      ':active': {
+        color: '#fff',
+        backgroundColor: '#5a6268'
+      },
+      ':focus': {
+        outline: '5px auto -webkit-focus-ring-color',
+      },
+    }),
+    multiValue: (provided) => provided,
+    multiValueRemove: (provided) => provided
+  }
+  const DropdownIndicator = ({ ...props }) => {
+    if (props.isDisabled)
+      return null
+
+    else return (
+      <CustomDropdownIndicator {...props} />
+    )
+  }
+
+  return (
+    <CreatableSelect
+      {...props}
+      ref={ forwardedRef ? forwardedRef : null }
+      components={{ IndicatorSeparator: null, DropdownIndicator }}
+      styles={customStyles}
+    />
+  )
+}
 
 export const DropdownWithFormText = ({ forwardedRef=undefined, ...props }) => {
   return (
