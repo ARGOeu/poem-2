@@ -1602,14 +1602,30 @@ describe('Tests for reports changeview', () => {
 
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
 
+    expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
+
     await selectEvent.select(card_groups.getByText('Certified'), 'Candidate')
+
+    expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
 
     fireEvent.click(card_groups.getByTestId('removeTag-1'))
 
+    expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
+
     fireEvent.click(card_groups.getByRole('button', { name: /add new tag/i }))
 
-    await selectEvent.select(card_groups.getAllByText(/select/i)[2], 'monitored')
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'yes')
+    expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { title: /change/i })).not.toBeInTheDocument()
+    })
+    expect(card_groups.queryByText(/required/i)).toBeInTheDocument()
+
+    await selectEvent.select(card_groups.getAllByText("Select...")[0], 'monitored')
+    await selectEvent.select(card_groups.getAllByText("Select...")[0], 'yes')
+
+    expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
 
     await selectEvent.select(card_groups.getByText('condor'), 'eddie')
 
@@ -2758,6 +2774,8 @@ describe('Tests for reports addview', () => {
 
     fireEvent.click(card_groups.getByText(/add new tag/i))
 
+    expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
+
     expect(card_groups.queryByText('certification')).not.toBeInTheDocument()
     expect(card_groups.queryByText('infrastructure')).not.toBeInTheDocument()
     expect(card_groups.queryByText('monitored')).not.toBeInTheDocument()
@@ -2786,7 +2804,14 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText('EOSCCore')).not.toBeInTheDocument()
     expect(card_groups.queryByText('FedCloud')).not.toBeInTheDocument()
 
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { title: /add/i })).not.toBeInTheDocument()
+    })
+    expect(card_groups.queryByText(/required/i)).toBeInTheDocument()
+
     await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'certification')
+    expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
     selectEvent.openMenu(card_groups.queryByText(/select/i))
     expect(card_groups.queryByText('Candidate')).toBeInTheDocument()
     expect(card_groups.queryByText('Certified')).toBeInTheDocument()
@@ -2880,6 +2905,8 @@ describe('Tests for reports addview', () => {
     await selectEvent.select(card_groups.getByText(/select/i), 'EGI')
 
     fireEvent.click(card_groups.getByTestId('removeTag-0'))
+
+    expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
 
     expect(card_groups.queryByText(/certification/i)).not.toBeInTheDocument()
     expect(card_groups.queryByText(/certified/i)).not.toBeInTheDocument()

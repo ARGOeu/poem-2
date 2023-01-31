@@ -11,7 +11,8 @@ import {
   ParagraphTitle,
   CustomReactSelect,
   CustomDropdownIndicator,
-  CustomReactCreatable
+  CustomReactCreatable,
+  CustomError
  } from './UIElements';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -65,6 +66,12 @@ const ReportsSchema = Yup.object().shape({
   metricProfile: Yup.string().required('Required'),
   aggregationProfile: Yup.string().required('Required'),
   operationsProfile: Yup.string().required('Required'),
+  groupsTags: Yup.array().of(
+    Yup.object().shape({
+      name: Yup.string().required("Required"),
+      values: Yup.string()
+    })
+  )
 })
 
 export const ReportsAdd = (props) => <ReportsComponent addview={true} {...props}/>;
@@ -299,7 +306,7 @@ const formatSelectEntities = (data) => {
 
 
 const TagSelect = ({forwardedRef, tagOptions, onChangeHandler, isMulti,
-  closeMenuOnSelect, tagInitials}) => {
+  closeMenuOnSelect, tagInitials, error}) => {
   if (tagInitials) {
     return (
       <CustomReactSelect
@@ -310,6 +317,7 @@ const TagSelect = ({forwardedRef, tagOptions, onChangeHandler, isMulti,
         onChange={(e) => onChangeHandler(e)}
         options={tagOptions}
         value={tagInitials}
+        error={ error }
       />
     )
   }
@@ -322,6 +330,7 @@ const TagSelect = ({forwardedRef, tagOptions, onChangeHandler, isMulti,
         isClearable={false}
         onChange={(e) => onChangeHandler(e)}
         options={tagOptions}
+        error={ error }
       />
     )
   }
@@ -437,7 +446,7 @@ const TopologyTagList = ({ part, fieldName, tagsAll, addview, publicView }) => {
     return []
   }
 
-  const { control, getValues, setValue } = useFormContext()
+  const { control, getValues, setValue, resetField, formState: { errors } } = useFormContext()
 
   const { fields, append, remove } = useFieldArray({ control, name: fieldName })
 
@@ -485,21 +494,29 @@ const TopologyTagList = ({ part, fieldName, tagsAll, addview, publicView }) => {
                           value={ getValues(`${fieldName}.${index}.name`) }
                         />
                       :
-                        <TagSelect
-                          forwardedRef={ field.ref }
-                          data-testid={ `${fieldName}.${index}.name` }
-                          tagOptions={ extractTags(part, true).map((e) => new Object({
-                            'label': e.name,
-                            'value': e.name
-                          })) }
-                          onChangeHandler={(e) => {
-                            setValue(`${fieldName}.${index}.name`, e.value)
-                            recordSelectedTagKeys(index, e.value)
-                          }}
-                          isMulti={false}
-                          closeMenuOnSelect={true}
-                          tagInitials={!addview ? tagsInitValues('name', tags) : undefined}
-                        />
+                        <>
+                          <TagSelect
+                            forwardedRef={ field.ref }
+                            data-testid={ `${fieldName}.${index}.name` }
+                            tagOptions={ extractTags(part, true).map((e) => new Object({
+                              'label': e.name,
+                              'value': e.name
+                            })) }
+                            onChangeHandler={(e) => {
+                              resetField(`${fieldName}.${index}.name`)
+                              setValue(`${fieldName}.${index}.name`, e.value)
+                              recordSelectedTagKeys(index, e.value)
+                            }}
+                            isMulti={false}
+                            closeMenuOnSelect={true}
+                            tagInitials={!addview ? tagsInitValues('name', tags) : undefined}
+                            error={ errors?.[fieldName]?.[index]?.name }
+                          />
+                          {
+                            errors?.[fieldName]?.[index]?.name &&
+                              <CustomError error={ errors?.[fieldName]?.[index]?.name?.message } />
+                          }
+                        </>
                     }
                   />
                 </Col>
