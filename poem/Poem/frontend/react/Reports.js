@@ -10,7 +10,6 @@ import {
   NotifyOk,
   ParagraphTitle,
   CustomReactSelect,
-  CustomDropdownIndicator,
   CustomReactCreatable,
   CustomError
  } from './UIElements';
@@ -175,13 +174,8 @@ const sortStr = (a, b) => {
 }
 
 
-function preProcessTagValue(data) {
-  if (data === '1')
-    return 'yes'
-  else if (data === '0')
-    return 'no'
-
-  return data
+const equalSets = (set1, set2) => {
+  return (set1.size == set2.size) && [...set1].every(val => set2.has(val))
 }
 
 
@@ -349,9 +343,8 @@ const TagCreatable = ({
         closeMenuOnSelect={ false }
         isMulti={ true }
         isClearable={ false }
-        onChange={ (e) => onChangeHandler(e) }
+        onChange={ onChangeHandler }
         options={ tagOptions }
-        components={{ CustomDropdownIndicator }}
         defaultValue={ tagInitials }
       />
     )
@@ -362,16 +355,15 @@ const TagCreatable = ({
         closeMenuOnSelect={ false }
         isMulti={ true }
         isClearable={ false }
-        onChange={ (e) => onChangeHandler(e) }
+        onChange={ onChangeHandler }
         options={ tagOptions }
-        components={{ CustomDropdownIndicator }}
       />
     )
   }
 }
 
 
-const TopologyTagList = ({ part, fieldName, tagsAll, addview, publicView }) => {
+const TopologyTagList = ({ part, fieldName, tagsAll, publicView }) => {
   const extractTags = (which, filter=false) => {
     let selected = new Array()
     let tagsState = getValues(fieldName.toLowerCase().endsWith("tags") ? "tagsState" : "extensionsState")
@@ -402,44 +394,28 @@ const TopologyTagList = ({ part, fieldName, tagsAll, addview, publicView }) => {
     setValue(tagsStateName, newState)
   }
 
-  const isMultiValuesTags = (data) => {
-    if (data) {
-      if (data.length === 2 || data.length === 1) {
-        if (data[0].value === 'yes' ||
-          data[0].value === 'no')
-        return false
-      }
-      else
-        return true
-    }
+  const isMultiValuesTags = (index) => {
+    let set1 = new Set(extractValuesTags(index).map(item => item.value))
+    let set2 = new Set(["no", "yes"])
+    return !equalSets(set1, set2)
   }
 
-  const tagsInitValues = (key, data, preprocess=false) => {
-    if (!data[key])
+  const tagsInitValues = (value) => {
+    if (!value)
       return undefined
-    if (data[key].indexOf('|') === -1)
-      return new Object({
-        'label': preprocess ? preProcessTagValue(data[key]) : data[key],
-        'value': preprocess ? preProcessTagValue(data[key]) : data[key]
-      })
-    else {
-      let tmp = data[key].split('|').map(e => new Object({
-        'label': preprocess ? preProcessTagValue(e) : e,
-        'value': preprocess ? preProcessTagValue(e) : e
-      }))
-      return tmp
-    }
+
+    if (typeof value === "string")
+      return new Object({ label: value, value: value })
+    else
+      return value.map(val => new Object({ label: val, value: val }))
   }
 
-  const extractValuesTags = (index, preprocess=false) => {
+  const extractValuesTags = (index) => {
     if (tagsState[part] !== undefined) {
       let interestTags = extractTags(part)
       interestTags = interestTags.filter((e) => e.name === tagsState[part][index])
       if (interestTags.length > 0) {
-        interestTags = interestTags[0].values.map((e) => new Object({
-          'label': preprocess ? preProcessTagValue(e) : e,
-          'value': preprocess ? preProcessTagValue(e) : e
-        }))
+        interestTags = interestTags[0].values.map((e) => new Object({ label: e, value: e }))
         return interestTags
       }
     }
@@ -491,7 +467,7 @@ const TopologyTagList = ({ part, fieldName, tagsAll, addview, publicView }) => {
                           data-testid={`${fieldName}.${index}.name`}
                           className="form-control"
                           disabled={ true }
-                          value={ getValues(`${fieldName}.${index}.name`) }
+                          value={ field.value }
                         />
                       :
                         <>
@@ -509,7 +485,7 @@ const TopologyTagList = ({ part, fieldName, tagsAll, addview, publicView }) => {
                             }}
                             isMulti={false}
                             closeMenuOnSelect={true}
-                            tagInitials={!addview ? tagsInitValues('name', tags) : undefined}
+                            tagInitials={ tagsInitValues(field.value) }
                             error={ errors?.[fieldName]?.[index]?.name }
                           />
                           {
@@ -531,45 +507,27 @@ const TopologyTagList = ({ part, fieldName, tagsAll, addview, publicView }) => {
                           data-testid={`${fieldName}.${index}.value`}
                           className='form-control'
                           disabled={true}
-                          value={preProcessTagValue(tags.value.replace(new RegExp('\\|', 'g'), ', '))}
+                          value={ Array.isArray(field.value) ? field.value.join(", ") : field.value }
                         />
                       :
-                        isMultiValuesTags(extractValuesTags(index)) ?
+                        isMultiValuesTags(index) ?
                           <TagCreatable
                             forwardedRef={ field.ref }
-                            tagOptions={extractValuesTags(index, true)}
-                            onChangeHandler={(e) => {
-                              if (Array.isArray(e)) {
-                                let joinedValues = ''
-                                e.forEach((e) => {
-                                  joinedValues += e.value + '|'
-                                })
-                                setValue(`${fieldName}.${index}.value`, joinedValues.replace(/\|$/, ''))
-                              }
-                              else
-                                setValue(`${fieldName}.${index}.value`, e.value.trim())
+                            tagOptions={ extractValuesTags(index) }
+                            onChangeHandler={ value => {
+                              setValue(`${fieldName}.${index}.value`, value.map(val => val.value))
                             }}
-                            tagInitials={!addview ? tagsInitValues('value', tags, true) : undefined}
+                            tagInitials={ tagsInitValues(field.value) }
                           />
                         :
                           <TagSelect
                             forwardedRef={ field.ref }
                             data-testid={`${fieldName}.${index}.value`}
                             tagOptions={extractValuesTags(index, true)}
-                            onChangeHandler={(e) => {
-                              if (Array.isArray(e)) {
-                                let joinedValues = ''
-                                e.forEach((e) => {
-                                  joinedValues += e.value + '|'
-                                })
-                                setValue(`${fieldName}.${index}.value`, joinedValues.replace(/\|$/, ''))
-                              }
-                              else
-                                setValue(`${fieldName}.${index}.value`, e.value.trim())
-                            }}
-                            isMulti={isMultiValuesTags(extractValuesTags(index))}
-                            closeMenuOnSelect={!isMultiValuesTags(extractValuesTags(index))}
-                            tagInitials={!addview ? tagsInitValues('value', tags, true) : undefined}
+                            onChangeHandler={ (e) => setValue(`${fieldName}.${index}.value`, e.value) }
+                            isMulti={ false }
+                            closeMenuOnSelect={ true }
+                            tagInitials={ tagsInitValues(field.value) }
                           />
                     }
                   />
@@ -1411,7 +1369,6 @@ const ReportsForm = ({
                       part="endpoints"
                       fieldName="endpointsTags"
                       tagsAll={context.allTags}
-                      addview={addview}
                       publicView={publicView}
                     />
                     <div>
@@ -1424,7 +1381,6 @@ const ReportsForm = ({
                       part="endpoints"
                       fieldName="endpointsExtensions"
                       tagsAll={context.allExtensions}
-                      addview={addview}
                       publicView={publicView}
                     />
                     <div>
@@ -1689,35 +1645,25 @@ export const ReportsComponent = (props) => {
 
   const formatToReportTags = (tagsContext, formikTags, formikExtensions) => {
     const formatTag = (tag, prefix='') => {
-      let tmpTag = new Object()
-      if (tag.value.indexOf('|') !== -1) {
-        let values = tag.value.replace(/\|/g, ', ')
-        tmpTag = new Object({
-          name: `${prefix}${tag.name}`,
-          value: values,
-          context: tagsContext.replace(".filter.tags", ".filter.tags.array")
-        })
+      let value = ""
+      if (typeof tag.value === "string") {
+        if (tag.value.toLowerCase() === "yes")
+          value = "1"
+
+        else if (tag.value.toLowerCase() === "no")
+          value = "0"
+
+        else
+          value = tag.value
+      } else {
+        value = tag.value.join(", ")
       }
-      else if (tag.value.indexOf(' ') === -1
-        && tag.value.toLowerCase() !== 'yes'
-        && tag.value.toLowerCase() !== 'no'
-        && tag.value.toLowerCase() !== '1'
-        && tag.value.toLowerCase() !== '0') {
-        tmpTag['name'] = `${prefix}${tag.name}`
-        tmpTag['value'] = tag.value
-        tmpTag['context'] = tagsContext.replace(".filter.tags", ".filter.tags.array")
-      }
-      else {
-        let tmpTagValue = tag.value
-        if (tag.value.toLowerCase() === 'yes')
-          tmpTagValue = '1'
-        else if (tag.value === 'no')
-          tmpTagValue = '0'
-        tmpTag['name'] = `${prefix}${tag.name}`
-        tmpTag['value'] = tmpTagValue
-        tmpTag['context'] = tagsContext
-      }
-      return tmpTag
+
+      return new Object({
+        name: `${prefix}${tag.name}`,
+        value: value,
+        context: Array.isArray(tag.value) ? tagsContext.replace(".filter.tags", ".filter.tags.array") : tagsContext
+      })
     }
 
     let tags = new Array()
@@ -1778,35 +1724,20 @@ export const ReportsComponent = (props) => {
     if (!formikTags)
       return new Array()
 
-    let tmpTagsJoint = new Object()
-    let tags = new Array()
-    let extensions = new Array()
+    let tags = formikTags.filter(tag => tagsContext.includes(tag.context) && !tag.name.startsWith("info_ext_"))
+    let extensions = formikTags.filter(tag => tagsContext.includes(tag.context) && tag.name.startsWith("info_ext_"))
 
+    const yesNoValues = ["no", "yes"]
 
-    for (let tag of formikTags) {
-      for (let tagContext of tagsContext) {
-        if (tag.context === tagContext) {
-          if (tmpTagsJoint[tag.name] === undefined)
-            tmpTagsJoint[tag.name] = new Array()
-          tmpTagsJoint[tag.name].push(tag.value)
-        }
-      }
-    }
+    tags = tags.map(tag => new Object({
+      name: tag.name,
+      value: ["0", "1"].includes(tag.value) ? yesNoValues[+tag.value] : tag.value.split(",").map(val => val.trim())
+    }))
 
-    for (let tag in tmpTagsJoint) {
-      if (tag.startsWith('info_ext_'))
-        extensions.push(
-          new Object({
-            name: tag.substring(9),
-            value: tmpTagsJoint[tag].join().replace(/, /g, '|')
-          })
-        )
-      else
-        tags.push(new Object({
-          'name': tag,
-          'value': tmpTagsJoint[tag].join().replace(/, /g, '|')
-        }))
-    }
+    extensions = extensions.map(ext => new Object({
+      name: ext.name.substring(9),
+      value: ext.value.split(",").map(val => val.trim())
+    }))
 
     return [tags, extensions]
   }
@@ -2088,6 +2019,13 @@ export const ReportsComponent = (props) => {
       return ''
   }
 
+  const checkIfTrueFalse = (data) => {
+    let dataSet = new Set(data)
+    let trueFalseSet = new Set(["0", "1"])
+
+    return equalSets(dataSet, trueFalseSet)
+  }
+
   const loading = publicView ?
     loadingBackendReport || loadingWebApiReport
   :
@@ -2322,7 +2260,13 @@ export const ReportsComponent = (props) => {
             )
 
           else if (!item['name'].startsWith('info_') && !item['name'].startsWith('vo_'))
-            tmpTags.push(item)
+            if (checkIfTrueFalse(item["values"]))
+              tmpTags.push(new Object({
+                name: item["name"],
+                values: ["no", "yes"]
+              }))
+            else
+              tmpTags.push(item)
         }
         allTags.push(
           new Object({

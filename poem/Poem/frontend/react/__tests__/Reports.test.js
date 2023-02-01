@@ -1631,8 +1631,8 @@ describe('Tests for reports changeview', () => {
 
     fireEvent.click(card_groups.getByText(/add new extension/i))
 
-    await selectEvent.select(card_groups.getAllByText(/select/i)[2], 'GLUE2EndpointImplementationName')
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'ARC-CE')
+    await selectEvent.select(card_groups.getAllByText("Select...")[0], 'GLUE2EndpointImplementationName')
+    await selectEvent.select(card_groups.getAllByText("Select...")[0], 'ARC-CE')
 
     const entity1 = card_groups.getByText('iris.ac.uk')
     const entity2 = card_groups.getByText(/dirac/i)
