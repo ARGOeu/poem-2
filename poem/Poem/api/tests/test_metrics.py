@@ -3663,6 +3663,45 @@ class ListMetricConfigurationAPIViewTests(TenantTestCase):
             ])
         )
 
+    def test_put_configuration_with_only_name(self):
+        data = {
+            "id": self.configuration1.id,
+            "name": "local_updated",
+            "global_attributes": [
+                {
+                    "attribute": "",
+                    "value": ""
+                }
+            ],
+            "host_attributes": [
+                {
+                    "hostname": "",
+                    "attribute": "",
+                    "value": ""
+                }
+            ],
+            "metric_parameters": [
+                {
+                    "hostname": "",
+                    "metric": "",
+                    "parameter": "",
+                    "value": ""
+                }
+            ]
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        conf = poem_models.MetricConfiguration.objects.get(
+            id=self.configuration1.id
+        )
+        self.assertEqual(conf.name, "local_updated")
+        self.assertEqual(conf.globalattribute, "")
+        self.assertEqual(conf.hostattribute, "")
+        self.assertEqual(conf.metricparameter, "")
+
     def test_put_configuration_with_existing_name_super_user(self):
         data = {
             "id": self.configuration1.id,

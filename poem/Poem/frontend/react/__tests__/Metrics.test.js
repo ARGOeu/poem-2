@@ -727,92 +727,119 @@ describe('Tests for metric change', () => {
     })
 
     const nameField = screen.getByTestId('name');
-    const typeField = screen.getByTestId('mtype');
-    const probeField = screen.getByTestId('probeversion');
-    const packageField = screen.getByTestId('package');
-    const descriptionField = screen.getByTestId('description');
-    const groupField = screen.getByText('EGI');
-    const executableField = screen.getByTestId('probeexecutable');
-    const configKey1 = screen.getByTestId('config.0.key');
-    const configKey2 = screen.getByTestId('config.1.key');
-    const configKey3 = screen.getByTestId('config.2.key');
-    const configKey4 = screen.getByTestId('config.3.key');
-    const configKey5 = screen.getByTestId('config.4.key');
-    const configVal1 = screen.getByTestId('config.0.value');
-    const configVal2 = screen.getByTestId('config.1.value');
-    const configVal3 = screen.getByTestId('config.2.value');
-    const configVal4 = screen.getByTestId('config.3.value');
-    const configVal5 = screen.getByTestId('config.4.value');
-    const attributeKey = screen.getByTestId('attributes.0.key');
-    const attributeVal = screen.getByTestId('attributes.0.value')
-    const dependencyKey = screen.getByTestId('empty-key.dependency');
-    const dependencyVal = screen.getByTestId('empty-value.dependency');
-    const parameterKey = screen.getByTestId('parameter.0.key');
-    const parameterVal = screen.getByTestId('parameter.0.value');
-    const flagKey = screen.getByTestId('flags.0.key');
-    const flagVal = screen.getByTestId('flags.0.value');
-    const parentField = screen.getByTestId('parent');
-
     expect(nameField.value).toBe('argo.AMS-Check');
     expect(nameField).toBeDisabled()
+
+    const typeField = screen.getByTestId('mtype');
     expect(typeField.value).toBe('Active');
     expect(typeField).toBeDisabled()
+
+    const probeField = screen.getByTestId('probeversion');
     expect(probeField.value).toBe('ams-probe (0.1.12)');
     expect(probeField).toBeDisabled();
+
+    const packageField = screen.getByTestId('package');
     expect(packageField.value).toBe('nagios-plugins-argo (0.1.12)');
     expect(packageField).toBeDisabled();
+
     expect(screen.queryAllByText(/test_tag/i)).toHaveLength(2);
+
+    const descriptionField = screen.getByTestId('description');
     expect(descriptionField.value).toBe('Description of argo.AMS-Check metric');
     expect(descriptionField).toBeDisabled();
+
+    const groupField = screen.getByText('EGI');
     expect(groupField).toBeEnabled()
 
     expect(screen.queryByText('ARGOTEST')).not.toBeInTheDocument()
     selectEvent.openMenu(groupField)
     expect(screen.getByText('ARGOTEST')).toBeInTheDocument()
 
-    expect(screen.getByRole('heading', { name: /metric conf/i }).textContent).toBe('Metric configuration');
-    expect(screen.getByRole('heading', { name: /exec/i }).textContent).toBe('probe executable');
+    expect(screen.getByRole('heading', { name: /metric configuration/i })).toBeInTheDocument()
+
+    expect(screen.getByRole('heading', { name: /executable/i }).textContent).toBe('probe executable');
+    const executableField = screen.getByTestId('probeexecutable');
     expect(executableField.value).toBe('ams-probe');
     expect(executableField).toBeDisabled()
+
+    const configKey1 = screen.getByTestId('config.0.key');
     expect(configKey1.value).toBe('maxCheckAttempts');
     expect(configKey1).toBeDisabled()
-    expect(configVal1.value).toBe('3');
-    expect(configVal1).not.toBeDisabled()
+
+    const configKey2 = screen.getByTestId('config.1.key');
     expect(configKey2.value).toBe('timeout');
     expect(configKey2).toBeDisabled()
-    expect(configVal2.value).toBe('60');
-    expect(configVal2).not.toBeDisabled()
+
+    const configKey3 = screen.getByTestId('config.2.key');
     expect(configKey3.value).toBe('interval');
     expect(configKey3).toBeDisabled()
-    expect(configVal3.value).toBe('5')
-    expect(configVal3).not.toBeDisabled()
+
+    const configKey4 = screen.getByTestId('config.3.key');
     expect(configKey4.value).toBe('retryInterval');
     expect(configKey4).toBeDisabled()
-    expect(configVal4.value).toBe('3')
-    expect(configVal4).not.toBeDisabled()
+
+    const configKey5 = screen.getByTestId('config.4.key');
     expect(configKey5.value).toBe('path');
     expect(configKey5).toBeDisabled()
+
+    const configVal1 = screen.getByTestId('config.0.value');
+    expect(configVal1.value).toBe('3');
+    expect(configVal1).not.toBeDisabled()
+
+    const configVal2 = screen.getByTestId('config.1.value');
+    expect(configVal2.value).toBe('60');
+    expect(configVal2).not.toBeDisabled()
+
+    const configVal3 = screen.getByTestId('config.2.value');
+    expect(configVal3.value).toBe('5')
+    expect(configVal3).not.toBeDisabled()
+
+    const configVal4 = screen.getByTestId('config.3.value');
+    expect(configVal4.value).toBe('3')
+    expect(configVal4).not.toBeDisabled()
+
+    const configVal5 = screen.getByTestId('config.4.value');
     expect(configVal5.value).toBe('/usr/libexec/argo-monitoring/probes/argo');
     expect(configVal5).toBeDisabled()
+
+    const attributeKey = screen.getByTestId('attributes.0.key');
     expect(attributeKey.value).toBe('argo.ams_TOKEN');
     expect(attributeKey).toBeDisabled()
+
+    const attributeVal = screen.getByTestId('attributes.0.value')
     expect(attributeVal.value).toBe('--token');
     expect(attributeVal).toBeDisabled()
+
+    const dependencyKey = screen.getByTestId('dependency.0.key');
     expect(dependencyKey.value).toBe('');
     expect(dependencyKey).toBeDisabled()
+
+    const dependencyVal = screen.getByTestId('dependency.0.value');
     expect(dependencyVal.value).toBe('');
     expect(dependencyVal).toBeDisabled()
+
+    const parameterKey = screen.getByTestId('parameter.0.key');
     expect(parameterKey.value).toBe('--project');
     expect(parameterKey).toBeDisabled()
+
+    const parameterVal = screen.getByTestId('parameter.0.value');
     expect(parameterVal.value).toBe('EGI');
     expect(parameterVal).toBeDisabled()
+
+    const flagKey = screen.getByTestId('flags.0.key');
     expect(flagKey.value).toBe('OBSESS');
     expect(flagKey).toBeDisabled()
+
+    const flagVal = screen.getByTestId('flags.0.value');
     expect(flagVal.value).toBe('1');
     expect(flagVal).toBeDisabled()
+
+    const parentField = screen.getByTestId('parent');
     expect(parentField.value).toBe('');
     expect(parentField).toBeDisabled()
+
     expect(screen.getByRole('button', { name: /history/i }).closest('a')).toHaveAttribute('href', '/ui/metrics/argo.AMS-Check/history')
+    expect(screen.queryByRole("button", { name: /clone/i })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
   })
@@ -844,92 +871,120 @@ describe('Tests for metric change', () => {
     })
 
     const nameField = screen.getByTestId('name');
-    const typeField = screen.getByTestId('mtype');
-    const probeField = screen.getByTestId('probeversion');
-    const packageField = screen.getByTestId('package');
-    const descriptionField = screen.getByTestId('description');
-    const groupField = screen.getByTestId('group');
-    const executableField = screen.getByTestId('probeexecutable');
-    const configKey1 = screen.getByTestId('config.0.key');
-    const configKey2 = screen.getByTestId('config.1.key');
-    const configKey3 = screen.getByTestId('config.2.key');
-    const configKey4 = screen.getByTestId('config.3.key');
-    const configKey5 = screen.getByTestId('config.4.key');
-    const configVal1 = screen.getByTestId('config.0.value');
-    const configVal2 = screen.getByTestId('config.1.value');
-    const configVal3 = screen.getByTestId('config.2.value');
-    const configVal4 = screen.getByTestId('config.3.value');
-    const configVal5 = screen.getByTestId('config.4.value');
-    const attributeKey = screen.getByTestId('attributes.0.key');
-    const attributeVal = screen.getByTestId('attributes.0.value')
-    const dependencyKey = screen.getByTestId('empty-key.dependency');
-    const dependencyVal = screen.getByTestId('empty-value.dependency');
-    const parameterKey = screen.getByTestId('parameter.0.key');
-    const parameterVal = screen.getByTestId('parameter.0.value');
-    const flagKey = screen.getByTestId('flags.0.key');
-    const flagVal = screen.getByTestId('flags.0.value');
-    const parentField = screen.getByTestId('parent');
-
     expect(nameField.value).toBe('argo.AMS-Check');
     expect(nameField).toBeDisabled()
+
+    const typeField = screen.getByTestId('mtype');
     expect(typeField.value).toBe('Active');
     expect(typeField).toBeDisabled()
+
+    const probeField = screen.getByTestId('probeversion');
     expect(probeField.value).toBe('ams-probe (0.1.12)');
     expect(probeField).toBeDisabled();
+
+    const packageField = screen.getByTestId('package');
     expect(packageField.value).toBe('nagios-plugins-argo (0.1.12)');
     expect(packageField).toBeDisabled();
+
     expect(screen.queryAllByText(/test_tag/i)).toHaveLength(2);
+
+    const descriptionField = screen.getByTestId('description');
     expect(descriptionField.value).toBe('Description of argo.AMS-Check metric');
     expect(descriptionField).toBeDisabled();
+
+    const groupField = screen.getByTestId('group');
     expect(groupField.value).toBe('EGI');
     expect(groupField).toBeDisabled();
     expect(screen.queryByRole('option', { name: /egi/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('option', { name: /argotest/i })).not.toBeInTheDocument();
+
     expect(screen.getByRole('heading', { name: /metric conf/i }).textContent).toBe('Metric configuration');
+
     expect(screen.getByRole('heading', { name: /exec/i }).textContent).toBe('probe executable');
+    const executableField = screen.getByTestId('probeexecutable');
     expect(executableField.value).toBe('ams-probe');
     expect(executableField).toBeDisabled()
+
+    const configKey1 = screen.getByTestId('config.0.key');
     expect(configKey1.value).toBe('maxCheckAttempts');
     expect(configKey1).toBeDisabled()
-    expect(configVal1.value).toBe('3');
-    expect(configVal1).toBeDisabled()
+
+    const configKey2 = screen.getByTestId('config.1.key');
     expect(configKey2.value).toBe('timeout');
     expect(configKey2).toBeDisabled()
-    expect(configVal2.value).toBe('60');
-    expect(configVal2).toBeDisabled()
+
+    const configKey3 = screen.getByTestId('config.2.key');
     expect(configKey3.value).toBe('interval');
     expect(configKey3).toBeDisabled()
-    expect(configVal3.value).toBe('5')
-    expect(configVal3).toBeDisabled()
+
+    const configKey4 = screen.getByTestId('config.3.key');
     expect(configKey4.value).toBe('retryInterval');
     expect(configKey4).toBeDisabled()
-    expect(configVal4.value).toBe('3')
-    expect(configVal4).toBeDisabled()
-    expect(configKey5.value).toBe('path');
+
+    const configKey5 = screen.getByTestId('config.4.key');
     expect(configKey5).toBeDisabled()
+    expect(configKey5.value).toBe('path');
+
+    const configVal1 = screen.getByTestId('config.0.value');
+    expect(configVal1.value).toBe('3');
+    expect(configVal1).toBeDisabled()
+
+    const configVal2 = screen.getByTestId('config.1.value');
+    expect(configVal2.value).toBe('60');
+    expect(configVal2).toBeDisabled()
+
+    const configVal3 = screen.getByTestId('config.2.value');
+    expect(configVal3.value).toBe('5')
+    expect(configVal3).toBeDisabled()
+
+    const configVal4 = screen.getByTestId('config.3.value');
+    expect(configVal4.value).toBe('3')
+    expect(configKey5).toBeDisabled()
+
+    const configVal5 = screen.getByTestId('config.4.value');
     expect(configVal5.value).toBe('/usr/libexec/argo-monitoring/probes/argo');
     expect(configVal5).toBeDisabled()
+
+    const attributeKey = screen.getByTestId('attributes.0.key');
     expect(attributeKey.value).toBe('argo.ams_TOKEN');
     expect(attributeKey).toBeDisabled()
+
+    const attributeVal = screen.getByTestId('attributes.0.value')
     expect(attributeVal.value).toBe('--token');
     expect(attributeVal).toBeDisabled()
+
+    const dependencyKey = screen.getByTestId('dependency.0.key');
     expect(dependencyKey.value).toBe('');
     expect(dependencyKey).toBeDisabled()
+
+    const dependencyVal = screen.getByTestId('dependency.0.value');
     expect(dependencyVal.value).toBe('');
     expect(dependencyVal).toBeDisabled()
+
+    const parameterKey = screen.getByTestId('parameter.0.key');
     expect(parameterKey.value).toBe('--project');
     expect(parameterKey).toBeDisabled()
+
+    const parameterVal = screen.getByTestId('parameter.0.value');
     expect(parameterVal.value).toBe('EGI');
     expect(parameterVal).toBeDisabled()
+
+    const flagKey = screen.getByTestId('flags.0.key');
     expect(flagKey.value).toBe('OBSESS');
     expect(flagKey).toBeDisabled()
+
+    const flagVal = screen.getByTestId('flags.0.value');
     expect(flagVal.value).toBe('1');
     expect(flagVal).toBeDisabled()
+
+    const parentField = screen.getByTestId('parent');
     expect(parentField.value).toBe('');
     expect(parentField).toBeDisabled()
+
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /clone/i })).not.toBeInTheDocument()
   })
 
   test('Test that passive metric changeview renders properly', async () => {
@@ -942,78 +997,82 @@ describe('Tests for metric change', () => {
     })
 
     const nameField = screen.getByTestId('name');
-    const typeField = screen.getByTestId('mtype');
-    const probeField = screen.queryByTestId('probeversion');
-    const packageField = screen.queryByTestId('package');
-    const descriptionField = screen.getByTestId('description');
-    const groupField = screen.getByText('ARGOTEST');
-    const executableField = screen.queryByTestId('probeexecutable');
-    const configKey1 = screen.queryByTestId('config.0.key');
-    const configKey2 = screen.queryByTestId('config.1.key');
-    const configKey3 = screen.queryByTestId('config.2.key');
-    const configKey4 = screen.queryByTestId('config.3.key');
-    const configKey5 = screen.queryByTestId('config.4.key');
-    const configVal1 = screen.queryByTestId('config.0.value');
-    const configVal2 = screen.queryByTestId('config.1.value');
-    const configVal3 = screen.queryByTestId('config.2.value');
-    const configVal4 = screen.queryByTestId('config.3.value');
-    const configVal5 = screen.queryByTestId('config.4.value');
-    const attributeKey = screen.queryByTestId('empty-key.attributes');
-    const attributeVal = screen.queryByTestId('empty-value.attributes')
-    const dependencyKey = screen.queryByTestId('empty-key.dependency');
-    const dependencyVal = screen.queryByTestId('empty-value.dependency');
-    const parameterKey = screen.queryByTestId('empty-key.parameter');
-    const parameterVal = screen.queryByTestId('empty-value.parameter');
-    const flagKey1 = screen.getByTestId('flags.0.key');
-    const flagVal1 = screen.getByTestId('flags.0.value');
-    const flagKey2 = screen.getByTestId('flags.1.key');
-    const flagVal2 = screen.getByTestId('flags.1.value');
-    const parentField = screen.getByTestId('parent');
-
     expect(nameField.value).toBe('org.apel.APEL-Pub');
     expect(nameField).toBeDisabled()
+
+    const typeField = screen.getByTestId('mtype');
     expect(typeField.value).toBe('Passive');
     expect(typeField).toBeDisabled()
+
+    const probeField = screen.queryByTestId('probeversion');
     expect(probeField.value).toBe('');
     expect(probeField).toBeDisabled();
+
+    const packageField = screen.queryByTestId('package');
     expect(packageField.value).toBe('');
     expect(packageField).toBeDisabled();
+
+    const descriptionField = screen.getByTestId('description');
     expect(descriptionField.value).toBe('');
     expect(descriptionField).toBeDisabled();
+
+    const groupField = screen.getByText('ARGOTEST');
     expect(groupField).toBeInTheDocument()
 
     expect(screen.queryByText('EGI')).not.toBeInTheDocument()
     selectEvent.openMenu(groupField)
     expect(screen.getByText('EGI')).toBeInTheDocument()
 
+    expect(screen.getByRole("heading", { name: /metric configuration/i })).toBeInTheDocument()
+
+    expect(screen.queryByRole("heading", { name: /probe executable/i })).not.toBeInTheDocument()
+    expect(screen.queryByTestId('probeexecutable')).not.toBeInTheDocument()
+
+    expect(screen.queryByRole("heading", { name: "config" })).not.toBeInTheDocument()
+    expect(screen.queryByTestId('config.0.key')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('config.1.key')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('config.2.key')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('config.3.key')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('config.4.key')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('config.0.value')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('config.1.value')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('config.2.value')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('config.3.value')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('config.4.value')).not.toBeInTheDocument()
+
+    expect(screen.queryByRole("heading", { name: /attributes/i })).not.toBeInTheDocument()
+    expect(screen.queryByTestId('attributes.0.key')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('attributes.0.value')).not.toBeInTheDocument()
+
+    expect(screen.queryByRole("heading", { name: /dependency/i })).not.toBeInTheDocument()
+    expect(screen.queryByTestId('dependency.0.key')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('dependency.0.value')).not.toBeInTheDocument()
+
+    expect(screen.queryByRole("heading", { name: /parameter/i })).not.toBeInTheDocument()
+    expect(screen.queryByTestId('parameter.0.key')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('parameter.0.value')).not.toBeInTheDocument()
+
     expect(screen.getByRole('heading', { name: /flags/i }).textContent).toBe('flags');
-    expect(executableField).not.toBeInTheDocument();
-    expect(configKey1).not.toBeInTheDocument();
-    expect(configVal1).not.toBeInTheDocument();
-    expect(configKey2).not.toBeInTheDocument();
-    expect(configVal2).not.toBeInTheDocument();
-    expect(configKey3).not.toBeInTheDocument();
-    expect(configVal3).not.toBeInTheDocument();
-    expect(configKey4).not.toBeInTheDocument();
-    expect(configVal4).not.toBeInTheDocument();
-    expect(configKey5).not.toBeInTheDocument();
-    expect(configVal5).not.toBeInTheDocument();
-    expect(attributeKey).not.toBeInTheDocument();
-    expect(attributeVal).not.toBeInTheDocument();
-    expect(dependencyKey).not.toBeInTheDocument();
-    expect(dependencyVal).not.toBeInTheDocument();
-    expect(parameterKey).not.toBeInTheDocument();
-    expect(parameterVal).not.toBeInTheDocument();
+    const flagKey1 = screen.getByTestId('flags.0.key');
     expect(flagKey1.value).toBe('OBSESS');
     expect(flagKey1).toBeDisabled()
+
+    const flagVal1 = screen.getByTestId('flags.0.value');
     expect(flagVal1.value).toBe('1');
     expect(flagVal1).toBeDisabled()
+
+    const flagKey2 = screen.getByTestId('flags.1.key');
     expect(flagKey2.value).toBe('PASSIVE');
     expect(flagKey2).toBeDisabled()
+
+    const flagVal2 = screen.getByTestId('flags.1.value');
     expect(flagVal2.value).toBe('1');
     expect(flagVal2).toBeDisabled()
+
+    const parentField = screen.getByTestId('parent');
     expect(parentField.value).toBe('');
     expect(parentField).toBeDisabled()
+
     expect(screen.getByRole('button', { name: /history/i }).closest('a')).toHaveAttribute('href', '/ui/metrics/org.apel.APEL-Pub/history')
     expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
@@ -1029,65 +1088,61 @@ describe('Tests for metric change', () => {
     })
 
     const nameField = screen.getByTestId('name');
+    expect(nameField.value).toBe('org.apel.APEL-Pub');
+    expect(nameField).toBeDisabled()
+
     const typeField = screen.getByTestId('mtype');
+    expect(typeField.value).toBe('Passive');
+    expect(typeField).toBeDisabled()
+
     const probeField = screen.queryByTestId('probeversion');
+    expect(probeField.value).toBe('');
+    expect(probeField).toBeDisabled();
+
     const packageField = screen.queryByTestId('package');
+    expect(packageField.value).toBe('');
+    expect(packageField).toBeDisabled();
+
     const descriptionField = screen.getByTestId('description');
+    expect(descriptionField.value).toBe('');
+    expect(descriptionField).toBeDisabled();
+
     const groupField = screen.getByTestId('group');
-    const executableField = screen.queryByTestId('probeexecutable');
-    const configKey1 = screen.queryByTestId('config.0.key');
-    const configKey2 = screen.queryByTestId('config.1.key');
-    const configKey3 = screen.queryByTestId('config.2.key');
-    const configKey4 = screen.queryByTestId('config.3.key');
-    const configKey5 = screen.queryByTestId('config.4.key');
-    const configVal1 = screen.queryByTestId('config.0.value');
-    const configVal2 = screen.queryByTestId('config.1.value');
-    const configVal3 = screen.queryByTestId('config.2.value');
-    const configVal4 = screen.queryByTestId('config.3.value');
-    const configVal5 = screen.queryByTestId('config.4.value');
-    const attributeKey = screen.queryByTestId('empty-key.attributes');
-    const attributeVal = screen.queryByTestId('empty-value.attributes')
-    const dependencyKey = screen.queryByTestId('empty-key.dependency');
-    const dependencyVal = screen.queryByTestId('empty-value.dependency');
-    const parameterKey = screen.queryByTestId('empty-key.parameter');
-    const parameterVal = screen.queryByTestId('empty-value.parameter');
+    expect(groupField.value).toBe('ARGOTEST');
+    expect(screen.queryByRole('option', { name: /egi/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: /argotest/i })).not.toBeInTheDocument();
+
+    expect(screen.queryByTestId('probeexecutable')).not.toBeInTheDocument()
+
+    expect(screen.queryByRole("heading", { name: "config" })).not.toBeInTheDocument()
+    expect(screen.queryByTestId('config.0.key')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('config.1.key')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('config.2.key')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('config.3.key')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('config.4.key')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('config.0.value')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('config.1.value')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('config.2.value')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('config.3.value')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('config.4.value')).not.toBeInTheDocument()
+
+    expect(screen.queryByRole("heading", { name: /attributes/i })).not.toBeInTheDocument()
+    expect(screen.queryByTestId('attributes.0.key')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('attributes.0.value')).not.toBeInTheDocument()
+
+    expect(screen.queryByRole("heading", { name: /dependency/i })).not.toBeInTheDocument()
+    expect(screen.queryByTestId('dependency.0.key')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('dependency.0.value')).not.toBeInTheDocument()
+
+    expect(screen.queryByRole("heading", { name: /parameter/i })).not.toBeInTheDocument()
+    expect(screen.queryByTestId('parameter.0.key')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('parameter.0.value')).not.toBeInTheDocument()
+
+    expect(screen.getByRole('heading', { name: /flags/i })).toBeInTheDocument()
     const flagKey1 = screen.getByTestId('flags.0.key');
     const flagVal1 = screen.getByTestId('flags.0.value');
     const flagKey2 = screen.getByTestId('flags.1.key');
     const flagVal2 = screen.getByTestId('flags.1.value');
-    const parentField = screen.getByTestId('parent');
-
-    expect(nameField.value).toBe('org.apel.APEL-Pub');
-    expect(nameField).toBeDisabled()
-    expect(typeField.value).toBe('Passive');
-    expect(typeField).toBeDisabled()
-    expect(probeField.value).toBe('');
-    expect(probeField).toBeDisabled();
-    expect(packageField.value).toBe('');
-    expect(packageField).toBeDisabled();
-    expect(descriptionField.value).toBe('');
-    expect(descriptionField).toBeDisabled();
-    expect(groupField.value).toBe('ARGOTEST');
-    expect(screen.queryByRole('option', { name: /egi/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('option', { name: /argotest/i })).not.toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /flags/i }).textContent).toBe('flags');
-    expect(executableField).not.toBeInTheDocument();
-    expect(configKey1).not.toBeInTheDocument();
-    expect(configVal1).not.toBeInTheDocument();
-    expect(configKey2).not.toBeInTheDocument();
-    expect(configVal2).not.toBeInTheDocument();
-    expect(configKey3).not.toBeInTheDocument();
-    expect(configVal3).not.toBeInTheDocument();
-    expect(configKey4).not.toBeInTheDocument();
-    expect(configVal4).not.toBeInTheDocument();
-    expect(configKey5).not.toBeInTheDocument();
-    expect(configVal5).not.toBeInTheDocument();
-    expect(attributeKey).not.toBeInTheDocument();
-    expect(attributeVal).not.toBeInTheDocument();
-    expect(dependencyKey).not.toBeInTheDocument();
-    expect(dependencyVal).not.toBeInTheDocument();
-    expect(parameterKey).not.toBeInTheDocument();
-    expect(parameterVal).not.toBeInTheDocument();
     expect(flagKey1.value).toBe('OBSESS');
     expect(flagKey1).toBeDisabled()
     expect(flagVal1.value).toBe('1');
@@ -1096,8 +1151,12 @@ describe('Tests for metric change', () => {
     expect(flagKey2).toBeDisabled()
     expect(flagVal2.value).toBe('1');
     expect(flagVal2).toBeDisabled()
+
+    expect(screen.getByRole('heading', { name: /parent/i })).toBeInTheDocument()
+    const parentField = screen.getByTestId('parent');
     expect(parentField.value).toBe('');
     expect(parentField).toBeDisabled()
+
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
@@ -1107,21 +1166,15 @@ describe('Tests for metric change', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric');
+      expect(screen.getByRole('heading', { name: /change metric/i })).toBeInTheDocument()
     })
 
-    const configVal1 = screen.getByTestId('config.0.value');
-    const configVal2 = screen.getByTestId('config.1.value');
-    const configVal3 = screen.getByTestId('config.2.value');
-    const configVal4 = screen.getByTestId('config.3.value');
-    const groupField = screen.getByText('EGI');
+    fireEvent.change(screen.getByTestId("config.0.value"), { target: { value: '4' } });
+    fireEvent.change(screen.getByTestId("config.1.value"), { target: { value: '70' } });
+    fireEvent.change(screen.getByTestId("config.2.value"), { target: { value: '4' } });
+    fireEvent.change(screen.getByTestId("config.3.value"), { target: { value: '2' } });
 
-    fireEvent.change(configVal1, { target: { value: '4' } });
-    fireEvent.change(configVal2, { target: { value: '70' } });
-    fireEvent.change(configVal3, { target: { value: '4' } });
-    fireEvent.change(configVal4, { target: { value: '2' } });
-
-    await selectEvent.select(groupField, 'ARGOTEST')
+    await selectEvent.select(screen.getByText("EGI"), 'ARGOTEST')
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
 
@@ -1151,8 +1204,7 @@ describe('Tests for metric change', () => {
           attribute: mockMetric.attribute,
           dependancy: mockMetric.dependancy,
           flags: mockMetric.flags,
-          parameter: mockMetric.parameter,
-          fileparameter: mockMetric.fileparameter
+          parameter: mockMetric.parameter
         }
       )
     })
@@ -1213,8 +1265,7 @@ describe('Tests for metric change', () => {
           attribute: mockMetric.attribute,
           dependancy: mockMetric.dependancy,
           flags: mockMetric.flags,
-          parameter: mockMetric.parameter,
-          fileparameter: mockMetric.fileparameter
+          parameter: mockMetric.parameter
         }
       )
     })
@@ -1280,8 +1331,7 @@ describe('Tests for metric change', () => {
           dependancy: mockMetric.dependancy,
           flags: mockMetric.flags,
           files: mockMetric.files,
-          parameter: mockMetric.parameter,
-          fileparameter: mockMetric.fileparameter
+          parameter: mockMetric.parameter
         }
       )
     })
@@ -1431,8 +1481,8 @@ describe('Tests for metric change', () => {
     const configVal5 = screen.getByTestId('config.4.value');
     const attributeKey = screen.getByTestId('attributes.0.key');
     const attributeVal = screen.getByTestId('attributes.0.value')
-    const dependencyKey = screen.getByTestId('empty-key.dependency');
-    const dependencyVal = screen.getByTestId('empty-value.dependency');
+    const dependencyKey = screen.getByTestId('dependency.0.key');
+    const dependencyVal = screen.getByTestId('dependency.0.value');
     const parameterKey = screen.getByTestId('parameter.0.key');
     const parameterVal = screen.getByTestId('parameter.0.value');
     const flagKey = screen.getByTestId('flags.0.key');
@@ -1553,8 +1603,8 @@ describe('Tests for metric history', () => {
     const configVal5 = screen.getByTestId('config.4.value');
     const attributeKey = screen.getByTestId('attributes.0.key');
     const attributeVal = screen.getByTestId('attributes.0.value')
-    const dependencyKey = screen.getByTestId('empty-key.dependency');
-    const dependencyVal = screen.getByTestId('empty-value.dependency');
+    const dependencyKey = screen.getByTestId('dependency.0.key');
+    const dependencyVal = screen.getByTestId('dependency.0.value');
     const parameterKey = screen.getByTestId('parameter.0.key');
     const parameterVal = screen.getByTestId('parameter.0.value');
     const flagKey = screen.getByTestId('flags.0.key');

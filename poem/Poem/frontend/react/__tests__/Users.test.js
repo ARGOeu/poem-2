@@ -64,6 +64,7 @@ const mockUsers = [
   }
 ]
 
+
 const mockUser = {
     first_name: 'Alan',
     last_name: 'Ford',
@@ -272,6 +273,7 @@ describe('Test users listview', () => {
 
 const mockFetchData = jest.fn();
 
+
 describe('Test user changeview on SuperAdmin POEM', () => {
   jest.spyOn(NotificationManager, 'success');
   jest.spyOn(NotificationManager, 'error');
@@ -306,8 +308,8 @@ describe('Test user changeview on SuperAdmin POEM', () => {
     const emailField = screen.getByTestId('email');
     const lastLoginField = screen.getByTestId('last_login');
     const dateJoinedField = screen.getByTestId('date_joined');
-    const superUserCheckbox = screen.getByRole('checkbox', { name: /superuser/i });
-    const activeCheckbox = screen.getByRole('checkbox', { name: /active/i })
+    const superUserCheckbox = screen.getAllByRole('checkbox')[0]
+    const activeCheckbox = screen.getAllByRole('checkbox')[1]
 
     expect(usernameField.value).toBe('Alan_Ford');
     expect(usernameField).toBeEnabled();
@@ -353,8 +355,8 @@ describe('Test user changeview on SuperAdmin POEM', () => {
     const emailField = screen.getByTestId('email');
     const lastLoginField = screen.getByTestId('last_login');
     const dateJoinedField = screen.getByTestId('date_joined');
-    const superUserCheckbox = screen.getByRole('checkbox', { name: /superuser/i });
-    const activeCheckbox = screen.getByRole('checkbox', { name: /active/i })
+    const superUserCheckbox = screen.getAllByRole('checkbox')[0]
+    const activeCheckbox = screen.getAllByRole('checkbox')[1]
 
     expect(usernameField.value).toBe('poem');
     expect(usernameField).toBeEnabled();
@@ -390,7 +392,7 @@ describe('Test user changeview on SuperAdmin POEM', () => {
     fireEvent.change(screen.getByTestId('first_name'), { target: { value: 'Al' } });
     fireEvent.change(screen.getByTestId('last_name'), { target: { value: 'Fordy' } });
     fireEvent.change(screen.getByTestId('email'), { target: { value: 'alan.ford@group-tnt.com' } });
-    fireEvent.click(screen.getByRole('checkbox', { name: /superuser/i }))
+    fireEvent.click(screen.getAllByRole('checkbox')[0])
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
@@ -431,11 +433,11 @@ describe('Test user changeview on SuperAdmin POEM', () => {
     fireEvent.change(screen.getByTestId('first_name'), { target: { value: '' } })
     fireEvent.change(screen.getByTestId('last_name'), { target: { value: '' } })
     fireEvent.change(screen.getByTestId('email'), { target: { value: '' } })
-    fireEvent.click(screen.getByRole('checkbox', { name: /superuser/i }));
+    fireEvent.click(screen.getAllByRole('checkbox')[0])
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
 
-    expect(await screen.findAllByTestId('error-msg')).toHaveLength(2);
+    expect(await screen.findAllByText("Required")).toHaveLength(2)
     expect(mockChangeObject).not.toHaveBeenCalled();
   })
 
@@ -454,7 +456,7 @@ describe('Test user changeview on SuperAdmin POEM', () => {
     fireEvent.change(screen.getByTestId('first_name'), { target: { value: 'Al' } });
     fireEvent.change(screen.getByTestId('last_name'), { target: { value: 'Fordy' } });
     fireEvent.change(screen.getByTestId('email'), { target: { value: 'alan.ford@group-tnt.com' } });
-    fireEvent.click(screen.getByRole('checkbox', { name: /superuser/i }))
+    fireEvent.click(screen.getAllByRole('checkbox')[0])
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
@@ -503,7 +505,7 @@ describe('Test user changeview on SuperAdmin POEM', () => {
     fireEvent.change(screen.getByTestId('first_name'), { target: { value: 'Al' } });
     fireEvent.change(screen.getByTestId('last_name'), { target: { value: 'Fordy' } });
     fireEvent.change(screen.getByTestId('email'), { target: { value: 'alan.ford@group-tnt.com' } });
-    fireEvent.click(screen.getByRole('checkbox', { name: /superuser/i }))
+    fireEvent.click(screen.getAllByRole('checkbox')[0])
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
@@ -667,8 +669,8 @@ describe('Tests for user addview on SuperAdmin POEM', () => {
     const emailField = screen.getByTestId('email');
     const lastLoginField = screen.queryByTestId('last_login');
     const dateJoinedField = screen.queryByTestId('date_joined');
-    const superUserCheckbox = screen.getByRole('checkbox', { name: /superuser/i });
-    const activeCheckbox = screen.getByRole('checkbox', { name: /active/i })
+    const superUserCheckbox = screen.getAllByRole('checkbox')[0]
+    const activeCheckbox = screen.getAllByRole('checkbox')[1]
 
     expect(usernameField.value).toBe('');
     expect(usernameField).toBeEnabled();
@@ -745,7 +747,8 @@ describe('Tests for user addview on SuperAdmin POEM', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
 
-    expect(await screen.findAllByTestId('error-msg')).toHaveLength(4);
+    expect(await screen.findAllByText('Required')).toHaveLength(2)
+    expect(await screen.getByText("Passwords do not match!")).toBeInTheDocument()
     expect(mockAddObject).not.toHaveBeenCalled();
   })
 
@@ -894,7 +897,6 @@ describe('Tests for user changeview on tenant POEM', () => {
       expect(screen.getByRole('heading', { name: /change user/i }).textContent).toBe('Change user')
     })
 
-    const form = screen.getByTestId('form');
     const usernameField = screen.getByTestId('username');
     const passwordField = screen.queryByTestId('password');
     const confirmPasswordField = screen.queryByTestId('confirm_password');
@@ -903,8 +905,8 @@ describe('Tests for user changeview on tenant POEM', () => {
     const emailField = screen.getByTestId('email');
     const lastLoginField = screen.getByTestId('last_login');
     const dateJoinedField = screen.getByTestId('date_joined');
-    const superUserCheckbox = screen.getByRole('checkbox', { name: /superuser/i });
-    const activeCheckbox = screen.getByRole('checkbox', { name: /active/i })
+    const superUserCheckbox = screen.getAllByRole('checkbox')[0]
+    const activeCheckbox = screen.getAllByRole('checkbox')[1]
     const groupsOfMetricsField = screen.getByText('metric-group1').parentElement
     const groupsOfMetricProfilesField = screen.getByText('mp-group1').parentElement
     const groupsOfAggregationsField = screen.getByText('aggr-group1').parentElement
@@ -938,13 +940,17 @@ describe('Tests for user changeview on tenant POEM', () => {
     expect(groupsOfThresholdsField).toBeInTheDocument();
     expect(groupsOfReportsField).toBeInTheDocument();
 
-    expect(form).toHaveFormValues({
-      groupsofaggregations: 'aggr-group1',
-      groupsofmetrics: ['metric-group1', 'metric-group2'],
-      groupsofmetricprofiles: 'mp-group1',
-      groupsofthresholdsprofiles: 'threshold-group3',
-      groupsofreports: 'report-group2'
-    })
+    expect(screen.getAllByText(/aggr-group/i)).toHaveLength(1)
+    expect(screen.getByText("aggr-group1")).toBeInTheDocument()
+    expect(screen.getAllByText(/metric-group/i)).toHaveLength(2)
+    expect(screen.getByText("metric-group1")).toBeInTheDocument()
+    expect(screen.getByText("metric-group2")).toBeInTheDocument()
+    expect(screen.getAllByText(/mp-group/i)).toHaveLength(1)
+    expect(screen.getByText("mp-group1")).toBeInTheDocument()
+    expect(screen.getAllByText(/threshold-group/i)).toHaveLength(1)
+    expect(screen.getByText("threshold-group3")).toBeInTheDocument()
+    expect(screen.getAllByText(/report-group/i)).toHaveLength(1)
+    expect(screen.getByText("report-group2")).toBeInTheDocument()
 
     expect(screen.queryByText('aggr-group2')).not.toBeInTheDocument()
     selectEvent.openMenu(groupsOfAggregationsField)
@@ -986,7 +992,7 @@ describe('Tests for user changeview on tenant POEM', () => {
     fireEvent.change(screen.getByTestId('first_name'), { target: { value: 'Al' } });
     fireEvent.change(screen.getByTestId('last_name'), { target: { value: 'Fordy' } });
     fireEvent.change(screen.getByTestId('email'), { target: { value: 'alan.ford@group-tnt.com' } });
-    fireEvent.click(screen.getByRole('checkbox', { name: /superuser/i }))
+    fireEvent.click(screen.getAllByRole('checkbox')[0])
 
     const metricGroups = screen.getByText('metric-group1').parentElement
 
@@ -1051,11 +1057,11 @@ describe('Tests for user changeview on tenant POEM', () => {
     fireEvent.change(screen.getByTestId('first_name'), { target: { value: '' } })
     fireEvent.change(screen.getByTestId('last_name'), { target: { value: '' } })
     fireEvent.change(screen.getByTestId('email'), { target: { value: '' } })
-    fireEvent.click(screen.getByRole('checkbox', { name: /superuser/i }));
+    fireEvent.click(screen.getAllByRole('checkbox')[0])
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
 
-    expect(await screen.findAllByTestId('error-msg')).toHaveLength(2);
+    expect(await screen.findAllByText("Required")).toHaveLength(2);
     expect(mockChangeObject).not.toHaveBeenCalled();
   })
 
@@ -1074,7 +1080,7 @@ describe('Tests for user changeview on tenant POEM', () => {
     fireEvent.change(screen.getByTestId('first_name'), { target: { value: 'Al' } });
     fireEvent.change(screen.getByTestId('last_name'), { target: { value: 'Fordy' } });
     fireEvent.change(screen.getByTestId('email'), { target: { value: 'alan.ford@group-tnt.com' } });
-    fireEvent.click(screen.getByRole('checkbox', { name: /superuser/i }))
+    fireEvent.click(screen.getAllByRole('checkbox')[0])
 
     const metricGroups = screen.getByText('metric-group1').parentElement
 
@@ -1136,7 +1142,7 @@ describe('Tests for user changeview on tenant POEM', () => {
     fireEvent.change(screen.getByTestId('first_name'), { target: { value: 'Al' } });
     fireEvent.change(screen.getByTestId('last_name'), { target: { value: 'Fordy' } });
     fireEvent.change(screen.getByTestId('email'), { target: { value: 'alan.ford@group-tnt.com' } });
-    fireEvent.click(screen.getByRole('checkbox', { name: /superuser/i }))
+    fireEvent.click(screen.getAllByRole('checkbox')[0])
 
     const metricGroups = screen.getByText('metric-group1').parentElement
 
@@ -1210,7 +1216,7 @@ describe('Tests for user changeview on tenant POEM', () => {
     fireEvent.change(screen.getByTestId('first_name'), { target: { value: 'Al' } });
     fireEvent.change(screen.getByTestId('last_name'), { target: { value: 'Fordy' } });
     fireEvent.change(screen.getByTestId('email'), { target: { value: 'alan.ford@group-tnt.com' } });
-    fireEvent.click(screen.getByRole('checkbox', { name: /superuser/i }))
+    fireEvent.click(screen.getAllByRole('checkbox')[0])
 
     const metricGroups = screen.getByText('metric-group1').parentElement
 
@@ -1270,7 +1276,7 @@ describe('Tests for user changeview on tenant POEM', () => {
     fireEvent.change(screen.getByTestId('first_name'), { target: { value: 'Al' } });
     fireEvent.change(screen.getByTestId('last_name'), { target: { value: 'Fordy' } });
     fireEvent.change(screen.getByTestId('email'), { target: { value: 'alan.ford@group-tnt.com' } });
-    fireEvent.click(screen.getByRole('checkbox', { name: /superuser/i }))
+    fireEvent.click(screen.getAllByRole('checkbox')[0])
 
     const metricGroups = screen.getByText('metric-group1').parentElement
 
@@ -1465,8 +1471,8 @@ describe('Tests for user addview on tenant POEM', () => {
     const emailField = screen.getByTestId('email');
     const lastLoginField = screen.queryByTestId('last_login');
     const dateJoinedField = screen.queryByTestId('date_joined');
-    const superUserCheckbox = screen.getByRole('checkbox', { name: /superuser/i });
-    const activeCheckbox = screen.getByRole('checkbox', { name: /active/i })
+    const superUserCheckbox = screen.getAllByRole('checkbox')[0]
+    const activeCheckbox = screen.getAllByRole('checkbox')[1]
 
     // there is a word 'select' in a description of is_active checkbox, therefore
     // the numbering here starts from 1
@@ -1614,7 +1620,7 @@ describe('Tests for user addview on tenant POEM', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
 
-    expect(await screen.findAllByTestId('error-msg')).toHaveLength(4);
+    expect(await screen.findAllByText('Required')).toHaveLength(4);
     expect(mockAddObject).not.toHaveBeenCalled();
   })
 
@@ -1944,7 +1950,7 @@ describe('Tests for changing password', () => {
     fireEvent.change(screen.getByTestId('password'), { target: { value: 'foobar28' } });
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    expect(await screen.findAllByTestId('error-msg')).toHaveLength(2);
+    expect(await screen.findByText('Required')).toBeInTheDocument()
     expect(mockChangeObject).not.toHaveBeenCalled();
   })
 
@@ -1959,7 +1965,7 @@ describe('Tests for changing password', () => {
     fireEvent.change(screen.getByTestId('confirm_password'), { target: { value: 'foobar38' } })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    expect(await screen.findAllByTestId('error-msg')).toHaveLength(2);
+    expect(await screen.findByText("Passwords do not match!")).toBeInTheDocument()
     expect(mockChangeObject).not.toHaveBeenCalled();
   })
 
@@ -1974,7 +1980,7 @@ describe('Tests for changing password', () => {
     fireEvent.change(screen.getByTestId('confirm_password'), { target: { value: 'foobar' } })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    expect(await screen.findAllByTestId('error-msg')).toHaveLength(2);
+    expect(await screen.findByText("Your password must contain at least 8 characters.")).toBeInTheDocument()
     expect(mockChangeObject).not.toHaveBeenCalled();
   })
 
@@ -1986,7 +1992,7 @@ describe('Tests for changing password', () => {
     })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    expect(await screen.findAllByTestId('error-msg')).toHaveLength(2);
+    expect(await screen.findAllByText("Required")).toHaveLength(2);
     expect(mockChangeObject).not.toHaveBeenCalled();
   })
 

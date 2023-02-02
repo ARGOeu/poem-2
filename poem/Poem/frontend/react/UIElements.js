@@ -34,7 +34,9 @@ import {
   Table,
   Pagination,
   PaginationItem,
-  PaginationLink
+  PaginationLink,
+  Input,
+  FormFeedback
 } from 'reactstrap';
 import { Link } from 'react-router-dom';
 import ArgoLogo from './argologo_color.svg';
@@ -74,11 +76,12 @@ import { NotificationManager } from 'react-notifications';
 import { Field } from 'formik';
 import { Backend } from './DataManager';
 import ReactDiffViewer from 'react-diff-viewer';
-import Autosuggest from 'react-autosuggest';
 import { CookiePolicy } from './CookiePolicy';
 import { useTable, usePagination, useFilters } from 'react-table';
 import { Helmet } from 'react-helmet';
 import Select, { components } from 'react-select';
+import { Controller, useFormContext } from 'react-hook-form';
+import { ErrorMessage } from '@hookform/error-message';
 
 
 var list_pages = ['administration', 'probes',
@@ -204,7 +207,7 @@ export const CustomReactSelect = ({ forwardedRef=undefined, ...props}) => {
       textShadow: 'none',
       textAlign: 'start',
       textIndent: 0,
-      borderColor: props.error ? '#FF0000' : state.selectProps.menuIsOpen ? '#66afe9' : '#ced4da',
+      borderColor: props.error ? '#dc3545' : props.isnew ? '#198754' : props.ismissing ? '#0d6efd' : state.selectProps.menuIsOpen ? '#66afe9' : '#ced4da',
       transition: 'border-color .15s ease-in-out, box-shadow .15s ease-in-out',
       boxShadow: state.selectProps.menuIsOpen ? '0 0 0 .2rem rgba(0, 123, 255, .25)' : 'none',
       ':focus': {
@@ -285,24 +288,6 @@ export const DropdownWithFormText = ({ forwardedRef=undefined, ...props }) => {
     </div>
   )
 }
-
-
-export const DropDown = ({field, data=[], prefix="", class_name="", isnew=false, errors=undefined}) =>
-  <Field component="select"
-    name={prefix ? `${prefix}.${field.name}` : field.name}
-    data-testid={prefix ? `${prefix}.${field.name}` : field.name}
-    required={true}
-    className={`form-control ${class_name} ${isnew ? 'border-success' : `${errors && errors[field.name] ? 'border-danger' : ''}`}`}
-  >
-    {
-      data.map((name, i) => (
-        i === 0 ?
-          <option key={i} value='' hidden color='text-muted'>{name}</option>
-        :
-          <option key={i} value={name}>{name}</option>
-      ))
-    }
-  </Field>
 
 
 export const SearchField = ({field, forwardedRef=undefined, ...rest}) =>
@@ -994,100 +979,8 @@ export const BaseArgoView = ({resourcename='', location=undefined,
 
 
 export const CustomError = (props) => (
-  <div data-testid='error-msg' style={{color: '#FF0000', fontSize: 'small'}}>{props.error}</div>
+  <div data-testid='error-msg' className="end-0" style={{color: '#dc3545', fontSize: 'small'}}>{props.error}</div>
 )
-
-
-export const AutocompleteField = ({lists=[], field, icon, label, onselect_handler=undefined, hide_error=false, ...props}) => {
-  return (
-    <_AutocompleteField
-      lists={lists}
-      field={field}
-      icon={icon}
-      label={label}
-      val={props.values[field]}
-      err={props.errors[field]}
-      setFieldValue={props.setFieldValue}
-      onselect_handler={onselect_handler}
-      hide_error={hide_error}
-    />
-  )
-}
-
-
-export const _AutocompleteField = ({lists=[], field, val, err, setFieldValue, icon, label, onselect_handler=undefined, hide_error=false}) => {
-  const [inputValue, setInputValue] = useState(val);
-  const [suggestions, setSuggestions] = useState(lists);
-  const [touched, setTouched] = useState(false);
-
-  const getSuggestions = value => {
-    setTouched(true);
-    return (
-      lists.filter(suggestion =>
-        suggestion.toLowerCase().includes(value.trim().toLowerCase())
-      )
-    );
-  };
-
-  const getSuggestionValue = suggestion => suggestion;
-
-  const renderSuggestion = (suggestion, {isHighlighted}) => (
-    <div
-      key={lists.indexOf(suggestion)}
-      className={`argo-autocomplete-entries ${isHighlighted ?
-        'argo-autocomplete-entries-highlighted' : ''}`}
-    >
-      {suggestion ? <Icon i={icon}/> : ''} {suggestion}
-    </div>
-  );
-
-  const renderInputComponent = inputProps => {
-    if (label)
-      return (
-        <div>
-          <div className='input-group mb-3'>
-            <div className='input-group-prepend'>
-              <span className='input-group-text' id='basic-addon1'>{label}</span>
-            </div>
-            <input {...inputProps} type='text' data-testid={`autocomplete-${field}`}
-            className={`form-control ${err && touched && 'border-danger'}`} aria-label='label' />
-          </div>
-          {!hide_error && err && touched && <div style={{color: '#FF0000', fontSize: 'small'}}>{err}</div>}
-        </div>
-      );
-    else
-      return (<input {...inputProps} type='text' data-testid={`autocomplete-${field}`} className='form-control'/>);
-  }
-
-  return (
-    <div>
-      <Autosuggest
-        suggestions={suggestions}
-        onSuggestionsClearRequested={() => setSuggestions([])}
-        onSuggestionsFetchRequested={({ value }) => {
-          setInputValue(value);
-          setSuggestions(getSuggestions(value));
-        }}
-        getSuggestionValue={getSuggestionValue}
-        renderSuggestion={renderSuggestion}
-        inputProps={{
-          value: inputValue,
-          onChange: (_, { newValue }) => {
-            setInputValue(newValue);
-            setFieldValue(field, newValue);
-            onselect_handler && onselect_handler(field, newValue);
-          }
-        }}
-        renderInputComponent={renderInputComponent}
-        shouldRenderSuggestions={() => true}
-        theme={{
-          containerOpen: 'argo-autocomplete-menu',
-          suggestionsList: 'argo-autocomplete-list'
-        }}
-      />
-    </div>
-  );
-};
 
 
 export const DropdownFilterComponent = ({value, onChange, data}) => (
@@ -1121,9 +1014,9 @@ export const HistoryComponent = (props) => {
 
   var apiUrl = undefined;
   if (['metric', 'metricprofile', 'aggregationprofile', 'thresholdsprofile'].includes(obj))
-    apiUrl = `/api/v2/internal/${publicView ? 'public_' : ''}tenantversion/`;
+    apiUrl = `/api/v2/internal/${publicView ? 'public_' : ''}tenantversion`;
   else
-    apiUrl = `/api/v2/internal/${publicView ? 'public_' : ''}version/`;
+    apiUrl = `/api/v2/internal/${publicView ? 'public_' : ''}version`;
 
   const compareUrl = `/ui/${tenantView ? 'administration/' : ''}${publicView ? 'public_' : ''}${obj}s/${name}/history`;
 
@@ -1134,7 +1027,8 @@ export const HistoryComponent = (props) => {
     async function fetchData() {
       try {
         let json = await backend.fetchData(`${apiUrl}/${obj}/${name}`);
-          setListVersions(json);
+        setListVersions(json);
+
         if (json.length > 1) {
           setCompare1(json[0].version);
           setCompare2(json[1].version);
@@ -1286,6 +1180,112 @@ export const DiffElement = ({title, item1, item2}) => {
     </div>
   );
 };
+
+
+export const ProfileMain = ({
+  grouplist=undefined,
+  description=undefined,
+  fieldsdisable=false,
+  profiletype=undefined,
+  addview=false
+}) => {
+  const { control, setValue, clearErrors, formState: { errors } } = useFormContext()
+
+  return (
+    <FormGroup>
+      <Row>
+        <Col md={6}>
+          <InputGroup>
+            <InputGroupText>Name</InputGroupText>
+            <Controller
+              name="name"
+              control={ control }
+              render={ ({ field }) =>
+                <Input
+                  { ...field }
+                  data-testid="name"
+                  className={ `form-control form-control-lg ${errors?.name && "is-invalid"}` }
+                  disabled={ !addview }
+                />
+              }
+            />
+            <ErrorMessage
+              errors={ errors }
+              name="name"
+              render={ ({ message }) =>
+                <FormFeedback invalid="true" className="end-0">
+                  { message }
+                </FormFeedback>
+              }
+            />
+          </InputGroup>
+          <FormText color='text-muted'>
+            { `Name of ${profiletype} profile` }
+          </FormText>
+        </Col>
+      </Row>
+      {
+        description &&
+          <Row className='mt-3'>
+            <Col md={10}>
+              <Label for="profileDescription">Description:</Label>
+              <Controller
+                name={ description }
+                control={ control }
+                render={ ({ field }) =>
+                  <textarea
+                    { ...field }
+                    id="profileDescription"
+                    className="form-control"
+                    rows={ 4 }
+                    disabled={ fieldsdisable }
+                  />
+                }
+              />
+              <FormText color="muted">
+                Free text description outlining the purpose of this profile.
+              </FormText>
+            </Col>
+          </Row>
+      }
+      <Row className='mt-4'>
+        <Col md={3}>
+          <InputGroup>
+            <InputGroupText>Group</InputGroupText>
+            <Controller
+              name="groupname"
+              control={ control }
+              render={ ({ field }) =>
+                fieldsdisable ?
+                  <Input
+                    { ...field }
+                    data-testid="groupname"
+                    className="form-control"
+                    disabled={ true }
+                  />
+                :
+                  <DropdownWithFormText
+                    forwardedRef={ field.ref }
+                    error={ errors?.groupname }
+                    options={ grouplist }
+                    value={ field.value }
+                    onChange={ e => {
+                      setValue("groupname", e.value)
+                      clearErrors("groupname")
+                    }}
+                  />
+              }
+            />
+          </InputGroup>
+          <CustomError error={ errors.groupname?.message } />
+          <FormText color="muted">
+            { `${profiletype.charAt(0).toUpperCase() + profiletype.slice(1)} profile is member of given group.` }
+          </FormText>
+        </Col>
+      </Row>
+    </FormGroup>
+  )
+}
 
 
 export const ProfileMainInfo = ({grouplist=undefined, description=undefined,

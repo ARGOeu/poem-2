@@ -933,7 +933,7 @@ class ListYumReposAPIViewTests(TenantTestCase):
 
     def test_put_yum_repo_with_nonexisting_repo_sp_superuser(self):
         data = {
-            'id': 999,
+            'id': self.repo1.id + self.repo2.id,
             'name': 'repo-3',
             'tag': 'CentOS 6',
             'description': 'New repo description.'
@@ -948,7 +948,7 @@ class ListYumReposAPIViewTests(TenantTestCase):
 
     def test_put_yum_repo_with_nonexisting_repo_sp_user(self):
         data = {
-            'id': 999,
+            'id': self.repo1.id + self.repo2.id,
             'name': 'repo-3',
             'tag': 'CentOS 6',
             'description': 'New repo description.'
@@ -966,7 +966,7 @@ class ListYumReposAPIViewTests(TenantTestCase):
 
     def test_put_yum_repo_with_nonexisting_repo_tenant_superuser(self):
         data = {
-            'id': 999,
+            'id': self.repo1.id + self.repo2.id,
             'name': 'repo-3',
             'tag': 'CentOS 6',
             'description': 'New repo description.'
@@ -984,7 +984,7 @@ class ListYumReposAPIViewTests(TenantTestCase):
 
     def test_put_yum_repo_with_nonexisting_repo_tenant_user(self):
         data = {
-            'id': 999,
+            'id': self.repo1.id + self.repo2.id,
             'name': 'repo-3',
             'tag': 'CentOS 6',
             'description': 'New repo description.'
