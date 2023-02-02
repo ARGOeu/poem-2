@@ -1,5 +1,30 @@
 # Changelog
 
+## [3.4.6] - 2023-02-01
+
+### Added
+
+* ARGO-4103 POEM POST service types with tags=poem field set
+
+### Fixed
+
+* ARGO-4104 Reflect changing number of entries in pagination on rendering of tuples
+* ARGO-4160 Form validation triggered wrong
+* ARGO-4179 Fix duplicated tuple logic clear off on metric profiles
+
+### Changed
+
+* ARGO-4030 Switch aggregation profile page to react-hook-form library
+* ARGO-4033 Switch metric overrides page to react-hook-form library
+* ARGO-4034 Switch metric profile page to react-hook-form library
+* ARGO-4035 Switch metric and metric templates page to react-hook-form library
+* ARGO-4036 Switch metric tags page to react-hook-form library
+* ARGO-4038 Remove formik from operations profile page
+* ARGO-4040 Switch probe page to react-hook-form library
+* ARGO-4043 Switch users page to react-hook-form library
+* ARGO-4044 Switch YUM repo page to react-hook-form library
+* ARGO-4161 Bump libs
+
 ## [3.4.5] - 2022-11-03
 
 ### Added
