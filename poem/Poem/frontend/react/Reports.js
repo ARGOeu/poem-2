@@ -2148,37 +2148,20 @@ export const ReportsComponent = (props) => {
 
     if (topologyEndpoints && serviceTypesSitesEndpoints.length === 0 &&
       serviceTypesServiceGroupsEndpoints.length === 0) {
-      let servicesSites = new Set()
-      let servicesServiceGroups = new Set()
+      let servicesSites = new Set(topologyEndpoints.filter(endpoint => endpoint["type"].toLowerCase() === "sites").map(endpoint => endpoint["service"]))
+      let servicesServiceGroups = new Set(topologyEndpoints.filter(endpoint => endpoint["type"].toLowerCase() === "servicegroups").map(endpoint => endpoint["service"]))
 
-      for (var endpoint of topologyEndpoints) {
-        if (endpoint['type'].toLowerCase() === 'sites')
-          servicesSites.add(endpoint['service'])
-        else if (endpoint['type'].toLowerCase() === 'servicegroups')
-          servicesServiceGroups.add(endpoint['service'])
-      }
       serviceTypesSitesEndpoints = Array.from(servicesSites).sort(sortStr)
       serviceTypesServiceGroupsEndpoints = Array.from(servicesServiceGroups).sort(sortStr)
     }
 
     if (topologyGroups && entitiesNgi.length === 0 && entitiesSites.length === 0
       && entitiesProjects.length === 0 && entitiesServiceGroups.length === 0) {
-      let ngis = new Set()
-      let projects = new Set()
-      let servicegroups = new Set()
-      let sites = new Set()
+      let ngis = new Set(topologyGroups.filter(entity => entity["type"].toLowerCase() === "ngi").map(entity => entity["group"]))
+      let projects = new Set(topologyGroups.filter(entity => entity["type"].toLowerCase() === "project").map(entity => entity["group"]))
+      let servicegroups = new Set(topologyGroups.filter(entity => entity["type"].toLowerCase() === "project").map(entity => entity["subgroup"]))
+      let sites = new Set(topologyGroups.filter(entity => entity["type"].toLowerCase() === "ngi").map(entity => entity["subgroup"]))
 
-      for (var entity of topologyGroups) {
-        if (entity['type'].toLowerCase() === 'project') {
-          projects.add(entity['group'])
-          servicegroups.add(entity['subgroup'])
-        }
-
-        else if (entity['type'].toLowerCase() === 'ngi') {
-          ngis.add(entity['group'])
-          sites.add(entity['subgroup'])
-        }
-      }
       entitiesNgi = Array.from(ngis).sort(sortStr)
       entitiesSites = Array.from(sites).sort(sortStr)
       entitiesProjects = Array.from(projects).sort(sortStr)
