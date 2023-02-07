@@ -289,13 +289,7 @@ const formatFilteredSelectEntities = (data, entitiesGroups, entitiesEndpoints, t
 
 
 const formatSelectEntities = (data) => {
-  let formatted = new Array()
-  for (var e of [...data])
-    formatted.push(new Object({
-      'label': e,
-      'value': e
-    }))
-  return formatted
+  return data.map(item => new Object({ label: item, value: item }))
 }
 
 
@@ -2387,4 +2381,4 @@ export const ReportsComponent = (props) => {
 
   else
     return null
-};
+}
