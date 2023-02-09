@@ -183,20 +183,9 @@ const entityInitValues = (matchWhat, formvalue) => {
   let tmp = new Array()
   for (let entity of formvalue) {
     if (entity && matchWhat.indexOf(entity.name) > -1) {
-      if (entity.value.indexOf('|') > -1) {
-        tmp = entity.value.split('|').map(e => new Object({
-          'label': e.trim(),
-          'value': e.trim()
-        }))
+      if (entity.value) {
+        tmp = entity.value.map(e => new Object({ label: e, value: e }))
       }
-      else if (entity.value)
-        tmp.push(
-          new Object({
-            'label': entity.value,
-            'value': entity.value
-          }))
-      else
-        tmp.push(undefined)
     }
   }
   return tmp
@@ -204,25 +193,11 @@ const entityInitValues = (matchWhat, formvalue) => {
 
 
 const formatFilteredSelectEntities = (data, entitiesGroups, entitiesEndpoints, topoMaps, lookkey) => {
-  let selectedTop = new Array()
-  let selectedMiddle = new Array()
+  let selectedTop = entitiesGroups[0]["value"]
+  let selectedMiddle = entitiesEndpoints[0] && entitiesEndpoints[0]["value"] ? entitiesEndpoints[0]["value"] : entitiesGroups[1]["value"]
 
-  let selectedEntitiesTop = entitiesGroups[0]
-  let selectedEntitiesMiddle = entitiesEndpoints[0] && entitiesEndpoints[0]['value'] ? entitiesEndpoints[0] : entitiesGroups[1]
-
-  if (selectedEntitiesTop && selectedEntitiesTop['value']) {
-    if (selectedEntitiesTop['value'].includes('|'))
-      selectedTop = selectedEntitiesTop['value'].split('|')
-    else
-      selectedTop = [selectedEntitiesTop['value']]
-  }
-
-  if (selectedEntitiesMiddle && selectedEntitiesMiddle['value']) {
-    if (selectedEntitiesMiddle['value'].includes('|'))
-      selectedMiddle = selectedEntitiesMiddle['value'].split('|')
-    else
-      selectedMiddle = [selectedEntitiesMiddle['value']]
-  }
+  selectedTop = selectedTop ? selectedTop : new Array()
+  selectedMiddle = selectedMiddle ? selectedMiddle : new Array()
 
   if (selectedTop.length > 0 || selectedMiddle.length > 0) {
     let topoTypeMeta = new Array(
@@ -596,9 +571,9 @@ const EntitySelect = ({
           placeholder="Search..."
           isMulti={ true }
           isClearable={ false }
-          onChange={ (e) => onChangeHandler(e) }
+          onChange={ onChangeHandler }
           options={ entitiesOptions }
-          value={ entitiesInitials }
+          defaultValue={ entitiesInitials }
           inputId="entity-creatable"
         />
       </>
@@ -613,7 +588,7 @@ const EntitySelect = ({
           placeholder="Search..."
           isMulti={ true }
           isClearable={ false }
-          onChange={ (e) => onChangeHandler(e) }
+          onChange={ onChangeHandler }
           options={ entitiesOptions }
           inputId="entity-creatable"
         />
@@ -667,20 +642,16 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, topoMaps, publicVi
               id='topoEntityGroup1'
               className='form-control'
               disabled={true}
-              value={field.value?.replace(new RegExp('\\|', 'g'), ', ')}
+              value={ field.value?.join(", ") }
             />
           :
             <EntitySelect
               forwardedRef={ field.ref }
               id="topoEntityGroup1"
               entitiesOptions={formatSelectEntities(topoGroups[key1])}
-              onChangeHandler={(e) => {
-                let joinedValues = ''
-                for (let event of e)
-                  joinedValues += event.value + '|'
-                joinedValues = joinedValues.replace(/\|$/, '')
+              onChangeHandler={ (e) => {
                 setValue("entitiesGroups.0.name", key1)
-                setValue("entitiesGroups.0.value", joinedValues)
+                setValue("entitiesGroups.0.value", e.map(item => item.value))
               }}
               entitiesInitials={!addview ? entityInitValues(["entitiesNgi", "entitiesProjects"], getValues("entitiesGroups")) : undefined}
             />
@@ -697,7 +668,7 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, topoMaps, publicVi
               id='topoEntityGroup2'
               className='form-control'
               disabled={true}
-              value={field.value?.replace(new RegExp('\\|', 'g'), ', ')}
+              value={ field.value?.join(", ") }
             />
           :
             <EntitySelect
@@ -705,13 +676,9 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, topoMaps, publicVi
               className="pt-2"
               id="topoEntityGroup2"
               entitiesOptions={formatFilteredSelectEntities(topoGroups[key2], entitiesGroups, entitiesEndpoints, topoMaps, key2)}
-              onChangeHandler={(e) => {
-                let joinedValues = ''
-                for (let event of e)
-                  joinedValues += event.value + '|'
-                joinedValues = joinedValues.replace(/\|$/, '')
+              onChangeHandler={ (e) => {
                 setValue("entitiesGroups.1.name", key2)
-                setValue("entitiesGroups.1.value", joinedValues)
+                setValue("entitiesGroups.1.value", e.map(item => item.value))
               }}
               entitiesInitials={!addview ? entityInitValues(["entitiesSites", "entitiesServiceGroups"], getValues("entitiesGroups")) : undefined}
             />
@@ -766,7 +733,7 @@ const TopologyConfEndpointsEntityFields = ({topoGroups, addview, topoMaps, publi
               id='topoEntityEndoint1'
               className='form-control'
               disabled={true}
-              value={field.value?.replace(new RegExp('\\|', 'g'), ', ')}
+              value={ field.value?.join(", ") }
             />
           :
             <EntitySelect
@@ -776,13 +743,9 @@ const TopologyConfEndpointsEntityFields = ({topoGroups, addview, topoMaps, publi
                 formatFilteredSelectEntities(
                   topoGroups[key1], entitiesGroups, entitiesEndpoints, topoMaps, key1
               )}
-              onChangeHandler={(e) => {
-                let joinedValues = ''
-                for (let event of e)
-                  joinedValues += event.value + '|'
-                joinedValues = joinedValues.replace(/\|$/, '')
+              onChangeHandler={ (e) => {
                 setValue("entitiesEndpoints.0.name", key1)
-                setValue("entitiesEndpoints.0.value", joinedValues)
+                setValue("entitiesEndpoints.0.value", e.map(item => item.value))
               }}
               entitiesInitials={!addview ? entityInitValues(["entitiesSites", "entitiesServiceGroups"], getValues("entitiesEndpoints")) : undefined}
             />
@@ -799,7 +762,7 @@ const TopologyConfEndpointsEntityFields = ({topoGroups, addview, topoMaps, publi
               id='topoEntityEndoint2'
               className='form-control'
               disabled={true}
-              value={field.value?.replace(new RegExp('\\|', 'g'), ', ')}
+              value={ field.value?.join(", ") }
             />
           :
             <EntitySelect
@@ -814,13 +777,9 @@ const TopologyConfEndpointsEntityFields = ({topoGroups, addview, topoMaps, publi
                   topoMaps,
                   key2
               )}
-              onChangeHandler={(e) => {
-                let joinedValues = ''
-                for (let event of e)
-                  joinedValues += event.value + '|'
-                joinedValues = joinedValues.replace(/\|$/, '')
+              onChangeHandler={ (e) => {
                 setValue("entitiesEndpoints.1.name", key2)
-                setValue("entitiesEndpoints.1.value", joinedValues)
+                setValue("entitiesEndpoints.1.value", e.map(item => item.value))
               }}
               entitiesInitials={!addview ? entityInitValues(["serviceTypesSitesEndpoints", "serviceTypesServiceGroupsEndpoints"], getValues("entitiesEndpoints")) : undefined}
             />
@@ -1684,14 +1643,15 @@ export const ReportsComponent = (props) => {
           name_field = 'service'
         return name_field
     }
+
     let entities = new Array()
 
     for (var i = 0; i < formikEntities.length; i++) {
       let entity = formikEntities[i]
       let tmpEntity = new Object()
       let tmpEntites = new Array()
-      if (entity.value && entity.value.indexOf('|') !== -1) {
-        let values = entity.value.split('|')
+      if (entity.value) {
+        let values = entity.value
 
         for (var val of values)
           if (val)
@@ -1737,12 +1697,11 @@ export const ReportsComponent = (props) => {
   }
 
   const formatFromReportEntities = (context, formikEntities, topologyGroups) => {
-    let default_empty = new Object(
-      {
+    let default_empty = new Object({
         'name': undefined,
         'value': undefined
-      }
-    )
+      })
+
     if (!formikEntities || (formikEntities && formikEntities.length === 0))
       return new Array(default_empty, default_empty)
 
@@ -1772,7 +1731,7 @@ export const ReportsComponent = (props) => {
     for (let entity in tmpEntityJoint)
       entities.push(new Object({
         'name': entity,
-        'value': tmpEntityJoint[entity].join('|')
+        'value': tmpEntityJoint[entity]
       }))
 
     let final_entities = new Array()

@@ -1634,11 +1634,8 @@ describe('Tests for reports changeview', () => {
     await selectEvent.select(card_groups.getAllByText("Select...")[0], 'GLUE2EndpointImplementationName')
     await selectEvent.select(card_groups.getAllByText("Select...")[0], 'ARC-CE')
 
-    const entity1 = card_groups.getByText('iris.ac.uk')
-    const entity2 = card_groups.getByText(/dirac/i)
-
-    await selectEvent.select(entity1, 'Russia')
-    await selectEvent.select(entity2, 'RU-SARFTI')
+    await selectEvent.select(card_groups.getByText("iris.ac.uk"), 'Russia')
+    await selectEvent.select(card_groups.getByText(/dirac/i), 'RU-SARFTI')
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
