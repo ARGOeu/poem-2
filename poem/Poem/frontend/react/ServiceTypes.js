@@ -511,7 +511,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     setAreYouSureModal(!areYouSureModal)
   }
 
-  const { control, setValue, getValues, handleSubmit, formState: {errors} } = useForm({
+  const { control, setValue, getValues, handleSubmit } = useForm({
     defaultValues: {
       serviceTypes: dataWithChecked,
       searchService: '',
@@ -671,7 +671,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
         </span>
       </div>
       <div id="argo-contentwrap" className="ms-2 mb-2 mt-2 p-3 border rounded">
-        <Form onSubmit={handleSubmit((data) => {})} className="needs-validation">
+        <Form onSubmit={handleSubmit} className="needs-validation">
           <Row>
             <Col>
               <Table bordered responsive hover size="sm">
