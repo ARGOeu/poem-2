@@ -138,7 +138,7 @@ function renderAddView() {
 }
 
 
-function renderListView() {
+function renderListView(withServiceTypesTitles=false) {
   const route = '/ui/servicetypes';
   const history = createMemoryHistory({ initialEntries: [route] });
 
@@ -147,8 +147,12 @@ function renderListView() {
       <QueryClientProvider client={queryClient}>
         <Router history={history}>
           <Route
-            path='/ui/servicetypes/'
-            component={ServiceTypesList}
+            render={props => <ServiceTypesList
+              {...props}
+              webapitoken='token'
+              webapiservicetypes="https://mock.servicetypes.com"
+              showtitles={ withServiceTypesTitles }
+            />}
           />
         </Router>
       </QueryClientProvider>
@@ -276,7 +280,7 @@ describe('Test service types list - Read Only', () => {
   })
 
   test('Test filtering public service types', async () => {
-    renderListView(true);
+    renderListViewPublic()
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 

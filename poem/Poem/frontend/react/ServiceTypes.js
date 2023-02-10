@@ -888,8 +888,8 @@ export const ServiceTypesListPublic = (props) => {
       },
       {
         Header: <div><Icon i="servicetypes"/> Service type</div>,
-        id: 'name',
-        accessor: e => <span className="fw-bold">{e.name}</span>,
+        accessor: 'name',
+        Cell: ({ value }) => <span className="fw-bold">{ value }</span>,
         column_width: '25%',
         Filter: DefaultColumnFilter
       },
