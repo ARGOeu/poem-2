@@ -167,29 +167,33 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
         self.view = views.GetConfigOptions.as_view()
         self.url = '/api/v2/internal/config_options/'
         self.user = CustUser.objects.create(username='testuser')
-        self.maxDiff = None
 
+    @patch(
+        "Poem.api.internal_views.app.get_use_service_titles",
+        return_value=True
+    )
     @patch('Poem.api.internal_views.app.saml_login_string',
            return_value='Log in using B2ACCESS')
     @patch('Poem.api.internal_views.app.tenant_from_request',
            return_value='tenant')
     def test_get_config_options(self, *args):
+        self.maxDiff = None
         with self.settings(
-                WEBAPI_METRIC='https://metric.profile.com',
-                WEBAPI_AGGREGATION='https://aggregations.com',
-                WEBAPI_THRESHOLDS='https://thresholds.com',
-                WEBAPI_OPERATIONS='https://operations.com',
-                WEBAPI_REPORTS='https://reports.com',
-                WEBAPI_REPORTSTAGS='https://reports-tags.com',
-                WEBAPI_REPORTSTOPOLOGYGROUPS='https://topology-groups.com',
-                WEBAPI_REPORTSTOPOLOGYENDPOINTS='https://endpoints.com',
-                WEBAPI_SERVICETYPES='https://topology-servicetypes.com',
-                LINKS_TERMS_PRIVACY={
-                    'tenant': {
-                        'terms': 'https://terms.of.use.com',
-                        'privacy': 'https://privacy.policies.com'
-                    }
+            WEBAPI_METRIC='https://metric.profile.com',
+            WEBAPI_AGGREGATION='https://aggregations.com',
+            WEBAPI_THRESHOLDS='https://thresholds.com',
+            WEBAPI_OPERATIONS='https://operations.com',
+            WEBAPI_REPORTS='https://reports.com',
+            WEBAPI_REPORTSTAGS='https://reports-tags.com',
+            WEBAPI_REPORTSTOPOLOGYGROUPS='https://topology-groups.com',
+            WEBAPI_REPORTSTOPOLOGYENDPOINTS='https://endpoints.com',
+            WEBAPI_SERVICETYPES='https://topology-servicetypes.com',
+            LINKS_TERMS_PRIVACY={
+                'tenant': {
+                    'terms': 'https://terms.of.use.com',
+                    'privacy': 'https://privacy.policies.com'
                 }
+            }
         ):
             request = self.factory.get(self.url)
             response = self.view(request)
@@ -216,7 +220,8 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
                         'terms_privacy_links': {
                             'terms': 'https://terms.of.use.com',
                             'privacy': 'https://privacy.policies.com'
-                        }
+                        },
+                        "use_service_title": True
                     }
                 }
             )

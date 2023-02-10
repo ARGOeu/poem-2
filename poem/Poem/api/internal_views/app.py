@@ -1,19 +1,17 @@
+from configparser import ConfigParser
+
 import pkg_resources
-
-from django.conf import settings
-from django.db import connection
-from django.contrib.auth import get_user_model
-
 from Poem.api import serializers
 from Poem.api.internal_views.users import get_all_groups, get_groups_for_user
 from Poem.api.models import MyAPIKey
 from Poem.poem.saml2.config import tenant_from_request, saml_login_string
-
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.db import connection
+from django_tenants.utils import get_public_schema_name
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
-from django_tenants.utils import get_public_schema_name
 
 
 class ListGroupsForUser(APIView):
@@ -84,13 +82,23 @@ class IsSessionActive(APIView):
         return Response({'active': True, 'userdetails': userdetails})
 
 
+def get_use_service_titles(tenant):
+    config = ConfigParser()
+    config.read(filenames=settings.CONFIG_FILE)
+
+    if config.get(f"GENERAL_{tenant.upper()}", "useservicetitles") == "True":
+        return True
+
+    else:
+        return False
+
+
 class GetConfigOptions(APIView):
     authentication_classes = ()
     permission_classes = ()
 
     def get(self, request):
         options = dict()
-        version = None
 
         try:
             version = pkg_resources.get_distribution('poem').version
@@ -100,6 +108,7 @@ class GetConfigOptions(APIView):
         tenant = tenant_from_request(request)
         if tenant != 'all':
             options.update(saml_login_string=saml_login_string(tenant))
+            options.update(use_service_title=get_use_service_titles(tenant))
 
         options.update(terms_privacy_links=settings.LINKS_TERMS_PRIVACY[tenant])
 
