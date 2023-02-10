@@ -939,6 +939,8 @@ export const ServiceTypesListPublic = (props) => {
 
 
 export const ServiceTypesList = (props) => {
+  const showtitles = props.showtitles
+
   const webapi = new WebApi({
     token: props.webapitoken,
     serviceTypes: props.webapiservicetypes
@@ -955,24 +957,24 @@ export const ServiceTypesList = (props) => {
     { enabled: !!userDetails }
   )
 
-  const columns = React.useMemo(
-    () => [
+  const memoized_columns = React.useMemo(() => {
+    let columns = [
       {
         Header: '#',
         accessor: null,
         column_width: '2%'
       },
       {
-        Header: <div><Icon i="servicetypes"/> Service type</div>,
+        Header: <div><Icon i="servicetypes"/>Service type</div>,
         accessor: 'name',
-        column_width: '25%',
+        column_width: `${showtitles ? "20%" : "25%"}`,
         Cell: ({value}) => <span className="fw-bold">{value}</span>,
         Filter: DefaultColumnFilter
       },
       {
         Header: 'Description',
         accessor: 'description',
-        column_width: '70%',
+        column_width: `${showtitles ? "50%" : "70%"}`,
         Filter: DefaultColumnFilter
       },
       {
@@ -985,8 +987,18 @@ export const ServiceTypesList = (props) => {
         column_width: '3%',
         Filter: ''
       }
-    ], []
-  )
+    ]
+
+    if (showtitles) {
+      columns.splice(2, 0, {
+        Header: "Title",
+        accessor: "title",
+        column_width: "25%",
+        Filter: DefaultColumnFilter
+      })
+    }
+    return columns
+  }, [showtitles])
 
   if (loadingUserDetails || loadingServiceTypesDescriptions)
     return (<LoadingAnim/>);
@@ -1003,7 +1015,7 @@ export const ServiceTypesList = (props) => {
         resourcename='Service types'
         infoview={true}>
         <BaseArgoTable
-          columns={columns}
+          columns={memoized_columns}
           data={serviceTypesDescriptions}
           filter={true}
           resourcename='service types'

@@ -144,7 +144,19 @@ const RedirectAfterLogin = ({isSuperUser}) => {
 }
 
 
-const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, webApiOperations, webApiReports, webApiServiceTypes, token, tenantName, isSuperUser, userGroups}) => (
+const TenantRouteSwitch = ({
+  webApiAggregation,
+  webApiMetric,
+  webApiThresholds,
+  webApiOperations,
+  webApiReports,
+  webApiServiceTypes,
+  token,
+  tenantName,
+  showServiceTitle,
+  isSuperUser,
+  userGroups
+}) => (
   <Switch>
     <Route exact path="/ui/login" render={props => <RedirectAfterLogin isSuperUser={isSuperUser} {...props}/>}/>
     <Route exact path="/ui/home" component={Home} />
@@ -548,6 +560,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         {...props}
         webapitoken={token}
         webapiservicetypes={webApiServiceTypes}
+        showtitles={showServiceTitle}
       />}
     />
     <SuperUserRoute
@@ -643,6 +656,7 @@ const App = () => {
   const [token, setToken] = useState(undefined);
   const [version, setVersion] = useState(undefined);
   const [isTenantSchema, setIsTenantSchema] = useState(null);
+  const [showServiceTitle, setShowServiceTitle] = useState(undefined)
 
   async function onLogin(json) {
     let response = new Object({
@@ -681,6 +695,7 @@ const App = () => {
       setWebApiReports(options && options.result.webapireports);
       setWebApiServiceTypes(options && options.result.webapiservicetypes);
       setTenantName(options && options.result.tenant_name);
+      setShowServiceTitle(options && options.result.use_service_title)
     }
     options && prefetchData(false, poemType, options, poemType ? response.userdetails.token : null)
   }
@@ -1286,6 +1301,7 @@ const App = () => {
                     webApiServiceTypes={webApiServiceTypes}
                     token={token}
                     tenantName={tenantName}
+                    showServiceTitle={showServiceTitle}
                     isSuperUser={userDetails.is_superuser}
                     userGroups={userDetails.groups}/>
                   :

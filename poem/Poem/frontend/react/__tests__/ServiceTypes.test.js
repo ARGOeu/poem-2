@@ -73,47 +73,56 @@ const mockAddServiceTypes = jest.fn()
 const mockServTypes = [
   {
     name: 'argo.api',
+    title: "ARGO API service",
     description: 'ARGO API service for retrieving status and A/R results.',
     tags: ['topology']
   },
   {
     name: 'argo.computeengine',
+    title: "ARGO Compute Engine",
     description: 'ARGO Compute Engine computes availability and reliability of services.',
     tags: ['topology']
   },
   {
     name: 'argo.consumer',
+    title: "ARGO Consumer",
     description: 'ARGO Consumer collects monitoring metrics from monitoring engines.',
     tags: ['topology']
   },
   {
     name: 'argo.mon',
+    title: "ARGO Monitoring Engine",
     description: 'ARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.',
     tags: ['topology']
   },
   {
     name: 'argo.poem',
+    title: "POEM",
     description: 'POEM is system for managing profiles of probes and metrics in ARGO system.',
     tags: ['topology']
   },
   {
     name: 'argo.webui',
+    title: "ARGO web user interface",
     description: 'ARGO web user interface for metric A/R visualization and recalculation management.',
     tags: ['topology']
   },
   {
     name: 'poem.added.one',
+    title: "POEM another",
     description: 'Service type created from POEM UI and POSTed on WEB-API.',
     tags: ['poem']
   },
   {
     name: 'poem.added.two',
-    description: 'Service type created from POEM UI and POSTed on WEB-API.',
+    title: "POEM extra 2",
+    description: '2nd service type created from POEM UI and POSTed on WEB-API.',
     tags: ['poem']
   },
   {
     name: 'poem.added.three',
-    description: 'Service type created from POEM UI and POSTed on WEB-API.',
+    title: "POEM extra 3",
+    description: '3rd service type created from POEM UI and POSTed on WEB-API.',
     tags: ['poem']
   }
 ];
@@ -138,7 +147,7 @@ function renderAddView() {
 }
 
 
-function renderListView(withServiceTypesTitles=false) {
+function renderListView(withServiceTypesTitles=undefined) {
   const route = '/ui/servicetypes';
   const history = createMemoryHistory({ initialEntries: [route] });
 
@@ -210,7 +219,7 @@ describe('Test service types list - Read Only', () => {
     expect(rows).toHaveLength(17);
     expect(screen.getAllByPlaceholderText(/search/i)).toHaveLength(2);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(7);
-    expect(rows[0].textContent).toBe('# Service typeDescriptionSource');
+    expect(rows[0].textContent).toBe('#Service typeDescriptionSource');
     // row 1 is the one with search fields
     expect(rows[2].textContent).toBe('1argo.apiARGO API service for retrieving status and A/R results.topology')
     expect(rows[3].textContent).toBe('2argo.computeengineARGO Compute Engine computes availability and reliability of services.topology');
@@ -219,8 +228,8 @@ describe('Test service types list - Read Only', () => {
     expect(rows[6].textContent).toBe('5argo.poemPOEM is system for managing profiles of probes and metrics in ARGO system.topology')
     expect(rows[7].textContent).toBe('6argo.webuiARGO web user interface for metric A/R visualization and recalculation management.topology')
     expect(rows[8].textContent).toBe('7poem.added.oneService type created from POEM UI and POSTed on WEB-API.poem')
-    expect(rows[9].textContent).toBe('8poem.added.twoService type created from POEM UI and POSTed on WEB-API.poem')
-    expect(rows[10].textContent).toBe('9poem.added.threeService type created from POEM UI and POSTed on WEB-API.poem')
+    expect(rows[9].textContent).toBe('8poem.added.two2nd service type created from POEM UI and POSTed on WEB-API.poem')
+    expect(rows[10].textContent).toBe('9poem.added.three3rd service type created from POEM UI and POSTed on WEB-API.poem')
   })
 
   test('Test filtering service types', async () => {
@@ -245,6 +254,67 @@ describe('Test service types list - Read Only', () => {
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(14);
     expect(screen.getByRole('row', { name: /1/ }).textContent).toBe('1argo.consumerARGO Consumer collects monitoring metrics from monitoring engines.topology')
     expect(screen.queryByRole('row', { name: /2/ })).not.toBeInTheDocument();
+  })
+
+  test("Test that page renders properly when showing titles", async () => {
+    renderListView(true)
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /service/i })).toBeInTheDocument()
+    })
+
+    expect(screen.getAllByRole("columnheader")).toHaveLength(10)
+    expect(screen.getByRole("columnheader", { name: "#" })).toBeInTheDocument()
+    expect(screen.getByRole("columnheader", { name: "Service type" })).toBeInTheDocument()
+    expect(screen.getByRole("columnheader", { name: "Title" })).toBeInTheDocument()
+    expect(screen.getByRole("columnheader", { name: "Description" })).toBeInTheDocument()
+    expect(screen.getByRole("columnheader", { name: "Source" })).toBeInTheDocument()
+
+    const rows = screen.getAllByRole("row")
+    expect(rows).toHaveLength(17)
+    expect(screen.getAllByPlaceholderText(/search/i)).toHaveLength(3)
+    expect(screen.getAllByRole("row", { name: "" })).toHaveLength(7)
+
+    expect(rows[0].textContent).toBe("#Service typeTitleDescriptionSource")
+    expect(rows[2].textContent).toBe('1argo.apiARGO API serviceARGO API service for retrieving status and A/R results.topology')
+    expect(rows[3].textContent).toBe('2argo.computeengineARGO Compute EngineARGO Compute Engine computes availability and reliability of services.topology');
+    expect(rows[4].textContent).toBe('3argo.consumerARGO ConsumerARGO Consumer collects monitoring metrics from monitoring engines.topology')
+    expect(rows[5].textContent).toBe('4argo.monARGO Monitoring EngineARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.topology');
+    expect(rows[6].textContent).toBe('5argo.poemPOEMPOEM is system for managing profiles of probes and metrics in ARGO system.topology')
+    expect(rows[7].textContent).toBe('6argo.webuiARGO web user interfaceARGO web user interface for metric A/R visualization and recalculation management.topology')
+    expect(rows[8].textContent).toBe('7poem.added.onePOEM anotherService type created from POEM UI and POSTed on WEB-API.poem')
+    expect(rows[9].textContent).toBe('8poem.added.twoPOEM extra 22nd service type created from POEM UI and POSTed on WEB-API.poem')
+    expect(rows[10].textContent).toBe('9poem.added.threePOEM extra 33rd service type created from POEM UI and POSTed on WEB-API.poem')
+  })
+
+  test("Test filtering service types when showing titles", async () => {
+    renderListView(true)
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /service/i })).toBeInTheDocument()
+    })
+
+    const searchFields = screen.getAllByPlaceholderText(/search/i)
+
+    fireEvent.change(searchFields[0], { target: { value: "poem" } })
+    expect(screen.getAllByRole("row", { name: "" })).toHaveLength(11)
+
+    var rows = screen.getAllByRole("row")
+    expect(rows[2].textContent).toBe("1argo.poemPOEMPOEM is system for managing profiles of probes and metrics in ARGO system.topology")
+    expect(rows[3].textContent).toBe("2poem.added.onePOEM anotherService type created from POEM UI and POSTed on WEB-API.poem")
+    expect(rows[4].textContent).toBe("3poem.added.twoPOEM extra 22nd service type created from POEM UI and POSTed on WEB-API.poem")
+    expect(rows[5].textContent).toBe("4poem.added.threePOEM extra 33rd service type created from POEM UI and POSTed on WEB-API.poem")
+
+    fireEvent.change(searchFields[1], { target: { value: "extra" } })
+    expect(screen.getAllByRole("row", { name: "" })).toHaveLength(13)
+    rows = screen.getAllByRole("row")
+    expect(rows[2].textContent).toBe("1poem.added.twoPOEM extra 22nd service type created from POEM UI and POSTed on WEB-API.poem")
+    expect(rows[3].textContent).toBe("2poem.added.threePOEM extra 33rd service type created from POEM UI and POSTed on WEB-API.poem")
+
+    fireEvent.change(searchFields[2], { target: { value: "2" } })
+    expect(screen.getAllByRole("row", { name: "" })).toHaveLength(14)
+    rows = screen.getAllByRole("row")
+    expect(rows[2].textContent).toBe("1poem.added.twoPOEM extra 22nd service type created from POEM UI and POSTed on WEB-API.poem")
   })
 
   test('Test that public page renders properly', async () => {
@@ -275,8 +345,8 @@ describe('Test service types list - Read Only', () => {
     expect(rows[6].textContent).toBe('5argo.poemPOEM is system for managing profiles of probes and metrics in ARGO system.topology')
     expect(rows[7].textContent).toBe('6argo.webuiARGO web user interface for metric A/R visualization and recalculation management.topology')
     expect(rows[8].textContent).toBe('7poem.added.oneService type created from POEM UI and POSTed on WEB-API.poem')
-    expect(rows[9].textContent).toBe('8poem.added.twoService type created from POEM UI and POSTed on WEB-API.poem')
-    expect(rows[10].textContent).toBe('9poem.added.threeService type created from POEM UI and POSTed on WEB-API.poem')
+    expect(rows[9].textContent).toBe('8poem.added.two2nd service type created from POEM UI and POSTed on WEB-API.poem')
+    expect(rows[10].textContent).toBe('9poem.added.three3rd service type created from POEM UI and POSTed on WEB-API.poem')
   })
 
   test('Test filtering public service types', async () => {
@@ -338,8 +408,8 @@ describe('Test service types list - Bulk change and delete', () => {
     expect(tableRows[5]).toHaveTextContent('5argo.poemPOEM is system for managing profiles of probes and metrics in ARGO system.topology')
     expect(tableRows[6]).toHaveTextContent('6argo.webuiARGO web user interface for metric A/R visualization and recalculation management.topology')
     expect(tableRows[7].textContent).toBe('7poem.added.oneService type created from POEM UI and POSTed on WEB-API.poem')
-    expect(tableRows[8].textContent).toBe('8poem.added.twoService type created from POEM UI and POSTed on WEB-API.poem')
-    expect(tableRows[9].textContent).toBe('9poem.added.threeService type created from POEM UI and POSTed on WEB-API.poem')
+    expect(tableRows[8].textContent).toBe('8poem.added.two2nd service type created from POEM UI and POSTed on WEB-API.poem')
+    expect(tableRows[9].textContent).toBe('9poem.added.three3rd service type created from POEM UI and POSTed on WEB-API.poem')
 
     const paginationRoot = screen.getByRole('navigation', {name: /pagination/})
     const paginationLinks = within(paginationRoot).getAllByRole('listitem')
@@ -384,7 +454,7 @@ describe('Test service types list - Bulk change and delete', () => {
     expect(tableRowsFiltered[4]).toHaveTextContent('4argo.monARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.topology')
     expect(tableRowsFiltered[5]).toHaveTextContent('5argo.poemPOEM is system for managing profiles of probes and metrics in ARGO system.topology')
     expect(tableRowsFiltered[6]).toHaveTextContent('6argo.webuiARGO web user interface for metric A/R visualization and recalculation management.topology')
-    expect(tableRowsFiltered[7]).toHaveTextContent('7poem.added.threeService type created from POEM UI and POSTed on WEB-API.poem')
+    expect(tableRowsFiltered[7]).toHaveTextContent('7poem.added.three3rd service type created from POEM UI and POSTed on WEB-API.poem')
 
     await waitFor(() => {
       expect(mockAddServiceTypes).toHaveBeenCalledWith(
@@ -420,7 +490,7 @@ describe('Test service types list - Bulk change and delete', () => {
             "tags": ["topology"]
           },
           {
-            "description": "Service type created from POEM UI and POSTed on WEB-API.",
+            "description": "3rd service type created from POEM UI and POSTed on WEB-API.",
             "name": "poem.added.three",
             "tags": ["poem"]
           }
@@ -521,7 +591,7 @@ describe('Test service types list - Bulk change and delete', () => {
             "tags": ["poem"]
           },
           {
-            "description": "Service type created from POEM UI and POSTed on WEB-API.",
+            "description": "3rd service type created from POEM UI and POSTed on WEB-API.",
             "name": "poem.added.three",
             "tags": ["poem"]
           },
@@ -653,12 +723,12 @@ describe('Test service types list - Bulk add', () => {
           },
           {
             "name": 'poem.added.three',
-            "description": 'Service type created from POEM UI and POSTed on WEB-API.',
+            "description": '3rd service type created from POEM UI and POSTed on WEB-API.',
             "tags": ['poem']
           },
           {
             "name": 'poem.added.two',
-            "description": 'Service type created from POEM UI and POSTed on WEB-API.',
+            "description": '2nd service type created from POEM UI and POSTed on WEB-API.',
             "tags": ['poem']
           },
           {
