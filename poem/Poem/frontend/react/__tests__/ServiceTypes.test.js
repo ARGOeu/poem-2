@@ -271,19 +271,18 @@ describe('Test service types list - Read Only', () => {
       expect(screen.getByRole("heading", { name: /service/i })).toBeInTheDocument()
     })
 
-    expect(screen.getAllByRole("columnheader")).toHaveLength(10)
+    expect(screen.getAllByRole("columnheader")).toHaveLength(8)
     expect(screen.getByRole("columnheader", { name: "#" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: "Service type" })).toBeInTheDocument()
-    expect(screen.getByRole("columnheader", { name: "Title" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: "Description" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: "Source" })).toBeInTheDocument()
 
     const rows = screen.getAllByRole("row")
     expect(rows).toHaveLength(17)
-    expect(screen.getAllByPlaceholderText(/search/i)).toHaveLength(3)
+    expect(screen.getAllByPlaceholderText(/search/i)).toHaveLength(2)
     expect(screen.getAllByRole("row", { name: "" })).toHaveLength(7)
 
-    expect(rows[0].textContent).toBe("#Service typeTitleDescriptionSource")
+    expect(rows[0].textContent).toBe("#Service typeDescriptionSource")
     expect(rows[2].textContent).toBe('1argo.apiARGO API serviceARGO API service for retrieving status and A/R results.topology')
     expect(rows[3].textContent).toBe('2argo.computeengineARGO Compute EngineARGO Compute Engine computes availability and reliability of services.topology');
     expect(rows[4].textContent).toBe('3argo.consumerARGO ConsumerARGO Consumer collects monitoring metrics from monitoring engines.topology')
@@ -313,13 +312,7 @@ describe('Test service types list - Read Only', () => {
     expect(rows[4].textContent).toBe("3poem.added.twoPOEM extra 22nd service type created from POEM UI and POSTed on WEB-API.poem")
     expect(rows[5].textContent).toBe("4poem.added.threePOEM extra 33rd service type created from POEM UI and POSTed on WEB-API.poem")
 
-    fireEvent.change(searchFields[1], { target: { value: "extra" } })
-    expect(screen.getAllByRole("row", { name: "" })).toHaveLength(13)
-    rows = screen.getAllByRole("row")
-    expect(rows[2].textContent).toBe("1poem.added.twoPOEM extra 22nd service type created from POEM UI and POSTed on WEB-API.poem")
-    expect(rows[3].textContent).toBe("2poem.added.threePOEM extra 33rd service type created from POEM UI and POSTed on WEB-API.poem")
-
-    fireEvent.change(searchFields[2], { target: { value: "2" } })
+    fireEvent.change(searchFields[1], { target: { value: "2" } })
     expect(screen.getAllByRole("row", { name: "" })).toHaveLength(14)
     rows = screen.getAllByRole("row")
     expect(rows[2].textContent).toBe("1poem.added.twoPOEM extra 22nd service type created from POEM UI and POSTed on WEB-API.poem")
@@ -388,19 +381,18 @@ describe('Test service types list - Read Only', () => {
       expect(screen.getByRole("heading", { name: /service/i })).toBeInTheDocument()
     })
 
-    expect(screen.getAllByRole("columnheader")).toHaveLength(10)
+    expect(screen.getAllByRole("columnheader")).toHaveLength(8)
     expect(screen.getByRole("columnheader", { name: "#" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: "Service type" })).toBeInTheDocument()
-    expect(screen.getByRole("columnheader", { name: "Title" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: "Description" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: "Source" })).toBeInTheDocument()
 
     const rows = screen.getAllByRole("row")
     expect(rows).toHaveLength(17)
-    expect(screen.getAllByPlaceholderText(/search/i)).toHaveLength(3)
+    expect(screen.getAllByPlaceholderText(/search/i)).toHaveLength(2)
     expect(screen.getAllByRole("row", { name: "" })).toHaveLength(7)
 
-    expect(rows[0].textContent).toBe("#Service typeTitleDescriptionSource")
+    expect(rows[0].textContent).toBe("#Service typeDescriptionSource")
     expect(rows[2].textContent).toBe('1argo.apiARGO API serviceARGO API service for retrieving status and A/R results.topology')
     expect(rows[3].textContent).toBe('2argo.computeengineARGO Compute EngineARGO Compute Engine computes availability and reliability of services.topology');
     expect(rows[4].textContent).toBe('3argo.consumerARGO ConsumerARGO Consumer collects monitoring metrics from monitoring engines.topology')
@@ -430,13 +422,7 @@ describe('Test service types list - Read Only', () => {
     expect(rows[4].textContent).toBe("3poem.added.twoPOEM extra 22nd service type created from POEM UI and POSTed on WEB-API.poem")
     expect(rows[5].textContent).toBe("4poem.added.threePOEM extra 33rd service type created from POEM UI and POSTed on WEB-API.poem")
 
-    fireEvent.change(searchFields[1], { target: { value: "extra" } })
-    expect(screen.getAllByRole("row", { name: "" })).toHaveLength(13)
-    rows = screen.getAllByRole("row")
-    expect(rows[2].textContent).toBe("1poem.added.twoPOEM extra 22nd service type created from POEM UI and POSTed on WEB-API.poem")
-    expect(rows[3].textContent).toBe("2poem.added.threePOEM extra 33rd service type created from POEM UI and POSTed on WEB-API.poem")
-
-    fireEvent.change(searchFields[2], { target: { value: "2" } })
+    fireEvent.change(searchFields[1], { target: { value: "2" } })
     expect(screen.getAllByRole("row", { name: "" })).toHaveLength(14)
     rows = screen.getAllByRole("row")
     expect(rows[2].textContent).toBe("1poem.added.twoPOEM extra 22nd service type created from POEM UI and POSTed on WEB-API.poem")

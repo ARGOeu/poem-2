@@ -887,48 +887,49 @@ export const ServiceTypesList = (props) => {
     { enabled: publicView || !!userDetails }
   )
 
-  const memoized_columns = React.useMemo(() => {
-    let columns = [
-      {
-        Header: '#',
-        accessor: null,
-        column_width: '2%'
+  const columns = React.useMemo(() => [
+    {
+      Header: '#',
+      accessor: null,
+      column_width: '2%'
+    },
+    {
+      Header: <div><Icon i="servicetypes"/>Service type</div>,
+      accessor: "name",
+      column_width: "25%",
+      Cell: (row) => {
+        let original = row.cell.row.original
+        if (showtitles)
+          return(
+            <div>
+              <p className="fw-bold m-0">{ original.name }</p>
+              <p className="m-0"><small>{ original.title }</small></p>
+            </div>
+          )
+        else
+          return (
+            <span className="fw-bold">{ original.name }</span>
+          )
       },
-      {
-        Header: <div><Icon i="servicetypes"/>Service type</div>,
-        accessor: 'name',
-        column_width: `${showtitles ? "20%" : "25%"}`,
-        Cell: ({value}) => <span className="fw-bold">{value}</span>,
-        Filter: DefaultColumnFilter
-      },
-      {
-        Header: 'Description',
-        accessor: 'description',
-        column_width: `${showtitles ? "50%" : "70%"}`,
-        Filter: DefaultColumnFilter
-      },
-      {
-        Header: 'Source',
-        id: 'tags',
-        accessor: e =>
-          <Badge color={`${e.tags[0] === 'poem' ? 'success' : 'secondary'}`}>
-            {e.tags[0]}
-          </Badge>,
-        column_width: '3%',
-        Filter: ''
-      }
-    ]
-
-    if (showtitles) {
-      columns.splice(2, 0, {
-        Header: "Title",
-        accessor: "title",
-        column_width: "25%",
-        Filter: DefaultColumnFilter
-      })
+      Filter: DefaultColumnFilter
+    },
+    {
+      Header: 'Description',
+      accessor: 'description',
+      column_width: "70%",
+      Filter: DefaultColumnFilter
+    },
+    {
+      Header: 'Source',
+      id: 'tags',
+      accessor: e =>
+        <Badge color={`${e.tags[0] === 'poem' ? 'success' : 'secondary'}`}>
+          {e.tags[0]}
+        </Badge>,
+      column_width: '3%',
+      Filter: ''
     }
-    return columns
-  }, [showtitles])
+  ], [showtitles])
 
   if (loadingUserDetails || loadingServiceTypesDescriptions)
     return (<LoadingAnim/>);
@@ -945,7 +946,7 @@ export const ServiceTypesList = (props) => {
         resourcename='Service types'
         infoview={true}>
         <BaseArgoTable
-          columns={memoized_columns}
+          columns={columns}
           data={serviceTypesDescriptions}
           filter={true}
           resourcename='service types'
