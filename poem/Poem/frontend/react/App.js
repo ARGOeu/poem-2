@@ -49,7 +49,7 @@ import { ThresholdsProfilesList, ThresholdsProfilesChange, ThresholdsProfileVers
 
 import './App.css';
 import { PackageList, PackageComponent } from './Package';
-import { ServiceTypesListPublic, ServiceTypesList, ServiceTypesBulkAdd } from './ServiceTypes';
+import { ServiceTypesList, ServiceTypesBulkAdd } from './ServiceTypes';
 import { TenantList, TenantChange } from './Tenants';
 import { OperationsProfilesList, OperationsProfileDetails } from './OperationsProfiles';
 import { CookiePolicy } from './CookiePolicy';
@@ -717,6 +717,7 @@ const App = () => {
     setPrivacyLink(options && options.result.terms_privacy_links.privacy);
     setTermsLink(options && options.result.terms_privacy_links.terms);
     setTenantName(options && options.result.tenant_name);
+    setShowServiceTitle(options && options.result.use_service_title)
     setPublicView(true);
     options && prefetchData(true, isTenantSchema, options, token)
   }
@@ -1115,10 +1116,12 @@ const App = () => {
               <Route exact path="/ui/public_servicetypes"
                 render={props =>
                   <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
-                    <ServiceTypesListPublic
+                    <ServiceTypesList
                       {...props}
                       webapitoken={token}
                       webapiservicetypes={webApiServiceTypes}
+                      showtitles={showServiceTitle}
+                      publicView={ true }
                     />
                   </PublicPage>
                 }

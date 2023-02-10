@@ -4,7 +4,7 @@ import '@testing-library/jest-dom/extend-expect';
 import userEvent from '@testing-library/user-event';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
-import { ServiceTypesList, ServiceTypesListPublic, ServiceTypesBulkAdd } from '../ServiceTypes';
+import { ServiceTypesList, ServiceTypesBulkAdd } from '../ServiceTypes';
 import { WebApi } from '../DataManager';
 import { fetchUserDetails } from '../QueryFunctions';
 import { QueryClient, QueryClientProvider } from 'react-query';
@@ -170,7 +170,7 @@ function renderListView(withServiceTypesTitles=undefined) {
 }
 
 
-function renderListViewPublic() {
+function renderListViewPublic(withServiceTypesTitles=false) {
   const route = '/ui/public_servicetypes';
   const history = createMemoryHistory({ initialEntries: [route] });
 
@@ -179,8 +179,16 @@ function renderListViewPublic() {
       <QueryClientProvider client={queryClient}>
         <Router history={history}>
           <Route
-            path='/ui/public_servicetypes/'
-            component={ServiceTypesListPublic}
+            exact path='/ui/public_servicetypes/'
+            render={
+              props => <ServiceTypesList
+                { ...props }
+                webapitoken="token"
+                webapiservicetypes="https://mock.servicetypes.com"
+                showtitles={ withServiceTypesTitles }
+                publicView={ true }
+              />
+            }
           />
         </Router>
       </QueryClientProvider>
@@ -336,7 +344,7 @@ describe('Test service types list - Read Only', () => {
     expect(rows).toHaveLength(17);
     expect(screen.getAllByPlaceholderText(/search/i)).toHaveLength(2);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(7);
-    expect(rows[0].textContent).toBe('# Service typeDescriptionSource');
+    expect(rows[0].textContent).toBe('#Service typeDescriptionSource');
     // row 1 is the one with search fields
     expect(rows[2].textContent).toBe('1argo.apiARGO API service for retrieving status and A/R results.topology')
     expect(rows[3].textContent).toBe('2argo.computeengineARGO Compute Engine computes availability and reliability of services.topology');
@@ -371,6 +379,67 @@ describe('Test service types list - Read Only', () => {
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(14);
     expect(screen.getByRole('row', { name: /1/ }).textContent).toBe('1argo.consumerARGO Consumer collects monitoring metrics from monitoring engines.topology')
     expect(screen.queryByRole('row', { name: /2/ })).not.toBeInTheDocument();
+  })
+
+  test("Test that public page renders properly when showing titles", async () => {
+    renderListViewPublic(true)
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /service/i })).toBeInTheDocument()
+    })
+
+    expect(screen.getAllByRole("columnheader")).toHaveLength(10)
+    expect(screen.getByRole("columnheader", { name: "#" })).toBeInTheDocument()
+    expect(screen.getByRole("columnheader", { name: "Service type" })).toBeInTheDocument()
+    expect(screen.getByRole("columnheader", { name: "Title" })).toBeInTheDocument()
+    expect(screen.getByRole("columnheader", { name: "Description" })).toBeInTheDocument()
+    expect(screen.getByRole("columnheader", { name: "Source" })).toBeInTheDocument()
+
+    const rows = screen.getAllByRole("row")
+    expect(rows).toHaveLength(17)
+    expect(screen.getAllByPlaceholderText(/search/i)).toHaveLength(3)
+    expect(screen.getAllByRole("row", { name: "" })).toHaveLength(7)
+
+    expect(rows[0].textContent).toBe("#Service typeTitleDescriptionSource")
+    expect(rows[2].textContent).toBe('1argo.apiARGO API serviceARGO API service for retrieving status and A/R results.topology')
+    expect(rows[3].textContent).toBe('2argo.computeengineARGO Compute EngineARGO Compute Engine computes availability and reliability of services.topology');
+    expect(rows[4].textContent).toBe('3argo.consumerARGO ConsumerARGO Consumer collects monitoring metrics from monitoring engines.topology')
+    expect(rows[5].textContent).toBe('4argo.monARGO Monitoring EngineARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.topology');
+    expect(rows[6].textContent).toBe('5argo.poemPOEMPOEM is system for managing profiles of probes and metrics in ARGO system.topology')
+    expect(rows[7].textContent).toBe('6argo.webuiARGO web user interfaceARGO web user interface for metric A/R visualization and recalculation management.topology')
+    expect(rows[8].textContent).toBe('7poem.added.onePOEM anotherService type created from POEM UI and POSTed on WEB-API.poem')
+    expect(rows[9].textContent).toBe('8poem.added.twoPOEM extra 22nd service type created from POEM UI and POSTed on WEB-API.poem')
+    expect(rows[10].textContent).toBe('9poem.added.threePOEM extra 33rd service type created from POEM UI and POSTed on WEB-API.poem')
+  })
+
+  test("Test filtering public service types when showing titles", async () => {
+    renderListViewPublic(true)
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /service/i })).toBeInTheDocument()
+    })
+
+    const searchFields = screen.getAllByPlaceholderText(/search/i)
+
+    fireEvent.change(searchFields[0], { target: { value: "poem" } })
+    expect(screen.getAllByRole("row", { name: "" })).toHaveLength(11)
+
+    var rows = screen.getAllByRole("row")
+    expect(rows[2].textContent).toBe("1argo.poemPOEMPOEM is system for managing profiles of probes and metrics in ARGO system.topology")
+    expect(rows[3].textContent).toBe("2poem.added.onePOEM anotherService type created from POEM UI and POSTed on WEB-API.poem")
+    expect(rows[4].textContent).toBe("3poem.added.twoPOEM extra 22nd service type created from POEM UI and POSTed on WEB-API.poem")
+    expect(rows[5].textContent).toBe("4poem.added.threePOEM extra 33rd service type created from POEM UI and POSTed on WEB-API.poem")
+
+    fireEvent.change(searchFields[1], { target: { value: "extra" } })
+    expect(screen.getAllByRole("row", { name: "" })).toHaveLength(13)
+    rows = screen.getAllByRole("row")
+    expect(rows[2].textContent).toBe("1poem.added.twoPOEM extra 22nd service type created from POEM UI and POSTed on WEB-API.poem")
+    expect(rows[3].textContent).toBe("2poem.added.threePOEM extra 33rd service type created from POEM UI and POSTed on WEB-API.poem")
+
+    fireEvent.change(searchFields[2], { target: { value: "2" } })
+    expect(screen.getAllByRole("row", { name: "" })).toHaveLength(14)
+    rows = screen.getAllByRole("row")
+    expect(rows[2].textContent).toBe("1poem.added.twoPOEM extra 22nd service type created from POEM UI and POSTed on WEB-API.poem")
   })
 })
 

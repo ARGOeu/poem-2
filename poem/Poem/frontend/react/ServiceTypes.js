@@ -867,79 +867,9 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
 }
 
 
-export const ServiceTypesListPublic = (props) => {
-  const webapi = new WebApi({
-    token: props.webapitoken,
-    serviceTypes: props.webapiservicetypes
-  })
-
-  const { data: serviceTypesDescriptions, errorServiceTypesDescriptions, isLoading: loadingServiceTypesDescriptions} = useQuery(
-    'public_servicetypes', async () => {
-      return await webapi.fetchServiceTypes();
-    },
-  )
-
-  const columns = React.useMemo(
-    () => [
-      {
-        Header: '#',
-        accessor: null,
-        column_width: '2%'
-      },
-      {
-        Header: <div><Icon i="servicetypes"/> Service type</div>,
-        accessor: 'name',
-        Cell: ({ value }) => <span className="fw-bold">{ value }</span>,
-        column_width: '25%',
-        Filter: DefaultColumnFilter
-      },
-      {
-        Header: 'Description',
-        accessor: 'description',
-        column_width: '70%',
-        Filter: DefaultColumnFilter
-      },
-      {
-        Header: 'Source',
-        id: 'tags',
-        accessor: e =>
-          <Badge color={`${e.tags[0] === 'poem' ? 'success' : 'secondary'}`}>
-            {e.tags[0]}
-          </Badge>,
-        column_width: '3%',
-        Filter: ''
-      }
-    ], []
-  )
-
-  if (loadingServiceTypesDescriptions)
-    return (<LoadingAnim/>);
-
-  else if (errorServiceTypesDescriptions)
-    return (<ErrorComponent error={errorServiceTypesDescriptions}/>);
-
-  else if (serviceTypesDescriptions) {
-    return (
-      <BaseArgoView
-        resourcename='Service types'
-        infoview={true}>
-        <BaseArgoTable
-          columns={columns}
-          data={serviceTypesDescriptions}
-          filter={true}
-          resourcename='service types'
-          page_size={15}
-        />
-      </BaseArgoView>
-    )
-  }
-  else
-    return null
-}
-
-
 export const ServiceTypesList = (props) => {
   const showtitles = props.showtitles
+  const publicView = props.publicView
 
   const webapi = new WebApi({
     token: props.webapitoken,
@@ -951,10 +881,10 @@ export const ServiceTypesList = (props) => {
   );
 
   const { data: serviceTypesDescriptions, errorServiceTypesDescriptions, isLoading: loadingServiceTypesDescriptions} = useQuery(
-    ['servicetypes', 'webapi'], async () => {
+    [`${publicView ? "public_" : ""}servicetypes`, 'webapi'], async () => {
       return await webapi.fetchServiceTypes();
     },
-    { enabled: !!userDetails }
+    { enabled: publicView || !!userDetails }
   )
 
   const memoized_columns = React.useMemo(() => {
@@ -1009,7 +939,7 @@ export const ServiceTypesList = (props) => {
   else if (errorServiceTypesDescriptions)
     return (<ErrorComponent error={errorServiceTypesDescriptions}/>);
 
-  else if (serviceTypesDescriptions && !userDetails?.is_superuser) {
+  else if (serviceTypesDescriptions && (!userDetails?.is_superuser || publicView)) {
     return (
       <BaseArgoView
         resourcename='Service types'
