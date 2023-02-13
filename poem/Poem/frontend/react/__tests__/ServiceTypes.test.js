@@ -762,37 +762,52 @@ describe('Test service types list - Bulk add', () => {
   test('Test add', async () => {
     renderAddView();
 
-    expect(screen.getByRole('heading', {'level': 4})).toHaveTextContent(/loading data/i)
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', {'level': 2})).toHaveTextContent(/Add service types/i)
+      expect(screen.getByRole('heading', { level: 2, name: /service type/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByLabelText(/name/i), {target: {value: 'service.name.1'}})
 
     fireEvent.change(screen.getByLabelText(/desc/i), {target: {value: 'service description 1'}})
 
-    const addNew = screen.getByText(/Add new/)
-    fireEvent.click(addNew);
+    fireEvent.click(screen.getByRole("button", { name: /add/i }))
 
     await waitFor(() => {
-      expect(screen.getAllByTestId(/rows-add-serviceTypes\.[0-9]*/)).toHaveLength(1)
+      expect(screen.getAllByTestId(/addrow-/)).toHaveLength(1)
     })
+
+    expect(screen.getByTestId("addrow-0").textContent).toBe("1service.name.1service description 1")
 
     fireEvent.change(screen.getByLabelText(/name/i), {target: {value: 'service.name.2'}})
     fireEvent.change(screen.getByLabelText(/desc/i), {target: {value: 'service description 2'}})
-    const addNew2 = screen.getByText(/Add new/)
-    fireEvent.click(addNew2);
+    fireEvent.click(screen.getByRole("button", { name: /add/i }))
 
     await waitFor(() => {
-      expect(screen.getAllByTestId(/rows-add-serviceTypes\.[0-9]*/)).toHaveLength(2)
+      expect(screen.getAllByTestId(/addrow-/)).toHaveLength(2)
     })
 
-    fireEvent.click(screen.getByText(/Save/));
+    expect(screen.getByTestId("addrow-0").textContent).toBe("1service.name.1service description 1")
+    expect(screen.getByTestId("addrow-1").textContent).toBe("2service.name.2service description 2")
+
+    fireEvent.change(screen.getByLabelText(/name/i), {target: {value: 'service.name.3'}})
+    fireEvent.change(screen.getByLabelText(/desc/i), {target: {value: 'service description 3'}})
+    fireEvent.click(screen.getByRole("button", { name: /add/i }))
+
     await waitFor(() => {
-      expect(screen.getByText('Are you sure you want to add 2 Service types?')).toBeInTheDocument()
+      expect(screen.getAllByTestId(/addrow-/)).toHaveLength(3)
     })
-    fireEvent.click(screen.getByText(/Yes/))
+
+    expect(screen.getByTestId("addrow-0").textContent).toBe("1service.name.1service description 1")
+    expect(screen.getByTestId("addrow-1").textContent).toBe("2service.name.2service description 2")
+    expect(screen.getByTestId("addrow-2").textContent).toBe("3service.name.3service description 3")
+
+    fireEvent.click(screen.getByTestId("row-remove-1"))
+
+    fireEvent.click(screen.getByRole("button", { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByText('Are you sure you want to add 2 service types?')).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByText(/yes/i))
 
     await waitFor(() => {
       expect(mockAddServiceTypes).toHaveBeenCalledWith(
@@ -858,9 +873,9 @@ describe('Test service types list - Bulk add', () => {
             "tags": ['poem']
           },
           {
-            "description": "service description 2",
+            "description": "service description 3",
             "title": "",
-            "name": "service.name.2",
+            "name": "service.name.3",
             "tags": ['poem']
           }
         ]
@@ -881,26 +896,46 @@ describe('Test service types list - Bulk add', () => {
 
     fireEvent.change(screen.getByLabelText(/desc/i), {target: {value: 'service description 1'}})
 
-    fireEvent.click(screen.getByText(/Add new/))
+    fireEvent.click(screen.getByRole("button", { name: /add/i }))
 
     await waitFor(() => {
-      expect(screen.getAllByTestId(/rows-add-serviceTypes\.[0-9]*/)).toHaveLength(1)
+      expect(screen.getAllByTestId(/addrow-/)).toHaveLength(1)
     })
+
+    expect(screen.getByTestId("addrow-0").textContent).toBe("1service.name.1Service Title 1service description 1")
 
     fireEvent.change(screen.getByLabelText(/name/i), {target: {value: 'service.name.2'}})
     fireEvent.change(screen.getByLabelText(/title/i), {target: {value: 'Service Title 2'}})
     fireEvent.change(screen.getByLabelText(/desc/i), {target: {value: 'service description 2'}})
-    fireEvent.click(screen.getByText(/Add new/))
+    fireEvent.click(screen.getByRole("button", { name: /add/i }))
 
     await waitFor(() => {
-      expect(screen.getAllByTestId(/rows-add-serviceTypes\.[0-9]*/)).toHaveLength(2)
+      expect(screen.getAllByTestId(/addrow-/)).toHaveLength(2)
     })
 
-    fireEvent.click(screen.getByText(/Save/));
+    expect(screen.getByTestId("addrow-0").textContent).toBe("1service.name.1Service Title 1service description 1")
+    expect(screen.getByTestId("addrow-1").textContent).toBe("2service.name.2Service Title 2service description 2")
+
+    fireEvent.change(screen.getByLabelText(/name/i), {target: {value: 'service.name.3'}})
+    fireEvent.change(screen.getByLabelText(/title/i), {target: {value: 'Service Title 3'}})
+    fireEvent.change(screen.getByLabelText(/desc/i), {target: {value: 'service description 3'}})
+    fireEvent.click(screen.getByRole("button", { name: /add/i }))
+
     await waitFor(() => {
-      expect(screen.getByText('Are you sure you want to add 2 Service types?')).toBeInTheDocument()
+      expect(screen.getAllByTestId(/addrow-/)).toHaveLength(3)
     })
-    fireEvent.click(screen.getByText(/Yes/))
+
+    expect(screen.getByTestId("addrow-0").textContent).toBe("1service.name.1Service Title 1service description 1")
+    expect(screen.getByTestId("addrow-1").textContent).toBe("2service.name.2Service Title 2service description 2")
+    expect(screen.getByTestId("addrow-2").textContent).toBe("3service.name.3Service Title 3service description 3")
+
+    fireEvent.click(screen.getByTestId("row-remove-1"))
+
+    fireEvent.click(screen.getByRole("button", { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByText('Are you sure you want to add 2 service types?')).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByText(/yes/i))
 
     await waitFor(() => {
       expect(mockAddServiceTypes).toHaveBeenCalledWith(
@@ -966,9 +1001,9 @@ describe('Test service types list - Bulk add', () => {
             "tags": ['poem']
           },
           {
-            "description": "service description 2",
-            "title": "Service Title 2",
-            "name": "service.name.2",
+            "description": "service description 3",
+            "title": "Service Title 3",
+            "name": "service.name.3",
             "tags": ['poem']
           }
         ]
@@ -993,10 +1028,35 @@ describe('Test service types list - Bulk add', () => {
     fireEvent.click(addNew);
 
     await waitFor(() => {
-      expect(screen.getAllByTestId(/rows-add-serviceTypes\.[0-9]*/)).toHaveLength(1)
-      expect(screen.getByText(/Empty data/)).toBeVisible()
-      expect(screen.getByText(/Description can not be empty/)).toBeVisible()
-      expect(screen.getByText(/Name can only contain alphanumeric characters, punctuations, underscores and minuses/)).toBeVisible()
+      expect(screen.getAllByTestId(/addrow-/)).toHaveLength(1)
     })
+
+    expect(screen.getByText(/Empty data/)).toBeVisible()
+    expect(screen.getByText(/Description cannot be empty/)).toBeVisible()
+    expect(screen.queryByText(/Title cannot be empty/)).not.toBeInTheDocument()
+    expect(screen.getByText(/Name can only contain alphanumeric characters, punctuations, underscores and minuses/)).toBeVisible()
+  })
+
+  test('Test add validation with titles', async () => {
+    renderAddView(true)
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { level: 2, name: /service type/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByLabelText(/name/i), {target: {value: 'service name 1'}})
+
+    fireEvent.change(screen.getByLabelText(/desc/i), {target: {value: ''}})
+
+    fireEvent.click(screen.getByRole("button", { name: /add/i }))
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId(/addrow-/)).toHaveLength(1)
+    })
+
+    expect(screen.getByText(/Empty data/)).toBeVisible()
+    expect(screen.getByText(/Description cannot be empty/)).toBeVisible()
+    expect(screen.getByText(/Title cannot be empty/)).toBeVisible()
+    expect(screen.getByText(/Name can only contain alphanumeric characters, punctuations, underscores and minuses/)).toBeVisible()
   })
 })

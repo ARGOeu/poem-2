@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { WebApi } from './DataManager';
 import { useQuery, useQueryClient, useMutation } from 'react-query';
@@ -44,6 +44,9 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { ErrorMessage } from '@hookform/error-message';
 import * as yup from "yup";
 import _ from "lodash";
+
+
+const BulkAddContext = React.createContext()
 
 
 class TablePaginationHelper {
@@ -176,12 +179,20 @@ class TablePaginationHelper {
 
 const validationSchema = yup.object().shape({
   name: yup.string().matches(/^[A-Za-z0-9\\.\-_]+$/g, {message: 'Name can only contain alphanumeric characters, punctuations, underscores and minuses', excludeEmptyString: false}),
-  description: yup.string().required('Description can not be empty.')
+  title: yup.string().when("$showtitles", (showtitles, schema) => {
+    if (showtitles)
+      return schema.required("Title cannot be empty.")
+
+    return
+  }),
+  description: yup.string().required('Description cannot be empty.')
 }).required();
 
 
-const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
-  serviceTypesDescriptions, ...modal}) => {
+const ServiceTypesListAdded = ({ data, ...props }) => {
+  const context = useContext(BulkAddContext)
+  const showtitles = props.showtitles
+
   const { control, setValue, getValues, reset } = useForm({
     defaultValues: {
       serviceTypes: data,
@@ -189,7 +200,16 @@ const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
   })
 
   const queryClient = useQueryClient();
-  const webapiAddMutation = useMutation(async (values) => await webapi.addServiceTypes(values));
+  const webapiAddMutation = useMutation(async (values) => await context.webapi.addServiceTypes(values));
+
+  const [areYouSureModal, setAreYouSureModal] = React.useState(false)
+  const [modalTitle, setModalTitle] = React.useState('')
+  const [modalMsg, setModalMsg] = React.useState('')
+  const [modalFunc, setModalFunc] = React.useState(undefined)
+
+  function toggleModal() {
+    setAreYouSureModal(!areYouSureModal)
+  }
 
   const { fields, remove } = useFieldArray({
     control,
@@ -199,10 +219,6 @@ const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
   useEffect(() => {
     setValue("serviceTypes", data)
   }, [data])
-
-  const {setModalMsg, setModalTitle,
-    setModalFunc, setAreYouSureModal,
-    areYouSureModal} = modal
 
   const resetFields = () => {
     reset({
@@ -231,7 +247,7 @@ const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
   }
 
   const doSave = () => {
-    let tmpArray = [...getValues('serviceTypes'), ...serviceTypesDescriptions]
+    let tmpArray = [...getValues('serviceTypes'), ...context.serviceTypesDescriptions]
     let pairs = _.orderBy(tmpArray, [service => service.name.toLowerCase()], ['asc'])
     postServiceTypesWebApi([...pairs.map(
       e => Object(
@@ -244,14 +260,21 @@ const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
 
   const onSubmit = (event) => {
     event.preventDefault()
-    setModalMsg(`Are you sure you want to add ${data.length} Service types?`)
+    setModalMsg(`Are you sure you want to add ${getValues('serviceTypes').length} service types?`)
     setModalTitle('Add service types')
     setModalFunc(() => doSave)
     setAreYouSureModal(!areYouSureModal);
   }
 
-  if (userDetails?.is_superuser && serviceTypesDescriptions) {
-    return (
+  return (
+    <>
+      <ModalAreYouSure
+        isOpen={areYouSureModal}
+        toggle={toggleModal}
+        title={modalTitle}
+        msg={modalMsg}
+        onYes={modalFunc}
+      />
       <div id="argo-contentwrap" className="ms-2 mb-2 mt-2 p-3 border rounded">
         <ParagraphTitle title='Service types prepared for submission'/>
         <Table bordered responsive hover size="sm">
@@ -274,7 +297,7 @@ const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
           {
             fields.length === 0 ?
               <tbody>
-                <tr key="0" data-testid="rows-add-serviceTypes.0">
+                <tr key="0" data-testid="addrow-0">
                   <td colSpan="4" className="table-light text-muted text-center p-3 fs-3">
                     Empty data
                   </td>
@@ -284,12 +307,20 @@ const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
               <tbody>
                 {
                   fields.map((entry, index) =>
-                    <tr key={entry.id} data-testid={`rows-add-serviceTypes.${index}`}>
+                    <tr key={entry.id} data-testid={`addrow-${index}`}>
                       <td className="align-middle text-center">
                         {index + 1}
                       </td>
                       <td className="align-middle text-left fw-bold">
-                        <span className="ms-2">{ entry.name }</span>
+                        {
+                          showtitles ?
+                            <div>
+                              <p className="fw-bold m-0">{ entry.name }</p>
+                              <p className="m-0"><small>{ entry.title }</small></p>
+                            </div>
+                          :
+                            <span className="ms-2">{ entry.name }</span>
+                        }
                       </td>
                       <td>
                         <Controller
@@ -305,16 +336,20 @@ const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
                         />
                       </td>
                       <td className="text-center align-middle">
-                        <Button size="sm" className="fw-bold" color="danger" onClick={() => {
-                          let tmp = [...fields]
-                          tmp = tmp.filter((e, i) => i !== index)
-                          setCallback(tmp)
-                          remove(index)
-                        }}>
+                        <Button
+                          size="sm"
+                          className="fw-bold"
+                          color="danger"
+                          data-testid={ `row-remove-${index}` }
+                          onClick={() => {
+                            remove(index)
+                          }}
+                        >
                           <FontAwesomeIcon icon={faTimes}/>
                         </Button>
                       </td>
-                    </tr>)
+                    </tr>
+                  )
                 }
               </tbody>
           }
@@ -330,10 +365,8 @@ const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
             ''
         }
       </div>
-    )
-  }
-  else
-    return null
+    </>
+  )
 }
 
 
@@ -360,6 +393,7 @@ export const ServiceTypesBulkAdd = (props) => {
 
   const { control, handleSubmit, reset, formState: {errors} } = useForm({
     resolver: yupResolver(validationSchema),
+    context: { showtitles: showtitles },
     defaultValues: {
       name: '',
       title: "",
@@ -367,12 +401,6 @@ export const ServiceTypesBulkAdd = (props) => {
       tags: ['poem']
     }
   })
-
-  const [areYouSureModal, setAreYouSureModal] = React.useState(false)
-  const [modalTitle, setModalTitle] = React.useState('')
-  const [modalMsg, setModalMsg] = React.useState('')
-  const [modalFunc, setModalFunc] = React.useState(undefined)
-  const [modalCallbackArg, setModalCallbackArg] = React.useState(undefined)
 
   const onSubmit = data => {
     let tmpArray = [...addedServices]
@@ -384,10 +412,6 @@ export const ServiceTypesBulkAdd = (props) => {
       description: '',
       tags: ['poem']
     })
-  }
-
-  function toggleModal() {
-    setAreYouSureModal(!areYouSureModal)
   }
 
   if (loadingUserDetails || loadingServiceTypesDescriptions)
@@ -431,14 +455,6 @@ export const ServiceTypesBulkAdd = (props) => {
 
     return (
       <>
-        <ModalAreYouSure
-          isOpen={areYouSureModal}
-          toggle={toggleModal}
-          title={modalTitle}
-          msg={modalMsg}
-          onYes={modalFunc}
-          callbackOnYesArg={modalCallbackArg}
-        />
         <div className="d-flex align-items-center justify-content-between">
           <h2 className="ms-3 mt-1 mb-4">Add service types</h2>
         </div>
@@ -529,11 +545,14 @@ export const ServiceTypesBulkAdd = (props) => {
             }
           </Form>
         </div>
-        <ServiceTypesListAdded data={addedServices} setCallback={setAddedServices} webapi={webapi}
-          userDetails={userDetails} serviceTypesDescriptions={serviceTypesDescriptions}
-          areYouSureModal={areYouSureModal} setAreYouSureModal={setAreYouSureModal}
-          setModalMsg={setModalMsg} setModalCallbackArg={setModalCallbackArg}
-          setModalFunc={setModalFunc} setModalTitle={setModalTitle}/>
+        <BulkAddContext.Provider value={{
+          setCallback: setAddedServices,
+          userDetails: userDetails,
+          serviceTypesDescriptions: serviceTypesDescriptions,
+          webapi: webapi
+        }}>
+          <ServiceTypesListAdded data={addedServices} { ...props } />
+        </BulkAddContext.Provider>
       </>
     )
   }
