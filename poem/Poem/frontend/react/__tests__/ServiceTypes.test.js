@@ -448,6 +448,8 @@ describe('Test service types list - Bulk change and delete', () => {
       expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Service types');
     })
 
+    expect(screen.getAllByPlaceholderText(/search/i)).toHaveLength(2)
+
     expect(screen.getAllByTestId(/rows-serviceTypes\.[0-9]*/)).toHaveLength(mockServTypes.length)
     expect(screen.getByText(/Name of service/)).toBeVisible()
     expect(screen.getByText(/Description of service/)).toBeVisible()
@@ -465,6 +467,44 @@ describe('Test service types list - Bulk change and delete', () => {
     expect(tableRows[7].textContent).toBe('7poem.added.oneService type created from POEM UI and POSTed on WEB-API.poem')
     expect(tableRows[8].textContent).toBe('8poem.added.two2nd service type created from POEM UI and POSTed on WEB-API.poem')
     expect(tableRows[9].textContent).toBe('9poem.added.three3rd service type created from POEM UI and POSTed on WEB-API.poem')
+
+    const paginationRoot = screen.getByRole('navigation', {name: /pagination/})
+    const paginationLinks = within(paginationRoot).getAllByRole('listitem')
+    expect(paginationLinks).toHaveLength(6)
+    expect(paginationLinks[0]).toHaveTextContent('First')
+    expect(paginationLinks[1]).toHaveTextContent('Previous')
+    expect(paginationLinks[2]).toHaveTextContent('1')
+    expect(paginationLinks[3]).toHaveTextContent('Next')
+    expect(paginationLinks[4]).toHaveTextContent('Last')
+    expect(paginationLinks[5]).toHaveTextContent('30 service types')
+  })
+
+  test('Test that page renders properly if showing titles', async () => {
+    renderListView(true)
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /service/i })).toBeInTheDocument()
+    })
+
+    expect(screen.getAllByPlaceholderText(/search/i)).toHaveLength(2)
+
+    expect(screen.getAllByTestId(/rows-serviceTypes\.[0-9]*/)).toHaveLength(mockServTypes.length)
+    expect(screen.getByText(/Name of service/)).toBeVisible()
+    expect(screen.getByText(/Description of service/)).toBeVisible()
+    expect(screen.getByText(/Delete selected/)).toBeDisabled()
+    expect(screen.getByText(/Save/)).toBeDisabled()
+
+    const tbody = screen.getAllByRole('rowgroup')[1]
+    const tableRows = within(tbody).getAllByRole('row')
+    expect(tableRows[1]).toHaveTextContent('1argo.apiARGO API serviceARGO API service for retrieving status and A/R results.topology')
+    expect(tableRows[2]).toHaveTextContent('2argo.computeengineARGO Compute EngineARGO Compute Engine computes availability and reliability of services.topology')
+    expect(tableRows[3]).toHaveTextContent('3argo.consumerARGO ConsumerARGO Consumer collects monitoring metrics from monitoring engines.topology')
+    expect(tableRows[4]).toHaveTextContent('4argo.monARGO Monitoring EngineARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.topology')
+    expect(tableRows[5]).toHaveTextContent('5argo.poemPOEMPOEM is system for managing profiles of probes and metrics in ARGO system.topology')
+    expect(tableRows[6]).toHaveTextContent('6argo.webuiARGO web user interfaceARGO web user interface for metric A/R visualization and recalculation management.topology')
+    expect(tableRows[7].textContent).toBe('7poem.added.onePOEM anotherService type created from POEM UI and POSTed on WEB-API.poem')
+    expect(tableRows[8].textContent).toBe('8poem.added.twoPOEM extra 22nd service type created from POEM UI and POSTed on WEB-API.poem')
+    expect(tableRows[9].textContent).toBe('9poem.added.threePOEM extra 33rd service type created from POEM UI and POSTed on WEB-API.poem')
 
     const paginationRoot = screen.getByRole('navigation', {name: /pagination/})
     const paginationLinks = within(paginationRoot).getAllByRole('listitem')

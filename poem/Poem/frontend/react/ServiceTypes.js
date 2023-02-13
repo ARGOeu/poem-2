@@ -488,7 +488,9 @@ export const ServiceTypesBulkAdd = (props) => {
 }
 
 
-const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
+const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
+  const showtitles = props.showtitles
+
   const dataWithChecked = data.map(e => {
     return {
       ...e,
@@ -732,7 +734,15 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                           { lookupIndexes[entry.id] + 1 }
                         </td>
                         <td className="align-middle text-left fw-bold">
-                          <span className="ms-2">{ entry.name }</span>
+                          {
+                            showtitles ?
+                              <div>
+                                <p className="fw-bold m-0">{ entry.name }</p>
+                                <p className="fw-normal m-0"><small>{ entry.title }</small></p>
+                              </div>
+                            :
+                              <span className="ms-2">{ entry.name }</span>
+                          }
                         </td>
                         <td>
                           <Controller
