@@ -236,7 +236,7 @@ const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
     postServiceTypesWebApi([...pairs.map(
       e => Object(
         {
-          'name': e.name, 'description': e.description, 'tags': e.tags
+          'name': e.name, 'title': e.title, 'description': e.description, 'tags': e.tags
         }
       ))],
       'added', 'Add')

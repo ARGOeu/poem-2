@@ -791,65 +791,183 @@ describe('Test service types list - Bulk add', () => {
     fireEvent.click(screen.getByText(/Save/));
     await waitFor(() => {
       expect(screen.getByText('Are you sure you want to add 2 Service types?')).toBeInTheDocument()
-      const yesButton = screen.getByText(/Yes/)
-      fireEvent.click(yesButton);
     })
+    fireEvent.click(screen.getByText(/Yes/))
 
     await waitFor(() => {
       expect(mockAddServiceTypes).toHaveBeenCalledWith(
         [
           {
             'name': 'argo.api',
+            'title': "ARGO API service",
             'description': 'ARGO API service for retrieving status and A/R results.',
             'tags': ['topology']
           },
           {
             "description": "ARGO Compute Engine computes availability and reliability of services.",
+            "title": "ARGO Compute Engine",
             "name": "argo.computeengine",
             "tags": ['topology']
           },
           {
             "description": "ARGO Consumer collects monitoring metrics from monitoring engines.",
+            "title": "ARGO Consumer",
             "name": "argo.consumer",
             "tags": ['topology']
           },
           {
             "description": "ARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.",
+            "title": "ARGO Monitoring Engine",
             "name": "argo.mon",
             "tags": ['topology']
           },
           {
             "description": "POEM is system for managing profiles of probes and metrics in ARGO system.",
+            "title": "POEM",
             "name": "argo.poem",
             "tags": ['topology']
           },
           {
             "description": "ARGO web user interface for metric A/R visualization and recalculation management.",
+            "title": "ARGO web user interface",
             "name": "argo.webui",
             "tags": ['topology']
           },
           {
             "name": 'poem.added.one',
+            "title": "POEM another",
             "description": 'Service type created from POEM UI and POSTed on WEB-API.',
             "tags": ['poem']
           },
           {
             "name": 'poem.added.three',
+            "title": "POEM extra 3",
             "description": '3rd service type created from POEM UI and POSTed on WEB-API.',
             "tags": ['poem']
           },
           {
             "name": 'poem.added.two',
+            "title": "POEM extra 2",
             "description": '2nd service type created from POEM UI and POSTed on WEB-API.',
             "tags": ['poem']
           },
           {
             "description": "service description 1",
+            "title": "",
             "name": "service.name.1",
             "tags": ['poem']
           },
           {
             "description": "service description 2",
+            "title": "",
+            "name": "service.name.2",
+            "tags": ['poem']
+          }
+        ]
+      )
+    })
+  })
+
+  test('Test add with titles', async () => {
+    renderAddView(true);
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { level: 2, name: /service type/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByLabelText(/name/i), {target: {value: 'service.name.1'}})
+
+    fireEvent.change(screen.getByLabelText(/title/i), { target: { value: "Service Title 1" } })
+
+    fireEvent.change(screen.getByLabelText(/desc/i), {target: {value: 'service description 1'}})
+
+    fireEvent.click(screen.getByText(/Add new/))
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId(/rows-add-serviceTypes\.[0-9]*/)).toHaveLength(1)
+    })
+
+    fireEvent.change(screen.getByLabelText(/name/i), {target: {value: 'service.name.2'}})
+    fireEvent.change(screen.getByLabelText(/title/i), {target: {value: 'Service Title 2'}})
+    fireEvent.change(screen.getByLabelText(/desc/i), {target: {value: 'service description 2'}})
+    fireEvent.click(screen.getByText(/Add new/))
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId(/rows-add-serviceTypes\.[0-9]*/)).toHaveLength(2)
+    })
+
+    fireEvent.click(screen.getByText(/Save/));
+    await waitFor(() => {
+      expect(screen.getByText('Are you sure you want to add 2 Service types?')).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByText(/Yes/))
+
+    await waitFor(() => {
+      expect(mockAddServiceTypes).toHaveBeenCalledWith(
+        [
+          {
+            'name': 'argo.api',
+            'title': 'ARGO API service',
+            'description': 'ARGO API service for retrieving status and A/R results.',
+            'tags': ['topology']
+          },
+          {
+            "description": "ARGO Compute Engine computes availability and reliability of services.",
+            "title": "ARGO Compute Engine",
+            "name": "argo.computeengine",
+            "tags": ['topology']
+          },
+          {
+            "description": "ARGO Consumer collects monitoring metrics from monitoring engines.",
+            "title": "ARGO Consumer",
+            "name": "argo.consumer",
+            "tags": ['topology']
+          },
+          {
+            "description": "ARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.",
+            "title": "ARGO Monitoring Engine",
+            "name": "argo.mon",
+            "tags": ['topology']
+          },
+          {
+            "description": "POEM is system for managing profiles of probes and metrics in ARGO system.",
+            "title": "POEM",
+            "name": "argo.poem",
+            "tags": ['topology']
+          },
+          {
+            "description": "ARGO web user interface for metric A/R visualization and recalculation management.",
+            "title": "ARGO web user interface",
+            "name": "argo.webui",
+            "tags": ['topology']
+          },
+          {
+            "name": 'poem.added.one',
+            "title": "POEM another",
+            "description": 'Service type created from POEM UI and POSTed on WEB-API.',
+            "tags": ['poem']
+          },
+          {
+            "name": 'poem.added.three',
+            "title": "POEM extra 3",
+            "description": '3rd service type created from POEM UI and POSTed on WEB-API.',
+            "tags": ['poem']
+          },
+          {
+            "name": 'poem.added.two',
+            "title": "POEM extra 2",
+            "description": '2nd service type created from POEM UI and POSTed on WEB-API.',
+            "tags": ['poem']
+          },
+          {
+            "description": "service description 1",
+            "title": "Service Title 1",
+            "name": "service.name.1",
+            "tags": ['poem']
+          },
+          {
+            "description": "service description 2",
+            "title": "Service Title 2",
             "name": "service.name.2",
             "tags": ['poem']
           }
