@@ -128,7 +128,7 @@ const mockServTypes = [
 ];
 
 
-function renderAddView() {
+function renderAddView(withServiceTypesTitles=undefined) {
   const route = `/ui/servicetypes/add`;
   const history = createMemoryHistory({ initialEntries: [route] });
 
@@ -138,7 +138,12 @@ function renderAddView() {
         <Router history={history}>
           <Route
             path='/ui/servicetypes/add'
-            component={ServiceTypesBulkAdd}
+            render={ props => <ServiceTypesBulkAdd
+              { ...props }
+              webapitoken="token"
+              webapiservicetypes="https://mock.servicetypes.com"
+              showtitles={ withServiceTypesTitles }
+            />}
           />
         </Router>
       </QueryClientProvider>
@@ -715,11 +720,33 @@ describe('Test service types list - Bulk add', () => {
       expect(screen.getByRole('heading', {'level': 2})).toHaveTextContent(/Add service types/i)
     })
 
-    expect(screen.getByText(/Name:/)).toBeVisible()
-    expect(screen.getByText(/Description:/)).toBeVisible()
+    expect(screen.getByLabelText(/Name:/)).toBeInTheDocument()
+    expect(screen.queryByLabelText(/Title:/)).not.toBeInTheDocument()
+    expect(screen.getByLabelText(/Description:/)).toBeInTheDocument()
 
-    expect(screen.getByTestId('input-name')).toBeVisible()
-    expect(screen.getByTestId('input-description')).toBeVisible()
+    expect(screen.getByRole('heading', {'level': 4})).toHaveTextContent(/Service types prepared for submission/i)
+
+    const thead = screen.getAllByRole('rowgroup')[0]
+    let tableRows = within(thead).getAllByRole('row')
+    expect(tableRows[0]).toHaveTextContent('#Name of serviceDescription of serviceAction')
+
+    const tbody = screen.getAllByRole('rowgroup')[1]
+    tableRows = within(tbody).getAllByRole('row')
+    expect(tableRows[0]).toHaveTextContent('Empty data')
+  })
+
+  test('Test that page renders properly with title', async () => {
+    renderAddView(true);
+
+    expect(screen.getByRole('heading', {'level': 4})).toHaveTextContent(/loading data/i)
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', {'level': 2})).toHaveTextContent(/Add service types/i)
+    })
+
+    expect(screen.getByLabelText(/Name:/)).toBeInTheDocument()
+    expect(screen.queryByLabelText(/Title:/)).toBeInTheDocument()
+    expect(screen.getByLabelText(/Description:/)).toBeInTheDocument()
 
     expect(screen.getByRole('heading', {'level': 4})).toHaveTextContent(/Service types prepared for submission/i)
 
@@ -741,17 +768,9 @@ describe('Test service types list - Bulk add', () => {
       expect(screen.getByRole('heading', {'level': 2})).toHaveTextContent(/Add service types/i)
     })
 
-    expect(screen.getByText(/Name:/)).toBeVisible()
-    expect(screen.getByText(/Description:/)).toBeVisible()
+    fireEvent.change(screen.getByLabelText(/name/i), {target: {value: 'service.name.1'}})
 
-    expect(screen.getByTestId('input-name')).toBeVisible()
-    expect(screen.getByTestId('input-description')).toBeVisible()
-
-    const inputName = screen.getByTestId('input-name')
-    fireEvent.change(inputName, {target: {value: 'service.name.1'}})
-
-    const inputDesc = screen.getByTestId('input-description')
-    fireEvent.change(inputDesc, {target: {value: 'service description 1'}})
+    fireEvent.change(screen.getByLabelText(/desc/i), {target: {value: 'service description 1'}})
 
     const addNew = screen.getByText(/Add new/)
     fireEvent.click(addNew);
@@ -760,10 +779,8 @@ describe('Test service types list - Bulk add', () => {
       expect(screen.getAllByTestId(/rows-add-serviceTypes\.[0-9]*/)).toHaveLength(1)
     })
 
-    const inputName2 = screen.getByTestId('input-name')
-    fireEvent.change(inputName2, {target: {value: 'service.name.2'}})
-    const inputDesc2 = screen.getByTestId('input-description')
-    fireEvent.change(inputDesc2, {target: {value: 'service description 2'}})
+    fireEvent.change(screen.getByLabelText(/name/i), {target: {value: 'service.name.2'}})
+    fireEvent.change(screen.getByLabelText(/desc/i), {target: {value: 'service description 2'}})
     const addNew2 = screen.getByText(/Add new/)
     fireEvent.click(addNew2);
 
@@ -850,17 +867,9 @@ describe('Test service types list - Bulk add', () => {
       expect(screen.getByRole('heading', {'level': 2})).toHaveTextContent(/Add service types/i)
     })
 
-    expect(screen.getByText(/Name:/)).toBeVisible()
-    expect(screen.getByText(/Description:/)).toBeVisible()
+    fireEvent.change(screen.getByLabelText(/name/i), {target: {value: 'service name 1'}})
 
-    expect(screen.getByTestId('input-name')).toBeVisible()
-    expect(screen.getByTestId('input-description')).toBeVisible()
-
-    const inputName = screen.getByTestId('input-name')
-    fireEvent.change(inputName, {target: {value: 'service name 1'}})
-
-    const inputDesc = screen.getByTestId('input-description')
-    fireEvent.change(inputDesc, {target: {value: ''}})
+    fireEvent.change(screen.getByLabelText(/desc/i), {target: {value: ''}})
 
     const addNew = screen.getByText(/Add new/)
     fireEvent.click(addNew);

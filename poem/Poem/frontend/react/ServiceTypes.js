@@ -338,6 +338,8 @@ const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
 
 
 export const ServiceTypesBulkAdd = (props) => {
+  const showtitles = props.showtitles
+
   const [addedServices, setAddedServices] = useState([])
 
   const webapi = new WebApi({
@@ -360,6 +362,7 @@ export const ServiceTypesBulkAdd = (props) => {
     resolver: yupResolver(validationSchema),
     defaultValues: {
       name: '',
+      title: "",
       description: '',
       tags: ['poem']
     }
@@ -377,6 +380,7 @@ export const ServiceTypesBulkAdd = (props) => {
     setAddedServices(tmpArray)
     reset({
       name: '',
+      title: "",
       description: '',
       tags: ['poem']
     })
@@ -396,6 +400,35 @@ export const ServiceTypesBulkAdd = (props) => {
     return (<ErrorComponent error={errorServiceTypesDescriptions}/>);
 
   if (userDetails?.is_superuser && serviceTypesDescriptions) {
+    const DescriptionInputGroup = <>
+      <Label className="fw-bold" for="description">
+        Description:
+      </Label>
+      <InputGroup>
+        <Controller
+          name="description"
+          control={ control }
+          render={ ({field}) =>
+            <textarea
+              {...field}
+              id="description"
+              rows="3"
+              className={`form-control ${errors?.description && "is-invalid" }`}
+            />
+          }
+        />
+        <ErrorMessage
+          errors={errors}
+          name="description"
+          render={({ message }) =>
+            <FormFeedback invalid="true" className="end-0">
+              { message }
+            </FormFeedback>
+          }
+        />
+      </InputGroup>
+    </>
+
     return (
       <>
         <ModalAreYouSure
@@ -422,9 +455,9 @@ export const ServiceTypesBulkAdd = (props) => {
                     control={control}
                     render={ ({field}) =>
                       <Input
-                        data-testid="input-name"
                         {...field}
-                        className={`form-control ${errors && errors.name ? "is-invalid" : ""}`}
+                        id="name"
+                        className={`form-control ${errors?.name && "is-invalid" }`}
                       />
                     }
                   />
@@ -439,40 +472,61 @@ export const ServiceTypesBulkAdd = (props) => {
                   />
                 </InputGroup>
               </Col>
-              <Col sm={{size: 7}}>
-                <Label className="fw-bold" for="description">
-                  Description:
-                </Label>
-                <InputGroup>
-                  <Controller
-                    name="description"
-                    control={control}
-                    render={ ({field}) =>
-                      <textarea
-                        {...field}
-                        rows="3"
-                        data-testid="input-description"
-                        className={`form-control ${errors && errors.description ? "is-invalid" : ""}`}
+              {
+                showtitles ?
+                  <Col sm={{size: 7}}>
+                    <Label className="fw-bold" for="title">
+                      Title:
+                    </Label>
+                    <InputGroup>
+                      <Controller
+                        name="title"
+                        control={ control }
+                        render={ ({ field }) =>
+                          <Input
+                            { ...field }
+                            id="title"
+                            className={ `form-control ${errors?.title && "is-invalid"}` }
+                          />
+                        }
                       />
-                    }
-                  />
-                  <ErrorMessage
-                    errors={errors}
-                    name="description"
-                    render={({ message }) =>
-                      <FormFeedback invalid="true" className="end-0">
-                        { message }
-                      </FormFeedback>
-                    }
-                  />
-                </InputGroup>
-              </Col>
-              <Col sm={{size: 1}} className="text-center">
-                <Button className="mt-3" color="success" type="submit">
-                  Add new
-                </Button>
-              </Col>
+                      <ErrorMessage
+                        errors={errors}
+                        name="title"
+                        render={({ message }) =>
+                          <FormFeedback invalid="true" className="end-0">
+                            { message }
+                          </FormFeedback>
+                        }
+                      />
+                    </InputGroup>
+                  </Col>
+                :
+                  <>
+                    <Col sm={{ size: 7 }}>
+                      { DescriptionInputGroup }
+                    </Col>
+                    <Col sm={{size: 1}} className="text-center">
+                      <Button className="mt-5" color="success" type="submit">
+                        Add new
+                      </Button>
+                    </Col>
+                  </>
+              }
             </Row>
+            {
+              showtitles &&
+                <Row className="mt-3">
+                  <Col sm={{ size: 11 }}>
+                    { DescriptionInputGroup }
+                  </Col>
+                  <Col sm={{size: 1}} className="text-center">
+                    <Button className="mt-5" color="success" type="submit">
+                      Add new
+                    </Button>
+                  </Col>
+                </Row>
+            }
           </Form>
         </div>
         <ServiceTypesListAdded data={addedServices} setCallback={setAddedServices} webapi={webapi}

@@ -570,6 +570,7 @@ const TenantRouteSwitch = ({
         {...props}
         webapitoken={token}
         webapiservicetypes={webApiServiceTypes}
+        showtitles={showServiceTitle}
       />}
     />
     <Route component={NotFound} />
