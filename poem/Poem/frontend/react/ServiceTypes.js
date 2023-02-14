@@ -316,7 +316,7 @@ const ServiceTypesListAdded = ({ data, ...props }) => {
                           showtitles ?
                             <div>
                               <p className="fw-bold m-0">{ entry.name }</p>
-                              <p className="m-0"><small>{ entry.title }</small></p>
+                              <p className="m-0 fw-normal"><small>{ entry.title }</small></p>
                             </div>
                           :
                             <span className="ms-2">{ entry.name }</span>
