@@ -195,6 +195,8 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
       render={props => <MetricProfilesChange
         {...props}
         webapimetric={webApiMetric}
+        webapiaggregation={webApiAggregation}
+        webapireports={webApiReports}
         webapiservicetypes={webApiServiceTypes}
         webapitoken={token}
         tenantname={tenantName}/>}
@@ -238,6 +240,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         {...props}
         webapiaggregation={webApiAggregation}
         webapimetric={webApiMetric}
+        webapireports={webApiReports}
         webapitoken={token}
         tenantname={tenantName}/>}
       />
