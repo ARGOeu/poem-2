@@ -942,7 +942,7 @@ describe('Test service types list - Bulk add', () => {
 
     const thead = screen.getAllByRole('rowgroup')[0]
     let tableRows = within(thead).getAllByRole('row')
-    expect(tableRows[0]).toHaveTextContent('#Name of serviceDescription of serviceAction')
+    expect(tableRows[0]).toHaveTextContent('#Service nameService descriptionAction')
 
     const tbody = screen.getAllByRole('rowgroup')[1]
     tableRows = within(tbody).getAllByRole('row')
@@ -966,7 +966,7 @@ describe('Test service types list - Bulk add', () => {
 
     const thead = screen.getAllByRole('rowgroup')[0]
     let tableRows = within(thead).getAllByRole('row')
-    expect(tableRows[0]).toHaveTextContent('#Name of serviceDescription of serviceAction')
+    expect(tableRows[0]).toHaveTextContent('#Service nameService descriptionAction')
 
     const tbody = screen.getAllByRole('rowgroup')[1]
     tableRows = within(tbody).getAllByRole('row')

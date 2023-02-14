@@ -284,10 +284,10 @@ const ServiceTypesListAdded = ({ data, ...props }) => {
                 #
               </th>
               <th>
-                Name of service
+                Service name
               </th>
               <th>
-                Description of service
+                Service description
               </th>
               <th style={{'width': '62px'}}>
                 Action
