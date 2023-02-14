@@ -1,7 +1,6 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
-import userEvent from '@testing-library/user-event';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
 import { ServiceTypesList, ServiceTypesBulkAdd } from '../ServiceTypes';
@@ -453,13 +452,21 @@ describe('Test service types list - Bulk change and delete', () => {
       expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Service types');
     })
 
-    expect(screen.getAllByPlaceholderText(/search/i)).toHaveLength(2)
+    const table = within(screen.getByRole("table"))
+    expect(table.getAllByRole("columnheader")).toHaveLength(5)
+    expect(table.getByRole("columnheader", { name: "#" })).toBeInTheDocument()
+    expect(table.getByRole("columnheader", { name: "Service name" })).toBeInTheDocument()
+    expect(table.getByRole("columnheader", { name: "Service description" })).toBeInTheDocument()
+    expect(table.getByRole("columnheader", { name: "Source" })).toBeInTheDocument()
+    expect(table.getByRole("columnheader", { name: "Checked" })).toBeInTheDocument()
+    expect(table.getAllByPlaceholderText(/search/i)).toHaveLength(2)
+    expect(table.getAllByTestId(/st-rows-/)).toHaveLength(9)
+    expect(table.getAllByTestId(/checkbox-/)).toHaveLength(9)
+    expect(table.getAllByTestId(/checkbox-/, { checked: false })).toHaveLength(9)
 
-    expect(screen.getAllByTestId(/rows-serviceTypes\.[0-9]*/)).toHaveLength(mockServTypes.length)
-    expect(screen.getByText(/Name of service/)).toBeVisible()
-    expect(screen.getByText(/Description of service/)).toBeVisible()
-    expect(screen.getByText(/Delete selected/)).toBeDisabled()
-    expect(screen.getByText(/Save/)).toBeDisabled()
+    expect(screen.getByRole("button", { name: /delete/i })).toBeDisabled()
+    expect(screen.getByRole("button", { name: /save/i })).toBeDisabled()
+    expect(screen.getByRole("button", { name: /add/i })).toBeEnabled()
 
     const tbody = screen.getAllByRole('rowgroup')[1]
     const tableRows = within(tbody).getAllByRole('row')
@@ -491,13 +498,21 @@ describe('Test service types list - Bulk change and delete', () => {
       expect(screen.getByRole('heading', { name: /service/i })).toBeInTheDocument()
     })
 
-    expect(screen.getAllByPlaceholderText(/search/i)).toHaveLength(2)
+    const table = within(screen.getByRole("table"))
+    expect(table.getAllByRole("columnheader")).toHaveLength(5)
+    expect(table.getByRole("columnheader", { name: "#" })).toBeInTheDocument()
+    expect(table.getByRole("columnheader", { name: "Service name" })).toBeInTheDocument()
+    expect(table.getByRole("columnheader", { name: "Service description" })).toBeInTheDocument()
+    expect(table.getByRole("columnheader", { name: "Source" })).toBeInTheDocument()
+    expect(table.getByRole("columnheader", { name: "Checked" })).toBeInTheDocument()
+    expect(table.getAllByPlaceholderText(/search/i)).toHaveLength(2)
+    expect(table.getAllByTestId(/st-rows-/)).toHaveLength(9)
+    expect(table.getAllByTestId(/checkbox-/)).toHaveLength(9)
+    expect(table.getAllByTestId(/checkbox-/, { checked: false })).toHaveLength(9)
 
-    expect(screen.getAllByTestId(/rows-serviceTypes\.[0-9]*/)).toHaveLength(mockServTypes.length)
-    expect(screen.getByText(/Name of service/)).toBeVisible()
-    expect(screen.getByText(/Description of service/)).toBeVisible()
-    expect(screen.getByText(/Delete selected/)).toBeDisabled()
-    expect(screen.getByText(/Save/)).toBeDisabled()
+    expect(screen.getByRole("button", { name: /delete/i })).toBeDisabled()
+    expect(screen.getByRole("button", { name: /save/i })).toBeDisabled()
+    expect(screen.getByRole("button", { name: /add/i })).toBeEnabled()
 
     const tbody = screen.getAllByRole('rowgroup')[1]
     const tableRows = within(tbody).getAllByRole('row')
@@ -525,27 +540,35 @@ describe('Test service types list - Bulk change and delete', () => {
   test('Test bulk delete', async () => {
     renderListView();
 
-    expect(screen.getByRole('heading', {'level': 4})).toHaveTextContent(/loading data/i)
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Service types');
+      expect(screen.getByRole('heading', { name: /service/i })).toBeInTheDocument()
     })
 
-    const firstCheckbox = screen.getAllByRole('checkbox', {checked: false})[0]
-    const secondCheckbox = screen.getAllByRole('checkbox', {checked: false})[1]
+    expect(screen.getByTestId("checkbox-0")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-1")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-2")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-3")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-4")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-5")).toBeDisabled()
+    const firstCheckbox = screen.getByTestId("checkbox-6")
+    const secondCheckbox = screen.getByTestId("checkbox-7")
+    expect(firstCheckbox).toBeEnabled()
+    expect(secondCheckbox).toBeEnabled()
+    expect(screen.getByTestId("checkbox-8")).toBeEnabled()
     fireEvent.click(firstCheckbox)
     fireEvent.click(secondCheckbox)
-    expect(firstCheckbox.checked).toBe(true)
-    expect(secondCheckbox.checked).toBe(true)
-    expect(screen.getByText(/Delete selected/)).toBeEnabled()
 
-    fireEvent.click(screen.getByText(/Delete selected/));
+    expect(screen.getByRole("button", { name: /delete/i })).toBeEnabled()
+    expect(screen.getByRole("button", { name: /save/i })).toBeDisabled()
+    expect(screen.getByRole("button", { name: /add/i })).toBeEnabled()
+
+    fireEvent.click(screen.getByRole("button", { name: /delete/i }))
+
     await waitFor(() => {
-      expect(screen.getByText('Are you sure you want to delete 2 Service types?')).toBeInTheDocument()
-      const yesButton = screen.getByText(/Yes/)
-      fireEvent.click(yesButton);
+      expect(screen.getByText('Are you sure you want to delete 2 service types?')).toBeInTheDocument()
     })
-    expect(screen.getAllByTestId(/rows-serviceTypes\.[1-9]*/)).toHaveLength(mockServTypes.length - 2)
+    fireEvent.click(screen.getByText(/yes/i))
+
     const tbodyFiltered = screen.getAllByRole('rowgroup')[1]
     const tableRowsFiltered = within(tbodyFiltered).getAllByRole('row')
     expect(tableRowsFiltered[1]).toHaveTextContent('1argo.apiARGO API service for retrieving status and A/R results.topology')
@@ -561,36 +584,137 @@ describe('Test service types list - Bulk change and delete', () => {
         [
           {
             "description": "ARGO API service for retrieving status and A/R results.",
+            "title": "ARGO API service",
             "name": "argo.api",
             "tags": ["topology"]
           },
           {
             "description": "ARGO Compute Engine computes availability and reliability of services.",
+            "title": "ARGO Compute Engine",
             "name": "argo.computeengine",
             "tags": ["topology"]
           },
           {
             "description": "ARGO Consumer collects monitoring metrics from monitoring engines.",
+            "title": "ARGO Consumer",
             "name": "argo.consumer",
             "tags": ["topology"]
           },
           {
             "description": "ARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.",
+            "title": "ARGO Monitoring Engine",
             "name": "argo.mon",
             "tags": ["topology"]
           },
           {
             "description": "POEM is system for managing profiles of probes and metrics in ARGO system.",
+            "title": "POEM",
             "name": "argo.poem",
             "tags": ["topology"]
           },
           {
             "description": "ARGO web user interface for metric A/R visualization and recalculation management.",
+            "title": "ARGO web user interface",
             "name": "argo.webui",
             "tags": ["topology"]
           },
           {
             "description": "3rd service type created from POEM UI and POSTed on WEB-API.",
+            "title": "POEM extra 3",
+            "name": "poem.added.three",
+            "tags": ["poem"]
+          }
+        ]
+      )
+    })
+  })
+
+  test('Test bulk delete when showing titles', async () => {
+    renderListView(true);
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /service/i })).toBeInTheDocument()
+    })
+
+    expect(screen.getByTestId("checkbox-0")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-1")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-2")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-3")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-4")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-5")).toBeDisabled()
+    const firstCheckbox = screen.getByTestId("checkbox-6")
+    const secondCheckbox = screen.getByTestId("checkbox-7")
+    expect(firstCheckbox).toBeEnabled()
+    expect(secondCheckbox).toBeEnabled()
+    expect(screen.getByTestId("checkbox-8")).toBeEnabled()
+    fireEvent.click(firstCheckbox)
+    fireEvent.click(secondCheckbox)
+    expect(firstCheckbox.checked).toBe(true)
+    expect(secondCheckbox.checked).toBe(true)
+
+    expect(screen.getByRole("button", { name: /delete/i })).toBeEnabled()
+    expect(screen.getByRole("button", { name: /save/i })).toBeDisabled()
+    expect(screen.getByRole("button", { name: /add/i })).toBeEnabled()
+
+    fireEvent.click(screen.getByRole("button", { name: /delete/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText('Are you sure you want to delete 2 service types?')).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByText(/yes/i))
+
+    const tbodyFiltered = screen.getAllByRole('rowgroup')[1]
+    const tableRowsFiltered = within(tbodyFiltered).getAllByRole('row')
+    expect(tableRowsFiltered[1]).toHaveTextContent('1argo.apiARGO API serviceARGO API service for retrieving status and A/R results.topology')
+    expect(tableRowsFiltered[2]).toHaveTextContent('2argo.computeengineARGO Compute EngineARGO Compute Engine computes availability and reliability of services.topology')
+    expect(tableRowsFiltered[3]).toHaveTextContent('3argo.consumerARGO ConsumerARGO Consumer collects monitoring metrics from monitoring engines.topology')
+    expect(tableRowsFiltered[4]).toHaveTextContent('4argo.monARGO Monitoring EngineARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.topology')
+    expect(tableRowsFiltered[5]).toHaveTextContent('5argo.poemPOEMPOEM is system for managing profiles of probes and metrics in ARGO system.topology')
+    expect(tableRowsFiltered[6]).toHaveTextContent('6argo.webuiARGO web user interfaceARGO web user interface for metric A/R visualization and recalculation management.topology')
+    expect(tableRowsFiltered[7]).toHaveTextContent('7poem.added.threePOEM extra 33rd service type created from POEM UI and POSTed on WEB-API.poem')
+
+    await waitFor(() => {
+      expect(mockAddServiceTypes).toHaveBeenCalledWith(
+        [
+          {
+            "description": "ARGO API service for retrieving status and A/R results.",
+            "title": "ARGO API service",
+            "name": "argo.api",
+            "tags": ["topology"]
+          },
+          {
+            "description": "ARGO Compute Engine computes availability and reliability of services.",
+            "title": "ARGO Compute Engine",
+            "name": "argo.computeengine",
+            "tags": ["topology"]
+          },
+          {
+            "description": "ARGO Consumer collects monitoring metrics from monitoring engines.",
+            "title": "ARGO Consumer",
+            "name": "argo.consumer",
+            "tags": ["topology"]
+          },
+          {
+            "description": "ARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.",
+            "title": "ARGO Monitoring Engine",
+            "name": "argo.mon",
+            "tags": ["topology"]
+          },
+          {
+            "description": "POEM is system for managing profiles of probes and metrics in ARGO system.",
+            "title": "POEM",
+            "name": "argo.poem",
+            "tags": ["topology"]
+          },
+          {
+            "description": "ARGO web user interface for metric A/R visualization and recalculation management.",
+            "title": "ARGO web user interface",
+            "name": "argo.webui",
+            "tags": ["topology"]
+          },
+          {
+            "description": "3rd service type created from POEM UI and POSTed on WEB-API.",
+            "title": "POEM extra 3",
             "name": "poem.added.three",
             "tags": ["poem"]
           }
@@ -600,98 +724,92 @@ describe('Test service types list - Bulk change and delete', () => {
   })
 
   test('Test change description', async () => {
-    //const user = userEvent.setup()
     renderListView();
 
-    expect(screen.getByRole('heading', {'level': 4})).toHaveTextContent(/loading data/i)
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Service types');
+      expect(screen.getByRole('heading', { name: /service/i })).toBeInTheDocument()
     })
 
-    const tbody = screen.getAllByRole('rowgroup')[1]
-    const tableRows = within(tbody).getAllByRole('row')
-    expect(tableRows[1]).toHaveTextContent('1argo.apiARGO API service for retrieving status and A/R results.topology')
-    expect(tableRows[2]).toHaveTextContent('2argo.computeengineARGO Compute Engine computes availability and reliability of services.topology')
+    expect(screen.getByTestId("description-0")).toBeDisabled()
+    expect(screen.getByTestId("description-1")).toBeDisabled()
+    expect(screen.getByTestId("description-2")).toBeDisabled()
+    expect(screen.getByTestId("description-3")).toBeDisabled()
+    expect(screen.getByTestId("description-4")).toBeDisabled()
+    expect(screen.getByTestId("description-5")).toBeDisabled()
+    expect(screen.getByTestId("description-6")).toBeEnabled()
+    expect(screen.getByTestId("description-7")).toBeEnabled()
+    expect(screen.getByTestId("description-8")).toBeEnabled()
 
-    const inputFirstDesc = screen.getByText('ARGO API service for retrieving status and A/R results.')
-    const inputSecondDesc = screen.getByText('ARGO Compute Engine computes availability and reliability of services.')
-    expect(inputFirstDesc).toBeDisabled()
-    expect(inputSecondDesc).toBeDisabled()
-
-    // fireEvent does not trigger onChange on react-hook-form Controller fields so using userEvent
-    //fireEvent.change(inputFirstDesc, {target: {value: 'CHANGED DESCRIPTION'}})
-    //fireEvent.change(inputSecondDesc, {target: {value: 'CHANGED DESCRIPTION 2'}})
-
-    const inputSeventhDesc = within(tableRows[7]).getAllByRole('textbox')[0]
-    const inputEightDesc = within(tableRows[8]).getAllByRole('textbox')[0]
-    expect(inputSeventhDesc).toBeEnabled()
-    expect(inputEightDesc).toBeEnabled()
-
-    await userEvent.clear(inputSeventhDesc)
-    await userEvent.type(inputSeventhDesc, 'CHANGED DESCRIPTION')
-    await expect(inputSeventhDesc).toHaveTextContent('CHANGED DESCRIPTION')
-
-    await userEvent.clear(inputEightDesc)
-    await userEvent.type(inputEightDesc, 'CHANGED DESCRIPTION 2')
-    await expect(inputEightDesc).toHaveTextContent('CHANGED DESCRIPTION 2')
+    fireEvent.change(screen.getByTestId("description-6"), { target: { value: "CHANGED DESCRIPTION" } })
+    fireEvent.change(screen.getByTestId("description-7"), { target: { value: "CHANGED DESCRIPTION 2" } })
 
     await waitFor(() => {
-      expect(screen.getByText('Save')).toBeEnabled()
+      expect(screen.getByRole("button", { name: /save/i })).toBeEnabled()
     })
 
-    fireEvent.click(screen.getByText(/Save/));
+    expect(screen.getByRole("button", { name: /delete/i })).toBeDisabled()
+    expect(screen.getByRole("button", { name: /add/i })).toBeEnabled()
+
+    fireEvent.click(screen.getByRole("button", { name: /save/i }))
     await waitFor(() => {
-      expect(screen.getByText('Are you sure you want to change Service type?')).toBeInTheDocument()
-      const yesButton = screen.getByText(/Yes/)
-      fireEvent.click(yesButton);
+      expect(screen.getByText('Are you sure you want to change service type?')).toBeInTheDocument()
     })
+    fireEvent.click(screen.getByText(/yes/i))
 
     await waitFor(() => {
       expect(mockAddServiceTypes).toHaveBeenCalledWith(
         [
           {
             "description": "ARGO API service for retrieving status and A/R results.",
+            "title": "ARGO API service",
             "name": "argo.api",
             "tags": ["topology"]
           },
           {
             "description": "ARGO Compute Engine computes availability and reliability of services.",
+            "title": "ARGO Compute Engine",
             "name": "argo.computeengine",
             "tags": ["topology"]
           },
           {
             "description": "ARGO Consumer collects monitoring metrics from monitoring engines.",
+            "title": "ARGO Consumer",
             "name": "argo.consumer",
             "tags": ["topology"]
           },
           {
             "description": "ARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.",
+            "title": "ARGO Monitoring Engine",
             "name": "argo.mon",
             "tags": ["topology"]
           },
           {
             "description": "POEM is system for managing profiles of probes and metrics in ARGO system.",
+            "title": "POEM",
             "name": "argo.poem",
             "tags": ["topology"]
           },
           {
             "description": "ARGO web user interface for metric A/R visualization and recalculation management.",
+            "title": "ARGO web user interface",
             "name": "argo.webui",
             "tags": ["topology"]
           },
           {
             "description": "CHANGED DESCRIPTION",
+            "title": "POEM another",
             "name": "poem.added.one",
             "tags": ["poem"]
           },
           {
             "description": "CHANGED DESCRIPTION 2",
+            "title": "POEM extra 2",
             "name": "poem.added.two",
             "tags": ["poem"]
           },
           {
             "description": "3rd service type created from POEM UI and POSTed on WEB-API.",
+            "title": "POEM extra 3",
             "name": "poem.added.three",
             "tags": ["poem"]
           },
@@ -699,6 +817,102 @@ describe('Test service types list - Bulk change and delete', () => {
       )
     })
   })
+
+  test('Test change description when showing titles', async () => {
+    renderListView(true);
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /service/i })).toBeInTheDocument()
+    })
+
+    expect(screen.getByTestId("description-0")).toBeDisabled()
+    expect(screen.getByTestId("description-1")).toBeDisabled()
+    expect(screen.getByTestId("description-2")).toBeDisabled()
+    expect(screen.getByTestId("description-3")).toBeDisabled()
+    expect(screen.getByTestId("description-4")).toBeDisabled()
+    expect(screen.getByTestId("description-5")).toBeDisabled()
+    expect(screen.getByTestId("description-6")).toBeEnabled()
+    expect(screen.getByTestId("description-7")).toBeEnabled()
+    expect(screen.getByTestId("description-8")).toBeEnabled()
+
+    fireEvent.change(screen.getByTestId("description-6"), { target: { value: "CHANGED DESCRIPTION" } })
+    fireEvent.change(screen.getByTestId("description-7"), { target: { value: "CHANGED DESCRIPTION 2" } })
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /save/i })).toBeEnabled()
+    })
+
+    expect(screen.getByRole("button", { name: /delete/i })).toBeDisabled()
+    expect(screen.getByRole("button", { name: /add/i })).toBeEnabled()
+
+    fireEvent.click(screen.getByRole("button", { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByText('Are you sure you want to change service type?')).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByText(/yes/i))
+
+    await waitFor(() => {
+      expect(mockAddServiceTypes).toHaveBeenCalledWith(
+        [
+          {
+            "description": "ARGO API service for retrieving status and A/R results.",
+            "title": "ARGO API service",
+            "name": "argo.api",
+            "tags": ["topology"]
+          },
+          {
+            "description": "ARGO Compute Engine computes availability and reliability of services.",
+            "title": "ARGO Compute Engine",
+            "name": "argo.computeengine",
+            "tags": ["topology"]
+          },
+          {
+            "description": "ARGO Consumer collects monitoring metrics from monitoring engines.",
+            "title": "ARGO Consumer",
+            "name": "argo.consumer",
+            "tags": ["topology"]
+          },
+          {
+            "description": "ARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.",
+            "title": "ARGO Monitoring Engine",
+            "name": "argo.mon",
+            "tags": ["topology"]
+          },
+          {
+            "description": "POEM is system for managing profiles of probes and metrics in ARGO system.",
+            "title": "POEM",
+            "name": "argo.poem",
+            "tags": ["topology"]
+          },
+          {
+            "description": "ARGO web user interface for metric A/R visualization and recalculation management.",
+            "title": "ARGO web user interface",
+            "name": "argo.webui",
+            "tags": ["topology"]
+          },
+          {
+            "description": "CHANGED DESCRIPTION",
+            "title": "POEM another",
+            "name": "poem.added.one",
+            "tags": ["poem"]
+          },
+          {
+            "description": "CHANGED DESCRIPTION 2",
+            "title": "POEM extra 2",
+            "name": "poem.added.two",
+            "tags": ["poem"]
+          },
+          {
+            "description": "3rd service type created from POEM UI and POSTed on WEB-API.",
+            "title": "POEM extra 3",
+            "name": "poem.added.three",
+            "tags": ["poem"]
+          },
+        ]
+      )
+    })
+  })
+
 })
 
 

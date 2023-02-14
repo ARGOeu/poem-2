@@ -564,10 +564,10 @@ export const ServiceTypesBulkAdd = (props) => {
 const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
   const showtitles = props.showtitles
 
-  const dataWithChecked = data.map(e => {
+  const updatedData = data.map( e => {
     return {
       ...e,
-      checked: false
+      isChecked: false
     }
   })
 
@@ -586,11 +586,11 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
     setAreYouSureModal(!areYouSureModal)
   }
 
-  const { control, setValue, getValues, handleSubmit } = useForm({
+  const { control, setValue, getValues, handleSubmit, formState: { isDirty } } = useForm({
     defaultValues: {
-      serviceTypes: dataWithChecked,
+      serviceTypes: updatedData,
       searchService: '',
-      searchDesc: '',
+      searchDesc: ''
     }
   })
 
@@ -599,22 +599,19 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
     data.forEach(entry => tmpArray.push(entry.name.length))
     return Math.max(...tmpArray)
   }
+
   let columnNameWidth = longestName(data) * 8 + 10
   columnNameWidth = Math.max(220, columnNameWidth)
   columnNameWidth = Math.min(360, columnNameWidth)
 
   const searchService = useWatch({control, name: "searchService"})
   const searchDesc = useWatch({control, name: "searchDesc"})
+  const serviceTypes = useWatch({ control, name: "serviceTypes" })
 
-  const { fields, update, replace } = useFieldArray({
+  const { fields } = useFieldArray({
     control,
     name: "serviceTypes"
   })
-
-  function initChangedDesc() {
-    return _.fromPairs(fields.map((e) => [e.id, false]))
-  }
-  const [lookupChanged, setLookupChanged] = React.useState(initChangedDesc())
 
   function postServiceTypesWebApi(data, action, title) {
     webapiAddMutation.mutate(data, {
@@ -637,78 +634,50 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
   }
 
   function doSave() {
-    let values = getValues('serviceTypes')
-    replace(values)
-    postServiceTypesWebApi([...values.map(
-      e => Object(
-        {
-          'name': e.name, 'description': e.description, 'tags': e.tags
-        }
-      ))],
+    postServiceTypesWebApi([...serviceTypes.map(
+      e => Object({
+          name: e.name, title: e.title, description: e.description, tags: e.tags
+        })
+      )],
       'changed', 'Change')
-    setLookupChanged(initChangedDesc())
   }
 
   function onSave() {
-    setModalMsg(`Are you sure you want to change Service type?`)
+    setModalMsg(`Are you sure you want to change service type?`)
     setModalTitle('Change service type')
     setModalFunc(() => doSave)
     setAreYouSureModal(!areYouSureModal);
   }
 
-  function onChange(event, entryid) {
-    let value = event.target.checked ? true : false
-    let values = getValues('serviceTypes')
-    let index = fields.findIndex(field => field.id === entryid)
-    setValue(`serviceTypes.${index}.checked`, value)
-    update(index, {
-      name: values[index].name,
-      description: values[index].description,
-      checked: value
-    })
-  }
-
   function doDelete() {
-    let cleaned = fields.filter(e => !e.checked)
+    let cleaned = getValues("serviceTypes").filter(e => !e.isChecked)
     setValue("serviceTypes", cleaned)
     postServiceTypesWebApi([...cleaned.map(
-      e => Object(
-        {
-          'name': e.name, 'description': e.description, 'tags': e.tags
-        }
-      ))],
+      e => Object({
+          name: e.name, title: e.title, description: e.description, tags: e.tags
+        })
+      )],
       'deleted', 'Delete')
   }
 
   function onDelete() {
-    let cleaned = fields.filter(e => !e.checked)
+    let cleaned = getValues("serviceTypes").filter(e => !e.isChecked)
 
-    setModalMsg(`Are you sure you want to delete ${fields.length - cleaned.length} Service types?`)
+    setModalMsg(`Are you sure you want to delete ${fields.length - cleaned.length} service types?`)
     setModalTitle('Delete service types')
     setModalFunc(() => doDelete)
     setAreYouSureModal(!areYouSureModal);
   }
 
-  function onDescriptionChange (entryid, isChanged) {
-    let tmp = JSON.parse(JSON.stringify(lookupChanged))
-    if (tmp[entryid] !== isChanged) {
-      tmp[entryid] = isChanged
-      setLookupChanged(tmp)
-    }
-  }
-
-  let lookupIndexes = _.fromPairs(fields.map((e, index) => [e.id, index]))
+  let lookupIndices = _.fromPairs(fields.map((e, index) => [e.id, index]))
 
   let fieldsView = fields
   let paginationHelp = new TablePaginationHelper(fieldsView.length, pageSize, pageIndex)
 
-  if (searchService && searchDesc) {
-    fieldsView = fields.filter(e => e.name.toLowerCase().includes(searchService.toLowerCase()))
-    fieldsView = fieldsView.filter(e => e.description.toLowerCase().includes(searchDesc.toLowerCase()))
-  }
-  else if (searchDesc)
+  if (searchDesc)
     fieldsView = fields.filter(e => e.description.toLowerCase().includes(searchDesc.toLowerCase()))
-  else if (searchService)
+
+  if (searchService)
     fieldsView = fields.filter(e => e.name.toLowerCase().includes(searchService.toLowerCase()))
 
   paginationHelp.searchNum = fieldsView.length
@@ -730,15 +699,15 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
         <span>
           <Button
             color="danger"
-            disabled={![...fields.map(e => e.checked)].includes(true)}
+            disabled={![...serviceTypes.map(e => e.isChecked)].includes(true)}
             onClick={() => onDelete()}
             className="me-3">
             Delete selected
           </Button>
           <Button
             color="success"
-            disabled={!_.valuesIn(lookupChanged).includes(true)}
-            onClick={() => onSave()}
+            disabled={ !isDirty }
+            onClick={ () => onSave() }
             className="me-3">
             Save
           </Button>
@@ -756,13 +725,16 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
                       #
                     </th>
                     <th>
-                      Name of service
+                      Service name
                     </th>
                     <th>
-                      Description of service
+                      Service description
                     </th>
                     <th style={{'width': '60px'}}>
                       Source
+                    </th>
+                    <th style={{ width: "60px" }}>
+                      Checked
                     </th>
                   </tr>
                 </thead>
@@ -799,12 +771,13 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
                     </td>
                     <td className="align-middle text-center">
                     </td>
+                    <td></td>
                   </tr>
                   {
                     fieldsView.map((entry, index) =>
-                      <tr key={entry.id} data-testid={`rows-serviceTypes.${index}`}>
+                      <tr key={entry.id} data-testid={`st-rows-${index}`}>
                         <td className="align-middle text-center">
-                          { lookupIndexes[entry.id] + 1 }
+                          { index + 1 }
                         </td>
                         <td className="align-middle text-left fw-bold">
                           {
@@ -819,76 +792,39 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
                         </td>
                         <td>
                           <Controller
-                            name={`serviceTypes.${lookupIndexes[entry.id]}.description`}
+                            name={`serviceTypes.${lookupIndices[entry.id]}.description`}
                             control={control}
-                            render={ ({field}) => {
-                              let formval = getValues('serviceTypes')[lookupIndexes[entry.id]].description
-                              let initval = fields[lookupIndexes[entry.id]].description
-                              let isChanged = formval !== initval
-                              let isDisabled = undefined
-                              if (entry.tags && entry.tags.indexOf('topology') !== -1)
-                                isDisabled = true
-                              else
-                                isDisabled = false
-
-                              return (
-                                <textarea
-                                  {...field}
-                                  onChange={(e) => {onDescriptionChange(entry.id, isChanged) ; field.onChange(e)}}
-                                  onBlur={(e) => {onDescriptionChange(entry.id, isChanged); field.onBlur(e)}}
-                                  disabled={isDisabled}
-                                  rows="2"
-                                  className={`${isChanged ? 'border border-danger form-control' : 'form-control'}`}
-                                />
-                              )
-                            }}
+                            render={ ({field}) =>
+                              <textarea
+                                {...field}
+                                data-testid={ `description-${index}` }
+                                disabled={ entry.tags?.indexOf("topology") !== -1 }
+                                rows="2"
+                                className={ `form-control ${serviceTypes[lookupIndices[entry.id]].description !== updatedData[lookupIndices[entry.id]].description && 'border border-danger'}` }
+                              />
+                            }
                           />
                         </td>
                         <td className="text-center align-middle">
+                          <Badge color={`${entry.tags?.indexOf("topology") !== -1 ? "secondary" : "success"}`}>
+                            { entry.tags[0] }
+                          </Badge>
+                        </td>
+                        <td className="text-center align-middle">
                           <Controller
-                            name={`serviceTypes.${lookupIndexes[entry.id]}.checked`}
+                            name={`serviceTypes.${lookupIndices[entry.id]}.isChecked`}
                             control={control}
-                            render={ ({field}) => {
-                              // with checked=true,false ServiceTypes.test.js fails
-                              let isDisabled = undefined
-                              if (entry.tags && entry.tags.indexOf('topology') !== -1)
-                                isDisabled = true
-                              else
-                                isDisabled = false
-
-                              return(
-                                isDisabled ?
-                                  <Badge color="secondary">
-                                    topology
-                                  </Badge>
-                                :
-                                  entry.checked ?
-                                    <div className="d-flex flex-column align-self-center align-items-center">
-                                      <Badge color="success">
-                                        poem
-                                      </Badge>
-                                      <Input {...field}
-                                        type="checkbox"
-                                        className="mt-2 fw-bold"
-                                        disabled={isDisabled}
-                                        checked={entry.checked}
-                                        onChange={(e) => onChange(e, entry.id)}
-                                      />
-                                    </div>
-                                  :
-                                    <div className="d-flex flex-column align-self-center align-items-center">
-                                      <Badge color="success">
-                                        poem
-                                      </Badge>
-                                      <Input {...field}
-                                        type="checkbox"
-                                        disabled={isDisabled}
-                                        className="mt-2 fw-bold"
-                                        onChange={(e) => onChange(e, entry.id)}
-                                      />
-                                    </div>
-                              )
-                            }}
+                            render={ ({field}) =>
+                              <Input
+                                { ...field }
+                                type="checkbox"
+                                data-testid={`checkbox-${index}`}
+                                className="mt-2"
+                                disabled={ entry.tags?.indexOf("topology") !== -1 }
+                                onChange={ e => setValue(`serviceTypes.${lookupIndices[entry.id]}.isChecked`, e.target.checked)}
+                                checked={ field.checked }
+                              />
+                            }
                           />
                         </td>
                       </tr>
