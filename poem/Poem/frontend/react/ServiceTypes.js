@@ -284,7 +284,7 @@ const ServiceTypesListAdded = ({ data, ...props }) => {
                 #
               </th>
               <th>
-                Service name
+                { `Service name${showtitles ? " and title" : ""}` }
               </th>
               <th>
                 Service description
@@ -725,7 +725,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
                       #
                     </th>
                     <th>
-                      Service name
+                      { `Service name${showtitles ? " and title" : ""}` }
                     </th>
                     <th>
                       Service description
@@ -913,7 +913,7 @@ export const ServiceTypesList = (props) => {
       column_width: '2%'
     },
     {
-      Header: <div><Icon i="servicetypes"/>Service type</div>,
+      Header: <div><Icon i="servicetypes"/>{ `Service name${showtitles ? " and title" : ""}` }</div>,
       accessor: "name",
       column_width: "25%",
       Cell: (row) => {

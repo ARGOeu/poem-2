@@ -223,7 +223,7 @@ describe('Test service types list - Read Only', () => {
 
     expect(screen.getAllByRole('columnheader')).toHaveLength(8);
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: 'Service type' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Service name' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Description' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Source' })).toBeInTheDocument();
 
@@ -231,7 +231,7 @@ describe('Test service types list - Read Only', () => {
     expect(rows).toHaveLength(17);
     expect(screen.getAllByPlaceholderText(/search/i)).toHaveLength(2);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(7);
-    expect(rows[0].textContent).toBe('#Service typeDescriptionSource');
+    expect(rows[0].textContent).toBe('#Service nameDescriptionSource');
     // row 1 is the one with search fields
     expect(rows[2].textContent).toBe('1argo.apiARGO API service for retrieving status and A/R results.topology')
     expect(rows[3].textContent).toBe('2argo.computeengineARGO Compute Engine computes availability and reliability of services.topology');
@@ -277,7 +277,7 @@ describe('Test service types list - Read Only', () => {
 
     expect(screen.getAllByRole("columnheader")).toHaveLength(8)
     expect(screen.getByRole("columnheader", { name: "#" })).toBeInTheDocument()
-    expect(screen.getByRole("columnheader", { name: "Service type" })).toBeInTheDocument()
+    expect(screen.getByRole("columnheader", { name: "Service name and title" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: "Description" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: "Source" })).toBeInTheDocument()
 
@@ -286,7 +286,7 @@ describe('Test service types list - Read Only', () => {
     expect(screen.getAllByPlaceholderText(/search/i)).toHaveLength(2)
     expect(screen.getAllByRole("row", { name: "" })).toHaveLength(7)
 
-    expect(rows[0].textContent).toBe("#Service typeDescriptionSource")
+    expect(rows[0].textContent).toBe("#Service name and titleDescriptionSource")
     expect(rows[2].textContent).toBe('1argo.apiARGO API serviceARGO API service for retrieving status and A/R results.topology')
     expect(rows[3].textContent).toBe('2argo.computeengineARGO Compute EngineARGO Compute Engine computes availability and reliability of services.topology');
     expect(rows[4].textContent).toBe('3argo.consumerARGO ConsumerARGO Consumer collects monitoring metrics from monitoring engines.topology')
@@ -333,7 +333,7 @@ describe('Test service types list - Read Only', () => {
 
     expect(screen.getAllByRole('columnheader')).toHaveLength(8);
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
-    expect(screen.getByRole('columnheader', { name: 'Service type' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Service name' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Description' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Source' })).toBeInTheDocument();
 
@@ -341,7 +341,7 @@ describe('Test service types list - Read Only', () => {
     expect(rows).toHaveLength(17);
     expect(screen.getAllByPlaceholderText(/search/i)).toHaveLength(2);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(7);
-    expect(rows[0].textContent).toBe('#Service typeDescriptionSource');
+    expect(rows[0].textContent).toBe('#Service nameDescriptionSource');
     // row 1 is the one with search fields
     expect(rows[2].textContent).toBe('1argo.apiARGO API service for retrieving status and A/R results.topology')
     expect(rows[3].textContent).toBe('2argo.computeengineARGO Compute Engine computes availability and reliability of services.topology');
@@ -387,7 +387,7 @@ describe('Test service types list - Read Only', () => {
 
     expect(screen.getAllByRole("columnheader")).toHaveLength(8)
     expect(screen.getByRole("columnheader", { name: "#" })).toBeInTheDocument()
-    expect(screen.getByRole("columnheader", { name: "Service type" })).toBeInTheDocument()
+    expect(screen.getByRole("columnheader", { name: "Service name and title" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: "Description" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: "Source" })).toBeInTheDocument()
 
@@ -396,7 +396,7 @@ describe('Test service types list - Read Only', () => {
     expect(screen.getAllByPlaceholderText(/search/i)).toHaveLength(2)
     expect(screen.getAllByRole("row", { name: "" })).toHaveLength(7)
 
-    expect(rows[0].textContent).toBe("#Service typeDescriptionSource")
+    expect(rows[0].textContent).toBe("#Service name and titleDescriptionSource")
     expect(rows[2].textContent).toBe('1argo.apiARGO API serviceARGO API service for retrieving status and A/R results.topology')
     expect(rows[3].textContent).toBe('2argo.computeengineARGO Compute EngineARGO Compute Engine computes availability and reliability of services.topology');
     expect(rows[4].textContent).toBe('3argo.consumerARGO ConsumerARGO Consumer collects monitoring metrics from monitoring engines.topology')
@@ -501,7 +501,7 @@ describe('Test service types list - Bulk change and delete', () => {
     const table = within(screen.getByRole("table"))
     expect(table.getAllByRole("columnheader")).toHaveLength(5)
     expect(table.getByRole("columnheader", { name: "#" })).toBeInTheDocument()
-    expect(table.getByRole("columnheader", { name: "Service name" })).toBeInTheDocument()
+    expect(table.getByRole("columnheader", { name: "Service name and title" })).toBeInTheDocument()
     expect(table.getByRole("columnheader", { name: "Service description" })).toBeInTheDocument()
     expect(table.getByRole("columnheader", { name: "Source" })).toBeInTheDocument()
     expect(table.getByRole("columnheader", { name: "Checked" })).toBeInTheDocument()
@@ -912,7 +912,6 @@ describe('Test service types list - Bulk change and delete', () => {
       )
     })
   })
-
 })
 
 
@@ -966,7 +965,7 @@ describe('Test service types list - Bulk add', () => {
 
     const thead = screen.getAllByRole('rowgroup')[0]
     let tableRows = within(thead).getAllByRole('row')
-    expect(tableRows[0]).toHaveTextContent('#Service nameService descriptionAction')
+    expect(tableRows[0]).toHaveTextContent('#Service name and titleService descriptionAction')
 
     const tbody = screen.getAllByRole('rowgroup')[1]
     tableRows = within(tbody).getAllByRole('row')
