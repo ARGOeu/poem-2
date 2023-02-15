@@ -1,1 +1,112 @@
-{"status":"done","chunks":{"main":[{"name":"main-659bdc9988bbe78ad44a.js","path":"/home/dvrcic/my_work/srce/git.poem-react/poem-react/poem/Poem/frontend/bundles/reactbundle/main-659bdc9988bbe78ad44a.js"}],"runtime":[{"name":"runtime-659bdc9988bbe78ad44a.js","path":"/home/dvrcic/my_work/srce/git.poem-react/poem-react/poem/Poem/frontend/bundles/reactbundle/runtime-659bdc9988bbe78ad44a.js"}],"vendors":[{"name":"vendors-659bdc9988bbe78ad44a.js","path":"/home/dvrcic/my_work/srce/git.poem-react/poem-react/poem/Poem/frontend/bundles/reactbundle/vendors-659bdc9988bbe78ad44a.js"}]}}
+{
+  "status": "done",
+  "assets": {
+    "main.js": {
+      "name": "main.js",
+      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.js",
+      "publicPath": "http://localhost:3000/main.js"
+    },
+    "9f1772748c39cc35a994.svg": {
+      "name": "9f1772748c39cc35a994.svg",
+      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/9f1772748c39cc35a994.svg",
+      "publicPath": "http://localhost:3000/9f1772748c39cc35a994.svg"
+    },
+    "3e7613d8583ea266dfeb.svg": {
+      "name": "3e7613d8583ea266dfeb.svg",
+      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/3e7613d8583ea266dfeb.svg",
+      "publicPath": "http://localhost:3000/3e7613d8583ea266dfeb.svg"
+    },
+    "dd46c5e52c76e4542afe.png": {
+      "name": "dd46c5e52c76e4542afe.png",
+      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/dd46c5e52c76e4542afe.png",
+      "publicPath": "http://localhost:3000/dd46c5e52c76e4542afe.png"
+    },
+    "5ae655538d1c6dfc473a.png": {
+      "name": "5ae655538d1c6dfc473a.png",
+      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/5ae655538d1c6dfc473a.png",
+      "publicPath": "http://localhost:3000/5ae655538d1c6dfc473a.png"
+    },
+    "3657084dc0419605a91c.eot": {
+      "name": "3657084dc0419605a91c.eot",
+      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/3657084dc0419605a91c.eot",
+      "publicPath": "http://localhost:3000/3657084dc0419605a91c.eot"
+    },
+    "3657084dc0419605a91c.eot?s3g3t9": {
+      "name": "3657084dc0419605a91c.eot?s3g3t9",
+      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/3657084dc0419605a91c.eot",
+      "publicPath": "http://localhost:3000/3657084dc0419605a91c.eot?s3g3t9"
+    },
+    "5d0158671dd860c714c4.svg?s3g3t9": {
+      "name": "5d0158671dd860c714c4.svg?s3g3t9",
+      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/5d0158671dd860c714c4.svg",
+      "publicPath": "http://localhost:3000/5d0158671dd860c714c4.svg?s3g3t9"
+    },
+    "c5d9251ea82e42f75381.ttf?s3g3t9": {
+      "name": "c5d9251ea82e42f75381.ttf?s3g3t9",
+      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/c5d9251ea82e42f75381.ttf",
+      "publicPath": "http://localhost:3000/c5d9251ea82e42f75381.ttf?s3g3t9"
+    },
+    "c392cd33d9d9de730f9d.woff?s3g3t9": {
+      "name": "c392cd33d9d9de730f9d.woff?s3g3t9",
+      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/c392cd33d9d9de730f9d.woff",
+      "publicPath": "http://localhost:3000/c392cd33d9d9de730f9d.woff?s3g3t9"
+    },
+    "main.276752f2d5d1b4422783.hot-update.js": {
+      "name": "main.276752f2d5d1b4422783.hot-update.js",
+      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.276752f2d5d1b4422783.hot-update.js",
+      "publicPath": "http://localhost:3000/main.276752f2d5d1b4422783.hot-update.js"
+    },
+    "main.276752f2d5d1b4422783.hot-update.json": {
+      "name": "main.276752f2d5d1b4422783.hot-update.json",
+      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.276752f2d5d1b4422783.hot-update.json",
+      "publicPath": "http://localhost:3000/main.276752f2d5d1b4422783.hot-update.json"
+    },
+    "main.84f2f5f5a30d83dd1b45.hot-update.js": {
+      "name": "main.84f2f5f5a30d83dd1b45.hot-update.js",
+      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.84f2f5f5a30d83dd1b45.hot-update.js",
+      "publicPath": "http://localhost:3000/main.84f2f5f5a30d83dd1b45.hot-update.js"
+    },
+    "main.84f2f5f5a30d83dd1b45.hot-update.json": {
+      "name": "main.84f2f5f5a30d83dd1b45.hot-update.json",
+      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.84f2f5f5a30d83dd1b45.hot-update.json",
+      "publicPath": "http://localhost:3000/main.84f2f5f5a30d83dd1b45.hot-update.json"
+    },
+    "main.6d19c50ecbc224a916cd.hot-update.js": {
+      "name": "main.6d19c50ecbc224a916cd.hot-update.js",
+      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.6d19c50ecbc224a916cd.hot-update.js",
+      "publicPath": "http://localhost:3000/main.6d19c50ecbc224a916cd.hot-update.js"
+    },
+    "main.6d19c50ecbc224a916cd.hot-update.json": {
+      "name": "main.6d19c50ecbc224a916cd.hot-update.json",
+      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.6d19c50ecbc224a916cd.hot-update.json",
+      "publicPath": "http://localhost:3000/main.6d19c50ecbc224a916cd.hot-update.json"
+    },
+    "main.309bbb9013e3fb3fb060.hot-update.js": {
+      "name": "main.309bbb9013e3fb3fb060.hot-update.js",
+      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.309bbb9013e3fb3fb060.hot-update.js",
+      "publicPath": "http://localhost:3000/main.309bbb9013e3fb3fb060.hot-update.js"
+    },
+    "main.309bbb9013e3fb3fb060.hot-update.json": {
+      "name": "main.309bbb9013e3fb3fb060.hot-update.json",
+      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.309bbb9013e3fb3fb060.hot-update.json",
+      "publicPath": "http://localhost:3000/main.309bbb9013e3fb3fb060.hot-update.json"
+    },
+    "main.31c5d7841823585747ac.hot-update.js": {
+      "name": "main.31c5d7841823585747ac.hot-update.js",
+      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.31c5d7841823585747ac.hot-update.js",
+      "publicPath": "http://localhost:3000/main.31c5d7841823585747ac.hot-update.js"
+    },
+    "main.31c5d7841823585747ac.hot-update.json": {
+      "name": "main.31c5d7841823585747ac.hot-update.json",
+      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.31c5d7841823585747ac.hot-update.json",
+      "publicPath": "http://localhost:3000/main.31c5d7841823585747ac.hot-update.json"
+    }
+  },
+  "chunks": {
+    "main": [
+      "main.js",
+      "main.31c5d7841823585747ac.hot-update.js"
+    ]
+  },
+  "publicPath": "http://localhost:3000/"
+}

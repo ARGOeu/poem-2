@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { WebApi } from './DataManager';
 import { useQuery, useQueryClient, useMutation } from 'react-query';
@@ -44,6 +44,9 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { ErrorMessage } from '@hookform/error-message';
 import * as yup from "yup";
 import _ from "lodash";
+
+
+const BulkAddContext = React.createContext()
 
 
 class TablePaginationHelper {
@@ -176,12 +179,20 @@ class TablePaginationHelper {
 
 const validationSchema = yup.object().shape({
   name: yup.string().matches(/^[A-Za-z0-9\\.\-_]+$/g, {message: 'Name can only contain alphanumeric characters, punctuations, underscores and minuses', excludeEmptyString: false}),
-  description: yup.string().required('Description can not be empty.')
+  title: yup.string().when("$showtitles", (showtitles, schema) => {
+    if (showtitles)
+      return schema.required("Title cannot be empty.")
+
+    return
+  }),
+  description: yup.string().required('Description cannot be empty.')
 }).required();
 
 
-const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
-  serviceTypesDescriptions, ...modal}) => {
+const ServiceTypesListAdded = ({ data, ...props }) => {
+  const context = useContext(BulkAddContext)
+  const showtitles = props.showtitles
+
   const { control, setValue, getValues, reset } = useForm({
     defaultValues: {
       serviceTypes: data,
@@ -189,7 +200,16 @@ const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
   })
 
   const queryClient = useQueryClient();
-  const webapiAddMutation = useMutation(async (values) => await webapi.addServiceTypes(values));
+  const webapiAddMutation = useMutation(async (values) => await context.webapi.addServiceTypes(values));
+
+  const [areYouSureModal, setAreYouSureModal] = React.useState(false)
+  const [modalTitle, setModalTitle] = React.useState('')
+  const [modalMsg, setModalMsg] = React.useState('')
+  const [modalFunc, setModalFunc] = React.useState(undefined)
+
+  function toggleModal() {
+    setAreYouSureModal(!areYouSureModal)
+  }
 
   const { fields, remove } = useFieldArray({
     control,
@@ -199,10 +219,6 @@ const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
   useEffect(() => {
     setValue("serviceTypes", data)
   }, [data])
-
-  const {setModalMsg, setModalTitle,
-    setModalFunc, setAreYouSureModal,
-    areYouSureModal} = modal
 
   const resetFields = () => {
     reset({
@@ -231,12 +247,12 @@ const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
   }
 
   const doSave = () => {
-    let tmpArray = [...getValues('serviceTypes'), ...serviceTypesDescriptions]
+    let tmpArray = [...getValues('serviceTypes'), ...context.serviceTypesDescriptions]
     let pairs = _.orderBy(tmpArray, [service => service.name.toLowerCase()], ['asc'])
     postServiceTypesWebApi([...pairs.map(
       e => Object(
         {
-          'name': e.name, 'description': e.description, 'tags': e.tags
+          'name': e.name, 'title': e.title, 'description': e.description, 'tags': e.tags
         }
       ))],
       'added', 'Add')
@@ -244,14 +260,21 @@ const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
 
   const onSubmit = (event) => {
     event.preventDefault()
-    setModalMsg(`Are you sure you want to add ${data.length} Service types?`)
+    setModalMsg(`Are you sure you want to add ${getValues('serviceTypes').length} service types?`)
     setModalTitle('Add service types')
     setModalFunc(() => doSave)
     setAreYouSureModal(!areYouSureModal);
   }
 
-  if (userDetails?.is_superuser && serviceTypesDescriptions) {
-    return (
+  return (
+    <>
+      <ModalAreYouSure
+        isOpen={areYouSureModal}
+        toggle={toggleModal}
+        title={modalTitle}
+        msg={modalMsg}
+        onYes={modalFunc}
+      />
       <div id="argo-contentwrap" className="ms-2 mb-2 mt-2 p-3 border rounded">
         <ParagraphTitle title='Service types prepared for submission'/>
         <Table bordered responsive hover size="sm">
@@ -261,10 +284,10 @@ const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
                 #
               </th>
               <th>
-                Name of service
+                { `Service name${showtitles ? " and title" : ""}` }
               </th>
               <th>
-                Description of service
+                Service description
               </th>
               <th style={{'width': '62px'}}>
                 Action
@@ -274,7 +297,7 @@ const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
           {
             fields.length === 0 ?
               <tbody>
-                <tr key="0" data-testid="rows-add-serviceTypes.0">
+                <tr key="0" data-testid="addrow-0">
                   <td colSpan="4" className="table-light text-muted text-center p-3 fs-3">
                     Empty data
                   </td>
@@ -284,12 +307,20 @@ const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
               <tbody>
                 {
                   fields.map((entry, index) =>
-                    <tr key={entry.id} data-testid={`rows-add-serviceTypes.${index}`}>
+                    <tr key={entry.id} data-testid={`addrow-${index}`}>
                       <td className="align-middle text-center">
                         {index + 1}
                       </td>
                       <td className="align-middle text-left fw-bold">
-                        <span className="ms-2">{ entry.name }</span>
+                        {
+                          showtitles ?
+                            <div>
+                              <p className="fw-bold m-0">{ entry.name }</p>
+                              <p className="m-0 fw-normal"><small>{ entry.title }</small></p>
+                            </div>
+                          :
+                            <span className="ms-2">{ entry.name }</span>
+                        }
                       </td>
                       <td>
                         <Controller
@@ -305,16 +336,20 @@ const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
                         />
                       </td>
                       <td className="text-center align-middle">
-                        <Button size="sm" className="fw-bold" color="danger" onClick={() => {
-                          let tmp = [...fields]
-                          tmp = tmp.filter((e, i) => i !== index)
-                          setCallback(tmp)
-                          remove(index)
-                        }}>
+                        <Button
+                          size="sm"
+                          className="fw-bold"
+                          color="danger"
+                          data-testid={ `row-remove-${index}` }
+                          onClick={() => {
+                            remove(index)
+                          }}
+                        >
                           <FontAwesomeIcon icon={faTimes}/>
                         </Button>
                       </td>
-                    </tr>)
+                    </tr>
+                  )
                 }
               </tbody>
           }
@@ -330,14 +365,14 @@ const ServiceTypesListAdded = ({data, setCallback, webapi, userDetails,
             ''
         }
       </div>
-    )
-  }
-  else
-    return null
+    </>
+  )
 }
 
 
 export const ServiceTypesBulkAdd = (props) => {
+  const showtitles = props.showtitles
+
   const [addedServices, setAddedServices] = useState([])
 
   const webapi = new WebApi({
@@ -358,18 +393,14 @@ export const ServiceTypesBulkAdd = (props) => {
 
   const { control, handleSubmit, reset, formState: {errors} } = useForm({
     resolver: yupResolver(validationSchema),
+    context: { showtitles: showtitles },
     defaultValues: {
       name: '',
+      title: "",
       description: '',
       tags: ['poem']
     }
   })
-
-  const [areYouSureModal, setAreYouSureModal] = React.useState(false)
-  const [modalTitle, setModalTitle] = React.useState('')
-  const [modalMsg, setModalMsg] = React.useState('')
-  const [modalFunc, setModalFunc] = React.useState(undefined)
-  const [modalCallbackArg, setModalCallbackArg] = React.useState(undefined)
 
   const onSubmit = data => {
     let tmpArray = [...addedServices]
@@ -377,13 +408,10 @@ export const ServiceTypesBulkAdd = (props) => {
     setAddedServices(tmpArray)
     reset({
       name: '',
+      title: "",
       description: '',
       tags: ['poem']
     })
-  }
-
-  function toggleModal() {
-    setAreYouSureModal(!areYouSureModal)
   }
 
   if (loadingUserDetails || loadingServiceTypesDescriptions)
@@ -396,16 +424,37 @@ export const ServiceTypesBulkAdd = (props) => {
     return (<ErrorComponent error={errorServiceTypesDescriptions}/>);
 
   if (userDetails?.is_superuser && serviceTypesDescriptions) {
+    const DescriptionInputGroup = <>
+      <Label className="fw-bold" for="description">
+        Description:
+      </Label>
+      <InputGroup>
+        <Controller
+          name="description"
+          control={ control }
+          render={ ({field}) =>
+            <textarea
+              {...field}
+              id="description"
+              rows="3"
+              className={`form-control ${errors?.description && "is-invalid" }`}
+            />
+          }
+        />
+        <ErrorMessage
+          errors={errors}
+          name="description"
+          render={({ message }) =>
+            <FormFeedback invalid="true" className="end-0">
+              { message }
+            </FormFeedback>
+          }
+        />
+      </InputGroup>
+    </>
+
     return (
       <>
-        <ModalAreYouSure
-          isOpen={areYouSureModal}
-          toggle={toggleModal}
-          title={modalTitle}
-          msg={modalMsg}
-          onYes={modalFunc}
-          callbackOnYesArg={modalCallbackArg}
-        />
         <div className="d-flex align-items-center justify-content-between">
           <h2 className="ms-3 mt-1 mb-4">Add service types</h2>
         </div>
@@ -422,9 +471,9 @@ export const ServiceTypesBulkAdd = (props) => {
                     control={control}
                     render={ ({field}) =>
                       <Input
-                        data-testid="input-name"
                         {...field}
-                        className={`form-control ${errors && errors.name ? "is-invalid" : ""}`}
+                        id="name"
+                        className={`form-control ${errors?.name && "is-invalid" }`}
                       />
                     }
                   />
@@ -439,47 +488,71 @@ export const ServiceTypesBulkAdd = (props) => {
                   />
                 </InputGroup>
               </Col>
-              <Col sm={{size: 7}}>
-                <Label className="fw-bold" for="description">
-                  Description:
-                </Label>
-                <InputGroup>
-                  <Controller
-                    name="description"
-                    control={control}
-                    render={ ({field}) =>
-                      <textarea
-                        {...field}
-                        rows="3"
-                        data-testid="input-description"
-                        className={`form-control ${errors && errors.description ? "is-invalid" : ""}`}
+              {
+                showtitles ?
+                  <Col sm={{size: 7}}>
+                    <Label className="fw-bold" for="title">
+                      Title:
+                    </Label>
+                    <InputGroup>
+                      <Controller
+                        name="title"
+                        control={ control }
+                        render={ ({ field }) =>
+                          <Input
+                            { ...field }
+                            id="title"
+                            className={ `form-control ${errors?.title && "is-invalid"}` }
+                          />
+                        }
                       />
-                    }
-                  />
-                  <ErrorMessage
-                    errors={errors}
-                    name="description"
-                    render={({ message }) =>
-                      <FormFeedback invalid="true" className="end-0">
-                        { message }
-                      </FormFeedback>
-                    }
-                  />
-                </InputGroup>
-              </Col>
-              <Col sm={{size: 1}} className="text-center">
-                <Button className="mt-3" color="success" type="submit">
-                  Add new
-                </Button>
-              </Col>
+                      <ErrorMessage
+                        errors={errors}
+                        name="title"
+                        render={({ message }) =>
+                          <FormFeedback invalid="true" className="end-0">
+                            { message }
+                          </FormFeedback>
+                        }
+                      />
+                    </InputGroup>
+                  </Col>
+                :
+                  <>
+                    <Col sm={{ size: 7 }}>
+                      { DescriptionInputGroup }
+                    </Col>
+                    <Col sm={{size: 1}} className="text-center">
+                      <Button className="mt-5" color="success" type="submit">
+                        Add new
+                      </Button>
+                    </Col>
+                  </>
+              }
             </Row>
+            {
+              showtitles &&
+                <Row className="mt-3">
+                  <Col sm={{ size: 11 }}>
+                    { DescriptionInputGroup }
+                  </Col>
+                  <Col sm={{size: 1}} className="text-center">
+                    <Button className="mt-5" color="success" type="submit">
+                      Add new
+                    </Button>
+                  </Col>
+                </Row>
+            }
           </Form>
         </div>
-        <ServiceTypesListAdded data={addedServices} setCallback={setAddedServices} webapi={webapi}
-          userDetails={userDetails} serviceTypesDescriptions={serviceTypesDescriptions}
-          areYouSureModal={areYouSureModal} setAreYouSureModal={setAreYouSureModal}
-          setModalMsg={setModalMsg} setModalCallbackArg={setModalCallbackArg}
-          setModalFunc={setModalFunc} setModalTitle={setModalTitle}/>
+        <BulkAddContext.Provider value={{
+          setCallback: setAddedServices,
+          userDetails: userDetails,
+          serviceTypesDescriptions: serviceTypesDescriptions,
+          webapi: webapi
+        }}>
+          <ServiceTypesListAdded data={addedServices} { ...props } />
+        </BulkAddContext.Provider>
       </>
     )
   }
@@ -488,11 +561,13 @@ export const ServiceTypesBulkAdd = (props) => {
 }
 
 
-const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
-  const dataWithChecked = data.map(e => {
+const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
+  const showtitles = props.showtitles
+
+  const updatedData = data.map( e => {
     return {
       ...e,
-      checked: false
+      isChecked: false
     }
   })
 
@@ -511,11 +586,11 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     setAreYouSureModal(!areYouSureModal)
   }
 
-  const { control, setValue, getValues, handleSubmit, formState: {errors} } = useForm({
+  const { control, setValue, getValues, handleSubmit, formState: { isDirty } } = useForm({
     defaultValues: {
-      serviceTypes: dataWithChecked,
+      serviceTypes: updatedData,
       searchService: '',
-      searchDesc: '',
+      searchDesc: ''
     }
   })
 
@@ -524,22 +599,19 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
     data.forEach(entry => tmpArray.push(entry.name.length))
     return Math.max(...tmpArray)
   }
+
   let columnNameWidth = longestName(data) * 8 + 10
   columnNameWidth = Math.max(220, columnNameWidth)
   columnNameWidth = Math.min(360, columnNameWidth)
 
   const searchService = useWatch({control, name: "searchService"})
   const searchDesc = useWatch({control, name: "searchDesc"})
+  const serviceTypes = useWatch({ control, name: "serviceTypes" })
 
-  const { fields, update, replace } = useFieldArray({
+  const { fields } = useFieldArray({
     control,
     name: "serviceTypes"
   })
-
-  function initChangedDesc() {
-    return _.fromPairs(fields.map((e) => [e.id, false]))
-  }
-  const [lookupChanged, setLookupChanged] = React.useState(initChangedDesc())
 
   function postServiceTypesWebApi(data, action, title) {
     webapiAddMutation.mutate(data, {
@@ -562,79 +634,51 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
   }
 
   function doSave() {
-    let values = getValues('serviceTypes')
-    replace(values)
-    postServiceTypesWebApi([...values.map(
-      e => Object(
-        {
-          'name': e.name, 'description': e.description, 'tags': e.tags
-        }
-      ))],
+    postServiceTypesWebApi([...serviceTypes.map(
+      e => Object({
+          name: e.name, title: e.title, description: e.description, tags: e.tags
+        })
+      )],
       'changed', 'Change')
-    setLookupChanged(initChangedDesc())
   }
 
   function onSave() {
-    setModalMsg(`Are you sure you want to change Service type?`)
+    setModalMsg(`Are you sure you want to change service type?`)
     setModalTitle('Change service type')
     setModalFunc(() => doSave)
     setAreYouSureModal(!areYouSureModal);
   }
 
-  function onChange(event, entryid) {
-    let value = event.target.checked ? true : false
-    let values = getValues('serviceTypes')
-    let index = fields.findIndex(field => field.id === entryid)
-    setValue(`serviceTypes.${index}.checked`, value)
-    update(index, {
-      name: values[index].name,
-      description: values[index].description,
-      checked: value
-    })
-  }
-
   function doDelete() {
-    let cleaned = fields.filter(e => !e.checked)
+    let cleaned = getValues("serviceTypes").filter(e => !e.isChecked)
     setValue("serviceTypes", cleaned)
     postServiceTypesWebApi([...cleaned.map(
-      e => Object(
-        {
-          'name': e.name, 'description': e.description, 'tags': e.tags
-        }
-      ))],
+      e => Object({
+          name: e.name, title: e.title, description: e.description, tags: e.tags
+        })
+      )],
       'deleted', 'Delete')
   }
 
   function onDelete() {
-    let cleaned = fields.filter(e => !e.checked)
+    let cleaned = getValues("serviceTypes").filter(e => !e.isChecked)
 
-    setModalMsg(`Are you sure you want to delete ${fields.length - cleaned.length} Service types?`)
+    setModalMsg(`Are you sure you want to delete ${fields.length - cleaned.length} service types?`)
     setModalTitle('Delete service types')
     setModalFunc(() => doDelete)
     setAreYouSureModal(!areYouSureModal);
   }
 
-  function onDescriptionChange (entryid, isChanged) {
-    let tmp = JSON.parse(JSON.stringify(lookupChanged))
-    if (tmp[entryid] !== isChanged) {
-      tmp[entryid] = isChanged
-      setLookupChanged(tmp)
-    }
-  }
-
-  let lookupIndexes = _.fromPairs(fields.map((e, index) => [e.id, index]))
+  let lookupIndices = _.fromPairs(fields.map((e, index) => [e.id, index]))
 
   let fieldsView = fields
   let paginationHelp = new TablePaginationHelper(fieldsView.length, pageSize, pageIndex)
 
-  if (searchService && searchDesc) {
-    fieldsView = fields.filter(e => e.name.toLowerCase().includes(searchService.toLowerCase()))
-    fieldsView = fieldsView.filter(e => e.description.toLowerCase().includes(searchDesc.toLowerCase()))
-  }
-  else if (searchDesc)
+  if (searchDesc)
     fieldsView = fields.filter(e => e.description.toLowerCase().includes(searchDesc.toLowerCase()))
-  else if (searchService)
-    fieldsView = fields.filter(e => e.name.toLowerCase().includes(searchService.toLowerCase()))
+
+  if (searchService)
+    fieldsView = fields.filter(e => e.name.toLowerCase().includes(searchService.toLowerCase()) || e.title.toLowerCase().includes(searchService.toLowerCase()))
 
   paginationHelp.searchNum = fieldsView.length
   paginationHelp.isSearched = searchService || searchDesc ? true : false
@@ -655,15 +699,15 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
         <span>
           <Button
             color="danger"
-            disabled={![...fields.map(e => e.checked)].includes(true)}
+            disabled={![...serviceTypes.map(e => e.isChecked)].includes(true)}
             onClick={() => onDelete()}
             className="me-3">
             Delete selected
           </Button>
           <Button
             color="success"
-            disabled={!_.valuesIn(lookupChanged).includes(true)}
-            onClick={() => onSave()}
+            disabled={ !isDirty }
+            onClick={ () => onSave() }
             className="me-3">
             Save
           </Button>
@@ -671,7 +715,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
         </span>
       </div>
       <div id="argo-contentwrap" className="ms-2 mb-2 mt-2 p-3 border rounded">
-        <Form onSubmit={handleSubmit((data) => {})} className="needs-validation">
+        <Form onSubmit={handleSubmit(() => {})} className="needs-validation">
           <Row>
             <Col>
               <Table bordered responsive hover size="sm">
@@ -681,13 +725,16 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                       #
                     </th>
                     <th>
-                      Name of service
+                      { `Service name${showtitles ? " and title" : ""}` }
                     </th>
                     <th>
-                      Description of service
+                      Service description
                     </th>
                     <th style={{'width': '60px'}}>
                       Source
+                    </th>
+                    <th style={{ width: "60px" }}>
+                      Checked
                     </th>
                   </tr>
                 </thead>
@@ -724,88 +771,60 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
                     </td>
                     <td className="align-middle text-center">
                     </td>
+                    <td></td>
                   </tr>
                   {
                     fieldsView.map((entry, index) =>
-                      <tr key={entry.id} data-testid={`rows-serviceTypes.${index}`}>
+                      <tr key={entry.id} data-testid={`st-rows-${index}`}>
                         <td className="align-middle text-center">
-                          { lookupIndexes[entry.id] + 1 }
+                          { lookupIndices[entry.id] + 1 }
                         </td>
                         <td className="align-middle text-left fw-bold">
-                          <span className="ms-2">{ entry.name }</span>
+                          {
+                            showtitles ?
+                              <div>
+                                <p className="fw-bold m-0">{ entry.name }</p>
+                                <p className="fw-normal m-0"><small>{ entry.title }</small></p>
+                              </div>
+                            :
+                              <span className="ms-2">{ entry.name }</span>
+                          }
                         </td>
                         <td>
                           <Controller
-                            name={`serviceTypes.${lookupIndexes[entry.id]}.description`}
+                            name={`serviceTypes.${lookupIndices[entry.id]}.description`}
                             control={control}
-                            render={ ({field}) => {
-                              let formval = getValues('serviceTypes')[lookupIndexes[entry.id]].description
-                              let initval = fields[lookupIndexes[entry.id]].description
-                              let isChanged = formval !== initval
-                              let isDisabled = undefined
-                              if (entry.tags && entry.tags.indexOf('topology') !== -1)
-                                isDisabled = true
-                              else
-                                isDisabled = false
-
-                              return (
-                                <textarea
-                                  {...field}
-                                  onChange={(e) => {onDescriptionChange(entry.id, isChanged) ; field.onChange(e)}}
-                                  onBlur={(e) => {onDescriptionChange(entry.id, isChanged); field.onBlur(e)}}
-                                  disabled={isDisabled}
-                                  rows="2"
-                                  className={`${isChanged ? 'border border-danger form-control' : 'form-control'}`}
-                                />
-                              )
-                            }}
+                            render={ ({field}) =>
+                              <textarea
+                                {...field}
+                                data-testid={ `description-${index}` }
+                                disabled={ entry.tags?.indexOf("topology") !== -1 }
+                                rows="2"
+                                className={ `form-control ${serviceTypes[lookupIndices[entry.id]].description !== updatedData[lookupIndices[entry.id]].description && 'border border-danger'}` }
+                              />
+                            }
                           />
                         </td>
                         <td className="text-center align-middle">
+                          <Badge color={`${entry.tags?.indexOf("topology") !== -1 ? "secondary" : "success"}`}>
+                            { entry.tags[0] }
+                          </Badge>
+                        </td>
+                        <td className="text-center align-middle">
                           <Controller
-                            name={`serviceTypes.${lookupIndexes[entry.id]}.checked`}
+                            name={`serviceTypes.${lookupIndices[entry.id]}.isChecked`}
                             control={control}
-                            render={ ({field}) => {
-                              // with checked=true,false ServiceTypes.test.js fails
-                              let isDisabled = undefined
-                              if (entry.tags && entry.tags.indexOf('topology') !== -1)
-                                isDisabled = true
-                              else
-                                isDisabled = false
-
-                              return(
-                                isDisabled ?
-                                  <Badge color="secondary">
-                                    topology
-                                  </Badge>
-                                :
-                                  entry.checked ?
-                                    <div className="d-flex flex-column align-self-center align-items-center">
-                                      <Badge color="success">
-                                        poem
-                                      </Badge>
-                                      <Input {...field}
-                                        type="checkbox"
-                                        className="mt-2 fw-bold"
-                                        disabled={isDisabled}
-                                        checked={entry.checked}
-                                        onChange={(e) => onChange(e, entry.id)}
-                                      />
-                                    </div>
-                                  :
-                                    <div className="d-flex flex-column align-self-center align-items-center">
-                                      <Badge color="success">
-                                        poem
-                                      </Badge>
-                                      <Input {...field}
-                                        type="checkbox"
-                                        disabled={isDisabled}
-                                        className="mt-2 fw-bold"
-                                        onChange={(e) => onChange(e, entry.id)}
-                                      />
-                                    </div>
-                              )
-                            }}
+                            render={ ({field}) =>
+                              <Input
+                                { ...field }
+                                type="checkbox"
+                                data-testid={`checkbox-${index}`}
+                                className="mt-2"
+                                disabled={ entry.tags?.indexOf("topology") !== -1 }
+                                onChange={ e => setValue(`serviceTypes.${lookupIndices[entry.id]}.isChecked`, e.target.checked)}
+                                checked={ field.checked }
+                              />
+                            }
                           />
                         </td>
                       </tr>
@@ -867,78 +886,10 @@ const ServiceTypesBulkDeleteChange = ({data, webapi}) => {
 }
 
 
-export const ServiceTypesListPublic = (props) => {
-  const webapi = new WebApi({
-    token: props.webapitoken,
-    serviceTypes: props.webapiservicetypes
-  })
-
-  const { data: serviceTypesDescriptions, errorServiceTypesDescriptions, isLoading: loadingServiceTypesDescriptions} = useQuery(
-    'public_servicetypes', async () => {
-      return await webapi.fetchServiceTypes();
-    },
-  )
-
-  const columns = React.useMemo(
-    () => [
-      {
-        Header: '#',
-        accessor: null,
-        column_width: '2%'
-      },
-      {
-        Header: <div><Icon i="servicetypes"/> Service type</div>,
-        id: 'name',
-        accessor: e => <span className="fw-bold">{e.name}</span>,
-        column_width: '25%',
-        Filter: DefaultColumnFilter
-      },
-      {
-        Header: 'Description',
-        accessor: 'description',
-        column_width: '70%',
-        Filter: DefaultColumnFilter
-      },
-      {
-        Header: 'Source',
-        id: 'tags',
-        accessor: e =>
-          <Badge color={`${e.tags[0] === 'poem' ? 'success' : 'secondary'}`}>
-            {e.tags[0]}
-          </Badge>,
-        column_width: '3%',
-        Filter: ''
-      }
-    ], []
-  )
-
-  if (loadingServiceTypesDescriptions)
-    return (<LoadingAnim/>);
-
-  else if (errorServiceTypesDescriptions)
-    return (<ErrorComponent error={errorServiceTypesDescriptions}/>);
-
-  else if (serviceTypesDescriptions) {
-    return (
-      <BaseArgoView
-        resourcename='Service types'
-        infoview={true}>
-        <BaseArgoTable
-          columns={columns}
-          data={serviceTypesDescriptions}
-          filter={true}
-          resourcename='service types'
-          page_size={15}
-        />
-      </BaseArgoView>
-    )
-  }
-  else
-    return null
-}
-
-
 export const ServiceTypesList = (props) => {
+  const showtitles = props.showtitles
+  const publicView = props.publicView
+
   const webapi = new WebApi({
     token: props.webapitoken,
     serviceTypes: props.webapiservicetypes
@@ -949,44 +900,60 @@ export const ServiceTypesList = (props) => {
   );
 
   const { data: serviceTypesDescriptions, errorServiceTypesDescriptions, isLoading: loadingServiceTypesDescriptions} = useQuery(
-    ['servicetypes', 'webapi'], async () => {
+    [`${publicView ? "public_" : ""}servicetypes`, 'webapi'], async () => {
       return await webapi.fetchServiceTypes();
     },
-    { enabled: !!userDetails }
+    { enabled: publicView || !!userDetails }
   )
 
-  const columns = React.useMemo(
-    () => [
-      {
-        Header: '#',
-        accessor: null,
-        column_width: '2%'
+  const columns = React.useMemo(() => [
+    {
+      Header: '#',
+      accessor: null,
+      column_width: '2%'
+    },
+    {
+      Header: <div><Icon i="servicetypes"/>{ `Service name${showtitles ? " and title" : ""}` }</div>,
+      accessor: "name",
+      column_width: "25%",
+      Cell: (row) => {
+        let original = row.cell.row.original
+        if (showtitles)
+          return(
+            <div>
+              <p className="fw-bold m-0">{ original.name }</p>
+              <p className="m-0"><small>{ original.title }</small></p>
+            </div>
+          )
+        else
+          return (
+            <span className="fw-bold">{ original.name }</span>
+          )
       },
-      {
-        Header: <div><Icon i="servicetypes"/> Service type</div>,
-        accessor: 'name',
-        column_width: '25%',
-        Cell: ({value}) => <span className="fw-bold">{value}</span>,
-        Filter: DefaultColumnFilter
+      filter: (rows, id, filterValue) => {
+        return rows.filter(row =>
+          row.values.name.toLowerCase().includes(filterValue.toLowerCase()) || row.original.title.toLowerCase().includes(filterValue.toLowerCase())
+        )
       },
-      {
-        Header: 'Description',
-        accessor: 'description',
-        column_width: '70%',
-        Filter: DefaultColumnFilter
-      },
-      {
-        Header: 'Source',
-        id: 'tags',
-        accessor: e =>
-          <Badge color={`${e.tags[0] === 'poem' ? 'success' : 'secondary'}`}>
-            {e.tags[0]}
-          </Badge>,
-        column_width: '3%',
-        Filter: ''
-      }
-    ], []
-  )
+      Filter: DefaultColumnFilter
+    },
+    {
+      Header: 'Description',
+      accessor: 'description',
+      column_width: "70%",
+      Filter: DefaultColumnFilter
+    },
+    {
+      Header: 'Source',
+      id: 'tags',
+      accessor: e =>
+        <Badge color={`${e.tags[0] === 'poem' ? 'success' : 'secondary'}`}>
+          {e.tags[0]}
+        </Badge>,
+      column_width: '3%',
+      Filter: ''
+    }
+  ], [showtitles])
 
   if (loadingUserDetails || loadingServiceTypesDescriptions)
     return (<LoadingAnim/>);
@@ -997,7 +964,7 @@ export const ServiceTypesList = (props) => {
   else if (errorServiceTypesDescriptions)
     return (<ErrorComponent error={errorServiceTypesDescriptions}/>);
 
-  else if (serviceTypesDescriptions && !userDetails?.is_superuser) {
+  else if (serviceTypesDescriptions && (!userDetails?.is_superuser || publicView)) {
     return (
       <BaseArgoView
         resourcename='Service types'

@@ -1,8 +1,10 @@
+import os
 from collections import OrderedDict
 from unittest.mock import patch
 
 import pkg_resources
 from Poem.api import views_internal as views
+from Poem.api.internal_views.app import get_use_service_titles
 from Poem.api.models import MyAPIKey
 from Poem.poem import models as poem_models
 from Poem.users.models import CustUser
@@ -167,29 +169,32 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
         self.view = views.GetConfigOptions.as_view()
         self.url = '/api/v2/internal/config_options/'
         self.user = CustUser.objects.create(username='testuser')
-        self.maxDiff = None
 
+    @patch(
+        "Poem.api.internal_views.app.get_use_service_titles",
+        return_value=True
+    )
     @patch('Poem.api.internal_views.app.saml_login_string',
            return_value='Log in using B2ACCESS')
     @patch('Poem.api.internal_views.app.tenant_from_request',
            return_value='tenant')
     def test_get_config_options(self, *args):
         with self.settings(
-                WEBAPI_METRIC='https://metric.profile.com',
-                WEBAPI_AGGREGATION='https://aggregations.com',
-                WEBAPI_THRESHOLDS='https://thresholds.com',
-                WEBAPI_OPERATIONS='https://operations.com',
-                WEBAPI_REPORTS='https://reports.com',
-                WEBAPI_REPORTSTAGS='https://reports-tags.com',
-                WEBAPI_REPORTSTOPOLOGYGROUPS='https://topology-groups.com',
-                WEBAPI_REPORTSTOPOLOGYENDPOINTS='https://endpoints.com',
-                WEBAPI_SERVICETYPES='https://topology-servicetypes.com',
-                LINKS_TERMS_PRIVACY={
-                    'tenant': {
-                        'terms': 'https://terms.of.use.com',
-                        'privacy': 'https://privacy.policies.com'
-                    }
+            WEBAPI_METRIC='https://metric.profile.com',
+            WEBAPI_AGGREGATION='https://aggregations.com',
+            WEBAPI_THRESHOLDS='https://thresholds.com',
+            WEBAPI_OPERATIONS='https://operations.com',
+            WEBAPI_REPORTS='https://reports.com',
+            WEBAPI_REPORTSTAGS='https://reports-tags.com',
+            WEBAPI_REPORTSTOPOLOGYGROUPS='https://topology-groups.com',
+            WEBAPI_REPORTSTOPOLOGYENDPOINTS='https://endpoints.com',
+            WEBAPI_SERVICETYPES='https://topology-servicetypes.com',
+            LINKS_TERMS_PRIVACY={
+                'tenant': {
+                    'terms': 'https://terms.of.use.com',
+                    'privacy': 'https://privacy.policies.com'
                 }
+            }
         ):
             request = self.factory.get(self.url)
             response = self.view(request)
@@ -216,7 +221,8 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
                         'terms_privacy_links': {
                             'terms': 'https://terms.of.use.com',
                             'privacy': 'https://privacy.policies.com'
-                        }
+                        },
+                        "use_service_title": True
                     }
                 }
             )
@@ -324,3 +330,88 @@ class GetIsTenantSchemaAPIViewTests(TenantTestCase):
             response.data,
             {'isTenantSchema': False}
         )
+
+
+CONFIGFILE = """
+[GENERAL_ALL]
+PublicPage = tenant.com
+TermsOfUse = https://ui.argo.grnet.gr/egi/termsofUse/
+PrivacyPolicies = https://argo.egi.eu/egi/policies/
+
+[SUPERUSER_ALL]
+Name =
+Password =
+Email =
+
+[GENERAL_EGI]
+Namespace = hr.cro-ngi.EGI
+SamlLoginString = Login using EGI CHECK-IN
+SamlServiceName = ARGO POEM EGI-CheckIN
+TermsOfUse = https://ui.argo.grnet.gr/egi/termsofUse
+PrivacyPolicies = https://argo.egi.eu/egi/policies
+UseServiceTitles = False
+
+[GENERAL_EOSC]
+Namespace = hr.cro-ngi.EOSC
+SamlLoginString = Login using EGI CHECK-IN
+SamlServiceName = ARGO POEM EGI-CheckIN
+TermsOfUse = https://ui.argo.grnet.gr/eosc/termsofUse
+PrivacyPolicies = https://argo.egi.eu/eosc/policies
+UseServiceTitles = True
+"""
+
+CONFIGFILE2 = """
+[GENERAL_ALL]
+PublicPage = tenant.com
+TermsOfUse = https://ui.argo.grnet.gr/egi/termsofUse/
+PrivacyPolicies = https://argo.egi.eu/egi/policies/
+
+[SUPERUSER_ALL]
+Name =
+Password =
+Email =
+
+[GENERAL_EGI]
+Namespace = hr.cro-ngi.EGI
+SamlLoginString = Login using EGI CHECK-IN
+SamlServiceName = ARGO POEM EGI-CheckIN
+TermsOfUse = https://ui.argo.grnet.gr/egi/termsofUse
+PrivacyPolicies = https://argo.egi.eu/egi/policies
+
+[GENERAL_EOSC]
+Namespace = hr.cro-ngi.EOSC
+SamlLoginString = Login using EGI CHECK-IN
+SamlServiceName = ARGO POEM EGI-CheckIN
+TermsOfUse = https://ui.argo.grnet.gr/eosc/termsofUse
+PrivacyPolicies = https://argo.egi.eu/eosc/policies
+UseServiceTitles = True
+"""
+
+
+class ConfigTests(TenantTestCase):
+    def setUp(self) -> None:
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.GetConfigOptions.as_view()
+        self.url = '/api/v2/internal/config_options/'
+        self.user = CustUser.objects.create(username='testuser')
+        self.config_file_name = "test.conf"
+
+    def tearDown(self) -> None:
+        if os.path.isfile(self.config_file_name):
+            os.remove(self.config_file_name)
+
+    def test_get_use_service_titles_if_all_defined(self):
+        with open(self.config_file_name, "w") as f:
+            f.write(CONFIGFILE)
+
+        with self.settings(CONFIG_FILE=self.config_file_name):
+            self.assertFalse(get_use_service_titles("EGI"))
+            self.assertTrue(get_use_service_titles("EOSC"))
+
+    def test_get_use_service_titles_if_key_missing(self):
+        with open(self.config_file_name, "w") as f:
+            f.write(CONFIGFILE2)
+
+        with self.settings(CONFIG_FILE=self.config_file_name):
+            self.assertFalse(get_use_service_titles("EGI"))
+            self.assertTrue(get_use_service_titles("EOSC"))

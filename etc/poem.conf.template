@@ -46,6 +46,7 @@ SamlLoginString = Login using EGI CHECK-IN
 SamlServiceName = ARGO POEM EGI-CheckIN
 TermsOfUse = https://ui.argo.grnet.gr/egi/termsofUse
 PrivacyPolicies = https://argo.egi.eu/egi/policies
+UseServiceTitles = False
 
 [SUPERUSER_EGI]
 Name =
