@@ -777,7 +777,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
                     fieldsView.map((entry, index) =>
                       <tr key={entry.id} data-testid={`st-rows-${index}`}>
                         <td className="align-middle text-center">
-                          { index + 1 }
+                          { lookupIndices[entry.id] + 1 }
                         </td>
                         <td className="align-middle text-left fw-bold">
                           {
