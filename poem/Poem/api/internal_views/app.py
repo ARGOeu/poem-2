@@ -1,4 +1,4 @@
-from configparser import ConfigParser
+import configparser
 
 import pkg_resources
 from Poem.api import serializers
@@ -83,13 +83,19 @@ class IsSessionActive(APIView):
 
 
 def get_use_service_titles(tenant):
-    config = ConfigParser()
+    config = configparser.ConfigParser()
     config.read(filenames=settings.CONFIG_FILE)
 
-    if config.get(f"GENERAL_{tenant.upper()}", "useservicetitles") == "True":
-        return True
+    try:
+        if config.get(
+                f"GENERAL_{tenant.upper()}", "useservicetitles"
+        ) == "True":
+            return True
 
-    else:
+        else:
+            return False
+
+    except configparser.NoOptionError:
         return False
 
 
