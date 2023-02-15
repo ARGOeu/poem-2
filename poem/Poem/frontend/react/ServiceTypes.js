@@ -715,7 +715,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
         </span>
       </div>
       <div id="argo-contentwrap" className="ms-2 mb-2 mt-2 p-3 border rounded">
-        <Form onSubmit={handleSubmit} className="needs-validation">
+        <Form onSubmit={handleSubmit(() => {})} className="needs-validation">
           <Row>
             <Col>
               <Table bordered responsive hover size="sm">
