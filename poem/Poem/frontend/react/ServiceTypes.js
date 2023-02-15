@@ -678,7 +678,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
     fieldsView = fields.filter(e => e.description.toLowerCase().includes(searchDesc.toLowerCase()))
 
   if (searchService)
-    fieldsView = fields.filter(e => e.name.toLowerCase().includes(searchService.toLowerCase()))
+    fieldsView = fields.filter(e => e.name.toLowerCase().includes(searchService.toLowerCase()) || e.title.toLowerCase().includes(searchService.toLowerCase()))
 
   paginationHelp.searchNum = fieldsView.length
   paginationHelp.isSearched = searchService || searchDesc ? true : false
@@ -929,6 +929,11 @@ export const ServiceTypesList = (props) => {
           return (
             <span className="fw-bold">{ original.name }</span>
           )
+      },
+      filter: (rows, id, filterValue) => {
+        return rows.filter(row =>
+          row.values.name.toLowerCase().includes(filterValue.toLowerCase()) || row.original.title.toLowerCase().includes(filterValue.toLowerCase())
+        )
       },
       Filter: DefaultColumnFilter
     },
