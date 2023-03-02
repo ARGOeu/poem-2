@@ -68,7 +68,47 @@ const ReportsSchema = Yup.object().shape({
   groupsTags: Yup.array().of(
     Yup.object().shape({
       name: Yup.string().required("Required"),
-      values: Yup.string()
+      value: Yup.mixed().test("custom_required", "Required", function (val) {
+        if (Array.isArray(val))
+          if (val.length === 0)
+            return false
+
+          else
+            return true
+
+        else if (typeof(val) == "string")
+          if (val === "")
+            return false
+
+          else
+            return true
+
+        else
+          return false
+      })
+    })
+  ),
+  endpointsTags: Yup.array().of(
+    Yup.object().shape({
+      name: Yup.string().required("Required"),
+      value: Yup.mixed().test("custom_required", "Required", function (val) {
+        if (Array.isArray(val))
+          if (val.length === 0)
+            return false
+
+          else
+            return true
+
+        else if (typeof(val) == "string")
+          if (val === "")
+            return false
+
+          else
+            return true
+
+        else
+          return false
+      })
     })
   )
 })
@@ -303,7 +343,8 @@ const TagCreatable = ({
   forwardedRef,
   tagOptions,
   onChangeHandler,
-  tagInitials
+  tagInitials,
+  error
 }) => {
   if (tagInitials) {
     return (
@@ -315,6 +356,7 @@ const TagCreatable = ({
         onChange={ onChangeHandler }
         options={ tagOptions }
         defaultValue={ tagInitials }
+        error={ error }
       />
     )
   } else {
@@ -326,6 +368,7 @@ const TagCreatable = ({
         isClearable={ false }
         onChange={ onChangeHandler }
         options={ tagOptions }
+        error={ error }
       />
     )
   }
@@ -391,7 +434,7 @@ const TopologyTagList = ({ part, fieldName, tagsAll, publicView }) => {
     return []
   }
 
-  const { control, getValues, setValue, resetField, formState: { errors } } = useFormContext()
+  const { control, getValues, setValue, resetField, clearErrors, formState: { errors } } = useFormContext()
 
   const { fields, append, remove } = useFieldArray({ control, name: fieldName })
 
@@ -479,25 +522,40 @@ const TopologyTagList = ({ part, fieldName, tagsAll, publicView }) => {
                           value={ Array.isArray(field.value) ? field.value.join(", ") : field.value }
                         />
                       :
-                        isMultiValuesTags(index) ?
-                          <TagCreatable
-                            forwardedRef={ field.ref }
-                            tagOptions={ extractValuesTags(index) }
-                            onChangeHandler={ value => {
-                              setValue(`${fieldName}.${index}.value`, value.map(val => val.value))
-                            }}
-                            tagInitials={ tagsInitValues(field.value) }
-                          />
-                        :
-                          <TagSelect
-                            forwardedRef={ field.ref }
-                            data-testid={`${fieldName}.${index}.value`}
-                            tagOptions={extractValuesTags(index, true)}
-                            onChangeHandler={ (e) => setValue(`${fieldName}.${index}.value`, e.value) }
-                            isMulti={ false }
-                            closeMenuOnSelect={ true }
-                            tagInitials={ tagsInitValues(field.value) }
-                          />
+                        <>
+                          {
+                            isMultiValuesTags(index) ?
+                              <TagCreatable
+                                forwardedRef={ field.ref }
+                                tagOptions={ extractValuesTags(index) }
+                                onChangeHandler={ value => {
+                                  setValue(`${fieldName}.${index}.value`, value.map(val => val.value))
+                                  clearErrors(`${fieldName}.${index}.value`)
+                                }}
+                                tagInitials={ tagsInitValues(field.value) }
+                                error={ errors?.[fieldName]?.[index]?.value }
+                              />
+                            :
+                              <TagSelect
+                                forwardedRef={ field.ref }
+                                data-testid={`${fieldName}.${index}.value`}
+                                tagOptions={extractValuesTags(index, true)}
+                                onChangeHandler={ (e) => {
+                                  setValue(`${fieldName}.${index}.value`, e.value)
+                                  clearErrors(`${fieldName}.${index}.value`)
+                                }}
+                                isMulti={ false }
+                                closeMenuOnSelect={ true }
+                                tagInitials={ tagsInitValues(field.value) }
+                                error={ errors?.[fieldName]?.[index]?.value }
+                              />
+
+                          }
+                          {
+                            errors?.[fieldName]?.[index]?.value &&
+                              <CustomError error={ errors?.[fieldName]?.[index]?.value?.message } />
+                          }
+                        </>
                     }
                   />
                 </Col>

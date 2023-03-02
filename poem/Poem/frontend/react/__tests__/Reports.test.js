@@ -1620,7 +1620,7 @@ describe('Tests for reports changeview', () => {
     await waitFor(() => {
       expect(screen.queryByRole('dialog', { title: /change/i })).not.toBeInTheDocument()
     })
-    expect(card_groups.queryByText(/required/i)).toBeInTheDocument()
+    expect(card_groups.queryAllByText(/required/i)).toHaveLength(2)
 
     await selectEvent.select(card_groups.getAllByText("Select...")[0], 'monitored')
     await selectEvent.select(card_groups.getAllByText("Select...")[0], 'yes')
@@ -2805,10 +2805,10 @@ describe('Tests for reports addview', () => {
     await waitFor(() => {
       expect(screen.queryByRole('dialog', { title: /add/i })).not.toBeInTheDocument()
     })
-    expect(card_groups.queryByText(/required/i)).toBeInTheDocument()
+    expect(card_groups.queryAllByText(/required/i)).toHaveLength(2)
 
     await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'certification')
-    expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
+    expect(card_groups.queryAllByText(/required/i)).toHaveLength(1)
     selectEvent.openMenu(card_groups.queryByText(/select/i))
     expect(card_groups.queryByText('Candidate')).toBeInTheDocument()
     expect(card_groups.queryByText('Certified')).toBeInTheDocument()
