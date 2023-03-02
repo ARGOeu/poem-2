@@ -25,6 +25,8 @@ const mockDeleteObject = jest.fn();
 const mockDeleteThresholdsProfile = jest.fn();
 const mockAddObject = jest.fn();
 const mockAddThresholdsProfile = jest.fn();
+const mockFetchReports = jest.fn()
+const mockChangeReport = jest.fn()
 
 const queryClient = new QueryClient();
 
@@ -399,6 +401,178 @@ const mockThresholdProfileVersions = [
   }
 ];
 
+const mockReports = [
+  {
+    id: "aaaa1111-1111-2222-3333-4444-000000000000",
+    tenant: "TENANT",
+    disabled: false,
+    info: {
+      name: "CORE",
+      description: "Some report",
+      created: "2022-05-25 17:59:54",
+      updated: "2022-12-28 10:46:30"
+    },
+    computations: {
+      ar: true,
+      status: true,
+      trends: [
+        "flapping",
+        "status",
+        "tags"
+      ]
+    },
+    thresholds: {
+      availability: 80,
+      reliability: 90,
+      uptime: 0.8,
+      unknown: 0.1,
+      downtime: 0.1
+    },
+    topology_schema: {
+      group: {
+        type: "PROJECT",
+        group: {
+          type: "SERVICEGROUPS"
+        }
+      }
+    },
+    profiles: [
+      {
+        id: "va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv",
+        name: "ARGO_MON",
+        type: "metric"
+      },
+      {
+        id: "00000000-1111-1111-1111-222222222222",
+        name: "aggr1",
+        type: "aggregation"
+      },
+      {
+        id: "00000000-oooo-kkkk-aaaa-aaeekkccnnee",
+        name: "TEST_PROFILE",
+        type: "thresholds"
+      },
+      {
+        id: "11111111-1111-1111-1111-111111111111",
+        name: "ops",
+        type: "operations"
+      }
+    ],
+    filter_tags: []
+  },
+  {
+    id: "aaaa1111-1111-2222-3333-4444-999999999999",
+    tenant: "TENANT",
+    disabled: false,
+    info: {
+      name: "ANOTHER",
+      description: "Some report",
+      created: "2022-05-25 17:59:54",
+      updated: "2022-12-28 10:46:30"
+    },
+    computations: {
+      ar: true,
+      status: true,
+      trends: [
+        "flapping",
+        "status",
+        "tags"
+      ]
+    },
+    thresholds: {
+      availability: 80,
+      reliability: 90,
+      uptime: 0.8,
+      unknown: 0.1,
+      downtime: 0.1
+    },
+    topology_schema: {
+      group: {
+        type: "PROJECT",
+        group: {
+          type: "SERVICEGROUPS"
+        }
+      }
+    },
+    profiles: [
+      {
+        id: "uiwee7um-cq51-pez2-6g85-aeghei1yeeph",
+        name: "ARGO_MON2",
+        type: "metric"
+      },
+      {
+        id: "99999999-1111-1111-1111-222222222222",
+        name: "aggr2",
+        type: "aggregation"
+      },
+      {
+        id: "11111111-1111-1111-1111-111111111111",
+        name: "ops",
+        type: "operations"
+      }
+    ],
+    filter_tags: []
+  },
+  {
+    id: "aaaabbbb-1111-2222-3333-4444-000000000000",
+    tenant: "TENANT",
+    disabled: false,
+    info: {
+      name: "TEST",
+      description: "Some report",
+      created: "2022-05-25 17:59:54",
+      updated: "2022-12-28 10:46:30"
+    },
+    computations: {
+      ar: true,
+      status: true,
+      trends: [
+        "flapping",
+        "status",
+        "tags"
+      ]
+    },
+    thresholds: {
+      availability: 80,
+      reliability: 90,
+      uptime: 0.8,
+      unknown: 0.1,
+      downtime: 0.1
+    },
+    topology_schema: {
+      group: {
+        type: "PROJECT",
+        group: {
+          type: "SERVICEGROUPS"
+        }
+      }
+    },
+    profiles: [
+      {
+        id: "va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv",
+        name: "ARGO_MON",
+        type: "metric"
+      },
+      {
+        id: "00000000-1111-1111-1111-222222222222",
+        name: "aggr1",
+        type: "aggregation"
+      },
+      {
+        id: "00000000-oooo-kkkk-aaaa-aaeekkccnnee",
+        name: "TEST_PROFILE",
+        type: "thresholds"
+      },
+      {
+        id: "11111111-1111-1111-1111-111111111111",
+        name: "ops",
+        type: "operations"
+      }
+    ],
+    filter_tags: []
+  }
+]
+
 
 function renderListView(publicView=false) {
   const route = `/ui/${publicView ? 'public_' : ''}thresholdsprofiles`;
@@ -603,16 +777,21 @@ describe('Tests for thresholds profiles listview', () => {
 describe('Tests for threshols profile changeview', () => {
   jest.spyOn(NotificationManager, 'success');
   jest.spyOn(NotificationManager, 'error');
+  jest.spyOn(NotificationManager, "info")
+  jest.spyOn(NotificationManager, "warning")
   jest.spyOn(queryClient, 'invalidateQueries');
 
-  beforeAll(() => {
+  beforeEach(() => {
+    mockFetchReports.mockReturnValue([mockReports[1]])
     WebApi.mockImplementation(() => {
       return {
         fetchThresholdsProfile: () => Promise.resolve(mockWebApiProfile),
         fetchMetricProfiles: () => Promise.resolve(mockMetricProfiles),
         fetchReportsTopologyEndpoints: () => Promise.resolve(mockTopologyEndpoints),
+        fetchReports: mockFetchReports,
         changeThresholdsProfile: mockChangeThresholdsProfile,
-        deleteThresholdsProfile: mockDeleteThresholdsProfile
+        deleteThresholdsProfile: mockDeleteThresholdsProfile,
+        changeReport: mockChangeReport
       }
     })
     Backend.mockImplementation(() => {
@@ -2105,11 +2284,17 @@ describe('Tests for threshols profile changeview', () => {
       )
     })
 
+    await waitFor(() => {
+      expect(mockChangeReport).not.toHaveBeenCalled()
+    })
+
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith('thresholdsprofile');
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_thresholdsprofile');
     expect(NotificationManager.success).toHaveBeenCalledWith(
       'Thresholds profile successfully deleted', 'Deleted', 2000
     )
+    expect(NotificationManager.info).not.toHaveBeenCalled()
+    expect(NotificationManager.warning).not.toHaveBeenCalled()
   })
 
   test('Test error deleting thresholds profile on web api with error message', async () => {
@@ -2139,6 +2324,10 @@ describe('Tests for threshols profile changeview', () => {
       expect(mockDeleteObject).not.toHaveBeenCalled()
     })
 
+    await waitFor(() => {
+      expect(mockChangeReport).not.toHaveBeenCalled()
+    })
+
     expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
@@ -2149,6 +2338,8 @@ describe('Tests for threshols profile changeview', () => {
       0,
       expect.any(Function)
     )
+    expect(NotificationManager.info).not.toHaveBeenCalled()
+    expect(NotificationManager.warning).not.toHaveBeenCalled()
   })
 
   test('Test error deleting thresholds profile on web api without error message', async () => {
@@ -2176,6 +2367,10 @@ describe('Tests for threshols profile changeview', () => {
       expect(mockDeleteObject).not.toHaveBeenCalled()
     })
 
+    await waitFor(() => {
+      expect(mockChangeReport).not.toHaveBeenCalled()
+    })
+
     expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
@@ -2186,6 +2381,8 @@ describe('Tests for threshols profile changeview', () => {
       0,
       expect.any(Function)
     )
+    expect(NotificationManager.info).not.toHaveBeenCalled()
+    expect(NotificationManager.warning).not.toHaveBeenCalled()
   })
 
   test('Test error deleting thresholds profile on internal api with error message', async () => {
@@ -2220,6 +2417,10 @@ describe('Tests for threshols profile changeview', () => {
       )
     })
 
+    await waitFor(() => {
+      expect(mockChangeReport).not.toHaveBeenCalled()
+    })
+
     expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
@@ -2230,6 +2431,8 @@ describe('Tests for threshols profile changeview', () => {
       0,
       expect.any(Function)
     )
+    expect(NotificationManager.info).not.toHaveBeenCalled()
+    expect(NotificationManager.warning).not.toHaveBeenCalled()
   })
 
   test('Test error deleting thresholds profile on internal api without error message', async () => {
@@ -2262,6 +2465,10 @@ describe('Tests for threshols profile changeview', () => {
       )
     })
 
+    await waitFor(() => {
+      expect(mockChangeReport).not.toHaveBeenCalled()
+    })
+
     expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
@@ -2269,6 +2476,47 @@ describe('Tests for threshols profile changeview', () => {
         <p>Click to dismiss.</p>
       </div>,
       'Internal API error',
+      0,
+      expect.any(Function)
+    )
+    expect(NotificationManager.info).not.toHaveBeenCalled()
+    expect(NotificationManager.warning).not.toHaveBeenCalled()
+  })
+
+  test("Test delete thresholds profile when associated with report", async () => {
+    mockFetchReports.mockReturnValueOnce(mockReports)
+    mockDeleteThresholdsProfile.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: "OK" })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /profile/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: /delete/i }))
+    await waitFor(() => {
+      expect(screen.getByRole("dialog", { title: /delete/i })).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole("button", { name: /yes/i }))
+
+    await waitFor(() => {
+      expect(mockDeleteThresholdsProfile).not.toHaveBeenCalled()
+    })
+
+    await waitFor(() => {
+      expect(mockDeleteObject).not.toHaveBeenCalled()
+    })
+
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalled()
+    expect(NotificationManager.success).not.toHaveBeenCalled()
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Thresholds profile is associated with reports: CORE, TEST</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      "Unable to delete",
       0,
       expect.any(Function)
     )

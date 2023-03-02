@@ -49,7 +49,7 @@ import { ThresholdsProfilesList, ThresholdsProfilesChange, ThresholdsProfileVers
 
 import './App.css';
 import { PackageList, PackageComponent } from './Package';
-import { ServiceTypesListPublic, ServiceTypesList, ServiceTypesBulkAdd } from './ServiceTypes';
+import { ServiceTypesList, ServiceTypesBulkAdd } from './ServiceTypes';
 import { TenantList, TenantChange } from './Tenants';
 import { OperationsProfilesList, OperationsProfileDetails } from './OperationsProfiles';
 import { CookiePolicy } from './CookiePolicy';
@@ -144,7 +144,19 @@ const RedirectAfterLogin = ({isSuperUser}) => {
 }
 
 
-const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, webApiOperations, webApiReports, webApiServiceTypes, token, tenantName, isSuperUser, userGroups}) => (
+const TenantRouteSwitch = ({
+  webApiAggregation,
+  webApiMetric,
+  webApiThresholds,
+  webApiOperations,
+  webApiReports,
+  webApiServiceTypes,
+  token,
+  tenantName,
+  showServiceTitle,
+  isSuperUser,
+  userGroups
+}) => (
   <Switch>
     <Route exact path="/ui/login" render={props => <RedirectAfterLogin isSuperUser={isSuperUser} {...props}/>}/>
     <Route exact path="/ui/home" component={Home} />
@@ -195,6 +207,8 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
       render={props => <MetricProfilesChange
         {...props}
         webapimetric={webApiMetric}
+        webapiaggregation={webApiAggregation}
+        webapireports={webApiReports}
         webapiservicetypes={webApiServiceTypes}
         webapitoken={token}
         tenantname={tenantName}/>}
@@ -238,6 +252,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         {...props}
         webapiaggregation={webApiAggregation}
         webapimetric={webApiMetric}
+        webapireports={webApiReports}
         webapitoken={token}
         tenantname={tenantName}/>}
       />
@@ -545,6 +560,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         {...props}
         webapitoken={token}
         webapiservicetypes={webApiServiceTypes}
+        showtitles={showServiceTitle}
       />}
     />
     <SuperUserRoute
@@ -554,6 +570,7 @@ const TenantRouteSwitch = ({webApiAggregation, webApiMetric, webApiThresholds, w
         {...props}
         webapitoken={token}
         webapiservicetypes={webApiServiceTypes}
+        showtitles={showServiceTitle}
       />}
     />
     <Route component={NotFound} />
@@ -640,6 +657,7 @@ const App = () => {
   const [token, setToken] = useState(undefined);
   const [version, setVersion] = useState(undefined);
   const [isTenantSchema, setIsTenantSchema] = useState(null);
+  const [showServiceTitle, setShowServiceTitle] = useState(undefined)
 
   async function onLogin(json) {
     let response = new Object({
@@ -678,6 +696,7 @@ const App = () => {
       setWebApiReports(options && options.result.webapireports);
       setWebApiServiceTypes(options && options.result.webapiservicetypes);
       setTenantName(options && options.result.tenant_name);
+      setShowServiceTitle(options && options.result.use_service_title)
     }
     options && prefetchData(false, poemType, options, poemType ? response.userdetails.token : null)
   }
@@ -699,6 +718,7 @@ const App = () => {
     setPrivacyLink(options && options.result.terms_privacy_links.privacy);
     setTermsLink(options && options.result.terms_privacy_links.terms);
     setTenantName(options && options.result.tenant_name);
+    setShowServiceTitle(options && options.result.use_service_title)
     setPublicView(true);
     options && prefetchData(true, isTenantSchema, options, token)
   }
@@ -1097,10 +1117,12 @@ const App = () => {
               <Route exact path="/ui/public_servicetypes"
                 render={props =>
                   <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
-                    <ServiceTypesListPublic
+                    <ServiceTypesList
                       {...props}
                       webapitoken={token}
                       webapiservicetypes={webApiServiceTypes}
+                      showtitles={showServiceTitle}
+                      publicView={ true }
                     />
                   </PublicPage>
                 }
@@ -1283,6 +1305,7 @@ const App = () => {
                     webApiServiceTypes={webApiServiceTypes}
                     token={token}
                     tenantName={tenantName}
+                    showServiceTitle={showServiceTitle}
                     isSuperUser={userDetails.is_superuser}
                     userGroups={userDetails.groups}/>
                   :

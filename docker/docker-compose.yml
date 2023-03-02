@@ -9,6 +9,7 @@ services:
     hostname: poem-react
     tty: true
     stdin_open: true
+    user: user
     ports:
       - "8000:8000"
     depends_on:
