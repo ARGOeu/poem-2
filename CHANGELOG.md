@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.4.7] - 2023-03-02
+
+### Added
+
+* ARGO-4213 Add title field for service types
+
+### Changed
+
+* ARGO-4214 Bump libs
+
 ## [3.4.6] - 2023-02-01
 
 ### Added
