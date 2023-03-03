@@ -86,6 +86,16 @@ const ReportsSchema = Yup.object().shape({
         else
           return false
       })
+      .test("regex", "Value not matching predefined values", function (vals) {
+        if (Array.isArray(vals)) {
+          let groupsTags = this.options.context.allTags.filter(tag => tag.name === "groups")[0]["values"]
+          let tagValues = groupsTags.filter(tag => tag.name === this.parent.name)[0]["values"]
+          let invalidValues = getInvalidValues(vals, tagValues)
+
+          return invalidValues.length === 0
+        } else
+          return true
+      })
     })
   ),
   endpointsTags: Yup.array().of(
@@ -109,12 +119,39 @@ const ReportsSchema = Yup.object().shape({
         else
           return false
       })
+      .test("regex", "Value not matching predefined values", function (vals) {
+        if (Array.isArray(vals)) {
+          let groupsTags = this.options.context.allTags.filter(tag => tag.name === "endpoints")[0]["values"]
+          let tagValues = groupsTags.filter(tag => tag.name === this.parent.name)[0]["values"]
+          let invalidValues = getInvalidValues(vals, tagValues)
+
+          return invalidValues.length === 0
+        } else
+          return true
+      })
     })
   )
 })
 
 export const ReportsAdd = (props) => <ReportsComponent addview={true} {...props}/>;
 export const ReportsChange = (props) => <ReportsComponent {...props}/>;
+
+
+const getInvalidValues = (values, tagValues) => {
+  let invalidValues = []
+  for (let val of values) {
+    if (val.includes("*")) {
+      if (tagValues.filter(tag => tag.match(new RegExp(`${val.replace("*", ".*")}`))).length === 0)
+        invalidValues.push(val)
+    } else {
+      if (tagValues.indexOf(val) === -1) {
+        invalidValues.push(val)
+      }
+    }
+  }
+
+  return invalidValues
+}
 
 
 const fetchReport = async (webapi, name) => {
@@ -342,6 +379,7 @@ const TagSelect = ({forwardedRef, tagOptions, onChangeHandler, isMulti,
 const TagCreatable = ({
   forwardedRef,
   tagOptions,
+  invalidValues,
   onChangeHandler,
   tagInitials,
   error
@@ -356,6 +394,7 @@ const TagCreatable = ({
         onChange={ onChangeHandler }
         options={ tagOptions }
         defaultValue={ tagInitials }
+        invalidValues={ invalidValues }
         error={ error }
       />
     )
@@ -368,6 +407,7 @@ const TagCreatable = ({
         isClearable={ false }
         onChange={ onChangeHandler }
         options={ tagOptions }
+        invalidValues={ invalidValues }
         error={ error }
       />
     )
@@ -434,13 +474,15 @@ const TopologyTagList = ({ part, fieldName, tagsAll, publicView }) => {
     return []
   }
 
-  const { control, getValues, setValue, resetField, clearErrors, formState: { errors } } = useFormContext()
+  const { control, getValues, setValue, resetField, clearErrors, trigger, formState: { errors } } = useFormContext()
 
   const { fields, append, remove } = useFieldArray({ control, name: fieldName })
 
   const tagsStateName = fieldName.toLowerCase().endsWith("tags") ? "tagsState" : "extensionsState"
 
   const tagsState = useWatch({ control, name: tagsStateName })
+
+  const [invalidValues, setInvalidValues] = useState(new Array())
 
   return (
     <React.Fragment>
@@ -529,10 +571,14 @@ const TopologyTagList = ({ part, fieldName, tagsAll, publicView }) => {
                                 forwardedRef={ field.ref }
                                 tagOptions={ extractValuesTags(index) }
                                 onChangeHandler={ value => {
-                                  setValue(`${fieldName}.${index}.value`, value.map(val => val.value))
+                                  let fieldValues = value.map(val => val.value)
+                                  setValue(`${fieldName}.${index}.value`, fieldValues)
+                                  setInvalidValues(getInvalidValues(fieldValues, extractValuesTags(index).map(tag => tag.value)))
                                   clearErrors(`${fieldName}.${index}.value`)
+                                  trigger(`${fieldName}.${index}.value`)
                                 }}
                                 tagInitials={ tagsInitValues(field.value) }
+                                invalidValues={ invalidValues }
                                 error={ errors?.[fieldName]?.[index]?.value }
                               />
                             :
@@ -905,7 +951,8 @@ const ReportsForm = ({
   const methods = useForm({
     defaultValues: initValues,
     mode: "all",
-    resolver: yupResolver(ReportsSchema)
+    resolver: yupResolver(ReportsSchema),
+    context: { allTags: context.allTags, allExtensions: context.allExtensions }
   })
 
   const extractProfileNames = (profiles) => {

@@ -312,7 +312,9 @@ export const CustomReactCreatable = ({ forwardedRef=undefined, ...props}) => {
         outline: '5px auto -webkit-focus-ring-color',
       },
     }),
-    multiValue: (provided) => provided,
+    multiValue: (base, state) => {
+      return (props.invalidValues && props.invalidValues.includes(state.data.value)) ? {...base, backgroundColor: '#f8d7da'} : base;
+    },
     multiValueRemove: (provided) => provided
   }
   const DropdownIndicator = ({ ...props }) => {
