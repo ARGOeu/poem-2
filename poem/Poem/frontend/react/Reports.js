@@ -98,6 +98,39 @@ const ReportsSchema = Yup.object().shape({
       })
     })
   ),
+  groupsExtensions: Yup.array().of(
+    Yup.object().shape({
+      name: Yup.string().required("Required"),
+      value: Yup.mixed().test("custom_required", "Required", function (val) {
+        if (Array.isArray(val))
+          if (val.length === 0)
+            return false
+
+          else
+            return true
+
+        else if (typeof(val) == "string")
+          if (val === "")
+            return false
+
+          else
+            return true
+
+        else
+          return false
+      })
+      .test("regex", "Value not matching predefined values", function (vals) {
+        if (Array.isArray(vals)) {
+          let groupsExt = this.options.context.allExtensions.filter(ext => ext.name === "groups")[0]["values"]
+          let extValues = groupsExt.filter(ext => ext.name === this.parent.name)[0]["values"]
+          let invalidValues = getInvalidValues(vals, extValues)
+
+          return invalidValues.length === 0
+        } else
+          return true
+      })
+    })
+  ),
   endpointsTags: Yup.array().of(
     Yup.object().shape({
       name: Yup.string().required("Required"),
@@ -130,7 +163,40 @@ const ReportsSchema = Yup.object().shape({
           return true
       })
     })
-  )
+  ),
+  endpointsExtensions: Yup.array().of(
+    Yup.object().shape({
+      name: Yup.string().required("Required"),
+      value: Yup.mixed().test("custom_required", "Required", function (val) {
+        if (Array.isArray(val))
+          if (val.length === 0)
+            return false
+
+          else
+            return true
+
+        else if (typeof(val) == "string")
+          if (val === "")
+            return false
+
+          else
+            return true
+
+        else
+          return false
+      })
+      .test("regex", "Value not matching predefined values", function (vals) {
+        if (Array.isArray(vals)) {
+          let groupsExt = this.options.context.allExtensions.filter(ext => ext.name === "endpoints")[0]["values"]
+          let extValues = groupsExt.filter(ext => ext.name === this.parent.name)[0]["values"]
+          let invalidValues = getInvalidValues(vals, extValues)
+
+          return invalidValues.length === 0
+        } else
+          return true
+      })
+    })
+  ),
 })
 
 export const ReportsAdd = (props) => <ReportsComponent addview={true} {...props}/>;
