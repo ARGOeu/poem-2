@@ -96,6 +96,14 @@ const ReportsSchema = Yup.object().shape({
         } else
           return true
       })
+      .test("regex-duplicate", "Duplicate values", function (vals) {
+        if (Array.isArray(vals)) {
+          let invalidValues = getWildcardDuplicates(vals)
+
+          return invalidValues.length === 0
+        } else
+          return true
+      })
     })
   ),
   groupsExtensions: Yup.array().of(
@@ -124,6 +132,14 @@ const ReportsSchema = Yup.object().shape({
           let groupsExt = this.options.context.allExtensions.filter(ext => ext.name === "groups")[0]["values"]
           let extValues = groupsExt.filter(ext => ext.name === this.parent.name)[0]["values"]
           let invalidValues = getInvalidValues(vals, extValues)
+
+          return invalidValues.length === 0
+        } else
+          return true
+      })
+      .test("regex-duplicate", "Duplicate values", function (vals) {
+        if (Array.isArray(vals)) {
+          let invalidValues = getWildcardDuplicates(vals)
 
           return invalidValues.length === 0
         } else
@@ -162,6 +178,14 @@ const ReportsSchema = Yup.object().shape({
         } else
           return true
       })
+      .test("regex-duplicate", "Duplicate values", function (vals) {
+        if (Array.isArray(vals)) {
+          let invalidValues = getWildcardDuplicates(vals)
+
+          return invalidValues.length === 0
+        } else
+          return true
+      })
     })
   ),
   endpointsExtensions: Yup.array().of(
@@ -195,6 +219,14 @@ const ReportsSchema = Yup.object().shape({
         } else
           return true
       })
+      .test("regex-duplicate", "Duplicate values", function (vals) {
+        if (Array.isArray(vals)) {
+          let invalidValues = getWildcardDuplicates(vals)
+
+          return invalidValues.length === 0
+        } else
+          return true
+      })
     })
   ),
 })
@@ -217,6 +249,29 @@ const getInvalidValues = (values, tagValues) => {
   }
 
   return invalidValues
+}
+
+
+const getWildcardDuplicates = (values) => {
+  let duplicates = []
+
+  let withWildcard = values.filter(val => val.includes("*"))
+
+  if (withWildcard.length > 0) {
+    for (let w of withWildcard) {
+      let wDuplicates = []
+      for (let value of values.filter(val => !val.includes("*"))) {
+        if (value.match(new RegExp(`${w.replace("*", ".*")}`)))
+          wDuplicates.push(value)
+      }
+      if (wDuplicates.length > 0) {
+        duplicates.push(...wDuplicates)
+        duplicates.push(w)
+      }
+    }
+  }
+
+  return duplicates
 }
 
 
@@ -639,7 +694,12 @@ const TopologyTagList = ({ part, fieldName, tagsAll, publicView }) => {
                                 onChangeHandler={ value => {
                                   let fieldValues = value.map(val => val.value)
                                   setValue(`${fieldName}.${index}.value`, fieldValues)
-                                  setInvalidValues(getInvalidValues(fieldValues, extractValuesTags(index).map(tag => tag.value)))
+                                  let invalidValues = getInvalidValues(fieldValues, extractValuesTags(index).map(tag => tag.value))
+                                  let duplicateValues = getWildcardDuplicates(fieldValues)
+                                  if (invalidValues)
+                                    setInvalidValues(invalidValues)
+                                  if (duplicateValues)
+                                    setInvalidValues(duplicateValues)
                                   clearErrors(`${fieldName}.${index}.value`)
                                   trigger(`${fieldName}.${index}.value`)
                                 }}
