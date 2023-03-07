@@ -1,8 +1,10 @@
 import datetime
+import re
 
 from Poem.api.models import MyAPIKey
 from Poem.api.views import NotFound
 from Poem.poem import models as poem_models
+from Poem.poem_super_admin.models import WebAPIKey
 from django.db.models import Q
 from django_tenants.utils import get_public_schema_name
 from rest_framework import status
@@ -18,31 +20,10 @@ class ListAPIKeys(APIView):
 
     def get(self, request, name=None):
         if name:
-            try:
-                if request.tenant.schema_name == get_public_schema_name():
-                    regular_user = None
-                    regular_user_no_perms = None
-
-                else:
-                    userprofile = poem_models.UserProfile.objects.get(
-                        user=request.user
-                    )
-                    regular_user = not request.user.is_superuser and (
-                        len(userprofile.groupsofaggregations.all()) > 0 or
-                        len(userprofile.groupsofmetricprofiles.all()) > 0 or
-                        len(userprofile.groupsofthresholdsprofiles.all()) > 0
-                    )
-                    regular_user_no_perms = not request.user.is_superuser and (
-                        len(userprofile.groupsofaggregations.all()) == 0 and
-                        len(userprofile.groupsofmetricprofiles.all()) == 0 and
-                        len(userprofile.groupsofthresholdsprofiles.all()) == 0
-                    )
-                if request.user.is_superuser or (
-                    regular_user and name.startswith('WEB-API')
-                ) or (
-                    regular_user_no_perms and name == 'WEB-API-RO'
-                ):
+            if request.user.is_superuser:
+                try:
                     apikey = MyAPIKey.objects.get(name=name)
+
                     api_format = dict(
                         id=apikey.id,
                         name=apikey.name,
@@ -53,20 +34,14 @@ class ListAPIKeys(APIView):
                         revoked=apikey.revoked
                     )
 
-                else:
-                    return error_response(
-                        detail='You do not have permission for fetching this '
-                               'API key.',
-                        status_code=status.HTTP_401_UNAUTHORIZED
-                    )
+                except MyAPIKey.DoesNotExist:
+                    raise NotFound(status=404, detail='API key not found')
 
-            except MyAPIKey.DoesNotExist:
-                raise NotFound(status=404, detail='API key not found')
-
-            except poem_models.UserProfile.DoesNotExist:
-                raise NotFound(
-                    status=404,
-                    detail='User profile for authenticated user not found.'
+            else:
+                return error_response(
+                    detail='You do not have permission for fetching this '
+                           'API key.',
+                    status_code=status.HTTP_401_UNAUTHORIZED
                 )
 
         else:
@@ -192,5 +167,98 @@ class ListPublicAPIKey(APIView):
 
         except MyAPIKey.DoesNotExist:
             raise NotFound(status=404, detail='API key not found')
+
+        return Response(api_format)
+
+
+class ListWebAPIKeys(APIView):
+    def get(self, request, name=None):
+        if request.tenant.schema_name == get_public_schema_name():
+            superuser = request.user.is_superuser
+            tenant_superuser = None
+            regular_user = None
+            regular_user_no_perms = None
+            if not superuser:
+                return error_response(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="You do not have permission to view Web API keys"
+                )
+
+        else:
+            try:
+                userprofile = poem_models.UserProfile.objects.get(
+                    user=request.user
+                )
+
+            except poem_models.UserProfile.DoesNotExist:
+                raise NotFound(
+                    status=404,
+                    detail='User profile for authenticated user not found.'
+                )
+
+            superuser = None
+            tenant_superuser = request.user.is_superuser
+            regular_user = not tenant_superuser and (
+                    len(userprofile.groupsofaggregations.all()) > 0 or
+                    len(userprofile.groupsofmetricprofiles.all()) > 0 or
+                    len(userprofile.groupsofthresholdsprofiles.all()) > 0
+            )
+            regular_user_no_perms = not tenant_superuser and (
+                    len(userprofile.groupsofaggregations.all()) == 0 and
+                    len(userprofile.groupsofmetricprofiles.all()) == 0 and
+                    len(userprofile.groupsofthresholdsprofiles.all()) == 0
+            )
+
+        if name:
+            if superuser or (
+                    (regular_user or tenant_superuser) and
+                    re.match(f"^WEB-API-{request.tenant.name}(-RO)?$", name)
+            ) or (
+                    regular_user_no_perms and
+                    name == f"WEB-API-{request.tenant.name}-RO"
+            ):
+                apikey = WebAPIKey.objects.get(name=name)
+                api_format = dict(
+                    id=apikey.id,
+                    name=apikey.name,
+                    token=apikey.token,
+                    created=datetime.datetime.strftime(
+                        apikey.created, "%Y-%m-%d %H:%M:%S"
+                    ),
+                    revoked=apikey.revoked
+                )
+
+            else:
+                return error_response(
+                    detail="You do not have permission to view requested "
+                           "Web API key",
+                    status_code=status.HTTP_401_UNAUTHORIZED
+                )
+
+        else:
+            if superuser:
+                apikeys = WebAPIKey.objects.all().order_by("name")
+
+            else:
+                if regular_user_no_perms:
+                    apikeys = WebAPIKey.objects.filter(
+                        name=f"WEB-API-{request.tenant.name}-RO"
+                    )
+
+                else:
+                    apikeys = WebAPIKey.objects.filter(
+                        name__iregex=rf"^WEB-API-{request.tenant.name}(-RO)?$"
+                    ).order_by("name")
+
+            api_format = [
+                dict(
+                    id=e.id,
+                    name=e.name,
+                    created=datetime.datetime.strftime(
+                        e.created, '%Y-%m-%d %H:%M:%S'
+                    ),
+                    revoked=e.revoked
+                ) for e in apikeys
+            ]
 
         return Response(api_format)
