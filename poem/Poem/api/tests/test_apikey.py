@@ -530,11 +530,30 @@ class ListWebAPIKeysViewTests(TenantTestCase):
             }
         )
 
+    def test_get_nonexisting_webapikey_name_superpoem_superuser(self):
+        request = self.factory.get(self.url + "NONEXISTING")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superpoem_superuser)
+        response = self.view(request, "NONEXISTING")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data["detail"], "Web API key not found")
+
     def test_get_webapikey_name_superpoem_regular_user(self):
         request = self.factory.get(self.url + "WEB-API-TENANT")
         request.tenant = self.public_tenant
         force_authenticate(request, user=self.superpoem_user)
         response = self.view(request, "WEB-API-TENANT")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to view Web API keys"
+        )
+
+    def test_get_nonexising_webapikey_name_superpoem_regular_user(self):
+        request = self.factory.get(self.url + "NONEXISTING")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superpoem_user)
+        response = self.view(request, "NONEXISTING")
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(
             response.data["detail"],
@@ -555,6 +574,17 @@ class ListWebAPIKeysViewTests(TenantTestCase):
                 'created': self.created1,
                 'revoked': False
             }
+        )
+
+    def test_get_nonexising_webapikey_name_tenant_superuser(self):
+        request = self.factory.get(self.url + "NONEXISTING")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, "NONEXISTING")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to view requested Web API key"
         )
 
     def test_get_webapikey_name_tenant_superuser_wrong_tenant_name(self):
@@ -582,6 +612,17 @@ class ListWebAPIKeysViewTests(TenantTestCase):
                 'created': self.created1,
                 'revoked': False
             }
+        )
+
+    def test_get_nonexisting_webapikey_tenant_user(self):
+        request = self.factory.get(self.url + "NONEXISTING")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request, "NONEXISTING")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to view requested Web API key"
         )
 
     def test_get_webapikey_tenant_user_another_tenant_key(self):
@@ -620,6 +661,17 @@ class ListWebAPIKeysViewTests(TenantTestCase):
                 "created": self.created2,
                 "revoked": False
             }
+        )
+
+    def test_get_nonexisting_webapikey_tenant_poor_user(self):
+        request = self.factory.get(self.url + "NONEXISTING")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.poor_user)
+        response = self.view(request, "NONEXISTING")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to view requested Web API key"
         )
 
     def test_get_webapikey_tenant_poor_user_other_tenant_key(self):

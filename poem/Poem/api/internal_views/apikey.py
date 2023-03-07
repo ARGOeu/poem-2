@@ -217,7 +217,15 @@ class ListWebAPIKeys(APIView):
                     regular_user_no_perms and
                     name == f"WEB-API-{request.tenant.name}-RO"
             ):
-                apikey = WebAPIKey.objects.get(name=name)
+                try:
+                    apikey = WebAPIKey.objects.get(name=name)
+
+                except WebAPIKey.DoesNotExist:
+                    raise NotFound(
+                        status=status.HTTP_404_NOT_FOUND,
+                        detail="Web API key not found"
+                    )
+
                 api_format = dict(
                     id=apikey.id,
                     name=apikey.name,
