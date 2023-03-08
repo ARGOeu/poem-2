@@ -27,7 +27,7 @@ import {
 } from 'reactstrap';
 import { faClipboard } from '@fortawesome/free-solid-svg-icons';
 import { useQuery, useQueryClient, useMutation } from 'react-query';
-import { fetchAPIKeys } from './QueryFunctions';
+import { fetchAPIKeys, fetchWebAPIKeys } from './QueryFunctions';
 import { Controller, useForm } from 'react-hook-form';
 
 
@@ -38,13 +38,24 @@ const fetchAPIKey = async(name) => {
 }
 
 
+const sortKeys = (a, b) => {
+  if (a.name.toLowerCase() < b.name.toLowerCase()) return -1;
+  if (a.name.toLowerCase() > b.name.toLowerCase()) return 1;
+  else return 0
+}
+
+
 export const APIKeyList = (props) => {
   const location = props.location;
 
   const queryClient = useQueryClient();
 
-  const { data: keys, error: error, status: status } = useQuery(
+  const { data: poemKeys, error: poemKeysError, isLoading: poemKeysLoading } = useQuery(
     'apikey', () => fetchAPIKeys()
+  )
+
+  const { data: webApiKeys, error: webApiKeysError, isLoading: webApiKeysLoading } = useQuery(
+    "webapikey", () => fetchWebAPIKeys()
   )
 
   const columns = React.useMemo(
@@ -99,13 +110,17 @@ export const APIKeyList = (props) => {
     ], [queryClient]
   );
 
-  if (status === 'loading')
-    return (<LoadingAnim/>);
+  if (poemKeysLoading || webApiKeysLoading)
+    return (<LoadingAnim/>)
 
-  else if (status === 'error')
-    return (<ErrorComponent error={error}/>);
+  else if (poemKeysError)
+    return (<ErrorComponent error={ poemKeysError } />)
 
-  else if (keys) {
+  else if (webApiKeysError)
+    return (<ErrorComponent error={ webApiKeysError } />)
+
+  else if (poemKeys && webApiKeys) {
+    const keys = [...poemKeys, ...webApiKeys].sort(sortKeys)
     return (
       <BaseArgoView
         resourcename='API key'
@@ -115,7 +130,7 @@ export const APIKeyList = (props) => {
         <BaseArgoTable
           data={keys}
           columns={columns}
-          page_size={5}
+          page_size={10}
           resourcename='API keys'
         />
       </BaseArgoView>

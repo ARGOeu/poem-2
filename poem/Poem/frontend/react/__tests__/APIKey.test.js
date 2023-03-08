@@ -66,17 +66,41 @@ const mockAPIKeys = [
   }
 ];
 
+
+const mockWebAPIKeys = [
+  {
+    id: 1,
+    name: 'WEB-API-TENANT1',
+    created: '2023-03-08 08:56:34',
+    revoked: false
+  },
+  {
+    id: 3,
+    name: 'WEB-API-TENANT1-RO',
+    created: '2023-03-08 09:00:00',
+    revoked: false
+  },
+  {
+    id: 2,
+    name: 'WEB-API-TENANT2',
+    created: '2023-03-08 08:58:28',
+    revoked: false
+  },
+  {
+    id: 4,
+    name: 'WEB-API-TENANT2-RO',
+    created: '2023-03-08 09:01:20',
+    revoked: false
+  }
+];
+
 const mockChangeObject = jest.fn();
 const mockAddObject = jest.fn();
 const mockDeleteObject = jest.fn();
 
 jest.mock('../DataManager', () => {
   return {
-    Backend: jest.fn().mockImplementation(() => {
-      return {
-        fetchData: () => Promise.resolve(mockAPIKeys)
-      }
-    })
+    Backend: jest.fn()
   }
 })
 
@@ -92,6 +116,22 @@ afterEach(() => {
 })
 
 describe("Tests for API keys listview", () => {
+  beforeAll(() => {
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: (path) => {
+          switch (path) {
+            case "/api/v2/internal/apikeys":
+              return Promise.resolve(mockAPIKeys)
+
+            case "/api/v2/internal/webapikeys":
+              return Promise.resolve(mockWebAPIKeys)
+          }
+        }
+      }
+    })
+  })
+
   it('Render properly', async () => {
     renderWithRouterMatch(APIKeyList)
 
@@ -105,13 +145,20 @@ describe("Tests for API keys listview", () => {
     expect(screen.getByRole('columnheader', {name: /#/i}).textContent).toBe('#')
     expect(screen.getByRole('columnheader', {name: /created/i}).textContent).toBe('Created')
     expect(screen.getByRole('columnheader', {name: /revoked/i}).textContent).toBe('Revoked')
-    expect(screen.getAllByRole('row')).toHaveLength(6)
-    expect(screen.getAllByRole('row', {name: ''})).toHaveLength(3)
-    expect(screen.getAllByRole('row', {name: /token/i})).toHaveLength(2)
+    expect(screen.getAllByRole('row')).toHaveLength(11)
+    expect(screen.getAllByRole('row', {name: ''})).toHaveLength(4)
     expect(screen.getByRole('row', {name: /first_token/i}).textContent).toBe('1FIRST_TOKEN2020-11-09 13:00:00')
     expect(screen.getByRole('row', {name: /second_token/i}).textContent).toBe('2SECOND_TOKEN2020-11-09 13:10:01')
-    expect(screen.getByRole('link', {name: /first/i})).toHaveProperty('href', 'http://localhost/ui/administration/apikey/FIRST_TOKEN')
+    expect(screen.getAllByRole("row", { name: /web-api-tenant1/i })[0].textContent).toBe("3WEB-API-TENANT12023-03-08 08:56:34")
+    expect(screen.getByRole("row", { name: /web-api-tenant1-ro/i }).textContent).toBe("4WEB-API-TENANT1-RO2023-03-08 09:00:00")
+    expect(screen.getAllByRole("row", { name: /web-api-tenant2/i })[0].textContent).toBe("5WEB-API-TENANT22023-03-08 08:58:28")
+    expect(screen.getByRole("row", { name: /web-api-tenant2-ro/i }).textContent).toBe("6WEB-API-TENANT2-RO2023-03-08 09:01:20")
+    expect(screen.getByRole("link", { name: /first/i })).toHaveProperty("href", "http://localhost/ui/administration/apikey/FIRST_TOKEN")
     expect(screen.getByRole('link', {name: /second/i})).toHaveProperty('href', 'http://localhost/ui/administration/apikey/SECOND_TOKEN')
+    expect(screen.getByRole("link", { name: "WEB-API-TENANT1" })).toHaveProperty("href", "http://localhost/ui/administration/apikey/WEB-API-TENANT1")
+    expect(screen.getByRole("link", { name: "WEB-API-TENANT1-RO" })).toHaveProperty("href", "http://localhost/ui/administration/apikey/WEB-API-TENANT1-RO")
+    expect(screen.getByRole("link", { name: "WEB-API-TENANT2" })).toHaveProperty("href", "http://localhost/ui/administration/apikey/WEB-API-TENANT2")
+    expect(screen.getByRole("link", { name: "WEB-API-TENANT2-RO" })).toHaveProperty("href", "http://localhost/ui/administration/apikey/WEB-API-TENANT2-RO")
     expect(screen.getByRole('button', {name: 'Add'})).toBeTruthy()
   })
 
@@ -134,8 +181,8 @@ describe("Tests for API keys listview", () => {
     expect(screen.getByRole('columnheader', {name: /#/i}).textContent).toBe('#')
     expect(screen.getByRole('columnheader', {name: /created/i}).textContent).toBe('Created')
     expect(screen.getByRole('columnheader', {name: /revoked/i}).textContent).toBe('Revoked')
-    expect(screen.getAllByRole('row')).toHaveLength(6)
-    expect(screen.getAllByRole('row', {name: ''})).toHaveLength(4)
+    expect(screen.getAllByRole('row')).toHaveLength(11)
+    expect(screen.getAllByRole('row', {name: ''})).toHaveLength(9)
     expect(screen.getByRole('row', {name: /no/i}).textContent).toBe('No API keys')
     expect(screen.getByRole('button', {name: 'Add'})).toBeTruthy()
   })
