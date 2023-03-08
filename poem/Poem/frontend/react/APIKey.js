@@ -23,7 +23,8 @@ import {
   InputGroup,
   InputGroupText,
   Input,
-  Form
+  Form,
+  Badge
 } from 'reactstrap';
 import { faClipboard } from '@fortawesome/free-solid-svg-icons';
 import { useQuery, useQueryClient, useMutation } from 'react-query';
@@ -79,7 +80,7 @@ export const APIKeyList = (props) => {
           >
             {e.name}
           </Link>,
-        column_width: '73%'
+        column_width: '70%'
       },
       {
         Header: 'Created',
@@ -106,6 +107,15 @@ export const APIKeyList = (props) => {
             :
               <FontAwesomeIcon icon={faTimesCircle} style={{color: "#CC0000"}}/>,
         column_width: '5%'
+      },
+      {
+        Header: "Used for",
+        id: "usage",
+        accessor: e =>
+          <Badge color={ `${e.usage === "poem" ? "success" : "secondary"}` }>
+            { e.usage }
+          </Badge>,
+        column_width: "3%"
       }
     ], [queryClient]
   );
@@ -120,7 +130,9 @@ export const APIKeyList = (props) => {
     return (<ErrorComponent error={ webApiKeysError } />)
 
   else if (poemKeys && webApiKeys) {
-    const keys = [...poemKeys, ...webApiKeys].sort(sortKeys)
+    let newPoemKeys = poemKeys.map(key => ({...key, usage: "poem"}))
+    let newWebApiKeys = webApiKeys.map(key => ({...key, usage: "webapi"}))
+    const keys = [...newPoemKeys, ...newWebApiKeys].sort(sortKeys)
     return (
       <BaseArgoView
         resourcename='API key'
