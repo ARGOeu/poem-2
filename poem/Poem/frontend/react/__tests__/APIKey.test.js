@@ -56,43 +56,46 @@ const mockAPIKeys = [
     id: 1,
     name: 'FIRST_TOKEN',
     created: '2020-11-09 13:00:00',
-    revoked: false
+    revoked: false,
+    used_by: "poem"
   },
   {
     id: 2,
     name: 'SECOND_TOKEN',
     created: '2020-11-09 13:10:01',
-    revoked: false
-  }
-];
-
-
-const mockWebAPIKeys = [
+    revoked: false,
+    used_by: "poem"
+  },
   {
     id: 1,
     name: 'WEB-API-TENANT1',
     created: '2023-03-08 08:56:34',
-    revoked: false
+    revoked: false,
+    used_by: "webapi"
   },
   {
     id: 3,
     name: 'WEB-API-TENANT1-RO',
     created: '2023-03-08 09:00:00',
-    revoked: false
+    revoked: false,
+    used_by: "webapi"
   },
   {
     id: 2,
     name: 'WEB-API-TENANT2',
     created: '2023-03-08 08:58:28',
-    revoked: false
+    revoked: false,
+    used_by: "webapi"
   },
   {
     id: 4,
     name: 'WEB-API-TENANT2-RO',
     created: '2023-03-08 09:01:20',
-    revoked: false
+    revoked: false,
+    used_by: "webapi"
   }
-];
+]
+
 
 const mockChangeObject = jest.fn();
 const mockAddObject = jest.fn();
@@ -119,15 +122,7 @@ describe("Tests for API keys listview", () => {
   beforeAll(() => {
     Backend.mockImplementation(() => {
       return {
-        fetchData: (path) => {
-          switch (path) {
-            case "/api/v2/internal/apikeys":
-              return Promise.resolve(mockAPIKeys)
-
-            case "/api/v2/internal/webapikeys":
-              return Promise.resolve(mockWebAPIKeys)
-          }
-        }
+        fetchData: () => Promise.resolve(mockAPIKeys)
       }
     })
   })
@@ -145,7 +140,7 @@ describe("Tests for API keys listview", () => {
     expect(screen.getByRole('columnheader', {name: /#/i}).textContent).toBe('#')
     expect(screen.getByRole('columnheader', {name: /created/i}).textContent).toBe('Created')
     expect(screen.getByRole('columnheader', {name: /revoked/i}).textContent).toBe('Revoked')
-    expect(screen.getByRole("columnheader", { name: /used for/i }).textContent).toBe("Used for")
+    expect(screen.getByRole("columnheader", { name: /used by/i }).textContent).toBe("Used by")
     expect(screen.getAllByRole('row')).toHaveLength(11)
     expect(screen.getAllByRole('row', {name: ''})).toHaveLength(4)
     expect(screen.getByRole('row', {name: /first_token/i}).textContent).toBe('1FIRST_TOKEN2020-11-09 13:00:00poem')
@@ -182,7 +177,7 @@ describe("Tests for API keys listview", () => {
     expect(screen.getByRole('columnheader', {name: /#/i}).textContent).toBe('#')
     expect(screen.getByRole('columnheader', {name: /created/i}).textContent).toBe('Created')
     expect(screen.getByRole('columnheader', {name: /revoked/i}).textContent).toBe('Revoked')
-    expect(screen.getByRole("columnheader", { name: /used for/i }).textContent).toBe("Used for")
+    expect(screen.getByRole("columnheader", { name: /used by/i }).textContent).toBe("Used by")
     expect(screen.getAllByRole('row')).toHaveLength(11)
     expect(screen.getAllByRole('row', {name: ''})).toHaveLength(9)
     expect(screen.getByRole('row', {name: /no/i}).textContent).toBe('No API keys')

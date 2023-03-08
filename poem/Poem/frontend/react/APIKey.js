@@ -28,7 +28,7 @@ import {
 } from 'reactstrap';
 import { faClipboard } from '@fortawesome/free-solid-svg-icons';
 import { useQuery, useQueryClient, useMutation } from 'react-query';
-import { fetchAPIKeys, fetchWebAPIKeys } from './QueryFunctions';
+import { fetchAPIKeys } from './QueryFunctions';
 import { Controller, useForm } from 'react-hook-form';
 
 
@@ -39,24 +39,13 @@ const fetchAPIKey = async(name) => {
 }
 
 
-const sortKeys = (a, b) => {
-  if (a.name.toLowerCase() < b.name.toLowerCase()) return -1;
-  if (a.name.toLowerCase() > b.name.toLowerCase()) return 1;
-  else return 0
-}
-
-
 export const APIKeyList = (props) => {
   const location = props.location;
 
   const queryClient = useQueryClient();
 
-  const { data: poemKeys, error: poemKeysError, isLoading: poemKeysLoading } = useQuery(
+  const { data: keys, error, isLoading: loading } = useQuery(
     'apikey', () => fetchAPIKeys()
-  )
-
-  const { data: webApiKeys, error: webApiKeysError, isLoading: webApiKeysLoading } = useQuery(
-    "webapikey", () => fetchWebAPIKeys()
   )
 
   const columns = React.useMemo(
@@ -109,30 +98,24 @@ export const APIKeyList = (props) => {
         column_width: '5%'
       },
       {
-        Header: "Used for",
-        id: "usage",
+        Header: "Used by",
+        id: "used_by",
         accessor: e =>
-          <Badge color={ `${e.usage === "poem" ? "success" : "secondary"}` }>
-            { e.usage }
+          <Badge color={ `${e.used_by === "poem" ? "success" : "secondary"}` }>
+            { e.used_by }
           </Badge>,
         column_width: "3%"
       }
     ], [queryClient]
   );
 
-  if (poemKeysLoading || webApiKeysLoading)
+  if (loading)
     return (<LoadingAnim/>)
 
-  else if (poemKeysError)
-    return (<ErrorComponent error={ poemKeysError } />)
+  else if (error)
+    return (<ErrorComponent error={ error } />)
 
-  else if (webApiKeysError)
-    return (<ErrorComponent error={ webApiKeysError } />)
-
-  else if (poemKeys && webApiKeys) {
-    let newPoemKeys = poemKeys.map(key => ({...key, usage: "poem"}))
-    let newWebApiKeys = webApiKeys.map(key => ({...key, usage: "webapi"}))
-    const keys = [...newPoemKeys, ...newWebApiKeys].sort(sortKeys)
+  else if (keys) {
     return (
       <BaseArgoView
         resourcename='API key'

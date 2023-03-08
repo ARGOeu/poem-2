@@ -116,13 +116,6 @@ export const fetchAPIKeys = async () => {
 }
 
 
-export const fetchWebAPIKeys = async () => {
-  const backend = new Backend();
-
-  return await backend.fetchData('/api/v2/internal/webapikeys');
-}
-
-
 export const fetchTenants = async () => {
   const backend = new  Backend();
 
