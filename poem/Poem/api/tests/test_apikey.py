@@ -513,7 +513,7 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             "You do not have permission to view requested API key"
         )
 
-    def test_put_apikey(self):
+    def test_put_apikey_superuser(self):
         data = {
             'id': self.id1,
             'name': 'EGI2',
@@ -522,6 +522,7 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         changed_entry = MyAPIKey.objects.get(id=self.id1)
@@ -538,15 +539,117 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
         changed_entry = MyAPIKey.objects.get(id=self.id1)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(
             response.data['detail'],
-            'You do not have permission to change API keys.'
+            'You do not have permission to change API keys'
         )
         self.assertEqual(changed_entry.name, 'EGI')
+        self.assertFalse(changed_entry.revoked)
+
+    def test_put_webapikey_superpoem_superuser(self):
+        data = {
+            "id": self.id4,
+            "name": "WEB-API-TENANT",
+            "revoked": True,
+            "used_by": "webapi"
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superpoem_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        changed_entry = WebAPIKey.objects.get(id=self.id4)
+        self.assertEqual(changed_entry.name, "WEB-API-TENANT")
+        self.assertTrue(changed_entry.revoked)
+
+    def test_put_webapikey_superpoem_regular_user(self):
+        data = {
+            "id": self.id4,
+            "name": "WEB-API-TENANT",
+            "revoked": True,
+            "used_by": "webapi"
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superpoem_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to change API keys"
+        )
+        changed_entry = WebAPIKey.objects.get(id=self.id4)
+        self.assertEqual(changed_entry.name, "WEB-API-TENANT")
+        self.assertFalse(changed_entry.revoked)
+
+    def test_put_webapikey_tenant_superuser(self):
+        data = {
+            "id": self.id4,
+            "name": "WEB-API-TENANT",
+            "revoked": True,
+            "used_by": "webapi"
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to change API keys"
+        )
+        changed_entry = WebAPIKey.objects.get(id=self.id4)
+        self.assertEqual(changed_entry.name, "WEB-API-TENANT")
+        self.assertFalse(changed_entry.revoked)
+
+    def test_put_webapikey_tenant_regular_user(self):
+        data = {
+            "id": self.id4,
+            "name": "WEB-API-TENANT",
+            "revoked": True,
+            "used_by": "webapi"
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to change API keys"
+        )
+        changed_entry = WebAPIKey.objects.get(id=self.id4)
+        self.assertEqual(changed_entry.name, "WEB-API-TENANT")
+        self.assertFalse(changed_entry.revoked)
+
+    def test_put_webapikey_tenant_no_perms_user(self):
+        data = {
+            "id": self.id4,
+            "name": "WEB-API-TENANT",
+            "revoked": True,
+            "used_by": "webapi"
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.poor_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to change API keys"
+        )
+        changed_entry = WebAPIKey.objects.get(id=self.id4)
+        self.assertEqual(changed_entry.name, "WEB-API-TENANT")
         self.assertFalse(changed_entry.revoked)
 
     def test_post_apikey(self):

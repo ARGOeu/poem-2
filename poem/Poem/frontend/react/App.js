@@ -420,7 +420,7 @@ const TenantRouteSwitch = ({
     />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/apikey" component={APIKeyList} />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/apikey/add"
-      render={props => <APIKeyChange {...props} addview={true}/>}
+      render={props => <APIKeyChange {...props} addview={true} />}
     />
     <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/metrictemplates/' render={props => <ListOfMetrics type='metrictemplates' isTenantSchema={true} {...props} /> } />
     <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/metrictemplates/:name'
@@ -623,10 +623,10 @@ const SuperAdminRouteSwitch = () => (
     />
     <Route exact path="/ui/administration/apikey" component={APIKeyList} />
     <Route exact path="/ui/administration/apikey/add"
-      render={props => <APIKeyChange {...props} addview={true}/>}
+      render={props => <APIKeyChange {...props} addview={true} isTenantSchema={ true } />}
     />
     <Route exact path="/ui/administration/apikey/:name"
-      render={props => <APIKeyChange {...props} />}
+      render={props => <APIKeyChange {...props} isTenantSchema={ true } />}
     />
     <Route exact path="/ui/tenants" component={TenantList}/>
     <Route exact path="/ui/tenants/:name"

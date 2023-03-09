@@ -17,24 +17,46 @@ setLogger({
   error: () => {}
 })
 
-function renderWithRouterMatch(
-  ui,
-  {
-    path = "/",
-    route = "/",
-    history = createMemoryHistory({ initialEntries: [route] })
-  } = {}
-) {
+function renderListView() {
+  const route = "/ui/administration/apikey"
+  const history = createMemoryHistory({ initialEntries: [route] })
+
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
         <Router history={history}>
-          <Route path={path} component={ui} />
+          <Route
+            exact path="/ui/administration/apikey"
+            component={APIKeyList}
+          />
         </Router>
       </QueryClientProvider>
     )
   };
 }
+
+
+function renderChangeView(isTenant=false, webapi=false) {
+  const route = `/ui/administration/apikey/${webapi ? "WEB-API-TENANT" : "FIRST_TOKEN"}`
+  const history = createMemoryHistory({ initialEntries: [route] })
+
+  return {
+    ...render(
+      <QueryClientProvider client={ queryClient }>
+        <Router history={ history }>
+          <Route
+            exact path="/ui/administration/apikey/:name"
+            render={ props => <APIKeyChange
+              { ...props }
+              isTenantSchema={ isTenant }
+            />}
+          />
+        </Router>
+      </QueryClientProvider>
+    )
+  }
+}
+
 
 function renderAddview() {
   const history = createMemoryHistory();
@@ -129,7 +151,7 @@ describe("Tests for API keys listview", () => {
   })
 
   it('Render properly', async () => {
-    renderWithRouterMatch(APIKeyList)
+    renderListView()
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
@@ -166,7 +188,7 @@ describe("Tests for API keys listview", () => {
       }
     })
 
-    renderWithRouterMatch(APIKeyList)
+    renderListView()
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
@@ -187,7 +209,7 @@ describe("Tests for API keys listview", () => {
 })
 
 
-describe('Tests for API key change', () => {
+describe('Tests for tenant API key change', () => {
   jest.spyOn(navigator.clipboard, "writeText");
   jest.spyOn(NotificationManager, "success");
   jest.spyOn(NotificationManager, "error");
@@ -201,11 +223,28 @@ describe('Tests for API key change', () => {
       created: '2020-11-09 13:00:00',
       revoked: false,
       used_by: "poem"
-    };
+    }
+
+    const mockWebAPIKey = {
+      id: 1,
+      name: 'WEB-API-TENANT',
+      token: '78910',
+      created: '2023-03-09 10:27:13',
+      revoked: false,
+      used_by: "webapi"
+    }
 
     Backend.mockImplementation(() => {
       return {
-        fetchData: () => Promise.resolve(mockAPIKey),
+        fetchData: (path) => {
+          switch (path) {
+            case "/api/v2/internal/apikeys/FIRST_TOKEN":
+              return Promise.resolve(mockAPIKey)
+
+            case "/api/v2/internal/apikeys/WEB-API-TENANT":
+              return Promise.resolve(mockWebAPIKey)
+          }
+        },
         changeObject: mockChangeObject,
         deleteObject: mockDeleteObject
       }
@@ -213,7 +252,7 @@ describe('Tests for API key change', () => {
   })
 
   it('Test that page renders properly', async () => {
-    renderWithRouterMatch(APIKeyChange)
+    renderChangeView(true)
 
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
@@ -234,6 +273,30 @@ describe('Tests for API key change', () => {
     expect(screen.getByRole('button', {name: ''})).toBeInTheDocument();
   })
 
+  it('Test that page renders properly if webapi key', async () => {
+    renderChangeView(true, true)
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', {name: /api/i}).textContent).toBe('Change API key')
+    });
+
+    expect(screen.getByRole('heading', {name: /credent/i}).textContent).toBe('Credentials')
+
+    const nameField = screen.getByTestId("name")
+    const checkboxField = screen.getByRole("checkbox")
+    expect(nameField.value).toBe('WEB-API-TENANT')
+    expect(nameField).toBeDisabled()
+    expect(checkboxField.checked).toBeFalsy()
+    expect(checkboxField).toBeDisabled()
+    expect(screen.getByDisplayValue(/789/i).value).toBe('78910');
+    expect(screen.getByDisplayValue(/789/i)).toBeDisabled();
+    expect(screen.queryByRole('button', {name: /save/i})).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: /delete/i})).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: ''})).toBeInTheDocument();
+  })
+
   test("Test that page renders properly if the key is revoked", async () => {
     let mockRevokedKey = {
       id: 2,
@@ -249,7 +312,7 @@ describe('Tests for API key change', () => {
       }
     })
 
-    renderWithRouterMatch(APIKeyChange)
+    renderChangeView(true)
 
     expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
 
@@ -272,8 +335,49 @@ describe('Tests for API key change', () => {
     expect(screen.getByRole("button", {name: ''})).toBeInTheDocument()
   })
 
+  test("Test that page renders properly if the webapi key is revoked", async () => {
+    let mockRevokedKey = {
+      id: 2,
+      name: 'WEB-API-TENANT2',
+      token: '123456789',
+      created: '2023-03-09 10:32:48',
+      revoked: true,
+      used_by: "webapi"
+    }
+
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: () => Promise.resolve(mockRevokedKey)
+      }
+    })
+
+    renderChangeView(true)
+
+    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", {name: /api/i}).textContent).toBe("Change API key")
+    });
+
+    expect(screen.getByRole("heading", {name: /credent/i}).textContent).toBe("Credentials")
+
+    const nameField = screen.getByTestId("name")
+    const checkboxField = screen.getByRole("checkbox")
+
+    expect(nameField.value).toBe("WEB-API-TENANT2")
+    expect(nameField).toBeDisabled()
+    expect(checkboxField.checked).toBeTruthy()
+    expect(checkboxField).toBeDisabled()
+    expect(screen.getByDisplayValue(/123/i).value).toBe("123456789")
+    expect(screen.getByDisplayValue(/123/i)).toBeDisabled()
+
+    expect(screen.queryByRole("button", {name: /save/i})).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", {name: /delete/i})).not.toBeInTheDocument()
+    expect(screen.getByRole("button", {name: ''})).toBeInTheDocument()
+  })
+
   it('Test copy to clipbord button', async () => {
-    renderWithRouterMatch(APIKeyChange)
+    renderChangeView(true)
 
     await waitFor(() => {
       expect(screen.getByRole('button', {name: ''})).toBeInTheDocument();
@@ -283,7 +387,7 @@ describe('Tests for API key change', () => {
   })
 
   it('Test revoke API key and save', async () => {
-    renderWithRouterMatch(APIKeyChange)
+    renderChangeView(true)
 
     await waitFor(() => {
       expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument()
@@ -309,7 +413,7 @@ describe('Tests for API key change', () => {
       throw Error('400 BAD REQUEST: Something went wrong')
     } );
 
-    renderWithRouterMatch(APIKeyChange)
+    renderChangeView(true)
 
     await waitFor(() => {
       expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
@@ -341,7 +445,7 @@ describe('Tests for API key change', () => {
   it('Test change API key with backend error without message', async () => {
     mockChangeObject.mockImplementationOnce( () => { throw Error() } );
 
-    renderWithRouterMatch(APIKeyChange)
+    renderChangeView(true)
 
     await waitFor(() => {
       expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
@@ -371,10 +475,7 @@ describe('Tests for API key change', () => {
   })
 
   test('Test API key deletion', async () => {
-    renderWithRouterMatch(APIKeyChange, {
-      path: '/ui/administration/apikey/:name',
-      route: '/ui/administration/apikey/FIRST_TOKEN'
-    })
+    renderChangeView(true)
 
     await waitFor(() => {
       expect(screen.getByRole('button', {name: /delete/i})).toBeInTheDocument()
@@ -395,6 +496,402 @@ describe('Tests for API key change', () => {
   })
 })
 
+
+describe('Tests for super POEM API key change', () => {
+  jest.spyOn(navigator.clipboard, "writeText");
+  jest.spyOn(NotificationManager, "success");
+  jest.spyOn(NotificationManager, "error");
+  jest.spyOn(queryClient, 'invalidateQueries');
+
+  beforeEach(() => {
+    const mockAPIKey = {
+      id: 1,
+      name: 'FIRST_TOKEN',
+      token: '123456',
+      created: '2020-11-09 13:00:00',
+      revoked: false,
+      used_by: "poem"
+    }
+
+    const mockWebAPIKey = {
+      id: 1,
+      name: 'WEB-API-TENANT',
+      token: '78910',
+      created: '2023-03-09 10:27:13',
+      revoked: false,
+      used_by: "webapi"
+    }
+
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: (path) => {
+          switch (path) {
+            case "/api/v2/internal/apikeys/FIRST_TOKEN":
+              return Promise.resolve(mockAPIKey)
+
+            case "/api/v2/internal/apikeys/WEB-API-TENANT":
+              return Promise.resolve(mockWebAPIKey)
+          }
+        },
+        changeObject: mockChangeObject,
+        deleteObject: mockDeleteObject
+      }
+    })
+  })
+
+  it('Test that page renders properly', async () => {
+    renderChangeView()
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', {name: /api/i}).textContent).toBe('Change API key')
+    });
+
+    expect(screen.getByRole('heading', {name: /credent/i}).textContent).toBe('Credentials')
+
+    const nameField = screen.getByTestId("name")
+    expect(nameField.value).toBe('FIRST_TOKEN')
+    expect(nameField).toBeDisabled()
+    expect(screen.getByRole('checkbox').checked).toBeFalsy()
+    expect(screen.getByDisplayValue(/123/i).value).toBe('123456');
+    expect(screen.getByDisplayValue(/123/i)).toBeDisabled();
+    expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
+    expect(screen.getByRole('button', {name: /delete/i})).toBeInTheDocument();
+    expect(screen.getByRole('button', {name: ''})).toBeInTheDocument();
+  })
+
+  it('Test that page renders properly if webapi key', async () => {
+    renderChangeView(false, true)
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', {name: /api/i}).textContent).toBe('Change API key')
+    });
+
+    expect(screen.getByRole('heading', {name: /credent/i}).textContent).toBe('Credentials')
+
+    const nameField = screen.getByTestId("name")
+    const checkboxField = screen.getByRole("checkbox")
+    expect(nameField.value).toBe('WEB-API-TENANT')
+    expect(nameField).toBeDisabled()
+    expect(checkboxField.checked).toBeFalsy()
+    expect(checkboxField).toBeEnabled()
+    expect(screen.getByDisplayValue(/789/i).value).toBe('78910');
+    expect(screen.getByDisplayValue(/789/i)).toBeDisabled();
+    expect(screen.queryByRole('button', {name: /save/i})).toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: /delete/i})).toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: ''})).toBeInTheDocument();
+  })
+
+  test("Test that page renders properly if the key is revoked", async () => {
+    let mockRevokedKey = {
+      id: 2,
+      name: 'SECOND_TOKEN',
+      token: '123456789',
+      created: '2020-11-09 13:00:00',
+      revoked: true,
+      used_by: "poem"
+    }
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: () => Promise.resolve(mockRevokedKey)
+      }
+    })
+
+    renderChangeView()
+
+    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", {name: /api/i}).textContent).toBe("Change API key")
+    });
+
+    expect(screen.getByRole("heading", {name: /credent/i}).textContent).toBe("Credentials")
+
+    const nameField = screen.getByTestId("name")
+
+    expect(nameField.value).toBe("SECOND_TOKEN")
+    expect(nameField).toBeDisabled()
+    expect(screen.getByRole("checkbox").checked).toBeTruthy()
+    expect(screen.getByDisplayValue(/123/i).value).toBe("123456789")
+    expect(screen.getByDisplayValue(/123/i)).toBeDisabled()
+
+    expect(screen.getByRole("button", {name: /save/i})).toBeInTheDocument()
+    expect(screen.getByRole("button", {name: /delete/i})).toBeInTheDocument()
+    expect(screen.getByRole("button", {name: ''})).toBeInTheDocument()
+  })
+
+  test("Test that page renders properly if the webapi key is revoked", async () => {
+    let mockRevokedKey = {
+      id: 2,
+      name: 'WEB-API-TENANT2',
+      token: '123456789',
+      created: '2023-03-09 10:32:48',
+      revoked: true,
+      used_by: "webapi"
+    }
+
+    Backend.mockImplementation(() => {
+      return {
+        fetchData: () => Promise.resolve(mockRevokedKey)
+      }
+    })
+
+    renderChangeView(false, true)
+
+    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", {name: /api/i}).textContent).toBe("Change API key")
+    });
+
+    expect(screen.getByRole("heading", {name: /credent/i}).textContent).toBe("Credentials")
+
+    const nameField = screen.getByTestId("name")
+    const checkboxField = screen.getByRole("checkbox")
+
+    expect(nameField.value).toBe("WEB-API-TENANT2")
+    expect(nameField).toBeDisabled()
+    expect(checkboxField.checked).toBeTruthy()
+    expect(checkboxField).toBeEnabled()
+    expect(screen.getByDisplayValue(/123/i).value).toBe("123456789")
+    expect(screen.getByDisplayValue(/123/i)).toBeDisabled()
+
+    expect(screen.queryByRole("button", {name: /save/i})).toBeInTheDocument()
+    expect(screen.queryByRole("button", {name: /delete/i})).toBeInTheDocument()
+    expect(screen.getByRole("button", {name: ''})).toBeInTheDocument()
+  })
+
+  it('Test copy to clipbord button', async () => {
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', {name: ''})).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', {name: ''}))
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith('123456')
+  })
+
+  it('Test revoke API key and save', async () => {
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole("checkbox"))
+    fireEvent.click(screen.getByRole('button', {name: /save/i}))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', {title: /change/i})).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole('button', {name: /yes/i}))
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/apikeys/',
+        {id: 1, revoked: true, name: 'FIRST_TOKEN', used_by: "poem"}
+      )
+    })
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('apikey');
+    expect(NotificationManager.success).toHaveBeenCalledWith('API key successfully changed', 'Changed', 2000)
+  })
+
+  it('Test revoke web API key and save', async () => {
+    renderChangeView(false, true)
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole("checkbox"))
+    fireEvent.click(screen.getByRole('button', {name: /save/i}))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', {title: /change/i})).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole('button', {name: /yes/i}))
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/apikeys/',
+        {id: 1, revoked: true, name: 'WEB-API-TENANT', used_by: "webapi"}
+      )
+    })
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('apikey');
+    expect(NotificationManager.success).toHaveBeenCalledWith('API key successfully changed', 'Changed', 2000)
+  })
+
+  it('Test revoke API key with backend error message', async () => {
+    mockChangeObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: Something went wrong')
+    } );
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole("checkbox"))
+    fireEvent.click(screen.getByRole('button', {name: /save/i}))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', {title: /change/i})).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole('button', {name: /yes/i}))
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/apikeys/',
+        {id: 1, revoked: true, name: 'FIRST_TOKEN', used_by: "poem"}
+      )
+    })
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('apikey');
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>400 BAD REQUEST: Something went wrong</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  it('Test revoke web API key with backend error message', async () => {
+    mockChangeObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: Something went wrong')
+    } );
+
+    renderChangeView(false, true)
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole("checkbox"))
+    fireEvent.click(screen.getByRole('button', {name: /save/i}))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', {title: /change/i})).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole('button', {name: /yes/i}))
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/apikeys/',
+        {id: 1, revoked: true, name: 'WEB-API-TENANT', used_by: "webapi"}
+      )
+    })
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('apikey');
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>400 BAD REQUEST: Something went wrong</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  it('Test change API key with backend error without message', async () => {
+    mockChangeObject.mockImplementationOnce( () => { throw Error() } );
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole("checkbox"))
+    fireEvent.click(screen.getByRole('button', {name: /save/i}))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', {title: /change/i})).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole('button', {name: /yes/i}))
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/apikeys/',
+        {id: 1, revoked: true, name: 'FIRST_TOKEN', used_by: "poem"}
+      )
+    })
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('apikey');
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error changing API key</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  it('Test change web API key with backend error without message', async () => {
+    mockChangeObject.mockImplementationOnce( () => { throw Error() } );
+
+    renderChangeView(false, true)
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole("checkbox"))
+    fireEvent.click(screen.getByRole('button', {name: /save/i}))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', {title: /change/i})).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole('button', {name: /yes/i}))
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        '/api/v2/internal/apikeys/',
+        {id: 1, revoked: true, name: 'WEB-API-TENANT', used_by: "webapi"}
+      )
+    })
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('apikey');
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error changing API key</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test API key deletion', async () => {
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', {name: /delete/i})).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole('button', {name: /delete/i}))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', {title: /delete/i})).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole('button', {name: /yes/i}))
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        '/api/v2/internal/apikeys/FIRST_TOKEN'
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('apikey');
+    expect(NotificationManager.success).toHaveBeenCalledWith('API key successfully deleted', 'Deleted', 2000)
+  })
+
+  test('Test web API key deletion', async () => {
+    renderChangeView(false, true)
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', {name: /delete/i})).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole('button', {name: /delete/i}))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', {title: /delete/i})).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole('button', {name: /yes/i}))
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        '/api/v2/internal/apikeys/WEB-API-TENANT'
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('apikey');
+    expect(NotificationManager.success).toHaveBeenCalledWith('API key successfully deleted', 'Deleted', 2000)
+  })
+})
 
 describe('Tests for API key addview', () => {
   jest.spyOn(NotificationManager, "success");

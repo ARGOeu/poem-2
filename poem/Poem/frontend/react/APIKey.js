@@ -143,6 +143,7 @@ const APIKeyForm = ({
   ...props
 }) => {
   const name = props.match.params.name;
+  const isTenantSchema = props.isTenantSchema
   const location = props.location;
   const addview = props.addview;
 
@@ -227,6 +228,7 @@ const APIKeyForm = ({
                           type='checkbox'
                           onChange={e => setValue("revoked", e.target.checked)}
                           checked={field.value}
+                          disabled={ isTenantSchema && getValues("used_by") === "webapi" }
                         />
 
                       )
@@ -284,29 +286,30 @@ const APIKeyForm = ({
           </Row>
         </FormGroup>
         {
-          <div className={!addview ? "submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5" : "submit-row d-flex align-items-center justify-content-end bg-light p-3 mt-5"}>
-            {
-              (!addview) &&
+          !(isTenantSchema && getValues("used_by") === "webapi") &&
+            <div className={!addview ? "submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5" : "submit-row d-flex align-items-center justify-content-end bg-light p-3 mt-5"}>
+              {
+                (!addview) &&
+                <Button
+                  color='danger'
+                  onClick={() => {
+                    setModalMsg('Are you sure you want to delete API key?')
+                    setModalTitle('Delete API key')
+                    setAreYouSureModal(!areYouSureModal);
+                    setOnYes('delete')
+                  }}
+                >
+                  Delete
+                </Button>
+              }
               <Button
-                color='danger'
-                onClick={() => {
-                  setModalMsg('Are you sure you want to delete API key?')
-                  setModalTitle('Delete API key')
-                  setAreYouSureModal(!areYouSureModal);
-                  setOnYes('delete')
-                }}
+                color='success'
+                id='submit-button'
+                type='submit'
               >
-                Delete
+                Save
               </Button>
-            }
-            <Button
-              color='success'
-              id='submit-button'
-              type='submit'
-            >
-              Save
-            </Button>
-          </div>
+            </div>
         }
       </Form>
     </BaseArgoView>

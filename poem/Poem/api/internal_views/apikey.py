@@ -143,9 +143,23 @@ class ListAPIKeys(APIView):
         return Response(api_format)
 
     def put(self, request):
-        if request.user.is_superuser:
+        is_superuser = request.user.is_superuser
+        is_public_tenant = \
+            request.tenant.schema_name == get_public_schema_name()
+        if is_superuser:
             try:
-                obj = MyAPIKey.objects.get(id=request.data['id'])
+                if is_public_tenant and request.data["used_by"] == "webapi":
+                    obj = WebAPIKey.objects.get(id=request.data["id"])
+
+                elif request.data["used_by"] == "poem":
+                    obj = MyAPIKey.objects.get(id=request.data['id'])
+
+                else:
+                    return error_response(
+                        detail="You do not have permission to change API keys",
+                        status_code=status.HTTP_401_UNAUTHORIZED
+                    )
+
                 obj.revoked = request.data['revoked']
                 obj.save()
 
@@ -156,7 +170,7 @@ class ListAPIKeys(APIView):
 
         else:
             return error_response(
-                detail='You do not have permission to change API keys.',
+                detail='You do not have permission to change API keys',
                 status_code=status.HTTP_401_UNAUTHORIZED
             )
 
