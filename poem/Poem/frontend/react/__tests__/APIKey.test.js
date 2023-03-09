@@ -199,7 +199,8 @@ describe('Tests for API key change', () => {
       name: 'FIRST_TOKEN',
       token: '123456',
       created: '2020-11-09 13:00:00',
-      revoked: false
+      revoked: false,
+      used_by: "poem"
     };
 
     Backend.mockImplementation(() => {
@@ -219,8 +220,12 @@ describe('Tests for API key change', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', {name: /api/i}).textContent).toBe('Change API key')
     });
+
     expect(screen.getByRole('heading', {name: /credent/i}).textContent).toBe('Credentials')
-    expect(screen.getByTestId("name").value).toBe('FIRST_TOKEN');
+
+    const nameField = screen.getByTestId("name")
+    expect(nameField.value).toBe('FIRST_TOKEN')
+    expect(nameField).toBeDisabled()
     expect(screen.getByRole('checkbox').checked).toBeFalsy()
     expect(screen.getByDisplayValue(/123/i).value).toBe('123456');
     expect(screen.getByDisplayValue(/123/i)).toBeDisabled();
@@ -235,7 +240,8 @@ describe('Tests for API key change', () => {
       name: 'SECOND_TOKEN',
       token: '123456789',
       created: '2020-11-09 13:00:00',
-      revoked: true
+      revoked: true,
+      used_by: "poem"
     }
     Backend.mockImplementation(() => {
       return {
@@ -253,7 +259,10 @@ describe('Tests for API key change', () => {
 
     expect(screen.getByRole("heading", {name: /credent/i}).textContent).toBe("Credentials")
 
-    expect(screen.getByTestId("name").value).toBe("SECOND_TOKEN")
+    const nameField = screen.getByTestId("name")
+
+    expect(nameField.value).toBe("SECOND_TOKEN")
+    expect(nameField).toBeDisabled()
     expect(screen.getByRole("checkbox").checked).toBeTruthy()
     expect(screen.getByDisplayValue(/123/i).value).toBe("123456789")
     expect(screen.getByDisplayValue(/123/i)).toBeDisabled()
@@ -273,28 +282,6 @@ describe('Tests for API key change', () => {
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith('123456')
   })
 
-  it('Test change API key name and save', async () => {
-    renderWithRouterMatch(APIKeyChange)
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument()
-    })
-    fireEvent.change(screen.getByTestId("name"), {target: {value: 'NEW_NAME'}})
-    fireEvent.click(screen.getByRole('button', {name: /save/i}))
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', {title: /change/i})).toBeInTheDocument()
-    })
-    fireEvent.click(screen.getByRole('button', {name: /yes/i}))
-    await waitFor(() => {
-      expect(mockChangeObject).toHaveBeenCalledWith(
-        '/api/v2/internal/apikeys/',
-        {id: 1, revoked: false, name: 'NEW_NAME'}
-      )
-    })
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('apikey');
-    expect(NotificationManager.success).toHaveBeenCalledWith('API key successfully changed', 'Changed', 2000)
-  })
-
   it('Test revoke API key and save', async () => {
     renderWithRouterMatch(APIKeyChange)
 
@@ -310,16 +297,16 @@ describe('Tests for API key change', () => {
     await waitFor(() => {
       expect(mockChangeObject).toHaveBeenCalledWith(
         '/api/v2/internal/apikeys/',
-        {id: 1, revoked: true, name: 'FIRST_TOKEN'}
+        {id: 1, revoked: true, name: 'FIRST_TOKEN', used_by: "poem"}
       )
     })
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith('apikey');
     expect(NotificationManager.success).toHaveBeenCalledWith('API key successfully changed', 'Changed', 2000)
   })
 
-  it('Test change API key with backend error message', async () => {
+  it('Test revoke API key with backend error message', async () => {
     mockChangeObject.mockImplementationOnce( () => {
-      throw Error('400 BAD REQUEST: API key with this name already exists')
+      throw Error('400 BAD REQUEST: Something went wrong')
     } );
 
     renderWithRouterMatch(APIKeyChange)
@@ -327,7 +314,7 @@ describe('Tests for API key change', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
     })
-    fireEvent.change(screen.getByTestId("name"), {target: {value: 'SECOND_TOKEN'}})
+    fireEvent.click(screen.getByRole("checkbox"))
     fireEvent.click(screen.getByRole('button', {name: /save/i}))
     await waitFor(() => {
       expect(screen.getByRole('dialog', {title: /change/i})).toBeInTheDocument()
@@ -336,13 +323,13 @@ describe('Tests for API key change', () => {
     await waitFor(() => {
       expect(mockChangeObject).toHaveBeenCalledWith(
         '/api/v2/internal/apikeys/',
-        {id: 1, revoked: false, name: 'SECOND_TOKEN'}
+        {id: 1, revoked: true, name: 'FIRST_TOKEN', used_by: "poem"}
       )
     })
     expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('apikey');
     expect(NotificationManager.error).toHaveBeenCalledWith(
       <div>
-        <p>400 BAD REQUEST: API key with this name already exists</p>
+        <p>400 BAD REQUEST: Something went wrong</p>
         <p>Click to dismiss.</p>
       </div>,
       'Error',
@@ -359,7 +346,7 @@ describe('Tests for API key change', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
     })
-    fireEvent.change(screen.getByTestId('name'), {target: {value: 'SECOND_TOKEN'}})
+    fireEvent.click(screen.getByRole("checkbox"))
     fireEvent.click(screen.getByRole('button', {name: /save/i}))
     await waitFor(() => {
       expect(screen.getByRole('dialog', {title: /change/i})).toBeInTheDocument()
@@ -368,7 +355,7 @@ describe('Tests for API key change', () => {
     await waitFor(() => {
       expect(mockChangeObject).toHaveBeenCalledWith(
         '/api/v2/internal/apikeys/',
-        {id: 1, revoked: false, name: 'SECOND_TOKEN'}
+        {id: 1, revoked: true, name: 'FIRST_TOKEN', used_by: "poem"}
       )
     })
     expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('apikey');

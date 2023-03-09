@@ -204,6 +204,7 @@ const APIKeyForm = ({
                     {...field}
                     data-testid="name"
                     className="form-control"
+                    disabled={ !addview }
                   />
                 }
               />
@@ -334,7 +335,7 @@ export const APIKeyChange = (props) => {
   const doChange = (values) => {
     if (!addview) {
       changeMutation.mutate(
-        { id: values.id, revoked: values.revoked, name: values.name }, {
+        { id: values.id, revoked: values.revoked, name: values.name, used_by: values.used_by }, {
           onSuccess: () => {
             queryClient.invalidateQueries('apikey');
             NotifyOk({

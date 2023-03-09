@@ -514,17 +514,28 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
         )
 
     def test_put_apikey(self):
-        data = {'id': self.id1, 'name': 'EGI2', 'revoked': False}
+        data = {
+            'id': self.id1,
+            'name': 'EGI2',
+            'revoked': True,
+            "used_by": "poem"
+        }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         changed_entry = MyAPIKey.objects.get(id=self.id1)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual('EGI2', changed_entry.name)
+        self.assertEqual('EGI', changed_entry.name)
+        self.assertTrue(changed_entry.revoked)
 
     def test_put_apikey_regular_user(self):
-        data = {'id': self.id1, 'name': 'EGI2', 'revoked': False}
+        data = {
+            'id': self.id1,
+            'name': 'EGI2',
+            'revoked': True,
+            "used_by": "poem"
+        }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
         force_authenticate(request, user=self.user)
@@ -537,56 +548,6 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
         )
         self.assertEqual(changed_entry.name, 'EGI')
         self.assertFalse(changed_entry.revoked)
-
-    def test_put_apikey_without_changing_name(self):
-        data = {'id': self.id1, 'name': 'EGI', 'revoked': True}
-        content, content_type = encode_data(data)
-        request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.superuser)
-        response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        key = MyAPIKey.objects.get(id=self.id1)
-        self.assertEqual(key.name, 'EGI')
-        self.assertTrue(key.revoked)
-
-    def test_put_apikey_without_changing_name_regular_user(self):
-        data = {'id': self.id1, 'name': 'EGI', 'revoked': True}
-        content, content_type = encode_data(data)
-        request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user)
-        response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertEqual(
-            response.data['detail'],
-            'You do not have permission to change API keys.'
-        )
-        key = MyAPIKey.objects.get(id=self.id1)
-        self.assertEqual(key.name, 'EGI')
-        self.assertFalse(key.revoked)
-
-    def test_put_apikey_with_name_that_already_exists(self):
-        data = {'id': self.id1, 'name': 'EUDAT', 'revoked': False}
-        content, content_type = encode_data(data)
-        request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.superuser)
-        response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(
-            response.data['detail'],
-            'API key with this name already exists'
-        )
-
-    def test_put_apikey_with_name_that_already_exists_regular_user(self):
-        data = {'id': self.id1, 'name': 'EUDAT', 'revoked': False}
-        content, content_type = encode_data(data)
-        request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user)
-        response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertEqual(
-            response.data['detail'],
-            'You do not have permission to change API keys.'
-        )
 
     def test_post_apikey(self):
         data = {'name': 'test', 'revoked': False}

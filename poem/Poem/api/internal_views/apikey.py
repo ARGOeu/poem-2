@@ -145,20 +145,9 @@ class ListAPIKeys(APIView):
     def put(self, request):
         if request.user.is_superuser:
             try:
-                names = MyAPIKey.objects.filter(
-                    ~Q(id=request.data['id'])
-                ).values_list('name', flat=True)
-                if request.data['name'] not in names:
-                    obj = MyAPIKey.objects.get(id=request.data['id'])
-                    obj.name = request.data['name']
-                    obj.revoked = request.data['revoked']
-                    obj.save()
-
-                else:
-                    return error_response(
-                        detail='API key with this name already exists',
-                        status_code=status.HTTP_400_BAD_REQUEST
-                    )
+                obj = MyAPIKey.objects.get(id=request.data['id'])
+                obj.revoked = request.data['revoked']
+                obj.save()
 
                 return Response(status=status.HTTP_201_CREATED)
 
