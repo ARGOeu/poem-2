@@ -136,14 +136,15 @@ export const APIKeyList = (props) => {
 }
 
 
-const APIKeyForm = ({ name, data, addview, history, location }) => {
-  const backend = new Backend();
-
-  const queryClient = useQueryClient();
-
-  const changeMutation = useMutation(async (values) => backend.changeObject('/api/v2/internal/apikeys/', values));
-  const addMutation = useMutation(async (values) => backend.addObject('/api/v2/internal/apikeys/', values));
-  const deleteMutation = useMutation(async () => await backend.deleteObject(`/api/v2/internal/apikeys/${name}`));
+const APIKeyForm = ({
+  data,
+  doChange,
+  doDelete,
+  ...props
+}) => {
+  const name = props.match.params.name;
+  const location = props.location;
+  const addview = props.addview;
 
   const [areYouSureModal, setAreYouSureModal] = useState(false)
   const [modalTitle, setModalTitle] = useState(undefined)
@@ -155,46 +156,6 @@ const APIKeyForm = ({ name, data, addview, history, location }) => {
     defaultValues: !addview ? data : { name: "", revoked: false, token: "" }
   })
 
-  const doChange = (values) => {
-    if (!addview) {
-      changeMutation.mutate(
-        { id: values.id, revoked: values.revoked, name: values.name }, {
-          onSuccess: () => {
-            queryClient.invalidateQueries('apikey');
-            NotifyOk({
-              msg: 'API key successfully changed',
-              title: 'Changed',
-              callback: () => history.push('/ui/administration/apikey')
-            });
-          },
-          onError: (error) => {
-            NotifyError({
-              title: 'Error',
-              msg: error.message ? error.message : 'Error changing API key'
-            })
-          }
-        }
-      )
-    } else {
-      addMutation.mutate({ name: values.name, token: values.token }, {
-        onSuccess: () => {
-          queryClient.invalidateQueries('apikey');
-          NotifyOk({
-            msg: 'API key successfully added',
-            title: 'Added',
-            callback: () => history.push('/ui/administration/apikey')
-          })
-        },
-        onError: (error) => {
-          NotifyError({
-            title: 'Error',
-            msg: error.message ? error.message : 'Error adding API key'
-          })
-        }
-      })
-    }
-  };
-
   const onSubmitHandle = () => {
     let msg = `Are you sure you want to ${addview ? 'add' : 'change'} API key?`;
     let title = `${addview ? 'Add' : 'Change'}`;
@@ -203,25 +164,6 @@ const APIKeyForm = ({ name, data, addview, history, location }) => {
     setModalMsg(msg)
     setModalTitle(title)
     setOnYes('change')
-  }
-
-  const doDelete = () => {
-    deleteMutation.mutate(undefined, {
-      onSuccess: () => {
-        queryClient.invalidateQueries('apikey');
-        NotifyOk({
-          msg: 'API key successfully deleted',
-          title: 'Deleted',
-          callback: () => history.push('/ui/administration/apikey')
-        })
-      },
-      onError: (error) => {
-        NotifyError({
-          title: 'Error',
-          msg: error.message ? error.message : 'Error deleting API key'
-        })
-      }
-    })
   }
 
   const onYesCallback = () => {
@@ -373,15 +315,80 @@ const APIKeyForm = ({ name, data, addview, history, location }) => {
 
 export const APIKeyChange = (props) => {
   const name = props.match.params.name;
-  const location = props.location;
   const addview = props.addview;
   const history = props.history;
 
+  const queryClient = useQueryClient()
+
+  const backend = new Backend()
+
+  const changeMutation = useMutation(async (values) => backend.changeObject('/api/v2/internal/apikeys/', values));
+  const addMutation = useMutation(async (values) => backend.addObject('/api/v2/internal/apikeys/', values));
+  const deleteMutation = useMutation(async () => await backend.deleteObject(`/api/v2/internal/apikeys/${name}`));
 
   const { data: key, error: error, status: status } = useQuery(
     ['apikey', name], () => fetchAPIKey(name),
     { enabled: !addview }
   )
+
+  const doChange = (values) => {
+    if (!addview) {
+      changeMutation.mutate(
+        { id: values.id, revoked: values.revoked, name: values.name }, {
+          onSuccess: () => {
+            queryClient.invalidateQueries('apikey');
+            NotifyOk({
+              msg: 'API key successfully changed',
+              title: 'Changed',
+              callback: () => history.push('/ui/administration/apikey')
+            });
+          },
+          onError: (error) => {
+            NotifyError({
+              title: 'Error',
+              msg: error.message ? error.message : 'Error changing API key'
+            })
+          }
+        }
+      )
+    } else {
+      addMutation.mutate({ name: values.name, token: values.token }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries('apikey');
+          NotifyOk({
+            msg: 'API key successfully added',
+            title: 'Added',
+            callback: () => history.push('/ui/administration/apikey')
+          })
+        },
+        onError: (error) => {
+          NotifyError({
+            title: 'Error',
+            msg: error.message ? error.message : 'Error adding API key'
+          })
+        }
+      })
+    }
+  }
+
+  const doDelete = () => {
+    deleteMutation.mutate(undefined, {
+      onSuccess: () => {
+        queryClient.invalidateQueries('apikey');
+        NotifyOk({
+          msg: 'API key successfully deleted',
+          title: 'Deleted',
+          callback: () => history.push('/ui/administration/apikey')
+        })
+      },
+      onError: (error) => {
+        NotifyError({
+          title: 'Error',
+          msg: error.message ? error.message : 'Error deleting API key'
+        })
+      }
+    })
+  }
 
   if (status === 'loading')
     return (<LoadingAnim/>);
@@ -391,7 +398,12 @@ export const APIKeyChange = (props) => {
 
   else if (key || addview)
     return (
-      <APIKeyForm data={key} name={name} history={history} location={location} addview={addview} />
+      <APIKeyForm
+        { ...props }
+        data={ key }
+        doChange={ doChange }
+        doDelete={ doDelete }
+      />
     )
   else
     return null

@@ -118,6 +118,7 @@ afterEach(() => {
   queryClient.clear();
 })
 
+
 describe("Tests for API keys listview", () => {
   beforeAll(() => {
     Backend.mockImplementation(() => {
@@ -185,13 +186,14 @@ describe("Tests for API keys listview", () => {
   })
 })
 
+
 describe('Tests for API key change', () => {
   jest.spyOn(navigator.clipboard, "writeText");
   jest.spyOn(NotificationManager, "success");
   jest.spyOn(NotificationManager, "error");
   jest.spyOn(queryClient, 'invalidateQueries');
 
-  beforeAll(() => {
+  beforeEach(() => {
     const mockAPIKey = {
       id: 1,
       name: 'FIRST_TOKEN',
@@ -235,7 +237,7 @@ describe('Tests for API key change', () => {
       created: '2020-11-09 13:00:00',
       revoked: true
     }
-    Backend.mockImplementationOnce(() => {
+    Backend.mockImplementation(() => {
       return {
         fetchData: () => Promise.resolve(mockRevokedKey)
       }
@@ -405,6 +407,7 @@ describe('Tests for API key change', () => {
     expect(NotificationManager.success).toHaveBeenCalledWith('API key successfully deleted', 'Deleted', 2000)
   })
 })
+
 
 describe('Tests for API key addview', () => {
   jest.spyOn(NotificationManager, "success");
