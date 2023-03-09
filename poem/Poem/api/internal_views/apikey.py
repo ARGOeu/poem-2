@@ -176,18 +176,40 @@ class ListAPIKeys(APIView):
 
     def post(self, request):
         if request.user.is_superuser:
-            names = MyAPIKey.objects.get_usable_keys().values_list(
+            if request.data["used_by"] == "poem":
+                model = MyAPIKey
+            else:
+                if request.tenant.schema_name != get_public_schema_name():
+                    return error_response(
+                        detail="You do not have permission to add API keys",
+                        status_code=status.HTTP_401_UNAUTHORIZED
+                    )
+                else:
+                    model = WebAPIKey
+                    if not re.match(
+                            "^WEB-API-\S*(-RO)?$", request.data["name"]
+                    ):
+                        return error_response(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Wrong API key name - web API key name must "
+                                   "have the form WEB-API-<tenant_name> or "
+                                   "WEB-API-<tenant_name>-RO"
+                        )
+
+            names = model.objects.get_usable_keys().values_list(
                 'name', flat=True
             )
+
             if request.data['name'] not in names:
                 token = request.data.get('token', False)
                 if token:
-                    MyAPIKey.objects.create_key(
+                    model.objects.create_key(
                         name=request.data['name'],
                         token=token
                     )
+
                 else:
-                    MyAPIKey.objects.create_key(
+                    model.objects.create_key(
                         name=request.data['name']
                     )
 
@@ -201,7 +223,7 @@ class ListAPIKeys(APIView):
 
         else:
             return error_response(
-                detail='You do not have permission to add API keys.',
+                detail='You do not have permission to add API keys',
                 status_code=status.HTTP_401_UNAUTHORIZED
             )
 

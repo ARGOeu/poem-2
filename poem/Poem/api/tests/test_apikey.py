@@ -652,29 +652,32 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
         self.assertEqual(changed_entry.name, "WEB-API-TENANT")
         self.assertFalse(changed_entry.revoked)
 
-    def test_post_apikey(self):
-        data = {'name': 'test', 'revoked': False}
+    def test_post_apikey_superuser(self):
+        data = {'name': 'test', 'revoked': False, "used_by": "poem"}
         request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(len(MyAPIKey.objects.all()), 4)
 
     def test_post_apikey_regular_user(self):
-        data = {'name': 'test', 'revoked': False}
+        data = {'name': 'test', 'revoked': False, "used_by": "poem"}
         request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(
             response.data['detail'],
-            'You do not have permission to add API keys.'
+            'You do not have permission to add API keys'
         )
         self.assertEqual(len(MyAPIKey.objects.all()), 3)
 
-    def test_post_apikey_name_already_exists(self):
-        data = {'name': 'EUDAT', 'revoked': False}
+    def test_post_apikey_name_already_exists_superuser(self):
+        data = {'name': 'EUDAT', 'revoked': False, "used_by": "poem"}
         request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -685,16 +688,301 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
         self.assertEqual(len(MyAPIKey.objects.all()), 3)
 
     def test_post_apikey_name_already_exists_regular_user(self):
-        data = {'name': 'EUDAT', 'revoked': False}
+        data = {'name': 'EUDAT', 'revoked': False, "used_by": "poem"}
         request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(
             response.data['detail'],
-            'You do not have permission to add API keys.'
+            'You do not have permission to add API keys'
         )
         self.assertEqual(len(MyAPIKey.objects.all()), 3)
+
+    def test_post_webapikey_superpoem_superuser(self):
+        data = {
+            "name": "WEB-API-TENANT3",
+            "revoked": False,
+            "used_by": "webapi"
+        }
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superpoem_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(MyAPIKey.objects.all()), 3)
+        self.assertEqual(len(WebAPIKey.objects.all()), 5)
+        new_key = WebAPIKey.objects.get(name="WEB-API-TENANT3")
+        self.assertFalse(new_key.revoked)
+
+    def test_post_ro_webapikey_superpoem_superuser(self):
+        data = {
+            "name": "WEB-API-TENANT3-RO",
+            "revoked": False,
+            "used_by": "webapi"
+        }
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superpoem_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(MyAPIKey.objects.all()), 3)
+        self.assertEqual(len(WebAPIKey.objects.all()), 5)
+        new_key = WebAPIKey.objects.get(name="WEB-API-TENANT3-RO")
+        self.assertFalse(new_key.revoked)
+
+    def test_post_webapikey_superpoem_superuser_existing_name(self):
+        data = {
+            "name": "WEB-API-TENANT",
+            "revoked": False,
+            "used_by": "webapi"
+        }
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superpoem_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["detail"], "API key with this name already exists"
+        )
+        self.assertEqual(len(MyAPIKey.objects.all()), 3)
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+
+    def test_post_webapikey_superpoem_superuser_wrong_name_form(self):
+        data = {
+            "name": "WEB-TENANT-API",
+            "revoked": False,
+            "used_by": "webapi"
+        }
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superpoem_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["detail"],
+            "Wrong API key name - web API key name must have the form "
+            "WEB-API-<tenant_name> or WEB-API-<tenant_name>-RO"
+        )
+        self.assertEqual(len(MyAPIKey.objects.all()), 3)
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+
+    def test_post_webapikey_superpoem_regular_user(self):
+        data = {
+            "name": "WEB-API-TENANT3",
+            "revoked": False,
+            "used_by": "webapi"
+        }
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superpoem_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add API keys"
+        )
+        self.assertEqual(len(MyAPIKey.objects.all()), 3)
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+
+    def test_post_ro_webapikey_superpoem_regular_user(self):
+        data = {
+            "name": "WEB-API-TENANT3-RO",
+            "revoked": False,
+            "used_by": "webapi"
+        }
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superpoem_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add API keys"
+        )
+        self.assertEqual(len(MyAPIKey.objects.all()), 3)
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+
+    def test_post_webapikey_superpoem_regular_user_existing_name(self):
+        data = {
+            "name": "WEB-API-TENANT",
+            "revoked": False,
+            "used_by": "webapi"
+        }
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superpoem_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add API keys"
+        )
+        self.assertEqual(len(MyAPIKey.objects.all()), 3)
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+
+    def test_post_webapikey_superpoem_regular_user_wrong_name_form(self):
+        data = {
+            "name": "WEB-TENANT-API",
+            "revoked": False,
+            "used_by": "webapi"
+        }
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superpoem_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add API keys"
+        )
+        self.assertEqual(len(MyAPIKey.objects.all()), 3)
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+
+    def test_post_webapikey_tenant_superuser(self):
+        data = {
+            "name": "WEB-API-TENANT3",
+            "revoked": False,
+            "used_by": "webapi"
+        }
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add API keys"
+        )
+        self.assertEqual(len(MyAPIKey.objects.all()), 3)
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+
+    def test_post_ro_webapikey_tenant_superuser(self):
+        data = {
+            "name": "WEB-API-TENANT3-RO",
+            "revoked": False,
+            "used_by": "webapi"
+        }
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add API keys"
+        )
+        self.assertEqual(len(MyAPIKey.objects.all()), 3)
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+
+    def test_post_webapikey_tenant_superuser_existing_name(self):
+        data = {
+            "name": "WEB-API-TENANT",
+            "revoked": False,
+            "used_by": "webapi"
+        }
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add API keys"
+        )
+        self.assertEqual(len(MyAPIKey.objects.all()), 3)
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+
+    def test_post_webapikey_tenant_superuser_wrong_name_form(self):
+        data = {
+            "name": "WEB-TENANT-API",
+            "revoked": False,
+            "used_by": "webapi"
+        }
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add API keys"
+        )
+        self.assertEqual(len(MyAPIKey.objects.all()), 3)
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+
+    def test_post_webapikey_tenant_regular_user(self):
+        data = {
+            "name": "WEB-API-TENANT3",
+            "revoked": False,
+            "used_by": "webapi"
+        }
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add API keys"
+        )
+        self.assertEqual(len(MyAPIKey.objects.all()), 3)
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+
+    def test_post_ro_webapikey_tenant_regular_user(self):
+        data = {
+            "name": "WEB-API-TENANT3-RO",
+            "revoked": False,
+            "used_by": "webapi"
+        }
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add API keys"
+        )
+        self.assertEqual(len(MyAPIKey.objects.all()), 3)
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+
+    def test_post_webapikey_tenant_regular_user_existing_name(self):
+        data = {
+            "name": "WEB-API-TENANT",
+            "revoked": False,
+            "used_by": "webapi"
+        }
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add API keys"
+        )
+        self.assertEqual(len(MyAPIKey.objects.all()), 3)
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+
+    def test_post_webapikey_tenant_regular_user_wrong_name_form(self):
+        data = {
+            "name": "WEB-TENANT-API",
+            "revoked": False,
+            "used_by": "webapi"
+        }
+        request = self.factory.post(self.url, data, format="json")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to add API keys"
+        )
+        self.assertEqual(len(MyAPIKey.objects.all()), 3)
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
 
     def test_delete_apikey(self):
         request = self.factory.delete(self.url + 'DELETABLE')
