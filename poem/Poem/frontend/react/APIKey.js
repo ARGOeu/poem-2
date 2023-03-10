@@ -190,9 +190,9 @@ const APIKeyForm = ({
 
   const onYesCallback = () => {
     if (onYes === 'delete')
-      doDelete(name);
+      doDelete(`${getValues("used_by")}_${name}`)
     else if (onYes === 'change')
-      doChange(getValues());
+      doChange(getValues())
   }
 
   const copyToClipboard = (e) => {
@@ -394,7 +394,7 @@ export const APIKeyChange = (props) => {
 
   const changeMutation = useMutation(async (values) => backend.changeObject('/api/v2/internal/apikeys/', values));
   const addMutation = useMutation(async (values) => backend.addObject('/api/v2/internal/apikeys/', values));
-  const deleteMutation = useMutation(async () => await backend.deleteObject(`/api/v2/internal/apikeys/${name}`));
+  const deleteMutation = useMutation(async (prefix_name) => await backend.deleteObject(`/api/v2/internal/apikeys/${prefix_name}`));
 
   const { data: key, error: error, status: status } = useQuery(
     ['apikey', name], () => fetchAPIKey(name),
@@ -441,8 +441,8 @@ export const APIKeyChange = (props) => {
     }
   }
 
-  const doDelete = () => {
-    deleteMutation.mutate(undefined, {
+  const doDelete = (prefix_name) => {
+    deleteMutation.mutate(prefix_name, {
       onSuccess: () => {
         queryClient.invalidateQueries('apikey');
         NotifyOk({
