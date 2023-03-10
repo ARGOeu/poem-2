@@ -3,8 +3,8 @@ import configparser
 import pkg_resources
 from Poem.api import serializers
 from Poem.api.internal_views.users import get_all_groups, get_groups_for_user
-from Poem.api.models import MyAPIKey
 from Poem.poem.saml2.config import tenant_from_request, saml_login_string
+from Poem.poem_super_admin.models import WebAPIKey
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import connection
@@ -49,8 +49,9 @@ class IsSessionActive(APIView):
         obj = None
 
         try:
-            obj = MyAPIKey.objects.get(name=name)
-        except MyAPIKey.DoesNotExist:
+            obj = WebAPIKey.objects.get(name=name)
+
+        except WebAPIKey.DoesNotExist:
             pass
 
         if obj is not None:
@@ -60,7 +61,6 @@ class IsSessionActive(APIView):
 
     def get(self, request, istenant):
         userdetails = dict()
-        token = None
 
         user = get_user_model().objects.get(id=self.request.user.id)
         serializer = serializers.UsersSerializer(user)
@@ -74,9 +74,9 @@ class IsSessionActive(APIView):
             userdetails['groups'] = groups
 
             if self._have_rwperm(groups):
-                token = self._get_token('WEB-API')
+                token = self._get_token(f"WEB-API-{request.tenant.name}")
             else:
-                token = self._get_token('WEB-API-RO')
+                token = self._get_token(f"WEB-API-{request.tenant.name}-RO")
             userdetails['token'] = token
 
         return Response({'active': True, 'userdetails': userdetails})
