@@ -214,6 +214,39 @@ const APIKeyForm = ({
               </FormText>
             </Col>
           </Row>
+          {
+            (addview && !isTenantSchema) &&
+              <Row className='mt-2'>
+                <Col md={6}>
+                  <Row>
+                    <FormGroup check inline className='ms-3'>
+                      <Controller
+                        name="used_by"
+                        control={control}
+                        render={ ({ field }) => {
+                          return (
+                            <Input
+                              {...field}
+                              type='checkbox'
+                              data-testid="used_by"
+                              id="used_by"
+                              onChange={ e => setValue("used_by", e.target.checked ? "webapi" : "poem") }
+                              checked={ field.value === "webapi" }
+                            />
+                          )
+                        }}
+                      />
+                      <Label check for="used_by">Web API key</Label>
+                    </FormGroup>
+                  </Row>
+                  <Row>
+                    <FormText color="muted">
+                      Mark this checkbox if the key being saved is going to be used for web API authentication.
+                    </FormText>
+                  </Row>
+                </Col>
+              </Row>
+          }
           <Row className='mt-2'>
             <Col md={6}>
               <Row>
@@ -226,11 +259,11 @@ const APIKeyForm = ({
                         <Input
                           {...field}
                           type='checkbox'
+                          data-testid="revoked"
                           onChange={e => setValue("revoked", e.target.checked)}
                           checked={field.value}
                           disabled={ isTenantSchema && getValues("used_by") === "webapi" }
                         />
-
                       )
                     }}
                   />

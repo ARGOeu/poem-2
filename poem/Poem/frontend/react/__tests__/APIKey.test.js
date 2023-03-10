@@ -58,14 +58,14 @@ function renderChangeView(isTenant=false, webapi=false) {
 }
 
 
-function renderAddview() {
+function renderAddview(isTenant=false) {
   const history = createMemoryHistory();
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
         <Router history={history}>
-          <Route render={props => <APIKeyChange {...props} addview={true} />} />
+          <Route render={props => <APIKeyChange {...props} addview={ true } isTenantSchema={ isTenant } />} />
         </Router>
       </QueryClientProvider>
     )
@@ -265,7 +265,7 @@ describe('Tests for tenant API key change', () => {
     const nameField = screen.getByTestId("name")
     expect(nameField.value).toBe('FIRST_TOKEN')
     expect(nameField).toBeDisabled()
-    expect(screen.getByRole('checkbox').checked).toBeFalsy()
+    expect(screen.getByTestId("revoked").checked).toBeFalsy()
     expect(screen.getByDisplayValue(/123/i).value).toBe('123456');
     expect(screen.getByDisplayValue(/123/i)).toBeDisabled();
     expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
@@ -285,7 +285,7 @@ describe('Tests for tenant API key change', () => {
     expect(screen.getByRole('heading', {name: /credent/i}).textContent).toBe('Credentials')
 
     const nameField = screen.getByTestId("name")
-    const checkboxField = screen.getByRole("checkbox")
+    const checkboxField = screen.getByTestId("revoked")
     expect(nameField.value).toBe('WEB-API-TENANT')
     expect(nameField).toBeDisabled()
     expect(checkboxField.checked).toBeFalsy()
@@ -326,7 +326,7 @@ describe('Tests for tenant API key change', () => {
 
     expect(nameField.value).toBe("SECOND_TOKEN")
     expect(nameField).toBeDisabled()
-    expect(screen.getByRole("checkbox").checked).toBeTruthy()
+    expect(screen.getByTestId("revoked").checked).toBeTruthy()
     expect(screen.getByDisplayValue(/123/i).value).toBe("123456789")
     expect(screen.getByDisplayValue(/123/i)).toBeDisabled()
 
@@ -362,7 +362,7 @@ describe('Tests for tenant API key change', () => {
     expect(screen.getByRole("heading", {name: /credent/i}).textContent).toBe("Credentials")
 
     const nameField = screen.getByTestId("name")
-    const checkboxField = screen.getByRole("checkbox")
+    const checkboxField = screen.getByTestId("revoked")
 
     expect(nameField.value).toBe("WEB-API-TENANT2")
     expect(nameField).toBeDisabled()
@@ -392,7 +392,7 @@ describe('Tests for tenant API key change', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument()
     })
-    fireEvent.click(screen.getByRole("checkbox"))
+    fireEvent.click(screen.getByTestId("revoked"))
     fireEvent.click(screen.getByRole('button', {name: /save/i}))
     await waitFor(() => {
       expect(screen.getByRole('dialog', {title: /change/i})).toBeInTheDocument()
@@ -418,7 +418,7 @@ describe('Tests for tenant API key change', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
     })
-    fireEvent.click(screen.getByRole("checkbox"))
+    fireEvent.click(screen.getByTestId("revoked"))
     fireEvent.click(screen.getByRole('button', {name: /save/i}))
     await waitFor(() => {
       expect(screen.getByRole('dialog', {title: /change/i})).toBeInTheDocument()
@@ -450,7 +450,7 @@ describe('Tests for tenant API key change', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
     })
-    fireEvent.click(screen.getByRole("checkbox"))
+    fireEvent.click(screen.getByTestId("revoked"))
     fireEvent.click(screen.getByRole('button', {name: /save/i}))
     await waitFor(() => {
       expect(screen.getByRole('dialog', {title: /change/i})).toBeInTheDocument()
@@ -553,7 +553,7 @@ describe('Tests for super POEM API key change', () => {
     const nameField = screen.getByTestId("name")
     expect(nameField.value).toBe('FIRST_TOKEN')
     expect(nameField).toBeDisabled()
-    expect(screen.getByRole('checkbox').checked).toBeFalsy()
+    expect(screen.getByTestId('revoked').checked).toBeFalsy()
     expect(screen.getByDisplayValue(/123/i).value).toBe('123456');
     expect(screen.getByDisplayValue(/123/i)).toBeDisabled();
     expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
@@ -573,7 +573,7 @@ describe('Tests for super POEM API key change', () => {
     expect(screen.getByRole('heading', {name: /credent/i}).textContent).toBe('Credentials')
 
     const nameField = screen.getByTestId("name")
-    const checkboxField = screen.getByRole("checkbox")
+    const checkboxField = screen.getByTestId("revoked")
     expect(nameField.value).toBe('WEB-API-TENANT')
     expect(nameField).toBeDisabled()
     expect(checkboxField.checked).toBeFalsy()
@@ -614,7 +614,7 @@ describe('Tests for super POEM API key change', () => {
 
     expect(nameField.value).toBe("SECOND_TOKEN")
     expect(nameField).toBeDisabled()
-    expect(screen.getByRole("checkbox").checked).toBeTruthy()
+    expect(screen.getByTestId("revoked").checked).toBeTruthy()
     expect(screen.getByDisplayValue(/123/i).value).toBe("123456789")
     expect(screen.getByDisplayValue(/123/i)).toBeDisabled()
 
@@ -650,7 +650,7 @@ describe('Tests for super POEM API key change', () => {
     expect(screen.getByRole("heading", {name: /credent/i}).textContent).toBe("Credentials")
 
     const nameField = screen.getByTestId("name")
-    const checkboxField = screen.getByRole("checkbox")
+    const checkboxField = screen.getByTestId("revoked")
 
     expect(nameField.value).toBe("WEB-API-TENANT2")
     expect(nameField).toBeDisabled()
@@ -680,7 +680,7 @@ describe('Tests for super POEM API key change', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument()
     })
-    fireEvent.click(screen.getByRole("checkbox"))
+    fireEvent.click(screen.getByTestId("revoked"))
     fireEvent.click(screen.getByRole('button', {name: /save/i}))
     await waitFor(() => {
       expect(screen.getByRole('dialog', {title: /change/i})).toBeInTheDocument()
@@ -702,7 +702,7 @@ describe('Tests for super POEM API key change', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument()
     })
-    fireEvent.click(screen.getByRole("checkbox"))
+    fireEvent.click(screen.getByTestId("revoked"))
     fireEvent.click(screen.getByRole('button', {name: /save/i}))
     await waitFor(() => {
       expect(screen.getByRole('dialog', {title: /change/i})).toBeInTheDocument()
@@ -728,7 +728,7 @@ describe('Tests for super POEM API key change', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
     })
-    fireEvent.click(screen.getByRole("checkbox"))
+    fireEvent.click(screen.getByTestId("revoked"))
     fireEvent.click(screen.getByRole('button', {name: /save/i}))
     await waitFor(() => {
       expect(screen.getByRole('dialog', {title: /change/i})).toBeInTheDocument()
@@ -762,7 +762,7 @@ describe('Tests for super POEM API key change', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
     })
-    fireEvent.click(screen.getByRole("checkbox"))
+    fireEvent.click(screen.getByTestId("revoked"))
     fireEvent.click(screen.getByRole('button', {name: /save/i}))
     await waitFor(() => {
       expect(screen.getByRole('dialog', {title: /change/i})).toBeInTheDocument()
@@ -794,7 +794,7 @@ describe('Tests for super POEM API key change', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
     })
-    fireEvent.click(screen.getByRole("checkbox"))
+    fireEvent.click(screen.getByTestId("revoked"))
     fireEvent.click(screen.getByRole('button', {name: /save/i}))
     await waitFor(() => {
       expect(screen.getByRole('dialog', {title: /change/i})).toBeInTheDocument()
@@ -826,7 +826,7 @@ describe('Tests for super POEM API key change', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
     })
-    fireEvent.click(screen.getByRole("checkbox"))
+    fireEvent.click(screen.getByTestId("revoked"))
     fireEvent.click(screen.getByRole('button', {name: /save/i}))
     await waitFor(() => {
       expect(screen.getByRole('dialog', {title: /change/i})).toBeInTheDocument()
@@ -893,7 +893,144 @@ describe('Tests for super POEM API key change', () => {
   })
 })
 
-describe('Tests for API key addview', () => {
+
+describe('Tests for tenant API key addview', () => {
+  jest.spyOn(NotificationManager, "success");
+  jest.spyOn(NotificationManager, "error");
+  jest.spyOn(queryClient, 'invalidateQueries');
+
+  beforeAll(() => {
+    Backend.mockImplementation(() => {
+      return {
+        addObject: mockAddObject
+      }
+    })
+  })
+
+  it ('Test that addview renders properly', () => {
+    renderAddview(true)
+
+    expect(screen.getByRole('heading', {name: /api/i}).textContent).toBe('Add API key')
+    expect(screen.getByRole('heading', {name: /credent/i}).textContent).toBe('Credentials')
+    expect(screen.getByTestId('name').value).toBe('');
+    expect(screen.getByTestId("revoked").checked).toBeFalsy()
+    expect(screen.getByRole('alert').textContent).toBe('If token field is left empty, value will be automatically generated on save.')
+    expect(screen.getByTestId('token').value).toBe('');
+    expect(screen.getByTestId('token')).toBeEnabled();
+    expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
+    expect(screen.queryByText(/delete/i)).not.toBeInTheDocument();
+  })
+
+  it ('Test adding new API key', async () => {
+    renderAddview(true)
+
+    fireEvent.change(screen.getByTestId('name'), {target: {value: 'APIKEY'}});
+    fireEvent.click(screen.getByRole('button', {name: /save/i}))
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', {title: /add/i})).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole('button', {name: /yes/i}))
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/apikeys/',
+        {name: 'APIKEY', token: ''}
+      )
+    })
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('apikey');
+    expect(NotificationManager.success).toHaveBeenCalledWith('API key successfully added', 'Added', 2000)
+  })
+
+  it ('Test adding new API key with predefined token', async () => {
+    renderAddview(true)
+
+    fireEvent.change(screen.getByTestId('name'), {target: {value: 'APIKEY'}});
+    fireEvent.change(screen.getByTestId('token'), {target: {value: 'token123'}})
+    fireEvent.click(screen.getByRole('button', {name: /save/i}))
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', {title: /add/i})).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole('button', {name: /yes/i}))
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/apikeys/',
+        {name: 'APIKEY', token: 'token123'}
+      )
+    })
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('apikey');
+    expect(NotificationManager.success).toHaveBeenCalledWith('API key successfully added', 'Added', 2000)
+  })
+
+  it('Test add API key with backend error message', async () => {
+    mockAddObject.mockImplementationOnce( () => {
+      throw Error('400 BAD REQUEST: API key with this name already exists')
+    } );
+
+    renderAddview(true)
+
+    fireEvent.change(screen.getByTestId('name'), {target: {value: 'APIKEY'}});
+    fireEvent.change(screen.getByTestId('token'), {target: {value: 'token123'}})
+    fireEvent.click(screen.getByRole('button', {name: /save/i}))
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', {title: /add/i})).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole('button', {name: /yes/i}))
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/apikeys/',
+        {name: 'APIKEY', token: 'token123'}
+      )
+    })
+
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('apikey');
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>400 BAD REQUEST: API key with this name already exists</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error',
+      0,
+      expect.any(Function)
+    )
+  })
+
+  it('Test add API key with backend error without message', async () => {
+    mockAddObject.mockImplementationOnce( () => { throw Error() } );
+
+    renderAddview(true)
+
+    fireEvent.change(screen.getByTestId('name'), {target: {value: 'APIKEY'}});
+    fireEvent.change(screen.getByTestId('token'), {target: {value: 'token123'}})
+    fireEvent.click(screen.getByRole('button', {name: /save/i}))
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', {title: /add/i})).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole('button', {name: /yes/i}))
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/apikeys/',
+        {name: 'APIKEY', token: 'token123'}
+      )
+    })
+
+    expect(queryClient.invalidateQueries).not.toHaveBeenCalledWith('apikey');
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error adding API key</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      'Error',
+      0,
+      expect.any(Function)
+    )
+  })
+})
+
+
+describe('Tests for super POEM API key addview', () => {
   jest.spyOn(NotificationManager, "success");
   jest.spyOn(NotificationManager, "error");
   jest.spyOn(queryClient, 'invalidateQueries');
@@ -912,7 +1049,8 @@ describe('Tests for API key addview', () => {
     expect(screen.getByRole('heading', {name: /api/i}).textContent).toBe('Add API key')
     expect(screen.getByRole('heading', {name: /credent/i}).textContent).toBe('Credentials')
     expect(screen.getByTestId('name').value).toBe('');
-    expect(screen.getByRole('checkbox').checked).toBeFalsy()
+    expect(screen.getByTestId("revoked").checked).toBeFalsy()
+    expect(screen.getByTestId("used_by").checked).toBeFalsy()
     expect(screen.getByRole('alert').textContent).toBe('If token field is left empty, value will be automatically generated on save.')
     expect(screen.getByTestId('token').value).toBe('');
     expect(screen.getByTestId('token')).toBeEnabled();
