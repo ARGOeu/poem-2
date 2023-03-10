@@ -924,7 +924,16 @@ describe('Tests for tenant API key addview', () => {
   it ('Test adding new API key', async () => {
     renderAddview(true)
 
-    fireEvent.change(screen.getByTestId('name'), {target: {value: 'APIKEY'}});
+    fireEvent.change(screen.getByTestId('name'), { target: { value: "WEB-API-TEST" } });
+
+    fireEvent.click(screen.getByRole('button', {name: /save/i}))
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', {title: /add/i})).not.toBeInTheDocument()
+    })
+    expect(screen.getByText("Name can contain alphanumeric characters, dash and underscore, must always begin with a letter, but not with WEB-API-")).toBeInTheDocument()
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "APIKEY" } })
+
     fireEvent.click(screen.getByRole('button', {name: /save/i}))
 
     await waitFor(() => {
@@ -934,7 +943,7 @@ describe('Tests for tenant API key addview', () => {
     await waitFor(() => {
       expect(mockAddObject).toHaveBeenCalledWith(
         '/api/v2/internal/apikeys/',
-        {name: 'APIKEY', token: ''}
+        {name: 'APIKEY', token: '', used_by: "poem"}
       )
     })
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith('apikey');
@@ -955,7 +964,7 @@ describe('Tests for tenant API key addview', () => {
     await waitFor(() => {
       expect(mockAddObject).toHaveBeenCalledWith(
         '/api/v2/internal/apikeys/',
-        {name: 'APIKEY', token: 'token123'}
+        {name: 'APIKEY', token: 'token123', used_by: "poem"}
       )
     })
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith('apikey');
@@ -980,7 +989,7 @@ describe('Tests for tenant API key addview', () => {
     await waitFor(() => {
       expect(mockAddObject).toHaveBeenCalledWith(
         '/api/v2/internal/apikeys/',
-        {name: 'APIKEY', token: 'token123'}
+        {name: 'APIKEY', token: 'token123', used_by: "poem"}
       )
     })
 
@@ -1012,7 +1021,7 @@ describe('Tests for tenant API key addview', () => {
     await waitFor(() => {
       expect(mockAddObject).toHaveBeenCalledWith(
         '/api/v2/internal/apikeys/',
-        {name: 'APIKEY', token: 'token123'}
+        {name: 'APIKEY', token: 'token123', used_by: "poem"}
       )
     })
 
@@ -1058,10 +1067,22 @@ describe('Tests for super POEM API key addview', () => {
     expect(screen.queryByText(/delete/i)).not.toBeInTheDocument();
   })
 
-  it ('Test adding new API key', async () => {
+  it ('Test adding new web API key', async () => {
     renderAddview()
 
-    fireEvent.change(screen.getByTestId('name'), {target: {value: 'APIKEY'}});
+    fireEvent.change(screen.getByTestId('name'), { target: { value: "WEB-API-TEST" } });
+    fireEvent.click(screen.getByRole('button', {name: /save/i}))
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', {title: /add/i})).not.toBeInTheDocument()
+    })
+    expect(screen.getByText("Name can contain alphanumeric characters, dash and underscore, must always begin with a letter, but not with WEB-API-")).toBeInTheDocument()
+
+    fireEvent.click(screen.getByTestId("used_by"))
+
+    await waitFor(() => {
+      expect(screen.queryByText("Name can contain alphanumeric characters, dash and underscore, must always begin with a letter, but not with WEB-API-")).not.toBeInTheDocument()
+    })
+
     fireEvent.click(screen.getByRole('button', {name: /save/i}))
 
     await waitFor(() => {
@@ -1071,7 +1092,70 @@ describe('Tests for super POEM API key addview', () => {
     await waitFor(() => {
       expect(mockAddObject).toHaveBeenCalledWith(
         '/api/v2/internal/apikeys/',
-        {name: 'APIKEY', token: ''}
+        {name: 'WEB-API-TEST', token: '', used_by: "webapi"}
+      )
+    })
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('apikey');
+    expect(NotificationManager.success).toHaveBeenCalledWith('API key successfully added', 'Added', 2000)
+  })
+
+  it ('Test adding new web API key with predefined token', async () => {
+    renderAddview()
+
+    fireEvent.change(screen.getByTestId('name'), {target: {value: 'APIKEY'}});
+    expect(screen.queryByText("Name can contain alphanumeric characters, dash and underscore, must always begin with a letter, but not with WEB-API-")).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByTestId("used_by"))
+    fireEvent.click(screen.getByRole('button', {name: /save/i}))
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', {title: /add/i})).not.toBeInTheDocument()
+    })
+    expect(screen.queryByText("Name must have form WEB-API-<tenant_name> or WEB-API-<tenant_name>-RO")).toBeInTheDocument()
+
+    fireEvent.change(screen.getByTestId('name'), {target: {value: 'WEB-API-TEST'}});
+    await waitFor(() => {
+      expect(screen.queryByText("Name must have form WEB-API-<tenant_name> or WEB-API-<tenant_name>-RO")).not.toBeInTheDocument()
+    })
+    fireEvent.change(screen.getByTestId('token'), {target: {value: 'token123'}})
+    fireEvent.click(screen.getByRole('button', {name: /save/i}))
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', {title: /add/i})).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole('button', {name: /yes/i}))
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/apikeys/',
+        {name: 'WEB-API-TEST', token: 'token123', used_by: "webapi"}
+      )
+    })
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('apikey');
+    expect(NotificationManager.success).toHaveBeenCalledWith('API key successfully added', 'Added', 2000)
+  })
+
+  it ('Test adding new API key', async () => {
+    renderAddview()
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: "WEB-API-TEST" } });
+
+    fireEvent.click(screen.getByRole('button', {name: /save/i}))
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', {title: /add/i})).not.toBeInTheDocument()
+    })
+    expect(screen.getByText("Name can contain alphanumeric characters, dash and underscore, must always begin with a letter, but not with WEB-API-")).toBeInTheDocument()
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: "APIKEY" } });
+
+    fireEvent.click(screen.getByRole('button', {name: /save/i}))
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', {title: /add/i})).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole('button', {name: /yes/i}))
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        '/api/v2/internal/apikeys/',
+        {name: 'APIKEY', token: '', used_by: "poem"}
       )
     })
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith('apikey');
@@ -1092,13 +1176,12 @@ describe('Tests for super POEM API key addview', () => {
     await waitFor(() => {
       expect(mockAddObject).toHaveBeenCalledWith(
         '/api/v2/internal/apikeys/',
-        {name: 'APIKEY', token: 'token123'}
+        {name: 'APIKEY', token: 'token123', used_by: "poem"}
       )
     })
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith('apikey');
     expect(NotificationManager.success).toHaveBeenCalledWith('API key successfully added', 'Added', 2000)
   })
-
   it('Test add API key with backend error message', async () => {
     mockAddObject.mockImplementationOnce( () => {
       throw Error('400 BAD REQUEST: API key with this name already exists')
@@ -1117,7 +1200,7 @@ describe('Tests for super POEM API key addview', () => {
     await waitFor(() => {
       expect(mockAddObject).toHaveBeenCalledWith(
         '/api/v2/internal/apikeys/',
-        {name: 'APIKEY', token: 'token123'}
+        {name: 'APIKEY', token: 'token123', used_by: "poem"}
       )
     })
 
@@ -1149,7 +1232,7 @@ describe('Tests for super POEM API key addview', () => {
     await waitFor(() => {
       expect(mockAddObject).toHaveBeenCalledWith(
         '/api/v2/internal/apikeys/',
-        {name: 'APIKEY', token: 'token123'}
+        {name: 'APIKEY', token: 'token123', used_by: "poem"}
       )
     })
 

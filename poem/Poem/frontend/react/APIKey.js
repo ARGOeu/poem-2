@@ -24,12 +24,31 @@ import {
   InputGroupText,
   Input,
   Form,
-  Badge
+  Badge,
+  FormFeedback
 } from 'reactstrap';
 import { faClipboard } from '@fortawesome/free-solid-svg-icons';
 import { useQuery, useQueryClient, useMutation } from 'react-query';
 import { fetchAPIKeys } from './QueryFunctions';
 import { Controller, useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from "yup";
+import { ErrorMessage } from "@hookform/error-message"
+
+
+const validationSchema = yup.object().shape({
+  name: yup.string().required("Name field is required")
+    .when("used_by", {
+      is: (value) => value === "poem",
+      then: yup.string().test("must_not_start", "Name can contain alphanumeric characters, dash and underscore, must always begin with a letter, but not with WEB-API-", function (value) {
+        if (!value.startsWith("WEB-API-") && value.match(/^[a-zA-Z][A-Za-z0-9\-_]*$/))
+          return true
+        else
+          return false
+      }),
+      otherwise: yup.string().matches(/^WEB-API-\S*(-RO)?$/, "Name must have form WEB-API-<tenant_name> or WEB-API-<tenant_name>-RO")
+    })
+})
 
 
 const fetchAPIKey = async(name) => {
@@ -153,8 +172,10 @@ const APIKeyForm = ({
   const [onYes, setOnYes] = useState('')
   const refToken = useRef(null);
 
-  const { control, handleSubmit, setValue, getValues } = useForm({
-    defaultValues: !addview ? data : { name: "", revoked: false, token: "" }
+  const { control, handleSubmit, setValue, getValues, trigger, formState: { errors } } = useForm({
+    defaultValues: !addview ? data : { name: "", revoked: false, token: "", used_by: "poem" },
+    mode: "all",
+    resolver: yupResolver(validationSchema)
   })
 
   const onSubmitHandle = () => {
@@ -204,9 +225,18 @@ const APIKeyForm = ({
                   <Input
                     {...field}
                     data-testid="name"
-                    className="form-control"
+                    className={ `form-control ${errors?.name && "is-invalid"}` }
                     disabled={ !addview }
                   />
+                }
+              />
+              <ErrorMessage
+                errors={ errors }
+                name="name"
+                render={ ({ message }) =>
+                  <FormFeedback invalid="true" className="end-0">
+                    { message }
+                  </FormFeedback>
                 }
               />
               <FormText color='muted'>
@@ -230,7 +260,10 @@ const APIKeyForm = ({
                               type='checkbox'
                               data-testid="used_by"
                               id="used_by"
-                              onChange={ e => setValue("used_by", e.target.checked ? "webapi" : "poem") }
+                              onChange={ e => {
+                                setValue("used_by", e.target.checked ? "webapi" : "poem")
+                                trigger("name")
+                              }}
                               checked={ field.value === "webapi" }
                             />
                           )
@@ -389,7 +422,7 @@ export const APIKeyChange = (props) => {
         }
       )
     } else {
-      addMutation.mutate({ name: values.name, token: values.token }, {
+      addMutation.mutate({ name: values.name, token: values.token, used_by: values.used_by }, {
         onSuccess: () => {
           queryClient.invalidateQueries('apikey');
           NotifyOk({
