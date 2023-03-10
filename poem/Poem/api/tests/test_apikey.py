@@ -985,63 +985,311 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
         self.assertEqual(len(WebAPIKey.objects.all()), 4)
 
     def test_delete_apikey(self):
-        request = self.factory.delete(self.url + 'DELETABLE')
+        self.assertEqual(len(MyAPIKey.objects.all()), 3)
+        request = self.factory.delete(self.url + 'poem_DELETABLE')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.superuser)
-        response = self.view(request, 'DELETABLE')
+        response = self.view(request, 'poem_DELETABLE')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         keys = MyAPIKey.objects.all().values_list('name', flat=True)
         self.assertEqual(len(keys), 2)
         self.assertFalse('DELETABLE' in keys)
 
     def test_delete_apikey_regular_user(self):
-        request = self.factory.delete(self.url + 'DELETABLE')
+        self.assertEqual(len(MyAPIKey.objects.all()), 3)
+        request = self.factory.delete(self.url + 'poem_DELETABLE')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
-        response = self.view(request, 'DELETABLE')
+        response = self.view(request, 'poem_DELETABLE')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(
             response.data['detail'],
-            'You do not have permission to delete API keys.'
+            'You do not have permission to delete API keys'
         )
         keys = MyAPIKey.objects.all().values_list('name', flat=True)
         self.assertEqual(len(keys), 3)
         self.assertTrue('DELETABLE' in keys)
 
     def test_delete_nonexisting_apikey(self):
-        request = self.factory.delete(self.url + 'nonexisting')
+        self.assertEqual(len(MyAPIKey.objects.all()), 3)
+        request = self.factory.delete(self.url + 'poem_nonexisting')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.superuser)
-        response = self.view(request, 'nonexisting')
+        response = self.view(request, 'poem_nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data['detail'], 'API key not found')
         keys = MyAPIKey.objects.all().values_list('name', flat=True)
         self.assertEqual(len(keys), 3)
 
     def test_delete_nonexisting_apikey_regular_user(self):
-        request = self.factory.delete(self.url + 'nonexisting')
+        self.assertEqual(len(MyAPIKey.objects.all()), 3)
+        request = self.factory.delete(self.url + 'poem_nonexisting')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
-        response = self.view(request, 'nonexisting')
+        response = self.view(request, 'poem_nonexisting')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(
             response.data['detail'],
-            'You do not have permission to delete API keys.'
+            'You do not have permission to delete API keys'
         )
         keys = MyAPIKey.objects.all().values_list('name', flat=True)
         self.assertEqual(len(keys), 3)
 
     def test_delete_no_apikey_name(self):
+        self.assertEqual(len(MyAPIKey.objects.all()), 3)
         request = self.factory.delete(self.url)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
             response.data['detail'], 'API key name must be defined'
         )
+        self.assertEqual(len(MyAPIKey.objects.all()), 3)
 
     def test_delete_no_apikey_name_regular_user(self):
+        self.assertEqual(len(MyAPIKey.objects.all()), 3)
         request = self.factory.delete(self.url)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(
             response.data['detail'],
-            'You do not have permission to delete API keys.'
+            'You do not have permission to delete API keys'
         )
+        self.assertEqual(len(MyAPIKey.objects.all()), 3)
+
+    def test_delete_wrong_apikey_name(self):
+        self.assertEqual(len(MyAPIKey.objects.all()), 3)
+        request = self.factory.delete(self.url, "meh_DELETABLE")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, "meh_DELETABLE")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data['detail'], 'Missing API key name prefix'
+        )
+        self.assertEqual(len(MyAPIKey.objects.all()), 3)
+
+    def test_delete_wrong_apikey_name_regular_user(self):
+        self.assertEqual(len(MyAPIKey.objects.all()), 3)
+        request = self.factory.delete(self.url + "meh_DELETABLE")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request, "meh_DELETABLE")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete API keys'
+        )
+        self.assertEqual(len(MyAPIKey.objects.all()), 3)
+
+    def test_delete_webapikey_superpoem_superuser(self):
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        request = self.factory.delete(self.url + "webapi_WEB-API-TENANT")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superpoem_superuser)
+        response = self.view(request, "webapi_WEB-API-TENANT")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        keys = WebAPIKey.objects.all().values_list('name', flat=True)
+        self.assertEqual(len(keys), 3)
+        self.assertFalse("WEB-API-TENANT" in keys)
+
+    def test_delete_webapikey_superpoem_regular_user(self):
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        request = self.factory.delete(self.url + "webapi_WEB-API-TENANT")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superpoem_user)
+        response = self.view(request, "webapi_WEB-API-TENANT")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete API keys'
+        )
+        keys = WebAPIKey.objects.all().values_list('name', flat=True)
+        self.assertEqual(len(keys), 4)
+        self.assertTrue("WEB-API-TENANT" in keys)
+
+    def test_delete_webapikey_tenant_superuser(self):
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        request = self.factory.delete(self.url + "webapi_WEB-API-TENANT")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, "webapi_WEB-API-TENANT")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete web API keys'
+        )
+        keys = WebAPIKey.objects.all().values_list('name', flat=True)
+        self.assertEqual(len(keys), 4)
+        self.assertTrue("WEB-API-TENANT" in keys)
+
+    def test_delete_webapikey_tenant_regular_user(self):
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        request = self.factory.delete(self.url + "webapi_WEB-API-TENANT")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request, "webapi_WEB-API-TENANT")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete API keys'
+        )
+        keys = WebAPIKey.objects.all().values_list('name', flat=True)
+        self.assertEqual(len(keys), 4)
+        self.assertTrue("WEB-API-TENANT" in keys)
+
+    def test_delete_nonexisting_webapikey_superpoem_superuser(self):
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        request = self.factory.delete(self.url + 'webapi_nonexisting')
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superpoem_superuser)
+        response = self.view(request, 'webapi_nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['detail'], 'API key not found')
+        keys = WebAPIKey.objects.all().values_list('name', flat=True)
+        self.assertEqual(len(keys), 4)
+
+    def test_delete_nonexisting_webapikey_superpoem_regular_user(self):
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        request = self.factory.delete(self.url + 'webapi_nonexisting')
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superpoem_user)
+        response = self.view(request, 'webapi_nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete API keys'
+        )
+        keys = WebAPIKey.objects.all().values_list('name', flat=True)
+        self.assertEqual(len(keys), 4)
+
+    def test_delete_nonexisting_webapikey_tenant_superuser(self):
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        request = self.factory.delete(self.url + 'webapi_nonexisting')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, 'webapi_nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete web API keys'
+        )
+        keys = WebAPIKey.objects.all().values_list('name', flat=True)
+        self.assertEqual(len(keys), 4)
+
+    def test_delete_nonexisting_webapikey_tenant_regular_user(self):
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        request = self.factory.delete(self.url + 'webapi_nonexisting')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'webapi_nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete API keys'
+        )
+        keys = WebAPIKey.objects.all().values_list('name', flat=True)
+        self.assertEqual(len(keys), 4)
+
+    def test_delete_no_webapikey_name_superpoem_superuser(self):
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        request = self.factory.delete(self.url)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superpoem_superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data['detail'], 'API key name must be defined'
+        )
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+
+    def test_delete_no_webapikey_name_superpoem_regular_user(self):
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        request = self.factory.delete(self.url)
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superpoem_user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete API keys'
+        )
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+
+    def test_delete_no_webapikey_name_tenant_superuser(self):
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        request = self.factory.delete(self.url)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data['detail'], "API key name must be defined"
+        )
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+
+    def test_delete_no_webapikey_name_tenant_regular_user(self):
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        request = self.factory.delete(self.url)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete API keys'
+        )
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+
+    def test_delete_wrong_webapikey_name_superpoem_superuser(self):
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        request = self.factory.delete(self.url + "meh_WEB-API-TENANT")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superpoem_superuser)
+        response = self.view(request, "meh_WEB-API-TENANT")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data['detail'], 'Missing API key name prefix'
+        )
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+
+    def test_delete_wrong_webapikey_name_superpoem_regular_user(self):
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        request = self.factory.delete(self.url + "meh_WEB-API-TENANT")
+        request.tenant = self.public_tenant
+        force_authenticate(request, user=self.superpoem_user)
+        response = self.view(request, "meh_WEB-API-TENANT")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete API keys'
+        )
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+
+    def test_delete_wrong_webapikey_name_tenant_superuser(self):
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        request = self.factory.delete(self.url, "meh_WEB-API-TENANT")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, "meh_WEB-API-TENANT")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data['detail'], "Missing API key name prefix"
+        )
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+
+    def test_delete_wrong_webapikey_name_tenant_regular_user(self):
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        request = self.factory.delete(self.url + "meh_WEB-API-TENANT")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request, "meh_WEB-API-TENANT")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data['detail'],
+            'You do not have permission to delete API keys'
+        )
+        self.assertEqual(len(WebAPIKey.objects.all()), 4)

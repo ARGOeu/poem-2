@@ -228,14 +228,37 @@ class ListAPIKeys(APIView):
             )
 
     def delete(self, request, name=None):
-        if request.user.is_superuser:
+        is_tenant = request.tenant.schema_name != get_public_schema_name()
+        is_superuser = request.user.is_superuser
+        if is_superuser:
             if name:
+                if name.startswith("poem_"):
+                    name = name[5:]
+                    model = MyAPIKey
+
+                elif name.startswith("webapi_"):
+                    if is_tenant:
+                        return error_response(
+                            status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="You do not have permission to delete web "
+                                   "API keys"
+                        )
+
+                    name = name[7:]
+                    model = WebAPIKey
+
+                else:
+                    return error_response(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Missing API key name prefix"
+                    )
+
                 try:
-                    apikey = MyAPIKey.objects.get(name=name)
+                    apikey = model.objects.get(name=name)
                     apikey.delete()
                     return Response(status=status.HTTP_204_NO_CONTENT)
 
-                except MyAPIKey.DoesNotExist:
+                except model.DoesNotExist:
                     raise NotFound(status=404, detail='API key not found')
 
             else:
@@ -246,7 +269,7 @@ class ListAPIKeys(APIView):
 
         else:
             return error_response(
-                detail='You do not have permission to delete API keys.',
+                detail='You do not have permission to delete API keys',
                 status_code=status.HTTP_401_UNAUTHORIZED
             )
 
