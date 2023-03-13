@@ -13,29 +13,29 @@ from django_tenants.test.client import TenantRequestFactory
 from rest_framework import status
 
 
-def mock_function(profile):
-    if profile == 'ARGO-MON':
+def mock_function(*args):
+    if args[0] == 'ARGO-MON':
         return {'argo.AMS-Check'}
 
-    if profile == 'MON-TEST':
+    if args[0] == 'MON-TEST':
         return {
             'argo.AMS-Check', 'eu.seadatanet.org.downloadmanager-check',
             'eu.seadatanet.org.nvs2-check'
         }
 
-    if profile == 'MON-PASSIVE':
+    if args[0] == 'MON-PASSIVE':
         return {
             'argo.AMS-Check', 'eu.seadatanet.org.downloadmanager-check',
             'eu.seadatanet.org.nvs2-check', 'org.apel.APEL-Pub'
         }
 
-    if profile == 'EMPTY':
+    if args[0] == 'EMPTY':
         return set()
 
-    if profile == 'TEST-NONEXISTING':
+    if args[0] == 'TEST-NONEXISTING':
         return {'nonexisting.metric'}
 
-    if profile == 'TEST_PROMOO':
+    if args[0] == 'TEST_PROMOO':
         return {'eu.egi.cloud.OCCI-Categories'}
 
 
@@ -939,6 +939,8 @@ class ListMetricsAPIViewTests(TenantTestCase):
 
 class ListReposAPIViewTests(TenantTestCase):
     def setUp(self):
+        self.tenant.name = "TENANT"
+        self.tenant.save()
         self.token = create_credentials()
         self.view = views.ListRepos.as_view()
         self.factory = TenantRequestFactory(self.tenant)
@@ -952,6 +954,7 @@ class ListReposAPIViewTests(TenantTestCase):
             **{'HTTP_X_API_KEY': 'wrong_token',
                'HTTP_PROFILES': '[ARGO-MON, MON-TEST]'}
         )
+        request.tenant = self.tenant
         response = self.view(request, 'centos7')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
@@ -963,13 +966,16 @@ class ListReposAPIViewTests(TenantTestCase):
             **{'HTTP_X_API_KEY': self.token,
                'HTTP_PROFILES': '[ARGO-MON, MON-TEST]'}
         )
+        request.tenant = self.tenant
         response = self.view(request, 'centos7')
         test_data = response.data
         test_data['data']['repo-1']['packages'] = sorted(
             test_data['data']['repo-1']['packages'], key=lambda k: k['name']
         )
         self.assertEqual(mock_get_metrics.call_count, 2)
-        mock_get_metrics.assert_has_calls([call('ARGO-MON'), call('MON-TEST')])
+        mock_get_metrics.assert_has_calls([
+            call('ARGO-MON', "TENANT"), call('MON-TEST', "TENANT")
+        ])
         self.assertEqual(
             test_data,
             {
@@ -1011,6 +1017,7 @@ class ListReposAPIViewTests(TenantTestCase):
             **{'HTTP_X_API_KEY': self.token,
                'HTTP_PROFILES': '[ARGO-MON, MON-TEST]'}
         )
+        request.tenant = self.tenant
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
@@ -1022,6 +1029,7 @@ class ListReposAPIViewTests(TenantTestCase):
         request = self.factory.get(
             self.url + '/centos7', **{'HTTP_X_API_KEY': self.token}
         )
+        request.tenant = self.tenant
         response = self.view(request, 'centos7')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
@@ -1037,10 +1045,11 @@ class ListReposAPIViewTests(TenantTestCase):
             **{'HTTP_X_API_KEY': self.token,
                'HTTP_PROFILES': '[ARGO-MON, MON-PASSIVE]'}
         )
+        request.tenant = self.tenant
         response = self.view(request, 'centos6')
         self.assertEqual(mock_get_metrics.call_count, 2)
         mock_get_metrics.assert_has_calls(
-            [call('ARGO-MON'), call('MON-PASSIVE')]
+            [call('ARGO-MON', "TENANT"), call('MON-PASSIVE', "TENANT")]
         )
         self.assertEqual(
             response.data,
@@ -1080,9 +1089,10 @@ class ListReposAPIViewTests(TenantTestCase):
             **{'HTTP_X_API_KEY': self.token,
                'HTTP_PROFILES': '[EMPTY]'}
         )
+        request.tenant = self.tenant
         response = self.view(request, 'centos6')
         mock_get_metrics.assert_called_once()
-        mock_get_metrics.assert_called_with('EMPTY')
+        mock_get_metrics.assert_called_with('EMPTY', "TENANT")
         self.assertEqual(
             response.data,
             {
@@ -1109,9 +1119,12 @@ class ListReposAPIViewTests(TenantTestCase):
             **{'HTTP_X_API_KEY': self.token,
                'HTTP_PROFILES': '[ARGO-MON, MON-TEST]'}
         )
+        request.tenant = self.tenant
         response = self.view(request, 'nonexisting')
         self.assertEqual(mock_get_metrics.call_count, 2)
-        mock_get_metrics.assert_has_calls([call('ARGO-MON'), call('MON-TEST')])
+        mock_get_metrics.assert_has_calls([
+            call('ARGO-MON', "TENANT"), call('MON-TEST', "TENANT")
+        ])
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(
             response.data,
@@ -1128,10 +1141,13 @@ class ListReposAPIViewTests(TenantTestCase):
             **{'HTTP_X_API_KEY': self.token,
                'HTTP_PROFILES': '[ARGO-MON, MON-TEST, TEST-NONEXISTING]'}
         )
+        request.tenant = self.tenant
         response = self.view(request, 'centos6')
         self.assertEqual(mock_get_metrics.call_count, 3)
         mock_get_metrics.assert_has_calls([
-            call('ARGO-MON'), call('MON-TEST'), call('TEST-NONEXISTING')
+            call('ARGO-MON', "TENANT"),
+            call('MON-TEST', "TENANT"),
+            call('TEST-NONEXISTING', "TENANT")
         ])
         self.assertEqual(
             response.data,
@@ -1171,9 +1187,10 @@ class ListReposAPIViewTests(TenantTestCase):
             **{'HTTP_X_API_KEY': self.token,
                'HTTP_PROFILES': '[TEST_PROMOO]'}
         )
+        request.tenant = self.tenant
         response = self.view(request, 'centos6')
         mock_get_metrics.assert_called_once()
-        mock_get_metrics.assert_called_with('TEST_PROMOO')
+        mock_get_metrics.assert_called_with('TEST_PROMOO', "TENANT")
         self.assertEqual(
             response.data,
             {
@@ -1209,9 +1226,10 @@ class ListReposAPIViewTests(TenantTestCase):
             **{'HTTP_X_API_KEY': self.token,
                'HTTP_PROFILES': '[TEST_PROMOO]'}
         )
+        request.tenant = self.tenant
         response = self.view(request, 'centos7')
         mock_get_metrics.assert_called_once()
-        mock_get_metrics.assert_called_with('TEST_PROMOO')
+        mock_get_metrics.assert_called_with('TEST_PROMOO', "TENANT")
         self.assertEqual(
             response.data,
             {

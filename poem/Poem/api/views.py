@@ -3,10 +3,10 @@ import json
 import requests
 from Poem.api.internal_views.utils import one_value_inline, \
     two_value_inline_dict
-from Poem.api.models import MyAPIKey
 from Poem.api.permissions import MyHasAPIKey
 from Poem.poem import models
 from Poem.poem_super_admin import models as admin_models
+from Poem.poem_super_admin.models import WebAPIKey
 from django.conf import settings
 from rest_framework import status
 from rest_framework.exceptions import APIException
@@ -139,8 +139,8 @@ def build_metricconfigs(templates=False):
     return ret
 
 
-def get_metrics_from_profile(profile):
-    token = MyAPIKey.objects.get(name='WEB-API-RO')
+def get_metrics_from_profile(profile, tenant):
+    token = WebAPIKey.objects.get(name=f"WEB-API-{tenant}-RO")
 
     headers = {'Accept': 'application/json', 'x-api-key': token.token}
     response = requests.get(
@@ -215,7 +215,9 @@ class ListRepos(APIView):
             profiles = dict(request.META)['HTTP_PROFILES'][1:-1].split(', ')
             metrics = set()
             for profile in profiles:
-                metrics = metrics.union(get_metrics_from_profile(profile))
+                metrics = metrics.union(
+                    get_metrics_from_profile(profile, request.tenant.name)
+                )
 
             internal_mt = [
                 mt.name for mt in
