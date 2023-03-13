@@ -1,6 +1,7 @@
 import datetime
 import json
 from unittest.mock import patch, call
+from Poem.poem_super_admin.models import WebAPIKey
 
 import factory
 import requests
@@ -3169,6 +3170,8 @@ class UpdateMetricsTests(TenantTestCase):
 
 class MetricsInProfilesTests(TenantTestCase):
     def setUp(self):
+        self.tenant.name = "TENANT"
+        self.tenant.save()
         with schema_context(get_public_schema_name()):
             tenant = Tenant.objects.create(
                 name='public', schema_name=get_public_schema_name()
@@ -3179,10 +3182,12 @@ class MetricsInProfilesTests(TenantTestCase):
 
     @patch('Poem.helpers.metrics_helpers.requests.put')
     @patch('Poem.helpers.metrics_helpers.requests.get')
-    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
+    @patch('Poem.helpers.metrics_helpers.WebAPIKey.objects.get')
     def test_update_metrics_in_profiles(self, mock_key, mock_get, mock_put):
         with self.settings(WEBAPI_METRIC='https://mock.api.url'):
-            mock_key.return_value = MyAPIKey(name='WEB-API', token='mock_key')
+            mock_key.return_value = WebAPIKey(
+                name='WEB-API-TENANT', token='mock_key'
+            )
             mock_get.side_effect = mocked_web_api_metric_profiles
             msgs = update_metrics_in_profiles('metric1', 'new.metric1')
             mock_put.assert_called_once()
@@ -3216,10 +3221,12 @@ class MetricsInProfilesTests(TenantTestCase):
             self.assertEqual(msgs, [])
 
     @patch('Poem.helpers.metrics_helpers.requests.get')
-    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
+    @patch('Poem.helpers.metrics_helpers.WebAPIKey.objects.get')
     def test_update_metrics_in_profiles_wrong_token(self, mock_key, mock_get):
         with self.settings(WEBAPI_METRIC='https://mock.api.url'):
-            mock_key.return_value = MyAPIKey(name='WEB-API', token='wrong_key')
+            mock_key.return_value = WebAPIKey(
+                name='WEB-API-TENANT', token='wrong_key'
+            )
             mock_get.side_effect = mocked_web_api_metric_profiles_wrong_token
             msgs = update_metrics_in_profiles('metric1', 'new.metric1')
             self.assertEqual(
@@ -3244,12 +3251,14 @@ class MetricsInProfilesTests(TenantTestCase):
 
     @patch('Poem.helpers.metrics_helpers.requests.put')
     @patch('Poem.helpers.metrics_helpers.requests.get')
-    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
+    @patch('Poem.helpers.metrics_helpers.WebAPIKey.objects.get')
     def test_update_metrics_in_profiles_if_response_empty(
             self, mock_key, mock_get, mock_put
     ):
         with self.settings(WEBAPI_METRIC='https://mock.api.url'):
-            mock_key.return_value = MyAPIKey(name='WEB-API', token='mock_key')
+            mock_key.return_value = WebAPIKey(
+                name='WEB-API-TENANT', token='mock_key'
+            )
             mock_get.side_effect = mocked_web_api_metric_profiles_empty
             msgs = update_metrics_in_profiles('metric1', 'new.metric1')
             self.assertEqual(msgs, [])
@@ -3257,24 +3266,28 @@ class MetricsInProfilesTests(TenantTestCase):
 
     @patch('Poem.helpers.metrics_helpers.requests.put')
     @patch('Poem.helpers.metrics_helpers.requests.get')
-    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
+    @patch('Poem.helpers.metrics_helpers.WebAPIKey.objects.get')
     def test_update_metrics_in_profiles_if_same_name(
             self, mock_key, mock_get, mock_put
     ):
         with self.settings(WEBAPI_METRIC='https://mock.api.url'):
-            mock_key.return_value = MyAPIKey(name='WEB-API', token='mock_key')
+            mock_key.return_value = WebAPIKey(
+                name='WEB-API-TENANT', token='mock_key'
+            )
             mock_get.side_effect = mocked_web_api_metric_profiles
             msgs = update_metrics_in_profiles('metric1', 'metric1')
             self.assertEqual(msgs, [])
             self.assertFalse(mock_put.called)
 
     @patch('Poem.helpers.metrics_helpers.requests.get')
-    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
+    @patch('Poem.helpers.metrics_helpers.WebAPIKey.objects.get')
     def test_get_metrics_in_profiles(self, mock_key, mock_get):
         with self.settings(WEBAPI_METRIC='https://mock.api.url'):
-            mock_key.return_value = MyAPIKey(name='WEB-API', token='mock_key')
+            mock_key.return_value = WebAPIKey(
+                name='WEB-API-TENANT', token='mock_key'
+            )
             mock_get.side_effect = mocked_web_api_metric_profiles
-            metrics = get_metrics_in_profiles('test')
+            metrics = get_metrics_in_profiles(self.tenant)
             mock_get.assert_called_once()
             mock_get.assert_called_with(
                 'https://mock.api.url',
@@ -3294,35 +3307,39 @@ class MetricsInProfilesTests(TenantTestCase):
             )
 
     @patch('Poem.helpers.metrics_helpers.requests.get')
-    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
+    @patch('Poem.helpers.metrics_helpers.WebAPIKey.objects.get')
     def test_get_metrics_in_profiles_wrong_token(self, mock_key, mock_get):
         with self.settings(WEBAPI_METRIC='https://mock.api.url'):
-            mock_key.return_value = MyAPIKey(name='WEB-API', token='wrong_key')
+            mock_key.return_value = WebAPIKey(
+                name='WEB-API-TENANT', token='wrong_key'
+            )
             mock_get.side_effect = mocked_web_api_metric_profiles_wrong_token
             self.assertRaises(
                 requests.exceptions.HTTPError,
                 get_metrics_in_profiles,
-                'test'
+                self.tenant
             )
 
     def test_get_metrics_in_profiles_nonexisting_key(self):
         with self.settings(WEBAPI_METRIC='https://mock.api.url'):
             with self.assertRaises(Exception) as context:
-                get_metrics_in_profiles('test')
+                get_metrics_in_profiles(self.tenant)
             self.assertEqual(
                 str(context.exception),
                 'Error fetching WEB API data: API key not found.'
             )
 
     @patch('Poem.helpers.metrics_helpers.requests.get')
-    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
+    @patch('Poem.helpers.metrics_helpers.WebAPIKey.objects.get')
     def test_get_metrics_in_profiles_if_response_empty(
             self, mock_key, mock_get
     ):
         with self.settings(WEBAPI_METRIC='https://mock.api.url'):
-            mock_key.return_value = MyAPIKey(name='WEB-API', token='mock_key')
+            mock_key.return_value = WebAPIKey(
+                name='WEB-API-TENANT', token='mock_key'
+            )
             mock_get.side_effect = mocked_web_api_metric_profiles_empty
-            metrics = get_metrics_in_profiles('test')
+            metrics = get_metrics_in_profiles(self.tenant)
             mock_get.assert_called_once_with(
                 'https://mock.api.url',
                 headers={'Accept': 'application/json', 'x-api-key': 'mock_key'},
@@ -3334,12 +3351,14 @@ class MetricsInProfilesTests(TenantTestCase):
     @patch('Poem.helpers.metrics_helpers.requests.get')
     @patch('Poem.helpers.metrics_helpers.poem_models.MetricProfiles.objects.'
            'get')
-    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
+    @patch('Poem.helpers.metrics_helpers.WebAPIKey.objects.get')
     def test_delete_metrics_from_profiles(
             self, mock_key, mock_profile, mock_get, mock_put
     ):
         with self.settings(WEBAPI_METRIC='https://mock.api.url/'):
-            mock_key.return_value = MyAPIKey(name='WEB-API', token='mock_key')
+            mock_key.return_value = WebAPIKey(
+                name='WEB-API-TENANT', token='mock_key'
+            )
             mock_profile.return_value = poem_models.MetricProfiles(
                 name='PROFILE1', apiid='11111111-2222-3333-4444-555555555555',
                 description='First profile', groupname='TEST'
@@ -3347,7 +3366,8 @@ class MetricsInProfilesTests(TenantTestCase):
             mock_get.side_effect = mocked_web_api_metric_profile
             mock_put.side_effect = mocked_web_api_metric_profile_put
             delete_metrics_from_profile(
-                profile='PROFILE1', metrics=['metric3', 'metric4']
+                profile='PROFILE1', metrics=['metric3', 'metric4'],
+                tenant="TENANT"
             )
             mock_get.assert_called_once_with(
                 'https://mock.api.url/11111111-2222-3333-4444-555555555555',
@@ -3377,12 +3397,14 @@ class MetricsInProfilesTests(TenantTestCase):
     @patch('Poem.helpers.metrics_helpers.requests.get')
     @patch('Poem.helpers.metrics_helpers.poem_models.MetricProfiles.objects.'
            'get')
-    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
+    @patch('Poem.helpers.metrics_helpers.WebAPIKey.objects.get')
     def test_delete_metrics_from_profiles_wrong_token(
             self, mock_key, mock_profile, mock_get
     ):
         with self.settings(WEBAPI_METRIC='https://mock.api.url/'):
-            mock_key.return_value = MyAPIKey(name='WEB-API', token='wrong_key')
+            mock_key.return_value = WebAPIKey(
+                name='WEB-API-TENANT', token='wrong_key'
+            )
             mock_profile.return_value = poem_models.MetricProfiles(
                 name='PROFILE1', apiid='11111111-2222-3333-4444-555555555555',
                 description='First profile', groupname='TEST'
@@ -3391,7 +3413,8 @@ class MetricsInProfilesTests(TenantTestCase):
             self.assertRaises(
                 requests.exceptions.HTTPError,
                 delete_metrics_from_profile,
-                profile='PROFILE1', metrics=['metric3', 'metric4']
+                profile='PROFILE1', metrics=['metric3', 'metric4'],
+                tenant="TENANT"
             )
             mock_get.assert_called_once_with(
                 'https://mock.api.url/11111111-2222-3333-4444-555555555555',
@@ -3410,7 +3433,8 @@ class MetricsInProfilesTests(TenantTestCase):
         )
         with self.assertRaises(Exception) as context:
             delete_metrics_from_profile(
-                profile='PROFILE1', metrics=['metric3', 'metric4']
+                profile='PROFILE1', metrics=['metric3', 'metric4'],
+                tenant="TENANT"
             )
         self.assertEqual(
             str(context.exception),
@@ -3420,7 +3444,8 @@ class MetricsInProfilesTests(TenantTestCase):
     def test_delete_metrics_from_profiles_missing_profile(self):
         with self.assertRaises(Exception) as context:
             delete_metrics_from_profile(
-                profile='PROFILE1', metrics=['metric3', 'metric4']
+                profile='PROFILE1', metrics=['metric3', 'metric4'],
+                tenant="TENANT"
             )
         self.assertEqual(
             str(context.exception),

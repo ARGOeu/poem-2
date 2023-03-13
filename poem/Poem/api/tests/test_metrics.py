@@ -2042,6 +2042,8 @@ class ImportMetricsAPIViewTests(TenantTestCase):
 
 class UpdateMetricsVersionsTests(TenantTestCase):
     def setUp(self):
+        self.tenant.name = "TENANT"
+        self.tenant.save()
         self.factory = TenantRequestFactory(self.tenant)
         self.view = views.UpdateMetricsVersions.as_view()
         self.url = '/api/v2/internal/updatemetricsversions'
@@ -2654,7 +2656,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             }
         )
         mock_delete.assert_called_once_with(
-            'PROFILE1', ['argo.AMSPublisher-Check']
+            'PROFILE1', ['argo.AMSPublisher-Check'], "TENANT"
         )
         self.assertEqual(mock_update.call_count, 1)
         mock_update.assert_has_calls([
@@ -2782,8 +2784,8 @@ class UpdateMetricsVersionsTests(TenantTestCase):
         ])
         self.assertEqual(mock_delete.call_count, 2)
         mock_delete.assert_has_calls([
-            call('PROFILE1', ['argo.AMSPublisher-Check']),
-            call('PROFILE2', ['argo.AMSPublisher-Check'])
+            call('PROFILE1', ['argo.AMSPublisher-Check'], "TENANT"),
+            call('PROFILE2', ['argo.AMSPublisher-Check'], "TENANT")
         ])
 
     @patch('Poem.api.internal_views.metrics.delete_metrics_from_profile')
@@ -2876,7 +2878,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
                 update_from_history=True, user='testuser'
             )
         ])
-        mock_get.assert_called_once_with(self.tenant.schema_name)
+        mock_get.assert_called_once_with(self.tenant)
         self.assertFalse(mock_delete.called)
 
     @patch('Poem.api.internal_views.metrics.delete_metrics_from_profile')
@@ -2972,9 +2974,9 @@ class UpdateMetricsVersionsTests(TenantTestCase):
                 update_from_history=True, user='testuser'
             )
         ])
-        mock_get.assert_called_once_with(self.tenant.schema_name)
+        mock_get.assert_called_once_with(self.tenant)
         mock_delete.assert_called_once_with(
-            'PROFILE1', ['argo.AMSPublisher-Check']
+            'PROFILE1', ['argo.AMSPublisher-Check'], "TENANT"
         )
 
     @patch('Poem.api.internal_views.metrics.update_metric_in_schema')
