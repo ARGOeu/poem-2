@@ -80,7 +80,9 @@ class ListReports(APIView):
             )
 
     def get(self, request, report_name=None):
-        sync_webapi(settings.WEBAPI_REPORTS, poem_models.Reports)
+        sync_webapi(
+            settings.WEBAPI_REPORTS, poem_models.Reports, request.tenant.name
+        )
 
         if report_name:
             try:

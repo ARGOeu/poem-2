@@ -203,7 +203,10 @@ class ListAggregations(APIView):
             )
 
     def get(self, request, aggregation_name=None):
-        sync_webapi(settings.WEBAPI_AGGREGATION, poem_models.Aggregation)
+        sync_webapi(
+            settings.WEBAPI_AGGREGATION, poem_models.Aggregation,
+            request.tenant.name
+        )
 
         if aggregation_name:
             try:

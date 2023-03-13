@@ -5,11 +5,11 @@ from unittest.mock import patch
 import factory.django
 from Poem.api.internal_views.utils import sync_webapi, \
     get_tenant_resources, sync_tags_webapi, WebApiException
-from Poem.api.models import MyAPIKey
 from Poem.helpers.history_helpers import create_comment
 from Poem.helpers.history_helpers import serialize_metric
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
+from Poem.poem_super_admin.models import WebAPIKey
 from Poem.users.models import CustUser
 from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
@@ -59,9 +59,11 @@ def mocked_put_response_not_ok_no_msg(*args, **kwargs):
 
 class SyncWebApiTests(TenantTestCase):
     def setUp(self):
+        self.tenant.name = "TENANT"
+        self.tenant.save()
         ct_mp = ContentType.objects.get_for_model(poem_models.MetricProfiles)
-        MyAPIKey.objects.create(
-            name='WEB-API',
+        WebAPIKey.objects.create(
+            name='WEB-API-TENANT',
             token='mocked_token'
         )
 
@@ -153,7 +155,7 @@ class SyncWebApiTests(TenantTestCase):
     def test_sync_webapi_metricprofiles(self, func):
         func.side_effect = mocked_web_api_request
         self.assertEqual(poem_models.MetricProfiles.objects.all().count(), 2)
-        sync_webapi('metric_profiles', poem_models.MetricProfiles)
+        sync_webapi('metric_profiles', poem_models.MetricProfiles, "TENANT")
         self.assertEqual(poem_models.MetricProfiles.objects.all().count(), 2)
         self.assertEqual(
             poem_models.MetricProfiles.objects.get(name='TEST_PROFILE'),
@@ -191,7 +193,7 @@ class SyncWebApiTests(TenantTestCase):
     def test_sync_webapi_aggregationprofiles(self, func):
         func.side_effect = mocked_web_api_request
         self.assertEqual(poem_models.Aggregation.objects.all().count(), 2)
-        sync_webapi('aggregation_profiles', poem_models.Aggregation)
+        sync_webapi('aggregation_profiles', poem_models.Aggregation, "TENANT")
         self.assertEqual(poem_models.Aggregation.objects.all().count(), 2)
         self.assertEqual(
             poem_models.Aggregation.objects.get(name='TEST_PROFILE'), self.aggr1
@@ -209,7 +211,9 @@ class SyncWebApiTests(TenantTestCase):
         self.assertEqual(
             poem_models.ThresholdsProfiles.objects.all().count(), 2
         )
-        sync_webapi('thresholds_profiles', poem_models.ThresholdsProfiles)
+        sync_webapi(
+            'thresholds_profiles', poem_models.ThresholdsProfiles, "TENANT"
+        )
         self.assertEqual(
             poem_models.ThresholdsProfiles.objects.all().count(), 2
         )
@@ -226,9 +230,12 @@ class SyncWebApiTests(TenantTestCase):
 
 class SyncWebApiTagsTests(TenantTestCase):
     def setUp(self) -> None:
+        self.tenant.name = "TENANT"
+        self.tenant.save()
+
         mock_db_for_metrics_tests()
 
-        MyAPIKey.objects.create(
+        WebAPIKey.objects.create(
             name='WEB-API-ADMIN',
             token='mocked_token'
         )
