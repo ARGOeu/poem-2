@@ -64,8 +64,61 @@ class ListMetricProfiles(APIView):
                             request.user, request.data['description']
                         )
 
+                        imported, warn, err, unavailable, deleted = \
+                            sync_metrics(request.tenant, request.user)
+
+                        data = dict()
+
+                        if len(imported) > 0:
+                            if len(imported) == 1:
+                                msg = f"Metric {imported[0]} has"
+
+                            else:
+                                msg = f"Metrics {', '.join(imported)} have"
+
+                            data.update({
+                                "imported": f"{msg} been imported"
+                            })
+
+                        if len(warn) > 0:
+                            if len(warn) == 1:
+                                msg = f"Metric {warn[0]} has"
+
+                            else:
+                                msg = f"Metrics {', '.join(warn)} have"
+
+                            data.update({
+                                "warning":
+                                    f"{msg} been imported with package version "
+                                    f"used by {request.tenant.name} tenant"
+                            })
+
+                        if len(unavailable) > 0:
+                            if len(unavailable) == 1:
+                                msg = f"Metric {unavailable[0]}"
+
+                            else:
+                                msg = f"Metrics {', '.join(unavailable)}"
+
+                            data.update({
+                                "unavailable":
+                                    f"{msg} not available for package used by "
+                                    f"{request.tenant.name} tenant"
+                            })
+
+                        if len(deleted) > 0:
+                            if len(deleted) == 1:
+                                msg = f"Metric {deleted[0]} has"
+
+                            else:
+                                msg = f"Metrics {', '.join(deleted)} have"
+
+                            data.update({
+                                "deleted": f"{msg} been deleted"
+                            })
+
                         return Response(
-                            serializer.data, status=status.HTTP_201_CREATED
+                            data=data, status=status.HTTP_201_CREATED
                         )
 
                     else:

@@ -251,7 +251,9 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    def test_post_metric_profile_superuser(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_post_metric_profile_superuser(self, mock_sync_metrics):
+        mock_sync_metrics.return_value = [], [], [], [], []
         data = {
             "apiid": "12341234-aaaa-kkkk-aaaa-aaeekkccnnee",
             "name": "new-profile",
@@ -264,9 +266,11 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             ]
         }
         request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data, dict())
         profile = poem_models.MetricProfiles.objects.get(name='new-profile')
         history = poem_models.TenantHistory.objects.filter(
             object_id=profile.id, content_type=self.ct
@@ -276,8 +280,13 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         self.assertEqual(profile.groupname, 'EGI')
         self.assertEqual(history.count(), 1)
         self.assertEqual(history[0].comment, 'Initial version.')
+        mock_sync_metrics.assert_called_once_with(self.tenant, self.superuser)
 
-    def test_post_metric_profile_regular_user(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_post_metric_profile_superuser_if_one_imported_metric(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = ["org.apel.APEL-Pub"], [], [], [], []
         data = {
             "apiid": "12341234-aaaa-kkkk-aaaa-aaeekkccnnee",
             "name": "new-profile",
@@ -290,20 +299,340 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             ]
         }
         request = self.factory.post(self.url, data, format='json')
-        force_authenticate(request, user=self.user)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
         response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data, {
+                "imported": "Metric org.apel.APEL-Pub has been imported"
+            }
+        )
         profile = poem_models.MetricProfiles.objects.get(name='new-profile')
         history = poem_models.TenantHistory.objects.filter(
             object_id=profile.id, content_type=self.ct
         )
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(profile.name, 'new-profile')
         self.assertEqual(profile.apiid, '12341234-aaaa-kkkk-aaaa-aaeekkccnnee')
         self.assertEqual(profile.groupname, 'EGI')
         self.assertEqual(history.count(), 1)
         self.assertEqual(history[0].comment, 'Initial version.')
+        mock_sync_metrics.assert_called_once_with(self.tenant, self.superuser)
 
-    def test_post_metric_profile_regular_user_wrong_group(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_post_metric_profile_superuser_if_imported_metrics(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [
+            "org.apel.APEL-Pub", "org.apel.APEL-Sync"
+        ], [], [], [], []
+        data = {
+            "apiid": "12341234-aaaa-kkkk-aaaa-aaeekkccnnee",
+            "name": "new-profile",
+            "groupname": "EGI",
+            "description": "New profile description.",
+            "services": [
+                {"service": "AMGA", "metric": "org.nagios.SAML-SP"},
+                {"service": "APEL", "metric": "org.apel.APEL-Pub"},
+                {"service": "APEL", "metric": "org.apel.APEL-Sync"}
+            ]
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data, {
+                "imported": "Metrics org.apel.APEL-Pub, org.apel.APEL-Sync "
+                            "have been imported"
+            }
+        )
+        profile = poem_models.MetricProfiles.objects.get(name='new-profile')
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        )
+        self.assertEqual(profile.name, 'new-profile')
+        self.assertEqual(profile.apiid, '12341234-aaaa-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.groupname, 'EGI')
+        self.assertEqual(history.count(), 1)
+        self.assertEqual(history[0].comment, 'Initial version.')
+        mock_sync_metrics.assert_called_once_with(self.tenant, self.superuser)
+
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_post_metric_profile_superuser_if_one_warning_metric(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], ["org.apel.APEL-Pub"], [], [], []
+        data = {
+            "apiid": "12341234-aaaa-kkkk-aaaa-aaeekkccnnee",
+            "name": "new-profile",
+            "groupname": "EGI",
+            "description": "New profile description.",
+            "services": [
+                {"service": "AMGA", "metric": "org.nagios.SAML-SP"},
+                {"service": "APEL", "metric": "org.apel.APEL-Pub"},
+                {"service": "APEL", "metric": "org.apel.APEL-Sync"}
+            ]
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data, {
+                "warning": "Metric org.apel.APEL-Pub has been imported with "
+                           "package version used by TENANT tenant"
+            }
+        )
+        profile = poem_models.MetricProfiles.objects.get(name='new-profile')
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        )
+        self.assertEqual(profile.name, 'new-profile')
+        self.assertEqual(profile.apiid, '12341234-aaaa-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.groupname, 'EGI')
+        self.assertEqual(history.count(), 1)
+        self.assertEqual(history[0].comment, 'Initial version.')
+        mock_sync_metrics.assert_called_once_with(self.tenant, self.superuser)
+
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_post_metric_profile_superuser_if_warning_metrics(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [
+            "org.apel.APEL-Pub", "org.apel.APEL-Sync"
+        ], [], [], []
+        data = {
+            "apiid": "12341234-aaaa-kkkk-aaaa-aaeekkccnnee",
+            "name": "new-profile",
+            "groupname": "EGI",
+            "description": "New profile description.",
+            "services": [
+                {"service": "AMGA", "metric": "org.nagios.SAML-SP"},
+                {"service": "APEL", "metric": "org.apel.APEL-Pub"},
+                {"service": "APEL", "metric": "org.apel.APEL-Sync"}
+            ]
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data, {
+                "warning": "Metrics org.apel.APEL-Pub, org.apel.APEL-Sync "
+                           "have been imported with package version used by "
+                           "TENANT tenant"
+            }
+        )
+        profile = poem_models.MetricProfiles.objects.get(name='new-profile')
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        )
+        self.assertEqual(profile.name, 'new-profile')
+        self.assertEqual(profile.apiid, '12341234-aaaa-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.groupname, 'EGI')
+        self.assertEqual(history.count(), 1)
+        self.assertEqual(history[0].comment, 'Initial version.')
+        mock_sync_metrics.assert_called_once_with(self.tenant, self.superuser)
+
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_post_metric_profile_superuser_if_one_unavailable_metric(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], ["org.apel.APEL-Pub"], []
+        data = {
+            "apiid": "12341234-aaaa-kkkk-aaaa-aaeekkccnnee",
+            "name": "new-profile",
+            "groupname": "EGI",
+            "description": "New profile description.",
+            "services": [
+                {"service": "AMGA", "metric": "org.nagios.SAML-SP"},
+                {"service": "APEL", "metric": "org.apel.APEL-Pub"},
+                {"service": "APEL", "metric": "org.apel.APEL-Sync"}
+            ]
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data, {
+                "unavailable": "Metric org.apel.APEL-Pub not available for "
+                               "package used by TENANT tenant"
+            }
+        )
+        profile = poem_models.MetricProfiles.objects.get(name='new-profile')
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        )
+        self.assertEqual(profile.name, 'new-profile')
+        self.assertEqual(profile.apiid, '12341234-aaaa-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.groupname, 'EGI')
+        self.assertEqual(history.count(), 1)
+        self.assertEqual(history[0].comment, 'Initial version.')
+        mock_sync_metrics.assert_called_once_with(self.tenant, self.superuser)
+
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_post_metric_profile_superuser_if_unavailable_metrics(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [
+            "org.apel.APEL-Pub", "org.apel.APEL-Sync"
+        ], []
+        data = {
+            "apiid": "12341234-aaaa-kkkk-aaaa-aaeekkccnnee",
+            "name": "new-profile",
+            "groupname": "EGI",
+            "description": "New profile description.",
+            "services": [
+                {"service": "AMGA", "metric": "org.nagios.SAML-SP"},
+                {"service": "APEL", "metric": "org.apel.APEL-Pub"},
+                {"service": "APEL", "metric": "org.apel.APEL-Sync"}
+            ]
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data, {
+                "unavailable": "Metrics org.apel.APEL-Pub, org.apel.APEL-Sync "
+                               "not available for package used by TENANT tenant"
+            }
+        )
+        profile = poem_models.MetricProfiles.objects.get(name='new-profile')
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        )
+        self.assertEqual(profile.name, 'new-profile')
+        self.assertEqual(profile.apiid, '12341234-aaaa-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.groupname, 'EGI')
+        self.assertEqual(history.count(), 1)
+        self.assertEqual(history[0].comment, 'Initial version.')
+        mock_sync_metrics.assert_called_once_with(self.tenant, self.superuser)
+
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_post_metric_profile_superuser_if_one_deleted_metric(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], ["mock.deleted.metric"]
+        data = {
+            "apiid": "12341234-aaaa-kkkk-aaaa-aaeekkccnnee",
+            "name": "new-profile",
+            "groupname": "EGI",
+            "description": "New profile description.",
+            "services": [
+                {"service": "AMGA", "metric": "org.nagios.SAML-SP"},
+                {"service": "APEL", "metric": "org.apel.APEL-Pub"},
+                {"service": "APEL", "metric": "org.apel.APEL-Sync"}
+            ]
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data, {
+                "deleted": "Metric mock.deleted.metric has been deleted"
+            }
+        )
+        profile = poem_models.MetricProfiles.objects.get(name='new-profile')
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        )
+        self.assertEqual(profile.name, 'new-profile')
+        self.assertEqual(profile.apiid, '12341234-aaaa-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.groupname, 'EGI')
+        self.assertEqual(history.count(), 1)
+        self.assertEqual(history[0].comment, 'Initial version.')
+        mock_sync_metrics.assert_called_once_with(self.tenant, self.superuser)
+
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_post_metric_profile_superuser_if_metrics_combo(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = ["org.nagios.SAML-SP"], \
+            ["org.apel.APEL-Pub"], [], ["org.apel.APEL-Sync"], \
+            ["mock.deleted.metric"]
+        data = {
+            "apiid": "12341234-aaaa-kkkk-aaaa-aaeekkccnnee",
+            "name": "new-profile",
+            "groupname": "EGI",
+            "description": "New profile description.",
+            "services": [
+                {"service": "AMGA", "metric": "org.nagios.SAML-SP"},
+                {"service": "APEL", "metric": "org.apel.APEL-Pub"},
+                {"service": "APEL", "metric": "org.apel.APEL-Sync"}
+            ]
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data, {
+                "imported": "Metric org.nagios.SAML-SP has been imported",
+                "warning": "Metric org.apel.APEL-Pub has been imported with "
+                           "package version used by TENANT tenant",
+                "unavailable": "Metric org.apel.APEL-Sync not available for "
+                               "package used by TENANT tenant",
+                "deleted": "Metric mock.deleted.metric has been deleted"
+            }
+        )
+        profile = poem_models.MetricProfiles.objects.get(name='new-profile')
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        )
+        self.assertEqual(profile.name, 'new-profile')
+        self.assertEqual(profile.apiid, '12341234-aaaa-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.groupname, 'EGI')
+        self.assertEqual(history.count(), 1)
+        self.assertEqual(history[0].comment, 'Initial version.')
+        mock_sync_metrics.assert_called_once_with(self.tenant, self.superuser)
+
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_post_metric_profile_regular_user(self, mock_sync_metrics):
+        mock_sync_metrics.return_value = [], [], [], [], []
+        data = {
+            "apiid": "12341234-aaaa-kkkk-aaaa-aaeekkccnnee",
+            "name": "new-profile",
+            "groupname": "EGI",
+            "description": "New profile description.",
+            "services": [
+                {"service": "AMGA", "metric": "org.nagios.SAML-SP"},
+                {"service": "APEL", "metric": "org.apel.APEL-Pub"},
+                {"service": "APEL", "metric": "org.apel.APEL-Sync"}
+            ]
+        }
+        request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data, dict())
+        profile = poem_models.MetricProfiles.objects.get(name='new-profile')
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        )
+        self.assertEqual(profile.name, 'new-profile')
+        self.assertEqual(profile.apiid, '12341234-aaaa-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.groupname, 'EGI')
+        self.assertEqual(history.count(), 1)
+        self.assertEqual(history[0].comment, 'Initial version.')
+        mock_sync_metrics.assert_called_once_with(self.tenant, self.user)
+
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_post_metric_profile_regular_user_wrong_group(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], []
         data = {
             "apiid": "12341234-aaaa-kkkk-aaaa-aaeekkccnnee",
             "name": "new-profile",
@@ -316,6 +645,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             ]
         }
         request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -330,8 +660,11 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             name='new-profile'
         )
         self.assertEqual(len(poem_models.MetricProfiles.objects.all()), 2)
+        self.assertEqual(mock_sync_metrics.call_count, 0)
 
-    def test_post_metric_profile_limited_user(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_post_metric_profile_limited_user(self, mock_sync_metrics):
+        mock_sync_metrics.return_value = [], [], [], [], []
         data = {
             "apiid": "12341234-aaaa-kkkk-aaaa-aaeekkccnnee",
             "name": "new-profile",
@@ -344,6 +677,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             ]
         }
         request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.limited_user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -357,8 +691,13 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             name='new-profile'
         )
         self.assertEqual(len(poem_models.MetricProfiles.objects.all()), 2)
+        self.assertEqual(mock_sync_metrics.call_count, 0)
 
-    def test_post_metric_profile_nonexisting_group_superuser(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_post_metric_profile_nonexisting_group_superuser(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], []
         data = {
             "apiid": "12341234-aaaa-kkkk-aaaa-aaeekkccnnee",
             "name": "new-profile",
@@ -371,6 +710,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             ]
         }
         request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -382,8 +722,13 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             poem_models.MetricProfiles.objects.get,
             name='new-profile'
         )
+        self.assertEqual(mock_sync_metrics.call_count, 0)
 
-    def test_post_metric_profile_nonexisting_group_regular_user(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_post_metric_profile_nonexisting_group_regular_user(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], []
         data = {
             "apiid": "12341234-aaaa-kkkk-aaaa-aaeekkccnnee",
             "name": "new-profile",
@@ -396,6 +741,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             ]
         }
         request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -407,8 +753,13 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             poem_models.MetricProfiles.objects.get,
             name='new-profile'
         )
+        self.assertEqual(mock_sync_metrics.call_count, 0)
 
-    def test_post_metric_profile_nonexisting_group_limited_user(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_post_metric_profile_nonexisting_group_limited_user(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], []
         data = {
             "apiid": "12341234-aaaa-kkkk-aaaa-aaeekkccnnee",
             "name": "new-profile",
@@ -421,6 +772,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             ]
         }
         request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.limited_user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -433,8 +785,13 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             poem_models.MetricProfiles.objects.get,
             name='new-profile'
         )
+        self.assertEqual(mock_sync_metrics.call_count, 0)
 
-    def test_post_metric_profile_without_description_superuser(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_post_metric_profile_without_description_superuser(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], []
         data = {
             "apiid": "12341234-aaaa-kkkk-aaaa-aaeekkccnnee",
             "name": "new-profile",
@@ -447,9 +804,11 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             ]
         }
         request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data, dict())
         profile = poem_models.MetricProfiles.objects.get(name='new-profile')
         history = poem_models.TenantHistory.objects.filter(
             object_id=profile.id, content_type=self.ct
@@ -460,8 +819,13 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         self.assertEqual(profile.description, '')
         self.assertEqual(history.count(), 1)
         self.assertEqual(history[0].comment, 'Initial version.')
+        mock_sync_metrics.assert_called_once_with(self.tenant, self.superuser)
 
-    def test_post_metric_profile_without_description_regular_user(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_post_metric_profile_without_description_regular_user(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], []
         data = {
             "apiid": "12341234-aaaa-kkkk-aaaa-aaeekkccnnee",
             "name": "new-profile",
@@ -474,21 +838,28 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             ]
         }
         request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data, dict())
         profile = poem_models.MetricProfiles.objects.get(name='new-profile')
         history = poem_models.TenantHistory.objects.filter(
             object_id=profile.id, content_type=self.ct
         )
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(profile.name, 'new-profile')
         self.assertEqual(profile.apiid, '12341234-aaaa-kkkk-aaaa-aaeekkccnnee')
         self.assertEqual(profile.groupname, 'EGI')
         self.assertEqual(profile.description, '')
         self.assertEqual(history.count(), 1)
         self.assertEqual(history[0].comment, 'Initial version.')
+        mock_sync_metrics.assert_called_once_with(self.tenant, self.user)
 
-    def test_post_metric_profile_without_desc_regular_user_wrong_group(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_post_metric_profile_without_desc_regular_user_wrong_group(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], []
         data = {
             "apiid": "12341234-aaaa-kkkk-aaaa-aaeekkccnnee",
             "name": "new-profile",
@@ -501,6 +872,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             ]
         }
         request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -514,8 +886,13 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             poem_models.MetricProfiles.objects.get,
             name='new-profile'
         )
+        self.assertEqual(mock_sync_metrics.call_count, 0)
 
-    def test_post_metric_profile_without_description_limited_user(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_post_metric_profile_without_description_limited_user(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], []
         data = {
             "apiid": "12341234-aaaa-kkkk-aaaa-aaeekkccnnee",
             "name": "new-profile",
@@ -528,6 +905,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             ]
         }
         request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.limited_user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -540,10 +918,16 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             poem_models.MetricProfiles.objects.get,
             name='new-profile'
         )
+        self.assertEqual(mock_sync_metrics.call_count, 0)
 
-    def test_post_metric_profile_invalid_data_superuser(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_post_metric_profile_invalid_data_superuser(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], []
         data = {'name': 'new-profile'}
         request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -551,10 +935,16 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             response.data, {'detail': 'apiid: This field is required.'}
         )
         self.assertEqual(len(poem_models.MetricProfiles.objects.all()), 2)
+        self.assertEqual(mock_sync_metrics.call_count, 0)
 
-    def test_post_metric_profile_invalid_data_regular_user(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_post_metric_profile_invalid_data_regular_user(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], []
         data = {'name': 'new-profile'}
         request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -562,10 +952,16 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             response.data['detail'], 'apiid: This field is required.'
         )
         self.assertEqual(len(poem_models.MetricProfiles.objects.all()), 2)
+        self.assertEqual(mock_sync_metrics.call_count, 0)
 
-    def test_post_metric_profile_invalid_data_limited_user(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_post_metric_profile_invalid_data_limited_user(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], []
         data = {'name': 'new-profile'}
         request = self.factory.post(self.url, data, format='json')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.limited_user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -574,6 +970,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             'You do not have permission to add metric profiles.'
         )
         self.assertEqual(len(poem_models.MetricProfiles.objects.all()), 2)
+        self.assertEqual(mock_sync_metrics.call_count, 0)
 
     @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
     def test_put_metric_profile_superuser(self, mock_sync_metrics):
