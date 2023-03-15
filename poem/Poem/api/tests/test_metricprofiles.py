@@ -17,6 +17,8 @@ from .utils_test import mocked_func, encode_data
 
 class ListMetricProfilesAPIViewTests(TenantTestCase):
     def setUp(self):
+        self.tenant.name = "TENANT"
+        self.tenant.save()
         self.factory = TenantRequestFactory(self.tenant)
         self.view = views.ListMetricProfiles.as_view()
         self.url = '/api/v2/internal/metricprofiles/'
@@ -593,6 +595,515 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data, dict())
+        profile = poem_models.MetricProfiles.objects.get(name='TEST_PROFILE')
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        ).order_by('-date_created')
+        self.assertEqual(profile.name, 'TEST_PROFILE')
+        self.assertEqual(profile.apiid, '00000000-oooo-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.groupname, 'new-group')
+        self.assertEqual(history.count(), 2)
+        serialized_data = json.loads(history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['name'], profile.name)
+        self.assertEqual(serialized_data['apiid'], profile.apiid)
+        self.assertEqual(serialized_data['groupname'], profile.groupname)
+        self.assertEqual(
+            serialized_data['metricinstances'],
+            [
+                ['AMGA', 'org.nagios.SAML-SP'],
+                ['APEL', 'org.apel.APEL-Pub'],
+                ['APEL', 'org.apel.APEL-Sync']
+            ]
+        )
+        self.assertEqual(
+            history[0].comment,
+            '[{"added": {"fields": ["description"]}}, '
+            '{"changed": {"fields": ["groupname"]}}]'
+        )
+        mock_sync_metrics.assert_called_once_with(self.tenant, self.superuser)
+
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_put_metric_profile_superuser_if_one_imported_metric(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = ["org.apel.APEL-Pub"], [], [], [], []
+        data = {
+            "name": "TEST_PROFILE2",
+            "apiid": "00000000-oooo-kkkk-aaaa-aaeekkccnnee",
+            "groupname": "new-group",
+            "description": "New profile description.",
+            "services": [
+                {"service": "AMGA", "metric": "org.nagios.SAML-SP"},
+                {"service": "APEL", "metric": "org.apel.APEL-Pub"},
+                {"service": "APEL", "metric": "org.apel.APEL-Sync"}
+            ]
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data, {
+                "imported": "Metric org.apel.APEL-Pub has been imported"
+            }
+        )
+        profile = poem_models.MetricProfiles.objects.get(name='TEST_PROFILE')
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        ).order_by('-date_created')
+        self.assertEqual(profile.name, 'TEST_PROFILE')
+        self.assertEqual(profile.apiid, '00000000-oooo-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.groupname, 'new-group')
+        self.assertEqual(history.count(), 2)
+        serialized_data = json.loads(history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['name'], profile.name)
+        self.assertEqual(serialized_data['apiid'], profile.apiid)
+        self.assertEqual(serialized_data['groupname'], profile.groupname)
+        self.assertEqual(
+            serialized_data['metricinstances'],
+            [
+                ['AMGA', 'org.nagios.SAML-SP'],
+                ['APEL', 'org.apel.APEL-Pub'],
+                ['APEL', 'org.apel.APEL-Sync']
+            ]
+        )
+        self.assertEqual(
+            history[0].comment,
+            '[{"added": {"fields": ["description"]}}, '
+            '{"changed": {"fields": ["groupname"]}}]'
+        )
+        mock_sync_metrics.assert_called_once_with(self.tenant, self.superuser)
+
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_put_metric_profile_superuser_if_imported_metrics(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [
+            "org.apel.APEL-Pub", "org.apel.APEL-Sync"
+        ], [], [], [], []
+        data = {
+            "name": "TEST_PROFILE2",
+            "apiid": "00000000-oooo-kkkk-aaaa-aaeekkccnnee",
+            "groupname": "new-group",
+            "description": "New profile description.",
+            "services": [
+                {"service": "AMGA", "metric": "org.nagios.SAML-SP"},
+                {"service": "APEL", "metric": "org.apel.APEL-Pub"},
+                {"service": "APEL", "metric": "org.apel.APEL-Sync"}
+            ]
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data, {
+                "imported": "Metrics org.apel.APEL-Pub, org.apel.APEL-Sync "
+                            "have been imported"
+            }
+        )
+        profile = poem_models.MetricProfiles.objects.get(name='TEST_PROFILE')
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        ).order_by('-date_created')
+        self.assertEqual(profile.name, 'TEST_PROFILE')
+        self.assertEqual(profile.apiid, '00000000-oooo-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.groupname, 'new-group')
+        self.assertEqual(history.count(), 2)
+        serialized_data = json.loads(history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['name'], profile.name)
+        self.assertEqual(serialized_data['apiid'], profile.apiid)
+        self.assertEqual(serialized_data['groupname'], profile.groupname)
+        self.assertEqual(
+            serialized_data['metricinstances'],
+            [
+                ['AMGA', 'org.nagios.SAML-SP'],
+                ['APEL', 'org.apel.APEL-Pub'],
+                ['APEL', 'org.apel.APEL-Sync']
+            ]
+        )
+        self.assertEqual(
+            history[0].comment,
+            '[{"added": {"fields": ["description"]}}, '
+            '{"changed": {"fields": ["groupname"]}}]'
+        )
+        mock_sync_metrics.assert_called_once_with(self.tenant, self.superuser)
+
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_put_metric_profile_superuser_if_one_warning_metric(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], ["org.apel.APEL-Pub"], [], [], []
+        data = {
+            "name": "TEST_PROFILE2",
+            "apiid": "00000000-oooo-kkkk-aaaa-aaeekkccnnee",
+            "groupname": "new-group",
+            "description": "New profile description.",
+            "services": [
+                {"service": "AMGA", "metric": "org.nagios.SAML-SP"},
+                {"service": "APEL", "metric": "org.apel.APEL-Pub"},
+                {"service": "APEL", "metric": "org.apel.APEL-Sync"}
+            ]
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data, {
+                "warning": "Metric org.apel.APEL-Pub has been imported with "
+                           "package version used by TENANT tenant"
+            }
+        )
+        profile = poem_models.MetricProfiles.objects.get(name='TEST_PROFILE')
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        ).order_by('-date_created')
+        self.assertEqual(profile.name, 'TEST_PROFILE')
+        self.assertEqual(profile.apiid, '00000000-oooo-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.groupname, 'new-group')
+        self.assertEqual(history.count(), 2)
+        serialized_data = json.loads(history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['name'], profile.name)
+        self.assertEqual(serialized_data['apiid'], profile.apiid)
+        self.assertEqual(serialized_data['groupname'], profile.groupname)
+        self.assertEqual(
+            serialized_data['metricinstances'],
+            [
+                ['AMGA', 'org.nagios.SAML-SP'],
+                ['APEL', 'org.apel.APEL-Pub'],
+                ['APEL', 'org.apel.APEL-Sync']
+            ]
+        )
+        self.assertEqual(
+            history[0].comment,
+            '[{"added": {"fields": ["description"]}}, '
+            '{"changed": {"fields": ["groupname"]}}]'
+        )
+        mock_sync_metrics.assert_called_once_with(self.tenant, self.superuser)
+
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_put_metric_profile_superuser_if_warning_metrics(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [
+            "org.apel.APEL-Pub", "org.apel.APEL-Sync"
+        ], [], [], []
+        data = {
+            "name": "TEST_PROFILE2",
+            "apiid": "00000000-oooo-kkkk-aaaa-aaeekkccnnee",
+            "groupname": "new-group",
+            "description": "New profile description.",
+            "services": [
+                {"service": "AMGA", "metric": "org.nagios.SAML-SP"},
+                {"service": "APEL", "metric": "org.apel.APEL-Pub"},
+                {"service": "APEL", "metric": "org.apel.APEL-Sync"}
+            ]
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data, {
+                "warning": "Metrics org.apel.APEL-Pub, org.apel.APEL-Sync "
+                           "have been imported with package version used by "
+                           "TENANT tenant"
+            }
+        )
+        profile = poem_models.MetricProfiles.objects.get(name='TEST_PROFILE')
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        ).order_by('-date_created')
+        self.assertEqual(profile.name, 'TEST_PROFILE')
+        self.assertEqual(profile.apiid, '00000000-oooo-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.groupname, 'new-group')
+        self.assertEqual(history.count(), 2)
+        serialized_data = json.loads(history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['name'], profile.name)
+        self.assertEqual(serialized_data['apiid'], profile.apiid)
+        self.assertEqual(serialized_data['groupname'], profile.groupname)
+        self.assertEqual(
+            serialized_data['metricinstances'],
+            [
+                ['AMGA', 'org.nagios.SAML-SP'],
+                ['APEL', 'org.apel.APEL-Pub'],
+                ['APEL', 'org.apel.APEL-Sync']
+            ]
+        )
+        self.assertEqual(
+            history[0].comment,
+            '[{"added": {"fields": ["description"]}}, '
+            '{"changed": {"fields": ["groupname"]}}]'
+        )
+        mock_sync_metrics.assert_called_once_with(self.tenant, self.superuser)
+
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_put_metric_profile_superuser_if_one_unavailable_metric(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], ["org.apel.APEL-Pub"], []
+        data = {
+            "name": "TEST_PROFILE2",
+            "apiid": "00000000-oooo-kkkk-aaaa-aaeekkccnnee",
+            "groupname": "new-group",
+            "description": "New profile description.",
+            "services": [
+                {"service": "AMGA", "metric": "org.nagios.SAML-SP"},
+                {"service": "APEL", "metric": "org.apel.APEL-Pub"},
+                {"service": "APEL", "metric": "org.apel.APEL-Sync"}
+            ]
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data, {
+                "unavailable": "Metric org.apel.APEL-Pub not available for "
+                               "package used by TENANT tenant"
+            }
+        )
+        profile = poem_models.MetricProfiles.objects.get(name='TEST_PROFILE')
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        ).order_by('-date_created')
+        self.assertEqual(profile.name, 'TEST_PROFILE')
+        self.assertEqual(profile.apiid, '00000000-oooo-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.groupname, 'new-group')
+        self.assertEqual(history.count(), 2)
+        serialized_data = json.loads(history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['name'], profile.name)
+        self.assertEqual(serialized_data['apiid'], profile.apiid)
+        self.assertEqual(serialized_data['groupname'], profile.groupname)
+        self.assertEqual(
+            serialized_data['metricinstances'],
+            [
+                ['AMGA', 'org.nagios.SAML-SP'],
+                ['APEL', 'org.apel.APEL-Pub'],
+                ['APEL', 'org.apel.APEL-Sync']
+            ]
+        )
+        self.assertEqual(
+            history[0].comment,
+            '[{"added": {"fields": ["description"]}}, '
+            '{"changed": {"fields": ["groupname"]}}]'
+        )
+        mock_sync_metrics.assert_called_once_with(self.tenant, self.superuser)
+
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_put_metric_profile_superuser_if_unavailable_metrics(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [
+            "org.apel.APEL-Pub", "org.apel.APEL-Sync"
+        ], []
+        data = {
+            "name": "TEST_PROFILE2",
+            "apiid": "00000000-oooo-kkkk-aaaa-aaeekkccnnee",
+            "groupname": "new-group",
+            "description": "New profile description.",
+            "services": [
+                {"service": "AMGA", "metric": "org.nagios.SAML-SP"},
+                {"service": "APEL", "metric": "org.apel.APEL-Pub"},
+                {"service": "APEL", "metric": "org.apel.APEL-Sync"}
+            ]
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data, {
+                "unavailable": "Metrics org.apel.APEL-Pub, org.apel.APEL-Sync "
+                               "not available for package used by TENANT tenant"
+            }
+        )
+        profile = poem_models.MetricProfiles.objects.get(name='TEST_PROFILE')
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        ).order_by('-date_created')
+        self.assertEqual(profile.name, 'TEST_PROFILE')
+        self.assertEqual(profile.apiid, '00000000-oooo-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.groupname, 'new-group')
+        self.assertEqual(history.count(), 2)
+        serialized_data = json.loads(history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['name'], profile.name)
+        self.assertEqual(serialized_data['apiid'], profile.apiid)
+        self.assertEqual(serialized_data['groupname'], profile.groupname)
+        self.assertEqual(
+            serialized_data['metricinstances'],
+            [
+                ['AMGA', 'org.nagios.SAML-SP'],
+                ['APEL', 'org.apel.APEL-Pub'],
+                ['APEL', 'org.apel.APEL-Sync']
+            ]
+        )
+        self.assertEqual(
+            history[0].comment,
+            '[{"added": {"fields": ["description"]}}, '
+            '{"changed": {"fields": ["groupname"]}}]'
+        )
+        mock_sync_metrics.assert_called_once_with(self.tenant, self.superuser)
+
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_put_metric_profile_superuser_if_one_deleted_metric(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], ["mock.deleted.metric"]
+        data = {
+            "name": "TEST_PROFILE2",
+            "apiid": "00000000-oooo-kkkk-aaaa-aaeekkccnnee",
+            "groupname": "new-group",
+            "description": "New profile description.",
+            "services": [
+                {"service": "AMGA", "metric": "org.nagios.SAML-SP"},
+                {"service": "APEL", "metric": "org.apel.APEL-Pub"},
+                {"service": "APEL", "metric": "org.apel.APEL-Sync"}
+            ]
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data, {
+                "deleted": "Metric mock.deleted.metric has been deleted"
+            }
+        )
+        profile = poem_models.MetricProfiles.objects.get(name='TEST_PROFILE')
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        ).order_by('-date_created')
+        self.assertEqual(profile.name, 'TEST_PROFILE')
+        self.assertEqual(profile.apiid, '00000000-oooo-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.groupname, 'new-group')
+        self.assertEqual(history.count(), 2)
+        serialized_data = json.loads(history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['name'], profile.name)
+        self.assertEqual(serialized_data['apiid'], profile.apiid)
+        self.assertEqual(serialized_data['groupname'], profile.groupname)
+        self.assertEqual(
+            serialized_data['metricinstances'],
+            [
+                ['AMGA', 'org.nagios.SAML-SP'],
+                ['APEL', 'org.apel.APEL-Pub'],
+                ['APEL', 'org.apel.APEL-Sync']
+            ]
+        )
+        self.assertEqual(
+            history[0].comment,
+            '[{"added": {"fields": ["description"]}}, '
+            '{"changed": {"fields": ["groupname"]}}]'
+        )
+        mock_sync_metrics.assert_called_once_with(self.tenant, self.superuser)
+
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_put_metric_profile_superuser_if_deleted_metrics(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], [
+            "mock.deleted.metric", "mock.deleted.metric2"
+        ]
+        data = {
+            "name": "TEST_PROFILE2",
+            "apiid": "00000000-oooo-kkkk-aaaa-aaeekkccnnee",
+            "groupname": "new-group",
+            "description": "New profile description.",
+            "services": [
+                {"service": "AMGA", "metric": "org.nagios.SAML-SP"},
+                {"service": "APEL", "metric": "org.apel.APEL-Pub"},
+                {"service": "APEL", "metric": "org.apel.APEL-Sync"}
+            ]
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data, {
+                "deleted": "Metrics mock.deleted.metric, mock.deleted.metric2 "
+                           "have been deleted"
+            }
+        )
+        profile = poem_models.MetricProfiles.objects.get(name='TEST_PROFILE')
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=profile.id, content_type=self.ct
+        ).order_by('-date_created')
+        self.assertEqual(profile.name, 'TEST_PROFILE')
+        self.assertEqual(profile.apiid, '00000000-oooo-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.groupname, 'new-group')
+        self.assertEqual(history.count(), 2)
+        serialized_data = json.loads(history[0].serialized_data)[0]['fields']
+        self.assertEqual(serialized_data['name'], profile.name)
+        self.assertEqual(serialized_data['apiid'], profile.apiid)
+        self.assertEqual(serialized_data['groupname'], profile.groupname)
+        self.assertEqual(
+            serialized_data['metricinstances'],
+            [
+                ['AMGA', 'org.nagios.SAML-SP'],
+                ['APEL', 'org.apel.APEL-Pub'],
+                ['APEL', 'org.apel.APEL-Sync']
+            ]
+        )
+        self.assertEqual(
+            history[0].comment,
+            '[{"added": {"fields": ["description"]}}, '
+            '{"changed": {"fields": ["groupname"]}}]'
+        )
+        mock_sync_metrics.assert_called_once_with(self.tenant, self.superuser)
+
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_put_metric_profile_superuser_if_metrics_combo(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = ["org.nagios.SAML-SP"], \
+            ["org.apel.APEL-Pub"], [], ["org.apel.APEL-Sync"], \
+            ["mock.deleted.metric"]
+        data = {
+            "name": "TEST_PROFILE2",
+            "apiid": "00000000-oooo-kkkk-aaaa-aaeekkccnnee",
+            "groupname": "new-group",
+            "description": "New profile description.",
+            "services": [
+                {"service": "AMGA", "metric": "org.nagios.SAML-SP"},
+                {"service": "APEL", "metric": "org.apel.APEL-Pub"},
+                {"service": "APEL", "metric": "org.apel.APEL-Sync"}
+            ]
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data, {
+                "imported": "Metric org.nagios.SAML-SP has been imported",
+                "warning": "Metric org.apel.APEL-Pub has been imported with "
+                           "package version used by TENANT tenant",
+                "unavailable": "Metric org.apel.APEL-Sync not available for "
+                               "package used by TENANT tenant",
+                "deleted": "Metric mock.deleted.metric has been deleted"
+            }
+        )
         profile = poem_models.MetricProfiles.objects.get(name='TEST_PROFILE')
         history = poem_models.TenantHistory.objects.filter(
             object_id=profile.id, content_type=self.ct
