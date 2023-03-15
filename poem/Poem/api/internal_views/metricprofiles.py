@@ -2,6 +2,7 @@ from Poem.api import serializers
 from Poem.api.internal_views.utils import sync_webapi
 from Poem.api.views import NotFound
 from Poem.helpers.history_helpers import create_profile_history
+from Poem.helpers.metrics_helpers import sync_metrics
 from Poem.poem import models as poem_models
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
@@ -189,6 +190,8 @@ class ListMetricProfiles(APIView):
                                     profile, dict(request.data)['services'],
                                     request.user, request.data['description']
                                 )
+
+                                sync_metrics(request.tenant, request.user)
 
                                 return Response(status=status.HTTP_201_CREATED)
 

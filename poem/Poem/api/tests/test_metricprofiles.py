@@ -573,7 +573,9 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(len(poem_models.MetricProfiles.objects.all()), 2)
 
-    def test_put_metric_profile_superuser(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_put_metric_profile_superuser(self, mock_sync_metrics):
+        mock_sync_metrics.return_value = [], [], [], [], []
         data = {
             "name": "TEST_PROFILE2",
             "apiid": "00000000-oooo-kkkk-aaaa-aaeekkccnnee",
@@ -587,6 +589,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -615,8 +618,11 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             '[{"added": {"fields": ["description"]}}, '
             '{"changed": {"fields": ["groupname"]}}]'
         )
+        mock_sync_metrics.assert_called_once_with(self.tenant, self.superuser)
 
-    def test_put_metric_profile_regular_user(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_put_metric_profile_regular_user(self, mock_sync_metrics):
+        mock_sync_metrics.return_value = [], [], [], [], []
         data = {
             "name": "TEST_PROFILE",
             "apiid": "00000000-oooo-kkkk-aaaa-aaeekkccnnee",
@@ -630,6 +636,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -660,8 +667,13 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             '{"changed": {"fields": ["groupname"]}}]'
         )
         self.assertEqual(group.metricprofiles.all().count(), 1)
+        mock_sync_metrics.assert_called_once_with(self.tenant, self.user)
 
-    def test_put_metric_profile_regular_user_wrong_group(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_put_metric_profile_regular_user_wrong_group(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], []
         data = {
             "name": "TEST_PROFILE2",
             "apiid": "00000000-oooo-kkkk-aaaa-aaeekkccnnee",
@@ -675,6 +687,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -706,8 +719,13 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(history[0].comment, 'Initial version.')
         self.assertFalse(profile in group.metricprofiles.all())
+        self.assertEqual(mock_sync_metrics.call_count, 0)
 
-    def test_put_metric_profile_regular_user_wrong_initial_group(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_put_metric_profile_regular_user_wrong_initial_group(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], []
         mp3 = poem_models.MetricProfiles.objects.create(
             name='ARGO_MON',
             apiid='quaoqu7a-0nkd-09po-2ymk-aelitoch7ahz',
@@ -754,6 +772,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -787,8 +806,11 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             ]
         )
         self.assertEqual(history[0].comment, 'Initial version.')
+        self.assertEqual(mock_sync_metrics.call_count, 0)
 
-    def test_put_metric_profile_limited_user(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_put_metric_profile_limited_user(self, mock_sync_metrics):
+        mock_sync_metrics.return_value = [], [], [], [], []
         data = {
             "name": "TEST_PROFILE",
             "apiid": "00000000-oooo-kkkk-aaaa-aaeekkccnnee",
@@ -802,6 +824,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.limited_user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -832,8 +855,13 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(history[0].comment, 'Initial version.')
         self.assertFalse(profile in group.metricprofiles.all())
+        self.assertEqual(mock_sync_metrics.call_count, 0)
 
-    def test_put_metric_profile_nonexisting_group_superuser(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_put_metric_profile_nonexisting_group_superuser(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], []
         data = {
             "name": "TEST_PROFILE",
             "apiid": "00000000-oooo-kkkk-aaaa-aaeekkccnnee",
@@ -847,6 +875,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -875,8 +904,13 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             ]
         )
         self.assertEqual(history[0].comment, 'Initial version.')
+        self.assertEqual(mock_sync_metrics.call_count, 0)
 
-    def test_put_metric_profile_nonexisting_group_regular_user(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_put_metric_profile_nonexisting_group_regular_user(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], []
         data = {
             "name": "TEST_PROFILE",
             "apiid": "00000000-oooo-kkkk-aaaa-aaeekkccnnee",
@@ -890,6 +924,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -918,8 +953,13 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             ]
         )
         self.assertEqual(history[0].comment, 'Initial version.')
+        self.assertEqual(mock_sync_metrics.call_count, 0)
 
-    def test_put_metric_profile_nonexisting_group_limited_user(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_put_metric_profile_nonexisting_group_limited_user(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], []
         data = {
             "name": "TEST_PROFILE",
             "apiid": "00000000-oooo-kkkk-aaaa-aaeekkccnnee",
@@ -933,6 +973,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.limited_user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -961,8 +1002,13 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             ]
         )
         self.assertEqual(history[0].comment, 'Initial version.')
+        self.assertEqual(mock_sync_metrics.call_count, 0)
 
-    def test_put_metric_profile_without_description_superuser(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_put_metric_profile_without_description_superuser(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], []
         data = {
             "name": "TEST_PROFILE",
             "apiid": "00000000-oooo-kkkk-aaaa-aaeekkccnnee",
@@ -976,6 +1022,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -1005,8 +1052,13 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             history[0].comment,
             '[{"changed": {"fields": ["groupname"]}}]'
         )
+        mock_sync_metrics.assert_called_once_with(self.tenant, self.superuser)
 
-    def test_put_metric_profile_without_description_regular_user(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_put_metric_profile_without_description_regular_user(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], []
         data = {
             "name": "TEST_PROFILE",
             "apiid": "00000000-oooo-kkkk-aaaa-aaeekkccnnee",
@@ -1020,6 +1072,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -1049,8 +1102,13 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             history[0].comment,
             '[{"changed": {"fields": ["groupname"]}}]'
         )
+        mock_sync_metrics.assert_called_once_with(self.tenant, self.user)
 
-    def test_put_metric_profile_without_description_regular_user_wrong_gr(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_put_metric_profile_without_description_regular_user_wrong_gr(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], []
         data = {
             "name": "TEST_PROFILE",
             "apiid": "00000000-oooo-kkkk-aaaa-aaeekkccnnee",
@@ -1064,6 +1122,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -1095,8 +1154,13 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             ]
         )
         self.assertEqual(history[0].comment, 'Initial version.')
+        self.assertEqual(mock_sync_metrics.call_count, 0)
 
-    def test_put_metric_profile_without_description_limited_user(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_put_metric_profile_without_description_limited_user(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], []
         data = {
             "name": "TEST_PROFILE",
             "apiid": "00000000-oooo-kkkk-aaaa-aaeekkccnnee",
@@ -1110,6 +1174,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.limited_user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -1140,8 +1205,13 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             ]
         )
         self.assertEqual(history[0].comment, 'Initial version.')
+        self.assertEqual(mock_sync_metrics.call_count, 0)
 
-    def test_put_metric_profile_without_apiid_superuser(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_put_metric_profile_without_apiid_superuser(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], []
         data = {
             "name": "TEST_PROFILE",
             "apiid": "",
@@ -1155,14 +1225,20 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
             response.data, {'detail': 'Apiid field undefined!'}
         )
+        self.assertEqual(mock_sync_metrics.call_count, 0)
 
-    def test_put_metric_profile_without_apiid_regular_user(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_put_metric_profile_without_apiid_regular_user(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], []
         data = {
             "name": "TEST_PROFILE",
             "apiid": "",
@@ -1176,14 +1252,20 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
             response.data, {'detail': 'Apiid field undefined!'}
         )
+        self.assertEqual(mock_sync_metrics.call_count, 0)
 
-    def test_put_metric_profile_without_apiid_regular_user_wrong_group(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_put_metric_profile_without_apiid_regular_user_wrong_group(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], []
         data = {
             "name": "TEST_PROFILE",
             "apiid": "",
@@ -1197,6 +1279,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -1205,8 +1288,13 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             'You do not have permission to assign metric profiles to the given '
             'group.'
         )
+        self.assertEqual(mock_sync_metrics.call_count, 0)
 
-    def test_put_metric_profile_without_apiid_limited_user(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_put_metric_profile_without_apiid_limited_user(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], []
         data = {
             "name": "TEST_PROFILE",
             "apiid": "",
@@ -1220,6 +1308,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.limited_user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -1227,6 +1316,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to change metric profiles.'
         )
+        self.assertEqual(mock_sync_metrics.call_count, 0)
 
     def test_delete_metric_profile_superuser(self):
         request = self.factory.delete(
