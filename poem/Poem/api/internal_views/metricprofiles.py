@@ -369,8 +369,24 @@ class ListMetricProfiles(APIView):
                             ).delete()
 
                             profile.delete()
+                            deleted = sync_metrics(
+                                request.tenant, request.user
+                            )[4]
 
-                            return Response(status=status.HTTP_204_NO_CONTENT)
+                            data = dict()
+
+                            if len(deleted) > 0:
+                                if len(deleted) == 1:
+                                    msg = f"Metric {deleted[0]} has"
+
+                                else:
+                                    msg = f"Metrics {', '.join(deleted)} have"
+
+                                data.update({"deleted": f"{msg} been deleted"})
+
+                            return Response(
+                                data=data, status=status.HTTP_204_NO_CONTENT
+                            )
 
                         else:
                             return error_response(

@@ -2226,13 +2226,17 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(mock_sync_metrics.call_count, 0)
 
-    def test_delete_metric_profile_superuser(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_delete_metric_profile_superuser(self, mock_sync_metrics):
+        mock_sync_metrics.return_value = [], [], [], [], []
         request = self.factory.delete(
             self.url + '12341234-oooo-kkkk-aaaa-aaeekkccnnee'
         )
+        request.tenant = self.tenant
         force_authenticate(request, user=self.superuser)
         response = self.view(request, '12341234-oooo-kkkk-aaaa-aaeekkccnnee')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(response.data, dict())
         all_profiles = poem_models.MetricProfiles.objects.all().values_list(
             'name', flat=True
         )
@@ -2241,27 +2245,95 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             object_id=self.mp2.id, content_type=self.ct
         )
         self.assertEqual(history.count(), 0)
+        mock_sync_metrics.assert_called_once_with(self.tenant, self.superuser)
 
-    def test_delete_metric_profile_regular_user(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_delete_metric_profile_superuser_if_one_deleted_metric(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], ["org.apel.APEL-Pub"]
         request = self.factory.delete(
-            self.url + '00000000-oooo-kkkk-aaaa-aaeekkccnnee'
+            self.url + '12341234-oooo-kkkk-aaaa-aaeekkccnnee'
         )
-        force_authenticate(request, user=self.user)
-        response = self.view(request, '00000000-oooo-kkkk-aaaa-aaeekkccnnee')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, '12341234-oooo-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(
+            response.data, {
+                "deleted": "Metric org.apel.APEL-Pub has been deleted"
+            }
+        )
         all_profiles = poem_models.MetricProfiles.objects.all().values_list(
             'name', flat=True
         )
+        self.assertFalse('ANOTHER-PROFILE' in all_profiles)
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=self.mp2.id, content_type=self.ct
+        )
+        self.assertEqual(history.count(), 0)
+        mock_sync_metrics.assert_called_once_with(self.tenant, self.superuser)
+
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_delete_metric_profile_superuser_if_deleted_metrics(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], [
+            "org.apel.APEL-Pub", "org.apel.APEL-Sync"
+        ]
+        request = self.factory.delete(
+            self.url + '12341234-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, '12341234-oooo-kkkk-aaaa-aaeekkccnnee')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(
+            response.data, {
+                "deleted": "Metrics org.apel.APEL-Pub, org.apel.APEL-Sync have "
+                           "been deleted"
+            }
+        )
+        all_profiles = poem_models.MetricProfiles.objects.all().values_list(
+            'name', flat=True
+        )
+        self.assertFalse('ANOTHER-PROFILE' in all_profiles)
+        history = poem_models.TenantHistory.objects.filter(
+            object_id=self.mp2.id, content_type=self.ct
+        )
+        self.assertEqual(history.count(), 0)
+        mock_sync_metrics.assert_called_once_with(self.tenant, self.superuser)
+
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_delete_metric_profile_regular_user(self, mock_sync_metrics):
+        mock_sync_metrics.return_value = [], [], [], [], []
+        request = self.factory.delete(
+            self.url + '00000000-oooo-kkkk-aaaa-aaeekkccnnee'
+        )
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request, '00000000-oooo-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(response.data, dict())
+        all_profiles = poem_models.MetricProfiles.objects.all().values_list(
+            'name', flat=True
+        )
         self.assertFalse('TEST_PROFILE' in all_profiles)
         history = poem_models.TenantHistory.objects.filter(
             object_id=self.mp1.id, content_type=self.ct
         )
         self.assertEqual(history.count(), 0)
+        mock_sync_metrics.assert_called_once_with(self.tenant, self.user)
 
-    def test_delete_metric_profile_regular_user_wrong_group(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_delete_metric_profile_regular_user_wrong_group(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], []
         request = self.factory.delete(
             self.url + '12341234-oooo-kkkk-aaaa-aaeekkccnnee'
         )
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request, '12341234-oooo-kkkk-aaaa-aaeekkccnnee')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -2271,11 +2343,15 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             'this group.'
         )
         self.assertEqual(poem_models.MetricProfiles.objects.all().count(), 2)
+        self.assertEqual(mock_sync_metrics.call_count, 0)
 
-    def test_delete_metric_profile_limited_user(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_delete_metric_profile_limited_user(self, mock_sync_metrics):
+        mock_sync_metrics.return_value = [], [], [], [], []
         request = self.factory.delete(
             self.url + '00000000-oooo-kkkk-aaaa-aaeekkccnnee'
         )
+        request.tenant = self.tenant
         force_authenticate(request, user=self.limited_user)
         response = self.view(request, '00000000-oooo-kkkk-aaaa-aaeekkccnnee')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -2284,27 +2360,45 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             'You do not have permission to delete metric profiles.'
         )
         self.assertEqual(poem_models.MetricProfiles.objects.all().count(), 2)
+        self.assertEqual(mock_sync_metrics.call_count, 0)
 
-    def test_delete_metric_profile_with_wrong_id_superuser(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_delete_metric_profile_with_wrong_id_superuser(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], []
         request = self.factory.delete(self.url + 'wrong_id')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.superuser)
         response = self.view(request, 'wrong_id')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(
             response.data, {'detail': 'Metric profile not found'}
         )
+        self.assertEqual(mock_sync_metrics.call_count, 0)
 
-    def test_delete_metric_profile_with_wrong_id_regular_user(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_delete_metric_profile_with_wrong_id_regular_user(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], []
         request = self.factory.delete(self.url + 'wrong_id')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request, 'wrong_id')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(
             response.data, {'detail': 'Metric profile not found'}
         )
+        self.assertEqual(mock_sync_metrics.call_count, 0)
 
-    def test_delete_metric_profile_with_wrong_id_limited_user(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_delete_metric_profile_with_wrong_id_limited_user(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], []
         request = self.factory.delete(self.url + 'wrong_id')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.limited_user)
         response = self.view(request, 'wrong_id')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -2312,30 +2406,49 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to delete metric profiles.'
         )
+        self.assertEqual(mock_sync_metrics.call_count, 0)
 
-    def test_delete_metric_profile_without_specifying_apiid_superuser(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_delete_metric_profile_without_specifying_apiid_superuser(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], []
         request = self.factory.delete(self.url)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
             response.data, {'detail': 'Metric profile not specified!'}
         )
+        self.assertEqual(mock_sync_metrics.call_count, 0)
 
-    def test_delete_metric_profile_without_specifying_apiid_regular_user(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_delete_metric_profile_without_specifying_apiid_regular_user(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], []
         request = self.factory.delete(self.url)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
             response.data, {'detail': 'Metric profile not specified!'}
         )
+        self.assertEqual(mock_sync_metrics.call_count, 0)
 
-    def test_delete_metric_profile_without_specifying_apiid_limited_user(self):
+    @patch("Poem.api.internal_views.metricprofiles.sync_metrics")
+    def test_delete_metric_profile_without_specifying_apiid_limited_user(
+            self, mock_sync_metrics
+    ):
+        mock_sync_metrics.return_value = [], [], [], [], []
         request = self.factory.delete(self.url)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.limited_user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
             response.data, {'detail': 'Metric profile not specified!'}
         )
+        self.assertEqual(mock_sync_metrics.call_count, 0)
