@@ -8,7 +8,6 @@ import {
   DiffElement,
   NotifyWarn,
   NotifyError,
-  NotifyInfo,
   ErrorComponent,
   ModalAreYouSure,
   ParagraphTitle,
@@ -305,7 +304,6 @@ export const ListOfMetrics = (props) => {
 
   const [selected, setSelected] = useState({});
   const [selectAll, setSelectAll] = useState(0);
-  const [disabled, setDisabled] = useState('');
   const [areYouSureModal, setAreYouSureModal] = useState(false);
   const [modalVar, setModalVar] = useState(undefined);
   const [modalTitle, setModalTitle] = useState(undefined);
@@ -323,7 +321,6 @@ export const ListOfMetrics = (props) => {
   const queryClient = useQueryClient();
 
   const mutationDelete = useMutation(async (values) => await backend.bulkDeleteMetrics(values));
-  const mutationImport = useMutation(async (values) => await backend.importMetrics(values));
 
   const { data: userDetails, error: userDetailsError, isLoading: userDetailsLoading } = useQuery(
     'userdetails', () => fetchUserDetails(isTenantSchema),
@@ -379,47 +376,6 @@ export const ListOfMetrics = (props) => {
         msg: 'No metric templates were selected!',
         title: 'Error'
       });
-  }
-
-  async function importMetrics() {
-    let selectedMetrics = selected;
-    // get only those metrics whose value is true
-    let mt = Object.keys(selectedMetrics).filter(key => selectedMetrics[key]);
-    if (mt.length > 0) {
-      mutationImport.mutate({ 'metrictemplates': mt }, {
-        onSuccess: (data) => {
-          let dis = '';
-          if ('imported' in data) {
-            NotifyOk({ msg: data.imported, title: 'Imported' });
-            dis += data.imported;
-          }
-
-          if ('warn' in data) {
-            NotifyInfo({ msg: data.warn, title: 'Imported with older probe version' });
-            dis += data.warn;
-          }
-
-          if ('err' in data)
-            NotifyWarn({ msg: data.err, title: 'Not imported' });
-
-          if ('unavailable' in data)
-            NotifyError({ msg: data.unavailable, title: 'Unavailable' })
-
-          if ('imported' in data || 'warn' in data) {
-            queryClient.invalidateQueries('metric');
-            queryClient.invalidateQueries('public_metric');
-          }
-
-          setDisabled(dis);
-          setSelected({});
-          setSelectAll(0);
-        }
-      })
-    } else {
-      NotifyError({
-        msg: 'No metric templates were selected!',
-        title: 'Error'});
-    }
   }
 
   async function bulkDeleteMetrics(mt) {
@@ -487,9 +443,8 @@ export const ListOfMetrics = (props) => {
       var list_metric = [];
 
       instance.filteredFlatRows.forEach(row => {
-        if ((isTenantSchema && row.original.importable) || !isTenantSchema)
-          list_metric.push(row.original)
-      });
+        list_metric.push(row.original)
+      })
 
       let newSelected = {};
       if (selectAll === 0) {
@@ -565,47 +520,46 @@ export const ListOfMetrics = (props) => {
       }
     ];
 
-    if (type == 'metrictemplates' && userDetails && userDetails.is_superuser) {
-      columns.splice(
-        0,
-        0,
-        {
-          id: 'checkbox',
-          accessor: null,
-          Cell: (row) => {
-            let original = row.cell.row.original;
-            return (
-              <div style={{display: 'flex', justifyContent: 'center'}}>
+    if (type == 'metrictemplates' && userDetails && userDetails.is_superuser && !isTenantSchema) {
+        columns.splice(
+          0,
+          0,
+          {
+            id: 'checkbox',
+            accessor: null,
+            Cell: (row) => {
+              let original = row.cell.row.original;
+              return (
+                <div style={{display: 'flex', justifyContent: 'center'}}>
+                  <input
+                    type='checkbox'
+                    className='checkbox'
+                    data-testid={`checkbox-${original.name}`}
+                    checked={ selected[original.name] === true }
+                    onChange={() => toggleRow(original.name)}
+                  />
+                </div>
+              );
+            },
+            Header: "Delete",
+            Filter: (instance) =>
+              <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
                 <input
                   type='checkbox'
+                  data-testid='checkbox-select-all'
                   className='checkbox'
-                  data-testid={`checkbox-${original.name}`}
-                  checked={selected[original.name] === true || (isTenantSchema && (!original.importable || disabled.includes(original.name)))}
-                  disabled={isTenantSchema && (!original.importable || disabled.includes(original.name))}
-                  onChange={() => toggleRow(original.name)}
+                  checked={selectAll === 1}
+                  ref={input => {
+                    if (input) {
+                      input.indeterminate = selectAll === 2;
+                    }
+                  }}
+                  onChange={() => toggleSelectAll(instance)}
                 />
-              </div>
-            );
-          },
-          Header: `${isTenantSchema ? 'Select all' : 'Delete'}`,
-          Filter: (instance) =>
-            <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
-              <input
-                type='checkbox'
-                data-testid='checkbox-select-all'
-                className='checkbox'
-                checked={selectAll === 1}
-                ref={input => {
-                  if (input) {
-                    input.indeterminate = selectAll === 2;
-                  }
-                }}
-                onChange={() => toggleSelectAll(instance)}
-              />
-            </div>,
-          column_width: '5%'
-        }
-      );
+              </div>,
+            column_width: '5%'
+          }
+        );
     } else {
       columns.splice(
         0,
@@ -613,7 +567,8 @@ export const ListOfMetrics = (props) => {
         {
           Header: '#',
           id: 'row',
-          column_width: '5%'
+          column_width: '5%',
+          Filter: ""
         }
       );
     }
@@ -678,7 +633,7 @@ export const ListOfMetrics = (props) => {
           0,
           {
             Header: 'OS',
-            column_width: `${type === "metrics" ? "10%" : "12%"}`,
+            column_width: "12%",
             accessor: 'ostag',
             Cell: row =>
               <div style={{textAlign: 'center'}}>
@@ -692,11 +647,7 @@ export const ListOfMetrics = (props) => {
     }
 
     return columns;
-  }, type === "metrics" ?
-      [isTenantSchema, OSGroups, tags, types, metriclink, publicView, selectAll, selected, type, userDetails, disabled, metricProfiles]
-    :
-      [isTenantSchema, OSGroups, tags, types, metriclink, publicView, selectAll, selected, type, userDetails, disabled]
-  )
+  })
 
   if (metricsLoading || typesLoading || tagsLoading || OSGroupsLoading || userDetailsLoading || loadingMP)
     return (<LoadingAnim />);
@@ -740,30 +691,21 @@ export const ListOfMetrics = (props) => {
     } else {
       if (isTenantSchema)
         return (
-          <>
-            <div className="d-flex align-items-center justify-content-between">
-              <h2 className="ms-3 mt-1 mb-4">{`Select metric template${(userDetails && userDetails.is_superuser) ? '(s) to import' : ' for details'}`}</h2>
-              {
-                (userDetails && userDetails.is_superuser) &&
-                  <Button
-                    className='btn btn-secondary'
-                    onClick={() => importMetrics()}
-                  >
-                    Import
-                  </Button>
-              }
-            </div>
-            <div id="argo-contentwrap" className="ms-2 mb-2 mt-2 p-3 border rounded">
-              <BaseArgoTable
-                data={metrics}
-                columns={memoized_columns}
-                page_size={50}
-                resourcename='metric templates'
-                filter={true}
-                selectable={!publicView}
-              />
-            </div>
-          </>
+          <BaseArgoView
+            resourcename="metric template"
+            location={ location }
+            listview={ true }
+            addnew={ false }
+          >
+            <BaseArgoTable
+              data={metrics}
+              columns={memoized_columns}
+              page_size={50}
+              resourcename='metric templates'
+              filter={true}
+              selectable={ false }
+            />
+          </BaseArgoView>
         );
       else
         return (
