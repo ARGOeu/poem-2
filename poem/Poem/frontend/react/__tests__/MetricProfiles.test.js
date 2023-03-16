@@ -27,7 +27,7 @@ jest.setTimeout(20000);
 
 const mockChangeMetricProfileBackend = jest.fn(() => Promise.resolve({}))
 const mockChangeMetricProfile = jest.fn();
-const mockDeleteObject = jest.fn();
+const mockDeleteMetricProfileBackend = jest.fn(() => Promise.resolve({}))
 const mockDeleteMetricProfile = jest.fn();
 const mockAddMetricProfileBackend = jest.fn(() => Promise.resolve({}));
 const mockAddMetricProfile = jest.fn();
@@ -687,7 +687,7 @@ describe('Tests for metric profiles changeview', () => {
         fetchData: () => Promise.resolve(mockBackendMetricProfile),
         fetchListOfNames: () => Promise.resolve(mockMetrics),
         changeMetricProfile: mockChangeMetricProfileBackend,
-        deleteObject: mockDeleteObject
+        deleteMetricProfile: mockDeleteMetricProfileBackend
       }
     })
   })
@@ -2663,8 +2663,8 @@ describe('Tests for metric profiles changeview', () => {
     })
 
     await waitFor(() => {
-      expect(mockDeleteObject).toHaveBeenCalledWith(
-        '/api/v2/internal/metricprofiles/va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv'
+      expect(mockDeleteMetricProfileBackend).toHaveBeenCalledWith(
+        "va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv"
       )
     })
 
@@ -2672,6 +2672,48 @@ describe('Tests for metric profiles changeview', () => {
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metricprofile');
     expect(NotificationManager.success).toHaveBeenCalledWith(
       'Metric profile successfully deleted', 'Deleted', 2000
+    )
+    expect(NotificationManager.warning).not.toHaveBeenCalled()
+  })
+
+  test('Test successfully deleting metric profile with info on deleted metrics', async () => {
+    mockDeleteMetricProfile.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
+    )
+    mockDeleteMetricProfileBackend.mockReturnValueOnce(
+      Promise.resolve({
+        deleted: "Metric mock.metric.name has been deleted"
+      })
+    )
+
+    renderChangeView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /delete/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockDeleteMetricProfile).toHaveBeenCalledWith('va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv');
+    })
+
+    await waitFor(() => {
+      expect(mockDeleteMetricProfileBackend).toHaveBeenCalledWith(
+        "va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv"
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metricprofile');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metricprofile');
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Metric profile successfully deleted\nMetric mock.metric.name has been deleted', 
+      'Deleted', 
+      2000
     )
   })
 
@@ -2695,7 +2737,7 @@ describe('Tests for metric profiles changeview', () => {
     })
 
     await waitFor(() => {
-      expect(mockDeleteObject).not.toHaveBeenCalled()
+      expect(mockDeleteMetricProfileBackend).not.toHaveBeenCalled()
     })
 
     expect(queryClient.invalidateQueries).not.toHaveBeenCalled()
@@ -2732,7 +2774,7 @@ describe('Tests for metric profiles changeview', () => {
     })
 
     await waitFor(() => {
-      expect(mockDeleteObject).not.toHaveBeenCalled()
+      expect(mockDeleteMetricProfileBackend).not.toHaveBeenCalled()
     })
 
     expect(queryClient.invalidateQueries).not.toHaveBeenCalled()
@@ -2770,7 +2812,7 @@ describe('Tests for metric profiles changeview', () => {
     })
 
     await waitFor(() => {
-      expect(mockDeleteObject).not.toHaveBeenCalled()
+      expect(mockDeleteMetricProfileBackend).not.toHaveBeenCalled()
     })
 
     expect(queryClient.invalidateQueries).not.toHaveBeenCalled()
@@ -2820,7 +2862,7 @@ describe('Tests for metric profiles changeview', () => {
     })
 
     await waitFor(() => {
-      expect(mockDeleteObject).not.toHaveBeenCalled()
+      expect(mockDeleteMetricProfileBackend).not.toHaveBeenCalled()
     })
 
     expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
@@ -2855,7 +2897,7 @@ describe('Tests for metric profiles changeview', () => {
     })
 
     await waitFor(() => {
-      expect(mockDeleteObject).not.toHaveBeenCalled()
+      expect(mockDeleteMetricProfileBackend).not.toHaveBeenCalled()
     })
 
     expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
@@ -2871,7 +2913,7 @@ describe('Tests for metric profiles changeview', () => {
   })
 
   test('Test error deleting metric profile on internal backend with error message', async () => {
-    mockDeleteObject.mockImplementationOnce( () => {
+    mockDeleteMetricProfileBackend.mockImplementationOnce( () => {
       throw Error('400 BAD REQUEST: There has been an internal error.')
     } );
     mockDeleteMetricProfile.mockReturnValueOnce(
@@ -2895,8 +2937,8 @@ describe('Tests for metric profiles changeview', () => {
     })
 
     await waitFor(() => {
-      expect(mockDeleteObject).toHaveBeenCalledWith(
-        '/api/v2/internal/metricprofiles/va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv'
+      expect(mockDeleteMetricProfileBackend).toHaveBeenCalledWith(
+        "va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv"
       )
     })
 
@@ -2913,7 +2955,7 @@ describe('Tests for metric profiles changeview', () => {
   })
 
   test('Test error deleting metric profile on internal backend without error message', async () => {
-    mockDeleteObject.mockImplementationOnce( () => { throw Error() } );
+    mockDeleteMetricProfileBackend.mockImplementationOnce( () => { throw Error() } );
     mockDeleteMetricProfile.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
     )
@@ -2935,8 +2977,8 @@ describe('Tests for metric profiles changeview', () => {
     })
 
     await waitFor(() => {
-      expect(mockDeleteObject).toHaveBeenCalledWith(
-        '/api/v2/internal/metricprofiles/va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv'
+      expect(mockDeleteMetricProfileBackend).toHaveBeenCalledWith(
+        "va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv"
       )
     })
 

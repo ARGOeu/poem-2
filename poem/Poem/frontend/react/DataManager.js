@@ -256,6 +256,29 @@ export class Backend {
       throw Error(error_msg)
   }
 
+  async deleteMetricProfile(idProfile) {
+    let error_msg = ""
+    const url = `/api/v2/internal/metricprofiles/${idProfile}`
+    try {
+      const response = await this.send(url, 'DELETE');
+      if (!response.ok) {
+        try {
+          let json = await response.json()
+          error_msg = `${response.status} ${response.statusText} in DELETE ${url}${json.detail ? `: ${json.detail}` : ''}`;
+        } catch (err2) {
+          error_msg = `${response.status} ${response.statusText} in DELETE ${url}`;
+        }
+      } else {
+        return await response.json()
+      }
+    } catch (err1) {
+      error_msg = `${err1} in DELETE ${url}`
+    }
+
+    if (error_msg)
+      throw Error(error_msg)
+  }
+
   async bulkDeleteMetrics(data) {
     let error_msg = '';
     const url = '/api/v2/internal/deletetemplates/';

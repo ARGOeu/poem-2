@@ -590,7 +590,7 @@ export const MetricProfilesComponent = (props) => {
   const webapiAddMutation = useMutation(async (values) => await webapi.addMetricProfile(values));
   const backendAddMutation = useMutation(async (values) => await backend.addMetricProfile(values))
   const webapiDeleteMutation = useMutation(async (idProfile) => await webapi.deleteMetricProfile(idProfile));
-  const backendDeleteMutation = useMutation(async (idProfile) => await backend.deleteObject(`/api/v2/internal/metricprofiles/${idProfile}`));
+  const backendDeleteMutation = useMutation(async (idProfile) => await backend.deleteMetricProfile(idProfile))
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
     'userdetails', () => fetchUserDetails(true),
@@ -668,11 +668,17 @@ export const MetricProfilesComponent = (props) => {
       webapiDeleteMutation.mutate(idProfile, {
         onSuccess: () => {
           backendDeleteMutation.mutate(idProfile, {
-            onSuccess: () => {
+            onSuccess: (data) => {
               queryClient.invalidateQueries('metricprofile');
               queryClient.invalidateQueries('public_metricprofile');
+              
+              let msg = "Metric profile successfully deleted"
+
+              if ("deleted" in data)
+                msg = `${msg}\n${data.deleted}`
+
               NotifyOk({
-                msg: 'Metric profile successfully deleted',
+                msg: msg,
                 title: 'Deleted',
                 callback: () => history.push('/ui/metricprofiles')
               });
