@@ -32,7 +32,7 @@ import { useQuery, useQueryClient, useMutation } from 'react-query';
 import PapaParse from 'papaparse';
 import { downloadCSV } from './FileDownload';
 import {
-  fetchAllMetrics,
+  fetchMetricTemplates,
   fetchUserDetails,
   fetchBackendMetricProfiles
 } from './QueryFunctions';
@@ -623,7 +623,7 @@ export const MetricProfilesComponent = (props) => {
   )
 
   const { data: metricsAll, error: errorMetricsAll, isLoading: loadingMetricsAll } = useQuery(
-    'metricsall', () => fetchAllMetrics(),
+    "metrictemplate", () => fetchMetricTemplates(),
     { enabled: !publicView }
   )
 
@@ -911,7 +911,7 @@ export const MetricProfilesComponent = (props) => {
         { ...props }
         metricProfile={ metricProfile }
         userDetails={ userDetails }
-        metricsAll={ metricsAll ? metricsAll : [] }
+        metricsAll={ metricsAll ? metricsAll.map(metric => metric.name) : [] }
         servicesAll={ webApiST ? webApiST : [] }
         doChange={ doChange }
         doDelete={ doDelete }

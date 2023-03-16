@@ -162,19 +162,443 @@ const mockBackendMetricProfile2 = {
 };
 
 const mockMetrics = [
-  "argo.AMS-Check",
-  "argo.AMSPublisher-Check",
-  "ch.cern.HTCondorCE-JobState",
-  "ch.cern.HTCondorCE-JobSubmit",
-  "ch.cern.LFC-Ping",
-  "ch.cern.LFC-Read",
-  "ch.cern.LFC-Write",
-  "eu.egi.CertValidity",
-  "eu.egi.sec.CREAMCE",
-  "org.nagios.ARGOWeb-AR",
-  "org.nagios.ARGOWeb-Status",
-  "org.nagios.NagiosWebInterface",
-  "org.nagiosexchange.AppDB-WebCheck"
+  {
+    id: "1",
+    name: "argo.AMS-Check",
+    importable: true,
+    mtype: "Active",
+    description: 'Some description of argo.AMS-Check metric template.',
+    ostag: ['CentOS 6', 'CentOS 7'],
+    tags: ['test_tag1', 'test_tag2'],
+    probeversion: 'ams-probe (0.1.12)',
+    parent: '',
+    probeexecutable: 'ams-probe',
+    config: [
+      { key: 'maxCheckAttempts', value: '4' },
+      { key: 'timeout', value: '70' },
+      { key: 'path', value: '/usr/libexec/argo-monitoring/' },
+      { key: 'interval', value: '5' },
+      { key: 'retryInterval', value: '3' }
+    ],
+    attribute: [
+      { key: 'argo.ams_TOKEN', value: '--token' }
+    ],
+    dependency: [],
+    flags: [
+      { key: 'OBSESS', value: '1' }
+    ],
+    files: [],
+    parameter: [
+      { key: '--project', value: 'EGI' }
+    ],
+    fileparameter: []
+  },
+  {
+    id: 3,
+    name: 'argo.AMSPublisher-Check',
+    importable: false,
+    mtype: 'Active',
+    tags: ['internal'],
+    probeversion: 'ams-publisher-probe (0.1.12)',
+    ostag: ['CentOS 7'],
+    description: '',
+    parent: '',
+    probeexecutable: 'ams-publisher-probe',
+    config: [
+      { key: 'interval', value: '180' },
+      { key: 'maxCheckAttempts', value: '1' },
+      { key: 'path', value: '/usr/libexec/argo-monitoring/probes/argo'},
+      { key: 'retryInterval', value: '1' },
+      { key: 'timeout', value: '120' }
+    ],
+    attribute: [],
+    dependancy: [],
+    flags: [
+      { key: 'NOHOSTNAME', value: '1' },
+      { key: 'NOTIMEOUT', value: '1'},
+      { key: 'NOPUBLISH', value: '1' }
+    ],
+    files: [],
+    parameter: [
+      { key: '-s', value: '/var/run/argo-nagios-ams-publisher/sock'}
+    ],
+    fileparameter: []
+  },
+  {
+    id: 4,
+    name: "ch.cern.HTCondorCE-JobState",
+    importable: true,
+    mtype: 'Active',
+    tags: ["htcondor", "compute", "htc"],
+    probeversion: "check_js (present)",
+    ostag: ['CentOS 7'],
+    description: '',
+    parent: '',
+    probeexecutable: 'check_js',
+    config: [
+      { key: 'interval', value: '30' },
+      { key: 'maxCheckAttempts', value: '2' },
+      { key: 'path', value: '/usr/lib64/nagios/plugins'},
+      { key: 'retryInterval', value: '15' },
+      { key: 'timeout', value: '600' }
+    ],
+    attribute: [
+      { key: "VONAME", value: "--vo" },
+      { key: "X509_USER_PROXY", value: "-x" }
+    ],
+    dependancy: [],
+    flags: [
+      { key: 'OBSESS', value: '1' },
+      { key: 'VO', value: '1' }
+    ],
+    files: [],
+    parameter: [
+      { key: "--executable", value: "/bin/hostname" }
+    ],
+    fileparameter: []
+  },
+  {
+    id: 5,
+    name: "ch.cern.HTCondorCE-JobSubmit",
+    importable: true,
+    mtype: "Passive",
+    tags: ["htcondor", "compute", "htc"],
+    probeversion: "",
+    ostag: ['CentOS 7'],
+    description: '',
+    parent: 'ch.cern.HTCondorCE-JobState',
+    probeexecutable: "",
+    config: [],
+    attribute: [],
+    dependancy: [],
+    flags: [
+      { key: 'OBSESS', value: '1' },
+      { key: "PASSIVE", value: '1' },
+      { key: "VO", value: "1" }
+    ],
+    files: [],
+    parameter: [],
+    fileparameter: []
+  },
+  {
+    id: 6,
+    name: "ch.cern.HTCondorCE-JobSubmit",
+    importable: true,
+    mtype: "Passive",
+    tags: ["htcondor", "compute", "htc"],
+    probeversion: "",
+    ostag: ['CentOS 7'],
+    description: '',
+    parent: 'ch.cern.HTCondorCE-JobState',
+    probeexecutable: "",
+    config: [],
+    attribute: [],
+    dependancy: [],
+    flags: [
+      { key: 'OBSESS', value: '1' },
+      { key: "PASSIVE", value: '1' },
+      { key: "VO", value: "1" }
+    ],
+    files: [],
+    parameter: [],
+    fileparameter: []
+  },
+  {
+    id: 7,
+    name: "ch.cern.LFC-Ping",
+    importable: true,
+    mtype: "Active",
+    tags: ["htc", "lfc", "storage"],
+    probeversion: "check_lfc_sam (0.9.6)",
+    ostag: ['CentOS 7'],
+    description: '',
+    parent: "",
+    probeexecutable: "lcgdm/check_lfc_sam",
+    config: [
+      { key: "interval", value: "15" },
+      { key: "maxCheckAttempts", value: "4" },
+      { key: "path", value: "/usr/lib64/nagios/plugins/" },
+      { key: "retryInterval", value: "5" },
+      { key: "timeout", value: "120" }
+    ],
+    attribute: [
+      { key: "VONAME", value: "--vo" },
+      { key: "X509_USER_PROXY", value: "-x" }
+    ],
+    dependancy: [],
+    flags: [
+      { key: "NRPE", value: "1" },
+      { key: "OBSESS", value: "1" },
+      { key: "VO", value: "1" }
+    ],
+    files: [],
+    parameter: [],
+    fileparameter: []
+  },
+  {
+    id: 8,
+    name: "ch.cern.LFC-Read",
+    importable: true,
+    mtype: "Active",
+    tags: ["htc", "lfc", "storage"],
+    probeversion: "check_lfc_sam (0.9.6)",
+    ostag: ['CentOS 7'],
+    description: '',
+    parent: "",
+    probeexecutable: "lcgdm/check_lfc_sam",
+    config: [
+      { key: "interval", value: "15" },
+      { key: "maxCheckAttempts", value: "4" },
+      { key: "path", value: "/usr/lib64/nagios/plugins/" },
+      { key: "retryInterval", value: "5" },
+      { key: "timeout", value: "120" }
+    ],
+    attribute: [
+      { key: "VONAME", value: "--vo" },
+      { key: "X509_USER_PROXY", value: "-x" }
+    ],
+    dependancy: [],
+    flags: [
+      { key: "NRPE", value: "1" },
+      { key: "OBSESS", value: "1" },
+      { key: "VO", value: "1" }
+    ],
+    files: [],
+    parameter: [
+      { key: "-m", value: "ch.cern.LFC-Read" }
+    ],
+    fileparameter: []
+  },
+  {
+    id: 9,
+    name: "ch.cern.LFC-Write",
+    importable: true,
+    mtype: "Active",
+    tags: ["htc", "lfc", "storage"],
+    probeversion: "check_lfc_sam (0.9.6)",
+    ostag: ['CentOS 7'],
+    description: '',
+    parent: "",
+    probeexecutable: "lcgdm/check_lfc_sam",
+    config: [
+      { key: "interval", value: "15" },
+      { key: "maxCheckAttempts", value: "4" },
+      { key: "path", value: "/usr/lib64/nagios/plugins/" },
+      { key: "retryInterval", value: "5" },
+      { key: "timeout", value: "120" }
+    ],
+    attribute: [
+      { key: "VONAME", value: "--vo" },
+      { key: "X509_USER_PROXY", value: "-x" }
+    ],
+    dependancy: [],
+    flags: [
+      { key: "NRPE", value: "1" },
+      { key: "OBSESS", value: "1" },
+      { key: "VO", value: "1" }
+    ],
+    files: [],
+    parameter: [
+      { key: "-m", value: "ch.cern.LFC-Write" }
+    ],
+    fileparameter: []
+  },
+  {
+    id: 11,
+    name: "eu.egi.CertValidity",
+    importable: true,
+    mtype: "Active",
+    tags: ["authentication", "certificate"],
+    probeversion: "check_ssl_cert (1.84.0)",
+    ostag: ['CentOS 7'],
+    description: '',
+    parent: "",
+    probeexecutable: "check_ssl_cert",
+    config: [
+      { key: "interval", value: "240" },
+      { key: "maxCheckAttempts", value: "2" },
+      { key: "path", value: "$USER1$" },
+      { key: "retryInterval", value: "30" },
+      { key: "timeout", value: "60" }
+    ],
+    attribute: [
+      { key: "NAGIOS_HOST_CERT", value: "-C" },
+      { key: "NAGIOS_HOST_KEY", value: "-K" }
+    ],
+    dependancy: [],
+    flags: [
+      { key: "OBSESS", value: "1" }
+    ],
+    files: [],
+    parameter: [
+      { key: "-w", value: "30 -c 0 -N --altnames" },
+      { key: "--rootcert-dir", value: "/etc/grid-security/certificates" },
+      { key: "--rootcert-file", value: "/etc/pki/tls/certs/ca-bundle.crt" }
+    ],
+    fileparameter: []
+  },
+  {
+    id: 12,
+    name: "eu.egi.sec.CREAMCE",
+    importable: true,
+    mtype: "Active",
+    tags: ["cream", "security"],
+    probeversion: "check_dummy (present)",
+    ostag: ['CentOS 7'],
+    description: '',
+    parent: "",
+    probeexecutable: "check_dummy",
+    config: [
+      { key: "interval", value: "1440" },
+      { key: "maxCheckAttempts", value: "1" },
+      { key: "path", value: "$USER1$" },
+      { key: "retryInterval", value: "15" },
+      { key: "timeout", value: "10" }
+    ],
+    attribute: [],
+    dependancy: [],
+    flags: [
+      { key: "NOHOSTNAME", value: "1" },
+      { key: "NOTIMEOUT", value: "1" },
+      { key: "OBSESS", value: "1" }
+    ],
+    files: [],
+    parameter: [
+      { key: "2", value: "0" }
+    ],
+    fileparameter: []
+  },
+  {
+    id: 13,
+    name: "org.nagios.ARGOWeb-AR",
+    importable: true,
+    mtype: "Active",
+    tags: ["UI", "argo"],
+    probeversion: "check_http (present)",
+    ostag: ['CentOS 7'],
+    description: '',
+    parent: "",
+    probeexecutable: "check_http",
+    config: [
+      { key: "interval", value: "5" },
+      { key: "maxCheckAttempts", value: "3" },
+      { key: "path", value: "$USER1$" },
+      { key: "retryInterval", value: "3" },
+      { key: "timeout", value: "30" }
+    ],
+    attribute: [],
+    dependancy: [],
+    flags: [
+      { key: "OBSESS", value: "1" },
+      { key: "PNP", value: "1" }
+    ],
+    files: [],
+    parameter: [
+      { key: "-r", value: "NGI_HR" },
+      { key: "-u", value: "/egi/report-ar/Critical/NGI?accept=csv" },
+      { key: "--ssl", value: "0" },
+      { key: "--onredirect", value: "follow" }
+    ],
+    fileparameter: []
+  },
+  {
+    id: 14,
+    name: "org.nagios.ARGOWeb-Status",
+    importable: true,
+    mtype: "Active",
+    tags: ["UI", "argo"],
+    probeversion: "check_http (present)",
+    ostag: ['CentOS 7'],
+    description: '',
+    parent: "",
+    probeexecutable: "check_http",
+    config: [
+      { key: "interval", value: "5" },
+      { key: "maxCheckAttempts", value: "3" },
+      { key: "path", value: "$USER1$" },
+      { key: "retryInterval", value: "3" },
+      { key: "timeout", value: "30" }
+    ],
+    attribute: [],
+    dependancy: [],
+    flags: [
+      { key: "OBSESS", value: "1" },
+      { key: "PNP", value: "1" }
+    ],
+    files: [],
+    parameter: [
+      { key: "-r", value: "IN2P3-CC" },
+      { key: "-u", value: "/egi/report-status/Critical/SITES?accept=csv" },
+      { key: "--ssl", value: "0" },
+      { key: "--onredirect", value: "follow" }
+    ],
+    fileparameter: []
+  },
+  {
+    id: 15,
+    name: "org.nagios.NagiosWebInterface",
+    importable: true,
+    mtype: "Active",
+    tags: ["http", "argo", "nagios"],
+    probeversion: "check_http (present)",
+    ostag: ['CentOS 7'],
+    description: '',
+    parent: "",
+    probeexecutable: "check_http",
+    config: [
+      { key: "interval", value: "5" },
+      { key: "maxCheckAttempts", value: "3" },
+      { key: "path", value: "$USER1$" },
+      { key: "retryInterval", value: "3" },
+      { key: "timeout", value: "30" }
+    ],
+    attribute: [
+      { key: "NAGIOS_ACTUAL_HOST_CERT", value: "-J" },
+      { key: "NAGIOS_ACTUAL_HOST_KEY", value: "-K" }
+    ],
+    dependancy: [],
+    flags: [
+      { key: "OBSESS", value: "1" },
+      { key: "PNP", value: "1" }
+    ],
+    files: [],
+    parameter: [
+      { key: "--ssl", value: "" },
+      { key: "-s", value: '"Status Details"' },
+      { key: "-u", value: '"/nagios/cgi-bin/status.cgi?hostgroup=all&style=hostdetail"' }
+    ],
+    fileparameter: []
+  },
+  {
+    id: 17,
+    name: "org.nagiosexchange.AppDB-WebCheck",
+    importable: true,
+    mtype: "Active",
+    tags: ["http", "appdb", "htc"],
+    probeversion: "check_http (present)",
+    ostag: ['CentOS 7'],
+    description: '',
+    parent: "",
+    probeexecutable: "check_http",
+    config: [
+      { key: "interval", value: "5" },
+      { key: "maxCheckAttempts", value: "3" },
+      { key: "path", value: "$USER1$" },
+      { key: "retryInterval", value: "3" },
+      { key: "timeout", value: "120" }
+    ],
+    attribute: [],
+    dependancy: [],
+    flags: [
+      { key: "OBSESS", value: "1" },
+      { key: "PNP", value: "1" }
+    ],
+    files: [],
+    parameter: [
+      { key: "--link", value: "0" }
+    ],
+    fileparameter: []
+  }
 ];
 
 const mockWebApiServiceTypes = [
@@ -684,8 +1108,18 @@ describe('Tests for metric profiles changeview', () => {
     Backend.mockImplementation(() => {
       return {
         isActiveSession: () => Promise.resolve(mockActiveSession),
-        fetchData: () => Promise.resolve(mockBackendMetricProfile),
-        fetchListOfNames: () => Promise.resolve(mockMetrics),
+        fetchData: (path) => {
+          switch (path) {
+            case "/api/v2/internal/metricprofiles/ARGO_MON":
+              return Promise.resolve(mockBackendMetricProfile)
+
+            case "/api/v2/internal/public_metricprofiles/ARGO_MON":
+              return Promise.resolve(mockBackendMetricProfile)
+
+            case "/api/v2/internal/metrictemplates":
+              return Promise.resolve(mockMetrics)
+          }
+        },
         changeMetricProfile: mockChangeMetricProfileBackend,
         deleteMetricProfile: mockDeleteMetricProfileBackend
       }
@@ -3014,7 +3448,7 @@ describe('Tests for metric profile addview', () => {
     Backend.mockImplementation(() => {
       return {
         isActiveSession: () => Promise.resolve(mockActiveSession),
-        fetchListOfNames: () => Promise.resolve(mockMetrics),
+        fetchData: () => Promise.resolve(mockMetrics),
         addMetricProfile: mockAddMetricProfileBackend
       }
     })
@@ -4336,8 +4770,15 @@ describe('Tests for metric profile cloneview', () => {
     Backend.mockImplementation(() => {
       return {
         isActiveSession: () => Promise.resolve(mockActiveSession),
-        fetchData: () => Promise.resolve(mockBackendMetricProfile2),
-        fetchListOfNames: () => Promise.resolve(mockMetrics),
+        fetchData: (path) => {
+          switch (path) {
+            case "/api/v2/internal/metricprofiles/ARGO_MON2":
+              return Promise.resolve(mockBackendMetricProfile2)
+
+            case "/api/v2/internal/metrictemplates":
+              return Promise.resolve(mockMetrics)
+          }
+        },
         addMetricProfile: mockAddMetricProfileBackend
       }
     })
