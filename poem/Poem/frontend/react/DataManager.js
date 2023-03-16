@@ -233,6 +233,29 @@ export class Backend {
       throw Error(error_msg)
   }
 
+  async addMetricProfile(data) {
+    let error_msg = ""
+    const url = "/api/v2/internal/metricprofiles/"
+    try {
+      const response = await this.send(url, 'POST', data);
+      if (!response.ok) {
+        try {
+          let json = await response.json()
+          error_msg = `${response.status} ${response.statusText} in POST ${url}${json.detail ? `: ${json.detail}` : ''}`;
+        } catch (err2) {
+          error_msg = `${response.status} ${response.statusText} in POST ${url}`;
+        }
+      } else {
+        return await response.json()
+      }
+    } catch (err1) {
+      error_msg = `${err1} in POST ${url}`
+    }
+
+    if (error_msg)
+      throw Error(error_msg)
+  }
+
   async bulkDeleteMetrics(data) {
     let error_msg = '';
     const url = '/api/v2/internal/deletetemplates/';

@@ -588,7 +588,7 @@ export const MetricProfilesComponent = (props) => {
   const webapiChangeMutation = useMutation(async (values) => await webapi.changeMetricProfile(values));
   const backendChangeMutation = useMutation(async (values) => await backend.changeMetricProfile(values))
   const webapiAddMutation = useMutation(async (values) => await webapi.addMetricProfile(values));
-  const backendAddMutation = useMutation(async (values) => await backend.addObject('/api/v2/internal/metricprofiles/', values));
+  const backendAddMutation = useMutation(async (values) => await backend.addMetricProfile(values))
   const webapiDeleteMutation = useMutation(async (idProfile) => await webapi.deleteMetricProfile(idProfile));
   const backendDeleteMutation = useMutation(async (idProfile) => await backend.deleteObject(`/api/v2/internal/metricprofiles/${idProfile}`));
 

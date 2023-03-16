@@ -25,11 +25,11 @@ jest.mock('../DataManager', () => {
 
 jest.setTimeout(20000);
 
-const mockChangeObject = jest.fn(() => Promise.resolve({}))
+const mockChangeMetricProfileBackend = jest.fn(() => Promise.resolve({}))
 const mockChangeMetricProfile = jest.fn();
 const mockDeleteObject = jest.fn();
 const mockDeleteMetricProfile = jest.fn();
-const mockAddObject = jest.fn();
+const mockAddMetricProfileBackend = jest.fn(() => Promise.resolve({}));
 const mockAddMetricProfile = jest.fn();
 const mockFetchAggregationProfiles = jest.fn()
 const mockFetchReports = jest.fn()
@@ -686,7 +686,7 @@ describe('Tests for metric profiles changeview', () => {
         isActiveSession: () => Promise.resolve(mockActiveSession),
         fetchData: () => Promise.resolve(mockBackendMetricProfile),
         fetchListOfNames: () => Promise.resolve(mockMetrics),
-        changeMetricProfile: mockChangeObject,
+        changeMetricProfile: mockChangeMetricProfileBackend,
         deleteObject: mockDeleteObject
       }
     })
@@ -1378,7 +1378,7 @@ describe('Tests for metric profiles changeview', () => {
     })
 
     await waitFor(() => {
-      expect(mockChangeObject).not.toHaveBeenCalled()
+      expect(mockChangeMetricProfileBackend).not.toHaveBeenCalled()
     })
 
     expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
@@ -1475,7 +1475,7 @@ describe('Tests for metric profiles changeview', () => {
     })
 
     await waitFor(() => {
-      expect(mockChangeObject).not.toHaveBeenCalled()
+      expect(mockChangeMetricProfileBackend).not.toHaveBeenCalled()
     })
 
     expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
@@ -1494,7 +1494,7 @@ describe('Tests for metric profiles changeview', () => {
     mockChangeMetricProfile.mockReturnValueOnce(
       Promise.resolve({ ok: 'ok' })
     )
-    mockChangeObject.mockImplementationOnce( () => {
+    mockChangeMetricProfileBackend.mockImplementationOnce( () => {
       throw Error('400 BAD REQUEST: There has been error in the backend.')
     } );
 
@@ -1576,7 +1576,7 @@ describe('Tests for metric profiles changeview', () => {
     })
 
     await waitFor(() => {
-      expect(mockChangeObject).toHaveBeenCalledWith(
+      expect(mockChangeMetricProfileBackend).toHaveBeenCalledWith(
         {
           name: 'ARGO_MON',
           apiid: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
@@ -1612,7 +1612,7 @@ describe('Tests for metric profiles changeview', () => {
     mockChangeMetricProfile.mockReturnValueOnce(
       Promise.resolve({ ok: 'ok' })
     )
-    mockChangeObject.mockImplementationOnce( () => { throw Error() } );
+    mockChangeMetricProfileBackend.mockImplementationOnce( () => { throw Error() } );
 
     renderChangeView();
 
@@ -1692,7 +1692,7 @@ describe('Tests for metric profiles changeview', () => {
     })
 
     await waitFor(() => {
-      expect(mockChangeObject).toHaveBeenCalledWith(
+      expect(mockChangeMetricProfileBackend).toHaveBeenCalledWith(
         {
           name: 'ARGO_MON',
           apiid: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
@@ -1725,7 +1725,7 @@ describe('Tests for metric profiles changeview', () => {
   })
 
   test('Test successfully changing and saving metric profile', async () => {
-    mockChangeObject.mockReturnValueOnce(
+    mockChangeMetricProfileBackend.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
     )
     mockChangeMetricProfile.mockReturnValueOnce(
@@ -1810,7 +1810,7 @@ describe('Tests for metric profiles changeview', () => {
     })
 
     await waitFor(() => {
-      expect(mockChangeObject).toHaveBeenCalledWith(
+      expect(mockChangeMetricProfileBackend).toHaveBeenCalledWith(
         {
           name: 'ARGO_MON',
           apiid: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
@@ -1838,7 +1838,7 @@ describe('Tests for metric profiles changeview', () => {
   })
 
   test('Test successfully changing and saving metric profile with info on imported metrics', async () => {
-    mockChangeObject.mockReturnValueOnce(
+    mockChangeMetricProfileBackend.mockReturnValueOnce(
       Promise.resolve({ 
           imported: "Metric ch.cern.LFC-Write has been imported"
       })
@@ -1925,7 +1925,7 @@ describe('Tests for metric profiles changeview', () => {
     })
 
     await waitFor(() => {
-      expect(mockChangeObject).toHaveBeenCalledWith(
+      expect(mockChangeMetricProfileBackend).toHaveBeenCalledWith(
         {
           name: 'ARGO_MON',
           apiid: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
@@ -1956,7 +1956,7 @@ describe('Tests for metric profiles changeview', () => {
   })
 
   test('Test successfully changing and saving metric profile with info on metrics with warning', async () => {
-    mockChangeObject.mockReturnValueOnce(
+    mockChangeMetricProfileBackend.mockReturnValueOnce(
       Promise.resolve({ 
           warning: "Metric ch.cern.LFC-Write has been imported with package version used by TEST tenant"
       })
@@ -2043,7 +2043,7 @@ describe('Tests for metric profiles changeview', () => {
     })
 
     await waitFor(() => {
-      expect(mockChangeObject).toHaveBeenCalledWith(
+      expect(mockChangeMetricProfileBackend).toHaveBeenCalledWith(
         {
           name: 'ARGO_MON',
           apiid: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
@@ -2082,7 +2082,7 @@ describe('Tests for metric profiles changeview', () => {
   })
 
   test('Test successfully changing and saving metric profile with info on unavailable metrics', async () => {
-    mockChangeObject.mockReturnValueOnce(
+    mockChangeMetricProfileBackend.mockReturnValueOnce(
       Promise.resolve({ 
           unavailable: "Metric ch.cern.LFC-Write not available for package used by TEST tenant"
       })
@@ -2169,7 +2169,7 @@ describe('Tests for metric profiles changeview', () => {
     })
 
     await waitFor(() => {
-      expect(mockChangeObject).toHaveBeenCalledWith(
+      expect(mockChangeMetricProfileBackend).toHaveBeenCalledWith(
         {
           name: 'ARGO_MON',
           apiid: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
@@ -2208,7 +2208,7 @@ describe('Tests for metric profiles changeview', () => {
   })
 
   test('Test successfully changing and saving metric profile with info on deleted metrics', async () => {
-    mockChangeObject.mockReturnValueOnce(
+    mockChangeMetricProfileBackend.mockReturnValueOnce(
       Promise.resolve({ 
           deleted: "Metric mock.metric.name has been deleted"
       })
@@ -2295,7 +2295,7 @@ describe('Tests for metric profiles changeview', () => {
     })
 
     await waitFor(() => {
-      expect(mockChangeObject).toHaveBeenCalledWith(
+      expect(mockChangeMetricProfileBackend).toHaveBeenCalledWith(
         {
           name: 'ARGO_MON',
           apiid: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
@@ -2326,7 +2326,7 @@ describe('Tests for metric profiles changeview', () => {
   })
 
   test('Test successfully changing and saving metric profile with various info on metrics', async () => {
-    mockChangeObject.mockReturnValueOnce(
+    mockChangeMetricProfileBackend.mockReturnValueOnce(
       Promise.resolve({ 
           imported: "Metric ch.cern.LFC-Write has been imported",
           warning: "Metric ch.cern.LFC-Ping has been imported with package version used by TEST tenant",
@@ -2416,7 +2416,7 @@ describe('Tests for metric profiles changeview', () => {
     })
 
     await waitFor(() => {
-      expect(mockChangeObject).toHaveBeenCalledWith(
+      expect(mockChangeMetricProfileBackend).toHaveBeenCalledWith(
         {
           name: 'ARGO_MON',
           apiid: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
@@ -2456,7 +2456,7 @@ describe('Tests for metric profiles changeview', () => {
   })
 
   test('Test import csv, make some changes and save profile', async() => {
-    mockChangeObject.mockReturnValueOnce(
+    mockChangeMetricProfileBackend.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
     )
     mockChangeMetricProfile.mockReturnValueOnce(
@@ -2529,7 +2529,7 @@ describe('Tests for metric profiles changeview', () => {
     })
 
     await waitFor(() => {
-      expect(mockChangeObject).toHaveBeenCalledWith(
+      expect(mockChangeMetricProfileBackend).toHaveBeenCalledWith(
         {
           name: 'ARGO_MON',
           apiid: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
@@ -2618,7 +2618,7 @@ describe('Tests for metric profiles changeview', () => {
     })
 
     await waitFor(() => {
-      expect(mockChangeObject).toHaveBeenCalledWith(
+      expect(mockChangeMetricProfileBackend).toHaveBeenCalledWith(
         {
           name: 'ARGO_MON',
           apiid: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
@@ -2972,7 +2972,7 @@ describe('Tests for metric profile addview', () => {
       return {
         isActiveSession: () => Promise.resolve(mockActiveSession),
         fetchListOfNames: () => Promise.resolve(mockMetrics),
-        addObject: mockAddObject
+        addMetricProfile: mockAddMetricProfileBackend
       }
     })
   })
@@ -3217,8 +3217,7 @@ describe('Tests for metric profile addview', () => {
     })
 
     await waitFor(() => {
-      expect(mockAddObject).toHaveBeenCalledWith(
-        '/api/v2/internal/metricprofiles/',
+      expect(mockAddMetricProfileBackend).toHaveBeenCalledWith(
         {
           apiid: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
           name: 'NEW_PROFILE',
@@ -3317,7 +3316,7 @@ describe('Tests for metric profile addview', () => {
     })
 
     await waitFor(() => {
-      expect(mockAddObject).not.toHaveBeenCalled()
+      expect(mockAddMetricProfileBackend).not.toHaveBeenCalled()
     })
 
     expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
@@ -3408,7 +3407,7 @@ describe('Tests for metric profile addview', () => {
     })
 
     await waitFor(() => {
-      expect(mockAddObject).not.toHaveBeenCalled()
+      expect(mockAddMetricProfileBackend).not.toHaveBeenCalled()
     })
 
     expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
@@ -3438,7 +3437,7 @@ describe('Tests for metric profile addview', () => {
         }
       })
     )
-    mockAddObject.mockImplementationOnce( () => {
+    mockAddMetricProfileBackend.mockImplementationOnce( () => {
       throw Error('400 BAD REQUEST: There has been an internal error.')
     } );
 
@@ -3516,8 +3515,7 @@ describe('Tests for metric profile addview', () => {
     })
 
     await waitFor(() => {
-      expect(mockAddObject).toHaveBeenCalledWith(
-        '/api/v2/internal/metricprofiles/',
+      expect(mockAddMetricProfileBackend).toHaveBeenCalledWith(
         {
           apiid: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
           name: 'NEW_PROFILE',
@@ -3559,7 +3557,7 @@ describe('Tests for metric profile addview', () => {
         }
       })
     )
-    mockAddObject.mockImplementationOnce( () => { throw Error() } );
+    mockAddMetricProfileBackend.mockImplementationOnce( () => { throw Error() } );
 
     renderAddView();
 
@@ -3634,8 +3632,7 @@ describe('Tests for metric profile addview', () => {
     })
 
     await waitFor(() => {
-      expect(mockAddObject).toHaveBeenCalledWith(
-        '/api/v2/internal/metricprofiles/',
+      expect(mockAddMetricProfileBackend).toHaveBeenCalledWith(
         {
           apiid: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
           name: 'NEW_PROFILE',
@@ -3684,7 +3681,7 @@ describe('Tests for metric profile cloneview', () => {
         isActiveSession: () => Promise.resolve(mockActiveSession),
         fetchData: () => Promise.resolve(mockBackendMetricProfile2),
         fetchListOfNames: () => Promise.resolve(mockMetrics),
-        addObject: mockAddObject
+        addMetricProfile: mockAddMetricProfileBackend
       }
     })
   })
@@ -4047,8 +4044,7 @@ describe('Tests for metric profile cloneview', () => {
     })
 
     await waitFor(() => {
-      expect(mockAddObject).toHaveBeenCalledWith(
-        '/api/v2/internal/metricprofiles/',
+      expect(mockAddMetricProfileBackend).toHaveBeenCalledWith(
         {
           name: 'ARGO_MON',
           apiid: 'hithai1j-zn0i-sj7d-p3pz-gothoorie2ei',
@@ -4159,7 +4155,7 @@ describe('Tests for metric profile cloneview', () => {
     })
 
     await waitFor(() => {
-      expect(mockAddObject).not.toHaveBeenCalled()
+      expect(mockAddMetricProfileBackend).not.toHaveBeenCalled()
     })
 
     expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
@@ -4256,7 +4252,7 @@ describe('Tests for metric profile cloneview', () => {
     })
 
     await waitFor(() => {
-      expect(mockAddObject).not.toHaveBeenCalled()
+      expect(mockAddMetricProfileBackend).not.toHaveBeenCalled()
     })
 
     expect(queryClient.invalidateQueries).not.toHaveBeenCalled();
@@ -4286,7 +4282,7 @@ describe('Tests for metric profile cloneview', () => {
         }
       })
     )
-    mockAddObject.mockImplementationOnce( () => {
+    mockAddMetricProfileBackend.mockImplementationOnce( () => {
       throw Error('400 BAD REQUEST: There has been error in the backend.')
     } );
 
@@ -4369,8 +4365,7 @@ describe('Tests for metric profile cloneview', () => {
     })
 
     await waitFor(() => {
-      expect(mockAddObject).toHaveBeenCalledWith(
-        '/api/v2/internal/metricprofiles/',
+      expect(mockAddMetricProfileBackend).toHaveBeenCalledWith(
         {
           name: 'ARGO_MON',
           apiid: 'hithai1j-zn0i-sj7d-p3pz-gothoorie2ei',
@@ -4417,7 +4412,7 @@ describe('Tests for metric profile cloneview', () => {
         }
       })
     )
-    mockAddObject.mockImplementationOnce( () => { throw Error() } );
+    mockAddMetricProfileBackend.mockImplementationOnce( () => { throw Error() } );
 
     renderCloneView();
 
@@ -4498,8 +4493,7 @@ describe('Tests for metric profile cloneview', () => {
     })
 
     await waitFor(() => {
-      expect(mockAddObject).toHaveBeenCalledWith(
-        '/api/v2/internal/metricprofiles/',
+      expect(mockAddMetricProfileBackend).toHaveBeenCalledWith(
         {
           name: 'ARGO_MON',
           apiid: 'hithai1j-zn0i-sj7d-p3pz-gothoorie2ei',
