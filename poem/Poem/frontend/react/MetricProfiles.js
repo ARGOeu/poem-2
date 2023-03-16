@@ -750,6 +750,7 @@ export const MetricProfilesComponent = (props) => {
             onSuccess: (data) => {
               queryClient.invalidateQueries('metricprofile');
               queryClient.invalidateQueries('public_metricprofile');
+
               let msg = "Metric profile successfully changed"
               let warn_msg = ""
 
@@ -808,14 +809,33 @@ export const MetricProfilesComponent = (props) => {
             description: formValues.description,
             services: backend_services
           }, {
-            onSuccess: () => {
+            onSuccess: (data) => {
               queryClient.invalidateQueries('metricprofile');
               queryClient.invalidateQueries('public_metricprofile');
+              
+              let msg = "Metric profile successfully added"
+              let warn_msg = ""
+
+              if ("imported" in data)
+                msg = `${msg}\n${data.imported}`
+
+              if ("warning" in data)
+                warn_msg = `${warn_msg}\n${data.warning}`.replace(/^\s+|\s+$/g, "")
+
+              if ("unavailable" in data)
+                warn_msg = `${warn_msg}\n${data.unavailable}`.replace(/^\s+|\s+$/g, "")
+
+              if ("deleted" in data)
+                msg = `${msg}\n${data.deleted}`
+
               NotifyOk({
-                msg: 'Metric profile successfully added',
+                msg: msg,
                 title: 'Added',
                 callback: () => history.push('/ui/metricprofiles')
-              });
+              })
+
+              if (warn_msg)
+                NotifyWarn({ msg: warn_msg, title: "Metrics warning" })
             },
             onError: (error) => {
               NotifyError({

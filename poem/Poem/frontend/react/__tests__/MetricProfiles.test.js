@@ -1840,7 +1840,7 @@ describe('Tests for metric profiles changeview', () => {
   test('Test successfully changing and saving metric profile with info on imported metrics', async () => {
     mockChangeMetricProfileBackend.mockReturnValueOnce(
       Promise.resolve({ 
-          imported: "Metric ch.cern.LFC-Write has been imported"
+        imported: "Metric ch.cern.LFC-Write has been imported"
       })
     )
     mockChangeMetricProfile.mockReturnValueOnce(
@@ -1958,7 +1958,7 @@ describe('Tests for metric profiles changeview', () => {
   test('Test successfully changing and saving metric profile with info on metrics with warning', async () => {
     mockChangeMetricProfileBackend.mockReturnValueOnce(
       Promise.resolve({ 
-          warning: "Metric ch.cern.LFC-Write has been imported with package version used by TEST tenant"
+        warning: "Metric ch.cern.LFC-Write has been imported with package version used by TEST tenant"
       })
     )
     mockChangeMetricProfile.mockReturnValueOnce(
@@ -2084,7 +2084,7 @@ describe('Tests for metric profiles changeview', () => {
   test('Test successfully changing and saving metric profile with info on unavailable metrics', async () => {
     mockChangeMetricProfileBackend.mockReturnValueOnce(
       Promise.resolve({ 
-          unavailable: "Metric ch.cern.LFC-Write not available for package used by TEST tenant"
+        unavailable: "Metric ch.cern.LFC-Write not available for package used by TEST tenant"
       })
     )
     mockChangeMetricProfile.mockReturnValueOnce(
@@ -2210,7 +2210,7 @@ describe('Tests for metric profiles changeview', () => {
   test('Test successfully changing and saving metric profile with info on deleted metrics', async () => {
     mockChangeMetricProfileBackend.mockReturnValueOnce(
       Promise.resolve({ 
-          deleted: "Metric mock.metric.name has been deleted"
+        deleted: "Metric mock.metric.name has been deleted"
       })
     )
     mockChangeMetricProfile.mockReturnValueOnce(
@@ -2328,10 +2328,10 @@ describe('Tests for metric profiles changeview', () => {
   test('Test successfully changing and saving metric profile with various info on metrics', async () => {
     mockChangeMetricProfileBackend.mockReturnValueOnce(
       Promise.resolve({ 
-          imported: "Metric ch.cern.LFC-Write has been imported",
-          warning: "Metric ch.cern.LFC-Ping has been imported with package version used by TEST tenant",
-          unavailable: "Metric ch.cern.LFC-Read not available for package used by TEST tenant",
-          deleted: "Metric mock.metric.name has been deleted"
+        imported: "Metric ch.cern.LFC-Write has been imported",
+        warning: "Metric ch.cern.LFC-Ping has been imported with package version used by TEST tenant",
+        unavailable: "Metric ch.cern.LFC-Read not available for package used by TEST tenant",
+        deleted: "Metric mock.metric.name has been deleted"
       })
     )
     mockChangeMetricProfile.mockReturnValueOnce(
@@ -2956,6 +2956,7 @@ describe('Tests for metric profiles changeview', () => {
 
 describe('Tests for metric profile addview', () => {
   jest.spyOn(NotificationManager, 'success');
+  jest.spyOn(NotificationManager, "warning")
   jest.spyOn(NotificationManager, 'error');
   jest.spyOn(queryClient, 'invalidateQueries');
 
@@ -3236,6 +3237,619 @@ describe('Tests for metric profile addview', () => {
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metricprofile');
     expect(NotificationManager.success).toHaveBeenCalledWith(
       'Metric profile successfully added', 'Added', 2000
+    )
+  })
+
+  test('Test successfully adding a metric profile with info on imported metrics', async () => {
+    mockAddMetricProfile.mockReturnValueOnce(
+      Promise.resolve({
+        status: {
+          message: 'Metric profile Created',
+          code: '200'
+        },
+        data: {
+          id: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
+          links: {
+            self: 'string'
+          }
+        }
+      })
+    )
+    mockAddMetricProfileBackend.mockReturnValueOnce(
+      Promise.resolve({
+        imported: "Metric argo.AMS-Check has been imported"
+      })
+    )
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
+
+    await selectEvent.select(screen.getAllByText("Select...")[0], 'ARGO')
+
+    const metricInstances = within(screen.getByRole('table'));
+    var rows = metricInstances.getAllByRole('row');
+    var row1 = within(rows[2])
+
+    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+
+    fireEvent.click(screen.getByTestId('insert-0'));
+
+    rows = metricInstances.getAllByRole('row');
+    var row2 = within(rows[3])
+
+    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+
+    fireEvent.click(screen.getByTestId('insert-1'));
+    rows = metricInstances.getAllByRole('row');
+    const row3 = within(rows[4])
+
+    await selectEvent.select(row3.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row3.getAllByText("Select...")[0], "argo.AMSPublisher-Check")
+
+    fireEvent.click(screen.getByTestId('insert-2'));
+    rows = metricInstances.getAllByRole('row');
+    const row4 = within(rows[5])
+
+    await selectEvent.select(row4.getAllByText("Select...")[0], "argo.mon")
+    await selectEvent.select(row4.getAllByText("Select...")[0], "eu.egi.CertValidity")
+
+    fireEvent.click(metricInstances.getByTestId('remove-3'));
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddMetricProfile).toHaveBeenCalledWith({
+        description: 'New central ARGO_MON profile.',
+        name: 'NEW_PROFILE',
+        services: [
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check',
+              'argo.AMSPublisher-Check'
+            ]
+          }
+        ]
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockAddMetricProfileBackend).toHaveBeenCalledWith(
+        {
+          apiid: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
+          name: 'NEW_PROFILE',
+          groupname: 'ARGO',
+          description: 'New central ARGO_MON profile.',
+          services: [
+            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
+            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
+            { service: 'eu.argo.ams', metric: 'argo.AMSPublisher-Check' }
+          ]
+        }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metricprofile');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metricprofile');
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Metric profile successfully added\nMetric argo.AMS-Check has been imported', 
+      'Added', 
+      2000
+    )
+    expect(NotificationManager.warning).not.toHaveBeenCalled()
+  })
+
+  test('Test successfully adding a metric profile with info on metrics with warning', async () => {
+    mockAddMetricProfile.mockReturnValueOnce(
+      Promise.resolve({
+        status: {
+          message: 'Metric profile Created',
+          code: '200'
+        },
+        data: {
+          id: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
+          links: {
+            self: 'string'
+          }
+        }
+      })
+    )
+    mockAddMetricProfileBackend.mockReturnValueOnce(
+      Promise.resolve({
+        warning: "Metric argo.AMS-Check has been imported with package version used by TEST tenant"
+      })
+    )
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
+
+    await selectEvent.select(screen.getAllByText("Select...")[0], 'ARGO')
+
+    const metricInstances = within(screen.getByRole('table'));
+    var rows = metricInstances.getAllByRole('row');
+    var row1 = within(rows[2])
+
+    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+
+    fireEvent.click(screen.getByTestId('insert-0'));
+
+    rows = metricInstances.getAllByRole('row');
+    var row2 = within(rows[3])
+
+    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+
+    fireEvent.click(screen.getByTestId('insert-1'));
+    rows = metricInstances.getAllByRole('row');
+    const row3 = within(rows[4])
+
+    await selectEvent.select(row3.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row3.getAllByText("Select...")[0], "argo.AMSPublisher-Check")
+
+    fireEvent.click(screen.getByTestId('insert-2'));
+    rows = metricInstances.getAllByRole('row');
+    const row4 = within(rows[5])
+
+    await selectEvent.select(row4.getAllByText("Select...")[0], "argo.mon")
+    await selectEvent.select(row4.getAllByText("Select...")[0], "eu.egi.CertValidity")
+
+    fireEvent.click(metricInstances.getByTestId('remove-3'));
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddMetricProfile).toHaveBeenCalledWith({
+        description: 'New central ARGO_MON profile.',
+        name: 'NEW_PROFILE',
+        services: [
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check',
+              'argo.AMSPublisher-Check'
+            ]
+          }
+        ]
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockAddMetricProfileBackend).toHaveBeenCalledWith(
+        {
+          apiid: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
+          name: 'NEW_PROFILE',
+          groupname: 'ARGO',
+          description: 'New central ARGO_MON profile.',
+          services: [
+            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
+            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
+            { service: 'eu.argo.ams', metric: 'argo.AMSPublisher-Check' }
+          ]
+        }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metricprofile');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metricprofile');
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Metric profile successfully added',
+      'Added', 
+      2000
+    )
+    expect(NotificationManager.warning).toHaveBeenCalledWith(
+      <div>
+        <p>Metric argo.AMS-Check has been imported with package version used by TEST tenant</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      "Metrics warning",
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test successfully adding a metric profile with info on unavailable metrics', async () => {
+    mockAddMetricProfile.mockReturnValueOnce(
+      Promise.resolve({
+        status: {
+          message: 'Metric profile Created',
+          code: '200'
+        },
+        data: {
+          id: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
+          links: {
+            self: 'string'
+          }
+        }
+      })
+    )
+    mockAddMetricProfileBackend.mockReturnValueOnce(
+      Promise.resolve({
+        unavailable: "Metric argo.AMS-Check not available for package used by TEST tenant"
+      })
+    )
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
+
+    await selectEvent.select(screen.getAllByText("Select...")[0], 'ARGO')
+
+    const metricInstances = within(screen.getByRole('table'));
+    var rows = metricInstances.getAllByRole('row');
+    var row1 = within(rows[2])
+
+    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+
+    fireEvent.click(screen.getByTestId('insert-0'));
+
+    rows = metricInstances.getAllByRole('row');
+    var row2 = within(rows[3])
+
+    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+
+    fireEvent.click(screen.getByTestId('insert-1'));
+    rows = metricInstances.getAllByRole('row');
+    const row3 = within(rows[4])
+
+    await selectEvent.select(row3.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row3.getAllByText("Select...")[0], "argo.AMSPublisher-Check")
+
+    fireEvent.click(screen.getByTestId('insert-2'));
+    rows = metricInstances.getAllByRole('row');
+    const row4 = within(rows[5])
+
+    await selectEvent.select(row4.getAllByText("Select...")[0], "argo.mon")
+    await selectEvent.select(row4.getAllByText("Select...")[0], "eu.egi.CertValidity")
+
+    fireEvent.click(metricInstances.getByTestId('remove-3'));
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddMetricProfile).toHaveBeenCalledWith({
+        description: 'New central ARGO_MON profile.',
+        name: 'NEW_PROFILE',
+        services: [
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check',
+              'argo.AMSPublisher-Check'
+            ]
+          }
+        ]
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockAddMetricProfileBackend).toHaveBeenCalledWith(
+        {
+          apiid: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
+          name: 'NEW_PROFILE',
+          groupname: 'ARGO',
+          description: 'New central ARGO_MON profile.',
+          services: [
+            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
+            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
+            { service: 'eu.argo.ams', metric: 'argo.AMSPublisher-Check' }
+          ]
+        }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metricprofile');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metricprofile');
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Metric profile successfully added',
+      'Added', 
+      2000
+    )
+    expect(NotificationManager.warning).toHaveBeenCalledWith(
+      <div>
+        <p>Metric argo.AMS-Check not available for package used by TEST tenant</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      "Metrics warning",
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test successfully adding a metric profile with info on deleted metrics', async () => {
+    mockAddMetricProfile.mockReturnValueOnce(
+      Promise.resolve({
+        status: {
+          message: 'Metric profile Created',
+          code: '200'
+        },
+        data: {
+          id: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
+          links: {
+            self: 'string'
+          }
+        }
+      })
+    )
+    mockAddMetricProfileBackend.mockReturnValueOnce(
+      Promise.resolve({
+        deleted: "Metric mock.metric.name has been deleted"
+      })
+    )
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
+
+    await selectEvent.select(screen.getAllByText("Select...")[0], 'ARGO')
+
+    const metricInstances = within(screen.getByRole('table'));
+    var rows = metricInstances.getAllByRole('row');
+    var row1 = within(rows[2])
+
+    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+
+    fireEvent.click(screen.getByTestId('insert-0'));
+
+    rows = metricInstances.getAllByRole('row');
+    var row2 = within(rows[3])
+
+    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+
+    fireEvent.click(screen.getByTestId('insert-1'));
+    rows = metricInstances.getAllByRole('row');
+    const row3 = within(rows[4])
+
+    await selectEvent.select(row3.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row3.getAllByText("Select...")[0], "argo.AMSPublisher-Check")
+
+    fireEvent.click(screen.getByTestId('insert-2'));
+    rows = metricInstances.getAllByRole('row');
+    const row4 = within(rows[5])
+
+    await selectEvent.select(row4.getAllByText("Select...")[0], "argo.mon")
+    await selectEvent.select(row4.getAllByText("Select...")[0], "eu.egi.CertValidity")
+
+    fireEvent.click(metricInstances.getByTestId('remove-3'));
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddMetricProfile).toHaveBeenCalledWith({
+        description: 'New central ARGO_MON profile.',
+        name: 'NEW_PROFILE',
+        services: [
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check',
+              'argo.AMSPublisher-Check'
+            ]
+          }
+        ]
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockAddMetricProfileBackend).toHaveBeenCalledWith(
+        {
+          apiid: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
+          name: 'NEW_PROFILE',
+          groupname: 'ARGO',
+          description: 'New central ARGO_MON profile.',
+          services: [
+            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
+            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
+            { service: 'eu.argo.ams', metric: 'argo.AMSPublisher-Check' }
+          ]
+        }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metricprofile');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metricprofile');
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Metric profile successfully added\nMetric mock.metric.name has been deleted', 
+      'Added', 
+      2000
+    )
+    expect(NotificationManager.warning).not.toHaveBeenCalled()
+  })
+
+  test('Test successfully adding a metric profile with various info on metrics', async () => {
+    mockAddMetricProfile.mockReturnValueOnce(
+      Promise.resolve({
+        status: {
+          message: 'Metric profile Created',
+          code: '200'
+        },
+        data: {
+          id: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
+          links: {
+            self: 'string'
+          }
+        }
+      })
+    )
+    mockAddMetricProfileBackend.mockReturnValueOnce(
+      Promise.resolve({
+        imported: "Metric org.nagiosexchange.AppDB-WebCheck has been imported",
+        warning: "Metric argo.AMS-Check has been imported with package version used by TEST tenant",
+        unavailable: "Metric argo.AMSPublisher-Check not available for package used by TEST tenant",
+        deleted: "Metric mock.metric.name has been deleted"
+      })
+    )
+
+    renderAddView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
+
+    await selectEvent.select(screen.getAllByText("Select...")[0], 'ARGO')
+
+    const metricInstances = within(screen.getByRole('table'));
+    var rows = metricInstances.getAllByRole('row');
+    var row1 = within(rows[2])
+
+    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+
+    fireEvent.click(screen.getByTestId('insert-0'));
+
+    rows = metricInstances.getAllByRole('row');
+    var row2 = within(rows[3])
+
+    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+
+    fireEvent.click(screen.getByTestId('insert-1'));
+    rows = metricInstances.getAllByRole('row');
+    const row3 = within(rows[4])
+
+    await selectEvent.select(row3.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row3.getAllByText("Select...")[0], "argo.AMSPublisher-Check")
+
+    fireEvent.click(screen.getByTestId('insert-2'));
+    rows = metricInstances.getAllByRole('row');
+    const row4 = within(rows[5])
+
+    await selectEvent.select(row4.getAllByText("Select...")[0], "argo.mon")
+    await selectEvent.select(row4.getAllByText("Select...")[0], "eu.egi.CertValidity")
+
+    fireEvent.click(metricInstances.getByTestId('remove-3'));
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddMetricProfile).toHaveBeenCalledWith({
+        description: 'New central ARGO_MON profile.',
+        name: 'NEW_PROFILE',
+        services: [
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check',
+              'argo.AMSPublisher-Check'
+            ]
+          }
+        ]
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockAddMetricProfileBackend).toHaveBeenCalledWith(
+        {
+          apiid: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
+          name: 'NEW_PROFILE',
+          groupname: 'ARGO',
+          description: 'New central ARGO_MON profile.',
+          services: [
+            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
+            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' },
+            { service: 'eu.argo.ams', metric: 'argo.AMSPublisher-Check' }
+          ]
+        }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metricprofile');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metricprofile');
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Metric profile successfully added\nMetric org.nagiosexchange.AppDB-WebCheck has been imported\nMetric mock.metric.name has been deleted', 
+      'Added', 
+      2000
+    )
+    expect(NotificationManager.warning).toHaveBeenCalledWith(
+      <div>
+        <p>Metric argo.AMS-Check has been imported with package version used by TEST tenant</p>
+        <p>Metric argo.AMSPublisher-Check not available for package used by TEST tenant</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      "Metrics warning",
+      0,
+      expect.any(Function)
     )
   })
 
@@ -3663,6 +4277,7 @@ describe('Tests for metric profile addview', () => {
 
 describe('Tests for metric profile cloneview', () => {
   jest.spyOn(NotificationManager, 'success');
+  jest.spyOn(NotificationManager, "warning")
   jest.spyOn(NotificationManager, 'error');
   jest.spyOn(queryClient, 'invalidateQueries');
 
@@ -4068,6 +4683,689 @@ describe('Tests for metric profile cloneview', () => {
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metricprofile');
     expect(NotificationManager.success).toHaveBeenCalledWith(
       'Metric profile successfully added', 'Added', 2000
+    )
+  })
+
+  test('Test successfully cloning a metric profile with info on imported metrics', async () => {
+    mockAddMetricProfile.mockReturnValueOnce(
+      Promise.resolve({
+        status: {
+          message: 'Metric profile Created',
+          code: '200'
+        },
+        data: {
+          id: 'hithai1j-zn0i-sj7d-p3pz-gothoorie2ei',
+          links: {
+            self: 'string'
+          }
+        }
+      })
+    )
+
+    mockAddMetricProfileBackend.mockReturnValueOnce(
+      Promise.resolve({
+        imported: "Metric ch.cern.LFC-Write has been imported"
+      })
+    )
+
+    renderCloneView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'ARGO_MON' } });
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
+
+    await selectEvent.select(screen.getByText('ARGO'), 'TEST')
+
+    fireEvent.click(screen.getByTestId('remove-1'));
+
+    fireEvent.click(screen.getByTestId('insert-0'));
+
+    const metricInstances = within(screen.getByRole('table'));
+    var rows = metricInstances.getAllByRole('row');
+    const row1 = within(rows[3])
+
+    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+
+    fireEvent.click(screen.getByTestId('insert-1'));
+
+    rows = metricInstances.getAllByRole('row');
+    const row2 = within(rows[4])
+
+    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddMetricProfile).toHaveBeenCalledWith({
+        description: 'New central ARGO_MON profile.',
+        name: 'ARGO_MON',
+        services: [
+          {
+            service: 'argo.mon',
+            metrics: [
+              'eu.egi.CertValidity'
+            ]
+          },
+          {
+            service: 'argo.webui',
+            metrics: [
+              'org.nagios.ARGOWeb-AR',
+              'org.nagios.ARGOWeb-Status'
+            ]
+          },
+          {
+            service: 'Central-LFC',
+            metrics: [
+              'ch.cern.LFC-Ping',
+              'ch.cern.LFC-Read',
+              'ch.cern.LFC-Write'
+            ]
+          },
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check'
+            ]
+          }
+        ]
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockAddMetricProfileBackend).toHaveBeenCalledWith(
+        {
+          name: 'ARGO_MON',
+          apiid: 'hithai1j-zn0i-sj7d-p3pz-gothoorie2ei',
+          groupname: 'TEST',
+          description: 'New central ARGO_MON profile.',
+          services: [
+            { service: 'argo.mon', metric: 'eu.egi.CertValidity' },
+            { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-AR' },
+            { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-Status' },
+            { service: 'Central-LFC', metric: 'ch.cern.LFC-Ping' },
+            { service: 'Central-LFC', metric: 'ch.cern.LFC-Read' },
+            { service: 'Central-LFC', metric: 'ch.cern.LFC-Write' },
+            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
+            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' }
+          ]
+        }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metricprofile');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metricprofile');
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Metric profile successfully added\nMetric ch.cern.LFC-Write has been imported', 
+      'Added', 
+      2000
+    )
+    expect(NotificationManager.warning).not.toHaveBeenCalled()
+  })
+
+  test('Test successfully cloning a metric profile with info on metrics with warning', async () => {
+    mockAddMetricProfile.mockReturnValueOnce(
+      Promise.resolve({
+        status: {
+          message: 'Metric profile Created',
+          code: '200'
+        },
+        data: {
+          id: 'hithai1j-zn0i-sj7d-p3pz-gothoorie2ei',
+          links: {
+            self: 'string'
+          }
+        }
+      })
+    )
+
+    mockAddMetricProfileBackend.mockReturnValueOnce(
+      Promise.resolve({
+        warning: "Metric ch.cern.LFC-Write has been imported with package version used by TEST tenant"
+      })
+    )
+
+    renderCloneView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'ARGO_MON' } });
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
+
+    await selectEvent.select(screen.getByText('ARGO'), 'TEST')
+
+    fireEvent.click(screen.getByTestId('remove-1'));
+
+    fireEvent.click(screen.getByTestId('insert-0'));
+
+    const metricInstances = within(screen.getByRole('table'));
+    var rows = metricInstances.getAllByRole('row');
+    const row1 = within(rows[3])
+
+    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+
+    fireEvent.click(screen.getByTestId('insert-1'));
+
+    rows = metricInstances.getAllByRole('row');
+    const row2 = within(rows[4])
+
+    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddMetricProfile).toHaveBeenCalledWith({
+        description: 'New central ARGO_MON profile.',
+        name: 'ARGO_MON',
+        services: [
+          {
+            service: 'argo.mon',
+            metrics: [
+              'eu.egi.CertValidity'
+            ]
+          },
+          {
+            service: 'argo.webui',
+            metrics: [
+              'org.nagios.ARGOWeb-AR',
+              'org.nagios.ARGOWeb-Status'
+            ]
+          },
+          {
+            service: 'Central-LFC',
+            metrics: [
+              'ch.cern.LFC-Ping',
+              'ch.cern.LFC-Read',
+              'ch.cern.LFC-Write'
+            ]
+          },
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check'
+            ]
+          }
+        ]
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockAddMetricProfileBackend).toHaveBeenCalledWith(
+        {
+          name: 'ARGO_MON',
+          apiid: 'hithai1j-zn0i-sj7d-p3pz-gothoorie2ei',
+          groupname: 'TEST',
+          description: 'New central ARGO_MON profile.',
+          services: [
+            { service: 'argo.mon', metric: 'eu.egi.CertValidity' },
+            { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-AR' },
+            { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-Status' },
+            { service: 'Central-LFC', metric: 'ch.cern.LFC-Ping' },
+            { service: 'Central-LFC', metric: 'ch.cern.LFC-Read' },
+            { service: 'Central-LFC', metric: 'ch.cern.LFC-Write' },
+            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
+            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' }
+          ]
+        }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metricprofile');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metricprofile');
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Metric profile successfully added',
+      'Added', 
+      2000
+    )
+    expect(NotificationManager.warning).toHaveBeenCalledWith(
+      <div>
+        <p>Metric ch.cern.LFC-Write has been imported with package version used by TEST tenant</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      "Metrics warning",
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test successfully cloning a metric profile with info on unavailable metrics', async () => {
+    mockAddMetricProfile.mockReturnValueOnce(
+      Promise.resolve({
+        status: {
+          message: 'Metric profile Created',
+          code: '200'
+        },
+        data: {
+          id: 'hithai1j-zn0i-sj7d-p3pz-gothoorie2ei',
+          links: {
+            self: 'string'
+          }
+        }
+      })
+    )
+
+    mockAddMetricProfileBackend.mockReturnValueOnce(
+      Promise.resolve({
+        unavailable: "Metric ch.cern.LFC-Write not available for package used by TEST tenant"
+      })
+    )
+
+    renderCloneView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'ARGO_MON' } });
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
+
+    await selectEvent.select(screen.getByText('ARGO'), 'TEST')
+
+    fireEvent.click(screen.getByTestId('remove-1'));
+
+    fireEvent.click(screen.getByTestId('insert-0'));
+
+    const metricInstances = within(screen.getByRole('table'));
+    var rows = metricInstances.getAllByRole('row');
+    const row1 = within(rows[3])
+
+    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+
+    fireEvent.click(screen.getByTestId('insert-1'));
+
+    rows = metricInstances.getAllByRole('row');
+    const row2 = within(rows[4])
+
+    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddMetricProfile).toHaveBeenCalledWith({
+        description: 'New central ARGO_MON profile.',
+        name: 'ARGO_MON',
+        services: [
+          {
+            service: 'argo.mon',
+            metrics: [
+              'eu.egi.CertValidity'
+            ]
+          },
+          {
+            service: 'argo.webui',
+            metrics: [
+              'org.nagios.ARGOWeb-AR',
+              'org.nagios.ARGOWeb-Status'
+            ]
+          },
+          {
+            service: 'Central-LFC',
+            metrics: [
+              'ch.cern.LFC-Ping',
+              'ch.cern.LFC-Read',
+              'ch.cern.LFC-Write'
+            ]
+          },
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check'
+            ]
+          }
+        ]
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockAddMetricProfileBackend).toHaveBeenCalledWith(
+        {
+          name: 'ARGO_MON',
+          apiid: 'hithai1j-zn0i-sj7d-p3pz-gothoorie2ei',
+          groupname: 'TEST',
+          description: 'New central ARGO_MON profile.',
+          services: [
+            { service: 'argo.mon', metric: 'eu.egi.CertValidity' },
+            { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-AR' },
+            { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-Status' },
+            { service: 'Central-LFC', metric: 'ch.cern.LFC-Ping' },
+            { service: 'Central-LFC', metric: 'ch.cern.LFC-Read' },
+            { service: 'Central-LFC', metric: 'ch.cern.LFC-Write' },
+            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
+            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' }
+          ]
+        }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metricprofile');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metricprofile');
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Metric profile successfully added',
+      'Added', 
+      2000
+    )
+    expect(NotificationManager.warning).toHaveBeenCalledWith(
+      <div>
+        <p>Metric ch.cern.LFC-Write not available for package used by TEST tenant</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      "Metrics warning",
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test('Test successfully cloning a metric profile with info on deleted metrics', async () => {
+    mockAddMetricProfile.mockReturnValueOnce(
+      Promise.resolve({
+        status: {
+          message: 'Metric profile Created',
+          code: '200'
+        },
+        data: {
+          id: 'hithai1j-zn0i-sj7d-p3pz-gothoorie2ei',
+          links: {
+            self: 'string'
+          }
+        }
+      })
+    )
+
+    mockAddMetricProfileBackend.mockReturnValueOnce(
+      Promise.resolve({
+        deleted: "Metric mock.metric.name has been deleted"
+      })
+    )
+
+    renderCloneView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'ARGO_MON' } });
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
+
+    await selectEvent.select(screen.getByText('ARGO'), 'TEST')
+
+    fireEvent.click(screen.getByTestId('remove-1'));
+
+    fireEvent.click(screen.getByTestId('insert-0'));
+
+    const metricInstances = within(screen.getByRole('table'));
+    var rows = metricInstances.getAllByRole('row');
+    const row1 = within(rows[3])
+
+    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+
+    fireEvent.click(screen.getByTestId('insert-1'));
+
+    rows = metricInstances.getAllByRole('row');
+    const row2 = within(rows[4])
+
+    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddMetricProfile).toHaveBeenCalledWith({
+        description: 'New central ARGO_MON profile.',
+        name: 'ARGO_MON',
+        services: [
+          {
+            service: 'argo.mon',
+            metrics: [
+              'eu.egi.CertValidity'
+            ]
+          },
+          {
+            service: 'argo.webui',
+            metrics: [
+              'org.nagios.ARGOWeb-AR',
+              'org.nagios.ARGOWeb-Status'
+            ]
+          },
+          {
+            service: 'Central-LFC',
+            metrics: [
+              'ch.cern.LFC-Ping',
+              'ch.cern.LFC-Read',
+              'ch.cern.LFC-Write'
+            ]
+          },
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check'
+            ]
+          }
+        ]
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockAddMetricProfileBackend).toHaveBeenCalledWith(
+        {
+          name: 'ARGO_MON',
+          apiid: 'hithai1j-zn0i-sj7d-p3pz-gothoorie2ei',
+          groupname: 'TEST',
+          description: 'New central ARGO_MON profile.',
+          services: [
+            { service: 'argo.mon', metric: 'eu.egi.CertValidity' },
+            { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-AR' },
+            { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-Status' },
+            { service: 'Central-LFC', metric: 'ch.cern.LFC-Ping' },
+            { service: 'Central-LFC', metric: 'ch.cern.LFC-Read' },
+            { service: 'Central-LFC', metric: 'ch.cern.LFC-Write' },
+            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
+            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' }
+          ]
+        }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metricprofile');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metricprofile');
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Metric profile successfully added\nMetric mock.metric.name has been deleted',
+      'Added', 
+      2000
+    )
+    expect(NotificationManager.warning).not.toHaveBeenCalled()
+  })
+
+  test('Test successfully cloning a metric profile with various info on metrics', async () => {
+    mockAddMetricProfile.mockReturnValueOnce(
+      Promise.resolve({
+        status: {
+          message: 'Metric profile Created',
+          code: '200'
+        },
+        data: {
+          id: 'hithai1j-zn0i-sj7d-p3pz-gothoorie2ei',
+          links: {
+            self: 'string'
+          }
+        }
+      })
+    )
+
+    mockAddMetricProfileBackend.mockReturnValueOnce(
+      Promise.resolve({
+        imported: "Metric ch.cern.LFC-Write has been imported",
+        warning: "Metric ch.cern.LFC-Ping has been imported with package version used by TEST tenant",
+        unavailable: "Metric ch.cern.LFC-Read not available for package used by TEST tenant",
+        deleted: "Metric mock.metric.name has been deleted"
+      })
+    )
+
+    renderCloneView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'ARGO_MON' } });
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
+
+    await selectEvent.select(screen.getByText('ARGO'), 'TEST')
+
+    fireEvent.click(screen.getByTestId('remove-1'));
+
+    fireEvent.click(screen.getByTestId('insert-0'));
+
+    const metricInstances = within(screen.getByRole('table'));
+    var rows = metricInstances.getAllByRole('row');
+    const row1 = within(rows[3])
+
+    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+
+    fireEvent.click(screen.getByTestId('insert-1'));
+
+    rows = metricInstances.getAllByRole('row');
+    const row2 = within(rows[4])
+
+    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddMetricProfile).toHaveBeenCalledWith({
+        description: 'New central ARGO_MON profile.',
+        name: 'ARGO_MON',
+        services: [
+          {
+            service: 'argo.mon',
+            metrics: [
+              'eu.egi.CertValidity'
+            ]
+          },
+          {
+            service: 'argo.webui',
+            metrics: [
+              'org.nagios.ARGOWeb-AR',
+              'org.nagios.ARGOWeb-Status'
+            ]
+          },
+          {
+            service: 'Central-LFC',
+            metrics: [
+              'ch.cern.LFC-Ping',
+              'ch.cern.LFC-Read',
+              'ch.cern.LFC-Write'
+            ]
+          },
+          {
+            service: 'egi.AppDB',
+            metrics: [
+              'org.nagiosexchange.AppDB-WebCheck'
+            ]
+          },
+          {
+            service: 'eu.argo.ams',
+            metrics: [
+              'argo.AMS-Check'
+            ]
+          }
+        ]
+      })
+    })
+
+    await waitFor(() => {
+      expect(mockAddMetricProfileBackend).toHaveBeenCalledWith(
+        {
+          name: 'ARGO_MON',
+          apiid: 'hithai1j-zn0i-sj7d-p3pz-gothoorie2ei',
+          groupname: 'TEST',
+          description: 'New central ARGO_MON profile.',
+          services: [
+            { service: 'argo.mon', metric: 'eu.egi.CertValidity' },
+            { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-AR' },
+            { service: 'argo.webui', metric: 'org.nagios.ARGOWeb-Status' },
+            { service: 'Central-LFC', metric: 'ch.cern.LFC-Ping' },
+            { service: 'Central-LFC', metric: 'ch.cern.LFC-Read' },
+            { service: 'Central-LFC', metric: 'ch.cern.LFC-Write' },
+            { service: 'egi.AppDB', metric: 'org.nagiosexchange.AppDB-WebCheck' },
+            { service: 'eu.argo.ams', metric: 'argo.AMS-Check' }
+          ]
+        }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('metricprofile');
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('public_metricprofile');
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      'Metric profile successfully added\nMetric ch.cern.LFC-Write has been imported\nMetric mock.metric.name has been deleted',
+      'Added', 
+      2000
+    )
+    expect(NotificationManager.warning).toHaveBeenCalledWith(
+      <div>
+        <p>Metric ch.cern.LFC-Ping has been imported with package version used by TEST tenant</p>
+        <p>Metric ch.cern.LFC-Read not available for package used by TEST tenant</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      "Metrics warning",
+      0,
+      expect.any(Function)
     )
   })
 
