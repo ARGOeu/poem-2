@@ -14,7 +14,8 @@ import {
   ProfilesListTable,
   CustomError,
   ProfileMain,
-  CustomReactSelect
+  CustomReactSelect,
+  NotifyWarn
 } from './UIElements';
 import {
   Button,
@@ -585,7 +586,7 @@ export const MetricProfilesComponent = (props) => {
 
   const queryClient = useQueryClient();
   const webapiChangeMutation = useMutation(async (values) => await webapi.changeMetricProfile(values));
-  const backendChangeMutation = useMutation(async (values) => await backend.changeObject('/api/v2/internal/metricprofiles/', values));
+  const backendChangeMutation = useMutation(async (values) => await backend.changeMetricProfile(values))
   const webapiAddMutation = useMutation(async (values) => await webapi.addMetricProfile(values));
   const backendAddMutation = useMutation(async (values) => await backend.addObject('/api/v2/internal/metricprofiles/', values));
   const webapiDeleteMutation = useMutation(async (idProfile) => await webapi.deleteMetricProfile(idProfile));
@@ -746,14 +747,35 @@ export const MetricProfilesComponent = (props) => {
             groupname: formValues.groupname,
             services: backend_services
           }, {
-            onSuccess: () => {
+            onSuccess: (data) => {
               queryClient.invalidateQueries('metricprofile');
               queryClient.invalidateQueries('public_metricprofile');
+              let msg = "Metric profile successfully changed"
+              let warn_msg = ""
+
+              if ("imported" in data)
+                msg = `${msg}\n${data.imported}`
+
+              if ("warning" in data)
+                warn_msg = `${warn_msg}\n${data.warning}`.replace(/^\s+|\s+$/g, "")
+
+              if ("unavailable" in data)
+                warn_msg = `${warn_msg}\n${data.unavailable}`.replace(/^\s+|\s+$/g, "")
+
+              if ("deleted" in data)
+                msg = `${msg}\n${data.deleted}`
+
               NotifyOk({
-                msg: 'Metric profile successfully changed',
+                msg: msg,
                 title: 'Changed',
                 callback: () => history.push('/ui/metricprofiles')
               });
+
+              if (warn_msg)
+                NotifyWarn({
+                  msg: warn_msg,
+                  title: "Metrics warning"
+                })
             },
             onError: (error) => {
               NotifyError({
