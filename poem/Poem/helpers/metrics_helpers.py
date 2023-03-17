@@ -19,7 +19,12 @@ def import_metrics(metrictemplates, tenant, user):
     unavailable = []
     for template in metrictemplates:
         imported_different_version = False
-        mt = admin_models.MetricTemplate.objects.get(name=template)
+        try:
+            mt = admin_models.MetricTemplate.objects.get(name=template)
+
+        except admin_models.MetricTemplate.DoesNotExist:
+            continue
+
         gr = poem_models.GroupOfMetrics.objects.get(
             name=tenant.name.upper()
         )

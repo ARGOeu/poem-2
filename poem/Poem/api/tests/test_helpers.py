@@ -2633,6 +2633,22 @@ class ImportMetricsTests(TransactionTestCase):
             name='argo.AMS-Check-Old'
         )
 
+    def test_import_nonexisting_metric(self):
+        self.assertEqual(poem_models.Metric.objects.all().count(), 6)
+        success, warning, error, unavailable = import_metrics(
+            ['argo.nonexisting.metric'], self.tenant, self.user
+        )
+        self.assertEqual(success, [])
+        self.assertEqual(warning, [])
+        self.assertEqual(error, [])
+        self.assertEqual(unavailable, [])
+        self.assertEqual(poem_models.Metric.objects.all().count(), 6)
+        self.assertRaises(
+            poem_models.Metric.DoesNotExist,
+            poem_models.Metric.objects.get,
+            name="argo.nonexisting.metric"
+        )
+
 
 class UpdateMetricsTests(TenantTestCase):
     def setUp(self):
