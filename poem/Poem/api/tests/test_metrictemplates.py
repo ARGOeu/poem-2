@@ -90,6 +90,24 @@ def mock_db():
     )
     package6.repos.add(repo2)
 
+    package7 = admin_models.Package.objects.create(
+        name="nagios-plugin-grnet-agora",
+        version="0.2"
+    )
+    package7.repos.add(repo1)
+
+    package8 = admin_models.Package.objects.create(
+        name="nagios-plugin-grnet-agora",
+        version="0.3"
+    )
+    package8.repos.add(repo1)
+
+    package9 = admin_models.Package.objects.create(
+        name="argo-probe-grnet-agora",
+        version="0.4"
+    )
+    package9.repos.add(repo1)
+
     probe1 = admin_models.Probe.objects.create(
         name="ams-probe",
         package=package1,
@@ -255,6 +273,62 @@ def mock_db():
         docurl=probe5.docurl,
         date_created=datetime.datetime.now(),
         version_comment='Initial version.',
+        version_user=superuser.username
+    )
+
+    probe6 = admin_models.Probe.objects.create(
+        name="checkhealth",
+        package=package7,
+        description="Nagios plugins to check availability of Agora Catalogue.",
+        comment="Initial version.",
+        repository="https://github.com/ARGOeu/agora-probes/",
+        docurl="https://github.com/ARGOeu/agora-probes/"
+    )
+
+    probe6_version1 = admin_models.ProbeHistory.objects.create(
+        object_id=probe6,
+        name=probe6.name,
+        package=probe6.package,
+        description=probe6.description,
+        comment=probe6.comment,
+        repository=probe6.repository,
+        docurl=probe6.docurl,
+        date_created=datetime.datetime.now(),
+        version_comment='Initial version.',
+        version_user=superuser.username
+    )
+
+    probe6.package = package8
+    probe6.comment = "Updated version."
+    probe6.save()
+
+    probe6_version2 = admin_models.ProbeHistory.objects.create(
+        object_id=probe6,
+        name=probe6.name,
+        package=probe6.package,
+        description=probe6.description,
+        comment=probe6.comment,
+        repository=probe6.repository,
+        docurl=probe6.docurl,
+        date_created=datetime.datetime.now(),
+        version_comment='Updated version.',
+        version_user=superuser.username
+    )
+
+    probe6.package = package9
+    probe6.comment = "Updated parameters"
+    probe6.save()
+
+    probe6_version3 = admin_models.ProbeHistory.objects.create(
+        object_id=probe6,
+        name=probe6.name,
+        package=probe6.package,
+        description=probe6.description,
+        comment=probe6.comment,
+        repository=probe6.repository,
+        docurl=probe6.docurl,
+        date_created=datetime.datetime.now(),
+        version_comment='Updated parameters.',
         version_user=superuser.username
     )
 
@@ -529,6 +603,93 @@ def mock_db():
         version_comment='Initial version.',
     )
 
+    mt8 = admin_models.MetricTemplate.objects.create(
+        name="eudat.itsm.spmt-healthcheck",
+        mtype=mttype1,
+        probekey=probe6_version1,
+        probeexecutable='["checkhealth"]',
+        config='["interval 15", "maxCheckAttempts 3", '
+               '"path /usr/libexec/argo-monitoring/probes/grnet-agora/", '
+               '"retryInterval 3", "timeout 10"]',
+        attribute='["eu.eudat.itsm.spmt_URL -U"]',
+        flags='["OBSESS 1", "NOTIMEOUT 1", "NOHOSTNAME 1"]'
+    )
+
+    mt8_version1 = admin_models.MetricTemplateHistory.objects.create(
+        object_id=mt8,
+        name=mt8.name,
+        mtype=mt8.mtype,
+        probekey=mt8.probekey,
+        description=mt8.description,
+        probeexecutable=mt8.probeexecutable,
+        config=mt8.config,
+        attribute=mt8.attribute,
+        dependency=mt8.dependency,
+        flags=mt8.flags,
+        files=mt8.files,
+        parameter=mt8.parameter,
+        fileparameter=mt8.fileparameter,
+        date_created=datetime.datetime.now(),
+        version_user=superuser.username,
+        version_comment='Initial version.'
+    )
+
+    mt8.probekey = probe6_version2
+    mt8.attribute = '["eu.eudat.itsm.spmt_URL -U", "AGORA_USERNAME -u", ' \
+                    '"AGORA_PASSWORD -p"]'
+    mt8.parameter = '["-v ", "-i "]'
+    mt8.save()
+
+    admin_models.MetricTemplateHistory.objects.create(
+        object_id=mt8,
+        name=mt8.name,
+        mtype=mt8.mtype,
+        probekey=mt8.probekey,
+        description=mt8.description,
+        probeexecutable=mt8.probeexecutable,
+        config=mt8.config,
+        attribute=mt8.attribute,
+        dependency=mt8.dependency,
+        flags=mt8.flags,
+        files=mt8.files,
+        parameter=mt8.parameter,
+        fileparameter=mt8.fileparameter,
+        date_created=datetime.datetime.now(),
+        version_user=superuser.username,
+        version_comment='Added parameter fields "-i" and "-v". '
+                        'Added attribute fields "AGORA_PASSWORD" and '
+                        '"AGORA_USERNAME". Changed probekey.'
+    )
+
+    mt8.name = "grnet.agora.healthcheck"
+    mt8.probekey = probe6_version3
+    mt8.config = '["interval 15", "maxCheckAttempts 3", '\
+                 '"path /usr/libexec/argo/probes/grnet-agora/", '\
+                 '"retryInterval 3", "timeout 10"]'
+    mt8.attribute = '["AGORA_USERNAME -u", "AGORA_PASSWORD -p"]'
+    mt8.flags = '["OBSESS 1", "NOTIMEOUT 1"]'
+    mt8.save()
+
+    admin_models.MetricTemplateHistory.objects.create(
+        object_id=mt8,
+        name=mt8.name,
+        mtype=mt8.mtype,
+        probekey=mt8.probekey,
+        description=mt8.description,
+        probeexecutable=mt8.probeexecutable,
+        config=mt8.config,
+        attribute=mt8.attribute,
+        dependency=mt8.dependency,
+        flags=mt8.flags,
+        files=mt8.files,
+        parameter=mt8.parameter,
+        fileparameter=mt8.fileparameter,
+        date_created=datetime.datetime.now(),
+        version_user=superuser.username,
+        version_comment='Deleted flags field "NOHOSTNAME". '
+                        'Changed name and probekey.'
+    )
+
     admin_models.DefaultPort.objects.create(name="SITE_BDII_PORT", value="2170")
     admin_models.DefaultPort.objects.create(name="BDII_PORT", value="2170")
     admin_models.DefaultPort.objects.create(name="GRAM_PORT", value="2119")
@@ -586,6 +747,23 @@ def mock_db():
         user=tenant_superuser.username
     )
 
+    metric4 = poem_models.Metric.objects.create(
+        name=mt8_version1.name,
+        probeversion=mt8_version1.probekey.__str__(),
+        config=mt8_version1.config,
+        group=group
+    )
+
+    poem_models.TenantHistory.objects.create(
+        object_id=metric4.id,
+        object_repr=metric4.__str__(),
+        serialized_data=serialize_metric(metric4),
+        content_type=ContentType.objects.get_for_model(metric4),
+        date_created=datetime.datetime.now(),
+        comment='Initial version.',
+        user=tenant_superuser.username
+    )
+
 
 def mocked_syncer_error(*args, **kwargs):
     raise WebApiException("400 BAD REQUEST")
@@ -622,6 +800,9 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         )
         self.metrictemplate7 = admin_models.MetricTemplate.objects.get(
             name="test2.AMS-Check"
+        )
+        self.metrictemplate8 = admin_models.MetricTemplate.objects.get(
+            name="grnet.agora.healthcheck"
         )
 
         self.template_active = admin_models.MetricTemplateType.objects.get(
@@ -859,6 +1040,72 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                     ],
                     "files": [],
                     "parameter": [],
+                    "fileparameter": []
+                },
+                {
+                    "id": self.metrictemplate8.id,
+                    "name": "grnet.agora.healthcheck",
+                    "mtype": "Active",
+                    "description": "",
+                    "ostag": ["CentOS 6"],
+                    "tags": [],
+                    "probeversion": "checkhealth (0.4)",
+                    "parent": "",
+                    "probeexecutable": "checkhealth",
+                    "config": [
+                        {
+                            "key": "interval",
+                            "value": "15"
+                        },
+                        {
+                            "key": "maxCheckAttempts",
+                            "value": "3"
+                        },
+                        {
+                            "key": "path",
+                            "value": "/usr/libexec/argo/probes/grnet-agora/"
+                        },
+                        {
+                            "key": "retryInterval",
+                            "value": "3"
+                        },
+                        {
+                            "key": "timeout",
+                            "value": "10"
+                        }
+                    ],
+                    "attribute": [
+                        {
+                            "key": "AGORA_USERNAME",
+                            "value": "-u"
+                        },
+                        {
+                            "key": "AGORA_PASSWORD",
+                            "value": "-p"
+                        }
+                    ],
+                    "dependency": [],
+                    "flags": [
+                        {
+                            "key": "OBSESS",
+                            "value": "1"
+                        },
+                        {
+                            "key": "NOTIMEOUT",
+                            "value": "1"
+                        }
+                    ],
+                    "files": [],
+                    "parameter": [
+                        {
+                            "key": "-v",
+                            "value": ""
+                        },
+                        {
+                            "key": "-i",
+                            "value": ""
+                        }
+                    ],
                     "fileparameter": []
                 },
                 {
@@ -1218,6 +1465,73 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                     ],
                     "files": [],
                     "parameter": [],
+                    "fileparameter": []
+                },
+                {
+                    "id": self.metrictemplate8.id,
+                    "name": "grnet.agora.healthcheck",
+                    'importable': True,
+                    "mtype": "Active",
+                    "description": "",
+                    "ostag": ["CentOS 6"],
+                    "tags": [],
+                    "probeversion": "checkhealth (0.4)",
+                    "parent": "",
+                    "probeexecutable": "checkhealth",
+                    "config": [
+                        {
+                            "key": "interval",
+                            "value": "15"
+                        },
+                        {
+                            "key": "maxCheckAttempts",
+                            "value": "3"
+                        },
+                        {
+                            "key": "path",
+                            "value": "/usr/libexec/argo/probes/grnet-agora/"
+                        },
+                        {
+                            "key": "retryInterval",
+                            "value": "3"
+                        },
+                        {
+                            "key": "timeout",
+                            "value": "10"
+                        }
+                    ],
+                    "attribute": [
+                        {
+                            "key": "AGORA_USERNAME",
+                            "value": "-u"
+                        },
+                        {
+                            "key": "AGORA_PASSWORD",
+                            "value": "-p"
+                        }
+                    ],
+                    "dependency": [],
+                    "flags": [
+                        {
+                            "key": "OBSESS",
+                            "value": "1"
+                        },
+                        {
+                            "key": "NOTIMEOUT",
+                            "value": "1"
+                        }
+                    ],
+                    "files": [],
+                    "parameter": [
+                        {
+                            "key": "-v",
+                            "value": ""
+                        },
+                        {
+                            "key": "-i",
+                            "value": ""
+                        }
+                    ],
                     "fileparameter": []
                 },
                 {
@@ -1627,7 +1941,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             name='new-template'
         )
         self.assertEqual(versions.count(), 0)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
@@ -1680,7 +1994,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             name='new-template'
         )
         self.assertEqual(versions.count(), 0)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
@@ -1731,7 +2045,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             name='new-template'
         )
         self.assertEqual(versions.count(), 0)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
@@ -1881,7 +2195,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             name='new-template'
         )
         self.assertEqual(versions.count(), 0)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
@@ -1944,7 +2258,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             name='new-template'
         )
         self.assertEqual(versions.count(), 0)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
@@ -2007,7 +2321,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             name='new-template'
         )
         self.assertEqual(versions.count(), 0)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
@@ -2139,7 +2453,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             name='new-template'
         )
         self.assertEqual(versions.count(), 0)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
@@ -2192,7 +2506,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             name='new-template'
         )
         self.assertEqual(versions.count(), 0)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
@@ -2245,7 +2559,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             name='new-template'
         )
         self.assertEqual(versions.count(), 0)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
@@ -2383,7 +2697,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             name='new-template'
         )
         self.assertEqual(versions.count(), 0)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
@@ -2436,7 +2750,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             name='new-template'
         )
         self.assertEqual(versions.count(), 0)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
@@ -2489,7 +2803,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             name='new-template'
         )
         self.assertEqual(versions.count(), 0)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
@@ -2574,7 +2888,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to add metric templates.'
         )
         self.assertFalse(mock_sync.called)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
@@ -2617,7 +2931,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to add metric templates.'
         )
         self.assertFalse(mock_sync.called)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
@@ -2660,7 +2974,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to add metric templates.'
         )
         self.assertFalse(mock_sync.called)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
@@ -2702,7 +3016,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'], 'Probe version does not exist.'
         )
         self.assertFalse(mock_sync.called)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
@@ -2745,7 +3059,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to add metric templates.'
         )
         self.assertFalse(mock_sync.called)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
@@ -2788,7 +3102,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to add metric templates.'
         )
         self.assertFalse(mock_sync.called)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
@@ -2831,7 +3145,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to add metric templates.'
         )
         self.assertFalse(mock_sync.called)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
@@ -2873,7 +3187,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'], 'Probe version not specified.'
         )
         self.assertFalse(mock_sync.called)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
@@ -2916,7 +3230,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to add metric templates.'
         )
         self.assertFalse(mock_sync.called)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
@@ -2959,7 +3273,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to add metric templates.'
         )
         self.assertFalse(mock_sync.called)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
@@ -3002,7 +3316,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to add metric templates.'
         )
         self.assertFalse(mock_sync.called)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
@@ -3043,7 +3357,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'], 'Missing data key: flags'
         )
         self.assertFalse(mock_sync.called)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
@@ -3085,7 +3399,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to add metric templates.'
         )
         self.assertFalse(mock_sync.called)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
@@ -3127,7 +3441,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to add metric templates.'
         )
         self.assertFalse(mock_sync.called)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
@@ -3169,7 +3483,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to add metric templates.'
         )
         self.assertFalse(mock_sync.called)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -8280,19 +8594,19 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     def test_delete_metric_template_sp_superuser(self, mock_sync):
         mock_sync.side_effect = mocked_func
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
         request = self.factory.delete(self.url + 'argo.AMS-Check')
         request.tenant = self.public_tenant
         force_authenticate(request, user=self.superuser)
         response = self.view(request, 'argo.AMS-Check')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         mock_sync.assert_called_once()
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 6)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     def test_delete_metric_template_sp_user(self, mock_sync):
         mock_sync.side_effect = mocked_func
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
         request = self.factory.delete(self.url + 'argo.AMS-Check')
         request.tenant = self.public_tenant
         force_authenticate(request, user=self.user)
@@ -8303,12 +8617,12 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to delete metric templates.'
         )
         self.assertFalse(mock_sync.called)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     def test_delete_metric_template_tenant_superuser(self, mock_sync):
         mock_sync.side_effect = mocked_func
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
         request = self.factory.delete(self.url + 'argo.AMS-Check')
         request.tenant = self.tenant
         force_authenticate(request, user=self.tenant_superuser)
@@ -8319,12 +8633,12 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to delete metric templates.'
         )
         self.assertFalse(mock_sync.called)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     def test_delete_metric_template_tenant_user(self, mock_sync):
         mock_sync.side_effect = mocked_func
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
         request = self.factory.delete(self.url + 'argo.AMS-Check')
         request.tenant = self.tenant
         force_authenticate(request, user=self.tenant_user)
@@ -8335,12 +8649,12 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to delete metric templates.'
         )
         self.assertFalse(mock_sync.called)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     def test_delete_metric_template_error_sync_sp_superuser(self, mock_sync):
         mock_sync.side_effect = mocked_syncer_error
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
         request = self.factory.delete(self.url + 'argo.AMS-Check')
         request.tenant = self.public_tenant
         force_authenticate(request, user=self.superuser)
@@ -8351,12 +8665,12 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             "Error syncing metric tags: 400 BAD REQUEST"
         )
         mock_sync.assert_called_once()
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 6)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     def test_delete_metric_template_error_sync_sp_user(self, mock_sync):
         mock_sync.side_effect = mocked_syncer_error
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
         request = self.factory.delete(self.url + 'argo.AMS-Check')
         request.tenant = self.public_tenant
         force_authenticate(request, user=self.user)
@@ -8367,14 +8681,14 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to delete metric templates.'
         )
         self.assertFalse(mock_sync.called)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     def test_delete_metric_template_error_sync_tenant_superuser(
             self, mock_sync
     ):
         mock_sync.side_effect = mocked_syncer_error
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
         request = self.factory.delete(self.url + 'argo.AMS-Check')
         request.tenant = self.tenant
         force_authenticate(request, user=self.tenant_superuser)
@@ -8385,12 +8699,12 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to delete metric templates.'
         )
         self.assertFalse(mock_sync.called)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     def test_delete_metric_template_error_sync_tenant_user(self, mock_sync):
         mock_sync.side_effect = mocked_syncer_error
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
         request = self.factory.delete(self.url + 'argo.AMS-Check')
         request.tenant = self.tenant
         force_authenticate(request, user=self.tenant_user)
@@ -8401,7 +8715,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to delete metric templates.'
         )
         self.assertFalse(mock_sync.called)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     def test_delete_nonexisting_metric_template_sp_superuser(self, mock_sync):
@@ -8415,7 +8729,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'], 'Metric template does not exist.'
         )
         self.assertFalse(mock_sync.called)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     def test_delete_nonexisting_metric_template_sp_user(self, mock_sync):
@@ -8430,7 +8744,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to delete metric templates.'
         )
         self.assertFalse(mock_sync.called)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     def test_delete_nonexisting_metric_template_tenant_superuser(
@@ -8447,7 +8761,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to delete metric templates.'
         )
         self.assertFalse(mock_sync.called)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     def test_delete_nonexisting_metric_template_tenant_user(self, mock_sync):
@@ -8462,7 +8776,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to delete metric templates.'
         )
         self.assertFalse(mock_sync.called)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     def test_delete_metric_template_without_specifying_name_sp_superuser(
@@ -8478,7 +8792,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             response.data['detail'], 'Metric template name not specified.'
         )
         self.assertFalse(mock_sync.called)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     def test_delete_metric_template_without_specifying_name_sp_user(
@@ -8495,7 +8809,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to delete metric templates.'
         )
         self.assertFalse(mock_sync.called)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     def test_delete_metric_template_without_specifying_name_tenant_superuser(
@@ -8512,7 +8826,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to delete metric templates.'
         )
         self.assertFalse(mock_sync.called)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     def test_delete_metric_template_without_specifying_name_tenant_user(
@@ -8529,7 +8843,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'You do not have permission to delete metric templates.'
         )
         self.assertFalse(mock_sync.called)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
 
 
 class ListMetricTemplateTypesAPIViewTests(TenantTestCase):
@@ -8579,6 +8893,39 @@ class ListMetricTemplatesForProbeVersionAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request, 'ams-publisher-probe(0.1.7)')
         self.assertEqual(list(response.data), [])
+
+
+class ListAvailableMetricTemplatesAPIViewTests(TenantTestCase):
+    def setUp(self) -> None:
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.ListAvailableMetricTemplates.as_view()
+        self.url = "/api/v2/internal/availmetrictemplates"
+
+        mock_db()
+
+        self.user = CustUser.objects.get(username='tenant_poem')
+
+    def test_get_available_metrictemplates_if_no_auth(self):
+        request = self.factory.get(self.url)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_get_available_metrictemplates(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            response.data, [
+                {"name": "argo.AMS-Check"},
+                {"name": "argo.AMSPublisher-Check"},
+                {"name": "argo.EGI-Connectors-Check"},
+                {"name": "eu.seadatanet.org.nerc-sparql-check"},
+                {"name": "eudat.itsm.spmt-healthcheck"},
+                {"name": "org.apel.APEL-Pub"},
+                {"name": "test.AMS-Check"},
+                {"name": "test2.AMS-Check"}
+            ]
+        )
 
 
 class ListMetricTemplatesForImportTests(TenantTestCase):
@@ -8637,6 +8984,15 @@ class ListMetricTemplatesForImportTests(TenantTestCase):
                     'probeversion': 'sdc-nerq-sparq (1.0.1)',
                     'centos6_probeversion': '',
                     'centos7_probeversion': 'sdc-nerq-sparq (1.0.1)'
+                },
+                {
+                    "name": "grnet.agora.healthcheck",
+                    "mtype": "Active",
+                    "tags": [],
+                    "ostag": ["CentOS 6"],
+                    "probeversion": "checkhealth (0.4)",
+                    "centos6_probeversion": "checkhealth (0.4)",
+                    "centos7_probeversion": ""
                 },
                 {
                     'name': 'org.apel.APEL-Pub',
@@ -8704,7 +9060,7 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
         }
         assert self.metric
         metric_id = self.metric.id
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.sp_tenant
         force_authenticate(request, user=self.superuser)
@@ -8717,7 +9073,7 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
                         "successfully deleted."
             }
         )
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 5)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 6)
         self.assertRaises(
             admin_models.MetricTemplate.DoesNotExist,
             admin_models.MetricTemplate.objects.get,
@@ -8759,7 +9115,7 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
         }
         assert self.metric
         metric_id = self.metric.id
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.sp_tenant
         force_authenticate(request, user=self.user)
@@ -8769,7 +9125,7 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to delete metric templates.'
         )
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
         self.assertEqual(
             len(poem_models.TenantHistory.objects.filter(object_id=metric_id)),
             1
@@ -8792,7 +9148,7 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
         }
         assert self.metric
         metric_id = self.metric.id
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.tenant
         force_authenticate(request, user=self.tenant_superuser)
@@ -8802,7 +9158,7 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to delete metric templates.'
         )
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
         self.assertEqual(
             len(poem_models.TenantHistory.objects.filter(object_id=metric_id)),
             1
@@ -8825,7 +9181,7 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
         }
         assert self.metric
         metric_id = self.metric.id
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.tenant
         force_authenticate(request, user=self.tenant_user)
@@ -8835,7 +9191,7 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to delete metric templates.'
         )
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
         self.assertEqual(
             len(poem_models.TenantHistory.objects.filter(object_id=metric_id)),
             1
@@ -8858,7 +9214,7 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
         }
         assert self.metric
         metric_id = self.metric.id
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.sp_tenant
         force_authenticate(request, user=self.superuser)
@@ -8872,7 +9228,7 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
                 "warning": "Error syncing metric tags: 400 BAD REQUEST"
             }
         )
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 5)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 6)
         self.assertRaises(
             admin_models.MetricTemplate.DoesNotExist,
             admin_models.MetricTemplate.objects.get,
@@ -8912,7 +9268,7 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
         data = {'metrictemplates': ['test.AMS-Check']}
         assert self.metric
         metric_id = self.metric.id
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.sp_tenant
         force_authenticate(request, user=self.superuser)
@@ -8922,7 +9278,7 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             response.data,
             {"info": "Metric template test.AMS-Check successfully deleted."}
         )
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 6)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
         self.assertRaises(
             admin_models.MetricTemplate.DoesNotExist,
             admin_models.MetricTemplate.objects.get,
@@ -8957,7 +9313,7 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
         data = {'metrictemplates': ['test.AMS-Check']}
         assert self.metric
         metric_id = self.metric.id
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.sp_tenant
         force_authenticate(request, user=self.user)
@@ -8967,7 +9323,7 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to delete metric templates.'
         )
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
         self.assertEqual(
             len(poem_models.TenantHistory.objects.filter(object_id=metric_id)),
             1
@@ -8988,7 +9344,7 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
         data = {'metrictemplates': ['test.AMS-Check']}
         assert self.metric
         metric_id = self.metric.id
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.tenant
         force_authenticate(request, user=self.tenant_superuser)
@@ -8998,7 +9354,7 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to delete metric templates.'
         )
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
         self.assertEqual(
             len(poem_models.TenantHistory.objects.filter(object_id=metric_id)),
             1
@@ -9019,7 +9375,7 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
         data = {'metrictemplates': ['test.AMS-Check']}
         assert self.metric
         metric_id = self.metric.id
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.tenant
         force_authenticate(request, user=self.tenant_user)
@@ -9029,7 +9385,7 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to delete metric templates.'
         )
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
         self.assertEqual(
             len(poem_models.TenantHistory.objects.filter(object_id=metric_id)),
             1
@@ -9067,7 +9423,7 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             }
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 5)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 6)
         metric_history = poem_models.TenantHistory.objects.filter(
             object_id=self.metric.id
         )
@@ -9098,7 +9454,7 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to delete metric templates.'
         )
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
         metric_history = poem_models.TenantHistory.objects.filter(
             object_id=self.metric.id
         )
@@ -9130,7 +9486,7 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to delete metric templates.'
         )
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
         metric_history = poem_models.TenantHistory.objects.filter(
             object_id=self.metric.id
         )
@@ -9162,7 +9518,7 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to delete metric templates.'
         )
-        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 7)
+        self.assertEqual(admin_models.MetricTemplate.objects.all().count(), 8)
         metric_history = poem_models.TenantHistory.objects.filter(
             object_id=self.metric.id
         )

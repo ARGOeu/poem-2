@@ -550,6 +550,36 @@ class ListPublicMetricTemplates(ListMetricTemplates):
         return self._denied()
 
 
+class ListAvailableMetricTemplates(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request):
+        mts = admin_models.MetricTemplate.objects.all().values_list(
+            "name", flat=True
+        )
+        metrics = Metric.objects.all().values_list("name", flat=True)
+
+        missing_metrics_names = set(metrics).difference(set(mts))
+
+        result = list(mts)
+        if len(missing_metrics_names) > 0:
+            for m in missing_metrics_names:
+                mt_versions = admin_models.MetricTemplateHistory.objects.filter(
+                    name=m
+                )
+                all_versions = \
+                    admin_models.MetricTemplateHistory.objects.filter(
+                        object_id=mt_versions[0].object_id
+                    ).order_by("-date_created")
+                result = list(
+                    map(lambda x: x.replace(all_versions[0].name, m), result)
+                )
+
+        results = [{"name": mt} for mt in sorted(result)]
+
+        return Response(results)
+
+
 class ListMetricTemplatesForImport(APIView):
     authentication_classes = (SessionAuthentication,)
 
