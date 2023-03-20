@@ -280,7 +280,9 @@ class ListPublicAPIKey(APIView):
 
     def get(self, request):
         try:
-            apikey = MyAPIKey.objects.get(name='WEB-API-RO')
+            apikey = WebAPIKey.objects.get(
+                name=f"WEB-API-{request.tenant.name}-RO"
+            )
             api_format = dict(
                 id=apikey.id,
                 name=apikey.name,
@@ -290,7 +292,7 @@ class ListPublicAPIKey(APIView):
                 revoked=apikey.revoked
             )
 
-        except MyAPIKey.DoesNotExist:
+        except WebAPIKey.DoesNotExist:
             raise NotFound(status=404, detail='API key not found')
 
         return Response(api_format)
