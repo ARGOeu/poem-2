@@ -167,6 +167,7 @@ class ListAggregationsAPIViewTests(TenantTestCase):
            side_effect=mocked_func)
     def test_get_all_aggregations(self, func):
         request = self.factory.get(self.url)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(
@@ -197,6 +198,7 @@ class ListAggregationsAPIViewTests(TenantTestCase):
            side_effect=mocked_func)
     def test_get_aggregation_by_name(self, func):
         request = self.factory.get(self.url + 'TEST_PROFILE')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request, 'TEST_PROFILE')
         self.assertEqual(
@@ -213,6 +215,7 @@ class ListAggregationsAPIViewTests(TenantTestCase):
            side_effect=mocked_func)
     def test_get_aggregation_if_wrong_name(self, func):
         request = self.factory.get(self.url + 'nonexisting')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

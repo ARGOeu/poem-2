@@ -5,8 +5,8 @@ from unittest.mock import patch
 import pkg_resources
 from Poem.api import views_internal as views
 from Poem.api.internal_views.app import get_use_service_titles
-from Poem.api.models import MyAPIKey
 from Poem.poem import models as poem_models
+from Poem.poem_super_admin.models import WebAPIKey
 from Poem.users.models import CustUser
 from django_tenants.test.cases import TenantTestCase
 from django_tenants.test.client import TenantRequestFactory
@@ -230,6 +230,8 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
 
 class GetSessionDetailsAPIViewTests(TenantTestCase):
     def setUp(self):
+        self.tenant.name = "TENANT"
+        self.tenant.save()
         self.factory = TenantRequestFactory(self.tenant)
         self.view = views.IsSessionActive.as_view()
         self.url = '/api/v2/internal/sessionactive/'
@@ -241,15 +243,15 @@ class GetSessionDetailsAPIViewTests(TenantTestCase):
             displayname='First_User',
             egiid='blablabla'
         )
-        MyAPIKey.objects.create(
+        WebAPIKey.objects.create(
             id=1,
-            name='WEB-API',
+            name='WEB-API-TENANT',
             prefix='foo',
             token='mocked_token_rw'
         )
-        MyAPIKey.objects.create(
+        WebAPIKey.objects.create(
             id=2,
-            name='WEB-API-RO',
+            name='WEB-API-TENANT-RO',
             token='mocked_token_ro',
             prefix='bar'
         )
@@ -281,6 +283,7 @@ class GetSessionDetailsAPIViewTests(TenantTestCase):
         self.userprofile.groupsofreports.add(gr)
 
         request = self.factory.get(self.url + 'true')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request, 'true')
         self.assertEqual(response.status_code, 200)
@@ -300,6 +303,7 @@ class GetSessionDetailsAPIViewTests(TenantTestCase):
 
     def test_auth_readonly(self):
         request = self.factory.get(self.url + 'true')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request, 'true')
         self.assertEqual(

@@ -636,21 +636,22 @@ class BulkDeleteMetricTemplates(APIView):
                 request.user.is_superuser:
             metrictemplates = dict(request.data)['metrictemplates']
 
-            schemas = list(
-                Tenant.objects.all().values_list('schema_name', flat=True)
-            )
-            schemas.remove(get_public_schema_name())
+            tenants = Tenant.objects.all()
+            tenants = [
+                tenant for tenant in tenants if
+                tenant.schema_name != get_public_schema_name()
+            ]
 
             warning_message = []
-            for schema in schemas:
-                with schema_context(schema):
+            for tenant in tenants:
+                with schema_context(tenant.schema_name):
                     try:
-                        mip = get_metrics_in_profiles(schema)
+                        mip = get_metrics_in_profiles(tenant)
                     except Exception as e:
                         warning_message.append(
                             '{}: Metrics are not removed from metric profiles. '
                             'Unable to get metric profiles: {}'.format(
-                                schema, str(e)
+                                tenant.schema_name, str(e)
                             )
                         )
                         continue
@@ -683,7 +684,9 @@ class BulkDeleteMetricTemplates(APIView):
                     if profiles:
                         for key, value in profiles.items():
                             try:
-                                delete_metrics_from_profile(key, value)
+                                delete_metrics_from_profile(
+                                    key, value, tenant.name
+                                )
 
                             except Exception as e:
                                 if len(value) > 1:
@@ -694,7 +697,7 @@ class BulkDeleteMetricTemplates(APIView):
                                 warning_message.append(
                                     '{}: {} not deleted from '
                                     'profile {}: {}'.format(
-                                        schema, noun, key, str(e)
+                                        tenant.schema_name, noun, key, str(e)
                                     )
                                 )
 

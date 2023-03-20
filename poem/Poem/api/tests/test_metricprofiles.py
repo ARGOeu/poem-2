@@ -100,6 +100,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
     def test_get_all_metric_profiles_superuser(self, func):
         func.side_effect = mocked_func
         request = self.factory.get(self.url)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(
@@ -124,6 +125,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
     def test_get_all_metric_profiles_regular_user(self, func):
         func.side_effect = mocked_func
         request = self.factory.get(self.url)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(
@@ -148,6 +150,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
     def test_get_all_metric_profiles_regular_user_limited_user(self, func):
         func.side_effect = mocked_func
         request = self.factory.get(self.url)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.limited_user)
         response = self.view(request)
         self.assertEqual(
@@ -172,6 +175,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
     def test_get_metric_profile_by_name_superuser(self, func):
         func.side_effect = mocked_func
         request = self.factory.get(self.url + 'TEST_PROFILE')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.superuser)
         response = self.view(request, 'TEST_PROFILE')
         self.assertEqual(
@@ -188,6 +192,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
     def test_get_metric_profile_by_name_regular_user(self, func):
         func.side_effect = mocked_func
         request = self.factory.get(self.url + 'TEST_PROFILE')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request, 'TEST_PROFILE')
         self.assertEqual(
@@ -204,6 +209,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
     def test_get_metric_profile_by_name_limited_user(self, func):
         func.side_effect = mocked_func
         request = self.factory.get(self.url + 'TEST_PROFILE')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.limited_user)
         response = self.view(request, 'TEST_PROFILE')
         self.assertEqual(
@@ -220,6 +226,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
     def test_get_metric_profile_if_wrong_name_superuser(self, func):
         func.side_effect = mocked_func
         request = self.factory.get(self.url + 'nonexisting')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.superuser)
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -228,6 +235,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
     def test_get_metric_profile_if_wrong_name_regular_user(self, func):
         func.side_effect = mocked_func
         request = self.factory.get(self.url + 'nonexisting')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -236,6 +244,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
     def test_get_metric_profile_if_wrong_name_limited_user(self, func):
         func.side_effect = mocked_func
         request = self.factory.get(self.url + 'nonexisting')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.limited_user)
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

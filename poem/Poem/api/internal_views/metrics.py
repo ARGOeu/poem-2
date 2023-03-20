@@ -553,9 +553,7 @@ class UpdateMetricsVersions(APIView):
         name = pkg.split(version)[0][0:-1]
 
         try:
-            metrics_in_profiles = get_metrics_in_profiles(
-                request.tenant.schema_name
-            )
+            metrics_in_profiles = get_metrics_in_profiles(request.tenant)
 
         except requests.exceptions.HTTPError as e:
             try:
@@ -595,7 +593,7 @@ class UpdateMetricsVersions(APIView):
             if deleted:
                 try:
                     metrics_in_profiles = get_metrics_in_profiles(
-                        request.tenant.schema_name
+                        request.tenant
                     )
 
                 except Exception:
@@ -621,7 +619,9 @@ class UpdateMetricsVersions(APIView):
                     if profiles:
                         for key, value in profiles.items():
                             try:
-                                delete_metrics_from_profile(key, value)
+                                delete_metrics_from_profile(
+                                    key, value, request.tenant.name
+                                )
 
                             except Exception:
                                 if len(value) > 1:

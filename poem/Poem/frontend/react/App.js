@@ -420,7 +420,7 @@ const TenantRouteSwitch = ({
     />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/apikey" component={APIKeyList} />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/apikey/add"
-      render={props => <APIKeyChange {...props} addview={true}/>}
+      render={props => <APIKeyChange {...props} addview={true} isTenantSchema={ true } />}
     />
     <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/metrictemplates/' render={props => <ListOfMetrics type='metrictemplates' isTenantSchema={true} {...props} /> } />
     <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/metrictemplates/:name'
@@ -433,7 +433,7 @@ const TenantRouteSwitch = ({
     <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/metrictemplates/:name/history/compare/:id1/:id2' render={props => <CompareMetrics {...props} type='metrictemplate'/>}/>
     <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/metrictemplates/:name/history/:version' render={props => <MetricTemplateVersionDetails {...props}/>}/>
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/apikey/:name"
-      render={props => <APIKeyChange {...props} />}
+      render={props => <APIKeyChange {...props} isTenantSchema={ true } />}
     />
     <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/yumrepos/' render={ props => <YumRepoList {...props} isTenantSchema={true} /> }/>
     <SuperUserRoute isSuperUser={isSuperUser} exact path='/ui/administration/yumrepos/:name'
@@ -623,7 +623,7 @@ const SuperAdminRouteSwitch = () => (
     />
     <Route exact path="/ui/administration/apikey" component={APIKeyList} />
     <Route exact path="/ui/administration/apikey/add"
-      render={props => <APIKeyChange {...props} addview={true}/>}
+      render={props => <APIKeyChange {...props} addview={true} />}
     />
     <Route exact path="/ui/administration/apikey/:name"
       render={props => <APIKeyChange {...props} />}

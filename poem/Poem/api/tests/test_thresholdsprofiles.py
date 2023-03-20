@@ -146,6 +146,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
     def test_get_all_thresholds_profiles_superuser(self, func):
         func.side_effect = mocked_func
         request = self.factory.get(self.url)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(
@@ -176,6 +177,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
     def test_get_all_thresholds_profiles_user(self, func):
         func.side_effect = mocked_func
         request = self.factory.get(self.url)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(
@@ -206,6 +208,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
     def test_get_all_thresholds_profiles_limited_user(self, func):
         func.side_effect = mocked_func
         request = self.factory.get(self.url)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.limited_user)
         response = self.view(request)
         self.assertEqual(
@@ -236,6 +239,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
     def test_get_thresholds_profiles_if_no_authentication(self, func):
         func.side_effect = mocked_func
         request = self.factory.get(self.url)
+        request.tenant = self.tenant
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
@@ -243,6 +247,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
     def test_get_thresholds_profile_by_name_superuser(self, func):
         func.side_effect = mocked_func
         request = self.factory.get(self.url + 'TEST_PROFILE')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.superuser)
         response = self.view(request, 'TEST_PROFILE')
         self.assertEqual(
@@ -259,6 +264,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
     def test_get_thresholds_profile_by_name_user(self, func):
         func.side_effect = mocked_func
         request = self.factory.get(self.url + 'TEST_PROFILE')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request, 'TEST_PROFILE')
         self.assertEqual(
@@ -275,6 +281,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
     def test_get_thresholds_profile_by_name_limited_user(self, func):
         func.side_effect = mocked_func
         request = self.factory.get(self.url + 'TEST_PROFILE')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.limited_user)
         response = self.view(request, 'TEST_PROFILE')
         self.assertEqual(
@@ -291,6 +298,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
     def test_get_thresholds_profile_by_nonexisting_name_superuser(self, func):
         func.side_effect = mocked_func
         request = self.factory.get(self.url + 'nonexisting')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.superuser)
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -302,6 +310,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
     def test_get_thresholds_profile_by_nonexisting_name_user(self, func):
         func.side_effect = mocked_func
         request = self.factory.get(self.url + 'nonexisting')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -313,6 +322,7 @@ class ListThresholdsProfilesAPIViewTests(TenantTestCase):
     def test_get_thresholds_profile_by_nonexisting_name_limited_usr(self, func):
         func.side_effect = mocked_func
         request = self.factory.get(self.url + 'nonexisting')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.limited_user)
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

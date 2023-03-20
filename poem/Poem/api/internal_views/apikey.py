@@ -1,9 +1,12 @@
 import datetime
+import re
+from itertools import chain
 
 from Poem.api.models import MyAPIKey
 from Poem.api.views import NotFound
 from Poem.poem import models as poem_models
-from django.db.models import Q
+from Poem.poem_super_admin.models import WebAPIKey
+from django.db.models import Q, Value
 from django_tenants.utils import get_public_schema_name
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
@@ -17,51 +20,24 @@ class ListAPIKeys(APIView):
     authentication_classes = (SessionAuthentication,)
 
     def get(self, request, name=None):
-        if name:
+        pattern = f"^WEB-API-{request.tenant.name}(-RO)?$"
+
+        if request.tenant.schema_name == get_public_schema_name():
+            superuser = request.user.is_superuser
+            tenant_superuser = None
+            regular_user = None
+            regular_user_no_perms = None
+            if not superuser:
+                return error_response(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="You do not have permission to view API keys"
+                )
+
+        else:
             try:
-                if request.tenant.schema_name == get_public_schema_name():
-                    regular_user = None
-                    regular_user_no_perms = None
-
-                else:
-                    userprofile = poem_models.UserProfile.objects.get(
-                        user=request.user
-                    )
-                    regular_user = not request.user.is_superuser and (
-                        len(userprofile.groupsofaggregations.all()) > 0 or
-                        len(userprofile.groupsofmetricprofiles.all()) > 0 or
-                        len(userprofile.groupsofthresholdsprofiles.all()) > 0
-                    )
-                    regular_user_no_perms = not request.user.is_superuser and (
-                        len(userprofile.groupsofaggregations.all()) == 0 and
-                        len(userprofile.groupsofmetricprofiles.all()) == 0 and
-                        len(userprofile.groupsofthresholdsprofiles.all()) == 0
-                    )
-                if request.user.is_superuser or (
-                    regular_user and name.startswith('WEB-API')
-                ) or (
-                    regular_user_no_perms and name == 'WEB-API-RO'
-                ):
-                    apikey = MyAPIKey.objects.get(name=name)
-                    api_format = dict(
-                        id=apikey.id,
-                        name=apikey.name,
-                        token=apikey.token,
-                        created=datetime.datetime.strftime(
-                            apikey.created, '%Y-%m-%d %H:%M:%S'
-                        ),
-                        revoked=apikey.revoked
-                    )
-
-                else:
-                    return error_response(
-                        detail='You do not have permission for fetching this '
-                               'API key.',
-                        status_code=status.HTTP_401_UNAUTHORIZED
-                    )
-
-            except MyAPIKey.DoesNotExist:
-                raise NotFound(status=404, detail='API key not found')
+                userprofile = poem_models.UserProfile.objects.get(
+                    user=request.user
+                )
 
             except poem_models.UserProfile.DoesNotExist:
                 raise NotFound(
@@ -69,13 +45,88 @@ class ListAPIKeys(APIView):
                     detail='User profile for authenticated user not found.'
                 )
 
-        else:
-            if request.user.is_superuser:
-                apikeys = MyAPIKey.objects.all().order_by('name')
+            superuser = None
+            tenant_superuser = request.user.is_superuser
+            regular_user = not tenant_superuser and (
+                    len(userprofile.groupsofaggregations.all()) > 0 or
+                    len(userprofile.groupsofmetricprofiles.all()) > 0 or
+                    len(userprofile.groupsofthresholdsprofiles.all()) > 0
+            )
+            regular_user_no_perms = not tenant_superuser and (
+                    len(userprofile.groupsofaggregations.all()) == 0 and
+                    len(userprofile.groupsofmetricprofiles.all()) == 0 and
+                    len(userprofile.groupsofthresholdsprofiles.all()) == 0
+            )
+
+        if name:
+            if superuser or (
+                    tenant_superuser and
+                    (not name.startswith("WEB-API-") or
+                     (name.startswith("WEB-API-") and re.match(pattern, name)))
+            ) or (
+                    regular_user and re.match(pattern, name)
+            ) or (
+                    regular_user_no_perms and
+                    name == f"WEB-API-{request.tenant.name}-RO"
+            ):
+                try:
+                    apikey = MyAPIKey.objects.get(name=name)
+                    used_by = "poem"
+
+                except MyAPIKey.DoesNotExist:
+                    try:
+                        apikey = WebAPIKey.objects.get(name=name)
+                        used_by = "webapi"
+
+                    except WebAPIKey.DoesNotExist:
+                        raise NotFound(status=404, detail='API key not found')
+
+                api_format = dict(
+                    id=apikey.id,
+                    name=apikey.name,
+                    token=apikey.token,
+                    created=datetime.datetime.strftime(
+                        apikey.created, '%Y-%m-%d %H:%M:%S'
+                    ),
+                    revoked=apikey.revoked,
+                    used_by=used_by
+                )
+
             else:
-                apikeys = MyAPIKey.objects.filter(
-                    name__startswith='WEB-API'
-                ).order_by('name')
+                return error_response(
+                    detail='You do not have permission to view requested '
+                           'API key',
+                    status_code=status.HTTP_401_UNAUTHORIZED
+                )
+
+        else:
+            apikeys = sorted(list(chain(
+                MyAPIKey.objects.annotate(used_by=Value("poem")),
+                WebAPIKey.objects.annotate(used_by=Value("webapi"))
+            )), key=lambda k: k.name)
+            if superuser:
+                apikeys = apikeys
+
+            else:
+                if regular_user_no_perms:
+                    apikeys = [
+                        key for key in apikeys if
+                        key.name == f"WEB-API-{request.tenant.name}-RO"
+                    ]
+
+                elif regular_user:
+                    apikeys = [
+                        key for key in apikeys if re.match(pattern, key.name)
+                    ]
+
+                else:
+                    apikeys = [
+                        key for key in apikeys if
+                        (key.name.startswith("WEB-API-") and
+                         re.match(
+                             f"^WEB-API-{request.tenant.name}(-RO)?$", key.name
+                         )) or not key.name.startswith("WEB-API-")
+                    ]
 
             api_format = [
                 dict(
@@ -84,29 +135,33 @@ class ListAPIKeys(APIView):
                     created=datetime.datetime.strftime(
                         e.created, '%Y-%m-%d %H:%M:%S'
                     ),
-                    revoked=e.revoked
+                    revoked=e.revoked,
+                    used_by=e.used_by
                 ) for e in apikeys
             ]
 
         return Response(api_format)
 
     def put(self, request):
-        if request.user.is_superuser:
+        is_superuser = request.user.is_superuser
+        is_public_tenant = \
+            request.tenant.schema_name == get_public_schema_name()
+        if is_superuser:
             try:
-                names = MyAPIKey.objects.filter(
-                    ~Q(id=request.data['id'])
-                ).values_list('name', flat=True)
-                if request.data['name'] not in names:
+                if is_public_tenant and request.data["used_by"] == "webapi":
+                    obj = WebAPIKey.objects.get(id=request.data["id"])
+
+                elif request.data["used_by"] == "poem":
                     obj = MyAPIKey.objects.get(id=request.data['id'])
-                    obj.name = request.data['name']
-                    obj.revoked = request.data['revoked']
-                    obj.save()
 
                 else:
                     return error_response(
-                        detail='API key with this name already exists',
-                        status_code=status.HTTP_400_BAD_REQUEST
+                        detail="You do not have permission to change API keys",
+                        status_code=status.HTTP_401_UNAUTHORIZED
                     )
+
+                obj.revoked = request.data['revoked']
+                obj.save()
 
                 return Response(status=status.HTTP_201_CREATED)
 
@@ -115,24 +170,46 @@ class ListAPIKeys(APIView):
 
         else:
             return error_response(
-                detail='You do not have permission to change API keys.',
+                detail='You do not have permission to change API keys',
                 status_code=status.HTTP_401_UNAUTHORIZED
             )
 
     def post(self, request):
         if request.user.is_superuser:
-            names = MyAPIKey.objects.get_usable_keys().values_list(
+            if request.data["used_by"] == "poem":
+                model = MyAPIKey
+            else:
+                if request.tenant.schema_name != get_public_schema_name():
+                    return error_response(
+                        detail="You do not have permission to add API keys",
+                        status_code=status.HTTP_401_UNAUTHORIZED
+                    )
+                else:
+                    model = WebAPIKey
+                    if not re.match(
+                            "^WEB-API-\S*(-RO)?$", request.data["name"]
+                    ):
+                        return error_response(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Wrong API key name - web API key name must "
+                                   "have the form WEB-API-<tenant_name> or "
+                                   "WEB-API-<tenant_name>-RO"
+                        )
+
+            names = model.objects.get_usable_keys().values_list(
                 'name', flat=True
             )
+
             if request.data['name'] not in names:
                 token = request.data.get('token', False)
                 if token:
-                    MyAPIKey.objects.create_key(
+                    model.objects.create_key(
                         name=request.data['name'],
                         token=token
                     )
+
                 else:
-                    MyAPIKey.objects.create_key(
+                    model.objects.create_key(
                         name=request.data['name']
                     )
 
@@ -146,19 +223,42 @@ class ListAPIKeys(APIView):
 
         else:
             return error_response(
-                detail='You do not have permission to add API keys.',
+                detail='You do not have permission to add API keys',
                 status_code=status.HTTP_401_UNAUTHORIZED
             )
 
     def delete(self, request, name=None):
-        if request.user.is_superuser:
+        is_tenant = request.tenant.schema_name != get_public_schema_name()
+        is_superuser = request.user.is_superuser
+        if is_superuser:
             if name:
+                if name.startswith("poem_"):
+                    name = name[5:]
+                    model = MyAPIKey
+
+                elif name.startswith("webapi_"):
+                    if is_tenant:
+                        return error_response(
+                            status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="You do not have permission to delete web "
+                                   "API keys"
+                        )
+
+                    name = name[7:]
+                    model = WebAPIKey
+
+                else:
+                    return error_response(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Missing API key name prefix"
+                    )
+
                 try:
-                    apikey = MyAPIKey.objects.get(name=name)
+                    apikey = model.objects.get(name=name)
                     apikey.delete()
                     return Response(status=status.HTTP_204_NO_CONTENT)
 
-                except MyAPIKey.DoesNotExist:
+                except model.DoesNotExist:
                     raise NotFound(status=404, detail='API key not found')
 
             else:
@@ -169,7 +269,7 @@ class ListAPIKeys(APIView):
 
         else:
             return error_response(
-                detail='You do not have permission to delete API keys.',
+                detail='You do not have permission to delete API keys',
                 status_code=status.HTTP_401_UNAUTHORIZED
             )
 

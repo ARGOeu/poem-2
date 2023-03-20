@@ -8671,6 +8671,8 @@ class ListMetricTemplatesForImportTests(TenantTestCase):
 
 class BulkDeleteMetricTemplatesTests(TenantTestCase):
     def setUp(self):
+        self.tenant.name = "TENANT"
+        self.tenant.save()
         self.factory = TenantRequestFactory(self.tenant)
         self.view = views.BulkDeleteMetricTemplates.as_view()
         self.url = '/api/v2/internal/deletetemplates/'
@@ -8737,8 +8739,8 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
         )
         self.assertEqual(mock_delete.call_count, 2)
         mock_delete.assert_has_calls([
-            call('PROFILE1', ['test.AMS-Check']),
-            call('PROFILE2', ['test.AMS-Check'])
+            call('PROFILE1', ['test.AMS-Check'], "TENANT"),
+            call('PROFILE2', ['test.AMS-Check'], "TENANT")
         ])
         mock_sync.assert_called_once()
 
@@ -8892,8 +8894,8 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
         )
         self.assertEqual(mock_delete.call_count, 2)
         mock_delete.assert_has_calls([
-            call('PROFILE1', ['test.AMS-Check']),
-            call('PROFILE2', ['test.AMS-Check'])
+            call('PROFILE1', ['test.AMS-Check'], "TENANT"),
+            call('PROFILE2', ['test.AMS-Check'], "TENANT")
         ])
         mock_sync.assert_called_once()
 
@@ -8937,8 +8939,8 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
         )
         self.assertEqual(mock_delete.call_count, 2)
         mock_delete.assert_has_calls([
-            call('PROFILE1', ['test.AMS-Check']),
-            call('PROFILE2', ['test.AMS-Check'])
+            call('PROFILE1', ['test.AMS-Check'], "TENANT"),
+            call('PROFILE2', ['test.AMS-Check'], "TENANT")
         ])
         mock_sync.assert_called_once()
 
@@ -9340,8 +9342,8 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
         )
         self.assertEqual(mock_delete.call_count, 2)
         mock_delete.assert_has_calls([
-            call('PROFILE1', ['test.AMS-Check']),
-            call('PROFILE2', ['test.AMS-Check'])
+            call('PROFILE1', ['test.AMS-Check'], "TENANT"),
+            call('PROFILE2', ['test.AMS-Check'], "TENANT")
         ])
         mock_sync.assert_called_once()
 
@@ -9496,8 +9498,8 @@ class BulkDeleteMetricTemplatesTests(TenantTestCase):
         )
         self.assertEqual(mock_delete.call_count, 2)
         mock_delete.assert_has_calls([
-            call('PROFILE1', ['test.AMS-Check']),
-            call('PROFILE2', ['test.AMS-Check'])
+            call('PROFILE1', ['test.AMS-Check'], "TENANT"),
+            call('PROFILE2', ['test.AMS-Check'], "TENANT")
         ])
         mock_sync.assert_called_once()
 

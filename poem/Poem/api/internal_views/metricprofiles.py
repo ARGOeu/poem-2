@@ -92,7 +92,10 @@ class ListMetricProfiles(APIView):
                 )
 
     def get(self, request, profile_name=None):
-        sync_webapi(settings.WEBAPI_METRIC, poem_models.MetricProfiles)
+        sync_webapi(
+            settings.WEBAPI_METRIC, poem_models.MetricProfiles,
+            request.tenant.name
+        )
 
         if profile_name:
             try:
