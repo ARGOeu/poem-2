@@ -44,8 +44,8 @@ export const TenantList = (props) => {
       for (let j = 0; j < 3; j++) {
         if ((i + j) < tenants.length)
           cards.push(
-            <Card data-testid={`${tenants[i + j].name}-card`} className='me-3' key={j + 1} onClick={() => history.push(`/ui/tenants/${tenants[i + j].name}`)} style={{cursor: 'pointer', color: 'black'}}>
-              <CardTitle className='text-center'>
+            <Card data-testid={`${tenants[i + j].name}-card`} className='me-3' key={ j + 1 }>
+              <CardTitle className='text-center' onClick={() => history.push(`/ui/tenants/${tenants[i + j].name}`)} style={{cursor: 'pointer', color: 'black'}}>
                 <h3>{tenants[i + j].name}</h3>
               </CardTitle>
               <CardSubtitle className='mb-4 mt-3 text-center'>
@@ -56,17 +56,37 @@ export const TenantList = (props) => {
                   <b>Schema name:</b> {tenants[i + j].schema_name}
                 </CardText>
                 <CardText data-testid={`${tenants[i + j].name}-poem`}>
-                  <b>POEM url:</b> {tenants[i + j].domain_url}
+                  <b>POEM url:</b> <a href={`https://${tenants[i + j].domain_url}`}>{ tenants[i + j].domain_url }</a>
                 </CardText>
+                {
+                  tenants[i + j].combined &&
+                    <>
+                      <CardText data-testid={`${tenants[i + j].name}-combined`} className="mb-1">
+                        <b>Combined tenant</b>
+                      </CardText>
+                      <CardText data-testid={`${tenants[i + j].name}-combined_from`}>
+                        <b>Combined from:</b> { tenants[i + j].combined_from.join(", ") }
+                      </CardText>
+                    </>
+
+                }
                 <div className='mb-1'>
-                  <Badge color='info' className='me-2' data-testid={`${tenants[i + j].name}-metrics`}>
-                    {`Metric${tenants[i + j].schema_name == 'public' ? ' templates ' : 's '
-                    }`}
+                  <Badge 
+                    color='info' 
+                    className='me-2' 
+                    data-testid={`${tenants[i + j].name}-metrics`}
+                    href={ `https://${tenants[i + j].domain_url}/ui/public_metrics` }
+                  >
+                    { `Metric${tenants[i + j].schema_name == 'public' ? ' templates ' : 's ' }` }
                     <Badge style={{fontSize: '10pt', color: 'black'}} color='light'>{tenants[i + j].nr_metrics}</Badge>
                   </Badge>
                 </div>
                 <div>
-                  <Badge color='success' data-testid={`${tenants[i + j].name}-probes`}>
+                  <Badge 
+                    color='success' 
+                    data-testid={`${tenants[i + j].name}-probes`}
+                    href={ `https://${tenants[i + j].domain_url}/ui/public_probes` }
+                  >
                     Probes <Badge style={{fontSize: '10pt', color: 'black'}} color='light'>{tenants[i + j].nr_probes}</Badge>
                   </Badge>
                 </div>
