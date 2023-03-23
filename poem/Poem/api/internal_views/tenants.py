@@ -1,6 +1,7 @@
 import datetime
 
 from Poem.api.internal_views.utils import get_tenant_resources
+from Poem.helpers.tenant_helpers import CombinedTenant
 from Poem.tenants.models import Tenant
 from django_tenants.utils import get_public_schema_name, get_tenant_domain_model
 from rest_framework import status
@@ -37,6 +38,7 @@ class ListTenants(APIView):
             if tenant.schema_name == get_public_schema_name():
                 tenant_name = 'SuperPOEM Tenant'
                 metric_key = 'metric_templates'
+
             else:
                 tenant_name = tenant.name
                 metric_key = 'metrics'
@@ -45,7 +47,8 @@ class ListTenants(APIView):
                 domain = get_tenant_domain_model().objects.get(tenant=tenant)
 
                 data = get_tenant_resources(tenant.schema_name)
-                results.append(dict(
+
+                result = dict(
                     name=tenant_name,
                     schema_name=tenant.schema_name,
                     domain_url=domain.domain,
@@ -55,7 +58,13 @@ class ListTenants(APIView):
                     nr_metrics=data[metric_key],
                     nr_probes=data['probes'],
                     combined=tenant.combined
-                ))
+                )
+
+                if tenant.combined:
+                    combined = CombinedTenant(tenant)
+                    result.update({"combined_from": combined.tenants()})
+
+                results.append(result)
 
             except get_tenant_domain_model().DoesNotExist:
                 return error_response(

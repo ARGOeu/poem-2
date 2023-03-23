@@ -83,9 +83,11 @@ class ListTenantsTests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    @patch("Poem.api.internal_views.tenants.CombinedTenant.tenants")
     @patch('Poem.api.internal_views.tenants.get_tenant_resources')
-    def test_get_all_tenants(self, mock_resources):
+    def test_get_all_tenants(self, mock_resources, mock_tenants):
         mock_resources.side_effect = mock_tenant_resources
+        mock_tenants.return_value = ["TEST1", "TEST2"]
         request = self.factory.get(self.url)
         force_authenticate(request, user=self.user)
         response = self.view(request)
@@ -113,7 +115,8 @@ class ListTenantsTests(TenantTestCase):
                     ),
                     "nr_metrics": 6,
                     "nr_probes": 6,
-                    "combined": True
+                    "combined": True,
+                    "combined_from": ["TEST1", "TEST2"]
                 },
                 {
                     'name': 'SuperPOEM Tenant',
