@@ -53,7 +53,8 @@ class ListTenants(APIView):
                         tenant.created_on, '%Y-%m-%d'
                     ),
                     nr_metrics=data[metric_key],
-                    nr_probes=data['probes']
+                    nr_probes=data['probes'],
+                    combined=tenant.combined
                 ))
 
             except get_tenant_domain_model().DoesNotExist:
