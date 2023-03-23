@@ -324,3 +324,35 @@ def mocked_web_api_metric_profile_put(*args, **kwargs):
             }
         }, 200
     )
+
+
+def mocked_web_api_data_feed(*args, **kwargs):
+    return MockResponse(
+        {
+            "status": {
+                "message": "Success",
+                "code": "200"
+            },
+            "data": [
+                {
+                    "tenants": [
+                        "TENANT_X",
+                        "TENANT_Y"
+                    ]
+                }
+            ]
+        }, 200
+    )
+
+
+def mocked_web_api_data_feed_wrong_token(*args, **kwargs):
+    return MockResponse(
+        {
+            "status": {
+                "message": "Unauthorized",
+                "code": "401",
+                "details": "You need to provide a correct authentication token "
+                           "using the header 'x-api-key'"
+            }
+        }, 401
+    )
