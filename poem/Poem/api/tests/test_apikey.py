@@ -1,4 +1,5 @@
 import datetime
+from unittest.mock import patch
 
 from Poem.api import views_internal as views
 from Poem.api.models import MyAPIKey
@@ -49,6 +50,10 @@ def mock_db():
     WebAPIKey.objects.create_key(name='WEB-API-TENANT-RO')
     WebAPIKey.objects.create_key(name='WEB-API-TENANT2')
     WebAPIKey.objects.create_key(name='WEB-API-TENANT2-RO')
+    WebAPIKey.objects.create_key(name='WEB-API-TENANT3')
+    WebAPIKey.objects.create_key(name='WEB-API-TENANT3-RO')
+    WebAPIKey.objects.create_key(name='WEB-API-TENANT4')
+    WebAPIKey.objects.create_key(name='WEB-API-TENANT4-RO')
 
 
 class ListAPIKeysAPIViewTests(TenantTestCase):
@@ -119,6 +124,34 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             key7.created, "%Y-%m-%d %H:%M:%S"
         )
 
+        key8 = WebAPIKey.objects.get(name="WEB-API-TENANT3")
+        self.id8 = key8.id
+        self.token8 = key8.token
+        self.created8 = datetime.datetime.strftime(
+            key8.created, "%Y-%m-%d %H:%M:%S"
+        )
+
+        key9 = WebAPIKey.objects.get(name="WEB-API-TENANT3-RO")
+        self.id9 = key9.id
+        self.token9 = key9.token
+        self.created9 = datetime.datetime.strftime(
+            key9.created, "%Y-%m-%d %H:%M:%S"
+        )
+
+        key10 = WebAPIKey.objects.get(name="WEB-API-TENANT4")
+        self.id10 = key10.id
+        self.token10 = key10.token
+        self.created10 = datetime.datetime.strftime(
+            key10.created, "%Y-%m-%d %H:%M:%S"
+        )
+
+        key11 = WebAPIKey.objects.get(name="WEB-API-TENANT4-RO")
+        self.id11 = key11.id
+        self.token11 = key11.token
+        self.created11 = datetime.datetime.strftime(
+            key11.created, "%Y-%m-%d %H:%M:%S"
+        )
+
     def test_permission_denied_in_case_no_authorization(self):
         request = self.factory.get(self.url)
         request.tenant = self.tenant
@@ -179,6 +212,34 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
                     "id": self.id7,
                     "name": "WEB-API-TENANT2-RO",
                     "created": self.created7,
+                    "revoked": False,
+                    "used_by": "webapi"
+                },
+                {
+                    "id": self.id8,
+                    "name": "WEB-API-TENANT3",
+                    "created": self.created8,
+                    "revoked": False,
+                    "used_by": "webapi"
+                },
+                {
+                    "id": self.id9,
+                    "name": "WEB-API-TENANT3-RO",
+                    "created": self.created9,
+                    "revoked": False,
+                    "used_by": "webapi"
+                },
+                {
+                    "id": self.id10,
+                    "name": "WEB-API-TENANT4",
+                    "created": self.created10,
+                    "revoked": False,
+                    "used_by": "webapi"
+                },
+                {
+                    "id": self.id11,
+                    "name": "WEB-API-TENANT4-RO",
+                    "created": self.created11,
                     "revoked": False,
                     "used_by": "webapi"
                 }
@@ -268,6 +329,138 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
         )
 
     def test_get_list_of_apikeys_regular_user_no_perms(self):
+        request = self.factory.get(self.url)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.poor_user)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    "id": self.id5,
+                    "name": "WEB-API-TENANT-RO",
+                    "created": self.created5,
+                    "revoked": False,
+                    "used_by": "webapi"
+                }
+            ]
+        )
+
+    @patch("Poem.api.internal_views.apikey.CombinedTenant.tenants")
+    def test_get_list_of_apikeys_combined_tenant_superuser(self, mock_tenants):
+        self.maxDiff = None
+        mock_tenants.return_value = ["TENANT2", "TENANT3"]
+        self.tenant.combined = True
+        self.tenant.save()
+        request = self.factory.get(self.url)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    'id': self.id3,
+                    'name': 'DELETABLE',
+                    'created': self.created3,
+                    'revoked': False,
+                    "used_by": "poem"
+                },
+                {
+                    'id': self.id1,
+                    'name': 'EGI',
+                    'created': self.created1,
+                    'revoked': False,
+                    "used_by": "poem"
+                },
+                {
+                    'id': self.id2,
+                    'name': 'EUDAT',
+                    'created': self.created2,
+                    'revoked': False,
+                    "used_by": "poem"
+                },
+                {
+                    "id": self.id4,
+                    "name": "WEB-API-TENANT",
+                    "created": self.created4,
+                    "revoked": False,
+                    "used_by": "webapi"
+                },
+                {
+                    "id": self.id5,
+                    "name": "WEB-API-TENANT-RO",
+                    "created": self.created5,
+                    "revoked": False,
+                    "used_by": "webapi"
+                },
+                {
+                    "id": self.id7,
+                    "name": "WEB-API-TENANT2-RO",
+                    "created": self.created7,
+                    "revoked": False,
+                    "used_by": "webapi"
+                },
+                {
+                    "id": self.id9,
+                    "name": "WEB-API-TENANT3-RO",
+                    "created": self.created9,
+                    "revoked": False,
+                    "used_by": "webapi"
+                }
+            ]
+        )
+
+    @patch("Poem.api.internal_views.apikey.CombinedTenant.tenants")
+    def test_get_list_of_apikeys_combined_tenant_regular_user(
+            self, mock_tenants
+    ):
+        self.tenant.combined = True
+        self.tenant.save()
+        mock_tenants.return_value = ["TENANT2", "TENANT3"]
+        request = self.factory.get(self.url)
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    "id": self.id4,
+                    "name": "WEB-API-TENANT",
+                    "created": self.created4,
+                    "revoked": False,
+                    "used_by": "webapi"
+                },
+                {
+                    "id": self.id5,
+                    "name": "WEB-API-TENANT-RO",
+                    "created": self.created5,
+                    "revoked": False,
+                    "used_by": "webapi"
+                },
+                {
+                    "id": self.id7,
+                    "name": "WEB-API-TENANT2-RO",
+                    "created": self.created7,
+                    "revoked": False,
+                    "used_by": "webapi"
+                },
+                {
+                    "id": self.id9,
+                    "name": "WEB-API-TENANT3-RO",
+                    "created": self.created9,
+                    "revoked": False,
+                    "used_by": "webapi"
+                }
+            ]
+        )
+
+    @patch("Poem.api.internal_views.apikey.CombinedTenant.tenants")
+    def test_get_list_of_apikeys_combined_tenant_regular_user_no_perms(
+            self, mock_tenants
+    ):
+        mock_tenants.return_value = ["TENANT2", "TENANT3"]
         request = self.factory.get(self.url)
         request.tenant = self.tenant
         force_authenticate(request, user=self.poor_user)
@@ -394,11 +587,68 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             }
         )
 
+    @patch("Poem.api.internal_views.apikey.CombinedTenant.tenants")
+    def test_get_ro_combined_webapikey_by_name_combined_tenant_superuser(
+            self, mock_tenants
+    ):
+        mock_tenants.return_value = ["TENANT2", "TENANT3"]
+        self.tenant.combined = True
+        self.tenant.save()
+        request = self.factory.get(self.url + "WEB-API-TENANT2-RO")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, "WEB-API-TENANT2-RO")
+        self.assertEqual(
+            response.data,
+            {
+                "id": self.id7,
+                "name": "WEB-API-TENANT2-RO",
+                "token": self.token7,
+                "created": self.created7,
+                "revoked": False,
+                "used_by": "webapi"
+            }
+        )
+
+    @patch("Poem.api.internal_views.apikey.CombinedTenant.tenants")
+    def test_get_rw_combined_webapikey_by_name_combined_tenant_superuser(
+            self, mock_tenants
+    ):
+        mock_tenants.return_value = ["TENANT2", "TENANT3"]
+        self.tenant.combined = True
+        self.tenant.save()
+        request = self.factory.get(self.url + "WEB-API-TENANT2")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, "WEB-API-TENANT2")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to view requested API key"
+        )
+
     def test_get_other_tenant_webapikey_by_name_tenant_superuser(self):
         request = self.factory.get(self.url + "WEB-API-TENANT2")
         request.tenant = self.tenant
         force_authenticate(request, user=self.superuser)
         response = self.view(request, "WEB-API-TENANT2")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to view requested API key"
+        )
+
+    @patch("Poem.api.internal_views.apikey.CombinedTenant.tenants")
+    def test_get_other_tenant_webapikey_by_name_combined_tenant_superuser(
+            self, mock_tenants
+    ):
+        mock_tenants.return_value = ["TENANT2", "TENANT3"]
+        self.tenant.combined = True
+        self.tenant.save()
+        request = self.factory.get(self.url + "WEB-API-TENANT4")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, "WEB-API-TENANT4")
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(
             response.data["detail"],
@@ -441,11 +691,66 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             }
         )
 
+    @patch("Poem.api.internal_views.apikey.CombinedTenant.tenants")
+    def test_get_ro_combined_webapikey_by_name_combined_tenant_regular_user(
+            self, mock_tenants
+    ):
+        self.tenant.combined = True
+        self.tenant.save()
+        mock_tenants.return_value = ["TENANT2", "TENANT3"]
+        request = self.factory.get(self.url + "WEB-API-TENANT2-RO")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request, "WEB-API-TENANT2-RO")
+        self.assertEqual(
+            response.data,
+            {
+                "id": self.id7,
+                "name": "WEB-API-TENANT2-RO",
+                "token": self.token7,
+                "created": self.created7,
+                "revoked": False,
+                "used_by": "webapi"
+            }
+        )
+
+    @patch("Poem.api.internal_views.apikey.CombinedTenant.tenants")
+    def test_get_rw_combined_webapikey_by_name_combined_tenant_regular_user(
+            self, mock_tenants
+    ):
+        mock_tenants.return_value = ["TENANT2", "TENANT3"]
+        request = self.factory.get(self.url + "WEB-API-TENANT2")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request, "WEB-API-TENANT2")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to view requested API key"
+        )
+
     def test_get_other_tenant_webapikey_by_name_tenant_regular_user(self):
         request = self.factory.get(self.url + "WEB-API-TENANT2")
         request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request, "WEB-API-TENANT2")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to view requested API key"
+        )
+
+    @patch("Poem.api.internal_views.apikey.CombinedTenant.tenants")
+    def test_get_other_tenant_webapikey_by_name_combined_tenant_regular_user(
+            self, mock_tenants
+    ):
+        self.tenant.combined = True
+        self.tenant.save()
+        mock_tenants.return_value = ["TENANT2", "TENANT3"]
+        request = self.factory.get(self.url + "WEB-API-TENANT4")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request, "WEB-API-TENANT4")
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(
             response.data["detail"],
@@ -479,6 +784,40 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
         request.tenant = self.tenant
         force_authenticate(request, user=self.poor_user)
         response = self.view(request, "WEB-API-TENANT")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to view requested API key"
+        )
+
+    @patch("Poem.api.internal_views.apikey.CombinedTenant.tenants")
+    def test_get_rw_combined_webapikey_by_name_combined_tenant_user_no_perms(
+            self, mock_tenants
+    ):
+        self.tenant.combined = True
+        self.tenant.save()
+        mock_tenants.return_value = ["TENANT2", "TENANT3"]
+        request = self.factory.get(self.url + "WEB-API-TENANT2")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.poor_user)
+        response = self.view(request, "WEB-API-TENANT2")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to view requested API key"
+        )
+
+    @patch("Poem.api.internal_views.apikey.CombinedTenant.tenants")
+    def test_get_ro_combined_webapikey_by_name_combined_tenant_user_no_perms(
+            self, mock_tenants
+    ):
+        self.tenant.combined = True
+        self.tenant.save()
+        mock_tenants.return_value = ["TENANT2", "TENANT3"]
+        request = self.factory.get(self.url + "WEB-API-TENANT2-RO")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.poor_user)
+        response = self.view(request, "WEB-API-TENANT2-RO")
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(
             response.data["detail"],
@@ -702,7 +1041,7 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
 
     def test_post_webapikey_superpoem_superuser(self):
         data = {
-            "name": "WEB-API-TENANT3",
+            "name": "WEB-API-TENANT5",
             "revoked": False,
             "used_by": "webapi"
         }
@@ -712,13 +1051,13 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(len(MyAPIKey.objects.all()), 3)
-        self.assertEqual(len(WebAPIKey.objects.all()), 5)
-        new_key = WebAPIKey.objects.get(name="WEB-API-TENANT3")
+        self.assertEqual(len(WebAPIKey.objects.all()), 9)
+        new_key = WebAPIKey.objects.get(name="WEB-API-TENANT5")
         self.assertFalse(new_key.revoked)
 
     def test_post_ro_webapikey_superpoem_superuser(self):
         data = {
-            "name": "WEB-API-TENANT3-RO",
+            "name": "WEB-API-TENANT5-RO",
             "revoked": False,
             "used_by": "webapi"
         }
@@ -728,8 +1067,8 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(len(MyAPIKey.objects.all()), 3)
-        self.assertEqual(len(WebAPIKey.objects.all()), 5)
-        new_key = WebAPIKey.objects.get(name="WEB-API-TENANT3-RO")
+        self.assertEqual(len(WebAPIKey.objects.all()), 9)
+        new_key = WebAPIKey.objects.get(name="WEB-API-TENANT5-RO")
         self.assertFalse(new_key.revoked)
 
     def test_post_webapikey_superpoem_superuser_existing_name(self):
@@ -747,7 +1086,7 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             response.data["detail"], "API key with this name already exists"
         )
         self.assertEqual(len(MyAPIKey.objects.all()), 3)
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
 
     def test_post_webapikey_superpoem_superuser_wrong_name_form(self):
         data = {
@@ -766,11 +1105,11 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             "WEB-API-<tenant_name> or WEB-API-<tenant_name>-RO"
         )
         self.assertEqual(len(MyAPIKey.objects.all()), 3)
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
 
     def test_post_webapikey_superpoem_regular_user(self):
         data = {
-            "name": "WEB-API-TENANT3",
+            "name": "WEB-API-TENANT5",
             "revoked": False,
             "used_by": "webapi"
         }
@@ -784,11 +1123,11 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             "You do not have permission to add API keys"
         )
         self.assertEqual(len(MyAPIKey.objects.all()), 3)
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
 
     def test_post_ro_webapikey_superpoem_regular_user(self):
         data = {
-            "name": "WEB-API-TENANT3-RO",
+            "name": "WEB-API-TENANT5-RO",
             "revoked": False,
             "used_by": "webapi"
         }
@@ -802,7 +1141,7 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             "You do not have permission to add API keys"
         )
         self.assertEqual(len(MyAPIKey.objects.all()), 3)
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
 
     def test_post_webapikey_superpoem_regular_user_existing_name(self):
         data = {
@@ -820,7 +1159,7 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             "You do not have permission to add API keys"
         )
         self.assertEqual(len(MyAPIKey.objects.all()), 3)
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
 
     def test_post_webapikey_superpoem_regular_user_wrong_name_form(self):
         data = {
@@ -838,11 +1177,11 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             "You do not have permission to add API keys"
         )
         self.assertEqual(len(MyAPIKey.objects.all()), 3)
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
 
     def test_post_webapikey_tenant_superuser(self):
         data = {
-            "name": "WEB-API-TENANT3",
+            "name": "WEB-API-TENANT5",
             "revoked": False,
             "used_by": "webapi"
         }
@@ -856,11 +1195,11 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             "You do not have permission to add API keys"
         )
         self.assertEqual(len(MyAPIKey.objects.all()), 3)
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
 
     def test_post_ro_webapikey_tenant_superuser(self):
         data = {
-            "name": "WEB-API-TENANT3-RO",
+            "name": "WEB-API-TENANT5-RO",
             "revoked": False,
             "used_by": "webapi"
         }
@@ -874,7 +1213,7 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             "You do not have permission to add API keys"
         )
         self.assertEqual(len(MyAPIKey.objects.all()), 3)
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
 
     def test_post_webapikey_tenant_superuser_existing_name(self):
         data = {
@@ -892,7 +1231,7 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             "You do not have permission to add API keys"
         )
         self.assertEqual(len(MyAPIKey.objects.all()), 3)
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
 
     def test_post_webapikey_tenant_superuser_wrong_name_form(self):
         data = {
@@ -910,11 +1249,11 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             "You do not have permission to add API keys"
         )
         self.assertEqual(len(MyAPIKey.objects.all()), 3)
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
 
     def test_post_webapikey_tenant_regular_user(self):
         data = {
-            "name": "WEB-API-TENANT3",
+            "name": "WEB-API-TENANT5",
             "revoked": False,
             "used_by": "webapi"
         }
@@ -928,11 +1267,11 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             "You do not have permission to add API keys"
         )
         self.assertEqual(len(MyAPIKey.objects.all()), 3)
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
 
     def test_post_ro_webapikey_tenant_regular_user(self):
         data = {
-            "name": "WEB-API-TENANT3-RO",
+            "name": "WEB-API-TENANT5-RO",
             "revoked": False,
             "used_by": "webapi"
         }
@@ -946,7 +1285,7 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             "You do not have permission to add API keys"
         )
         self.assertEqual(len(MyAPIKey.objects.all()), 3)
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
 
     def test_post_webapikey_tenant_regular_user_existing_name(self):
         data = {
@@ -964,7 +1303,7 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             "You do not have permission to add API keys"
         )
         self.assertEqual(len(MyAPIKey.objects.all()), 3)
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
 
     def test_post_webapikey_tenant_regular_user_wrong_name_form(self):
         data = {
@@ -982,7 +1321,7 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             "You do not have permission to add API keys"
         )
         self.assertEqual(len(MyAPIKey.objects.all()), 3)
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
 
     def test_delete_apikey(self):
         self.assertEqual(len(MyAPIKey.objects.all()), 3)
@@ -1086,18 +1425,18 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
         self.assertEqual(len(MyAPIKey.objects.all()), 3)
 
     def test_delete_webapikey_superpoem_superuser(self):
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
         request = self.factory.delete(self.url + "webapi_WEB-API-TENANT")
         request.tenant = self.public_tenant
         force_authenticate(request, user=self.superpoem_superuser)
         response = self.view(request, "webapi_WEB-API-TENANT")
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         keys = WebAPIKey.objects.all().values_list('name', flat=True)
-        self.assertEqual(len(keys), 3)
+        self.assertEqual(len(keys), 7)
         self.assertFalse("WEB-API-TENANT" in keys)
 
     def test_delete_webapikey_superpoem_regular_user(self):
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
         request = self.factory.delete(self.url + "webapi_WEB-API-TENANT")
         request.tenant = self.public_tenant
         force_authenticate(request, user=self.superpoem_user)
@@ -1108,11 +1447,11 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             'You do not have permission to delete API keys'
         )
         keys = WebAPIKey.objects.all().values_list('name', flat=True)
-        self.assertEqual(len(keys), 4)
+        self.assertEqual(len(keys), 8)
         self.assertTrue("WEB-API-TENANT" in keys)
 
     def test_delete_webapikey_tenant_superuser(self):
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
         request = self.factory.delete(self.url + "webapi_WEB-API-TENANT")
         request.tenant = self.tenant
         force_authenticate(request, user=self.superuser)
@@ -1123,11 +1462,11 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             'You do not have permission to delete web API keys'
         )
         keys = WebAPIKey.objects.all().values_list('name', flat=True)
-        self.assertEqual(len(keys), 4)
+        self.assertEqual(len(keys), 8)
         self.assertTrue("WEB-API-TENANT" in keys)
 
     def test_delete_webapikey_tenant_regular_user(self):
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
         request = self.factory.delete(self.url + "webapi_WEB-API-TENANT")
         request.tenant = self.tenant
         force_authenticate(request, user=self.user)
@@ -1138,11 +1477,11 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             'You do not have permission to delete API keys'
         )
         keys = WebAPIKey.objects.all().values_list('name', flat=True)
-        self.assertEqual(len(keys), 4)
+        self.assertEqual(len(keys), 8)
         self.assertTrue("WEB-API-TENANT" in keys)
 
     def test_delete_nonexisting_webapikey_superpoem_superuser(self):
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
         request = self.factory.delete(self.url + 'webapi_nonexisting')
         request.tenant = self.public_tenant
         force_authenticate(request, user=self.superpoem_superuser)
@@ -1150,10 +1489,10 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data['detail'], 'API key not found')
         keys = WebAPIKey.objects.all().values_list('name', flat=True)
-        self.assertEqual(len(keys), 4)
+        self.assertEqual(len(keys), 8)
 
     def test_delete_nonexisting_webapikey_superpoem_regular_user(self):
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
         request = self.factory.delete(self.url + 'webapi_nonexisting')
         request.tenant = self.public_tenant
         force_authenticate(request, user=self.superpoem_user)
@@ -1164,10 +1503,10 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             'You do not have permission to delete API keys'
         )
         keys = WebAPIKey.objects.all().values_list('name', flat=True)
-        self.assertEqual(len(keys), 4)
+        self.assertEqual(len(keys), 8)
 
     def test_delete_nonexisting_webapikey_tenant_superuser(self):
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
         request = self.factory.delete(self.url + 'webapi_nonexisting')
         request.tenant = self.tenant
         force_authenticate(request, user=self.superuser)
@@ -1178,10 +1517,10 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             'You do not have permission to delete web API keys'
         )
         keys = WebAPIKey.objects.all().values_list('name', flat=True)
-        self.assertEqual(len(keys), 4)
+        self.assertEqual(len(keys), 8)
 
     def test_delete_nonexisting_webapikey_tenant_regular_user(self):
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
         request = self.factory.delete(self.url + 'webapi_nonexisting')
         request.tenant = self.tenant
         force_authenticate(request, user=self.user)
@@ -1192,10 +1531,10 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             'You do not have permission to delete API keys'
         )
         keys = WebAPIKey.objects.all().values_list('name', flat=True)
-        self.assertEqual(len(keys), 4)
+        self.assertEqual(len(keys), 8)
 
     def test_delete_no_webapikey_name_superpoem_superuser(self):
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
         request = self.factory.delete(self.url)
         request.tenant = self.public_tenant
         force_authenticate(request, user=self.superpoem_superuser)
@@ -1204,10 +1543,10 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
         self.assertEqual(
             response.data['detail'], 'API key name must be defined'
         )
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
 
     def test_delete_no_webapikey_name_superpoem_regular_user(self):
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
         request = self.factory.delete(self.url)
         request.tenant = self.public_tenant
         force_authenticate(request, user=self.superpoem_user)
@@ -1217,10 +1556,10 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to delete API keys'
         )
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
 
     def test_delete_no_webapikey_name_tenant_superuser(self):
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
         request = self.factory.delete(self.url)
         request.tenant = self.tenant
         force_authenticate(request, user=self.superuser)
@@ -1229,10 +1568,10 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
         self.assertEqual(
             response.data['detail'], "API key name must be defined"
         )
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
 
     def test_delete_no_webapikey_name_tenant_regular_user(self):
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
         request = self.factory.delete(self.url)
         request.tenant = self.tenant
         force_authenticate(request, user=self.user)
@@ -1242,10 +1581,10 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to delete API keys'
         )
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
 
     def test_delete_wrong_webapikey_name_superpoem_superuser(self):
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
         request = self.factory.delete(self.url + "meh_WEB-API-TENANT")
         request.tenant = self.public_tenant
         force_authenticate(request, user=self.superpoem_superuser)
@@ -1254,10 +1593,10 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
         self.assertEqual(
             response.data['detail'], 'Missing API key name prefix'
         )
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
 
     def test_delete_wrong_webapikey_name_superpoem_regular_user(self):
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
         request = self.factory.delete(self.url + "meh_WEB-API-TENANT")
         request.tenant = self.public_tenant
         force_authenticate(request, user=self.superpoem_user)
@@ -1267,10 +1606,10 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to delete API keys'
         )
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
 
     def test_delete_wrong_webapikey_name_tenant_superuser(self):
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
         request = self.factory.delete(self.url, "meh_WEB-API-TENANT")
         request.tenant = self.tenant
         force_authenticate(request, user=self.superuser)
@@ -1279,10 +1618,10 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
         self.assertEqual(
             response.data['detail'], "Missing API key name prefix"
         )
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
 
     def test_delete_wrong_webapikey_name_tenant_regular_user(self):
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
         request = self.factory.delete(self.url + "meh_WEB-API-TENANT")
         request.tenant = self.tenant
         force_authenticate(request, user=self.user)
@@ -1292,4 +1631,4 @@ class ListAPIKeysAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to delete API keys'
         )
-        self.assertEqual(len(WebAPIKey.objects.all()), 4)
+        self.assertEqual(len(WebAPIKey.objects.all()), 8)
