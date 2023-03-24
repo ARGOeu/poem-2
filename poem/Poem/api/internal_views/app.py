@@ -3,6 +3,7 @@ import configparser
 import pkg_resources
 from Poem.api import serializers
 from Poem.api.internal_views.users import get_all_groups, get_groups_for_user
+from Poem.helpers.tenant_helpers import CombinedTenant
 from Poem.poem.saml2.config import tenant_from_request, saml_login_string
 from Poem.poem_super_admin.models import WebAPIKey
 from django.conf import settings
@@ -66,20 +67,43 @@ class IsSessionActive(APIView):
         serializer = serializers.UsersSerializer(user)
         userdetails.update(serializer.data)
 
+        rw_user = False
         if istenant == 'true':
             if user.is_superuser:
                 groups = get_all_groups()
+
             else:
                 groups = get_groups_for_user(user)
+
             userdetails['groups'] = groups
+            rw_user = len(groups["metricprofiles"]) > 0
 
             if self._have_rwperm(groups):
                 token = self._get_token(f"WEB-API-{request.tenant.name}")
+
             else:
                 token = self._get_token(f"WEB-API-{request.tenant.name}-RO")
+
             userdetails['token'] = token
 
-        return Response({'active': True, 'userdetails': userdetails})
+        tenantdetails = {"combined": request.tenant.combined}
+
+        if request.tenant.combined and rw_user:
+            ct = CombinedTenant(request.tenant)
+            tenants = ct.tenants()
+
+            tenants_dict = dict()
+            for tenant in tenants:
+                token = WebAPIKey.objects.get(name=f"WEB-API-{tenant}-RO")
+                tenants_dict.update({tenant: token.token})
+
+            tenantdetails.update({"tenants": tenants_dict})
+
+        return Response({
+            'active': True,
+            'userdetails': userdetails,
+            "tenantdetails": tenantdetails
+        })
 
 
 def get_use_service_titles(tenant):
