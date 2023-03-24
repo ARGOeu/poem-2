@@ -189,6 +189,7 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
             WEBAPI_REPORTSTOPOLOGYGROUPS='https://topology-groups.com',
             WEBAPI_REPORTSTOPOLOGYENDPOINTS='https://endpoints.com',
             WEBAPI_SERVICETYPES='https://topology-servicetypes.com',
+            WEBAPI_DATAFEEDS="https://data.feeds.com",
             LINKS_TERMS_PRIVACY={
                 'tenant': {
                     'terms': 'https://terms.of.use.com',
@@ -216,7 +217,9 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
                             'topologygroups': 'https://topology-groups.com',
                             'topologyendpoints': 'https://endpoints.com'
                         },
-                        'webapiservicetypes': 'https://topology-servicetypes.com',
+                        'webapiservicetypes':
+                            'https://topology-servicetypes.com',
+                        "webapidatafeeds": "https://data.feeds.com",
                         'tenant_name': 'tenant',
                         'terms_privacy_links': {
                             'terms': 'https://terms.of.use.com',
