@@ -339,7 +339,8 @@ class GetSessionDetailsAPIViewTests(TenantTestCase):
                     "token": "mocked_token_rw"
                 },
                 "tenantdetails": {
-                    "combined": False
+                    "combined": False,
+                    "tenants": {}
                 }
             }
         )
@@ -440,7 +441,8 @@ class GetSessionDetailsAPIViewTests(TenantTestCase):
                     "token": "mocked_token_ro"
                 },
                 "tenantdetails": {
-                    "combined": False
+                    "combined": False,
+                    "tenants": {}
                 }
             }
         )
@@ -477,7 +479,8 @@ class GetSessionDetailsAPIViewTests(TenantTestCase):
                     "token": "mocked_token_ro"
                 },
                 "tenantdetails": {
-                    "combined": True
+                    "combined": True,
+                    "tenants": {}
                 }
             }
         )

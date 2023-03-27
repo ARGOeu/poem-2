@@ -88,16 +88,16 @@ class IsSessionActive(APIView):
 
         tenantdetails = {"combined": request.tenant.combined}
 
+        tenants_dict = dict()
         if request.tenant.combined and rw_user:
             ct = CombinedTenant(request.tenant)
             tenants = ct.tenants()
 
-            tenants_dict = dict()
             for tenant in tenants:
                 token = WebAPIKey.objects.get(name=f"WEB-API-{tenant}-RO")
                 tenants_dict.update({tenant: token.token})
 
-            tenantdetails.update({"tenants": tenants_dict})
+        tenantdetails.update({"tenants": tenants_dict})
 
         return Response({
             'active': True,
