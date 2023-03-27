@@ -661,3 +661,24 @@ export class WebApi {
     });
   }
 }
+
+
+const fetchMetricProfiles4Tenant = async (webapimetric, token) => {
+  let webapi = new WebApi({
+    token: token,
+    metricProfiles: webapimetric
+  })
+
+  return await webapi.fetchMetricProfiles()
+}
+
+
+export const fetchTenantsMetricProfiles = async (webapimetric, tenants) => {
+  let result = new Object()
+
+  for (const [tenant, token] of Object.entries(tenants)) {
+    result[tenant] = await fetchMetricProfiles4Tenant(webapimetric, token)
+  }
+
+  return result
+}

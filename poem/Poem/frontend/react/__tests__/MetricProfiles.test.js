@@ -3,7 +3,7 @@ import { render, waitFor, screen, within, fireEvent } from '@testing-library/rea
 import '@testing-library/jest-dom/extend-expect';
 import { createMemoryHistory } from 'history';
 import { Route, Router } from 'react-router-dom';
-import { Backend, WebApi } from '../DataManager';
+import { Backend, WebApi, fetchTenantsMetricProfiles } from '../DataManager';
 import { QueryClient, QueryClientProvider, setLogger } from 'react-query';
 import {
   MetricProfilesChange,
@@ -19,7 +19,8 @@ import selectEvent from 'react-select-event';
 jest.mock('../DataManager', () => {
   return {
     Backend: jest.fn(),
-    WebApi: jest.fn()
+    WebApi: jest.fn(),
+    fetchTenantsMetricProfiles: jest.fn()
   }
 })
 
@@ -75,15 +76,19 @@ const mockActiveSession = {
     is_superuser: true,
     email: 'test@email.com',
     date_joined: '2019-07-08T12:58:08',
-    id: '1',
+    pk: '1',
     groups: {
       aggregations: ['ARGO', 'EGI'],
       metricprofiles: ['ARGO', 'TEST'],
       metrics: ['TEST3', 'TEST4'],
       thresholdsprofiles: ['TEST', 'TESTa']
+    },
+    token: "m0ck_t0k3n",
+    tenantdetails: {
+      combined: false
     }
   }
-};
+}
 
 const mockWebApiMetricProfile = {
   id: "va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv",
@@ -146,6 +151,76 @@ const mockWebApiMetricProfile2 = {
     }
   ]
 };
+
+const mockWebApiMetricProfileTenant1 = [
+  {
+    id: "11111",
+    date: "2023-03-27",
+    name: "TENANT1-PROFILE1",
+    description: "",
+    services: [
+      {
+        service: "b2access.unity",
+        metrics: [
+          "eudat.b2access.unity.login-certificate",
+          "eudat.b2access.unity.login-local"
+        ]
+      },
+      {
+        service: "b2drop.nextcloud",
+        metrics: [
+          "generic.tcp.connect"
+        ]
+      }
+    ]
+  },
+  {
+    id: "2222",
+    date: "2023-03-27",
+    name: "TENANT1-PROFILE2",
+    description: "",
+    services: [
+      {
+        service: "b2handle.handle.api",
+        metrics: [
+          "eudat.b2handle.handle.api-crud",
+          "eudat.b2handle.handle.api-healthcheck-resolve",
+          "generic.tcp.connect"
+        ]
+      }
+    ]
+  }
+]
+
+const mockWebApiMetricProfileTenant2 = [
+  {
+    id: "3333",
+    date: "2023-03-27",
+    name: "PROFILE3",
+    description: "",
+    services: [
+      {
+        service: "generic.json",
+        metrics: [
+          "generic.http.json"
+        ]
+      },
+      {
+        service: "generic.oai-pmh",
+        metrics: [
+          "generic.oai-pmh.validity"
+        ]
+      },
+      {
+        service: "portal.services.url",
+        metrics: [
+          "generic.http.connect",
+          "generic.certificate.validity"
+        ]
+      }
+    ]
+  }
+] 
 
 const mockBackendMetricProfile = {
   name: 'ARGO_MON',
@@ -480,9 +555,13 @@ function renderListView(publicView=false) {
 }
 
 
-function renderChangeView(publicView=false) {
+function renderChangeView(publicView=false, combined=false) {
   const route = `/ui/${publicView ? 'public_' : ''}metricprofiles/ARGO_MON`;
   const history = createMemoryHistory({ initialEntries: [route] });
+
+  let tenants = {}
+  if (combined && !publicView)
+    tenants = { TENANT1: "mock_tenant1_token", TENANT2: "mock_tenant2_token" }
 
   if (publicView)
     return {
@@ -497,6 +576,10 @@ function renderChangeView(publicView=false) {
                 webapitoken='token'
                 tenantname='TENANT'
                 publicView={true}
+                tenantDetails={{
+                  combined: combined,
+                  tenants: tenants
+                }}
               /> }
             />
           </Router>
@@ -523,6 +606,10 @@ function renderChangeView(publicView=false) {
                 }}
                 webapitoken='token'
                 tenantname='TENANT'
+                tenantDetails={{
+                  combined: combined,
+                  tenants: tenants
+                }}
               /> }
             />
           </Router>
@@ -532,34 +619,70 @@ function renderChangeView(publicView=false) {
 }
 
 
-function renderAddView() {
+function renderAddView(combined=false) {
   const route = '/ui/metricprofiles/add';
   const history = createMemoryHistory({ initialEntries: [route] });
 
-  return {
-    ...render(
-      <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/metricprofiles/add'
-            render={props => <MetricProfilesChange
-              {...props}
-              webapimetric='https://mock.metrics.com'
-              webapitoken='token'
-              tenantname='TENANT'
-              addview={true}
-            /> }
-          />
-        </Router>
-      </QueryClientProvider>
-    )
-  }
+  if (combined)
+    return {
+      ...render(
+        <QueryClientProvider client={ queryClient }>
+          <Router history={ history }>
+            <Route
+              path="/ui/metricprofiles/add"
+              render={ props => <MetricProfilesChange
+                { ...props }
+                webapimetric='https://mock.metrics.com'
+                webapitoken='token'
+                tenantname='TENANT'
+                addview={true}
+                tenantDetails={ {
+                  combined: combined,
+                  tenants: {
+                    TENANT1: "mock_tenant1_token",
+                    TENANT2: "mock_tenant2_token"
+                  }
+                } }
+              /> }
+            />
+          </Router>
+        </QueryClientProvider>
+      )
+    }
+
+  else
+    return {
+      ...render(
+        <QueryClientProvider client={queryClient}>
+          <Router history={history}>
+            <Route
+              path='/ui/metricprofiles/add'
+              render={props => <MetricProfilesChange
+                {...props}
+                webapimetric='https://mock.metrics.com'
+                webapitoken='token'
+                tenantname='TENANT'
+                addview={true}
+                tenantDetails={ {
+                  combined: combined,
+                  tenants: {}
+                } }
+              /> }
+            />
+          </Router>
+        </QueryClientProvider>
+      )
+    }
 }
 
 
-function renderCloneView() {
+function renderCloneView(combined=false) {
   const route = '/ui/metricprofiles/ARGO_MON2/clone';
   const history = createMemoryHistory({ initialEntries: [route] });
+
+  let tenants = {}
+  if (combined)
+    tenants = { TENANT1: "mock_tenant1_token", TENANT2: "mock_tenant2_token" }
 
   return {
     ...render(
@@ -572,6 +695,10 @@ function renderCloneView() {
               webapimetric='https://mock.metrics.com'
               webapitoken='token'
               tenantname='TENANT'
+              tenantDetails={ {
+                combined: combined,
+                tenants: tenants
+              } }
             /> }
           />
         </Router>
@@ -717,6 +844,68 @@ describe('Tests for metric profiles changeview', () => {
 
     expect(screen.getByText('TEST')).toBeInTheDocument()
 
+    expect(screen.queryByText("Combined from")).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/profile/i)).not.toBeInTheDocument()
+
+    const metricInstances = within(screen.getByRole('table'));
+    const rows = metricInstances.getAllByRole('row');
+    expect(rows).toHaveLength(9);
+    const row1 = within(rows[2])
+    const row2 = within(rows[3])
+    const row3 = within(rows[4])
+    const row4 = within(rows[5])
+    const row5 = within(rows[6])
+    const row6 = within(rows[7])
+    const row7 = within(rows[8])
+    expect(row1.getByText("argo.mon")).toBeInTheDocument()
+    expect(row1.getByText("eu.egi.CertValidity")).toBeInTheDocument()
+    expect(row2.getByText("argo.mon")).toBeInTheDocument()
+    expect(row2.getByText("org.nagios.NagiosWebInterface")).toBeInTheDocument()
+    expect(row3.getByText("argo.webui")).toBeInTheDocument()
+    expect(row3.getByText("org.nagios.ARGOWeb-AR")).toBeInTheDocument()
+    expect(row4.getByText("argo.webui")).toBeInTheDocument()
+    expect(row4.getByText("org.nagios.ARGOWeb-Status")).toBeInTheDocument()
+    expect(row5.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row5.getByText("ch.cern.LFC-Ping")).toBeInTheDocument()
+    expect(row6.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row6.getByText("ch.cern.LFC-Read")).toBeInTheDocument()
+    expect(row7.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row7.getByText("ch.cern.LFC-Write")).toBeInTheDocument()
+
+    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /clone/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /clone/i }).closest('a')).toHaveAttribute('href', '/ui/metricprofiles/ARGO_MON/clone');
+    expect(screen.getByRole('button', { name: /csv/i })).toBeInTheDocument();
+  })
+
+  test('Test that page renders properly for combined tenant', async () => {
+    renderChangeView(false, true)
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change metric profile');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const descriptionField = screen.getByLabelText(/description/i);
+    const groupField = screen.getByText('ARGO');
+
+    expect(nameField.value).toBe('ARGO_MON');
+    expect(nameField).toBeDisabled();
+    expect(descriptionField.value).toBe('Central ARGO-MON profile');
+    expect(descriptionField).toBeEnabled();
+    expect(groupField).toBeEnabled();
+
+    expect(screen.queryByText('TEST')).not.toBeInTheDocument()
+    selectEvent.openMenu(groupField)
+
+    expect(screen.getByText('TEST')).toBeInTheDocument()
+
+    expect(screen.queryByText("Combined from")).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/profile/i)).not.toBeInTheDocument()
+
     const metricInstances = within(screen.getByRole('table'));
     const rows = metricInstances.getAllByRole('row');
     expect(rows).toHaveLength(9);
@@ -800,6 +989,60 @@ describe('Tests for metric profiles changeview', () => {
     expect(descriptionField).toBeDisabled();
     expect(groupField.value).toBe('ARGO');
     expect(groupField).toBeDisabled();
+
+    expect(screen.queryByText("Combined from")).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/profile/i)).not.toBeInTheDocument()
+
+    const metricInstances = within(screen.getByRole('table'));
+    const rows = metricInstances.getAllByRole('row');
+    expect(rows).toHaveLength(9);
+
+    expect(within(rows[2]).queryAllByRole('textbox')).toHaveLength(0);
+    expect(within(rows[3]).queryAllByRole('textbox')).toHaveLength(0);
+    expect(within(rows[4]).queryAllByRole('textbox')).toHaveLength(0);
+    expect(within(rows[5]).queryAllByRole('textbox')).toHaveLength(0);
+    expect(within(rows[6]).queryAllByRole('textbox')).toHaveLength(0);
+    expect(within(rows[7]).queryAllByRole('textbox')).toHaveLength(0);
+    expect(within(rows[8]).queryAllByRole('textbox')).toHaveLength(0);
+    expect(metricInstances.queryAllByTestId(/remove-/i)).toHaveLength(0);
+    expect(metricInstances.queryAllByTestId(/insert-/i)).toHaveLength(0);
+
+    expect(rows[2].textContent).toBe('1argo.moneu.egi.CertValidity')
+    expect(rows[3].textContent).toBe('2argo.monorg.nagios.NagiosWebInterface')
+    expect(rows[4].textContent).toBe('3argo.webuiorg.nagios.ARGOWeb-AR')
+    expect(rows[5].textContent).toBe('4argo.webuiorg.nagios.ARGOWeb-Status')
+    expect(rows[6].textContent).toBe('5Central-LFCch.cern.LFC-Ping')
+    expect(rows[7].textContent).toBe('6Central-LFCch.cern.LFC-Read')
+    expect(rows[8].textContent).toBe('7Central-LFCch.cern.LFC-Write')
+
+    expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /csv/i })).not.toBeInTheDocument();
+  })
+
+  test('Test that public page renders properly for combined tenant', async () => {
+    renderChangeView(true, true);
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Metric profile details');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const descriptionField = screen.getByLabelText(/description/i);
+    const groupField = screen.getByTestId('groupname');
+
+    expect(nameField.value).toBe('ARGO_MON');
+    expect(nameField).toBeDisabled();
+    expect(descriptionField.value).toBe('Central ARGO-MON profile');
+    expect(descriptionField).toBeDisabled();
+    expect(groupField.value).toBe('ARGO');
+    expect(groupField).toBeDisabled();
+
+    expect(screen.queryByText("Combined from")).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/profile/i)).not.toBeInTheDocument()
 
     const metricInstances = within(screen.getByRole('table'));
     const rows = metricInstances.getAllByRole('row');
@@ -3019,6 +3262,12 @@ describe('Tests for metric profile addview', () => {
         addMetricProfile: mockAddMetricProfileBackend
       }
     })
+    fetchTenantsMetricProfiles.mockImplementation(() => {
+      return {
+        TENANT1: mockWebApiMetricProfileTenant1,
+        TENANT2: mockWebApiMetricProfileTenant2
+      }
+    })
   })
 
   test('Test that page renders properly', async () => {
@@ -3042,6 +3291,57 @@ describe('Tests for metric profile addview', () => {
     selectEvent.openMenu(groupField)
     expect(screen.getByText('ARGO')).toBeInTheDocument()
     expect(screen.getByText('TEST')).toBeInTheDocument()
+
+    expect(screen.queryByText("Combined from")).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/profile/i)).not.toBeInTheDocument()
+
+    const metricInstances = within(screen.getByRole('table'));
+    const rows = metricInstances.getAllByRole("row")
+    expect(rows).toHaveLength(3)
+    expect(within(rows[2]).getAllByText("Select...")).toHaveLength(2)
+
+    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /csv/i })).not.toBeInTheDocument();
+  })
+
+  test('Test that page renders properly for combined tenant', async () => {
+    renderAddView(true)
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Add metric profile');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const descriptionField = screen.getByLabelText(/description/i);
+    const groupField = screen.getAllByText("Select...")[0]
+
+    expect(nameField.value).toBe('');
+    expect(nameField).toBeEnabled();
+    expect(descriptionField.value).toBe('');
+    expect(descriptionField).toBeEnabled();
+
+    expect(screen.queryByText('ARGO')).not.toBeInTheDocument()
+    expect(screen.queryByText('TEST')).not.toBeInTheDocument()
+    selectEvent.openMenu(groupField)
+    expect(screen.getByText('ARGO')).toBeInTheDocument()
+    expect(screen.getByText('TEST')).toBeInTheDocument()
+
+    expect(screen.queryByText("Combined from")).toBeInTheDocument()
+    expect(screen.queryAllByLabelText(/profile/i)).toHaveLength(2)
+
+    expect(screen.queryByText("TENANT1-PROFILE1")).not.toBeInTheDocument()
+    expect(screen.queryByText("TENANT1-PROFILE2")).not.toBeInTheDocument()
+    expect(screen.queryByText("PROFILE3")).not.toBeInTheDocument()
+
+    selectEvent.openMenu(screen.queryAllByLabelText(/profile/i)[0])
+    expect(screen.queryByText("TENANT1-PROFILE1")).toBeInTheDocument()
+    expect(screen.queryByText("TENANT1-PROFILE2")).toBeInTheDocument()
+    expect(screen.queryByText("PROFILE3")).not.toBeInTheDocument()
+
+    selectEvent.openMenu(screen.queryAllByLabelText(/profile/i)[1])
+    expect(screen.queryByText("PROFILE3")).toBeInTheDocument()
 
     const metricInstances = within(screen.getByRole('table'));
     const rows = metricInstances.getAllByRole("row")
@@ -4366,6 +4666,70 @@ describe('Tests for metric profile cloneview', () => {
     expect(screen.queryByText('TEST')).not.toBeInTheDocument()
     selectEvent.openMenu(groupField)
     expect(screen.getByText('TEST')).toBeInTheDocument()
+
+    expect(screen.queryByText("Combined from")).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/profile/i)).not.toBeInTheDocument()
+
+    const metricInstances = within(screen.getByRole('table'));
+    const rows = metricInstances.getAllByRole('row');
+    expect(rows).toHaveLength(9);
+    const row1 = within(rows[2])
+    const row2 = within(rows[3])
+    const row3 = within(rows[4])
+    const row4 = within(rows[5])
+    const row5 = within(rows[6])
+    const row6 = within(rows[7])
+    const row7 = within(rows[8])
+
+    expect(row1.getByText("argo.mon")).toBeInTheDocument()
+    expect(row1.getByText("eu.egi.CertValidity")).toBeInTheDocument()
+    expect(row2.getByText("argo.mon")).toBeInTheDocument()
+    expect(row2.getByText("org.nagios.NagiosWebInterface")).toBeInTheDocument()
+    expect(row3.getByText("argo.webui")).toBeInTheDocument()
+    expect(row3.getByText("org.nagios.ARGOWeb-AR")).toBeInTheDocument()
+    expect(row4.getByText("argo.webui")).toBeInTheDocument()
+    expect(row4.getByText("org.nagios.ARGOWeb-Status")).toBeInTheDocument()
+    expect(row5.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row5.getByText("ch.cern.LFC-Ping")).toBeInTheDocument()
+    expect(row6.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row6.getByText("ch.cern.LFC-Read")).toBeInTheDocument()
+    expect(row7.getByText("Central-LFC")).toBeInTheDocument()
+    expect(row7.getByText("ch.cern.LFC-Write")).toBeInTheDocument()
+
+    expect(metricInstances.getAllByTestId(/remove-/i)).toHaveLength(7);
+    expect(metricInstances.getAllByTestId(/insert-/i)).toHaveLength(7);
+
+    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /csv/i })).not.toBeInTheDocument();
+  })
+
+  test('Test that page renders properly for combined tenant', async () => {
+    renderCloneView(true)
+
+    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Clone metric profile');
+    })
+
+    const nameField = screen.getByTestId('name');
+    const descriptionField = screen.getByLabelText(/description/i);
+    const groupField = screen.getByText('ARGO');
+
+    expect(nameField.value).toBe('Cloned ARGO_MON2');
+    expect(nameField).toBeEnabled();
+    expect(descriptionField.value).toBe('Central ARGO-MON profile');
+    expect(descriptionField).toBeEnabled();
+    expect(groupField).toBeEnabled();
+
+    expect(screen.queryByText('TEST')).not.toBeInTheDocument()
+    selectEvent.openMenu(groupField)
+    expect(screen.getByText('TEST')).toBeInTheDocument()
+
+    expect(screen.queryByText("Combined from")).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/profile/i)).not.toBeInTheDocument()
 
     const metricInstances = within(screen.getByRole('table'));
     const rows = metricInstances.getAllByRole('row');
