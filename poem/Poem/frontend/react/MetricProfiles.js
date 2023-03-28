@@ -390,7 +390,7 @@ const MetricProfilesForm = ({
 
   if (addview && combined) {
     for (let tenant of Object.keys(tenantsProfiles)) {
-      initValues[`${tenant}-profiles`] = []
+      initValues[`${tenant}-profile`] = ""
     }
   }
 
@@ -444,6 +444,16 @@ const MetricProfilesForm = ({
           servicesList: listServices.sort(sortServices)
         }
       );
+  }
+
+  const resetServices = (values) => {
+    methods.resetField("view_services")
+    methods.setValue("view_services", values.sort(sortServices))
+    methods.resetField("search_metric")
+    methods.resetField("search_serviceflavour")
+    methods.resetField("services")
+    methods.setValue("services", values.sort(sortServices))
+    methods.trigger()
   }
 
   return (
@@ -506,13 +516,7 @@ const MetricProfilesForm = ({
                       }))
                         item.isNew = true
                     })
-                    methods.resetField("view_services")
-                    methods.setValue("view_services", imported.sort(sortServices))
-                    methods.resetField("search_metric")
-                    methods.resetField("search_serviceflavour")
-                    methods.resetField("services")
-                    methods.setValue("services", imported.sort(sortServices))
-                    methods.trigger()
+                    resetServices(imported)
                   }
                 })
               }}
@@ -544,15 +548,30 @@ const MetricProfilesForm = ({
               <Row key={tenant}>
                 <Col md={7}>
                   <h6 className='mt-4 font-weight-bold text-uppercase'>{ tenant }</h6>
-                  <Label for={ `${tenant}-profiles` }>Metric profile:</Label>
+                  <Label for={ `${tenant}-profile` }>Metric profile:</Label>
                   <Controller
-                    name={ `${tenant}-profiles` }
+                    name={ `${tenant}-profile` }
                     control={ control }
                     render={ ({ field }) =>
                       <CustomReactSelect
                         forwardedRef={ field.ref }
-                        inputId={ `${tenant}-profiles` }
-                        onChange={ e => methods.setValue(`${tenant}-profiles`, e.value) }
+                        inputId={ `${tenant}-profile` }
+                        onChange={ e => {
+                          let tenants = Object.keys(tenantsProfiles)
+                          let old_profile = methods.getValues(`${tenant}-profile`)
+                          methods.setValue(`${tenant}-profile`, e.value) 
+                          let old_profile_tuples = []
+                          if (old_profile)
+                            old_profile_tuples = flattenServices(tenantsProfiles[tenant].filter(profile => profile.name === old_profile)[0].services)
+                          let current_tuples = []
+                          for (let tnnt of tenants) {
+                            let pname = methods.getValues(`${tnnt}-profile`)
+                            if (pname)
+                              current_tuples = current_tuples.concat(flattenServices(tenantsProfiles[tnnt].filter(profile => profile.name === pname)[0].services))
+                          }
+                          let tuples = current_tuples.filter(tuple => !old_profile_tuples.includes(tuple))
+                          resetServices(tuples)
+                        } }
                         options={ tenantsProfiles[tenant].map(profile => new Object({ value: profile.name, label: profile.name })) }
                         defaultValue={ field.value }
                       />

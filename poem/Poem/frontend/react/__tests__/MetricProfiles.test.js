@@ -3474,6 +3474,106 @@ describe('Tests for metric profile addview', () => {
     expect(row1.getAllByText("Select...")).toHaveLength(2)
   })
 
+  test("Test importing tuples from constituting tenants for combined tenant", async () => {
+    renderAddView(true)
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+    })
+
+    const metricInstances = within(screen.getByRole("table"))
+    var rows = metricInstances.getAllByRole("row")
+    expect(rows).toHaveLength(3)
+    var row1 = within(rows[2])
+
+    expect(row1.getAllByText("Select...")).toHaveLength(2)
+
+    await selectEvent.select(screen.getAllByLabelText(/profile/i)[0], "TENANT1-PROFILE1")
+
+    rows = metricInstances.getAllByRole("row")
+    expect(rows).toHaveLength(5)
+    row1 = within(rows[2])
+    var row2 = within(rows[3])
+    var row3 = within(rows[4])
+
+    expect(row1.getByText("b2access.unity")).toBeInTheDocument()
+    expect(row1.getByText("eudat.b2access.unity.login-certificate")).toBeInTheDocument()
+
+    expect(row2.getByText("b2access.unity")).toBeInTheDocument()
+    expect(row2.getByText("eudat.b2access.unity.login-local")).toBeInTheDocument()
+
+    expect(row3.getByText("b2drop.nextcloud")).toBeInTheDocument()
+    expect(row3.getByText("generic.tcp.connect")).toBeInTheDocument()
+
+    await selectEvent.select(screen.getAllByLabelText(/profile/i)[1], "PROFILE3")
+
+    rows = metricInstances.getAllByRole("row")
+    expect(rows).toHaveLength(9)
+
+    row1 = within(rows[2])
+    row2 = within(rows[3])
+    row3 = within(rows[4])
+    var row4 = within(rows[5])
+    var row5 = within(rows[6])
+    var row6 = within(rows[7])
+    var row7 = within(rows[8])
+
+    expect(row1.getByText("b2access.unity")).toBeInTheDocument()
+    expect(row1.getByText("eudat.b2access.unity.login-certificate")).toBeInTheDocument()
+
+    expect(row2.getByText("b2access.unity")).toBeInTheDocument()
+    expect(row2.getByText("eudat.b2access.unity.login-local")).toBeInTheDocument()
+
+    expect(row3.getByText("b2drop.nextcloud")).toBeInTheDocument()
+    expect(row3.getByText("generic.tcp.connect")).toBeInTheDocument()
+
+    expect(row4.getByText("generic.json")).toBeInTheDocument()
+    expect(row4.getByText("generic.http.json")).toBeInTheDocument()
+
+    expect(row5.getByText("generic.oai-pmh")).toBeInTheDocument()
+    expect(row5.getByText("generic.oai-pmh.validity")).toBeInTheDocument()
+
+    expect(row6.getByText("portal.services.url")).toBeInTheDocument()
+    expect(row6.getByText("generic.certificate.validity")).toBeInTheDocument()
+
+    expect(row7.getByText("portal.services.url")).toBeInTheDocument()
+    expect(row7.getByText("generic.http.connect")).toBeInTheDocument()
+
+    await selectEvent.select(screen.getAllByLabelText(/profile/i)[0], "TENANT1-PROFILE2")
+
+    rows = metricInstances.getAllByRole("row")
+    expect(rows).toHaveLength(9)
+
+    row1 = within(rows[2])
+    row2 = within(rows[3])
+    row3 = within(rows[4])
+    row4 = within(rows[5])
+    row5 = within(rows[6])
+    row6 = within(rows[7])
+    row7 = within(rows[8])
+
+    expect(row1.getByText("b2handle.handle.api")).toBeInTheDocument()
+    expect(row1.getByText("eudat.b2handle.handle.api-crud")).toBeInTheDocument()
+
+    expect(row2.getByText("b2handle.handle.api")).toBeInTheDocument()
+    expect(row2.getByText("eudat.b2handle.handle.api-healthcheck-resolve")).toBeInTheDocument()
+
+    expect(row3.getByText("b2handle.handle.api")).toBeInTheDocument()
+    expect(row3.getByText("generic.tcp.connect")).toBeInTheDocument()
+
+    expect(row4.getByText("generic.json")).toBeInTheDocument()
+    expect(row4.getByText("generic.http.json")).toBeInTheDocument()
+
+    expect(row5.getByText("generic.oai-pmh")).toBeInTheDocument()
+    expect(row5.getByText("generic.oai-pmh.validity")).toBeInTheDocument()
+
+    expect(row6.getByText("portal.services.url")).toBeInTheDocument()
+    expect(row6.getByText("generic.certificate.validity")).toBeInTheDocument()
+
+    expect(row7.getByText("portal.services.url")).toBeInTheDocument()
+    expect(row7.getByText("generic.http.connect")).toBeInTheDocument()
+  })
+
   test('Test successfully adding a metric profile', async () => {
     mockAddMetricProfile.mockReturnValueOnce(
       Promise.resolve({
