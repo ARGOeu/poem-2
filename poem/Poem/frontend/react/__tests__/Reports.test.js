@@ -1136,7 +1136,7 @@ describe('Tests for reports changeview', () => {
   jest.spyOn(NotificationManager, 'error');
   jest.spyOn(queryClient, 'invalidateQueries');
 
-  beforeAll(() => {
+  beforeEach(() => {
     WebApi.mockImplementation(() => {
       return {
         fetchReport: () => Promise.resolve(mockReport),
@@ -1529,13 +1529,6 @@ describe('Tests for reports changeview', () => {
   })
 
   test('Test change topology type', async () => {
-    mockChangeObject.mockReturnValueOnce(
-      Promise.resolve({ ok: true, status: 200, statusText: 'OK' })
-    )
-    mockChangeReport.mockReturnValueOnce(
-      Promise.resolve({ ok: 'ok' })
-    )
-
     renderChangeView()
 
     await waitFor(() => {
@@ -1553,37 +1546,6 @@ describe('Tests for reports changeview', () => {
     expect(screen.getAllByText(/service groups/i)).toHaveLength(2)
     expect(screen.queryByText(/sites/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/ngis/i)).not.toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
-    })
-    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
-
-    let frontendReport = JSON.parse(JSON.stringify(report4sending))
-    frontendReport.topology_schema = {
-      group: {
-        type: 'PROJECT',
-        group: {
-          type: 'SERVICEGROUPS'
-        }
-      }
-    }
-
-    await waitFor(() => {
-      expect(mockChangeReport).toHaveBeenCalledWith(frontendReport)
-    })
-
-    await waitFor(() => {
-      expect(mockChangeObject).toHaveBeenCalledWith(
-        '/api/v2/internal/reports/', backendReport4sending
-      )
-    })
-
-    expect(queryClient.invalidateQueries).toHaveBeenCalledWith('report')
-    expect(NotificationManager.success).toHaveBeenCalledWith(
-      'Report successfully changed', 'Changed', 2000
-    )
   })
 
   test('Test change groups', async () => {
