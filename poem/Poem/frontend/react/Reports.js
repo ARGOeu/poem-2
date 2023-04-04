@@ -249,6 +249,24 @@ const ReportsSchema = Yup.object().shape({
       })
     })
   ),
+  entitiesEndpoints: Yup.array().of(
+    Yup.object().shape({
+      name: Yup.string(),
+      value: Yup.array().test("regex", "Value not matching predefined values", function (vals, context) {
+        let { key1, key2 } = getEndpointsEntitiesKeysLabels(context.from[1].value.topologyType)
+        let key = context.options.index === 0 ? key1 : key2
+        let selectEntities = filterSelectEntities(
+            this.options.context.groupsEntitiesTopoGroups[key],
+            context.from[1].value.entitiesGroups,
+            context.from[1].value.entitiesEndpoints,
+            this.options.context.topoMaps,
+            key
+          )
+
+        return getInvalidValues(vals, selectEntities).length === 0
+      })
+    })
+  )
 })
 
 export const ReportsAdd = (props) => <ReportsComponent addview={true} {...props}/>;
@@ -440,7 +458,14 @@ const filterSelectEntities = (data, entitiesGroups, entitiesEndpoints, topoMaps,
         let choices = new Array()
         if (selectedTop.length > 0)
           selectedTop.forEach(sel => {
-            let sels = topoMaps[tt['topMapKey']].get(sel)
+            let sels = new Array()
+            if (sel.includes("*")) {
+              for (const [key, val] of topoMaps[tt["topMapKey"]].entries()) {
+                const res = key.match(new RegExp(`${sel.replace("*", ".*")}`))
+                if (res) sels.push(...val)
+              }
+            } else
+              sels = topoMaps[tt['topMapKey']].get(sel)
             if (sels)
               choices.push(...sels)
           })
@@ -479,7 +504,7 @@ const filterSelectEntities = (data, entitiesGroups, entitiesEndpoints, topoMaps,
     }
   }
   else
-    return data.sort(sortStr)
+    return data ? data.sort(sortStr) : []
 }
 
 
@@ -1029,11 +1054,13 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, topoMaps, publicVi
 
 
 const TopologyConfEndpointsEntityFields = ({topoGroups, addview, topoMaps, publicView}) => {
-  const { control, getValues, setValue } = useFormContext()
+  const { control, getValues, setValue, clearErrors, trigger, formState: { errors } } = useFormContext()
 
   const topoType = useWatch({ control, name: "topologyType" })
   const entitiesGroups = useWatch({ control, name: "entitiesGroups" })
   const entitiesEndpoints = useWatch({ control, name: "entitiesEndpoints" })
+
+  const [invalidValues, setInvalidValues] = useState(new Array())
 
   let { key1, key2, label1, label2 } = getEndpointsEntitiesKeysLabels(topoType)
 
@@ -1053,25 +1080,49 @@ const TopologyConfEndpointsEntityFields = ({topoGroups, addview, topoMaps, publi
               value={ field.value?.join(", ") }
             />
           :
-            <EntitySelect
-              forwardedRef={ field.ref }
-              id="topoEntityEndoint1"
-              entitiesOptions={
-                formatSelectEntities(
-                  filterSelectEntities(
-                    topoGroups[key1],
-                    entitiesGroups,
-                    entitiesEndpoints,
-                    topoMaps,
-                    key1
+            <>
+              <EntitySelect
+                forwardedRef={ field.ref }
+                id="topoEntityEndoint1"
+                entitiesOptions={
+                  formatSelectEntities(
+                    filterSelectEntities(
+                      topoGroups[key1],
+                      entitiesGroups,
+                      entitiesEndpoints,
+                      topoMaps,
+                      key1
+                    )
+                )}
+                onChangeHandler={ (e) => {
+                  let fieldValues = e.map(item => item.value)
+                  setValue("entitiesEndpoints.0.name", key1)
+                  setValue("entitiesEndpoints.0.value", fieldValues)
+                  setInvalidValues(
+                    getInvalidValues(
+                      fieldValues,
+                      filterSelectEntities(
+                        topoGroups[key1],
+                        entitiesGroups,
+                        entitiesEndpoints,
+                        topoMaps,
+                        key1
+                      )
+                    )
                   )
-              )}
-              onChangeHandler={ (e) => {
-                setValue("entitiesEndpoints.0.name", key1)
-                setValue("entitiesEndpoints.0.value", e.map(item => item.value))
-              }}
-              entitiesInitials={!addview ? entityInitValues(["entitiesSites", "entitiesServiceGroups"], getValues("entitiesEndpoints")) : undefined}
-            />
+                  clearErrors("entitiesEndpoints.0.value")
+                  trigger("entitiesEndpoints.0.value")
+                  trigger("entitiesEndpoints.1.value")
+                }}
+                entitiesInitials={!addview ? entityInitValues(["entitiesSites", "entitiesServiceGroups"], getValues("entitiesEndpoints")) : undefined}
+                invalidValues={ invalidValues }
+                error={ errors?.entitiesEndpoints?.[0]?.value }
+              />
+              {
+                errors?.entitiesEndpoints?.[0]?.value &&
+                  <CustomError error={ errors?.entitiesGroups?.[0]?.value?.message } />
+              }
+            </>
         }
       />
       <Label for='topoEntityEndoint2' className='pt-2'>{label2}</Label>
@@ -1088,26 +1139,49 @@ const TopologyConfEndpointsEntityFields = ({topoGroups, addview, topoMaps, publi
               value={ field.value?.join(", ") }
             />
           :
-            <EntitySelect
-              forwardedRef={ field.ref }
-              className="pt-2"
-              id="topoEntityEndoint2"
-              entitiesOptions={
-                formatSelectEntities(
-                  filterSelectEntities(
-                    topoGroups[key2],
-                    entitiesGroups,
-                    entitiesEndpoints,
-                    topoMaps,
-                    key2
+            <>
+              <EntitySelect
+                forwardedRef={ field.ref }
+                className="pt-2"
+                id="topoEntityEndoint2"
+                entitiesOptions={
+                  formatSelectEntities(
+                    filterSelectEntities(
+                      topoGroups[key2],
+                      entitiesGroups,
+                      entitiesEndpoints,
+                      topoMaps,
+                      key2
+                    )
+                )}
+                onChangeHandler={ (e) => {
+                  let fieldValues = e.map(item => item.value)
+                  setValue("entitiesEndpoints.1.name", key2)
+                  setValue("entitiesEndpoints.1.value", fieldValues)
+                  setInvalidValues(
+                    getInvalidValues(
+                      fieldValues,
+                      filterSelectEntities(
+                        topoGroups[key2],
+                        entitiesGroups,
+                        entitiesEndpoints,
+                        topoMaps,
+                        key2
+                      )
+                    )
                   )
-              )}
-              onChangeHandler={ (e) => {
-                setValue("entitiesEndpoints.1.name", key2)
-                setValue("entitiesEndpoints.1.value", e.map(item => item.value))
-              }}
-              entitiesInitials={!addview ? entityInitValues(["serviceTypesSitesEndpoints", "serviceTypesServiceGroupsEndpoints"], getValues("entitiesEndpoints")) : undefined}
-            />
+                  clearErrors("entitiesEndpoints.1.value")
+                  trigger("entitiesEndpoints.1.value")
+                }}
+                entitiesInitials={!addview ? entityInitValues(["serviceTypesSitesEndpoints", "serviceTypesServiceGroupsEndpoints"], getValues("entitiesEndpoints")) : undefined}
+                invalidValues={ invalidValues }
+                error={ errors?.entitiesEndpoints?.[1]?.value }
+              />
+              {
+                errors?.entitiesEndpoints?.[1]?.value &&
+                  <CustomError error={ errors?.entitiesEndpoints?.[1]?.value?.message } />
+              }
+            </>
           }
       />
     </React.Fragment>
@@ -1579,7 +1653,13 @@ const ReportsForm = ({
                         forwardedRef={ field.ref }
                         error={ methods.formState.errors?.topologyType }
                         label="Topology type:"
-                        onChange={ e => methods.setValue("topologyType", e.value) }
+                        onChange={ e => {
+                          methods.setValue("topologyType", e.value) 
+                          methods.trigger("entitiesGroups.0.value")
+                          methods.trigger("entitiesGroups.1.value")
+                          methods.trigger("entitiesEndpoints.0.value")
+                          methods.trigger("entitiesEndpoints.1.value")
+                        } }
                         options={
                           context.topologyTypes.map(type => new Object({
                             label: type, value: type
@@ -1640,7 +1720,7 @@ const ReportsForm = ({
                       <strong>Entities</strong>
                     </CardTitle>
                     <TopologyConfGroupsEntityFields
-                      topoGroups={groupsEntitiesTopoGroups  }
+                      topoGroups={ groupsEntitiesTopoGroups }
                       topoMaps={context.topologyMaps}
                       addview={addview}
                       publicView={publicView}
