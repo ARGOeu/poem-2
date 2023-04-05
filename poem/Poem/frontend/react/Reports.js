@@ -455,7 +455,7 @@ const filterSelectEntities = (data, entitiesGroups, entitiesEndpoints, topoMaps,
 
     for (var tt of topoTypeMeta) {
       if (lookkey.includes(tt['middleKey'])) {
-        let choices = new Array()
+        let choices = new Set()
         if (selectedTop.length > 0)
           selectedTop.forEach(sel => {
             let sels = new Array()
@@ -467,18 +467,27 @@ const filterSelectEntities = (data, entitiesGroups, entitiesEndpoints, topoMaps,
             } else
               sels = topoMaps[tt['topMapKey']].get(sel)
             if (sels)
-              choices.push(...sels)
+              for (var ser of sels)
+                choices.add(ser)
           })
         else
           choices = data
-        return choices.sort(sortStr)
+
+        return Array.from(choices).sort(sortStr)
       }
 
       else if (lookkey.includes(tt['lowerKey'])) {
         let services = new Set()
         if (selectedMiddle.length > 0) {
           selectedMiddle.forEach(sel => {
-            let sels = topoMaps[tt['middleMapKey']].get(sel)
+            let sels = new Array()
+            if (sel.includes("*")) {
+              for (const [key, val] of topoMaps[tt["middleMapKey"]].entries()) {
+                const res = key.match(new RegExp(`${sel.replace("*", ".*")}`))
+                if (res) sels.push(...val)
+              }
+            } else
+              sels = topoMaps[tt['middleMapKey']].get(sel)
             if (sels)
               for (var ser of sels)
                 services.add(ser)
@@ -488,12 +497,26 @@ const filterSelectEntities = (data, entitiesGroups, entitiesEndpoints, topoMaps,
         else if (selectedTop.length > 0) {
           let sites = new Array()
           selectedTop.forEach(sel => {
-            let sels = topoMaps[tt['topMapKey']].get(sel)
+            let sels = new Array()
+            if (sel.includes("*")) {
+              for (const [key, val] of topoMaps[tt["topMapKey"]].entries()) {
+                const res = key.match(new RegExp(`${sel.replace("*", ".*")}`))
+                if (res) sels.push(...val)
+              }
+            } else
+              sels = topoMaps[tt['topMapKey']].get(sel)
             if (sels)
               sites.push(...sels)
           })
           sites.forEach(sel => {
-            let sels = topoMaps[tt['middleMapKey']].get(sel)
+            let sels = new Array()
+            if (sel.includes("*")) {
+              for (const [key, val] of topoMaps[tt["middleMapKey"]].entries()) {
+                const res = key.match(new RegExp(`${sel.replace("*", ".*")}`))
+                if (res) sels.push(...val)
+              }
+            } else 
+              sels = topoMaps[tt['middleMapKey']].get(sel)
             if (sels)
               for (var ser of sels)
                 services.add(ser)
@@ -2012,6 +2035,17 @@ export const ReportsComponent = (props) => {
     { enabled: !publicView && !!userDetails }
   )
 
+  const getEntityNameField = (i, context) => {
+    let name_field = ''
+    if (i === 0)
+      name_field = 'group'
+    else if (context.indexOf('argo.group') !== -1 && i === 1)
+      name_field = 'subgroup'
+    else if (context.indexOf('argo.endpoint') !== -1 && i === 1)
+      name_field = 'service'
+    return name_field
+  }
+
   const formatToReportTags = (tagsContext, formikTags, formikExtensions) => {
     const formatTag = (tag, prefix='') => {
       let value = ""
@@ -2049,17 +2083,6 @@ export const ReportsComponent = (props) => {
   }
 
   const formatToReportEntities = (context, formikEntities) => {
-    const setNameField = (i) => {
-        let name_field = ''
-        if (i === 0)
-          name_field = 'group'
-        else if (context.indexOf('argo.group') !== -1 && i === 1)
-          name_field = 'subgroup'
-        else if (context.indexOf('argo.endpoint') !== -1 && i === 1)
-          name_field = 'service'
-        return name_field
-    }
-
     let entities = new Array()
 
     for (var i = 0; i < formikEntities.length; i++) {
@@ -2072,7 +2095,7 @@ export const ReportsComponent = (props) => {
         for (var val of values)
           if (val)
             tmpEntites.push(new Object({
-              name: setNameField(i),
+              name: getEntityNameField(i, context),
               value: val.trim(),
               context: context
             }))
@@ -2080,7 +2103,7 @@ export const ReportsComponent = (props) => {
       }
       else {
         if (entity.value) {
-          tmpEntity['name'] = setNameField(i),
+          tmpEntity['name'] = getEntityNameField(i, context),
           tmpEntity['value'] = entity.value,
           tmpEntity['context'] = context
           entities.push(tmpEntity)
@@ -2112,7 +2135,11 @@ export const ReportsComponent = (props) => {
     return [tags, extensions]
   }
 
-  const formatFromReportEntities = (context, formikEntities, topologyGroups) => {
+  const formatFromReportEntities = (
+    context, 
+    formikEntities, 
+    topoType
+  ) => {
     let default_empty = new Object({
         'name': undefined,
         'value': undefined
@@ -2128,14 +2155,12 @@ export const ReportsComponent = (props) => {
     let tmpEntityJoint = new Object()
     let entities = new Array()
 
+    let getKeysLabels = context.indexOf("argo.group") > -1 ? getGroupsEntitiesKeysLabels : getEndpointsEntitiesKeysLabels
+
     for (let entity of formikEntities) {
       if (entity.context === context) {
-        let entity_type = undefined
-        for (var type in topologyGroups)
-          if (topologyGroups[type].indexOf(entity.value) > -1) {
-            entity_type = type
-            break
-          }
+        let { key1, key2 } = getKeysLabels(topoType)
+        let entity_type = entity.name === "group" ? key1 : key2
         if (entity_type) {
           if (tmpEntityJoint[entity_type] === undefined)
             tmpEntityJoint[entity_type] = new Array()
@@ -2162,12 +2187,13 @@ export const ReportsComponent = (props) => {
       else
         final_entities = entities
     }
+
     else if (context.indexOf('argo.endpoint') !== 1) {
       if (entities.length === 1) {
         let only_type = entities[0].name.toLowerCase()
-        if (only_type.startsWith('site') || only_type.startsWith('servicegroup'))
+        if (only_type.indexOf('site') !== -1 || only_type.indexOf('servicegroup') !== -1)
           final_entities = [entities[0], default_empty]
-        else if (only_type.startsWith('servicetypessites') || only_type.startsWith('servicetypesservicegroups'))
+        else if (only_type.indexOf('servicetypessites') !== 1 || only_type.indexOf('servicetypesservicegroups') !== 1)
           final_entities = [default_empty, entities[0]]
       }
       else
@@ -2549,13 +2575,11 @@ export const ReportsComponent = (props) => {
         || (entitiesProjects.length > 0 && entitiesServiceGroups.length > 0)
       )
     ) {
-      entitiesGroupsFormik = formatFromReportEntities('argo.group.filter.fields',
-        webApiReport['filter_tags'], {
-          entitiesNgi,
-          entitiesSites,
-          entitiesProjects,
-          entitiesServiceGroups
-        })
+      entitiesGroupsFormik = formatFromReportEntities(
+        'argo.group.filter.fields',
+        webApiReport["filter_tags"],
+        whichTopologyType(webApiReport.topology_schema)
+      )
     }
     else if (addview)
       entitiesGroupsFormik = new Array(
@@ -2575,13 +2599,11 @@ export const ReportsComponent = (props) => {
         || (entitiesServiceGroups.length > 0 && serviceTypesServiceGroupsEndpoints.length > 0)
       )
     ) {
-      entitiesEndpointsFormik = formatFromReportEntities('argo.endpoint.filter.fields',
-        webApiReport['filter_tags'], {
-          entitiesSites,
-          serviceTypesSitesEndpoints,
-          entitiesServiceGroups,
-          serviceTypesServiceGroupsEndpoints
-        })
+      entitiesEndpointsFormik = formatFromReportEntities(
+        'argo.endpoint.filter.fields',
+        webApiReport['filter_tags'],
+        whichTopologyType(webApiReport.topology_schema)
+      )
     }
     else if (addview)
       entitiesEndpointsFormik = new Array(
