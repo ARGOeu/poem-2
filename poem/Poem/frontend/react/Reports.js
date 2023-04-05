@@ -165,6 +165,14 @@ const ReportsSchema = Yup.object().shape({
 
         return getInvalidValues(vals, selectEntities).length === 0
       })
+      .test("regex-duplicate", "Duplicate values", function (vals) {
+        if (Array.isArray(vals)) {
+          let invalidValues = getWildcardDuplicates(vals)
+
+          return invalidValues.length === 0
+        } else
+          return true
+      })
     })
   ),
   endpointsTags: Yup.array().of(
@@ -264,6 +272,14 @@ const ReportsSchema = Yup.object().shape({
           )
 
         return getInvalidValues(vals, selectEntities).length === 0
+      })
+      .test("regex-duplicate", "Duplicate values", function (vals) {
+        if (Array.isArray(vals)) {
+          let invalidValues = getWildcardDuplicates(vals)
+
+          return invalidValues.length === 0
+        } else
+          return true
       })
     })
   )
@@ -822,12 +838,10 @@ const TopologyTagList = ({ part, fieldName, tagsAll, publicView }) => {
                                 onChangeHandler={ value => {
                                   let fieldValues = value.map(val => val.value)
                                   setValue(`${fieldName}.${index}.value`, fieldValues)
-                                  let invalidValues = getInvalidValues(fieldValues, extractValuesTags(index).map(tag => tag.value))
-                                  let duplicateValues = getWildcardDuplicates(fieldValues)
-                                  if (invalidValues)
-                                    setInvalidValues(invalidValues)
-                                  if (duplicateValues)
-                                    setInvalidValues(duplicateValues)
+                                  let invalidvalues = getInvalidValues(fieldValues, extractValuesTags(index).map(tag => tag.value))
+                                  let duplicatevalues = getWildcardDuplicates(fieldValues)
+                                  if (invalidvalues) setInvalidValues(invalidvalues)
+                                  if (duplicatevalues) setInvalidValues(duplicatevalues)
                                   clearErrors(`${fieldName}.${index}.value`)
                                   trigger(`${fieldName}.${index}.value`)
                                 }}
@@ -998,7 +1012,10 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, topoMaps, publicVi
                   let fieldValues = e.map(item => item.value)
                   setValue("entitiesGroups.0.name", key1)
                   setValue("entitiesGroups.0.value", fieldValues)
-                  setInvalidValues(getInvalidValues(fieldValues, topoGroups[key1]))
+                  let invalidvalues = getInvalidValues(getValues("entitiesGroups.0.value"), topoGroups[key1])
+                  let duplicatevalues = getWildcardDuplicates(fieldValues)
+                  if (invalidvalues) setInvalidValues(invalidvalues)
+                  else if (duplicatevalues) setInvalidValues(duplicatevalues)
                   clearErrors("entitiesGroups.0.value")
                   trigger("entitiesGroups.0.value")
                 }}
@@ -1045,8 +1062,7 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, topoMaps, publicVi
                   let fieldValues = e.map(item => item.value)
                   setValue("entitiesGroups.1.name", key2)
                   setValue("entitiesGroups.1.value", fieldValues)
-                  setInvalidValues(
-                    getInvalidValues(
+                  let invalidvalues = getInvalidValues(
                       fieldValues,
                       filterSelectEntities(
                         topoGroups[key2],
@@ -1055,8 +1071,10 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, topoMaps, publicVi
                         topoMaps,
                         key2
                       )
-                    )
                   )
+                  let duplicatevalues = getWildcardDuplicates(fieldValues)
+                  if (invalidvalues) setInvalidValues(invalidvalues)
+                  else if (duplicatevalues) setInvalidValues(duplicatevalues)
                   clearErrors("entitiesGroups.1.value")
                   trigger("entitiesGroups.1.value")
                 }}
@@ -1121,18 +1139,19 @@ const TopologyConfEndpointsEntityFields = ({topoGroups, addview, topoMaps, publi
                   let fieldValues = e.map(item => item.value)
                   setValue("entitiesEndpoints.0.name", key1)
                   setValue("entitiesEndpoints.0.value", fieldValues)
-                  setInvalidValues(
-                    getInvalidValues(
-                      fieldValues,
-                      filterSelectEntities(
-                        topoGroups[key1],
-                        entitiesGroups,
-                        entitiesEndpoints,
-                        topoMaps,
-                        key1
-                      )
+                  let invalidvalues = getInvalidValues(
+                    fieldValues,
+                    filterSelectEntities(
+                      topoGroups[key1],
+                      entitiesGroups,
+                      entitiesEndpoints,
+                      topoMaps,
+                      key1
                     )
                   )
+                  let duplicatevalues = getWildcardDuplicates(fieldValues)
+                  if (invalidvalues) setInvalidValues(invalidvalues)
+                  else if (duplicatevalues) setInvalidValues(duplicatevalues)
                   clearErrors("entitiesEndpoints.0.value")
                   trigger("entitiesEndpoints.0.value")
                   trigger("entitiesEndpoints.1.value")
@@ -1181,18 +1200,19 @@ const TopologyConfEndpointsEntityFields = ({topoGroups, addview, topoMaps, publi
                   let fieldValues = e.map(item => item.value)
                   setValue("entitiesEndpoints.1.name", key2)
                   setValue("entitiesEndpoints.1.value", fieldValues)
-                  setInvalidValues(
-                    getInvalidValues(
-                      fieldValues,
-                      filterSelectEntities(
-                        topoGroups[key2],
-                        entitiesGroups,
-                        entitiesEndpoints,
-                        topoMaps,
-                        key2
-                      )
+                  let invalidvalues = getInvalidValues(
+                    fieldValues,
+                    filterSelectEntities(
+                      topoGroups[key2],
+                      entitiesGroups,
+                      entitiesEndpoints,
+                      topoMaps,
+                      key2
                     )
                   )
+                  let duplicatevalues = getWildcardDuplicates(fieldValues)
+                  if (invalidvalues) setInvalidValues(invalidvalues)
+                  else if (duplicatevalues) setInvalidValues(duplicatevalues)
                   clearErrors("entitiesEndpoints.1.value")
                   trigger("entitiesEndpoints.1.value")
                 }}

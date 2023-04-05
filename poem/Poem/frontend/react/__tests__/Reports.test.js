@@ -2963,6 +2963,33 @@ describe("Tests for reports changeview when using wildcards", () => {
     expect(card_endpoints.queryByText("eu.eosc.core-aai.saml.login.edugain")).toBeInTheDocument()
     expect(card_endpoints.queryByText("eu.eosc.core-aai.oidc.login.edugain")).toBeInTheDocument()
   })
+
+  test("Test duplicates validation", async () => {
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /report/i })).toBeInTheDocument()
+    })
+
+    const card_groups = within(screen.getByTestId("card-group-of-groups"))
+    const card_endpoints = within(screen.getByTestId("card-group-of-endpoints"))
+
+    expect(card_groups.queryByText("Duplicate values")).not.toBeInTheDocument()
+
+    await selectEvent.select(card_groups.queryByText("EOSC_*"), "EOSC_AAI")
+
+    await waitFor(() => {
+      expect(card_groups.queryAllByText("Duplicate values")).toHaveLength(1)
+    })
+
+    expect(card_endpoints.queryByText("Duplicate values")).not.toBeInTheDocument()
+
+    await selectEvent.select(card_endpoints.queryByText("EOSC_Core*"), "EOSC_Core_Infrastracture_proxy")
+
+    await waitFor(() => {
+      expect(card_endpoints.queryAllByText("Duplicate values")).toHaveLength(1)
+    })
+  })
 })
 
 
