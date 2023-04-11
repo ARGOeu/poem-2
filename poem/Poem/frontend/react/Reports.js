@@ -379,10 +379,14 @@ const getNegationDuplicates = (values) => {
 
   if (negated.length > 0) {
     for (let n of negated) {
-      let wDuplicates = values.filter(val => val === n.slice(1))
+      let nDuplicates = []
+      for (let value of values.filter(val => !val.startsWith("~"))) {
+        if (value.match(new RegExp(`${n.slice(1).replace("*", ".*")}`)))
+          nDuplicates.push(value)
+      }
 
-      if (wDuplicates.length > 0) {
-        duplicates.push(...wDuplicates)
+      if (nDuplicates.length > 0) {
+        duplicates.push(...nDuplicates)
         duplicates.push(n)
       }
     }
