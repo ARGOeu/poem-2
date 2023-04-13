@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
 import { Backend } from './DataManager';
-import { LoadingAnim, ErrorComponent, BaseArgoView, ParagraphTitle, NotifyError, NotifyOk } from './UIElements';
-import { Formik, Form, Field } from 'formik';
+import { 
+  LoadingAnim, 
+  ErrorComponent, 
+  BaseArgoView, 
+  ParagraphTitle, 
+  NotifyError, 
+  NotifyOk 
+} from './UIElements';
 import {
   FormGroup,
   Row,
@@ -15,12 +21,15 @@ import {
   Badge,
   CardTitle,
   CardSubtitle,
-  Button
+  Button,
+  Form,
+  Input
 } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faIdBadge } from '@fortawesome/free-solid-svg-icons';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { fetchTenants } from './QueryFunctions';
+import { Controller, useForm } from 'react-hook-form';
 
 
 export const TenantList = (props) => {
@@ -127,13 +136,145 @@ export const TenantList = (props) => {
 };
 
 
-export const TenantChange = (props) => {
+const TenantForm = ({
+  initialValues=undefined,
+  doDelete=undefined,
+  ...props
+}) => {
+  const location = props.location
+
   const [areYouSureModal, setAreYouSureModal] = useState(false);
   const [modalTitle, setModalTitle] = useState(undefined);
   const [modalMsg, setModalMsg] = useState(undefined);
 
+  const { control } = useForm({
+    defaultValues: initialValues
+  })
+
+  function toggleAreYouSure() {
+    setAreYouSureModal(!areYouSureModal);
+  }
+
+  return (
+    <BaseArgoView
+      resourcename='Tenant details'
+      location={location}
+      history={false}
+      infoview={true}
+      modal={true}
+      state={{
+        areYouSureModal,
+        modalTitle,
+        modalMsg,
+        modalFunc: doDelete
+      }}
+      toggle={toggleAreYouSure}
+    >
+      <Form>
+        <FormGroup>
+          <Row>
+            <Col md={6}>
+              <InputGroup>
+                <InputGroupText>Name</InputGroupText>
+                <Controller
+                  name="name"
+                  control={ control }
+                  render={ ({ field }) =>
+                    <Input
+                      { ...field }
+                      data-testid="name"
+                      disabled={ true }
+                      className="form-control form-control-lg"
+                    />
+                  }
+                />
+              </InputGroup>
+            </Col>
+          </Row>
+        </FormGroup>
+        <FormGroup>
+          <ParagraphTitle title='basic info'/>
+          <Row>
+            <Col md={6}>
+              <InputGroup>
+                <InputGroupText>Schema</InputGroupText>
+                <Controller
+                  name="schema"
+                  control={ control }
+                  render={ ({ field }) =>
+                    <Input
+                      { ...field }
+                      data-testid="schema"
+                      disabled={ true }
+                      className="form-control"
+                    />
+                  }
+                />
+              </InputGroup>
+            </Col>
+          </Row>
+          <Row>
+            <Col md={6}>
+              <InputGroup>
+                <InputGroupText>POEM URL</InputGroupText>
+                <Controller
+                  name="url"
+                  control={ control }
+                  render={ ({ field }) =>
+                    <Input
+                      { ...field }
+                      data-testid="url"
+                      disabled={ true }
+                      className="form-control"
+                    />
+                  }
+                />
+              </InputGroup>
+            </Col>
+          </Row>
+          <Row>
+            <Col md={6}>
+              <InputGroup>
+                <InputGroupText>Created on</InputGroupText>
+                <Controller
+                  name="created_on"
+                  control={ control }
+                  render={ ({ field }) =>
+                    <Input
+                      { ...field }
+                      data-testid="created_on"
+                      disabled={ true }
+                      className="form-control"
+                    />
+                  }
+                />
+              </InputGroup>
+            </Col>
+          </Row>
+        </FormGroup>
+        <>
+          <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+            <Button
+              color='danger'
+              onClick={() => {
+                setModalMsg('Are you sure you want to delete tenant?');
+                setModalTitle('Delete tenant')
+                toggleAreYouSure()
+              }}
+            >
+              Delete
+            </Button>
+          </div>
+          <div></div>
+        </>
+      </Form>
+    </BaseArgoView>
+  )
+}
+
+
+export const TenantChange = (props) => {
   const name = props.match.params.name;
-  const location = props.location;
   const history = props.history;
 
   const backend = new Backend();
@@ -153,10 +294,6 @@ export const TenantChange = (props) => {
       }
     }
   )
-
-  function toggleAreYouSure() {
-    setAreYouSureModal(!areYouSureModal);
-  }
 
   async function doDelete() {
     try {
@@ -185,117 +322,19 @@ export const TenantChange = (props) => {
 
   else if (tenant) {
     return (
-      <BaseArgoView
-        resourcename='Tenant details'
-        location={location}
-        history={false}
-        infoview={true}
-        modal={true}
-        state={{
-          areYouSureModal,
-          modalTitle,
-          modalMsg,
-          modalFunc: doDelete
+      <TenantForm
+        { ...props }
+        initialValues={{
+          name: tenant.name,
+          schema: tenant.schema_name,
+          url: tenant.domain_url,
+          created_on: tenant.created_on,
+          nr_metrics: tenant.nr_metrics,
+          nr_probes: tenant.nr_probes
         }}
-        toggle={toggleAreYouSure}
-      >
-        <Formik
-          initialValues = {{
-            name: tenant.name,
-            schema: tenant.schema_name,
-            url: tenant.domain_url,
-            created_on: tenant.created_on,
-            nr_metrics: tenant.nr_metrics,
-            nr_probes: tenant.nr_probes
-          }}
-        >
-          {() => (
-            <Form>
-              <FormGroup>
-                <Row>
-                  <Col md={6}>
-                    <InputGroup>
-                      <InputGroupText>Name</InputGroupText>
-                      <Field
-                        type='text'
-                        name='name'
-                        id='name'
-                        data-testid='name'
-                        disabled={true}
-                        className='form-control form-control-lg'
-                      />
-                    </InputGroup>
-                  </Col>
-                </Row>
-              </FormGroup>
-              <FormGroup>
-                <ParagraphTitle title='basic info'/>
-                <Row>
-                  <Col md={6}>
-                    <InputGroup>
-                      <InputGroupText>Schema</InputGroupText>
-                      <Field
-                        type='text'
-                        name='schema'
-                        id='schema'
-                        data-testid='schema'
-                        disabled={true}
-                        className='form-control'
-                      />
-                    </InputGroup>
-                  </Col>
-                </Row>
-                <Row>
-                  <Col md={6}>
-                    <InputGroup>
-                      <InputGroupText>POEM URL</InputGroupText>
-                      <Field
-                        type='text'
-                        name='url'
-                        id='url'
-                        data-testid='url'
-                        disabled={true}
-                        className='form-control'
-                      />
-                    </InputGroup>
-                  </Col>
-                </Row>
-                <Row>
-                  <Col md={6}>
-                    <InputGroup>
-                      <InputGroupText>Created on</InputGroupText>
-                      <Field
-                        type='text'
-                        name='created_on'
-                        id='created_on'
-                        data-testid='created_on'
-                        disabled={true}
-                        className='form-control'
-                      />
-                    </InputGroup>
-                  </Col>
-                </Row>
-              </FormGroup>
-              <>
-                <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                  <Button
-                    color='danger'
-                    onClick={() => {
-                      setModalMsg('Are you sure you want to delete tenant?');
-                      setModalTitle('Delete tenant');
-                      toggleAreYouSure();
-                    }}
-                  >
-                    Delete
-                  </Button>
-                </div>
-                <div></div>
-              </>
-            </Form>
-          )}
-        </Formik>
-      </BaseArgoView>
-    );
+        doDelete={ doDelete }
+      />
+    )
   } else
     return null;
 };
