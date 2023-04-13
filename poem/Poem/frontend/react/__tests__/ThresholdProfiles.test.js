@@ -868,29 +868,29 @@ describe('Tests for threshols profile changeview', () => {
     expect(table1.getByRole('columnheader', { name: 'max' })).toBeInTheDocument();
     expect(table1.getByRole('columnheader', { name: 'Action' })).toBeInTheDocument();
 
-    expect(screen.getByTestId('values.rules.0.thresholds.0.label').value).toBe('time');
-    expect(screen.getByTestId('values.rules.0.thresholds.0.value').value).toBe('1');
-    expect(screen.getByTestId('values.rules.0.thresholds.0.uom').value).toBe('s');
-    expect(screen.getByTestId('values.rules.0.thresholds.0.warn1').value).toBe('0');
-    expect(screen.getByTestId('values.rules.0.thresholds.0.warn2').value).toBe('0.5');
-    expect(screen.getByTestId('values.rules.0.thresholds.0.crit1').value).toBe('0.5');
-    expect(screen.getByTestId('values.rules.0.thresholds.0.crit2').value).toBe('1');
-    expect(screen.getByTestId('values.rules.0.thresholds.0.min').value).toBe('0');
-    expect(screen.getByTestId('values.rules.0.thresholds.0.max').value).toBe('10');
-    expect(screen.getByTestId('values.rules.0.thresholds.0.remove')).toBeInTheDocument();
-    expect(screen.getByTestId('values.rules.0.thresholds.0.add')).toBeInTheDocument();
+    expect(table1.getAllByText("s")).toHaveLength(2)
 
-    expect(screen.getByTestId('values.rules.0.thresholds.1.label').value).toBe('freshness');
-    expect(screen.getByTestId('values.rules.0.thresholds.1.value').value).toBe('1');
-    expect(screen.getByTestId('values.rules.0.thresholds.1.uom').value).toBe('s');
-    expect(screen.getByTestId('values.rules.0.thresholds.1.warn1').value).toBe('0');
-    expect(screen.getByTestId('values.rules.0.thresholds.1.warn2').value).toBe('10');
-    expect(screen.getByTestId('values.rules.0.thresholds.1.crit1').value).toBe('9');
-    expect(screen.getByTestId('values.rules.0.thresholds.1.crit2').value).toBe('');
-    expect(screen.getByTestId('values.rules.0.thresholds.1.min').value).toBe('0');
-    expect(screen.getByTestId('values.rules.0.thresholds.1.max').value).toBe('25');
-    expect(screen.getByTestId('values.rules.0.thresholds.1.remove')).toBeInTheDocument();
-    expect(screen.getByTestId('values.rules.0.thresholds.1.add')).toBeInTheDocument();
+    expect(screen.getByTestId('rules.0.thresholds.0.label').value).toBe('time');
+    expect(screen.getByTestId('rules.0.thresholds.0.value').value).toBe('1');
+    expect(screen.getByTestId('rules.0.thresholds.0.warn1').value).toBe('0');
+    expect(screen.getByTestId('rules.0.thresholds.0.warn2').value).toBe('0.5');
+    expect(screen.getByTestId('rules.0.thresholds.0.crit1').value).toBe('0.5');
+    expect(screen.getByTestId('rules.0.thresholds.0.crit2').value).toBe('1');
+    expect(screen.getByTestId('rules.0.thresholds.0.min').value).toBe('0');
+    expect(screen.getByTestId('rules.0.thresholds.0.max').value).toBe('10');
+    expect(screen.getByTestId('rules.0.thresholds.0.remove')).toBeInTheDocument();
+    expect(screen.getByTestId('rules.0.thresholds.0.add')).toBeInTheDocument();
+
+    expect(screen.getByTestId('rules.0.thresholds.1.label').value).toBe('freshness');
+    expect(screen.getByTestId('rules.0.thresholds.1.value').value).toBe('1');
+    expect(screen.getByTestId('rules.0.thresholds.1.warn1').value).toBe('0');
+    expect(screen.getByTestId('rules.0.thresholds.1.warn2').value).toBe('10');
+    expect(screen.getByTestId('rules.0.thresholds.1.crit1').value).toBe('9');
+    expect(screen.getByTestId('rules.0.thresholds.1.crit2').value).toBe('');
+    expect(screen.getByTestId('rules.0.thresholds.1.min').value).toBe('0');
+    expect(screen.getByTestId('rules.0.thresholds.1.max').value).toBe('25');
+    expect(screen.getByTestId('rules.0.thresholds.1.remove')).toBeInTheDocument();
+    expect(screen.getByTestId('rules.0.thresholds.1.add')).toBeInTheDocument();
 
     expect(metric2).toBeEnabled();
     expect(host2).toBeEnabled();
@@ -908,17 +908,18 @@ describe('Tests for threshols profile changeview', () => {
     expect(table2.getByRole('columnheader', { name: 'max' })).toBeInTheDocument();
     expect(table2.getByRole('columnheader', { name: 'Action' })).toBeInTheDocument();
 
-    expect(screen.getByTestId('values.rules.1.thresholds.0.label').value).toBe('time');
-    expect(screen.getByTestId('values.rules.1.thresholds.0.value').value).toBe('1');
-    expect(screen.getByTestId('values.rules.1.thresholds.0.uom').value).toBe('s');
-    expect(screen.getByTestId('values.rules.1.thresholds.0.warn1').value).toBe('0.1');
-    expect(screen.getByTestId('values.rules.1.thresholds.0.warn2').value).toBe('0.2');
-    expect(screen.getByTestId('values.rules.1.thresholds.0.crit1').value).toBe('0.2');
-    expect(screen.getByTestId('values.rules.1.thresholds.0.crit2').value).toBe('0.5');
-    expect(screen.getByTestId('values.rules.1.thresholds.0.min').value).toBe('0');
-    expect(screen.getByTestId('values.rules.1.thresholds.0.max').value).toBe('10');
-    expect(screen.getByTestId('values.rules.1.thresholds.0.remove')).toBeInTheDocument();
-    expect(screen.getByTestId('values.rules.1.thresholds.0.add')).toBeInTheDocument();
+    expect(table2.getAllByText("s")).toHaveLength(1)
+
+    expect(screen.getByTestId('rules.1.thresholds.0.label').value).toBe('time');
+    expect(screen.getByTestId('rules.1.thresholds.0.value').value).toBe('1');
+    expect(screen.getByTestId('rules.1.thresholds.0.warn1').value).toBe('0.1');
+    expect(screen.getByTestId('rules.1.thresholds.0.warn2').value).toBe('0.2');
+    expect(screen.getByTestId('rules.1.thresholds.0.crit1').value).toBe('0.2');
+    expect(screen.getByTestId('rules.1.thresholds.0.crit2').value).toBe('0.5');
+    expect(screen.getByTestId('rules.1.thresholds.0.min').value).toBe('0');
+    expect(screen.getByTestId('rules.1.thresholds.0.max').value).toBe('10');
+    expect(screen.getByTestId('rules.1.thresholds.0.remove')).toBeInTheDocument();
+    expect(screen.getByTestId('rules.1.thresholds.0.add')).toBeInTheDocument();
 
     expect(metric3).toBeEnabled();
     expect(host3).toBeEnabled();
@@ -936,17 +937,18 @@ describe('Tests for threshols profile changeview', () => {
     expect(table3.getByRole('columnheader', { name: 'max' })).toBeInTheDocument();
     expect(table3.getByRole('columnheader', { name: 'Action' })).toBeInTheDocument();
 
-    expect(screen.getByTestId('values.rules.2.thresholds.0.label').value).toBe('time');
-    expect(screen.getByTestId('values.rules.2.thresholds.0.value').value).toBe('1');
-    expect(screen.getByTestId('values.rules.2.thresholds.0.uom').value).toBe('s');
-    expect(screen.getByTestId('values.rules.2.thresholds.0.warn1').value).toBe('0.001');
-    expect(screen.getByTestId('values.rules.2.thresholds.0.warn2').value).toBe('0.2');
-    expect(screen.getByTestId('values.rules.2.thresholds.0.crit1').value).toBe('0.2');
-    expect(screen.getByTestId('values.rules.2.thresholds.0.crit2').value).toBe('0.5');
-    expect(screen.getByTestId('values.rules.2.thresholds.0.min').value).toBe('0');
-    expect(screen.getByTestId('values.rules.2.thresholds.0.max').value).toBe('10');
-    expect(screen.getByTestId('values.rules.2.thresholds.0.remove')).toBeInTheDocument();
-    expect(screen.getByTestId('values.rules.2.thresholds.0.add')).toBeInTheDocument();
+    expect(table3.getAllByText("s")).toHaveLength(1)
+
+    expect(screen.getByTestId('rules.2.thresholds.0.label').value).toBe('time');
+    expect(screen.getByTestId('rules.2.thresholds.0.value').value).toBe('1');
+    expect(screen.getByTestId('rules.2.thresholds.0.warn1').value).toBe('0.001');
+    expect(screen.getByTestId('rules.2.thresholds.0.warn2').value).toBe('0.2');
+    expect(screen.getByTestId('rules.2.thresholds.0.crit1').value).toBe('0.2');
+    expect(screen.getByTestId('rules.2.thresholds.0.crit2').value).toBe('0.5');
+    expect(screen.getByTestId('rules.2.thresholds.0.min').value).toBe('0');
+    expect(screen.getByTestId('rules.2.thresholds.0.max').value).toBe('10');
+    expect(screen.getByTestId('rules.2.thresholds.0.remove')).toBeInTheDocument();
+    expect(screen.getByTestId('rules.2.thresholds.0.add')).toBeInTheDocument();
 
     expect(screen.getByRole('button', { name: 'Add new rule' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
@@ -1076,10 +1078,11 @@ describe('Tests for threshols profile changeview', () => {
 
     await selectEvent.select(screen.getByText('TEST'), 'TESTa')
 
-    const rule1 = within(screen.getByTestId('rules.0'))
-    const metric1 = rule1.getByText('org.nagios.ARGOWeb-Status')
+    var rule1 = within(screen.getByTestId('rules.0'))
 
-    await selectEvent.select(metric1, 'argo.AMS-Check')
+    await selectEvent.select(rule1.getByLabelText(/metric/i), 'argo.AMS-Check')
+
+    rule1 = within(screen.getByTestId("rules.0"))
 
     expect(rule1.queryByText('argo.egi.eu')).not.toBeInTheDocument();
     expect(rule1.queryByText('msg.argo.grnet.gr')).not.toBeInTheDocument();
@@ -1093,12 +1096,9 @@ describe('Tests for threshols profile changeview', () => {
     expect(rule1.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
     expect(rule1.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
-    const host1 = rule1.getAllByText(/select/i)[0]
-
-    selectEvent.openMenu(host1)
-
+    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
     expect(rule1.queryByText('argo.egi.eu')).not.toBeInTheDocument();
-    expect(rule1.getByText('msg.argo.grnet.gr')).toBeInTheDocument();
+    expect(rule1.queryByText('msg.argo.grnet.gr')).toBeInTheDocument();
     expect(rule1.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
     expect(rule1.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
     expect(rule1.queryByText('eosccore.ui.argo.grnet.gr')).not.toBeInTheDocument();
@@ -1109,7 +1109,9 @@ describe('Tests for threshols profile changeview', () => {
     expect(rule1.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
     expect(rule1.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
-    await selectEvent.select(host1, 'msg.argo.grnet.gr')
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'msg.argo.grnet.gr')
+
+    rule1 = within(screen.getByTestId("rules.0"))
 
     expect(rule1.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
     expect(rule1.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
@@ -1119,9 +1121,7 @@ describe('Tests for threshols profile changeview', () => {
     expect(rule1.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
     expect(rule1.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
 
-    const endpoint1 = rule1.getAllByText(/select/i)[0]
-
-    selectEvent.openMenu(endpoint1)
+    selectEvent.openMenu(rule1.getByText(/select/i))
     expect(rule1.getByText('GRIDOPS-MSG')).toBeInTheDocument();
     expect(rule1.getByText('EOSC_Messaging')).toBeInTheDocument();
     expect(rule1.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
@@ -1130,23 +1130,20 @@ describe('Tests for threshols profile changeview', () => {
     expect(rule1.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
     expect(rule1.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
 
-    await selectEvent.select(endpoint1, 'GRIDOPS-MSG')
+    await selectEvent.select(rule1.getByText(/select/i), 'GRIDOPS-MSG')
 
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn1'), { target: { value: '1' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn2'), { target: { value: '15' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit1'), { target: { value: '10' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit2'), { target: { value: '20' } });
-    fireEvent.click(screen.getByTestId('values.rules.0.thresholds.1.remove'))
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.warn1'), { target: { value: '1' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.warn2'), { target: { value: '15' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.crit1'), { target: { value: '10' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.crit2'), { target: { value: '20' } });
+    fireEvent.click(screen.getByTestId('rules.0.thresholds.1.remove'))
 
     fireEvent.click(screen.getByTestId('rules.2.remove'))
     fireEvent.click(screen.getByTestId('rules.1.remove'));
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new rule' }));
 
-    const newRule = within(screen.getByTestId('rules.1'))
-    const metric2 = newRule.getAllByText(/select/i)[0]
-    const host2 = newRule.getAllByText(/select/i)[1]
-    const endpoint2 = newRule.getAllByText(/select/i)[2]
+    var newRule = within(screen.getByTestId('rules.1'))
 
     expect(newRule.queryByText('argo.AMS-Check')).not.toBeInTheDocument();
     expect(newRule.queryByText('argo.AMSPublisher-Check')).not.toBeInTheDocument();
@@ -1160,7 +1157,8 @@ describe('Tests for threshols profile changeview', () => {
     expect(newRule.queryByText('org.nagios.ARGOWeb-Status')).not.toBeInTheDocument();
     expect(newRule.queryByText('org.nagios.BDII-Check')).not.toBeInTheDocument();
     expect(newRule.queryByText('org.nagios.GridFTP-Check')).not.toBeInTheDocument();
-    selectEvent.openMenu(metric2)
+
+    selectEvent.openMenu(newRule.getAllByText(/select/i)[0])
     expect(newRule.getByText('argo.AMS-Check')).toBeInTheDocument();
     expect(newRule.getByText('argo.AMSPublisher-Check')).toBeInTheDocument();
     expect(newRule.getByText('argo.POEM-API-MON')).toBeInTheDocument();
@@ -1174,7 +1172,9 @@ describe('Tests for threshols profile changeview', () => {
     expect(newRule.getByText('org.nagios.BDII-Check')).toBeInTheDocument();
     expect(newRule.getByText('org.nagios.GridFTP-Check')).toBeInTheDocument();
 
-    await selectEvent.select(metric2, 'org.bdii.Entries')
+    await selectEvent.select(newRule.getAllByText(/select/i)[0], 'org.bdii.Entries')
+
+    newRule = within(screen.getByTestId('rules.1'))
 
     expect(newRule.queryByText('msg.argo.grnet.gr')).not.toBeInTheDocument();
     expect(newRule.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -1188,8 +1188,7 @@ describe('Tests for threshols profile changeview', () => {
     expect(newRule.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
     expect(newRule.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(host2)
-
+    selectEvent.openMenu(newRule.getAllByText(/select/i)[0])
     expect(newRule.queryByText('msg.argo.grnet.gr')).not.toBeInTheDocument();
     expect(newRule.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
     expect(newRule.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -1202,7 +1201,9 @@ describe('Tests for threshols profile changeview', () => {
     expect(newRule.getByText('bdii.grid.cesnet.cz')).toBeInTheDocument();
     expect(newRule.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
-    await selectEvent.select(host2, 'bdii.grid.cesnet.cz')
+    await selectEvent.select(newRule.getAllByText(/select/i)[0], 'bdii.grid.cesnet.cz')
+
+    newRule = within(screen.getByTestId('rules.1'))
 
     expect(newRule.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
     expect(newRule.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
@@ -1212,7 +1213,7 @@ describe('Tests for threshols profile changeview', () => {
     expect(newRule.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
     expect(newRule.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(endpoint2)
+    selectEvent.openMenu(newRule.getAllByText(/select/i)[0])
     expect(newRule.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
     expect(newRule.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
     expect(newRule.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
@@ -1221,11 +1222,12 @@ describe('Tests for threshols profile changeview', () => {
     expect(newRule.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
     expect(newRule.getByText('prague_cesnet_lcg2')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.label'), { target: { value: 'entries' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.value'), { target: { value: '2' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.uom'), { target: { value: 'B' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.warn1'), { target: { value: '0' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.crit1'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.label'), { target: { value: 'entries' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.value'), { target: { value: '2' } });
+
+    await selectEvent.select(newRule.getAllByText(/select/i)[1], "B")
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.warn1'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.crit1'), { target: { value: '2' } });
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -1300,38 +1302,44 @@ describe('Tests for threshols profile changeview', () => {
 
     await selectEvent.select(screen.getByText('TEST'), 'TESTa')
 
-    const rule1 = within(screen.getByTestId('rules.0'))
-    const metric1 = rule1.getByText('org.nagios.ARGOWeb-Status')
+    var rule1 = within(screen.getByTestId('rules.0'))
 
-    await selectEvent.select(metric1, 'argo.AMS-Check')
+    await selectEvent.select(rule1.getByText('org.nagios.ARGOWeb-Status'), 'argo.AMS-Check')
 
-    const host1 = rule1.getAllByText(/select/i)[0]
-    await selectEvent.select(host1, 'msg.argo.grnet.gr')
+    rule1 = within(screen.getByTestId('rules.0'))
 
-    const endpoint1 = rule1.getAllByText(/select/i)[0]
-    await selectEvent.select(endpoint1, 'GRIDOPS-MSG')
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'msg.argo.grnet.gr')
 
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn1'), { target: { value: '1' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn2'), { target: { value: '15' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit1'), { target: { value: '10' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit2'), { target: { value: '20' } });
-    fireEvent.click(screen.getByTestId('values.rules.0.thresholds.1.remove'))
+    rule1 = within(screen.getByTestId('rules.0'))
+
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'GRIDOPS-MSG')
+
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.warn1'), { target: { value: '1' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.warn2'), { target: { value: '15' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.crit1'), { target: { value: '10' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.crit2'), { target: { value: '20' } });
+    fireEvent.click(screen.getByTestId('rules.0.thresholds.1.remove'))
 
     fireEvent.click(screen.getByTestId('rules.2.remove'))
     fireEvent.click(screen.getByTestId('rules.1.remove'));
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new rule' }));
 
-    const newRule = within(screen.getByTestId('rules.1'))
-    const metric2 = newRule.getAllByText(/select/i)[0]
-    const host2 = newRule.getAllByText(/select/i)[1]
+    var newRule = within(screen.getByTestId('rules.1'))
 
-    await selectEvent.select(metric2, 'org.bdii.Entries')
-    await selectEvent.select(host2, 'bdii.grid.cesnet.cz')
+    selectEvent.openMenu(newRule.getAllByText(/select/i)[0])
 
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.label'), { target: { value: 'entries' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.warn1'), { target: { value: '0' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.crit1'), { target: { value: '2' } });
+    await selectEvent.select(newRule.getAllByText(/select/i)[0], 'org.bdii.Entries')
+
+    newRule = within(screen.getByTestId('rules.1'))
+
+    selectEvent.openMenu(newRule.getAllByText(/select/i)[0])
+
+    await selectEvent.select(newRule.getAllByText(/select/i)[0], 'bdii.grid.cesnet.cz')
+
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.label'), { target: { value: 'entries' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.warn1'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.crit1'), { target: { value: '2' } });
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -1403,10 +1411,11 @@ describe('Tests for threshols profile changeview', () => {
 
     await selectEvent.select(screen.getByText('TEST'), 'TESTa')
 
-    const rule1 = within(screen.getByTestId('rules.0'))
-    const metric1 = rule1.getByText('org.nagios.ARGOWeb-Status')
+    var rule1 = within(screen.getByTestId('rules.0'))
 
-    await selectEvent.select(metric1, 'argo.AMS-Check')
+    await selectEvent.select(rule1.getByText('org.nagios.ARGOWeb-Status'), 'argo.AMS-Check')
+
+    rule1 = within(screen.getByTestId('rules.0'))
 
     expect(rule1.queryByText('argo.egi.eu')).not.toBeInTheDocument();
     expect(rule1.queryByText('msg.argo.grnet.gr')).not.toBeInTheDocument();
@@ -1420,10 +1429,7 @@ describe('Tests for threshols profile changeview', () => {
     expect(rule1.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
     expect(rule1.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
-    const host1 = rule1.getAllByText(/select/i)[0]
-
-    selectEvent.openMenu(host1)
-
+    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
     expect(rule1.queryByText('argo.egi.eu')).not.toBeInTheDocument();
     expect(rule1.getByText('msg.argo.grnet.gr')).toBeInTheDocument();
     expect(rule1.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -1436,7 +1442,9 @@ describe('Tests for threshols profile changeview', () => {
     expect(rule1.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
     expect(rule1.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
-    await selectEvent.select(host1, 'msg.argo.grnet.gr')
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'msg.argo.grnet.gr')
+
+    rule1 = within(screen.getByTestId('rules.0'))
 
     expect(rule1.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
     expect(rule1.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
@@ -1446,9 +1454,7 @@ describe('Tests for threshols profile changeview', () => {
     expect(rule1.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
     expect(rule1.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
 
-    const endpoint1 = rule1.getAllByText(/select/i)[0]
-
-    selectEvent.openMenu(endpoint1)
+    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
     expect(rule1.getByText('GRIDOPS-MSG')).toBeInTheDocument();
     expect(rule1.getByText('EOSC_Messaging')).toBeInTheDocument();
     expect(rule1.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
@@ -1457,23 +1463,20 @@ describe('Tests for threshols profile changeview', () => {
     expect(rule1.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
     expect(rule1.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
 
-    await selectEvent.select(endpoint1, 'GRIDOPS-MSG')
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'GRIDOPS-MSG')
 
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn1'), { target: { value: '1' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn2'), { target: { value: '15' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit1'), { target: { value: '10' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit2'), { target: { value: '20' } });
-    fireEvent.click(screen.getByTestId('values.rules.0.thresholds.1.remove'))
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.warn1'), { target: { value: '1' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.warn2'), { target: { value: '15' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.crit1'), { target: { value: '10' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.crit2'), { target: { value: '20' } });
+    fireEvent.click(screen.getByTestId('rules.0.thresholds.1.remove'))
 
     fireEvent.click(screen.getByTestId('rules.2.remove'))
     fireEvent.click(screen.getByTestId('rules.1.remove'));
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new rule' }));
 
-    const newRule = within(screen.getByTestId('rules.1'))
-    const metric2 = newRule.getAllByText(/select/i)[0]
-    const host2 = newRule.getAllByText(/select/i)[1]
-    const endpoint2 = newRule.getAllByText(/select/i)[2]
+    var newRule = within(screen.getByTestId('rules.1'))
 
     expect(newRule.queryByText('argo.AMS-Check')).not.toBeInTheDocument();
     expect(newRule.queryByText('argo.AMSPublisher-Check')).not.toBeInTheDocument();
@@ -1487,7 +1490,8 @@ describe('Tests for threshols profile changeview', () => {
     expect(newRule.queryByText('org.nagios.ARGOWeb-Status')).not.toBeInTheDocument();
     expect(newRule.queryByText('org.nagios.BDII-Check')).not.toBeInTheDocument();
     expect(newRule.queryByText('org.nagios.GridFTP-Check')).not.toBeInTheDocument();
-    selectEvent.openMenu(metric2)
+
+    selectEvent.openMenu(newRule.getAllByText(/select/i)[0])
     expect(newRule.getByText('argo.AMS-Check')).toBeInTheDocument();
     expect(newRule.getByText('argo.AMSPublisher-Check')).toBeInTheDocument();
     expect(newRule.getByText('argo.POEM-API-MON')).toBeInTheDocument();
@@ -1501,7 +1505,9 @@ describe('Tests for threshols profile changeview', () => {
     expect(newRule.getByText('org.nagios.BDII-Check')).toBeInTheDocument();
     expect(newRule.getByText('org.nagios.GridFTP-Check')).toBeInTheDocument();
 
-    await selectEvent.select(metric2, 'org.bdii.Entries')
+    await selectEvent.select(newRule.getAllByText(/select/i)[0], 'org.bdii.Entries')
+
+    newRule = within(screen.getByTestId('rules.1'))
 
     expect(newRule.queryByText('msg.argo.grnet.gr')).not.toBeInTheDocument();
     expect(newRule.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -1515,8 +1521,7 @@ describe('Tests for threshols profile changeview', () => {
     expect(newRule.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
     expect(newRule.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(host2)
-
+    selectEvent.openMenu(newRule.getAllByText(/select/i)[0])
     expect(newRule.queryByText('msg.argo.grnet.gr')).not.toBeInTheDocument();
     expect(newRule.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
     expect(newRule.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -1529,7 +1534,9 @@ describe('Tests for threshols profile changeview', () => {
     expect(newRule.getByText('bdii.grid.cesnet.cz')).toBeInTheDocument();
     expect(newRule.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
-    await selectEvent.select(host2, 'bdii.grid.cesnet.cz')
+    await selectEvent.select(newRule.getAllByText(/select/i)[0], 'bdii.grid.cesnet.cz')
+
+    newRule = within(screen.getByTestId('rules.1'))
 
     expect(newRule.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
     expect(newRule.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
@@ -1539,7 +1546,7 @@ describe('Tests for threshols profile changeview', () => {
     expect(newRule.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
     expect(newRule.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(endpoint2)
+    selectEvent.openMenu(newRule.getAllByText(/select/i)[0])
     expect(newRule.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
     expect(newRule.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
     expect(newRule.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
@@ -1548,11 +1555,11 @@ describe('Tests for threshols profile changeview', () => {
     expect(newRule.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
     expect(newRule.getByText('prague_cesnet_lcg2')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.label'), { target: { value: 'entries' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.value'), { target: { value: '2' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.uom'), { target: { value: 'B' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.warn1'), { target: { value: '0' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.crit1'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.label'), { target: { value: 'entries' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.value'), { target: { value: '2' } });
+    await selectEvent.select(newRule.getAllByText(/select/i)[1], "B")
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.warn1'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.crit1'), { target: { value: '2' } });
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -1607,10 +1614,11 @@ describe('Tests for threshols profile changeview', () => {
 
     await selectEvent.select(screen.getByText('TEST'), 'TESTa')
 
-    const rule1 = within(screen.getByTestId('rules.0'))
-    const metric1 = rule1.getByText('org.nagios.ARGOWeb-Status')
+    var rule1 = within(screen.getByTestId('rules.0'))
 
-    await selectEvent.select(metric1, 'argo.AMS-Check')
+    await selectEvent.select(rule1.getByText('org.nagios.ARGOWeb-Status'), 'argo.AMS-Check')
+
+    rule1 = within(screen.getByTestId('rules.0'))
 
     expect(rule1.queryByText('argo.egi.eu')).not.toBeInTheDocument();
     expect(rule1.queryByText('msg.argo.grnet.gr')).not.toBeInTheDocument();
@@ -1624,10 +1632,7 @@ describe('Tests for threshols profile changeview', () => {
     expect(rule1.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
     expect(rule1.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
-    const host1 = rule1.getAllByText(/select/i)[0]
-
-    selectEvent.openMenu(host1)
-
+    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
     expect(rule1.queryByText('argo.egi.eu')).not.toBeInTheDocument();
     expect(rule1.getByText('msg.argo.grnet.gr')).toBeInTheDocument();
     expect(rule1.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -1640,7 +1645,9 @@ describe('Tests for threshols profile changeview', () => {
     expect(rule1.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
     expect(rule1.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
-    await selectEvent.select(host1, 'msg.argo.grnet.gr')
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'msg.argo.grnet.gr')
+
+    rule1 = within(screen.getByTestId('rules.0'))
 
     expect(rule1.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
     expect(rule1.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
@@ -1650,9 +1657,7 @@ describe('Tests for threshols profile changeview', () => {
     expect(rule1.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
     expect(rule1.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
 
-    const endpoint1 = rule1.getAllByText(/select/i)[0]
-
-    selectEvent.openMenu(endpoint1)
+    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
     expect(rule1.getByText('GRIDOPS-MSG')).toBeInTheDocument();
     expect(rule1.getByText('EOSC_Messaging')).toBeInTheDocument();
     expect(rule1.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
@@ -1661,23 +1666,22 @@ describe('Tests for threshols profile changeview', () => {
     expect(rule1.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
     expect(rule1.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
 
-    await selectEvent.select(endpoint1, 'GRIDOPS-MSG')
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'GRIDOPS-MSG')
 
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn1'), { target: { value: '1' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn2'), { target: { value: '15' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit1'), { target: { value: '10' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit2'), { target: { value: '20' } });
-    fireEvent.click(screen.getByTestId('values.rules.0.thresholds.1.remove'))
+    rule1 = within(screen.getByTestId('rules.0'))
+
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.warn1'), { target: { value: '1' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.warn2'), { target: { value: '15' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.crit1'), { target: { value: '10' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.crit2'), { target: { value: '20' } });
+    fireEvent.click(screen.getByTestId('rules.0.thresholds.1.remove'))
 
     fireEvent.click(screen.getByTestId('rules.2.remove'))
     fireEvent.click(screen.getByTestId('rules.1.remove'));
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new rule' }));
 
-    const newRule = within(screen.getByTestId('rules.1'))
-    const metric2 = newRule.getAllByText(/select/i)[0]
-    const host2 = newRule.getAllByText(/select/i)[1]
-    const endpoint2 = newRule.getAllByText(/select/i)[2]
+    var newRule = within(screen.getByTestId('rules.1'))
 
     expect(newRule.queryByText('argo.AMS-Check')).not.toBeInTheDocument();
     expect(newRule.queryByText('argo.AMSPublisher-Check')).not.toBeInTheDocument();
@@ -1691,7 +1695,8 @@ describe('Tests for threshols profile changeview', () => {
     expect(newRule.queryByText('org.nagios.ARGOWeb-Status')).not.toBeInTheDocument();
     expect(newRule.queryByText('org.nagios.BDII-Check')).not.toBeInTheDocument();
     expect(newRule.queryByText('org.nagios.GridFTP-Check')).not.toBeInTheDocument();
-    selectEvent.openMenu(metric2)
+
+    selectEvent.openMenu(newRule.getAllByText(/select/i)[0])
     expect(newRule.getByText('argo.AMS-Check')).toBeInTheDocument();
     expect(newRule.getByText('argo.AMSPublisher-Check')).toBeInTheDocument();
     expect(newRule.getByText('argo.POEM-API-MON')).toBeInTheDocument();
@@ -1705,7 +1710,9 @@ describe('Tests for threshols profile changeview', () => {
     expect(newRule.getByText('org.nagios.BDII-Check')).toBeInTheDocument();
     expect(newRule.getByText('org.nagios.GridFTP-Check')).toBeInTheDocument();
 
-    await selectEvent.select(metric2, 'org.bdii.Entries')
+    await selectEvent.select(newRule.getAllByText(/select/i)[0], 'org.bdii.Entries')
+
+    newRule = within(screen.getByTestId('rules.1'))
 
     expect(newRule.queryByText('msg.argo.grnet.gr')).not.toBeInTheDocument();
     expect(newRule.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -1719,8 +1726,7 @@ describe('Tests for threshols profile changeview', () => {
     expect(newRule.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
     expect(newRule.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(host2)
-
+    selectEvent.openMenu(newRule.getAllByText(/select/i)[0])
     expect(newRule.queryByText('msg.argo.grnet.gr')).not.toBeInTheDocument();
     expect(newRule.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
     expect(newRule.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -1733,7 +1739,9 @@ describe('Tests for threshols profile changeview', () => {
     expect(newRule.getByText('bdii.grid.cesnet.cz')).toBeInTheDocument();
     expect(newRule.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
-    await selectEvent.select(host2, 'bdii.grid.cesnet.cz')
+    await selectEvent.select(newRule.getAllByText(/select/i)[0], 'bdii.grid.cesnet.cz')
+
+    newRule = within(screen.getByTestId('rules.1'))
 
     expect(newRule.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
     expect(newRule.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
@@ -1743,7 +1751,7 @@ describe('Tests for threshols profile changeview', () => {
     expect(newRule.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
     expect(newRule.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(endpoint2)
+    selectEvent.openMenu(newRule.getAllByText(/select/i)[0])
     expect(newRule.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
     expect(newRule.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
     expect(newRule.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
@@ -1752,11 +1760,11 @@ describe('Tests for threshols profile changeview', () => {
     expect(newRule.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
     expect(newRule.getByText('prague_cesnet_lcg2')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.label'), { target: { value: 'entries' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.value'), { target: { value: '2' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.uom'), { target: { value: 'B' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.warn1'), { target: { value: '0' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.crit1'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.label'), { target: { value: 'entries' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.value'), { target: { value: '2' } });
+    await selectEvent.select(newRule.getAllByText(/select/i)[1], "B")
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.warn1'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.crit1'), { target: { value: '2' } });
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -1816,10 +1824,11 @@ describe('Tests for threshols profile changeview', () => {
 
     await selectEvent.select(screen.getByText('TEST'), 'TESTa')
 
-    const rule1 = within(screen.getByTestId('rules.0'))
-    const metric1 = rule1.getByText('org.nagios.ARGOWeb-Status')
+    var rule1 = within(screen.getByTestId('rules.0'))
 
-    await selectEvent.select(metric1, 'argo.AMS-Check')
+    await selectEvent.select(rule1.getByText('org.nagios.ARGOWeb-Status'), 'argo.AMS-Check')
+
+    rule1 = within(screen.getByTestId('rules.0'))
 
     expect(rule1.queryByText('argo.egi.eu')).not.toBeInTheDocument();
     expect(rule1.queryByText('msg.argo.grnet.gr')).not.toBeInTheDocument();
@@ -1833,10 +1842,7 @@ describe('Tests for threshols profile changeview', () => {
     expect(rule1.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
     expect(rule1.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
-    const host1 = rule1.getAllByText(/select/i)[0]
-
-    selectEvent.openMenu(host1)
-
+    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
     expect(rule1.queryByText('argo.egi.eu')).not.toBeInTheDocument();
     expect(rule1.getByText('msg.argo.grnet.gr')).toBeInTheDocument();
     expect(rule1.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -1849,7 +1855,9 @@ describe('Tests for threshols profile changeview', () => {
     expect(rule1.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
     expect(rule1.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
-    await selectEvent.select(host1, 'msg.argo.grnet.gr')
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'msg.argo.grnet.gr')
+
+    rule1 = within(screen.getByTestId('rules.0'))
 
     expect(rule1.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
     expect(rule1.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
@@ -1859,9 +1867,7 @@ describe('Tests for threshols profile changeview', () => {
     expect(rule1.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
     expect(rule1.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
 
-    const endpoint1 = rule1.getAllByText(/select/i)[0]
-
-    selectEvent.openMenu(endpoint1)
+    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
     expect(rule1.getByText('GRIDOPS-MSG')).toBeInTheDocument();
     expect(rule1.getByText('EOSC_Messaging')).toBeInTheDocument();
     expect(rule1.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
@@ -1870,23 +1876,22 @@ describe('Tests for threshols profile changeview', () => {
     expect(rule1.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
     expect(rule1.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
 
-    await selectEvent.select(endpoint1, 'GRIDOPS-MSG')
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'GRIDOPS-MSG')
 
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn1'), { target: { value: '1' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn2'), { target: { value: '15' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit1'), { target: { value: '10' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit2'), { target: { value: '20' } });
-    fireEvent.click(screen.getByTestId('values.rules.0.thresholds.1.remove'))
+    rule1 = within(screen.getByTestId('rules.0'))
+
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.warn1'), { target: { value: '1' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.warn2'), { target: { value: '15' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.crit1'), { target: { value: '10' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.crit2'), { target: { value: '20' } });
+    fireEvent.click(screen.getByTestId('rules.0.thresholds.1.remove'))
 
     fireEvent.click(screen.getByTestId('rules.2.remove'))
     fireEvent.click(screen.getByTestId('rules.1.remove'));
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new rule' }));
 
-    const newRule = within(screen.getByTestId('rules.1'))
-    const metric2 = newRule.getAllByText(/select/i)[0]
-    const host2 = newRule.getAllByText(/select/i)[1]
-    const endpoint2 = newRule.getAllByText(/select/i)[2]
+    var newRule = within(screen.getByTestId('rules.1'))
 
     expect(newRule.queryByText('argo.AMS-Check')).not.toBeInTheDocument();
     expect(newRule.queryByText('argo.AMSPublisher-Check')).not.toBeInTheDocument();
@@ -1900,7 +1905,8 @@ describe('Tests for threshols profile changeview', () => {
     expect(newRule.queryByText('org.nagios.ARGOWeb-Status')).not.toBeInTheDocument();
     expect(newRule.queryByText('org.nagios.BDII-Check')).not.toBeInTheDocument();
     expect(newRule.queryByText('org.nagios.GridFTP-Check')).not.toBeInTheDocument();
-    selectEvent.openMenu(metric2)
+
+    selectEvent.openMenu(newRule.getAllByText(/select/i)[0])
     expect(newRule.getByText('argo.AMS-Check')).toBeInTheDocument();
     expect(newRule.getByText('argo.AMSPublisher-Check')).toBeInTheDocument();
     expect(newRule.getByText('argo.POEM-API-MON')).toBeInTheDocument();
@@ -1914,7 +1920,9 @@ describe('Tests for threshols profile changeview', () => {
     expect(newRule.getByText('org.nagios.BDII-Check')).toBeInTheDocument();
     expect(newRule.getByText('org.nagios.GridFTP-Check')).toBeInTheDocument();
 
-    await selectEvent.select(metric2, 'org.bdii.Entries')
+    await selectEvent.select(newRule.getAllByText(/select/i)[0], 'org.bdii.Entries')
+
+    newRule = within(screen.getByTestId('rules.1'))
 
     expect(newRule.queryByText('msg.argo.grnet.gr')).not.toBeInTheDocument();
     expect(newRule.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -1928,8 +1936,7 @@ describe('Tests for threshols profile changeview', () => {
     expect(newRule.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
     expect(newRule.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(host2)
-
+    selectEvent.openMenu(newRule.getAllByText(/select/i)[0])
     expect(newRule.queryByText('msg.argo.grnet.gr')).not.toBeInTheDocument();
     expect(newRule.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
     expect(newRule.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -1942,7 +1949,9 @@ describe('Tests for threshols profile changeview', () => {
     expect(newRule.getByText('bdii.grid.cesnet.cz')).toBeInTheDocument();
     expect(newRule.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
-    await selectEvent.select(host2, 'bdii.grid.cesnet.cz')
+    await selectEvent.select(newRule.getAllByText(/select/i)[0], 'bdii.grid.cesnet.cz')
+
+    newRule = within(screen.getByTestId('rules.1'))
 
     expect(newRule.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
     expect(newRule.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
@@ -1952,7 +1961,7 @@ describe('Tests for threshols profile changeview', () => {
     expect(newRule.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
     expect(newRule.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(endpoint2)
+    selectEvent.openMenu(newRule.getAllByText(/select/i)[0])
     expect(newRule.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
     expect(newRule.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
     expect(newRule.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
@@ -1961,11 +1970,11 @@ describe('Tests for threshols profile changeview', () => {
     expect(newRule.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
     expect(newRule.getByText('prague_cesnet_lcg2')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.label'), { target: { value: 'entries' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.value'), { target: { value: '2' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.uom'), { target: { value: 'B' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.warn1'), { target: { value: '0' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.crit1'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.label'), { target: { value: 'entries' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.value'), { target: { value: '2' } });
+    await selectEvent.select(newRule.getAllByText(/select/i)[1], "B")
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.warn1'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.crit1'), { target: { value: '2' } });
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -2042,10 +2051,11 @@ describe('Tests for threshols profile changeview', () => {
 
     await selectEvent.select(screen.getByText('TEST'), 'TESTa')
 
-    const rule1 = within(screen.getByTestId('rules.0'))
-    const metric1 = rule1.getByText('org.nagios.ARGOWeb-Status')
+    var rule1 = within(screen.getByTestId('rules.0'))
 
-    await selectEvent.select(metric1, 'argo.AMS-Check')
+    await selectEvent.select(rule1.getByText('org.nagios.ARGOWeb-Status'), 'argo.AMS-Check')
+
+    rule1 = within(screen.getByTestId('rules.0'))
 
     expect(rule1.queryByText('argo.egi.eu')).not.toBeInTheDocument();
     expect(rule1.queryByText('msg.argo.grnet.gr')).not.toBeInTheDocument();
@@ -2059,10 +2069,7 @@ describe('Tests for threshols profile changeview', () => {
     expect(rule1.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
     expect(rule1.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
-    const host1 = rule1.getAllByText(/select/i)[0]
-
-    selectEvent.openMenu(host1)
-
+    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
     expect(rule1.queryByText('argo.egi.eu')).not.toBeInTheDocument();
     expect(rule1.getByText('msg.argo.grnet.gr')).toBeInTheDocument();
     expect(rule1.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -2075,7 +2082,9 @@ describe('Tests for threshols profile changeview', () => {
     expect(rule1.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
     expect(rule1.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
-    await selectEvent.select(host1, 'msg.argo.grnet.gr')
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'msg.argo.grnet.gr')
+
+    rule1 = within(screen.getByTestId('rules.0'))
 
     expect(rule1.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
     expect(rule1.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
@@ -2085,9 +2094,7 @@ describe('Tests for threshols profile changeview', () => {
     expect(rule1.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
     expect(rule1.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
 
-    const endpoint1 = rule1.getAllByText(/select/i)[0]
-
-    selectEvent.openMenu(endpoint1)
+    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
     expect(rule1.getByText('GRIDOPS-MSG')).toBeInTheDocument();
     expect(rule1.getByText('EOSC_Messaging')).toBeInTheDocument();
     expect(rule1.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
@@ -2096,23 +2103,22 @@ describe('Tests for threshols profile changeview', () => {
     expect(rule1.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
     expect(rule1.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
 
-    await selectEvent.select(endpoint1, 'GRIDOPS-MSG')
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'GRIDOPS-MSG')
 
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn1'), { target: { value: '1' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn2'), { target: { value: '15' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit1'), { target: { value: '10' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit2'), { target: { value: '20' } });
-    fireEvent.click(screen.getByTestId('values.rules.0.thresholds.1.remove'))
+    rule1 = within(screen.getByTestId('rules.0'))
+
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.warn1'), { target: { value: '1' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.warn2'), { target: { value: '15' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.crit1'), { target: { value: '10' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.crit2'), { target: { value: '20' } });
+    fireEvent.click(screen.getByTestId('rules.0.thresholds.1.remove'))
 
     fireEvent.click(screen.getByTestId('rules.2.remove'))
     fireEvent.click(screen.getByTestId('rules.1.remove'));
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new rule' }));
 
-    const newRule = within(screen.getByTestId('rules.1'))
-    const metric2 = newRule.getAllByText(/select/i)[0]
-    const host2 = newRule.getAllByText(/select/i)[1]
-    const endpoint2 = newRule.getAllByText(/select/i)[2]
+    var newRule = within(screen.getByTestId('rules.1'))
 
     expect(newRule.queryByText('argo.AMS-Check')).not.toBeInTheDocument();
     expect(newRule.queryByText('argo.AMSPublisher-Check')).not.toBeInTheDocument();
@@ -2126,7 +2132,8 @@ describe('Tests for threshols profile changeview', () => {
     expect(newRule.queryByText('org.nagios.ARGOWeb-Status')).not.toBeInTheDocument();
     expect(newRule.queryByText('org.nagios.BDII-Check')).not.toBeInTheDocument();
     expect(newRule.queryByText('org.nagios.GridFTP-Check')).not.toBeInTheDocument();
-    selectEvent.openMenu(metric2)
+
+    selectEvent.openMenu(newRule.getAllByText(/select/i)[0])
     expect(newRule.getByText('argo.AMS-Check')).toBeInTheDocument();
     expect(newRule.getByText('argo.AMSPublisher-Check')).toBeInTheDocument();
     expect(newRule.getByText('argo.POEM-API-MON')).toBeInTheDocument();
@@ -2140,8 +2147,10 @@ describe('Tests for threshols profile changeview', () => {
     expect(newRule.getByText('org.nagios.BDII-Check')).toBeInTheDocument();
     expect(newRule.getByText('org.nagios.GridFTP-Check')).toBeInTheDocument();
 
-    await selectEvent.select(metric2, 'org.bdii.Entries')
+    await selectEvent.select(newRule.getAllByText(/select/i)[0], 'org.bdii.Entries')
 
+    newRule = within(screen.getByTestId('rules.1'))
+    
     expect(newRule.queryByText('msg.argo.grnet.gr')).not.toBeInTheDocument();
     expect(newRule.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
     expect(newRule.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -2154,8 +2163,7 @@ describe('Tests for threshols profile changeview', () => {
     expect(newRule.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
     expect(newRule.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(host2)
-
+    selectEvent.openMenu(newRule.getAllByText(/select/i)[0])
     expect(newRule.queryByText('msg.argo.grnet.gr')).not.toBeInTheDocument();
     expect(newRule.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
     expect(newRule.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -2168,7 +2176,9 @@ describe('Tests for threshols profile changeview', () => {
     expect(newRule.getByText('bdii.grid.cesnet.cz')).toBeInTheDocument();
     expect(newRule.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
-    await selectEvent.select(host2, 'bdii.grid.cesnet.cz')
+    await selectEvent.select(newRule.getAllByText(/select/i)[0], 'bdii.grid.cesnet.cz')
+
+    newRule = within(screen.getByTestId('rules.1'))
 
     expect(newRule.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
     expect(newRule.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
@@ -2178,7 +2188,7 @@ describe('Tests for threshols profile changeview', () => {
     expect(newRule.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
     expect(newRule.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(endpoint2)
+    selectEvent.openMenu(newRule.getAllByText(/select/i)[0])
     expect(newRule.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
     expect(newRule.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
     expect(newRule.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
@@ -2187,11 +2197,11 @@ describe('Tests for threshols profile changeview', () => {
     expect(newRule.queryByText('GRIDOPS-SAM')).not.toBeInTheDocument();
     expect(newRule.getByText('prague_cesnet_lcg2')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.label'), { target: { value: 'entries' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.value'), { target: { value: '2' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.uom'), { target: { value: 'B' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.warn1'), { target: { value: '0' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.crit1'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.label'), { target: { value: 'entries' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.value'), { target: { value: '2' } });
+    await selectEvent.select(newRule.getAllByText(/select/i)[1], "B")
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.warn1'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.crit1'), { target: { value: '2' } });
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -2610,11 +2620,7 @@ describe('Tests for thresholds profiles addview', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Add a rule' }));
 
-    const rule1 = within(screen.getByTestId('rules.0'))
-
-    const metric1 = rule1.getAllByText(/select/i)[0]
-    const host1 = rule1.getAllByText(/select/i)[1]
-    const endpoint1 = rule1.getAllByText(/select/i)[2]
+    var rule1 = within(screen.getByTestId('rules.0'))
 
     expect(rule1.queryByText('argo.AMS-Check')).not.toBeInTheDocument();
     expect(rule1.queryByText('argo.AMSPublisher-Check')).not.toBeInTheDocument();
@@ -2629,8 +2635,7 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule1.queryByText('org.nagios.BDII-Check')).not.toBeInTheDocument();
     expect(rule1.queryByText('org.nagios.GridFTP-Check')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(metric1)
-
+    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
     expect(rule1.getByText('argo.AMS-Check')).toBeInTheDocument();
     expect(rule1.getByText('argo.AMSPublisher-Check')).toBeInTheDocument();
     expect(rule1.getByText('argo.POEM-API-MON')).toBeInTheDocument();
@@ -2644,7 +2649,9 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule1.getByText('org.nagios.BDII-Check')).toBeInTheDocument();
     expect(rule1.getByText('org.nagios.GridFTP-Check')).toBeInTheDocument();
 
-    await selectEvent.select(metric1, 'argo.AMS-Check')
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'argo.AMS-Check')
+
+    rule1 = within(screen.getByTestId('rules.0'))
 
     expect(rule1.queryByText('msg.argo.grnet.gr')).not.toBeInTheDocument();
     expect(rule1.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -2657,8 +2664,7 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule1.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
     expect(rule1.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(host1)
-
+    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
     expect(rule1.getByText('msg.argo.grnet.gr')).toBeInTheDocument();
     expect(rule1.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
     expect(rule1.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -2670,7 +2676,9 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule1.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
     expect(rule1.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
-    await selectEvent.select(host1, 'msg.argo.grnet.gr')
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'msg.argo.grnet.gr')
+
+    rule1 = within(screen.getByTestId('rules.0'))
 
     expect(rule1.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
     expect(rule1.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
@@ -2681,8 +2689,7 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule1.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
     expect(rule1.queryByText('BUDAPEST')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(endpoint1)
-
+    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
     expect(rule1.getByText('GRIDOPS-MSG')).toBeInTheDocument();
     expect(rule1.getByText('EOSC_Messaging')).toBeInTheDocument();
     expect(rule1.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
@@ -2692,28 +2699,30 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule1.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
     expect(rule1.queryByText('BUDAPEST')).not.toBeInTheDocument();
 
-    await selectEvent.select(endpoint1, 'EOSC_Messaging')
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'EOSC_Messaging')
 
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.label'), { target: { value: 'freshness' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.value'), { target: { value: '1' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.uom'), { target: { value: 's' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn1'), { target: { value: '1' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn2'), { target: { value: '15' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit1'), { target: { value: '10' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit2'), { target: { value: '20' } });
+    rule1 = within(screen.getByTestId('rules.0'))
 
-    fireEvent.click(screen.getByTestId('values.rules.0.thresholds.0.add'));
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.label'), { target: { value: 'entries' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.value'), { target: { value: '2' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.uom'), { target: { value: 'B' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.warn1'), { target: { value: '0' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.crit1'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.label'), { target: { value: 'freshness' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.value'), { target: { value: '1' } });
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], "s")
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.warn1'), { target: { value: '1' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.warn2'), { target: { value: '15' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.crit1'), { target: { value: '10' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.crit2'), { target: { value: '20' } });
+
+    rule1 = within(screen.getByTestId('rules.0'))
+
+    fireEvent.click(screen.getByTestId('rules.0.thresholds.0.add'));
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.1.label'), { target: { value: 'entries' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.1.value'), { target: { value: '2' } });
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], "B")
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.1.warn1'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.1.crit1'), { target: { value: '2' } });
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new rule' }));
-    const rule2 = within(screen.getByTestId('rules.1'))
 
-    const metric2 = rule2.getAllByText(/select/i)[0]
-    const endpoint2 = rule2.getAllByText(/select/i)[2]
+    var rule2 = within(screen.getByTestId('rules.1'))
 
     expect(rule2.queryByText('argo.AMS-Check')).not.toBeInTheDocument();
     expect(rule2.queryByText('argo.AMSPublisher-Check')).not.toBeInTheDocument();
@@ -2728,8 +2737,7 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule2.queryByText('org.nagios.BDII-Check')).not.toBeInTheDocument();
     expect(rule2.queryByText('org.nagios.GridFTP-Check')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(metric2)
-
+    selectEvent.openMenu(rule2.getAllByText(/select/i)[0])
     expect(rule2.getByText('argo.AMS-Check')).toBeInTheDocument();
     expect(rule2.getByText('argo.AMSPublisher-Check')).toBeInTheDocument();
     expect(rule2.getByText('argo.POEM-API-MON')).toBeInTheDocument();
@@ -2743,7 +2751,9 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule2.getByText('org.nagios.BDII-Check')).toBeInTheDocument();
     expect(rule2.getByText('org.nagios.GridFTP-Check')).toBeInTheDocument();
 
-    await selectEvent.select(metric2, 'ch.cern.HTCondorCE-JobState')
+    await selectEvent.select(rule2.getAllByText(/select/i)[0], 'ch.cern.HTCondorCE-JobState')
+
+    rule2 = within(screen.getByTestId('rules.1'))
 
     expect(rule2.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
     expect(rule2.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
@@ -2754,8 +2764,7 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule2.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
     expect(rule2.queryByText('BUDAPEST')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(endpoint2)
-
+    selectEvent.openMenu(rule2.getAllByText(/select/i)[1])
     expect(rule2.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
     expect(rule2.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
     expect(rule2.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
@@ -2765,19 +2774,21 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule2.getByText('prague_cesnet_lcg2')).toBeInTheDocument();
     expect(rule2.getByText('BUDAPEST')).toBeInTheDocument();
 
-    await selectEvent.select(endpoint2, 'BUDAPEST')
+    await selectEvent.select(rule2.getAllByText(/select/i)[1], 'BUDAPEST')
 
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.label'), { target: { value: 'test' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.value'), { target: { value: '2' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.uom'), { target: { value: 'TB' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.warn1'), { target: { value: '2' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.warn2'), { target: { value: '8' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.crit1'), { target: { value: '3' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.crit2'), { target: { value: '8' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.min'), { target: { value: '0' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.max'), { target: { value: '10' } });
+    rule2 = within(screen.getByTestId('rules.1'))
 
-    fireEvent.click(screen.getByTestId('values.rules.0.thresholds.1.remove'));
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.label'), { target: { value: 'test' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.value'), { target: { value: '2' } });
+    await selectEvent.select(rule2.getAllByText(/select/i)[1], "TB")
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.warn1'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.warn2'), { target: { value: '8' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.crit1'), { target: { value: '3' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.crit2'), { target: { value: '8' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.min'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.max'), { target: { value: '10' } });
+
+    fireEvent.click(screen.getByTestId('rules.0.thresholds.1.remove'));
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -2863,47 +2874,56 @@ describe('Tests for thresholds profiles addview', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Add a rule' }));
 
-    const rule1 = within(screen.getByTestId('rules.0'))
+    var rule1 = within(screen.getByTestId('rules.0'))
 
-    const metric1 = rule1.getAllByText(/select/i)[0]
-    const host1 = rule1.getAllByText(/select/i)[1]
-    const endpoint1 = rule1.getAllByText(/select/i)[2]
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'argo.AMS-Check')
 
-    await selectEvent.select(metric1, 'argo.AMS-Check')
-    await selectEvent.select(host1, 'msg.argo.grnet.gr')
-    await selectEvent.select(endpoint1, 'EOSC_Messaging')
+    rule1 = within(screen.getByTestId('rules.0'))
 
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.label'), { target: { value: 'freshness' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.value'), { target: { value: '1' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.uom'), { target: { value: 's' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn1'), { target: { value: '1' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn2'), { target: { value: '15' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit1'), { target: { value: '10' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit2'), { target: { value: '20' } });
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'msg.argo.grnet.gr')
 
-    fireEvent.click(screen.getByTestId('values.rules.0.thresholds.0.add'));
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.label'), { target: { value: 'entries' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.warn1'), { target: { value: '0' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.crit1'), { target: { value: '2' } });
+    rule1 = within(screen.getByTestId('rules.0'))
+
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'EOSC_Messaging')
+
+    rule1 = within(screen.getByTestId('rules.0'))
+
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.label'), { target: { value: 'freshness' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.value'), { target: { value: '1' } });
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], "s")
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.warn1'), { target: { value: '1' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.warn2'), { target: { value: '15' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.crit1'), { target: { value: '10' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.crit2'), { target: { value: '20' } });
+
+    fireEvent.click(screen.getByTestId('rules.0.thresholds.0.add'));
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.1.label'), { target: { value: 'entries' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.1.warn1'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.1.crit1'), { target: { value: '2' } });
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new rule' }));
-    const rule2 = within(screen.getByTestId('rules.1'))
 
-    const metric2 = rule2.getAllByText(/select/i)[0]
-    const endpoint2 = rule2.getAllByText(/select/i)[2]
+    var rule2 = within(screen.getByTestId('rules.1'))
 
-    await selectEvent.select(metric2, 'ch.cern.HTCondorCE-JobState')
-    await selectEvent.select(endpoint2, 'BUDAPEST')
+    selectEvent.openMenu(rule2.getAllByText(/select/i)[0])
 
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.label'), { target: { value: 'test' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.value'), { target: { value: '2' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.uom'), { target: { value: 'TB' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.warn1'), { target: { value: '2' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.warn2'), { target: { value: '8' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.crit1'), { target: { value: '3' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.crit2'), { target: { value: '8' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.min'), { target: { value: '0' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.max'), { target: { value: '10' } });
+    await selectEvent.select(rule2.getAllByText(/select/i)[0], 'ch.cern.HTCondorCE-JobState')
+
+    rule2 = within(screen.getByTestId('rules.1'))
+
+    await selectEvent.select(rule2.getAllByText(/select/i)[1], 'BUDAPEST')
+
+    rule2 = within(screen.getByTestId('rules.1'))
+
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.label'), { target: { value: 'test' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.value'), { target: { value: '2' } });
+    await selectEvent.select(rule2.getAllByText(/select/i)[1], "TB")
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.warn1'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.warn2'), { target: { value: '8' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.crit1'), { target: { value: '3' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.crit2'), { target: { value: '8' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.min'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.max'), { target: { value: '10' } });
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -2978,11 +2998,7 @@ describe('Tests for thresholds profiles addview', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Add a rule' }));
 
-    const rule1 = within(screen.getByTestId('rules.0'))
-
-    const metric1 = rule1.getAllByText(/select/i)[0]
-    const host1 = rule1.getAllByText(/select/i)[1]
-    const endpoint1 = rule1.getAllByText(/select/i)[2]
+    var rule1 = within(screen.getByTestId('rules.0'))
 
     expect(rule1.queryByText('argo.AMS-Check')).not.toBeInTheDocument();
     expect(rule1.queryByText('argo.AMSPublisher-Check')).not.toBeInTheDocument();
@@ -2997,8 +3013,7 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule1.queryByText('org.nagios.BDII-Check')).not.toBeInTheDocument();
     expect(rule1.queryByText('org.nagios.GridFTP-Check')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(metric1)
-
+    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
     expect(rule1.getByText('argo.AMS-Check')).toBeInTheDocument();
     expect(rule1.getByText('argo.AMSPublisher-Check')).toBeInTheDocument();
     expect(rule1.getByText('argo.POEM-API-MON')).toBeInTheDocument();
@@ -3012,7 +3027,9 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule1.getByText('org.nagios.BDII-Check')).toBeInTheDocument();
     expect(rule1.getByText('org.nagios.GridFTP-Check')).toBeInTheDocument();
 
-    await selectEvent.select(metric1, 'argo.AMS-Check')
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'argo.AMS-Check')
+
+    rule1 = within(screen.getByTestId('rules.0'))
 
     expect(rule1.queryByText('msg.argo.grnet.gr')).not.toBeInTheDocument();
     expect(rule1.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -3025,8 +3042,7 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule1.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
     expect(rule1.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(host1)
-
+    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
     expect(rule1.getByText('msg.argo.grnet.gr')).toBeInTheDocument();
     expect(rule1.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
     expect(rule1.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -3038,7 +3054,9 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule1.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
     expect(rule1.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
-    await selectEvent.select(host1, 'msg.argo.grnet.gr')
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'msg.argo.grnet.gr')
+
+    rule1 = within(screen.getByTestId('rules.0'))
 
     expect(rule1.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
     expect(rule1.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
@@ -3049,8 +3067,7 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule1.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
     expect(rule1.queryByText('BUDAPEST')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(endpoint1)
-
+    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
     expect(rule1.getByText('GRIDOPS-MSG')).toBeInTheDocument();
     expect(rule1.getByText('EOSC_Messaging')).toBeInTheDocument();
     expect(rule1.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
@@ -3060,28 +3077,30 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule1.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
     expect(rule1.queryByText('BUDAPEST')).not.toBeInTheDocument();
 
-    await selectEvent.select(endpoint1, 'EOSC_Messaging')
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'EOSC_Messaging')
 
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.label'), { target: { value: 'freshness' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.value'), { target: { value: '1' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.uom'), { target: { value: 's' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn1'), { target: { value: '1' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn2'), { target: { value: '15' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit1'), { target: { value: '10' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit2'), { target: { value: '20' } });
+    rule1 = within(screen.getByTestId('rules.0'))
 
-    fireEvent.click(screen.getByTestId('values.rules.0.thresholds.0.add'));
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.label'), { target: { value: 'entries' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.value'), { target: { value: '2' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.uom'), { target: { value: 'B' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.warn1'), { target: { value: '0' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.crit1'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.label'), { target: { value: 'freshness' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.value'), { target: { value: '1' } });
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], "s")
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.warn1'), { target: { value: '1' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.warn2'), { target: { value: '15' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.crit1'), { target: { value: '10' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.crit2'), { target: { value: '20' } });
+
+    rule1 = within(screen.getByTestId('rules.0'))
+
+    fireEvent.click(screen.getByTestId('rules.0.thresholds.0.add'));
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.1.label'), { target: { value: 'entries' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.1.value'), { target: { value: '2' } });
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], "B")
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.1.warn1'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.1.crit1'), { target: { value: '2' } });
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new rule' }));
-    const rule2 = within(screen.getByTestId('rules.1'))
 
-    const metric2 = rule2.getAllByText(/select/i)[0]
-    const endpoint2 = rule2.getAllByText(/select/i)[2]
+    var rule2 = within(screen.getByTestId('rules.1'))
 
     expect(rule2.queryByText('argo.AMS-Check')).not.toBeInTheDocument();
     expect(rule2.queryByText('argo.AMSPublisher-Check')).not.toBeInTheDocument();
@@ -3096,8 +3115,7 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule2.queryByText('org.nagios.BDII-Check')).not.toBeInTheDocument();
     expect(rule2.queryByText('org.nagios.GridFTP-Check')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(metric2)
-
+    selectEvent.openMenu(rule2.getAllByText(/select/i)[0])
     expect(rule2.getByText('argo.AMS-Check')).toBeInTheDocument();
     expect(rule2.getByText('argo.AMSPublisher-Check')).toBeInTheDocument();
     expect(rule2.getByText('argo.POEM-API-MON')).toBeInTheDocument();
@@ -3111,7 +3129,9 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule2.getByText('org.nagios.BDII-Check')).toBeInTheDocument();
     expect(rule2.getByText('org.nagios.GridFTP-Check')).toBeInTheDocument();
 
-    await selectEvent.select(metric2, 'ch.cern.HTCondorCE-JobState')
+    await selectEvent.select(rule2.getAllByText(/select/i)[0], 'ch.cern.HTCondorCE-JobState')
+
+    rule2 = within(screen.getByTestId('rules.1'))
 
     expect(rule2.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
     expect(rule2.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
@@ -3122,8 +3142,7 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule2.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
     expect(rule2.queryByText('BUDAPEST')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(endpoint2)
-
+    selectEvent.openMenu(rule2.getAllByText(/select/i)[1])
     expect(rule2.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
     expect(rule2.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
     expect(rule2.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
@@ -3133,19 +3152,21 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule2.getByText('prague_cesnet_lcg2')).toBeInTheDocument();
     expect(rule2.getByText('BUDAPEST')).toBeInTheDocument();
 
-    await selectEvent.select(endpoint2, 'BUDAPEST')
+    await selectEvent.select(rule2.getAllByText(/select/i)[1], 'BUDAPEST')
 
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.label'), { target: { value: 'test' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.value'), { target: { value: '2' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.uom'), { target: { value: 'TB' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.warn1'), { target: { value: '2' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.warn2'), { target: { value: '8' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.crit1'), { target: { value: '3' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.crit2'), { target: { value: '8' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.min'), { target: { value: '0' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.max'), { target: { value: '10' } });
+    rule2 = within(screen.getByTestId('rules.1'))
 
-    fireEvent.click(screen.getByTestId('values.rules.0.thresholds.1.remove'));
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.label'), { target: { value: 'test' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.value'), { target: { value: '2' } });
+    await selectEvent.select(rule2.getAllByText(/select/i)[1], "TB")
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.warn1'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.warn2'), { target: { value: '8' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.crit1'), { target: { value: '3' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.crit2'), { target: { value: '8' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.min'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.max'), { target: { value: '10' } });
+
+    fireEvent.click(screen.getByTestId('rules.0.thresholds.1.remove'));
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -3203,11 +3224,7 @@ describe('Tests for thresholds profiles addview', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Add a rule' }));
 
-    const rule1 = within(screen.getByTestId('rules.0'))
-
-    const metric1 = rule1.getAllByText(/select/i)[0]
-    const host1 = rule1.getAllByText(/select/i)[1]
-    const endpoint1 = rule1.getAllByText(/select/i)[2]
+    var rule1 = within(screen.getByTestId('rules.0'))
 
     expect(rule1.queryByText('argo.AMS-Check')).not.toBeInTheDocument();
     expect(rule1.queryByText('argo.AMSPublisher-Check')).not.toBeInTheDocument();
@@ -3222,8 +3239,7 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule1.queryByText('org.nagios.BDII-Check')).not.toBeInTheDocument();
     expect(rule1.queryByText('org.nagios.GridFTP-Check')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(metric1)
-
+    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
     expect(rule1.getByText('argo.AMS-Check')).toBeInTheDocument();
     expect(rule1.getByText('argo.AMSPublisher-Check')).toBeInTheDocument();
     expect(rule1.getByText('argo.POEM-API-MON')).toBeInTheDocument();
@@ -3237,7 +3253,9 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule1.getByText('org.nagios.BDII-Check')).toBeInTheDocument();
     expect(rule1.getByText('org.nagios.GridFTP-Check')).toBeInTheDocument();
 
-    await selectEvent.select(metric1, 'argo.AMS-Check')
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'argo.AMS-Check')
+
+    rule1 = within(screen.getByTestId('rules.0'))
 
     expect(rule1.queryByText('msg.argo.grnet.gr')).not.toBeInTheDocument();
     expect(rule1.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -3250,8 +3268,7 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule1.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
     expect(rule1.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(host1)
-
+    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
     expect(rule1.getByText('msg.argo.grnet.gr')).toBeInTheDocument();
     expect(rule1.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
     expect(rule1.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -3263,7 +3280,9 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule1.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
     expect(rule1.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
-    await selectEvent.select(host1, 'msg.argo.grnet.gr')
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'msg.argo.grnet.gr')
+
+    rule1 = within(screen.getByTestId('rules.0'))
 
     expect(rule1.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
     expect(rule1.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
@@ -3274,8 +3293,7 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule1.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
     expect(rule1.queryByText('BUDAPEST')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(endpoint1)
-
+    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
     expect(rule1.getByText('GRIDOPS-MSG')).toBeInTheDocument();
     expect(rule1.getByText('EOSC_Messaging')).toBeInTheDocument();
     expect(rule1.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
@@ -3285,28 +3303,28 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule1.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
     expect(rule1.queryByText('BUDAPEST')).not.toBeInTheDocument();
 
-    await selectEvent.select(endpoint1, 'EOSC_Messaging')
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'EOSC_Messaging')
 
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.label'), { target: { value: 'freshness' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.value'), { target: { value: '1' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.uom'), { target: { value: 's' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn1'), { target: { value: '1' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn2'), { target: { value: '15' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit1'), { target: { value: '10' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit2'), { target: { value: '20' } });
+    rule1 = within(screen.getByTestId('rules.0'))
 
-    fireEvent.click(screen.getByTestId('values.rules.0.thresholds.0.add'));
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.label'), { target: { value: 'entries' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.value'), { target: { value: '2' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.uom'), { target: { value: 'B' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.warn1'), { target: { value: '0' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.crit1'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.label'), { target: { value: 'freshness' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.value'), { target: { value: '1' } });
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], "s")
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.warn1'), { target: { value: '1' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.warn2'), { target: { value: '15' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.crit1'), { target: { value: '10' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.crit2'), { target: { value: '20' } });
+
+    fireEvent.click(screen.getByTestId('rules.0.thresholds.0.add'));
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.1.label'), { target: { value: 'entries' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.1.value'), { target: { value: '2' } });
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], "B")
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.1.warn1'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.1.crit1'), { target: { value: '2' } });
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new rule' }));
-    const rule2 = within(screen.getByTestId('rules.1'))
 
-    const metric2 = rule2.getAllByText(/select/i)[0]
-    const endpoint2 = rule2.getAllByText(/select/i)[2]
+    var rule2 = within(screen.getByTestId('rules.1'))
 
     expect(rule2.queryByText('argo.AMS-Check')).not.toBeInTheDocument();
     expect(rule2.queryByText('argo.AMSPublisher-Check')).not.toBeInTheDocument();
@@ -3321,8 +3339,7 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule2.queryByText('org.nagios.BDII-Check')).not.toBeInTheDocument();
     expect(rule2.queryByText('org.nagios.GridFTP-Check')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(metric2)
-
+    selectEvent.openMenu(rule2.getAllByText(/select/i)[0])
     expect(rule2.getByText('argo.AMS-Check')).toBeInTheDocument();
     expect(rule2.getByText('argo.AMSPublisher-Check')).toBeInTheDocument();
     expect(rule2.getByText('argo.POEM-API-MON')).toBeInTheDocument();
@@ -3336,7 +3353,9 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule2.getByText('org.nagios.BDII-Check')).toBeInTheDocument();
     expect(rule2.getByText('org.nagios.GridFTP-Check')).toBeInTheDocument();
 
-    await selectEvent.select(metric2, 'ch.cern.HTCondorCE-JobState')
+    await selectEvent.select(rule2.getAllByText(/select/i)[0], 'ch.cern.HTCondorCE-JobState')
+
+    rule2 = within(screen.getByTestId('rules.1'))
 
     expect(rule2.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
     expect(rule2.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
@@ -3347,8 +3366,7 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule2.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
     expect(rule2.queryByText('BUDAPEST')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(endpoint2)
-
+    selectEvent.openMenu(rule2.getAllByText(/select/i)[1])
     expect(rule2.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
     expect(rule2.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
     expect(rule2.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
@@ -3358,19 +3376,21 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule2.getByText('prague_cesnet_lcg2')).toBeInTheDocument();
     expect(rule2.getByText('BUDAPEST')).toBeInTheDocument();
 
-    await selectEvent.select(endpoint2, 'BUDAPEST')
+    await selectEvent.select(rule2.getAllByText(/select/i)[1], 'BUDAPEST')
 
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.label'), { target: { value: 'test' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.value'), { target: { value: '2' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.uom'), { target: { value: 'TB' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.warn1'), { target: { value: '2' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.warn2'), { target: { value: '8' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.crit1'), { target: { value: '3' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.crit2'), { target: { value: '8' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.min'), { target: { value: '0' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.max'), { target: { value: '10' } });
+    rule2 = within(screen.getByTestId('rules.1'))
 
-    fireEvent.click(screen.getByTestId('values.rules.0.thresholds.1.remove'));
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.label'), { target: { value: 'test' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.value'), { target: { value: '2' } });
+    await selectEvent.select(rule2.getAllByText(/select/i)[1], "TB")
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.warn1'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.warn2'), { target: { value: '8' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.crit1'), { target: { value: '3' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.crit2'), { target: { value: '8' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.min'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.max'), { target: { value: '10' } });
+
+    fireEvent.click(screen.getByTestId('rules.0.thresholds.1.remove'));
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -3444,11 +3464,7 @@ describe('Tests for thresholds profiles addview', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Add a rule' }));
 
-    const rule1 = within(screen.getByTestId('rules.0'))
-
-    const metric1 = rule1.getAllByText(/select/i)[0]
-    const host1 = rule1.getAllByText(/select/i)[1]
-    const endpoint1 = rule1.getAllByText(/select/i)[2]
+    var rule1 = within(screen.getByTestId('rules.0'))
 
     expect(rule1.queryByText('argo.AMS-Check')).not.toBeInTheDocument();
     expect(rule1.queryByText('argo.AMSPublisher-Check')).not.toBeInTheDocument();
@@ -3463,8 +3479,7 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule1.queryByText('org.nagios.BDII-Check')).not.toBeInTheDocument();
     expect(rule1.queryByText('org.nagios.GridFTP-Check')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(metric1)
-
+    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
     expect(rule1.getByText('argo.AMS-Check')).toBeInTheDocument();
     expect(rule1.getByText('argo.AMSPublisher-Check')).toBeInTheDocument();
     expect(rule1.getByText('argo.POEM-API-MON')).toBeInTheDocument();
@@ -3478,7 +3493,9 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule1.getByText('org.nagios.BDII-Check')).toBeInTheDocument();
     expect(rule1.getByText('org.nagios.GridFTP-Check')).toBeInTheDocument();
 
-    await selectEvent.select(metric1, 'argo.AMS-Check')
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'argo.AMS-Check')
+
+    rule1 = within(screen.getByTestId('rules.0'))
 
     expect(rule1.queryByText('msg.argo.grnet.gr')).not.toBeInTheDocument();
     expect(rule1.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -3491,8 +3508,7 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule1.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
     expect(rule1.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(host1)
-
+    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
     expect(rule1.getByText('msg.argo.grnet.gr')).toBeInTheDocument();
     expect(rule1.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
     expect(rule1.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -3504,7 +3520,9 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule1.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
     expect(rule1.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
-    await selectEvent.select(host1, 'msg.argo.grnet.gr')
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'msg.argo.grnet.gr')
+
+    rule1 = within(screen.getByTestId('rules.0'))
 
     expect(rule1.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
     expect(rule1.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
@@ -3515,8 +3533,7 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule1.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
     expect(rule1.queryByText('BUDAPEST')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(endpoint1)
-
+    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
     expect(rule1.getByText('GRIDOPS-MSG')).toBeInTheDocument();
     expect(rule1.getByText('EOSC_Messaging')).toBeInTheDocument();
     expect(rule1.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
@@ -3526,28 +3543,28 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule1.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
     expect(rule1.queryByText('BUDAPEST')).not.toBeInTheDocument();
 
-    await selectEvent.select(endpoint1, 'EOSC_Messaging')
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'EOSC_Messaging')
 
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.label'), { target: { value: 'freshness' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.value'), { target: { value: '1' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.uom'), { target: { value: 's' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn1'), { target: { value: '1' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn2'), { target: { value: '15' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit1'), { target: { value: '10' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit2'), { target: { value: '20' } });
+    rule1 = within(screen.getByTestId('rules.0'))
 
-    fireEvent.click(screen.getByTestId('values.rules.0.thresholds.0.add'));
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.label'), { target: { value: 'entries' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.value'), { target: { value: '2' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.uom'), { target: { value: 'B' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.warn1'), { target: { value: '0' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.crit1'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.label'), { target: { value: 'freshness' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.value'), { target: { value: '1' } });
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], "s")
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.warn1'), { target: { value: '1' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.warn2'), { target: { value: '15' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.crit1'), { target: { value: '10' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.crit2'), { target: { value: '20' } });
+
+    fireEvent.click(screen.getByTestId('rules.0.thresholds.0.add'));
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.1.label'), { target: { value: 'entries' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.1.value'), { target: { value: '2' } });
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], "B")
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.1.warn1'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.1.crit1'), { target: { value: '2' } });
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new rule' }));
-    const rule2 = within(screen.getByTestId('rules.1'))
 
-    const metric2 = rule2.getAllByText(/select/i)[0]
-    const endpoint2 = rule2.getAllByText(/select/i)[2]
+    var rule2 = within(screen.getByTestId('rules.1'))
 
     expect(rule2.queryByText('argo.AMS-Check')).not.toBeInTheDocument();
     expect(rule2.queryByText('argo.AMSPublisher-Check')).not.toBeInTheDocument();
@@ -3562,8 +3579,7 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule2.queryByText('org.nagios.BDII-Check')).not.toBeInTheDocument();
     expect(rule2.queryByText('org.nagios.GridFTP-Check')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(metric2)
-
+    selectEvent.openMenu(rule2.getAllByText(/select/i)[0])
     expect(rule2.getByText('argo.AMS-Check')).toBeInTheDocument();
     expect(rule2.getByText('argo.AMSPublisher-Check')).toBeInTheDocument();
     expect(rule2.getByText('argo.POEM-API-MON')).toBeInTheDocument();
@@ -3577,7 +3593,9 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule2.getByText('org.nagios.BDII-Check')).toBeInTheDocument();
     expect(rule2.getByText('org.nagios.GridFTP-Check')).toBeInTheDocument();
 
-    await selectEvent.select(metric2, 'ch.cern.HTCondorCE-JobState')
+    await selectEvent.select(rule2.getAllByText(/select/i)[0], 'ch.cern.HTCondorCE-JobState')
+
+    rule2 = within(screen.getByTestId('rules.1'))
 
     expect(rule2.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
     expect(rule2.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
@@ -3588,8 +3606,7 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule2.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
     expect(rule2.queryByText('BUDAPEST')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(endpoint2)
-
+    selectEvent.openMenu(rule2.getAllByText(/select/i)[1])
     expect(rule2.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
     expect(rule2.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
     expect(rule2.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
@@ -3599,19 +3616,21 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule2.getByText('prague_cesnet_lcg2')).toBeInTheDocument();
     expect(rule2.getByText('BUDAPEST')).toBeInTheDocument();
 
-    await selectEvent.select(endpoint2, 'BUDAPEST')
+    await selectEvent.select(rule2.getAllByText(/select/i)[1], 'BUDAPEST')
 
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.label'), { target: { value: 'test' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.value'), { target: { value: '2' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.uom'), { target: { value: 'TB' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.warn1'), { target: { value: '2' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.warn2'), { target: { value: '8' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.crit1'), { target: { value: '3' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.crit2'), { target: { value: '8' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.min'), { target: { value: '0' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.max'), { target: { value: '10' } });
+    rule2 = within(screen.getByTestId('rules.1'))
 
-    fireEvent.click(screen.getByTestId('values.rules.0.thresholds.1.remove'));
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.label'), { target: { value: 'test' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.value'), { target: { value: '2' } });
+    await selectEvent.select(rule2.getAllByText(/select/i)[1], "TB")
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.warn1'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.warn2'), { target: { value: '8' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.crit1'), { target: { value: '3' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.crit2'), { target: { value: '8' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.min'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.max'), { target: { value: '10' } });
+
+    fireEvent.click(screen.getByTestId('rules.0.thresholds.1.remove'));
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -3703,11 +3722,7 @@ describe('Tests for thresholds profiles addview', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Add a rule' }));
 
-    const rule1 = within(screen.getByTestId('rules.0'))
-
-    const metric1 = rule1.getAllByText(/select/i)[0]
-    const host1 = rule1.getAllByText(/select/i)[1]
-    const endpoint1 = rule1.getAllByText(/select/i)[2]
+    var rule1 = within(screen.getByTestId('rules.0'))
 
     expect(rule1.queryByText('argo.AMS-Check')).not.toBeInTheDocument();
     expect(rule1.queryByText('argo.AMSPublisher-Check')).not.toBeInTheDocument();
@@ -3722,8 +3737,7 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule1.queryByText('org.nagios.BDII-Check')).not.toBeInTheDocument();
     expect(rule1.queryByText('org.nagios.GridFTP-Check')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(metric1)
-
+    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
     expect(rule1.getByText('argo.AMS-Check')).toBeInTheDocument();
     expect(rule1.getByText('argo.AMSPublisher-Check')).toBeInTheDocument();
     expect(rule1.getByText('argo.POEM-API-MON')).toBeInTheDocument();
@@ -3737,7 +3751,9 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule1.getByText('org.nagios.BDII-Check')).toBeInTheDocument();
     expect(rule1.getByText('org.nagios.GridFTP-Check')).toBeInTheDocument();
 
-    await selectEvent.select(metric1, 'argo.AMS-Check')
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'argo.AMS-Check')
+
+    rule1 = within(screen.getByTestId('rules.0'))
 
     expect(rule1.queryByText('msg.argo.grnet.gr')).not.toBeInTheDocument();
     expect(rule1.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -3750,8 +3766,7 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule1.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
     expect(rule1.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(host1)
-
+    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
     expect(rule1.getByText('msg.argo.grnet.gr')).toBeInTheDocument();
     expect(rule1.queryByText('sedoor1.bfg.uni-freiburg.de')).not.toBeInTheDocument();
     expect(rule1.queryByText('sedoor2.bfg.uni-freiburg.de')).not.toBeInTheDocument();
@@ -3763,7 +3778,9 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule1.queryByText('bdii.grid.cesnet.cz')).not.toBeInTheDocument();
     expect(rule1.queryByText('grid108.kfki.hu')).not.toBeInTheDocument();
 
-    await selectEvent.select(host1, 'msg.argo.grnet.gr')
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'msg.argo.grnet.gr')
+
+    rule1 = within(screen.getByTestId('rules.0'))
 
     expect(rule1.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
     expect(rule1.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
@@ -3774,8 +3791,7 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule1.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
     expect(rule1.queryByText('BUDAPEST')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(endpoint1)
-
+    selectEvent.openMenu(rule1.getAllByText(/select/i)[0])
     expect(rule1.getByText('GRIDOPS-MSG')).toBeInTheDocument();
     expect(rule1.getByText('EOSC_Messaging')).toBeInTheDocument();
     expect(rule1.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
@@ -3785,28 +3801,28 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule1.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
     expect(rule1.queryByText('BUDAPEST')).not.toBeInTheDocument();
 
-    await selectEvent.select(endpoint1, 'EOSC_Messaging')
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], 'EOSC_Messaging')
 
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.label'), { target: { value: 'freshness' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.value'), { target: { value: '1' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.uom'), { target: { value: 's' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn1'), { target: { value: '1' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.warn2'), { target: { value: '15' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit1'), { target: { value: '10' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.0.crit2'), { target: { value: '20' } });
+    rule1 = within(screen.getByTestId('rules.0'))
 
-    fireEvent.click(screen.getByTestId('values.rules.0.thresholds.0.add'));
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.label'), { target: { value: 'entries' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.value'), { target: { value: '2' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.uom'), { target: { value: 'B' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.warn1'), { target: { value: '0' } });
-    fireEvent.change(screen.getByTestId('values.rules.0.thresholds.1.crit1'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.label'), { target: { value: 'freshness' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.value'), { target: { value: '1' } });
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], "s")
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.warn1'), { target: { value: '1' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.warn2'), { target: { value: '15' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.crit1'), { target: { value: '10' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.0.crit2'), { target: { value: '20' } });
+
+    fireEvent.click(screen.getByTestId('rules.0.thresholds.0.add'));
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.1.label'), { target: { value: 'entries' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.1.value'), { target: { value: '2' } });
+    await selectEvent.select(rule1.getAllByText(/select/i)[0], "B")
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.1.warn1'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('rules.0.thresholds.1.crit1'), { target: { value: '2' } });
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new rule' }));
-    const rule2 = within(screen.getByTestId('rules.1'))
 
-    const metric2 = rule2.getAllByText(/select/i)[0]
-    const endpoint2 = rule2.getAllByText(/select/i)[2]
+    var rule2 = within(screen.getByTestId('rules.1'))
 
     expect(rule2.queryByText('argo.AMS-Check')).not.toBeInTheDocument();
     expect(rule2.queryByText('argo.AMSPublisher-Check')).not.toBeInTheDocument();
@@ -3821,8 +3837,7 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule2.queryByText('org.nagios.BDII-Check')).not.toBeInTheDocument();
     expect(rule2.queryByText('org.nagios.GridFTP-Check')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(metric2)
-
+    selectEvent.openMenu(rule2.getAllByText(/select/i)[0])
     expect(rule2.getByText('argo.AMS-Check')).toBeInTheDocument();
     expect(rule2.getByText('argo.AMSPublisher-Check')).toBeInTheDocument();
     expect(rule2.getByText('argo.POEM-API-MON')).toBeInTheDocument();
@@ -3836,7 +3851,9 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule2.getByText('org.nagios.BDII-Check')).toBeInTheDocument();
     expect(rule2.getByText('org.nagios.GridFTP-Check')).toBeInTheDocument();
 
-    await selectEvent.select(metric2, 'ch.cern.HTCondorCE-JobState')
+    await selectEvent.select(rule2.getAllByText(/select/i)[0], 'ch.cern.HTCondorCE-JobState')
+
+    rule2 = within(screen.getByTestId('rules.1'))
 
     expect(rule2.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
     expect(rule2.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
@@ -3847,8 +3864,7 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule2.queryByText('prague_cesnet_lcg2')).not.toBeInTheDocument();
     expect(rule2.queryByText('BUDAPEST')).not.toBeInTheDocument();
 
-    selectEvent.openMenu(endpoint2)
-
+    selectEvent.openMenu(rule2.getAllByText(/select/i)[1])
     expect(rule2.queryByText('GRIDOPS-MSG')).not.toBeInTheDocument();
     expect(rule2.queryByText('EOSC_Messaging')).not.toBeInTheDocument();
     expect(rule2.queryByText('UNI-FREIBURG')).not.toBeInTheDocument();
@@ -3858,19 +3874,21 @@ describe('Tests for thresholds profiles addview', () => {
     expect(rule2.getByText('prague_cesnet_lcg2')).toBeInTheDocument();
     expect(rule2.getByText('BUDAPEST')).toBeInTheDocument();
 
-    await selectEvent.select(endpoint2, 'BUDAPEST')
+    await selectEvent.select(rule2.getAllByText(/select/i)[1], 'BUDAPEST')
 
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.label'), { target: { value: 'test' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.value'), { target: { value: '2' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.uom'), { target: { value: 'TB' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.warn1'), { target: { value: '2' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.warn2'), { target: { value: '8' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.crit1'), { target: { value: '3' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.crit2'), { target: { value: '8' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.min'), { target: { value: '0' } });
-    fireEvent.change(screen.getByTestId('values.rules.1.thresholds.0.max'), { target: { value: '10' } });
+    rule2 = within(screen.getByTestId('rules.1'))
 
-    fireEvent.click(screen.getByTestId('values.rules.0.thresholds.1.remove'));
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.label'), { target: { value: 'test' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.value'), { target: { value: '2' } });
+    await selectEvent.select(rule2.getAllByText(/select/i)[1], "TB")
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.warn1'), { target: { value: '2' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.warn2'), { target: { value: '8' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.crit1'), { target: { value: '3' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.crit2'), { target: { value: '8' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.min'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('rules.1.thresholds.0.max'), { target: { value: '10' } });
+
+    fireEvent.click(screen.getByTestId('rules.0.thresholds.1.remove'));
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
