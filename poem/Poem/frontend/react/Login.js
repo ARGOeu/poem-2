@@ -10,14 +10,16 @@ import {
   CardBody,
   Label,
   CardFooter,
-  FormGroup
+  FormGroup,
+  Form,
+  Input
 } from 'reactstrap';
-import { Formik, Field, Form } from 'formik';
 import ArgoLogo from './argologo_color.svg';
 import { Footer } from './UIElements.js';
 import { Backend } from './DataManager.js';
 
 import './Login.css';
+import { Controller, useForm } from 'react-hook-form';
 
 
 const Login = (props) => {
@@ -30,6 +32,10 @@ const Login = (props) => {
 
   const backend = new Backend();
   const AppOnLogin = props.onLogin;
+
+  const { control, getValues, handleSubmit } = useForm({
+    defaultValues: { username: '', password: '' }
+  })
 
   useEffect(() => {
     setLoading(true);
@@ -72,6 +78,17 @@ const Login = (props) => {
     return backend.isActiveSession(isTenantSchema);
   }
 
+  const onSubmitHandle = async () => {
+    let values = getValues()
+    let response = await doUserPassLogin(values.username, values.password);
+    if (response.active) {
+      AppOnLogin(response.userdetails)
+    }
+    else {
+      setLoginFailedVisible(true);
+    }
+  }
+
   if (isTenantSchema !== null && !loading) {
     return (
       <Container>
@@ -85,42 +102,50 @@ const Login = (props) => {
                 <h4 className="text-light"><strong>ARGO</strong> POEM</h4>
               </CardHeader>
               <CardBody>
-                <Formik
-                  initialValues = {{username: '', password: ''}}
-                  onSubmit = {
-                    async (values) => {
-                      let response = await doUserPassLogin(values.username, values.password);
-                      if (response.active) {
-                        AppOnLogin(response)
+                <Form onSubmit={ handleSubmit(onSubmitHandle) }>
+                  <FormGroup>
+                    <Label for="username">Username: </Label>
+                    <Controller
+                      name="username"
+                      control={ control }
+                      render={ ({ field }) => 
+                        <Input
+                          { ...field }
+                          id="username"
+                          className="form-control"
+                        />
                       }
-                      else {
-                        setLoginFailedVisible(true);
+                    />
+                  </FormGroup>
+                  <FormGroup>
+                    <Label for="password">Password: </Label>
+                    <Controller
+                      name="password"
+                      control={ control }
+                      render={ ({ field }) =>
+                        <Input
+                          { ...field }
+                          id="password"
+                          type="password"
+                          className="form-control"
+                        />
                       }
-                  }}>
-                  <Form>
-                    <FormGroup>
-                      <Label for="username">Username: </Label>
-                      <Field name="username" id="username" className="form-control"/>
-                    </FormGroup>
-                    <FormGroup>
-                      <Label for="password">Password: </Label>
-                      <Field name="password" id="password" className="form-control" type="password"/>
-                    </FormGroup>
-                    <FormGroup>
-                      <Alert color="danger" isOpen={loginFailedVisible} toggle={() => setLoginFailedVisible(false)} fade={false}>
-                        <p className="text-center">
-                          Login failed, invalid username and password provided
-                        </p>
-                      </Alert>
-                    </FormGroup>
-                    <div className="pt-3">
-                    </div>
-                    <FormGroup className='justify-content-center'>
-                      <Button color="success" type="submit" block className='mb-2'>Login using username and password</Button>
-                      {isTenantSchema && <a className="btn btn-success btn-block" role="button" href="/saml2/login" style={{width: '100%'}}>{samlIdpString}</a>}
-                    </FormGroup>
-                  </Form>
-                </Formik>
+                    />
+                  </FormGroup>
+                  <FormGroup>
+                    <Alert color="danger" isOpen={loginFailedVisible} toggle={() => setLoginFailedVisible(false)} fade={false}>
+                      <p className="text-center">
+                        Login failed, invalid username and password provided
+                      </p>
+                    </Alert>
+                  </FormGroup>
+                  <div className="pt-3">
+                  </div>
+                  <FormGroup className='justify-content-center'>
+                    <Button color="success" type="submit" block className='mb-2'>Login using username and password</Button>
+                    {isTenantSchema && <a className="btn btn-success btn-block" role="button" href="/saml2/login" style={{width: '100%'}}>{samlIdpString}</a>}
+                  </FormGroup>
+                </Form>
               </CardBody>
               <CardFooter id="argo-loginfooter">
                 <Footer privacyLink={privacyLink} termsLink={termsLink} loginPage={true}/>
