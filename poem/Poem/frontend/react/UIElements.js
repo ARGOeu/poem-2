@@ -73,7 +73,6 @@ import {
   faPlug
 } from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
-import { Field } from 'formik';
 import { Backend } from './DataManager';
 import ReactDiffViewer from 'react-diff-viewer';
 import { CookiePolicy } from './CookiePolicy';
@@ -1362,78 +1361,6 @@ export const ProfileMain = ({
     </FormGroup>
   )
 }
-
-
-export const ProfileMainInfo = ({grouplist=undefined, description=undefined,
-  fieldsdisable=false, profiletype=undefined, addview=false, ...props }) => (
-    <FormGroup>
-      <Row>
-        <Col md={6}>
-          <InputGroup>
-            <InputGroupText>Name</InputGroupText>
-            <Field
-              type='text'
-              name='name'
-              data-testid='name'
-              className={`form-control form-control-lg ${props.errors.name && 'border-danger'}`}
-              disabled={!addview}
-            />
-          </InputGroup>
-          <CustomError error={props.errors.name} />
-          <FormText color='text-muted'>
-            {`Name of ${profiletype} profile`}
-          </FormText>
-        </Col>
-      </Row>
-      {
-        description &&
-          <Row className='mt-3'>
-            <Col md={10}>
-              <Label for="profileDescription">Description:</Label>
-              <Field
-                id="profileDescription"
-                className="form-control"
-                component="textarea"
-                rows={4}
-                name={description}
-                disabled={fieldsdisable}/>
-              <FormText color='muted'>
-                Free text description outlining the purpose of this profile.
-              </FormText>
-            </Col>
-          </Row>
-    }
-      <Row className='mt-4'>
-        <Col md={3}>
-          <InputGroup>
-            <InputGroupText>Group</InputGroupText>
-            {
-              fieldsdisable ?
-                <Field
-                  type='text'
-                  name='groupname'
-                  data-testid='groupname'
-                  className='form-control'
-                  disabled={true}
-                />
-              :
-                <DropdownWithFormText
-                  name='groupname'
-                  error={ props.errors.groupname }
-                  options={ grouplist }
-                  value={ props.values.groupname }
-                  onChange={ e => props.setFieldValue('groupname', e.value) }
-                />
-          }
-          </InputGroup>
-          <CustomError error={props.errors.groupname} />
-          <FormText color='muted'>
-            {`${profiletype.charAt(0).toUpperCase() + profiletype.slice(1)} profile is member of given group.`}
-          </FormText>
-        </Col>
-      </Row>
-    </FormGroup>
-);
 
 
 export const ErrorComponent = ({error}) => {
