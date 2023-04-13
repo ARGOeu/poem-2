@@ -14,9 +14,6 @@ import {
   CustomReactSelect
 } from './UIElements';
 import {
-  Formik,
-} from 'formik';
-import {
   Row,
   Col,
   Card,
@@ -857,6 +854,7 @@ const ThresholdsProfilesForm = ({
   doDelete=undefined,
   ...props
 }) => {
+  const name = props.match.params.name;
   const addview = props.addview;
   const location = props.location;
   const publicView = props.publicView;
@@ -904,12 +902,20 @@ const ThresholdsProfilesForm = ({
 
   return (
     <BaseArgoView
-      resourcename={publicView ? "Thresholds profile details" : "thresholds profile"}
+      resourcename={
+        context.historyview ?
+          `${name} (${initialValues.date_created})`
+        :
+          publicView ? 
+            "Thresholds profile details" 
+          : "thresholds profile"
+      }
       location={location}
       history={!publicView}
       submitperm={context.write_perm}
       addview={publicView ? !publicView : addview}
       publicview={publicView}
+      infoview={ context.historyview }
       modal={true}
       state={{areYouSureModal, 'modalFunc': onYesCallback, modalTitle, modalMsg}}
       toggle={toggleAreYouSure}
@@ -1526,28 +1532,21 @@ export const ThresholdsProfileVersionDetail = (props) => {
 
     if (profile)
       return (
-        <BaseArgoView
-          resourcename={`${name} (${profile.date_created})`}
-          infoview={true}
-        >
-          <Formik
-            initialValues = {{
+        <ThresholdsProfilesChangeContext.Provider value={{
+          readonly: true,
+          historyview: true
+        }}>
+          <ThresholdsProfilesForm
+            initialValues={{
               name: profile.name,
               groupname: profile.groupname,
-              rules: profile.rules
+              rules: profile.rules,
+              date_created: profile.date_created
             }}
-          >
-            {props => (
-              <Form>
-                <ThresholdsProfilesForm
-                  {...props}
-                  historyview={true}
-                />
-              </Form>
-            )}
-          </Formik>
-        </BaseArgoView>
-      );
+            { ...props }
+          />
+        </ThresholdsProfilesChangeContext.Provider>
+      )
     } else
       return null;
 };
