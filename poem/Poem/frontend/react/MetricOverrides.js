@@ -36,6 +36,7 @@ import * as Yup from "yup";
 import { ErrorMessage } from "@hookform/error-message"
 
 
+const hostnameRegex = /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9-]*[A-Za-z0-9])$/
 
 const validationSchema = Yup.object().shape({
   name: Yup.string()
@@ -63,9 +64,9 @@ const validationSchema = Yup.object().shape({
       hostname: Yup.string()
         .when(["attribute", "value"], {
           is: (attribute, value) => !!value || !!attribute,
-          then: Yup.string().matches(/^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9-]*[A-Za-z0-9])$/, "Invalid hostname"),
+          then: Yup.string().matches(hostnameRegex, "Invalid hostname"),
           otherwise: Yup.string().matches(
-            /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9-]*[A-Za-z0-9])$/, {
+            hostnameRegex, {
               excludeEmptyString: true,
               message: "Invalid hostname"
             }
@@ -89,9 +90,9 @@ const validationSchema = Yup.object().shape({
     Yup.object().shape({
       hostname: Yup.string().when(["metric", "parameter", "value"], {
         is: (metric, parameter, value) => !!metric || !!parameter || !!value,
-        then: Yup.string().matches(/^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9-]*[A-Za-z0-9])$/, "Invalid hostname"),
+        then: Yup.string().matches(hostnameRegex, "Invalid hostname"),
         otherwise: Yup.string().matches(
-          /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9-]*[A-Za-z0-9])$/, {
+          hostnameRegex, {
             excludeEmptyString: true,
             message: "Invalid hostname"
           }
@@ -627,7 +628,7 @@ const MetricOverrideForm = ({
                         render={ ({ field }) =>
                           <Input
                             { ...field }
-                            className={ `form-control ${ errors?.metricParameters?.[index]?.hostname }` }
+                            className={ `form-control ${ errors?.metricParameters?.[index]?.hostname && "is-invalid" }` }
                             data-testid={ `metricParameters.${index}.hostname` }
                           />
                         }
