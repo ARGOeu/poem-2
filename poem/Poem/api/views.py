@@ -428,3 +428,20 @@ class ListDefaultPorts(APIView):
             results.update({item.name: item.value})
 
         return Response(results)
+
+
+class ProbeCandidateAPI(APIView):
+    permission_classes = (MyHasAPIKey,)
+
+    def post(self, request):
+        models.ProbeCandidate.objects.create(
+            name=request.data["name"],
+            description=request.data["description"],
+            docurl=request.data["docurl"],
+            rpm=request.data["rpm"],
+            yum_baseurl=request.data["yum_baseurl"],
+            command=request.data["command"],
+            contact=request.data["contact"]
+        )
+
+        return Response(status=status.HTTP_201_CREATED)

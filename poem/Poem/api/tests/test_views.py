@@ -1537,3 +1537,53 @@ class ListDefaultPortsTests(TenantTestCase):
                 "SITE_BDII_PORT": "2170"
             }
         )
+
+
+class ProbeCandidateAPITests(TenantTestCase):
+    def setUp(self) -> None:
+        self.token = create_credentials()
+        self.view = views.ProbeCandidateAPI.as_view()
+        self.factory = TenantRequestFactory(self.tenant)
+        self.url = "/api/v2/probes"
+
+    def test_post_probe_candidate_successfully(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        candidate = poem_models.ProbeCandidate.objects.get(name="poem-probe")
+        self.assertEqual(
+            candidate.description,
+            "Probe is checking mandatory metric configurations of Tenant POEMs"
+        )
+        self.assertEqual(
+            candidate.docurl,
+            "https://github.com/ARGOeu-Metrics/argo-probe-poem"
+        )
+        self.assertEqual(
+            candidate.rpm, "argo-probe-poem-0.1.0-1.el7.noarch.rpm"
+        )
+        self.assertEqual(
+            candidate.yum_baseurl, "https://rpm-repo.example.com/centos7"
+        )
+        self.assertEqual(
+            candidate.command,
+            "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+            "-t <timeout> --test"
+        )
+        self.assertEqual(candidate.contact, "poem@example.com")
+        self.assertEqual(candidate.status, "submitted")
