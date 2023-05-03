@@ -277,6 +277,7 @@ export const DropdownWithFormText = ({ forwardedRef=undefined, ...props }) => {
       <CustomReactSelect
         name={ props.name }
         forwardedRef={ forwardedRef ? forwardedRef : null }
+        inputId={ props.inputId ? props.inputId : null }
         id={ props.id ? props.id : props.name }
         isClearable={ props.isClearable }
         inputgroup={ true }

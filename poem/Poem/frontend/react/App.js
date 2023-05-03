@@ -155,7 +155,8 @@ const TenantRouteSwitch = ({
   tenantName,
   showServiceTitle,
   isSuperUser,
-  userGroups
+  userGroups,
+  tenantDetails
 }) => (
   <Switch>
     <Route exact path="/ui/login" render={props => <RedirectAfterLogin isSuperUser={isSuperUser} {...props}/>}/>
@@ -201,7 +202,9 @@ const TenantRouteSwitch = ({
         webapitoken={token}
         tenantname={tenantName}
         webapiservicetypes={webApiServiceTypes}
-        addview={true}/>}
+        addview={true}
+        tenantDetails={ tenantDetails }
+        />}
       />
     <Route exact path="/ui/metricprofiles/:name"
       render={props => <MetricProfilesChange
@@ -211,7 +214,9 @@ const TenantRouteSwitch = ({
         webapireports={webApiReports}
         webapiservicetypes={webApiServiceTypes}
         webapitoken={token}
-        tenantname={tenantName}/>}
+        tenantname={tenantName}
+        tenantDetails={ tenantDetails }
+      />}
     />
     <Route exact path="/ui/metricprofiles/:name/clone"
       render={props => <MetricProfilesClone
@@ -219,7 +224,9 @@ const TenantRouteSwitch = ({
         webapimetric={webApiMetric}
         webapiservicetypes={webApiServiceTypes}
         webapitoken={token}
-        tenantname={tenantName}/>}
+        tenantname={tenantName}
+        tenantDetails={ tenantDetails }
+      />}
     />
     <Route exact path="/ui/metricprofiles/:name/history"
       render={props => <HistoryComponent object='metricprofile' {...props}/>}
@@ -658,13 +665,9 @@ const App = () => {
   const [version, setVersion] = useState(undefined);
   const [isTenantSchema, setIsTenantSchema] = useState(null);
   const [showServiceTitle, setShowServiceTitle] = useState(undefined)
+  const [tenantDetails, setTenantDetails] = useState(undefined)
 
-  async function onLogin(json) {
-    let response = new Object({
-      active: true,
-      userdetails: json
-    })
-
+  async function onLogin(response) {
     let isTenantSchema = await backend.isTenantSchema();
     await initalizeState(isTenantSchema, response);
   }
@@ -683,6 +686,7 @@ const App = () => {
     setIsTenantSchema(poemType);
     setIsSessionActive(response.active);
     setUserDetails(response.userdetails);
+    setTenantDetails(response.tenantdetails)
     setVersion(options && options.result.version);
     setPrivacyLink(options && options.result.terms_privacy_links.privacy);
     setTermsLink(options && options.result.terms_privacy_links.terms);
@@ -1033,6 +1037,7 @@ const App = () => {
                       webapitoken={token}
                       tenantname={tenantName}
                       publicView={true}
+                      tenantDetails={ tenantDetails }
                     />
                   </PublicPage>
                 }
@@ -1307,7 +1312,9 @@ const App = () => {
                     tenantName={tenantName}
                     showServiceTitle={showServiceTitle}
                     isSuperUser={userDetails.is_superuser}
-                    userGroups={userDetails.groups}/>
+                    userGroups={userDetails.groups}
+                    tenantDetails={ tenantDetails }
+                    />
                   :
                   <SuperAdminRouteSwitch/>
                 }

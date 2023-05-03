@@ -1,6 +1,10 @@
 import React, { useState, useMemo, useContext, useEffect } from 'react';
 import {Link} from 'react-router-dom';
-import {Backend, WebApi} from './DataManager';
+import {
+  Backend, 
+  WebApi,
+  fetchTenantsMetricProfiles
+} from './DataManager';
 import {
   LoadingAnim,
   BaseArgoView,
@@ -23,7 +27,10 @@ import {
   DropdownToggle,
   DropdownMenu,
   DropdownItem,
-  Form
+  Form,
+  Label,
+  Row,
+  Col
 } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
@@ -311,6 +318,7 @@ const MetricProfilesForm = ({
   userDetails,
   metricsAll=undefined,
   servicesAll=undefined,
+  tenantsProfiles=undefined,
   doChange=undefined,
   doDelete=undefined,
   historyview=false,
@@ -321,6 +329,7 @@ const MetricProfilesForm = ({
   const location = props.location;
   const cloneview = props.cloneview;
   const publicView = props.publicView;
+  const combined = props.combined
 
   const [areYouSureModal, setAreYouSureModal] = useState(false)
   const [modalMsg, setModalMsg] = useState(undefined);
@@ -368,17 +377,25 @@ const MetricProfilesForm = ({
   :
     [{ service: "", metric: "" }]
 
+  let initValues = {
+    id: metricProfile.profile.id,
+    name: `${ cloneview ? "Cloned " : ""}${metricProfile.profile.name}`,
+    description: metricProfile.profile.description,
+    groupname: metricProfile.groupname,
+    services: defaultServices,
+    view_services: defaultServices,
+    search_metric: "",
+    search_serviceflavour: ""
+  }
+
+  if (addview && combined) {
+    for (let tenant of Object.keys(tenantsProfiles)) {
+      initValues[`${tenant}-profile`] = ""
+    }
+  }
+
   const methods = useForm({
-    defaultValues: {
-      id: metricProfile.profile.id,
-      name: metricProfile.profile.name,
-      description: metricProfile.profile.description,
-      groupname: metricProfile.groupname,
-      services: defaultServices,
-      view_services: defaultServices,
-      search_metric: "",
-      search_serviceflavour: ""
-    },
+    defaultValues: initValues,
     mode: "all",
     resolver: yupResolver(MetricProfilesSchema),
     context: { allServices: servicesAll, allMetrics: metricsAll }
@@ -427,6 +444,16 @@ const MetricProfilesForm = ({
           servicesList: listServices.sort(sortServices)
         }
       );
+  }
+
+  const resetServices = (values) => {
+    methods.resetField("view_services")
+    methods.setValue("view_services", values.sort(sortServices))
+    methods.resetField("search_metric")
+    methods.resetField("search_serviceflavour")
+    methods.resetField("services")
+    methods.setValue("services", values.sort(sortServices))
+    methods.trigger()
   }
 
   return (
@@ -489,13 +516,7 @@ const MetricProfilesForm = ({
                       }))
                         item.isNew = true
                     })
-                    methods.resetField("view_services")
-                    methods.setValue("view_services", imported.sort(sortServices))
-                    methods.resetField("search_metric")
-                    methods.resetField("search_serviceflavour")
-                    methods.resetField("services")
-                    methods.setValue("services", imported.sort(sortServices))
-                    methods.trigger()
+                    resetServices(imported)
                   }
                 })
               }}
@@ -518,6 +539,48 @@ const MetricProfilesForm = ({
             fieldsdisable={ publicView || historyview }
             addview={ addview || cloneview }
           />
+          {
+            (combined && addview) && <ParagraphTitle title="Combined from"/>
+          }
+          {
+            (combined && addview) &&
+            Object.keys(tenantsProfiles).sort().map(tenant => 
+              <Row key={tenant}>
+                <Col md={7}>
+                  <h6 className='mt-4 font-weight-bold text-uppercase'>{ tenant }</h6>
+                  <Label for={ `${tenant}-profile` }>Metric profile:</Label>
+                  <Controller
+                    name={ `${tenant}-profile` }
+                    control={ control }
+                    render={ ({ field }) =>
+                      <CustomReactSelect
+                        forwardedRef={ field.ref }
+                        inputId={ `${tenant}-profile` }
+                        onChange={ e => {
+                          let tenants = Object.keys(tenantsProfiles)
+                          let old_profile = methods.getValues(`${tenant}-profile`)
+                          methods.setValue(`${tenant}-profile`, e.value) 
+                          let old_profile_tuples = []
+                          if (old_profile)
+                            old_profile_tuples = flattenServices(tenantsProfiles[tenant].filter(profile => profile.name === old_profile)[0].services)
+                          let current_tuples = []
+                          for (let tnnt of tenants) {
+                            let pname = methods.getValues(`${tnnt}-profile`)
+                            if (pname)
+                              current_tuples = current_tuples.concat(flattenServices(tenantsProfiles[tnnt].filter(profile => profile.name === pname)[0].services))
+                          }
+                          let tuples = current_tuples.filter(tuple => !old_profile_tuples.includes(tuple))
+                          resetServices(tuples)
+                        } }
+                        options={ tenantsProfiles[tenant].map(profile => new Object({ value: profile.name, label: profile.name })) }
+                        defaultValue={ field.value }
+                      />
+                    }
+                  />
+                </Col>
+              </Row>
+            )
+          }
           <ParagraphTitle title='Metric instances'/>
           <MetricProfilesComponentContext.Provider value={{
             publicView: publicView,
@@ -573,6 +636,8 @@ export const MetricProfilesComponent = (props) => {
   const history = props.history;
   const cloneview = props.cloneview;
   const publicView = props.publicView;
+  const tenantDetails = props.tenantDetails
+  const combined = props.tenantDetails.combined
 
   const backend = new Backend();
   const webapi = new WebApi({
@@ -642,6 +707,18 @@ export const MetricProfilesComponent = (props) => {
   const { data: reports, error: errorReports, isLoading: loadingReports } = useQuery(
     [`${publicView ? "public_" : ""}report`, "webapi"], async () => await webapi.fetchReports(),
     { enabled: !publicView && !cloneview && !addview && !!userDetails }
+  )
+
+  const { data: tenantsProfiles, error: errorTenantsProfiles, isLoading: loadingTenantsProfiles } = useQuery(
+    ["metricprofile", "combined", profile_name],
+    () => fetchTenantsMetricProfiles(props.webapimetric, tenantDetails.tenants),
+    { 
+      enabled: combined && addview && !!userDetails,
+      initialData: () => {
+        if (userDetails)
+          return userDetails.tenantdetails
+      }
+    }
   )
 
   const getAssociatedAggregations = (profileId) => {
@@ -860,7 +937,7 @@ export const MetricProfilesComponent = (props) => {
     }
   }
 
-  if (loadingUserDetails || loadingBackendMP || loadingWebApiMP || loadingMetricsAll || loadingWebApiST || loadingAggrProfiles || loadingReports)
+  if (loadingUserDetails || loadingBackendMP || loadingWebApiMP || loadingMetricsAll || loadingWebApiST || loadingAggrProfiles || loadingReports || loadingTenantsProfiles)
     return (<LoadingAnim />)
 
   else if (errorUserDetails)
@@ -884,7 +961,10 @@ export const MetricProfilesComponent = (props) => {
   else if (errorReports)
     return (<ErrorComponent error={errorReports} />)
 
-  else if ((addview && webApiST) || (backendMP && webApiMP && webApiST) || (publicView))
+  else if (errorTenantsProfiles)
+    return (<ErrorComponent error={ errorTenantsProfiles } />)
+
+  else if ((addview && webApiST && (!tenantDetails.combined || (tenantDetails.combined && tenantsProfiles))) || (backendMP && webApiMP && webApiST) || (publicView))
   {
     var metricProfile = {
       profile: {
@@ -900,9 +980,6 @@ export const MetricProfilesComponent = (props) => {
     if (backendMP && webApiMP) {
       metricProfile.profile = webApiMP
       metricProfile.groupname = backendMP.groupname
-
-      if (cloneview)
-        metricProfile.profile.name = `Cloned ${metricProfile.profile.name}`
     }
 
     return (
@@ -912,6 +989,8 @@ export const MetricProfilesComponent = (props) => {
         userDetails={ userDetails }
         metricsAll={ metricsAll ? metricsAll : [] }
         servicesAll={ webApiST ? webApiST : [] }
+        tenantsProfiles={ tenantsProfiles ? tenantsProfiles : [] }
+        combined={ tenantDetails.combined }
         doChange={ doChange }
         doDelete={ doDelete }
       />

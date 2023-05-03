@@ -1,5 +1,5 @@
+import datetime
 import os
-from collections import OrderedDict
 from unittest.mock import patch
 
 import pkg_resources
@@ -189,6 +189,7 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
             WEBAPI_REPORTSTOPOLOGYGROUPS='https://topology-groups.com',
             WEBAPI_REPORTSTOPOLOGYENDPOINTS='https://endpoints.com',
             WEBAPI_SERVICETYPES='https://topology-servicetypes.com',
+            WEBAPI_DATAFEEDS="https://data.feeds.com",
             LINKS_TERMS_PRIVACY={
                 'tenant': {
                     'terms': 'https://terms.of.use.com',
@@ -216,7 +217,9 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
                             'topologygroups': 'https://topology-groups.com',
                             'topologyendpoints': 'https://endpoints.com'
                         },
-                        'webapiservicetypes': 'https://topology-servicetypes.com',
+                        'webapiservicetypes':
+                            'https://topology-servicetypes.com',
+                        "webapidatafeeds": "https://data.feeds.com",
                         'tenant_name': 'tenant',
                         'terms_privacy_links': {
                             'terms': 'https://terms.of.use.com',
@@ -246,14 +249,38 @@ class GetSessionDetailsAPIViewTests(TenantTestCase):
         WebAPIKey.objects.create(
             id=1,
             name='WEB-API-TENANT',
-            prefix='foo',
-            token='mocked_token_rw'
+            token='mocked_token_rw',
+            prefix="prefix1"
         )
         WebAPIKey.objects.create(
             id=2,
             name='WEB-API-TENANT-RO',
             token='mocked_token_ro',
-            prefix='bar'
+            prefix="prefix2"
+        )
+        WebAPIKey.objects.create(
+            id=3,
+            name="WEB-API-TENANT1",
+            token="mock_tenant1_rw_token",
+            prefix="prefix3"
+        )
+        WebAPIKey.objects.create(
+            id=4,
+            name="WEB-API-TENANT1-RO",
+            token="mock_tenant1_ro_token",
+            prefix="prefix4"
+        )
+        WebAPIKey.objects.create(
+            id=5,
+            name="WEB-API-TENANT2",
+            token="mock_tenant2_rw_token",
+            prefix="prefix5"
+        )
+        WebAPIKey.objects.create(
+            id=6,
+            name="WEB-API-TENANT2-RO",
+            token="mock_tenant2_ro_token",
+            prefix="prefix6"
         )
 
     def test_unauth(self):
@@ -287,27 +314,175 @@ class GetSessionDetailsAPIViewTests(TenantTestCase):
         force_authenticate(request, user=self.user)
         response = self.view(request, 'true')
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.data['active'])
-        self.assertFalse(response.data['userdetails']['is_superuser'])
-        self.assertEqual(response.data['userdetails']['username'], 'testuser')
-        self.assertEqual(response.data['userdetails']['groups'], OrderedDict([
-            ('aggregations', ['GROUP-aggregations']),
-            ('metricprofiles', ['GROUP-metricprofiles']),
-            ('metrics', ['GROUP-metrics']),
-            ('reports', ['GROUP-reports']),
-            ('thresholdsprofiles', ['GROUP-thresholds'])]
-        ))
         self.assertEqual(
-            response.data['userdetails']['token'], 'mocked_token_rw'
+            response.data,
+            {
+                "active": True,
+                "userdetails": {
+                    "first_name": "",
+                    "last_name": "",
+                    "username": "testuser",
+                    "is_superuser": False,
+                    "is_active": True,
+                    "email": "",
+                    "date_joined": datetime.datetime.strftime(
+                        self.user.date_joined, "%Y-%m-%dT%H:%M:%S.%f"
+                    ),
+                    "pk": self.user.id,
+                    "groups": {
+                        "aggregations": ["GROUP-aggregations"],
+                        "metricprofiles": ["GROUP-metricprofiles"],
+                        "metrics": ["GROUP-metrics"],
+                        "reports": ["GROUP-reports"],
+                        "thresholdsprofiles": ["GROUP-thresholds"]
+                    },
+                    "token": "mocked_token_rw"
+                },
+                "tenantdetails": {
+                    "combined": False,
+                    "tenants": {}
+                }
+            }
+        )
+
+    @patch("Poem.api.internal_views.app.CombinedTenant.tenants")
+    def test_auth_crud_combined_tenant(self, mock_tenants):
+        mock_tenants.return_value = ["TENANT1", "TENANT2"]
+        self.tenant.combined = True
+        self.tenant.save()
+        gm = poem_models.GroupOfMetrics.objects.create(
+            name='GROUP-metrics'
+        )
+        ga = poem_models.GroupOfAggregations.objects.create(
+            name='GROUP-aggregations'
+        )
+        gmp = poem_models.GroupOfMetricProfiles.objects.create(
+            name='GROUP-metricprofiles'
+        )
+        gtp = poem_models.GroupOfThresholdsProfiles.objects.create(
+            name='GROUP-thresholds'
+        )
+        gr = poem_models.GroupOfReports.objects.create(name='GROUP-reports')
+
+        self.userprofile.groupsofmetrics.add(gm)
+        self.userprofile.groupsofaggregations.add(ga)
+        self.userprofile.groupsofmetricprofiles.add(gmp)
+        self.userprofile.groupsofthresholdsprofiles.add(gtp)
+        self.userprofile.groupsofreports.add(gr)
+
+        request = self.factory.get(self.url + 'true')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'true')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.data,
+            {
+                "active": True,
+                "userdetails": {
+                    "first_name": "",
+                    "last_name": "",
+                    "username": "testuser",
+                    "is_superuser": False,
+                    "is_active": True,
+                    "email": "",
+                    "date_joined": datetime.datetime.strftime(
+                        self.user.date_joined, "%Y-%m-%dT%H:%M:%S.%f"
+                    ),
+                    "pk": self.user.id,
+                    "groups": {
+                        "aggregations": ["GROUP-aggregations"],
+                        "metricprofiles": ["GROUP-metricprofiles"],
+                        "metrics": ["GROUP-metrics"],
+                        "reports": ["GROUP-reports"],
+                        "thresholdsprofiles": ["GROUP-thresholds"]
+                    },
+                    "token": "mocked_token_rw"
+                },
+                "tenantdetails": {
+                    "combined": True,
+                    "tenants": {
+                        "TENANT1": "mock_tenant1_ro_token",
+                        "TENANT2": "mock_tenant2_ro_token"
+                    }
+                }
+            }
         )
 
     def test_auth_readonly(self):
+        self.tenant.combined = False
+        self.tenant.save()
         request = self.factory.get(self.url + 'true')
         request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request, 'true')
         self.assertEqual(
-            response.data['userdetails']['token'], 'mocked_token_ro'
+            response.data,
+            {
+                "active": True,
+                "userdetails": {
+                    "first_name": "",
+                    "last_name": "",
+                    "username": "testuser",
+                    "is_superuser": False,
+                    "is_active": True,
+                    "email": "",
+                    "date_joined": datetime.datetime.strftime(
+                        self.user.date_joined, "%Y-%m-%dT%H:%M:%S.%f"
+                    ),
+                    "pk": self.user.id,
+                    "groups": {
+                        "aggregations": [],
+                        "metricprofiles": [],
+                        "metrics": [],
+                        "reports": [],
+                        "thresholdsprofiles": []
+                    },
+                    "token": "mocked_token_ro"
+                },
+                "tenantdetails": {
+                    "combined": False,
+                    "tenants": {}
+                }
+            }
+        )
+
+    def test_auth_readonly_combined_tenant(self):
+        self.tenant.combined = True
+        self.tenant.save()
+        request = self.factory.get(self.url + 'true')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'true')
+        self.assertEqual(
+            response.data,
+            {
+                "active": True,
+                "userdetails": {
+                    "first_name": "",
+                    "last_name": "",
+                    "username": "testuser",
+                    "is_superuser": False,
+                    "is_active": True,
+                    "email": "",
+                    "date_joined": datetime.datetime.strftime(
+                        self.user.date_joined, "%Y-%m-%dT%H:%M:%S.%f"
+                    ),
+                    "pk": self.user.id,
+                    "groups": {
+                        "aggregations": [],
+                        "metricprofiles": [],
+                        "metrics": [],
+                        "reports": [],
+                        "thresholdsprofiles": []
+                    },
+                    "token": "mocked_token_ro"
+                },
+                "tenantdetails": {
+                    "combined": True,
+                    "tenants": {}
+                }
+            }
         )
 
 

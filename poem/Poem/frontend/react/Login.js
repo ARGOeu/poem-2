@@ -91,7 +91,7 @@ const Login = (props) => {
                     async (values) => {
                       let response = await doUserPassLogin(values.username, values.password);
                       if (response.active) {
-                        AppOnLogin(response.userdetails)
+                        AppOnLogin(response)
                       }
                       else {
                         setLoginFailedVisible(true);
