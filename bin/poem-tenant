@@ -5,9 +5,10 @@ SITEPACK=$(python -c "from distutils.sysconfig import get_python_lib; print(get_
 
 usage()
 {
-	printf "Usage: %s -t <tenant name> [-d <hostname> | -r] [-l] \n" $(basename $0) >&2
+	printf "Usage: %s -t <tenant name> [-d <hostname> -c | -r] [-l] \n" $(basename $0) >&2
 	printf "       [-t] - tenant name\n" >&2
 	printf "       [-d] - hostname\n" >&2
+	printf "       [-c] - use if tenant is combined tenant\n" >&2
 	printf "       [-r] - remove tenant and schema\n" >&2
 	printf "       [-l] - list all tenants\n" >&2
     exit 2
@@ -18,7 +19,7 @@ then
     usage
 fi
 
-while getopts 't:d:hlr' OPTION
+while getopts 't:d:chlr' OPTION
 do
     case $OPTION in
         t)
@@ -26,6 +27,9 @@ do
             ;;
         d)
             hostname=$OPTARG
+            ;;
+        c)
+            combined=1
             ;;
         r)
             if [ -z "$name" ]
@@ -55,11 +59,23 @@ done
 
 if [ -z "$hostname" ]
 then
-    su -m -s /bin/sh $RUNASUSER -c \
-    "poem-manage create_tenant --name $name"
+    if [ -z "$combined" ]
+    then
+      su -m -s /bin/sh $RUNASUSER -c \
+      "poem-manage create_tenant --name $name"
+    else
+      su -m -s /bin/sh $RUNASUSER -c \
+      "poem-manage create_tenant --name $name --combined"
+    fi
 else
-    su -m -s /bin/sh $RUNASUSER -c \
-    "poem-manage poem_create_tenant --name $name --hostname $hostname"
+    if [ -z "$combined" ]
+    then
+      su -m -s /bin/sh $RUNASUSER -c \
+      "poem-manage poem_create_tenant --name $name --hostname $hostname"
+    else
+      su -m -s /bin/sh $RUNASUSER -c \
+      "poem-manage poem_create_tenant --name $name --hostname $hostname --combined"
+    fi
 fi
 
 schema=$(echo "$name" | tr '[:upper:]' '[:lower:]')

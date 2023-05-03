@@ -406,7 +406,16 @@ export class WebApi {
   }
 
   async fetchServiceTypes() {
-    return this.fetchProfiles(this.servicetypes);
+    let data = await this.fetchProfiles(this.servicetypes);
+
+    data = data.map(item => {
+      if (!("tags" in item))
+        item["tags"] = ["topology"]
+
+      return item
+    })
+
+    return data
   }
 
   fetchMetricProfile(id) {

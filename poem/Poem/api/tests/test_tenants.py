@@ -23,6 +23,9 @@ def mock_tenant_resources(*args, **kwargs):
     elif args[0] == 'test2':
         return {'metrics': 50, 'probes': 30}
 
+    elif args[0] == "combined":
+        return { "metrics": 6, "probes": 6 }
+
     else:
         return {'metrics': 24, 'probes': 15}
 
@@ -46,9 +49,16 @@ class ListTenantsTests(TenantTestCase):
             )
             self.tenant3.auto_create_schema = False
 
+            self.tenant4 = Tenant(
+                name="COMBINED", schema_name="combined", combined=True
+            )
+            self.tenant4.auto_create_schema = False
+
             self.tenant1.save()
             self.tenant2.save()
             self.tenant3.save()
+            self.tenant4.save()
+
             get_tenant_domain_model().objects.create(
                 domain='test1.domain.url', tenant=self.tenant1, is_primary=True
             )
@@ -58,6 +68,11 @@ class ListTenantsTests(TenantTestCase):
             get_tenant_domain_model().objects.create(
                 domain='domain.url', tenant=self.tenant3, is_primary=True
             )
+            get_tenant_domain_model().objects.create(
+                domain="combined.domain.url", tenant=self.tenant4,
+                is_primary=True
+            )
+
             self.supertenant_superuser = CustUser.objects.create_user(
                 username='poem', is_superuser=True
             )
@@ -68,13 +83,15 @@ class ListTenantsTests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    @patch("Poem.api.internal_views.tenants.CombinedTenant.tenants")
     @patch('Poem.api.internal_views.tenants.get_tenant_resources')
-    def test_get_all_tenants(self, mock_resources):
+    def test_get_all_tenants(self, mock_resources, mock_tenants):
         mock_resources.side_effect = mock_tenant_resources
+        mock_tenants.return_value = ["TEST1", "TEST2"]
         request = self.factory.get(self.url)
         force_authenticate(request, user=self.user)
         response = self.view(request)
-        self.assertEqual(mock_resources.call_count, 4)
+        self.assertEqual(mock_resources.call_count, 5)
         self.assertEqual(
             response.data,
             [
@@ -86,7 +103,20 @@ class ListTenantsTests(TenantTestCase):
                         self.tenant.created_on, '%Y-%m-%d'
                     ),
                     'nr_metrics': 24,
-                    'nr_probes': 15
+                    'nr_probes': 15,
+                    "combined": False
+                },
+                {
+                    "name": self.tenant4.name,
+                    "schema_name": self.tenant4.schema_name,
+                    "domain_url": "combined.domain.url",
+                    "created_on": datetime.date.strftime(
+                        self.tenant4.created_on, "%Y-%m-%d"
+                    ),
+                    "nr_metrics": 6,
+                    "nr_probes": 6,
+                    "combined": True,
+                    "combined_from": ["TEST1", "TEST2"]
                 },
                 {
                     'name': 'SuperPOEM Tenant',
@@ -96,7 +126,8 @@ class ListTenantsTests(TenantTestCase):
                         self.tenant3.created_on, '%Y-%m-%d'
                     ),
                     'nr_metrics': 354,
-                    'nr_probes': 111
+                    'nr_probes': 111,
+                    "combined": False
                 },
                 {
                     'name': 'TEST1',
@@ -106,7 +137,8 @@ class ListTenantsTests(TenantTestCase):
                         self.tenant1.created_on, '%Y-%m-%d'
                     ),
                     'nr_metrics': 30,
-                    'nr_probes': 10
+                    'nr_probes': 10,
+                    "combined": False
                 },
                 {
                     'name': 'TEST2',
@@ -116,7 +148,8 @@ class ListTenantsTests(TenantTestCase):
                         self.tenant2.created_on, '%Y-%m-%d'
                     ),
                     'nr_metrics': 50,
-                    'nr_probes': 30
+                    'nr_probes': 30,
+                    "combined": False
                 }
             ]
         )
@@ -137,7 +170,8 @@ class ListTenantsTests(TenantTestCase):
                     self.tenant1.created_on, '%Y-%m-%d'
                 ),
                 'nr_metrics': 24,
-                'nr_probes': 15
+                'nr_probes': 15,
+                "combined": False
             }
         )
         mock_resources.assert_called_once_with('test1')
@@ -158,7 +192,8 @@ class ListTenantsTests(TenantTestCase):
                     self.tenant1.created_on, '%Y-%m-%d'
                 ),
                 'nr_metrics': 354,
-                'nr_probes': 112
+                'nr_probes': 112,
+                "combined": False
             }
         )
         mock_resources.assert_called_once_with(get_public_schema_name())
@@ -173,14 +208,14 @@ class ListTenantsTests(TenantTestCase):
         self.assertFalse(mock_resources.called)
 
     def test_delete_tenant(self):
-        self.assertEqual(Tenant.objects.all().count(), 4)
+        self.assertEqual(Tenant.objects.all().count(), 5)
         request = self.factory.delete(self.url + 'TEST1')
         request.tenant = self.tenant3
         connection.set_schema_to_public()
         force_authenticate(request, user=self.supertenant_superuser)
         response = self.view(request, 'TEST1')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertEqual(Tenant.objects.all().count(), 3)
+        self.assertEqual(Tenant.objects.all().count(), 4)
         self.assertRaises(
             Tenant.DoesNotExist,
             Tenant.objects.get,
@@ -188,7 +223,7 @@ class ListTenantsTests(TenantTestCase):
         )
 
     def test_delete_tenant_when_not_public_schema(self):
-        self.assertEqual(Tenant.objects.all().count(), 4)
+        self.assertEqual(Tenant.objects.all().count(), 5)
         request = self.factory.delete(self.url + 'TEST1')
         request.tenant = self.tenant
         force_authenticate(request, user=self.user)
@@ -198,15 +233,15 @@ class ListTenantsTests(TenantTestCase):
             response.data['detail'],
             'Cannot delete tenant outside public schema.'
         )
-        self.assertEqual(Tenant.objects.all().count(), 4)
+        self.assertEqual(Tenant.objects.all().count(), 5)
 
     def test_delete_tenant_when_not_superuser(self):
-        self.assertEqual(Tenant.objects.all().count(), 4)
+        self.assertEqual(Tenant.objects.all().count(), 5)
         request = self.factory.delete(self.url + 'TEST1')
         request.tenant = self.tenant3
         force_authenticate(request, user=self.supertenant_user)
         response = self.view(request, 'TEST1')
-        self.assertEqual(Tenant.objects.all().count(), 4)
+        self.assertEqual(Tenant.objects.all().count(), 5)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(
             response.data['detail'],
@@ -214,23 +249,23 @@ class ListTenantsTests(TenantTestCase):
         )
 
     def test_delete_tenant_without_name(self):
-        self.assertEqual(Tenant.objects.all().count(), 4)
+        self.assertEqual(Tenant.objects.all().count(), 5)
         request = self.factory.delete(self.url)
         request.tenant = self.tenant3
         force_authenticate(request, user=self.supertenant_superuser)
         response = self.view(request)
-        self.assertEqual(Tenant.objects.all().count(), 4)
+        self.assertEqual(Tenant.objects.all().count(), 5)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
             response.data['detail'], 'Tenant name should be specified.'
         )
 
     def test_delete_nonexisting_tenant(self):
-        self.assertEqual(Tenant.objects.all().count(), 4)
+        self.assertEqual(Tenant.objects.all().count(), 5)
         request = self.factory.delete(self.url + 'nonexisting')
         request.tenant = self.tenant3
         force_authenticate(request, user=self.supertenant_superuser)
         response = self.view(request, 'nonexisting')
-        self.assertEqual(Tenant.objects.all().count(), 4)
+        self.assertEqual(Tenant.objects.all().count(), 5)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data['detail'], 'Tenant not found.')

@@ -54,6 +54,7 @@ try:
     WEBAPI_REPORTSTOPOLOGYENDPOINTS = config.get('WEBAPI', 'ReportsTopologyEndpoints')
     WEBAPI_METRICSTAGS = config.get("WEBAPI", "Metrics")
     WEBAPI_SERVICETYPES = config.get("WEBAPI", "ServiceTypes")
+    WEBAPI_DATAFEEDS = config.get("WEBAPI", "DataFeeds")
 
     LINKS_TERMS_PRIVACY = dict()
     all_sections = config.sections()

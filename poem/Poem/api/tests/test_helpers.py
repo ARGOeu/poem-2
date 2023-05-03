@@ -9,6 +9,7 @@ from Poem.helpers.history_helpers import create_comment, update_comment, \
 from Poem.helpers.metrics_helpers import import_metrics, update_metrics, \
     update_metrics_in_profiles, get_metrics_in_profiles, \
     delete_metrics_from_profile, update_metric_in_schema, sync_metrics
+from Poem.helpers.tenant_helpers import CombinedTenant
 from Poem.helpers.versioned_comments import new_comment
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
@@ -29,7 +30,8 @@ from django_tenants.utils import get_tenant_model, get_public_schema_name, \
 from .utils_test import mocked_func, mocked_web_api_metric_profile, \
     mocked_web_api_metric_profile_put, mocked_web_api_metric_profiles, \
     mocked_web_api_metric_profiles_empty, \
-    mocked_web_api_metric_profiles_wrong_token
+    mocked_web_api_metric_profiles_wrong_token, mocked_web_api_data_feed, \
+    mocked_web_api_data_feed_wrong_token
 
 ALLOWED_TEST_DOMAIN = '.test.com'
 
@@ -3844,3 +3846,50 @@ class CommentsTests(TenantTestCase):
             'Deleted service-metric instance tuple '
             '(APEL, org.apel.APEL-Sync).'
         )
+
+
+class CombinedTenantTests(TenantTestCase):
+    def setUp(self) -> None:
+        self.tenant.name = "TENANT"
+        self.tenant.save()
+        self.combined_tenant = CombinedTenant(self.tenant)
+
+    @patch("Poem.helpers.tenant_helpers.requests.get")
+    @patch("Poem.helpers.tenant_helpers.WebAPIKey.objects.get")
+    def test_get_combined_tenants(self, mock_key, mock_get):
+        with self.settings(WEBAPI_DATAFEEDS="https://mock.api.url/feeds/data"):
+            mock_key.return_value = WebAPIKey(
+                name="WEB-API-TENANT", token="t0k3n"
+            )
+            mock_get.side_effect = mocked_web_api_data_feed
+            tenants = self.combined_tenant.tenants()
+            mock_get.assert_called_once_with(
+                "https://mock.api.url/feeds/data",
+                headers={"Accept": "application/json", "x-api-key": "t0k3n"},
+                timeout=20
+            )
+            self.assertEqual(tenants, ["TENANT_X", "TENANT_Y"])
+
+    @patch("Poem.helpers.tenant_helpers.requests.get")
+    @patch("Poem.helpers.tenant_helpers.WebAPIKey.objects.get")
+    def test_get_combined_tenants_webapi_exception(self, mock_key, mock_get):
+        with self.settings(WEBAPI_DATAFEEDS="https://mock.api.url/feeds/data"):
+            mock_key.return_value = WebAPIKey(
+                name="WEB-API-TENANT", token="t0k3n"
+            )
+            mock_get.side_effect = mocked_web_api_data_feed_wrong_token
+            tenants = self.combined_tenant.tenants()
+            mock_get.assert_called_once_with(
+                "https://mock.api.url/feeds/data",
+                headers={"Accept": "application/json", "x-api-key": "t0k3n"},
+                timeout=20
+            )
+            self.assertEqual(tenants, [])
+
+    @patch("Poem.helpers.tenant_helpers.requests.get")
+    def test_get_combined_tenants_key_doesnotexist(self, mock_get):
+        with self.settings(WEBAPI_DATAFEEDS="https://mock.api.url/feeds/data"):
+            mock_get.side_effect = mocked_web_api_data_feed_wrong_token
+            tenants = self.combined_tenant.tenants()
+            self.assertFalse(mock_get.called)
+            self.assertEqual(tenants, [])

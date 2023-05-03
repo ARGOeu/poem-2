@@ -19,14 +19,15 @@ def create_groups_of_resources(tenant_name):
         poem_models.GroupOfReports.objects.create(name=group)
 
 
-def create_tenant(name, hostname):
+def create_tenant(name, hostname, combined=False):
     # if tenant is created for the public schema, tenant name is 'all',
     # otherwise tenant name is the same as schema name
     if name == 'all':
         schema = 'public'
     else:
         schema = name.lower()
-    tenant = Tenant(schema_name=schema, name=name)
+
+    tenant = Tenant(schema_name=schema, name=name, combined=combined)
     tenant.save()
     domain_model = get_tenant_domain_model()
     domain = domain_model()
@@ -54,6 +55,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--name', required=True, type=str)
         parser.add_argument('--hostname', nargs='?', type=str)
+        parser.add_argument("--combined", action="store_true")
 
     def handle(self, *args, **kwargs):
         name = kwargs['name']
@@ -61,4 +63,11 @@ class Command(BaseCommand):
             hostname = kwargs['hostname']
         else:
             hostname = get_public_schema_hostname()
-        create_tenant(name, hostname)
+
+        if kwargs["combined"]:
+            combined = True
+
+        else:
+            combined = False
+
+        create_tenant(name, hostname, combined)

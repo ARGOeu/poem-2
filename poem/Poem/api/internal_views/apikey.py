@@ -4,9 +4,10 @@ from itertools import chain
 
 from Poem.api.models import MyAPIKey
 from Poem.api.views import NotFound
+from Poem.helpers.tenant_helpers import CombinedTenant
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin.models import WebAPIKey
-from django.db.models import Q, Value
+from django.db.models import Value
 from django_tenants.utils import get_public_schema_name
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
@@ -20,7 +21,16 @@ class ListAPIKeys(APIView):
     authentication_classes = (SessionAuthentication,)
 
     def get(self, request, name=None):
-        pattern = f"^WEB-API-{request.tenant.name}(-RO)?$"
+        if request.tenant.combined:
+            ct = CombinedTenant(request.tenant)
+            tenants = ct.tenants()
+            keynames = "|".join([f"{tenant}-RO" for tenant in tenants])
+
+            pattern = \
+                f"^WEB-API-({request.tenant.name}(-RO)?|{keynames})$"
+
+        else:
+            pattern = f"^WEB-API-{request.tenant.name}(-RO)?$"
 
         if request.tenant.schema_name == get_public_schema_name():
             superuser = request.user.is_superuser
@@ -123,9 +133,8 @@ class ListAPIKeys(APIView):
                     apikeys = [
                         key for key in apikeys if
                         (key.name.startswith("WEB-API-") and
-                         re.match(
-                             f"^WEB-API-{request.tenant.name}(-RO)?$", key.name
-                         )) or not key.name.startswith("WEB-API-")
+                         re.match(pattern, key.name)) or
+                        not key.name.startswith("WEB-API-")
                     ]
 
             api_format = [
