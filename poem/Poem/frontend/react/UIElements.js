@@ -812,10 +812,20 @@ export const NotifyError = ({msg='', title=''}) => {
 
 
 export const NotifyWarn = ({msg='', title=''}) => {
-  msg = <div>
-    <p>{msg}</p>
-    <p>Click to dismiss.</p>
-  </div>
+  let msg_list = msg.split("\n")
+  if (msg_list.length === 1)
+    msg = <div>
+      <p>{msg}</p>
+      <p>Click to dismiss.</p>
+    </div>
+  
+  else
+    msg = <div>
+      <p>{ msg_list[0] }</p>
+      <p>{ msg_list[1] }</p>
+      <p>Click to dismiss.</p>
+    </div>
+
   NotificationManager.warning(msg, title, 0, () => true);
 };
 

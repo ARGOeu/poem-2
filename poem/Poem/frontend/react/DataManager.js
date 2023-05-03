@@ -210,6 +210,75 @@ export class Backend {
       throw Error(error_msg)
   }
 
+  async changeMetricProfile(data) {
+    let error_msg = ""
+    const url = "/api/v2/internal/metricprofiles/"
+    try {
+      const response = await this.send(url, 'PUT', data);
+      if (!response.ok) {
+        try {
+          let json = await response.json()
+          error_msg = `${response.status} ${response.statusText} in PUT ${url}${json.detail ? `: ${json.detail}` : ''}`;
+        } catch (err2) {
+          error_msg = `${response.status} ${response.statusText} in PUT ${url}`;
+        }
+      } else {
+        return await response.json()
+      }
+    } catch (err1) {
+      error_msg = `${err1} in PUT ${url}`
+    }
+
+    if (error_msg)
+      throw Error(error_msg)
+  }
+
+  async addMetricProfile(data) {
+    let error_msg = ""
+    const url = "/api/v2/internal/metricprofiles/"
+    try {
+      const response = await this.send(url, 'POST', data);
+      if (!response.ok) {
+        try {
+          let json = await response.json()
+          error_msg = `${response.status} ${response.statusText} in POST ${url}${json.detail ? `: ${json.detail}` : ''}`;
+        } catch (err2) {
+          error_msg = `${response.status} ${response.statusText} in POST ${url}`;
+        }
+      } else {
+        return await response.json()
+      }
+    } catch (err1) {
+      error_msg = `${err1} in POST ${url}`
+    }
+
+    if (error_msg)
+      throw Error(error_msg)
+  }
+
+  async deleteMetricProfile(idProfile) {
+    let error_msg = ""
+    const url = `/api/v2/internal/metricprofiles/${idProfile}`
+    try {
+      const response = await this.send(url, 'DELETE');
+      if (!response.ok) {
+        try {
+          let json = await response.json()
+          error_msg = `${response.status} ${response.statusText} in DELETE ${url}${json.detail ? `: ${json.detail}` : ''}`;
+        } catch (err2) {
+          error_msg = `${response.status} ${response.statusText} in DELETE ${url}`;
+        }
+      } else {
+        return await response.json()
+      }
+    } catch (err1) {
+      error_msg = `${err1} in DELETE ${url}`
+    }
+
+    if (error_msg)
+      throw Error(error_msg)
+  }
+
   async bulkDeleteMetrics(data) {
     let error_msg = '';
     const url = '/api/v2/internal/deletetemplates/';

@@ -14,7 +14,8 @@ import {
   ProfilesListTable,
   CustomError,
   ProfileMain,
-  CustomReactSelect
+  CustomReactSelect,
+  NotifyWarn
 } from './UIElements';
 import {
   Button,
@@ -31,7 +32,6 @@ import { useQuery, useQueryClient, useMutation } from 'react-query';
 import PapaParse from 'papaparse';
 import { downloadCSV } from './FileDownload';
 import {
-  fetchAllMetrics,
   fetchUserDetails,
   fetchBackendMetricProfiles
 } from './QueryFunctions';
@@ -585,11 +585,11 @@ export const MetricProfilesComponent = (props) => {
 
   const queryClient = useQueryClient();
   const webapiChangeMutation = useMutation(async (values) => await webapi.changeMetricProfile(values));
-  const backendChangeMutation = useMutation(async (values) => await backend.changeObject('/api/v2/internal/metricprofiles/', values));
+  const backendChangeMutation = useMutation(async (values) => await backend.changeMetricProfile(values))
   const webapiAddMutation = useMutation(async (values) => await webapi.addMetricProfile(values));
-  const backendAddMutation = useMutation(async (values) => await backend.addObject('/api/v2/internal/metricprofiles/', values));
+  const backendAddMutation = useMutation(async (values) => await backend.addMetricProfile(values))
   const webapiDeleteMutation = useMutation(async (idProfile) => await webapi.deleteMetricProfile(idProfile));
-  const backendDeleteMutation = useMutation(async (idProfile) => await backend.deleteObject(`/api/v2/internal/metricprofiles/${idProfile}`));
+  const backendDeleteMutation = useMutation(async (idProfile) => await backend.deleteMetricProfile(idProfile))
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
     'userdetails', () => fetchUserDetails(true),
@@ -622,7 +622,7 @@ export const MetricProfilesComponent = (props) => {
   )
 
   const { data: metricsAll, error: errorMetricsAll, isLoading: loadingMetricsAll } = useQuery(
-    'metricsall', () => fetchAllMetrics(),
+    "metrictemplate_names", async () => await backend.fetchListOfNames("/api/v2/internal/availmetrictemplates"),
     { enabled: !publicView }
   )
 
@@ -667,11 +667,17 @@ export const MetricProfilesComponent = (props) => {
       webapiDeleteMutation.mutate(idProfile, {
         onSuccess: () => {
           backendDeleteMutation.mutate(idProfile, {
-            onSuccess: () => {
+            onSuccess: (data) => {
               queryClient.invalidateQueries('metricprofile');
               queryClient.invalidateQueries('public_metricprofile');
+              
+              let msg = "Metric profile successfully deleted"
+
+              if ("deleted" in data)
+                msg = `${msg}\n${data.deleted}`
+
               NotifyOk({
-                msg: 'Metric profile successfully deleted',
+                msg: msg,
                 title: 'Deleted',
                 callback: () => history.push('/ui/metricprofiles')
               });
@@ -746,14 +752,36 @@ export const MetricProfilesComponent = (props) => {
             groupname: formValues.groupname,
             services: backend_services
           }, {
-            onSuccess: () => {
+            onSuccess: (data) => {
               queryClient.invalidateQueries('metricprofile');
               queryClient.invalidateQueries('public_metricprofile');
+
+              let msg = "Metric profile successfully changed"
+              let warn_msg = ""
+
+              if ("imported" in data)
+                msg = `${msg}\n${data.imported}`
+
+              if ("warning" in data)
+                warn_msg = `${warn_msg}\n${data.warning}`.replace(/^\s+|\s+$/g, "")
+
+              if ("unavailable" in data)
+                warn_msg = `${warn_msg}\n${data.unavailable}`.replace(/^\s+|\s+$/g, "")
+
+              if ("deleted" in data)
+                msg = `${msg}\n${data.deleted}`
+
               NotifyOk({
-                msg: 'Metric profile successfully changed',
+                msg: msg,
                 title: 'Changed',
                 callback: () => history.push('/ui/metricprofiles')
               });
+
+              if (warn_msg)
+                NotifyWarn({
+                  msg: warn_msg,
+                  title: "Metrics warning"
+                })
             },
             onError: (error) => {
               NotifyError({
@@ -786,14 +814,33 @@ export const MetricProfilesComponent = (props) => {
             description: formValues.description,
             services: backend_services
           }, {
-            onSuccess: () => {
+            onSuccess: (data) => {
               queryClient.invalidateQueries('metricprofile');
               queryClient.invalidateQueries('public_metricprofile');
+              
+              let msg = "Metric profile successfully added"
+              let warn_msg = ""
+
+              if ("imported" in data)
+                msg = `${msg}\n${data.imported}`
+
+              if ("warning" in data)
+                warn_msg = `${warn_msg}\n${data.warning}`.replace(/^\s+|\s+$/g, "")
+
+              if ("unavailable" in data)
+                warn_msg = `${warn_msg}\n${data.unavailable}`.replace(/^\s+|\s+$/g, "")
+
+              if ("deleted" in data)
+                msg = `${msg}\n${data.deleted}`
+
               NotifyOk({
-                msg: 'Metric profile successfully added',
+                msg: msg,
                 title: 'Added',
                 callback: () => history.push('/ui/metricprofiles')
-              });
+              })
+
+              if (warn_msg)
+                NotifyWarn({ msg: warn_msg, title: "Metrics warning" })
             },
             onError: (error) => {
               NotifyError({

@@ -550,65 +550,32 @@ class ListPublicMetricTemplates(ListMetricTemplates):
         return self._denied()
 
 
-class ListMetricTemplatesForImport(APIView):
+class ListAvailableMetricTemplates(APIView):
     authentication_classes = (SessionAuthentication,)
 
     def get(self, request):
-        metrictemplates = admin_models.MetricTemplate.objects.all().order_by(
-            'name'
+        mts = admin_models.MetricTemplate.objects.all().values_list(
+            "name", flat=True
         )
+        metrics = Metric.objects.all().values_list("name", flat=True)
 
-        results = []
-        for mt in metrictemplates:
-            vers = admin_models.MetricTemplateHistory.objects.filter(
-                object_id=mt
-            ).order_by('-date_created')
-            if mt.probekey:
-                probeversion = mt.probekey.__str__()
-                tags = set()
-                probeversion_dict = dict()
-                for ver in vers:
-                    for repo in ver.probekey.package.repos.all():
-                        tags.add(repo.tag.name)
-                        if repo.tag.name not in probeversion_dict:
-                            probeversion_dict.update(
-                                {
-                                    repo.tag.name: ver.probekey.__str__()
-                                }
-                            )
+        missing_metrics_names = set(metrics).difference(set(mts))
 
-                tags = list(tags)
-
-                if 'CentOS 6' in probeversion_dict:
-                    centos6_probeversion = probeversion_dict['CentOS 6']
-                else:
-                    centos6_probeversion = ''
-
-                if 'CentOS 7' in probeversion_dict:
-                    centos7_probeversion = probeversion_dict['CentOS 7']
-                else:
-                    centos7_probeversion = ''
-
-            else:
-                tags = list(admin_models.OSTag.objects.all().values_list(
-                    'name', flat=True
-                ))
-                probeversion = ''
-                centos6_probeversion = ''
-                centos7_probeversion = ''
-
-            tags.sort()
-            results.append(
-                dict(
-                    name=mt.name,
-                    mtype=mt.mtype.name,
-                    tags=sorted([tag.name for tag in mt.tags.all()]),
-                    probeversion=probeversion,
-                    centos6_probeversion=centos6_probeversion,
-                    centos7_probeversion=centos7_probeversion,
-                    ostag=tags
+        result = list(mts)
+        if len(missing_metrics_names) > 0:
+            for m in missing_metrics_names:
+                mt_versions = admin_models.MetricTemplateHistory.objects.filter(
+                    name=m
                 )
-            )
+                all_versions = \
+                    admin_models.MetricTemplateHistory.objects.filter(
+                        object_id=mt_versions[0].object_id
+                    ).order_by("-date_created")
+                result = list(
+                    map(lambda x: x.replace(all_versions[0].name, m), result)
+                )
+
+        results = [{"name": mt} for mt in sorted(result)]
 
         return Response(results)
 
