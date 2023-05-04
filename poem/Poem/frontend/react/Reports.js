@@ -9,7 +9,9 @@ import {
   NotifyError,
   NotifyOk,
   ParagraphTitle,
-  CustomReactSelect
+  CustomReactSelect,
+  CustomReactCreatable,
+  CustomError
  } from './UIElements';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -63,10 +65,270 @@ const ReportsSchema = Yup.object().shape({
   metricProfile: Yup.string().required('Required'),
   aggregationProfile: Yup.string().required('Required'),
   operationsProfile: Yup.string().required('Required'),
+  groupsTags: Yup.array().of(
+    Yup.object().shape({
+      name: Yup.string().required("Required"),
+      value: Yup.mixed().test("custom_required", "Required", function (val) {
+        if (Array.isArray(val))
+          if (val.length === 0)
+            return false
+
+          else
+            return true
+
+        else if (typeof(val) == "string")
+          if (val === "")
+            return false
+
+          else
+            return true
+
+        else
+          return false
+      })
+      .test("regex", "Value not matching predefined values", function (vals) {
+        if (Array.isArray(vals)) {
+          let groupsTags = this.options.context.allTags.filter(tag => tag.name === "groups")[0]["values"]
+          let tagValues = groupsTags.filter(tag => tag.name === this.parent.name)[0]["values"]
+          let invalidValues = getInvalidValues(vals, tagValues)
+
+          return invalidValues.length === 0
+        } else
+          return true
+      })
+      .test("regex-duplicate", "Duplicate values", function (vals) {
+        if (Array.isArray(vals)) {
+          let invalidValues = getWildcardDuplicates(vals)
+
+          return invalidValues.length === 0
+        } else
+          return true
+      })
+    })
+  ),
+  groupsExtensions: Yup.array().of(
+    Yup.object().shape({
+      name: Yup.string().required("Required"),
+      value: Yup.mixed().test("custom_required", "Required", function (val) {
+        if (Array.isArray(val))
+          if (val.length === 0)
+            return false
+
+          else
+            return true
+
+        else if (typeof(val) == "string")
+          if (val === "")
+            return false
+
+          else
+            return true
+
+        else
+          return false
+      })
+      .test("regex", "Value not matching predefined values", function (vals) {
+        if (Array.isArray(vals)) {
+          let groupsExt = this.options.context.allExtensions.filter(ext => ext.name === "groups")[0]["values"]
+          let extValues = groupsExt.filter(ext => ext.name === this.parent.name)[0]["values"]
+          let invalidValues = getInvalidValues(vals, extValues)
+
+          return invalidValues.length === 0
+        } else
+          return true
+      })
+      .test("regex-duplicate", "Duplicate values", function (vals) {
+        if (Array.isArray(vals)) {
+          let invalidValues = getWildcardDuplicates(vals)
+
+          return invalidValues.length === 0
+        } else
+          return true
+      })
+    })
+  ),
+  entitiesGroups: Yup.array().of(
+    Yup.object().shape({
+      name: Yup.string(),
+      value: Yup.array().test("regex", "Value not matching predefined values", function (vals, context) {
+        let { key1, key2 } = getGroupsEntitiesKeysLabels(context.from[1].value.topologyType)
+        let selectEntities = context.options.index === 0 ?
+          this.options.context.groupsEntitiesTopoGroups[key1]
+        :
+          filterSelectEntities(
+            this.options.context.groupsEntitiesTopoGroups[key2],
+            context.from[1].value.entitiesGroups,
+            context.from[1].value.entitiesEndpoints,
+            this.options.context.topoMaps,
+            key2
+          )
+
+        return getInvalidValues(vals, selectEntities).length === 0
+      })
+      .test("regex-duplicate", "Duplicate values", function (vals) {
+        if (Array.isArray(vals)) {
+          let invalidValues = getWildcardDuplicates(vals)
+
+          return invalidValues.length === 0
+        } else
+          return true
+      })
+    })
+  ),
+  endpointsTags: Yup.array().of(
+    Yup.object().shape({
+      name: Yup.string().required("Required"),
+      value: Yup.mixed().test("custom_required", "Required", function (val) {
+        if (Array.isArray(val))
+          if (val.length === 0)
+            return false
+
+          else
+            return true
+
+        else if (typeof(val) == "string")
+          if (val === "")
+            return false
+
+          else
+            return true
+
+        else
+          return false
+      })
+      .test("regex", "Value not matching predefined values", function (vals) {
+        if (Array.isArray(vals)) {
+          let groupsTags = this.options.context.allTags.filter(tag => tag.name === "endpoints")[0]["values"]
+          let tagValues = groupsTags.filter(tag => tag.name === this.parent.name)[0]["values"]
+          let invalidValues = getInvalidValues(vals, tagValues)
+
+          return invalidValues.length === 0
+        } else
+          return true
+      })
+      .test("regex-duplicate", "Duplicate values", function (vals) {
+        if (Array.isArray(vals)) {
+          let invalidValues = getWildcardDuplicates(vals)
+
+          return invalidValues.length === 0
+        } else
+          return true
+      })
+    })
+  ),
+  endpointsExtensions: Yup.array().of(
+    Yup.object().shape({
+      name: Yup.string().required("Required"),
+      value: Yup.mixed().test("custom_required", "Required", function (val) {
+        if (Array.isArray(val))
+          if (val.length === 0)
+            return false
+
+          else
+            return true
+
+        else if (typeof(val) == "string")
+          if (val === "")
+            return false
+
+          else
+            return true
+
+        else
+          return false
+      })
+      .test("regex", "Value not matching predefined values", function (vals) {
+        if (Array.isArray(vals)) {
+          let groupsExt = this.options.context.allExtensions.filter(ext => ext.name === "endpoints")[0]["values"]
+          let extValues = groupsExt.filter(ext => ext.name === this.parent.name)[0]["values"]
+          let invalidValues = getInvalidValues(vals, extValues)
+
+          return invalidValues.length === 0
+        } else
+          return true
+      })
+      .test("regex-duplicate", "Duplicate values", function (vals) {
+        if (Array.isArray(vals)) {
+          let invalidValues = getWildcardDuplicates(vals)
+
+          return invalidValues.length === 0
+        } else
+          return true
+      })
+    })
+  ),
+  entitiesEndpoints: Yup.array().of(
+    Yup.object().shape({
+      name: Yup.string(),
+      value: Yup.array().test("regex", "Value not matching predefined values", function (vals, context) {
+        let { key1, key2 } = getEndpointsEntitiesKeysLabels(context.from[1].value.topologyType)
+        let key = context.options.index === 0 ? key1 : key2
+        let selectEntities = filterSelectEntities(
+            this.options.context.groupsEntitiesTopoGroups[key],
+            context.from[1].value.entitiesGroups,
+            context.from[1].value.entitiesEndpoints,
+            this.options.context.topoMaps,
+            key
+          )
+
+        return getInvalidValues(vals, selectEntities).length === 0
+      })
+      .test("regex-duplicate", "Duplicate values", function (vals) {
+        if (Array.isArray(vals)) {
+          let invalidValues = getWildcardDuplicates(vals)
+
+          return invalidValues.length === 0
+        } else
+          return true
+      })
+    })
+  )
 })
 
 export const ReportsAdd = (props) => <ReportsComponent addview={true} {...props}/>;
 export const ReportsChange = (props) => <ReportsComponent {...props}/>;
+
+
+const getInvalidValues = (values, tagValues) => {
+  let invalidValues = []
+  if (values) {
+    for (let val of values) {
+      if (val.includes("*")) {
+        if (tagValues.filter(tag => tag.match(new RegExp(`${val.replace("*", ".*")}`))).length === 0)
+          invalidValues.push(val)
+      } else {
+        if (tagValues.indexOf(val) === -1) {
+          invalidValues.push(val)
+        }
+      }
+    }
+  }
+
+  return invalidValues
+}
+
+
+const getWildcardDuplicates = (values) => {
+  let duplicates = []
+
+  let withWildcard = values.filter(val => val.includes("*"))
+
+  if (withWildcard.length > 0) {
+    for (let w of withWildcard) {
+      let wDuplicates = []
+      for (let value of values.filter(val => !val.includes("*"))) {
+        if (value.match(new RegExp(`${w.replace("*", ".*")}`)))
+          wDuplicates.push(value)
+      }
+      if (wDuplicates.length > 0) {
+        duplicates.push(...wDuplicates)
+        duplicates.push(w)
+      }
+    }
+  }
+
+  return duplicates
+}
 
 
 const fetchReport = async (webapi, name) => {
@@ -166,13 +428,8 @@ const sortStr = (a, b) => {
 }
 
 
-function preProcessTagValue(data) {
-  if (data === '1')
-    return 'yes'
-  else if (data === '0')
-    return 'no'
-
-  return data
+const equalSets = (set1, set2) => {
+  return (set1.size == set2.size) && [...set1].every(val => set2.has(val))
 }
 
 
@@ -180,46 +437,21 @@ const entityInitValues = (matchWhat, formvalue) => {
   let tmp = new Array()
   for (let entity of formvalue) {
     if (entity && matchWhat.indexOf(entity.name) > -1) {
-      if (entity.value.indexOf('|') > -1) {
-        tmp = entity.value.split('|').map(e => new Object({
-          'label': e.trim(),
-          'value': e.trim()
-        }))
+      if (entity.value) {
+        tmp = entity.value.map(e => new Object({ label: e, value: e }))
       }
-      else if (entity.value)
-        tmp.push(
-          new Object({
-            'label': entity.value,
-            'value': entity.value
-          }))
-      else
-        tmp.push(undefined)
     }
   }
   return tmp
 }
 
 
-const formatFilteredSelectEntities = (data, entitiesGroups, entitiesEndpoints, topoMaps, lookkey) => {
-  let selectedTop = new Array()
-  let selectedMiddle = new Array()
+const filterSelectEntities = (data, entitiesGroups, entitiesEndpoints, topoMaps, lookkey) => {
+  let selectedTop = entitiesGroups[0]["value"]
+  let selectedMiddle = entitiesEndpoints[0] && entitiesEndpoints[0]["value"] ? entitiesEndpoints[0]["value"] : entitiesGroups[1]["value"]
 
-  let selectedEntitiesTop = entitiesGroups[0]
-  let selectedEntitiesMiddle = entitiesEndpoints[0] && entitiesEndpoints[0]['value'] ? entitiesEndpoints[0] : entitiesGroups[1]
-
-  if (selectedEntitiesTop && selectedEntitiesTop['value']) {
-    if (selectedEntitiesTop['value'].includes('|'))
-      selectedTop = selectedEntitiesTop['value'].split('|')
-    else
-      selectedTop = [selectedEntitiesTop['value']]
-  }
-
-  if (selectedEntitiesMiddle && selectedEntitiesMiddle['value']) {
-    if (selectedEntitiesMiddle['value'].includes('|'))
-      selectedMiddle = selectedEntitiesMiddle['value'].split('|')
-    else
-      selectedMiddle = [selectedEntitiesMiddle['value']]
-  }
+  selectedTop = selectedTop ? selectedTop : new Array()
+  selectedMiddle = selectedMiddle ? selectedMiddle : new Array()
 
   if (selectedTop.length > 0 || selectedMiddle.length > 0) {
     let topoTypeMeta = new Array(
@@ -239,93 +471,216 @@ const formatFilteredSelectEntities = (data, entitiesGroups, entitiesEndpoints, t
 
     for (var tt of topoTypeMeta) {
       if (lookkey.includes(tt['middleKey'])) {
-        let choices = new Array()
+        let choices = new Set()
         if (selectedTop.length > 0)
           selectedTop.forEach(sel => {
-            let sels = topoMaps[tt['topMapKey']].get(sel)
+            let sels = new Array()
+            if (sel.includes("*")) {
+              for (const [key, val] of topoMaps[tt["topMapKey"]].entries()) {
+                const res = key.match(new RegExp(`${sel.replace("*", ".*")}`))
+                if (res) sels.push(...val)
+              }
+            } else
+              sels = topoMaps[tt['topMapKey']].get(sel)
             if (sels)
-              choices.push(...sels)
+              for (var ser of sels)
+                choices.add(ser)
           })
         else
           choices = data
-        return formatSelectEntities(choices.sort(sortStr))
+
+        return Array.from(choices).sort(sortStr)
       }
 
       else if (lookkey.includes(tt['lowerKey'])) {
         let services = new Set()
         if (selectedMiddle.length > 0) {
           selectedMiddle.forEach(sel => {
-            let sels = topoMaps[tt['middleMapKey']].get(sel)
+            let sels = new Array()
+            if (sel.includes("*")) {
+              for (const [key, val] of topoMaps[tt["middleMapKey"]].entries()) {
+                const res = key.match(new RegExp(`${sel.replace("*", ".*")}`))
+                if (res) sels.push(...val)
+              }
+            } else
+              sels = topoMaps[tt['middleMapKey']].get(sel)
             if (sels)
               for (var ser of sels)
                 services.add(ser)
           })
-          return formatSelectEntities(Array.from(services).sort(sortStr))
+          return Array.from(services).sort(sortStr)
         }
         else if (selectedTop.length > 0) {
           let sites = new Array()
           selectedTop.forEach(sel => {
-            let sels = topoMaps[tt['topMapKey']].get(sel)
+            let sels = new Array()
+            if (sel.includes("*")) {
+              for (const [key, val] of topoMaps[tt["topMapKey"]].entries()) {
+                const res = key.match(new RegExp(`${sel.replace("*", ".*")}`))
+                if (res) sels.push(...val)
+              }
+            } else
+              sels = topoMaps[tt['topMapKey']].get(sel)
             if (sels)
               sites.push(...sels)
           })
           sites.forEach(sel => {
-            let sels = topoMaps[tt['middleMapKey']].get(sel)
+            let sels = new Array()
+            if (sel.includes("*")) {
+              for (const [key, val] of topoMaps[tt["middleMapKey"]].entries()) {
+                const res = key.match(new RegExp(`${sel.replace("*", ".*")}`))
+                if (res) sels.push(...val)
+              }
+            } else 
+              sels = topoMaps[tt['middleMapKey']].get(sel)
             if (sels)
               for (var ser of sels)
                 services.add(ser)
           })
-          return formatSelectEntities(Array.from(services).sort(sortStr))
+          return Array.from(services).sort(sortStr)
         }
       }
     }
   }
   else
-    return formatSelectEntities(data.sort(sortStr))
+    return data ? data.sort(sortStr) : []
+}
+
+
+const getGroupsEntitiesKeysLabels = (topoType) => {
+  let label1 = undefined
+  let label2 = undefined
+  let key1 = undefined
+  let key2 = undefined
+
+  if (topoType === 'Sites') {
+    label1 = 'NGIs:'
+    label2 = 'Sites:'
+    key1 = 'entitiesNgi'
+    key2 = 'entitiesSites'
+  }
+  else if (topoType === 'ServiceGroups'){
+    label1 = 'Projects:'
+    label2 = 'Service groups:'
+    key1 = 'entitiesProjects'
+    key2 = 'entitiesServiceGroups'
+  }
+  else {
+    label1 = 'Upper group:'
+    label2 = 'Lower group:'
+    key1 = 'entitiesNgi'
+    key2 = 'entitiesSites'
+  }
+
+  return new Object({ key1: key1, label1: label1, key2: key2, label2: label2 })
+}
+
+
+const getEndpointsEntitiesKeysLabels = (topoType) => {
+  let label1 = undefined
+  let label2 = undefined
+  let key1 = undefined
+  let key2 = undefined
+
+  if (topoType === 'Sites') {
+    label1 = 'Sites:'
+    label2 = 'Service types:'
+    key1 = 'entitiesSites'
+    key2 = 'serviceTypesSitesEndpoints'
+  }
+  else if (topoType === 'ServiceGroups'){
+    label1 = 'Service groups:'
+    label2 = 'Service types:'
+    key1 = 'entitiesServiceGroups'
+    key2 = 'serviceTypesServiceGroupsEndpoints'
+  }
+  else {
+    label1 = 'Upper group:'
+    label2 = 'Lower group:'
+    key1 = 'entitiesSites'
+    key2 = 'serviceTypesSitesEndpoints'
+  }
+
+  return new Object({ key1: key1, label1: label1, key2: key2, label2: label2 })
 }
 
 
 const formatSelectEntities = (data) => {
-  let formatted = new Array()
-  for (var e of [...data])
-    formatted.push(new Object({
-      'label': e,
-      'value': e
-    }))
-  return formatted
+  return data.map(item => new Object({ label: item, value: item }))
 }
 
 
-const TagSelect = ({field, tagOptions, onChangeHandler, isMulti,
-  closeMenuOnSelect, tagInitials}) => {
+const TagSelect = ({forwardedRef, tagOptions, onChangeHandler, isMulti,
+  closeMenuOnSelect, tagInitials, error}) => {
   if (tagInitials) {
     return (
       <CustomReactSelect
-        forwardedRef={field.ref}
+        forwardedRef={ forwardedRef }
         closeMenuOnSelect={closeMenuOnSelect}
         isMulti={isMulti}
         isClearable={false}
         onChange={(e) => onChangeHandler(e)}
         options={tagOptions}
         value={tagInitials}
+        error={ error }
       />
     )
   }
   else
     return (
       <CustomReactSelect
-        forwardedRef={field.ref}
+        forwardedRef={ forwardedRef }
         closeMenuOnSelect={closeMenuOnSelect}
         isMulti={isMulti}
         isClearable={false}
         onChange={(e) => onChangeHandler(e)}
         options={tagOptions}
+        error={ error }
       />
     )
+  }
+
+
+const TagCreatable = ({
+  forwardedRef,
+  tagOptions,
+  invalidValues,
+  onChangeHandler,
+  tagInitials,
+  error
+}) => {
+  if (tagInitials) {
+    return (
+      <CustomReactCreatable
+        forwardedRef={ forwardedRef }
+        closeMenuOnSelect={ false }
+        isMulti={ true }
+        isClearable={ false }
+        onChange={ onChangeHandler }
+        options={ tagOptions }
+        defaultValue={ tagInitials }
+        invalidValues={ invalidValues }
+        error={ error }
+      />
+    )
+  } else {
+    return (
+      <CustomReactCreatable
+        forwardedRef={ forwardedRef }
+        closeMenuOnSelect={ false }
+        isMulti={ true }
+        isClearable={ false }
+        onChange={ onChangeHandler }
+        options={ tagOptions }
+        invalidValues={ invalidValues }
+        error={ error }
+      />
+    )
+  }
 }
 
 
-const TopologyTagList = ({ part, fieldName, tagsAll, addview, publicView }) => {
+const TopologyTagList = ({ part, fieldName, tagsAll, publicView }) => {
   const extractTags = (which, filter=false) => {
     let selected = new Array()
     let tagsState = getValues(fieldName.toLowerCase().endsWith("tags") ? "tagsState" : "extensionsState")
@@ -356,57 +711,43 @@ const TopologyTagList = ({ part, fieldName, tagsAll, addview, publicView }) => {
     setValue(tagsStateName, newState)
   }
 
-  const isMultiValuesTags = (data) => {
-    if (data) {
-      if (data.length === 2 || data.length === 1) {
-        if (data[0].value === 'yes' ||
-          data[0].value === 'no')
-        return false
-      }
-      else
-        return true
-    }
+  const isMultiValuesTags = (index) => {
+    let set1 = new Set(extractValuesTags(index).map(item => item.value))
+    let set2 = new Set(["no", "yes"])
+    return !equalSets(set1, set2)
   }
 
-  const tagsInitValues = (key, data, preprocess=false) => {
-    if (!data[key])
+  const tagsInitValues = (value) => {
+    if (!value)
       return undefined
-    if (data[key].indexOf('|') === -1)
-      return new Object({
-        'label': preprocess ? preProcessTagValue(data[key]) : data[key],
-        'value': preprocess ? preProcessTagValue(data[key]) : data[key]
-      })
-    else {
-      let tmp = data[key].split('|').map(e => new Object({
-        'label': preprocess ? preProcessTagValue(e) : e,
-        'value': preprocess ? preProcessTagValue(e) : e
-      }))
-      return tmp
-    }
+
+    if (typeof value === "string")
+      return new Object({ label: value, value: value })
+    else
+      return value.map(val => new Object({ label: val, value: val }))
   }
 
-  const extractValuesTags = (index, preprocess=false) => {
+  const extractValuesTags = (index) => {
     if (tagsState[part] !== undefined) {
       let interestTags = extractTags(part)
       interestTags = interestTags.filter((e) => e.name === tagsState[part][index])
       if (interestTags.length > 0) {
-        interestTags = interestTags[0].values.map((e) => new Object({
-          'label': preprocess ? preProcessTagValue(e) : e,
-          'value': preprocess ? preProcessTagValue(e) : e
-        }))
+        interestTags = interestTags[0].values.map((e) => new Object({ label: e, value: e }))
         return interestTags
       }
     }
     return []
   }
 
-  const { control, getValues, setValue } = useFormContext()
+  const { control, getValues, setValue, resetField, clearErrors, trigger, formState: { errors } } = useFormContext()
 
   const { fields, append, remove } = useFieldArray({ control, name: fieldName })
 
   const tagsStateName = fieldName.toLowerCase().endsWith("tags") ? "tagsState" : "extensionsState"
 
   const tagsState = useWatch({ control, name: tagsStateName })
+
+  const [invalidValues, setInvalidValues] = useState(new Array())
 
   return (
     <React.Fragment>
@@ -445,24 +786,32 @@ const TopologyTagList = ({ part, fieldName, tagsAll, addview, publicView }) => {
                           data-testid={`${fieldName}.${index}.name`}
                           className="form-control"
                           disabled={ true }
-                          value={ getValues(`${fieldName}.${index}.name`) }
+                          value={ field.value }
                         />
                       :
-                        <TagSelect
-                          field={ field }
-                          data-testid={ `${fieldName}.${index}.name` }
-                          tagOptions={ extractTags(part, true).map((e) => new Object({
-                            'label': e.name,
-                            'value': e.name
-                          })) }
-                          onChangeHandler={(e) => {
-                            setValue(`${fieldName}.${index}.name`, e.value)
-                            recordSelectedTagKeys(index, e.value)
-                          }}
-                          isMulti={false}
-                          closeMenuOnSelect={true}
-                          tagInitials={!addview ? tagsInitValues('name', tags) : undefined}
-                        />
+                        <>
+                          <TagSelect
+                            forwardedRef={ field.ref }
+                            data-testid={ `${fieldName}.${index}.name` }
+                            tagOptions={ extractTags(part, true).map((e) => new Object({
+                              'label': e.name,
+                              'value': e.name
+                            })) }
+                            onChangeHandler={(e) => {
+                              resetField(`${fieldName}.${index}.name`)
+                              setValue(`${fieldName}.${index}.name`, e.value)
+                              recordSelectedTagKeys(index, e.value)
+                            }}
+                            isMulti={false}
+                            closeMenuOnSelect={true}
+                            tagInitials={ tagsInitValues(field.value) }
+                            error={ errors?.[fieldName]?.[index]?.name }
+                          />
+                          {
+                            errors?.[fieldName]?.[index]?.name &&
+                              <CustomError error={ errors?.[fieldName]?.[index]?.name?.message } />
+                          }
+                        </>
                     }
                   />
                 </Col>
@@ -477,28 +826,50 @@ const TopologyTagList = ({ part, fieldName, tagsAll, addview, publicView }) => {
                           data-testid={`${fieldName}.${index}.value`}
                           className='form-control'
                           disabled={true}
-                          value={preProcessTagValue(tags.value.replace(new RegExp('\\|', 'g'), ', '))}
+                          value={ Array.isArray(field.value) ? field.value.join(", ") : field.value }
                         />
                       :
-                        <TagSelect
-                          field={ field }
-                          data-testid={`${fieldName}.${index}.value`}
-                          tagOptions={extractValuesTags(index, true)}
-                          onChangeHandler={(e) => {
-                            if (Array.isArray(e)) {
-                              let joinedValues = ''
-                              e.forEach((e) => {
-                                joinedValues += e.value + '|'
-                              })
-                              setValue(`${fieldName}.${index}.value`, joinedValues.replace(/\|$/, ''))
-                            }
-                            else
-                              setValue(`${fieldName}.${index}.value`, e.value.trim())
-                          }}
-                          isMulti={isMultiValuesTags(extractValuesTags(index))}
-                          closeMenuOnSelect={!isMultiValuesTags(extractValuesTags(index))}
-                          tagInitials={!addview ? tagsInitValues('value', tags, true) : undefined}
-                        />
+                        <>
+                          {
+                            isMultiValuesTags(index) ?
+                              <TagCreatable
+                                forwardedRef={ field.ref }
+                                tagOptions={ extractValuesTags(index) }
+                                onChangeHandler={ value => {
+                                  let fieldValues = value.map(val => val.value)
+                                  setValue(`${fieldName}.${index}.value`, fieldValues)
+                                  let invalidvalues = getInvalidValues(fieldValues, extractValuesTags(index).map(tag => tag.value))
+                                  let duplicatevalues = getWildcardDuplicates(fieldValues)
+                                  if (invalidvalues) setInvalidValues(invalidvalues)
+                                  if (duplicatevalues) setInvalidValues(duplicatevalues)
+                                  clearErrors(`${fieldName}.${index}.value`)
+                                  trigger(`${fieldName}.${index}.value`)
+                                }}
+                                tagInitials={ tagsInitValues(field.value) }
+                                invalidValues={ invalidValues }
+                                error={ errors?.[fieldName]?.[index]?.value }
+                              />
+                            :
+                              <TagSelect
+                                forwardedRef={ field.ref }
+                                data-testid={`${fieldName}.${index}.value`}
+                                tagOptions={extractValuesTags(index, true)}
+                                onChangeHandler={ (e) => {
+                                  setValue(`${fieldName}.${index}.value`, e.value)
+                                  clearErrors(`${fieldName}.${index}.value`)
+                                }}
+                                isMulti={ false }
+                                closeMenuOnSelect={ true }
+                                tagInitials={ tagsInitValues(field.value) }
+                                error={ errors?.[fieldName]?.[index]?.value }
+                              />
+
+                          }
+                          {
+                            errors?.[fieldName]?.[index]?.value &&
+                              <CustomError error={ errors?.[fieldName]?.[index]?.value?.message } />
+                          }
+                        </>
                     }
                   />
                 </Col>
@@ -555,68 +926,66 @@ const TopologyTagList = ({ part, fieldName, tagsAll, addview, publicView }) => {
 }
 
 
-const EntitySelect = ({field, label, entitiesOptions, onChangeHandler, entitiesInitials }) => {
-  if (entitiesInitials) {
+const EntitySelect = ({
+  forwardedRef,
+  label,
+  entitiesOptions,
+  onChangeHandler,
+  entitiesInitials,
+  invalidValues,
+  error
+}) => {
+  if (entitiesInitials)
     return (
-      <CustomReactSelect
-        forwardedRef={field.ref}
-        closeMenuOnSelect={false}
-        placeholder="Search..."
-        isClearable={false}
-        isMulti
-        onChange={(e) => onChangeHandler(e)}
-        options={entitiesOptions}
-        value={entitiesInitials}
-        label={label}
-      />
+      <>
+        { label && <Label for="entity-creatable">{ label }</Label> }
+        <CustomReactCreatable
+          forwardedRef={ forwardedRef }
+          closeMenuOnSelect={ false }
+          placeholder="Search..."
+          isMulti={ true }
+          isClearable={ false }
+          onChange={ onChangeHandler }
+          options={ entitiesOptions }
+          defaultValue={ entitiesInitials }
+          inputId="entity-creatable"
+          invalidValues={ invalidValues }
+          error={ error }
+        />
+      </>
     )
-  }
   else
     return (
-      <CustomReactSelect
-        forwardedRef={field.ref}
-        closeMenuOnSelect={false}
-        placeholder="Search..."
-        isClearable={false}
-        isMulti
-        onChange={(e) => onChangeHandler(e)}
-        options={entitiesOptions}
-        label={label}
-      />
+      <>
+        { label && <Label for="entity-creatable">{ label }</Label> }
+        <CustomReactCreatable
+          forwardedRef={ forwardedRef }
+          closeMenuOnSelect={ false }
+          placeholder="Search..."
+          isMulti={ true }
+          isClearable={ false }
+          onChange={ onChangeHandler }
+          options={ entitiesOptions }
+          inputId="entity-creatable"
+          invalidValues={ invalidValues }
+          error={ error }
+        />
+      </>
     )
+
 }
 
 
 const TopologyConfGroupsEntityFields = ({topoGroups, addview, topoMaps, publicView}) => {
-  const { control, getValues, setValue } = useFormContext()
+  const { control, getValues, setValue, clearErrors, trigger, formState: { errors } } = useFormContext()
 
   const topoType = useWatch({ control, name: "topologyType" })
   const entitiesGroups = useWatch({ control, name: "entitiesGroups" })
   const entitiesEndpoints = useWatch({ control, name: "entitiesEndpoints" })
 
-  let label1 = undefined
-  let label2 = undefined
-  let key1 = undefined
-  let key2 = undefined
+  const [invalidValues, setInvalidValues] = useState(new Array())
 
-  if (topoType === 'Sites') {
-    label1 = 'NGIs:'
-    label2 = 'Sites:'
-    key1 = 'entitiesNgi'
-    key2 = 'entitiesSites'
-  }
-  else if (topoType === 'ServiceGroups'){
-    label1 = 'Projects:'
-    label2 = 'Service groups:'
-    key1 = 'entitiesProjects'
-    key2 = 'entitiesServiceGroups'
-  }
-  else {
-    label1 = 'Upper group:'
-    label2 = 'Lower group:'
-    key1 = 'entitiesNgi'
-    key2 = 'entitiesSites'
-  }
+  let { key1, label1, key2, label2 } = getGroupsEntitiesKeysLabels(topoType)
 
   return (
     <React.Fragment>
@@ -631,23 +1000,34 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, topoMaps, publicVi
               id='topoEntityGroup1'
               className='form-control'
               disabled={true}
-              value={field.value?.replace(new RegExp('\\|', 'g'), ', ')}
+              value={ field.value?.join(", ") }
             />
           :
-            <EntitySelect
-              field={field}
-              id="topoEntityGroup1"
-              entitiesOptions={formatSelectEntities(topoGroups[key1])}
-              onChangeHandler={(e) => {
-                let joinedValues = ''
-                for (let event of e)
-                  joinedValues += event.value + '|'
-                joinedValues = joinedValues.replace(/\|$/, '')
-                setValue("entitiesGroups.0.name", key1)
-                setValue("entitiesGroups.0.value", joinedValues)
-              }}
-              entitiesInitials={!addview ? entityInitValues(["entitiesNgi", "entitiesProjects"], getValues("entitiesGroups")) : undefined}
-            />
+            <>
+              <EntitySelect
+                forwardedRef={ field.ref }
+                id="topoEntityGroup1"
+                entitiesOptions={formatSelectEntities(topoGroups[key1])}
+                onChangeHandler={ (e) => {
+                  let fieldValues = e.map(item => item.value)
+                  setValue("entitiesGroups.0.name", key1)
+                  setValue("entitiesGroups.0.value", fieldValues)
+                  let invalidvalues = getInvalidValues(getValues("entitiesGroups.0.value"), topoGroups[key1])
+                  let duplicatevalues = getWildcardDuplicates(fieldValues)
+                  if (invalidvalues) setInvalidValues(invalidvalues)
+                  else if (duplicatevalues) setInvalidValues(duplicatevalues)
+                  clearErrors("entitiesGroups.0.value")
+                  trigger("entitiesGroups.0.value")
+                }}
+                entitiesInitials={!addview ? entityInitValues(["entitiesNgi", "entitiesProjects"], getValues("entitiesGroups")) : undefined}
+                invalidValues={ invalidValues }
+                error={ errors?.entitiesGroups?.[0]?.value }
+              />
+              {
+                errors?.entitiesGroups?.[0]?.value &&
+                  <CustomError error={ errors?.entitiesGroups?.[0]?.value?.message } />
+              }
+            </>
         }
       />
       <Label for='topoEntityGroup2' className='pt-2'>{label2}</Label>
@@ -661,24 +1041,52 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, topoMaps, publicVi
               id='topoEntityGroup2'
               className='form-control'
               disabled={true}
-              value={field.value?.replace(new RegExp('\\|', 'g'), ', ')}
+              value={ field.value?.join(", ") }
             />
           :
-            <EntitySelect
-              field={field}
-              className="pt-2"
-              id="topoEntityGroup2"
-              entitiesOptions={formatFilteredSelectEntities(topoGroups[key2], entitiesGroups, entitiesEndpoints, topoMaps, key2)}
-              onChangeHandler={(e) => {
-                let joinedValues = ''
-                for (let event of e)
-                  joinedValues += event.value + '|'
-                joinedValues = joinedValues.replace(/\|$/, '')
-                setValue("entitiesGroups.1.name", key2)
-                setValue("entitiesGroups.1.value", joinedValues)
-              }}
-              entitiesInitials={!addview ? entityInitValues(["entitiesSites", "entitiesServiceGroups"], getValues("entitiesGroups")) : undefined}
-            />
+            <>
+              <EntitySelect
+                forwardedRef={ field.ref }
+                className="pt-2"
+                id="topoEntityGroup2"
+                entitiesOptions={formatSelectEntities(
+                    filterSelectEntities(
+                      topoGroups[key2],
+                      entitiesGroups,
+                      entitiesEndpoints,
+                      topoMaps,
+                      key2
+                    )
+                )}
+                onChangeHandler={ (e) => {
+                  let fieldValues = e.map(item => item.value)
+                  setValue("entitiesGroups.1.name", key2)
+                  setValue("entitiesGroups.1.value", fieldValues)
+                  let invalidvalues = getInvalidValues(
+                      fieldValues,
+                      filterSelectEntities(
+                        topoGroups[key2],
+                        entitiesGroups,
+                        entitiesEndpoints,
+                        topoMaps,
+                        key2
+                      )
+                  )
+                  let duplicatevalues = getWildcardDuplicates(fieldValues)
+                  if (invalidvalues) setInvalidValues(invalidvalues)
+                  else if (duplicatevalues) setInvalidValues(duplicatevalues)
+                  clearErrors("entitiesGroups.1.value")
+                  trigger("entitiesGroups.1.value")
+                }}
+                entitiesInitials={!addview ? entityInitValues(["entitiesSites", "entitiesServiceGroups"], getValues("entitiesGroups")) : undefined}
+                invalidValues={ invalidValues }
+                error={ errors?.entitiesGroups?.[1]?.value }
+              />
+              {
+                errors?.entitiesGroups?.[1]?.value &&
+                  <CustomError error={ errors?.entitiesGroups?.[1]?.value?.message } />
+              }
+            </>
         }
       />
     </React.Fragment>
@@ -687,35 +1095,15 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, topoMaps, publicVi
 
 
 const TopologyConfEndpointsEntityFields = ({topoGroups, addview, topoMaps, publicView}) => {
-  const { control, getValues, setValue } = useFormContext()
+  const { control, getValues, setValue, clearErrors, trigger, formState: { errors } } = useFormContext()
 
   const topoType = useWatch({ control, name: "topologyType" })
   const entitiesGroups = useWatch({ control, name: "entitiesGroups" })
   const entitiesEndpoints = useWatch({ control, name: "entitiesEndpoints" })
 
-  let label1 = undefined
-  let label2 = undefined
-  let key1 = undefined
-  let key2 = undefined
+  const [invalidValues, setInvalidValues] = useState(new Array())
 
-  if (topoType === 'Sites') {
-    label1 = 'Sites:'
-    label2 = 'Service types:'
-    key1 = 'entitiesSites'
-    key2 = 'serviceTypesSitesEndpoints'
-  }
-  else if (topoType === 'ServiceGroups'){
-    label1 = 'Service groups:'
-    label2 = 'Service types:'
-    key1 = 'entitiesServiceGroups'
-    key2 = 'serviceTypesServiceGroupsEndpoints'
-  }
-  else {
-    label1 = 'Upper group:'
-    label2 = 'Lower group:'
-    key1 = 'entitiesSites'
-    key2 = 'serviceTypesSitesEndpoints'
-  }
+  let { key1, key2, label1, label2 } = getEndpointsEntitiesKeysLabels(topoType)
 
   return (
     <React.Fragment>
@@ -730,26 +1118,53 @@ const TopologyConfEndpointsEntityFields = ({topoGroups, addview, topoMaps, publi
               id='topoEntityEndoint1'
               className='form-control'
               disabled={true}
-              value={field.value?.replace(new RegExp('\\|', 'g'), ', ')}
+              value={ field.value?.join(", ") }
             />
           :
-            <EntitySelect
-              field={field}
-              id="topoEntityEndoint1"
-              entitiesOptions={
-                formatFilteredSelectEntities(
-                  topoGroups[key1], entitiesGroups, entitiesEndpoints, topoMaps, key1
-              )}
-              onChangeHandler={(e) => {
-                let joinedValues = ''
-                for (let event of e)
-                  joinedValues += event.value + '|'
-                joinedValues = joinedValues.replace(/\|$/, '')
-                setValue("entitiesEndpoints.0.name", key1)
-                setValue("entitiesEndpoints.0.value", joinedValues)
-              }}
-              entitiesInitials={!addview ? entityInitValues(["entitiesSites", "entitiesServiceGroups"], getValues("entitiesEndpoints")) : undefined}
-            />
+            <>
+              <EntitySelect
+                forwardedRef={ field.ref }
+                id="topoEntityEndoint1"
+                entitiesOptions={
+                  formatSelectEntities(
+                    filterSelectEntities(
+                      topoGroups[key1],
+                      entitiesGroups,
+                      entitiesEndpoints,
+                      topoMaps,
+                      key1
+                    )
+                )}
+                onChangeHandler={ (e) => {
+                  let fieldValues = e.map(item => item.value)
+                  setValue("entitiesEndpoints.0.name", key1)
+                  setValue("entitiesEndpoints.0.value", fieldValues)
+                  let invalidvalues = getInvalidValues(
+                    fieldValues,
+                    filterSelectEntities(
+                      topoGroups[key1],
+                      entitiesGroups,
+                      entitiesEndpoints,
+                      topoMaps,
+                      key1
+                    )
+                  )
+                  let duplicatevalues = getWildcardDuplicates(fieldValues)
+                  if (invalidvalues) setInvalidValues(invalidvalues)
+                  else if (duplicatevalues) setInvalidValues(duplicatevalues)
+                  clearErrors("entitiesEndpoints.0.value")
+                  trigger("entitiesEndpoints.0.value")
+                  trigger("entitiesEndpoints.1.value")
+                }}
+                entitiesInitials={!addview ? entityInitValues(["entitiesSites", "entitiesServiceGroups"], getValues("entitiesEndpoints")) : undefined}
+                invalidValues={ invalidValues }
+                error={ errors?.entitiesEndpoints?.[0]?.value }
+              />
+              {
+                errors?.entitiesEndpoints?.[0]?.value &&
+                  <CustomError error={ errors?.entitiesGroups?.[0]?.value?.message } />
+              }
+            </>
         }
       />
       <Label for='topoEntityEndoint2' className='pt-2'>{label2}</Label>
@@ -763,31 +1178,53 @@ const TopologyConfEndpointsEntityFields = ({topoGroups, addview, topoMaps, publi
               id='topoEntityEndoint2'
               className='form-control'
               disabled={true}
-              value={field.value?.replace(new RegExp('\\|', 'g'), ', ')}
+              value={ field.value?.join(", ") }
             />
           :
-            <EntitySelect
-              field={field}
-              className="pt-2"
-              id="topoEntityEndoint2"
-              entitiesOptions={
-                formatFilteredSelectEntities(
-                  topoGroups[key2],
-                  entitiesGroups,
-                  entitiesEndpoints,
-                  topoMaps,
-                  key2
-              )}
-              onChangeHandler={(e) => {
-                let joinedValues = ''
-                for (let event of e)
-                  joinedValues += event.value + '|'
-                joinedValues = joinedValues.replace(/\|$/, '')
-                setValue("entitiesEndpoints.1.name", key2)
-                setValue("entitiesEndpoints.1.value", joinedValues)
-              }}
-              entitiesInitials={!addview ? entityInitValues(["serviceTypesSitesEndpoints", "serviceTypesServiceGroupsEndpoints"], getValues("entitiesEndpoints")) : undefined}
-            />
+            <>
+              <EntitySelect
+                forwardedRef={ field.ref }
+                className="pt-2"
+                id="topoEntityEndoint2"
+                entitiesOptions={
+                  formatSelectEntities(
+                    filterSelectEntities(
+                      topoGroups[key2],
+                      entitiesGroups,
+                      entitiesEndpoints,
+                      topoMaps,
+                      key2
+                    )
+                )}
+                onChangeHandler={ (e) => {
+                  let fieldValues = e.map(item => item.value)
+                  setValue("entitiesEndpoints.1.name", key2)
+                  setValue("entitiesEndpoints.1.value", fieldValues)
+                  let invalidvalues = getInvalidValues(
+                    fieldValues,
+                    filterSelectEntities(
+                      topoGroups[key2],
+                      entitiesGroups,
+                      entitiesEndpoints,
+                      topoMaps,
+                      key2
+                    )
+                  )
+                  let duplicatevalues = getWildcardDuplicates(fieldValues)
+                  if (invalidvalues) setInvalidValues(invalidvalues)
+                  else if (duplicatevalues) setInvalidValues(duplicatevalues)
+                  clearErrors("entitiesEndpoints.1.value")
+                  trigger("entitiesEndpoints.1.value")
+                }}
+                entitiesInitials={!addview ? entityInitValues(["serviceTypesSitesEndpoints", "serviceTypesServiceGroupsEndpoints"], getValues("entitiesEndpoints")) : undefined}
+                invalidValues={ invalidValues }
+                error={ errors?.entitiesEndpoints?.[1]?.value }
+              />
+              {
+                errors?.entitiesEndpoints?.[1]?.value &&
+                  <CustomError error={ errors?.entitiesEndpoints?.[1]?.value?.message } />
+              }
+            </>
           }
       />
     </React.Fragment>
@@ -844,6 +1281,16 @@ const ReportsForm = ({
   const serviceTypesSitesEndpoints = context.serviceTypesSitesEndpoints
   const serviceTypesServiceGroupsEndpoints = context.serviceTypesServiceGroupsEndpoints
 
+  const groupsEntitiesTopoGroups = {
+    entitiesNgi, entitiesSites,
+    entitiesProjects, entitiesServiceGroups
+  }
+
+  const endpointsEntitiesTopoGroups = {
+    entitiesSites, entitiesServiceGroups,
+    serviceTypesSitesEndpoints, serviceTypesServiceGroupsEndpoints
+  }
+
   const [areYouSureModal, setAreYouSureModal] = useState(false)
   const [modalMsg, setModalMsg] = useState(undefined);
   const [modalTitle, setModalTitle] = useState(undefined);
@@ -852,7 +1299,14 @@ const ReportsForm = ({
   const methods = useForm({
     defaultValues: initValues,
     mode: "all",
-    resolver: yupResolver(ReportsSchema)
+    resolver: yupResolver(ReportsSchema),
+    context: {
+      allTags: context.allTags,
+      allExtensions: context.allExtensions,
+      topoMaps: context.topologyMaps,
+      groupsEntitiesTopoGroups: groupsEntitiesTopoGroups,
+      endpointsEntitiesTopoGroups: endpointsEntitiesTopoGroups
+    }
   })
 
   const extractProfileNames = (profiles) => {
@@ -1242,7 +1696,13 @@ const ReportsForm = ({
                         forwardedRef={ field.ref }
                         error={ methods.formState.errors?.topologyType }
                         label="Topology type:"
-                        onChange={ e => methods.setValue("topologyType", e.value) }
+                        onChange={ e => {
+                          methods.setValue("topologyType", e.value) 
+                          methods.trigger("entitiesGroups.0.value")
+                          methods.trigger("entitiesGroups.1.value")
+                          methods.trigger("entitiesEndpoints.0.value")
+                          methods.trigger("entitiesEndpoints.1.value")
+                        } }
                         options={
                           context.topologyTypes.map(type => new Object({
                             label: type, value: type
@@ -1303,10 +1763,7 @@ const ReportsForm = ({
                       <strong>Entities</strong>
                     </CardTitle>
                     <TopologyConfGroupsEntityFields
-                      topoGroups={{
-                        entitiesNgi, entitiesSites,
-                        entitiesProjects, entitiesServiceGroups
-                      }}
+                      topoGroups={ groupsEntitiesTopoGroups }
                       topoMaps={context.topologyMaps}
                       addview={addview}
                       publicView={publicView}
@@ -1327,7 +1784,6 @@ const ReportsForm = ({
                       part="endpoints"
                       fieldName="endpointsTags"
                       tagsAll={context.allTags}
-                      addview={addview}
                       publicView={publicView}
                     />
                     <div>
@@ -1340,7 +1796,6 @@ const ReportsForm = ({
                       part="endpoints"
                       fieldName="endpointsExtensions"
                       tagsAll={context.allExtensions}
-                      addview={addview}
                       publicView={publicView}
                     />
                     <div>
@@ -1350,10 +1805,7 @@ const ReportsForm = ({
                       <strong>Entities</strong>
                     </CardTitle>
                     <TopologyConfEndpointsEntityFields
-                      topoGroups={{
-                        entitiesSites, entitiesServiceGroups,
-                        serviceTypesSitesEndpoints, serviceTypesServiceGroupsEndpoints
-                      }}
+                      topoGroups={ endpointsEntitiesTopoGroups }
                       topoMaps={context.topologyMaps}
                       addview={addview}
                       publicView={publicView}
@@ -1603,37 +2055,38 @@ export const ReportsComponent = (props) => {
     { enabled: !publicView && !!userDetails }
   )
 
+  const getEntityNameField = (i, context) => {
+    let name_field = ''
+    if (i === 0)
+      name_field = 'group'
+    else if (context.indexOf('argo.group') !== -1 && i === 1)
+      name_field = 'subgroup'
+    else if (context.indexOf('argo.endpoint') !== -1 && i === 1)
+      name_field = 'service'
+    return name_field
+  }
+
   const formatToReportTags = (tagsContext, formikTags, formikExtensions) => {
     const formatTag = (tag, prefix='') => {
-      let tmpTag = new Object()
-      if (tag.value.indexOf('|') !== -1) {
-        let values = tag.value.replace(/\|/g, ', ')
-        tmpTag = new Object({
-          name: `${prefix}${tag.name}`,
-          value: values,
-          context: tagsContext.replace(".filter.tags", ".filter.tags.array")
-        })
+      let value = ""
+      if (typeof tag.value === "string") {
+        if (tag.value.toLowerCase() === "yes")
+          value = "1"
+
+        else if (tag.value.toLowerCase() === "no")
+          value = "0"
+
+        else
+          value = tag.value
+      } else {
+        value = tag.value.join(", ")
       }
-      else if (tag.value.indexOf(' ') === -1
-        && tag.value.toLowerCase() !== 'yes'
-        && tag.value.toLowerCase() !== 'no'
-        && tag.value.toLowerCase() !== '1'
-        && tag.value.toLowerCase() !== '0') {
-        tmpTag['name'] = `${prefix}${tag.name}`
-        tmpTag['value'] = tag.value
-        tmpTag['context'] = tagsContext.replace(".filter.tags", ".filter.tags.array")
-      }
-      else {
-        let tmpTagValue = tag.value
-        if (tag.value.toLowerCase() === 'yes')
-          tmpTagValue = '1'
-        else if (tag.value === 'no')
-          tmpTagValue = '0'
-        tmpTag['name'] = `${prefix}${tag.name}`
-        tmpTag['value'] = tmpTagValue
-        tmpTag['context'] = tagsContext
-      }
-      return tmpTag
+
+      return new Object({
+        name: `${prefix}${tag.name}`,
+        value: value,
+        context: Array.isArray(tag.value) ? tagsContext.replace(".filter.tags", ".filter.tags.array") : tagsContext
+      })
     }
 
     let tags = new Array()
@@ -1650,29 +2103,19 @@ export const ReportsComponent = (props) => {
   }
 
   const formatToReportEntities = (context, formikEntities) => {
-    const setNameField = (i) => {
-        let name_field = ''
-        if (i === 0)
-          name_field = 'group'
-        else if (context.indexOf('argo.group') !== -1 && i === 1)
-          name_field = 'subgroup'
-        else if (context.indexOf('argo.endpoint') !== -1 && i === 1)
-          name_field = 'service'
-        return name_field
-    }
     let entities = new Array()
 
     for (var i = 0; i < formikEntities.length; i++) {
       let entity = formikEntities[i]
       let tmpEntity = new Object()
       let tmpEntites = new Array()
-      if (entity.value && entity.value.indexOf('|') !== -1) {
-        let values = entity.value.split('|')
+      if (entity.value) {
+        let values = entity.value
 
         for (var val of values)
           if (val)
             tmpEntites.push(new Object({
-              name: setNameField(i),
+              name: getEntityNameField(i, context),
               value: val.trim(),
               context: context
             }))
@@ -1680,7 +2123,7 @@ export const ReportsComponent = (props) => {
       }
       else {
         if (entity.value) {
-          tmpEntity['name'] = setNameField(i),
+          tmpEntity['name'] = getEntityNameField(i, context),
           tmpEntity['value'] = entity.value,
           tmpEntity['context'] = context
           entities.push(tmpEntity)
@@ -1694,46 +2137,34 @@ export const ReportsComponent = (props) => {
     if (!formikTags)
       return new Array()
 
-    let tmpTagsJoint = new Object()
-    let tags = new Array()
-    let extensions = new Array()
+    let tags = formikTags.filter(tag => tagsContext.includes(tag.context) && !tag.name.startsWith("info_ext_"))
+    let extensions = formikTags.filter(tag => tagsContext.includes(tag.context) && tag.name.startsWith("info_ext_"))
 
+    const yesNoValues = ["no", "yes"]
 
-    for (let tag of formikTags) {
-      for (let tagContext of tagsContext) {
-        if (tag.context === tagContext) {
-          if (tmpTagsJoint[tag.name] === undefined)
-            tmpTagsJoint[tag.name] = new Array()
-          tmpTagsJoint[tag.name].push(tag.value)
-        }
-      }
-    }
+    tags = tags.map(tag => new Object({
+      name: tag.name,
+      value: ["0", "1"].includes(tag.value) ? yesNoValues[+tag.value] : tag.value.split(",").map(val => val.trim())
+    }))
 
-    for (let tag in tmpTagsJoint) {
-      if (tag.startsWith('info_ext_'))
-        extensions.push(
-          new Object({
-            name: tag.substring(9),
-            value: tmpTagsJoint[tag].join().replace(/, /g, '|')
-          })
-        )
-      else
-        tags.push(new Object({
-          'name': tag,
-          'value': tmpTagsJoint[tag].join().replace(/, /g, '|')
-        }))
-    }
+    extensions = extensions.map(ext => new Object({
+      name: ext.name.substring(9),
+      value: ext.value.split(",").map(val => val.trim())
+    }))
 
     return [tags, extensions]
   }
 
-  const formatFromReportEntities = (context, formikEntities, topologyGroups) => {
-    let default_empty = new Object(
-      {
+  const formatFromReportEntities = (
+    context, 
+    formikEntities, 
+    topoType
+  ) => {
+    let default_empty = new Object({
         'name': undefined,
         'value': undefined
-      }
-    )
+      })
+
     if (!formikEntities || (formikEntities && formikEntities.length === 0))
       return new Array(default_empty, default_empty)
 
@@ -1744,14 +2175,12 @@ export const ReportsComponent = (props) => {
     let tmpEntityJoint = new Object()
     let entities = new Array()
 
+    let getKeysLabels = context.indexOf("argo.group") > -1 ? getGroupsEntitiesKeysLabels : getEndpointsEntitiesKeysLabels
+
     for (let entity of formikEntities) {
       if (entity.context === context) {
-        let entity_type = undefined
-        for (var type in topologyGroups)
-          if (topologyGroups[type].indexOf(entity.value) > -1) {
-            entity_type = type
-            break
-          }
+        let { key1, key2 } = getKeysLabels(topoType)
+        let entity_type = entity.name === "group" ? key1 : key2
         if (entity_type) {
           if (tmpEntityJoint[entity_type] === undefined)
             tmpEntityJoint[entity_type] = new Array()
@@ -1763,7 +2192,7 @@ export const ReportsComponent = (props) => {
     for (let entity in tmpEntityJoint)
       entities.push(new Object({
         'name': entity,
-        'value': tmpEntityJoint[entity].join('|')
+        'value': tmpEntityJoint[entity]
       }))
 
     let final_entities = new Array()
@@ -1778,12 +2207,13 @@ export const ReportsComponent = (props) => {
       else
         final_entities = entities
     }
+
     else if (context.indexOf('argo.endpoint') !== 1) {
       if (entities.length === 1) {
         let only_type = entities[0].name.toLowerCase()
-        if (only_type.startsWith('site') || only_type.startsWith('servicegroup'))
+        if (only_type.indexOf('site') !== -1 || only_type.indexOf('servicegroup') !== -1)
           final_entities = [entities[0], default_empty]
-        else if (only_type.startsWith('servicetypessites') || only_type.startsWith('servicetypesservicegroups'))
+        else if (only_type.indexOf('servicetypessites') !== 1 || only_type.indexOf('servicetypesservicegroups') !== 1)
           final_entities = [default_empty, entities[0]]
       }
       else
@@ -2004,6 +2434,13 @@ export const ReportsComponent = (props) => {
       return ''
   }
 
+  const checkIfTrueFalse = (data) => {
+    let dataSet = new Set(data)
+    let trueFalseSet = new Set(["0", "1"])
+
+    return equalSets(dataSet, trueFalseSet)
+  }
+
   const loading = publicView ?
     loadingBackendReport || loadingWebApiReport
   :
@@ -2132,37 +2569,20 @@ export const ReportsComponent = (props) => {
 
     if (topologyEndpoints && serviceTypesSitesEndpoints.length === 0 &&
       serviceTypesServiceGroupsEndpoints.length === 0) {
-      let servicesSites = new Set()
-      let servicesServiceGroups = new Set()
+      let servicesSites = new Set(topologyEndpoints.filter(endpoint => endpoint["type"].toLowerCase() === "sites").map(endpoint => endpoint["service"]))
+      let servicesServiceGroups = new Set(topologyEndpoints.filter(endpoint => endpoint["type"].toLowerCase() === "servicegroups").map(endpoint => endpoint["service"]))
 
-      for (var endpoint of topologyEndpoints) {
-        if (endpoint['type'].toLowerCase() === 'sites')
-          servicesSites.add(endpoint['service'])
-        else if (endpoint['type'].toLowerCase() === 'servicegroups')
-          servicesServiceGroups.add(endpoint['service'])
-      }
       serviceTypesSitesEndpoints = Array.from(servicesSites).sort(sortStr)
       serviceTypesServiceGroupsEndpoints = Array.from(servicesServiceGroups).sort(sortStr)
     }
 
     if (topologyGroups && entitiesNgi.length === 0 && entitiesSites.length === 0
       && entitiesProjects.length === 0 && entitiesServiceGroups.length === 0) {
-      let ngis = new Set()
-      let projects = new Set()
-      let servicegroups = new Set()
-      let sites = new Set()
+      let ngis = new Set(topologyGroups.filter(entity => entity["type"].toLowerCase() === "ngi").map(entity => entity["group"]))
+      let projects = new Set(topologyGroups.filter(entity => entity["type"].toLowerCase() === "project").map(entity => entity["group"]))
+      let servicegroups = new Set(topologyGroups.filter(entity => entity["type"].toLowerCase() === "project").map(entity => entity["subgroup"]))
+      let sites = new Set(topologyGroups.filter(entity => entity["type"].toLowerCase() === "ngi").map(entity => entity["subgroup"]))
 
-      for (var entity of topologyGroups) {
-        if (entity['type'].toLowerCase() === 'project') {
-          projects.add(entity['group'])
-          servicegroups.add(entity['subgroup'])
-        }
-
-        else if (entity['type'].toLowerCase() === 'ngi') {
-          ngis.add(entity['group'])
-          sites.add(entity['subgroup'])
-        }
-      }
       entitiesNgi = Array.from(ngis).sort(sortStr)
       entitiesSites = Array.from(sites).sort(sortStr)
       entitiesProjects = Array.from(projects).sort(sortStr)
@@ -2175,13 +2595,11 @@ export const ReportsComponent = (props) => {
         || (entitiesProjects.length > 0 && entitiesServiceGroups.length > 0)
       )
     ) {
-      entitiesGroupsFormik = formatFromReportEntities('argo.group.filter.fields',
-        webApiReport['filter_tags'], {
-          entitiesNgi,
-          entitiesSites,
-          entitiesProjects,
-          entitiesServiceGroups
-        })
+      entitiesGroupsFormik = formatFromReportEntities(
+        'argo.group.filter.fields',
+        webApiReport["filter_tags"],
+        whichTopologyType(webApiReport.topology_schema)
+      )
     }
     else if (addview)
       entitiesGroupsFormik = new Array(
@@ -2201,13 +2619,11 @@ export const ReportsComponent = (props) => {
         || (entitiesServiceGroups.length > 0 && serviceTypesServiceGroupsEndpoints.length > 0)
       )
     ) {
-      entitiesEndpointsFormik = formatFromReportEntities('argo.endpoint.filter.fields',
-        webApiReport['filter_tags'], {
-          entitiesSites,
-          serviceTypesSitesEndpoints,
-          entitiesServiceGroups,
-          serviceTypesServiceGroupsEndpoints
-        })
+      entitiesEndpointsFormik = formatFromReportEntities(
+        'argo.endpoint.filter.fields',
+        webApiReport['filter_tags'],
+        whichTopologyType(webApiReport.topology_schema)
+      )
     }
     else if (addview)
       entitiesEndpointsFormik = new Array(
@@ -2238,7 +2654,13 @@ export const ReportsComponent = (props) => {
             )
 
           else if (!item['name'].startsWith('info_') && !item['name'].startsWith('vo_'))
-            tmpTags.push(item)
+            if (checkIfTrueFalse(item["values"]))
+              tmpTags.push(new Object({
+                name: item["name"],
+                values: ["no", "yes"]
+              }))
+            else
+              tmpTags.push(item)
         }
         allTags.push(
           new Object({
@@ -2359,4 +2781,4 @@ export const ReportsComponent = (props) => {
 
   else
     return null
-};
+}
