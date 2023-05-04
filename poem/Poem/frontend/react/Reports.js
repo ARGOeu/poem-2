@@ -163,11 +163,32 @@ const ReportsSchema = Yup.object().shape({
             key2
           )
 
-        return getInvalidValues(vals, selectEntities).length === 0
+        let vals2 = vals
+        if (vals)
+          if (vals.filter(val => val.startsWith("~")).length > 0) {
+            vals2 = []
+            for (let v of vals) {
+              if (v.startsWith("~"))
+                vals2.push(v.slice(1))
+
+              else
+                vals2.push(v)
+            }
+          }
+
+        return getInvalidValues(vals2, selectEntities).length === 0
       })
       .test("regex-duplicate", "Duplicate values", function (vals) {
         if (Array.isArray(vals)) {
           let invalidValues = getWildcardDuplicates(vals)
+
+          return invalidValues.length === 0
+        } else
+          return true
+      })
+      .test("negated", "You cannot select negated value", function (vals) {
+        if (Array.isArray(vals)) {
+          let invalidValues = getNegationDuplicates(vals)
 
           return invalidValues.length === 0
         } else
@@ -271,11 +292,32 @@ const ReportsSchema = Yup.object().shape({
             key
           )
 
-        return getInvalidValues(vals, selectEntities).length === 0
+        let vals2 = vals
+        if (vals)
+          if (vals.filter(val => val.startsWith("~")).length > 0) {
+            vals2 = []
+            for (let v of vals) {
+              if (v.startsWith("~"))
+                vals2.push(v.slice(1))
+
+              else
+                vals2.push(v)
+            }
+          }
+
+        return getInvalidValues(vals2, selectEntities).length === 0
       })
       .test("regex-duplicate", "Duplicate values", function (vals) {
         if (Array.isArray(vals)) {
           let invalidValues = getWildcardDuplicates(vals)
+
+          return invalidValues.length === 0
+        } else
+          return true
+      })
+      .test("negated", "You cannot select negated value", function (vals) {
+        if (Array.isArray(vals)) {
+          let invalidValues = getNegationDuplicates(vals)
 
           return invalidValues.length === 0
         } else
@@ -323,6 +365,29 @@ const getWildcardDuplicates = (values) => {
       if (wDuplicates.length > 0) {
         duplicates.push(...wDuplicates)
         duplicates.push(w)
+      }
+    }
+  }
+
+  return duplicates
+}
+
+const getNegationDuplicates = (values) => {
+  let duplicates = []
+
+  let negated = values.filter(val => val.startsWith("~"))
+
+  if (negated.length > 0) {
+    for (let n of negated) {
+      let nDuplicates = []
+      for (let value of values.filter(val => !val.startsWith("~"))) {
+        if (value.match(new RegExp(`${n.slice(1).replace("*", ".*")}`)))
+          nDuplicates.push(value)
+      }
+
+      if (nDuplicates.length > 0) {
+        duplicates.push(...nDuplicates)
+        duplicates.push(n)
       }
     }
   }
@@ -475,9 +540,11 @@ const filterSelectEntities = (data, entitiesGroups, entitiesEndpoints, topoMaps,
         if (selectedTop.length > 0)
           selectedTop.forEach(sel => {
             let sels = new Array()
-            if (sel.includes("*")) {
+            if (sel.includes("*") || sel.startsWith("~")) {
+              let pattern = sel.replace("*", ".*")
+              let regex = sel.startsWith("~") ? new RegExp(`^(?!.*${pattern.slice(1)}).*$`) : new RegExp(pattern)
               for (const [key, val] of topoMaps[tt["topMapKey"]].entries()) {
-                const res = key.match(new RegExp(`${sel.replace("*", ".*")}`))
+                const res = key.match(regex)
                 if (res) sels.push(...val)
               }
             } else
@@ -497,9 +564,11 @@ const filterSelectEntities = (data, entitiesGroups, entitiesEndpoints, topoMaps,
         if (selectedMiddle.length > 0) {
           selectedMiddle.forEach(sel => {
             let sels = new Array()
-            if (sel.includes("*")) {
+            if (sel.includes("*") || sel.startsWith("~")) {
+              let pattern = sel.replace("*", ".*")
+              let regex = sel.startsWith("~") ? new RegExp(`^(?!.*${pattern.slice(1)}).*$`) : new RegExp(pattern)
               for (const [key, val] of topoMaps[tt["middleMapKey"]].entries()) {
-                const res = key.match(new RegExp(`${sel.replace("*", ".*")}`))
+                const res = key.match(regex)
                 if (res) sels.push(...val)
               }
             } else
@@ -514,9 +583,11 @@ const filterSelectEntities = (data, entitiesGroups, entitiesEndpoints, topoMaps,
           let sites = new Array()
           selectedTop.forEach(sel => {
             let sels = new Array()
-            if (sel.includes("*")) {
+            if (sel.includes("*") || sel.startsWith("~")) {
+              let pattern = sel.replace("*", ".*")
+              let regex = sel.startsWith("~") ? new RegExp(`^(?!.*${pattern.slice(1)}).*$`) : new RegExp(pattern)
               for (const [key, val] of topoMaps[tt["topMapKey"]].entries()) {
-                const res = key.match(new RegExp(`${sel.replace("*", ".*")}`))
+                const res = key.match(regex)
                 if (res) sels.push(...val)
               }
             } else
@@ -526,9 +597,11 @@ const filterSelectEntities = (data, entitiesGroups, entitiesEndpoints, topoMaps,
           })
           sites.forEach(sel => {
             let sels = new Array()
-            if (sel.includes("*")) {
+            if (sel.includes("*") || sel.startsWith("~")) {
+              let pattern = sel.replace("*", ".*")
+              let regex = sel.startsWith("~") ? new RegExp(`^(?!.*${pattern.slice(1)}).*$`) : new RegExp(pattern)
               for (const [key, val] of topoMaps[tt["middleMapKey"]].entries()) {
-                const res = key.match(new RegExp(`${sel.replace("*", ".*")}`))
+                const res = key.match(regex)
                 if (res) sels.push(...val)
               }
             } else 
@@ -1012,10 +1085,24 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, topoMaps, publicVi
                   let fieldValues = e.map(item => item.value)
                   setValue("entitiesGroups.0.name", key1)
                   setValue("entitiesGroups.0.value", fieldValues)
-                  let invalidvalues = getInvalidValues(getValues("entitiesGroups.0.value"), topoGroups[key1])
+                  let fieldValues4invalid = fieldValues
+                  if (fieldValues.filter(val => val.startsWith("~")).length > 0) {
+                    fieldValues4invalid = []
+                    for (let v of fieldValues) {
+                      if (v.startsWith("~"))
+                        fieldValues4invalid.push(v.slice(1))
+                      
+                      else
+                        fieldValues4invalid.push(v)
+                    }
+                  }
+                  let invalidvalues = getInvalidValues(fieldValues4invalid, topoGroups[key1])
                   let duplicatevalues = getWildcardDuplicates(fieldValues)
-                  if (invalidvalues) setInvalidValues(invalidvalues)
-                  else if (duplicatevalues) setInvalidValues(duplicatevalues)
+                  let negatedvalues = getNegationDuplicates(fieldValues)
+                  if (invalidvalues.length > 0) setInvalidValues(invalidvalues)
+                  else if (duplicatevalues.length > 0) setInvalidValues(duplicatevalues)
+                  else if (negatedvalues.length > 0) setInvalidValues(negatedvalues)
+                  else setInvalidValues([])
                   clearErrors("entitiesGroups.0.value")
                   trigger("entitiesGroups.0.value")
                 }}
@@ -1062,8 +1149,19 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, topoMaps, publicVi
                   let fieldValues = e.map(item => item.value)
                   setValue("entitiesGroups.1.name", key2)
                   setValue("entitiesGroups.1.value", fieldValues)
+                  let fieldValues4invalid = fieldValues
+                  if (fieldValues.filter(val => val.startsWith("~")).length > 0) {
+                    fieldValues4invalid = []
+                    for (let v of fieldValues) {
+                      if (v.startsWith("~"))
+                        fieldValues4invalid.push(v.slice(1))
+                      
+                      else
+                        fieldValues4invalid.push(v)
+                    }
+                  }
                   let invalidvalues = getInvalidValues(
-                      fieldValues,
+                      fieldValues4invalid,
                       filterSelectEntities(
                         topoGroups[key2],
                         entitiesGroups,
@@ -1073,8 +1171,11 @@ const TopologyConfGroupsEntityFields = ({topoGroups, addview, topoMaps, publicVi
                       )
                   )
                   let duplicatevalues = getWildcardDuplicates(fieldValues)
-                  if (invalidvalues) setInvalidValues(invalidvalues)
-                  else if (duplicatevalues) setInvalidValues(duplicatevalues)
+                  let negatedvalues = getNegationDuplicates(fieldValues)
+                  if (invalidvalues.length > 0) setInvalidValues(invalidvalues)
+                  else if (duplicatevalues.length > 0) setInvalidValues(duplicatevalues)
+                  else if (negatedvalues.length > 0) setInvalidValues(negatedvalues)
+                  else setInvalidValues([])
                   clearErrors("entitiesGroups.1.value")
                   trigger("entitiesGroups.1.value")
                 }}
@@ -1139,8 +1240,19 @@ const TopologyConfEndpointsEntityFields = ({topoGroups, addview, topoMaps, publi
                   let fieldValues = e.map(item => item.value)
                   setValue("entitiesEndpoints.0.name", key1)
                   setValue("entitiesEndpoints.0.value", fieldValues)
+                  let fieldValues4invalid = fieldValues
+                  if (fieldValues.filter(val => val.startsWith("~")).length > 0) {
+                    fieldValues4invalid = []
+                    for (let v of fieldValues) {
+                      if (v.startsWith("~"))
+                        fieldValues4invalid.push(v.slice(1))
+                      
+                      else
+                        fieldValues4invalid.push(v)
+                    }
+                  }
                   let invalidvalues = getInvalidValues(
-                    fieldValues,
+                    fieldValues4invalid,
                     filterSelectEntities(
                       topoGroups[key1],
                       entitiesGroups,
@@ -1150,8 +1262,11 @@ const TopologyConfEndpointsEntityFields = ({topoGroups, addview, topoMaps, publi
                     )
                   )
                   let duplicatevalues = getWildcardDuplicates(fieldValues)
-                  if (invalidvalues) setInvalidValues(invalidvalues)
-                  else if (duplicatevalues) setInvalidValues(duplicatevalues)
+                  let negatedvalues = getNegationDuplicates(fieldValues)
+                  if (invalidvalues.length > 0) setInvalidValues(invalidvalues)
+                  else if (duplicatevalues.length > 0) setInvalidValues(duplicatevalues)
+                  else if (negatedvalues.length > 0) setInvalidValues(negatedvalues)
+                  else setInvalidValues([])
                   clearErrors("entitiesEndpoints.0.value")
                   trigger("entitiesEndpoints.0.value")
                   trigger("entitiesEndpoints.1.value")
@@ -1162,7 +1277,7 @@ const TopologyConfEndpointsEntityFields = ({topoGroups, addview, topoMaps, publi
               />
               {
                 errors?.entitiesEndpoints?.[0]?.value &&
-                  <CustomError error={ errors?.entitiesGroups?.[0]?.value?.message } />
+                  <CustomError error={ errors?.entitiesEndpoints?.[0]?.value?.message } />
               }
             </>
         }
@@ -1200,8 +1315,19 @@ const TopologyConfEndpointsEntityFields = ({topoGroups, addview, topoMaps, publi
                   let fieldValues = e.map(item => item.value)
                   setValue("entitiesEndpoints.1.name", key2)
                   setValue("entitiesEndpoints.1.value", fieldValues)
+                  let fieldValues4invalid = fieldValues
+                  if (fieldValues.filter(val => val.startsWith("~")).length > 0) {
+                    fieldValues4invalid = []
+                    for (let v of fieldValues) {
+                      if (v.startsWith("~"))
+                        fieldValues4invalid.push(v.slice(1))
+                      
+                      else
+                        fieldValues4invalid.push(v)
+                    }
+                  }
                   let invalidvalues = getInvalidValues(
-                    fieldValues,
+                    fieldValues4invalid,
                     filterSelectEntities(
                       topoGroups[key2],
                       entitiesGroups,
@@ -1211,8 +1337,11 @@ const TopologyConfEndpointsEntityFields = ({topoGroups, addview, topoMaps, publi
                     )
                   )
                   let duplicatevalues = getWildcardDuplicates(fieldValues)
-                  if (invalidvalues) setInvalidValues(invalidvalues)
-                  else if (duplicatevalues) setInvalidValues(duplicatevalues)
+                  let negatedvalues = getNegationDuplicates(fieldValues)
+                  if (invalidvalues.length > 0) setInvalidValues(invalidvalues)
+                  else if (duplicatevalues.length > 0) setInvalidValues(duplicatevalues)
+                  else if (negatedvalues.length > 0) setInvalidValues(negatedvalues)
+                  else setInvalidValues([])
                   clearErrors("entitiesEndpoints.1.value")
                   trigger("entitiesEndpoints.1.value")
                 }}
