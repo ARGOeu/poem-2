@@ -1755,6 +1755,34 @@ class ProbeCandidateAPITests(TenantTestCase):
             name="poem-probe"
         )
 
+    def test_post_probe_candidate_with_invalid_docurl(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["detail"], "Docurl field must be defined as valid URL"
+        )
+        self.assertRaises(
+            poem_models.ProbeCandidate.DoesNotExist,
+            poem_models.ProbeCandidate.objects.get,
+            name="poem-probe"
+        )
+
     def test_post_probe_candidate_with_missing_rpm(self):
         data = {
             "name": "poem-probe",
@@ -1913,6 +1941,35 @@ class ProbeCandidateAPITests(TenantTestCase):
         self.assertEqual(candidate.contact, "poem@example.com")
         self.assertEqual(candidate.status, "submitted")
 
+    def test_post_probe_candidate_with_invalid_yum_baseurl(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["detail"],
+            "Yum_baseurl field must be defined as valid URL"
+        )
+        self.assertRaises(
+            poem_models.ProbeCandidate.DoesNotExist,
+            poem_models.ProbeCandidate.objects.get,
+            name="poem-probe"
+        )
+
     def test_post_probe_candidate_with_missing_command(self):
         data = {
             "name": "poem-probe",
@@ -2005,6 +2062,35 @@ class ProbeCandidateAPITests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["detail"], "Contact field is mandatory")
+        self.assertRaises(
+            poem_models.ProbeCandidate.DoesNotExist,
+            poem_models.ProbeCandidate.objects.get,
+            name="poem-probe"
+        )
+
+    def test_post_probe_candidate_with_invalid_contact(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data,
+            format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["detail"], "Contact field is not valid email"
+        )
         self.assertRaises(
             poem_models.ProbeCandidate.DoesNotExist,
             poem_models.ProbeCandidate.objects.get,

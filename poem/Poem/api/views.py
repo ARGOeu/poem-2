@@ -9,6 +9,8 @@ from Poem.poem import models
 from Poem.poem_super_admin import models as admin_models
 from Poem.poem_super_admin.models import WebAPIKey
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.core.validators import URLValidator, EmailValidator
 from rest_framework import status
 from rest_framework.exceptions import APIException
 from rest_framework.response import Response
@@ -471,6 +473,36 @@ class ProbeCandidateAPI(APIView):
 
             if "rpm" in request.data:
                 rpm = request.data["rpm"]
+
+            url_validator = URLValidator()
+            try:
+                url_validator(request.data["docurl"])
+
+            except ValidationError:
+                return error_response(
+                    detail="Docurl field must be defined as valid URL",
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
+
+            try:
+                if yum_baseurl:
+                    url_validator(yum_baseurl)
+
+            except ValidationError:
+                return error_response(
+                    detail="Yum_baseurl field must be defined as valid URL",
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
+
+            email_validator = EmailValidator()
+            try:
+                email_validator(request.data["contact"])
+
+            except ValidationError:
+                return error_response(
+                    detail="Contact field is not valid email",
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
 
             models.ProbeCandidate.objects.create(
                 name=request.data["name"],
