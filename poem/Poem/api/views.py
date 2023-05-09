@@ -1,6 +1,7 @@
 import json
 
 import requests
+from Poem.api.internal_views.utils import error_response
 from Poem.api.internal_views.utils import one_value_inline, \
     two_value_inline_dict
 from Poem.api.permissions import MyHasAPIKey
@@ -434,14 +435,51 @@ class ProbeCandidateAPI(APIView):
     permission_classes = (MyHasAPIKey,)
 
     def post(self, request):
-        models.ProbeCandidate.objects.create(
-            name=request.data["name"],
-            description=request.data["description"],
-            docurl=request.data["docurl"],
-            rpm=request.data["rpm"],
-            yum_baseurl=request.data["yum_baseurl"],
-            command=request.data["command"],
-            contact=request.data["contact"]
-        )
+        if "name" not in request.data or not request.data["name"]:
+            return error_response(
+                detail="Name field is mandatory",
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
 
-        return Response(status=status.HTTP_201_CREATED)
+        elif "docurl" not in request.data or not request.data["docurl"]:
+            return error_response(
+                detail="Docurl field is mandatory",
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        elif "command" not in request.data or not request.data["command"]:
+            return error_response(
+                detail="Command field is mandatory",
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        elif "contact" not in request.data or not request.data["contact"]:
+            return error_response(
+                detail="Contact field is mandatory",
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        else:
+            description = ""
+            yum_baseurl = ""
+            rpm = ""
+            if "description" in request.data:
+                description = request.data["description"]
+
+            if "yum_baseurl" in request.data:
+                yum_baseurl = request.data["yum_baseurl"]
+
+            if "rpm" in request.data:
+                rpm = request.data["rpm"]
+
+            models.ProbeCandidate.objects.create(
+                name=request.data["name"],
+                description=description,
+                docurl=request.data["docurl"],
+                rpm=rpm,
+                yum_baseurl=yum_baseurl,
+                command=request.data["command"],
+                contact=request.data["contact"]
+            )
+
+            return Response(status=status.HTTP_201_CREATED)
