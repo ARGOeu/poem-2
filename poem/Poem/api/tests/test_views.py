@@ -1546,6 +1546,16 @@ class ProbeCandidateAPITests(TenantTestCase):
         self.factory = TenantRequestFactory(self.tenant)
         self.url = "/api/v2/probes"
 
+        poem_models.ProbeCandidate.objects.create(
+            name="test-probe",
+            description="Some description for the test probe",
+            docurl="https://github.com/ARGOeu-Metrics/argo-probe-test",
+            command="/usr/libexec/argo/probes/test/test-probe -H <hostname> "
+                    "-t <timeout> --test",
+            contact="poem@example.com",
+            status="testing"
+        )
+
     def test_post_probe_candidate_successfully(self):
         data = {
             "name": "poem-probe",
@@ -1588,6 +1598,64 @@ class ProbeCandidateAPITests(TenantTestCase):
         self.assertEqual(candidate.contact, "poem@example.com")
         self.assertEqual(candidate.status, "submitted")
 
+    def test_post_probe_candidate_with_existing_name(self):
+        data = {
+            "name": "test-probe",
+            "description": "Some different description",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-test",
+            "rpm": "argo-probe-test-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/test/test-probe -H <hostname> "
+                "-t <timeout> --test --dryrun",
+            "contact": "test@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        candidate = poem_models.ProbeCandidate.objects.filter(
+            name="test-probe"
+        ).order_by("created")
+        self.assertEqual(len(candidate), 2)
+        self.assertEqual(
+            candidate[0].description, "Some description for the test probe"
+        )
+        self.assertEqual(
+            candidate[1].description, "Some different description"
+        )
+        self.assertEqual(
+            candidate[0].docurl,
+            "https://github.com/ARGOeu-Metrics/argo-probe-test"
+        )
+        self.assertEqual(
+            candidate[1].docurl,
+            "https://github.com/ARGOeu-Metrics/argo-probe-test"
+        )
+        self.assertEqual(candidate[0].rpm, "")
+        self.assertEqual(
+            candidate[1].rpm, "argo-probe-test-0.1.0-1.el7.noarch.rpm"
+        )
+        self.assertEqual(candidate[0].yum_baseurl, "")
+        self.assertEqual(
+            candidate[1].yum_baseurl, "https://rpm-repo.example.com/centos7"
+        )
+        self.assertEqual(
+            candidate[0].command,
+            "/usr/libexec/argo/probes/test/test-probe -H <hostname> "
+            "-t <timeout> --test"
+        )
+        self.assertEqual(
+            candidate[1].command,
+            "/usr/libexec/argo/probes/test/test-probe -H <hostname> "
+            "-t <timeout> --test --dryrun"
+        )
+        self.assertEqual(candidate[0].contact, "poem@example.com")
+        self.assertEqual(candidate[1].contact, "test@example.com")
+        self.assertEqual(candidate[0].status, "testing")
+        self.assertEqual(candidate[1].status, "submitted")
+
     def test_post_probe_candidate_successfully_with_missing_name(self):
         data = {
             "description":
@@ -1607,7 +1675,7 @@ class ProbeCandidateAPITests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["detail"], "Name field is mandatory")
-        self.assertEqual(poem_models.ProbeCandidate.objects.count(), 0)
+        self.assertEqual(poem_models.ProbeCandidate.objects.count(), 1)
 
     def test_post_probe_candidate_successfully_with_empty_name(self):
         data = {
@@ -1629,7 +1697,7 @@ class ProbeCandidateAPITests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["detail"], "Name field is mandatory")
-        self.assertEqual(poem_models.ProbeCandidate.objects.count(), 0)
+        self.assertEqual(poem_models.ProbeCandidate.objects.count(), 1)
 
     def test_post_probe_candidate_with_missing_description(self):
         data = {

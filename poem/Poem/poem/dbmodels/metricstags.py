@@ -60,7 +60,7 @@ class MetricConfiguration(models.Model):
 
 class ProbeCandidate(models.Model):
     id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=128, unique=True)
+    name = models.CharField(max_length=128)
     description = models.CharField(max_length=1024)
     docurl = models.URLField(max_length=1024)
     rpm = models.CharField(max_length=1024)
