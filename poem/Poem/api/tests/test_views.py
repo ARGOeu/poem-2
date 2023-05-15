@@ -1546,7 +1546,7 @@ class ProbeCandidateAPITests(TenantTestCase):
         self.factory = TenantRequestFactory(self.tenant)
         self.url = "/api/v2/probes"
 
-        poem_models.ProbeCandidate.objects.create(
+        self.candidate1 = poem_models.ProbeCandidate.objects.create(
             name="test-probe",
             description="Some description for the test probe",
             docurl="https://github.com/ARGOeu-Metrics/argo-probe-test",
@@ -1554,6 +1554,48 @@ class ProbeCandidateAPITests(TenantTestCase):
                     "-t <timeout> --test",
             contact="poem@example.com",
             status="testing"
+        )
+        self.candidate2 = poem_models.ProbeCandidate.objects.create(
+            name="test-probe0",
+            description="Description of the probe",
+            docurl="https://github.com/ARGOeu-Metrics/argo-probe-test",
+            command="/usr/libexec/argo/probes/test/test-probe -H <hostname> "
+                    "-t <timeout> --test --flag1 --flag2",
+            contact="poem@example.com"
+        )
+
+    def test_get_probe_candidates_without_proper_authentication(self):
+        request = self.factory.get(self.url)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_get_probe_candidates_successfully(self):
+        request = self.factory.get(self.url, **{'HTTP_X_API_KEY': self.token})
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data, [
+                {
+                    "name": "test-probe",
+                    "status": "testing",
+                    "created": self.candidate1.created.strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    ),
+                    "last_update": self.candidate1.last_update.strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    )
+                },
+                {
+                    "name": "test-probe0",
+                    "status": "submitted",
+                    "created": self.candidate2.created.strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    ),
+                    "last_update": self.candidate2.last_update.strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    )
+                }
+            ]
         )
 
     def test_post_probe_candidate_successfully(self):
@@ -1675,7 +1717,7 @@ class ProbeCandidateAPITests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["detail"], "Name field is mandatory")
-        self.assertEqual(poem_models.ProbeCandidate.objects.count(), 1)
+        self.assertEqual(poem_models.ProbeCandidate.objects.count(), 2)
 
     def test_post_probe_candidate_successfully_with_empty_name(self):
         data = {
@@ -1697,7 +1739,7 @@ class ProbeCandidateAPITests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["detail"], "Name field is mandatory")
-        self.assertEqual(poem_models.ProbeCandidate.objects.count(), 1)
+        self.assertEqual(poem_models.ProbeCandidate.objects.count(), 2)
 
     def test_post_probe_candidate_with_missing_description(self):
         data = {

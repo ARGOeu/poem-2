@@ -436,6 +436,20 @@ class ListDefaultPorts(APIView):
 class ProbeCandidateAPI(APIView):
     permission_classes = (MyHasAPIKey,)
 
+    def get(self, request):
+        candidates = models.ProbeCandidate.objects.all().order_by("name")
+
+        results = list()
+        for c in candidates:
+            results.append({
+                "name": c.name,
+                "status": c.status,
+                "created": c.created.strftime("%Y-%m-%d %H:%M:%S"),
+                "last_update": c.last_update.strftime("%Y-%m-%d %H:%M:%S")
+            })
+
+        return Response(results)
+
     def post(self, request):
         if "name" not in request.data or not request.data["name"]:
             return error_response(
