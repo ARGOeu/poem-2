@@ -1537,3 +1537,672 @@ class ListDefaultPortsTests(TenantTestCase):
                 "SITE_BDII_PORT": "2170"
             }
         )
+
+
+class ProbeCandidateAPITests(TenantTestCase):
+    def setUp(self) -> None:
+        self.token = create_credentials()
+        self.view = views.ProbeCandidateAPI.as_view()
+        self.factory = TenantRequestFactory(self.tenant)
+        self.url = "/api/v2/probes"
+
+        self.candidate1 = poem_models.ProbeCandidate.objects.create(
+            name="test-probe",
+            description="Some description for the test probe",
+            docurl="https://github.com/ARGOeu-Metrics/argo-probe-test",
+            command="/usr/libexec/argo/probes/test/test-probe -H <hostname> "
+                    "-t <timeout> --test",
+            contact="poem@example.com",
+            status="testing"
+        )
+        self.candidate2 = poem_models.ProbeCandidate.objects.create(
+            name="test-probe0",
+            description="Description of the probe",
+            docurl="https://github.com/ARGOeu-Metrics/argo-probe-test",
+            command="/usr/libexec/argo/probes/test/test-probe -H <hostname> "
+                    "-t <timeout> --test --flag1 --flag2",
+            contact="poem@example.com"
+        )
+
+    def test_get_probe_candidates_without_proper_authentication(self):
+        request = self.factory.get(self.url)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_get_probe_candidates_successfully(self):
+        request = self.factory.get(self.url, **{'HTTP_X_API_KEY': self.token})
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data, [
+                {
+                    "name": "test-probe",
+                    "status": "testing",
+                    "created": self.candidate1.created.strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    ),
+                    "last_update": self.candidate1.last_update.strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    )
+                },
+                {
+                    "name": "test-probe0",
+                    "status": "submitted",
+                    "created": self.candidate2.created.strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    ),
+                    "last_update": self.candidate2.last_update.strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    )
+                }
+            ]
+        )
+
+    def test_post_probe_candidate_successfully(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        candidate = poem_models.ProbeCandidate.objects.get(name="poem-probe")
+        self.assertEqual(
+            candidate.description,
+            "Probe is checking mandatory metric configurations of Tenant POEMs"
+        )
+        self.assertEqual(
+            candidate.docurl,
+            "https://github.com/ARGOeu-Metrics/argo-probe-poem"
+        )
+        self.assertEqual(
+            candidate.rpm, "argo-probe-poem-0.1.0-1.el7.noarch.rpm"
+        )
+        self.assertEqual(
+            candidate.yum_baseurl, "https://rpm-repo.example.com/centos7"
+        )
+        self.assertEqual(
+            candidate.command,
+            "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+            "-t <timeout> --test"
+        )
+        self.assertEqual(candidate.contact, "poem@example.com")
+        self.assertEqual(candidate.status, "submitted")
+
+    def test_post_probe_candidate_with_existing_name(self):
+        data = {
+            "name": "test-probe",
+            "description": "Some different description",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-test",
+            "rpm": "argo-probe-test-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/test/test-probe -H <hostname> "
+                "-t <timeout> --test --dryrun",
+            "contact": "test@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        candidate = poem_models.ProbeCandidate.objects.filter(
+            name="test-probe"
+        ).order_by("created")
+        self.assertEqual(len(candidate), 2)
+        self.assertEqual(
+            candidate[0].description, "Some description for the test probe"
+        )
+        self.assertEqual(
+            candidate[1].description, "Some different description"
+        )
+        self.assertEqual(
+            candidate[0].docurl,
+            "https://github.com/ARGOeu-Metrics/argo-probe-test"
+        )
+        self.assertEqual(
+            candidate[1].docurl,
+            "https://github.com/ARGOeu-Metrics/argo-probe-test"
+        )
+        self.assertEqual(candidate[0].rpm, "")
+        self.assertEqual(
+            candidate[1].rpm, "argo-probe-test-0.1.0-1.el7.noarch.rpm"
+        )
+        self.assertEqual(candidate[0].yum_baseurl, "")
+        self.assertEqual(
+            candidate[1].yum_baseurl, "https://rpm-repo.example.com/centos7"
+        )
+        self.assertEqual(
+            candidate[0].command,
+            "/usr/libexec/argo/probes/test/test-probe -H <hostname> "
+            "-t <timeout> --test"
+        )
+        self.assertEqual(
+            candidate[1].command,
+            "/usr/libexec/argo/probes/test/test-probe -H <hostname> "
+            "-t <timeout> --test --dryrun"
+        )
+        self.assertEqual(candidate[0].contact, "poem@example.com")
+        self.assertEqual(candidate[1].contact, "test@example.com")
+        self.assertEqual(candidate[0].status, "testing")
+        self.assertEqual(candidate[1].status, "submitted")
+
+    def test_post_probe_candidate_successfully_with_missing_name(self):
+        data = {
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["detail"], "Name field is mandatory")
+        self.assertEqual(poem_models.ProbeCandidate.objects.count(), 2)
+
+    def test_post_probe_candidate_successfully_with_empty_name(self):
+        data = {
+            "name": "",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["detail"], "Name field is mandatory")
+        self.assertEqual(poem_models.ProbeCandidate.objects.count(), 2)
+
+    def test_post_probe_candidate_with_missing_description(self):
+        data = {
+            "name": "poem-probe",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        candidate = poem_models.ProbeCandidate.objects.get(name="poem-probe")
+        self.assertEqual(candidate.description, "")
+        self.assertEqual(
+            candidate.docurl,
+            "https://github.com/ARGOeu-Metrics/argo-probe-poem"
+        )
+        self.assertEqual(
+            candidate.rpm, "argo-probe-poem-0.1.0-1.el7.noarch.rpm"
+        )
+        self.assertEqual(
+            candidate.yum_baseurl, "https://rpm-repo.example.com/centos7"
+        )
+        self.assertEqual(
+            candidate.command,
+            "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+            "-t <timeout> --test"
+        )
+        self.assertEqual(candidate.contact, "poem@example.com")
+        self.assertEqual(candidate.status, "submitted")
+
+    def test_post_probe_candidate_with_empty_description(self):
+        data = {
+            "name": "poem-probe",
+            "description": "",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        candidate = poem_models.ProbeCandidate.objects.get(name="poem-probe")
+        self.assertEqual(candidate.description, "")
+        self.assertEqual(
+            candidate.docurl,
+            "https://github.com/ARGOeu-Metrics/argo-probe-poem"
+        )
+        self.assertEqual(
+            candidate.rpm, "argo-probe-poem-0.1.0-1.el7.noarch.rpm"
+        )
+        self.assertEqual(
+            candidate.yum_baseurl, "https://rpm-repo.example.com/centos7"
+        )
+        self.assertEqual(
+            candidate.command,
+            "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+            "-t <timeout> --test"
+        )
+        self.assertEqual(candidate.contact, "poem@example.com")
+        self.assertEqual(candidate.status, "submitted")
+
+    def test_post_probe_candidate_with_missing_docurl(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["detail"], "Docurl field is mandatory")
+        self.assertRaises(
+            poem_models.ProbeCandidate.DoesNotExist,
+            poem_models.ProbeCandidate.objects.get,
+            name="poem-probe"
+        )
+
+    def test_post_probe_candidate_with_empty_docurl(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["detail"], "Docurl field is mandatory")
+        self.assertRaises(
+            poem_models.ProbeCandidate.DoesNotExist,
+            poem_models.ProbeCandidate.objects.get,
+            name="poem-probe"
+        )
+
+    def test_post_probe_candidate_with_invalid_docurl(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["detail"], "Docurl field must be defined as valid URL"
+        )
+        self.assertRaises(
+            poem_models.ProbeCandidate.DoesNotExist,
+            poem_models.ProbeCandidate.objects.get,
+            name="poem-probe"
+        )
+
+    def test_post_probe_candidate_with_missing_rpm(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        candidate = poem_models.ProbeCandidate.objects.get(name="poem-probe")
+        self.assertEqual(
+            candidate.description,
+            "Probe is checking mandatory metric configurations of Tenant POEMs"
+        )
+        self.assertEqual(
+            candidate.docurl,
+            "https://github.com/ARGOeu-Metrics/argo-probe-poem"
+        )
+        self.assertEqual(candidate.rpm, "")
+        self.assertEqual(
+            candidate.yum_baseurl, "https://rpm-repo.example.com/centos7"
+        )
+        self.assertEqual(
+            candidate.command,
+            "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+            "-t <timeout> --test"
+        )
+        self.assertEqual(candidate.contact, "poem@example.com")
+        self.assertEqual(candidate.status, "submitted")
+
+    def test_post_probe_candidate_with_empty_rpm(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        candidate = poem_models.ProbeCandidate.objects.get(name="poem-probe")
+        self.assertEqual(
+            candidate.description,
+            "Probe is checking mandatory metric configurations of Tenant POEMs"
+        )
+        self.assertEqual(
+            candidate.docurl,
+            "https://github.com/ARGOeu-Metrics/argo-probe-poem"
+        )
+        self.assertEqual(candidate.rpm, "")
+        self.assertEqual(
+            candidate.yum_baseurl, "https://rpm-repo.example.com/centos7"
+        )
+        self.assertEqual(
+            candidate.command,
+            "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+            "-t <timeout> --test"
+        )
+        self.assertEqual(candidate.contact, "poem@example.com")
+        self.assertEqual(candidate.status, "submitted")
+
+    def test_post_probe_candidate_with_missing_yum_baseurl(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        candidate = poem_models.ProbeCandidate.objects.get(name="poem-probe")
+        self.assertEqual(
+            candidate.description,
+            "Probe is checking mandatory metric configurations of Tenant POEMs"
+        )
+        self.assertEqual(
+            candidate.docurl,
+            "https://github.com/ARGOeu-Metrics/argo-probe-poem"
+        )
+        self.assertEqual(
+            candidate.rpm, "argo-probe-poem-0.1.0-1.el7.noarch.rpm"
+        )
+        self.assertEqual(candidate.yum_baseurl, "")
+        self.assertEqual(
+            candidate.command,
+            "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+            "-t <timeout> --test"
+        )
+        self.assertEqual(candidate.contact, "poem@example.com")
+        self.assertEqual(candidate.status, "submitted")
+
+    def test_post_probe_candidate_with_empty_yum_baseurl(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        candidate = poem_models.ProbeCandidate.objects.get(name="poem-probe")
+        self.assertEqual(
+            candidate.description,
+            "Probe is checking mandatory metric configurations of Tenant POEMs"
+        )
+        self.assertEqual(
+            candidate.docurl,
+            "https://github.com/ARGOeu-Metrics/argo-probe-poem"
+        )
+        self.assertEqual(
+            candidate.rpm, "argo-probe-poem-0.1.0-1.el7.noarch.rpm"
+        )
+        self.assertEqual(candidate.yum_baseurl, "")
+        self.assertEqual(
+            candidate.command,
+            "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+            "-t <timeout> --test"
+        )
+        self.assertEqual(candidate.contact, "poem@example.com")
+        self.assertEqual(candidate.status, "submitted")
+
+    def test_post_probe_candidate_with_invalid_yum_baseurl(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["detail"],
+            "Yum_baseurl field must be defined as valid URL"
+        )
+        self.assertRaises(
+            poem_models.ProbeCandidate.DoesNotExist,
+            poem_models.ProbeCandidate.objects.get,
+            name="poem-probe"
+        )
+
+    def test_post_probe_candidate_with_missing_command(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["detail"], "Command field is mandatory")
+        self.assertRaises(
+            poem_models.ProbeCandidate.DoesNotExist,
+            poem_models.ProbeCandidate.objects.get,
+            name="poem-probe"
+        )
+
+    def test_post_probe_candidate_with_empty_command(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command": "",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["detail"], "Command field is mandatory")
+        self.assertRaises(
+            poem_models.ProbeCandidate.DoesNotExist,
+            poem_models.ProbeCandidate.objects.get,
+            name="poem-probe"
+        )
+
+    def test_post_probe_candidate_with_missing_contact(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["detail"], "Contact field is mandatory")
+        self.assertRaises(
+            poem_models.ProbeCandidate.DoesNotExist,
+            poem_models.ProbeCandidate.objects.get,
+            name="poem-probe"
+        )
+
+    def test_post_probe_candidate_with_empty_contact(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": ""
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["detail"], "Contact field is mandatory")
+        self.assertRaises(
+            poem_models.ProbeCandidate.DoesNotExist,
+            poem_models.ProbeCandidate.objects.get,
+            name="poem-probe"
+        )
+
+    def test_post_probe_candidate_with_invalid_contact(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data,
+            format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["detail"], "Contact field is not valid email"
+        )
+        self.assertRaises(
+            poem_models.ProbeCandidate.DoesNotExist,
+            poem_models.ProbeCandidate.objects.get,
+            name="poem-probe"
+        )

@@ -15,5 +15,6 @@ urlpatterns = [
     path('metrictemplates/<str:tag>', views.ListMetricTemplates.as_view()),
     path('metricoverrides/', views.ListMetricOverrides.as_view()),
     path('default_ports/', views.ListDefaultPorts.as_view()),
+    path("probes/", views.ProbeCandidateAPI.as_view()),
     path('internal/', include('Poem.api.urls_internal', namespace='internal'))
 ]
