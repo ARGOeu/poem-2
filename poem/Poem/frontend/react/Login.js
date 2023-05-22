@@ -33,7 +33,7 @@ const Login = (props) => {
   const backend = new Backend();
   const AppOnLogin = props.onLogin;
 
-  const { control, getValues, handleSubmit } = useForm({
+  const { control, getValues, handleSubmit, reset } = useForm({
     defaultValues: { username: '', password: '' }
   })
 
@@ -86,6 +86,7 @@ const Login = (props) => {
     }
     else {
       setLoginFailedVisible(true);
+      reset()
     }
   }
 
