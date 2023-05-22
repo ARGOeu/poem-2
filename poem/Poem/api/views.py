@@ -1,6 +1,7 @@
 import json
 
 import requests
+from Poem.api.internal_views.utils import error_response
 from Poem.api.internal_views.utils import one_value_inline, \
     two_value_inline_dict
 from Poem.api.permissions import MyHasAPIKey
@@ -8,6 +9,8 @@ from Poem.poem import models
 from Poem.poem_super_admin import models as admin_models
 from Poem.poem_super_admin.models import WebAPIKey
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.core.validators import URLValidator, EmailValidator
 from rest_framework import status
 from rest_framework.exceptions import APIException
 from rest_framework.response import Response
@@ -428,3 +431,101 @@ class ListDefaultPorts(APIView):
             results.update({item.name: item.value})
 
         return Response(results)
+
+
+class ProbeCandidateAPI(APIView):
+    permission_classes = (MyHasAPIKey,)
+
+    def get(self, request):
+        candidates = models.ProbeCandidate.objects.all().order_by("name")
+
+        results = list()
+        for c in candidates:
+            results.append({
+                "name": c.name,
+                "status": c.status,
+                "created": c.created.strftime("%Y-%m-%d %H:%M:%S"),
+                "last_update": c.last_update.strftime("%Y-%m-%d %H:%M:%S")
+            })
+
+        return Response(results)
+
+    def post(self, request):
+        if "name" not in request.data or not request.data["name"]:
+            return error_response(
+                detail="Name field is mandatory",
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        elif "docurl" not in request.data or not request.data["docurl"]:
+            return error_response(
+                detail="Docurl field is mandatory",
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        elif "command" not in request.data or not request.data["command"]:
+            return error_response(
+                detail="Command field is mandatory",
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        elif "contact" not in request.data or not request.data["contact"]:
+            return error_response(
+                detail="Contact field is mandatory",
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        else:
+            description = ""
+            yum_baseurl = ""
+            rpm = ""
+            if "description" in request.data:
+                description = request.data["description"]
+
+            if "yum_baseurl" in request.data:
+                yum_baseurl = request.data["yum_baseurl"]
+
+            if "rpm" in request.data:
+                rpm = request.data["rpm"]
+
+            url_validator = URLValidator()
+            try:
+                url_validator(request.data["docurl"])
+
+            except ValidationError:
+                return error_response(
+                    detail="Docurl field must be defined as valid URL",
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
+
+            try:
+                if yum_baseurl:
+                    url_validator(yum_baseurl)
+
+            except ValidationError:
+                return error_response(
+                    detail="Yum_baseurl field must be defined as valid URL",
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
+
+            email_validator = EmailValidator()
+            try:
+                email_validator(request.data["contact"])
+
+            except ValidationError:
+                return error_response(
+                    detail="Contact field is not valid email",
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
+
+            models.ProbeCandidate.objects.create(
+                name=request.data["name"],
+                description=description,
+                docurl=request.data["docurl"],
+                rpm=rpm,
+                yum_baseurl=yum_baseurl,
+                command=request.data["command"],
+                contact=request.data["contact"]
+            )
+
+            return Response(status=status.HTTP_201_CREATED)
