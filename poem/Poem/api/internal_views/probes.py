@@ -370,29 +370,57 @@ class ListPublicProbes(ListProbes):
 class ListProbeCandidates(APIView):
     authentication_classes = (SessionAuthentication,)
 
-    def get(self, request):
+    def get(self, request, cid=None):
         if request.user.is_superuser:
-            candidates = poem_models.ProbeCandidate.objects.all()
+            if cid:
+                try:
+                    candidate = poem_models.ProbeCandidate.objects.get(id=cid)
+                    results = {
+                        "id": candidate.id,
+                        "name": candidate.name,
+                        "description": candidate.description,
+                        "docurl": candidate.docurl,
+                        "rpm": candidate.rpm,
+                        "yum_baseurl": candidate.yum_baseurl,
+                        "command": candidate.command,
+                        "contact": candidate.contact,
+                        "status": candidate.status.name,
+                        "created":
+                            candidate.created.strftime("%Y-%m-%d %H:%M:%S"),
+                        "last_update":
+                            candidate.last_update.strftime("%Y-%m-%d %H:%M:%S")
+                    }
 
-            results = list()
-            for candidate in candidates:
-                results.append({
-                    "id": candidate.id,
-                    "name": candidate.name,
-                    "description": candidate.description,
-                    "docurl": candidate.docurl,
-                    "rpm": candidate.rpm,
-                    "yum_baseurl": candidate.yum_baseurl,
-                    "command": candidate.command,
-                    "contact": candidate.contact,
-                    "status": candidate.status.name,
-                    "created": candidate.created.strftime("%Y-%m-%d %H:%M:%S"),
-                    "last_update": candidate.last_update.strftime(
-                        "%Y-%m-%d %H:%M:%S"
+                except poem_models.ProbeCandidate.DoesNotExist:
+                    return error_response(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Probe candidate not found"
                     )
-                })
 
-            return Response(sorted(results, key=lambda k: k["name"]))
+            else:
+                candidates = poem_models.ProbeCandidate.objects.all()
+
+                results = list()
+                for candidate in candidates:
+                    results.append({
+                        "id": candidate.id,
+                        "name": candidate.name,
+                        "description": candidate.description,
+                        "docurl": candidate.docurl,
+                        "rpm": candidate.rpm,
+                        "yum_baseurl": candidate.yum_baseurl,
+                        "command": candidate.command,
+                        "contact": candidate.contact,
+                        "status": candidate.status.name,
+                        "created":
+                            candidate.created.strftime("%Y-%m-%d %H:%M:%S"),
+                        "last_update":
+                            candidate.last_update.strftime("%Y-%m-%d %H:%M:%S")
+                    })
+
+                results = sorted(results, key=lambda k: k["name"])
+
+            return Response(results)
 
         else:
             return error_response(

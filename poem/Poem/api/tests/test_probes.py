@@ -4287,7 +4287,7 @@ class ListProbeCandidatesTests(TenantTestCase):
     def setUp(self) -> None:
         self.view = views.ListProbeCandidates.as_view()
         self.factory = TenantRequestFactory(self.tenant)
-        self.url = "/api/v2/internal/probecandidates"
+        self.url = "/api/v2/internal/probecandidates/"
 
         self.user = CustUser.objects.create_user(username="testuser")
         self.superuser = CustUser.objects.create_user(
@@ -4379,6 +4379,61 @@ class ListProbeCandidatesTests(TenantTestCase):
         request = self.factory.get(self.url)
         force_authenticate(request, user=self.user)
         response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to view probe candidates"
+        )
+
+
+    def test_get_probe_candidate_by_id_superuser(self):
+        request = self.factory.get(f"{self.url}{self.candidate1.id}")
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, self.candidate1.id)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data, {
+                "id": self.candidate1.id,
+                "name": "test-probe",
+                "description": "Some description for the test probe",
+                "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-test",
+                "rpm": "argo-probe-test-0.1.0-1.el7.noarch.rpm",
+                "yum_baseurl": "http://repo.example.com/devel/centos7/",
+                "command":
+                    "/usr/libexec/argo/probes/test/test-probe -H <hostname>"
+                    " -t <timeout> --test",
+                "contact": "poem@example.com",
+                "status": "testing",
+                "created":
+                    self.candidate1.created.strftime("%Y-%m-%d %H:%M:%S"),
+                "last_update":
+                    self.candidate1.last_update.strftime("%Y-%m-%d %H:%M:%S")
+            }
+        )
+
+    def test_get_probe_candidate_by_id_regular_user(self):
+        request = self.factory.get(f"{self.url}{self.candidate1.id}")
+        force_authenticate(request, user=self.user)
+        response = self.view(request, self.candidate1.id)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to view probe candidates"
+        )
+
+    def test_get_probe_candidate_by_nonexisting_id_superuser(self):
+        cid = self.candidate1.id + self.candidate2.id
+        request = self.factory.get(f"{self.url}{cid}")
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, cid)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data["detail"], "Probe candidate not found")
+
+    def test_get_probe_candidate_by_nonexisting_id_regular_user(self):
+        cid = self.candidate1.id + self.candidate2.id
+        request = self.factory.get(f"{self.url}{cid}")
+        force_authenticate(request, user=self.user)
+        response = self.view(request, cid)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(
             response.data["detail"],
