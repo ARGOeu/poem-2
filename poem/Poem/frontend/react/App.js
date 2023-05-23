@@ -85,7 +85,7 @@ import {
 import { MetricTagsComponent, MetricTagsList } from './MetricTags';
 import { MetricOverrideChange, MetricOverrideList } from './MetricOverrides';
 import { DefaultPortsList } from './DefaultPorts';
-import { ProbeCandidateList } from './ProbeCandidates';
+import { ProbeCandidateChange, ProbeCandidateList } from './ProbeCandidates';
 
 
 const NavigationBarWithRouter = withRouter(NavigationBar);
@@ -341,6 +341,9 @@ const TenantRouteSwitch = ({
       render={ props => <ProbeCandidateList
         {...props}
       /> }
+    />
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/probecandidates/:id"
+      render={ props => <ProbeCandidateChange {...props} /> }
     />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/users"
       render={ props => <UsersList
