@@ -399,3 +399,22 @@ class ListProbeCandidates(APIView):
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You do not have permission to view probe candidates"
             )
+
+
+class ListProbeCandidateStatuses(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request):
+        if request.user.is_superuser:
+            statuses = poem_models.ProbeCandidateStatus.objects.all()
+
+            results = sorted([s.name for s in statuses])
+
+            return Response(results)
+
+        else:
+            return error_response(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to view probe candidate "
+                       "statuses"
+            )

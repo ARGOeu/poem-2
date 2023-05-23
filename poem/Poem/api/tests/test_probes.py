@@ -4384,3 +4384,52 @@ class ListProbeCandidatesTests(TenantTestCase):
             response.data["detail"],
             "You do not have permission to view probe candidates"
         )
+
+
+class ListProbeCandidateStatuses(TenantTestCase):
+    def setUp(self) -> None:
+        self.view = views.ListProbeCandidateStatuses.as_view()
+        self.factory = TenantRequestFactory(self.tenant)
+        self.url = "/api/v2/internal/probecandidatestatuses/"
+
+        self.user = CustUser.objects.create_user(username="testuser")
+        self.superuser = CustUser.objects.create_user(
+            username="poem", is_superuser=True
+        )
+
+        self.status1 = poem_models.ProbeCandidateStatus.objects.create(
+            name="submitted"
+        )
+        self.status2 = poem_models.ProbeCandidateStatus.objects.create(
+            name="testing"
+        )
+        self.status3 = poem_models.ProbeCandidateStatus.objects.create(
+            name="deployed"
+        )
+        self.status4 = poem_models.ProbeCandidateStatus.objects.create(
+            name="rejected"
+        )
+
+    def test_get_probe_candidate_statuses_if_not_authenticated(self):
+        request = self.factory.get(self.url)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_get_probe_candidate_statuses_superuser(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data, ["deployed", "rejected", "submitted", "testing"]
+        )
+
+    def test_get_probe_candidate_statuses_regular_user(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to view probe candidate statuses"
+        )
