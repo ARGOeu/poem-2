@@ -4385,7 +4385,6 @@ class ListProbeCandidatesTests(TenantTestCase):
             "You do not have permission to view probe candidates"
         )
 
-
     def test_get_probe_candidate_by_id_superuser(self):
         request = self.factory.get(f"{self.url}{self.candidate1.id}")
         force_authenticate(request, user=self.superuser)
@@ -4438,6 +4437,184 @@ class ListProbeCandidatesTests(TenantTestCase):
         self.assertEqual(
             response.data["detail"],
             "You do not have permission to view probe candidates"
+        )
+
+    def test_put_probe_candidate_superuser(self):
+        data = {
+            "id": self.candidate1.id,
+            "name": "new-probe",
+            "description": "More detailed description for the new probe",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
+            "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                       "-t <timeout> --test",
+            "contact": "meh@example.com",
+            "status": "deployed"
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        candidate = poem_models.ProbeCandidate.objects.get(
+            id=self.candidate1.id
+        )
+        self.assertEqual(candidate.name, "new-probe")
+        self.assertEqual(
+            candidate.description, "More detailed description for the new probe"
+        )
+        self.assertEqual(
+            candidate.docurl,
+            "https://github.com/ARGOeu-Metrics/argo-probe-new"
+        )
+        self.assertEqual(
+            candidate.rpm, "argo-probe-new-0.1.0-1.el7.noarch.rpm"
+        )
+        self.assertEqual(
+            candidate.yum_baseurl, "http://repo.example.com/devel/rocky8/"
+        )
+        self.assertEqual(
+            candidate.command,
+            "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+            "-t <timeout> --test"
+        )
+        self.assertEqual(candidate.contact, "poem@example.com")
+        self.assertEqual(candidate.status.name, "deployed")
+
+    def test_put_probe_candidate_regular_user(self):
+        data = {
+            "id": self.candidate1.id,
+            "name": "new-probe",
+            "description": "More detailed description for the test probe",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
+            "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                       "-t <timeout> --test",
+            "contact": "meh@example.com",
+            "status": "deployed"
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to modify probe candidates"
+        )
+        candidate = poem_models.ProbeCandidate.objects.get(
+            id=self.candidate1.id
+        )
+        self.assertEqual(candidate.name, "test-probe")
+        self.assertEqual(
+            candidate.description, "Some description for the test probe"
+        )
+        self.assertEqual(
+            candidate.docurl,
+            "https://github.com/ARGOeu-Metrics/argo-probe-test"
+        )
+        self.assertEqual(
+            candidate.rpm, "argo-probe-test-0.1.0-1.el7.noarch.rpm"
+        )
+        self.assertEqual(
+            candidate.yum_baseurl, "http://repo.example.com/devel/centos7/"
+        )
+        self.assertEqual(
+            candidate.command,
+            "/usr/libexec/argo/probes/test/test-probe -H <hostname> "
+            "-t <timeout> --test"
+        )
+        self.assertEqual(candidate.contact, "poem@example.com")
+        self.assertEqual(candidate.status.name, "testing")
+
+    def test_put_probe_candidate_nonexisting_id_superuser(self):
+        data = {
+            "id": self.candidate1.id + self.candidate2.id,
+            "name": "new-probe",
+            "description": "More detailed description for the new probe",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
+            "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                       "-t <timeout> --test",
+            "contact": "meh@example.com",
+            "status": "deployed"
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data["detail"], "Probe candidate not found")
+
+    def test_put_probe_candidate_nonexisting_id_regular_user(self):
+        data = {
+            "id": self.candidate1.id + self.candidate2.id,
+            "name": "new-probe",
+            "description": "More detailed description for the new probe",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
+            "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                       "-t <timeout> --test",
+            "contact": "meh@example.com",
+            "status": "deployed"
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to modify probe candidates"
+        )
+
+    def test_put_probe_candidate_nonexisting_status_superuser(self):
+        data = {
+            "id": self.candidate1.id,
+            "name": "new-probe",
+            "description": "More detailed description for the new probe",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
+            "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                       "-t <timeout> --test",
+            "contact": "meh@example.com",
+            "status": "nonexisting"
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data["detail"], "Probe candidate status not found"
+        )
+
+    def test_put_probe_candidate_nonexisting_status_regular_user(self):
+        data = {
+            "id": self.candidate1.id,
+            "name": "new-probe",
+            "description": "More detailed description for the new probe",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
+            "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                       "-t <timeout> --test",
+            "contact": "meh@example.com",
+            "status": "nonexisting"
+        }
+        content, content_type = encode_data(data)
+        request = self.factory.put(self.url, content, content_type=content_type)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to modify probe candidates"
         )
 
 

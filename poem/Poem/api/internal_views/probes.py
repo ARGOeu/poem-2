@@ -428,6 +428,43 @@ class ListProbeCandidates(APIView):
                 detail="You do not have permission to view probe candidates"
             )
 
+    def put(self, request):
+        if request.user.is_superuser:
+            try:
+                candidate = poem_models.ProbeCandidate.objects.get(
+                    id=request.data["id"]
+                )
+                candidate.name = request.data["name"]
+                candidate.description = request.data["description"]
+                candidate.docurl = request.data["docurl"]
+                candidate.rpm = request.data["rpm"]
+                candidate.yum_baseurl = request.data["yum_baseurl"]
+                candidate.command = request.data["command"]
+                candidate.status = poem_models.ProbeCandidateStatus.objects.get(
+                    name=request.data["status"]
+                )
+                candidate.save()
+
+                return Response(status=status.HTTP_201_CREATED)
+
+            except poem_models.ProbeCandidate.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Probe candidate not found"
+                )
+
+            except poem_models.ProbeCandidateStatus.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Probe candidate status not found"
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to modify probe candidates"
+            )
+
 
 class ListProbeCandidateStatuses(APIView):
     authentication_classes = (SessionAuthentication,)
