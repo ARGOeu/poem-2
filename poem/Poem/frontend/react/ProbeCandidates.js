@@ -5,12 +5,14 @@ import { Backend } from "./DataManager";
 import { 
   BaseArgoTable, 
   BaseArgoView, 
+  DefaultColumnFilter, 
   DropdownWithFormText, 
   ErrorComponent, 
   LoadingAnim, 
   NotifyError, 
   NotifyOk, 
-  ParagraphTitle 
+  ParagraphTitle,
+  SelectColumnFilter
 } from "./UIElements";
 import { 
   Badge, 
@@ -36,6 +38,13 @@ const fetchCandidates = async () => {
 }
 
 
+const fetchStatuses = async () => {
+  const backend = new Backend()
+
+  return await backend.fetchData("/api/v2/internal/probecandidatestatuses")
+}
+
+
 export const ProbeCandidateList = (props) => {
   const location = props.location
 
@@ -48,6 +57,11 @@ export const ProbeCandidateList = (props) => {
     { enabled: !!userDetails }
   )
 
+  const { data: statuses, error: errorStatuses, isLoading: loadingStatuses } = useQuery(
+    "probecandidatestatus", () => fetchStatuses(),
+    { enabled: !!userDetails }
+  )
+
   const columns = useMemo(() => [
     {
       Header: "#",
@@ -57,26 +71,30 @@ export const ProbeCandidateList = (props) => {
     {
       Header: "Name",
       id: "name",
-      column_width: "20%",
-      accessor: e => 
-        <Link to={`/ui/administration/probecandidates/${e.id}`}>
-          { e.name }
-        </Link>
+      column_width: "25%",
+      accessor: "name",
+      Cell: e => 
+        <Link to={`/ui/administration/probecandidates/${e.row.original.id}`}>
+          { e.value }
+        </Link>,
+      Filter: DefaultColumnFilter
     },
     {
       Header: "Description",
       accessor: "description",
-      column_width: "58%"
+      column_width: "50%",
+      Filter: DefaultColumnFilter
     },
     {
       Header: "Created",
       accessor: "created",
-      column_width: "12%"
+      column_width: "12%",
+      Filter: DefaultColumnFilter
     },
     {
       Header: "Status",
       accessor: "status",
-      column_width: "5%",
+      column_width: "8%",
       Cell: row =>
         <div style={{ textAlign: "center" }}>
           {
@@ -89,13 +107,18 @@ export const ProbeCandidateList = (props) => {
                 row.value === "deployed" ?
                   <Badge color="success" className="fw-normal">{ row.value }</Badge>
                 :
-                  <Badge color="secondary" className="fw-normal">{ row.value }</Badge>
+                  row.value === "rejected" ?
+                    <Badge color="danger" className="fw-normal">{ row.value }</Badge>
+                  :
+                    <Badge color="secondary" className="fw-normal">{ row.value }</Badge>
           }
-        </div>
+        </div>,
+      filterList: statuses,
+      Filter: SelectColumnFilter
     }
   ])
 
-  if (loadingUserDetails || loadingProbeCandidates)
+  if (loadingUserDetails || loadingProbeCandidates || loadingStatuses )
     return (<LoadingAnim />)
 
   else if (errorUserDetails)
@@ -103,8 +126,11 @@ export const ProbeCandidateList = (props) => {
   
   else if (errorProbeCandidates)
     return (<ErrorComponent error={ errorProbeCandidates } />)
+  
+  else if (errorStatuses)
+    return (<ErrorComponent error={ errorStatuses } />)
 
-  else if (probeCandidates && userDetails?.is_superuser)
+  else if (probeCandidates && statuses && userDetails?.is_superuser)
     return (
       <BaseArgoView
         resourcename="Select probe candidate to change"
@@ -116,6 +142,7 @@ export const ProbeCandidateList = (props) => {
           columns={ columns }
           page_size={ 10 }
           resourcename="probe candidates"
+          filter={ true }
         />
       </BaseArgoView>
     )
@@ -438,7 +465,7 @@ export const ProbeCandidateChange = (props) => {
   )
 
   const { data: statuses, error: statusesError, isLoading: statusesLoading } = useQuery(
-    "probecandidatestatus", async () => await backend.fetchData("/api/v2/internal/probecandidatestatuses"),
+    "probecandidatestatus", () => fetchStatuses(),
     { enabled: !!userDetails }
   )
 

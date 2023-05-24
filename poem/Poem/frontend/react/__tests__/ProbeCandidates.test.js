@@ -124,7 +124,15 @@ describe("Test list of probe candidates", () => {
   beforeAll(() => {
     Backend.mockImplementation(() => {
       return {
-        fetchData: () => Promise.resolve(mockListProbeCandidates),
+        fetchData: (path) => {
+          switch (path) {
+            case "/api/v2/internal/probecandidates":
+              return Promise.resolve(mockListProbeCandidates)
+
+            case "/api/v2/internal/probecandidatestatuses":
+              return Promise.resolve(mockListStatuses)
+          }
+        }, 
         isActiveSession: () => Promise.resolve(mockActiveSession)
       }
     })
@@ -139,14 +147,14 @@ describe("Test list of probe candidates", () => {
       expect(screen.getByRole("heading", { name: /candidate/i }).textContent).toBe("Select probe candidate to change")
     })
 
-    expect(screen.getAllByRole("columnheader")).toHaveLength(5)
+    expect(screen.getAllByRole("columnheader")).toHaveLength(10)
     expect(screen.getByRole("columnheader", { name: "#" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: "Name" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: "Description" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: "Created" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: "Status" })).toBeInTheDocument()
 
-    expect(screen.getAllByRole("row")).toHaveLength(11)
+    expect(screen.getAllByRole("row")).toHaveLength(12)
     expect(screen.getAllByRole("row", { name: "" })).toHaveLength(8)
     expect(screen.getByRole("row", { name: /some-probe/i }).textContent).toBe("1some-probeSome description for the test probe2023-05-22 09:55:48testing")
     expect(screen.getByRole("row", { name: /test-probe/i }).textContent).toBe("2test-probeDescription of the probe2023-05-22 09:59:59submitted")
@@ -155,6 +163,74 @@ describe("Test list of probe candidates", () => {
 
     expect(screen.queryByRole("button", { name: /add/i })).not.toBeInTheDocument()
   })
+
+  test("Test filtering", async () => {
+    renderListView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /candidate/i })).toBeInTheDocument()
+    })
+
+    const searchName = screen.getAllByPlaceholderText("Search")[0]
+    const searchDescription = screen.getAllByPlaceholderText("Search")[1]
+    const searchCreated = screen.getAllByPlaceholderText("Search")[2]
+    const selectStatus = screen.getByDisplayValue("Show all")
+
+    fireEvent.change(searchName, { target: { value: "test" } })
+
+    expect(screen.getAllByRole("row")).toHaveLength(12)
+    expect(screen.getAllByRole("row", { name: "" })).toHaveLength(9)
+    expect(screen.getByRole("row", { name: /test-probe/i }).textContent).toBe("1test-probeDescription of the probe2023-05-22 09:59:59submitted")
+    expect(screen.getByRole("link", { name: /test-probe/i }).closest("a")).toHaveAttribute("href", "/ui/administration/probecandidates/2")
+
+    fireEvent.change(searchName, { target: { value: "" } })
+
+    expect(screen.getAllByRole("row")).toHaveLength(12)
+    expect(screen.getAllByRole("row", { name: "" })).toHaveLength(8)
+    expect(screen.getByRole("row", { name: /some-probe/i }).textContent).toBe("1some-probeSome description for the test probe2023-05-22 09:55:48testing")
+    expect(screen.getByRole("row", { name: /test-probe/i }).textContent).toBe("2test-probeDescription of the probe2023-05-22 09:59:59submitted")
+    expect(screen.getByRole("link", { name: /some-probe/i }).closest("a")).toHaveAttribute("href", "/ui/administration/probecandidates/1")
+    expect(screen.getByRole("link", { name: /test-probe/i }).closest("a")).toHaveAttribute("href", "/ui/administration/probecandidates/2")
+
+    fireEvent.change(searchDescription, { target: { value: "test" } })
+
+    expect(screen.getAllByRole("row")).toHaveLength(12)
+    expect(screen.getAllByRole("row", { name: "" })).toHaveLength(9)
+    expect(screen.getByRole("row", { name: /some-probe/i }).textContent).toBe("1some-probeSome description for the test probe2023-05-22 09:55:48testing")
+    expect(screen.getByRole("link", { name: /some-probe/i }).closest("a")).toHaveAttribute("href", "/ui/administration/probecandidates/1")
+
+    fireEvent.change(searchDescription, { target: { value: "" } })
+
+    expect(screen.getAllByRole("row")).toHaveLength(12)
+    expect(screen.getAllByRole("row", { name: "" })).toHaveLength(8)
+    expect(screen.getByRole("row", { name: /some-probe/i }).textContent).toBe("1some-probeSome description for the test probe2023-05-22 09:55:48testing")
+    expect(screen.getByRole("row", { name: /test-probe/i }).textContent).toBe("2test-probeDescription of the probe2023-05-22 09:59:59submitted")
+    expect(screen.getByRole("link", { name: /some-probe/i }).closest("a")).toHaveAttribute("href", "/ui/administration/probecandidates/1")
+    expect(screen.getByRole("link", { name: /test-probe/i }).closest("a")).toHaveAttribute("href", "/ui/administration/probecandidates/2")
+
+    fireEvent.change(searchCreated, { target: { value: "09:55" } })
+
+    expect(screen.getAllByRole("row")).toHaveLength(12)
+    expect(screen.getAllByRole("row", { name: "" })).toHaveLength(9)
+    expect(screen.getByRole("row", { name: /some-probe/i }).textContent).toBe("1some-probeSome description for the test probe2023-05-22 09:55:48testing")
+    expect(screen.getByRole("link", { name: /some-probe/i }).closest("a")).toHaveAttribute("href", "/ui/administration/probecandidates/1")
+
+    fireEvent.change(searchCreated, { target: { value: "" } })
+
+    expect(screen.getAllByRole("row")).toHaveLength(12)
+    expect(screen.getAllByRole("row", { name: "" })).toHaveLength(8)
+    expect(screen.getByRole("row", { name: /some-probe/i }).textContent).toBe("1some-probeSome description for the test probe2023-05-22 09:55:48testing")
+    expect(screen.getByRole("row", { name: /test-probe/i }).textContent).toBe("2test-probeDescription of the probe2023-05-22 09:59:59submitted")
+    expect(screen.getByRole("link", { name: /some-probe/i }).closest("a")).toHaveAttribute("href", "/ui/administration/probecandidates/1")
+    expect(screen.getByRole("link", { name: /test-probe/i }).closest("a")).toHaveAttribute("href", "/ui/administration/probecandidates/2")
+
+    fireEvent.change(selectStatus, { target: { value: "testing" } })
+
+    expect(screen.getAllByRole("row")).toHaveLength(12)
+    expect(screen.getAllByRole("row", { name: "" })).toHaveLength(9)
+    expect(screen.getByRole("row", { name: /some-probe/i }).textContent).toBe("1some-probeSome description for the test probe2023-05-22 09:55:48testing")
+    expect(screen.getByRole("link", { name: /some-probe/i }).closest("a")).toHaveAttribute("href", "/ui/administration/probecandidates/1")
+  })
 })
 
 
@@ -162,7 +238,15 @@ describe("Test list of probe candidates if empty", () => {
   beforeAll(() => {
     Backend.mockImplementation(() => {
       return {
-        fetchData: () => Promise.resolve([]),
+        fetchData: (path) => {
+          switch (path) {
+            case "/api/v2/internal/probecandidates":
+              return Promise.resolve([])
+
+            case "/api/v2/internal/probecandidatestatuses":
+              return Promise.resolve(mockListStatuses)
+          }
+        }, 
         isActiveSession: () => Promise.resolve(mockActiveSession)
       }
     })
@@ -177,14 +261,14 @@ describe("Test list of probe candidates if empty", () => {
       expect(screen.getByRole("heading", { name: /candidate/i }).textContent).toBe("Select probe candidate to change")
     })
 
-    expect(screen.getAllByRole("columnheader")).toHaveLength(5)
+    expect(screen.getAllByRole("columnheader")).toHaveLength(10)
     expect(screen.getByRole("columnheader", { name: "#" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: "Name" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: "Description" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: "Created" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: "Status" })).toBeInTheDocument()
 
-    expect(screen.getAllByRole("row")).toHaveLength(11)
+    expect(screen.getAllByRole("row")).toHaveLength(12)
     expect(screen.getAllByRole("row", { name: "" })).toHaveLength(9)
     expect(screen.getByRole("row", { name: /no/i }).textContent).toBe("No probe candidates")
 
