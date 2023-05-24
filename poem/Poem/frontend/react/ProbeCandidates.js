@@ -1,12 +1,15 @@
-import React, { useMemo } from "react";
-import { useQuery, useQueryClient } from "react-query";
+import React, { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "react-query";
 import { fetchUserDetails } from "./QueryFunctions";
 import { Backend } from "./DataManager";
 import { 
   BaseArgoTable, 
   BaseArgoView, 
+  DropdownWithFormText, 
   ErrorComponent, 
   LoadingAnim, 
+  NotifyError, 
+  NotifyOk, 
   ParagraphTitle 
 } from "./UIElements";
 import { 
@@ -122,12 +125,34 @@ export const ProbeCandidateList = (props) => {
 }
 
 
-const ProbeCandidateForm = ({ data, ...props }) => {
+const ProbeCandidateForm = ({ 
+  data, 
+  statuses, 
+  doChange,
+  ...props 
+}) => {
   const location = props.location
 
-  const { control } = useForm({
+  const [areYouSureModal, setAreYouSureModal] = useState(false)
+  const [modalMsg, setModalMsg] = useState(undefined)
+  const [modalTitle, setModalTitle] = useState(undefined)
+  const [onYes, setOnYes] = useState("")
+
+  const { control, setValue, handleSubmit, getValues } = useForm({
     defaultValues: data
   })
+
+  const onSubmitHandle = () => {
+    setAreYouSureModal(!areYouSureModal)
+    setModalMsg("Are you sure you want to change probe candidate?")
+    setModalTitle("Change probe candidate")
+    setOnYes("change")
+  }
+
+  const onYesCallback = () => {
+    if (onYes === "change")
+      doChange(getValues())
+  }
 
   return (
     <BaseArgoView
@@ -137,8 +162,16 @@ const ProbeCandidateForm = ({ data, ...props }) => {
       submitperm={ true }
       addview={ false }
       publicview={ false }
+      modal={ true }
+      state={{
+        areYouSureModal, 
+        "modalFunc": onYesCallback, 
+        modalTitle, 
+        modalMsg
+      }}
+      toggle={ () => setAreYouSureModal(!areYouSureModal) }
     >
-      <Form>
+      <Form onSubmit={ handleSubmit(onSubmitHandle) }>
         <FormGroup>
           <Row className="mb-2">
             <Col md={ 6 }>
@@ -152,7 +185,6 @@ const ProbeCandidateForm = ({ data, ...props }) => {
                       { ...field }
                       data-testid="name"
                       className="form-control"
-                      disabled={ true }
                     />
                   }
                 />
@@ -168,10 +200,11 @@ const ProbeCandidateForm = ({ data, ...props }) => {
                   name="status"
                   control={ control }
                   render={ ({ field }) =>
-                    <Input
-                      { ...field }
-                      data-testid="status"
-                      className="form-control"
+                    <DropdownWithFormText
+                      forwardedRef={ field.ref }
+                      onChange={ e => setValue("status", e.value) }
+                      options={ statuses }
+                      value={ field.value }
                     />
                   }
                 />
@@ -190,7 +223,6 @@ const ProbeCandidateForm = ({ data, ...props }) => {
                     id="description"
                     rows="10"
                     className="form-control"
-                    disabled={ true }
                   />
                 }
               />
@@ -280,7 +312,6 @@ const ProbeCandidateForm = ({ data, ...props }) => {
                       { ...field }
                       data-testid="rpm"
                       className="form-control"
-                      disabled={ true }
                     />
                   }
                 />
@@ -298,9 +329,11 @@ const ProbeCandidateForm = ({ data, ...props }) => {
                   name="yum_baseurl"
                   control={ control }
                   render={ ({ field }) =>
-                    <div className='form-control' style={{backgroundColor: '#e9ecef', overflow: 'hidden', textOverflow: 'ellipsis'}}>
-                      <a href={ field.value } style={{'whiteSpace': 'nowrap'}}>{ field.value }</a>
-                    </div>
+                    <Input
+                      { ...field }
+                      data-testid="yum_baseurl"
+                      className="form-control"
+                    />
                   }
                 />
               </InputGroup>
@@ -325,7 +358,6 @@ const ProbeCandidateForm = ({ data, ...props }) => {
                     id="command"
                     data-testid="command"
                     className="form-control"
-                    disabled={ true }
                   />
                 }
               />
@@ -366,7 +398,11 @@ const ProbeCandidateForm = ({ data, ...props }) => {
           >
             Delete
           </Button>
-          <Button color="success">
+          <Button 
+            color="success"
+            id="submit-button"
+            type="submit"
+          >
             Save
           </Button>
         </div>
@@ -378,9 +414,12 @@ const ProbeCandidateForm = ({ data, ...props }) => {
 
 export const ProbeCandidateChange = (props) => {
   const pcid = props.match.params.id
+  const history = props.history
 
   const backend = new Backend()
   const queryClient = useQueryClient()
+
+  const mutation = useMutation(async (values) => await backend.changeObject("/api/v2/internal/probecandidates/", values))
 
   const { data: userDetails, error: userDetailsError, isLoading: userDetailsLoading } = useQuery(
     "userdetails", () => fetchUserDetails(true)
@@ -398,7 +437,41 @@ export const ProbeCandidateChange = (props) => {
     }
   )
 
-  if (userDetailsLoading || candidateLoading)
+  const { data: statuses, error: statusesError, isLoading: statusesLoading } = useQuery(
+    "probecandidatestatus", async () => await backend.fetchData("/api/v2/internal/probecandidatestatuses"),
+    { enabled: !!userDetails }
+  )
+
+  const doChange = ( values ) => {
+    mutation.mutate({
+      id: values.id,
+      name: values.name,
+      description: values.description,
+      docurl: values.docurl,
+      rpm: values.rpm,
+      yum_baseurl: values.yum_baseurl,
+      command: values.command,
+      contact: values.contact,
+      status: values.status
+    }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries("probecandidate")
+        NotifyOk({
+          msg: "Probe candidate successfully changed",
+          title: "Changed",
+          callback: () => history.push("/ui/administration/probecandidates")
+        })
+      },
+      onError: (error) => {
+        NotifyError({
+          title: "Error",
+          msg: error.message ? error.message : "Error changing probe candidate"
+        })
+      }
+    })
+  }
+
+  if (userDetailsLoading || candidateLoading || statusesLoading)
     return (<LoadingAnim />)
 
   else if (userDetailsError)
@@ -407,9 +480,17 @@ export const ProbeCandidateChange = (props) => {
   else if (candidateError)
     return (<ErrorComponent error={ candidateError } />)
 
-  else if (userDetails && candidate)
+  else if (statusesError)
+    return (<ErrorComponent error={ statusesError } />)
+
+  else if (userDetails && candidate && statuses)
     return (
-      <ProbeCandidateForm data={ candidate } { ...props }/>
+      <ProbeCandidateForm 
+        data={ candidate } 
+        statuses={ statuses }
+        doChange={ doChange }
+        { ...props }
+      />
     )
 
   else 
