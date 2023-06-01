@@ -58,6 +58,17 @@ class MetricConfiguration(models.Model):
         return u"%s" % self.name
 
 
+class ProbeCandidateStatus(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=128, unique=True)
+
+    class Meta:
+        app_label = "poem"
+
+    def __str__(self):
+        return u"%s" % self.name
+
+
 class ProbeCandidate(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=128)
