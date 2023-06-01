@@ -127,6 +127,7 @@ link_title.set('users', 'Users');
 link_title.set('yumrepos', 'YUM repos');
 link_title.set("metricoverrides", "Metric configuration overrides")
 link_title.set("default_ports", "Default ports")
+link_title.set("probecandidates", "Probe candidates")
 
 
 export const Icon = props =>
