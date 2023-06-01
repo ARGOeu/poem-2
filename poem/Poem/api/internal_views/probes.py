@@ -365,3 +365,37 @@ class ListPublicProbes(ListProbes):
 
     def delete(self, request, name):
         return self._denied()
+
+
+class ListProbeCandidates(APIView):
+    authentication_classes = (SessionAuthentication,)
+
+    def get(self, request):
+        if request.user.is_superuser:
+            candidates = poem_models.ProbeCandidate.objects.all()
+
+            results = list()
+            for candidate in candidates:
+                results.append({
+                    "id": candidate.id,
+                    "name": candidate.name,
+                    "description": candidate.description,
+                    "docurl": candidate.docurl,
+                    "rpm": candidate.rpm,
+                    "yum_baseurl": candidate.yum_baseurl,
+                    "command": candidate.command,
+                    "contact": candidate.contact,
+                    "status": candidate.status.name,
+                    "created": candidate.created.strftime("%Y-%m-%d %H:%M:%S"),
+                    "last_update": candidate.last_update.strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    )
+                })
+
+            return Response(sorted(results, key=lambda k: k["name"]))
+
+        else:
+            return error_response(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to view probe candidates"
+            )

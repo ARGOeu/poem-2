@@ -92,5 +92,6 @@ urlpatterns = [
     path('reportsgroup/<str:group>', views_internal.ListReportsInGroup.as_view(), name='reports'),
     path("metricconfiguration/", views_internal.ListMetricConfiguration.as_view(), name="metricconfiguration"),
     path("metricconfiguration/<str:name>", views_internal.ListMetricConfiguration.as_view(), name="metricconfiguration"),
-    path("default_ports/", views_internal.ListDefaultPorts.as_view(), name="default_ports")
+    path("default_ports/", views_internal.ListDefaultPorts.as_view(), name="default_ports"),
+    path("probecandidates/", views_internal.ListProbeCandidates.as_view(), name="probecandidates")
 ]

@@ -4281,3 +4281,106 @@ class ListProbesAPIViewTests(TenantTestCase):
             'You do not have permission to delete probes.'
         )
         self.assertEqual(admin_models.Probe.objects.all().count(), 3)
+
+
+class ListProbeCandidatesTests(TenantTestCase):
+    def setUp(self) -> None:
+        self.view = views.ListProbeCandidates.as_view()
+        self.factory = TenantRequestFactory(self.tenant)
+        self.url = "/api/v2/internal/probecandidates"
+
+        self.user = CustUser.objects.create_user(username="testuser")
+        self.superuser = CustUser.objects.create_user(
+            username="poem", is_superuser=True
+        )
+
+        status_submitted = poem_models.ProbeCandidateStatus.objects.create(
+            name="submitted"
+        )
+        status_testing = poem_models.ProbeCandidateStatus.objects.create(
+            name="testing"
+        )
+        poem_models.ProbeCandidateStatus.objects.create(name="deployed")
+        poem_models.ProbeCandidateStatus.objects.create(name="rejected")
+        poem_models.ProbeCandidateStatus.objects.create(name="processing")
+
+        self.candidate1 = poem_models.ProbeCandidate.objects.create(
+            name="test-probe",
+            description="Some description for the test probe",
+            docurl="https://github.com/ARGOeu-Metrics/argo-probe-test",
+            rpm="argo-probe-test-0.1.0-1.el7.noarch.rpm",
+            yum_baseurl="http://repo.example.com/devel/centos7/",
+            command="/usr/libexec/argo/probes/test/test-probe -H <hostname> "
+                    "-t <timeout> --test",
+            contact="poem@example.com",
+            status=status_testing
+        )
+        self.candidate2 = poem_models.ProbeCandidate.objects.create(
+            name="some-probe",
+            description="Description of the probe",
+            docurl="https://github.com/ARGOeu-Metrics/argo-probe-test",
+            command="/usr/libexec/argo/probes/test/test-probe -H <hostname> "
+                    "-t <timeout> --test --flag1 --flag2",
+            contact="poem@example.com",
+            status=status_submitted
+        )
+
+    def test_get_probe_candidates_list_if_not_authenticated(self):
+        request = self.factory.get(self.url)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_get_probe_candidates_list_superuser(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data, [
+                {
+                    "id": self.candidate2.id,
+                    "name": "some-probe",
+                    "description": "Description of the probe",
+                    "docurl":
+                        "https://github.com/ARGOeu-Metrics/argo-probe-test",
+                    "rpm": "",
+                    "yum_baseurl": "",
+                    "command":
+                        "/usr/libexec/argo/probes/test/test-probe "
+                        "-H <hostname> -t <timeout> --test --flag1 --flag2",
+                    "contact": "poem@example.com",
+                    "status": "submitted",
+                    "created":
+                        self.candidate2.created.strftime("%Y-%m-%d %H:%M:%S"),
+                    "last_update": self.candidate2.last_update.strftime(
+                        "%Y-%m-%d %H:%M:%S")
+                }, {
+                    "id": self.candidate1.id,
+                    "name": "test-probe",
+                    "description": "Some description for the test probe",
+                    "docurl":
+                        "https://github.com/ARGOeu-Metrics/argo-probe-test",
+                    "rpm": "argo-probe-test-0.1.0-1.el7.noarch.rpm",
+                    "yum_baseurl": "http://repo.example.com/devel/centos7/",
+                    "command":
+                        "/usr/libexec/argo/probes/test/test-probe -H <hostname>"
+                        " -t <timeout> --test",
+                    "contact": "poem@example.com",
+                    "status": "testing",
+                    "created":
+                        self.candidate1.created.strftime("%Y-%m-%d %H:%M:%S"),
+                    "last_update": self.candidate1.last_update.strftime(
+                        "%Y-%m-%d %H:%M:%S")
+                }
+            ]
+        )
+
+    def test_get_probe_candidates_list_regular_user(self):
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to view probe candidates"
+        )
