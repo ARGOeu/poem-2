@@ -78,7 +78,7 @@ class ProbeCandidate(models.Model):
     yum_baseurl = models.URLField(max_length=1024)
     command = models.CharField(max_length=2048)
     contact = models.EmailField()
-    status = models.CharField(max_length=512, default="submitted")
+    status = models.ForeignKey(ProbeCandidateStatus, on_delete=models.CASCADE)
     created = models.DateTimeField(max_length=32, auto_now_add=True)
     last_update = models.DateTimeField(max_length=32, auto_now=True)
 
