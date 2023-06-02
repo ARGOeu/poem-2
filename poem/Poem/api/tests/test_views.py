@@ -1546,6 +1546,16 @@ class ProbeCandidateAPITests(TenantTestCase):
         self.factory = TenantRequestFactory(self.tenant)
         self.url = "/api/v2/probes"
 
+        submitted_status = poem_models.ProbeCandidateStatus.objects.create(
+            name="submitted"
+        )
+        testing_status = poem_models.ProbeCandidateStatus.objects.create(
+            name="testing"
+        )
+        poem_models.ProbeCandidateStatus.objects.create(name="deployed")
+        poem_models.ProbeCandidateStatus.objects.create(name="rejected")
+        poem_models.ProbeCandidateStatus.objects.create(name="processing")
+
         self.candidate1 = poem_models.ProbeCandidate.objects.create(
             name="test-probe",
             description="Some description for the test probe",
@@ -1553,7 +1563,7 @@ class ProbeCandidateAPITests(TenantTestCase):
             command="/usr/libexec/argo/probes/test/test-probe -H <hostname> "
                     "-t <timeout> --test",
             contact="poem@example.com",
-            status="testing"
+            status=testing_status
         )
         self.candidate2 = poem_models.ProbeCandidate.objects.create(
             name="test-probe0",
@@ -1561,7 +1571,8 @@ class ProbeCandidateAPITests(TenantTestCase):
             docurl="https://github.com/ARGOeu-Metrics/argo-probe-test",
             command="/usr/libexec/argo/probes/test/test-probe -H <hostname> "
                     "-t <timeout> --test --flag1 --flag2",
-            contact="poem@example.com"
+            contact="poem@example.com",
+            status=submitted_status
         )
 
     def test_get_probe_candidates_without_proper_authentication(self):
@@ -1638,7 +1649,7 @@ class ProbeCandidateAPITests(TenantTestCase):
             "-t <timeout> --test"
         )
         self.assertEqual(candidate.contact, "poem@example.com")
-        self.assertEqual(candidate.status, "submitted")
+        self.assertEqual(candidate.status.name, "submitted")
 
     def test_post_probe_candidate_with_existing_name(self):
         data = {
@@ -1695,8 +1706,8 @@ class ProbeCandidateAPITests(TenantTestCase):
         )
         self.assertEqual(candidate[0].contact, "poem@example.com")
         self.assertEqual(candidate[1].contact, "test@example.com")
-        self.assertEqual(candidate[0].status, "testing")
-        self.assertEqual(candidate[1].status, "submitted")
+        self.assertEqual(candidate[0].status.name, "testing")
+        self.assertEqual(candidate[1].status.name, "submitted")
 
     def test_post_probe_candidate_successfully_with_missing_name(self):
         data = {
@@ -1719,7 +1730,7 @@ class ProbeCandidateAPITests(TenantTestCase):
         self.assertEqual(response.data["detail"], "Name field is mandatory")
         self.assertEqual(poem_models.ProbeCandidate.objects.count(), 2)
 
-    def test_post_probe_candidate_successfully_with_empty_name(self):
+    def test_post_probe_candidate_with_empty_name(self):
         data = {
             "name": "",
             "description":
@@ -1775,7 +1786,7 @@ class ProbeCandidateAPITests(TenantTestCase):
             "-t <timeout> --test"
         )
         self.assertEqual(candidate.contact, "poem@example.com")
-        self.assertEqual(candidate.status, "submitted")
+        self.assertEqual(candidate.status.name, "submitted")
 
     def test_post_probe_candidate_with_empty_description(self):
         data = {
@@ -1812,7 +1823,7 @@ class ProbeCandidateAPITests(TenantTestCase):
             "-t <timeout> --test"
         )
         self.assertEqual(candidate.contact, "poem@example.com")
-        self.assertEqual(candidate.status, "submitted")
+        self.assertEqual(candidate.status.name, "submitted")
 
     def test_post_probe_candidate_with_missing_docurl(self):
         data = {
@@ -1930,7 +1941,7 @@ class ProbeCandidateAPITests(TenantTestCase):
             "-t <timeout> --test"
         )
         self.assertEqual(candidate.contact, "poem@example.com")
-        self.assertEqual(candidate.status, "submitted")
+        self.assertEqual(candidate.status.name, "submitted")
 
     def test_post_probe_candidate_with_empty_rpm(self):
         data = {
@@ -1970,7 +1981,7 @@ class ProbeCandidateAPITests(TenantTestCase):
             "-t <timeout> --test"
         )
         self.assertEqual(candidate.contact, "poem@example.com")
-        self.assertEqual(candidate.status, "submitted")
+        self.assertEqual(candidate.status.name, "submitted")
 
     def test_post_probe_candidate_with_missing_yum_baseurl(self):
         data = {
@@ -2009,7 +2020,7 @@ class ProbeCandidateAPITests(TenantTestCase):
             "-t <timeout> --test"
         )
         self.assertEqual(candidate.contact, "poem@example.com")
-        self.assertEqual(candidate.status, "submitted")
+        self.assertEqual(candidate.status.name, "submitted")
 
     def test_post_probe_candidate_with_empty_yum_baseurl(self):
         data = {
@@ -2049,7 +2060,7 @@ class ProbeCandidateAPITests(TenantTestCase):
             "-t <timeout> --test"
         )
         self.assertEqual(candidate.contact, "poem@example.com")
-        self.assertEqual(candidate.status, "submitted")
+        self.assertEqual(candidate.status.name, "submitted")
 
     def test_post_probe_candidate_with_invalid_yum_baseurl(self):
         data = {
