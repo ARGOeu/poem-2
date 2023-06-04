@@ -57,7 +57,7 @@ describe('Tests for tenant administration', () => {
     renderTenantAdministration();
 
     expect(screen.getByRole('heading', { name: /admin/i }).textContent).toBe('Administration');
-    expect(screen.getAllByRole('link')).toHaveLength(17);
+    expect(screen.getAllByRole('link')).toHaveLength(18);
 
     expect(screen.getByRole('link', { name: 'Metrics' })).toHaveProperty('href', 'http://localhost/ui/metrics')
     expect(screen.getByRole('link', { name: 'Reports' })).toHaveProperty('href', 'http://localhost/ui/reports')
@@ -66,6 +66,7 @@ describe('Tests for tenant administration', () => {
     expect(screen.getByRole('link', { name: 'Thresholds profiles' })).toHaveProperty('href', 'http://localhost/ui/thresholdsprofiles')
     expect(screen.getByRole('link', { name: 'Operations profiles' })).toHaveProperty('href', 'http://localhost/ui/operationsprofiles')
     expect(screen.getByRole('link', { name: 'Metric configuration overrides' })).toHaveProperty('href', 'http://localhost/ui/administration/metricoverrides')
+    expect(screen.getByRole('link', { name: 'Probe candidates' })).toHaveProperty('href', 'http://localhost/ui/administration/probecandidates')
 
     expect(screen.getByRole('link', { name: 'Groups of reports' })).toHaveProperty('href', 'http://localhost/ui/administration/groupofreports')
     expect(screen.getByRole('link', { name: 'Groups of aggregations' })).toHaveProperty('href', 'http://localhost/ui/administration/groupofaggregations')
