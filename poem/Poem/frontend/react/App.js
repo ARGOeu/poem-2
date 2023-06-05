@@ -85,6 +85,7 @@ import {
 import { MetricTagsComponent, MetricTagsList } from './MetricTags';
 import { MetricOverrideChange, MetricOverrideList } from './MetricOverrides';
 import { DefaultPortsList } from './DefaultPorts';
+import { ProbeCandidateChange, ProbeCandidateList } from './ProbeCandidates';
 
 
 const NavigationBarWithRouter = withRouter(NavigationBar);
@@ -111,7 +112,7 @@ const AddRoute = ({usergroups, ...props}) => (
 )
 
 
-const RedirectAfterLogin = ({isSuperUser}) => {
+export const RedirectAfterLogin = ({isSuperUser}) => {
   let last = ''
   let before_last = ''
   let destination = ''
@@ -335,6 +336,14 @@ const TenantRouteSwitch = ({
     />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/metricoverrides/:name"
       render={ props => <MetricOverrideChange {...props} /> }
+    />
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/probecandidates"
+      render={ props => <ProbeCandidateList
+        {...props}
+      /> }
+    />
+    <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/probecandidates/:id"
+      render={ props => <ProbeCandidateChange {...props} /> }
     />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/users"
       render={ props => <UsersList
@@ -692,7 +701,7 @@ const App = () => {
     setTermsLink(options && options.result.terms_privacy_links.terms);
     setPublicView(false);
     if (poemType) {
-      setToken(response.userdetails.token);
+      setToken(response && response.userdetails.token);
       setWebApiMetric(options && options.result.webapimetric);
       setWebApiAggregation(options && options.result.webapiaggregation);
       setWebApiThresholds(options && options.result.webapithresholds);

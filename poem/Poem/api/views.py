@@ -443,7 +443,7 @@ class ProbeCandidateAPI(APIView):
         for c in candidates:
             results.append({
                 "name": c.name,
-                "status": c.status,
+                "status": c.status.name,
                 "created": c.created.strftime("%Y-%m-%d %H:%M:%S"),
                 "last_update": c.last_update.strftime("%Y-%m-%d %H:%M:%S")
             })
@@ -525,7 +525,8 @@ class ProbeCandidateAPI(APIView):
                 rpm=rpm,
                 yum_baseurl=yum_baseurl,
                 command=request.data["command"],
-                contact=request.data["contact"]
+                contact=request.data["contact"],
+                status=models.ProbeCandidateStatus.objects.get(name="submitted")
             )
 
             return Response(status=status.HTTP_201_CREATED)
