@@ -1,10 +1,10 @@
 import json
 
 import requests
-from Poem.api.models import MyAPIKey
 from Poem.helpers.history_helpers import create_profile_history
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
+from Poem.poem_super_admin.models import WebAPIKey
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django_tenants.utils import schema_context, get_public_schema_name
@@ -72,13 +72,11 @@ def two_value_inline_dict(input_data):
     return results
 
 
-def sync_webapi(api, model):
-    token = MyAPIKey.objects.get(name="WEB-API")
+def sync_webapi(api, model, tenant):
+    token = WebAPIKey.objects.get(name=f"WEB-API-{tenant}")
 
     headers = {'Accept': 'application/json', 'x-api-key': token.token}
-    response = requests.get(api,
-                            headers=headers,
-                            timeout=180)
+    response = requests.get(api, headers=headers, timeout=180)
     response.raise_for_status()
     data = response.json()['data']
 
@@ -171,7 +169,7 @@ class WebApiException(Exception):
 
 def sync_tags_webapi():
     mts = admin_models.MetricTemplate.objects.all()
-    token = MyAPIKey.objects.get(name="WEB-API-ADMIN")
+    token = WebAPIKey.objects.get(name="WEB-API-ADMIN")
 
     data2send = list()
     for mt in mts:

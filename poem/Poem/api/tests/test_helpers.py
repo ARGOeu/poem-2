@@ -4,15 +4,16 @@ from unittest.mock import patch, call
 
 import factory
 import requests
-from Poem.api.models import MyAPIKey
 from Poem.helpers.history_helpers import create_comment, update_comment, \
     serialize_metric
 from Poem.helpers.metrics_helpers import import_metrics, update_metrics, \
     update_metrics_in_profiles, get_metrics_in_profiles, \
-    delete_metrics_from_profile, update_metric_in_schema
+    delete_metrics_from_profile, update_metric_in_schema, sync_metrics
+from Poem.helpers.tenant_helpers import CombinedTenant
 from Poem.helpers.versioned_comments import new_comment
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
+from Poem.poem_super_admin.models import WebAPIKey
 from Poem.tenants.models import Tenant
 from Poem.users.models import CustUser
 from django.conf import settings
@@ -29,7 +30,8 @@ from django_tenants.utils import get_tenant_model, get_public_schema_name, \
 from .utils_test import mocked_func, mocked_web_api_metric_profile, \
     mocked_web_api_metric_profile_put, mocked_web_api_metric_profiles, \
     mocked_web_api_metric_profiles_empty, \
-    mocked_web_api_metric_profiles_wrong_token
+    mocked_web_api_metric_profiles_wrong_token, mocked_web_api_data_feed, \
+    mocked_web_api_data_feed_wrong_token
 
 ALLOWED_TEST_DOMAIN = '.test.com'
 
@@ -60,6 +62,7 @@ def mock_db(tenant, tenant2=False):
     mtag1 = admin_models.MetricTags.objects.create(name='test_tag1')
     mtag2 = admin_models.MetricTags.objects.create(name='test_tag2')
     mtag3 = admin_models.MetricTags.objects.create(name='test_tag3')
+    mtag4 = admin_models.MetricTags.objects.create(name="internal")
 
     tag1 = admin_models.OSTag.objects.create(name='CentOS 6')
     tag2 = admin_models.OSTag.objects.create(name='CentOS 7')
@@ -114,6 +117,12 @@ def mock_db(tenant, tenant2=False):
         version='2.0.0'
     )
     package8.repos.add(repo1, repo2)
+
+    package9 = admin_models.Package.objects.create(
+        name="argo-probe-argo-tools",
+        version="0.1.1"
+    )
+    package9.repos.add(repo2)
 
     probe1 = admin_models.Probe.objects.create(
         name='ams-probe',
@@ -374,6 +383,30 @@ def mock_db(tenant, tenant2=False):
         docurl=probe7.docurl,
         date_created=datetime.datetime.now(),
         version_comment='Changed version.',
+        version_user=user.username
+    )
+
+    probe8 = admin_models.Probe.objects.create(
+        name="check_log",
+        package=package9,
+        description="Probe is inspecting the execution of given application "
+                    "by parsing its logfile",
+        comment="Initial version.",
+        repository="https://github.com/ARGOeu-Metrics/argo-probe-argo-tools",
+        docurl="https://github.com/ARGOeu-Metrics/argo-probe-argo-tools/blob/"
+               "master/README.md"
+    )
+
+    probeversion8_1 = admin_models.ProbeHistory.objects.create(
+        object_id=probe8,
+        name=probe8.name,
+        package=probe8.package,
+        description=probe8.description,
+        comment=probe8.comment,
+        repository=probe8.repository,
+        docurl=probe8.docurl,
+        date_created=datetime.datetime.now(),
+        version_comment="Initial version.",
         version_user=user.username
     )
 
@@ -839,7 +872,7 @@ def mock_db(tenant, tenant2=False):
     )
     metrictemplate11.tags.add(mtag1, mtag2)
 
-    admin_models.MetricTemplateHistory.objects.create(
+    mt11_history1 = admin_models.MetricTemplateHistory.objects.create(
         object_id=metrictemplate11,
         name=metrictemplate11.name,
         mtype=metrictemplate11.mtype,
@@ -857,7 +890,42 @@ def mock_db(tenant, tenant2=False):
         version_user=user.username,
         version_comment='Initial version.'
     )
-    mt10_history1.tags.add(mtag1, mtag2)
+    mt11_history1.tags.add(mtag1, mtag2)
+
+    metrictemplate12 = admin_models.MetricTemplate.objects.create(
+        name="argo.poem-tools.check",
+        mtype=active,
+        probekey=probeversion8_1,
+        description="Probe inspecting the execution of argo-poem-tools.",
+        probeexecutable='["check_log"]',
+        config='["maxCheckAttempts 2", "timeout 120",'
+               ' "path /usr/libexec/argo/probes/argo_tools", '
+               '"interval 120", "retryInterval 120"]',
+        parameter='["--file /var/log/argo-poem-tools/argo-poem-tools.log", '
+                  '"--age 2", "--app argo-poem-packages"]',
+        flags='["NOHOSTNAME 1", "NOPUBLISH 1"]'
+    )
+    metrictemplate12.tags.add(mtag4)
+
+    mt12_history1 = admin_models.MetricTemplateHistory.objects.create(
+        object_id=metrictemplate12,
+        name=metrictemplate12.name,
+        mtype=metrictemplate12.mtype,
+        probekey=metrictemplate12.probekey,
+        description=metrictemplate12.description,
+        probeexecutable=metrictemplate12.probeexecutable,
+        config=metrictemplate12.config,
+        attribute=metrictemplate12.attribute,
+        dependency=metrictemplate12.dependency,
+        flags=metrictemplate12.flags,
+        files=metrictemplate12.files,
+        parameter=metrictemplate12.parameter,
+        fileparameter=metrictemplate12.fileparameter,
+        date_created=datetime.datetime.now(),
+        version_user=user.username,
+        version_comment='Initial version.'
+    )
+    mt12_history1.tags.add(mtag4)
 
     group = poem_models.GroupOfMetrics.objects.create(
         name=tenant.name.upper()
@@ -945,6 +1013,23 @@ def mock_db(tenant, tenant2=False):
         object_id=metric5.id,
         object_repr=metric5.__str__(),
         serialized_data=serialize_metric(metric5, tags=[mtag1, mtag2]),
+        content_type=ct,
+        date_created=datetime.datetime.now(),
+        comment='Initial version.',
+        user=user.username
+    )
+
+    metric6 = poem_models.Metric.objects.create(
+        name=metrictemplate12.name,
+        group=group,
+        probeversion=metrictemplate12.probekey.__str__(),
+        config=metrictemplate12.config
+    )
+
+    poem_models.TenantHistory.objects.create(
+        object_id=metric6.id,
+        object_repr=metric6.__str__(),
+        serialized_data=serialize_metric(metric6, tags=[mtag4]),
         content_type=ct,
         date_created=datetime.datetime.now(),
         comment='Initial version.',
@@ -2124,7 +2209,7 @@ class ImportMetricsTests(TransactionTestCase):
         )
 
     def test_import_active_metrics_successfully(self):
-        self.assertEqual(poem_models.Metric.objects.all().count(), 5)
+        self.assertEqual(poem_models.Metric.objects.all().count(), 6)
         success, warning, error, unavailable = import_metrics(
             ['eu.egi.cloud.OpenStack-VM', 'org.nagios.CertLifetime2'],
             self.tenant, self.user
@@ -2135,7 +2220,7 @@ class ImportMetricsTests(TransactionTestCase):
         self.assertEqual(warning, [])
         self.assertEqual(error, [])
         self.assertEqual(unavailable, [])
-        self.assertEqual(poem_models.Metric.objects.all().count(), 7)
+        self.assertEqual(poem_models.Metric.objects.all().count(), 8)
         metric1 = poem_models.Metric.objects.get(
             name='eu.egi.cloud.OpenStack-VM'
         )
@@ -2240,7 +2325,7 @@ class ImportMetricsTests(TransactionTestCase):
         )
 
     def test_import_passive_metric_successfully(self):
-        self.assertEqual(poem_models.Metric.objects.all().count(), 5)
+        self.assertEqual(poem_models.Metric.objects.all().count(), 6)
         success, warning, error, unavailable = import_metrics(
             ['eu.egi.sec.ARC-CE-result'], self.tenant, self.user
         )
@@ -2248,7 +2333,7 @@ class ImportMetricsTests(TransactionTestCase):
         self.assertEqual(warning, [])
         self.assertEqual(error, [])
         self.assertEqual(unavailable, [])
-        self.assertEqual(poem_models.Metric.objects.all().count(), 6)
+        self.assertEqual(poem_models.Metric.objects.all().count(), 7)
         metric1 = poem_models.Metric.objects.get(
             name='eu.egi.sec.ARC-CE-result'
         )
@@ -2293,7 +2378,7 @@ class ImportMetricsTests(TransactionTestCase):
         )
 
     def test_import_active_metric_with_warning(self):
-        self.assertEqual(poem_models.Metric.objects.all().count(), 5)
+        self.assertEqual(poem_models.Metric.objects.all().count(), 6)
         success, warning, error, unavailable = import_metrics(
             ['argo.AMSPublisher-Check'], self.tenant, self.user
         )
@@ -2301,7 +2386,7 @@ class ImportMetricsTests(TransactionTestCase):
         self.assertEqual(warning, ['argo.AMSPublisher-Check'])
         self.assertEqual(error, [])
         self.assertEqual(unavailable, [])
-        self.assertEqual(poem_models.Metric.objects.all().count(), 6)
+        self.assertEqual(poem_models.Metric.objects.all().count(), 7)
         metric1 = poem_models.Metric.objects.get(
             name='argo.AMSPublisher-Check'
         )
@@ -2355,7 +2440,7 @@ class ImportMetricsTests(TransactionTestCase):
     def test_import_active_metric_if_package_already_exists_with_diff_version(
             self
     ):
-        self.assertEqual(poem_models.Metric.objects.all().count(), 5)
+        self.assertEqual(poem_models.Metric.objects.all().count(), 6)
         success, warning, error, unavailable = import_metrics(
             ['test.Metric-Template', 'test.MetricTemplate'],
             self.tenant, self.user
@@ -2364,7 +2449,7 @@ class ImportMetricsTests(TransactionTestCase):
         self.assertEqual(warning, [])
         self.assertEqual(error, ['test.Metric-Template'])
         self.assertEqual(unavailable, ['test.MetricTemplate'])
-        self.assertEqual(poem_models.Metric.objects.all().count(), 5)
+        self.assertEqual(poem_models.Metric.objects.all().count(), 6)
         metric1 = poem_models.Metric.objects.get(name='test.Metric-Template')
         history1 = poem_models.TenantHistory.objects.filter(
             object_id=metric1.id
@@ -2424,7 +2509,7 @@ class ImportMetricsTests(TransactionTestCase):
         )
 
     def test_import_active_metrics_with_error(self):
-        self.assertEqual(poem_models.Metric.objects.all().count(), 5)
+        self.assertEqual(poem_models.Metric.objects.all().count(), 6)
         success, warning, error, unavailable = import_metrics(
             ['argo.AMS-Check', 'org.nagios.CertLifetime'],
             self.tenant, self.user
@@ -2433,7 +2518,7 @@ class ImportMetricsTests(TransactionTestCase):
         self.assertEqual(warning, [])
         self.assertEqual(error, ['argo.AMS-Check', 'org.nagios.CertLifetime'])
         self.assertEqual(unavailable, [])
-        self.assertEqual(poem_models.Metric.objects.all().count(), 5)
+        self.assertEqual(poem_models.Metric.objects.all().count(), 6)
         metric1 = poem_models.Metric.objects.get(name='argo.AMS-Check')
         history1 = poem_models.TenantHistory.objects.filter(
             object_id=metric1.id
@@ -2530,7 +2615,7 @@ class ImportMetricsTests(TransactionTestCase):
         )
 
     def test_import_metric_older_version_than_tenants_package(self):
-        self.assertEqual(poem_models.Metric.objects.all().count(), 5)
+        self.assertEqual(poem_models.Metric.objects.all().count(), 6)
         success, warning, error, unavailable = import_metrics(
             ['argo.AMS-Check-Old'], self.tenant, self.user
         )
@@ -2538,7 +2623,7 @@ class ImportMetricsTests(TransactionTestCase):
         self.assertEqual(warning, [])
         self.assertEqual(error, [])
         self.assertEqual(unavailable, ['argo.AMS-Check-Old'])
-        self.assertEqual(poem_models.Metric.objects.all().count(), 5)
+        self.assertEqual(poem_models.Metric.objects.all().count(), 6)
         poem_models.Metric.objects.get(name='argo.AMS-Check')
         poem_models.Metric.objects.get(name='org.nagios.CertLifetime')
         poem_models.Metric.objects.get(name='eu.egi.cloud.OpenStack-Swift')
@@ -2548,6 +2633,22 @@ class ImportMetricsTests(TransactionTestCase):
             poem_models.Metric.DoesNotExist,
             poem_models.Metric.objects.get,
             name='argo.AMS-Check-Old'
+        )
+
+    def test_import_nonexisting_metric(self):
+        self.assertEqual(poem_models.Metric.objects.all().count(), 6)
+        success, warning, error, unavailable = import_metrics(
+            ['argo.nonexisting.metric'], self.tenant, self.user
+        )
+        self.assertEqual(success, [])
+        self.assertEqual(warning, [])
+        self.assertEqual(error, [])
+        self.assertEqual(unavailable, [])
+        self.assertEqual(poem_models.Metric.objects.all().count(), 6)
+        self.assertRaises(
+            poem_models.Metric.DoesNotExist,
+            poem_models.Metric.objects.get,
+            name="argo.nonexisting.metric"
         )
 
 
@@ -3169,6 +3270,8 @@ class UpdateMetricsTests(TenantTestCase):
 
 class MetricsInProfilesTests(TenantTestCase):
     def setUp(self):
+        self.tenant.name = "TENANT"
+        self.tenant.save()
         with schema_context(get_public_schema_name()):
             tenant = Tenant.objects.create(
                 name='public', schema_name=get_public_schema_name()
@@ -3179,10 +3282,12 @@ class MetricsInProfilesTests(TenantTestCase):
 
     @patch('Poem.helpers.metrics_helpers.requests.put')
     @patch('Poem.helpers.metrics_helpers.requests.get')
-    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
+    @patch('Poem.helpers.metrics_helpers.WebAPIKey.objects.get')
     def test_update_metrics_in_profiles(self, mock_key, mock_get, mock_put):
         with self.settings(WEBAPI_METRIC='https://mock.api.url'):
-            mock_key.return_value = MyAPIKey(name='WEB-API', token='mock_key')
+            mock_key.return_value = WebAPIKey(
+                name='WEB-API-TENANT', token='mock_key'
+            )
             mock_get.side_effect = mocked_web_api_metric_profiles
             msgs = update_metrics_in_profiles('metric1', 'new.metric1')
             mock_put.assert_called_once()
@@ -3216,10 +3321,12 @@ class MetricsInProfilesTests(TenantTestCase):
             self.assertEqual(msgs, [])
 
     @patch('Poem.helpers.metrics_helpers.requests.get')
-    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
+    @patch('Poem.helpers.metrics_helpers.WebAPIKey.objects.get')
     def test_update_metrics_in_profiles_wrong_token(self, mock_key, mock_get):
         with self.settings(WEBAPI_METRIC='https://mock.api.url'):
-            mock_key.return_value = MyAPIKey(name='WEB-API', token='wrong_key')
+            mock_key.return_value = WebAPIKey(
+                name='WEB-API-TENANT', token='wrong_key'
+            )
             mock_get.side_effect = mocked_web_api_metric_profiles_wrong_token
             msgs = update_metrics_in_profiles('metric1', 'new.metric1')
             self.assertEqual(
@@ -3244,12 +3351,14 @@ class MetricsInProfilesTests(TenantTestCase):
 
     @patch('Poem.helpers.metrics_helpers.requests.put')
     @patch('Poem.helpers.metrics_helpers.requests.get')
-    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
+    @patch('Poem.helpers.metrics_helpers.WebAPIKey.objects.get')
     def test_update_metrics_in_profiles_if_response_empty(
             self, mock_key, mock_get, mock_put
     ):
         with self.settings(WEBAPI_METRIC='https://mock.api.url'):
-            mock_key.return_value = MyAPIKey(name='WEB-API', token='mock_key')
+            mock_key.return_value = WebAPIKey(
+                name='WEB-API-TENANT', token='mock_key'
+            )
             mock_get.side_effect = mocked_web_api_metric_profiles_empty
             msgs = update_metrics_in_profiles('metric1', 'new.metric1')
             self.assertEqual(msgs, [])
@@ -3257,24 +3366,28 @@ class MetricsInProfilesTests(TenantTestCase):
 
     @patch('Poem.helpers.metrics_helpers.requests.put')
     @patch('Poem.helpers.metrics_helpers.requests.get')
-    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
+    @patch('Poem.helpers.metrics_helpers.WebAPIKey.objects.get')
     def test_update_metrics_in_profiles_if_same_name(
             self, mock_key, mock_get, mock_put
     ):
         with self.settings(WEBAPI_METRIC='https://mock.api.url'):
-            mock_key.return_value = MyAPIKey(name='WEB-API', token='mock_key')
+            mock_key.return_value = WebAPIKey(
+                name='WEB-API-TENANT', token='mock_key'
+            )
             mock_get.side_effect = mocked_web_api_metric_profiles
             msgs = update_metrics_in_profiles('metric1', 'metric1')
             self.assertEqual(msgs, [])
             self.assertFalse(mock_put.called)
 
     @patch('Poem.helpers.metrics_helpers.requests.get')
-    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
+    @patch('Poem.helpers.metrics_helpers.WebAPIKey.objects.get')
     def test_get_metrics_in_profiles(self, mock_key, mock_get):
         with self.settings(WEBAPI_METRIC='https://mock.api.url'):
-            mock_key.return_value = MyAPIKey(name='WEB-API', token='mock_key')
+            mock_key.return_value = WebAPIKey(
+                name='WEB-API-TENANT', token='mock_key'
+            )
             mock_get.side_effect = mocked_web_api_metric_profiles
-            metrics = get_metrics_in_profiles('test')
+            metrics = get_metrics_in_profiles(self.tenant)
             mock_get.assert_called_once()
             mock_get.assert_called_with(
                 'https://mock.api.url',
@@ -3294,35 +3407,39 @@ class MetricsInProfilesTests(TenantTestCase):
             )
 
     @patch('Poem.helpers.metrics_helpers.requests.get')
-    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
+    @patch('Poem.helpers.metrics_helpers.WebAPIKey.objects.get')
     def test_get_metrics_in_profiles_wrong_token(self, mock_key, mock_get):
         with self.settings(WEBAPI_METRIC='https://mock.api.url'):
-            mock_key.return_value = MyAPIKey(name='WEB-API', token='wrong_key')
+            mock_key.return_value = WebAPIKey(
+                name='WEB-API-TENANT', token='wrong_key'
+            )
             mock_get.side_effect = mocked_web_api_metric_profiles_wrong_token
             self.assertRaises(
                 requests.exceptions.HTTPError,
                 get_metrics_in_profiles,
-                'test'
+                self.tenant
             )
 
     def test_get_metrics_in_profiles_nonexisting_key(self):
         with self.settings(WEBAPI_METRIC='https://mock.api.url'):
             with self.assertRaises(Exception) as context:
-                get_metrics_in_profiles('test')
+                get_metrics_in_profiles(self.tenant)
             self.assertEqual(
                 str(context.exception),
                 'Error fetching WEB API data: API key not found.'
             )
 
     @patch('Poem.helpers.metrics_helpers.requests.get')
-    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
+    @patch('Poem.helpers.metrics_helpers.WebAPIKey.objects.get')
     def test_get_metrics_in_profiles_if_response_empty(
             self, mock_key, mock_get
     ):
         with self.settings(WEBAPI_METRIC='https://mock.api.url'):
-            mock_key.return_value = MyAPIKey(name='WEB-API', token='mock_key')
+            mock_key.return_value = WebAPIKey(
+                name='WEB-API-TENANT', token='mock_key'
+            )
             mock_get.side_effect = mocked_web_api_metric_profiles_empty
-            metrics = get_metrics_in_profiles('test')
+            metrics = get_metrics_in_profiles(self.tenant)
             mock_get.assert_called_once_with(
                 'https://mock.api.url',
                 headers={'Accept': 'application/json', 'x-api-key': 'mock_key'},
@@ -3334,12 +3451,14 @@ class MetricsInProfilesTests(TenantTestCase):
     @patch('Poem.helpers.metrics_helpers.requests.get')
     @patch('Poem.helpers.metrics_helpers.poem_models.MetricProfiles.objects.'
            'get')
-    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
+    @patch('Poem.helpers.metrics_helpers.WebAPIKey.objects.get')
     def test_delete_metrics_from_profiles(
             self, mock_key, mock_profile, mock_get, mock_put
     ):
         with self.settings(WEBAPI_METRIC='https://mock.api.url/'):
-            mock_key.return_value = MyAPIKey(name='WEB-API', token='mock_key')
+            mock_key.return_value = WebAPIKey(
+                name='WEB-API-TENANT', token='mock_key'
+            )
             mock_profile.return_value = poem_models.MetricProfiles(
                 name='PROFILE1', apiid='11111111-2222-3333-4444-555555555555',
                 description='First profile', groupname='TEST'
@@ -3347,7 +3466,8 @@ class MetricsInProfilesTests(TenantTestCase):
             mock_get.side_effect = mocked_web_api_metric_profile
             mock_put.side_effect = mocked_web_api_metric_profile_put
             delete_metrics_from_profile(
-                profile='PROFILE1', metrics=['metric3', 'metric4']
+                profile='PROFILE1', metrics=['metric3', 'metric4'],
+                tenant="TENANT"
             )
             mock_get.assert_called_once_with(
                 'https://mock.api.url/11111111-2222-3333-4444-555555555555',
@@ -3377,12 +3497,14 @@ class MetricsInProfilesTests(TenantTestCase):
     @patch('Poem.helpers.metrics_helpers.requests.get')
     @patch('Poem.helpers.metrics_helpers.poem_models.MetricProfiles.objects.'
            'get')
-    @patch('Poem.helpers.metrics_helpers.MyAPIKey.objects.get')
+    @patch('Poem.helpers.metrics_helpers.WebAPIKey.objects.get')
     def test_delete_metrics_from_profiles_wrong_token(
             self, mock_key, mock_profile, mock_get
     ):
         with self.settings(WEBAPI_METRIC='https://mock.api.url/'):
-            mock_key.return_value = MyAPIKey(name='WEB-API', token='wrong_key')
+            mock_key.return_value = WebAPIKey(
+                name='WEB-API-TENANT', token='wrong_key'
+            )
             mock_profile.return_value = poem_models.MetricProfiles(
                 name='PROFILE1', apiid='11111111-2222-3333-4444-555555555555',
                 description='First profile', groupname='TEST'
@@ -3391,7 +3513,8 @@ class MetricsInProfilesTests(TenantTestCase):
             self.assertRaises(
                 requests.exceptions.HTTPError,
                 delete_metrics_from_profile,
-                profile='PROFILE1', metrics=['metric3', 'metric4']
+                profile='PROFILE1', metrics=['metric3', 'metric4'],
+                tenant="TENANT"
             )
             mock_get.assert_called_once_with(
                 'https://mock.api.url/11111111-2222-3333-4444-555555555555',
@@ -3410,7 +3533,8 @@ class MetricsInProfilesTests(TenantTestCase):
         )
         with self.assertRaises(Exception) as context:
             delete_metrics_from_profile(
-                profile='PROFILE1', metrics=['metric3', 'metric4']
+                profile='PROFILE1', metrics=['metric3', 'metric4'],
+                tenant="TENANT"
             )
         self.assertEqual(
             str(context.exception),
@@ -3420,11 +3544,217 @@ class MetricsInProfilesTests(TenantTestCase):
     def test_delete_metrics_from_profiles_missing_profile(self):
         with self.assertRaises(Exception) as context:
             delete_metrics_from_profile(
-                profile='PROFILE1', metrics=['metric3', 'metric4']
+                profile='PROFILE1', metrics=['metric3', 'metric4'],
+                tenant="TENANT"
             )
         self.assertEqual(
             str(context.exception),
             'Error deleting metric from profile: Profile not found.'
+        )
+
+
+class SyncMetricsTests(TenantTestCase):
+    def setUp(self) -> None:
+        self.tenant.name = "TENANT"
+        self.tenant.save()
+        mock_db(self.tenant)
+
+        self.user = CustUser.objects.get(username="testuser")
+
+    @patch("Poem.helpers.metrics_helpers.get_metrics_in_profiles")
+    def test_sync_active_metrics(self, mock_get_metrics):
+        self.assertRaises(
+            poem_models.Metric.DoesNotExist,
+            poem_models.Metric.objects.get,
+            name="org.nagios.CertLifetime2"
+        )
+        metric1 = poem_models.Metric.objects.get(
+            name="eu.egi.cloud.OpenStack-Swift"
+        )
+        metric2 = poem_models.Metric.objects.get(name="test.Metric-Template")
+        self.assertEqual(len(poem_models.Metric.objects.all()), 6)
+        mock_get_metrics.return_value = {
+            "argo.AMS-Check": ["ARGO-MON"],
+            "org.nagios.CertLifetime": ["ARGO-MON", "ARGO-MON2"],
+            "org.apel.APEL-Pub": ["ARGO-MON2"],
+            "org.nagios.CertLifetime2": ["ARGO-MON2"]
+        }
+        imported, warn, err, unavailable, deleted = sync_metrics(
+            self.tenant, self.user
+        )
+        self.assertEqual(imported, ["org.nagios.CertLifetime2"])
+        self.assertEqual(warn, [])
+        self.assertEqual(err, [])
+        self.assertEqual(unavailable, [])
+        self.assertEqual(
+            sorted(deleted),
+            ["eu.egi.cloud.OpenStack-Swift", "test.Metric-Template"]
+        )
+        self.assertEqual(len(poem_models.Metric.objects.all()), 5)
+        self.assertRaises(
+            poem_models.Metric.DoesNotExist,
+            poem_models.Metric.objects.get,
+            name="eu.egi.cloud.OpenStack-Swift"
+        )
+        self.assertEqual(len(poem_models.TenantHistory.objects.filter(
+            object_id=metric1.id
+        )), 0)
+        self.assertRaises(
+            poem_models.Metric.DoesNotExist,
+            poem_models.Metric.objects.get,
+            name="test.Metric-Template"
+        )
+        self.assertEqual(len(poem_models.TenantHistory.objects.filter(
+            object_id=metric2.id
+        )), 0)
+        metric = poem_models.Metric.objects.get(name="org.nagios.CertLifetime2")
+        assert metric
+
+    @patch("Poem.helpers.metrics_helpers.get_metrics_in_profiles")
+    def test_sync_passive_metrics(self, mock_get_metrics):
+        self.assertRaises(
+            poem_models.Metric.DoesNotExist,
+            poem_models.Metric.objects.get,
+            name="eu.egi.sec.ARC-CE-result"
+        )
+        metric1 = poem_models.Metric.objects.get(
+            name="eu.egi.cloud.OpenStack-Swift"
+        )
+        metric2 = poem_models.Metric.objects.get(name="test.Metric-Template")
+        mock_get_metrics.return_value = {
+            "argo.AMS-Check": ["ARGO-MON"],
+            "org.nagios.CertLifetime": ["ARGO-MON", "ARGO-MON2"],
+            "org.apel.APEL-Pub": ["ARGO-MON2"],
+            "eu.egi.sec.ARC-CE-result": ["ARGO-MON2"]
+        }
+        imported, warn, err, unavailable, deleted = sync_metrics(
+            self.tenant, self.user
+        )
+        self.assertEqual(imported, ["eu.egi.sec.ARC-CE-result"])
+        self.assertEqual(warn, [])
+        self.assertEqual(err, [])
+        self.assertEqual(unavailable, [])
+        self.assertEqual(
+            sorted(deleted),
+            ["eu.egi.cloud.OpenStack-Swift", "test.Metric-Template"]
+        )
+        self.assertEqual(len(poem_models.Metric.objects.all()), 5)
+        self.assertRaises(
+            poem_models.Metric.DoesNotExist,
+            poem_models.Metric.objects.get,
+            name="eu.egi.cloud.OpenStack-Swift"
+        )
+        self.assertEqual(len(poem_models.TenantHistory.objects.filter(
+            object_id=metric1.id
+        )), 0)
+        self.assertRaises(
+            poem_models.Metric.DoesNotExist,
+            poem_models.Metric.objects.get,
+            name="test.Metric-Template"
+        )
+        self.assertEqual(len(poem_models.TenantHistory.objects.filter(
+            object_id=metric2.id
+        )), 0)
+        metric = poem_models.Metric.objects.get(name="eu.egi.sec.ARC-CE-result")
+        assert metric
+
+    @patch("Poem.helpers.metrics_helpers.get_metrics_in_profiles")
+    def test_sync_metrics_with_warning(self, mock_get_metrics):
+        self.assertRaises(
+            poem_models.Metric.DoesNotExist,
+            poem_models.Metric.objects.get,
+            name="argo.AMSPublisher-Check"
+        )
+        metric1 = poem_models.Metric.objects.get(
+            name="eu.egi.cloud.OpenStack-Swift"
+        )
+        metric2 = poem_models.Metric.objects.get(name="test.Metric-Template")
+        mock_get_metrics.return_value = {
+            "argo.AMS-Check": ["ARGO-MON"],
+            "org.nagios.CertLifetime": ["ARGO-MON", "ARGO-MON2"],
+            "org.apel.APEL-Pub": ["ARGO-MON2"],
+            "argo.AMSPublisher-Check": ["ARGO-MON2"]
+        }
+        imported, warn, err, unavailable, deleted = sync_metrics(
+            self.tenant, self.user
+        )
+        self.assertEqual(imported, [])
+        self.assertEqual(warn, ["argo.AMSPublisher-Check"])
+        self.assertEqual(err, [])
+        self.assertEqual(unavailable, [])
+        self.assertEqual(
+            sorted(deleted),
+            ["eu.egi.cloud.OpenStack-Swift", "test.Metric-Template"]
+        )
+        self.assertEqual(len(poem_models.Metric.objects.all()), 5)
+        self.assertRaises(
+            poem_models.Metric.DoesNotExist,
+            poem_models.Metric.objects.get,
+            name="eu.egi.cloud.OpenStack-Swift"
+        )
+        self.assertEqual(len(poem_models.TenantHistory.objects.filter(
+            object_id=metric1.id
+        )), 0)
+        self.assertRaises(
+            poem_models.Metric.DoesNotExist,
+            poem_models.Metric.objects.get,
+            name="test.Metric-Template"
+        )
+        self.assertEqual(len(poem_models.TenantHistory.objects.filter(
+            object_id=metric2.id
+        )), 0)
+        metric = poem_models.Metric.objects.get(name="argo.AMSPublisher-Check")
+        assert metric
+
+    @patch("Poem.helpers.metrics_helpers.get_metrics_in_profiles")
+    def test_sync_metrics_if_version_unavailable(self, mock_get_metrics):
+        self.assertRaises(
+            poem_models.Metric.DoesNotExist,
+            poem_models.Metric.objects.get,
+            name="argo.AMSPublisher-Check"
+        )
+        metric1 = poem_models.Metric.objects.get(
+            name="eu.egi.cloud.OpenStack-Swift"
+        )
+        metric2 = poem_models.Metric.objects.get(name="test.Metric-Template")
+        mock_get_metrics.return_value = {
+            "argo.AMS-Check": ["ARGO-MON"],
+            "org.nagios.CertLifetime": ["ARGO-MON", "ARGO-MON2"],
+            "org.apel.APEL-Pub": ["ARGO-MON2"],
+            "test.MetricTemplate": ["ARGO-MON2"]
+        }
+        imported, warn, err, unavailable, deleted = sync_metrics(
+            self.tenant, self.user
+        )
+        self.assertEqual(imported, [])
+        self.assertEqual(warn, [])
+        self.assertEqual(err, [])
+        self.assertEqual(unavailable, ["test.MetricTemplate"])
+        self.assertEqual(
+            sorted(deleted),
+            ["eu.egi.cloud.OpenStack-Swift", "test.Metric-Template"]
+        )
+        self.assertEqual(len(poem_models.Metric.objects.all()), 4)
+        self.assertRaises(
+            poem_models.Metric.DoesNotExist,
+            poem_models.Metric.objects.get,
+            name="eu.egi.cloud.OpenStack-Swift"
+        )
+        self.assertEqual(len(poem_models.TenantHistory.objects.filter(
+            object_id=metric1.id
+        )), 0)
+        self.assertRaises(
+            poem_models.Metric.DoesNotExist,
+            poem_models.Metric.objects.get,
+            name="test.Metric-Template"
+        )
+        self.assertEqual(len(poem_models.TenantHistory.objects.filter(
+            object_id=metric2.id
+        )), 0)
+        self.assertRaises(
+            poem_models.Metric.DoesNotExist,
+            poem_models.Metric.objects.get,
+            name="test.MetricTemplate"
         )
 
 
@@ -3516,3 +3846,50 @@ class CommentsTests(TenantTestCase):
             'Deleted service-metric instance tuple '
             '(APEL, org.apel.APEL-Sync).'
         )
+
+
+class CombinedTenantTests(TenantTestCase):
+    def setUp(self) -> None:
+        self.tenant.name = "TENANT"
+        self.tenant.save()
+        self.combined_tenant = CombinedTenant(self.tenant)
+
+    @patch("Poem.helpers.tenant_helpers.requests.get")
+    @patch("Poem.helpers.tenant_helpers.WebAPIKey.objects.get")
+    def test_get_combined_tenants(self, mock_key, mock_get):
+        with self.settings(WEBAPI_DATAFEEDS="https://mock.api.url/feeds/data"):
+            mock_key.return_value = WebAPIKey(
+                name="WEB-API-TENANT", token="t0k3n"
+            )
+            mock_get.side_effect = mocked_web_api_data_feed
+            tenants = self.combined_tenant.tenants()
+            mock_get.assert_called_once_with(
+                "https://mock.api.url/feeds/data",
+                headers={"Accept": "application/json", "x-api-key": "t0k3n"},
+                timeout=20
+            )
+            self.assertEqual(tenants, ["TENANT_X", "TENANT_Y"])
+
+    @patch("Poem.helpers.tenant_helpers.requests.get")
+    @patch("Poem.helpers.tenant_helpers.WebAPIKey.objects.get")
+    def test_get_combined_tenants_webapi_exception(self, mock_key, mock_get):
+        with self.settings(WEBAPI_DATAFEEDS="https://mock.api.url/feeds/data"):
+            mock_key.return_value = WebAPIKey(
+                name="WEB-API-TENANT", token="t0k3n"
+            )
+            mock_get.side_effect = mocked_web_api_data_feed_wrong_token
+            tenants = self.combined_tenant.tenants()
+            mock_get.assert_called_once_with(
+                "https://mock.api.url/feeds/data",
+                headers={"Accept": "application/json", "x-api-key": "t0k3n"},
+                timeout=20
+            )
+            self.assertEqual(tenants, [])
+
+    @patch("Poem.helpers.tenant_helpers.requests.get")
+    def test_get_combined_tenants_key_doesnotexist(self, mock_get):
+        with self.settings(WEBAPI_DATAFEEDS="https://mock.api.url/feeds/data"):
+            mock_get.side_effect = mocked_web_api_data_feed_wrong_token
+            tenants = self.combined_tenant.tenants()
+            self.assertFalse(mock_get.called)
+            self.assertEqual(tenants, [])

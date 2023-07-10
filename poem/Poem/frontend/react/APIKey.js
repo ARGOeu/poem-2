@@ -23,12 +23,32 @@ import {
   InputGroup,
   InputGroupText,
   Input,
-  Form
+  Form,
+  Badge,
+  FormFeedback
 } from 'reactstrap';
 import { faClipboard } from '@fortawesome/free-solid-svg-icons';
 import { useQuery, useQueryClient, useMutation } from 'react-query';
 import { fetchAPIKeys } from './QueryFunctions';
 import { Controller, useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from "yup";
+import { ErrorMessage } from "@hookform/error-message"
+
+
+const validationSchema = yup.object().shape({
+  name: yup.string().required("Name field is required")
+    .when("used_by", {
+      is: (value) => value === "poem",
+      then: yup.string().test("must_not_start", "Name can contain alphanumeric characters, dash and underscore, must always begin with a letter, but not with WEB-API-", function (value) {
+        if (!value.startsWith("WEB-API-") && value.match(/^[a-zA-Z][A-Za-z0-9\-_]*$/))
+          return true
+        else
+          return false
+      }),
+      otherwise: yup.string().matches(/^WEB-API-\S*(-RO)?$/, "Name must have form WEB-API-<tenant_name> or WEB-API-<tenant_name>-RO")
+    })
+})
 
 
 const fetchAPIKey = async(name) => {
@@ -43,7 +63,7 @@ export const APIKeyList = (props) => {
 
   const queryClient = useQueryClient();
 
-  const { data: keys, error: error, status: status } = useQuery(
+  const { data: keys, error, isLoading: loading } = useQuery(
     'apikey', () => fetchAPIKeys()
   )
 
@@ -68,7 +88,7 @@ export const APIKeyList = (props) => {
           >
             {e.name}
           </Link>,
-        column_width: '73%'
+        column_width: '70%'
       },
       {
         Header: 'Created',
@@ -95,15 +115,24 @@ export const APIKeyList = (props) => {
             :
               <FontAwesomeIcon icon={faTimesCircle} style={{color: "#CC0000"}}/>,
         column_width: '5%'
+      },
+      {
+        Header: "Used by",
+        id: "used_by",
+        accessor: e =>
+          <Badge color={ `${e.used_by === "poem" ? "success" : "secondary"}` }>
+            { e.used_by }
+          </Badge>,
+        column_width: "3%"
       }
     ], [queryClient]
   );
 
-  if (status === 'loading')
-    return (<LoadingAnim/>);
+  if (loading)
+    return (<LoadingAnim/>)
 
-  else if (status === 'error')
-    return (<ErrorComponent error={error}/>);
+  else if (error)
+    return (<ErrorComponent error={ error } />)
 
   else if (keys) {
     return (
@@ -115,7 +144,7 @@ export const APIKeyList = (props) => {
         <BaseArgoTable
           data={keys}
           columns={columns}
-          page_size={5}
+          page_size={10}
           resourcename='API keys'
         />
       </BaseArgoView>
@@ -126,14 +155,16 @@ export const APIKeyList = (props) => {
 }
 
 
-const APIKeyForm = ({ name, data, addview, history, location }) => {
-  const backend = new Backend();
-
-  const queryClient = useQueryClient();
-
-  const changeMutation = useMutation(async (values) => backend.changeObject('/api/v2/internal/apikeys/', values));
-  const addMutation = useMutation(async (values) => backend.addObject('/api/v2/internal/apikeys/', values));
-  const deleteMutation = useMutation(async () => await backend.deleteObject(`/api/v2/internal/apikeys/${name}`));
+const APIKeyForm = ({
+  data,
+  doChange,
+  doDelete,
+  ...props
+}) => {
+  const name = props.match.params.name;
+  const isTenantSchema = props.isTenantSchema
+  const location = props.location;
+  const addview = props.addview;
 
   const [areYouSureModal, setAreYouSureModal] = useState(false)
   const [modalTitle, setModalTitle] = useState(undefined)
@@ -141,49 +172,11 @@ const APIKeyForm = ({ name, data, addview, history, location }) => {
   const [onYes, setOnYes] = useState('')
   const refToken = useRef(null);
 
-  const { control, handleSubmit, setValue, getValues } = useForm({
-    defaultValues: !addview ? data : { name: "", revoked: false, token: "" }
+  const { control, handleSubmit, setValue, getValues, trigger, formState: { errors } } = useForm({
+    defaultValues: !addview ? data : { name: "", revoked: false, token: "", used_by: "poem" },
+    mode: "all",
+    resolver: yupResolver(validationSchema)
   })
-
-  const doChange = (values) => {
-    if (!addview) {
-      changeMutation.mutate(
-        { id: values.id, revoked: values.revoked, name: values.name }, {
-          onSuccess: () => {
-            queryClient.invalidateQueries('apikey');
-            NotifyOk({
-              msg: 'API key successfully changed',
-              title: 'Changed',
-              callback: () => history.push('/ui/administration/apikey')
-            });
-          },
-          onError: (error) => {
-            NotifyError({
-              title: 'Error',
-              msg: error.message ? error.message : 'Error changing API key'
-            })
-          }
-        }
-      )
-    } else {
-      addMutation.mutate({ name: values.name, token: values.token }, {
-        onSuccess: () => {
-          queryClient.invalidateQueries('apikey');
-          NotifyOk({
-            msg: 'API key successfully added',
-            title: 'Added',
-            callback: () => history.push('/ui/administration/apikey')
-          })
-        },
-        onError: (error) => {
-          NotifyError({
-            title: 'Error',
-            msg: error.message ? error.message : 'Error adding API key'
-          })
-        }
-      })
-    }
-  };
 
   const onSubmitHandle = () => {
     let msg = `Are you sure you want to ${addview ? 'add' : 'change'} API key?`;
@@ -195,30 +188,11 @@ const APIKeyForm = ({ name, data, addview, history, location }) => {
     setOnYes('change')
   }
 
-  const doDelete = () => {
-    deleteMutation.mutate(undefined, {
-      onSuccess: () => {
-        queryClient.invalidateQueries('apikey');
-        NotifyOk({
-          msg: 'API key successfully deleted',
-          title: 'Deleted',
-          callback: () => history.push('/ui/administration/apikey')
-        })
-      },
-      onError: (error) => {
-        NotifyError({
-          title: 'Error',
-          msg: error.message ? error.message : 'Error deleting API key'
-        })
-      }
-    })
-  }
-
   const onYesCallback = () => {
     if (onYes === 'delete')
-      doDelete(name);
+      doDelete(`${getValues("used_by")}_${name}`)
     else if (onYes === 'change')
-      doChange(getValues());
+      doChange(getValues())
   }
 
   const copyToClipboard = (e) => {
@@ -251,8 +225,18 @@ const APIKeyForm = ({ name, data, addview, history, location }) => {
                   <Input
                     {...field}
                     data-testid="name"
-                    className="form-control"
+                    className={ `form-control ${errors?.name && "is-invalid"}` }
+                    disabled={ !addview }
                   />
+                }
+              />
+              <ErrorMessage
+                errors={ errors }
+                name="name"
+                render={ ({ message }) =>
+                  <FormFeedback invalid="true" className="end-0">
+                    { message }
+                  </FormFeedback>
                 }
               />
               <FormText color='muted'>
@@ -260,6 +244,42 @@ const APIKeyForm = ({ name, data, addview, history, location }) => {
               </FormText>
             </Col>
           </Row>
+          {
+            (addview && !isTenantSchema) &&
+              <Row className='mt-2'>
+                <Col md={6}>
+                  <Row>
+                    <FormGroup check inline className='ms-3'>
+                      <Controller
+                        name="used_by"
+                        control={control}
+                        render={ ({ field }) => {
+                          return (
+                            <Input
+                              {...field}
+                              type='checkbox'
+                              data-testid="used_by"
+                              id="used_by"
+                              onChange={ e => {
+                                setValue("used_by", e.target.checked ? "webapi" : "poem")
+                                trigger("name")
+                              }}
+                              checked={ field.value === "webapi" }
+                            />
+                          )
+                        }}
+                      />
+                      <Label check for="used_by">Web API key</Label>
+                    </FormGroup>
+                  </Row>
+                  <Row>
+                    <FormText color="muted">
+                      Mark this checkbox if the key being saved is going to be used for web API authentication.
+                    </FormText>
+                  </Row>
+                </Col>
+              </Row>
+          }
           <Row className='mt-2'>
             <Col md={6}>
               <Row>
@@ -272,10 +292,11 @@ const APIKeyForm = ({ name, data, addview, history, location }) => {
                         <Input
                           {...field}
                           type='checkbox'
+                          data-testid="revoked"
                           onChange={e => setValue("revoked", e.target.checked)}
                           checked={field.value}
+                          disabled={ isTenantSchema && getValues("used_by") === "webapi" }
                         />
-
                       )
                     }}
                   />
@@ -331,29 +352,30 @@ const APIKeyForm = ({ name, data, addview, history, location }) => {
           </Row>
         </FormGroup>
         {
-          <div className={!addview ? "submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5" : "submit-row d-flex align-items-center justify-content-end bg-light p-3 mt-5"}>
-            {
-              (!addview) &&
+          !(isTenantSchema && getValues("used_by") === "webapi") &&
+            <div className={!addview ? "submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5" : "submit-row d-flex align-items-center justify-content-end bg-light p-3 mt-5"}>
+              {
+                (!addview) &&
+                <Button
+                  color='danger'
+                  onClick={() => {
+                    setModalMsg('Are you sure you want to delete API key?')
+                    setModalTitle('Delete API key')
+                    setAreYouSureModal(!areYouSureModal);
+                    setOnYes('delete')
+                  }}
+                >
+                  Delete
+                </Button>
+              }
               <Button
-                color='danger'
-                onClick={() => {
-                  setModalMsg('Are you sure you want to delete API key?')
-                  setModalTitle('Delete API key')
-                  setAreYouSureModal(!areYouSureModal);
-                  setOnYes('delete')
-                }}
+                color='success'
+                id='submit-button'
+                type='submit'
               >
-                Delete
+                Save
               </Button>
-            }
-            <Button
-              color='success'
-              id='submit-button'
-              type='submit'
-            >
-              Save
-            </Button>
-          </div>
+            </div>
         }
       </Form>
     </BaseArgoView>
@@ -363,15 +385,80 @@ const APIKeyForm = ({ name, data, addview, history, location }) => {
 
 export const APIKeyChange = (props) => {
   const name = props.match.params.name;
-  const location = props.location;
   const addview = props.addview;
   const history = props.history;
 
+  const queryClient = useQueryClient()
+
+  const backend = new Backend()
+
+  const changeMutation = useMutation(async (values) => backend.changeObject('/api/v2/internal/apikeys/', values));
+  const addMutation = useMutation(async (values) => backend.addObject('/api/v2/internal/apikeys/', values));
+  const deleteMutation = useMutation(async (prefix_name) => await backend.deleteObject(`/api/v2/internal/apikeys/${prefix_name}`));
 
   const { data: key, error: error, status: status } = useQuery(
     ['apikey', name], () => fetchAPIKey(name),
     { enabled: !addview }
   )
+
+  const doChange = (values) => {
+    if (!addview) {
+      changeMutation.mutate(
+        { id: values.id, revoked: values.revoked, name: values.name, used_by: values.used_by }, {
+          onSuccess: () => {
+            queryClient.invalidateQueries('apikey');
+            NotifyOk({
+              msg: 'API key successfully changed',
+              title: 'Changed',
+              callback: () => history.push('/ui/administration/apikey')
+            });
+          },
+          onError: (error) => {
+            NotifyError({
+              title: 'Error',
+              msg: error.message ? error.message : 'Error changing API key'
+            })
+          }
+        }
+      )
+    } else {
+      addMutation.mutate({ name: values.name, token: values.token, used_by: values.used_by }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries('apikey');
+          NotifyOk({
+            msg: 'API key successfully added',
+            title: 'Added',
+            callback: () => history.push('/ui/administration/apikey')
+          })
+        },
+        onError: (error) => {
+          NotifyError({
+            title: 'Error',
+            msg: error.message ? error.message : 'Error adding API key'
+          })
+        }
+      })
+    }
+  }
+
+  const doDelete = (prefix_name) => {
+    deleteMutation.mutate(prefix_name, {
+      onSuccess: () => {
+        queryClient.invalidateQueries('apikey');
+        NotifyOk({
+          msg: 'API key successfully deleted',
+          title: 'Deleted',
+          callback: () => history.push('/ui/administration/apikey')
+        })
+      },
+      onError: (error) => {
+        NotifyError({
+          title: 'Error',
+          msg: error.message ? error.message : 'Error deleting API key'
+        })
+      }
+    })
+  }
 
   if (status === 'loading')
     return (<LoadingAnim/>);
@@ -381,7 +468,12 @@ export const APIKeyChange = (props) => {
 
   else if (key || addview)
     return (
-      <APIKeyForm data={key} name={name} history={history} location={location} addview={addview} />
+      <APIKeyForm
+        { ...props }
+        data={ key }
+        doChange={ doChange }
+        doDelete={ doDelete }
+      />
     )
   else
     return null

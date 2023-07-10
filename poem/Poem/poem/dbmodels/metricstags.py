@@ -58,6 +58,37 @@ class MetricConfiguration(models.Model):
         return u"%s" % self.name
 
 
+class ProbeCandidateStatus(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=128, unique=True)
+
+    class Meta:
+        app_label = "poem"
+
+    def __str__(self):
+        return u"%s" % self.name
+
+
+class ProbeCandidate(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=128)
+    description = models.CharField(max_length=1024)
+    docurl = models.URLField(max_length=1024)
+    rpm = models.CharField(max_length=1024)
+    yum_baseurl = models.URLField(max_length=1024)
+    command = models.CharField(max_length=2048)
+    contact = models.EmailField()
+    status = models.ForeignKey(ProbeCandidateStatus, on_delete=models.CASCADE)
+    created = models.DateTimeField(max_length=32, auto_now_add=True)
+    last_update = models.DateTimeField(max_length=32, auto_now=True)
+
+    class Meta:
+        app_label = "poem"
+
+    def __str__(self):
+        return u"%s" % self.name
+
+
 @receiver(pre_save, sender=admin_models.Package)
 def update_metrics(sender, instance, **kwargs):
     schemas = list(

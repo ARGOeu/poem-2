@@ -1,6 +1,10 @@
 import React, { useState, useMemo, useContext, useEffect } from 'react';
 import {Link} from 'react-router-dom';
-import {Backend, WebApi} from './DataManager';
+import {
+  Backend, 
+  WebApi,
+  fetchTenantsMetricProfiles
+} from './DataManager';
 import {
   LoadingAnim,
   BaseArgoView,
@@ -14,7 +18,8 @@ import {
   ProfilesListTable,
   CustomError,
   ProfileMain,
-  CustomReactSelect
+  CustomReactSelect,
+  NotifyWarn
 } from './UIElements';
 import {
   Button,
@@ -22,7 +27,10 @@ import {
   DropdownToggle,
   DropdownMenu,
   DropdownItem,
-  Form
+  Form,
+  Label,
+  Row,
+  Col
 } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
@@ -31,7 +39,6 @@ import { useQuery, useQueryClient, useMutation } from 'react-query';
 import PapaParse from 'papaparse';
 import { downloadCSV } from './FileDownload';
 import {
-  fetchAllMetrics,
   fetchUserDetails,
   fetchBackendMetricProfiles
 } from './QueryFunctions';
@@ -311,6 +318,7 @@ const MetricProfilesForm = ({
   userDetails,
   metricsAll=undefined,
   servicesAll=undefined,
+  tenantsProfiles=undefined,
   doChange=undefined,
   doDelete=undefined,
   historyview=false,
@@ -321,6 +329,7 @@ const MetricProfilesForm = ({
   const location = props.location;
   const cloneview = props.cloneview;
   const publicView = props.publicView;
+  const combined = props.combined
 
   const [areYouSureModal, setAreYouSureModal] = useState(false)
   const [modalMsg, setModalMsg] = useState(undefined);
@@ -368,17 +377,25 @@ const MetricProfilesForm = ({
   :
     [{ service: "", metric: "" }]
 
+  let initValues = {
+    id: metricProfile.profile.id,
+    name: `${ cloneview ? "Cloned " : ""}${metricProfile.profile.name}`,
+    description: metricProfile.profile.description,
+    groupname: metricProfile.groupname,
+    services: defaultServices,
+    view_services: defaultServices,
+    search_metric: "",
+    search_serviceflavour: ""
+  }
+
+  if (addview && combined) {
+    for (let tenant of Object.keys(tenantsProfiles)) {
+      initValues[`${tenant}-profile`] = ""
+    }
+  }
+
   const methods = useForm({
-    defaultValues: {
-      id: metricProfile.profile.id,
-      name: metricProfile.profile.name,
-      description: metricProfile.profile.description,
-      groupname: metricProfile.groupname,
-      services: defaultServices,
-      view_services: defaultServices,
-      search_metric: "",
-      search_serviceflavour: ""
-    },
+    defaultValues: initValues,
     mode: "all",
     resolver: yupResolver(MetricProfilesSchema),
     context: { allServices: servicesAll, allMetrics: metricsAll }
@@ -427,6 +444,16 @@ const MetricProfilesForm = ({
           servicesList: listServices.sort(sortServices)
         }
       );
+  }
+
+  const resetServices = (values) => {
+    methods.resetField("view_services")
+    methods.setValue("view_services", values.sort(sortServices))
+    methods.resetField("search_metric")
+    methods.resetField("search_serviceflavour")
+    methods.resetField("services")
+    methods.setValue("services", values.sort(sortServices))
+    methods.trigger()
   }
 
   return (
@@ -489,13 +516,7 @@ const MetricProfilesForm = ({
                       }))
                         item.isNew = true
                     })
-                    methods.resetField("view_services")
-                    methods.setValue("view_services", imported.sort(sortServices))
-                    methods.resetField("search_metric")
-                    methods.resetField("search_serviceflavour")
-                    methods.resetField("services")
-                    methods.setValue("services", imported.sort(sortServices))
-                    methods.trigger()
+                    resetServices(imported)
                   }
                 })
               }}
@@ -518,6 +539,48 @@ const MetricProfilesForm = ({
             fieldsdisable={ publicView || historyview }
             addview={ addview || cloneview }
           />
+          {
+            (combined && addview) && <ParagraphTitle title="Combined from"/>
+          }
+          {
+            (combined && addview) &&
+            Object.keys(tenantsProfiles).sort().map(tenant => 
+              <Row key={tenant}>
+                <Col md={7}>
+                  <h6 className='mt-4 font-weight-bold text-uppercase'>{ tenant }</h6>
+                  <Label for={ `${tenant}-profile` }>Metric profile:</Label>
+                  <Controller
+                    name={ `${tenant}-profile` }
+                    control={ control }
+                    render={ ({ field }) =>
+                      <CustomReactSelect
+                        forwardedRef={ field.ref }
+                        inputId={ `${tenant}-profile` }
+                        onChange={ e => {
+                          let tenants = Object.keys(tenantsProfiles)
+                          let old_profile = methods.getValues(`${tenant}-profile`)
+                          methods.setValue(`${tenant}-profile`, e.value) 
+                          let old_profile_tuples = []
+                          if (old_profile)
+                            old_profile_tuples = flattenServices(tenantsProfiles[tenant].filter(profile => profile.name === old_profile)[0].services)
+                          let current_tuples = []
+                          for (let tnnt of tenants) {
+                            let pname = methods.getValues(`${tnnt}-profile`)
+                            if (pname)
+                              current_tuples = current_tuples.concat(flattenServices(tenantsProfiles[tnnt].filter(profile => profile.name === pname)[0].services))
+                          }
+                          let tuples = current_tuples.filter(tuple => !old_profile_tuples.includes(tuple))
+                          resetServices(tuples)
+                        } }
+                        options={ tenantsProfiles[tenant].map(profile => new Object({ value: profile.name, label: profile.name })) }
+                        defaultValue={ field.value }
+                      />
+                    }
+                  />
+                </Col>
+              </Row>
+            )
+          }
           <ParagraphTitle title='Metric instances'/>
           <MetricProfilesComponentContext.Provider value={{
             publicView: publicView,
@@ -573,6 +636,8 @@ export const MetricProfilesComponent = (props) => {
   const history = props.history;
   const cloneview = props.cloneview;
   const publicView = props.publicView;
+  const tenantDetails = props.tenantDetails
+  const combined = props.tenantDetails.combined
 
   const backend = new Backend();
   const webapi = new WebApi({
@@ -585,11 +650,11 @@ export const MetricProfilesComponent = (props) => {
 
   const queryClient = useQueryClient();
   const webapiChangeMutation = useMutation(async (values) => await webapi.changeMetricProfile(values));
-  const backendChangeMutation = useMutation(async (values) => await backend.changeObject('/api/v2/internal/metricprofiles/', values));
+  const backendChangeMutation = useMutation(async (values) => await backend.changeMetricProfile(values))
   const webapiAddMutation = useMutation(async (values) => await webapi.addMetricProfile(values));
-  const backendAddMutation = useMutation(async (values) => await backend.addObject('/api/v2/internal/metricprofiles/', values));
+  const backendAddMutation = useMutation(async (values) => await backend.addMetricProfile(values))
   const webapiDeleteMutation = useMutation(async (idProfile) => await webapi.deleteMetricProfile(idProfile));
-  const backendDeleteMutation = useMutation(async (idProfile) => await backend.deleteObject(`/api/v2/internal/metricprofiles/${idProfile}`));
+  const backendDeleteMutation = useMutation(async (idProfile) => await backend.deleteMetricProfile(idProfile))
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
     'userdetails', () => fetchUserDetails(true),
@@ -622,7 +687,7 @@ export const MetricProfilesComponent = (props) => {
   )
 
   const { data: metricsAll, error: errorMetricsAll, isLoading: loadingMetricsAll } = useQuery(
-    'metricsall', () => fetchAllMetrics(),
+    "metrictemplate_names", async () => await backend.fetchListOfNames("/api/v2/internal/availmetrictemplates"),
     { enabled: !publicView }
   )
 
@@ -642,6 +707,18 @@ export const MetricProfilesComponent = (props) => {
   const { data: reports, error: errorReports, isLoading: loadingReports } = useQuery(
     [`${publicView ? "public_" : ""}report`, "webapi"], async () => await webapi.fetchReports(),
     { enabled: !publicView && !cloneview && !addview && !!userDetails }
+  )
+
+  const { data: tenantsProfiles, error: errorTenantsProfiles, isLoading: loadingTenantsProfiles } = useQuery(
+    ["metricprofile", "combined", profile_name],
+    () => fetchTenantsMetricProfiles(props.webapimetric, tenantDetails.tenants),
+    { 
+      enabled: combined && addview && !!userDetails,
+      initialData: () => {
+        if (userDetails)
+          return userDetails.tenantdetails
+      }
+    }
   )
 
   const getAssociatedAggregations = (profileId) => {
@@ -667,11 +744,17 @@ export const MetricProfilesComponent = (props) => {
       webapiDeleteMutation.mutate(idProfile, {
         onSuccess: () => {
           backendDeleteMutation.mutate(idProfile, {
-            onSuccess: () => {
+            onSuccess: (data) => {
               queryClient.invalidateQueries('metricprofile');
               queryClient.invalidateQueries('public_metricprofile');
+              
+              let msg = "Metric profile successfully deleted"
+
+              if ("deleted" in data)
+                msg = `${msg}\n${data.deleted}`
+
               NotifyOk({
-                msg: 'Metric profile successfully deleted',
+                msg: msg,
                 title: 'Deleted',
                 callback: () => history.push('/ui/metricprofiles')
               });
@@ -746,14 +829,36 @@ export const MetricProfilesComponent = (props) => {
             groupname: formValues.groupname,
             services: backend_services
           }, {
-            onSuccess: () => {
+            onSuccess: (data) => {
               queryClient.invalidateQueries('metricprofile');
               queryClient.invalidateQueries('public_metricprofile');
+
+              let msg = "Metric profile successfully changed"
+              let warn_msg = ""
+
+              if ("imported" in data)
+                msg = `${msg}\n${data.imported}`
+
+              if ("warning" in data)
+                warn_msg = `${warn_msg}\n${data.warning}`.replace(/^\s+|\s+$/g, "")
+
+              if ("unavailable" in data)
+                warn_msg = `${warn_msg}\n${data.unavailable}`.replace(/^\s+|\s+$/g, "")
+
+              if ("deleted" in data)
+                msg = `${msg}\n${data.deleted}`
+
               NotifyOk({
-                msg: 'Metric profile successfully changed',
+                msg: msg,
                 title: 'Changed',
                 callback: () => history.push('/ui/metricprofiles')
               });
+
+              if (warn_msg)
+                NotifyWarn({
+                  msg: warn_msg,
+                  title: "Metrics warning"
+                })
             },
             onError: (error) => {
               NotifyError({
@@ -786,14 +891,33 @@ export const MetricProfilesComponent = (props) => {
             description: formValues.description,
             services: backend_services
           }, {
-            onSuccess: () => {
+            onSuccess: (data) => {
               queryClient.invalidateQueries('metricprofile');
               queryClient.invalidateQueries('public_metricprofile');
+              
+              let msg = "Metric profile successfully added"
+              let warn_msg = ""
+
+              if ("imported" in data)
+                msg = `${msg}\n${data.imported}`
+
+              if ("warning" in data)
+                warn_msg = `${warn_msg}\n${data.warning}`.replace(/^\s+|\s+$/g, "")
+
+              if ("unavailable" in data)
+                warn_msg = `${warn_msg}\n${data.unavailable}`.replace(/^\s+|\s+$/g, "")
+
+              if ("deleted" in data)
+                msg = `${msg}\n${data.deleted}`
+
               NotifyOk({
-                msg: 'Metric profile successfully added',
+                msg: msg,
                 title: 'Added',
                 callback: () => history.push('/ui/metricprofiles')
-              });
+              })
+
+              if (warn_msg)
+                NotifyWarn({ msg: warn_msg, title: "Metrics warning" })
             },
             onError: (error) => {
               NotifyError({
@@ -813,7 +937,7 @@ export const MetricProfilesComponent = (props) => {
     }
   }
 
-  if (loadingUserDetails || loadingBackendMP || loadingWebApiMP || loadingMetricsAll || loadingWebApiST || loadingAggrProfiles || loadingReports)
+  if (loadingUserDetails || loadingBackendMP || loadingWebApiMP || loadingMetricsAll || loadingWebApiST || loadingAggrProfiles || loadingReports || loadingTenantsProfiles)
     return (<LoadingAnim />)
 
   else if (errorUserDetails)
@@ -837,7 +961,10 @@ export const MetricProfilesComponent = (props) => {
   else if (errorReports)
     return (<ErrorComponent error={errorReports} />)
 
-  else if ((addview && webApiST) || (backendMP && webApiMP && webApiST) || (publicView))
+  else if (errorTenantsProfiles)
+    return (<ErrorComponent error={ errorTenantsProfiles } />)
+
+  else if ((addview && webApiST && (!tenantDetails.combined || (tenantDetails.combined && tenantsProfiles))) || (backendMP && webApiMP && webApiST) || (publicView))
   {
     var metricProfile = {
       profile: {
@@ -853,9 +980,6 @@ export const MetricProfilesComponent = (props) => {
     if (backendMP && webApiMP) {
       metricProfile.profile = webApiMP
       metricProfile.groupname = backendMP.groupname
-
-      if (cloneview)
-        metricProfile.profile.name = `Cloned ${metricProfile.profile.name}`
     }
 
     return (
@@ -865,6 +989,8 @@ export const MetricProfilesComponent = (props) => {
         userDetails={ userDetails }
         metricsAll={ metricsAll ? metricsAll : [] }
         servicesAll={ webApiST ? webApiST : [] }
+        tenantsProfiles={ tenantsProfiles ? tenantsProfiles : [] }
+        combined={ tenantDetails.combined }
         doChange={ doChange }
         doDelete={ doDelete }
       />

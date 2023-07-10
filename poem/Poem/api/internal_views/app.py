@@ -3,8 +3,9 @@ import configparser
 import pkg_resources
 from Poem.api import serializers
 from Poem.api.internal_views.users import get_all_groups, get_groups_for_user
-from Poem.api.models import MyAPIKey
+from Poem.helpers.tenant_helpers import CombinedTenant
 from Poem.poem.saml2.config import tenant_from_request, saml_login_string
+from Poem.poem_super_admin.models import WebAPIKey
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import connection
@@ -49,8 +50,9 @@ class IsSessionActive(APIView):
         obj = None
 
         try:
-            obj = MyAPIKey.objects.get(name=name)
-        except MyAPIKey.DoesNotExist:
+            obj = WebAPIKey.objects.get(name=name)
+
+        except WebAPIKey.DoesNotExist:
             pass
 
         if obj is not None:
@@ -60,26 +62,48 @@ class IsSessionActive(APIView):
 
     def get(self, request, istenant):
         userdetails = dict()
-        token = None
 
         user = get_user_model().objects.get(id=self.request.user.id)
         serializer = serializers.UsersSerializer(user)
         userdetails.update(serializer.data)
 
+        rw_user = False
         if istenant == 'true':
             if user.is_superuser:
                 groups = get_all_groups()
+
             else:
                 groups = get_groups_for_user(user)
+
             userdetails['groups'] = groups
+            rw_user = len(groups["metricprofiles"]) > 0
 
             if self._have_rwperm(groups):
-                token = self._get_token('WEB-API')
+                token = self._get_token(f"WEB-API-{request.tenant.name}")
+
             else:
-                token = self._get_token('WEB-API-RO')
+                token = self._get_token(f"WEB-API-{request.tenant.name}-RO")
+
             userdetails['token'] = token
 
-        return Response({'active': True, 'userdetails': userdetails})
+        tenantdetails = {"combined": request.tenant.combined}
+
+        tenants_dict = dict()
+        if request.tenant.combined and rw_user:
+            ct = CombinedTenant(request.tenant)
+            tenants = ct.tenants()
+
+            for tenant in tenants:
+                token = WebAPIKey.objects.get(name=f"WEB-API-{tenant}-RO")
+                tenants_dict.update({tenant: token.token})
+
+        tenantdetails.update({"tenants": tenants_dict})
+
+        return Response({
+            'active': True,
+            'userdetails': userdetails,
+            "tenantdetails": tenantdetails
+        })
 
 
 def get_use_service_titles(tenant):
@@ -123,6 +147,7 @@ class GetConfigOptions(APIView):
         options.update(webapithresholds=settings.WEBAPI_THRESHOLDS)
         options.update(webapioperations=settings.WEBAPI_OPERATIONS)
         options.update(webapiservicetypes=settings.WEBAPI_SERVICETYPES)
+        options.update(webapidatafeeds=settings.WEBAPI_DATAFEEDS)
         options.update(version=version)
         options.update(webapireports=dict(
             main=settings.WEBAPI_REPORTS,

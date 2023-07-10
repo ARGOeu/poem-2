@@ -17,7 +17,10 @@ class ListThresholdsProfiles(APIView):
     authentication_classes = (SessionAuthentication,)
 
     def get(self, request, name=None):
-        sync_webapi(settings.WEBAPI_THRESHOLDS, poem_models.ThresholdsProfiles)
+        sync_webapi(
+            settings.WEBAPI_THRESHOLDS, poem_models.ThresholdsProfiles,
+            request.tenant.name
+        )
 
         if name:
             try:

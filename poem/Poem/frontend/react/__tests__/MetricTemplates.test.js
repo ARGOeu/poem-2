@@ -1229,12 +1229,12 @@ describe('Test list of metric templates on tenant POEM', () => {
     expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /metric/i }).textContent).toBe('Select metric template(s) to import')
+      expect(screen.getByRole('heading', { name: /metric/i }).textContent).toBe('Select metric template for details')
     })
 
     // double column header length because search fields are also th
     expect(screen.getAllByRole('columnheader')).toHaveLength(12);
-    expect(screen.getByRole('columnheader', { name: 'Select all' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: "#" })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /name/i }).textContent).toBe('Name');
     expect(screen.getByRole('columnheader', { name: /probe/i }).textContent).toBe('Probe version');
     expect(screen.getByRole('columnheader', { name: /type/i }).textContent).toBe('Type');
@@ -1253,10 +1253,10 @@ describe('Test list of metric templates on tenant POEM', () => {
     expect(screen.getByRole('option', { name: 'CentOS 7' })).toBeInTheDocument();
     expect(screen.getAllByRole('row')).toHaveLength(52);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(46);
-    expect(screen.getByRole('row', { name: /ams-check/i }).textContent).toBe('argo.AMS-Checkams-probe (0.1.12)ActiveCentOS 6, CentOS 7test_tag1test_tag2')
-    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('argo.AMS-Publisherams-publisher-probe (0.1.12)ActiveCentOS 7internal')
-    expect(screen.getByRole('row', { name: /poem/i }).textContent).toBe('argo.POEM-API-MONpoem-probe (0.1.12)ActiveCentOS 7none')
-    expect(screen.getByRole('row', { name: /apel/i }).textContent).toBe('org.apel.APEL-PubPassivenone')
+    expect(screen.getByRole('row', { name: /ams-check/i }).textContent).toBe('1argo.AMS-Checkams-probe (0.1.12)ActiveCentOS 6, CentOS 7test_tag1test_tag2')
+    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('2argo.AMS-Publisherams-publisher-probe (0.1.12)ActiveCentOS 7internal')
+    expect(screen.getByRole('row', { name: /poem/i }).textContent).toBe('3argo.POEM-API-MONpoem-probe (0.1.12)ActiveCentOS 7none')
+    expect(screen.getByRole('row', { name: /apel/i }).textContent).toBe('4org.apel.APEL-PubPassivenone')
     expect(screen.getByRole('link', { name: /argo.ams-check/i }).closest('a')).toHaveAttribute('href', '/ui/administration/metrictemplates/argo.AMS-Check');
     expect(screen.getByRole('link', { name: /ams-probe/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-probe/history/0.1.12')
     expect(screen.getByRole('link', { name: /argo.ams-publisher/i }).closest('a')).toHaveAttribute('href', '/ui/administration/metrictemplates/argo.AMS-Publisher');
@@ -1264,12 +1264,12 @@ describe('Test list of metric templates on tenant POEM', () => {
     expect(screen.getByRole('link', { name: /poem-api/i }).closest('a')).toHaveAttribute('href', '/ui/administration/metrictemplates/argo.POEM-API-MON');
     expect(screen.getByRole('link', { name: /poem-probe/i }).closest('a')).toHaveAttribute('href', '/ui/probes/poem-probe/history/0.1.12')
     expect(screen.getByRole('link', { name: /apel/i }).closest('a')).toHaveAttribute('href', '/ui/administration/metrictemplates/org.apel.APEL-Pub');
-    expect(screen.getByTestId('checkbox-argo.AMS-Check')).toBeEnabled();
-    expect(screen.getByTestId('checkbox-argo.AMS-Publisher')).toBeDisabled();
-    expect(screen.getByTestId('checkbox-argo.AMS-Publisher').checked).toBeTruthy();
-    expect(screen.getByTestId('checkbox-argo.POEM-API-MON')).toBeEnabled();
-    expect(screen.getByTestId('checkbox-org.apel.APEL-Pub')).toBeEnabled();
-    expect(screen.getByRole('button', { name: /import/i })).toBeInTheDocument();
+    expect(screen.queryByTestId('checkbox-argo.AMS-Check')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('checkbox-argo.AMS-Publisher')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('checkbox-argo.AMS-Publisher')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('checkbox-argo.POEM-API-MON')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('checkbox-org.apel.APEL-Pub')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /import/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /add/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
   })
@@ -1278,15 +1278,15 @@ describe('Test list of metric templates on tenant POEM', () => {
     renderTenantListView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric template(s) to import')
+      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric template for details')
     })
 
     fireEvent.change(screen.getAllByPlaceholderText('Search')[0], { target: { value: 'argo' } });
     expect(screen.getAllByRole('row')).toHaveLength(52);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(47);
-    expect(screen.getByRole('row', { name: /ams-check/i }).textContent).toBe('argo.AMS-Checkams-probe (0.1.12)ActiveCentOS 6, CentOS 7test_tag1test_tag2')
-    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('argo.AMS-Publisherams-publisher-probe (0.1.12)ActiveCentOS 7internal')
-    expect(screen.getByRole('row', { name: /poem/i }).textContent).toBe('argo.POEM-API-MONpoem-probe (0.1.12)ActiveCentOS 7none')
+    expect(screen.getByRole('row', { name: /ams-check/i }).textContent).toBe('1argo.AMS-Checkams-probe (0.1.12)ActiveCentOS 6, CentOS 7test_tag1test_tag2')
+    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('2argo.AMS-Publisherams-publisher-probe (0.1.12)ActiveCentOS 7internal')
+    expect(screen.getByRole('row', { name: /poem/i }).textContent).toBe('3argo.POEM-API-MONpoem-probe (0.1.12)ActiveCentOS 7none')
     expect(screen.getByRole('link', { name: /argo.ams-check/i }).closest('a')).toHaveAttribute('href', '/ui/administration/metrictemplates/argo.AMS-Check');
     expect(screen.getByRole('link', { name: /ams-probe/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-probe/history/0.1.12')
     expect(screen.getByRole('link', { name: /argo.ams-publisher/i }).closest('a')).toHaveAttribute('href', '/ui/administration/metrictemplates/argo.AMS-Publisher');
@@ -1297,7 +1297,7 @@ describe('Test list of metric templates on tenant POEM', () => {
     fireEvent.change(screen.getAllByDisplayValue('Show all')[2], { target: { value: 'internal' } })
     expect(screen.getAllByRole('row')).toHaveLength(52);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(49);
-    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('argo.AMS-Publisherams-publisher-probe (0.1.12)ActiveCentOS 7internal')
+    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('1argo.AMS-Publisherams-publisher-probe (0.1.12)ActiveCentOS 7internal')
     expect(screen.getByRole('link', { name: /argo.ams-publisher/i }).closest('a')).toHaveAttribute('href', '/ui/administration/metrictemplates/argo.AMS-Publisher');
     expect(screen.getByRole('link', { name: /ams-publisher-probe/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-publisher-probe/history/0.1.12')
 
@@ -1309,310 +1309,8 @@ describe('Test list of metric templates on tenant POEM', () => {
     fireEvent.change(screen.getByDisplayValue('internal'), { target: { value: 'Show all' } })
     expect(screen.getAllByRole('row')).toHaveLength(52);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(49);
-    expect(screen.getByRole('row', { name: /ams-check/i }).textContent).toBe('argo.AMS-Checkams-probe (0.1.12)ActiveCentOS 6, CentOS 7test_tag1test_tag2')
+    expect(screen.getByRole('row', { name: /ams-check/i }).textContent).toBe('1argo.AMS-Checkams-probe (0.1.12)ActiveCentOS 6, CentOS 7test_tag1test_tag2')
     expect(screen.getByRole('link', { name: /ams-probe/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-probe/history/0.1.12')
-  })
-
-  test('Test import metric templates', async () => {
-    mockImportMetrics.mockReturnValueOnce(
-      Promise.resolve({
-        imported: 'argo.AMS-Check, org.apel.APEL-Pub have been successfully imported.'
-      })
-    )
-
-    renderTenantListView();
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /metric/i }).textContent).toBe('Select metric template(s) to import');
-    })
-
-    fireEvent.click(screen.getByTestId('checkbox-argo.AMS-Check'));
-    fireEvent.click(screen.getByTestId('checkbox-org.apel.APEL-Pub'));
-
-    fireEvent.click(screen.getByRole('button', { name: /import/i }));
-    await waitFor(() => {
-      expect(mockImportMetrics).toHaveBeenCalledWith(
-        { metrictemplates: ['argo.AMS-Check', 'org.apel.APEL-Pub'] }
-      )
-    })
-
-    expect(NotificationManager.success).toHaveBeenCalledWith(
-      'argo.AMS-Check, org.apel.APEL-Pub have been successfully imported.',
-      'Imported',
-      2000
-    );
-
-    expect(screen.getByTestId('checkbox-argo.AMS-Check')).toBeDisabled();
-    expect(screen.getByTestId('checkbox-argo.AMS-Check').checked).toBeTruthy();
-    expect(screen.getByTestId('checkbox-argo.AMS-Publisher')).toBeDisabled();
-    expect(screen.getByTestId('checkbox-argo.AMS-Publisher').checked).toBeTruthy();
-    expect(screen.getByTestId('checkbox-argo.POEM-API-MON')).toBeEnabled();
-    expect(screen.getByTestId('checkbox-org.apel.APEL-Pub')).toBeDisabled();
-    expect(screen.getByTestId('checkbox-org.apel.APEL-Pub').checked).toBeTruthy();
-  })
-
-  test('Test importing of metric templates if no metric template has been selected', async () => {
-    renderTenantListView();
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /metric/i }).textContent).toBe('Select metric template(s) to import');
-    })
-
-    fireEvent.click(screen.getByRole('button', { name: /import/i }));
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>No metric templates were selected!</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Error', 0, expect.any(Function)
-    )
-
-    await waitFor(() => {
-      expect(mockImportMetrics).not.toHaveBeenCalled()
-    })
-  })
-
-  test('Test importing of metric templates if warn message', async () => {
-    mockImportMetrics.mockReturnValueOnce(
-      Promise.resolve({
-        warn: 'argo.AMS-Check, org.apel.APEL-Pub have been imported with older probe version. If you wish to use more recent probe version, you should update package version you use.'
-      })
-    )
-
-    renderTenantListView();
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /metric/i }).textContent).toBe('Select metric template(s) to import');
-    })
-
-    fireEvent.click(screen.getByTestId('checkbox-argo.AMS-Check'));
-    fireEvent.click(screen.getByTestId('checkbox-org.apel.APEL-Pub'));
-
-    fireEvent.click(screen.getByRole('button', { name: /import/i }));
-    await waitFor(() => {
-      expect(mockImportMetrics).toHaveBeenCalledWith(
-        { metrictemplates: ['argo.AMS-Check', 'org.apel.APEL-Pub'] }
-      )
-    })
-
-    expect(NotificationManager.info).toHaveBeenCalledWith(
-      <div>
-        <p>argo.AMS-Check, org.apel.APEL-Pub have been imported with older probe version. If you wish to use more recent probe version, you should update package version you use.</p>
-        <p>Click to dismiss.</p>
-      </div>,
-     'Imported with older probe version', 0, expect.any(Function)
-    )
-
-    expect(screen.getByTestId('checkbox-argo.AMS-Check')).toBeDisabled();
-    expect(screen.getByTestId('checkbox-argo.AMS-Check').checked).toBeTruthy();
-    expect(screen.getByTestId('checkbox-argo.AMS-Publisher')).toBeDisabled();
-    expect(screen.getByTestId('checkbox-argo.AMS-Publisher').checked).toBeTruthy();
-    expect(screen.getByTestId('checkbox-argo.POEM-API-MON')).toBeEnabled();
-    expect(screen.getByTestId('checkbox-org.apel.APEL-Pub')).toBeDisabled();
-    expect(screen.getByTestId('checkbox-org.apel.APEL-Pub').checked).toBeTruthy();
-  })
-
-  test('Test importing of metric templates if err message', async () => {
-    mockImportMetrics.mockReturnValueOnce(
-      Promise.resolve({
-        err: 'argo.AMS-Check, org.apel.APEL-Pub have not been imported since they already exist in the database.'
-      })
-    )
-
-    renderTenantListView();
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /metric/i }).textContent).toBe('Select metric template(s) to import');
-    })
-
-    fireEvent.click(screen.getByTestId('checkbox-argo.AMS-Check'));
-    fireEvent.click(screen.getByTestId('checkbox-org.apel.APEL-Pub'));
-
-    fireEvent.click(screen.getByRole('button', { name: /import/i }));
-    await waitFor(() => {
-      expect(mockImportMetrics).toHaveBeenCalledWith(
-        { metrictemplates: ['argo.AMS-Check', 'org.apel.APEL-Pub'] }
-      )
-    })
-
-    expect(NotificationManager.warning).toHaveBeenCalledWith(
-      <div>
-        <p>argo.AMS-Check, org.apel.APEL-Pub have not been imported since they already exist in the database.</p>
-        <p>Click to dismiss.</p>
-      </div>,
-     'Not imported', 0, expect.any(Function)
-    )
-
-    expect(screen.getByTestId('checkbox-argo.AMS-Check')).toBeEnabled();
-    expect(screen.getByTestId('checkbox-argo.AMS-Publisher')).toBeDisabled();
-    expect(screen.getByTestId('checkbox-argo.AMS-Publisher').checked).toBeTruthy();
-    expect(screen.getByTestId('checkbox-argo.POEM-API-MON')).toBeEnabled();
-    expect(screen.getByTestId('checkbox-org.apel.APEL-Pub')).toBeEnabled();
-  })
-
-  test('Test importing of metric templates if unavailable message', async () => {
-    mockImportMetrics.mockReturnValueOnce(
-      Promise.resolve({
-        unavailable: 'argo.AMS-Check, org.apel.APEL-Pub have not been imported, since they are not available for the package version you use. If you wish to use the metric, you should change the package version, and try to import again.'
-      })
-    )
-
-    renderTenantListView();
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /metric/i }).textContent).toBe('Select metric template(s) to import');
-    })
-
-    fireEvent.click(screen.getByTestId('checkbox-argo.AMS-Check'));
-    fireEvent.click(screen.getByTestId('checkbox-org.apel.APEL-Pub'));
-
-    fireEvent.click(screen.getByRole('button', { name: /import/i }));
-    await waitFor(() => {
-      expect(mockImportMetrics).toHaveBeenCalledWith(
-        { metrictemplates: ['argo.AMS-Check', 'org.apel.APEL-Pub'] }
-      )
-    })
-
-    expect(NotificationManager.error).toHaveBeenCalledWith(
-      <div>
-        <p>argo.AMS-Check, org.apel.APEL-Pub have not been imported, since they are not available for the package version you use. If you wish to use the metric, you should change the package version, and try to import again.</p>
-        <p>Click to dismiss.</p>
-      </div>,
-     'Unavailable', 0, expect.any(Function)
-    )
-
-    expect(screen.getByTestId('checkbox-argo.AMS-Check')).toBeEnabled();
-    expect(screen.getByTestId('checkbox-argo.AMS-Publisher')).toBeDisabled();
-    expect(screen.getByTestId('checkbox-argo.AMS-Publisher').checked).toBeTruthy();
-    expect(screen.getByTestId('checkbox-argo.POEM-API-MON')).toBeEnabled();
-    expect(screen.getByTestId('checkbox-org.apel.APEL-Pub')).toBeEnabled();
-  })
-
-  test('Test importing of metric templates if mixed messages', async () => {
-    mockImportMetrics.mockReturnValueOnce(
-      Promise.resolve({
-        imported: 'argo.AMS-Check has been successfully imported.',
-        warn: 'argo.POEM-API-MON has been imported with older probe version. If you wish to use more recent probe version, you should update package version you use.',
-        err: 'org.apel.APEL-Pub has not been imported since it already exists in the database.'
-      })
-    )
-
-    renderTenantListView();
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /metric/i }).textContent).toBe('Select metric template(s) to import');
-    })
-
-    fireEvent.click(screen.getByTestId('checkbox-argo.AMS-Check'));
-    fireEvent.click(screen.getByTestId('checkbox-argo.POEM-API-MON'));
-    fireEvent.click(screen.getByTestId('checkbox-org.apel.APEL-Pub'));
-
-    fireEvent.click(screen.getByRole('button', { name: /import/i }));
-    await waitFor(() => {
-      expect(mockImportMetrics).toHaveBeenCalledWith(
-        { metrictemplates: ['argo.AMS-Check', 'argo.POEM-API-MON', 'org.apel.APEL-Pub'] }
-      )
-    })
-
-    expect(NotificationManager.success).toHaveBeenCalledWith(
-      'argo.AMS-Check has been successfully imported.',
-      'Imported', 2000
-    )
-
-    expect(NotificationManager.info).toHaveBeenCalledWith(
-      <div>
-        <p>argo.POEM-API-MON has been imported with older probe version. If you wish to use more recent probe version, you should update package version you use.</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Imported with older probe version', 0, expect.any(Function)
-    )
-
-    expect(NotificationManager.warning).toHaveBeenCalledWith(
-      <div>
-        <p>org.apel.APEL-Pub has not been imported since it already exists in the database.</p>
-        <p>Click to dismiss.</p>
-      </div>,
-      'Not imported', 0, expect.any(Function)
-    )
-
-    expect(screen.getByTestId('checkbox-argo.AMS-Check')).toBeDisabled();
-    expect(screen.getByTestId('checkbox-argo.AMS-Check').checked).toBeTruthy();
-    expect(screen.getByTestId('checkbox-argo.AMS-Publisher')).toBeDisabled();
-    expect(screen.getByTestId('checkbox-argo.AMS-Publisher').checked).toBeTruthy();
-    expect(screen.getByTestId('checkbox-argo.POEM-API-MON')).toBeDisabled();
-    expect(screen.getByTestId('checkbox-argo.POEM-API-MON').checked).toBeTruthy();
-    expect(screen.getByTestId('checkbox-org.apel.APEL-Pub')).toBeEnabled();
-  })
-
-  test('Test select all when importing metric templates', async () => {
-    mockImportMetrics.mockReturnValueOnce(
-      Promise.resolve({
-        imported: 'argo.AMS-Check, argo.POEM-API-MON, org.apel.APEL-Pub have been successfully imported.'
-      })
-    )
-
-    renderTenantListView();
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /metric/i }).textContent).toBe('Select metric template(s) to import');
-    })
-
-    fireEvent.click(screen.getByTestId('checkbox-select-all'));
-
-    fireEvent.click(screen.getByRole('button', { name: /import/i }));
-    await waitFor(() => {
-      expect(mockImportMetrics).toHaveBeenCalledWith(
-        { metrictemplates: ['argo.AMS-Check', 'argo.POEM-API-MON', 'org.apel.APEL-Pub'] }
-      )
-    })
-
-    expect(NotificationManager.success).toHaveBeenCalledWith(
-      'argo.AMS-Check, argo.POEM-API-MON, org.apel.APEL-Pub have been successfully imported.',
-      'Imported', 2000
-    )
-
-    expect(screen.getByTestId('checkbox-argo.AMS-Check')).toBeDisabled();
-    expect(screen.getByTestId('checkbox-argo.AMS-Check').checked).toBeTruthy();
-    expect(screen.getByTestId('checkbox-argo.AMS-Publisher')).toBeDisabled();
-    expect(screen.getByTestId('checkbox-argo.AMS-Publisher').checked).toBeTruthy();
-    expect(screen.getByTestId('checkbox-argo.POEM-API-MON')).toBeDisabled();
-    expect(screen.getByTestId('checkbox-argo.POEM-API-MON').checked).toBeTruthy();
-    expect(screen.getByTestId('checkbox-org.apel.APEL-Pub')).toBeDisabled();
-    expect(screen.getByTestId('checkbox-org.apel.APEL-Pub').checked).toBeTruthy();
-  })
-
-  test('Test select all when importing metric templates if filtered', async () => {
-    mockImportMetrics.mockReturnValueOnce(
-      Promise.resolve({
-        imported: 'argo.AMS-Check, argo.POEM-API-MON have been successfully imported.'
-      })
-    )
-
-    renderTenantListView();
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /metric/i }).textContent).toBe('Select metric template(s) to import');
-    })
-
-    fireEvent.change(screen.getAllByPlaceholderText('Search')[0], { target: { value: 'argo' } });
-    fireEvent.click(screen.getByTestId('checkbox-select-all'));
-
-    fireEvent.click(screen.getByRole('button', { name: /import/i }));
-    await waitFor(() => {
-      expect(mockImportMetrics).toHaveBeenCalledWith(
-        { metrictemplates: ['argo.AMS-Check', 'argo.POEM-API-MON'] }
-      )
-    })
-
-    expect(NotificationManager.success).toHaveBeenCalledWith(
-      'argo.AMS-Check, argo.POEM-API-MON have been successfully imported.',
-      'Imported', 2000
-    )
-
-    expect(screen.getByTestId('checkbox-argo.AMS-Check')).toBeDisabled();
-    expect(screen.getByTestId('checkbox-argo.AMS-Check').checked).toBeTruthy();
-    expect(screen.getByTestId('checkbox-argo.AMS-Publisher').checked).toBeTruthy();
-    expect(screen.getByTestId('checkbox-argo.POEM-API-MON').checked).toBeTruthy();
   })
 })
 

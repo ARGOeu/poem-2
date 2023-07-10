@@ -16,7 +16,7 @@ def get_files(install_prefix, directory):
 
 
 setup(name=NAME,
-      version='3.4.7',
+      version='3.4.8',
       description='Reports, Profiles, Probes and Metric Configuration Management (POEM) for ARGO Monitoring framework.',
       author='SRCE',
       author_email='dvrcic@srce.hr, kzailac@srce.hr',
@@ -41,7 +41,7 @@ setup(name=NAME,
           'djangosaml2==1.0.*',
           'psycopg2-binary',
           'safety',
-          'typing_extensions==4.1.*',
+          'typing_extensions @ git+https://github.com/vrdel/typing_extensions@239445a35dc95ca30d54b2e227291ea7dad9cae4',
           'Unidecode'
       ],
       scripts=['bin/poem-db', 'bin/poem-genseckey', 'bin/poem-manage',

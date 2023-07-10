@@ -1,10 +1,10 @@
 import json
 
 import requests
-from Poem.api.models import MyAPIKey
 from Poem.helpers.history_helpers import create_history, serialize_metric
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
+from Poem.poem_super_admin.models import WebAPIKey
 from Poem.tenants.models import Tenant
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
@@ -19,7 +19,12 @@ def import_metrics(metrictemplates, tenant, user):
     unavailable = []
     for template in metrictemplates:
         imported_different_version = False
-        mt = admin_models.MetricTemplate.objects.get(name=template)
+        try:
+            mt = admin_models.MetricTemplate.objects.get(name=template)
+
+        except admin_models.MetricTemplate.DoesNotExist:
+            continue
+
         gr = poem_models.GroupOfMetrics.objects.get(
             name=tenant.name.upper()
         )
@@ -100,10 +105,10 @@ def import_metrics(metrictemplates, tenant, user):
     return imported, warn_imported, not_imported, unavailable
 
 
-def get_metrics_in_profiles(schema):
-    with schema_context(schema):
+def get_metrics_in_profiles(tenant):
+    with schema_context(tenant.schema_name):
         try:
-            token = MyAPIKey.objects.get(name='WEB-API')
+            token = WebAPIKey.objects.get(name=f"WEB-API-{tenant.name}")
             headers = {
                 'Accept': 'application/json', 'x-api-key': token.token
             }
@@ -135,7 +140,7 @@ def get_metrics_in_profiles(schema):
         except requests.exceptions.HTTPError:
             raise
 
-        except MyAPIKey.DoesNotExist:
+        except WebAPIKey.DoesNotExist:
             raise Exception('Error fetching WEB API data: API key not found.')
 
 
@@ -251,15 +256,16 @@ def update_metrics_in_profiles(old_name, new_name):
         pass
 
     else:
-        schemas = list(Tenant.objects.all().values_list(
-            'schema_name', flat=True
-        ))
-        schemas.remove(get_public_schema_name())
+        tenants = Tenant.objects.all()
+        tenants = [
+            tenant for tenant in tenants if
+            tenant.schema_name != get_public_schema_name()
+        ]
 
-        for schema in schemas:
-            with schema_context(schema):
+        for tenant in tenants:
+            with schema_context(tenant.schema_name):
                 try:
-                    token = MyAPIKey.objects.get(name='WEB-API')
+                    token = WebAPIKey.objects.get(name=f"WEB-API-{tenant.name}")
                     headers = {
                         'Accept': 'application/json', 'x-api-key': token.token
                     }
@@ -306,16 +312,16 @@ def update_metrics_in_profiles(old_name, new_name):
                     error_msgs.append(
                         '{}: Error trying to update metric in metric profiles: '
                         '{}.\nPlease update metric profiles manually.'.format(
-                            schema.upper(), e
+                            tenant.schema_name.upper(), e
                         )
                     )
                     continue
 
-                except MyAPIKey.DoesNotExist:
+                except WebAPIKey.DoesNotExist:
                     error_msgs.append(
                         '{}: No "WEB-API" key in the DB!'
                         '\nPlease update metric profiles manually.'.format(
-                            schema.upper()
+                            tenant.schema_name.upper()
                         )
                     )
                     continue
@@ -323,10 +329,10 @@ def update_metrics_in_profiles(old_name, new_name):
     return error_msgs
 
 
-def delete_metrics_from_profile(profile, metrics):
+def delete_metrics_from_profile(profile, metrics, tenant):
     try:
         profile_id = poem_models.MetricProfiles.objects.get(name=profile).apiid
-        token = MyAPIKey.objects.get(name='WEB-API')
+        token = WebAPIKey.objects.get(name=f"WEB-API-{tenant}")
         headers = {
             'Accept': 'application/json', 'x-api-key': token.token
         }
@@ -361,7 +367,7 @@ def delete_metrics_from_profile(profile, metrics):
         )
         response.raise_for_status()
 
-    except MyAPIKey.DoesNotExist:
+    except WebAPIKey.DoesNotExist:
         raise Exception(
             'Error deleting metric from profile: API key not found.'
         )
@@ -373,3 +379,35 @@ def delete_metrics_from_profile(profile, metrics):
 
     except requests.exceptions.HTTPError:
         raise
+
+
+def sync_metrics(tenant, user):
+    metrics_in_profiles = [
+        key for key in get_metrics_in_profiles(tenant=tenant)
+    ]
+    metrics = poem_models.Metric.objects.all().values_list("name", flat=True)
+    internal = admin_models.MetricTemplate.objects.filter(
+        tags__name="internal"
+    ).values_list("name", flat=True)
+
+    missing_metrics = list(set(metrics_in_profiles).difference(set(metrics)))
+    extra_metrics = list(set(metrics).difference(set(metrics_in_profiles)))
+
+    imported, warn, err, unavailable = import_metrics(
+        missing_metrics, tenant, user
+    )
+
+    deleted = list()
+    for metric in extra_metrics:
+        if metric not in internal:
+            m = poem_models.Metric.objects.get(name=metric)
+            poem_models.TenantHistory.objects.filter(
+                object_id=m.id,
+                content_type=ContentType.objects.get_for_model(
+                    poem_models.Metric
+                )
+            ).delete()
+            m.delete()
+            deleted.append(metric)
+
+    return imported, warn, err, unavailable, deleted

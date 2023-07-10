@@ -43,6 +43,9 @@ export const TenantAdministration = () =>
         <div className="p-1 align-items-center">
           <Icon i='metrics' /> <Link className='ps-1' to={'/ui/administration/metricoverrides'}>Metric configuration overrides</Link>
         </div>
+        <div className="p-1 align-items-center">
+          <Icon i='probes' /> <Link className='ps-1' to={'/ui/administration/probecandidates'}>Probe candidates</Link>
+        </div>
       </CardBody>
     </Card>
     <Card className='mb-2'>

@@ -1,5 +1,31 @@
 # Changelog
 
+## [3.4.8] - 2023-07-06
+
+### Added
+
+
+* ARGO-3573 Introduce negation feature for topology entity filter
+* ARGO-3574 Introduce wildcard specification for topology entity filter
+* ARGO-4241 Mark that tenant is combined tenant
+* ARGO-4242 Option to combine two existing profiles from different tenants
+* ARGO-4276 API endpoints to integrate probes to the Monitoring service
+* ARGO-4318 View in POEM for probe candidates
+### Fixed
+
+* ARGO-4230 Error not displayed on metric override page
+* ARGO-4246 Fork and patch typing_extensions and place it as POEM dependency
+* ARGO-4250 Bug fetching read-only WEB-API key
+* ARGO-4321 Login page not redirecting
+
+### Changed
+
+* ARGO-3724 Skip import metrics step in tenant POEMs
+* ARGO-4042 Switch threshold profile page to react-hook-form library
+* ARGO-4239 Add tenants' keys to super POEM
+* ARGO-4264 Switch login page to react-hook-form library
+* ARGO-4265 Switch tenants page to react-hook-form library
+
 ## [3.4.7] - 2023-03-02
 
 ### Added

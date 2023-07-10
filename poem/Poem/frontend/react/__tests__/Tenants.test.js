@@ -38,7 +38,8 @@ const mockTenants = [
     domain_url: 'tenant1.tenant.com',
     created_on: '2020-02-02',
     nr_metrics: 254,
-    nr_probes: 96
+    nr_probes: 96,
+    combined: false
   },
   {
     name: 'TENANT2',
@@ -46,7 +47,8 @@ const mockTenants = [
     domain_url: 'poem.tenant2.com',
     created_on: '2020-02-02',
     nr_metrics: 61,
-    nr_probes: 26
+    nr_probes: 26,
+    combined: false
   },
   {
     name: 'TENANT3',
@@ -54,7 +56,9 @@ const mockTenants = [
     domain_url: 'tenant3.tenant.com',
     created_on: '2020-02-02',
     nr_metrics: 6,
-    nr_probes: 6
+    nr_probes: 6,
+    combined: true,
+    combined_from: ["TENANT1", "TENANT2"]
   }
 ];
 
@@ -115,20 +119,35 @@ describe('Test list of tenants', () => {
     const tenant1 = within(screen.getByTestId('TENANT1-card'));
     expect(tenant1.getByTestId('TENANT1-schema').textContent).toBe('Schema name: tenant1');
     expect(tenant1.getByTestId('TENANT1-poem').textContent).toBe('POEM url: tenant1.tenant.com');
+    expect(tenant1.getByText("tenant1.tenant.com").closest("a")).toHaveAttribute("href", "https://tenant1.tenant.com")
+    expect(tenant1.queryByTestId("TENANT1-combined")).not.toBeInTheDocument()
+    expect(tenant1.queryByTestId("TENANT1-combined_from")).not.toBeInTheDocument()
     expect(tenant1.getByTestId('TENANT1-metrics').textContent).toBe('Metrics 254');
+    expect(tenant1.getByTestId("TENANT1-metrics").closest("a")).toHaveAttribute("href", "https://tenant1.tenant.com/ui/public_metrics")
     expect(tenant1.getByTestId('TENANT1-probes').textContent).toBe('Probes 96');
+    expect(tenant1.getByTestId("TENANT1-probes").closest("a")).toHaveAttribute("href", "https://tenant1.tenant.com/ui/public_probes")
 
     const tenant2 = within(screen.getByTestId('TENANT2-card'));
     expect(tenant2.getByTestId('TENANT2-schema').textContent).toBe('Schema name: tenant2');
     expect(tenant2.getByTestId('TENANT2-poem').textContent).toBe('POEM url: poem.tenant2.com');
+    expect(tenant2.getByText("poem.tenant2.com").closest("a")).toHaveAttribute("href", "https://poem.tenant2.com")
+    expect(tenant2.queryByTestId("TENANT2-combined")).not.toBeInTheDocument()
+    expect(tenant2.queryByTestId("TENANT2-combined_from")).not.toBeInTheDocument()
     expect(tenant2.getByTestId('TENANT2-metrics').textContent).toBe('Metrics 61');
+    expect(tenant2.getByTestId("TENANT2-metrics").closest("a")).toHaveAttribute("href", "https://poem.tenant2.com/ui/public_metrics")
     expect(tenant2.getByTestId('TENANT2-probes').textContent).toBe('Probes 26');
+    expect(tenant2.getByTestId("TENANT2-probes").closest("a")).toHaveAttribute("href", "https://poem.tenant2.com/ui/public_probes")
 
     const tenant3 = within(screen.getByTestId('TENANT3-card'));
     expect(tenant3.getByTestId('TENANT3-schema').textContent).toBe('Schema name: tenant3');
     expect(tenant3.getByTestId('TENANT3-poem').textContent).toBe('POEM url: tenant3.tenant.com');
+    expect(tenant3.getByText("tenant3.tenant.com").closest("a")).toHaveAttribute("href", "https://tenant3.tenant.com")
+    expect(tenant3.queryByTestId("TENANT3-combined").textContent).toBe("Combined tenant")
+    expect(tenant3.queryByTestId("TENANT3-combined_from").textContent).toBe("Combined from: TENANT1, TENANT2")
     expect(tenant3.getByTestId('TENANT3-metrics').textContent).toBe('Metrics 6');
+    expect(tenant3.getByTestId("TENANT3-metrics").closest("a")).toHaveAttribute("href", "https://tenant3.tenant.com/ui/public_metrics")
     expect(tenant3.getByTestId('TENANT3-probes').textContent).toBe('Probes 6');
+    expect(tenant3.getByTestId("TENANT3-probes").closest("a")).toHaveAttribute("href", "https://tenant3.tenant.com/ui/public_probes")
 
     expect(screen.queryByRole('button', { name: /add/i })).not.toBeInTheDocument();
   })

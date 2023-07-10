@@ -49,6 +49,7 @@ class ListReportsAPIViewTests(TenantTestCase):
     def test_get_all_reports_superuser(self, func):
         func.side_effect = mocked_func
         request = self.factory.get(self.url)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(
@@ -73,6 +74,7 @@ class ListReportsAPIViewTests(TenantTestCase):
     def test_get_all_reports_regular_user(self, func):
         func.side_effect = mocked_func
         request = self.factory.get(self.url)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(
@@ -97,6 +99,7 @@ class ListReportsAPIViewTests(TenantTestCase):
     def test_get_all_reports_limited_user(self, func):
         func.side_effect = mocked_func
         request = self.factory.get(self.url)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.limited_user)
         response = self.view(request)
         self.assertEqual(
@@ -121,6 +124,7 @@ class ListReportsAPIViewTests(TenantTestCase):
     def test_get_report_by_name_superuser(self, func):
         func.side_effect = mocked_func
         request = self.factory.get(self.url + 'Critical')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.superuser)
         response = self.view(request, 'Critical')
         self.assertEqual(
@@ -137,6 +141,7 @@ class ListReportsAPIViewTests(TenantTestCase):
     def test_get_report_by_name_regular_user(self, func):
         func.side_effect = mocked_func
         request = self.factory.get(self.url + 'Critical')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request, 'Critical')
         self.assertEqual(
@@ -153,6 +158,7 @@ class ListReportsAPIViewTests(TenantTestCase):
     def test_get_report_by_name_limited_user(self, func):
         func.side_effect = mocked_func
         request = self.factory.get(self.url + 'Critical')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.limited_user)
         response = self.view(request, 'Critical')
         self.assertEqual(
@@ -169,6 +175,7 @@ class ListReportsAPIViewTests(TenantTestCase):
     def test_get_report_if_wrong_name_superuser(self, func):
         func.side_effect = mocked_func
         request = self.factory.get(self.url + 'nonexisting')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.superuser)
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -177,6 +184,7 @@ class ListReportsAPIViewTests(TenantTestCase):
     def test_get_report_if_wrong_name_regular_user(self, func):
         func.side_effect = mocked_func
         request = self.factory.get(self.url + 'nonexisting')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -185,6 +193,7 @@ class ListReportsAPIViewTests(TenantTestCase):
     def test_get_report_if_wrong_name_limited_user(self, func):
         func.side_effect = mocked_func
         request = self.factory.get(self.url + 'nonexisting')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.limited_user)
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
