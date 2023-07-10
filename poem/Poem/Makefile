@@ -2,8 +2,8 @@ container_name = poem-react-c7
 
 place-new-bundle:
 	./keep-latest-bundle.sh
-	docker exec -t $(container_name) ./collectstatic.sh
-	docker exec -t $(container_name) ./restarthttpd.sh
+	docker exec -u user -t $(container_name) /home/user/collectstatic.sh
+	docker exec -u user -t $(container_name) /home/user/restarthttpd.sh
 
 devel-watch:
 	rm -rf frontend/bundles/reactbundle/* ; \
