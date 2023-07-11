@@ -988,10 +988,6 @@ class ListReposAPIViewTests(TenantTestCase):
                                 'version': '0.1.11'
                             },
                             {
-                                'name': 'nagios-plugins-nagiosexchange',
-                                'version': '1.0.0'
-                            },
-                            {
                                 'name': 'nagios-plugins-seadatacloud-nvs2',
                                 'version': '1.0.1'
                             }
@@ -1075,7 +1071,6 @@ class ListReposAPIViewTests(TenantTestCase):
                     }
                 },
                 'missing_packages': [
-                    'nagios-plugins-nagiosexchange (1.0.0)',
                     'nagios-plugins-seadatacloud-nvs2 (1.0.1)'
                 ]
             }
@@ -1096,18 +1091,8 @@ class ListReposAPIViewTests(TenantTestCase):
         self.assertEqual(
             response.data,
             {
-                'data': {
-                    'repo-1': {
-                        'content': 'content1\ncontent2\n',
-                        'packages': [
-                            {
-                                'name': 'nagios-plugins-argo',
-                                'version': '0.1.11'
-                            }
-                        ]
-                    }
-                },
-                'missing_packages': ['nagios-plugins-nagiosexchange (1.0.0)']
+                'data': {},
+                'missing_packages': []
             }
         )
 
@@ -1173,7 +1158,6 @@ class ListReposAPIViewTests(TenantTestCase):
                     }
                 },
                 'missing_packages': [
-                    'nagios-plugins-nagiosexchange (1.0.0)',
                     'nagios-plugins-seadatacloud-nvs2 (1.0.1)'
                 ]
             }
@@ -1195,15 +1179,6 @@ class ListReposAPIViewTests(TenantTestCase):
             response.data,
             {
                 'data': {
-                    'repo-1': {
-                        'content': 'content1\ncontent2\n',
-                        'packages': [
-                            {
-                                'name': 'nagios-plugins-argo',
-                                'version': '0.1.11'
-                            }
-                        ]
-                    },
                     'promoo': {
                         'content': 'content9\ncontent10',
                         'packages': [
@@ -1214,7 +1189,7 @@ class ListReposAPIViewTests(TenantTestCase):
                         ]
                     }
                 },
-                'missing_packages': ['nagios-plugins-nagiosexchange (1.0.0)']
+                'missing_packages': []
             }
         )
 
@@ -1233,6 +1208,44 @@ class ListReposAPIViewTests(TenantTestCase):
         self.assertEqual(
             response.data,
             {
+                'data': {},
+                'missing_packages': ['nagios-promoo (1.4.0)']
+            }
+        )
+
+
+class ListReposInternalAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.tenant.name = "TENANT"
+        self.tenant.save()
+        self.token = create_credentials()
+        self.view = views.ListReposInternal.as_view()
+        self.factory = TenantRequestFactory(self.tenant)
+        self.url = '/api/v2/repos_internal'
+
+        mock_db_for_repos_tests()
+
+    def test_get_repos_if_wrong_token(self):
+        request = self.factory.get(
+            self.url + '/centos7', **{'HTTP_X_API_KEY': 'wrong_token'}
+        )
+        request.tenant = self.tenant
+        response = self.view(request, 'centos7')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_get_repos(self):
+        request = self.factory.get(
+            self.url + '/centos7', **{'HTTP_X_API_KEY': self.token}
+        )
+        request.tenant = self.tenant
+        response = self.view(request, 'centos7')
+        test_data = response.data
+        test_data['data']['repo-1']['packages'] = sorted(
+            test_data['data']['repo-1']['packages'], key=lambda k: k['name']
+        )
+        self.assertEqual(
+            test_data,
+            {
                 'data': {
                     'repo-1': {
                         'content': 'content3\ncontent4\n',
@@ -1248,8 +1261,32 @@ class ListReposAPIViewTests(TenantTestCase):
                         ]
                     }
                 },
-                'missing_packages': ['nagios-promoo (1.4.0)']
+                'missing_packages': []
             }
+        )
+
+    def test_get_repos_if_no_tag(self):
+        request = self.factory.get(
+            self.url, **{'HTTP_X_API_KEY': self.token}
+        )
+        request.tenant = self.tenant
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {'detail': 'You must define OS!'}
+        )
+
+    def test_get_repos_if_nonexisting_tag(self):
+        request = self.factory.get(
+            self.url + '/nonexisting', **{'HTTP_X_API_KEY': self.token}
+        )
+        request.tenant = self.tenant
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data,
+            {'detail': 'YUM repo tag not found.'}
         )
 
 
