@@ -535,15 +535,31 @@ class ProbeCandidateAPI(APIView):
                     status_code=status.HTTP_400_BAD_REQUEST
                 )
 
-            models.ProbeCandidate.objects.create(
-                name=request.data["name"],
-                description=description,
-                docurl=request.data["docurl"],
-                rpm=rpm,
-                yum_baseurl=yum_baseurl,
-                command=request.data["command"],
-                contact=request.data["contact"],
-                status=models.ProbeCandidateStatus.objects.get(name="submitted")
-            )
+            split_command = [
+                item.strip() for item in request.data["command"].split(" ")
+            ]
 
-            return Response(status=status.HTTP_201_CREATED)
+            if "-t" not in split_command and "--timeout" not in split_command:
+                return error_response(
+                    detail="Command must have -t/--timeout argument. "
+                           "Please refer to the probe development guidelines: "
+                           "https://argoeu.github.io/argo-monitoring/docs/"
+                           "monitoring/guidelines",
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
+
+            else:
+                models.ProbeCandidate.objects.create(
+                    name=request.data["name"],
+                    description=description,
+                    docurl=request.data["docurl"],
+                    rpm=rpm,
+                    yum_baseurl=yum_baseurl,
+                    command=request.data["command"],
+                    contact=request.data["contact"],
+                    status=models.ProbeCandidateStatus.objects.get(
+                        name="submitted"
+                    )
+                )
+
+                return Response(status=status.HTTP_201_CREATED)
