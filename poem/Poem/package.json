@@ -90,7 +90,7 @@
     "@fortawesome/fontawesome-svg-core": "^6.4.0",
     "@fortawesome/free-solid-svg-icons": "^6.4.0",
     "@fortawesome/react-fontawesome": "^0.1.19",
-    "@popperjs/core": "^2.11.2",
+    "@popperjs/core": "^2.11.8",
     "async": "^2.6.4",
     "caniuse-lite": "^1.0.30001517",
     "decode-uri-component": "^0.2.2",
