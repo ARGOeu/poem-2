@@ -249,9 +249,10 @@ const ProbeCandidateForm = ({
                   render={ ({ field }) =>
                     <DropdownWithFormText
                       forwardedRef={ field.ref }
-                      onChange={ e => setValue("service_type", e.value) }
+                      onChange={ e => setValue("service_type", e ? e.value : "") }
                       options={ serviceTypes }
                       value={ field.value }
+                      isClearable={ true }
                     />
                   }
                 />

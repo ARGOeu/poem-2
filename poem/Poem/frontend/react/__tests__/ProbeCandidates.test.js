@@ -605,6 +605,60 @@ describe("Test probe candidate changeview", () => {
     )
   })
 
+  test("Test successfully changing probe candidate without service type", async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: "OK" })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /candidate/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "some-probe" } })
+
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: "More elaborate description of the probe" } })
+
+    fireEvent.change(screen.getByTestId("rpm"), { target: { value: "argo-probe-test-0.1.1-1.el7.noarch.rpm" } })
+
+    fireEvent.change(screen.getByTestId("yum_baseurl"), { target: { value: "http://repo.example.com/devel/rocky8/" } })
+
+    fireEvent.change(screen.getByTestId("command"), { target: { value: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test" } })
+
+    await selectEvent.select(screen.getByText("submitted"), "testing")
+
+    await selectEvent.clearAll(screen.getByText("Test service type"))
+
+    fireEvent.click(screen.getByRole("button", { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole("dialog", { title: "change" })).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole("button", { name: /yes/i }))
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/probecandidates/",
+        {
+          id: "2",
+          name: "some-probe",
+          description: "More elaborate description of the probe",
+          docurl: "https://github.com/ARGOeu-Metrics/argo-probe-test",
+          rpm: "argo-probe-test-0.1.1-1.el7.noarch.rpm",
+          yum_baseurl: "http://repo.example.com/devel/rocky8/",
+          command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
+          contact: "poem@example.com",
+          status: "testing",
+          service_type: ""
+        }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Probe candidate successfully changed", "Changed", 2000
+    )
+  })
+
   test("Error in changing probe candidate with message", async () => {
     mockChangeObject.mockImplementationOnce(() => {
       throw Error("400 BAD REQUEST; There has been an error")
