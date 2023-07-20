@@ -43,7 +43,7 @@ const mockListProbeCandidates = [
     command: "/usr/libexec/argo/probes/test/test-probe -H <hostname> -t <timeout> --test",
     contact: "poem@example.com",
     status: "testing",
-    service_type: "some.service.type",
+    service_type: "Some service type",
     created: "2023-05-22 09:55:48",
     last_update: "2023-05-22 10:00:23"
   },
@@ -57,7 +57,7 @@ const mockListProbeCandidates = [
     command: "/usr/libexec/argo/probes/test/test-probe -H <hostname> -t <timeout> --test --flag1 --flag2",
     contact: "poem@example.com",
     status: "submitted",
-    service_type: "test.service.type",
+    service_type: "Test service type",
     created: "2023-05-22 09:59:59",
     last_update: ""
   }
@@ -133,7 +133,12 @@ const renderChangeView = () => {
         <Router history={ history }>
           <Route
             path="/ui/administration/probecandidates/:id"
-            render={ props => <ProbeCandidateChange { ...props } /> }
+            render={ props => <ProbeCandidateChange 
+              { ...props } 
+              webapitoken="t0k3n"
+              webapiservicetypes="https://mock.service.types"
+              showtitles={ true }
+            /> }
           />
         </Router>
       </QueryClientProvider>
@@ -367,7 +372,14 @@ describe("Test probe candidate changeview", () => {
 
     expect(screen.getByText("submitted")).toBeEnabled()
 
-    expect(screen.getByText("test.service.type")).toBeEnabled()
+    expect(screen.queryByText("Some service type")).not.toBeInTheDocument()
+    expect(screen.queryByText("Meh service type")).not.toBeInTheDocument()
+
+    expect(screen.getByText("Test service type")).toBeEnabled()
+
+    selectEvent.openMenu(screen.getByText("Test service type"))
+    expect(screen.queryByText("Some service type")).toBeInTheDocument()
+    expect(screen.queryByText("Meh service type")).toBeInTheDocument()
 
     expect(createdField.value).toBe("2023-05-22 09:59:59")
     expect(createdField).toBeDisabled()
@@ -404,6 +416,8 @@ describe("Test probe candidate changeview", () => {
 
     await selectEvent.select(screen.getByText("submitted"), "testing")
 
+    await selectEvent.select(screen.getByText("Test service type"), "Some service type")
+
     fireEvent.click(screen.getByRole("button", { name: /save/i }))
     await waitFor(() => {
       expect(screen.getByRole("dialog", { title: "change" })).toBeInTheDocument()
@@ -422,7 +436,8 @@ describe("Test probe candidate changeview", () => {
           yum_baseurl: "http://repo.example.com/devel/rocky8/",
           command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
           contact: "poem@example.com",
-          status: "testing"
+          status: "testing",
+          service_type: "Some service type"
         }
       )
     })
@@ -455,6 +470,8 @@ describe("Test probe candidate changeview", () => {
 
     await selectEvent.select(screen.getByText("submitted"), "testing")
 
+    await selectEvent.select(screen.getByText("Test service type"), "Some service type")
+
     fireEvent.click(screen.getByRole("button", { name: /save/i }))
     await waitFor(() => {
       expect(screen.getByRole("dialog", { title: "change" })).toBeInTheDocument()
@@ -473,7 +490,8 @@ describe("Test probe candidate changeview", () => {
           yum_baseurl: "http://repo.example.com/devel/rocky8/",
           command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
           contact: "poem@example.com",
-          status: "testing"
+          status: "testing",
+          service_type: "Some service type"
         }
       )
     })
@@ -530,7 +548,8 @@ describe("Test probe candidate changeview", () => {
           yum_baseurl: "http://repo.example.com/devel/rocky8/",
           command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
           contact: "poem@example.com",
-          status: "testing"
+          status: "testing",
+          service_type: "Test service type"
         }
       )
     })

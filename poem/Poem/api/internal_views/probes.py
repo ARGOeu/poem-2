@@ -447,6 +447,7 @@ class ListProbeCandidates(APIView):
                 candidate.status = poem_models.ProbeCandidateStatus.objects.get(
                     name=request.data["status"]
                 )
+                candidate.service_type = request.data["service_type"]
                 candidate.save()
 
                 return Response(status=status.HTTP_201_CREATED)

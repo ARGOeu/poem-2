@@ -513,7 +513,8 @@ export const ProbeCandidateChange = (props) => {
       yum_baseurl: values.yum_baseurl,
       command: values.command,
       contact: values.contact,
-      status: values.status
+      status: values.status,
+      service_type: values.service_type
     }, {
       onSuccess: () => {
         queryClient.invalidateQueries("probecandidate")
