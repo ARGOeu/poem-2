@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { fetchUserDetails } from "./QueryFunctions";
-import { Backend } from "./DataManager";
+import { Backend, WebApi } from "./DataManager";
 import { 
   BaseArgoTable, 
   BaseArgoView, 
@@ -155,6 +155,7 @@ export const ProbeCandidateList = (props) => {
 const ProbeCandidateForm = ({ 
   data, 
   statuses, 
+  serviceTypes,
   doChange,
   ...props 
 }) => {
@@ -231,6 +232,25 @@ const ProbeCandidateForm = ({
                       forwardedRef={ field.ref }
                       onChange={ e => setValue("status", e.value) }
                       options={ statuses }
+                      value={ field.value }
+                    />
+                  }
+                />
+              </InputGroup>
+            </Col>
+          </Row>
+          <Row>
+            <Col md={ 6 }>
+              <InputGroup>
+                <InputGroupText>Service type</InputGroupText>
+                <Controller
+                  name="service_type"
+                  control={ control }
+                  render={ ({ field }) =>
+                    <DropdownWithFormText
+                      forwardedRef={ field.ref }
+                      onChange={ e => setValue("service_type", e.value) }
+                      options={ serviceTypes }
                       value={ field.value }
                     />
                   }
@@ -442,8 +462,15 @@ const ProbeCandidateForm = ({
 export const ProbeCandidateChange = (props) => {
   const pcid = props.match.params.id
   const history = props.history
+  const showtitles = props.showtitles
 
   const backend = new Backend()
+
+  const webapi = new WebApi({
+    token: props.webapitoken,
+    serviceTypes: props.webapiservicetypes
+  })
+
   const queryClient = useQueryClient()
 
   const mutation = useMutation(async (values) => await backend.changeObject("/api/v2/internal/probecandidates/", values))
@@ -466,6 +493,13 @@ export const ProbeCandidateChange = (props) => {
 
   const { data: statuses, error: statusesError, isLoading: statusesLoading } = useQuery(
     "probecandidatestatus", () => fetchStatuses(),
+    { enabled: !!userDetails }
+  )
+
+  const { data: serviceTypes, error: serviceTypesError, isLoading: serviceTypesLoading } = useQuery(
+    ["servicetypes", "webapi"], async () => {
+      return await webapi.fetchServiceTypes()
+    },
     { enabled: !!userDetails }
   )
 
@@ -498,7 +532,7 @@ export const ProbeCandidateChange = (props) => {
     })
   }
 
-  if (userDetailsLoading || candidateLoading || statusesLoading)
+  if (userDetailsLoading || candidateLoading || statusesLoading || serviceTypesLoading)
     return (<LoadingAnim />)
 
   else if (userDetailsError)
@@ -510,11 +544,15 @@ export const ProbeCandidateChange = (props) => {
   else if (statusesError)
     return (<ErrorComponent error={ statusesError } />)
 
-  else if (userDetails && candidate && statuses)
+  else if (serviceTypesError)
+    return (<ErrorComponent error={ serviceTypesError } />)
+
+  else if (userDetails && candidate && statuses && serviceTypes)
     return (
       <ProbeCandidateForm 
         data={ candidate } 
         statuses={ statuses }
+        serviceTypes={ showtitles ? serviceTypes.map(type => type.title) : serviceTypes.map(type => type.name) }
         doChange={ doChange }
         { ...props }
       />

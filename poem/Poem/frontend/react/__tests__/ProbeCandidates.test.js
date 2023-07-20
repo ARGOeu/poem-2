@@ -5,14 +5,15 @@ import { createMemoryHistory } from 'history';
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { Route, Router } from "react-router";
 import { ProbeCandidateChange, ProbeCandidateList } from "../ProbeCandidates";
-import { Backend } from "../DataManager";
+import { Backend, WebApi } from "../DataManager";
 import selectEvent from "react-select-event";
 import { NotificationManager } from "react-notifications";
 
 
 jest.mock("../DataManager", () => {
   return {
-    Backend: jest.fn()
+    Backend: jest.fn(), 
+    WebApi: jest.fn()
   }
 })
 
@@ -42,6 +43,7 @@ const mockListProbeCandidates = [
     command: "/usr/libexec/argo/probes/test/test-probe -H <hostname> -t <timeout> --test",
     contact: "poem@example.com",
     status: "testing",
+    service_type: "some.service.type",
     created: "2023-05-22 09:55:48",
     last_update: "2023-05-22 10:00:23"
   },
@@ -55,6 +57,7 @@ const mockListProbeCandidates = [
     command: "/usr/libexec/argo/probes/test/test-probe -H <hostname> -t <timeout> --test --flag1 --flag2",
     contact: "poem@example.com",
     status: "submitted",
+    service_type: "test.service.type",
     created: "2023-05-22 09:59:59",
     last_update: ""
   }
@@ -81,6 +84,25 @@ const mockActiveSession = {
     token: '1234token'
   }
 }
+
+const mockServiceTypes = [
+  {
+    name: "meh.service.type",
+    title: "Meh service type",
+    description: "Meh service type description",
+    tags: ["poem"]
+  }, {
+    name: "some.service.type",
+    title: "Some service type",
+    description: "Some service type description",
+    tags: ["poem"]
+  }, {
+    name: "test.service.type",
+    title: "Test service type",
+    description: "Test service type description",
+    tags: ["topology"]
+  }
+]
 
 
 const renderListView = () => {
@@ -297,6 +319,11 @@ describe("Test probe candidate changeview", () => {
         changeObject: mockChangeObject
       }
     })
+    WebApi.mockImplementation(() => {
+      return {
+        fetchServiceTypes: () => Promise.resolve(mockServiceTypes)
+      }
+    })
   })
 
   test("Test that page renders properly", async () => {
@@ -339,6 +366,8 @@ describe("Test probe candidate changeview", () => {
     expect(contactField).toBeDisabled()
 
     expect(screen.getByText("submitted")).toBeEnabled()
+
+    expect(screen.getByText("test.service.type")).toBeEnabled()
 
     expect(createdField.value).toBe("2023-05-22 09:59:59")
     expect(createdField).toBeDisabled()
