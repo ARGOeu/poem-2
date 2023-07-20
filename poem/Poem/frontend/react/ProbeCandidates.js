@@ -5,6 +5,7 @@ import { Backend, WebApi } from "./DataManager";
 import { 
   BaseArgoTable, 
   BaseArgoView, 
+  CustomError, 
   DefaultColumnFilter, 
   DropdownWithFormText, 
   ErrorComponent, 
@@ -29,6 +30,17 @@ import {
 } from "reactstrap";
 import { Link } from "react-router-dom";
 import { Controller, useForm } from "react-hook-form";
+import * as yup from 'yup';
+import { yupResolver } from '@hookform/resolvers/yup';
+
+
+const validationSchema = yup.object().shape({
+  status: yup.string(),
+  service_type: yup.string().when("status", {
+    is: (val) => val !== "submitted",
+    then: yup.string().required("Service type is required")
+  })
+})
 
 
 const fetchCandidates = async () => {
@@ -166,8 +178,10 @@ const ProbeCandidateForm = ({
   const [modalTitle, setModalTitle] = useState(undefined)
   const [onYes, setOnYes] = useState("")
 
-  const { control, setValue, handleSubmit, getValues } = useForm({
-    defaultValues: data
+  const { control, setValue, handleSubmit, getValues, trigger, formState: { errors } } = useForm({
+    defaultValues: data,
+    mode: "all",
+    resolver: yupResolver(validationSchema)
   })
 
   const onSubmitHandle = () => {
@@ -230,7 +244,10 @@ const ProbeCandidateForm = ({
                   render={ ({ field }) =>
                     <DropdownWithFormText
                       forwardedRef={ field.ref }
-                      onChange={ e => setValue("status", e.value) }
+                      onChange={ e => {
+                        setValue("status", e.value) 
+                        trigger("service_type")
+                      }}
                       options={ statuses }
                       value={ field.value }
                     />
@@ -249,14 +266,22 @@ const ProbeCandidateForm = ({
                   render={ ({ field }) =>
                     <DropdownWithFormText
                       forwardedRef={ field.ref }
-                      onChange={ e => setValue("service_type", e ? e.value : "") }
+                      onChange={ e => {
+                        setValue("service_type", e ? e.value : "") 
+                        trigger("service_type")
+                      }}
                       options={ serviceTypes }
                       value={ field.value }
                       isClearable={ true }
+                      error={ errors.service_type }
                     />
                   }
                 />
               </InputGroup>
+              {
+                errors?.service_type &&
+                  <CustomError error={ errors?.service_type.message } />
+              }
             </Col>
           </Row>
           <Row>
