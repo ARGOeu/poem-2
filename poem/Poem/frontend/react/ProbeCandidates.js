@@ -20,6 +20,7 @@ import {
   Button, 
   Col, 
   Form, 
+  FormFeedback, 
   FormGroup, 
   FormText, 
   Input, 
@@ -32,6 +33,7 @@ import { Link } from "react-router-dom";
 import { Controller, useForm } from "react-hook-form";
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { ErrorMessage } from "@hookform/error-message";
 
 
 const validationSchema = yup.object().shape({
@@ -39,6 +41,10 @@ const validationSchema = yup.object().shape({
   service_type: yup.string().when("status", {
     is: (val) => val !== "submitted",
     then: yup.string().required("Service type is required")
+  }),
+  devel_url: yup.string().url("Invalid URL").when("status", {
+    is: (val) => val === "testing",
+    then: yup.string().required("Devel UI URL is required")
   })
 })
 
@@ -297,6 +303,15 @@ const ProbeCandidateForm = ({
                       data-testid="devel_url"
                       className="form-control"
                     />
+                  }
+                />
+                <ErrorMessage
+                  errors={ errors }
+                  name="devel_url"
+                  render={ ({ message }) => 
+                    <FormFeedback invalid="true" className="end-0">
+                      { message }
+                    </FormFeedback>
                   }
                 />
               </InputGroup>
