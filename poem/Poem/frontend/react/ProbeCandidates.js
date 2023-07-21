@@ -324,6 +324,24 @@ const ProbeCandidateForm = ({
             </Col>
           </Row>
           <Row>
+            <Col md={ 6 }>
+              <InputGroup>
+                <InputGroupText>Production UI URL</InputGroupText>
+                <Controller
+                  name="production_url"
+                  control={ control }
+                  render={ ({ field }) =>
+                    <Input
+                      { ...field }
+                      data-testid="production_url"
+                      className="form-control"
+                    />
+                  }
+                />
+              </InputGroup>
+            </Col>
+          </Row>
+          <Row>
             <Col md={ 8 }>
               <Label for="description">Description</Label>
               <Controller

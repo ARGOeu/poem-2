@@ -389,6 +389,8 @@ class ListProbeCandidates(APIView):
                         candidate.service_type else "",
                         "devel_url": candidate.devel_url if candidate.devel_url
                         else "",
+                        "production_url": candidate.production_url if
+                        candidate.production_url else "",
                         "created":
                             candidate.created.strftime("%Y-%m-%d %H:%M:%S"),
                         "last_update":
@@ -420,6 +422,8 @@ class ListProbeCandidates(APIView):
                         candidate.service_type else "",
                         "devel_url": candidate.devel_url if candidate.devel_url
                         else "",
+                        "production_url": candidate.production_url if
+                        candidate.production_url else "",
                         "created":
                             candidate.created.strftime("%Y-%m-%d %H:%M:%S"),
                         "last_update":
