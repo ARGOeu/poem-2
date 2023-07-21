@@ -613,6 +613,8 @@ describe("Test probe candidate changeview", () => {
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: "some-probe" } })
 
+    fireEvent.change(screen.getByTestId("devel_url"), { target: { value: "https://test.argo.grnet.gr/ui/status/test" } })
+
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: "More elaborate description of the probe" } })
 
     fireEvent.change(screen.getByTestId("rpm"), { target: { value: "argo-probe-test-0.1.1-1.el7.noarch.rpm" } })
@@ -644,7 +646,8 @@ describe("Test probe candidate changeview", () => {
           command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
           contact: "poem@example.com",
           status: "testing",
-          service_type: "Some service type"
+          service_type: "Some service type",
+          devel_url: "https://test.argo.grnet.gr/ui/status/test"
         }
       )
     })
@@ -666,6 +669,8 @@ describe("Test probe candidate changeview", () => {
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: "some-probe" } })
+
+    fireEvent.change(screen.getByTestId("devel_url"), { target: { value: "https://test.argo.grnet.gr/ui/status/test" } })
 
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: "More elaborate description of the probe" } })
 
@@ -698,7 +703,8 @@ describe("Test probe candidate changeview", () => {
           command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
           contact: "poem@example.com",
           status: "testing",
-          service_type: "some.service.type"
+          service_type: "some.service.type",
+          devel_url: "https://test.argo.grnet.gr/ui/status/test"
         }
       )
     })
@@ -750,7 +756,8 @@ describe("Test probe candidate changeview", () => {
           command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
           contact: "poem@example.com",
           status: "submitted",
-          service_type: ""
+          service_type: "",
+          devel_url: ""
         }
       )
     })
@@ -772,6 +779,8 @@ describe("Test probe candidate changeview", () => {
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: "some-probe" } })
+
+    fireEvent.change(screen.getByTestId("devel_url"), { target: { value: "https://test.argo.grnet.gr/ui/status/test" } })
 
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: "More elaborate description of the probe" } })
 
@@ -813,7 +822,8 @@ describe("Test probe candidate changeview", () => {
           command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
           contact: "poem@example.com",
           status: "testing",
-          service_type: "Test service type"
+          service_type: "Test service type",
+          devel_url: "https://test.argo.grnet.gr/ui/status/test"
         }
       )
     })
@@ -835,6 +845,8 @@ describe("Test probe candidate changeview", () => {
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: "some-probe" } })
+
+    fireEvent.change(screen.getByTestId("devel_url"), { target: { value: "https://test.argo.grnet.gr/ui/status/test" } })
 
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: "More elaborate description of the probe" } })
 
@@ -867,7 +879,8 @@ describe("Test probe candidate changeview", () => {
           command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
           contact: "poem@example.com",
           status: "testing",
-          service_type: "Some service type"
+          service_type: "Some service type",
+          devel_url: "https://test.argo.grnet.gr/ui/status/test"
         }
       )
     })
@@ -895,6 +908,8 @@ describe("Test probe candidate changeview", () => {
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: "some-probe" } })
+
+    fireEvent.change(screen.getByTestId("devel_url"), { target: { value: "https://test.argo.grnet.gr/ui/status/test" } })
 
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: "More elaborate description of the probe" } })
 
@@ -925,7 +940,8 @@ describe("Test probe candidate changeview", () => {
           command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
           contact: "poem@example.com",
           status: "testing",
-          service_type: "Test service type"
+          service_type: "Test service type",
+          devel_url: "https://test.argo.grnet.gr/ui/status/test"
         }
       )
     })
