@@ -45,6 +45,10 @@ const validationSchema = yup.object().shape({
   devel_url: yup.string().url("Invalid URL").when("status", {
     is: (val) => val === "testing",
     then: yup.string().required("Devel UI URL is required")
+  }),
+  production_url: yup.string().url("Invalid URL").when("status", {
+    is: (val) => val === "deployed",
+    then: yup.string().required("Production UI URL is required")
   })
 })
 
@@ -334,8 +338,17 @@ const ProbeCandidateForm = ({
                     <Input
                       { ...field }
                       data-testid="production_url"
-                      className="form-control"
+                      className={ `form-control ${errors?.production_url && "is-invalid"}` }
                     />
+                  }
+                />
+                <ErrorMessage
+                  errors={ errors }
+                  name="production_url"
+                  render={ ({ message }) => 
+                    <FormFeedback invalid="true" className="end-0">
+                      { message }
+                    </FormFeedback>
                   }
                 />
               </InputGroup>
