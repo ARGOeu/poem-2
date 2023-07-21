@@ -45,6 +45,7 @@ const mockListProbeCandidates = [
     status: "testing",
     service_type: "Some service type",
     devel_url: "https://test.argo.grnet.gr/ui/status/test",
+    production_url: "",
     created: "2023-05-22 09:55:48",
     last_update: "2023-05-22 10:00:23"
   },
@@ -60,6 +61,7 @@ const mockListProbeCandidates = [
     status: "submitted",
     service_type: "Test service type",
     devel_url: "",
+    production_url: "",
     created: "2023-05-22 09:59:59",
     last_update: ""
   }
@@ -76,9 +78,27 @@ const mockProbeCandidateServiceTypeName = {
   contact: "poem@example.com",
   status: "submitted",
   devel_url: "",
+  production_url: "",
   service_type: "test.service.type",
   created: "2023-05-22 09:59:59",
   last_update: ""
+}
+
+const mockDeployedProbeCandidate = {
+  id: "4",
+  name: "deployed-probe",
+  description: "Description of the probe",
+  docurl: "https://github.com/ARGOeu-Metrics/argo-probe-test",
+  rpm: "argo-probe-test-0.1.0-1.el7.noarch.rpm",
+  yum_baseurl: "http://repo.example.com/devel/centos7/",
+  command: "/usr/libexec/argo/probes/test/test-probe -H <hostname> -t <timeout> --test --flag1 --flag2",
+  contact: "poem@example.com",
+  status: "deployed",
+  devel_url: "https://test.argo.grnet.gr/ui/status/test",
+  production_url: "https://production.argo.grnet.gr/ui/status/prod",
+  service_type: "Production service type",
+  created: "2023-05-22 09:55:48",
+  last_update: "2023-05-22 10:00:23"
 }
 
 const mockListStatuses = [
@@ -118,6 +138,11 @@ const mockServiceTypes = [
     name: "test.service.type",
     title: "Test service type",
     description: "Test service type description",
+    tags: ["topology"]
+  }, {
+    name: "production.service.type",
+    title: "Production service type",
+    description: "Production service type description",
     tags: ["topology"]
   }
 ]
@@ -190,6 +215,30 @@ const renderChangeView2 = () => {
 
 const renderChangeView3 = () => {
   const route = "/ui/administration/probecandidates/1"
+  const history = createMemoryHistory({ initialEntries: [route] })
+
+  return {
+    ...render(
+      <QueryClientProvider client={ queryClient }>
+        <Router history={ history }>
+          <Route
+            path="/ui/administration/probecandidates/:id"
+            render={ props => <ProbeCandidateChange 
+              { ...props } 
+              webapitoken="t0k3n"
+              webapiservicetypes="https://mock.service.types"
+              showtitles={ true }
+            /> }
+          />
+        </Router>
+      </QueryClientProvider>
+    )
+  }
+}
+
+
+const renderChangeView4 = () => {
+  const route = "/ui/administration/probecandidates/4"
   const history = createMemoryHistory({ initialEntries: [route] })
 
   return {
@@ -385,6 +434,9 @@ describe("Test probe candidate changeview", () => {
             
             case "/api/v2/internal/probecandidates/3":
               return Promise.resolve(mockProbeCandidateServiceTypeName)
+ 
+            case "/api/v2/internal/probecandidates/4":
+              return Promise.resolve(mockDeployedProbeCandidate)
 
             case "/api/v2/internal/probecandidatestatuses":
               return Promise.resolve(mockListStatuses)
@@ -413,6 +465,7 @@ describe("Test probe candidate changeview", () => {
     const nameField = screen.getByTestId("name")
     const descriptionField = screen.getByLabelText(/description/i)
     const develURLField = screen.getByTestId("devel_url")
+    const prodURLField = screen.getByTestId("production_url")
     const docURLField = screen.queryByRole("link")
     const rpmField = screen.getByTestId("rpm")
     const yumBaseURLField = screen.getByTestId("yum_baseurl")
@@ -426,6 +479,9 @@ describe("Test probe candidate changeview", () => {
 
     expect(develURLField.value).toBe("")
     expect(develURLField).toBeEnabled()
+
+    expect(prodURLField.value).toBe("")
+    expect(prodURLField).toBeEnabled()
 
     expect(descriptionField.value).toBe("Description of the probe")
     expect(descriptionField).toBeEnabled()
@@ -444,16 +500,27 @@ describe("Test probe candidate changeview", () => {
     expect(contactField.value).toBe("poem@example.com")
     expect(contactField).toBeDisabled()
 
+    expect(screen.queryByText("deployed")).not.toBeInTheDocument()
+    expect(screen.queryByText("rejected")).not.toBeInTheDocument()
+    expect(screen.queryByText("testing")).not.toBeInTheDocument()
+
     expect(screen.getByText("submitted")).toBeEnabled()
+
+    selectEvent.openMenu(screen.getByText("submitted"))
+    expect(screen.queryByText("deployed")).toBeInTheDocument()
+    expect(screen.queryByText("rejected")).toBeInTheDocument()
+    expect(screen.queryByText("testing")).toBeInTheDocument()
 
     expect(screen.queryByText("Some service type")).not.toBeInTheDocument()
     expect(screen.queryByText("Meh service type")).not.toBeInTheDocument()
+    expect(screen.queryByText("Production service type")).not.toBeInTheDocument()
 
     expect(screen.getByText("Test service type")).toBeEnabled()
 
     selectEvent.openMenu(screen.getByText("Test service type"))
     expect(screen.queryByText("Some service type")).toBeInTheDocument()
     expect(screen.queryByText("Meh service type")).toBeInTheDocument()
+    expect(screen.queryByText("Production service type")).toBeInTheDocument()
 
     expect(createdField.value).toBe("2023-05-22 09:59:59")
     expect(createdField).toBeDisabled()
@@ -479,6 +546,7 @@ describe("Test probe candidate changeview", () => {
     const nameField = screen.getByTestId("name")
     const descriptionField = screen.getByLabelText(/description/i)
     const develURLField = screen.getByTestId("devel_url")
+    const prodURLField = screen.getByTestId("production_url")
     const docURLField = screen.queryByRole("link")
     const rpmField = screen.getByTestId("rpm")
     const yumBaseURLField = screen.getByTestId("yum_baseurl")
@@ -492,6 +560,9 @@ describe("Test probe candidate changeview", () => {
 
     expect(develURLField.value).toBe("https://test.argo.grnet.gr/ui/status/test")
     expect(develURLField).toBeEnabled()
+
+    expect(prodURLField.value).toBe("")
+    expect(prodURLField).toBeEnabled()
 
     expect(descriptionField.value).toBe("Some description for the test probe")
     expect(descriptionField).toBeEnabled()
@@ -510,16 +581,109 @@ describe("Test probe candidate changeview", () => {
     expect(contactField.value).toBe("poem@example.com")
     expect(contactField).toBeDisabled()
 
+    expect(screen.queryByText("deployed")).not.toBeInTheDocument()
+    expect(screen.queryByText("rejected")).not.toBeInTheDocument()
+    expect(screen.queryByText("submitted")).not.toBeInTheDocument()
+
     expect(screen.getByText("testing")).toBeEnabled()
 
-    expect(screen.queryByText("Test service type")).not.toBeInTheDocument()
-    expect(screen.queryByText("Some service type")).toBeInTheDocument()
-    expect(screen.queryByText("Meh service type")).not.toBeInTheDocument()
+    selectEvent.openMenu(screen.getByText("testing"))
+    expect(screen.queryByText("deployed")).toBeInTheDocument()
+    expect(screen.queryByText("rejected")).toBeInTheDocument()
+    expect(screen.queryByText("submitted")).toBeInTheDocument()
 
+    expect(screen.queryByText("Test service type")).not.toBeInTheDocument()
+    expect(screen.queryByText("Meh service type")).not.toBeInTheDocument()
+    expect(screen.queryByText("Production service type")).not.toBeInTheDocument()
+
+    expect(screen.queryByText("Some service type")).toBeInTheDocument()
     expect(screen.queryByText("Some service type")).toBeEnabled()
 
     selectEvent.openMenu(screen.getByText("Some service type"))
     expect(screen.queryByText("Test service type")).toBeInTheDocument()
+    expect(screen.queryByText("Meh service type")).toBeInTheDocument()
+    expect(screen.queryByText("Production service type")).toBeInTheDocument()
+
+    expect(createdField.value).toBe("2023-05-22 09:55:48")
+    expect(createdField).toBeDisabled()
+
+    expect(updatedField.value).toBe("2023-05-22 10:00:23")
+    expect(updatedField).toBeDisabled()
+
+    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
+  })
+
+  test("Test that page renders properly if candidate with production URL", async () => {
+    renderChangeView4()
+
+    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /candidate/i }).textContent).toBe("Change probe candidate")
+    })
+
+    const nameField = screen.getByTestId("name")
+    const descriptionField = screen.getByLabelText(/description/i)
+    const develURLField = screen.getByTestId("devel_url")
+    const prodURLField = screen.getByTestId("production_url")
+    const docURLField = screen.queryByRole("link")
+    const rpmField = screen.getByTestId("rpm")
+    const yumBaseURLField = screen.getByTestId("yum_baseurl")
+    const commandField = screen.getByTestId("command")
+    const contactField = screen.getByTestId("contact")
+    const createdField = screen.getByTestId("created")
+    const updatedField = screen.getByTestId("last_update")
+
+    expect(nameField.value).toBe("deployed-probe")
+    expect(nameField).toBeEnabled()
+
+    expect(develURLField.value).toBe("https://test.argo.grnet.gr/ui/status/test")
+    expect(develURLField).toBeEnabled()
+
+    expect(prodURLField.value).toBe("https://production.argo.grnet.gr/ui/status/prod")
+    expect(prodURLField).toBeEnabled()
+
+    expect(descriptionField.value).toBe("Description of the probe")
+    expect(descriptionField).toBeEnabled()
+
+    expect(docURLField.closest("a")).toHaveAttribute("href", "https://github.com/ARGOeu-Metrics/argo-probe-test")
+
+    expect(rpmField.value).toBe("argo-probe-test-0.1.0-1.el7.noarch.rpm")
+    expect(rpmField).toBeEnabled()
+
+    expect(yumBaseURLField.value).toBe("http://repo.example.com/devel/centos7/")
+    expect(yumBaseURLField).toBeEnabled()
+
+    expect(commandField.value).toBe("/usr/libexec/argo/probes/test/test-probe -H <hostname> -t <timeout> --test --flag1 --flag2")
+    expect(commandField).toBeEnabled()
+
+    expect(contactField.value).toBe("poem@example.com")
+    expect(contactField).toBeDisabled()
+
+    expect(screen.queryByText("rejected")).not.toBeInTheDocument()
+    expect(screen.queryByText("submitted")).not.toBeInTheDocument()
+    expect(screen.queryByText("testing")).not.toBeInTheDocument()
+
+    expect(screen.getByText("deployed")).toBeEnabled()
+
+    selectEvent.openMenu(screen.getByText("deployed"))
+    expect(screen.queryByText("rejected")).toBeInTheDocument()
+    expect(screen.queryByText("submitted")).toBeInTheDocument()
+    expect(screen.queryByText("testing")).toBeInTheDocument()
+
+    expect(screen.queryByText("Test service type")).not.toBeInTheDocument()
+    expect(screen.queryByText("Some service type")).not.toBeInTheDocument()
+    expect(screen.queryByText("Meh service type")).not.toBeInTheDocument()
+
+    expect(screen.queryByText("Production service type")).toBeInTheDocument()
+    expect(screen.queryByText("Production service type")).toBeEnabled()
+
+    selectEvent.openMenu(screen.getByText("Production service type"))
+    expect(screen.queryByText("Test service type")).toBeInTheDocument()
+    expect(screen.queryByText("Some service type")).toBeInTheDocument()
     expect(screen.queryByText("Meh service type")).toBeInTheDocument()
 
     expect(createdField.value).toBe("2023-05-22 09:55:48")
@@ -545,6 +709,7 @@ describe("Test probe candidate changeview", () => {
 
     const nameField = screen.getByTestId("name")
     const develURLField = screen.getByTestId("devel_url")
+    const prodURLField = screen.getByTestId("production_url")
     const descriptionField = screen.getByLabelText(/description/i)
     const docURLField = screen.queryByRole("link")
     const rpmField = screen.getByTestId("rpm")
@@ -559,6 +724,9 @@ describe("Test probe candidate changeview", () => {
 
     expect(develURLField.value).toBe("")
     expect(develURLField).toBeEnabled()
+
+    expect(prodURLField.value).toBe("")
+    expect(prodURLField).toBeEnabled()
 
     expect(descriptionField.value).toBe("Description of the probe")
     expect(descriptionField).toBeEnabled()
@@ -577,16 +745,27 @@ describe("Test probe candidate changeview", () => {
     expect(contactField.value).toBe("poem@example.com")
     expect(contactField).toBeDisabled()
 
+    expect(screen.queryByText("deployed")).not.toBeInTheDocument()
+    expect(screen.queryByText("rejected")).not.toBeInTheDocument()
+    expect(screen.queryByText("testing")).not.toBeInTheDocument()
+
     expect(screen.getByText("submitted")).toBeEnabled()
+
+    selectEvent.openMenu(screen.getByText("submitted"))
+    expect(screen.queryByText("deployed")).toBeInTheDocument()
+    expect(screen.queryByText("rejected")).toBeInTheDocument()
+    expect(screen.queryByText("testing")).toBeInTheDocument()
 
     expect(screen.queryByText("some.service.type")).not.toBeInTheDocument()
     expect(screen.queryByText("meh.service.type")).not.toBeInTheDocument()
+    expect(screen.queryByText("production.service.type")).not.toBeInTheDocument()
 
     expect(screen.getByText("test.service.type")).toBeEnabled()
 
     selectEvent.openMenu(screen.getByText("test.service.type"))
     expect(screen.queryByText("some.service.type")).toBeInTheDocument()
     expect(screen.queryByText("meh.service.type")).toBeInTheDocument()
+    expect(screen.queryByText("production.service.type")).toBeInTheDocument()
 
     expect(createdField.value).toBe("2023-05-22 09:59:59")
     expect(createdField).toBeDisabled()
