@@ -826,7 +826,60 @@ describe("Test probe candidate changeview", () => {
           contact: "poem@example.com",
           status: "testing",
           service_type: "Some service type",
-          devel_url: "https://test.argo.grnet.gr/ui/status/test"
+          devel_url: "https://test.argo.grnet.gr/ui/status/test",
+          production_url: ""
+        }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Probe candidate successfully changed", "Changed", 2000
+    )
+  })
+
+  test("Test successfully changing probe candidate status to deployed", async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: "OK" })
+    )
+
+    renderChangeView3()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /candidate/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "prod-probe" } })
+
+    fireEvent.change(screen.getByTestId("production_url"), { target: { value: "https://production.argo.grnet.gr/ui/status/new" } })
+
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: "More elaborate description of the probe" } })
+
+    fireEvent.change(screen.getByTestId("command"), { target: { value: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --flag" } })
+
+    await selectEvent.select(screen.getByText("testing"), "deployed")
+
+    fireEvent.click(screen.getByRole("button", { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole("dialog", { title: "change" })).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole("button", { name: /yes/i }))
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/probecandidates/",
+        {
+          id: "1",
+          name: "prod-probe",
+          description: "More elaborate description of the probe",
+          docurl: "https://github.com/ARGOeu-Metrics/argo-probe-test",
+          rpm: "",
+          yum_baseurl: "",
+          command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --flag",
+          contact: "poem@example.com",
+          status: "deployed",
+          service_type: "Some service type",
+          devel_url: "https://test.argo.grnet.gr/ui/status/test",
+          production_url: "https://production.argo.grnet.gr/ui/status/new"
         }
       )
     })
@@ -883,7 +936,8 @@ describe("Test probe candidate changeview", () => {
           contact: "poem@example.com",
           status: "testing",
           service_type: "some.service.type",
-          devel_url: "https://test.argo.grnet.gr/ui/status/test"
+          devel_url: "https://test.argo.grnet.gr/ui/status/test",
+          production_url: ""
         }
       )
     })
@@ -936,7 +990,8 @@ describe("Test probe candidate changeview", () => {
           contact: "poem@example.com",
           status: "submitted",
           service_type: "",
-          devel_url: ""
+          devel_url: "",
+          production_url: ""
         }
       )
     })
@@ -1002,7 +1057,8 @@ describe("Test probe candidate changeview", () => {
           contact: "poem@example.com",
           status: "testing",
           service_type: "Test service type",
-          devel_url: "https://test.argo.grnet.gr/ui/status/test"
+          devel_url: "https://test.argo.grnet.gr/ui/status/test",
+          production_url: ""
         }
       )
     })
@@ -1069,7 +1125,8 @@ describe("Test probe candidate changeview", () => {
           contact: "poem@example.com",
           status: "testing",
           service_type: "Some service type",
-          devel_url: "https://test.argo.grnet.gr/ui/status/test"
+          devel_url: "https://test.argo.grnet.gr/ui/status/test",
+          production_url: ""
         }
       )
     })
@@ -1132,7 +1189,8 @@ describe("Test probe candidate changeview", () => {
           contact: "poem@example.com",
           status: "submitted",
           service_type: "Test service type",
-          devel_url: ""
+          devel_url: "",
+          production_url: ""
         }
       )
     })
@@ -1197,7 +1255,8 @@ describe("Test probe candidate changeview", () => {
           contact: "poem@example.com",
           status: "testing",
           service_type: "Test service type",
-          devel_url: "https://test.argo.grnet.gr/ui/status/test"
+          devel_url: "https://test.argo.grnet.gr/ui/status/test",
+          production_url: ""
         }
       )
     })
@@ -1254,7 +1313,8 @@ describe("Test probe candidate changeview", () => {
           contact: "poem@example.com",
           status: "testing",
           service_type: "Some service type",
-          devel_url: "https://test.argo.grnet.gr/ui/status/test"
+          devel_url: "https://test.argo.grnet.gr/ui/status/test",
+          production_url: ""
         }
       )
     })
@@ -1315,7 +1375,8 @@ describe("Test probe candidate changeview", () => {
           contact: "poem@example.com",
           status: "testing",
           service_type: "Test service type",
-          devel_url: "https://test.argo.grnet.gr/ui/status/test"
+          devel_url: "https://test.argo.grnet.gr/ui/status/test",
+          production_url: ""
         }
       )
     })

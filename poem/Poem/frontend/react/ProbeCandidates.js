@@ -598,7 +598,8 @@ export const ProbeCandidateChange = (props) => {
       contact: values.contact,
       status: values.status,
       service_type: values.service_type,
-      devel_url: values.devel_url
+      devel_url: values.devel_url,
+      production_url: values.production_url
     }, {
       onSuccess: () => {
         queryClient.invalidateQueries("probecandidate")
