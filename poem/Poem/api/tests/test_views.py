@@ -1600,7 +1600,8 @@ class ProbeCandidateAPITests(TenantTestCase):
             command="/usr/libexec/argo/probes/test/test-probe -H <hostname> "
                     "-t <timeout> --test",
             contact="poem@example.com",
-            status=testing_status
+            status=testing_status,
+            service_type="testing.service.type"
         )
         self.candidate2 = poem_models.ProbeCandidate.objects.create(
             name="test-probe0",

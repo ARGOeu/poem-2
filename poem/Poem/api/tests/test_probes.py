@@ -4313,7 +4313,8 @@ class ListProbeCandidatesTests(TenantTestCase):
             command="/usr/libexec/argo/probes/test/test-probe -H <hostname> "
                     "-t <timeout> --test",
             contact="poem@example.com",
-            status=status_testing
+            status=status_testing,
+            service_type="test.service.type"
         )
         self.candidate2 = poem_models.ProbeCandidate.objects.create(
             name="some-probe",
@@ -4350,6 +4351,7 @@ class ListProbeCandidatesTests(TenantTestCase):
                         "-H <hostname> -t <timeout> --test --flag1 --flag2",
                     "contact": "poem@example.com",
                     "status": "submitted",
+                    "service_type": "",
                     "created":
                         self.candidate2.created.strftime("%Y-%m-%d %H:%M:%S"),
                     "last_update": self.candidate2.last_update.strftime(
@@ -4367,6 +4369,7 @@ class ListProbeCandidatesTests(TenantTestCase):
                         " -t <timeout> --test",
                     "contact": "poem@example.com",
                     "status": "testing",
+                    "service_type": "test.service.type",
                     "created":
                         self.candidate1.created.strftime("%Y-%m-%d %H:%M:%S"),
                     "last_update": self.candidate1.last_update.strftime(
@@ -4403,6 +4406,7 @@ class ListProbeCandidatesTests(TenantTestCase):
                     " -t <timeout> --test",
                 "contact": "poem@example.com",
                 "status": "testing",
+                "service_type": "test.service.type",
                 "created":
                     self.candidate1.created.strftime("%Y-%m-%d %H:%M:%S"),
                 "last_update":
@@ -4450,7 +4454,8 @@ class ListProbeCandidatesTests(TenantTestCase):
             "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
                        "-t <timeout> --test",
             "contact": "meh@example.com",
-            "status": "deployed"
+            "status": "deployed",
+            "service_type": "some.service.type"
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -4481,6 +4486,7 @@ class ListProbeCandidatesTests(TenantTestCase):
         )
         self.assertEqual(candidate.contact, "poem@example.com")
         self.assertEqual(candidate.status.name, "deployed")
+        self.assertEqual(candidate.service_type, "some.service.type")
 
     def test_put_probe_candidate_regular_user(self):
         data = {
@@ -4493,7 +4499,8 @@ class ListProbeCandidatesTests(TenantTestCase):
             "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
                        "-t <timeout> --test",
             "contact": "meh@example.com",
-            "status": "deployed"
+            "status": "deployed",
+            "service_type": "some.service.type"
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -4528,6 +4535,7 @@ class ListProbeCandidatesTests(TenantTestCase):
         )
         self.assertEqual(candidate.contact, "poem@example.com")
         self.assertEqual(candidate.status.name, "testing")
+        self.assertEqual(candidate.service_type, "test.service.type")
 
     def test_put_probe_candidate_nonexisting_id_superuser(self):
         data = {
@@ -4540,7 +4548,8 @@ class ListProbeCandidatesTests(TenantTestCase):
             "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
                        "-t <timeout> --test",
             "contact": "meh@example.com",
-            "status": "deployed"
+            "status": "deployed",
+            "service_type": "some.service.type"
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -4560,7 +4569,8 @@ class ListProbeCandidatesTests(TenantTestCase):
             "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
                        "-t <timeout> --test",
             "contact": "meh@example.com",
-            "status": "deployed"
+            "status": "deployed",
+            "service_type": "some.service.type"
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -4583,7 +4593,8 @@ class ListProbeCandidatesTests(TenantTestCase):
             "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
                        "-t <timeout> --test",
             "contact": "meh@example.com",
-            "status": "nonexisting"
+            "status": "nonexisting",
+            "service_type": "some.service.type"
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -4605,7 +4616,8 @@ class ListProbeCandidatesTests(TenantTestCase):
             "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
                        "-t <timeout> --test",
             "contact": "meh@example.com",
-            "status": "nonexisting"
+            "status": "nonexisting",
+            "service_type": "some.service.type"
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)

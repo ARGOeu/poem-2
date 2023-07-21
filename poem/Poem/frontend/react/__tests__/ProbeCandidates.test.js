@@ -5,14 +5,15 @@ import { createMemoryHistory } from 'history';
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { Route, Router } from "react-router";
 import { ProbeCandidateChange, ProbeCandidateList } from "../ProbeCandidates";
-import { Backend } from "../DataManager";
+import { Backend, WebApi } from "../DataManager";
 import selectEvent from "react-select-event";
 import { NotificationManager } from "react-notifications";
 
 
 jest.mock("../DataManager", () => {
   return {
-    Backend: jest.fn()
+    Backend: jest.fn(), 
+    WebApi: jest.fn()
   }
 })
 
@@ -42,6 +43,7 @@ const mockListProbeCandidates = [
     command: "/usr/libexec/argo/probes/test/test-probe -H <hostname> -t <timeout> --test",
     contact: "poem@example.com",
     status: "testing",
+    service_type: "Some service type",
     created: "2023-05-22 09:55:48",
     last_update: "2023-05-22 10:00:23"
   },
@@ -55,10 +57,26 @@ const mockListProbeCandidates = [
     command: "/usr/libexec/argo/probes/test/test-probe -H <hostname> -t <timeout> --test --flag1 --flag2",
     contact: "poem@example.com",
     status: "submitted",
+    service_type: "Test service type",
     created: "2023-05-22 09:59:59",
     last_update: ""
   }
 ]
+
+const mockProbeCandidateServiceTypeName = {
+  id: "3",
+  name: "test-probe",
+  description: "Description of the probe",
+  docurl: "https://github.com/ARGOeu-Metrics/argo-probe-test",
+  rpm: "argo-probe-test-0.1.0-1.el7.noarch.rpm",
+  yum_baseurl: "http://repo.example.com/devel/centos7/",
+  command: "/usr/libexec/argo/probes/test/test-probe -H <hostname> -t <timeout> --test --flag1 --flag2",
+  contact: "poem@example.com",
+  status: "submitted",
+  service_type: "test.service.type",
+  created: "2023-05-22 09:59:59",
+  last_update: ""
+}
 
 const mockListStatuses = [
   "deployed",
@@ -81,6 +99,25 @@ const mockActiveSession = {
     token: '1234token'
   }
 }
+
+const mockServiceTypes = [
+  {
+    name: "meh.service.type",
+    title: "Meh service type",
+    description: "Meh service type description",
+    tags: ["poem"]
+  }, {
+    name: "some.service.type",
+    title: "Some service type",
+    description: "Some service type description",
+    tags: ["poem"]
+  }, {
+    name: "test.service.type",
+    title: "Test service type",
+    description: "Test service type description",
+    tags: ["topology"]
+  }
+]
 
 
 const renderListView = () => {
@@ -111,7 +148,35 @@ const renderChangeView = () => {
         <Router history={ history }>
           <Route
             path="/ui/administration/probecandidates/:id"
-            render={ props => <ProbeCandidateChange { ...props } /> }
+            render={ props => <ProbeCandidateChange 
+              { ...props } 
+              webapitoken="t0k3n"
+              webapiservicetypes="https://mock.service.types"
+              showtitles={ true }
+            /> }
+          />
+        </Router>
+      </QueryClientProvider>
+    )
+  }
+}
+
+
+const renderChangeView2 = () => {
+  const route = "/ui/administration/probecandidates/3"
+  const history = createMemoryHistory({ initialEntries: [route] })
+
+  return {
+    ...render(
+      <QueryClientProvider client={ queryClient }>
+        <Router history={ history }>
+          <Route
+            path="/ui/administration/probecandidates/:id"
+            render={ props => <ProbeCandidateChange 
+              { ...props } 
+              webapitoken="t0k3n"
+              webapiservicetypes="https://mock.service.types"
+            /> }
           />
         </Router>
       </QueryClientProvider>
@@ -288,6 +353,9 @@ describe("Test probe candidate changeview", () => {
           switch (path) {
             case "/api/v2/internal/probecandidates/2":
               return Promise.resolve(mockListProbeCandidates[1])
+            
+            case "/api/v2/internal/probecandidates/3":
+              return Promise.resolve(mockProbeCandidateServiceTypeName)
 
             case "/api/v2/internal/probecandidatestatuses":
               return Promise.resolve(mockListStatuses)
@@ -297,10 +365,16 @@ describe("Test probe candidate changeview", () => {
         changeObject: mockChangeObject
       }
     })
+    WebApi.mockImplementation(() => {
+      return {
+        fetchServiceTypes: () => Promise.resolve(mockServiceTypes)
+      }
+    })
   })
 
   test("Test that page renders properly", async () => {
     renderChangeView()
+
 
     expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
 
@@ -340,6 +414,77 @@ describe("Test probe candidate changeview", () => {
 
     expect(screen.getByText("submitted")).toBeEnabled()
 
+    expect(screen.queryByText("Some service type")).not.toBeInTheDocument()
+    expect(screen.queryByText("Meh service type")).not.toBeInTheDocument()
+
+    expect(screen.getByText("Test service type")).toBeEnabled()
+
+    selectEvent.openMenu(screen.getByText("Test service type"))
+    expect(screen.queryByText("Some service type")).toBeInTheDocument()
+    expect(screen.queryByText("Meh service type")).toBeInTheDocument()
+
+    expect(createdField.value).toBe("2023-05-22 09:59:59")
+    expect(createdField).toBeDisabled()
+
+    expect(updatedField.value).toBe("")
+    expect(updatedField).toBeDisabled()
+
+    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
+  })
+
+  test("Test that page renders properly if service types without titles", async () => {
+    renderChangeView2()
+
+    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /candidate/i }).textContent).toBe("Change probe candidate")
+    })
+
+    const nameField = screen.getByTestId("name")
+    const descriptionField = screen.getByLabelText(/description/i)
+    const docURLField = screen.queryByRole("link")
+    const rpmField = screen.getByTestId("rpm")
+    const yumBaseURLField = screen.getByTestId("yum_baseurl")
+    const commandField = screen.getByTestId("command")
+    const contactField = screen.getByTestId("contact")
+    const createdField = screen.getByTestId("created")
+    const updatedField = screen.getByTestId("last_update")
+
+    expect(nameField.value).toBe("test-probe")
+    expect(nameField).toBeEnabled()
+
+    expect(descriptionField.value).toBe("Description of the probe")
+    expect(descriptionField).toBeEnabled()
+
+    expect(docURLField.closest("a")).toHaveAttribute("href", "https://github.com/ARGOeu-Metrics/argo-probe-test")
+
+    expect(rpmField.value).toBe("argo-probe-test-0.1.0-1.el7.noarch.rpm")
+    expect(rpmField).toBeEnabled()
+
+    expect(yumBaseURLField.value).toBe("http://repo.example.com/devel/centos7/")
+    expect(yumBaseURLField).toBeEnabled()
+
+    expect(commandField.value).toBe("/usr/libexec/argo/probes/test/test-probe -H <hostname> -t <timeout> --test --flag1 --flag2")
+    expect(commandField).toBeEnabled()
+
+    expect(contactField.value).toBe("poem@example.com")
+    expect(contactField).toBeDisabled()
+
+    expect(screen.getByText("submitted")).toBeEnabled()
+
+    expect(screen.queryByText("some.service.type")).not.toBeInTheDocument()
+    expect(screen.queryByText("meh.service.type")).not.toBeInTheDocument()
+
+    expect(screen.getByText("test.service.type")).toBeEnabled()
+
+    selectEvent.openMenu(screen.getByText("test.service.type"))
+    expect(screen.queryByText("some.service.type")).toBeInTheDocument()
+    expect(screen.queryByText("meh.service.type")).toBeInTheDocument()
+
     expect(createdField.value).toBe("2023-05-22 09:59:59")
     expect(createdField).toBeDisabled()
 
@@ -375,6 +520,8 @@ describe("Test probe candidate changeview", () => {
 
     await selectEvent.select(screen.getByText("submitted"), "testing")
 
+    await selectEvent.select(screen.getByText("Test service type"), "Some service type")
+
     fireEvent.click(screen.getByRole("button", { name: /save/i }))
     await waitFor(() => {
       expect(screen.getByRole("dialog", { title: "change" })).toBeInTheDocument()
@@ -393,7 +540,177 @@ describe("Test probe candidate changeview", () => {
           yum_baseurl: "http://repo.example.com/devel/rocky8/",
           command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
           contact: "poem@example.com",
-          status: "testing"
+          status: "testing",
+          service_type: "Some service type"
+        }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Probe candidate successfully changed", "Changed", 2000
+    )
+  })
+
+  test("Test successfully changing probe candidate if service types have no titles", async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: "OK" })
+    )
+
+    renderChangeView2()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /candidate/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "some-probe" } })
+
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: "More elaborate description of the probe" } })
+
+    fireEvent.change(screen.getByTestId("rpm"), { target: { value: "argo-probe-test-0.1.1-1.el7.noarch.rpm" } })
+
+    fireEvent.change(screen.getByTestId("yum_baseurl"), { target: { value: "http://repo.example.com/devel/rocky8/" } })
+
+    fireEvent.change(screen.getByTestId("command"), { target: { value: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test" } })
+
+    await selectEvent.select(screen.getByText("submitted"), "testing")
+
+    await selectEvent.select(screen.getByText("test.service.type"), "some.service.type")
+
+    fireEvent.click(screen.getByRole("button", { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole("dialog", { title: "change" })).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole("button", { name: /yes/i }))
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/probecandidates/",
+        {
+          id: "3",
+          name: "some-probe",
+          description: "More elaborate description of the probe",
+          docurl: "https://github.com/ARGOeu-Metrics/argo-probe-test",
+          rpm: "argo-probe-test-0.1.1-1.el7.noarch.rpm",
+          yum_baseurl: "http://repo.example.com/devel/rocky8/",
+          command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
+          contact: "poem@example.com",
+          status: "testing",
+          service_type: "some.service.type"
+        }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Probe candidate successfully changed", "Changed", 2000
+    )
+  })
+
+  test("Test successfully changing probe candidate without service type", async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: "OK" })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /candidate/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "some-probe" } })
+
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: "More elaborate description of the probe" } })
+
+    fireEvent.change(screen.getByTestId("rpm"), { target: { value: "argo-probe-test-0.1.1-1.el7.noarch.rpm" } })
+
+    fireEvent.change(screen.getByTestId("yum_baseurl"), { target: { value: "http://repo.example.com/devel/rocky8/" } })
+
+    fireEvent.change(screen.getByTestId("command"), { target: { value: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test" } })
+
+    await selectEvent.clearAll(screen.getByText("Test service type"))
+
+    fireEvent.click(screen.getByRole("button", { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole("dialog", { title: "change" })).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole("button", { name: /yes/i }))
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/probecandidates/",
+        {
+          id: "2",
+          name: "some-probe",
+          description: "More elaborate description of the probe",
+          docurl: "https://github.com/ARGOeu-Metrics/argo-probe-test",
+          rpm: "argo-probe-test-0.1.1-1.el7.noarch.rpm",
+          yum_baseurl: "http://repo.example.com/devel/rocky8/",
+          command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
+          contact: "poem@example.com",
+          status: "submitted",
+          service_type: ""
+        }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Probe candidate successfully changed", "Changed", 2000
+    )
+  })
+
+  test("Test validation error when changing probe candidate without service type", async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: "OK" })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /candidate/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "some-probe" } })
+
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: "More elaborate description of the probe" } })
+
+    fireEvent.change(screen.getByTestId("rpm"), { target: { value: "argo-probe-test-0.1.1-1.el7.noarch.rpm" } })
+
+    fireEvent.change(screen.getByTestId("yum_baseurl"), { target: { value: "http://repo.example.com/devel/rocky8/" } })
+
+    fireEvent.change(screen.getByTestId("command"), { target: { value: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test" } })
+
+    await selectEvent.select(screen.getByText("submitted"), "testing")
+
+    await selectEvent.clearAll(screen.getByText("Test service type"))
+
+    fireEvent.click(screen.getByRole("button", { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { title: "change" })).not.toBeInTheDocument()
+    })
+
+    expect(screen.queryByText("Service type is required")).toBeInTheDocument()
+
+    await selectEvent.select(screen.getByText("Select..."), "Test service type")
+
+    fireEvent.click(screen.getByRole("button", { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole("dialog", { title: "change" })).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole("button", { name: /yes/i }))
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/probecandidates/",
+        {
+          id: "2",
+          name: "some-probe",
+          description: "More elaborate description of the probe",
+          docurl: "https://github.com/ARGOeu-Metrics/argo-probe-test",
+          rpm: "argo-probe-test-0.1.1-1.el7.noarch.rpm",
+          yum_baseurl: "http://repo.example.com/devel/rocky8/",
+          command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
+          contact: "poem@example.com",
+          status: "testing",
+          service_type: "Test service type"
         }
       )
     })
@@ -426,6 +743,8 @@ describe("Test probe candidate changeview", () => {
 
     await selectEvent.select(screen.getByText("submitted"), "testing")
 
+    await selectEvent.select(screen.getByText("Test service type"), "Some service type")
+
     fireEvent.click(screen.getByRole("button", { name: /save/i }))
     await waitFor(() => {
       expect(screen.getByRole("dialog", { title: "change" })).toBeInTheDocument()
@@ -444,7 +763,8 @@ describe("Test probe candidate changeview", () => {
           yum_baseurl: "http://repo.example.com/devel/rocky8/",
           command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
           contact: "poem@example.com",
-          status: "testing"
+          status: "testing",
+          service_type: "Some service type"
         }
       )
     })
@@ -501,7 +821,8 @@ describe("Test probe candidate changeview", () => {
           yum_baseurl: "http://repo.example.com/devel/rocky8/",
           command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
           contact: "poem@example.com",
-          status: "testing"
+          status: "testing",
+          service_type: "Test service type"
         }
       )
     })
