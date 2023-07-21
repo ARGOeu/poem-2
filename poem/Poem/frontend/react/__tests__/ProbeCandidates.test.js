@@ -889,6 +889,141 @@ describe("Test probe candidate changeview", () => {
     )
   })
 
+  test("Test validation error when changing probe candidate if invalid prod URL and not required", async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: "OK" })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /candidate/i })).toBeInTheDocument()
+    })
+
+    expect(screen.queryByText("Invalid URL")).not.toBeInTheDocument()
+    expect(screen.queryByText("Production UI URL is required")).not.toBeInTheDocument()
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "some-probe" } })
+
+    fireEvent.change(screen.getByTestId("devel_url"), { target: { value: "https://test.argo.grnet.gr/ui/status/test" } })
+
+    fireEvent.change(screen.getByTestId("production_url"), { target: { value: "production.argo.grnet.gr/ui/status/new" } })
+
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: "More elaborate description of the probe" } })
+
+    fireEvent.change(screen.getByTestId("rpm"), { target: { value: "argo-probe-test-0.1.1-1.el7.noarch.rpm" } })
+
+    fireEvent.change(screen.getByTestId("yum_baseurl"), { target: { value: "http://repo.example.com/devel/rocky8/" } })
+
+    fireEvent.change(screen.getByTestId("command"), { target: { value: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test" } })
+
+    await selectEvent.select(screen.getByText("submitted"), "testing")
+
+    await selectEvent.select(screen.getByText("Test service type"), "Some service type")
+
+    fireEvent.click(screen.getByRole("button", { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { title: "change" })).not.toBeInTheDocument()
+    })
+    expect(screen.queryByText("Invalid URL")).toBeInTheDocument()
+    expect(screen.queryByText("Production UI URL is required")).not.toBeInTheDocument()
+
+    fireEvent.change(screen.getByTestId("production_url"), { target: { value: "" } })
+
+    fireEvent.click(screen.getByRole("button", { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { title: "change" })).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole("button", { name: /yes/i }))
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/probecandidates/",
+        {
+          id: "2",
+          name: "some-probe",
+          description: "More elaborate description of the probe",
+          docurl: "https://github.com/ARGOeu-Metrics/argo-probe-test",
+          rpm: "argo-probe-test-0.1.1-1.el7.noarch.rpm",
+          yum_baseurl: "http://repo.example.com/devel/rocky8/",
+          command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
+          contact: "poem@example.com",
+          status: "testing",
+          service_type: "Some service type",
+          devel_url: "https://test.argo.grnet.gr/ui/status/test",
+          production_url: ""
+        }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Probe candidate successfully changed", "Changed", 2000
+    )
+  })
+
+  test("Test validation error when changing probe candidate with missing production URL", async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: "OK" })
+    )
+
+    renderChangeView3()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /candidate/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "prod-probe" } })
+
+
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: "More elaborate description of the probe" } })
+
+    fireEvent.change(screen.getByTestId("command"), { target: { value: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --flag" } })
+
+    await selectEvent.select(screen.getByText("testing"), "deployed")
+
+    expect(screen.queryByText("Invalid URL")).not.toBeInTheDocument()
+    expect(screen.queryByText("Production UI URL is required")).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("button", { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { title: "change" })).not.toBeInTheDocument()
+    })
+    expect(screen.queryByText("Invalid URL")).not.toBeInTheDocument()
+    expect(screen.queryByText("Production UI URL is required")).toBeInTheDocument()
+
+    fireEvent.change(screen.getByTestId("production_url"), { target: { value: "https://production.argo.grnet.gr/ui/status/new" } })
+
+    fireEvent.click(screen.getByRole("button", { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { title: "change" })).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole("button", { name: /yes/i }))
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/probecandidates/",
+        {
+          id: "1",
+          name: "prod-probe",
+          description: "More elaborate description of the probe",
+          docurl: "https://github.com/ARGOeu-Metrics/argo-probe-test",
+          rpm: "",
+          yum_baseurl: "",
+          command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --flag",
+          contact: "poem@example.com",
+          status: "deployed",
+          service_type: "Some service type",
+          devel_url: "https://test.argo.grnet.gr/ui/status/test",
+          production_url: "https://production.argo.grnet.gr/ui/status/new"
+        }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Probe candidate successfully changed", "Changed", 2000
+    )
+  })
+
   test("Test successfully changing probe candidate if service types have no titles", async () => {
     mockChangeObject.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200, statusText: "OK" })
