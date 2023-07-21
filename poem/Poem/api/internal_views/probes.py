@@ -452,6 +452,7 @@ class ListProbeCandidates(APIView):
                     name=request.data["status"]
                 )
                 candidate.service_type = request.data["service_type"]
+                candidate.devel_url = request.data["devel_url"]
                 candidate.save()
 
                 return Response(status=status.HTTP_201_CREATED)
