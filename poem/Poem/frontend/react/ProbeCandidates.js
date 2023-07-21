@@ -285,6 +285,24 @@ const ProbeCandidateForm = ({
             </Col>
           </Row>
           <Row>
+            <Col md={ 6 }>
+              <InputGroup>
+                <InputGroupText>Devel UI URL</InputGroupText>
+                <Controller
+                  name="devel_url"
+                  control={ control }
+                  render={ ({ field }) =>
+                    <Input
+                      { ...field }
+                      data-testid="devel_url"
+                      className="form-control"
+                    />
+                  }
+                />
+              </InputGroup>
+            </Col>
+          </Row>
+          <Row>
             <Col md={ 8 }>
               <Label for="description">Description</Label>
               <Controller
