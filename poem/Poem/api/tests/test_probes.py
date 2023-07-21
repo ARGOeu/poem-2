@@ -4561,7 +4561,8 @@ class ListProbeCandidatesTests(TenantTestCase):
             "contact": "meh@example.com",
             "status": "deployed",
             "service_type": "some.service.type",
-            "devel_url": "https://test.argo.grnet.gr/ui/status/new"
+            "devel_url": "https://test.argo.grnet.gr/ui/status/new",
+            "production_url": "https://production.argo.grnet.gr/ui/status/new",
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -4596,6 +4597,10 @@ class ListProbeCandidatesTests(TenantTestCase):
         self.assertEqual(
             candidate.devel_url, "https://test.argo.grnet.gr/ui/status/new"
         )
+        self.assertEqual(
+            candidate.production_url,
+            "https://production.argo.grnet.gr/ui/status/new"
+        )
 
     def test_put_probe_candidate_regular_user(self):
         data = {
@@ -4610,7 +4615,8 @@ class ListProbeCandidatesTests(TenantTestCase):
             "contact": "meh@example.com",
             "status": "deployed",
             "service_type": "some.service.type",
-            "devel_url": "https://test.argo.grnet.gr/ui/status/new"
+            "devel_url": "https://test.argo.grnet.gr/ui/status/new",
+            "production_url": "https://production.argo.grnet.gr/ui/status/new"
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -4649,6 +4655,7 @@ class ListProbeCandidatesTests(TenantTestCase):
         self.assertEqual(
             candidate.devel_url, "https://test.argo.grnet.gr/ui/status/test"
         )
+        self.assertEqual(candidate.production_url, None)
 
     def test_put_probe_candidate_nonexisting_id_superuser(self):
         data = {
@@ -4663,7 +4670,8 @@ class ListProbeCandidatesTests(TenantTestCase):
             "contact": "meh@example.com",
             "status": "deployed",
             "service_type": "some.service.type",
-            "devel_url": "https://test.argo.grnet.gr/ui/status/new"
+            "devel_url": "https://test.argo.grnet.gr/ui/status/new",
+            "production_url": "https://production.argo.grnet.gr/ui/status/new"
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -4685,7 +4693,8 @@ class ListProbeCandidatesTests(TenantTestCase):
             "contact": "meh@example.com",
             "status": "deployed",
             "service_type": "some.service.type",
-            "devel_url": "https://test.argo.grnet.gr/ui/status/new"
+            "devel_url": "https://test.argo.grnet.gr/ui/status/new",
+            "production_url": "https://production.argo.grnet.gr/ui/status/new"
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -4710,7 +4719,8 @@ class ListProbeCandidatesTests(TenantTestCase):
             "contact": "meh@example.com",
             "status": "nonexisting",
             "service_type": "some.service.type",
-            "devel_url": "https://test.argo.grnet.gr/ui/status/new"
+            "devel_url": "https://test.argo.grnet.gr/ui/status/new",
+            "production_url": "https://production.argo.grnet.gr/ui/status/new"
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -4748,6 +4758,7 @@ class ListProbeCandidatesTests(TenantTestCase):
         self.assertEqual(
             candidate.devel_url, "https://test.argo.grnet.gr/ui/status/test"
         )
+        self.assertEqual(candidate.production_url, None)
 
     def test_put_probe_candidate_nonexisting_status_regular_user(self):
         data = {
@@ -4762,7 +4773,8 @@ class ListProbeCandidatesTests(TenantTestCase):
             "contact": "meh@example.com",
             "status": "nonexisting",
             "service_type": "some.service.type",
-            "devel_url": "https://test.argo.grnet.gr/ui/status/new"
+            "devel_url": "https://test.argo.grnet.gr/ui/status/new",
+            "production_url": "https://production.argo.grnet.gr/ui/status/new"
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -4801,6 +4813,7 @@ class ListProbeCandidatesTests(TenantTestCase):
         self.assertEqual(
             candidate.devel_url, "https://test.argo.grnet.gr/ui/status/test"
         )
+        self.assertEqual(candidate.production_url, None)
 
 
 class ListProbeCandidateStatuses(TenantTestCase):
