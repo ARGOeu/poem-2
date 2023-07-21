@@ -44,6 +44,7 @@ const mockListProbeCandidates = [
     contact: "poem@example.com",
     status: "testing",
     service_type: "Some service type",
+    devel_url: "https://test.argo.grnet.gr/ui/status/test",
     created: "2023-05-22 09:55:48",
     last_update: "2023-05-22 10:00:23"
   },
@@ -58,6 +59,7 @@ const mockListProbeCandidates = [
     contact: "poem@example.com",
     status: "submitted",
     service_type: "Test service type",
+    devel_url: "",
     created: "2023-05-22 09:59:59",
     last_update: ""
   }
@@ -73,6 +75,7 @@ const mockProbeCandidateServiceTypeName = {
   command: "/usr/libexec/argo/probes/test/test-probe -H <hostname> -t <timeout> --test --flag1 --flag2",
   contact: "poem@example.com",
   status: "submitted",
+  devel_url: "",
   service_type: "test.service.type",
   created: "2023-05-22 09:59:59",
   last_update: ""
@@ -184,6 +187,29 @@ const renderChangeView2 = () => {
   }
 }
 
+
+const renderChangeView3 = () => {
+  const route = "/ui/administration/probecandidates/1"
+  const history = createMemoryHistory({ initialEntries: [route] })
+
+  return {
+    ...render(
+      <QueryClientProvider client={ queryClient }>
+        <Router history={ history }>
+          <Route
+            path="/ui/administration/probecandidates/:id"
+            render={ props => <ProbeCandidateChange 
+              { ...props } 
+              webapitoken="t0k3n"
+              webapiservicetypes="https://mock.service.types"
+              showtitles={ true }
+            /> }
+          />
+        </Router>
+      </QueryClientProvider>
+    )
+  }
+}
 
 describe("Test list of probe candidates", () => {
   beforeAll(() => {
@@ -351,6 +377,9 @@ describe("Test probe candidate changeview", () => {
       return {
         fetchData: (path) => {
           switch (path) {
+            case "/api/v2/internal/probecandidates/1":
+              return Promise.resolve(mockListProbeCandidates[0])
+
             case "/api/v2/internal/probecandidates/2":
               return Promise.resolve(mockListProbeCandidates[1])
             
@@ -375,7 +404,6 @@ describe("Test probe candidate changeview", () => {
   test("Test that page renders properly", async () => {
     renderChangeView()
 
-
     expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
 
     await waitFor(() => {
@@ -384,6 +412,7 @@ describe("Test probe candidate changeview", () => {
 
     const nameField = screen.getByTestId("name")
     const descriptionField = screen.getByLabelText(/description/i)
+    const develURLField = screen.getByTestId("devel_url")
     const docURLField = screen.queryByRole("link")
     const rpmField = screen.getByTestId("rpm")
     const yumBaseURLField = screen.getByTestId("yum_baseurl")
@@ -394,6 +423,9 @@ describe("Test probe candidate changeview", () => {
 
     expect(nameField.value).toBe("test-probe")
     expect(nameField).toBeEnabled()
+
+    expect(develURLField.value).toBe("")
+    expect(develURLField).toBeEnabled()
 
     expect(descriptionField.value).toBe("Description of the probe")
     expect(descriptionField).toBeEnabled()
@@ -435,6 +467,73 @@ describe("Test probe candidate changeview", () => {
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
   })
 
+  test("Test that page renders properly if candidate with devel URL", async () => {
+    renderChangeView3()
+
+    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /candidate/i }).textContent).toBe("Change probe candidate")
+    })
+
+    const nameField = screen.getByTestId("name")
+    const descriptionField = screen.getByLabelText(/description/i)
+    const develURLField = screen.getByTestId("devel_url")
+    const docURLField = screen.queryByRole("link")
+    const rpmField = screen.getByTestId("rpm")
+    const yumBaseURLField = screen.getByTestId("yum_baseurl")
+    const commandField = screen.getByTestId("command")
+    const contactField = screen.getByTestId("contact")
+    const createdField = screen.getByTestId("created")
+    const updatedField = screen.getByTestId("last_update")
+
+    expect(nameField.value).toBe("some-probe")
+    expect(nameField).toBeEnabled()
+
+    expect(develURLField.value).toBe("https://test.argo.grnet.gr/ui/status/test")
+    expect(develURLField).toBeEnabled()
+
+    expect(descriptionField.value).toBe("Some description for the test probe")
+    expect(descriptionField).toBeEnabled()
+
+    expect(docURLField.closest("a")).toHaveAttribute("href", "https://github.com/ARGOeu-Metrics/argo-probe-test")
+
+    expect(rpmField.value).toBe("")
+    expect(rpmField).toBeEnabled()
+
+    expect(yumBaseURLField.value).toBe("")
+    expect(yumBaseURLField).toBeEnabled()
+
+    expect(commandField.value).toBe("/usr/libexec/argo/probes/test/test-probe -H <hostname> -t <timeout> --test")
+    expect(commandField).toBeEnabled()
+
+    expect(contactField.value).toBe("poem@example.com")
+    expect(contactField).toBeDisabled()
+
+    expect(screen.getByText("testing")).toBeEnabled()
+
+    expect(screen.queryByText("Test service type")).not.toBeInTheDocument()
+    expect(screen.queryByText("Some service type")).toBeInTheDocument()
+    expect(screen.queryByText("Meh service type")).not.toBeInTheDocument()
+
+    expect(screen.queryByText("Some service type")).toBeEnabled()
+
+    selectEvent.openMenu(screen.getByText("Some service type"))
+    expect(screen.queryByText("Test service type")).toBeInTheDocument()
+    expect(screen.queryByText("Meh service type")).toBeInTheDocument()
+
+    expect(createdField.value).toBe("2023-05-22 09:55:48")
+    expect(createdField).toBeDisabled()
+
+    expect(updatedField.value).toBe("2023-05-22 10:00:23")
+    expect(updatedField).toBeDisabled()
+
+    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
+  })
+
   test("Test that page renders properly if service types without titles", async () => {
     renderChangeView2()
 
@@ -445,6 +544,7 @@ describe("Test probe candidate changeview", () => {
     })
 
     const nameField = screen.getByTestId("name")
+    const develURLField = screen.getByTestId("devel_url")
     const descriptionField = screen.getByLabelText(/description/i)
     const docURLField = screen.queryByRole("link")
     const rpmField = screen.getByTestId("rpm")
@@ -456,6 +556,9 @@ describe("Test probe candidate changeview", () => {
 
     expect(nameField.value).toBe("test-probe")
     expect(nameField).toBeEnabled()
+
+    expect(develURLField.value).toBe("")
+    expect(develURLField).toBeEnabled()
 
     expect(descriptionField.value).toBe("Description of the probe")
     expect(descriptionField).toBeEnabled()
