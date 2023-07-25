@@ -262,7 +262,7 @@ const ProbeCandidateForm = ({
               </InputGroup>
             </Col>
           </Row>
-          <Row>
+          <Row className="mb-2">
             <Col md={ 6 }>
               <InputGroup>
                 <InputGroupText>Service type</InputGroupText>
@@ -284,13 +284,16 @@ const ProbeCandidateForm = ({
                   }
                 />
               </InputGroup>
+              <FormText color="muted">
+                Suggested service type for testing
+              </FormText>
               {
                 errors?.service_type &&
                   <CustomError error={ errors?.service_type.message } />
               }
             </Col>
           </Row>
-          <Row>
+          <Row className="mb-2">
             <Col md={ 6 }>
               <InputGroup>
                 <InputGroupText>Devel UI URL</InputGroupText>
@@ -315,6 +318,9 @@ const ProbeCandidateForm = ({
                   }
                 />
               </InputGroup>
+              <FormText color="muted">
+                URL showing the results of probe testing
+              </FormText>
             </Col>
           </Row>
           <Row>
