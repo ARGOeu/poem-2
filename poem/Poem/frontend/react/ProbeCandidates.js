@@ -327,7 +327,7 @@ const ProbeCandidateForm = ({
               </FormText>
             </Col>
           </Row>
-          <Row>
+          <Row className="mb-2">
             <Col md={ 6 }>
               <InputGroup>
                 <InputGroupText>Production UI URL</InputGroupText>
@@ -352,6 +352,9 @@ const ProbeCandidateForm = ({
                   }
                 />
               </InputGroup>
+              <FormText color="muted">
+                URL showing the results of deployed probe
+              </FormText>
             </Col>
           </Row>
           <Row>
