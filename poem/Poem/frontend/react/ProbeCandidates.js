@@ -266,6 +266,29 @@ const ProbeCandidateForm = ({
               </InputGroup>
             </Col>
           </Row>
+          <Row>
+            <Col md={ 8 }>
+              <Label for="description">Description</Label>
+              <Controller
+                name="description"
+                control={ control }
+                render={ ({ field }) =>
+                  <textarea
+                    { ...field }
+                    id="description"
+                    rows="10"
+                    className="form-control"
+                  />
+                }
+              />
+            </Col>
+            <FormText color="muted">
+              Free text description outlining the purpose of this probe.
+            </FormText>
+          </Row>
+        </FormGroup>
+        <ParagraphTitle title="Admin info" />
+        <FormGroup>
           <Row className="mb-2">
             <Col md={ 6 }>
               <InputGroup>
@@ -356,26 +379,6 @@ const ProbeCandidateForm = ({
                 URL showing the results of deployed probe
               </FormText>
             </Col>
-          </Row>
-          <Row>
-            <Col md={ 8 }>
-              <Label for="description">Description</Label>
-              <Controller
-                name="description"
-                control={ control }
-                render={ ({ field }) =>
-                  <textarea
-                    { ...field }
-                    id="description"
-                    rows="10"
-                    className="form-control"
-                  />
-                }
-              />
-            </Col>
-            <FormText color="muted">
-              Free text description outlining the purpose of this probe.
-            </FormText>
           </Row>
         </FormGroup>
         <ParagraphTitle title="Creation info"/>
