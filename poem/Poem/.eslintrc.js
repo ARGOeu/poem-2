@@ -1,8 +1,9 @@
 module.exports = {
-    parser: "babel-eslint",
+    parser: "@babel/eslint-parser",
     "env": {
-        "browser": true,
-        "es6": true
+    "jest": true,
+          "browser": true,
+          "es6": true
     },
     "extends": [
         "eslint:recommended",
@@ -21,7 +22,7 @@ module.exports = {
     "plugins": [
         "react",
         "react-hooks",
-         "@getify/proper-arrows"
+        "@getify/proper-arrows"
     ],
     "rules": {
         "no-unused-vars": ["error", { "vars": "all", "args": "after-used", "ignoreRestSiblings": false }],

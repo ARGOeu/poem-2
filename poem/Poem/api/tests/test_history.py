@@ -1,16 +1,19 @@
 import datetime
 import json
 
+import factory
 from Poem.api import views_internal as views
 from Poem.poem_super_admin import models as admin_models
 from Poem.users.models import CustUser
+from django.db.models.signals import pre_save
+from django_tenants.test.cases import TenantTestCase
+from django_tenants.test.client import TenantRequestFactory
 from rest_framework import status
 from rest_framework.test import force_authenticate
-from tenant_schemas.test.cases import TenantTestCase
-from tenant_schemas.test.client import TenantRequestFactory
 
 
 class ListVersionsAPIViewTests(TenantTestCase):
+    @factory.django.mute_signals(pre_save)
     def setUp(self):
         self.factory = TenantRequestFactory(self.tenant)
         self.view = views.ListVersions.as_view()
@@ -572,7 +575,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                     ),
                     'comment': 'Changed name.',
                     'version': datetime.datetime.strftime(
-                        self.ver7.date_created, '%Y-%m-%d %H:%M:%S'
+                        self.ver7.date_created, '%Y%m%d-%H%M%S'
                     )
                 },
                 {
@@ -604,7 +607,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                     ),
                     'comment': 'Initial version.',
                     'version': datetime.datetime.strftime(
-                        self.ver6.date_created, '%Y-%m-%d %H:%M:%S'
+                        self.ver6.date_created, '%Y%m%d-%H%M%S'
                     )
                 }
             ]

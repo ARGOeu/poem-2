@@ -1,5 +1,5 @@
-from django.urls import path
 from django.conf.urls import include
+from django.urls import path
 
 from . import views
 
@@ -9,7 +9,13 @@ urlpatterns = [
     path('metrics/', views.ListMetrics.as_view()),
     path('metrics/<str:tag>/', views.ListMetrics.as_view()),
     path('repos/', views.ListRepos.as_view()),
-    path('repos/<str:profile>/', views.ListRepos.as_view()),
     path('repos/<str:tag>', views.ListRepos.as_view()),
+    path("repos_internal/", views.ListReposInternal.as_view()),
+    path("repos_internal/<str:tag>", views.ListReposInternal.as_view()),
+    path('metrictemplates/', views.ListMetricTemplates.as_view()),
+    path('metrictemplates/<str:tag>', views.ListMetricTemplates.as_view()),
+    path('metricoverrides/', views.ListMetricOverrides.as_view()),
+    path('default_ports/', views.ListDefaultPorts.as_view()),
+    path("probes/", views.ProbeCandidateAPI.as_view()),
     path('internal/', include('Poem.api.urls_internal', namespace='internal'))
 ]

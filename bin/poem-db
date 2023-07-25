@@ -36,9 +36,9 @@ do
             su -m -s /bin/sh $RUNASUSER -c \
             "poem-manage migrate_schemas --shared"
             su -m -s /bin/sh $RUNASUSER -c \
-            "poem-manage create_tenant --name all"
+            "poem-manage poem_create_tenant --name all"
             su -m -s /bin/sh $RUNASUSER -c \
-            "poem-manage tenant_command --schema=public loaddata initial_data_public.json "
+            "poem-manage tenant_command loaddata initial_data_public.json --schema=public"
             ;;
         u)
             while getopts 'n:' OPTION2
@@ -48,7 +48,7 @@ do
                 esac
             done
             su -m -s /bin/sh $RUNASUSER -c \
-            "poem-manage tenant_command --schema=$schema poem_superuser "
+            "poem-manage tenant_command poem_superuser --schema=$schema"
              ;;
         m)
             poem-manage makemigrations poem
@@ -76,7 +76,7 @@ do
                 esac
             done
             su -m -s /bin/sh $RUNASUSER -c \
-            "poem-manage tenant_command --schema=$schema clearsessions "
+            "poem-manage tenant_command clearsessions --schema=$schema"
             ;;
         o)
             su -m -s /bin/sh $RUNASUSER -c \
@@ -93,7 +93,7 @@ do
                 esac
             done
             su -m -s /bin/sh $RUNASUSER -c \
-            "poem-manage tenant_command --schema=$schema loaddata initial_data.json "
+            "poem-manage tenant_command loaddata initial_data.json --schema=$schema"
             ;;
         d)
             while getopts 'n:f:' OPTION2
@@ -106,7 +106,7 @@ do
                 esac
             done
             su -m -s /bin/sh $RUNASUSER -c \
-            "poem-manage tenant_command --schema=$schema loaddata $filename"
+            "poem-manage tenant_command loaddata $filename --schema=$schema"
             ;;
         p)
             while getopts 'n:f:' OPTION2
@@ -120,9 +120,9 @@ do
             done
             if [[ $schema == 'public' ]]
             then
-              poem-manage tenant_command --schema=$schema dumpdata --indent 2 --natural-foreign --natural-primary --exclude tenants.tenant > $filename
+              poem-manage tenant_command dumpdata --indent 2 --natural-foreign --natural-primary --exclude tenants.tenant --exclude tenants.domain > $filename --schema=$schema
             else
-              poem-manage tenant_command --schema=$schema dumpdata --indent 2 --natural-foreign --natural-primary  > $filename
+              poem-manage tenant_command dumpdata --indent 2 --natural-foreign --natural-primary  > $filename --schema=$schema
             fi
             ;;
         i)
@@ -138,7 +138,7 @@ do
               exit 1
             else
               su -m -s /bin/sh $RUNASUSER -c \
-              "poem-manage tenant_command --schema=$schema import_internal_metrics"
+              "poem-manage tenant_command import_internal_metrics --schema=$schema"
             fi
             ;;
         h)

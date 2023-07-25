@@ -2,26 +2,68 @@ import datetime
 import json
 from unittest.mock import patch
 
+import factory.django
 from Poem.api.internal_views.utils import sync_webapi, \
-    get_tenant_resources
-from Poem.api.models import MyAPIKey
+    get_tenant_resources, sync_tags_webapi, WebApiException
 from Poem.helpers.history_helpers import create_comment
+from Poem.helpers.history_helpers import serialize_metric
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
+from Poem.poem_super_admin.models import WebAPIKey
 from Poem.users.models import CustUser
 from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
-from tenant_schemas.test.cases import TenantTestCase
-from tenant_schemas.utils import get_public_schema_name
+from django.db.models.signals import pre_save
+from django_tenants.test.cases import TenantTestCase
+from django_tenants.utils import get_public_schema_name
 
-from .utils_test import mocked_web_api_request
+from .test_views import mock_db_for_metrics_tests
+from .utils_test import mocked_web_api_request, MockResponse
+
+
+def mocked_put_response(*args, **kwargs):
+    return MockResponse({
+        "data": [
+            {
+                "name": "metric1",
+                "tags": [
+                    "tag1",
+                    "tag2"
+                ]
+            }
+        ]
+    }, 200)
+
+
+def mocked_put_response_not_ok(*args, **kwargs):
+    return MockResponse(
+        {
+            "status": {
+                "message": "Bad Request",
+                "code": "400"
+            },
+            "errors": [
+                {
+                    "message": "Bad Request",
+                    "code": "400",
+                    "details": "There has been an error"
+                }
+            ]
+        }, 400
+    )
+
+
+def mocked_put_response_not_ok_no_msg(*args, **kwargs):
+    return MockResponse(None, 500)
 
 
 class SyncWebApiTests(TenantTestCase):
     def setUp(self):
+        self.tenant.name = "TENANT"
+        self.tenant.save()
         ct_mp = ContentType.objects.get_for_model(poem_models.MetricProfiles)
-        MyAPIKey.objects.create(
-            name='WEB-API',
+        WebAPIKey.objects.create(
+            name='WEB-API-TENANT',
             token='mocked_token'
         )
 
@@ -113,7 +155,7 @@ class SyncWebApiTests(TenantTestCase):
     def test_sync_webapi_metricprofiles(self, func):
         func.side_effect = mocked_web_api_request
         self.assertEqual(poem_models.MetricProfiles.objects.all().count(), 2)
-        sync_webapi('metric_profiles', poem_models.MetricProfiles)
+        sync_webapi('metric_profiles', poem_models.MetricProfiles, "TENANT")
         self.assertEqual(poem_models.MetricProfiles.objects.all().count(), 2)
         self.assertEqual(
             poem_models.MetricProfiles.objects.get(name='TEST_PROFILE'),
@@ -151,7 +193,7 @@ class SyncWebApiTests(TenantTestCase):
     def test_sync_webapi_aggregationprofiles(self, func):
         func.side_effect = mocked_web_api_request
         self.assertEqual(poem_models.Aggregation.objects.all().count(), 2)
-        sync_webapi('aggregation_profiles', poem_models.Aggregation)
+        sync_webapi('aggregation_profiles', poem_models.Aggregation, "TENANT")
         self.assertEqual(poem_models.Aggregation.objects.all().count(), 2)
         self.assertEqual(
             poem_models.Aggregation.objects.get(name='TEST_PROFILE'), self.aggr1
@@ -169,7 +211,9 @@ class SyncWebApiTests(TenantTestCase):
         self.assertEqual(
             poem_models.ThresholdsProfiles.objects.all().count(), 2
         )
-        sync_webapi('thresholds_profiles', poem_models.ThresholdsProfiles)
+        sync_webapi(
+            'thresholds_profiles', poem_models.ThresholdsProfiles, "TENANT"
+        )
         self.assertEqual(
             poem_models.ThresholdsProfiles.objects.all().count(), 2
         )
@@ -184,15 +228,180 @@ class SyncWebApiTests(TenantTestCase):
         )
 
 
-class BasicResourceInfoTests(TenantTestCase):
+class SyncWebApiTagsTests(TenantTestCase):
     def setUp(self) -> None:
+        self.tenant.name = "TENANT"
+        self.tenant.save()
+
+        mock_db_for_metrics_tests()
+
+        WebAPIKey.objects.create(
+            name='WEB-API-ADMIN',
+            token='mocked_token'
+        )
+
+    @patch("requests.put")
+    def test_sync_tags(self, mock_put):
+        with self.settings(
+            WEBAPI_METRICSTAGS="https://metric.tags.com"
+        ):
+            mock_put.side_effect = mocked_put_response
+
+            sync_tags_webapi()
+
+            mock_put.assert_called_with(
+                "https://metric.tags.com",
+                headers={
+                    "x-api-key": "mocked_token",
+                    "Accept": "application/json"
+                },
+                data=json.dumps([
+                    {
+                        "name": "argo.AMSPublisher-Check",
+                        "tags": [
+                            "internal",
+                            "test_tag1"
+                        ]
+                    },
+                    {
+                        "name": "hr.srce.CertLifetime-Local",
+                        "tags": [
+                            "internal"
+                        ]
+                    },
+                    {
+                        "name": "org.apel.APEL-Pub",
+                        "tags": []
+                    },
+                    {
+                        "name": "test.AMS-Check",
+                        "tags": [
+                            "test_tag1",
+                            "test_tag2"
+                        ]
+                    },
+                    {
+                        "name": "test.EMPTY-metric",
+                        "tags": []
+                    }
+                ])
+            )
+
+    @patch("requests.put")
+    def test_sync_tags_with_error(self, mock_put):
+        with self.settings(
+            WEBAPI_METRICSTAGS="https://metric.tags.com"
+        ):
+            mock_put.side_effect = mocked_put_response_not_ok
+
+            with self.assertRaises(WebApiException) as context:
+                sync_tags_webapi()
+
+            mock_put.assert_called_with(
+                "https://metric.tags.com",
+                headers={
+                    "x-api-key": "mocked_token",
+                    "Accept": "application/json"
+                },
+                data=json.dumps([
+                    {
+                        "name": "argo.AMSPublisher-Check",
+                        "tags": [
+                            "internal",
+                            "test_tag1"
+                        ]
+                    },
+                    {
+                        "name": "hr.srce.CertLifetime-Local",
+                        "tags": [
+                            "internal"
+                        ]
+                    },
+                    {
+                        "name": "org.apel.APEL-Pub",
+                        "tags": []
+                    },
+                    {
+                        "name": "test.AMS-Check",
+                        "tags": [
+                            "test_tag1",
+                            "test_tag2"
+                        ]
+                    },
+                    {
+                        "name": "test.EMPTY-metric",
+                        "tags": []
+                    }
+                ])
+            )
+
+            self.assertEqual(
+                context.exception.__str__(),
+                "Error syncing metric tags: 400 BAD REQUEST: "
+                "There has been an error"
+            )
+
+    @patch("requests.put")
+    def test_sync_tags_with_error_without_msg(self, mock_put):
+        with self.settings(
+            WEBAPI_METRICSTAGS="https://metric.tags.com"
+        ):
+            mock_put.side_effect = mocked_put_response_not_ok_no_msg
+
+            with self.assertRaises(WebApiException) as context:
+                sync_tags_webapi()
+
+            mock_put.assert_called_with(
+                "https://metric.tags.com",
+                headers={
+                    "x-api-key": "mocked_token",
+                    "Accept": "application/json"
+                },
+                data=json.dumps([
+                    {
+                        "name": "argo.AMSPublisher-Check",
+                        "tags": [
+                            "internal",
+                            "test_tag1"
+                        ]
+                    },
+                    {
+                        "name": "hr.srce.CertLifetime-Local",
+                        "tags": [
+                            "internal"
+                        ]
+                    },
+                    {
+                        "name": "org.apel.APEL-Pub",
+                        "tags": []
+                    },
+                    {
+                        "name": "test.AMS-Check",
+                        "tags": [
+                            "test_tag1",
+                            "test_tag2"
+                        ]
+                    },
+                    {
+                        "name": "test.EMPTY-metric",
+                        "tags": []
+                    }
+                ])
+            )
+
+            self.assertEqual(
+                context.exception.__str__(),
+                "Error syncing metric tags: 500 SERVER ERROR"
+            )
+
+
+@factory.django.mute_signals(pre_save)
+class BasicResourceInfoTests(TenantTestCase):
+    def setUp(self):
         user = CustUser.objects.create_user(username='testuser')
 
         mtype1 = admin_models.MetricTemplateType.objects.create(name='Active')
         mtype2 = admin_models.MetricTemplateType.objects.create(name='Passive')
-
-        mtype3 = poem_models.MetricType.objects.create(name='Active')
-        mtype4 = poem_models.MetricType.objects.create(name='Passive')
 
         ct = ContentType.objects.get_for_model(poem_models.Metric)
 
@@ -326,6 +535,7 @@ class BasicResourceInfoTests(TenantTestCase):
             name=metrictemplate1.name,
             mtype=metrictemplate1.mtype,
             probekey=metrictemplate1.probekey,
+            parent=metrictemplate1.parent,
             description=metrictemplate1.description,
             probeexecutable=metrictemplate1.probeexecutable,
             config=metrictemplate1.config,
@@ -346,6 +556,7 @@ class BasicResourceInfoTests(TenantTestCase):
             mtype=metrictemplate2.mtype,
             description=metrictemplate2.description,
             probekey=metrictemplate2.probekey,
+            parent=metrictemplate2.parent,
             probeexecutable=metrictemplate2.probeexecutable,
             config=metrictemplate2.config,
             attribute=metrictemplate2.attribute,
@@ -402,6 +613,7 @@ class BasicResourceInfoTests(TenantTestCase):
             mtype=metrictemplate3.mtype,
             description=metrictemplate3.description,
             probekey=metrictemplate3.probekey,
+            parent=metrictemplate3.parent,
             probeexecutable=metrictemplate3.probeexecutable,
             config=metrictemplate3.config,
             attribute=metrictemplate3.attribute,
@@ -420,27 +632,14 @@ class BasicResourceInfoTests(TenantTestCase):
         metric1 = poem_models.Metric.objects.create(
             name=metrictemplate1.name,
             group=group,
-            mtype=mtype3,
-            description=metrictemplate1.description,
-            probekey=metrictemplate1.probekey,
-            probeexecutable=metrictemplate1.probeexecutable,
-            config=metrictemplate1.config,
-            attribute=metrictemplate1.attribute,
-            dependancy=metrictemplate1.dependency,
-            flags=metrictemplate1.flags,
-            files=metrictemplate1.files,
-            parameter=metrictemplate1.parameter,
-            fileparameter=metrictemplate1.fileparameter,
+            probeversion=metrictemplate1.probekey.__str__(),
+            config=metrictemplate1.config
         )
 
         poem_models.TenantHistory.objects.create(
             object_id=metric1.id,
             object_repr=metric1.__str__(),
-            serialized_data=serializers.serialize(
-                'json', [metric1],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
-            ),
+            serialized_data=serialize_metric(metric1),
             content_type=ct,
             date_created=datetime.datetime.now(),
             comment='Initial version.',
@@ -450,27 +649,14 @@ class BasicResourceInfoTests(TenantTestCase):
         metric2 = poem_models.Metric.objects.create(
             name=metrictemplate2.name,
             group=group,
-            mtype=mtype4,
-            description=metrictemplate2.description,
-            probekey=metrictemplate2.probekey,
-            probeexecutable=metrictemplate2.probeexecutable,
-            config=metrictemplate2.config,
-            attribute=metrictemplate2.attribute,
-            dependancy=metrictemplate2.dependency,
-            flags=metrictemplate2.flags,
-            files=metrictemplate2.files,
-            parameter=metrictemplate2.parameter,
-            fileparameter=metrictemplate2.fileparameter,
+            probeversion=metrictemplate2.probekey.__str__(),
+            config=metrictemplate2.config
         )
 
         poem_models.TenantHistory.objects.create(
             object_id=metric2.id,
             object_repr=metric2.__str__(),
-            serialized_data=serializers.serialize(
-                'json', [metric2],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
-            ),
+            serialized_data=serialize_metric(metric2),
             content_type=ct,
             date_created=datetime.datetime.now(),
             comment='Initial version.',

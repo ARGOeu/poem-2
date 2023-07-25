@@ -1,15 +1,17 @@
-from collections import OrderedDict
+import datetime
+import os
 from unittest.mock import patch
 
 import pkg_resources
 from Poem.api import views_internal as views
-from Poem.api.models import MyAPIKey
+from Poem.api.internal_views.app import get_use_service_titles
 from Poem.poem import models as poem_models
+from Poem.poem_super_admin.models import WebAPIKey
 from Poem.users.models import CustUser
+from django_tenants.test.cases import TenantTestCase
+from django_tenants.test.client import TenantRequestFactory
+from django_tenants.utils import get_public_schema_name
 from rest_framework.test import force_authenticate
-from tenant_schemas.test.cases import TenantTestCase
-from tenant_schemas.test.client import TenantRequestFactory
-from tenant_schemas.utils import get_public_schema_name
 
 
 class ListGroupsForUserAPIViewTests(TenantTestCase):
@@ -42,11 +44,15 @@ class ListGroupsForUserAPIViewTests(TenantTestCase):
             name='thresholdsgroup2'
         )
 
+        poem_models.GroupOfReports.objects.create(name='reportsgroup1')
+        gr = poem_models.GroupOfReports.objects.create(name='reportsgroup2')
+
         userprofile = poem_models.UserProfile.objects.create(user=self.user)
         userprofile.groupsofmetrics.add(gm1)
         userprofile.groupsofmetricprofiles.add(gmp1)
         userprofile.groupsofaggregations.add(ga1)
         userprofile.groupsofthresholdsprofiles.add(gtp1)
+        userprofile.groupsofreports.add(gr)
 
     def test_list_all_groups(self):
         request = self.factory.get(self.url)
@@ -60,6 +66,7 @@ class ListGroupsForUserAPIViewTests(TenantTestCase):
                     'metrics': ['metricgroup1', 'metricgroup2'],
                     'metricprofiles': ['metricprofilegroup1',
                                        'metricprofilegroup2'],
+                    'reports': ['reportsgroup1', 'reportsgroup2'],
                     'thresholdsprofiles': ['thresholdsgroup1',
                                            'thresholdsgroup2']
                 }
@@ -77,6 +84,7 @@ class ListGroupsForUserAPIViewTests(TenantTestCase):
                     'aggregations': ['aggrgroup2'],
                     'metrics': ['metricgroup2'],
                     'metricprofiles': ['metricprofilegroup2'],
+                    'reports': ['reportsgroup2'],
                     'thresholdsprofiles': ['thresholdsgroup2']
                 }
             }
@@ -162,16 +170,33 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
         self.url = '/api/v2/internal/config_options/'
         self.user = CustUser.objects.create(username='testuser')
 
+    @patch(
+        "Poem.api.internal_views.app.get_use_service_titles",
+        return_value=True
+    )
     @patch('Poem.api.internal_views.app.saml_login_string',
            return_value='Log in using B2ACCESS')
     @patch('Poem.api.internal_views.app.tenant_from_request',
-           return_value='Tenant')
+           return_value='tenant')
     def test_get_config_options(self, *args):
-        with self.settings(WEBAPI_METRIC='https://metric.profile.com',
-                           WEBAPI_AGGREGATION='https://aggregations.com',
-                           WEBAPI_THRESHOLDS='https://thresholds.com',
-                           WEBAPI_OPERATIONS='https://operations.com',
-                           WEBAPI_REPORTS='https://reports.com'):
+        with self.settings(
+            WEBAPI_METRIC='https://metric.profile.com',
+            WEBAPI_AGGREGATION='https://aggregations.com',
+            WEBAPI_THRESHOLDS='https://thresholds.com',
+            WEBAPI_OPERATIONS='https://operations.com',
+            WEBAPI_REPORTS='https://reports.com',
+            WEBAPI_REPORTSTAGS='https://reports-tags.com',
+            WEBAPI_REPORTSTOPOLOGYGROUPS='https://topology-groups.com',
+            WEBAPI_REPORTSTOPOLOGYENDPOINTS='https://endpoints.com',
+            WEBAPI_SERVICETYPES='https://topology-servicetypes.com',
+            WEBAPI_DATAFEEDS="https://data.feeds.com",
+            LINKS_TERMS_PRIVACY={
+                'tenant': {
+                    'terms': 'https://terms.of.use.com',
+                    'privacy': 'https://privacy.policies.com'
+                }
+            }
+        ):
             request = self.factory.get(self.url)
             response = self.view(request)
             self.assertEqual(
@@ -183,9 +208,24 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
                         'webapiaggregation': 'https://aggregations.com',
                         'webapithresholds': 'https://thresholds.com',
                         'webapioperations': 'https://operations.com',
-                        'version': pkg_resources.get_distribution('poem').version,
-                        'webapireports': 'https://reports.com',
-                        'tenant_name': 'Tenant'
+                        'version': pkg_resources.get_distribution(
+                            'poem'
+                        ).version,
+                        'webapireports': {
+                            'main': 'https://reports.com',
+                            'tags': 'https://reports-tags.com',
+                            'topologygroups': 'https://topology-groups.com',
+                            'topologyendpoints': 'https://endpoints.com'
+                        },
+                        'webapiservicetypes':
+                            'https://topology-servicetypes.com',
+                        "webapidatafeeds": "https://data.feeds.com",
+                        'tenant_name': 'tenant',
+                        'terms_privacy_links': {
+                            'terms': 'https://terms.of.use.com',
+                            'privacy': 'https://privacy.policies.com'
+                        },
+                        "use_service_title": True
                     }
                 }
             )
@@ -193,6 +233,8 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
 
 class GetSessionDetailsAPIViewTests(TenantTestCase):
     def setUp(self):
+        self.tenant.name = "TENANT"
+        self.tenant.save()
         self.factory = TenantRequestFactory(self.tenant)
         self.view = views.IsSessionActive.as_view()
         self.url = '/api/v2/internal/sessionactive/'
@@ -204,17 +246,41 @@ class GetSessionDetailsAPIViewTests(TenantTestCase):
             displayname='First_User',
             egiid='blablabla'
         )
-        MyAPIKey.objects.create(
+        WebAPIKey.objects.create(
             id=1,
-            name='WEB-API',
-            prefix='foo',
-            token='mocked_token_rw'
+            name='WEB-API-TENANT',
+            token='mocked_token_rw',
+            prefix="prefix1"
         )
-        MyAPIKey.objects.create(
+        WebAPIKey.objects.create(
             id=2,
-            name='WEB-API-RO',
+            name='WEB-API-TENANT-RO',
             token='mocked_token_ro',
-            prefix='bar'
+            prefix="prefix2"
+        )
+        WebAPIKey.objects.create(
+            id=3,
+            name="WEB-API-TENANT1",
+            token="mock_tenant1_rw_token",
+            prefix="prefix3"
+        )
+        WebAPIKey.objects.create(
+            id=4,
+            name="WEB-API-TENANT1-RO",
+            token="mock_tenant1_ro_token",
+            prefix="prefix4"
+        )
+        WebAPIKey.objects.create(
+            id=5,
+            name="WEB-API-TENANT2",
+            token="mock_tenant2_rw_token",
+            prefix="prefix5"
+        )
+        WebAPIKey.objects.create(
+            id=6,
+            name="WEB-API-TENANT2-RO",
+            token="mock_tenant2_ro_token",
+            prefix="prefix6"
         )
 
     def test_unauth(self):
@@ -235,32 +301,189 @@ class GetSessionDetailsAPIViewTests(TenantTestCase):
         gtp = poem_models.GroupOfThresholdsProfiles.objects.create(
             name='GROUP-thresholds'
         )
+        gr = poem_models.GroupOfReports.objects.create(name='GROUP-reports')
 
         self.userprofile.groupsofmetrics.add(gm)
         self.userprofile.groupsofaggregations.add(ga)
         self.userprofile.groupsofmetricprofiles.add(gmp)
         self.userprofile.groupsofthresholdsprofiles.add(gtp)
+        self.userprofile.groupsofreports.add(gr)
 
         request = self.factory.get(self.url + 'true')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request, 'true')
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.data['active'])
-        self.assertFalse(response.data['userdetails']['is_superuser'])
-        self.assertEqual(response.data['userdetails']['username'], 'testuser')
-        self.assertEqual(response.data['userdetails']['groups'], OrderedDict([
-            ('aggregations', ['GROUP-aggregations']),
-            ('metricprofiles', ['GROUP-metricprofiles']),
-            ('metrics', ['GROUP-metrics']),
-            ('thresholdsprofiles', ['GROUP-thresholds'])]
-        ))
-        self.assertEqual(response.data['userdetails']['token'], 'mocked_token_rw')
+        self.assertEqual(
+            response.data,
+            {
+                "active": True,
+                "userdetails": {
+                    "first_name": "",
+                    "last_name": "",
+                    "username": "testuser",
+                    "is_superuser": False,
+                    "is_active": True,
+                    "email": "",
+                    "date_joined": datetime.datetime.strftime(
+                        self.user.date_joined, "%Y-%m-%dT%H:%M:%S.%f"
+                    ),
+                    "pk": self.user.id,
+                    "groups": {
+                        "aggregations": ["GROUP-aggregations"],
+                        "metricprofiles": ["GROUP-metricprofiles"],
+                        "metrics": ["GROUP-metrics"],
+                        "reports": ["GROUP-reports"],
+                        "thresholdsprofiles": ["GROUP-thresholds"]
+                    },
+                    "token": "mocked_token_rw"
+                },
+                "tenantdetails": {
+                    "combined": False,
+                    "tenants": {}
+                }
+            }
+        )
 
-    def test_auth_readonly(self):
+    @patch("Poem.api.internal_views.app.CombinedTenant.tenants")
+    def test_auth_crud_combined_tenant(self, mock_tenants):
+        mock_tenants.return_value = ["TENANT1", "TENANT2"]
+        self.tenant.combined = True
+        self.tenant.save()
+        gm = poem_models.GroupOfMetrics.objects.create(
+            name='GROUP-metrics'
+        )
+        ga = poem_models.GroupOfAggregations.objects.create(
+            name='GROUP-aggregations'
+        )
+        gmp = poem_models.GroupOfMetricProfiles.objects.create(
+            name='GROUP-metricprofiles'
+        )
+        gtp = poem_models.GroupOfThresholdsProfiles.objects.create(
+            name='GROUP-thresholds'
+        )
+        gr = poem_models.GroupOfReports.objects.create(name='GROUP-reports')
+
+        self.userprofile.groupsofmetrics.add(gm)
+        self.userprofile.groupsofaggregations.add(ga)
+        self.userprofile.groupsofmetricprofiles.add(gmp)
+        self.userprofile.groupsofthresholdsprofiles.add(gtp)
+        self.userprofile.groupsofreports.add(gr)
+
         request = self.factory.get(self.url + 'true')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request, 'true')
-        self.assertEqual(response.data['userdetails']['token'], 'mocked_token_ro')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.data,
+            {
+                "active": True,
+                "userdetails": {
+                    "first_name": "",
+                    "last_name": "",
+                    "username": "testuser",
+                    "is_superuser": False,
+                    "is_active": True,
+                    "email": "",
+                    "date_joined": datetime.datetime.strftime(
+                        self.user.date_joined, "%Y-%m-%dT%H:%M:%S.%f"
+                    ),
+                    "pk": self.user.id,
+                    "groups": {
+                        "aggregations": ["GROUP-aggregations"],
+                        "metricprofiles": ["GROUP-metricprofiles"],
+                        "metrics": ["GROUP-metrics"],
+                        "reports": ["GROUP-reports"],
+                        "thresholdsprofiles": ["GROUP-thresholds"]
+                    },
+                    "token": "mocked_token_rw"
+                },
+                "tenantdetails": {
+                    "combined": True,
+                    "tenants": {
+                        "TENANT1": "mock_tenant1_ro_token",
+                        "TENANT2": "mock_tenant2_ro_token"
+                    }
+                }
+            }
+        )
+
+    def test_auth_readonly(self):
+        self.tenant.combined = False
+        self.tenant.save()
+        request = self.factory.get(self.url + 'true')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'true')
+        self.assertEqual(
+            response.data,
+            {
+                "active": True,
+                "userdetails": {
+                    "first_name": "",
+                    "last_name": "",
+                    "username": "testuser",
+                    "is_superuser": False,
+                    "is_active": True,
+                    "email": "",
+                    "date_joined": datetime.datetime.strftime(
+                        self.user.date_joined, "%Y-%m-%dT%H:%M:%S.%f"
+                    ),
+                    "pk": self.user.id,
+                    "groups": {
+                        "aggregations": [],
+                        "metricprofiles": [],
+                        "metrics": [],
+                        "reports": [],
+                        "thresholdsprofiles": []
+                    },
+                    "token": "mocked_token_ro"
+                },
+                "tenantdetails": {
+                    "combined": False,
+                    "tenants": {}
+                }
+            }
+        )
+
+    def test_auth_readonly_combined_tenant(self):
+        self.tenant.combined = True
+        self.tenant.save()
+        request = self.factory.get(self.url + 'true')
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request, 'true')
+        self.assertEqual(
+            response.data,
+            {
+                "active": True,
+                "userdetails": {
+                    "first_name": "",
+                    "last_name": "",
+                    "username": "testuser",
+                    "is_superuser": False,
+                    "is_active": True,
+                    "email": "",
+                    "date_joined": datetime.datetime.strftime(
+                        self.user.date_joined, "%Y-%m-%dT%H:%M:%S.%f"
+                    ),
+                    "pk": self.user.id,
+                    "groups": {
+                        "aggregations": [],
+                        "metricprofiles": [],
+                        "metrics": [],
+                        "reports": [],
+                        "thresholdsprofiles": []
+                    },
+                    "token": "mocked_token_ro"
+                },
+                "tenantdetails": {
+                    "combined": True,
+                    "tenants": {}
+                }
+            }
+        )
 
 
 class GetIsTenantSchemaAPIViewTests(TenantTestCase):
@@ -286,3 +509,88 @@ class GetIsTenantSchemaAPIViewTests(TenantTestCase):
             response.data,
             {'isTenantSchema': False}
         )
+
+
+CONFIGFILE = """
+[GENERAL_ALL]
+PublicPage = tenant.com
+TermsOfUse = https://ui.argo.grnet.gr/egi/termsofUse/
+PrivacyPolicies = https://argo.egi.eu/egi/policies/
+
+[SUPERUSER_ALL]
+Name =
+Password =
+Email =
+
+[GENERAL_EGI]
+Namespace = hr.cro-ngi.EGI
+SamlLoginString = Login using EGI CHECK-IN
+SamlServiceName = ARGO POEM EGI-CheckIN
+TermsOfUse = https://ui.argo.grnet.gr/egi/termsofUse
+PrivacyPolicies = https://argo.egi.eu/egi/policies
+UseServiceTitles = False
+
+[GENERAL_EOSC]
+Namespace = hr.cro-ngi.EOSC
+SamlLoginString = Login using EGI CHECK-IN
+SamlServiceName = ARGO POEM EGI-CheckIN
+TermsOfUse = https://ui.argo.grnet.gr/eosc/termsofUse
+PrivacyPolicies = https://argo.egi.eu/eosc/policies
+UseServiceTitles = True
+"""
+
+CONFIGFILE2 = """
+[GENERAL_ALL]
+PublicPage = tenant.com
+TermsOfUse = https://ui.argo.grnet.gr/egi/termsofUse/
+PrivacyPolicies = https://argo.egi.eu/egi/policies/
+
+[SUPERUSER_ALL]
+Name =
+Password =
+Email =
+
+[GENERAL_EGI]
+Namespace = hr.cro-ngi.EGI
+SamlLoginString = Login using EGI CHECK-IN
+SamlServiceName = ARGO POEM EGI-CheckIN
+TermsOfUse = https://ui.argo.grnet.gr/egi/termsofUse
+PrivacyPolicies = https://argo.egi.eu/egi/policies
+
+[GENERAL_EOSC]
+Namespace = hr.cro-ngi.EOSC
+SamlLoginString = Login using EGI CHECK-IN
+SamlServiceName = ARGO POEM EGI-CheckIN
+TermsOfUse = https://ui.argo.grnet.gr/eosc/termsofUse
+PrivacyPolicies = https://argo.egi.eu/eosc/policies
+UseServiceTitles = True
+"""
+
+
+class ConfigTests(TenantTestCase):
+    def setUp(self) -> None:
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.GetConfigOptions.as_view()
+        self.url = '/api/v2/internal/config_options/'
+        self.user = CustUser.objects.create(username='testuser')
+        self.config_file_name = "test.conf"
+
+    def tearDown(self) -> None:
+        if os.path.isfile(self.config_file_name):
+            os.remove(self.config_file_name)
+
+    def test_get_use_service_titles_if_all_defined(self):
+        with open(self.config_file_name, "w") as f:
+            f.write(CONFIGFILE)
+
+        with self.settings(CONFIG_FILE=self.config_file_name):
+            self.assertFalse(get_use_service_titles("EGI"))
+            self.assertTrue(get_use_service_titles("EOSC"))
+
+    def test_get_use_service_titles_if_key_missing(self):
+        with open(self.config_file_name, "w") as f:
+            f.write(CONFIGFILE2)
+
+        with self.settings(CONFIG_FILE=self.config_file_name):
+            self.assertFalse(get_use_service_titles("EGI"))
+            self.assertTrue(get_use_service_titles("EOSC"))

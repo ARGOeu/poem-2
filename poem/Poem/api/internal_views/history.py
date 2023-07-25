@@ -55,7 +55,7 @@ class ListVersions(APIView):
                 else:
                     probekey = ''
                     version = datetime.datetime.strftime(
-                        ver.date_created, '%Y-%m-%d %H:%M:%S'
+                        ver.date_created, '%Y%m%d-%H%M%S'
                     )
                 fields = {
                     'name': ver.name,

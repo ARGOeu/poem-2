@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { Backend } from './DataManager';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -12,7 +12,6 @@ import {
   ParagraphTitle,
   BaseArgoTable
 } from './UIElements';
-import { Formik, Form, Field } from 'formik';
 import {
   Alert,
   FormGroup,
@@ -22,34 +21,51 @@ import {
   FormText,
   Button,
   InputGroup,
-  InputGroupAddon,
+  InputGroupText,
+  Input,
+  Form,
+  Badge,
+  FormFeedback
 } from 'reactstrap';
 import { faClipboard } from '@fortawesome/free-solid-svg-icons';
+import { useQuery, useQueryClient, useMutation } from 'react-query';
+import { fetchAPIKeys } from './QueryFunctions';
+import { Controller, useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from "yup";
+import { ErrorMessage } from "@hookform/error-message"
+
+
+const validationSchema = yup.object().shape({
+  name: yup.string().required("Name field is required")
+    .when("used_by", {
+      is: (value) => value === "poem",
+      then: yup.string().test("must_not_start", "Name can contain alphanumeric characters, dash and underscore, must always begin with a letter, but not with WEB-API-", function (value) {
+        if (!value.startsWith("WEB-API-") && value.match(/^[a-zA-Z][A-Za-z0-9\-_]*$/))
+          return true
+        else
+          return false
+      }),
+      otherwise: yup.string().matches(/^WEB-API-\S*(-RO)?$/, "Name must have form WEB-API-<tenant_name> or WEB-API-<tenant_name>-RO")
+    })
+})
+
+
+const fetchAPIKey = async(name) => {
+  const backend = new Backend();
+
+  return await backend.fetchData(`/api/v2/internal/apikeys/${name}`);
+}
 
 
 export const APIKeyList = (props) => {
   const location = props.location;
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(undefined);
-  const [list_keys, setKeys] = useState(null);
 
-  useEffect(() => {
-    const backend = new Backend();
-    setLoading(true);
+  const queryClient = useQueryClient();
 
-    try {
-      const fetchDataAndSet = async () => {
-        let json = await backend.fetchData('/api/v2/internal/apikeys');
-
-        setKeys(json);
-        setLoading(false);
-      }
-      fetchDataAndSet();
-    } catch(err) {
-      setError(err);
-      setLoading(false);
-    }
-  }, []);
+  const { data: keys, error, isLoading: loading } = useQuery(
+    'apikey', () => fetchAPIKeys()
+  )
 
   const columns = React.useMemo(
     () => [
@@ -62,10 +78,17 @@ export const APIKeyList = (props) => {
         Header: 'Name',
         id: 'name',
         accessor: e =>
-          <Link to={'/ui/administration/apikey/' + e.name}>
+          <Link
+            to={'/ui/administration/apikey/' + e.name}
+            onMouseEnter={ async () => {
+              await queryClient.prefetchQuery(
+                ['apikey', e.name], () => fetchAPIKey(e.name)
+              );
+            } }
+          >
             {e.name}
           </Link>,
-        column_width: '73%'
+        column_width: '70%'
       },
       {
         Header: 'Created',
@@ -92,17 +115,26 @@ export const APIKeyList = (props) => {
             :
               <FontAwesomeIcon icon={faTimesCircle} style={{color: "#CC0000"}}/>,
         column_width: '5%'
+      },
+      {
+        Header: "Used by",
+        id: "used_by",
+        accessor: e =>
+          <Badge color={ `${e.used_by === "poem" ? "success" : "secondary"}` }>
+            { e.used_by }
+          </Badge>,
+        column_width: "3%"
       }
-    ], []
+    ], [queryClient]
   );
 
   if (loading)
-    return (<LoadingAnim/>);
+    return (<LoadingAnim/>)
 
   else if (error)
-    return (<ErrorComponent error={error}/>);
+    return (<ErrorComponent error={ error } />)
 
-  else if (!loading && list_keys) {
+  else if (keys) {
     return (
       <BaseArgoView
         resourcename='API key'
@@ -110,101 +142,43 @@ export const APIKeyList = (props) => {
         listview={true}
       >
         <BaseArgoTable
-          data={list_keys}
+          data={keys}
           columns={columns}
-          page_size={5}
+          page_size={10}
           resourcename='API keys'
         />
       </BaseArgoView>
     )
   }
   else
-    return null
+    return null;
 }
 
 
-export const APIKeyChange = (props) => {
+const APIKeyForm = ({
+  data,
+  doChange,
+  doDelete,
+  ...props
+}) => {
   const name = props.match.params.name;
+  const isTenantSchema = props.isTenantSchema
   const location = props.location;
   const addview = props.addview;
-  const history = props.history;
-  const backend = new Backend();
 
-  const [key, setKey] = useState({
-    name: '',
-    revoked: false,
-    token: ''
-  })
-  const [loading, setLoading] = useState(false)
   const [areYouSureModal, setAreYouSureModal] = useState(false)
   const [modalTitle, setModalTitle] = useState(undefined)
   const [modalMsg, setModalMsg] = useState(undefined)
-  const [error, setError] = useState(null)
   const [onYes, setOnYes] = useState('')
-  const [formikValues, setFormikValues] = useState({})
   const refToken = useRef(null);
 
-  const doChange = async (values) => {
-    if (!addview) {
-      let response = await backend.changeObject(
-        '/api/v2/internal/apikeys/',
-        {
-          id: key.id,
-          revoked: values.revoked,
-          name: values.name,
-        }
-      );
-      if (response.ok) {
-        NotifyOk({
-          msg: 'API key successfully changed',
-          title: 'Changed',
-          callback: () => history.push('/ui/administration/apikey')
-        });
-      } else {
-        let change_msg = '';
-        try {
-          let json = await response.json();
-          change_msg = `${json.detail ? json.detail : 'Error changing API key'}`;
-        } catch(err) {
-          change_msg = 'Error changing API key';
-        }
+  const { control, handleSubmit, setValue, getValues, trigger, formState: { errors } } = useForm({
+    defaultValues: !addview ? data : { name: "", revoked: false, token: "", used_by: "poem" },
+    mode: "all",
+    resolver: yupResolver(validationSchema)
+  })
 
-        NotifyError({
-          title: `Error: ${response.status} ${response.statusText}`,
-          msg: change_msg
-        });
-      }
-    } else {
-      let response = await backend.addObject(
-        '/api/v2/internal/apikeys/',
-        {
-          name: values.name,
-          token: values.token
-        }
-      );
-      if (response.ok) {
-        NotifyOk({
-          msg: 'API key successfully added',
-          title: 'Added',
-          callback: () => history.push('/ui/administration/apikey')
-        })
-      } else {
-        let add_msg = '';
-        try {
-          let json = await response.json();
-          add_msg = `${json.detail ? json.detail : 'Error adding API key'}`;
-        } catch(err) {
-          add_msg = 'Error adding API key';
-        }
-        NotifyError({
-          title: `Error: ${response.status} ${response.statusText}`,
-          msg: add_msg
-        });
-      }
-    }
-  };
-
-  const onSubmitHandle = (values) => {
+  const onSubmitHandle = () => {
     let msg = `Are you sure you want to ${addview ? 'add' : 'change'} API key?`;
     let title = `${addview ? 'Add' : 'Change'}`;
 
@@ -212,64 +186,13 @@ export const APIKeyChange = (props) => {
     setModalMsg(msg)
     setModalTitle(title)
     setOnYes('change')
-    setFormikValues(values)
-  }
-
-  useEffect(() => {
-    setLoading(true);
-
-    try {
-      if (!addview) {
-        const fetchDataAndSet = async () => {
-          let json = await backend.fetchData(`/api/v2/internal/apikeys/${name}`)
-          setKey(json);
-          setLoading(false);
-        }
-        fetchDataAndSet();
-      }
-      else {
-        setKey({
-          name: '',
-          revoked: false,
-          token: ''
-        });
-        setLoading(false);
-      }
-    }
-    catch(err) {
-      setError(err)
-      setLoading(false)
-    }
-  }, []);
-
-  const doDelete = async () => {
-    let response = await backend.deleteObject(`/api/v2/internal/apikeys/${name}`);
-    if (response.ok) {
-      NotifyOk({
-        msg: 'API key successfully deleted',
-        title: 'Deleted',
-        callback: () => history.push('/ui/administration/apikey')
-      })
-    } else {
-      let msg = '';
-      try {
-        let json = await response.json();
-        msg = `${json.detail ? json.detail : 'Error deleting API key'}`;
-      } catch(error) {
-        msg = 'Error deleting API key';
-      }
-      NotifyError({
-        title: `Error: ${response.status} ${response.statusText}`,
-        msg: msg
-      });
-    }
   }
 
   const onYesCallback = () => {
     if (onYes === 'delete')
-      doDelete(name);
+      doDelete(`${getValues("used_by")}_${name}`)
     else if (onYes === 'change')
-      doChange(formikValues);
+      doChange(getValues())
   }
 
   const copyToClipboard = (e) => {
@@ -281,128 +204,277 @@ export const APIKeyChange = (props) => {
     });
   }
 
-  if (loading)
+  return (
+    <BaseArgoView
+      resourcename='API key'
+      location={location}
+      addview={addview}
+      history={false}
+      modal={true}
+      state={{areYouSureModal, 'modalFunc': onYesCallback, modalTitle, modalMsg}}
+      toggle={() => setAreYouSureModal(!areYouSureModal)}>
+      <Form onSubmit={ handleSubmit(onSubmitHandle) }>
+        <FormGroup>
+          <Row>
+            <Col md={6}>
+              <Label for='name'>Name</Label>
+              <Controller
+                name="name"
+                control={ control }
+                render={ ({ field }) =>
+                  <Input
+                    {...field}
+                    data-testid="name"
+                    className={ `form-control ${errors?.name && "is-invalid"}` }
+                    disabled={ !addview }
+                  />
+                }
+              />
+              <ErrorMessage
+                errors={ errors }
+                name="name"
+                render={ ({ message }) =>
+                  <FormFeedback invalid="true" className="end-0">
+                    { message }
+                  </FormFeedback>
+                }
+              />
+              <FormText color='muted'>
+                A free-form unique identifier of the client. 50 characters max.
+              </FormText>
+            </Col>
+          </Row>
+          {
+            (addview && !isTenantSchema) &&
+              <Row className='mt-2'>
+                <Col md={6}>
+                  <Row>
+                    <FormGroup check inline className='ms-3'>
+                      <Controller
+                        name="used_by"
+                        control={control}
+                        render={ ({ field }) => {
+                          return (
+                            <Input
+                              {...field}
+                              type='checkbox'
+                              data-testid="used_by"
+                              id="used_by"
+                              onChange={ e => {
+                                setValue("used_by", e.target.checked ? "webapi" : "poem")
+                                trigger("name")
+                              }}
+                              checked={ field.value === "webapi" }
+                            />
+                          )
+                        }}
+                      />
+                      <Label check for="used_by">Web API key</Label>
+                    </FormGroup>
+                  </Row>
+                  <Row>
+                    <FormText color="muted">
+                      Mark this checkbox if the key being saved is going to be used for web API authentication.
+                    </FormText>
+                  </Row>
+                </Col>
+              </Row>
+          }
+          <Row className='mt-2'>
+            <Col md={6}>
+              <Row>
+                <FormGroup check inline className='ms-3'>
+                  <Controller
+                    name="revoked"
+                    control={control}
+                    render={ ({ field }) => {
+                      return (
+                        <Input
+                          {...field}
+                          type='checkbox'
+                          data-testid="revoked"
+                          onChange={e => setValue("revoked", e.target.checked)}
+                          checked={field.value}
+                          disabled={ isTenantSchema && getValues("used_by") === "webapi" }
+                        />
+                      )
+                    }}
+                  />
+                  <Label check for='revoked'>Revoked</Label>
+                </FormGroup>
+              </Row>
+              <Row>
+                <FormText color='muted'>
+                  If the API key is revoked, clients cannot use it any more. (This cannot be undone.)
+                </FormText>
+              </Row>
+            </Col>
+          </Row>
+        </FormGroup>
+        <FormGroup>
+          <ParagraphTitle title='Credentials'/>
+          {
+            addview &&
+              <Alert color="info" className="text-center">
+                If token field is <b>left empty</b>, value will be automatically generated on save.
+              </Alert>
+          }
+          <Row className="g-0">
+            <Col sm={6}>
+              <InputGroup>
+                <InputGroupText>Token</InputGroupText>
+                <Controller
+                  name="token"
+                  control={ control }
+                  render={ ({ field }) =>
+                    <Input
+                      {...field}
+                      data-testid="token"
+                      className="form-control"
+                      disabled={ addview ? false : true }
+                      innerRef={ refToken }
+                    />
+                  }
+                />
+              </InputGroup>
+              <FormText color='muted'>
+                A public, unique identifier for this API key.
+              </FormText>
+            </Col>
+            {
+              !addview &&
+              <Col sm={2}>
+                <Button className="btn" color="success" onClick={(e) => copyToClipboard(e)}>
+                  <FontAwesomeIcon icon={faClipboard} size="lg" color='white'/>
+                </Button>
+              </Col>
+            }
+          </Row>
+        </FormGroup>
+        {
+          !(isTenantSchema && getValues("used_by") === "webapi") &&
+            <div className={!addview ? "submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5" : "submit-row d-flex align-items-center justify-content-end bg-light p-3 mt-5"}>
+              {
+                (!addview) &&
+                <Button
+                  color='danger'
+                  onClick={() => {
+                    setModalMsg('Are you sure you want to delete API key?')
+                    setModalTitle('Delete API key')
+                    setAreYouSureModal(!areYouSureModal);
+                    setOnYes('delete')
+                  }}
+                >
+                  Delete
+                </Button>
+              }
+              <Button
+                color='success'
+                id='submit-button'
+                type='submit'
+              >
+                Save
+              </Button>
+            </div>
+        }
+      </Form>
+    </BaseArgoView>
+  )
+}
+
+
+export const APIKeyChange = (props) => {
+  const name = props.match.params.name;
+  const addview = props.addview;
+  const history = props.history;
+
+  const queryClient = useQueryClient()
+
+  const backend = new Backend()
+
+  const changeMutation = useMutation(async (values) => backend.changeObject('/api/v2/internal/apikeys/', values));
+  const addMutation = useMutation(async (values) => backend.addObject('/api/v2/internal/apikeys/', values));
+  const deleteMutation = useMutation(async (prefix_name) => await backend.deleteObject(`/api/v2/internal/apikeys/${prefix_name}`));
+
+  const { data: key, error: error, status: status } = useQuery(
+    ['apikey', name], () => fetchAPIKey(name),
+    { enabled: !addview }
+  )
+
+  const doChange = (values) => {
+    if (!addview) {
+      changeMutation.mutate(
+        { id: values.id, revoked: values.revoked, name: values.name, used_by: values.used_by }, {
+          onSuccess: () => {
+            queryClient.invalidateQueries('apikey');
+            NotifyOk({
+              msg: 'API key successfully changed',
+              title: 'Changed',
+              callback: () => history.push('/ui/administration/apikey')
+            });
+          },
+          onError: (error) => {
+            NotifyError({
+              title: 'Error',
+              msg: error.message ? error.message : 'Error changing API key'
+            })
+          }
+        }
+      )
+    } else {
+      addMutation.mutate({ name: values.name, token: values.token, used_by: values.used_by }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries('apikey');
+          NotifyOk({
+            msg: 'API key successfully added',
+            title: 'Added',
+            callback: () => history.push('/ui/administration/apikey')
+          })
+        },
+        onError: (error) => {
+          NotifyError({
+            title: 'Error',
+            msg: error.message ? error.message : 'Error adding API key'
+          })
+        }
+      })
+    }
+  }
+
+  const doDelete = (prefix_name) => {
+    deleteMutation.mutate(prefix_name, {
+      onSuccess: () => {
+        queryClient.invalidateQueries('apikey');
+        NotifyOk({
+          msg: 'API key successfully deleted',
+          title: 'Deleted',
+          callback: () => history.push('/ui/administration/apikey')
+        })
+      },
+      onError: (error) => {
+        NotifyError({
+          title: 'Error',
+          msg: error.message ? error.message : 'Error deleting API key'
+        })
+      }
+    })
+  }
+
+  if (status === 'loading')
     return (<LoadingAnim/>);
 
-  else if (error)
+  else if (status === 'error')
     return (<ErrorComponent error={error}/>);
 
-  else if (!loading && key) {
+  else if (key || addview)
     return (
-      <BaseArgoView
-        resourcename='API key'
-        location={location}
-        addview={addview}
-        history={false}
-        modal={true}
-        state={{areYouSureModal, 'modalFunc': onYesCallback, modalTitle, modalMsg}}
-        toggle={() => setAreYouSureModal(!areYouSureModal)}>
-        <Formik
-          initialValues = {{
-            name: key.name,
-            revoked: key.revoked,
-            token: key.token
-          }}
-          onSubmit = {(values) => onSubmitHandle(values)}
-        >
-          {() => (
-            <Form>
-              <FormGroup>
-                <Row>
-                  <Col md={6}>
-                    <Label for='name'>Name</Label>
-                    <Field
-                      type='text'
-                      name='name'
-                      id='name'
-                      required={true}
-                      className='form-control'
-                    />
-                    <FormText color='muted'>
-                      A free-form unique identifier of the client. 50 characters max.
-                    </FormText>
-                  </Col>
-                </Row>
-                <Row className='mt-2'>
-                  <Col md={6}>
-                    <label>
-                      <Field
-                        type='checkbox'
-                        name='revoked'
-                        id='checkbox'
-                      />
-                      Revoked
-                    </label>
-                    <FormText color='muted'>
-                      If the API key is revoked, clients cannot use it any more. (This cannot be undone.)
-                    </FormText>
-                  </Col>
-                </Row>
-              </FormGroup>
-              <FormGroup>
-                <ParagraphTitle title='Credentials'/>
-                {
-                  addview &&
-                    <Alert color="info" className="text-center">
-                      If token field is <b>left empty</b>, value will be automatically generated on save.
-                    </Alert>
-                }
-                <Row className="no-gutters">
-                  <Col sm={6}>
-                    <InputGroup>
-                      <InputGroupAddon addonType='prepend'>Token</InputGroupAddon>
-                      <Field
-                        type='text'
-                        name='token'
-                        id='token'
-                        disabled={addview ? false : true}
-                        className='form-control'
-                        innerRef={refToken}
-                      />
-                    </InputGroup>
-                    <FormText color='muted'>
-                      A public, unique identifier for this API key.
-                    </FormText>
-                  </Col>
-                  {
-                    !addview &&
-                    <Col sm={2}>
-                      <Button className="btn" color="success" onClick={(e) => copyToClipboard(e)}>
-                        <FontAwesomeIcon icon={faClipboard} size="lg" color='white'/>
-                      </Button>
-                    </Col>
-                  }
-                </Row>
-              </FormGroup>
-              {
-                <div className={!addview ? "submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5" : "submit-row d-flex align-items-center justify-content-end bg-light p-3 mt-5"}>
-                  {
-                    (!addview) &&
-                    <Button
-                      color='danger'
-                      onClick={() => {
-                        setModalMsg('Are you sure you want to delete API key?')
-                        setModalTitle('Delete API key')
-                        setAreYouSureModal(!areYouSureModal);
-                        setOnYes('delete')
-                      }}
-                    >
-                      Delete
-                    </Button>
-                  }
-                  <Button
-                    color='success'
-                    id='submit-button'
-                    type='submit'
-                  >
-                    Save
-                  </Button>
-                </div>
-              }
-            </Form>
-          )}
-        </Formik>
-      </BaseArgoView>
+      <APIKeyForm
+        { ...props }
+        data={ key }
+        doChange={ doChange }
+        doDelete={ doDelete }
+      />
     )
-  }
+  else
+    return null
 }

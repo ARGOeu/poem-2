@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from Poem.poem import models
-from Poem.poem_super_admin.models import Probe
+from Poem.poem_super_admin.models import Probe, MetricTags, DefaultPort
 from Poem.users.models import CustUser
 
 
@@ -17,10 +17,10 @@ class MetricProfileSerializer(serializers.ModelSerializer):
         model = models.MetricProfiles
 
 
-class ServiceFlavourSerializer(serializers.ModelSerializer):
+class ReportsSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = ('name', 'description', )
-        model = models.ServiceFlavour
+        fields = ('name', 'description', 'apiid', 'groupname', )
+        model = models.Reports
 
 
 class UsersSerializer(serializers.ModelSerializer):
@@ -52,3 +52,9 @@ class ThresholdsProfileSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('name', 'description', 'apiid', 'groupname',)
         model = models.ThresholdsProfiles
+
+
+class DefaultPortsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DefaultPort
+        fields = "__all__"

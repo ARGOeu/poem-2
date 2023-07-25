@@ -1,4 +1,5 @@
 import datetime
+import json
 from unittest.mock import patch, call
 
 import factory
@@ -6,42 +7,42 @@ from Poem.api import views
 from Poem.api.models import MyAPIKey
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
+from django_tenants.test.cases import TenantTestCase
+from django_tenants.test.client import TenantRequestFactory
 from rest_framework import status
-from tenant_schemas.test.cases import TenantTestCase
-from tenant_schemas.test.client import TenantRequestFactory
 
 
-def mock_function(profile):
-    if profile == 'ARGO-MON':
-        return {'argo.AMS-Check', 'argo.AMSPublisher-Check'}
+def mock_function(*args):
+    if args[0] == 'ARGO-MON':
+        return {'argo.AMS-Check'}
 
-    if profile == 'MON-TEST':
+    if args[0] == 'MON-TEST':
         return {
             'argo.AMS-Check', 'eu.seadatanet.org.downloadmanager-check',
             'eu.seadatanet.org.nvs2-check'
         }
 
-    if profile == 'MON-PASSIVE':
+    if args[0] == 'MON-PASSIVE':
         return {
             'argo.AMS-Check', 'eu.seadatanet.org.downloadmanager-check',
             'eu.seadatanet.org.nvs2-check', 'org.apel.APEL-Pub'
         }
 
-    if profile == 'EMPTY':
+    if args[0] == 'EMPTY':
         return set()
 
-    if profile == 'TEST-NONEXISTING':
+    if args[0] == 'TEST-NONEXISTING':
         return {'nonexisting.metric'}
 
-    if profile == 'TEST_PROMOO':
+    if args[0] == 'TEST_PROMOO':
         return {'eu.egi.cloud.OCCI-Categories'}
 
 
-@factory.django.mute_signals(post_save)
+@factory.django.mute_signals(pre_save, post_save)
 def mock_db_for_metrics_tests():
-    active = poem_models.MetricType.objects.create(name='Active')
-    passive = poem_models.MetricType.objects.create(name='Passive')
+    active = admin_models.MetricTemplateType.objects.create(name='Active')
+    passive = admin_models.MetricTemplateType.objects.create(name='Passive')
 
     tag = admin_models.OSTag.objects.create(name='CentOS 6')
     repo = admin_models.YumRepo.objects.create(name='repo-1', tag=tag)
@@ -138,10 +139,9 @@ def mock_db_for_metrics_tests():
     mtag3 = admin_models.MetricTags.objects.create(name='internal')
     admin_models.MetricTags.objects.create(name='empty_tag')
 
-    metric1 = poem_models.Metric.objects.create(
+    mt1 = admin_models.MetricTemplate.objects.create(
         name='test.AMS-Check',
         mtype=active,
-        group=group,
         probekey=probekey1,
         parent='["org.nagios.CDMI-TCP"]',
         probeexecutable='["ams-probe"]',
@@ -149,18 +149,47 @@ def mock_db_for_metrics_tests():
                '"path /usr/libexec/argo-monitoring/probes/argo", "interval 5", '
                '"retryInterval 3"]',
         attribute='["argo.ams_TOKEN --token"]',
-        dependancy='["argo.AMS-Check 1"]',
+        dependency='["argo.AMS-Check 1"]',
         flags='["OBSESS 1"]',
         files='["UCC_CONFIG UCC_CONFIG"]',
         parameter='["--project EGI"]',
         fileparameter='["FILE_SIZE_KBS 1000"]'
     )
-    metric1.tags.add(mtag1, mtag2)
+    mt1.tags.add(mtag1, mtag2)
 
-    metric2 = poem_models.Metric.objects.create(
+    mt1_version1 = admin_models.MetricTemplateHistory.objects.create(
+        object_id=mt1,
+        name=mt1.name,
+        mtype=mt1.mtype,
+        probekey=mt1.probekey,
+        parent=mt1.parent,
+        description=mt1.description,
+        probeexecutable=mt1.probeexecutable,
+        config=mt1.config,
+        attribute=mt1.attribute,
+        dependency=mt1.dependency,
+        flags=mt1.flags,
+        files=mt1.files,
+        parameter=mt1.parameter,
+        fileparameter=mt1.fileparameter,
+        date_created=datetime.datetime.now(),
+        version_user="poem",
+        version_comment="Initial version."
+    )
+    mt1_version1.tags.add(mtag1, mtag2)
+
+    poem_models.Metric.objects.create(
+        name='test.AMS-Check',
+        group=group,
+        probeversion=probekey1.__str__(),
+        config='["maxCheckAttempts 3", "timeout 60", '
+               '"path /usr/libexec/argo-monitoring/probes/argo", "interval 5", '
+               '"retryInterval 3"]'
+    )
+
+    mt2 = admin_models.MetricTemplate.objects.create(
         name='argo.AMSPublisher-Check',
         mtype=active,
-        group=group,
         probekey=probekey2,
         probeexecutable='["ams-publisher-probe"]',
         config='["maxCheckAttempts 1", "timeout 120", '
@@ -170,12 +199,41 @@ def mock_db_for_metrics_tests():
                   '"-q w:metrics+g:published180"]',
         flags='["NOHOSTNAME 1", "NOTIMEOUT 1", "NOPUBLISH 1"]'
     )
-    metric2.tags.add(mtag1, mtag3)
+    mt2.tags.add(mtag1, mtag3)
 
-    metric3 = poem_models.Metric.objects.create(
+    mt2_version1 = admin_models.MetricTemplateHistory.objects.create(
+        object_id=mt2,
+        name=mt2.name,
+        mtype=mt2.mtype,
+        probekey=mt2.probekey,
+        parent=mt2.parent,
+        description=mt2.description,
+        probeexecutable=mt2.probeexecutable,
+        config=mt2.config,
+        attribute=mt2.attribute,
+        dependency=mt2.dependency,
+        flags=mt2.flags,
+        files=mt2.files,
+        parameter=mt2.parameter,
+        fileparameter=mt2.fileparameter,
+        date_created=datetime.datetime.now(),
+        version_user="poem",
+        version_comment="Initial version."
+    )
+    mt2_version1.tags.add(mtag1, mtag3)
+
+    poem_models.Metric.objects.create(
+        name='argo.AMSPublisher-Check',
+        group=group,
+        probeversion=probekey2.__str__(),
+        config='["maxCheckAttempts 1", "timeout 120", '
+               '"path /usr/libexec/argo-monitoring/probes/argo", '
+               '"interval 180", "retryInterval 1"]'
+    )
+
+    mt3 = admin_models.MetricTemplate.objects.create(
         name='hr.srce.CertLifetime-Local',
         mtype=active,
-        group=group,
         probekey=probekey3,
         probeexecutable='["CertLifetime-probe"]',
         config='["maxCheckAttempts 2", "timeout 60", '
@@ -184,22 +242,129 @@ def mock_db_for_metrics_tests():
         attribute='["NAGIOS_HOST_CERT -f"]',
         flags='["NOHOSTNAME 1", "NOPUBLISH 1"]'
     )
-    metric3.tags.add(mtag3)
+    mt3.tags.add(mtag3)
+
+    mt3_version1 = admin_models.MetricTemplateHistory.objects.create(
+        object_id=mt3,
+        name=mt3.name,
+        mtype=mt3.mtype,
+        probekey=mt3.probekey,
+        parent=mt3.parent,
+        description=mt3.description,
+        probeexecutable=mt3.probeexecutable,
+        config=mt3.config,
+        attribute=mt3.attribute,
+        dependency=mt3.dependency,
+        flags=mt3.flags,
+        files=mt3.files,
+        parameter=mt3.parameter,
+        fileparameter=mt3.fileparameter,
+        date_created=datetime.datetime.now(),
+        version_user="poem",
+        version_comment="Initial version."
+    )
+    mt3_version1.tags.add(mtag3)
 
     poem_models.Metric.objects.create(
+        name='hr.srce.CertLifetime-Local',
+        group=group,
+        probeversion=probekey3.__str__(),
+        config='["maxCheckAttempts 2", "timeout 60", '
+               '"path /usr/libexec/argo-monitoring/probes/cert", '
+               '"interval 240", "retryInterval 30"]'
+    )
+
+    mt4 = admin_models.MetricTemplate.objects.create(
         name='org.apel.APEL-Pub',
         mtype=passive,
-        group=group,
         flags='["OBSESS 1", "PASSIVE 1"]'
     )
 
+    admin_models.MetricTemplateHistory.objects.create(
+        object_id=mt4,
+        name=mt4.name,
+        mtype=mt4.mtype,
+        probekey=mt4.probekey,
+        parent=mt4.parent,
+        description=mt4.description,
+        probeexecutable=mt4.probeexecutable,
+        config=mt4.config,
+        attribute=mt4.attribute,
+        dependency=mt4.dependency,
+        flags=mt4.flags,
+        files=mt4.files,
+        parameter=mt4.parameter,
+        fileparameter=mt4.fileparameter,
+        date_created=datetime.datetime.now(),
+        version_user="poem",
+        version_comment="Initial version."
+    )
+
     poem_models.Metric.objects.create(
+        name='org.apel.APEL-Pub',
+        group=group
+    )
+
+    mt5 = admin_models.MetricTemplate.objects.create(
         name='test.EMPTY-metric',
         mtype=active
     )
 
+    admin_models.MetricTemplateHistory.objects.create(
+        object_id=mt5,
+        name=mt5.name,
+        mtype=mt5.mtype,
+        probekey=mt5.probekey,
+        parent=mt5.parent,
+        description=mt5.description,
+        probeexecutable=mt5.probeexecutable,
+        config=mt5.config,
+        attribute=mt5.attribute,
+        dependency=mt5.dependency,
+        flags=mt5.flags,
+        files=mt5.files,
+        parameter=mt5.parameter,
+        fileparameter=mt5.fileparameter,
+        date_created=datetime.datetime.now(),
+        version_user="poem",
+        version_comment="Initial version."
+    )
 
-@factory.django.mute_signals(post_save)
+    poem_models.Metric.objects.create(
+        name='test.EMPTY-metric'
+    )
+
+    poem_models.MetricConfiguration.objects.create(
+        name="local",
+        globalattribute=json.dumps(
+            [
+                "NAGIOS_ACTUAL_HOST_CERT /etc/nagios/globus/hostcert.pem",
+                "NAGIOS_ACTUAL_HOST_KEY /etc/nagios/globus/hostkey.pem"
+            ]
+        ),
+        hostattribute=json.dumps(["mock.host.name attr1 some-new-value"]),
+        metricparameter=json.dumps(
+            [
+                "eosccore.ui.argo.grnet.gr org.nagios.ARGOWeb-AR "
+                "-r EOSC_Monitoring",
+                "argo.eosc-portal.eu org.nagios.ARGOWeb-Status -u "
+                "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
+            ]
+        )
+    )
+
+    poem_models.MetricConfiguration.objects.create(
+        name="consumer",
+        globalattribute="",
+        hostattribute="",
+        metricparameter=json.dumps([
+            "eosccore.mon.devel.argo.grnet.gr argo.AMSPublisher-Check "
+            "-q w:metrics+g:published180 -c 10"
+        ])
+    )
+
+
+@factory.django.mute_signals(pre_save, post_save)
 def mock_db_for_repos_tests():
     tag1 = admin_models.OSTag.objects.create(name='CentOS 6')
     tag2 = admin_models.OSTag.objects.create(name='CentOS 7')
@@ -277,6 +442,12 @@ def mock_db_for_repos_tests():
     )
     package5.repos.add(repo6)
 
+    package6 = admin_models.Package.objects.create(
+        name='nagios-plugins-nagiosexchange',
+        version='1.0.0'
+    )
+    package6.repos.add(repo2)
+
     probe1 = admin_models.Probe.objects.create(
         name='ams-probe',
         package=package1,
@@ -332,6 +503,19 @@ def mock_db_for_repos_tests():
         repository='https://github.com/EGI-Foundation/nagios-promoo',
         docurl='https://wiki.egi.eu/wiki/Cloud_SAM_tests',
         description='Probe checks the existence of OCCI Infra kinds.',
+        comment='Initial version',
+        user='testuser',
+        datetime=datetime.datetime.now()
+    )
+
+    probe6 = admin_models.Probe.objects.create(
+        name='check_dirsize',
+        package=package6,
+        repository='https://github.com/ARGOeu/nagios-plugins-nagiosexchange',
+        docurl='https://exchange.nagios.org/directory/Plugins/Operating-Systems'
+               '/Linux/CheckDirSize/details',
+        description='This plugin determines the size of a directory.',
+        comment='Initial version',
         user='testuser',
         datetime=datetime.datetime.now()
     )
@@ -417,8 +601,24 @@ def mock_db_for_repos_tests():
         version_user='testuser'
     )
 
+    probehistory7 = admin_models.ProbeHistory.objects.create(
+        object_id=probe6,
+        name=probe6.name,
+        package=probe6.package,
+        repository=probe6.repository,
+        docurl=probe6.docurl,
+        description=probe6.description,
+        comment=probe6.comment,
+        date_created=datetime.datetime.now(),
+        version_comment='Initial version',
+        version_user='testuser'
+    )
+
     mtype1 = admin_models.MetricTemplateType.objects.create(name='Active')
     mtype2 = admin_models.MetricTemplateType.objects.create(name='Passive')
+
+    mtag1 = admin_models.MetricTags.objects.create(name='internal')
+    mtag2 = admin_models.MetricTags.objects.create(name='tag1')
 
     mt1 = admin_models.MetricTemplate.objects.create(
         name='argo.AMS-Check',
@@ -443,6 +643,7 @@ def mock_db_for_repos_tests():
                '"interval 180", "retryInterval 1"]',
         flags='["NOHOSTNAME 1", "NOTIMEOUT 1"]'
     )
+    mt2.tags.add(mtag1)
 
     mt3 = admin_models.MetricTemplate.objects.create(
         name='eu.seadatanet.org.downloadmanager-check',
@@ -455,6 +656,7 @@ def mock_db_for_repos_tests():
         parameter='["-f follow", "-s OK"]',
         flags='["PNP 1", "OBSESS 1"]'
     )
+    mt3.tags.add(mtag2)
 
     mt4 = admin_models.MetricTemplate.objects.create(
         name='eu.seadatanet.org.nvs2-check',
@@ -466,6 +668,7 @@ def mock_db_for_repos_tests():
                '"retryInterval 3", "timeout 30"]',
         attribute='["voc_collection -u"]'
     )
+    mt4.tags.add(mtag2)
 
     mt5 = admin_models.MetricTemplate.objects.create(
         name='org.apel.APEL-Pub',
@@ -477,7 +680,7 @@ def mock_db_for_repos_tests():
         name='eu.egi.cloud.OCCI-Categories',
         probekey=probehistory6,
         mtype=mtype1,
-        probeexecutable='nagios-promoo occi categories',
+        probeexecutable='["nagios-promoo occi categories"]',
         config='["maxCheckAttempts 2", "path /opt/nagios-promoo/bin", '
                '"interval 60", "retryInterval 15"]',
         attribute='["OCCI_URL --endpoint", "X509_USER_PROXY --token"]',
@@ -486,98 +689,69 @@ def mock_db_for_repos_tests():
         flags='["OBSESS 1", "NOHOSTNAME 1", "NOTIMEOUT 1", "VO 1"]'
     )
 
-    group = poem_models.GroupOfMetrics.objects.create(name='TEST')
+    mt7 = admin_models.MetricTemplate.objects.create(
+        name='org.nagios.AmsDirSize',
+        probekey=probehistory7,
+        mtype=mtype1,
+        probeexecutable='["check_dirsize.sh"]',
+        config='["maxCheckAttempts 3", "timeout 15", '
+               '"path /usr/libexec/argo-monitoring/probes/nagiosexchange", '
+               '"interval 60", "retryInterval 5"]',
+        parameter='["-d /var/spool/argo-nagios-ams-publisher", "-w 10000", '
+                  '"-c 100000", "-f 0"]',
+        flags='["NOHOSTNAME 1", "NOPUBLISH 1"]'
+    )
+    mt7.tags.add(mtag1)
 
-    metric_type = poem_models.MetricType.objects.create(name='Active')
+    group = poem_models.GroupOfMetrics.objects.create(name='TEST')
 
     poem_models.Metric.objects.create(
         name=mt1.name,
         group=group,
-        mtype=metric_type,
-        probekey=mt1.probekey,
-        probeexecutable=mt1.probeexecutable,
-        config=mt1.config,
-        attribute=mt1.attribute,
-        dependancy=mt1.dependency,
-        flags=mt1.flags,
-        files=mt1.files,
-        parameter=mt1.parameter,
-        fileparameter=mt1.fileparameter
+        probeversion=mt1.probekey.__str__(),
+        config=mt1.config
     )
 
     poem_models.Metric.objects.create(
         name=mt2.name,
         group=group,
-        mtype=metric_type,
-        probekey=mt2.probekey,
-        probeexecutable=mt2.probeexecutable,
-        config=mt2.config,
-        attribute=mt2.attribute,
-        dependancy=mt2.dependency,
-        flags=mt2.flags,
-        files=mt2.files,
-        parameter=mt2.parameter,
-        fileparameter=mt2.fileparameter
+        probeversion=mt2.probekey.__str__(),
+        config=mt2.config
     )
 
     poem_models.Metric.objects.create(
         name=mt3.name,
         group=group,
-        mtype=metric_type,
-        probekey=mt3.probekey,
-        probeexecutable=mt3.probeexecutable,
-        config=mt3.config,
-        attribute=mt3.attribute,
-        dependancy=mt3.dependency,
-        flags=mt3.flags,
-        files=mt3.files,
-        parameter=mt3.parameter,
-        fileparameter=mt3.fileparameter
+        probeversion=mt3.probekey.__str__(),
+        config=mt3.config
     )
 
     poem_models.Metric.objects.create(
         name=mt4.name,
         group=group,
-        mtype=metric_type,
-        probekey=mt4.probekey,
-        probeexecutable=mt4.probeexecutable,
-        config=mt4.config,
-        attribute=mt4.attribute,
-        dependancy=mt4.dependency,
-        flags=mt4.flags,
-        files=mt4.files,
-        parameter=mt4.parameter,
-        fileparameter=mt4.fileparameter
+        probeversion=mt4.probekey.__str__(),
+        config=mt4.config
     )
 
     poem_models.Metric.objects.create(
         name=mt5.name,
         group=group,
-        mtype=metric_type,
-        probekey=mt5.probekey,
-        probeexecutable=mt5.probeexecutable,
-        config=mt5.config,
-        attribute=mt5.attribute,
-        dependancy=mt5.dependency,
-        flags=mt5.flags,
-        files=mt5.files,
-        parameter=mt5.parameter,
-        fileparameter=mt5.fileparameter
+        probeversion=None,
+        config=mt5.config
     )
 
     poem_models.Metric.objects.create(
         name=mt6.name,
         group=group,
-        mtype=metric_type,
-        probekey=probehistory5,
-        probeexecutable=mt6.probeexecutable,
-        config=mt6.config,
-        attribute=mt6.attribute,
-        dependancy=mt6.dependency,
-        flags=mt6.flags,
-        files=mt6.files,
-        parameter=mt6.parameter,
-        fileparameter=mt6.fileparameter
+        probeversion=probehistory5.__str__(),
+        config=mt6.config
+    )
+
+    poem_models.Metric.objects.create(
+        name=mt7.name,
+        group=group,
+        probeversion=probehistory7.__str__(),
+        config=mt7.config
     )
 
 
@@ -765,6 +939,8 @@ class ListMetricsAPIViewTests(TenantTestCase):
 
 class ListReposAPIViewTests(TenantTestCase):
     def setUp(self):
+        self.tenant.name = "TENANT"
+        self.tenant.save()
         self.token = create_credentials()
         self.view = views.ListRepos.as_view()
         self.factory = TenantRequestFactory(self.tenant)
@@ -778,6 +954,7 @@ class ListReposAPIViewTests(TenantTestCase):
             **{'HTTP_X_API_KEY': 'wrong_token',
                'HTTP_PROFILES': '[ARGO-MON, MON-TEST]'}
         )
+        request.tenant = self.tenant
         response = self.view(request, 'centos7')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
@@ -789,13 +966,16 @@ class ListReposAPIViewTests(TenantTestCase):
             **{'HTTP_X_API_KEY': self.token,
                'HTTP_PROFILES': '[ARGO-MON, MON-TEST]'}
         )
+        request.tenant = self.tenant
         response = self.view(request, 'centos7')
         test_data = response.data
         test_data['data']['repo-1']['packages'] = sorted(
             test_data['data']['repo-1']['packages'], key=lambda k: k['name']
         )
         self.assertEqual(mock_get_metrics.call_count, 2)
-        mock_get_metrics.assert_has_calls([call('ARGO-MON'), call('MON-TEST')])
+        mock_get_metrics.assert_has_calls([
+            call('ARGO-MON', "TENANT"), call('MON-TEST', "TENANT")
+        ])
         self.assertEqual(
             test_data,
             {
@@ -833,6 +1013,7 @@ class ListReposAPIViewTests(TenantTestCase):
             **{'HTTP_X_API_KEY': self.token,
                'HTTP_PROFILES': '[ARGO-MON, MON-TEST]'}
         )
+        request.tenant = self.tenant
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
@@ -844,6 +1025,7 @@ class ListReposAPIViewTests(TenantTestCase):
         request = self.factory.get(
             self.url + '/centos7', **{'HTTP_X_API_KEY': self.token}
         )
+        request.tenant = self.tenant
         response = self.view(request, 'centos7')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
@@ -859,10 +1041,11 @@ class ListReposAPIViewTests(TenantTestCase):
             **{'HTTP_X_API_KEY': self.token,
                'HTTP_PROFILES': '[ARGO-MON, MON-PASSIVE]'}
         )
+        request.tenant = self.tenant
         response = self.view(request, 'centos6')
         self.assertEqual(mock_get_metrics.call_count, 2)
         mock_get_metrics.assert_has_calls(
-            [call('ARGO-MON'), call('MON-PASSIVE')]
+            [call('ARGO-MON', "TENANT"), call('MON-PASSIVE', "TENANT")]
         )
         self.assertEqual(
             response.data,
@@ -887,7 +1070,9 @@ class ListReposAPIViewTests(TenantTestCase):
                         ]
                     }
                 },
-                'missing_packages': ['nagios-plugins-seadatacloud-nvs2 (1.0.1)']
+                'missing_packages': [
+                    'nagios-plugins-seadatacloud-nvs2 (1.0.1)'
+                ]
             }
         )
 
@@ -899,10 +1084,17 @@ class ListReposAPIViewTests(TenantTestCase):
             **{'HTTP_X_API_KEY': self.token,
                'HTTP_PROFILES': '[EMPTY]'}
         )
+        request.tenant = self.tenant
         response = self.view(request, 'centos6')
         mock_get_metrics.assert_called_once()
-        mock_get_metrics.assert_called_with('EMPTY')
-        self.assertEqual(response.data, {'data': {}, 'missing_packages': []})
+        mock_get_metrics.assert_called_with('EMPTY', "TENANT")
+        self.assertEqual(
+            response.data,
+            {
+                'data': {},
+                'missing_packages': []
+            }
+        )
 
     @patch('Poem.api.views.get_metrics_from_profile')
     def test_list_repos_if_nonexisting_tag(self, mock_get_metrics):
@@ -912,9 +1104,12 @@ class ListReposAPIViewTests(TenantTestCase):
             **{'HTTP_X_API_KEY': self.token,
                'HTTP_PROFILES': '[ARGO-MON, MON-TEST]'}
         )
+        request.tenant = self.tenant
         response = self.view(request, 'nonexisting')
         self.assertEqual(mock_get_metrics.call_count, 2)
-        mock_get_metrics.assert_has_calls([call('ARGO-MON'), call('MON-TEST')])
+        mock_get_metrics.assert_has_calls([
+            call('ARGO-MON', "TENANT"), call('MON-TEST', "TENANT")
+        ])
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(
             response.data,
@@ -931,10 +1126,13 @@ class ListReposAPIViewTests(TenantTestCase):
             **{'HTTP_X_API_KEY': self.token,
                'HTTP_PROFILES': '[ARGO-MON, MON-TEST, TEST-NONEXISTING]'}
         )
+        request.tenant = self.tenant
         response = self.view(request, 'centos6')
         self.assertEqual(mock_get_metrics.call_count, 3)
         mock_get_metrics.assert_has_calls([
-            call('ARGO-MON'), call('MON-TEST'), call('TEST-NONEXISTING')
+            call('ARGO-MON', "TENANT"),
+            call('MON-TEST', "TENANT"),
+            call('TEST-NONEXISTING', "TENANT")
         ])
         self.assertEqual(
             response.data,
@@ -959,7 +1157,9 @@ class ListReposAPIViewTests(TenantTestCase):
                         ]
                     }
                 },
-                'missing_packages': ['nagios-plugins-seadatacloud-nvs2 (1.0.1)']
+                'missing_packages': [
+                    'nagios-plugins-seadatacloud-nvs2 (1.0.1)'
+                ]
             }
         )
 
@@ -971,9 +1171,10 @@ class ListReposAPIViewTests(TenantTestCase):
             **{'HTTP_X_API_KEY': self.token,
                'HTTP_PROFILES': '[TEST_PROMOO]'}
         )
+        request.tenant = self.tenant
         response = self.view(request, 'centos6')
         mock_get_metrics.assert_called_once()
-        mock_get_metrics.assert_called_with('TEST_PROMOO')
+        mock_get_metrics.assert_called_with('TEST_PROMOO', "TENANT")
         self.assertEqual(
             response.data,
             {
@@ -1000,13 +1201,1130 @@ class ListReposAPIViewTests(TenantTestCase):
             **{'HTTP_X_API_KEY': self.token,
                'HTTP_PROFILES': '[TEST_PROMOO]'}
         )
+        request.tenant = self.tenant
         response = self.view(request, 'centos7')
         mock_get_metrics.assert_called_once()
-        mock_get_metrics.assert_called_with('TEST_PROMOO')
+        mock_get_metrics.assert_called_with('TEST_PROMOO', "TENANT")
         self.assertEqual(
             response.data,
             {
                 'data': {},
                 'missing_packages': ['nagios-promoo (1.4.0)']
             }
+        )
+
+
+class ListReposInternalAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.tenant.name = "TENANT"
+        self.tenant.save()
+        self.token = create_credentials()
+        self.view = views.ListReposInternal.as_view()
+        self.factory = TenantRequestFactory(self.tenant)
+        self.url = '/api/v2/repos_internal'
+
+        mock_db_for_repos_tests()
+
+    def test_get_repos_if_wrong_token(self):
+        request = self.factory.get(
+            self.url + '/centos7', **{'HTTP_X_API_KEY': 'wrong_token'}
+        )
+        request.tenant = self.tenant
+        response = self.view(request, 'centos7')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_get_repos(self):
+        request = self.factory.get(
+            self.url + '/centos7', **{'HTTP_X_API_KEY': self.token}
+        )
+        request.tenant = self.tenant
+        response = self.view(request, 'centos7')
+        test_data = response.data
+        test_data['data']['repo-1']['packages'] = sorted(
+            test_data['data']['repo-1']['packages'], key=lambda k: k['name']
+        )
+        self.assertEqual(
+            test_data,
+            {
+                'data': {
+                    'repo-1': {
+                        'content': 'content3\ncontent4\n',
+                        'packages': [
+                            {
+                                'name': 'nagios-plugins-argo',
+                                'version': '0.1.11'
+                            },
+                            {
+                                'name': 'nagios-plugins-nagiosexchange',
+                                'version': '1.0.0'
+                            }
+                        ]
+                    }
+                },
+                'missing_packages': []
+            }
+        )
+
+    def test_get_repos_if_no_tag(self):
+        request = self.factory.get(
+            self.url, **{'HTTP_X_API_KEY': self.token}
+        )
+        request.tenant = self.tenant
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data,
+            {'detail': 'You must define OS!'}
+        )
+
+    def test_get_repos_if_nonexisting_tag(self):
+        request = self.factory.get(
+            self.url + '/nonexisting', **{'HTTP_X_API_KEY': self.token}
+        )
+        request.tenant = self.tenant
+        response = self.view(request, 'nonexisting')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data,
+            {'detail': 'YUM repo tag not found.'}
+        )
+
+
+class ListMetricTemplateAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.token = create_credentials()
+        self.view = views.ListMetricTemplates.as_view()
+        self.factory = TenantRequestFactory(self.tenant)
+        self.url = '/api/v2/metrics'
+
+        mock_db_for_metrics_tests()
+
+    def test_list_metric_templates_if_wrong_token(self):
+        request = self.factory.get(
+            self.url, **{'HTTP_X_API_KEY': 'wrong_token'}
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_list_metric_templates(self):
+        request = self.factory.get(self.url, **{'HTTP_X_API_KEY': self.token})
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            [
+                {
+                    'argo.AMSPublisher-Check': {
+                        'probe': 'ams-publisher-probe',
+                        'tags': ['internal', 'test_tag1'],
+                        'config': {
+                            'maxCheckAttempts': '1',
+                            'timeout': '120',
+                            'path': '/usr/libexec/argo-monitoring/probes/argo',
+                            'interval': '180',
+                            'retryInterval': '1'
+                        },
+                        'flags': {
+                            'NOHOSTNAME': '1',
+                            'NOTIMEOUT': '1',
+                            'NOPUBLISH': '1'
+                        },
+                        'dependency': {},
+                        'attribute': {},
+                        'parameter': {
+                            '-s': '/var/run/argo-nagios-ams-publisher/sock',
+                            '-q': 'w:metrics+g:published180'
+                        },
+                        'file_parameter': {},
+                        'file_attribute': {},
+                        'parent': '',
+                        'docurl':
+                            'https://github.com/ARGOeu/nagios-plugins-argo'
+                            '/blob/master/README.md'
+                    }
+                },
+                {
+                    'hr.srce.CertLifetime-Local': {
+                        'probe': 'CertLifetime-probe',
+                        'tags': ['internal'],
+                        'config': {
+                            'maxCheckAttempts': '2',
+                            'timeout': '60',
+                            'path': '/usr/libexec/argo-monitoring/probes/cert',
+                            'interval': '240',
+                            'retryInterval': '30'
+                        },
+                        'flags': {
+                            'NOHOSTNAME': '1',
+                            'NOPUBLISH': '1'
+                        },
+                        'dependency': {},
+                        'attribute': {
+                            'NAGIOS_HOST_CERT': '-f'
+                        },
+                        'parameter': {},
+                        'file_parameter': {},
+                        'file_attribute': {},
+                        'parent': '',
+                        'docurl':
+                            'https://wiki.egi.eu/wiki/ROC_SAM_Tests#hr.srce.'
+                            'CREAMCE-CertLifetime'
+                    }
+                },
+                {
+                    'org.apel.APEL-Pub': {
+                        'probe': '',
+                        'tags': [],
+                        'config': {},
+                        'flags': {
+                            'OBSESS': '1',
+                            'PASSIVE': '1'
+                        },
+                        'dependency': {},
+                        'attribute': {},
+                        'parameter': {},
+                        'file_parameter': {},
+                        'file_attribute': {},
+                        'parent': '',
+                        'docurl': ''
+                    }
+                },
+                {
+                    'test.AMS-Check': {
+                        'probe': 'ams-probe',
+                        'tags': ['test_tag1', 'test_tag2'],
+                        'config': {
+                            'maxCheckAttempts': '3',
+                            'timeout': '60',
+                            'path': '/usr/libexec/argo-monitoring/probes/argo',
+                            'interval': '5',
+                            'retryInterval': '3'
+                        },
+                        'flags': {
+                            'OBSESS': '1'
+                        },
+                        'dependency': {
+                            'argo.AMS-Check': '1'
+                        },
+                        'attribute': {
+                            'argo.ams_TOKEN': '--token'
+                        },
+                        'parameter': {
+                            '--project': 'EGI'
+                        },
+                        'file_parameter': {
+                            'FILE_SIZE_KBS': '1000'
+                        },
+                        'file_attribute': {
+                            'UCC_CONFIG': 'UCC_CONFIG'
+                        },
+                        'parent': 'org.nagios.CDMI-TCP',
+                        'docurl':
+                            'https://github.com/ARGOeu/nagios-plugins-argo'
+                            '/blob/master/README.md'
+                    }
+                },
+                {
+                    'test.EMPTY-metric': {
+                        'probe': '',
+                        'tags': [],
+                        'config': {},
+                        'flags': {},
+                        'dependency': {},
+                        'attribute': {},
+                        'parameter': {},
+                        'file_parameter': {},
+                        'file_attribute': {},
+                        'parent': '',
+                        'docurl': ''
+                    }
+                }
+            ]
+        )
+
+    def test_get_internal_metric_templates(self):
+        request = self.factory.get(
+            self.url + '/internal', **{'HTTP_X_API_KEY': self.token}
+        )
+        response = self.view(request, 'internal')
+        self.assertEqual(
+            response.data,
+            ['argo.AMSPublisher-Check', 'hr.srce.CertLifetime-Local']
+        )
+
+    def test_get_metric_templates_if_no_tagged_metrics(self):
+        request = self.factory.get(
+            self.url + '/empty_tag', **{'HTTP_X_API_KEY': self.token}
+        )
+        response = self.view(request, 'empty_tag')
+        self.assertEqual(response.data, [])
+
+    def test_get_metric_templates_if_nonexistent_tag(self):
+        request = self.factory.get(
+            self.url + '/nonexistent', **{'HTTP_X_API_KEY': self.token}
+        )
+        response = self.view(request, 'nonexistent')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data, {'detail': 'Requested tag not found.'})
+
+
+class ListMetricConfigurationAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.token = create_credentials()
+        self.view = views.ListMetricOverrides.as_view()
+        self.factory = TenantRequestFactory(self.tenant)
+        self.url = '/api/v2/metricoverrides'
+
+        mock_db_for_metrics_tests()
+
+    def test_list_metric_overrides_if_wrong_token(self):
+        request = self.factory.get(
+            self.url, **{'HTTP_X_API_KEY': 'wrong_token'}
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_list_metric_overrides(self):
+        request = self.factory.get(self.url, **{'HTTP_X_API_KEY': self.token})
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            {
+                "consumer": {
+                    "global_attributes": [],
+                    "host_attributes": [],
+                    "metric_parameters": [
+                        {
+                            "hostname": "eosccore.mon.devel.argo.grnet.gr",
+                            "metric": "argo.AMSPublisher-Check",
+                            "parameter": "-q",
+                            "value": "w:metrics+g:published180 -c 10"
+                        }
+                    ]
+                },
+                "local": {
+                    "global_attributes": [
+                        {
+                            "attribute": "NAGIOS_ACTUAL_HOST_CERT",
+                            "value": "/etc/nagios/globus/hostcert.pem"
+                        },
+                        {
+                            "attribute": "NAGIOS_ACTUAL_HOST_KEY",
+                            "value": "/etc/nagios/globus/hostkey.pem"
+                        }
+                    ],
+                    "host_attributes": [
+                        {
+                            "hostname": "mock.host.name",
+                            "attribute": "attr1",
+                            "value": "some-new-value"
+                        }
+                    ],
+                    "metric_parameters": [
+                        {
+                            "hostname": "eosccore.ui.argo.grnet.gr",
+                            "metric": "org.nagios.ARGOWeb-AR",
+                            "parameter": "-r",
+                            "value": "EOSC_Monitoring"
+                        },
+                        {
+                            "hostname": "argo.eosc-portal.eu",
+                            "metric": "org.nagios.ARGOWeb-Status",
+                            "parameter": "-u",
+                            "value": "/eosc/report-status/Default/SERVICEGROUPS"
+                                     "?accept=csv"
+                        }
+                    ]
+                }
+            }
+        )
+
+
+class ListDefaultPortsTests(TenantTestCase):
+    def setUp(self):
+        self.token = create_credentials()
+        self.view = views.ListDefaultPorts.as_view()
+        self.factory = TenantRequestFactory(self.tenant)
+        self.url = '/api/v2/metricoverrides'
+
+        admin_models.DefaultPort.objects.create(
+            name="SITE_BDII_PORT", value="2170"
+        )
+        admin_models.DefaultPort.objects.create(name="BDII_PORT", value="2170")
+        admin_models.DefaultPort.objects.create(name="GRAM_PORT", value="2119")
+        admin_models.DefaultPort.objects.create(
+            name="MYPROXY_PORT", value="7512"
+        )
+
+    def test_list_default_ports_if_wrong_token(self):
+        request = self.factory.get(
+            self.url, **{'HTTP_X_API_KEY': 'wrong_token'}
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_list_default_ports(self):
+        request = self.factory.get(self.url, **{'HTTP_X_API_KEY': self.token})
+        response = self.view(request)
+        self.assertEqual(
+            response.data,
+            {
+                "BDII_PORT": "2170",
+                "GRAM_PORT": "2119",
+                "MYPROXY_PORT": "7512",
+                "SITE_BDII_PORT": "2170"
+            }
+        )
+
+
+class ProbeCandidateAPITests(TenantTestCase):
+    def setUp(self) -> None:
+        self.token = create_credentials()
+        self.view = views.ProbeCandidateAPI.as_view()
+        self.factory = TenantRequestFactory(self.tenant)
+        self.url = "/api/v2/probes"
+
+        submitted_status = poem_models.ProbeCandidateStatus.objects.create(
+            name="submitted"
+        )
+        testing_status = poem_models.ProbeCandidateStatus.objects.create(
+            name="testing"
+        )
+        poem_models.ProbeCandidateStatus.objects.create(name="deployed")
+        poem_models.ProbeCandidateStatus.objects.create(name="rejected")
+        poem_models.ProbeCandidateStatus.objects.create(name="processing")
+
+        self.candidate1 = poem_models.ProbeCandidate.objects.create(
+            name="test-probe",
+            description="Some description for the test probe",
+            docurl="https://github.com/ARGOeu-Metrics/argo-probe-test",
+            command="/usr/libexec/argo/probes/test/test-probe -H <hostname> "
+                    "-t <timeout> --test",
+            contact="poem@example.com",
+            status=testing_status,
+            service_type="testing.service.type"
+        )
+        self.candidate2 = poem_models.ProbeCandidate.objects.create(
+            name="test-probe0",
+            description="Description of the probe",
+            docurl="https://github.com/ARGOeu-Metrics/argo-probe-test",
+            command="/usr/libexec/argo/probes/test/test-probe -H <hostname> "
+                    "-t <timeout> --test --flag1 --flag2",
+            contact="poem@example.com",
+            status=submitted_status
+        )
+
+    def test_get_probe_candidates_without_proper_authentication(self):
+        request = self.factory.get(self.url)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_get_probe_candidates_successfully(self):
+        request = self.factory.get(self.url, **{'HTTP_X_API_KEY': self.token})
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data, [
+                {
+                    "name": "test-probe",
+                    "status": "testing",
+                    "created": self.candidate1.created.strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    ),
+                    "last_update": self.candidate1.last_update.strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    )
+                },
+                {
+                    "name": "test-probe0",
+                    "status": "submitted",
+                    "created": self.candidate2.created.strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    ),
+                    "last_update": self.candidate2.last_update.strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    )
+                }
+            ]
+        )
+
+    def test_post_probe_candidate_successfully(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        candidate = poem_models.ProbeCandidate.objects.get(name="poem-probe")
+        self.assertEqual(
+            candidate.description,
+            "Probe is checking mandatory metric configurations of Tenant POEMs"
+        )
+        self.assertEqual(
+            candidate.docurl,
+            "https://github.com/ARGOeu-Metrics/argo-probe-poem"
+        )
+        self.assertEqual(
+            candidate.rpm, "argo-probe-poem-0.1.0-1.el7.noarch.rpm"
+        )
+        self.assertEqual(
+            candidate.yum_baseurl, "https://rpm-repo.example.com/centos7"
+        )
+        self.assertEqual(
+            candidate.command,
+            "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+            "-t <timeout> --test"
+        )
+        self.assertEqual(candidate.contact, "poem@example.com")
+        self.assertEqual(candidate.status.name, "submitted")
+
+    def test_post_probe_candidate_successfully_different_timeout_arg(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "--timeout <timeout> --test",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        candidate = poem_models.ProbeCandidate.objects.get(name="poem-probe")
+        self.assertEqual(
+            candidate.description,
+            "Probe is checking mandatory metric configurations of Tenant POEMs"
+        )
+        self.assertEqual(
+            candidate.docurl,
+            "https://github.com/ARGOeu-Metrics/argo-probe-poem"
+        )
+        self.assertEqual(
+            candidate.rpm, "argo-probe-poem-0.1.0-1.el7.noarch.rpm"
+        )
+        self.assertEqual(
+            candidate.yum_baseurl, "https://rpm-repo.example.com/centos7"
+        )
+        self.assertEqual(
+            candidate.command,
+            "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+            "--timeout <timeout> --test"
+        )
+        self.assertEqual(candidate.contact, "poem@example.com")
+        self.assertEqual(candidate.status.name, "submitted")
+
+    def test_post_probe_candidate_with_existing_name(self):
+        data = {
+            "name": "test-probe",
+            "description": "Some different description",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-test",
+            "rpm": "argo-probe-test-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/test/test-probe -H <hostname> "
+                "-t <timeout> --test --dryrun",
+            "contact": "test@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        candidate = poem_models.ProbeCandidate.objects.filter(
+            name="test-probe"
+        ).order_by("created")
+        self.assertEqual(len(candidate), 2)
+        self.assertEqual(
+            candidate[0].description, "Some description for the test probe"
+        )
+        self.assertEqual(
+            candidate[1].description, "Some different description"
+        )
+        self.assertEqual(
+            candidate[0].docurl,
+            "https://github.com/ARGOeu-Metrics/argo-probe-test"
+        )
+        self.assertEqual(
+            candidate[1].docurl,
+            "https://github.com/ARGOeu-Metrics/argo-probe-test"
+        )
+        self.assertEqual(candidate[0].rpm, "")
+        self.assertEqual(
+            candidate[1].rpm, "argo-probe-test-0.1.0-1.el7.noarch.rpm"
+        )
+        self.assertEqual(candidate[0].yum_baseurl, "")
+        self.assertEqual(
+            candidate[1].yum_baseurl, "https://rpm-repo.example.com/centos7"
+        )
+        self.assertEqual(
+            candidate[0].command,
+            "/usr/libexec/argo/probes/test/test-probe -H <hostname> "
+            "-t <timeout> --test"
+        )
+        self.assertEqual(
+            candidate[1].command,
+            "/usr/libexec/argo/probes/test/test-probe -H <hostname> "
+            "-t <timeout> --test --dryrun"
+        )
+        self.assertEqual(candidate[0].contact, "poem@example.com")
+        self.assertEqual(candidate[1].contact, "test@example.com")
+        self.assertEqual(candidate[0].status.name, "testing")
+        self.assertEqual(candidate[1].status.name, "submitted")
+
+    def test_post_probe_candidate_successfully_with_missing_name(self):
+        data = {
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["detail"], "Name field is mandatory")
+        self.assertEqual(poem_models.ProbeCandidate.objects.count(), 2)
+
+    def test_post_probe_candidate_with_empty_name(self):
+        data = {
+            "name": "",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["detail"], "Name field is mandatory")
+        self.assertEqual(poem_models.ProbeCandidate.objects.count(), 2)
+
+    def test_post_probe_candidate_with_missing_description(self):
+        data = {
+            "name": "poem-probe",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        candidate = poem_models.ProbeCandidate.objects.get(name="poem-probe")
+        self.assertEqual(candidate.description, "")
+        self.assertEqual(
+            candidate.docurl,
+            "https://github.com/ARGOeu-Metrics/argo-probe-poem"
+        )
+        self.assertEqual(
+            candidate.rpm, "argo-probe-poem-0.1.0-1.el7.noarch.rpm"
+        )
+        self.assertEqual(
+            candidate.yum_baseurl, "https://rpm-repo.example.com/centos7"
+        )
+        self.assertEqual(
+            candidate.command,
+            "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+            "-t <timeout> --test"
+        )
+        self.assertEqual(candidate.contact, "poem@example.com")
+        self.assertEqual(candidate.status.name, "submitted")
+
+    def test_post_probe_candidate_with_empty_description(self):
+        data = {
+            "name": "poem-probe",
+            "description": "",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        candidate = poem_models.ProbeCandidate.objects.get(name="poem-probe")
+        self.assertEqual(candidate.description, "")
+        self.assertEqual(
+            candidate.docurl,
+            "https://github.com/ARGOeu-Metrics/argo-probe-poem"
+        )
+        self.assertEqual(
+            candidate.rpm, "argo-probe-poem-0.1.0-1.el7.noarch.rpm"
+        )
+        self.assertEqual(
+            candidate.yum_baseurl, "https://rpm-repo.example.com/centos7"
+        )
+        self.assertEqual(
+            candidate.command,
+            "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+            "-t <timeout> --test"
+        )
+        self.assertEqual(candidate.contact, "poem@example.com")
+        self.assertEqual(candidate.status.name, "submitted")
+
+    def test_post_probe_candidate_with_missing_docurl(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["detail"], "Docurl field is mandatory")
+        self.assertRaises(
+            poem_models.ProbeCandidate.DoesNotExist,
+            poem_models.ProbeCandidate.objects.get,
+            name="poem-probe"
+        )
+
+    def test_post_probe_candidate_with_empty_docurl(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["detail"], "Docurl field is mandatory")
+        self.assertRaises(
+            poem_models.ProbeCandidate.DoesNotExist,
+            poem_models.ProbeCandidate.objects.get,
+            name="poem-probe"
+        )
+
+    def test_post_probe_candidate_with_invalid_docurl(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["detail"], "Docurl field must be defined as valid URL"
+        )
+        self.assertRaises(
+            poem_models.ProbeCandidate.DoesNotExist,
+            poem_models.ProbeCandidate.objects.get,
+            name="poem-probe"
+        )
+
+    def test_post_probe_candidate_with_missing_rpm(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        candidate = poem_models.ProbeCandidate.objects.get(name="poem-probe")
+        self.assertEqual(
+            candidate.description,
+            "Probe is checking mandatory metric configurations of Tenant POEMs"
+        )
+        self.assertEqual(
+            candidate.docurl,
+            "https://github.com/ARGOeu-Metrics/argo-probe-poem"
+        )
+        self.assertEqual(candidate.rpm, "")
+        self.assertEqual(
+            candidate.yum_baseurl, "https://rpm-repo.example.com/centos7"
+        )
+        self.assertEqual(
+            candidate.command,
+            "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+            "-t <timeout> --test"
+        )
+        self.assertEqual(candidate.contact, "poem@example.com")
+        self.assertEqual(candidate.status.name, "submitted")
+
+    def test_post_probe_candidate_with_empty_rpm(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        candidate = poem_models.ProbeCandidate.objects.get(name="poem-probe")
+        self.assertEqual(
+            candidate.description,
+            "Probe is checking mandatory metric configurations of Tenant POEMs"
+        )
+        self.assertEqual(
+            candidate.docurl,
+            "https://github.com/ARGOeu-Metrics/argo-probe-poem"
+        )
+        self.assertEqual(candidate.rpm, "")
+        self.assertEqual(
+            candidate.yum_baseurl, "https://rpm-repo.example.com/centos7"
+        )
+        self.assertEqual(
+            candidate.command,
+            "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+            "-t <timeout> --test"
+        )
+        self.assertEqual(candidate.contact, "poem@example.com")
+        self.assertEqual(candidate.status.name, "submitted")
+
+    def test_post_probe_candidate_with_missing_yum_baseurl(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        candidate = poem_models.ProbeCandidate.objects.get(name="poem-probe")
+        self.assertEqual(
+            candidate.description,
+            "Probe is checking mandatory metric configurations of Tenant POEMs"
+        )
+        self.assertEqual(
+            candidate.docurl,
+            "https://github.com/ARGOeu-Metrics/argo-probe-poem"
+        )
+        self.assertEqual(
+            candidate.rpm, "argo-probe-poem-0.1.0-1.el7.noarch.rpm"
+        )
+        self.assertEqual(candidate.yum_baseurl, "")
+        self.assertEqual(
+            candidate.command,
+            "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+            "-t <timeout> --test"
+        )
+        self.assertEqual(candidate.contact, "poem@example.com")
+        self.assertEqual(candidate.status.name, "submitted")
+
+    def test_post_probe_candidate_with_empty_yum_baseurl(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        candidate = poem_models.ProbeCandidate.objects.get(name="poem-probe")
+        self.assertEqual(
+            candidate.description,
+            "Probe is checking mandatory metric configurations of Tenant POEMs"
+        )
+        self.assertEqual(
+            candidate.docurl,
+            "https://github.com/ARGOeu-Metrics/argo-probe-poem"
+        )
+        self.assertEqual(
+            candidate.rpm, "argo-probe-poem-0.1.0-1.el7.noarch.rpm"
+        )
+        self.assertEqual(candidate.yum_baseurl, "")
+        self.assertEqual(
+            candidate.command,
+            "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+            "-t <timeout> --test"
+        )
+        self.assertEqual(candidate.contact, "poem@example.com")
+        self.assertEqual(candidate.status.name, "submitted")
+
+    def test_post_probe_candidate_with_invalid_yum_baseurl(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["detail"],
+            "Yum_baseurl field must be defined as valid URL"
+        )
+        self.assertRaises(
+            poem_models.ProbeCandidate.DoesNotExist,
+            poem_models.ProbeCandidate.objects.get,
+            name="poem-probe"
+        )
+
+    def test_post_probe_candidate_with_missing_command(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["detail"], "Command field is mandatory")
+        self.assertRaises(
+            poem_models.ProbeCandidate.DoesNotExist,
+            poem_models.ProbeCandidate.objects.get,
+            name="poem-probe"
+        )
+
+    def test_post_probe_candidate_with_empty_command(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command": "",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["detail"], "Command field is mandatory")
+        self.assertRaises(
+            poem_models.ProbeCandidate.DoesNotExist,
+            poem_models.ProbeCandidate.objects.get,
+            name="poem-probe"
+        )
+
+    def test_post_probe_candidate_with_invalid_command(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> --test",
+            "contact": "poem@example.com"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["detail"],
+            "Command must have -t/--timeout argument. "
+            "Please refer to the probe development guidelines: "
+            "https://argoeu.github.io/argo-monitoring/docs/monitoring/"
+            "guidelines"
+        )
+        self.assertRaises(
+            poem_models.ProbeCandidate.DoesNotExist,
+            poem_models.ProbeCandidate.objects.get,
+            name="poem-probe"
+        )
+
+    def test_post_probe_candidate_with_missing_contact(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["detail"], "Contact field is mandatory")
+        self.assertRaises(
+            poem_models.ProbeCandidate.DoesNotExist,
+            poem_models.ProbeCandidate.objects.get,
+            name="poem-probe"
+        )
+
+    def test_post_probe_candidate_with_empty_contact(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": ""
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data, format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["detail"], "Contact field is mandatory")
+        self.assertRaises(
+            poem_models.ProbeCandidate.DoesNotExist,
+            poem_models.ProbeCandidate.objects.get,
+            name="poem-probe"
+        )
+
+    def test_post_probe_candidate_with_invalid_contact(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "https://rpm-repo.example.com/centos7",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@"
+        }
+        request = self.factory.post(
+            self.url, **{'HTTP_X_API_KEY': self.token}, data=data,
+            format="json"
+        )
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["detail"], "Contact field is not valid email"
+        )
+        self.assertRaises(
+            poem_models.ProbeCandidate.DoesNotExist,
+            poem_models.ProbeCandidate.objects.get,
+            name="poem-probe"
         )

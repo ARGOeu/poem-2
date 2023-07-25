@@ -21,6 +21,15 @@
   background-color: #ffffff;
 }
 
+#argo-navlinks > a {
+  text-decoration: none !important;
+}
+
+.notification-container {
+  max-width: 20% !important;
+  width: 20% !important;
+}
+
 .argo-autocomplete-menu {
   display: block;
   width: 94%;

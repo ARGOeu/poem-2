@@ -20,32 +20,33 @@ Here is a complete list of features:
 
 ### Design
 
-ARGO POEM is SPA (single page) web application using Django framework as backend and ReactJS UI library as a frontend component. Client's browser loads in bundle code that jointly represents whole frontend component that packs together Javascript, CSS, fonts, icons and everything else needed to properly render the UI. Frontend component is glued with backend Django framework as its staticfile that loads bundle in a single Django template presented to client. Keeping frontend close to backend allows exploiting of some nice Django packages that primarily deal with API methods, user authentication and tenant database handling. Frontend talks to backend over session protected REST API methods for resources that should be stored in local database. For the other part of the resources that should be kept on token protected ARGO WEB-API, HTTP requests are triggered directly from frontend. 
+ARGO POEM is SPA (single page) web application using Django framework as backend and ReactJS UI library as a frontend component. Client's browser loads in bundle code that jointly represents whole frontend component that packs together Javascript, CSS, fonts, icons and everything else needed to properly render the UI. Frontend component is glued with backend Django framework as its staticfile that loads bundle in a single Django template presented to client. Keeping frontend close to backend allows exploiting of some nice Django packages that primarily deal with API methods, user authentication and tenant database handling. Frontend talks to backend over session protected REST API methods for resources that should be stored in local database. For the other part of the resources that should be kept on token protected ARGO WEB-API, HTTP requests are triggered directly from frontend.
 
 Web application is served with Apache web server and uses PostgreSQL as database storage.
 
 #### List of packages used
 
-Backend: `Django`, `django-rest-auth`, `django-tenant-schemas`, `django-webpack-loader`, `djangorestframework`, `djangorestframework-api-key`, `djangosaml2`, `psycopg2-binary`
+Backend: `Django`, `dj-rest-auth`, `django-tenants`, `django-webpack-loader`, `djangorestframework`, `djangorestframework-api-key`, `djangosaml2`, `psycopg2-binary`
 
-Frontend: `ReactJS`, `formik`, `react-autosuggest`, `react-diff-viewer`, `react-dom`, `react-fontawesome`, `react-notifications`, `react-popup`, `react-router`, `react-select`, `react-table`, `reactstrap`, `webpack`, `yup`
+Frontend: `ReactJS`, `formik`, `react-hook-form`, `react-autosuggest`, `react-diff-viewer`, `react-dom`, `react-fontawesome`, `react-helmet`, `react-notifications`, `react-popup`, `react-router`, `react-select`, `react-table`, `reactstrap`, `webpack`, `yup`
 
 ## User documentation and instances
 
 User documentation: http://argoeu.github.io/poem/v1/
 
 EGI instances:
-* devel - https://egi.poem.devel.argo.grnet.gr
 * production - https://poem.egi.eu
+* devel - https://poem-devel.egi.eu
 * SuperPOEM - https://poem.argo.grnet.gr
 
 Public pages:
 * https://poem.egi.eu/ui/public_home
+* https://poem-devel.egi.eu/ui/public_home
 * https://poem.argo.grnet.gr/ui/public_home
 
 ## Installation
 
-POEM web service is meant to be running with Django 2.x driven by Python 3.x on CentOS 7 and served by installation of Apache from Software Collections. Setting up Python virtual environment based on Python 3.x is prerequisite. Once the virtual environment is set up, installation of the service simply narrows down to creating and installing wheel package that will also pull and install all needed dependencies. Beside wheel dependencies, service also needs some packages to be installed from CentOS 7 repositories:
+POEM web service is meant to be running with Django 3.x driven by Python 3.x on CentOS 7 and served by installation of Apache from Software Collections. Setting up Python virtual environment based on Python 3.x is prerequisite. Once the virtual environment is set up, installation of the service simply narrows down to creating and installing wheel package that will also pull and install all needed dependencies. Beside wheel dependencies, service also needs some packages to be installed from CentOS 7 repositories:
 
 ```sh
 % yum -y install ca-certificates \
@@ -59,23 +60,25 @@ Layout of POEM web service files on the filesystem depends on the location of vi
 VENV = /home/pyvenv/poem/
 ```
 
-| File Types								    | Destination                                                               |
-|------------------------------ |---------------------------------------------------------------------------|
-| Configuration - General		    | `VENV/etc/poem/poem.conf`                                                 |
-| Configuration - Logging		    | `VENV/etc/poem/poem_logging.conf`                                         |
-| Configuration - Apache		    | `/opt/rh/httpd24/root/etc/httpd/conf.d/`                                  |
-| Cron jobs									    | `/etc/cron.d/poem-clearsessions, poem-sync, poem-db_backup`               |
-| Logrotate 								    | `/etc/logrotate.d/poem-db_backup`                                         |
-| Database handler					    | `VENV/bin/poem-db`                                                        |
-| Sync (Service, Service types) | `VENV/bin/poem-syncservtype, poem-syncservices, poem-syncmetricinstances` |
-| Security key generator        | `VENV/bin/poem-genseckey`                                                 |
-| Token set/create 					    | `VENV/bin/poem-token`                                                     |
-| Tenant management					    | `VENV/bin/poem-tenant`                                                    |
-| Django `manage.py` wrapper    | `VENV/bin/poem-manage`                                                    |
-| Static data served by Apache  | `VENV/usr/share/poem/`                                                    |
-| Main application code         | `VENV/lib/python3.6/site-packages/Poem/`                                  |
-| Log file                      | `VENV/var/log/poem`                                                       |
-| DB backups                    | `VENV/var/db_backups/`                                                    |
+| File Types                      | Destination                                                                   |
+| ------------------------------- | ----------------------------------------------------------------------------- |
+| Configuration - General         | `VENV/etc/poem/poem.conf`                                                     |
+| Configuration - Logging         | `VENV/etc/poem/poem_logging.conf`                                             |
+| Configuration - Apache          | `/opt/rh/httpd24/root/etc/httpd/conf.d/`                                      |
+| Cron jobs                       | `/etc/cron.d/poem-clearsessions, poem-sync, poem-db_backup`                   |
+| Logrotate                       | `/etc/logrotate.d/poem-db_backup`                                             |
+| Database handler                | `VENV/bin/poem-db`                                                            |
+| Sync (Service types)            | `VENV/bin/poem-syncservtype`                                                  |
+| Security key generator          | `VENV/bin/poem-genseckey`                                                     |
+| Token set/create                | `VENV/bin/poem-token`                                                         |
+| Tenant management               | `VENV/bin/poem-tenant`                                                        |
+| Import services from json file  | `VENV/bin/poem-importservices`                                                |
+| Django `manage.py` wrapper      | `VENV/bin/poem-manage`                                                        |
+| Static data served by Apache    | `VENV/usr/share/poem/`                                                        |
+| Main application code           | `VENV/lib/python3.6/site-packages/Poem/`                                      |
+| Log file                        | `VENV/var/log/poem`                                                           |
+| DB backups                      | `VENV/var/db_backups/`                                                        |
+
 
 If the default location of virtual environment is inappropriate and needs to be changed, change of it should be reflected by adapting `VENV` configuration variable in `etc/poem/poem.conf`, `etc/poem/poem_logging.conf`, `/etc/httpd/conf.d/poem.conf` and `site-packages/Poem/settings.py`.
 
@@ -232,16 +235,41 @@ Part of the REST API is protected by token so for tenants that consume those API
 % poem-token -t EGI -s egi
 ```
 
+### WEBAPI
+
+    [WEBAPI]
+    MetricProfile = https://api.devel.argo.grnet.gr/api/v2/metric_profiles
+    AggregationProfile = https://api.devel.argo.grnet.gr/api/v2/aggregation_profiles
+    ThresholdsProfile = https://api.devel.argo.grnet.gr/api/v2/thresholds_profiles
+    OperationsProfile = https://api.devel.argo.grnet.gr/api/v2/operations_profiles
+    Reports = https://api.devel.argo.grnet.gr/api/v2/reports
+    ReportsTopologyTags = https://api.devel.argo.grnet.gr/api/v2/topology/tags
+    ReportsTopologyGroups = https://api.devel.argo.grnet.gr/api/v2/topology/groups
+    ReportsTopologyEndpoints = https://api.devel.argo.grnet.gr/api/v2/topology/endpoints
+    ServiceTypes = https://api.devel.argo.grnet.gr/api/v2/topology/service-types
+    Metrics = https://api.devel.argo.grnet.gr/api/v4/admin/metrics
+
+
+This section lists WEB-API methods for the resources that are not stored in
+POEM's PostgreSQL DB, but instead are consumed from ARGO WEB-API services. POEM
+actively polls the PI methods and is doing the full round of CRUD operations on
+them.
+
 ### GENERAL_<tenant_name>
 
     [GENERAL_EGI]
     Namespace = hr.cro-ngi.TEST
     SamlLoginString = Log in using EGI CHECK-IN
     SamlServiceName = ARGO POEM EGI-CheckIN
+    TermsOfUse = https://ui.argo.grnet.gr/egi/termsofUse/ALL
+    PrivacyPolicies = https://argo.egi.eu/egi/policies/ALL
+
 
 * `Namespace` defines the identifier that will be prepended to every Profile
 * `SamlLoginString` defines the text presented on the SAML2 button of login page
 * `SamlServiceName` defines service name in SAML2 configuration
+* `TermsOfUse` represents tenant URL reference to Terms of Use on ARGO UI service
+* `PrivacyPolicies` represents tenant URL reference to Privacy policies on ARGO UI service
 
 ### SUPERUSER_<tenant_name>
 
@@ -255,6 +283,8 @@ Initial superuser credentials that can be used to sign in to POEM with username 
 > It is **important** to note that these options should be specified with correct values **before** trying to create a superuser in database for the given tenant.
 
 ### SYNC_<tenant_name>
+
+> Section is _optional_ and is of particular interest for tenants that comes with GOCDB-like service whose service types are defined there and should be periodically pulled and presented in the ARGO POEM.
 
 These control options are used by sync scripts that fetch all available services types from GOCDB-like service. Additionally, if GOCDB-like service supports only Basic HTTP Authentication, it should be enabled by setting `UsePlainHttpAuth` and specifying credentials in `HttpUser` and `HttpPass`.
 
@@ -289,7 +319,7 @@ Once all is set, database can be created with provided tool `poem-db`.
 
 ### SuperPOEM
 
-TODO: Tenant handling will be done within SuperPOEM that will spawn TenantPOEM and will have a register all of them with needed tenant metadata. Until then, TenantPOEM is created with a set of Django backend tools that set and create needed tenant metadata. 
+TODO: Tenant handling will be done within SuperPOEM that will spawn TenantPOEM and will have a register all of them with needed tenant metadata. Until then, TenantPOEM is created with a set of Django backend tools that set and create needed tenant metadata.
 
 Prerequisite for spawning of new TenantPOEM is to have SuperPOEM operational with its data (metric templates, probes, packages and repo) loaded in `public` database schema. SuperPOEM is residing on its own FQDN, supporting only username/password login that should be defined in `poem.conf`:
 ```
@@ -298,11 +328,14 @@ AllowedHosts = poem.devel.argo.grnet.gr
 
 [GENERAL_ALL]
 PublicPage = poem.devel.argo.grnet.gr
+TermsOfUse = https://ui.argo.grnet.gr/egi/termsofUse/ALL
+PrivacyPolicies = https://argo.egi.eu/egi/policies/ALL
+
 
 [SUPERUSER_ALL]
 Name = <username>
 Password = <password>
-Email = <email> 
+Email = <email>
 ```
 
 `public` schema is automatically created once the database is created. It just needs to be populated with SuperPOEM data:
@@ -323,7 +356,7 @@ Tenant metadata is:
 Tenant metadata should be listed in `poem.conf` with corresponding sections:
 ```
 [SECURITY]
-AllowedHosts = egi.poem.devel.argo.grnet.gr
+AllowedHosts = poem.devel.argo.grnet.gr, egi.poem.devel.argo.grnet.gr
 
 [GENERAL_EGI]
 SamlLoginString = Login using EGI CHECK-IN
@@ -332,7 +365,7 @@ SamlServiceName = ARGO POEM EGI-CheckIN
 [SUPERUSER_EGI]
 Name = <username>
 Password = <password>
-Email = <email> 
+Email = <email>
 
 [SYNC_EGI]
 UsePlainHttpAuth = False
@@ -373,8 +406,8 @@ For seamless interaction with ARGO WEB-API, tokens with predefined names and val
 
 Example:
 ```
-poem-token -t WEB-API-RO -s egi -o xxxx 
-poem-token -t WEB-API -s egi -o xxxx 
+poem-token -t WEB-API-RO -s egi -o xxxx
+poem-token -t WEB-API -s egi -o xxxx
 ```
 
 `poem-token` tools takes two or three arguments. In three-arguments-mode, it's setting token name provided after `-t` within schema provided after `-s` to a predefined value provided after `-o`. If `-o` is omitted, than value will be automatically created.
@@ -384,7 +417,9 @@ In two-argument-mode it is used to generate a token for its REST API that will b
 poem-token -t EGI -s egi
 ```
 
-## Development environment
+## Development
+
+### Container environment
 
 Development environment is based on Docker containers and container building instructions and helper scripts are provided in `docker/` folder. Environment is implemented as multi-container Docker application that can be spawned with `docker-compose`. Prior starting application, container that will be running Django/React code needs to be built. Container that will be running PostgreSQL is pulled from Docker registry.
 
@@ -403,3 +438,61 @@ Starting of multi-container application:
 docker/ $ docker-compose up
 ```
 
+### Web server
+
+In development enviroment, application can be served via Apache web server or internal Django web server coupled with Webpack's dev server for the Hot Module Reload functionality (HMR). Helper make target rules are provided in [poem/Poem/Makefile](poem/Poem/Makefile).
+
+#### Apache
+
+For the Apache web serving, bundle created by the Webpack need to be manually planted as Django's staticfile everytime bundle is recreated. Webpack can monitor the changes in the React's code and recreate the bundle on the fly.
+
+Start Webpack's watch mode:
+```
+make devel-watch
+```
+
+After changes are done and developer wants to see how they are reflected, he needs to place newly created bundle as Django staticfile and restart the Apache within container enviroment. For that purpose, make target rule is prepared:
+```
+make place-new-bundle
+```
+
+#### Django web server
+
+Advantage of using Django's web server is that backend code can be easily debugged as developer can use debugger and breakpoints and trace the execution of code. Django web server is automatically reloaded for every change of the backend code. Webpack's bundles are automatically placed as they are picked up from `webpack-dev-server` running at `localhost:3000`. Moreover, developer can use HMR functionality as `webpack-dev-server` is able to trigger browser reload for every change in the frontend code.
+
+Start Django web server at `0.0.0.0:8000`:
+```
+make devel-django-server
+```
+
+Start `webpack-dev-server` as `localhost:3000`:
+```
+make devel-webpack-server
+```
+Or use HMR:
+```
+make devel-webpack-server-hmr
+```
+
+### Packaging
+
+Deployment of new versions is done with wheel packages that contain both backend Python and frontend Javascript code. Packages are build using setuptools and helper make target rules are provided in [Makefile](Makefile) and in [poem/Poem/Makefile](poem/Poem/Makefile). Latter is used to create a devel or production bundle of frontend Javascript code and place it as Django staticfiles, while the former is used to create Python wheel package.
+
+* frontend `Makefile` package targets:
+  - `make devel-bundle` - create a development Webpack bundle
+  - `make prod-bundle` - create a production Webpack bundle
+  - `make place-new-bundle` - place created bundle as Django staticfile
+* backend `Makefile` package targets:
+  - `make wheel-devel` - create date-tagged wheel package
+  - `make wheel-prod` - create versioned wheel package picking up the version from `setuptools`
+
+### Security vulnerabilities
+
+Security vulnerabilites happens ocassionally and are more often in environments and applications built from multiple software stacks. That's the case with ARGO POEM - two software stacks needs to be maintained: Django (Python) and React (Node.js/Javascript). Therefore, helpers are introduced to timely identify and resolve security issues:
+* Python `Makefile` security audit:
+    - `make py-audit-view`
+    - bump proposed package versions in `requirements.txt`
+* Javascript `Makefile` security audit:
+    - `make js-audit-view`
+    - `make js-audit-fix`
+Those are introduced in [poem/Poem/Makefile](poem/Poem/Makefile).

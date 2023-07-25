@@ -1,28 +1,11 @@
-from Poem.poem_super_admin.models import ProbeHistory, MetricTags
+from Poem.poem_super_admin import models as admin_models
+from Poem.tenants.models import Tenant
 from django.contrib.auth.models import GroupManager, Permission
 from django.db import models
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
-
-
-class MetricTypeManager(models.Manager):
-    def get_by_natural_key(self, name):
-        return self.get(name=name)
-
-
-class MetricType(models.Model):
-    id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=128)
-
-    objects = MetricTypeManager()
-
-    class Meta:
-        app_label = 'poem'
-
-    def __str__(self):
-        return u'%s' % self.name
-
-    def natural_key(self):
-        return (self.name,)
+from django_tenants.utils import schema_context, get_public_schema_name
 
 
 class GroupOfMetrics(models.Model):
@@ -47,22 +30,10 @@ class GroupOfMetrics(models.Model):
 class Metric(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=128, unique=True)
-    mtype = models.ForeignKey(MetricType, on_delete=models.CASCADE)
-    tags = models.ManyToManyField(MetricTags)
-    probekey = models.ForeignKey(ProbeHistory, blank=True, null=True,
-                                 on_delete=models.SET_NULL)
-    description = models.TextField(default='')
+    probeversion = models.CharField(max_length=1024, null=True, blank=True)
     group = models.ForeignKey(GroupOfMetrics, null=True,
                               on_delete=models.SET_NULL)
-    parent = models.CharField(max_length=128)
-    probeexecutable = models.CharField(max_length=128)
     config = models.CharField(max_length=1024)
-    attribute = models.CharField(max_length=1024)
-    dependancy = models.CharField(max_length=1024)
-    flags = models.CharField(max_length=1024)
-    files = models.CharField(max_length=1024)
-    parameter = models.CharField(max_length=1024)
-    fileparameter = models.CharField(max_length=1024)
 
     class Meta:
         permissions = (('metricsown', 'Read/Write/Modify'),)
@@ -71,3 +42,68 @@ class Metric(models.Model):
 
     def __str__(self):
         return u'%s' % self.name
+
+
+class MetricConfiguration(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=1024, unique=True)
+    globalattribute = models.TextField()
+    hostattribute = models.TextField()
+    metricparameter = models.TextField()
+
+    class Meta:
+        app_label = "poem"
+
+    def __str__(self):
+        return u"%s" % self.name
+
+
+class ProbeCandidateStatus(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=128, unique=True)
+
+    class Meta:
+        app_label = "poem"
+
+    def __str__(self):
+        return u"%s" % self.name
+
+
+class ProbeCandidate(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=128)
+    description = models.CharField(max_length=1024)
+    docurl = models.URLField(max_length=1024)
+    rpm = models.CharField(max_length=1024)
+    yum_baseurl = models.URLField(max_length=1024)
+    command = models.CharField(max_length=2048)
+    contact = models.EmailField()
+    status = models.ForeignKey(ProbeCandidateStatus, on_delete=models.CASCADE)
+    service_type = models.CharField(max_length=2048, blank=True, null=True)
+    created = models.DateTimeField(max_length=32, auto_now_add=True)
+    last_update = models.DateTimeField(max_length=32, auto_now=True)
+
+    class Meta:
+        app_label = "poem"
+
+    def __str__(self):
+        return u"%s" % self.name
+
+
+@receiver(pre_save, sender=admin_models.Package)
+def update_metrics(sender, instance, **kwargs):
+    schemas = list(
+        Tenant.objects.all().values_list('schema_name', flat=True)
+    )
+    schemas.remove(get_public_schema_name())
+    probes = admin_models.ProbeHistory.objects.filter(package=instance)
+
+    for schema in schemas:
+        with schema_context(schema):
+            for probe in probes:
+                metrics = Metric.objects.filter(
+                    probeversion=f"{probe.name} ({probe.package.version})"
+                )
+                for metric in metrics:
+                    metric.probeversion = f"{probe.name} ({instance.version})"
+                    metric.save()

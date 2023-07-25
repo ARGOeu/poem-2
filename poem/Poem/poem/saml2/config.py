@@ -7,14 +7,11 @@ from saml2.config import SPConfig
 from django.conf import settings
 from django.db import connection
 
-from tenant_schemas.utils import remove_www, get_tenant_model
+from django_tenants.utils import remove_www
 
 
 def tenant_from_request(request):
-    model = get_tenant_model()
-    hostname = get_hostname(request)
-    tenant = model.objects.get(domain_url=hostname)
-    return tenant.name.lower()
+    return request.tenant.name.lower()
 
 
 def get_schemaname():

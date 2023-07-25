@@ -40,15 +40,68 @@ def inline_one_to_dict(data):
         return ''
 
 
-def create_history_entry(instance, user, comment):
+def serialize_metric(metric_instance, tags=None):
+    if metric_instance.probeversion:
+        instance_probe = metric_instance.probeversion.split("(")
+        probe_name = instance_probe[0].strip()
+        probe_version = instance_probe[1][:-1].strip()
+        mt_instance = admin_models.MetricTemplateHistory.objects.get(
+            name=metric_instance.name, probekey__name=probe_name,
+            probekey__package__version=probe_version
+        )
+
+    else:
+        mt_instance = admin_models.MetricTemplateHistory.objects.get(
+            name=metric_instance.name
+        )
+
+    serialized_data = serializers.serialize(
+        "json", [metric_instance],
+        use_natural_foreign_keys=True,
+        use_natural_primary_keys=True
+    )
+
+    if not tags or len(tags) == 0:
+        tags_list = []
+
+    else:
+        tags_list = [[tag.name] for tag in tags]
+
+    unserialized = json.loads(serialized_data)[0]
+
+    if mt_instance.probekey:
+        probekey = [
+            mt_instance.probekey.name, mt_instance.probekey.package.version
+        ]
+
+    else:
+        probekey = None
+
+    unserialized["fields"].pop("probeversion")
+
+    unserialized["fields"].update({
+        "tags": tags_list,
+        "mtype": [mt_instance.mtype.name],
+        "description": mt_instance.description,
+        "parent": mt_instance.parent,
+        "probekey": probekey,
+        "probeexecutable": mt_instance.probeexecutable,
+        "attribute": mt_instance.attribute,
+        "dependancy": mt_instance.dependency,
+        "flags": mt_instance.flags,
+        "files": mt_instance.files,
+        "parameter": mt_instance.parameter,
+        "fileparameter": mt_instance.fileparameter
+    })
+
+    return json.dumps([unserialized])
+
+
+def create_history_entry(instance, user, comment, tags=None):
     if isinstance(instance, poem_models.Metric):
         poem_models.TenantHistory.objects.create(
             object_id=instance.id,
-            serialized_data=serializers.serialize(
-                'json', [instance],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
-            ),
+            serialized_data=serialize_metric(instance, tags=tags),
             object_repr=instance.__str__(),
             content_type=ContentType.objects.get_for_model(instance),
             comment=comment,
@@ -91,13 +144,9 @@ def create_history_entry(instance, user, comment):
             history.tags.add(tag)
 
 
-def create_history(instance, user, comment=None):
+def create_history(instance, user, comment=None, tags=None):
     if isinstance(instance, poem_models.Metric):
-        serialized_data = serializers.serialize(
-            'json', [instance],
-            use_natural_foreign_keys=True,
-            use_natural_primary_keys=True
-        )
+        serialized_data = serialize_metric(instance, tags=tags)
         content_type = ContentType.objects.get_for_model(instance)
 
         if not comment:
@@ -109,7 +158,7 @@ def create_history(instance, user, comment=None):
         if not comment:
             comment = create_comment(instance)
 
-    create_history_entry(instance, user, comment)
+    create_history_entry(instance, user, comment, tags)
 
 
 def analyze_differences(old_data, new_data):
@@ -424,7 +473,8 @@ def create_profile_history(instance, data, user, description=None):
         })
 
     elif isinstance(
-            instance, (poem_models.Aggregation, poem_models.ThresholdsProfiles)
+            instance, (poem_models.Aggregation, poem_models.ThresholdsProfiles,
+                       poem_models.Reports)
     ):
         serialized_data[0]['fields'].update(**data)
 

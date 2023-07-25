@@ -10,64 +10,57 @@ import {
   CardBody,
   Label,
   CardFooter,
-  FormGroup } from 'reactstrap';
-import { Formik, Field, Form } from 'formik';
+  FormGroup,
+  Form,
+  Input
+} from 'reactstrap';
 import ArgoLogo from './argologo_color.svg';
-import './Login.css';
 import { Footer } from './UIElements.js';
 import { Backend } from './DataManager.js';
 
+import './Login.css';
+import { Controller, useForm } from 'react-hook-form';
+
 
 const Login = (props) => {
-  var _isMounted = false
   const [samlIdpString, setSamlIdpString] = useState(null);
   const [loginFailedVisible, setLoginFailedVisible] = useState(false);
   const [isTenantSchema, setIsTenantSchema] = useState(null);
-  const [tenantName, setTenantName] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [privacyLink, setPrivacyLink] = useState(undefined);
+  const [termsLink, setTermsLink] = useState(undefined);
 
   const backend = new Backend();
   const AppOnLogin = props.onLogin;
 
-  async function fetchSamlButtonString() {
-    try {
-      let response = await fetch('/api/v2/internal/config_options');
-      let json = await response.json();
-      return json;
-    } catch(err) {
-      alert(`Something went wrong: ${err}`);
-    };
-  };
+  const { control, getValues, handleSubmit, reset } = useForm({
+    defaultValues: { username: '', password: '' }
+  })
 
   useEffect(() => {
-    _isMounted = true;
     setLoading(true);
 
     async function fetchData() {
       let response = await backend.isTenantSchema();
+      let options = await backend.fetchConfigOptions();
+
+      setPrivacyLink(options && options.result.terms_privacy_links.privacy);
+      setTermsLink(options && options.result.terms_privacy_links.terms);
+
       if (response) {
-        let json = await fetchSamlButtonString();
-        if (_isMounted) {
-          setIsTenantSchema(response);
-          setSamlIdpString(json.result.saml_login_string);
-          setTenantName(json.result.tenant_name);
-        };
+        setIsTenantSchema(response);
+        setSamlIdpString(options.result.saml_login_string);
       } else
-        if (_isMounted)
-          setIsTenantSchema(response);
+        setIsTenantSchema(response);
 
       setLoading(false);
-    };
+    }
 
     fetchData();
-
-    return function cleanup() {
-      _isMounted = false;
-    };
   }, []);
 
   async function doUserPassLogin(username, password) {
-    let response = await fetch('/rest-auth/login/', {
+    await fetch('/dj-rest-auth/login/', {
       method: 'POST',
       mode: 'cors',
       cache: 'no-cache',
@@ -85,9 +78,17 @@ const Login = (props) => {
     return backend.isActiveSession(isTenantSchema);
   }
 
-  function dismissLoginAlert() {
-    _isMounted && setLoginFailedVisible(false);
-  };
+  const onSubmitHandle = async () => {
+    let values = getValues()
+    let response = await doUserPassLogin(values.username, values.password);
+    if (response.active) {
+      AppOnLogin(response)
+    }
+    else {
+      setLoginFailedVisible(true);
+      reset()
+    }
+  }
 
   if (isTenantSchema !== null && !loading) {
     return (
@@ -102,46 +103,53 @@ const Login = (props) => {
                 <h4 className="text-light"><strong>ARGO</strong> POEM</h4>
               </CardHeader>
               <CardBody>
-                <Formik
-                  initialValues = {{username: '', password: ''}}
-                  onSubmit = {
-                    async (values) => {
-                      let response = await doUserPassLogin(values.username, values.password);
-                      if (response.active) {
-                        AppOnLogin(response.userdetails)
+                <Form onSubmit={ handleSubmit(onSubmitHandle) }>
+                  <FormGroup>
+                    <Label for="username">Username: </Label>
+                    <Controller
+                      name="username"
+                      control={ control }
+                      render={ ({ field }) => 
+                        <Input
+                          { ...field }
+                          id="username"
+                          className="form-control"
+                        />
                       }
-                      else {
-                        setLoginFailedVisible(true);
-                      };
-                    }
-                  }>
-                  <Form>
-                    <FormGroup>
-                      <Label for="username">Username: </Label>
-                      <Field name="username" className="form-control"/>
-                    </FormGroup>
-                    <FormGroup>
-                      <Label for="password">Password: </Label>
-                      <Field name="password" className="form-control" type="password"/>
-                    </FormGroup>
-                    <FormGroup>
-                      <Alert color="danger" isOpen={loginFailedVisible} toggle={dismissLoginAlert} fade={false}>
-                        <p className="text-center">
-                          Login failed, invalid username and password provided
-                        </p>
-                      </Alert>
-                    </FormGroup>
-                    <div className="pt-3">
-                    </div>
-                    <FormGroup>
-                      <Button color="success" type="submit" block>Login using username and password</Button>
-                      {isTenantSchema && <a className="btn btn-success btn-block" role="button" href="/saml2/login">{samlIdpString}</a>}
-                    </FormGroup>
-                  </Form>
-                </Formik>
+                    />
+                  </FormGroup>
+                  <FormGroup>
+                    <Label for="password">Password: </Label>
+                    <Controller
+                      name="password"
+                      control={ control }
+                      render={ ({ field }) =>
+                        <Input
+                          { ...field }
+                          id="password"
+                          type="password"
+                          className="form-control"
+                        />
+                      }
+                    />
+                  </FormGroup>
+                  <FormGroup>
+                    <Alert color="danger" isOpen={loginFailedVisible} toggle={() => setLoginFailedVisible(false)} fade={false}>
+                      <p className="text-center">
+                        Login failed, invalid username and password provided
+                      </p>
+                    </Alert>
+                  </FormGroup>
+                  <div className="pt-3">
+                  </div>
+                  <FormGroup className='justify-content-center'>
+                    <Button color="success" type="submit" block className='mb-2'>Login using username and password</Button>
+                    {isTenantSchema && <a className="btn btn-success btn-block" role="button" href="/saml2/login" style={{width: '100%'}}>{samlIdpString}</a>}
+                  </FormGroup>
+                </Form>
               </CardBody>
               <CardFooter id="argo-loginfooter">
-                <Footer loginPage={true} tenantName={tenantName}/>
+                <Footer privacyLink={privacyLink} termsLink={termsLink} loginPage={true}/>
               </CardFooter>
             </Card>
           </Col>

@@ -6,16 +6,15 @@ import {
   BaseArgoView,
   NotifyOk,
   NotifyError,
-  ModalAreYouSure,
   ErrorComponent,
   ParagraphTitle,
   BaseArgoTable,
-  CustomErrorMessage
+  CustomReactSelect
 } from './UIElements';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
-import { Formik, Form, Field } from 'formik';
 import {
+  Form,
   FormGroup,
   Row,
   Col,
@@ -23,9 +22,18 @@ import {
   FormText,
   Button,
   InputGroup,
-  InputGroupAddon
+  InputGroupText,
+  Input,
+  FormFeedback
 } from "reactstrap";
 import * as Yup from 'yup';
+import './Users.css';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
+import { fetchUserGroups, fetchUsers, fetchUserDetails  } from './QueryFunctions';
+import { Controller, useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { ErrorMessage } from '@hookform/error-message';
+
 
 const UserSchema = Yup.object().shape({
   username: Yup.string()
@@ -63,195 +71,37 @@ const ChangePasswordSchema = Yup.object().shape({
 })
 
 
-import './Users.css';
-import { useQuery } from 'react-query';
+const fetchUser = async (username) => {
+  const backend = new Backend();
+  return await backend.fetchData(`/api/v2/internal/users/${username}`)
+}
 
 
-const CommonUser = ({add, ...props}) =>
-  <>
-    {
-      (add) ?
-        <FormGroup>
-          <Row>
-            <Col md={6}>
-              <InputGroup>
-                <InputGroupAddon addonType='prepend'>Username</InputGroupAddon>
-                <Field
-                  type="text"
-                  name="username"
-                  className={`form-control ${props.errors.username && props.touched.username && 'border-danger'}`}
-                  id="userUsername"
-                />
-              </InputGroup>
-              <CustomErrorMessage name='username' />
-            </Col>
-          </Row>
-          <Row>
-            <Col md={6}>
-              <InputGroup>
-                <InputGroupAddon addonType='prepend'>Password</InputGroupAddon>
-                <Field
-                type="password"
-                name="password"
-                className={`form-control ${props.errors.password && props.touched.password && 'border-danger'}`}
-                id="password"
-              />
-              </InputGroup>
-              <CustomErrorMessage name='password' />
-            </Col>
-          </Row>
-          <Row>
-            <Col md={6}>
-              <InputGroup>
-                <InputGroupAddon addonType='prepend'>Confirm password</InputGroupAddon>
-                <Field
-                  type='password'
-                  name='confirm_password'
-                  className={`form-control ${props.errors.confirm_password && props.touched.confirm_password && 'border-danger'}`}
-                  id='confirm_password'
-                />
-              </InputGroup>
-              <CustomErrorMessage name='confirm_password' />
-            </Col>
-          </Row>
-        </FormGroup>
-      :
-        <FormGroup>
-          <Row>
-            <Col md={6}>
-              <InputGroup>
-                <InputGroupAddon addonType='prepend'>Username</InputGroupAddon>
-                <Field
-                  type="text"
-                  name='username'
-                  className={`form-control ${props.errors.username && props.touched.username && 'border-danger'}`}
-                  id='userUsername'
-                />
-              </InputGroup>
-              <CustomErrorMessage name='username' />
-            </Col>
-          </Row>
-        </FormGroup>
-    }
-    <FormGroup>
-      <ParagraphTitle title='Personal info'/>
-      <Row>
-        <Col md={6}>
-          <InputGroup>
-            <InputGroupAddon addonType="prepend">First name</InputGroupAddon>
-            <Field
-              type="text"
-              name="first_name"
-              className="form-control"
-              id="userFirstName"
-            />
-          </InputGroup>
-        </Col>
-      </Row>
-      <Row>
-        <Col md={6}>
-          <InputGroup>
-            <InputGroupAddon addonType="prepend">Last name</InputGroupAddon>
-            <Field
-              type="text"
-              name="last_name"
-              className="form-control"
-              id="userLastName"
-            />
-          </InputGroup>
-        </Col>
-      </Row>
-      <Row>
-        <Col md={6}>
-          <InputGroup>
-            <InputGroupAddon addonType="prepend">Email</InputGroupAddon>
-            <Field
-              type="text"
-              name="email"
-              className={`form-control ${props.errors.email && props.touched.email && 'border-danger'}`}
-              id="userEmail"
-            />
-          </InputGroup>
-          <CustomErrorMessage name='email' />
-        </Col>
-      </Row>
-      {
-        (!add) &&
-          <>
-            <Row>
-              <Col md={6}>
-                <InputGroup>
-                  <InputGroupAddon addonType='prepend'>Last login</InputGroupAddon>
-                  <Field
-                    type='text'
-                    name='last_login'
-                    className='form-control'
-                    readOnly
-                  />
-                </InputGroup>
-              </Col>
-            </Row>
-            <Row>
-              <Col md={6}>
-                <InputGroup>
-                  <InputGroupAddon addonType='prepend'>Date joined</InputGroupAddon>
-                  <Field
-                    type='text'
-                    name='date_joined'
-                    className='form-control'
-                    readOnly
-                  />
-                </InputGroup>
-              </Col>
-            </Row>
-          </>
-      }
-    </FormGroup>
-    <FormGroup>
-      <ParagraphTitle title='permissions'/>
-      <Row>
-        <Col md={6}>
-          <label>
-            <Field
-              type="checkbox"
-              name="is_superuser"
-              className="mr-1"
-            />
-            Superuser status
-          </label>
-          <FormText color="muted">
-            Designates that this user has all permissions without explicitly assigning them.
-          </FormText>
-        </Col>
-      </Row>
-      <Row>
-        <Col md={6}>
-          <label>
-            <Field
-              type="checkbox"
-              name="is_active"
-              className="mr-1"
-            />
-            Active
-          </label>
-          <FormText color="muted">
-            Designates whether this user should be treated as active. Unselect this instead of deleting accounts.
-          </FormText>
-        </Col>
-      </Row>
-    </FormGroup>
-  </>;
+const fetchUserProfile = async (isTenantSchema, username) => {
+  const backend = new Backend();
+  if (isTenantSchema)
+    return await backend.fetchData(`/api/v2/internal/userprofile/${username}`)
+}
+
+
+const fetchGroupsForUser = async (isTenantSchema, username) => {
+  const backend = new Backend();
+  if (isTenantSchema) {
+    let usergroups = await backend.fetchResult(`/api/v2/internal/usergroups/${username}`);
+
+    return usergroups;
+  }
+}
 
 
 export const UsersList = (props) => {
     const location = props.location;
-    const backend = new Backend();
+    const isTenantSchema = props.isTenantSchema;
+
+    const queryClient = useQueryClient();
 
     const { data: listUsers, error: error, isLoading: loading } = useQuery(
-      'users_listview', async () => {
-        let json = await backend.fetchData('/api/v2/internal/users');
-        return json;
-      }
+      'user', () => fetchUsers()
     );
 
   const columns = React.useMemo(() => [
@@ -324,7 +174,7 @@ export const UsersList = (props) => {
           }
         </div>
     }
-  ], []);
+  ], [isTenantSchema, queryClient]);
 
   if (loading)
     return (<LoadingAnim />);
@@ -335,7 +185,7 @@ export const UsersList = (props) => {
   else if (!loading && listUsers) {
     return (
       <BaseArgoView
-        resourcename='users'
+        resourcename='user'
         location={location}
         listview={true}>
         <BaseArgoTable
@@ -352,644 +202,832 @@ export const UsersList = (props) => {
 };
 
 
+const GroupSelect = ({ forwardedRef=undefined, ...props }) => {
+  return (
+    <CustomReactSelect
+      name={ props.name }
+      forwardedRef={ forwardedRef ? forwardedRef : null }
+      id={ props.id ? props.id : props.name }
+      label={ props.label }
+      isMulti={ true }
+      onChange={ props.onChange }
+      options={ props.options.map(option => new Object({ label: option, value: option })) }
+      value={
+        props.values.length > 0 ?
+          props.values.map(value => new Object({ label: value, value: value }))
+        :
+      undefined
+      }
+    />
+  )
+}
+
+
+const UserChangeForm = ({
+  user_name=undefined,
+  addview=false,
+  user=undefined,
+  userProfile=undefined,
+  userGroups=undefined,
+  allGroups=undefined,
+  userDetails=undefined,
+  isTenantSchema=undefined,
+  location=undefined,
+  history=undefined
+}) => {
+  const queryClient = useQueryClient()
+  const backend = new Backend()
+
+  const changeUserMutation = useMutation(async(values) => backend.changeObject('/api/v2/internal/users/', values))
+  const changeUserProfileMutation = useMutation(async(values) => backend.changeObject('/api/v2/internal/userprofile/', values))
+  const addUserMutation = useMutation(async(values) => backend.addObject('/api/v2/internal/users/', values))
+  const addUserProfileMutation = useMutation(async(values) => backend.addObject('/api/v2/internal/userprofile/', values))
+  const deleteMutation = useMutation(async () => await backend.deleteObject(`/api/v2/internal/users/${user_name}`))
+
+  const [areYouSureModal, setAreYouSureModal] = useState(false)
+  const [modalFlag, setModalFlag] = useState(undefined)
+  const [modalTitle, setModalTitle] = useState(undefined)
+  const [modalMsg, setModalMsg] = useState(undefined)
+
+  const { control, handleSubmit, setValue, getValues, formState: { errors } } = useForm({
+    defaultValues: {
+      addview: addview,
+      pk: user ? user.pk : '',
+      first_name: user ? user.first_name : '',
+      last_name: user ? user.last_name : '',
+      username: user ? user.username : '',
+      password: '',
+      confirm_password: '',
+      is_active: user ? user.is_active : true,
+      is_superuser: user ? user.is_superuser : false,
+      email: user ? user.email : '',
+      last_login: user ? user.last_login : '',
+      date_joined: user ? user.date_joined : '',
+      groupsofaggregations: isTenantSchema && userGroups ? userGroups.aggregations : [],
+      groupsofmetrics: isTenantSchema && userGroups ? userGroups.metrics : [],
+      groupsofmetricprofiles: isTenantSchema && userGroups ? userGroups.metricprofiles : [],
+      groupsofthresholdsprofiles: isTenantSchema && userGroups ? userGroups.thresholdsprofiles : [],
+      groupsofreports: isTenantSchema && userGroups ? userGroups.reports : [],
+      displayname: isTenantSchema && userProfile ? userProfile.displayname : '',
+      subject: isTenantSchema && userProfile ? userProfile.subject : '',
+      egiid: isTenantSchema && userProfile ? userProfile.egiid : ''
+    },
+    mode: "all",
+    resolver: yupResolver(UserSchema)
+  })
+
+  function toggleAreYouSure() {
+    setAreYouSureModal(!areYouSureModal)
+  }
+
+  function onSubmitHandle() {
+    let msg = `Are you sure you want to ${addview ? 'add' : 'change'} user?`
+    let title = `${addview ? 'Add' : 'Change'} user`
+
+    setModalMsg(msg)
+    setModalTitle(title)
+    setModalFlag('submit')
+    toggleAreYouSure()
+  }
+
+  function doChange() {
+    let formValues = getValues()
+
+    const sendValues = new Object({
+      username: formValues.username,
+      first_name: formValues.first_name,
+      last_name: formValues.last_name,
+      email: formValues.email,
+      is_superuser: formValues.is_superuser,
+      is_active: formValues.is_active
+    });
+
+    const sendValues2 = new Object({
+      username: formValues.username,
+      displayname: formValues.displayname,
+      subject: formValues.subject,
+      egiid: formValues.egiid,
+      groupsofaggregations: formValues.groupsofaggregations,
+      groupsofmetrics: formValues.groupsofmetrics,
+      groupsofmetricprofiles: formValues.groupsofmetricprofiles,
+      groupsofthresholdsprofiles: formValues.groupsofthresholdsprofiles,
+      groupsofreports: formValues.groupsofreports
+    })
+
+    if (!addview) {
+      changeUserMutation.mutate({ ...sendValues, pk: formValues.pk }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries('user');
+          if (isTenantSchema) {
+            changeUserProfileMutation.mutate(sendValues2, {
+              onSuccess: () => {
+                queryClient.invalidateQueries('userprofile');
+                NotifyOk({
+                  msg: 'User successfully changed',
+                  title: 'Changed',
+                  callback: () => history.push('/ui/administration/users')
+                })
+              },
+              onError: (error) => {
+                NotifyError({
+                  title: 'Error',
+                  msg: error.message ? error.message : 'Error changing user profile'
+                })
+              }
+            })
+          } else {
+            NotifyOk({
+              msg: 'User successfully changed',
+              title: 'Changed',
+              callback: () => history.push('/ui/administration/users')
+            })
+          }
+        },
+        onError: (error) => {
+          NotifyError({
+            title: 'Error',
+            msg: error.message ? error.message : 'Error changing user'
+          })
+        }
+      })
+    } else {
+      addUserMutation.mutate({ ...sendValues, password: formValues.password }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries('user');
+          if (isTenantSchema) {
+            addUserProfileMutation.mutate(sendValues2, {
+              onSuccess: () => {
+                queryClient.invalidateQueries('userprofile');
+                NotifyOk({
+                  msg: 'User successfully added',
+                  title: 'Added',
+                  callback: () => history.push('/ui/administration/users')
+                })
+              },
+              onError: (error) => {
+                NotifyError({
+                  title: 'Error',
+                  msg: error.message ? error.message : 'Error adding user profile'
+                })
+              }
+            })
+          } else {
+            NotifyOk({
+              msg: 'User successfully added',
+              title: 'Added',
+              callback: () => history.push('/ui/administration/users')
+            })
+          }
+        },
+        onError: (error) => {
+          NotifyError({
+            title: 'Error',
+            msg: error.message ? error.message : 'Error adding user'
+          })
+        }
+      })
+    }
+  }
+
+  function doDelete() {
+    deleteMutation.mutate(undefined, {
+      onSuccess: () => {
+        queryClient.invalidateQueries('user');
+        if (isTenantSchema)
+          queryClient.invalidateQueries('userprofile');
+        NotifyOk({
+          msg: 'User successfully deleted',
+          title: 'Deleted',
+          callback: () => history.push('/ui/administration/users')
+        })
+      },
+      onError: (error) => {
+        NotifyError({
+          title: 'Error',
+          msg: error.message ? error.message : 'Error deleting user'
+        })
+      }
+    })
+  }
+
+  return (
+    <BaseArgoView
+      resourcename="user"
+      location={location}
+      addview={addview}
+      history={false}
+      modal={true}
+      state={{
+        areYouSureModal,
+        modalTitle,
+        modalMsg,
+        'modalFunc': modalFlag === 'submit' ?
+          doChange
+        :
+          modalFlag === 'delete' ?
+            doDelete
+          :
+            undefined
+      }}
+      toggle={toggleAreYouSure}
+      extra_button={
+        !isTenantSchema && !addview && userDetails.username == user_name &&
+          <Link
+            className='btn btn-secondary'
+            to={location.pathname + '/change_password'}
+            role='button'
+          >
+            Change password
+          </Link>
+      }
+    >
+      <Form onSubmit={ handleSubmit(onSubmitHandle) } data-testid="form">
+        <FormGroup>
+          <Row>
+            <Col md={6}>
+              <InputGroup>
+                <InputGroupText>Username</InputGroupText>
+                <Controller
+                  name="username"
+                  control={ control }
+                  render={ ({ field }) =>
+                    <Input
+                      { ...field }
+                      data-testid="username"
+                      className={`form-control ${errors?.username && "is-invalid"}`}
+                    />
+                  }
+                />
+                <ErrorMessage
+                  errors={ errors }
+                  name="username"
+                  render={ ({ message }) =>
+                    <FormFeedback invalid="true" className="end-0">
+                      { message }
+                    </FormFeedback>
+                  }
+                />
+              </InputGroup>
+            </Col>
+          </Row>
+          {
+            addview &&
+              <>
+                <Row>
+                  <Col md={6}>
+                    <InputGroup>
+                      <InputGroupText>Password</InputGroupText>
+                      <Controller
+                        name="password"
+                        control={ control }
+                        render={ ({ field }) =>
+                          <input
+                            { ...field }
+                            type="password"
+                            data-testid="password"
+                            className={ `form-control ${errors?.password && "is-invalid"}` }
+                          />
+                        }
+                      />
+                      <ErrorMessage
+                        errors={ errors }
+                        name="password"
+                        render={ ({ message }) =>
+                          <FormFeedback invalid="true" className="end-0">
+                            { message }
+                          </FormFeedback>
+                        }
+                      />
+                    </InputGroup>
+                  </Col>
+                </Row>
+                <Row>
+                  <Col md={6}>
+                    <InputGroup>
+                      <InputGroupText>Confirm password</InputGroupText>
+                      <Controller
+                        name="confirm_password"
+                        control={ control }
+                        render={ ({ field }) =>
+                          <input
+                            { ...field }
+                            type="password"
+                            data-testid="confirm_password"
+                            className={ `form-control ${errors?.confirm_password && "is-invalid"}` }
+                          />
+                        }
+                      />
+                      <ErrorMessage
+                        errors={ errors }
+                        name="confirm_password"
+                        render={ ({ message }) =>
+                          <FormFeedback invalid="true" className="end-0">
+                            { message }
+                          </FormFeedback>
+                        }
+                      />
+                    </InputGroup>
+                  </Col>
+                </Row>
+              </>
+          }
+        </FormGroup>
+        <FormGroup>
+          <ParagraphTitle title='Personal info'/>
+          <Row>
+            <Col md={6}>
+              <InputGroup>
+                <InputGroupText>First name</InputGroupText>
+                <Controller
+                  name="first_name"
+                  control={ control }
+                  render={ ({ field }) =>
+                    <Input
+                      { ...field }
+                      data-testid="first_name"
+                      className="form-control"
+                    />
+                  }
+                />
+              </InputGroup>
+            </Col>
+          </Row>
+          <Row>
+            <Col md={6}>
+              <InputGroup>
+                <InputGroupText>Last name</InputGroupText>
+                <Controller
+                  name="last_name"
+                  control={ control }
+                  render={ ({field}) =>
+                    <Input
+                      { ...field }
+                      data-testid="last_name"
+                      className="form-control"
+                    />
+                  }
+                />
+              </InputGroup>
+            </Col>
+          </Row>
+          <Row>
+            <Col md={6}>
+              <InputGroup>
+                <InputGroupText>Email</InputGroupText>
+                <Controller
+                  name="email"
+                  control={ control }
+                  render={ ({ field }) =>
+                    <Input
+                      { ...field }
+                      name="email"
+                      data-testid="email"
+                      className={ `form-control ${errors?.email && "is-invalid"}` }
+                    />
+                  }
+                />
+                <ErrorMessage
+                  errors={ errors }
+                  name="email"
+                  render={ ({ message }) =>
+                    <FormFeedback invalid="true" className="end-0">
+                      { message }
+                    </FormFeedback>
+                  }
+                />
+              </InputGroup>
+            </Col>
+          </Row>
+          {
+            !addview &&
+              <>
+                <Row>
+                  <Col md={6}>
+                    <InputGroup>
+                      <InputGroupText>Last login</InputGroupText>
+                      <Controller
+                        name="last_login"
+                        control={ control }
+                        render={ ({ field }) =>
+                          <Input
+                            { ...field }
+                            data-testid="last_login"
+                            className="form-control"
+                            disabled={ true }
+                          />
+                        }
+                      />
+                    </InputGroup>
+                  </Col>
+                </Row>
+                <Row>
+                  <Col md={6}>
+                    <InputGroup>
+                      <InputGroupText>Date joined</InputGroupText>
+                      <Controller
+                        name="date_joined"
+                        control={ control }
+                        render={ ({ field }) =>
+                          <Input
+                            { ...field }
+                            data-testid="date_joined"
+                            className="form-control"
+                            disabled={ true }
+                          />
+                        }
+                      />
+                    </InputGroup>
+                  </Col>
+                </Row>
+              </>
+          }
+        </FormGroup>
+        <FormGroup>
+          <ParagraphTitle title='permissions'/>
+          <Row>
+            <Col md={6}>
+              <Row>
+                <FormGroup check inline className='ms-3'>
+                  <Controller
+                    name="is_superuser"
+                    control={ control }
+                    render={ ({ field }) =>
+                      <Input
+                        { ...field }
+                        type='checkbox'
+                        onChange={ e => setValue("is_superuser", e.target.checked) }
+                        checked={ field.value }
+                      />
+                    }
+                  />
+                  <Label check for="is_superuser">Superuser status</Label>
+                </FormGroup>
+              </Row>
+              <Row>
+                <FormText color="muted">
+                  Designates that this user has all permissions without explicitly assigning them.
+                </FormText>
+              </Row>
+            </Col>
+          </Row>
+          <Row>
+            <Col md={6}>
+              <Row>
+                <FormGroup check inline className='ms-3'>
+                  <Controller
+                    name="is_active"
+                    control={ control }
+                    render={ ({ field }) =>
+                      <Input
+                        { ...field }
+                        type='checkbox'
+                        onChange={ e => setValue("is_active", e.target.checked) }
+                        checked={ field.value }
+                      />
+                    }
+                  />
+                  <Label check for="is_active">Active</Label>
+                </FormGroup>
+              </Row>
+              <Row className='mt-0'>
+                <FormText color="muted">
+                  Designates whether this user should be treated as active. Unselect this instead of deleting accounts.
+                </FormText>
+              </Row>
+            </Col>
+          </Row>
+        </FormGroup>
+        {
+          isTenantSchema &&
+            <>
+              <FormGroup>
+                <ParagraphTitle title='POEM user permissions'/>
+                <Row>
+                  <Col md={5}>
+                    <Controller
+                      name="groupsofreports"
+                      control={ control }
+                      render={ ({ field }) =>
+                        <GroupSelect
+                          forwardedRef={ field.ref }
+                          label="Groups of reports"
+                          options={ allGroups.reports }
+                          values={ field.value }
+                          onChange={ e => {
+                            let selectedValues = new Array()
+                            e.forEach(e => selectedValues.push(e.value))
+                            setValue("groupsofreports", selectedValues)
+                          }}
+                        />
+                      }
+                    />
+                    <FormText color="muted">
+                      The groups of reports that user will control.
+                    </FormText>
+                  </Col>
+                  <Col md={5}>
+                    <Controller
+                      name="groupsofmetrics"
+                      control={ control }
+                      render={ ({ field }) =>
+                        <GroupSelect
+                          forwardedRef={ field.ref }
+                          label="Groups of metrics"
+                          options={ allGroups.metrics }
+                          values={ getValues("groupsofmetrics") }
+                          onChange={ e => {
+                            let selectedValues = new Array()
+                            e.forEach(e => selectedValues.push(e.value))
+                            setValue("groupsofmetrics", selectedValues)
+                          }}
+                        />
+                      }
+                    />
+                    <FormText color="muted">
+                      The groups of metrics that user will control.
+                    </FormText>
+                  </Col>
+                </Row>
+                <Row className='mt-3'>
+                  <Col md={5}>
+                    <Controller
+                      name="groupsofmetricprofiles"
+                      control={ control }
+                      render={ ({ field }) =>
+                        <GroupSelect
+                          forwardedRef={ field.ref }
+                          label="Groups of metric profiles"
+                          options={ allGroups.metricprofiles }
+                          values={ getValues("groupsofmetricprofiles") }
+                          onChange={ e => {
+                            let selectedValues = new Array()
+                            e.forEach(e => selectedValues.push(e.value))
+                            setValue("groupsofmetricprofiles", selectedValues)
+                          }}
+                        />
+                      }
+                    />
+                    <FormText color="muted">
+                      The groups of metric profiles that user will control.
+                    </FormText>
+                  </Col>
+                  <Col md={5}>
+                    <Controller
+                      name="groupsofaggregations"
+                      control={ control }
+                      render={ ({ field }) =>
+                        <GroupSelect
+                          forwardedRef={ field.ref }
+                          label="Groups of aggregations"
+                          options={ allGroups.aggregations }
+                          values={ getValues("groupsofaggregations") }
+                          onChange={ e => {
+                            let selectedValues = new Array()
+                            e.forEach(e => selectedValues.push(e.value))
+                            setValue("groupsofaggregations", selectedValues)
+                          }}
+                        />
+                      }
+                    />
+                    <FormText color="muted">
+                      The groups of aggregations that user will control.
+                    </FormText>
+                  </Col>
+                </Row>
+                <Row className='mt-3'>
+                  <Col md={5}>
+                    <Controller
+                      name="groupsofthresholdsprofiles"
+                      control={ control }
+                      render={ ({ field }) =>
+                        <GroupSelect
+                          forwardedRef={ field.ref }
+                          label="Groups of thresholds profiles"
+                          options={ allGroups.thresholdsprofiles }
+                          values={ getValues("groupsofthresholdsprofiles") }
+                          onChange={ e => {
+                            let selectedValues = new Array()
+                            e.forEach(e => selectedValues.push(e.value))
+                            setValue("groupsofthresholdsprofiles", selectedValues)
+                          }}
+                        />
+                      }
+                    />
+                    <FormText color="muted">
+                      The groups of thresholds profiles that user will control.
+                    </FormText>
+                  </Col>
+                </Row>
+              </FormGroup>
+              <FormGroup>
+                <ParagraphTitle title='Additional information'/>
+                <Row>
+                  <Col md={12}>
+                    <InputGroup>
+                      <InputGroupText>distinguishedName</InputGroupText>
+                      <Controller
+                        name="subject"
+                        control={ control }
+                        render={ ({ field }) =>
+                          <Input
+                            { ...field }
+                            className="form-control"
+                            data-testid="subject"
+                          />
+                        }
+                      />
+                    </InputGroup>
+                  </Col>
+                </Row>
+              </FormGroup>
+              <FormGroup>
+                <Row>
+                  <Col md={8}>
+                    <InputGroup>
+                      <InputGroupText>eduPersonUniqueId</InputGroupText>
+                      <Controller
+                        name="egiid"
+                        control={ control }
+                        render={ ({ field }) =>
+                          <Input
+                            { ...field }
+                            className="form-control"
+                            data-testid="egiid"
+                          />
+                        }
+                      />
+                    </InputGroup>
+                  </Col>
+                </Row>
+              </FormGroup>
+              <FormGroup>
+                <Row>
+                  <Col md={6}>
+                    <InputGroup>
+                      <InputGroupText>displayName</InputGroupText>
+                      <Controller
+                        name="displayname"
+                        control={ control }
+                        render={ ({ field }) =>
+                          <Input
+                            { ...field }
+                            className="form-control"
+                            data-testid="displayname"
+                          />
+                        }
+                      />
+                    </InputGroup>
+                  </Col>
+                </Row>
+              </FormGroup>
+            </>
+        }
+        <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+          {
+            !addview ?
+              <Button
+                color="danger"
+                onClick={() => {
+                  setModalMsg('Are you sure you want to delete user?')
+                  setModalTitle('Delete user')
+                  setModalFlag('delete')
+                  toggleAreYouSure()
+                }}
+              >
+                Delete
+              </Button>
+            :
+              <div></div>
+          }
+          <Button
+            color="success"
+            id="submit-button"
+            type="submit"
+          >
+            Save
+          </Button>
+        </div>
+      </Form>
+    </BaseArgoView>
+  )
+}
+
+
 export const UserChange = (props) => {
   const user_name = props.match.params.user_name;
   const addview = props.addview;
   const isTenantSchema = props.isTenantSchema;
   const location = props.location;
   const history = props.history;
-  const querykey = `user_${addview ? 'addview' : `${user_name}_changeview`}`;
 
-  const backend = new Backend();
+  const queryClient = useQueryClient();
 
-  const { data: user, error: errorUser, isLoading: loadingUser } = useQuery(
-    `${querykey}`, async () => {
-      if (!addview) {
-        let user = await backend.fetchData(`/api/v2/internal/users/${user_name}`);
-
-        return user;
-      }
-    },
-    { enabled: !addview }
+  const { data: userDetails, error: errorUserDetails, status: statusUserDetails } = useQuery(
+    'userdetails', () => fetchUserDetails(isTenantSchema)
   );
 
-  const { data: userProfile, error: errorUserProfile, isLoading: loadingUserProfile } = useQuery(
-    `${querykey}_userprofile`, async () => {
-      if (isTenantSchema && !addview) {
-        let userprofile = await backend.fetchData(`/api/v2/internal/userprofile/${user_name}`);
-
-        return userprofile;
+  const { data: user, error: errorUser, status: statusUser } = useQuery(
+    ['user', user_name], () => fetchUser(user_name),
+    {
+      enabled: !addview && !!userDetails,
+      initialData: () => {
+        if (!addview)
+          return queryClient.getQueryData('user')?.find(usr => usr.name === user_name)
       }
-    },
-    { enabled: !addview && isTenantSchema}
-  );
-
-  const { data: userGroups, error: errorUserGroups, isLoading: loadingUserGroups } = useQuery(
-    `${querykey}_usergroups`, async () => {
-      if (isTenantSchema && !addview) {
-        let usergroups = await backend.fetchResult(`/api/v2/internal/usergroups/${user_name}`);
-
-        return usergroups;
-      }
-    },
-    { enabled: isTenantSchema && !addview}
-  );
-
-  const { data: allGroups, error: errorAllGroups, isLoading: loadingAllGroups } = useQuery(
-    'user_listview_allgroups', async () => {
-      if (isTenantSchema) {
-       let allgroups = await backend.fetchResult('/api/v2/internal/usergroups');
-
-        return allgroups;
-      }
-    },
-    { enabled: isTenantSchema}
-  );
-
-  const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
-    'session_userdetails', async () => {
-      let arg = isTenantSchema ? true : false;
-      let session = await backend.isActiveSession(arg);
-
-      if (session.active)
-        return session.userdetails;
     }
   );
 
-  const [areYouSureModal, setAreYouSureModal] = useState(false);
-  const [modalFlag, setModalFlag] = useState(undefined);
-  const [modalTitle, setModalTitle] = useState(undefined);
-  const [modalMsg, setModalMsg] = useState(undefined);
-  const [formValues, setFormValues] = useState(undefined);
+  const { data: userProfile, error: errorUserProfile, status: statusUserProfile } = useQuery(
+    ['userprofile', user_name], () => fetchUserProfile(isTenantSchema, user_name),
+    { enabled: !addview && isTenantSchema }
+  );
 
-  function toggleAreYouSure() {
-    setAreYouSureModal(!areYouSureModal);
-  }
+  const { data: userGroups, error: errorUserGroups, status: statusUserGroups } = useQuery(
+    ['usergroups', user_name], () => fetchGroupsForUser(isTenantSchema, user_name),
+    { enabled: isTenantSchema && !addview }
+  );
 
-  function onSubmitHandle(values) {
-    let msg = `Are you sure you want to ${addview ? 'add' : 'change'} user?`;
-    let title = `${addview ? 'Add' : 'Change'} user`;
+  const { data: allGroups, error: errorAllGroups, status: statusAllGroups } = useQuery(
+    'usergroups', () => fetchUserGroups(isTenantSchema),
+    { enabled: isTenantSchema }
+  );
 
-    setModalMsg(msg);
-    setModalTitle(title);
-    setFormValues(values);
-    setModalFlag('submit');
-    toggleAreYouSure();
-  }
-
-  async function doChange() {
-    if (!addview) {
-      let response = await backend.changeObject(
-        '/api/v2/internal/users/',
-        {
-          pk: formValues.pk,
-          username: formValues.username,
-          first_name: formValues.first_name,
-          last_name: formValues.last_name,
-          email: formValues.email,
-          is_superuser: formValues.is_superuser,
-          is_active: formValues.is_active
-        }
-      );
-      if (!response.ok) {
-        let change_msg = '';
-        try {
-          let json = await response.json();
-          change_msg = json.detail;
-        } catch(err) {
-          change_msg = 'Error changing user';
-        }
-        NotifyError({
-          title: `Error: ${response.status} ${response.statusText}`,
-          msg: change_msg
-        });
-      } else {
-        if (isTenantSchema) {
-          let profile_response = await backend.changeObject(
-            '/api/v2/internal/userprofile/',
-            {
-              username: formValues.username,
-              displayname: formValues.displayname,
-              subject: formValues.subject,
-              egiid: formValues.egiid,
-              groupsofaggregations: formValues.groupsofaggregations,
-              groupsofmetrics: formValues.groupsofmetrics,
-              groupsofmetricprofiles: formValues.groupsofmetricprofiles,
-              groupsofthresholdsprofiles: formValues.groupsofthresholdsprofiles
-            }
-          );
-          if (profile_response.ok) {
-            NotifyOk({
-              msg: 'User successfully changed',
-              title: 'Changed',
-              callback: () => history.push('/ui/administration/users')
-            })
-          } else {
-            let change_msg = '';
-            try {
-              let json = await profile_response.json();
-              change_msg = json.detail;
-            } catch(err) {
-              change_msg = 'Error changing user profile'
-            }
-            NotifyError({
-              title: `Error: ${profile_response.status} ${profile_response.statusText}`,
-              msg: change_msg
-            });
-          }
-        } else {
-          NotifyOk({
-            msg: 'User successfully changed',
-            title: 'Changed',
-            callback: () => history.push('/ui/administration/users')
-          });
-        }
-      }
-    } else {
-      let response = await backend.addObject(
-        '/api/v2/internal/users/',
-        {
-          username: formValues.username,
-          password: formValues.password,
-          first_name: formValues.first_name,
-          last_name: formValues.last_name,
-          email: formValues.email,
-          is_superuser: formValues.is_superuser,
-          is_active: formValues.is_active
-        }
-      );
-      if (!response.ok) {
-        let add_msg = '';
-        try {
-          let json = await response.json();
-          add_msg = json.detail;
-        } catch(err) {
-          add_msg = 'Error adding user';
-        }
-        NotifyError({
-          title: `Error: ${response.status} ${response.statusText}`,
-          msg: add_msg
-        });
-      } else {
-        if (isTenantSchema) {
-          let profile_response = await backend.addObject(
-            '/api/v2/internal/userprofile/',
-            {
-              username: formValues.username,
-              displayname: formValues.displayname,
-              subject: formValues.subject,
-              egiid: formValues.egiid,
-              groupsofaggregations: formValues.groupsofaggregations,
-              groupsofmetrics: formValues.groupsofmetrics,
-              groupsofmetricprofiles: formValues.groupsofmetricprofiles,
-              groupsofthresholdsprofiles: formValues.groupsofthresholdsprofiles
-            }
-          );
-          if (profile_response.ok) {
-            NotifyOk({
-              msg: 'User successfully added',
-              title: 'Added',
-              callback: () => history.push('/ui/administration/users')
-            })
-          } else {
-            let add_msg = '';
-            try {
-              let json = await profile_response.json();
-              add_msg = json.detail;
-            } catch(err) {
-              add_msg = 'Error adding user profile';
-            }
-            NotifyError({
-              title: `Error: ${profile_response.status} ${profile_response.statusText}`,
-              msg: add_msg
-            });
-          }
-        } else {
-          NotifyOk({
-            msg: 'User successfully added',
-            title: 'Added',
-            callback: () => history.push('/ui/administration/users')
-          });
-        }
-      }
-    }
-  }
-
-  async function doDelete() {
-    let response = await backend.deleteObject(`/api/v2/internal/users/${user_name}`);
-    if (response.ok) {
-      NotifyOk({
-        msg: 'User successfully deleted',
-        title: 'Deleted',
-        callback: () => history.push('/ui/administration/users')
-      })
-    } else {
-      let msg = '';
-      try {
-        let json = await response.json();
-        msg = json.detail;
-      } catch(err) {
-        msg = 'Error deleting user';
-      }
-      NotifyError({
-        title: `Error: ${response.status} ${response.statusText}`,
-        msg: msg
-      });
-    }
-  }
-
-  if (loadingUser || loadingUserProfile || loadingUserGroups || loadingAllGroups || loadingUserDetails)
+  if (statusUser === 'loading' || statusUserProfile === 'loading' || statusUserGroups === 'loading' || statusAllGroups === 'loading' || statusUserDetails === 'loading')
     return(<LoadingAnim />)
 
-  else if (errorUser)
+  else if (statusUser === 'error')
     return (<ErrorComponent error={errorUser}/>);
 
-  else if (errorUserProfile)
+  else if (statusUserProfile === 'error')
     return (<ErrorComponent error={errorUserProfile}/>);
 
-  else if (errorUserGroups)
+  else if (statusUserGroups === 'error')
     return (<ErrorComponent error={errorUserGroups}/>);
 
-  else if (errorAllGroups)
+  else if (statusAllGroups === 'error')
     return (<ErrorComponent error={errorAllGroups}/>);
 
-  else if (errorUserDetails)
+  else if (statusUserDetails === 'error')
     return (<ErrorComponent error={errorUserDetails}/>);
 
-  else {
-    if (isTenantSchema) {
-      return (
-        <BaseArgoView
-          resourcename="users"
-          location={location}
-          addview={addview}
-          history={false}
-          modal={true}
-          state={{
-            areYouSureModal,
-            modalTitle,
-            modalMsg,
-            'modalFunc': modalFlag === 'submit' ?
-              doChange
-            :
-              modalFlag === 'delete' ?
-                doDelete
-              :
-                undefined
-          }}
-          toggle={toggleAreYouSure}
-        >
-          <Formik
-            initialValues = {{
-              addview: addview,
-              pk: user ? user.pk : '',
-              first_name: user ? user.first_name : '',
-              last_name: user ? user.last_name : '',
-              username: user ? user.username : '',
-              password: '',
-              confirm_password: '',
-              is_active: user ? user.is_active : true,
-              is_superuser: user ? user.is_superuser : false,
-              email: user ? user.email : '',
-              last_login: user ? user.last_login : '',
-              date_joined: user ? user.date_joined : '',
-              groupsofaggregations: userGroups ? userGroups.aggregations : [],
-              groupsofmetrics: userGroups ? userGroups.metrics : [],
-              groupsofmetricprofiles: userGroups ? userGroups.metricprofiles : [],
-              groupsofthresholdsprofiles: userGroups ? userGroups.thresholdsprofiles : [],
-              displayname: userProfile ? userProfile.displayname : '',
-              subject: userProfile ? userProfile.subject : '',
-              egiid: userProfile ? userProfile.egiid : ''
-            }}
-            validationSchema={UserSchema}
-            enableReinitialize={true}
-            onSubmit = {(values) => onSubmitHandle(values)}
-          >
-            {props => (
-              <Form>
-                <CommonUser
-                  {...props}
-                  add={addview}
-                />
-                {
-                  isTenantSchema &&
-                    <>
-                      <FormGroup>
-                        <ParagraphTitle title='POEM user permissions'/>
-                        <Row>
-                          <Col md={6}>
-                            <Label for="groupsofmetrics" className="grouplabel">Groups of metrics</Label>
-                            <Field
-                              component="select"
-                              name="groupsofmetrics"
-                              id='select-field'
-                              onChange={evt =>
-                                props.setFieldValue(
-                                  "groupsofmetrics",
-                                  [].slice
-                                    .call(evt.target.selectedOptions)
-                                    .map(option => option.value)
-                              )}
-                              multiple={true}
-                            >
-                              {allGroups.metrics.map( grp => (
-                                <option key={grp} value={grp}>
-                                  {grp}
-                                </option>
-                              ))}
-                            </Field>
-                            <FormText color="muted">
-                              The groups of metrics that user will control. Hold down &quot;Control&quot; or &quot;Command&quot; on a Mac to select more than one.
-                            </FormText>
-                          </Col>
-                        </Row>
-                        <Row>
-                          <Col md={6}>
-                            <Label for="groupsofmetricprofiles" className="grouplabel">Groups of metric profiles</Label>
-                            <Field
-                              component="select"
-                              name="groupsofmetricprofiles"
-                              id='select-field'
-                              onChange={evt =>
-                                props.setFieldValue(
-                                  "groupsofmetricprofiles",
-                                  [].slice
-                                    .call(evt.target.selectedOptions)
-                                    .map(option => option.value)
-                              )}
-                              multiple={true}
-                            >
-                              {allGroups.metricprofiles.map( grp => (
-                                <option key={grp} value={grp}>
-                                  {grp}
-                                </option>
-                              ))}
-                            </Field>
-                            <FormText color="muted">
-                              The groups of metric profiles that user will control. Hold down &quot;Control&quot; or &quot;Command&quot; on a Mac to select more than one.
-                            </FormText>
-                          </Col>
-                        </Row>
-                        <Row>
-                          <Col md={6}>
-                            <Label for="groupsofaggregations" className="grouplabel">Groups of aggregations</Label>
-                            <Field
-                              component="select"
-                              name="groupsofaggregations"
-                              id='select-field'
-                              onChange={evt =>
-                                props.setFieldValue(
-                                  "groupsofaggregations",
-                                  [].slice
-                                    .call(evt.target.selectedOptions)
-                                    .map(option => option.value)
-                              )}
-                              multiple={true}
-                            >
-                              {allGroups.aggregations.map( grp => (
-                                <option key={grp} value={grp}>
-                                  {grp}
-                                </option>
-                              ))}
-                            </Field>
-                            <FormText color="muted">
-                              The groups of aggregations that user will control. Hold down &quot;Control&quot; or &quot;Command&quot; on a Mac to select more than one.
-                            </FormText>
-                          </Col>
-                        </Row>
-                        <Row>
-                          <Col md={6}>
-                            <Label for="groupsofthresholdsprofiles" className="grouplabel">Groups of thresholds profiles</Label>
-                            <Field
-                              component="select"
-                              name="groupsofthresholdsprofiles"
-                              id='select-field'
-                              onChange={evt =>
-                                props.setFieldValue(
-                                  "groupsofthresholdsprofiles",
-                                  [].slice
-                                    .call(evt.target.selectedOptions)
-                                    .map(option => option.value)
-                              )}
-                              multiple={true}
-                            >
-                              {allGroups.thresholdsprofiles.map( grp => (
-                                <option key={grp} value={grp}>
-                                  {grp}
-                                </option>
-                              ))}
-                            </Field>
-                            <FormText color="muted">
-                              The groups of thresholds profiles that user will control. Hold down &quot;Control&quot; or &quot;Command&quot; on a Mac to select more than one.
-                            </FormText>
-                          </Col>
-                        </Row>
-                      </FormGroup>
-                      <FormGroup>
-                        <ParagraphTitle title='Additional information'/>
-                        <Row>
-                          <Col md={12}>
-                            <InputGroup>
-                              <InputGroupAddon addonType='prepend'>distinguishedName</InputGroupAddon>
-                              <Field
-                                type="text"
-                                name="subject"
-                                required={false}
-                                className="form-control"
-                                id="distinguishedname"
-                              />
-                            </InputGroup>
-                          </Col>
-                        </Row>
-                      </FormGroup>
-                      <FormGroup>
-                        <Row>
-                          <Col md={8}>
-                            <InputGroup>
-                              <InputGroupAddon addonType="prepend">eduPersonUniqueId</InputGroupAddon>
-                              <Field
-                                type="text"
-                                name="egiid"
-                                required={false}
-                                className="form-control"
-                                id='eduid'
-                              />
-                            </InputGroup>
-                          </Col>
-                        </Row>
-                      </FormGroup>
-                      <FormGroup>
-                        <Row>
-                          <Col md={6}>
-                            <InputGroup>
-                              <InputGroupAddon addonType="prepend">displayName</InputGroupAddon>
-                              <Field
-                                type="text"
-                                name="displayname"
-                                required={false}
-                                className="form-control"
-                                id="displayname"
-                              />
-                            </InputGroup>
-                          </Col>
-                        </Row>
-                      </FormGroup>
-                    </>
-                }
-                {
-                  <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                    {
-                      !addview ?
-                        <Button
-                          color="danger"
-                          onClick={() => {
-                            setModalMsg('Are you sure you want to delete user?');
-                            setModalTitle('Delete user');
-                            setModalFlag('delete');
-                            toggleAreYouSure();
-                          }}
-                        >
-                          Delete
-                        </Button>
-                      :
-                        <div></div>
-                    }
-                    <Button
-                      color="success"
-                      id="submit-button"
-                      type="submit"
-                    >
-                      Save
-                    </Button>
-                  </div>
-                }
-              </Form>
-            )}
-          </Formik>
-        </BaseArgoView>
-      )
-    } else {
-      return (
-        <React.Fragment>
-          {
-            <ModalAreYouSure
-              isOpen={areYouSureModal}
-              toggle={toggleAreYouSure}
-              title={modalTitle}
-              msg={modalMsg}
-              onYes={modalFlag === 'submit' ? doChange : modalFlag === 'delete' ? doDelete : undefined}
-            />
-          }
-          <div className='d-flex align-items-center justify-content-between'>
-            <h2 className='ml-3 mt-1 mb-4'>{`${addview ? 'Add' : 'Change'} user`}</h2>
-            {
-              (!addview && userDetails.username === user_name) &&
-                <Link
-                  className='btn btn-secondary'
-                  to={location.pathname + '/change_password'}
-                  role='button'
-                >
-                  Change password
-                </Link>
-            }
-          </div>
-          <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
-            <Formik
-              initialValues = {{
-                addview: addview,
-                pk: user ? user.pk : '',
-                first_name: user ? user.first_name : '',
-                last_name: user ? user.last_name : '',
-                username: user ? user.username : '',
-                password: '',
-                confirm_password: '',
-                is_active: user ? user.is_active : true,
-                is_superuser: user ? user.is_superuser : false,
-                email: user ? user.email : '',
-                last_login: user ? user.last_login : '',
-                date_joined: user ? user.date_joined : ''
-              }}
-              validationSchema={UserSchema}
-              enableReinitialize={true}
-              onSubmit = {(values, actions) => onSubmitHandle(values, actions)}
-            >
-              {props => (
-                <Form>
-                  <CommonUser
-                    {...props}
-                    add={addview}
-                  />
-                  <div className='submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5'>
-                    {
-                      !addview ?
-                        <Button
-                          color='danger'
-                          onClick={() => {
-                            setModalMsg(`Are you sure you want to delete user ${user_name}?`);
-                            setModalTitle('Delete user');
-                            setModalFlag('delete');
-                            toggleAreYouSure();
-                          }}
-                        >
-                          Delete
-                        </Button>
-                      :
-                        <div></div>
-                    }
-                    <Button
-                      color='success'
-                      id='submit-button'
-                      type='submit'
-                    >
-                      Save
-                    </Button>
-                  </div>
-                </Form>
-              )}
-            </Formik>
-          </div>
-        </React.Fragment>
-      )
-    }
-  }
-};
+  else if (addview || user && (!isTenantSchema || allGroups && (addview || (userProfile && userGroups)))) {
+    return (
+      <UserChangeForm
+        user_name={ user_name }
+        addview={ addview }
+        user={ user }
+        userProfile={ userProfile }
+        userGroups={ userGroups }
+        allGroups={ allGroups }
+        userDetails={ userDetails }
+        isTenantSchema={ isTenantSchema }
+        location={ location }
+        history={ history }
+      />
+    )
+  } else
+    return null
+}
 
 
-export const ChangePassword = (props) => {
-  const name = props.match.params.user_name;
-  const location = props.locaation;
-  const history = props.history;
+const ChangePasswordForm = ({
+  name=undefined,
+  userDetails=undefined,
+  location=undefined,
+  history=undefined
+}) => {
 
-  const backend = new Backend();
-
-  const { data: userDetails, isLoading: loading} = useQuery(
-    'session_userdetails', async () => {
-      let session = await backend.isActiveSession(false);
-      if (session.active)
-        return session.userdetails;
-    }
-  );
+  const backend = new Backend()
 
   const [areYouSureModal, setAreYouSureModal] = useState(false);
   const [modalTitle, setModalTitle] = useState(undefined);
   const [modalMsg, setModalMsg] = useState(undefined);
-  const [formValues, setFormValues] = useState(undefined);
+
+  const { control, handleSubmit, getValues, formState: { errors } } = useForm({
+    defaultValues: {
+      password: "",
+      confirm_password: ""
+    },
+    mode: "all",
+    resolver: yupResolver(ChangePasswordSchema)
+  })
 
   function toggleAreYouSure() {
     setAreYouSureModal(!areYouSureModal);
   }
 
-  function onSubmitHandle(values) {
+  function onSubmitHandle() {
     let msg = 'Are you sure you want to change password?';
     let title = 'Change password';
 
     setModalMsg(msg);
     setModalTitle(title);
-    setFormValues(values);
     toggleAreYouSure();
   }
 
   async function doChange() {
+    let formValues = getValues()
+
     let response = await backend.changeObject(
       '/api/v2/internal/change_password/',
       {
@@ -1011,7 +1049,7 @@ export const ChangePassword = (props) => {
       });
     } else {
       // eslint-disable-next-line no-unused-vars
-      let _response = await fetch('/rest-auth/login/', {
+      let _response = await fetch('/dj-rest-auth/login/', {
         method: 'POST',
         mode: 'cors',
         cache: 'no-cache',
@@ -1034,77 +1072,117 @@ export const ChangePassword = (props) => {
     }
   }
 
+  return (
+    <BaseArgoView
+      resourcename='password'
+      location={location}
+      history={false}
+      submitperm={userDetails.username === name}
+      modal={true}
+      state={{
+        areYouSureModal,
+        modalTitle,
+        modalMsg,
+        'modalFunc': doChange
+      }}
+      toggle={toggleAreYouSure}
+    >
+      <Form onSubmit={ handleSubmit(onSubmitHandle) }>
+        <Row>
+          <Col md={6}>
+            <InputGroup>
+              <InputGroupText>New password</InputGroupText>
+              <Controller
+                name="password"
+                control={ control }
+                render={ ({ field }) =>
+                  <input
+                    { ...field }
+                    type="password"
+                    className={ `form-control ${errors?.password && "is-invalid"}` }
+                    data-testid="password"
+                  />
+                }
+              />
+              <ErrorMessage
+                errors={ errors }
+                name="password"
+                render={ ({ message }) =>
+                  <FormFeedback invalid="true" className="end-0">
+                    { message }
+                  </FormFeedback>
+                }
+              />
+            </InputGroup>
+          </Col>
+        </Row>
+        <Row>
+          <Col md={6}>
+            <InputGroup>
+              <InputGroupText>Confirm password</InputGroupText>
+              <Controller
+                name="confirm_password"
+                control={ control }
+                render={ ({ field }) =>
+                  <input
+                    { ...field }
+                    type="password"
+                    className={ `form-control ${errors?.confirm_password && "is-invalid"}`}
+                    data-testid="confirm_password"
+                  />
+                }
+              />
+              <ErrorMessage
+                errors={ errors }
+                name="confirm_password"
+                render={ ({ message }) =>
+                  <FormFeedback invalid="true" className="end-0">
+                    { message }
+                  </FormFeedback>
+                }
+              />
+            </InputGroup>
+          </Col>
+        </Row>
+        {
+          (userDetails.username === name) &&
+            <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+              <div></div>
+              <Button
+                color='success'
+                id='submit-button'
+                type='submit'
+              >
+                Save
+              </Button>
+            </div>
+        }
+      </Form>
+    </BaseArgoView>
+  )
+}
+
+
+export const ChangePassword = (props) => {
+  const name = props.match.params.user_name;
+  const location = props.locaation;
+  const history = props.history;
+
+  const { data: userDetails, isLoading: loading} = useQuery(
+    'userdetails', () => fetchUserDetails(false)
+  );
+
   if (loading)
     return (<LoadingAnim/>);
 
-  else if (!loading && userDetails) {
-    let write_perm = userDetails.username === name;
-
+  else if (userDetails) {
     return (
-      <BaseArgoView
-        resourcename='password'
-        location={location}
-        history={false}
-        submitperm={write_perm}
-        modal={true}
-        state={{areYouSureModal, modalTitle, modalMsg, 'modalFunc': doChange}}
-        toggle={toggleAreYouSure}
-      >
-        <Formik
-          initialValues = {{
-            password: '',
-            confirm_password: ''
-          }}
-          validationSchema = {ChangePasswordSchema}
-          onSubmit = {(values) => onSubmitHandle(values)}
-        >
-          {props => (
-            <Form>
-              <Row>
-                <Col md={6}>
-                  <InputGroup>
-                    <InputGroupAddon addonType='prepend'>New password</InputGroupAddon>
-                    <Field
-                    type="password"
-                    name="password"
-                    className={`form-control ${props.errors.password && props.touched.password && 'border-danger'}`}
-                    id="password"
-                  />
-                  </InputGroup>
-                  <CustomErrorMessage name='password' />
-                </Col>
-              </Row>
-              <Row>
-                <Col md={6}>
-                  <InputGroup>
-                    <InputGroupAddon addonType='prepend'>Confirm password</InputGroupAddon>
-                    <Field
-                      type='password'
-                      name='confirm_password'
-                      className={`form-control ${props.errors.confirm_password && props.touched.confirm_password && 'border-danger'}`}
-                      id='confirm_password'
-                    />
-                  </InputGroup>
-                  <CustomErrorMessage name='confirm_password' />
-                </Col>
-              </Row>
-              {
-                write_perm &&
-                  <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                    <div></div>
-                    <Button
-                      color='success'
-                      id='submit-button'
-                      type='submit'
-                    >
-                      Save
-                    </Button>
-                  </div>
-              }
-            </Form>
-          )}
-        </Formik>
-      </BaseArgoView>
+      <ChangePasswordForm
+        userDetails={ userDetails }
+        name={ name }
+        location={ location }
+        history={ history }
+      />
     )
   } else
     return null;

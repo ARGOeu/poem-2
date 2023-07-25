@@ -1,19 +1,24 @@
+import ast
 import json
 
 import requests
 from Poem.api.internal_views.utils import one_value_inline, two_value_inline, \
     inline_metric_for_db
-from Poem.api.views import NotFound
+from Poem.api.views import NotFound, ListMetricOverrides
 from Poem.helpers.history_helpers import create_history
-from Poem.helpers.metrics_helpers import import_metrics, update_metrics, \
-    get_metrics_in_profiles, delete_metrics_from_profile
+from Poem.helpers.metrics_helpers import import_metrics, \
+    update_metric_in_schema, get_metrics_in_profiles, \
+    delete_metrics_from_profile
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from django.contrib.contenttypes.models import ContentType
+from django.db import IntegrityError
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from .utils import error_response
 
 
 class ListAllMetrics(APIView):
@@ -48,20 +53,30 @@ class ListMetric(APIView):
 
         results = []
         for metric in metrics:
-            config = two_value_inline(metric.config)
-            parent = one_value_inline(metric.parent)
-            probeexecutable = one_value_inline(metric.probeexecutable)
-            attribute = two_value_inline(metric.attribute)
-            dependancy = two_value_inline(metric.dependancy)
-            flags = two_value_inline(metric.flags)
-            files = two_value_inline(metric.files)
-            parameter = two_value_inline(metric.parameter)
-            fileparameter = two_value_inline(metric.fileparameter)
+            if metric.probeversion:
+                metric_probe = metric.probeversion.split(" (")
+                probe_name = metric_probe[0]
+                probe_version = metric_probe[1][:-1]
 
-            if metric.probekey:
-                probeversion = metric.probekey.__str__()
+                mt = admin_models.MetricTemplateHistory.objects.get(
+                    name=metric.name, probekey__name=probe_name,
+                    probekey__package__version=probe_version
+                )
+
             else:
-                probeversion = ''
+                mt = admin_models.MetricTemplateHistory.objects.get(
+                    name=metric.name
+                )
+
+            config = two_value_inline(metric.config)
+            parent = one_value_inline(mt.parent)
+            probeexecutable = one_value_inline(mt.probeexecutable)
+            attribute = two_value_inline(mt.attribute)
+            dependency = two_value_inline(mt.dependency)
+            flags = two_value_inline(mt.flags)
+            files = two_value_inline(mt.files)
+            parameter = two_value_inline(mt.parameter)
+            fileparameter = two_value_inline(mt.fileparameter)
 
             if metric.group:
                 group = metric.group.name
@@ -71,16 +86,16 @@ class ListMetric(APIView):
             results.append(dict(
                 id=metric.id,
                 name=metric.name,
-                mtype=metric.mtype.name,
-                tags=[tag.name for tag in metric.tags.all()],
-                probeversion=probeversion,
+                mtype=mt.mtype.name,
+                tags=[tag.name for tag in mt.tags.all()],
+                probeversion=metric.probeversion if metric.probeversion else "",
                 group=group,
-                description=metric.description,
+                description=mt.description,
                 parent=parent,
                 probeexecutable=probeexecutable,
                 config=config,
                 attribute=attribute,
-                dependancy=dependancy,
+                dependancy=dependency,
                 flags=flags,
                 files=files,
                 parameter=parameter,
@@ -95,67 +110,139 @@ class ListMetric(APIView):
             return Response(results)
 
     def put(self, request):
-        metric = poem_models.Metric.objects.get(name=request.data['name'])
+        try:
+            userprofile = poem_models.UserProfile.objects.get(user=request.user)
 
-        if request.data['parent']:
-            parent = json.dumps([request.data['parent']])
-        else:
-            parent = ''
+            metric = poem_models.Metric.objects.get(name=request.data['name'])
+            init_group = metric.group
 
-        if request.data['probeexecutable']:
-            probeexecutable = json.dumps([request.data['probeexecutable']])
-        else:
-            probeexecutable = ''
+            if not request.user.is_superuser and \
+                    userprofile.groupsofmetrics.all().count() == 0:
+                return error_response(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail='You do not have permission to change metrics.'
+                )
 
-        if request.data['description']:
-            description = request.data['description']
-        else:
-            description = ''
+            if not request.user.is_superuser and \
+                    init_group not in userprofile.groupsofmetrics.all():
+                return error_response(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail='You do not have permission to change metrics '
+                           'in this group.'
+                )
 
-        metric.name = request.data['name']
-        metric.mtype = poem_models.MetricType.objects.get(
-            name=request.data['mtype']
-        )
-        metric.group = poem_models.GroupOfMetrics.objects.get(
-            name=request.data['group']
-        )
-        metric.description = description
-        metric.parent = parent
-        metric.flags = inline_metric_for_db(request.data['flags'])
+            else:
+                metric_group = poem_models.GroupOfMetrics.objects.get(
+                    name=request.data['group']
+                )
 
-        if request.data['mtype'] == 'Active':
-            metric.probekey = admin_models.ProbeHistory.objects.get(
-                name=request.data['probeversion'].split(' ')[0],
-                package__version=request.data['probeversion'].split(' ')[1][
-                                 1:-1]
+                user_perm = request.user.is_superuser or \
+                    metric_group in userprofile.groupsofmetrics.all()
+
+                if user_perm:
+                    metric.group = poem_models.GroupOfMetrics.objects.get(
+                        name=request.data['group']
+                    )
+
+                    if request.data['mtype'] == 'Active':
+                        metric.config = inline_metric_for_db(
+                            request.data['config']
+                        )
+                        metric.probeversion = request.data["probeversion"]
+
+                        metric_probe = request.data["probeversion"].split(" (")
+                        probe_name = metric_probe[0].strip()
+                        probe_version = metric_probe[1][:-1].strip()
+
+                        mt = admin_models.MetricTemplateHistory.objects.get(
+                            name=metric.name, probekey__name=probe_name,
+                            probekey__package__version=probe_version
+                        )
+
+                    else:
+                        mt = admin_models.MetricTemplateHistory.objects.get(
+                            name=metric.name
+                        )
+
+                    create_history(
+                        metric, request.user.username, tags=mt.tags.all()
+                    )
+
+                    metric.save()
+
+                    return Response(status=status.HTTP_201_CREATED)
+
+                else:
+                    return error_response(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail='You do not have permission to assign metrics '
+                               'to the given group.'
+                    )
+
+        except poem_models.UserProfile.DoesNotExist:
+            return error_response(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='No user profile for authenticated user.'
             )
-            metric.probeexecutable = probeexecutable
-            metric.config = inline_metric_for_db(request.data['config'])
-            metric.attribute = inline_metric_for_db(request.data['attribute'])
-            metric.dependancy = inline_metric_for_db(request.data['dependancy'])
-            metric.files = inline_metric_for_db(request.data['files'])
-            metric.parameter = inline_metric_for_db(request.data['parameter'])
-            metric.fileparameter = inline_metric_for_db(
-                request.data['fileparameter']
+
+        except poem_models.Metric.DoesNotExist:
+            return error_response(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='Metric does not exist.'
             )
 
-        metric.save()
-        create_history(metric, request.user.username)
+        except poem_models.GroupOfMetrics.DoesNotExist:
+            return error_response(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='Group of metrics does not exist.'
+            )
 
-        return Response(status=status.HTTP_201_CREATED)
+        except KeyError as e:
+            return error_response(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='Missing data key: {}'.format(e.args[0])
+            )
 
     def delete(self, request, name=None):
         if name:
             try:
-                metric = poem_models.Metric.objects.get(name=name)
-                poem_models.TenantHistory.objects.filter(
-                    object_id=metric.id,
-                    content_type=ContentType.objects.get_for_model(
-                        poem_models.Metric
+                userprofile = poem_models.UserProfile.objects.get(
+                    user=request.user
+                )
+
+                if not request.user.is_superuser and \
+                        userprofile.groupsofmetrics.all().count() == 0:
+                    return error_response(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail='You do not have permission to delete metrics.'
                     )
-                ).delete()
-                metric.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
+
+                else:
+                    metric = poem_models.Metric.objects.get(name=name)
+
+                    if request.user.is_superuser or \
+                            metric.group in userprofile.groupsofmetrics.all():
+                        poem_models.TenantHistory.objects.filter(
+                            object_id=metric.id,
+                            content_type=ContentType.objects.get_for_model(
+                                poem_models.Metric
+                            )
+                        ).delete()
+                        metric.delete()
+                        return Response(status=status.HTTP_204_NO_CONTENT)
+
+                    else:
+                        return error_response(
+                            status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail='You do not have permission to delete '
+                                   'metrics in this group.'
+                        )
+
+            except poem_models.UserProfile.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail='No user profile for authenticated user.'
+                )
 
             except poem_models.Metric.DoesNotExist:
                 raise NotFound(status=404, detail='Metric not found')
@@ -181,107 +268,103 @@ class ListPublicMetric(ListMetric):
         return self._denied()
 
 
-class ListMetricTypes(APIView):
-    authentication_classes = (SessionAuthentication,)
-
-    def get(self, request):
-        types = poem_models.MetricType.objects.all().values_list(
-            'name', flat=True
-        )
-        return Response(types)
-
-
-class ListPublicMetricTypes(ListMetricTypes):
-    authentication_classes = ()
-    permission_classes = ()
-
-
 class ImportMetrics(APIView):
     authentication_classes = (SessionAuthentication,)
 
     def post(self, request):
-        imported, warn, err, unavailable = import_metrics(
-            metrictemplates=dict(request.data)['metrictemplates'],
-            tenant=request.tenant, user=request.user
-        )
+        if request.user.is_superuser:
+            imported, warn, err, unavailable = import_metrics(
+                metrictemplates=dict(request.data)['metrictemplates'],
+                tenant=request.tenant, user=request.user
+            )
 
-        message_bit = ''
-        warn_bit = ''
-        error_bit = ''
-        error_bit2 = ''
-        unavailable_bit = ''
-        if imported:
-            if len(imported) == 1:
-                message_bit = '{} has'.format(imported[0])
-            else:
-                message_bit = ', '.join(msg for msg in imported) + ' have'
+            message_bit = ''
+            warn_bit = ''
+            error_bit = ''
+            error_bit2 = ''
+            unavailable_bit = ''
+            if imported:
+                if len(imported) == 1:
+                    message_bit = '{} has'.format(imported[0])
+                else:
+                    message_bit = ', '.join(msg for msg in imported) + ' have'
 
-        if warn:
-            if len(warn) == 1:
-                warn_bit = '{} has been imported with older probe version. ' \
-                           'If you wish to use more recent probe version, ' \
-                           'you should update package version you use.'.format(
-                                warn[0]
-                            )
+            if warn:
+                if len(warn) == 1:
+                    warn_bit = \
+                        '{} has been imported with older probe version. ' \
+                        'If you wish to use more recent probe version, ' \
+                        'you should update package version you use.'.format(
+                            warn[0]
+                        )
 
-            else:
-                warn_bit = "{} have been imported with older probes' " \
-                           "versions. If you wish to use more recent " \
-                           "versions of probes, you should update packages' " \
-                           "versions you use.".format(
-                                ', '.join(msg for msg in warn)
-                            )
+                else:
+                    warn_bit = \
+                        "{} have been imported with older probes' " \
+                        "versions. If you wish to use more recent " \
+                        "versions of probes, you should update packages' " \
+                        "versions you use.".format(
+                            ', '.join(msg for msg in warn)
+                        )
 
-        if err:
-            if len(err) == 1:
-                error_bit = '{} has'.format(err[0])
-                error_bit2 = 'it already exists'
-            else:
-                error_bit = ', '.join(msg for msg in err) + ' have'
-                error_bit2 = 'they already exist'
+            if err:
+                if len(err) == 1:
+                    error_bit = '{} has'.format(err[0])
+                    error_bit2 = 'it already exists'
+                else:
+                    error_bit = ', '.join(msg for msg in err) + ' have'
+                    error_bit2 = 'they already exist'
 
-        if unavailable:
-            if len(unavailable) == 1:
-                unavailable_bit = '{} has not been imported, since it is not ' \
-                                  'available for the package version you ' \
-                                  'use. If you wish to use the metric, you ' \
-                                  'should change the package version, and try' \
-                                  ' to import again.'.format(unavailable[0])
-            else:
-                unavailable_bit = "{} have not been imported, since they are " \
-                                  "not available for the packages' versions " \
-                                  "you use. If you wish to use the metrics, " \
-                                  "you should change the packages' versions, " \
-                                  "and try to import again.".format(
-                                    ', '.join(ua for ua in unavailable)
-                )
+            if unavailable:
+                if len(unavailable) == 1:
+                    unavailable_bit = \
+                        '{} has not been imported, since it is not ' \
+                        'available for the package version you ' \
+                        'use. If you wish to use the metric, you ' \
+                        'should change the package version, and try' \
+                        ' to import again.'.format(unavailable[0])
+                else:
+                    unavailable_bit = \
+                        "{} have not been imported, since they are " \
+                        "not available for the packages' versions " \
+                        "you use. If you wish to use the metrics, " \
+                        "you should change the packages' versions, " \
+                        "and try to import again.".format(
+                            ', '.join(ua for ua in unavailable)
+                        )
 
-        data = dict()
-        if message_bit:
-            data.update({
-                'imported':
-                    '{} been successfully imported.'.format(message_bit)
-            })
+            data = dict()
+            if message_bit:
+                data.update({
+                    'imported':
+                        '{} been successfully imported.'.format(message_bit)
+                })
 
-        if warn_bit:
-            data.update({
-                'warn': warn_bit
-            })
+            if warn_bit:
+                data.update({
+                    'warn': warn_bit
+                })
 
-        if error_bit:
-            data.update({
-                'err':
-                    '{} not been imported since {} in the database.'.format(
-                        error_bit, error_bit2
-                    )
-            })
+            if error_bit:
+                data.update({
+                    'err':
+                        '{} not been imported since {} in the database.'.format(
+                            error_bit, error_bit2
+                        )
+                })
 
-        if unavailable_bit:
-            data.update({
-                'unavailable': unavailable_bit
-            })
+            if unavailable_bit:
+                data.update({
+                    'unavailable': unavailable_bit
+                })
 
-        return Response(status=status.HTTP_200_OK, data=data)
+            return Response(status=status.HTTP_200_OK, data=data)
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='You do not have permission to import metrics.'
+            )
 
 
 class UpdateMetricsVersions(APIView):
@@ -291,7 +374,9 @@ class UpdateMetricsVersions(APIView):
     """
     authentication_classes = (SessionAuthentication,)
 
-    def _handle_metrics(self, name, version, user, dry_run=False, metrics=None):
+    def _handle_metrics(
+            self, name, version, user, schema, dry_run=False, metrics=None
+    ):
         try:
             package = admin_models.Package.objects.get(
                 name=name, version=version
@@ -307,60 +392,72 @@ class UpdateMetricsVersions(APIView):
             updated = []
             profile_warning = []
             for metric in poem_models.Metric.objects.all():
-                if metric.probekey and \
-                        metric.probekey.package.name == package.name:
-                    mts_history = \
-                        admin_models.MetricTemplateHistory.objects.filter(
-                            name=metric.name
-                        )
-                    if len(mts_history) > 0:
-                        mts = admin_models.MetricTemplateHistory.objects.filter(
-                            object_id=mts_history[0].object_id
-                        )
-                        metrictemplate = None
-                        for mt in mts:
-                            if mt.probekey.package == package:
-                                metrictemplate = mt
-                                break
+                if metric.probeversion:
+                    metric_probe = metric.probeversion.split(" (")
+                    probe_name = metric_probe[0].strip()
+                    probe_version = metric_probe[1][:-1].strip()
+                    probekey = admin_models.ProbeHistory.objects.filter(
+                        name=probe_name,
+                        package__version=probe_version
+                    )
+                    if len(probekey) == 1 and \
+                            probekey[0].package.name == package.name:
+                        mts_history = \
+                            admin_models.MetricTemplateHistory.objects.filter(
+                                name=metric.name,
+                                probekey__package__name=package.name
+                            )
+                        if len(mts_history) > 0:
+                            mts = admin_models.MetricTemplateHistory.objects.filter(
+                                object_id=mts_history[0].object_id
+                            )
+                            metrictemplate = None
+                            for mt in mts:
+                                if mt.probekey.package == package:
+                                    metrictemplate = mt
+                                    break
 
-                        if metrictemplate:
-                            if not dry_run:
-                                update_metrics(
-                                    metrictemplate, metric.name,
-                                    metric.probekey,
-                                    user=user
-                                )
-                            updated.append(metric.name)
-
-                        else:
-                            if dry_run:
-                                for key, value in metrics.items():
-                                    if metric.name == key:
-                                        if len(value) == 1:
-                                            profile_warning.append(
-                                                'Metric {} is part of {} '
-                                                'metric profile.'.format(
-                                                    metric.name, value[0]
-                                                )
-                                            )
-
-                                        else:
-                                            profile_warning.append(
-                                                'Metric {} is part of {} '
-                                                'metric profiles.'.format(
-                                                    metric.name, ', '.join(
-                                                        value
-                                                    )
-                                                )
-                                            )
+                            if metrictemplate:
+                                if not dry_run:
+                                    update_metric_in_schema(
+                                        mt_id=metrictemplate.id,
+                                        name=metric.name,
+                                        pk_id=probekey[0].id,
+                                        schema=schema,
+                                        update_from_history=True,
+                                        user=user
+                                    )
+                                updated.append(metric.name)
 
                             else:
-                                metric.delete()
+                                if dry_run:
+                                    for key, value in metrics.items():
+                                        if metric.name == key:
+                                            if len(value) == 1:
+                                                profile_warning.append(
+                                                    'Metric {} is part of {} '
+                                                    'metric profile.'.format(
+                                                        metric.name, value[0]
+                                                    )
+                                                )
 
-                            deleted_not_in_package.append(metric.name)
+                                            else:
+                                                profile_warning.append(
+                                                    'Metric {} is part of {} '
+                                                    'metric profiles.'.format(
+                                                        metric.name, ', '.join(
+                                                            value
+                                                        )
+                                                    )
+                                                )
 
-                    else:
-                        warning_no_tbh.append(metric.name)
+                                else:
+                                    metric.delete()
+
+                                deleted_not_in_package.append(metric.name)
+
+                        else:
+                            warning_no_tbh.append(metric.name)
 
             msg = dict()
             if deleted_not_in_package:
@@ -456,9 +553,7 @@ class UpdateMetricsVersions(APIView):
         name = pkg.split(version)[0][0:-1]
 
         try:
-            metrics_in_profiles = get_metrics_in_profiles(
-                request.tenant.schema_name
-            )
+            metrics_in_profiles = get_metrics_in_profiles(request.tenant)
 
         except requests.exceptions.HTTPError as e:
             try:
@@ -481,67 +576,289 @@ class UpdateMetricsVersions(APIView):
 
         msg, status_code = self._handle_metrics(
             name=name, version=version, user=request.user.username,
-            dry_run=True, metrics=metrics_in_profiles
+            schema=request.tenant.schema_name, dry_run=True,
+            metrics=metrics_in_profiles
         )
 
         return Response(msg, status=status_code)
 
     def put(self, request):
-        msg, status_code, deleted = self._handle_metrics(
-            name=request.data['name'], version=request.data['version'],
-            user=request.user.username
-        )
+        if request.user.is_superuser:
+            msg, status_code, deleted = self._handle_metrics(
+                name=request.data['name'], version=request.data['version'],
+                schema=request.tenant.schema_name, user=request.user.username
+            )
 
-        warn_msg = []
-        if deleted:
-            try:
-                metrics_in_profiles = get_metrics_in_profiles(
-                    request.tenant.schema_name
+            warn_msg = []
+            if deleted:
+                try:
+                    metrics_in_profiles = get_metrics_in_profiles(
+                        request.tenant
+                    )
+
+                except Exception:
+                    warn_msg.append(
+                        'Unable to get data on metrics and metric profiles. '
+                        'Please remove deleted metrics from metric profiles '
+                        'manually.'
+                    )
+
+                else:
+                    profiles = dict()
+                    for metric in deleted:
+                        for key, value in metrics_in_profiles.items():
+                            if key == metric:
+                                for p in value:
+                                    if p in profiles:
+                                        profiles.update(
+                                            {p: profiles[p] + [key]}
+                                        )
+                                    else:
+                                        profiles.update({p: [key]})
+
+                    if profiles:
+                        for key, value in profiles.items():
+                            try:
+                                delete_metrics_from_profile(
+                                    key, value, request.tenant.name
+                                )
+
+                            except Exception:
+                                if len(value) > 1:
+                                    message = \
+                                        'Error trying to remove metrics {} ' \
+                                        'from profile {}.'.format(
+                                            ', '.join(value), key
+                                        )
+                                    pronoun = 'them'
+                                else:
+                                    message = \
+                                        'Error trying to remove metric {} ' \
+                                        'from profile {}.'.format(value[0], key)
+                                    pronoun = 'it'
+
+                                warn_msg.append(
+                                    message +
+                                    ' Please remove {} manually.'.format(
+                                        pronoun
+                                    )
+                                )
+                                continue
+
+            if warn_msg:
+                msg['deleted'] += ' WARNING: ' + ' '.join(warn_msg)
+
+            return Response(msg, status=status_code)
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You do not have permission to update metrics' versions."
+            )
+
+
+class ListMetricConfiguration(ListMetricOverrides):
+    authentication_classes = (SessionAuthentication,)
+    permission_classes = ()
+
+    def get(self, request, name=None):
+        if request.user.is_superuser:
+            if name:
+                configurations = poem_models.MetricConfiguration.objects.filter(
+                    name=name
                 )
 
-            except Exception:
-                warn_msg.append(
-                    'Unable to get data on metrics and metric profiles. '
-                    'Please remove deleted metrics from metric profiles '
-                    'manually.'
-                )
+                if configurations.count() == 0:
+                    raise NotFound(
+                        status=404, detail="Metric configuration not found."
+                    )
 
             else:
-                profiles = dict()
-                for metric in deleted:
-                    for key, value in metrics_in_profiles.items():
-                        if key == metric:
-                            for p in value:
-                                if p in profiles:
-                                    profiles.update({p: profiles[p] + [key]})
-                                else:
-                                    profiles.update({p: [key]})
+                configurations = poem_models.MetricConfiguration.objects.all()
 
-                if profiles:
-                    for key, value in profiles.items():
-                        try:
-                            delete_metrics_from_profile(key, value)
+            results = []
+            for configuration in configurations:
+                global_attributes = self._get_global_attributes(
+                    configuration.globalattribute
+                )
+                host_attributes = self._get_host_attributes(
+                    configuration.hostattribute
+                )
+                metric_parameters = self._get_metric_parameters(
+                    configuration.metricparameter
+                )
 
-                        except Exception:
-                            if len(value) > 1:
-                                message = \
-                                    'Error trying to remove metrics {} from '\
-                                    'profile {}.'.format(', '.join(value), key)
-                                pronoun = 'them'
-                            else:
-                                message = \
-                                    'Error trying to remove metric {} from '\
-                                    'profile {}.'.format(value[0], key)
-                                pronoun = 'it'
+                results.append(dict(
+                    id=configuration.id,
+                    name=configuration.name,
+                    global_attributes=global_attributes,
+                    host_attributes=host_attributes,
+                    metric_parameters=metric_parameters
+                ))
 
-                            warn_msg.append(
-                                message + ' Please remove {} manually.'.format(
-                                    pronoun
-                                )
-                            )
-                            continue
+            results = sorted(results, key=lambda k: k["name"])
 
-        if warn_msg:
-            msg['deleted'] += ' WARNING: ' + ' '.join(warn_msg)
+            if name:
+                return Response(results[0])
 
-        return Response(msg, status=status_code)
+            else:
+                return Response(results)
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You do not have permission to view metric "
+                       "configuration overrides."
+            )
+
+    def put(self, request):
+        if request.user.is_superuser:
+            try:
+                conf = poem_models.MetricConfiguration.objects.get(
+                    id=request.data["id"]
+                )
+                conf.name = request.data["name"]
+                global_attrs = list()
+                for item in dict(request.data)["global_attributes"]:
+                    if isinstance(item, str):
+                        item = ast.literal_eval(item)
+                    global_attrs.append("{attribute} {value}".format(**item))
+
+                host_attrs = list()
+                for item in dict(request.data)["host_attributes"]:
+                    if isinstance(item, str):
+                        item = ast.literal_eval(item)
+                    host_attrs.append(
+                        "{hostname} {attribute} {value}".format(**item)
+                    )
+
+                metric_params = list()
+                for item in dict(request.data)["metric_parameters"]:
+                    if isinstance(item, str):
+                        item = ast.literal_eval(item)
+                    metric_params.append(
+                        "{hostname} {metric} {parameter} {value}".format(**item)
+                    )
+
+                conf.globalattribute = json.dumps(global_attrs) if \
+                    len(global_attrs) >= 1 and global_attrs[0] != " " else ""
+                conf.hostattribute = json.dumps(host_attrs) \
+                    if len(host_attrs) >= 1 and host_attrs[0] != "  " else ""
+                conf.metricparameter = json.dumps(metric_params) \
+                    if len(metric_params) >= 1 and metric_params[0] != "   " \
+                    else ""
+
+                conf.save()
+
+                return Response(status=status.HTTP_201_CREATED)
+
+            except IntegrityError:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Metric configuration override with this name "
+                           "already exists."
+                )
+
+            except poem_models.MetricConfiguration.DoesNotExist:
+                return error_response(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Metric configuration override with requested id "
+                           "does not exist."
+                )
+
+            except KeyError as e:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Missing data key: {e.args[0]}"
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You do not have permission to change metric "
+                       "configuration overrides."
+            )
+
+    def post(self, request):
+        if request.user.is_superuser:
+            try:
+                global_attrs = list()
+                for item in dict(request.data)["global_attributes"]:
+                    if isinstance(item, str):
+                        item = ast.literal_eval(item)
+                    global_attrs.append("{attribute} {value}".format(**item))
+
+                host_attrs = list()
+                for item in dict(request.data)["host_attributes"]:
+                    if isinstance(item, str):
+                        item = ast.literal_eval(item)
+                    host_attrs.append(
+                        "{hostname} {attribute} {value}".format(**item)
+                    )
+
+                metric_params = list()
+                for item in dict(request.data)["metric_parameters"]:
+                    if isinstance(item, str):
+                        item = ast.literal_eval(item)
+                    metric_params.append(
+                        "{hostname} {metric} {parameter} {value}".format(**item)
+                    )
+
+                poem_models.MetricConfiguration.objects.create(
+                    name=request.data["name"],
+                    globalattribute=json.dumps(global_attrs),
+                    hostattribute=json.dumps(host_attrs),
+                    metricparameter=json.dumps(metric_params)
+                )
+
+                return Response(status=status.HTTP_201_CREATED)
+
+            except IntegrityError:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Local metric configuration with this name already "
+                           "exists."
+                )
+
+            except KeyError as e:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Missing data key: {e.args[0]}"
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You do not have permission to add metric configuration "
+                       "overrides."
+            )
+
+    def delete(self, request, name=None):
+        if request.user.is_superuser:
+            if name:
+                try:
+                    conf = poem_models.MetricConfiguration.objects.get(
+                        name=name
+                    )
+                    conf.delete()
+
+                    return Response(status=status.HTTP_204_NO_CONTENT)
+
+                except poem_models.MetricConfiguration.DoesNotExist:
+                    return error_response(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Metric configuration not found."
+                    )
+
+            else:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Metric configuration name must be defined."
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You do not have permission to delete local metric "
+                       "configurations."
+            )

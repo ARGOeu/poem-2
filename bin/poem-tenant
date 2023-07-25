@@ -5,9 +5,10 @@ SITEPACK=$(python -c "from distutils.sysconfig import get_python_lib; print(get_
 
 usage()
 {
-	printf "Usage: %s -t <tenant name> [-d <hostname> | -r] [-l] \n" $(basename $0) >&2
+	printf "Usage: %s -t <tenant name> [-d <hostname> -c | -r] [-l] \n" $(basename $0) >&2
 	printf "       [-t] - tenant name\n" >&2
 	printf "       [-d] - hostname\n" >&2
+	printf "       [-c] - use if tenant is combined tenant\n" >&2
 	printf "       [-r] - remove tenant and schema\n" >&2
 	printf "       [-l] - list all tenants\n" >&2
     exit 2
@@ -18,7 +19,7 @@ then
     usage
 fi
 
-while getopts 't:d:hlr' OPTION
+while getopts 't:d:chlr' OPTION
 do
     case $OPTION in
         t)
@@ -27,6 +28,9 @@ do
         d)
             hostname=$OPTARG
             ;;
+        c)
+            combined=1
+            ;;
         r)
             if [ -z "$name" ]
             then
@@ -34,7 +38,7 @@ do
               usage
             else
               su -m -s /bin/sh $RUNASUSER -c \
-              "poem-manage delete_tenant --name $name"
+              "poem-manage poem_delete_tenant --name $name"
               exit 0
             fi
             ;;
@@ -43,7 +47,7 @@ do
             ;;
         l)
             su -m -s /bin/sh $RUNASUSER -c \
-            "poem-manage list_tenants" | awk '{print $1}' | tr '\n' ' '
+            "poem-manage poem_list_tenants" | awk '{print $1}' | tr '\n' ' '
             echo
             exit 0
             ;;
@@ -55,22 +59,32 @@ done
 
 if [ -z "$hostname" ]
 then
-    su -m -s /bin/sh $RUNASUSER -c \
-    "poem-manage create_tenant --name $name"
+    if [ -z "$combined" ]
+    then
+      su -m -s /bin/sh $RUNASUSER -c \
+      "poem-manage create_tenant --name $name"
+    else
+      su -m -s /bin/sh $RUNASUSER -c \
+      "poem-manage create_tenant --name $name --combined"
+    fi
 else
-    su -m -s /bin/sh $RUNASUSER -c \
-    "poem-manage create_tenant --name $name --hostname $hostname"
+    if [ -z "$combined" ]
+    then
+      su -m -s /bin/sh $RUNASUSER -c \
+      "poem-manage poem_create_tenant --name $name --hostname $hostname"
+    else
+      su -m -s /bin/sh $RUNASUSER -c \
+      "poem-manage poem_create_tenant --name $name --hostname $hostname --combined"
+    fi
 fi
 
 schema=$(echo "$name" | tr '[:upper:]' '[:lower:]')
 
 su -m -s /bin/sh $RUNASUSER -c \
-"poem-manage tenant_command --schema $schema poem_superuser"
+"poem-manage tenant_command poem_superuser --schema=$schema "
 
 if [[ $name != 'all' ]]
 then
     su -m -s /bin/sh $RUNASUSER -c \
-    "poem-manage tenant_command --schema=$schema loaddata initial_data.json "
-    su -m -s /bin/sh $RUNASUSER -c \
-    "poem-manage tenant_command --schema=$schema import_internal_metrics"
+    "poem-manage tenant_command import_internal_metrics --schema=$schema"
 fi

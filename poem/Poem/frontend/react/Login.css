@@ -2,7 +2,7 @@
   background-color: #ecf0f5;
 }
 .login-first-row {
-  margin-top: 10%;
+  margin-top: 10% !important;
 }
 #argo-loginheader {
   background-color:#416090;

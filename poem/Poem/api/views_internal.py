@@ -9,7 +9,7 @@ from Poem.api.internal_views.metrics import *
 from Poem.api.internal_views.metrictemplates import *
 from Poem.api.internal_views.package import *
 from Poem.api.internal_views.probes import *
-from Poem.api.internal_views.servicetypes import *
+from Poem.api.internal_views.reports import *
 from Poem.api.internal_views.tenanthistory import *
 from Poem.api.internal_views.tenants import *
 from Poem.api.internal_views.thresholdsprofiles import *

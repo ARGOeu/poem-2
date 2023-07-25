@@ -33,15 +33,23 @@ class MockResponse:
     def __init__(self, data, status_code):
         self.data = data
         self.status_code = status_code
+        self.ok = False
 
         if self.status_code == 200:
             self.reason = 'OK'
+            self.ok = True
+
+        elif self.status_code == 400:
+            self.reason = "BAD REQUEST"
 
         elif self.status_code == 401:
             self.reason = 'Unauthorized'
 
         elif self.status_code == 404:
             self.reason = 'Not Found'
+
+        elif self.status_code == 500:
+            self.reason = "SERVER ERROR"
 
     def json(self):
         if isinstance(self.data, dict):
@@ -315,4 +323,36 @@ def mocked_web_api_metric_profile_put(*args, **kwargs):
                 }
             }
         }, 200
+    )
+
+
+def mocked_web_api_data_feed(*args, **kwargs):
+    return MockResponse(
+        {
+            "status": {
+                "message": "Success",
+                "code": "200"
+            },
+            "data": [
+                {
+                    "tenants": [
+                        "TENANT_X",
+                        "TENANT_Y"
+                    ]
+                }
+            ]
+        }, 200
+    )
+
+
+def mocked_web_api_data_feed_wrong_token(*args, **kwargs):
+    return MockResponse(
+        {
+            "status": {
+                "message": "Unauthorized",
+                "code": "401",
+                "details": "You need to provide a correct authentication token "
+                           "using the header 'x-api-key'"
+            }
+        }, 401
     )

@@ -1,6 +1,6 @@
 # Django settings
 import os
-from configparser import ConfigParser, NoSectionError
+from configparser import ConfigParser, NoSectionError, NoOptionError
 from django.core.exceptions import ImproperlyConfigured
 
 VENV = '/home/pyvenv/poem'
@@ -29,7 +29,7 @@ try:
 
     DATABASES = {
         'default': {
-            'ENGINE': 'tenant_schemas.postgresql_backend',
+            'ENGINE': 'django_tenants.postgresql_backend',
             'NAME': DBNAME,
             'USER': DBUSER,
             'PASSWORD': DBPASSWORD,
@@ -38,7 +38,7 @@ try:
         }
     }
 
-    DATABASE_ROUTERS = ('tenant_schemas.routers.TenantSyncRouter',)
+    DATABASE_ROUTERS = ('django_tenants.routers.TenantSyncRouter',)
 
     ALLOWED_HOSTS = config.get('SECURITY', 'AllowedHosts')
     HOST_CERT = config.get('SECURITY', 'HostCert')
@@ -49,20 +49,33 @@ try:
     WEBAPI_THRESHOLDS = config.get('WEBAPI', 'ThresholdsProfile')
     WEBAPI_OPERATIONS = config.get('WEBAPI', 'OperationsProfile')
     WEBAPI_REPORTS = config.get('WEBAPI', 'Reports')
+    WEBAPI_REPORTSTAGS = config.get('WEBAPI', 'ReportsTopologyTags')
+    WEBAPI_REPORTSTOPOLOGYGROUPS = config.get('WEBAPI', 'ReportsTopologyGroups')
+    WEBAPI_REPORTSTOPOLOGYENDPOINTS = config.get('WEBAPI', 'ReportsTopologyEndpoints')
+    WEBAPI_METRICSTAGS = config.get("WEBAPI", "Metrics")
+    WEBAPI_SERVICETYPES = config.get("WEBAPI", "ServiceTypes")
+    WEBAPI_DATAFEEDS = config.get("WEBAPI", "DataFeeds")
 
+    LINKS_TERMS_PRIVACY = dict()
+    all_sections = config.sections()
+    for section in all_sections:
+        if section.startswith('GENERAL_'):
+            tenant_name = section.split('_')[1]
+            LINKS_TERMS_PRIVACY[tenant_name.lower()] = dict()
+            terms = config.get(section, 'TermsOfUse')
+            privacy = config.get(section, 'PrivacyPolicies')
+            LINKS_TERMS_PRIVACY[tenant_name.lower()].update({"privacy": privacy, "terms": terms})
 
-except NoSectionError as e:
-    print(e)
+except (NoSectionError, ImproperlyConfigured, NoOptionError) as e:
+    print('ERROR: Configuration error - {}'.format(e))
     raise SystemExit(1)
 
-except ImproperlyConfigured as e:
-    print(e)
-    raise SystemExit(1)
 
 if ',' in ALLOWED_HOSTS:
     ALLOWED_HOSTS = [h.strip() for h in ALLOWED_HOSTS.split(',')]
 else:
     ALLOWED_HOSTS = [ALLOWED_HOSTS]
+
 
 # Make this unique, and don't share it with anybody.
 try:
@@ -83,7 +96,7 @@ ROOT_URLCONF = 'Poem.urls'
 APPEND_SLASH = True
 
 SHARED_APPS = (
-    'tenant_schemas',
+    'django_tenants',
     'Poem.tenants',
     'django.contrib.contenttypes',
     'django.contrib.admin',
@@ -94,7 +107,7 @@ SHARED_APPS = (
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_api_key',
-    'rest_auth',
+    'dj_rest_auth',
     'Poem.users',
     'Poem.poem_super_admin',
     'Poem.api',
@@ -111,7 +124,7 @@ TENANT_APPS = (
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_api_key',
-    'rest_auth',
+    'dj_rest_auth',
     'webpack_loader',
     'Poem.api',
     'Poem.poem',
@@ -122,9 +135,10 @@ INSTALLED_APPS = list(SHARED_APPS) + \
     [app for app in TENANT_APPS if app not in SHARED_APPS]
 
 TENANT_MODEL = 'tenants.Tenant'
+TENANT_DOMAIN_MODEL = 'tenants.Domain'
 
 MIDDLEWARE = [
-    'tenant_schemas.middleware.TenantMiddleware',
+    'django_tenants.middleware.main.TenantMainMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -132,6 +146,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'djangosaml2.middleware.SamlSessionMiddleware'
 ]
 
 TEMPLATES = [
@@ -188,7 +203,7 @@ API_KEY_CUSTOM_HEADER = 'HTTP_X_API_KEY'
 # MEDIA_URL = '/poem_media/'
 # MEDIA_ROOT = '{}/usr/share/poem/media/'.format(VENV)
 # STATIC_URL = '/static/'
-DEFAULT_FILE_STORAGE = 'tenant_schemas.storage.TenantFileSystemStorage'
+#DEFAULT_FILE_STORAGE = 'tenant_schemas.storage.TenantFileSystemStorage'
 
 STATICFILES_DIRS = [os.path.join(APP_PATH, 'frontend/bundles/')]
 
@@ -202,11 +217,20 @@ LOGOUT_REDIRECT_URL = '/ui/login'
 SAML_CONFIG_LOADER = 'Poem.poem.saml2.config.get_saml_config'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_SAMESITE = None
+SESSION_COOKIE_SECURE = True
 
 
 WEBPACK_LOADER = {
     'DEFAULT': {
+        'CACHE': not DEBUG,
+        'POLL_INTERVAL': 0.1,
         'BUNDLE_DIR_NAME': 'reactbundle/',
-        'STATS_FILE': os.path.join(APP_PATH, 'webpack-stats.json')
+        'STATS_FILE': os.path.join(APP_PATH, 'webpack-stats.json'),
+        'IGNORE': [r'.+\.hot-update.js', r'.+\.map'],
     }
 }
+
+TEST_RUNNER = 'xmlrunner.extra.djangotestrunner.XMLTestRunner'
+TEST_OUTPUT_FILE_NAME = 'junit-backend.xml'
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'

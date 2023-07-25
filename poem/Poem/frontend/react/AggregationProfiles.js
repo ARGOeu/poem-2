@@ -1,24 +1,20 @@
-import React, { useState, useMemo, useEffect, useContext } from 'react';
+import React, { useState, useMemo, useContext, useEffect } from 'react';
 import {Link} from 'react-router-dom';
 import {
   LoadingAnim,
   BaseArgoView,
   NotifyOk,
-  DropDown,
-  FancyErrorMessage,
-  Icon,
   DiffElement,
-  ProfileMainInfo,
+  ProfileMain,
   NotifyError,
   ErrorComponent,
   ParagraphTitle,
-  ProfilesListTable
+  ProfilesListTable,
+  CustomReactSelect,
+  CustomError
 } from './UIElements';
-import Autosuggest from 'react-autosuggest';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Formik, Field, FieldArray, Form } from 'formik';
 import { faPlus, faTimes, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
-import FormikEffect from './FormikEffect.js';
 import {Backend, WebApi} from './DataManager';
 import {
   Alert,
@@ -28,21 +24,37 @@ import {
   CardFooter,
   CardHeader,
   Col,
+  Form,
   FormGroup,
   FormText,
   Label,
-  Row
+  Row,
+  ButtonDropdown,
+  DropdownToggle,
+  DropdownMenu,
+  DropdownItem,
+  Input,
+  FormFeedback
 } from 'reactstrap';
-import { useQuery, queryCache } from 'react-query';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
 import * as Yup from 'yup';
+import { downloadJSON } from './FileDownload';
 
 import ReactDiffViewer from 'react-diff-viewer';
 
 import "react-notifications/lib/notifications.css";
 import './AggregationProfiles.css';
+import {
+  fetchBackendAggregationProfiles,
+  fetchMetricProfiles,
+  fetchUserDetails
+} from './QueryFunctions';
+import { Controller, FormProvider, useFieldArray, useForm, useFormContext, useWatch } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { ErrorMessage } from '@hookform/error-message';
 
 
-const AggregationProfilesChangeContext = React.createContext();
+const AggregationProfilesChangeContext = React.createContext()
 
 
 const AggregationProfilesSchema = Yup.object().shape({
@@ -66,80 +78,89 @@ const AggregationProfilesSchema = Yup.object().shape({
 })
 
 
-function insertSelectPlaceholder(data, text) {
-  if (data)
-    return [text, ...data]
-  else
-    return [text]
-}
-
-
-const AggregationProfileAutocompleteField = ({service, index, isNew, groupNew, groupIndex, isMissing}) => {
-  const context = useContext(AggregationProfilesChangeContext);
-  const [suggestionList, setSuggestions] = useState(context.list_services)
+const DropDown = ({
+  name,
+  options,
+  isnew=false,
+  errors=undefined
+}) => {
+  const { control, setValue, clearErrors } = useFormContext()
 
   return (
-    <Autosuggest
-      inputProps={{
-        className: `"form-control custom-select " ${isNew && !groupNew ? "border-success" : ""} ${isMissing ? "border-primary": ""}`,
-        placeholder: '',
-        onChange: (_, {newValue}) => context.formikBag.form.setFieldValue(`groups.${groupIndex}.services.${index}.name`, newValue),
-        value: service.name
-      }}
-      getSuggestionValue={(suggestion) => suggestion}
-      suggestions={suggestionList}
-      renderSuggestion={(suggestion, {query, isHighlighted}) =>
-        <div
-          key={context.list_services.indexOf(suggestion)}
-          className={`aggregation-autocomplete-entries ${isHighlighted ?
-              "aggregation-autocomplete-entries-highlighted"
-              : ""}`
-          }>
-          {suggestion ? <Icon i='serviceflavour'/> : ''} {suggestion}
-        </div>}
-      onSuggestionsFetchRequested={({ value }) =>
-        {
-          let result = context.list_services.filter(service => service.toLowerCase().includes(value.trim().toLowerCase()))
-          setSuggestions(result)
+    <Controller
+      name={ name }
+      control={ control }
+      render={ ({ field }) =>
+        <CustomReactSelect
+          forwardedRef={ field.ref }
+          onChange={ e => {
+            setValue(name, e.value)
+            clearErrors(name)
+          }}
+          options={ options.map(option => new Object({ label: option, value: option })) }
+          value={ field.value ? { label: field.value, value: field.value } : undefined }
+          error={ errors }
+          isnew={ isnew }
+        />
       }
-      }
-      onSuggestionsClearRequested={() => {
-        setSuggestions([])
-      }}
-      onSuggestionSelected={(_, {suggestion}) => {
-        context.formikBag.form.setFieldValue(`groups.${groupIndex}.services.${index}.name`, suggestion)
-      }}
-      shouldRenderSuggestions={() => true}
-      theme={{
-        suggestionsContainerOpen: 'aggregation-autocomplete-menu',
-        suggestionsList: 'aggregation-autocomplete-list'
-      }}
     />
   )
 }
 
 
-const GroupList = ({name}) => {
+const AggregationProfileAutocompleteField = ({
+  index,
+  isNew,
+  groupNew,
+  groupIndex,
+  isMissing,
+  error
+}) => {
   const context = useContext(AggregationProfilesChangeContext);
+
+  const { control, setValue, clearErrors } = useFormContext()
+
+  const name = `groups.${groupIndex}.services.${index}.name`
+
+  return (
+    <Controller
+      name={ name }
+      control={ control }
+      render={ ({ field }) =>
+        <CustomReactSelect
+          forwardedRef={ field.ref }
+          onChange={ e => {
+            setValue(name, e.value)
+            clearErrors(name)
+          }}
+          options={ context.list_services.map(option => new Object({ label: option, value: option })) }
+          value={ field.value ? { label: field.value, value: field.value } : undefined }
+          error={ error }
+          isnew={ isNew && !groupNew }
+          ismissing={ isMissing }
+        />
+      }
+    />
+  )
+}
+
+
+const GroupList = () => {
+  const { control } = useFormContext()
+
+  const { fields, insert, remove } = useFieldArray({ control, name: "groups" })
 
   return (
     <Row className="groups">
       {
-        context.formikBag.form.values[name].map((group, i) =>
-          <FieldArray
-            key={i}
-            name="groups"
-            render={props => (
-              <Group
-                {...props}
-                key={i}
-                operation={group.operation}
-                services={group.services}
-                groupindex={i}
-                isnew={group.isNew}
-                last={i === context.formikBag.form.values[name].length - 1}
-              />
-            )}
+        fields.map((group, i) =>
+          <Group
+            key={ group.id }
+            group={ group }
+            groupindex={ i }
+            insert={ insert }
+            remove={ remove }
+            last={ i === fields.length - 1 }
           />
         )
       }
@@ -148,62 +169,79 @@ const GroupList = ({name}) => {
 }
 
 
-const Group = ({operation, services, groupindex, isnew, last}) => {
-  const context = useContext(AggregationProfilesChangeContext);
+const Group = ({ group, groupindex, remove, insert, last }) => {
+  const context = useContext(AggregationProfilesChangeContext)
+
+  const { control, formState: { errors } } = useFormContext()
 
   if (!last)
     return (
-      <React.Fragment key={groupindex}>
+      <React.Fragment key={ group.id }>
         <Col sm={{size: 8}} md={{size: 5}} className="mt-4 mb-2">
-          <Card className={isnew ? "border-success" : ""}>
+          <Card className={ group.isNew ? "border-success" : ""} data-testid={`card-${groupindex}`}>
             <CardHeader className="p-1" color="primary">
-              <Row className="d-flex align-items-center no-gutters">
+              <Row className="d-flex align-items-center g-0">
                 <Col sm={{size: 10}} md={{size: 11}}>
-                  <Field
-                    name={`groups.${groupindex}.name`}
-                    placeholder="Name of service group"
-                    required={true}
-                    className={`${context.formikBag.form.errors && context.formikBag.form.errors.groups &&
-                      context.formikBag.form.errors.groups[groupindex] &&
-                      context.formikBag.form.errors.groups[groupindex].name ? "form-control border-danger" : "form-control"}`}
+                  <Controller
+                    name={ `groups.${groupindex}.name` }
+                    control={ control }
+                    render={ ({ field }) =>
+                      <Input
+                        { ...field }
+                        placeholder="Name of service group"
+                        data-testid={ `groups.${groupindex}.name` }
+                        className={ `form-control ${errors?.groups?.[groupindex]?.name && "is-invalid"}` }
+                      />
+                    }
+                  />
+                  <ErrorMessage
+                    errors={ errors }
+                    name={ `groups.${groupindex}.name` }
+                    render={ ({ message }) =>
+                      <FormFeedback invalid="true" className="end-0">
+                        { message }
+                      </FormFeedback>
+                    }
                   />
                 </Col>
-                <Col sm={{size: 2}} md={{size: 1}} className="pl-1">
-                  <Button size="sm" color="danger"
+                <Col sm={{size: 2}} md={{size: 1}} className="ps-1">
+                  <Button
+                    size="sm"
+                    color="danger"
+                    data-testid={`remove-group-${groupindex}`}
                     type="button"
-                    onClick={() => (context.write_perm) && context.formikBag.groupRemove(groupindex)}>
+                    onClick={() => (context.write_perm) && remove(groupindex)}
+                  >
                     <FontAwesomeIcon icon={faTimes}/>
                   </Button>
                 </Col>
               </Row>
             </CardHeader>
             <CardBody className="p-1">
-              <FieldArray
-                name={`groups.${groupindex}`}
-                render={props => (
-                  <ServiceList
-                    services={services}
-                    groupindex={groupindex}
-                    groupnew={isnew}
-                  />)}
+              <ServiceList
+                groupindex={groupindex}
+                groupnew={group.isNew}
               />
             </CardBody>
             <CardFooter className="p-1 d-flex justify-content-center">
-              <DropDown
-                field={{name: "operation", value: operation}}
-                data={insertSelectPlaceholder(context.list_operations, 'Select')}
-                prefix={`groups.${groupindex}`}
-                class_name="custom-select col-2"
-                errors={context.formikBag.form.errors && context.formikBag.form.errors.groups && context.formikBag.form.errors.groups[groupindex]}
-              />
+              <div className='col-2' data-testid='operation'>
+                <DropDown
+                  name={ `groups.${groupindex}.operation` }
+                  data-testid={ `groups.${groupindex}.operation` }
+                  options={ context.logic_operations }
+                  errors={ errors?.groups?.[groupindex]?.operation }
+                />
+                <CustomError error={ errors?.groups?.[groupindex]?.operation?.message } />
+              </div>
             </CardFooter>
           </Card>
         </Col>
         <Col sm={{size: 4}} md={{size: 1}} className="mt-5">
-          <div className="group-operation" key={groupindex}>
+          <div className="group-operation" key={groupindex} data-testid={`group-operation-${groupindex}`}>
             <DropDown
-              field={{name: 'profile_operation', value: context.formikBag.form.values.profile_operation}}
-              data={insertSelectPlaceholder(context.list_operations, 'Select')}
+              name="profile_operation"
+              data-testid={`profile_operation-${groupindex}`}
+              options={ context.logic_operations }
             />
           </div>
         </Col>
@@ -212,402 +250,809 @@ const Group = ({operation, services, groupindex, isnew, last}) => {
   else
     return (
       <Col sm={{size: 12}} md={{size: 6}} className="mt-4 mb-2 d-flex justify-content-center align-items-center">
-        <Button outline color="secondary" size='lg' disabled={!context.write_perm ? true : false} onClick={
-          () => context.write_perm &&
-            context.formikBag.groupInsert(groupindex, {name: '', operation: '', isNew: true,
-                services: [{name: '', operation: ''}]})
-        }>Add new group</Button>
+        <Button
+        outline
+        color="secondary"
+        size='lg'
+        disabled={ !context.write_perm || context.list_services.length === 0 ? true : false }
+        onClick={
+          () => context.write_perm && insert(groupindex, {name: '', operation: '', isNew: true, services: [{name: '', operation: ''}]})
+        }
+        >
+          Add new group
+        </Button>
       </Col>
     )
 }
 
 
-const ServiceList = ({services, groupindex, groupnew=false}) =>
+const ServiceList = ({groupindex, groupnew=false}) =>
 {
   const context = useContext(AggregationProfilesChangeContext);
 
+  const { control } = useFormContext()
+
+  const { fields: services, insert, remove } = useFieldArray({ control, name: `groups.${groupindex}.services` })
+
   return (
     services.map((service, i) =>
-      <FieldArray
-        key={i}
-        name={`groups.${groupindex}.services`}
-        render={props => (
-          <Service
-            key={i}
-            service={service}
-            groupindex={groupindex}
-            groupnew={groupnew}
-            index={i}
-            last={i === services.length - 1}
-            isnew={service.isNew}
-            serviceRemove={props.remove}
-            serviceInsert={props.insert}
-            ismissing={service.name && context.list_services.indexOf(service.name) === -1}
-          />
-        )}
+      <Service
+        key={ service.id }
+        groupindex={ groupindex }
+        groupnew={ groupnew }
+        isnew={ service.isNew }
+        index={ i }
+        serviceRemove={ remove }
+        serviceInsert={ insert }
+        ismissing={ service.name && context.list_services.indexOf(service.name) === -1 }
       />
     )
   )
 }
 
 
-const Service = ({service, operation, groupindex, groupnew, index, isnew,
-  serviceInsert, serviceRemove, ismissing}) => {
+const Service = ({
+  groupindex,
+  groupnew,
+  isnew,
+  index,
+  serviceInsert,
+  serviceRemove,
+  ismissing
+}) => {
   const context = useContext(AggregationProfilesChangeContext);
+
+  const { control, getValues, formState: { errors } } = useFormContext()
+
+  const insertOperationFromPrevious = (_, array) => {
+    if (array.length) {
+      let last = array.length - 1
+
+      return array[last]['operation']
+    }
+    else
+      return ''
+  }
 
   return (
     <React.Fragment>
-      <Row className="d-flex align-items-center service pt-1 pb-1 no-gutters" key={index}>
+      <Row className="d-flex align-items-center service pt-1 pb-1 g-0" key={index}>
         <Col md={8}>
-          <AggregationProfileAutocompleteField
-            service={service}
-            index={index}
-            form={context.formikBag.form}
-            isNew={isnew}
-            groupNew={groupnew}
-            groupIndex={groupindex}
-            isMissing={ismissing}
+          <Controller
+            name={ `groups.${groupindex}.services.${index}.name` }
+            control={ control }
+            render={ ({ field }) =>
+              <AggregationProfileAutocompleteField
+                forwardedRef={ field.id }
+                index={ index }
+                isNew={ isnew }
+                groupNew={ groupnew }
+                groupIndex={ groupindex }
+                isMissing={ ismissing }
+                value={ field.value }
+                error={ errors?.groups?.[groupindex]?.services?.[index]?.name }
+              />
+            }
           />
+          <CustomError error={ errors?.groups?.[groupindex]?.services?.[index]?.name?.message } />
         </Col>
         <Col md={2}>
-          <div className="input-group">
+          <div className="group-operation" data-testid={`operation-${index}`}>
             <DropDown
-              field={{name: "operation", value: operation}}
-              data={insertSelectPlaceholder(context.list_operations, 'Select')}
-              prefix={`groups.${groupindex}.services.${index}`}
-              class_name="custom-select service-operation"
-              isnew={isnew && !groupnew}
+              name={ `groups.${groupindex}.services.${index}.operation` }
+              data-testid={ `groups.${groupindex}.services.${index}.operation` }
+              options={ context.logic_operations }
+              isnew={ isnew && !groupnew }
+              errors={ errors?.groups?.[groupindex]?.services?.[index]?.operation }
           />
           </div>
+          <CustomError error={ errors?.groups?.[groupindex]?.services?.[index]?.operation?.message } />
         </Col>
-        <Col md={2} className="pl-2">
+        <Col md={2} className="ps-2">
           <Button size="sm" color="light"
             type="button"
-            onClick={() => serviceRemove(index)}>
+            data-testid={`remove-service-${index}`}
+            onClick={() => serviceRemove(index)}
+          >
             <FontAwesomeIcon icon={faTimes}/>
           </Button>
-          <Button size="sm" color="light"
+          <Button
+            size="sm"
+            color="light"
             type="button"
-            onClick={() => serviceInsert(index + 1, {name: '', operation:
-              context.last_service_operation(index, context.formikBag.form.values.groups[groupindex].services), isNew: true})}>
+            data-testid={`insert-${index}`}
+            onClick={() => {
+              serviceInsert(
+                index + 1,
+                {
+                  name: '',
+                  operation: insertOperationFromPrevious(index, getValues(`groups.${groupindex}.services`)),
+                  isNew: true
+                }
+              )
+            }}
+          >
             <FontAwesomeIcon icon={faPlus}/>
           </Button>
         </Col>
       </Row>
       <Row>
-        {
-          context.formikBag.form.errors && context.formikBag.form.errors.groups && context.formikBag.form.errors.groups[groupindex] &&
-          context.formikBag.form.errors.groups[groupindex].services && context.formikBag.form.errors.groups[groupindex].services[index] &&
-          context.formikBag.form.errors.groups[groupindex].services[index].name &&
-            <Col md={8}>
-                { FancyErrorMessage(context.formikBag.form.errors.groups[groupindex].services[index].name) }
-            </Col>
-        }
-        {
-          context.formikBag.form.errors && context.formikBag.form.errors.groups && context.formikBag.form.errors.groups[groupindex] &&
-          context.formikBag.form.errors.groups[groupindex].services && context.formikBag.form.errors.groups[groupindex].services[index] &&
-          context.formikBag.form.errors.groups[groupindex].services[index].operation &&
-            <Col md={{offset: context.formikBag.form.errors.groups[groupindex].services[index].name ? 0 : 8, size: 2}}>
-                { FancyErrorMessage(context.formikBag.form.errors.groups[groupindex].services[index].operation) }
-            </Col>
-      }
+        <Col md={8}>
+          <ErrorMessage
+            errors={ errors }
+            name={ `groups.${groupindex}.services.${index}.name` }
+            render={ ({ message }) =>
+              <FormFeedback invalid="true" className="end-0">
+                { message }
+              </FormFeedback>
+            }
+          />
+        </Col>
+        <Col md={{offset: errors?.groups?.[groupindex]?.services?.[index]?.name ? 0 : 8, size: 2}}>
+          <ErrorMessage
+            errors={ errors }
+            name={ `groups.${groupindex}.services.${index}.operation` }
+            render={ ({ message }) =>
+              <FormFeedback invalid="true" className="end-0">
+                { message }
+              </FormFeedback>
+            }
+          />
+        </Col>
       </Row>
     </React.Fragment>
   )
 }
 
 
-const AggregationProfilesForm = ({ values, errors, historyview=false, write_perm=false,
-  list_user_groups, logic_operations, endpoint_groups, list_id_metric_profiles }) =>
-(
-  <>
-    <ProfileMainInfo
-      values={values}
-      errors={errors}
-      fieldsdisable={historyview}
-      grouplist={
-        historyview ?
-          undefined
-        :
-          write_perm ?
-            list_user_groups
-          :
-            [values.groupname]
+const AggregationProfilesForm = ({
+  initValues,
+  resourcename,
+  profile_name,
+  location,
+  addview=false,
+  historyview=false,
+  publicView=false,
+  doDelete=undefined,
+  doChange=undefined
+}) => {
+  const context = useContext(AggregationProfilesChangeContext)
+
+  const [listServices, setListServices] = useState([])
+  const [isServiceMissing, setIsServiceMissing] = useState(false)
+  const [extraServices, setExtraServices] = useState([])
+  const [areYouSureModal, setAreYouSureModal] = useState(false)
+  const [modalMsg, setModalMsg] = useState(undefined);
+  const [modalTitle, setModalTitle] = useState(undefined);
+  const [onYes, setOnYes] = useState('')
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const hiddenFileInput = React.useRef(null);
+
+  const extractListOfServices = (profileFromAggregation, listMetricProfiles) => {
+    let targetProfile = listMetricProfiles.filter(profile => profile.name === profileFromAggregation)
+
+    if (targetProfile.length) {
+      let services = targetProfile[0].services.map(service => service.service)
+      return services.sort(sortServices)
+    }
+    else
+      return []
+  }
+
+  const handleFileRead = (e) => {
+    let jsonData = JSON.parse(e.target.result);
+    methods.setValue('metric_operation', jsonData.metric_operation);
+    methods.setValue('profile_operation', jsonData.profile_operation);
+    methods.setValue('metric_profile', jsonData.metric_profile);
+    methods.setValue('endpoint_group', jsonData.endpoint_group)
+    let groups = insertDummyGroup(
+      insertEmptyServiceForNoServices(jsonData.groups)
+    )
+    methods.resetField("groups")
+    methods.setValue('groups', groups)
+  }
+
+  const handleFileChosen = (file) => {
+    var reader = new FileReader();
+    reader.onload = handleFileRead;
+    reader.readAsText(file);
+  }
+
+  const onYesCallback = () => {
+    if (onYes === 'delete')
+      doDelete(methods.getValues("id"));
+    else if (onYes === 'change')
+      doChange(methods.getValues());
+  }
+
+  const methods = useForm({
+    defaultValues: initValues,
+    mode: "all",
+    resolver: yupResolver(AggregationProfilesSchema)
+  })
+
+  const { control } = methods
+
+  const metric_profile = useWatch({ control, name: "metric_profile" })
+  const groups = useWatch({ control, name: "groups" })
+
+  useEffect(() => {
+    if (!publicView && !historyview)
+      setListServices(extractListOfServices(metric_profile, context.metric_profiles))
+  }, [metric_profile])
+
+  useEffect(() => {
+    setIsServiceMissing(checkIfServiceMissingInMetricProfile())
+    setExtraServices(checkIfServiceExtraInMetricProfile(listServices, groups))
+  }, [groups, listServices])
+
+
+  const checkIfServiceMissingInMetricProfile = () => {
+    let servicesInMetricProfiles = new Set(listServices)
+    let isMissing = false
+
+    groups.forEach(group => {
+      for (let service of group.services) {
+        if (!["dummy", ""].includes(service.name))
+          if (!servicesInMetricProfiles.has(service.name)) {
+            isMissing = true
+            break
+          }
       }
-      profiletype='aggregation'
-  />
-    <ParagraphTitle title='Operations, endpoint group and metric profile'/>
-    <Row className='mt-4'>
-      <Col md={4}>
-        <FormGroup>
-          <Row>
-            <Col md={12}>
-              <Label for='aggregationMetric'>Metric operation:</Label>
-            </Col>
-          </Row>
-          <Row>
-            <Col md={5}>
-              {
-                historyview ?
-                  <Field
-                    name='metric_operation'
-                    className='form-control'
-                    id='aggregationMetric'
-                    disabled={true}
-                  />
-                :
-                  <Field
-                    name='metric_operation'
-                    component={DropDown}
-                    data={insertSelectPlaceholder(logic_operations, 'Select')}
-                    required={true}
-                    class_name='custom-select'
-                    id='aggregationMetric'
-                    errors={errors}
-                  />
-              }
-            </Col>
-          </Row>
-          <Row>
-            <Col md={12}>
-              {
-                errors && errors.metric_operation &&
-                  FancyErrorMessage(errors.metric_operation)
-              }
-              <FormText>
-                Logical operation that will be applied between metrics of each service flavour
-              </FormText>
-            </Col>
-          </Row>
-        </FormGroup>
-      </Col>
-      <Col md={4}>
-        <FormGroup>
-          <Row>
-            <Col md={12}>
-              <Label for='aggregationOperation'>Aggregation operation:</Label>
-            </Col>
-            <Col md={5}>
-              {
-                historyview ?
-                  <Field
-                    name='profile_operation'
-                    className='form-control'
-                    id='aggregationOperation'
-                    disabled={true}
-                  />
-                :
-                  <Field
-                    name='profile_operation'
-                    component={DropDown}
-                    data={insertSelectPlaceholder(logic_operations, 'Select')}
-                    required={true}
-                    class_name='custom-select'
-                    id='aggregationOperation'
-                    errors={errors}
-                  />
-              }
-            </Col>
-          </Row>
-          <Row>
-            <Col md={12}>
-              {
-                errors && errors.profile_operation &&
-                  FancyErrorMessage(errors.profile_operation)
-              }
-              <FormText>
-                Logical operation that will be applied between defined service flavour groups
-              </FormText>
-            </Col>
-          </Row>
-        </FormGroup>
-      </Col>
-      <Col md={4}>
-        <FormGroup>
-          <Row>
-            <Col md={12}>
-              <Label for='aggregationEndpointGroup'>Endpoint group:</Label>
-            </Col>
-            <Col md={5}>
-              {
-                historyview ?
-                  <Field
-                    name='endpoint_group'
-                    className='form-control'
-                    id='aggregationEndpointGroup'
-                    disabled={true}
-                  />
-                :
-                  <Field
-                    name='endpoint_group'
-                    component={DropDown}
-                    data={insertSelectPlaceholder(endpoint_groups, 'Select')}
-                    required={true}
-                    class_name='custom-select'
-                    id='aggregationEndpointGroup'
-                    errors={errors}
-                  />
-              }
-              {
-                errors && errors.endpoint_group &&
-                  FancyErrorMessage(errors.endpoint_group)
-              }
-            </Col>
-          </Row>
-        </FormGroup>
-      </Col>
-    </Row>
-    <Row className='mt-4'>
-      <Col md={5}>
-        <FormGroup>
-          <Label for='metricProfile'>Metric profile:</Label>
+    })
+
+    return isMissing
+  }
+
+  const checkIfServiceExtraInMetricProfile = () => {
+    let serviceGroupsInAggregationProfile = new Set()
+    let _difference = new Set(listServices)
+
+    groups.forEach(group => {
+      for (let service of group.services) {
+        if (service.name !== "dummy")
+          serviceGroupsInAggregationProfile.add(service.name)
+      }
+    })
+
+    for (let elem of serviceGroupsInAggregationProfile) {
+      _difference.delete(elem)
+    }
+
+    return Array.from(_difference).sort(sortServices)
+  }
+
+  const onSubmitHandle = () => {
+    setAreYouSureModal(!areYouSureModal);
+    setModalMsg(`Are you sure you want to ${addview ? "add" : "change"} aggregation profile?`)
+    setModalTitle(`${addview ? "Add" : "Change"} aggregation profile`)
+    setOnYes('change')
+  }
+
+  return (
+    <BaseArgoView
+      resourcename={ resourcename }
+      location={location}
+      modal={true}
+      infoview={ historyview }
+      history={!publicView}
+      state={{ areYouSureModal, 'modalFunc': onYesCallback, modalTitle, modalMsg }}
+      toggle={ () => setAreYouSureModal(!areYouSureModal) }
+      addview={ publicView ? !publicView : addview }
+      publicview={ publicView }
+      submitperm={ !historyview && context.write_perm }
+      extra_button={
+        (!addview && !historyview) &&
+          <ButtonDropdown isOpen={dropdownOpen} toggle={ () => setDropdownOpen(!dropdownOpen) }>
+            <DropdownToggle caret color='secondary'>JSON</DropdownToggle>
+            <DropdownMenu>
+              <DropdownItem
+                onClick={() => {
+                  let valueSave = JSON.parse(JSON.stringify(methods.getValues()));
+                  removeDummyGroup(valueSave);
+                  removeIsNewFlag(valueSave);
+                  const jsonContent = {
+                    endpoint_group: valueSave.endpoint_group,
+                    metric_operation: valueSave.metric_operation,
+                    profile_operation: valueSave.profile_operation,
+                    metric_profile: valueSave.metric_profile,
+                    groups: valueSave.groups
+                  }
+                  let filename = `${profile_name}.json`
+                  downloadJSON(jsonContent, filename)
+                }}
+              >
+                Export
+              </DropdownItem>
+              <DropdownItem
+                onClick={() => {hiddenFileInput.current.click()}}
+              >
+                Import
+              </DropdownItem>
+            </DropdownMenu>
+            <input
+              type='file'
+              data-testid='file_input'
+              ref={hiddenFileInput}
+              onChange={(e) => { handleFileChosen(e.target.files[0]) }}
+              style={{display: 'none'}}
+            />
+          </ButtonDropdown>
+      }
+    >
+      <FormProvider { ...methods }>
+        <Form onSubmit={ methods.handleSubmit(val => onSubmitHandle(val)) } data-testid="aggregation-form" >
           {
-            historyview ?
-              <Field
-                name='metric_profile'
-                className='form-control'
-                disabled={true}
-              />
+            (isServiceMissing && !(publicView || historyview)) &&
+              <Alert color='danger'>
+                <center data-testid='alert-missing'>
+                  <FontAwesomeIcon icon={faInfoCircle} size="lg" color="black"/> &nbsp;
+                  Some Service Flavours used in Aggregation profile are not presented in associated Metric profile meaning that two profiles are out of sync. Check below for Service Flavours in blue borders.
+                </center>
+              </Alert>
+          }
+          {
+            (groups.length > 1 && extraServices.length > 0 && !(publicView || historyview || addview)) &&
+              <Alert color='danger'>
+                <center data-testid='alert-extra'>
+                  <p>
+                    <FontAwesomeIcon icon={faInfoCircle} size='lg' color='black' /> &nbsp;
+                    There are some extra Service Flavours in associated metric profile which are not used in the aggregation profile, meaning that two profiles are out of sync:
+                  </p>
+                  <p>{ extraServices.join(', ') }</p>
+                </center>
+              </Alert>
+          }
+          <ProfileMain
+            fieldsdisable={ historyview }
+            grouplist={
+              historyview ?
+                undefined
+              :
+                context.write_perm ?
+                  context.list_user_groups
+                :
+                  [methods.getValues("groupname")]
+            }
+            profiletype="aggregation"
+            addview={ addview }
+          />
+          <ParagraphTitle title='Operations, endpoint group and metric profile'/>
+          <Row className='mt-4'>
+            <Col md={4}>
+              <FormGroup>
+                <Row>
+                  {
+                    historyview &&
+                      <Col md={12}>
+                        <Label for='aggregationMetric'>Metric operation:</Label>
+                      </Col>
+                  }
+                  <Col md={5}>
+                    <Controller
+                      name="metric_operation"
+                      control={ methods.control }
+                      render={ ({ field }) =>
+                        historyview ?
+                          <Input
+                            { ...field }
+                            data-testid="metric_operation"
+                            className="form-control"
+                            disabled={ true }
+                          />
+                        :
+                          <CustomReactSelect
+                            forwardedRef={ field.ref }
+                            onChange={ e => {
+                              methods.setValue("metric_operation", e.value)
+                              methods.clearErrors("metric_operation")
+                            }}
+                            options={
+                              context.logic_operations.map(operation => new Object({
+                                label: operation, value: operation
+                              }))
+                            }
+                            value={ field.value ? { label: field.value, value: field.value } : undefined }
+                            error={ methods.formState.errors?.metric_operation }
+                            label="Metric operation:"
+                          />
+                      }
+                    />
+                    <CustomError error={ methods.formState.errors.metric_operation?.message } />
+                  </Col>
+                </Row>
+                <Row>
+                  <Col md={12}>
+                    <FormText>
+                      Logical operation that will be applied between metrics of each service flavour
+                    </FormText>
+                  </Col>
+                </Row>
+              </FormGroup>
+            </Col>
+            <Col md={4}>
+              <FormGroup>
+                <Row>
+                  {
+                    historyview &&
+                      <Col md={12}>
+                        <Label for='aggregationOperation'>Aggregation operation:</Label>
+                      </Col>
+                  }
+                  <Col md={5}>
+                    <Controller
+                      name="profile_operation"
+                      control={ methods.control }
+                      render={ ({ field }) =>
+                        historyview ?
+                          <Input
+                            { ...field }
+                            data-testid="profile_operation"
+                            className="form-control"
+                            disabled={ true }
+                          />
+                        :
+                          <CustomReactSelect
+                            forwardedRef={ field.ref }
+                            onChange={e => {
+                              methods.setValue("profile_operation", e.value)
+                              methods.clearErrors("profile_operation")
+                            }}
+                            options={
+                              context.logic_operations.map(operation => new Object({
+                                label: operation, value: operation
+                              }))
+                            }
+                            value={ field.value ? { label: field.value, value: field.value } : undefined }
+                            label="Aggregation operation:"
+                            error={ methods.formState.errors?.profile_operation }
+                          />
+                      }
+                    />
+                  </Col>
+                </Row>
+                <Row>
+                  <Col md={12}>
+                    <CustomError error={ methods.formState.errors.profile_operation?.message } />
+                    <FormText>
+                      Logical operation that will be applied between defined service flavour groups
+                    </FormText>
+                  </Col>
+                </Row>
+              </FormGroup>
+            </Col>
+            <Col md={4}>
+              <FormGroup>
+                <Row>
+                  {
+                    historyview &&
+                      <Col md={12}>
+                        <Label for='aggregationEndpointGroup'>Endpoint group:</Label>
+                      </Col>
+                  }
+                  <Col md={5}>
+                    <Controller
+                      name="endpoint_group"
+                      control={ methods.control }
+                      render={ ({ field }) =>
+                        historyview ?
+                          <Input
+                            { ...field }
+                            data-testid="endpoint_group"
+                            id="aggregationEndpointGroup"
+                            className="form-control"
+                            disabled={ true }
+                          />
+                        :
+                          <CustomReactSelect
+                            forwardedRef={ field.ref }
+                            onChange={ e => {
+                              methods.setValue("endpoint_group", e.value)
+                              methods.clearErrors("endpoint_group")
+                            }}
+                            options={
+                              context.endpoint_groups.map(group => new Object({
+                                label: group, value: group
+                              }))
+                            }
+                            value={ field.value ? { label: field.value, value: field.value } : undefined }
+                            label="Endpoint group:"
+                            error={ methods.formState.errors?.endpoint_group }
+                          />
+                      }
+                    />
+                  </Col>
+                  <CustomError error={ methods.formState.errors.endpoint_group?.message } />
+                </Row>
+              </FormGroup>
+            </Col>
+          </Row>
+          <Row className='mt-4'>
+            <Col md={5}>
+              <FormGroup>
+                {
+                  historyview && <Label for='metricProfile'>Metric profile:</Label>
+                }
+                <Controller
+                  name="metric_profile"
+                  control={ methods.control }
+                  render={ ({ field }) =>
+                    historyview ?
+                      <Input
+                        { ...field }
+                        data-testid="metric_profile"
+                        id="metricProfile"
+                        className="form-control"
+                        disabled={ true }
+                      />
+                    :
+                      <CustomReactSelect
+                        onChange={ e => {
+                          methods.setValue("metric_profile", e.value)
+                          methods.clearErrors("metric_profile")
+                        }}
+                        options={
+                          extractListOfMetricsProfiles(context.metric_profiles).map(profile => new Object({
+                            label: profile.name, value: profile.name
+                          }))
+                        }
+                        value={ field.value ? { label: field.value, value: field.value } : undefined }
+                        label="Metric profile:"
+                        error={ methods.formState.errors?.metric_profile }
+                      />
+                  }
+                />
+                <CustomError error={ methods.formState.errors?.metric_profile?.message } />
+                <FormText>
+                  Metric profile associated to Aggregation profile. Service flavours defined in service flavour groups originate from selected metric profile.
+                </FormText>
+              </FormGroup>
+            </Col>
+          </Row>
+          <ParagraphTitle title='Service flavour groups'/>
+          {
+            !(publicView || historyview) ?
+              <AggregationProfilesChangeContext.Provider value={{ ...context, list_services: listServices }}>
+                <GroupList />
+              </AggregationProfilesChangeContext.Provider>
             :
-              <Field
-                name='metric_profile'
-                component={DropDown}
-                data={insertSelectPlaceholder(list_id_metric_profiles.map(e => e.name), 'Select')}
-                required={true}
-                class_name='custom-select'
-                errors={errors}
-              />
+              <GroupsDisabledForm />
           }
           {
-            errors && errors.metric_profile &&
-              FancyErrorMessage(errors.metric_profile)
+            (!historyview && context.write_perm) &&
+              <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                {
+                  !addview ?
+                    <Button
+                      color="danger"
+                      onClick={() => {
+                        setModalMsg('Are you sure you want to delete aggregation profile?')
+                        setModalTitle('Delete aggregation profile')
+                        setAreYouSureModal(!areYouSureModal)
+                        setOnYes('delete')
+                      }}
+                    >
+                      Delete
+                    </Button>
+                  :
+                    <div></div>
+                }
+                <Button color="success" id="submit-button" type="submit">Save</Button>
+              </div>
           }
-          <FormText>
-            Metric profile associated to Aggregation profile. Service flavours defined in service flavour groups originate from selected metric profile.
-          </FormText>
-        </FormGroup>
-      </Col>
+        </Form>
+      </FormProvider>
+    </BaseArgoView>
+  )
+}
+
+
+const GroupsDisabledForm = () => {
+  const { getValues } = useFormContext()
+
+  return (
+    <Row className='groups'>
+      {
+        getValues("groups").map((group, i) =>
+          <React.Fragment key={ i }>
+            <Col sm={{size: 8}} md={{size: 5}} className='mt-4 mb-2'>
+              <Card data-testid={`card-${i}`}>
+                <CardHeader className='p-1' color='primary'>
+                  <Row className='d-flex align-items-center g-0'>
+                    <Col sm={{size: 10}} md={{size: 11}} data-testid='service-group'>
+                      { group.name }
+                    </Col>
+                  </Row>
+                </CardHeader>
+                <CardBody className='p-1'>
+                  {
+                    group.services.map((_, j) =>
+                      <Row className='d-flex align-items-center service pt-1 pb-1 g-0' key={j}>
+                        <Col md={8} data-testid={`service-${j}`}>
+                          { group.services[j].name }
+                        </Col>
+                        <Col md={2} data-testid={`operation-${j}`}>
+                          { group.services[j].operation }
+                        </Col>
+                      </Row>
+                    )
+                  }
+                </CardBody>
+                <CardFooter className='p-1 d-flex justify-content-center' data-testid='operation'>
+                  { group.operation }
+                </CardFooter>
+              </Card>
+            </Col>
+            <Col sm={{size: 4}} md={{size: 1}} className='mt-5'>
+              <div className='group-operation' key={i} data-testid={`group-operation-${i}`}>
+                { getValues("profile_operation") }
+              </div>
+            </Col>
+          </React.Fragment>
+        )
+      }
     </Row>
-    <ParagraphTitle title='Service flavour groups'/>
-  </>
-);
+  )
+}
+
+
+const fetchAP = async (webapi, apiid) => {
+  return await webapi.fetchAggregationProfile(apiid);
+}
+
+
+const sortServices = (a, b) => {
+  if (a.toLowerCase() < b.toLowerCase()) return -1
+  if (a.toLowerCase() > b.toLowerCase()) return 1
+}
+
+
+const sortMetricProfiles = (a, b) => {
+  if (a.name.toLowerCase() < b.name.toLowerCase()) return -1;
+  if (a.name.toLowerCase() > b.name.toLowerCase()) return 1;
+  if (a.name.toLowerCase() === b.name.toLowerCase()) return 0;
+}
+
+
+const extractListOfMetricsProfiles = (allProfiles) => {
+  var list_profiles = []
+
+  allProfiles.forEach(profile => {
+    var i = list_profiles['length']
+    var {name, id} = profile
+
+    list_profiles[i] = {name, id}
+    i += 1
+  })
+
+  return list_profiles.sort(sortMetricProfiles)
+}
+
+
+const insertDummyGroup = (groups) => {
+  return  [...groups, {name: 'dummy', operation: 'OR', services: [{name: 'dummy', operation: 'OR'}]}]
+}
+
+
+const insertEmptyServiceForNoServices = (groups) => {
+  groups.forEach(group => {
+    if (group.services.length === 0) {
+        group.services.push({name: '', operation: ''})
+    }
+  })
+  return groups
+}
+
+
+const removeDummyGroup = (values) => {
+  let last_group_element = values.groups[values.groups.length - 1]
+
+  if (last_group_element['name'] == 'dummy' &&
+    last_group_element.services[0]['name'] == 'dummy') {
+    values.groups.pop()
+  }
+}
+
+
+const removeIsNewFlag = (values) => {
+  for (let group of values.groups) {
+    let keys = Object.keys(group)
+    if (keys.indexOf('isNew') !== -1)
+      delete group.isNew
+    for (let service of group.services) {
+      let keys = Object.keys(service)
+      if (keys.indexOf('isNew') !== -1)
+        delete service.isNew
+    }
+  }
+}
 
 
 export const AggregationProfilesChange = (props) => {
-  const tenant_name = props.tenant_name;
+  const tenant_name = props.tenantname;
   const profile_name = props.match.params.name;
   const addview = props.addview
   const history = props.history;
   const location = props.location;
   const publicView = props.publicView;
 
-  const [listServices, setListServices] = useState(undefined);
-  const [areYouSureModal, setAreYouSureModal] = useState(false)
-  const [modalMsg, setModalMsg] = useState(undefined);
-  const [modalTitle, setModalTitle] = useState(undefined);
-  const [onYes, setOnYes] = useState('')
-  // TODO: useFormik hook with formik 2.x
-  const [formikValues, setFormikValues] = useState({})
-  const querykey = `aggregationprofiles_${addview ? 'addview' : `${profile_name}_${publicView ? 'publicview' : 'changeview'}`}`;
-
   const backend = new Backend();
   const webapi = new WebApi({
     token: props.webapitoken,
     metricProfiles: props.webapimetric,
-    aggregationProfiles: props.webapiaggregation}
-  )
+    aggregationProfiles: props.webapiaggregation,
+    reportsConfigurations: props.webapireports
+  })
+
+  const queryClient = useQueryClient();
+  const webapiChangeMutation = useMutation(async (values) => await webapi.changeAggregation(values));
+  const backendChangeMutation = useMutation(async (values) => await backend.changeObject('/api/v2/internal/aggregations/', values));
+  const webapiAddMutation = useMutation(async (values) => await webapi.addAggregation(values));
+  const backendAddMutation = useMutation(async (values) => await backend.addObject('/api/v2/internal/aggregations/', values));
+  const webapiDeleteMutation = useMutation(async (idProfile) => await webapi.deleteAggregation(idProfile));
+  const backendDeleteMutation = useMutation(async (idProfile) => await backend.deleteObject(`/api/v2/internal/aggregations/${idProfile}`));
 
   const logic_operations = ["OR", "AND"];
   const endpoint_groups = ["servicegroups", "sites"];
 
-  const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
-    `session_userdetails`, async () => {
-      if (!publicView) {
-        const sessionActive = await backend.isActiveSession()
-        if (sessionActive.active) {
-          return sessionActive.userdetails
-        }
-      }
-    }
+  const { data: userDetails, isLoading: loadingUserDetails } = useQuery(
+    'userdetails', () => fetchUserDetails(true),
+    { enabled: !publicView }
   );
 
-  const { data: aggregationProfile, error: errorAggregationProfile, isLoading: loadingAggregationProfile } = useQuery(querykey, async () => {
-    let backendAggregationProfile = new Object({
-      id: '',
-      name: '',
-      metric_operation: '',
-      profile_operation: '',
-      endpoint_group: '',
-      metric_profile: {
-          name: ''
-      },
-      groups: []
-    })
-    if (!addview)
-      backendAggregationProfile = await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}aggregations/${profile_name}`);
+  const { data: backendAP, error: errorBackendAP, isLoading: loadingBackendAP } = useQuery(
+    [`${publicView ? 'public_' : ''}aggregationprofile`, 'backend', profile_name],
+    async () => {
+      return await backend.fetchData(`/api/v2/internal/${publicView ? 'public_' : ''}aggregations/${profile_name}`);
+    },
+    {
+      enabled: !addview && (!publicView ? !!userDetails : true),
+      initialData: () => {
+        if (!addview)
+          return queryClient.getQueryData(
+            [`${publicView ? 'public_' : ''}aggregationprofile`, 'backend']
+          )?.find(
+            profile => profile.name === profile_name
+          )
+      }
+    }
+  )
 
-    if (publicView) {
-      let metricProfiles = await webapi.fetchMetricProfiles();
-      let aggregationProfile = await webapi.fetchAggregationProfile(backendAggregationProfile.apiid);
-      return {
-        profile: aggregationProfile,
-        groupname: backendAggregationProfile.groupname,
-        listmetricprofiles: metricProfiles,
-        listidmetricprofiles: extractListOfMetricsProfiles(metricProfiles),
-        listservices: extractListOfServices(aggregationProfile.metric_profile, metricProfiles),
-        listusergroups: []
+  const { data: webApiAP, error: errorWebApiAP, isLoading: loadingWebApiAP } = useQuery(
+    [`${publicView ? 'public_' : ''}aggregationprofile`, 'webapi', profile_name],
+    () => fetchAP(webapi, backendAP.apiid),
+    {
+      enabled: !!backendAP,
+      initialData: () => {
+        if (!addview)
+          return queryClient.getQueryData(
+            [`${publicView ? "public_" : ""}aggregationprofile`, "webapi"]
+          )?.find(
+            profile => profile.id == backendAP.apiid
+          )
       }
     }
-    else {
-      let metricProfiles = await webapi.fetchMetricProfiles();
-      if (!addview) {
-        let aggregationProfile = await webapi.fetchAggregationProfile(backendAggregationProfile.apiid);
-        return {
-          profile: aggregationProfile,
-          groupname: backendAggregationProfile.groupname,
-          listidmetricprofiles: extractListOfMetricsProfiles(metricProfiles),
-          listservices: extractListOfServices(aggregationProfile.metric_profile, metricProfiles),
-          listmetricprofiles: metricProfiles
-        }
-      }
-      else {
-        return {
-          profile: backendAggregationProfile,
-          groupname: backendAggregationProfile.groupname,
-          listidmetricprofiles: extractListOfMetricsProfiles(metricProfiles),
-          listServices: [],
-          listmetricprofiles: metricProfiles
-        }
-      }
-    }
-  })
+  )
+
+  const { data: metricProfiles, error: errorMetricProfiles, isLoading: loadingMetricProfiles } = useQuery(
+    [`${publicView ? 'public_' : ''}metricprofile`, 'webapi'],
+    () => fetchMetricProfiles(webapi),
+    { enabled: !publicView ? !!userDetails : true }
+  )
+
+  const { data: reports, error: errorReports, isLoading: loadingReports } = useQuery(
+    [`${publicView ? "public_" : ""}report`, "webapi"],
+    async () => await webapi.fetchReports(),
+    { enabled: !publicView && !addview && !!userDetails }
+  )
 
   const correctMetricProfileName = (metricProfileId, listMetricProfilesWebApi) => {
-    let targetProfile = listMetricProfilesWebApi.filter(p => p.id === metricProfileId)
+    let targetProfile = listMetricProfilesWebApi.filter(profile => profile.id === metricProfileId)
 
     if (targetProfile.length)
       return targetProfile[0].name
     else
       return ''
-  }
-
-  const sortServices = (a, b) => {
-    if (a.toLowerCase() < b.toLowerCase()) return -1
-    if (a.toLowerCase() > b.toLowerCase()) return 1
-  }
-
-  const extractListOfServices = (profileFromAggregation, listMetricProfiles) => {
-    let targetProfile = listMetricProfiles.filter(p => p.name === profileFromAggregation.name)
-
-    if (targetProfile.length === 0)
-      targetProfile = listMetricProfiles.filter(p => p.id === profileFromAggregation.id)
-
-    if (targetProfile.length) {
-      let services = targetProfile[0].services.map(s => s.service)
-      return services.sort(sortServices)
-    }
-    else
-      return []
   }
 
   const sortMetricProfiles = (a, b) => {
@@ -630,139 +1075,73 @@ export const AggregationProfilesChange = (props) => {
     return list_profiles.sort(sortMetricProfiles)
   }
 
-  const insertEmptyServiceForNoServices = (groups) => {
-    groups.forEach(group => {
-      if (group.services.length === 0) {
-          group.services.push({name: '', operation: ''})
-      }
+  const getAssociatedReports = (profileId) => {
+    let reportsNames = new Array()
+    reports.forEach(report => {
+      report.profiles.forEach(profile => {
+        if (profile.type === "aggregation" && profile.id === profileId)
+          reportsNames.push(report.info.name)
+      })
     })
-    return groups
+    return reportsNames
   }
 
-  const insertOperationFromPrevious = (index, array) => {
-    if (array.length) {
-      let last = array.length - 1
-
-      return array[last]['operation']
-    }
-    else
-      return ''
-  }
-
-  const onSubmitHandle = (values, action) => {
-    let msg = undefined;
-    let title = undefined;
-
-    if (addview) {
-      msg = 'Are you sure you want to add Aggregation profile?'
-      title = 'Add aggregation profile'
-    }
-    else {
-      msg = 'Are you sure you want to change Aggregation profile?'
-      title = 'Change aggregation profile'
-    }
-    setAreYouSureModal(!areYouSureModal);
-    setModalMsg(msg)
-    setModalTitle(title)
-    setOnYes('change')
-    setFormikValues(values)
-  }
-
-  const updateCacheKey = (values) => {
-    let staleAggregationProfile = queryCache.getQueryData(querykey)
-    staleAggregationProfile.profile.groups = values.groups
-    staleAggregationProfile.profile.metric_profile = values.metric_profile
-    staleAggregationProfile.profile.profile_operation = values.profile_operation
-    staleAggregationProfile.profile.endpoint_group = values.endpoint_group
-    queryCache.setQueryData(querykey, staleAggregationProfile)
-  }
-
-  const doChange = async (values, actions) => {
+  const doChange = (values) => {
     let valueSend = JSON.parse(JSON.stringify(values));
     removeDummyGroup(valueSend)
     removeIsNewFlag(valueSend)
 
-    valueSend.namespace = tenant_name
+    valueSend.namespace = tenant_name;
+    if (!addview)
+      valueSend.name = profile_name;
 
-    let match_profile = aggregationProfile.listidmetricprofiles.filter((e) =>
+    let match_profile = extractListOfMetricsProfiles(metricProfiles).filter((e) =>
       valueSend.metric_profile === e.name)
 
     valueSend.metric_profile = match_profile[0]
 
     if (!addview) {
-      let response = await webapi.changeAggregation(valueSend);
-      if (!response.ok) {
-        let change_msg = '';
-        try {
-          let json = await response.json();
-          let msg_list = [];
-          json.errors.forEach(e => msg_list.push(e.details));
-          change_msg = msg_list.join(' ');
-        } catch(err) {
-          change_msg = 'Web API error changing aggregation profile';
-        }
-        NotifyError({
-          title: `Web API error: ${response.status} ${response.statusText}`,
-          msg: change_msg
-        });
-      } else {
-        let r_internal = await backend.changeObject(
-          '/api/v2/internal/aggregations/',
-          {
+      webapiChangeMutation.mutate(valueSend, {
+        onSuccess: () => {
+          backendChangeMutation.mutate({
             apiid: valueSend.id,
             name: valueSend.name,
             groupname: valueSend.groupname,
             endpoint_group: valueSend.endpoint_group,
             metric_operation: valueSend.metric_operation,
             profile_operation: valueSend.profile_operation,
-            metric_profile: values.metric_profile,
+            metric_profile: valueSend.metric_profile.name,
             groups: JSON.stringify(valueSend.groups)
-          }
-        )
-        if (r_internal.ok) {
-          NotifyOk({
-            msg: 'Aggregation profile succesfully changed',
-            title: 'Changed',
-            callback: () => history.push('/ui/aggregationprofiles')
+          }, {
+            onSuccess: () => {
+              queryClient.invalidateQueries('aggregationprofile');
+              queryClient.invalidateQueries('public_aggregationprofile');
+              NotifyOk({
+                msg: 'Aggregation profile successfully changed',
+                title: 'Changed',
+                callback: () => history.push('/ui/aggregationprofiles')
+              });
+            },
+            onError: (error) => {
+              NotifyError({
+                title: 'Internal API error',
+                msg: error.message ? error.message : 'Internal API error changing aggregation profile'
+              })
+            }
           })
-          updateCacheKey(valueSend)
-        }
-        else {
-          let change_msg = '';
-          try {
-            let json = await r_internal.json();
-            change_msg = json.detail;
-          } catch(err) {
-            change_msg = 'Internal API error changing aggregation profile';
-          }
+        },
+        onError: (error) => {
           NotifyError({
-            title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
-            msg: change_msg
-          });
+            title: 'Web API error',
+            msg: error.message ? error.message : 'Web API error changing aggregation profile'
+          })
         }
-      }
+      })
     } else {
-      let response = await webapi.addAggregation(valueSend);
-      if (!response.ok) {
-        let add_msg = '';
-        try {
-          let json = await response.json();
-          let msg_list = [];
-          json.errors.forEach(e => msg_list.push(e.details));
-          add_msg = msg_list.join(' ');
-        } catch(err) {
-          add_msg = `Web API error adding aggregation profile: ${err}`;
-        }
-        NotifyError({
-          title: `Web API error: ${response.status} ${response.statusText}`,
-          msg: add_msg
-        });
-      } else {
-        let r = await response.json();
-        let r_internal = await backend.addObject(
-          '/api/v2/internal/aggregations/',
-          {
-            apiid: r.data.id,
+      webapiAddMutation.mutate(valueSend, {
+        onSuccess: (data) => {
+          backendAddMutation.mutate({
+            apiid: data.data.id,
             name: valueSend.name,
             groupname: valueSend.groupname,
             endpoint_group: valueSend.endpoint_group,
@@ -770,141 +1149,97 @@ export const AggregationProfilesChange = (props) => {
             profile_operation: valueSend.profile_operation,
             metric_profile: values.metric_profile,
             groups: JSON.stringify(valueSend.groups)
-          }
-        );
-        if (r_internal.ok)
-          NotifyOk({
-            msg: 'Aggregation profile successfully added',
-            title: 'Added',
-            callback: () => history.push('/ui/aggregationprofiles')
+          }, {
+            onSuccess: () => {
+              queryClient.invalidateQueries('aggregationprofile');
+              queryClient.invalidateQueries('public_aggregationprofile');
+              NotifyOk({
+                msg: 'Aggregation profile successfully added',
+                title: 'Added',
+                callback: () => history.push('/ui/aggregationprofiles')
+              })
+            },
+            onError: (error) => {
+              NotifyError({
+                title: 'Internal API error',
+                msg: error.message ? error.message : 'Internal API error adding aggregation profile'
+              })
+            }
           })
-        else {
-          let add_msg = '';
-          try {
-            let json = await r_internal.json();
-            add_msg = json.detail;
-          } catch(err) {
-            add_msg = 'Internal API error adding aggregation profile';
-          }
+        },
+        onError: (error) => {
           NotifyError({
-            title: `Internal API error: ${r_internal.status} ${r_internal.statusText}`,
-            msg: add_msg
-          });
+            title: 'Web API error',
+            msg: error.message ? error.message : 'Web API error adding aggregation profile'
+          })
         }
-      }
+      })
     }
   }
 
-  const doDelete = async (idProfile) => {
-    let response = await webapi.deleteAggregation(idProfile);
-    if (!response.ok) {
-      let msg = '';
-      try {
-        let json = await response.json();
-        let msg_list = [];
-        json.errors.forEach(e => msg_list.push(e.details));
-        msg = msg_list.join(' ');
-      } catch(err) {
-        msg = 'Web API error deleting aggregation profile';
-      }
+  const doDelete = (idProfile) => {
+    let reportNames = getAssociatedReports(idProfile)
+
+    if (reportNames.length === 0)
+      webapiDeleteMutation.mutate(idProfile, {
+        onSuccess: () => {
+          backendDeleteMutation.mutate(idProfile, {
+            onSuccess: () => {
+              queryClient.invalidateQueries('aggregationprofile');
+              queryClient.invalidateQueries('public_aggregationprofile');
+              NotifyOk({
+                msg: 'Aggregation profile successfully deleted',
+                title: 'Deleted',
+                callback: () => history.push('/ui/aggregationprofiles')
+              });
+            },
+            onError: (error) => {
+              NotifyError({
+                title: 'Internal API error',
+                msg: error.message ? error.message : 'Internal API error deleting aggregation profile'
+              })
+            }
+          })
+        },
+        onError: (error) => {
+          NotifyError({
+            title: 'Web API error',
+            msg: error.message ? error.message : 'Web API error deleting aggregation profile'
+          })
+        }
+      })
+
+    else
       NotifyError({
-        title: `Web API error: ${response.status} ${response.statusText}`,
-        msg: msg
-      });
-    } else {
-      let r = await backend.deleteObject(`/api/v2/internal/aggregations/${idProfile}`);
-      if (r.ok)
-        NotifyOk({
-          msg: 'Aggregation profile sucessfully deleted',
-          title: 'Deleted',
-          callback: () => history.push('/ui/aggregationprofiles')
-        });
-      else {
-        let msg = '';
-        try {
-          let json = await r.json();
-          msg = json.detail;
-        } catch(err) {
-          msg = 'Internal API error deleting aggregation profile';
-        }
-        NotifyError({
-          title: `Internal API error: ${r.status} ${r.statusText}`,
-          msg: msg
-        });
-      }
-    }
+        title: "Unable to delete",
+        msg: `Aggregation profile is associated with report${reportNames.length > 1 ? "s" : ""}: ${reportNames.join(", ")}`
+      })
   }
 
-  const insertDummyGroup = (groups) => {
-    return  [...groups, {name: 'dummy', operation: 'OR', services: [{name: 'dummy', operation: 'OR'}]}]
-  }
-
-  const removeDummyGroup = (values) => {
-    let last_group_element = values.groups[values.groups.length - 1]
-
-    if (last_group_element['name'] == 'dummy' &&
-      last_group_element.services[0]['name'] == 'dummy') {
-      values.groups.pop()
-    }
-  }
-
-  const removeIsNewFlag = (values) => {
-    for (let group of values.groups) {
-      let keys = Object.keys(group)
-      if (keys.indexOf('isNew') !== -1)
-        delete group.isNew
-      for (let service of group.services) {
-        let keys = Object.keys(service)
-        if (keys.indexOf('isNew') !== -1)
-          delete service.isNew
-      }
-    }
-  }
-
-  const checkIfServiceMissingInMetricProfile = (servicesMetricProfile, serviceGroupsAggregationProfile) => {
-    let servicesInMetricProfiles = new Set(servicesMetricProfile)
-    let isMissing = false
-
-    serviceGroupsAggregationProfile.forEach(group => {
-      for (let service of group.services) {
-        if (!servicesInMetricProfiles.has(service.name)) {
-          isMissing = true
-          break
-        }
-      }
-    })
-
-    return isMissing
-  }
-
-  const onYesCallback = () => {
-    if (onYes === 'delete')
-      doDelete(formikValues.id);
-    else if (onYes === 'change')
-      doChange(formikValues);
-  }
-
-  if (loadingAggregationProfile)
+  if (loadingUserDetails || loadingBackendAP || loadingWebApiAP || loadingMetricProfiles || loadingReports)
     return (<LoadingAnim />)
 
-  else if (errorAggregationProfile)
-    return (
-      <ErrorComponent error={error}/>
-    )
+  else if (errorBackendAP)
+    return (<ErrorComponent error={errorBackendAP}/>)
 
-  else if (!loadingAggregationProfile && !loadingUserDetails && aggregationProfile) {
-    let isServiceMissing = checkIfServiceMissingInMetricProfile(aggregationProfile.listservices, aggregationProfile.profile.groups)
+  else if (errorWebApiAP)
+      return (<ErrorComponent error={errorWebApiAP} />)
+
+  else if (errorMetricProfiles)
+    return (<ErrorComponent error={errorMetricProfiles} />)
+
+  else if (errorReports)
+    return (<ErrorComponent error={errorReports} />)
+
+  else if ((addview || (backendAP && webApiAP) && metricProfiles)) {
     let write_perm = undefined
-
-    if (!listServices && !publicView && !addview)
-      setListServices(aggregationProfile.listservices)
 
     if (publicView) {
       write_perm = false
     }
     else if (!addview) {
       write_perm = userDetails.is_superuser ||
-            userDetails.groups.aggregations.indexOf(aggregationProfile.profile.groupname) >= 0;
+            userDetails.groups.aggregations.indexOf(backendAP.groupname) >= 0;
     }
     else {
       write_perm = userDetails.is_superuser ||
@@ -912,168 +1247,39 @@ export const AggregationProfilesChange = (props) => {
     }
 
     return (
-      <BaseArgoView
-        resourcename={publicView ? 'Aggregation profile details' : 'aggregation profile'}
-        location={location}
-        modal={true}
-        history={!publicView}
-        state={{areYouSureModal, 'modalFunc': onYesCallback, modalTitle, modalMsg}}
-        toggle={() => setAreYouSureModal(!areYouSureModal)}
-        addview={publicView ? !publicView : addview}
-        publicview={publicView}
-        submitperm={write_perm}>
-        <Formik
-          initialValues = {{
-            id: aggregationProfile.profile.id,
-            name: aggregationProfile.profile.name,
-            groupname: aggregationProfile.groupname,
-            metric_operation: aggregationProfile.profile.metric_operation,
-            profile_operation: aggregationProfile.profile.profile_operation,
-            metric_profile: correctMetricProfileName(aggregationProfile.profile.metric_profile.id, aggregationProfile.listidmetricprofiles),
-            endpoint_group: aggregationProfile.profile.endpoint_group,
+      <AggregationProfilesChangeContext.Provider value={{
+        list_user_groups: !publicView ? userDetails.groups.aggregations : [],
+        logic_operations: logic_operations,
+        endpoint_groups: endpoint_groups,
+        metric_profiles: metricProfiles,
+        write_perm: write_perm
+      }}>
+        <AggregationProfilesForm
+          initValues={{
+            id: webApiAP ? webApiAP.id : '',
+            name: webApiAP ? webApiAP.name : '',
+            groupname: backendAP ? backendAP.groupname: '',
+            metric_operation: webApiAP ? webApiAP.metric_operation : '',
+            profile_operation: webApiAP ? webApiAP.profile_operation : '',
+            metric_profile: webApiAP ? correctMetricProfileName(webApiAP.metric_profile.id, extractListOfMetricsProfiles(metricProfiles)) : '',
+            endpoint_group: webApiAP ? webApiAP.endpoint_group : '',
             groups: !publicView ?
               insertDummyGroup(
-                insertEmptyServiceForNoServices(aggregationProfile.profile.groups)
+                insertEmptyServiceForNoServices(webApiAP ? webApiAP.groups : [])
               )
             :
-              aggregationProfile.profile.groups
+              webApiAP.groups
           }}
-          onSubmit={(values, actions) => onSubmitHandle(values, actions)}
-          validationSchema={AggregationProfilesSchema}
-          validateOnBlur={true}
-          validateOnChange={false}
-        >
-          {props => (
-            <Form>
-              <FormikEffect onChange={(current, prev) => {
-                if (current.values.metric_profile !== prev.values.metric_profile) {
-                  let selected_profile = {
-                    name: current.values.metric_profile
-                  }
-                  setListServices(extractListOfServices(selected_profile,
-                    aggregationProfile.listmetricprofiles))
-                }
-              }}
-              />
-              {
-                (isServiceMissing && !publicView) &&
-                <Alert color='danger'>
-                  <center>
-                    <FontAwesomeIcon icon={faInfoCircle} size="lg" color="black"/> &nbsp;
-                    Some Service Flavours used in Aggregation profile are not presented in associated Metric profile meaning that two profiles are out of sync. Check below for Service Flavours in blue borders.
-                  </center>
-                </Alert>
-              }
-              <AggregationProfilesForm
-                {...props}
-                list_user_groups={!publicView ? userDetails.groups.aggregations : []}
-                logic_operations={logic_operations}
-                endpoint_groups={endpoint_groups}
-                list_id_metric_profiles={aggregationProfile.listidmetricprofiles}
-                write_perm={write_perm}
-                historyview={publicView}
-              />
-              {
-                !publicView ?
-                  <FieldArray
-                    name="groups"
-                    render={props => (
-                      <AggregationProfilesChangeContext.Provider value={{
-                        list_services: listServices,
-                        list_operations: logic_operations,
-                        write_perm: write_perm,
-                        last_service_operation: insertOperationFromPrevious,
-                        formikBag: {
-                          form: props.form,
-                          groupRemove: props.remove,
-                          groupInsert: props.insert
-                        }
-                      }}>
-                        <GroupList {...props}/>
-                      </AggregationProfilesChangeContext.Provider>
-                    )}
-                  />
-                :
-                  <FieldArray
-                    name='groups'
-                    render={arrayHelpers => (
-                      <Row className='groups'>
-                        {
-                          props.values['groups'].map((group, i) =>
-                            <FieldArray
-                              key={i}
-                              name='groups'
-                              render={arrayHelpers => (
-                                <React.Fragment key={i}>
-                                  <Col sm={{size: 8}} md={{size: 5}} className='mt-4 mb-2'>
-                                    <Card>
-                                      <CardHeader className='p-1' color='primary'>
-                                        <Row className='d-flex align-items-center no-gutters'>
-                                          <Col sm={{size: 10}} md={{size: 11}}>
-                                            {props.values.groups[i].name}
-                                          </Col>
-                                        </Row>
-                                      </CardHeader>
-                                      <CardBody className='p-1'>
-                                        {
-                                          group.services.map((service, j) =>
-                                            <FieldArray
-                                              key={j}
-                                              name={`groups.${i}.services`}
-                                              render={arrayHelpers => (
-                                                <Row className='d-flex align-items-center service pt-1 pb-1 no-gutters' key={j}>
-                                                  <Col md={8}>
-                                                    {props.values.groups[i].services[j].name}
-                                                  </Col>
-                                                  <Col md={2}>
-                                                    {props.values.groups[i].services[j].operation}
-                                                  </Col>
-                                                </Row>
-                                              )}
-                                            />
-                                          )
-                                        }
-                                      </CardBody>
-                                      <CardFooter className='p-1 d-flex justify-content-center'>
-                                        {props.values.groups[i].operation}
-                                      </CardFooter>
-                                    </Card>
-                                  </Col>
-                                  <Col sm={{size: 4}} md={{size: 1}} className='mt-5'>
-                                    <div className='group-operation' key={i}>
-                                      {props.values.profile_operation}
-                                    </div>
-                                  </Col>
-                                </React.Fragment>
-                              )}
-                            />
-                          )
-                        }
-                      </Row>
-                    )}
-                  />
-              }
-              {
-                (write_perm) &&
-                  <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-                    <Button
-                      color="danger"
-                      onClick={() => {
-                        setModalMsg('Are you sure you want to delete Aggregation profile?')
-                        setModalTitle('Delete aggregation profile')
-                        setAreYouSureModal(!areYouSureModal);
-                        setFormikValues(props.values)
-                        setOnYes('delete')
-                      }}>
-                      Delete
-                    </Button>
-                    <Button color="success" id="submit-button" type="submit">Save</Button>
-                  </div>
-              }
-            </Form>
-          )}
-        </Formik>
-      </BaseArgoView>
+          resourcename={ publicView ? 'Aggregation profile details' : 'aggregation profile' }
+          profile_name={ profile_name }
+          location={ location }
+          publicView={ publicView }
+          historyview={ publicView }
+          addview={ addview }
+          doChange={ doChange }
+          doDelete={ doDelete }
+        />
+      </AggregationProfilesChangeContext.Provider>
     )
   }
   else
@@ -1083,31 +1289,16 @@ export const AggregationProfilesChange = (props) => {
 
 export const AggregationProfilesList = (props) => {
   const location = props.location;
-  const backend = new Backend();
   const publicView = props.publicView
 
-  let apiUrl = null;
-  if (publicView)
-    apiUrl = '/api/v2/internal/public_aggregations'
-  else
-    apiUrl = '/api/v2/internal/aggregations'
-
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
-    `session_userdetails`, async () => {
-      const sessionActive = await backend.isActiveSession()
-      if (sessionActive.active) {
-        return sessionActive.userdetails
-      }
-    }
+    'userdetails', () => fetchUserDetails(true)
   );
 
-  const { data: listAggregationProfiles, error: errorListAggregationProfiles,
-    isLoading: loadingListAggregationProfiles} = useQuery(
-    `aggregations_listview`, async () => {
-      const fetched = await backend.fetchData(apiUrl)
-
-      return fetched
-    }
+  const { data: aggregations, error: errorAggregations, isLoading: loadingAggregations } = useQuery(
+    [`${publicView ? 'public_' : ''}aggregationprofile`, 'backend'],
+    () => fetchBackendAggregationProfiles(publicView),
+    { enabled: !publicView ? !!userDetails : true }
   );
 
   const columns = useMemo(() => [
@@ -1120,7 +1311,9 @@ export const AggregationProfilesList = (props) => {
       Header: 'Name',
       id: 'name',
       accessor: e =>
-        <Link to={`/ui/${publicView ? 'public_' : ''}aggregationprofiles/` + e.name}>
+        <Link
+          to={`/ui/${publicView ? 'public_' : ''}aggregationprofiles/` + e.name}
+        >
           {e.name}
         </Link>,
       column_width: '20%'
@@ -1139,18 +1332,18 @@ export const AggregationProfilesList = (props) => {
         </div>,
       column_width: '8%'
     }
-  ])
+  ], [])
 
-  if (loadingUserDetails || loadingListAggregationProfiles)
+  if (loadingUserDetails || loadingAggregations)
     return (<LoadingAnim />)
 
-  else if (errorListAggregationProfiles)
-    return (<ErrorComponent error={errorListAggregationProfiles}/>);
+  else if (errorAggregations)
+    return (<ErrorComponent error={errorAggregations}/>);
 
   else if (errorUserDetails)
     return (<ErrorComponent error={errorUserDetails}/>);
 
-  else if (!loadingUserDetails && !loadingUserDetails && listAggregationProfiles) {
+  else if (!loadingUserDetails && aggregations) {
     return (
       <BaseArgoView
         resourcename='aggregation profile'
@@ -1160,7 +1353,7 @@ export const AggregationProfilesList = (props) => {
         addperm={publicView ? false : userDetails.is_superuser || userDetails.groups.aggregations.length > 0}
         publicview={publicView}>
         <ProfilesListTable
-          data={listAggregationProfiles}
+          data={aggregations}
           columns={columns}
           type='aggregation'
         />
@@ -1199,7 +1392,7 @@ const ListDiffElement = ({title, item1, item2}) => {
   }
 
   return (
-    <div id='argo-contentwrap' className='ml-2 mb-2 mt-2 p-3 border rounded'>
+    <div id='argo-contentwrap' className='ms-2 mb-2 mt-2 p-3 border rounded'>
       <h6 className='mt-4 font-weight-bold text-uppercase'>{title}</h6>
       <ReactDiffViewer
         oldValue={list2.join('\n')}
@@ -1213,51 +1406,20 @@ const ListDiffElement = ({title, item1, item2}) => {
 };
 
 
+const fetchAggregationProfileVersions = async (name) => {
+  const backend = new Backend();
+  return await backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${name}`);
+}
+
+
 export const AggregationProfileVersionCompare = (props) => {
   const version1 = props.match.params.id1;
   const version2 = props.match.params.id2;
   const name = props.match.params.name;
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [aggregationProfileVersion1, setAggregationProfileVersion1] = useState(undefined)
-  const [aggregationProfileVersion2, setAggregationProfileVersion2] = useState(undefined)
 
-  useEffect(() => {
-    const backend = new Backend();
-    const fetchDataAndSet = async () => {
-      let json = await backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${name}`);
-      json.forEach((e) => {
-        if (e.version == version1)
-          setAggregationProfileVersion1({
-            name: e.fields.name,
-            groupname: e.fields.groupname,
-            metric_operation: e.fields.metric_operation,
-            profile_operation: e.fields.profile_operation,
-            endpoint_group: e.fields.endpoint_group,
-            metric_profile: e.fields.metric_profile,
-            groups: e.fields.groups,
-          })
-        else if (e.version == version2)
-          setAggregationProfileVersion2({
-            name: e.fields.name,
-            groupname: e.fields.groupname,
-            metric_operation: e.fields.metric_operation,
-            profile_operation: e.fields.profile_operation,
-            endpoint_group: e.fields.endpoint_group,
-            metric_profile: e.fields.metric_profile,
-            groups: e.fields.groups,
-          })
-        })
-      setLoading(false);
-    }
-    try {
-      fetchDataAndSet();
-    }
-    catch(err) {
-      setError(error);
-      setLoading(false);
-    }
-  }, [error, name, version1, version2])
+  const { data: versions, error, isLoading: loading } = useQuery(
+    ['aggregationprofile', 'tenantversion', name], () => fetchAggregationProfileVersions(name)
+  )
 
   if (loading)
     return (<LoadingAnim/>);
@@ -1267,12 +1429,16 @@ export const AggregationProfileVersionCompare = (props) => {
       <ErrorComponent error={error}/>
     )
 
-  else if (!loading && aggregationProfileVersion1 && aggregationProfileVersion2) {
+  else if (versions) {
+    const aggregationProfileVersion1 = versions.find(ver => ver.version == version1).fields;
+    const aggregationProfileVersion2 = versions.find(ver => ver.version == version2).fields;
+
     const {
       name: name1, groupname: groupname1, metric_operation: metric_operation1,
       profile_operation: profile_operation1, endpoint_group: endpoint_group1,
       metric_profile: metric_profile1, groups: groups1
     } = aggregationProfileVersion1
+
     const {
       name: name2, groupname: groupname2, metric_operation: metric_operation2,
       profile_operation: profile_operation2, endpoint_group: endpoint_group2,
@@ -1282,7 +1448,7 @@ export const AggregationProfileVersionCompare = (props) => {
     return (
       <React.Fragment>
         <div className='d-flex align-items-center justify-content-between'>
-          <h2 className='ml-3 mt-1 mb-4'>{`Compare ${name} versions`}</h2>
+          <h2 className='ms-3 mt-1 mb-4'>{`Compare ${name} versions`}</h2>
         </div>
         {
           (name1 !== name2) &&
@@ -1322,38 +1488,10 @@ export const AggregationProfileVersionCompare = (props) => {
 export const AggregationProfileVersionDetails = (props) => {
   const name = props.match.params.name;
   const version = props.match.params.version;
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [aggregationProfileDetails, setAggregationProfileDetails] = useState(undefined)
 
-  useEffect(() => {
-    const backend = new Backend();
-    const fetchDataAndSet = async () => {
-      let json = await backend.fetchData(`/api/v2/internal/tenantversion/aggregationprofile/${name}`);
-      json.forEach((e) => {
-        if (e.version == version)
-          setAggregationProfileDetails({
-            name: e.fields.name,
-            groupname: e.fields.groupname,
-            metric_operation: e.fields.metric_operation,
-            profile_operation: e.fields.profile_operation,
-            endpoint_group: e.fields.endpoint_group,
-            metric_profile: e.fields.metric_profile,
-            groups: e.fields.groups,
-            date_created: e.date_created,
-          })
-      })
-      setLoading(false);
-    }
-    setLoading(true);
-    try {
-      fetchDataAndSet()
-    }
-    catch(err) {
-      setError(error);
-      setLoading(false);
-    }
-  }, [error, name, version])
+  const { data: versions, error, isLoading: loading } = useQuery(
+    ['aggregationprofile', 'tenantversion', name], () => fetchAggregationProfileVersions(name)
+  )
 
   if (loading)
     return (<LoadingAnim/>);
@@ -1361,94 +1499,29 @@ export const AggregationProfileVersionDetails = (props) => {
   else if (error)
     return (<ErrorComponent error={error}/>)
 
-  else if (!loading && aggregationProfileDetails) {
-    const { groups } = aggregationProfileDetails;
+  else if (versions) {
+    const properVersion = versions.find(ver => ver.version == version);
+
+    const aggregationProfileDetails = {
+      ...properVersion.fields,
+      date_created: properVersion.date_created
+    };
 
     return (
-      <BaseArgoView
-        resourcename={`${name} (${aggregationProfileDetails.date_created})`}
-        infoview={true}
-      >
-        <Formik
-          initialValues = {{
-            name: name,
-            groupname: aggregationProfileDetails.groupname,
-            metric_operation: aggregationProfileDetails.metric_operation,
-            profile_operation: aggregationProfileDetails.profile_operation,
-            endpoint_group: aggregationProfileDetails.endpoint_group,
-            metric_profile: aggregationProfileDetails.metric_profile,
-            groups: aggregationProfileDetails.groups
-          }}
-        >
-          {props => (
-            <Form>
-              <AggregationProfilesForm
-                {...props}
-                historyview={true}
-              />
-              <FieldArray
-                name='groups'
-                render={arrayHelpers => (
-                  <Row className='groups'>
-                    {
-                      props.values['groups'].map((group, i) =>
-                        <FieldArray
-                          key={i}
-                          name='groups'
-                          render={arrayHelpers => (
-                            <React.Fragment key={i}>
-                              <Col sm={{size: 8}} md={{size: 5}} className='mt-4 mb-2'>
-                                <Card>
-                                  <CardHeader className='p-1' color='primary'>
-                                    <Row className='d-flex align-items-center no-gutters'>
-                                      <Col sm={{size: 10}} md={{size: 11}}>
-                                        {groups[i].name}
-                                      </Col>
-                                    </Row>
-                                  </CardHeader>
-                                  <CardBody className='p-1'>
-                                    {
-                                      group.services.map((service, j) =>
-                                        <FieldArray
-                                          key={j}
-                                          name={`groups.${i}.services`}
-                                          render={arrayHelpers => (
-                                            <Row className='d-flex align-items-center service pt-1 pb-1 no-gutters' key={j}>
-                                              <Col md={8}>
-                                                {groups[i].services[j].name}
-                                              </Col>
-                                              <Col md={2}>
-                                                {groups[i].services[j].operation}
-                                              </Col>
-                                            </Row>
-                                          )}
-                                        />
-                                      )
-                                    }
-                                  </CardBody>
-                                  <CardFooter className='p-1 d-flex justify-content-center'>
-                                    {groups[i].operation}
-                                  </CardFooter>
-                                </Card>
-                              </Col>
-                              <Col sm={{size: 4}} md={{size: 1}} className='mt-5'>
-                                <div className='group-operation' key={i}>
-                                  {props.values.profile_operation}
-                                </div>
-                              </Col>
-                            </React.Fragment>
-                          )}
-                        />
-                      )
-                    }
-                  </Row>
-                )}
-              />
-            </Form>
-          )}
-        </Formik>
-      </BaseArgoView>
-    );
+      <AggregationProfilesForm
+        initValues={{
+          name: name,
+          groupname: aggregationProfileDetails.groupname,
+          metric_operation: aggregationProfileDetails.metric_operation,
+          profile_operation: aggregationProfileDetails.profile_operation,
+          endpoint_group: aggregationProfileDetails.endpoint_group,
+          metric_profile: aggregationProfileDetails.metric_profile,
+          groups: aggregationProfileDetails.groups
+        }}
+        resourcename={ `${name} (${aggregationProfileDetails.date_created})` }
+        historyview={true}
+      />
+    )
   } else
-    return null;
+    return null
 }

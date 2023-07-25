@@ -1,15 +1,13 @@
-from django.contrib.contenttypes.models import ContentType
-from django.db import models
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-
 import json
 
 from Poem.poem.models import Metric
 from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
-
-from tenant_schemas.utils import schema_context, get_public_schema_name
+from django.contrib.contenttypes.models import ContentType
+from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django_tenants.utils import schema_context, get_public_schema_name
 
 
 class TenantHistoryManager(models.Manager):
@@ -53,7 +51,9 @@ def update_metric_history(sender, instance, created, **kwargs):
         for schema in schemas:
             with schema_context(schema):
                 for probe in probes:
-                    metrics = Metric.objects.filter(probekey=probe)
+                    metrics = Metric.objects.filter(
+                        probeversion=f"{probe.name} ({probe.package.version})"
+                    )
                     for metric in metrics:
                         vers = TenantHistory.objects.filter(
                             object_id=metric.id

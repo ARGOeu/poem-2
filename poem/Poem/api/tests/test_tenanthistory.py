@@ -2,16 +2,19 @@ import datetime
 import json
 
 from Poem.api import views_internal as views
-from Poem.helpers.history_helpers import create_comment
+from Poem.helpers.history_helpers import create_comment, serialize_metric
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
+from Poem.tenants.models import Tenant
 from Poem.users.models import CustUser
 from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
+from django_tenants.test.cases import TenantTestCase
+from django_tenants.test.client import TenantRequestFactory
+from django_tenants.utils import schema_context, get_public_schema_name, \
+    get_tenant_domain_model
 from rest_framework import status
 from rest_framework.test import force_authenticate
-from tenant_schemas.test.cases import TenantTestCase
-from tenant_schemas.test.client import TenantRequestFactory
 
 
 class ListTenantVersionsAPIViewTests(TenantTestCase):
@@ -20,6 +23,14 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
         self.view = views.ListTenantVersions.as_view()
         self.url = '/api/v2/internal/tenantversion/'
         self.user = CustUser.objects.create_user(username='testuser')
+
+        with schema_context(get_public_schema_name()):
+            public_tenant = Tenant.objects.create(
+                name='public', schema_name=get_public_schema_name()
+            )
+            get_tenant_domain_model().objects.create(
+                domain='public', tenant=public_tenant, is_primary=True
+            )
 
         tag = admin_models.OSTag.objects.create(name='CentOS 6')
         repo = admin_models.YumRepo.objects.create(name='repo-1', tag=tag)
@@ -81,8 +92,12 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
             version_user=self.user.username
         )
 
-        self.mtype1 = poem_models.MetricType.objects.create(name='Active')
-        self.mtype2 = poem_models.MetricType.objects.create(name='Passive')
+        self.mtype1 = admin_models.MetricTemplateType.objects.create(
+            name="Active"
+        )
+        self.mtype2 = admin_models.MetricTemplateType.objects.create(
+            name="Passive"
+        )
 
         self.mtag1 = admin_models.MetricTags.objects.create(name='test_tag1')
         self.mtag2 = admin_models.MetricTags.objects.create(name='test_tag2')
@@ -94,10 +109,9 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
         poem_models.GroupOfMetricProfiles.objects.create(name='EGI')
         poem_models.GroupOfMetricProfiles.objects.create(name='NEW_GROUP')
 
-        self.metric1 = poem_models.Metric.objects.create(
+        mt1 = admin_models.MetricTemplate.objects.create(
             name='argo.AMS-Check',
             mtype=self.mtype1,
-            group=group1,
             probekey=self.probever1,
             probeexecutable='["ams-probe"]',
             config='["maxCheckAttempts 3", "timeout 60",'
@@ -107,12 +121,65 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
             flags='["OBSESS 1"]',
             parameter='["--project EGI"]'
         )
-        self.metric1.tags.add(self.mtag1, self.mtag2)
+        mt1.tags.add(self.mtag1, self.mtag2)
 
-        poem_models.Metric.objects.create(
+        mt1_version1 = admin_models.MetricTemplateHistory.objects.create(
+            object_id=mt1,
+            name=mt1.name,
+            mtype=mt1.mtype,
+            probekey=mt1.probekey,
+            parent=mt1.parent,
+            description=mt1.description,
+            probeexecutable=mt1.probeexecutable,
+            config=mt1.config,
+            attribute=mt1.attribute,
+            dependency=mt1.dependency,
+            flags=mt1.flags,
+            files=mt1.files,
+            parameter=mt1.parameter,
+            fileparameter=mt1.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user="poem",
+            version_comment="Initial version."
+        )
+        mt1_version1.tags.add(self.mtag1, self.mtag2)
+
+        mt1.name = 'argo.AMS-Check-new'
+        mt1.probeexecutable = '["ams-probe-2"]'
+        mt1.probekey = self.probever2
+        mt1.description = 'Description of argo.AMS-Check-new.'
+        mt1.parent = '["new-parent"]'
+        mt1.attribute = '["argo.ams_TOKEN2 --token"]'
+        mt1.dependency = '["new-key new-value"]'
+        mt1.flags = ''
+        mt1.parameter = ''
+        mt1.fileparameter = '["new-key new-value"]'
+        mt1.save()
+
+        mt1_version2 = admin_models.MetricTemplateHistory.objects.create(
+            object_id=mt1,
+            name=mt1.name,
+            mtype=mt1.mtype,
+            probekey=mt1.probekey,
+            parent=mt1.parent,
+            description=mt1.description,
+            probeexecutable=mt1.probeexecutable,
+            config=mt1.config,
+            attribute=mt1.attribute,
+            dependency=mt1.dependency,
+            flags=mt1.flags,
+            files=mt1.files,
+            parameter=mt1.parameter,
+            fileparameter=mt1.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user="poem",
+            version_comment=create_comment(mt1)
+        )
+        mt1_version2.tags.add(self.mtag1, self.mtag2)
+
+        mt2 = admin_models.MetricTemplate.objects.create(
             name='test.AMS-Check',
             mtype=self.mtype1,
-            group=group1,
             probekey=self.probever1,
             description='Description of test.AMS-Check.',
             probeexecutable='["ams-probe"]',
@@ -124,12 +191,66 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
             parameter='["--project EGI"]'
         )
 
+        admin_models.MetricTemplateHistory.objects.create(
+            object_id=mt2,
+            name=mt2.name,
+            mtype=mt2.mtype,
+            probekey=mt2.probekey,
+            parent=mt2.parent,
+            description=mt2.description,
+            probeexecutable=mt2.probeexecutable,
+            config=mt2.config,
+            attribute=mt2.attribute,
+            dependency=mt2.dependency,
+            flags=mt2.flags,
+            files=mt2.files,
+            parameter=mt2.parameter,
+            fileparameter=mt2.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user="poem",
+            version_comment="Initial version."
+        )
+
+        mt3 = admin_models.MetricTemplate.objects.create(
+            name='org.apel.APEL-Pub',
+            description='Description of org.apel.APEL-Pub.',
+            mtype=self.mtype2,
+            flags='["OBSESS 1", "PASSIVE 1"]'
+        )
+
+        admin_models.MetricTemplateHistory.objects.create(
+            object_id=mt3,
+            name=mt3.name,
+            mtype=mt3.mtype,
+            probekey=mt3.probekey,
+            parent=mt3.parent,
+            description=mt3.description,
+            probeexecutable=mt3.probeexecutable,
+            config=mt3.config,
+            attribute=mt3.attribute,
+            dependency=mt3.dependency,
+            flags=mt3.flags,
+            files=mt3.files,
+            parameter=mt3.parameter,
+            fileparameter=mt3.fileparameter,
+            date_created=datetime.datetime.now(),
+            version_user="poem",
+            version_comment="Initial version."
+        )
+
+        self.metric1 = poem_models.Metric.objects.create(
+            name='argo.AMS-Check',
+            group=group1,
+            probeversion=self.probever1.__str__(),
+            config='["maxCheckAttempts 3", "timeout 60",'
+                   ' "path /usr/libexec/argo-monitoring/probes/argo",'
+                   ' "interval 5", "retryInterval 3"]'
+        )
+
         self.ver1 = poem_models.TenantHistory.objects.create(
             object_id=self.metric1.id,
-            serialized_data=serializers.serialize(
-                'json', [self.metric1],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
+            serialized_data=serialize_metric(
+                self.metric1, tags=[self.mtag1, self.mtag2]
             ),
             object_repr='argo.AMS-Check',
             content_type=ct_m,
@@ -138,36 +259,33 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
             user=self.user.username
         )
 
+        poem_models.Metric.objects.create(
+            name='test.AMS-Check',
+            group=group1,
+            probeversion=self.probever1.__str__(),
+            config='["maxCheckAttempts 3", "timeout 60",'
+                   ' "path /usr/libexec/argo-monitoring/probes/argo",'
+                   ' "interval 5", "retryInterval 3"]'
+        )
+
         self.metric1.name = 'argo.AMS-Check-new'
-        self.metric1.probeexecutable = '["ams-probe-2"]'
-        self.metric1.probekey = self.probever2
-        self.metric1.description = 'Description of argo.AMS-Check-new.'
         self.metric1.group = group2
-        self.metric1.parent = '["new-parent"]'
         self.metric1.config = '["maxCheckAttempts 4", "timeout 70", ' \
                               '"path /usr/libexec/argo-monitoring/' \
                               'probes/argo2", "interval 5", "retryInterval 4"]'
-        self.metric1.attribute = '["argo.ams_TOKEN2 --token"]'
-        self.metric1.dependancy = '["new-key new-value"]'
-        self.metric1.flags = ''
-        self.metric1.parameter = ''
-        self.metric1.fileparameter = '["new-key new-value"]'
+        self.metric1.probeversion = self.probever2.__str__()
         self.metric1.save()
-        self.metric1.tags.add(self.mtag3)
 
         comment = create_comment(
-            self.metric1, ct=ct_m, new_serialized_data=serializers.serialize(
-                'json', [self.metric1],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
+            self.metric1, ct=ct_m,
+            new_serialized_data=serialize_metric(
+                self.metric1, tags=[self.mtag1, self.mtag2, self.mtag3]
             )
         )
         self.ver2 = poem_models.TenantHistory.objects.create(
             object_id=self.metric1.id,
-            serialized_data=serializers.serialize(
-                'json', [self.metric1],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
+            serialized_data=serialize_metric(
+                self.metric1, tags=[self.mtag1, self.mtag2, self.mtag3]
             ),
             object_repr=self.metric1.__str__(),
             content_type=ct_m,
@@ -178,19 +296,12 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
 
         self.metric2 = poem_models.Metric.objects.create(
             name='org.apel.APEL-Pub',
-            description='Description of org.apel.APEL-Pub.',
-            mtype=self.mtype2,
-            group=group1,
-            flags='["OBSESS 1", "PASSIVE 1"]'
+            group=group1
         )
 
         self.ver3 = poem_models.TenantHistory.objects.create(
             object_id=self.metric2.id,
-            serialized_data=serializers.serialize(
-                'json', [self.metric2],
-                use_natural_foreign_keys=True,
-                use_natural_primary_keys=True
-            ),
+            serialized_data=serialize_metric(self.metric2),
             object_repr=self.metric2.__str__(),
             content_type=ct_m,
             date_created=datetime.datetime.now(),
@@ -667,12 +778,6 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
         response = self.view(request, 'metricprofile', 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data, {'detail': 'Metric profile not found.'})
-
-    def test_get_metric_version_without_specifying_name(self):
-        request = self.factory.get(self.url + 'metricprofile')
-        force_authenticate(request, user=self.user)
-        response = self.view(request, 'metricprofile')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_get_aggregation_profile_version(self):
         request = self.factory.get(
