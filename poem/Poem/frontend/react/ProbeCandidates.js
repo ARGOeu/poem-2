@@ -304,7 +304,7 @@ const ProbeCandidateForm = ({
                     <Input
                       { ...field }
                       data-testid="devel_url"
-                      className="form-control"
+                      className={ `form-control ${errors?.devel_url && "is-invalid"}` }
                     />
                   }
                 />
