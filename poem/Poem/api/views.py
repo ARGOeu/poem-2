@@ -10,6 +10,7 @@ from Poem.poem_super_admin import models as admin_models
 from Poem.poem_super_admin.models import WebAPIKey
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.mail import EmailMessage
 from django.core.validators import URLValidator, EmailValidator
 from rest_framework import status
 from rest_framework.exceptions import APIException
@@ -561,6 +562,26 @@ class ProbeCandidateAPI(APIView):
                         name="submitted"
                     )
                 )
+
+                body = f"""
+Dear madam/sir,
+
+your probe '{request.data["name"]}' has been successfully submitted. 
+
+You will receive further instructions after the probe has been inspected.
+
+Best regards,
+ARGO Monitoring team
+"""
+                mail = EmailMessage(
+                    subject="[ARGO Monitoring] Probe submitted",
+                    body=body,
+                    from_email=settings.EMAILFROM,
+                    to=[request.data["contact"]],
+                    bcc=[settings.EMAILUS]
+                )
+
+                mail.send(fail_silently=True)
 
                 return Response(
                     {
