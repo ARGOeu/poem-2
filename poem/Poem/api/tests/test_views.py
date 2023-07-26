@@ -1666,6 +1666,9 @@ class ProbeCandidateAPITests(TenantTestCase):
         )
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data, {"detail": "Probe 'poem-probe' POSTed successfully"}
+        )
         candidate = poem_models.ProbeCandidate.objects.get(name="poem-probe")
         self.assertEqual(
             candidate.description,
@@ -1708,6 +1711,9 @@ class ProbeCandidateAPITests(TenantTestCase):
         )
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data, {"detail": "Probe 'poem-probe' POSTed successfully"}
+        )
         candidate = poem_models.ProbeCandidate.objects.get(name="poem-probe")
         self.assertEqual(
             candidate.description,
@@ -1748,6 +1754,9 @@ class ProbeCandidateAPITests(TenantTestCase):
         )
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data, {"detail": "Probe 'test-probe' POSTed successfully"}
+        )
         candidate = poem_models.ProbeCandidate.objects.filter(
             name="test-probe"
         ).order_by("created")
@@ -1789,7 +1798,7 @@ class ProbeCandidateAPITests(TenantTestCase):
         self.assertEqual(candidate[0].status.name, "testing")
         self.assertEqual(candidate[1].status.name, "submitted")
 
-    def test_post_probe_candidate_successfully_with_missing_name(self):
+    def test_post_probe_candidate_with_missing_name(self):
         data = {
             "description":
                 "Probe is checking mandatory metric configurations of Tenant "
@@ -1848,6 +1857,9 @@ class ProbeCandidateAPITests(TenantTestCase):
         )
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data, {"detail": "Probe 'poem-probe' POSTed successfully"}
+        )
         candidate = poem_models.ProbeCandidate.objects.get(name="poem-probe")
         self.assertEqual(candidate.description, "")
         self.assertEqual(
@@ -1885,6 +1897,9 @@ class ProbeCandidateAPITests(TenantTestCase):
         )
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data, {"detail": "Probe 'poem-probe' POSTed successfully"}
+        )
         candidate = poem_models.ProbeCandidate.objects.get(name="poem-probe")
         self.assertEqual(candidate.description, "")
         self.assertEqual(
@@ -2002,6 +2017,9 @@ class ProbeCandidateAPITests(TenantTestCase):
         )
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data, {"detail": "Probe 'poem-probe' POSTed successfully"}
+        )
         candidate = poem_models.ProbeCandidate.objects.get(name="poem-probe")
         self.assertEqual(
             candidate.description,
@@ -2042,6 +2060,9 @@ class ProbeCandidateAPITests(TenantTestCase):
         )
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data, {"detail": "Probe 'poem-probe' POSTed successfully"}
+        )
         candidate = poem_models.ProbeCandidate.objects.get(name="poem-probe")
         self.assertEqual(
             candidate.description,
@@ -2081,6 +2102,9 @@ class ProbeCandidateAPITests(TenantTestCase):
         )
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data, {"detail": "Probe 'poem-probe' POSTed successfully"}
+        )
         candidate = poem_models.ProbeCandidate.objects.get(name="poem-probe")
         self.assertEqual(
             candidate.description,
@@ -2121,6 +2145,9 @@ class ProbeCandidateAPITests(TenantTestCase):
         )
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            response.data, {"detail": "Probe 'poem-probe' POSTed successfully"}
+        )
         candidate = poem_models.ProbeCandidate.objects.get(name="poem-probe")
         self.assertEqual(
             candidate.description,

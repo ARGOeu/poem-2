@@ -562,4 +562,9 @@ class ProbeCandidateAPI(APIView):
                     )
                 )
 
-                return Response(status=status.HTTP_201_CREATED)
+                return Response(
+                    {
+                        "detail": f"Probe '{request.data['name']}' POSTed "
+                                  f"successfully"
+                    },
+                    status=status.HTTP_201_CREATED)
