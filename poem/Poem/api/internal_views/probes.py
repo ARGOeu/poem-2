@@ -6,6 +6,8 @@ from Poem.helpers.history_helpers import create_history, update_comment
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
+from django.conf import settings
+from django.core.mail import EmailMessage
 from django.db import IntegrityError
 from django_tenants.utils import schema_context, get_public_schema_name
 from rest_framework import status
@@ -459,6 +461,65 @@ class ListProbeCandidates(APIView):
                 candidate.devel_url = request.data["devel_url"]
                 candidate.production_url = request.data["production_url"]
                 candidate.save()
+
+                subject = ""
+                body = ""
+
+                if request.data["status"] == "deployed":
+                    subject = "[ARGO Monitoring] Probe deployed"
+                    body = f"""
+Dear madam/sir,
+
+the probe '{request.data["name"]}' has been deployed to production.
+
+You can see the results here: {request.data["production_url"]}
+
+Best regards,
+ARGO Monitoring team
+"""
+
+                elif request.data["status"] == "processing":
+                    subject = "[ARGO Monitoring] Probe processing"
+                    body = f"""
+Dear madam/sir,
+
+we have started setting up the probe '{request.data["name"]}' for testing.
+
+Please add a new monitoring extension for your service with service type {request.data["service_type"]} in https://providers.eosc-portal.eu
+
+You will receive more information after the probe has been deployed to devel infrastructure.
+
+Best regards,
+ARGO Monitoring team
+"""
+
+                elif request.data["status"] == "testing":
+                    subject = "[ARGO Monitoring] Probe testing"
+                    body = f"""
+Dear madam/sir,
+
+the probe '{request.data["name"]}' has been deployed to devel infrastructure.
+
+You can see the results here: {request.data["devel_url"]}
+
+The probe will be running in the devel infrastructure for a couple of days, and will be moved to production once we make sure it is working properly.
+
+You will receive final email once the probe has been deployed to production infrastructure.
+
+Best regards,
+ARGO Monitoring team
+"""
+
+                if subject and body:
+                    mail = EmailMessage(
+                        subject,
+                        body,
+                        settings.EMAILFROM,
+                        [request.data["contact"]],
+                        [settings.EMAILUS]
+                    )
+
+                    mail.send()
 
                 return Response(status=status.HTTP_201_CREATED)
 
