@@ -448,6 +448,40 @@ class ListProbeCandidates(APIView):
                 candidate = poem_models.ProbeCandidate.objects.get(
                     id=request.data["id"]
                 )
+
+                for key in [
+                    "name", "description", "docurl", "command", "status"
+                ]:
+                    if not request.data[key]:
+                        return error_response(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=f"{key.capitalize()} is mandatory"
+                        )
+
+                if request.data["status"] == "deployed" and \
+                        not request.data["production_url"]:
+                    return error_response(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Production URL is mandatory when probe status "
+                               "is 'deployed'"
+                    )
+
+                if request.data["status"] == "processing" and \
+                        not request.data["service_type"]:
+                    return error_response(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Service type is mandatory when probe status is "
+                               "'processing'"
+                    )
+
+                if request.data["status"] == "testing" and \
+                        not request.data["devel_url"]:
+                    return error_response(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Devel URL is mandatory when probe status is "
+                               "'testing'"
+                    )
+
                 candidate.name = request.data["name"]
                 candidate.description = request.data["description"]
                 candidate.docurl = request.data["docurl"]
@@ -533,6 +567,12 @@ ARGO Monitoring team
                 return error_response(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Probe candidate status not found"
+                )
+
+            except KeyError as e:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Missing data key: {e.args[0]}"
                 )
 
         else:
