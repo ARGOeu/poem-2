@@ -545,15 +545,23 @@ ARGO Monitoring team
 """
 
                 if subject and body:
-                    mail = EmailMessage(
-                        subject,
-                        body,
-                        settings.EMAILFROM,
-                        [request.data["contact"]],
-                        [settings.EMAILUS]
-                    )
+                    try:
+                        mail = EmailMessage(
+                            subject,
+                            body,
+                            settings.EMAILFROM,
+                            [request.data["contact"]],
+                            [settings.EMAILUS]
+                        )
 
-                    mail.send()
+                        mail.send(fail_silently=False)
+
+                    except Exception as e:
+                        return Response({
+                            "warning": f"Probe candidate has been successfully "
+                                       f"modified, but the email was not sent: "
+                                       f"{str(e)}"
+                        }, status=status.HTTP_201_CREATED)
 
                 return Response(status=status.HTTP_201_CREATED)
 

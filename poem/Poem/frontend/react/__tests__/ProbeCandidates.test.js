@@ -420,6 +420,7 @@ describe("Test list of probe candidates if empty", () => {
 describe("Test probe candidate changeview", () => {
   jest.spyOn(NotificationManager, "success")
   jest.spyOn(NotificationManager, "error")
+  jest.spyOn(NotificationManager, "warning")
 
   beforeEach(() => {
     Backend.mockImplementation(() => {
@@ -1522,6 +1523,72 @@ describe("Test probe candidate changeview", () => {
         <p>Click to dismiss.</p>
       </div>,
       "Error",
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test("Error in changing probe candidate with warning", async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({
+        warning: "Probe candidate has been successfully modified, but the email was not sent: SMTP error"
+      })
+    )
+    
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /candidate/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "some-probe" } })
+
+    fireEvent.change(screen.getByTestId("devel_url"), { target: { value: "https://test.argo.grnet.gr/ui/status/test" } })
+
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: "More elaborate description of the probe" } })
+
+    fireEvent.change(screen.getByTestId("rpm"), { target: { value: "argo-probe-test-0.1.1-1.el7.noarch.rpm" } })
+
+    fireEvent.change(screen.getByTestId("yum_baseurl"), { target: { value: "http://repo.example.com/devel/rocky8/" } })
+
+    fireEvent.change(screen.getByTestId("command"), { target: { value: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test" } })
+
+    await selectEvent.select(screen.getByText("submitted"), "testing")
+
+    fireEvent.click(screen.getByRole("button", { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole("dialog", { title: "change" })).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole("button", { name: /yes/i }))
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/probecandidates/",
+        {
+          id: "2",
+          name: "some-probe",
+          description: "More elaborate description of the probe",
+          docurl: "https://github.com/ARGOeu-Metrics/argo-probe-test",
+          rpm: "argo-probe-test-0.1.1-1.el7.noarch.rpm",
+          yum_baseurl: "http://repo.example.com/devel/rocky8/",
+          command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
+          contact: "poem@example.com",
+          status: "testing",
+          service_type: "Test service type",
+          devel_url: "https://test.argo.grnet.gr/ui/status/test",
+          production_url: ""
+        }
+      )
+    })
+
+    expect(NotificationManager.success).not.toHaveBeenCalled()
+    expect(NotificationManager.error).not.toHaveBeenCalled()
+    expect(NotificationManager.warning).toHaveBeenCalledWith(
+      <div>
+        <p>Probe candidate has been successfully modified, but the email was not sent: SMTP error</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      "Warning",
       0,
       expect.any(Function)
     )

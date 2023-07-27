@@ -1,5 +1,6 @@
 import datetime
 import json
+from unittest.mock import patch
 
 from Poem.api import views_internal as views
 from Poem.helpers.history_helpers import serialize_metric
@@ -5358,6 +5359,76 @@ ARGO Monitoring team
                 candidate.devel_url, "https://test.argo.grnet.gr/ui/status/test"
             )
             self.assertEqual(candidate.production_url, None)
+
+    @patch("Poem.api.internal_views.probes.EmailMessage.send")
+    def test_put_probe_candidate_superuser_mail_exception(self, mock_send):
+        mock_send.side_effect = Exception("Error sending email")
+        data = {
+            "id": self.candidate1.id,
+            "name": "new-probe",
+            "description": "More detailed description for the new probe",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
+            "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                       "-t <timeout> --test",
+            "contact": "meh@example.com",
+            "status": "deployed",
+            "service_type": "some.service.type",
+            "devel_url": "https://test.argo.grnet.gr/ui/status/new",
+            "production_url": "https://production.argo.grnet.gr/ui/status/new"
+        }
+        with self.settings(
+                EMAILFROM="no-reply@argo.test.com",
+                EMAILUS="argo@argo.test.com"
+        ):
+            content, content_type = encode_data(data)
+            request = self.factory.put(
+                self.url, content, content_type=content_type
+            )
+            force_authenticate(request, user=self.superuser)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            self.assertEqual(
+                response.data["warning"],
+                "Probe candidate has been successfully modified, but the email "
+                "was not sent: Error sending email"
+            )
+            candidate = poem_models.ProbeCandidate.objects.get(
+                id=self.candidate1.id
+            )
+            self.assertEqual(candidate.name, "new-probe")
+            self.assertEqual(
+                candidate.description,
+                "More detailed description for the new probe"
+            )
+            self.assertEqual(
+                candidate.docurl,
+                "https://github.com/ARGOeu-Metrics/argo-probe-new"
+            )
+            self.assertEqual(
+                candidate.rpm, "argo-probe-new-0.1.0-1.el7.noarch.rpm"
+            )
+            self.assertEqual(
+                candidate.yum_baseurl,
+                "http://repo.example.com/devel/rocky8/"
+            )
+            self.assertEqual(
+                candidate.command,
+                "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                "-t <timeout> --test"
+            )
+            self.assertEqual(candidate.contact, "poem@example.com")
+            self.assertEqual(candidate.status.name, "deployed")
+            self.assertEqual(candidate.service_type, "some.service.type")
+            self.assertEqual(
+                candidate.devel_url,
+                "https://test.argo.grnet.gr/ui/status/new"
+            )
+            self.assertEqual(
+                candidate.production_url,
+                "https://production.argo.grnet.gr/ui/status/new"
+            )
 
 
 class ListProbeCandidateStatuses(TenantTestCase):
