@@ -45,7 +45,8 @@ setup(name=NAME,
           'Unidecode'
       ],
       scripts=['bin/poem-db', 'bin/poem-genseckey', 'bin/poem-manage',
-               'bin/poem-token', 'bin/poem-tenant', 'bin/poem-clearsessions'],
+               'bin/poem-token', 'bin/poem-tenant', 'bin/poem-clearsessions',
+               'bin/poem-backup'],
       data_files=[
           ('etc/poem', ['etc/poem.conf.template', 'etc/poem_logging.conf']),
           ('etc/cron.d/', ['cron/poem-clearsessions', 'cron/poem-db_backup']),
