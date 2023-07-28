@@ -37,6 +37,7 @@ services:
       - ../bin/poem-genseckey:$VENV/bin/poem-genseckey
       - ../bin/poem-tenant:$VENV/bin/poem-tenant
       - ../bin/poem-token:$VENV/bin/poem-token
+      - ../bin/poem-backup:$VENV/bin/poem-backup
     networks:
       app_net:
         ipv4_address: 172.19.0.2
