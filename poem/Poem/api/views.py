@@ -198,9 +198,86 @@ class ListMetrics(APIView):
             return Response(build_metricconfigs())
 
 
-class ListRepos(APIView):
+class Repos(APIView):
     permission_classes = (MyHasAPIKey,)
 
+    def _get_packages(self, tag, metrics):
+        if tag == 'centos7':
+            ostag = admin_models.OSTag.objects.get(name='CentOS 7')
+        elif tag == 'centos6':
+            ostag = admin_models.OSTag.objects.get(name='CentOS 6')
+        else:
+            raise NotFound(status=404, detail='YUM repo tag not found.')
+
+        packages = set()
+        for metric in metrics:
+            try:
+                m = models.Metric.objects.get(name=metric)
+                if m.probeversion:
+                    probeversion = m.probeversion.split("(")
+                    probe_name = probeversion[0].strip()
+                    probe_version = probeversion[1][:-1].strip()
+                    probe = admin_models.ProbeHistory.objects.get(
+                        name=probe_name, package__version=probe_version
+                    )
+                    packages.add(probe.package)
+
+            except models.Metric.DoesNotExist:
+                pass
+
+        data = dict()
+        packagedict = dict()
+        missing_packages = []
+        for package in packages:
+            try:
+                repo = package.repos.get(tag=ostag)
+
+            except admin_models.YumRepo.DoesNotExist:
+                missing_packages.append(package.__str__())
+                continue
+
+            else:
+                packagedict.update({package: repo})
+
+        for key, value in packagedict.items():
+            if value.name not in data:
+                if key.use_present_version:
+                    version = 'present'
+                else:
+                    version = key.version
+                data.update(
+                    {
+                        value.name: {
+                            'content': value.content,
+                            'packages': [
+                                {
+                                    'name': key.name,
+                                    'version': version
+                                }
+                            ]
+                        }
+                    }
+                )
+
+            else:
+                data[value.name]['packages'].append(
+                    {
+                        'name': key.name,
+                        'version': key.version
+                    }
+                )
+
+            data[value.name]['packages'] = sorted(
+                data[value.name]['packages'], key=lambda i: i['name']
+            )
+
+        return Response({
+            'data': data,
+            'missing_packages': sorted(missing_packages)
+        })
+
+
+class ListRepos(Repos):
     def get(self, request, tag=None):
         if not tag:
             return Response(
@@ -222,6 +299,19 @@ class ListRepos(APIView):
                     get_metrics_from_profile(profile, request.tenant.name)
                 )
 
+            return self._get_packages(tag=tag, metrics=metrics)
+
+
+class ListReposInternal(Repos):
+
+    def get(self, request, tag=None):
+        if not tag:
+            return Response(
+                {'detail': 'You must define OS!'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        else:
             internal_mt = [
                 mt.name for mt in
                 admin_models.MetricTemplate.objects.filter(
@@ -232,81 +322,8 @@ class ListRepos(APIView):
                 metric.name for metric in models.Metric.objects.all() if
                 metric.name in internal_mt
             ])
-            metrics = metrics.union(internal_metrics)
 
-            if tag == 'centos7':
-                ostag = admin_models.OSTag.objects.get(name='CentOS 7')
-            elif tag == 'centos6':
-                ostag = admin_models.OSTag.objects.get(name='CentOS 6')
-            else:
-                raise NotFound(status=404, detail='YUM repo tag not found.')
-
-            packages = set()
-            for metric in metrics:
-                try:
-                    m = models.Metric.objects.get(name=metric)
-                    if m.probeversion:
-                        probeversion = m.probeversion.split("(")
-                        probe_name = probeversion[0].strip()
-                        probe_version = probeversion[1][:-1].strip()
-                        probe = admin_models.ProbeHistory.objects.get(
-                            name=probe_name, package__version=probe_version
-                        )
-                        packages.add(probe.package)
-
-                except models.Metric.DoesNotExist:
-                    pass
-
-            data = dict()
-            packagedict = dict()
-            missing_packages = []
-            for package in packages:
-                try:
-                    repo = package.repos.get(tag=ostag)
-
-                except admin_models.YumRepo.DoesNotExist:
-                    missing_packages.append(package.__str__())
-                    continue
-
-                else:
-                    packagedict.update({package: repo})
-
-            for key, value in packagedict.items():
-                if value.name not in data:
-                    if key.use_present_version:
-                        version = 'present'
-                    else:
-                        version = key.version
-                    data.update(
-                        {
-                            value.name: {
-                                'content': value.content,
-                                'packages': [
-                                    {
-                                        'name': key.name,
-                                        'version': version
-                                    }
-                                ]
-                            }
-                        }
-                    )
-
-                else:
-                    data[value.name]['packages'].append(
-                        {
-                            'name': key.name,
-                            'version': key.version
-                        }
-                    )
-
-                data[value.name]['packages'] = sorted(
-                    data[value.name]['packages'], key=lambda i: i['name']
-                )
-
-        return Response({
-            'data': data,
-            'missing_packages': sorted(missing_packages)
-        })
+            return self._get_packages(tag=tag, metrics=internal_metrics)
 
 
 class ListMetricTemplates(APIView):
@@ -518,15 +535,31 @@ class ProbeCandidateAPI(APIView):
                     status_code=status.HTTP_400_BAD_REQUEST
                 )
 
-            models.ProbeCandidate.objects.create(
-                name=request.data["name"],
-                description=description,
-                docurl=request.data["docurl"],
-                rpm=rpm,
-                yum_baseurl=yum_baseurl,
-                command=request.data["command"],
-                contact=request.data["contact"],
-                status=models.ProbeCandidateStatus.objects.get(name="submitted")
-            )
+            split_command = [
+                item.strip() for item in request.data["command"].split(" ")
+            ]
 
-            return Response(status=status.HTTP_201_CREATED)
+            if "-t" not in split_command and "--timeout" not in split_command:
+                return error_response(
+                    detail="Command must have -t/--timeout argument. "
+                           "Please refer to the probe development guidelines: "
+                           "https://argoeu.github.io/argo-monitoring/docs/"
+                           "monitoring/guidelines",
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
+
+            else:
+                models.ProbeCandidate.objects.create(
+                    name=request.data["name"],
+                    description=description,
+                    docurl=request.data["docurl"],
+                    rpm=rpm,
+                    yum_baseurl=yum_baseurl,
+                    command=request.data["command"],
+                    contact=request.data["contact"],
+                    status=models.ProbeCandidateStatus.objects.get(
+                        name="submitted"
+                    )
+                )
+
+                return Response(status=status.HTTP_201_CREATED)

@@ -351,7 +351,7 @@ const ProbeForm = ({
                   control={ control }
                   render={ ({ field }) =>
                     (isTenantSchema || isHistory || publicView) ?
-                      <div className='form-control' style={{backgroundColor: '#e9ecef', overflow: 'hidden', textOverflow: 'ellipsis'}}>
+                      <div className='form-control' style={{backgroundColor: '#f8f9fa', overflow: 'hidden', textOverflow: 'ellipsis'}}>
                         <a href={ field.value } style={{'whiteSpace': 'nowrap'}}>{ field.value }</a>
                       </div>
                     :
@@ -387,7 +387,7 @@ const ProbeForm = ({
                   control={ control }
                   render={ ({ field }) =>
                     (isTenantSchema || isHistory || publicView) ?
-                      <div className='form-control' style={{backgroundColor: '#e9ecef', overflow: 'hidden', textOverflow: 'ellipsis'}}>
+                      <div className='form-control' style={{backgroundColor: '#f8f9fa', overflow: 'hidden', textOverflow: 'ellipsis'}}>
                         <a href={ field.value } style={{'whiteSpace': 'nowrap'}}>{ field.value }</a>
                       </div>
                     :

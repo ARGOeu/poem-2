@@ -385,6 +385,8 @@ class ListProbeCandidates(APIView):
                         "command": candidate.command,
                         "contact": candidate.contact,
                         "status": candidate.status.name,
+                        "service_type": candidate.service_type if
+                        candidate.service_type else "",
                         "created":
                             candidate.created.strftime("%Y-%m-%d %H:%M:%S"),
                         "last_update":
@@ -412,6 +414,8 @@ class ListProbeCandidates(APIView):
                         "command": candidate.command,
                         "contact": candidate.contact,
                         "status": candidate.status.name,
+                        "service_type": candidate.service_type if
+                        candidate.service_type else "",
                         "created":
                             candidate.created.strftime("%Y-%m-%d %H:%M:%S"),
                         "last_update":
@@ -443,6 +447,7 @@ class ListProbeCandidates(APIView):
                 candidate.status = poem_models.ProbeCandidateStatus.objects.get(
                     name=request.data["status"]
                 )
+                candidate.service_type = request.data["service_type"]
                 candidate.save()
 
                 return Response(status=status.HTTP_201_CREATED)

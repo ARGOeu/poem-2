@@ -1,0 +1,21 @@
+#!/bin/sh
+
+source /etc/profile.d/venv_poem.sh;
+workon poem;
+
+export PYTHONIOENCODING=utf-8
+
+tenants=($(poem-manage poem_list_tenants));
+
+for tenant in "${tenants[@]}"
+do
+  if [[ $tenant == "all" ]]
+  then
+    schema="public"
+    filename=$VIRTUAL_ENV/var/db_backups/poem-db-backup-public_$(date "+%Y-%m-%d").json
+  else
+    schema=$(echo "$tenant" | awk '{print tolower($0)}')
+    filename=$VIRTUAL_ENV/var/db_backups/poem-db-backup-$schema\_$(date "+%Y-%m-%d").json
+  fi
+  eval poem-db -p -n "$schema" -f "$filename"
+done

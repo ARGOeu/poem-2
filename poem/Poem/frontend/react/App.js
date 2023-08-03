@@ -343,7 +343,12 @@ const TenantRouteSwitch = ({
       /> }
     />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/probecandidates/:id"
-      render={ props => <ProbeCandidateChange {...props} /> }
+      render={ props => <ProbeCandidateChange 
+        { ...props } 
+        webapitoken={ token }
+        webapiservicetypes={ webApiServiceTypes }
+        showtitles={ showServiceTitle }
+      /> }
     />
     <SuperUserRoute isSuperUser={isSuperUser} exact path="/ui/administration/users"
       render={ props => <UsersList

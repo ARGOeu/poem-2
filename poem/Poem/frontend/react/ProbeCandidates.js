@@ -1,10 +1,11 @@
 import React, { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { fetchUserDetails } from "./QueryFunctions";
-import { Backend } from "./DataManager";
+import { Backend, WebApi } from "./DataManager";
 import { 
   BaseArgoTable, 
   BaseArgoView, 
+  CustomError, 
   DefaultColumnFilter, 
   DropdownWithFormText, 
   ErrorComponent, 
@@ -29,6 +30,17 @@ import {
 } from "reactstrap";
 import { Link } from "react-router-dom";
 import { Controller, useForm } from "react-hook-form";
+import * as yup from 'yup';
+import { yupResolver } from '@hookform/resolvers/yup';
+
+
+const validationSchema = yup.object().shape({
+  status: yup.string(),
+  service_type: yup.string().when("status", {
+    is: (val) => val !== "submitted",
+    then: yup.string().required("Service type is required")
+  })
+})
 
 
 const fetchCandidates = async () => {
@@ -155,6 +167,7 @@ export const ProbeCandidateList = (props) => {
 const ProbeCandidateForm = ({ 
   data, 
   statuses, 
+  serviceTypes,
   doChange,
   ...props 
 }) => {
@@ -165,8 +178,10 @@ const ProbeCandidateForm = ({
   const [modalTitle, setModalTitle] = useState(undefined)
   const [onYes, setOnYes] = useState("")
 
-  const { control, setValue, handleSubmit, getValues } = useForm({
-    defaultValues: data
+  const { control, setValue, handleSubmit, getValues, trigger, formState: { errors } } = useForm({
+    defaultValues: data,
+    mode: "all",
+    resolver: yupResolver(validationSchema)
   })
 
   const onSubmitHandle = () => {
@@ -229,13 +244,44 @@ const ProbeCandidateForm = ({
                   render={ ({ field }) =>
                     <DropdownWithFormText
                       forwardedRef={ field.ref }
-                      onChange={ e => setValue("status", e.value) }
+                      onChange={ e => {
+                        setValue("status", e.value) 
+                        trigger("service_type")
+                      }}
                       options={ statuses }
                       value={ field.value }
                     />
                   }
                 />
               </InputGroup>
+            </Col>
+          </Row>
+          <Row>
+            <Col md={ 6 }>
+              <InputGroup>
+                <InputGroupText>Service type</InputGroupText>
+                <Controller
+                  name="service_type"
+                  control={ control }
+                  render={ ({ field }) =>
+                    <DropdownWithFormText
+                      forwardedRef={ field.ref }
+                      onChange={ e => {
+                        setValue("service_type", e ? e.value : "") 
+                        trigger("service_type")
+                      }}
+                      options={ serviceTypes }
+                      value={ field.value }
+                      isClearable={ true }
+                      error={ errors.service_type }
+                    />
+                  }
+                />
+              </InputGroup>
+              {
+                errors?.service_type &&
+                  <CustomError error={ errors?.service_type.message } />
+              }
             </Col>
           </Row>
           <Row>
@@ -316,7 +362,7 @@ const ProbeCandidateForm = ({
                   name="docurl"
                   control={ control }
                   render={ ({ field }) =>
-                    <div className='form-control' style={{backgroundColor: '#e9ecef', overflow: 'hidden', textOverflow: 'ellipsis'}}>
+                    <div className='form-control' style={{backgroundColor: '#f8f9fa', overflow: 'hidden', textOverflow: 'ellipsis'}}>
                       <a href={ field.value } style={{'whiteSpace': 'nowrap'}}>{ field.value }</a>
                     </div>
                   }
@@ -442,8 +488,15 @@ const ProbeCandidateForm = ({
 export const ProbeCandidateChange = (props) => {
   const pcid = props.match.params.id
   const history = props.history
+  const showtitles = props.showtitles
 
   const backend = new Backend()
+
+  const webapi = new WebApi({
+    token: props.webapitoken,
+    serviceTypes: props.webapiservicetypes
+  })
+
   const queryClient = useQueryClient()
 
   const mutation = useMutation(async (values) => await backend.changeObject("/api/v2/internal/probecandidates/", values))
@@ -469,6 +522,13 @@ export const ProbeCandidateChange = (props) => {
     { enabled: !!userDetails }
   )
 
+  const { data: serviceTypes, error: serviceTypesError, isLoading: serviceTypesLoading } = useQuery(
+    ["servicetypes", "webapi"], async () => {
+      return await webapi.fetchServiceTypes()
+    },
+    { enabled: !!userDetails }
+  )
+
   const doChange = ( values ) => {
     mutation.mutate({
       id: values.id,
@@ -479,7 +539,8 @@ export const ProbeCandidateChange = (props) => {
       yum_baseurl: values.yum_baseurl,
       command: values.command,
       contact: values.contact,
-      status: values.status
+      status: values.status,
+      service_type: values.service_type
     }, {
       onSuccess: () => {
         queryClient.invalidateQueries("probecandidate")
@@ -498,7 +559,7 @@ export const ProbeCandidateChange = (props) => {
     })
   }
 
-  if (userDetailsLoading || candidateLoading || statusesLoading)
+  if (userDetailsLoading || candidateLoading || statusesLoading || serviceTypesLoading)
     return (<LoadingAnim />)
 
   else if (userDetailsError)
@@ -510,11 +571,15 @@ export const ProbeCandidateChange = (props) => {
   else if (statusesError)
     return (<ErrorComponent error={ statusesError } />)
 
-  else if (userDetails && candidate && statuses)
+  else if (serviceTypesError)
+    return (<ErrorComponent error={ serviceTypesError } />)
+
+  else if (userDetails && candidate && statuses && serviceTypes)
     return (
       <ProbeCandidateForm 
         data={ candidate } 
         statuses={ statuses }
+        serviceTypes={ showtitles ? serviceTypes.map(type => type.title) : serviceTypes.map(type => type.name) }
         doChange={ doChange }
         { ...props }
       />

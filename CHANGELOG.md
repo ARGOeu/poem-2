@@ -1,9 +1,26 @@
 # Changelog
 
-## [3.4.8] - 2023-07-06
+## [3.4.9] - 2023-08-03
 
 ### Added
 
+* ARGO-4358 Add command validation to probe candidate API view
+* ARGO-4359 Add service type field to probe candidate model
+* ARGO-4360 Add devel UI URL field to probe candidate model
+* ARGO-4361 Add production UI URL field to probe candidate model
+
+### Fixed
+
+* ARGO-4363 Configure setup.py to include new DB backup script into wheel package
+
+### Changed
+
+* ARGO-4362 Simplify db backup in POEM
+* ARGO-4354 Remove internal metrics from token protected YUM repos API view
+
+## [3.4.8] - 2023-07-06
+
+### Added
 
 * ARGO-3573 Introduce negation feature for topology entity filter
 * ARGO-3574 Introduce wildcard specification for topology entity filter
@@ -11,6 +28,7 @@
 * ARGO-4242 Option to combine two existing profiles from different tenants
 * ARGO-4276 API endpoints to integrate probes to the Monitoring service
 * ARGO-4318 View in POEM for probe candidates
+
 ### Fixed
 
 * ARGO-4230 Error not displayed on metric override page

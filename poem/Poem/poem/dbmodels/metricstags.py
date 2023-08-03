@@ -79,6 +79,7 @@ class ProbeCandidate(models.Model):
     command = models.CharField(max_length=2048)
     contact = models.EmailField()
     status = models.ForeignKey(ProbeCandidateStatus, on_delete=models.CASCADE)
+    service_type = models.CharField(max_length=2048, blank=True, null=True)
     created = models.DateTimeField(max_length=32, auto_now_add=True)
     last_update = models.DateTimeField(max_length=32, auto_now=True)
 
