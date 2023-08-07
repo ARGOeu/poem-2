@@ -482,6 +482,14 @@ class ListProbeCandidates(APIView):
                                "'testing'"
                     )
 
+                if (request.data["status"] == "rejected" and
+                        not request.data["rejection_reason"]):
+                    return error_response(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Rejection reason is mandatory when probe "
+                               "status is 'rejected'"
+                    )
+
                 candidate.name = request.data["name"]
                 candidate.description = request.data["description"]
                 candidate.docurl = request.data["docurl"]
