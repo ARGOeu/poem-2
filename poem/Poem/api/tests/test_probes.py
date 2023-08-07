@@ -5050,6 +5050,9 @@ ARGO Monitoring team
             )
             self.assertEqual(candidate.production_url, None)
 
+    def test_put_probe_candidate_rejected_superuser(self):
+        pass
+
     def test_put_probe_candidate_regular_user(self):
         data = {
             "id": self.candidate1.id,
@@ -5300,7 +5303,7 @@ ARGO Monitoring team
             )
             self.assertEqual(candidate.production_url, None)
 
-    def test_put_probe_candidate_missing_keysuperuser(self):
+    def test_put_probe_candidate_missing_key_superuser(self):
         data = {
             "id": self.candidate1.id,
             "name": "new-probe",

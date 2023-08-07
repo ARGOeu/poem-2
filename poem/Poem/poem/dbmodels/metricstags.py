@@ -82,6 +82,7 @@ class ProbeCandidate(models.Model):
     service_type = models.CharField(max_length=2048, blank=True, null=True)
     devel_url = models.URLField(max_length=2048, blank=True, null=True)
     production_url = models.URLField(max_length=2048, blank=True, null=True)
+    rejection_reason = models.CharField(max_length=1024, blank=True, null=True)
     created = models.DateTimeField(max_length=32, auto_now_add=True)
     last_update = models.DateTimeField(max_length=32, auto_now=True)
 
