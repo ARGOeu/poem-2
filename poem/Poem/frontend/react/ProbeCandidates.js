@@ -267,6 +267,26 @@ const ProbeCandidateForm = ({
               </InputGroup>
             </Col>
           </Row>
+          {
+            getValues("status") === "rejected" &&
+              <Row className="mb-3">
+                <Col md={ 8 }>
+                  <Label for="rejection_reason">Reason for rejection</Label>
+                  <Controller
+                    name="rejection_reason"
+                    control={ control }
+                    render={ ({ field }) =>
+                      <textarea
+                        { ...field }
+                        id="rejection_reason"
+                        rows="10"
+                        className="form-control"
+                      />
+                    }
+                  />
+                </Col>
+              </Row>
+          }
           <Row>
             <Col md={ 8 }>
               <Label for="description">Description</Label>
