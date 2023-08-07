@@ -494,6 +494,7 @@ class ListProbeCandidates(APIView):
                 candidate.service_type = request.data["service_type"]
                 candidate.devel_url = request.data["devel_url"]
                 candidate.production_url = request.data["production_url"]
+                candidate.rejection_reason = request.data["rejection_reason"]
                 candidate.save()
 
                 subject = ""
@@ -539,6 +540,21 @@ You can see the results here: {request.data["devel_url"]}
 The probe will be running in the devel infrastructure for a couple of days, and will be moved to production once we make sure it is working properly.
 
 You will receive final email once the probe has been deployed to production infrastructure.
+
+Best regards,
+ARGO Monitoring team
+"""
+
+                elif request.data["status"] == "rejected":
+                    subject = "[ARGO Monitoring] Probe rejected"
+                    body = f"""
+Dear madam/sir,
+
+the probe '{request.data["name"]}' has been rejected for the following reason:
+
+{request.data["rejection_reason"]}
+
+If you make the necessary changes to the probe, please submit the new version.
 
 Best regards,
 ARGO Monitoring team

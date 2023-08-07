@@ -4565,6 +4565,7 @@ class ListProbeCandidatesTests(TenantTestCase):
             "service_type": "some.service.type",
             "devel_url": "https://test.argo.grnet.gr/ui/status/new",
             "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": ""
         }
         with self.settings(
                 EMAILFROM="no-reply@argo.test.com",
@@ -4632,6 +4633,7 @@ ARGO Monitoring team
                 candidate.production_url,
                 "https://production.argo.grnet.gr/ui/status/new"
             )
+            self.assertEqual(candidate.rejection_reason, "")
 
     def test_put_probe_candidate_deployed_empty_name_superuser(self):
         data = {
@@ -4648,6 +4650,7 @@ ARGO Monitoring team
             "service_type": "some.service.type",
             "devel_url": "https://test.argo.grnet.gr/ui/status/new",
             "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": ""
         }
         with self.settings(
                 EMAILFROM="no-reply@argo.test.com",
@@ -4691,6 +4694,7 @@ ARGO Monitoring team
                 candidate.devel_url, "https://test.argo.grnet.gr/ui/status/test"
             )
             self.assertEqual(candidate.production_url, None)
+            self.assertEqual(candidate.rejection_reason, None)
 
     def test_put_probe_candidate_deployed_empty_production_url_superuser(self):
         data = {
@@ -4706,7 +4710,8 @@ ARGO Monitoring team
             "status": "deployed",
             "service_type": "some.service.type",
             "devel_url": "https://test.argo.grnet.gr/ui/status/new",
-            "production_url": ""
+            "production_url": "",
+            "rejection_reason": ""
         }
         with self.settings(
                 EMAILFROM="no-reply@argo.test.com",
@@ -4753,6 +4758,7 @@ ARGO Monitoring team
                 candidate.devel_url, "https://test.argo.grnet.gr/ui/status/test"
             )
             self.assertEqual(candidate.production_url, None)
+            self.assertEqual(candidate.rejection_reason, None)
 
     def test_put_probe_candidate_processing_superuser(self):
         data = {
@@ -4769,6 +4775,7 @@ ARGO Monitoring team
             "service_type": "some.service.type",
             "devel_url": "https://test.argo.grnet.gr/ui/status/new",
             "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": ""
         }
         with self.settings(
                 EMAILFROM="no-reply@argo.test.com",
@@ -4838,6 +4845,7 @@ ARGO Monitoring team
                 candidate.production_url,
                 "https://production.argo.grnet.gr/ui/status/new"
             )
+            self.assertEqual(candidate.rejection_reason, "")
 
     def test_put_probe_candidate_processing_empty_service_type_superuser(self):
         data = {
@@ -4854,6 +4862,7 @@ ARGO Monitoring team
             "service_type": "",
             "devel_url": "https://test.argo.grnet.gr/ui/status/new",
             "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": ""
         }
         with self.settings(
                 EMAILFROM="no-reply@argo.test.com",
@@ -4900,6 +4909,7 @@ ARGO Monitoring team
                 candidate.devel_url, "https://test.argo.grnet.gr/ui/status/test"
             )
             self.assertEqual(candidate.production_url, None)
+            self.assertEqual(candidate.rejection_reason, None)
 
     def test_put_probe_candidate_testing_superuser(self):
         data = {
@@ -4916,6 +4926,7 @@ ARGO Monitoring team
             "service_type": "some.service.type",
             "devel_url": "https://test.argo.grnet.gr/ui/status/new",
             "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": ""
         }
         with self.settings(
                 EMAILFROM="no-reply@argo.test.com",
@@ -4987,6 +4998,7 @@ ARGO Monitoring team
                 candidate.production_url,
                 "https://production.argo.grnet.gr/ui/status/new"
             )
+            self.assertEqual(candidate.rejection_reason, "")
 
     def test_put_probe_candidate_testing_empty_devel_url_superuser(self):
         data = {
@@ -5003,6 +5015,7 @@ ARGO Monitoring team
             "service_type": "some.service.type",
             "devel_url": "",
             "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": ""
         }
         with self.settings(
                 EMAILFROM="no-reply@argo.test.com",
@@ -5049,9 +5062,94 @@ ARGO Monitoring team
                 candidate.devel_url, "https://test.argo.grnet.gr/ui/status/test"
             )
             self.assertEqual(candidate.production_url, None)
+            self.assertEqual(candidate.rejection_reason, None)
 
     def test_put_probe_candidate_rejected_superuser(self):
-        pass
+        data = {
+            "id": self.candidate1.id,
+            "name": "new-probe",
+            "description": "More detailed description for the new probe",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
+            "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                       "-t <timeout> --test",
+            "contact": "meh@example.com",
+            "status": "rejected",
+            "service_type": "some.service.type",
+            "devel_url": "",
+            "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": "The probe is not stable."
+        }
+        with self.settings(
+                EMAILFROM="no-reply@argo.test.com",
+                EMAILUS="argo@argo.test.com"
+        ):
+            content, content_type = encode_data(data)
+            request = self.factory.put(
+                self.url, content, content_type=content_type
+            )
+            force_authenticate(request, user=self.superuser)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            self.assertEqual(len(mail.outbox), 1)
+            self.assertEqual(
+                mail.outbox[0].subject, "[ARGO Monitoring] Probe rejected"
+            )
+            self.assertEqual(
+                mail.outbox[0].body,
+                """
+Dear madam/sir,
+
+the probe 'new-probe' has been rejected for the following reason:
+
+The probe is not stable.
+
+If you make the necessary changes to the probe, please submit the new version.
+
+Best regards,
+ARGO Monitoring team
+"""
+            )
+            self.assertEqual(
+                mail.outbox[0].from_email, "no-reply@argo.test.com"
+            )
+            self.assertEqual(mail.outbox[0].to, ["meh@example.com"])
+            self.assertEqual(mail.outbox[0].bcc, ["argo@argo.test.com"])
+            candidate = poem_models.ProbeCandidate.objects.get(
+                id=self.candidate1.id
+            )
+            self.assertEqual(candidate.name, "new-probe")
+            self.assertEqual(
+                candidate.description,
+                "More detailed description for the new probe"
+            )
+            self.assertEqual(
+                candidate.docurl,
+                "https://github.com/ARGOeu-Metrics/argo-probe-new"
+            )
+            self.assertEqual(
+                candidate.rpm, "argo-probe-new-0.1.0-1.el7.noarch.rpm"
+            )
+            self.assertEqual(
+                candidate.yum_baseurl, "http://repo.example.com/devel/rocky8/"
+            )
+            self.assertEqual(
+                candidate.command,
+                "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                "-t <timeout> --test"
+            )
+            self.assertEqual(candidate.contact, "poem@example.com")
+            self.assertEqual(candidate.status.name, "rejected")
+            self.assertEqual(candidate.service_type, "some.service.type")
+            self.assertEqual(candidate.devel_url, "")
+            self.assertEqual(
+                candidate.production_url,
+                "https://production.argo.grnet.gr/ui/status/new"
+            )
+            self.assertEqual(
+                candidate.rejection_reason, "The probe is not stable."
+            )
 
     def test_put_probe_candidate_regular_user(self):
         data = {
@@ -5067,7 +5165,8 @@ ARGO Monitoring team
             "status": "deployed",
             "service_type": "some.service.type",
             "devel_url": "https://test.argo.grnet.gr/ui/status/new",
-            "production_url": "https://production.argo.grnet.gr/ui/status/new"
+            "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": ""
         }
         with self.settings(
                 EMAILFROM="no-reply@argo.test.com",
@@ -5114,6 +5213,7 @@ ARGO Monitoring team
                 candidate.devel_url, "https://test.argo.grnet.gr/ui/status/test"
             )
             self.assertEqual(candidate.production_url, None)
+            self.assertEqual(candidate.rejection_reason, None)
 
     def test_put_probe_candidate_nonexisting_id_superuser(self):
         data = {
@@ -5129,7 +5229,8 @@ ARGO Monitoring team
             "status": "deployed",
             "service_type": "some.service.type",
             "devel_url": "https://test.argo.grnet.gr/ui/status/new",
-            "production_url": "https://production.argo.grnet.gr/ui/status/new"
+            "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": ""
         }
         with self.settings(
                 EMAILFROM="no-reply@argo.test.com",
@@ -5161,7 +5262,8 @@ ARGO Monitoring team
             "status": "deployed",
             "service_type": "some.service.type",
             "devel_url": "https://test.argo.grnet.gr/ui/status/new",
-            "production_url": "https://production.argo.grnet.gr/ui/status/new"
+            "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": ""
         }
         with self.settings(
                 EMAILFROM="no-reply@argo.test.com",
@@ -5194,7 +5296,8 @@ ARGO Monitoring team
             "status": "nonexisting",
             "service_type": "some.service.type",
             "devel_url": "https://test.argo.grnet.gr/ui/status/new",
-            "production_url": "https://production.argo.grnet.gr/ui/status/new"
+            "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": ""
         }
         with self.settings(
                 EMAILFROM="no-reply@argo.test.com",
@@ -5240,6 +5343,7 @@ ARGO Monitoring team
                 candidate.devel_url, "https://test.argo.grnet.gr/ui/status/test"
             )
             self.assertEqual(candidate.production_url, None)
+            self.assertEqual(candidate.rejection_reason, None)
 
     def test_put_probe_candidate_nonexisting_status_regular_user(self):
         data = {
@@ -5255,7 +5359,8 @@ ARGO Monitoring team
             "status": "nonexisting",
             "service_type": "some.service.type",
             "devel_url": "https://test.argo.grnet.gr/ui/status/new",
-            "production_url": "https://production.argo.grnet.gr/ui/status/new"
+            "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": ""
         }
         with self.settings(
                 EMAILFROM="no-reply@argo.test.com",
@@ -5302,6 +5407,7 @@ ARGO Monitoring team
                 candidate.devel_url, "https://test.argo.grnet.gr/ui/status/test"
             )
             self.assertEqual(candidate.production_url, None)
+            self.assertEqual(candidate.rejection_reason, None)
 
     def test_put_probe_candidate_missing_key_superuser(self):
         data = {
@@ -5317,6 +5423,7 @@ ARGO Monitoring team
             "service_type": "some.service.type",
             "devel_url": "https://test.argo.grnet.gr/ui/status/new",
             "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": ""
         }
         with self.settings(
                 EMAILFROM="no-reply@argo.test.com",
@@ -5362,6 +5469,7 @@ ARGO Monitoring team
                 candidate.devel_url, "https://test.argo.grnet.gr/ui/status/test"
             )
             self.assertEqual(candidate.production_url, None)
+            self.assertEqual(candidate.rejection_reason, None)
 
     @patch("Poem.api.internal_views.probes.EmailMessage.send")
     def test_put_probe_candidate_superuser_mail_exception(self, mock_send):
@@ -5379,7 +5487,8 @@ ARGO Monitoring team
             "status": "deployed",
             "service_type": "some.service.type",
             "devel_url": "https://test.argo.grnet.gr/ui/status/new",
-            "production_url": "https://production.argo.grnet.gr/ui/status/new"
+            "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": ""
         }
         with self.settings(
                 EMAILFROM="no-reply@argo.test.com",
@@ -5432,6 +5541,7 @@ ARGO Monitoring team
                 candidate.production_url,
                 "https://production.argo.grnet.gr/ui/status/new"
             )
+            self.assertEqual(candidate.rejection_reason, "")
 
 
 class ListProbeCandidateStatuses(TenantTestCase):
