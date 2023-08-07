@@ -4305,7 +4305,9 @@ class ListProbeCandidatesTests(TenantTestCase):
         status_deployed = poem_models.ProbeCandidateStatus.objects.create(
             name="deployed"
         )
-        poem_models.ProbeCandidateStatus.objects.create(name="rejected")
+        status_rejected = poem_models.ProbeCandidateStatus.objects.create(
+            name="rejected"
+        )
         status_processing = poem_models.ProbeCandidateStatus.objects.create(
             name="processing"
         )
@@ -4353,6 +4355,18 @@ class ListProbeCandidatesTests(TenantTestCase):
             service_type="production.service.type",
             production_url="https://production.argo.grnet.gr/ui/status/prod"
         )
+        self.candidate5 = poem_models.ProbeCandidate.objects.create(
+            name="rejected-probe",
+            description="Some description of the probe",
+            docurl="https://github.com/ARGOeu-Metrics/argo-probe-bad",
+            command="/usr/libexec/argo/probes/test/test -H <hostname> "
+                    "-t <timeout>",
+            contact="test@contact.com",
+            status=status_rejected,
+            service_type="test.service.type",
+            devel_url="https://devel.argo.grnet.gr/ui/status/devel",
+            rejection_reason="Probe is not working"
+        )
 
     def test_get_probe_candidates_list_if_not_authenticated(self):
         request = self.factory.get(self.url)
@@ -4383,6 +4397,7 @@ class ListProbeCandidatesTests(TenantTestCase):
                     "devel_url": "",
                     "production_url":
                         "https://production.argo.grnet.gr/ui/status/prod",
+                    "rejection_reason": "",
                     "created":
                         self.candidate4.created.strftime("%Y-%m-%d %H:%M:%S"),
                     "last_update": self.candidate4.last_update.strftime(
@@ -4404,9 +4419,31 @@ class ListProbeCandidatesTests(TenantTestCase):
                     "service_type": "processing.service.type",
                     "devel_url": "",
                     "production_url": "",
+                    "rejection_reason": "",
                     "created":
                         self.candidate3.created.strftime("%Y-%m-%d %H:%M:%S"),
                     "last_update": self.candidate3.last_update.strftime(
+                        "%Y-%m-%d %H:%M:%S")
+                },
+                {
+                    "id": self.candidate5.id,
+                    "name": "rejected-probe",
+                    "description": "Some description of the probe",
+                    "docurl":
+                        "https://github.com/ARGOeu-Metrics/argo-probe-bad",
+                    "rpm": "",
+                    "yum_baseurl": "",
+                    "command": "/usr/libexec/argo/probes/test/test -H "
+                               "<hostname> -t <timeout>",
+                    "contact": "test@contact.com",
+                    "status": "rejected",
+                    "service_type": "test.service.type",
+                    "devel_url": "https://devel.argo.grnet.gr/ui/status/devel",
+                    "production_url": "",
+                    "rejection_reason": "Probe is not working",
+                    "created":
+                        self.candidate5.created.strftime("%Y-%m-%d %H:%M:%S"),
+                    "last_update": self.candidate5.last_update.strftime(
                         "%Y-%m-%d %H:%M:%S")
                 },
                 {
@@ -4425,6 +4462,7 @@ class ListProbeCandidatesTests(TenantTestCase):
                     "service_type": "",
                     "devel_url": "",
                     "production_url": "",
+                    "rejection_reason": "",
                     "created":
                         self.candidate2.created.strftime("%Y-%m-%d %H:%M:%S"),
                     "last_update": self.candidate2.last_update.strftime(
@@ -4445,6 +4483,7 @@ class ListProbeCandidatesTests(TenantTestCase):
                     "service_type": "test.service.type",
                     "devel_url": "https://test.argo.grnet.gr/ui/status/test",
                     "production_url": "",
+                    "rejection_reason": "",
                     "created":
                         self.candidate1.created.strftime("%Y-%m-%d %H:%M:%S"),
                     "last_update": self.candidate1.last_update.strftime(
@@ -4484,6 +4523,7 @@ class ListProbeCandidatesTests(TenantTestCase):
                 "service_type": "test.service.type",
                 "devel_url": "https://test.argo.grnet.gr/ui/status/test",
                 "production_url": "",
+                "rejection_reason": "",
                 "created":
                     self.candidate1.created.strftime("%Y-%m-%d %H:%M:%S"),
                 "last_update":
@@ -4514,9 +4554,39 @@ class ListProbeCandidatesTests(TenantTestCase):
                 "devel_url": "",
                 "production_url":
                     "https://production.argo.grnet.gr/ui/status/prod",
+                "rejection_reason": "",
                 "created":
                     self.candidate4.created.strftime("%Y-%m-%d %H:%M:%S"),
                 "last_update": self.candidate4.last_update.strftime(
+                    "%Y-%m-%d %H:%M:%S")
+            }
+        )
+
+    def test_get_probe_candidate_by_id_with_rejection_superuser(self):
+        request = self.factory.get(f"{self.url}{self.candidate5.id}")
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, self.candidate5.id)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data, {
+                "id": self.candidate5.id,
+                "name": "rejected-probe",
+                "description": "Some description of the probe",
+                "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-bad",
+                "rpm": "",
+                "yum_baseurl": "",
+                "command":
+                    "/usr/libexec/argo/probes/test/test -H <hostname> "
+                    "-t <timeout>",
+                "contact": "test@contact.com",
+                "status": "rejected",
+                "service_type": "test.service.type",
+                "devel_url": "https://devel.argo.grnet.gr/ui/status/devel",
+                "production_url": "",
+                "rejection_reason": "Probe is not working",
+                "created":
+                    self.candidate5.created.strftime("%Y-%m-%d %H:%M:%S"),
+                "last_update": self.candidate5.last_update.strftime(
                     "%Y-%m-%d %H:%M:%S")
             }
         )

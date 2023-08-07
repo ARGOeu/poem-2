@@ -375,31 +375,11 @@ class ListProbeCandidates(APIView):
     def get(self, request, cid=None):
         if request.user.is_superuser:
             if cid:
-                try:
-                    candidate = poem_models.ProbeCandidate.objects.get(id=cid)
-                    results = {
-                        "id": candidate.id,
-                        "name": candidate.name,
-                        "description": candidate.description,
-                        "docurl": candidate.docurl,
-                        "rpm": candidate.rpm,
-                        "yum_baseurl": candidate.yum_baseurl,
-                        "command": candidate.command,
-                        "contact": candidate.contact,
-                        "status": candidate.status.name,
-                        "service_type": candidate.service_type if
-                        candidate.service_type else "",
-                        "devel_url": candidate.devel_url if candidate.devel_url
-                        else "",
-                        "production_url": candidate.production_url if
-                        candidate.production_url else "",
-                        "created":
-                            candidate.created.strftime("%Y-%m-%d %H:%M:%S"),
-                        "last_update":
-                            candidate.last_update.strftime("%Y-%m-%d %H:%M:%S")
-                    }
+                candidates = poem_models.ProbeCandidate.objects.filter(
+                    id=cid
+                )
 
-                except poem_models.ProbeCandidate.DoesNotExist:
+                if len(candidates) == 0:
                     return error_response(
                         status_code=status.HTTP_404_NOT_FOUND,
                         detail="Probe candidate not found"
@@ -408,33 +388,39 @@ class ListProbeCandidates(APIView):
             else:
                 candidates = poem_models.ProbeCandidate.objects.all()
 
-                results = list()
-                for candidate in candidates:
-                    results.append({
-                        "id": candidate.id,
-                        "name": candidate.name,
-                        "description": candidate.description,
-                        "docurl": candidate.docurl,
-                        "rpm": candidate.rpm,
-                        "yum_baseurl": candidate.yum_baseurl,
-                        "command": candidate.command,
-                        "contact": candidate.contact,
-                        "status": candidate.status.name,
-                        "service_type": candidate.service_type if
-                        candidate.service_type else "",
-                        "devel_url": candidate.devel_url if candidate.devel_url
-                        else "",
-                        "production_url": candidate.production_url if
-                        candidate.production_url else "",
-                        "created":
-                            candidate.created.strftime("%Y-%m-%d %H:%M:%S"),
-                        "last_update":
-                            candidate.last_update.strftime("%Y-%m-%d %H:%M:%S")
-                    })
+            results = list()
+            for candidate in candidates:
+                results.append({
+                    "id": candidate.id,
+                    "name": candidate.name,
+                    "description": candidate.description,
+                    "docurl": candidate.docurl,
+                    "rpm": candidate.rpm,
+                    "yum_baseurl": candidate.yum_baseurl,
+                    "command": candidate.command,
+                    "contact": candidate.contact,
+                    "status": candidate.status.name,
+                    "service_type": candidate.service_type if
+                    candidate.service_type else "",
+                    "devel_url": candidate.devel_url if candidate.devel_url
+                    else "",
+                    "production_url": candidate.production_url if
+                    candidate.production_url else "",
+                    "rejection_reason": candidate.rejection_reason if
+                    candidate.rejection_reason else "",
+                    "created":
+                        candidate.created.strftime("%Y-%m-%d %H:%M:%S"),
+                    "last_update":
+                        candidate.last_update.strftime("%Y-%m-%d %H:%M:%S")
+                })
 
-                results = sorted(results, key=lambda k: k["name"])
+            results = sorted(results, key=lambda k: k["name"])
 
-            return Response(results)
+            if cid:
+                return Response(results[0])
+
+            else:
+                return Response(results)
 
         else:
             return error_response(
