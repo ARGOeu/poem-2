@@ -489,12 +489,12 @@ class ListProbeCandidates(APIView):
                 candidate.devel_url = request.data["devel_url"]
                 candidate.production_url = request.data["production_url"]
                 candidate.rejection_reason = request.data["rejection_reason"]
-                candidate.save()
 
                 subject = ""
                 body = ""
 
                 if request.data["status"] == "deployed":
+                    candidate.deployed_sent = True
                     subject = "[ARGO Monitoring] Probe deployed"
                     body = f"""
 Dear madam/sir,
@@ -508,6 +508,7 @@ ARGO Monitoring team
 """
 
                 elif request.data["status"] == "processing":
+                    candidate.processing_sent = True
                     subject = "[ARGO Monitoring] Probe processing"
                     body = f"""
 Dear madam/sir,
@@ -523,6 +524,7 @@ ARGO Monitoring team
 """
 
                 elif request.data["status"] == "testing":
+                    candidate.testing_sent = True
                     subject = "[ARGO Monitoring] Probe testing"
                     body = f"""
 Dear madam/sir,
@@ -540,6 +542,7 @@ ARGO Monitoring team
 """
 
                 elif request.data["status"] == "rejected":
+                    candidate.rejected_sent = True
                     subject = "[ARGO Monitoring] Probe rejected"
                     body = f"""
 Dear madam/sir,
@@ -565,8 +568,10 @@ ARGO Monitoring team
                         )
 
                         mail.send(fail_silently=False)
+                        candidate.save()
 
                     except Exception as e:
+                        candidate.save()
                         return Response({
                             "warning": f"Probe candidate has been successfully "
                                        f"modified, but the email was not sent: "

@@ -4322,6 +4322,9 @@ class ListProbeCandidatesTests(TenantTestCase):
                     "-t <timeout> --test",
             contact="poem@example.com",
             status=status_testing,
+            submitted_sent=True,
+            processing_sent=True,
+            testing_sent=True,
             service_type="test.service.type",
             devel_url="https://test.argo.grnet.gr/ui/status/test"
         )
@@ -4332,7 +4335,8 @@ class ListProbeCandidatesTests(TenantTestCase):
             command="/usr/libexec/argo/probes/test/test-probe -H <hostname> "
                     "-t <timeout> --test --flag1 --flag2",
             contact="poem@example.com",
-            status=status_submitted
+            status=status_submitted,
+            submitted_sent=True
         )
         self.candidate3 = poem_models.ProbeCandidate.objects.create(
             name="processing-probe",
@@ -4342,6 +4346,8 @@ class ListProbeCandidatesTests(TenantTestCase):
                     "-t <timeout> --test --flag1 --flag2 --flag3",
             contact="poem@example.com",
             status=status_processing,
+            submitted_sent=True,
+            processing_sent=True,
             service_type="processing.service.type"
         )
         self.candidate4 = poem_models.ProbeCandidate.objects.create(
@@ -4352,6 +4358,10 @@ class ListProbeCandidatesTests(TenantTestCase):
                     "-t <timeout> --prod",
             contact="poem@example.com",
             status=status_deployed,
+            submitted_sent=True,
+            processing_sent=True,
+            testing_sent=True,
+            deployed_sent=True,
             service_type="production.service.type",
             production_url="https://production.argo.grnet.gr/ui/status/prod"
         )
@@ -4363,6 +4373,10 @@ class ListProbeCandidatesTests(TenantTestCase):
                     "-t <timeout>",
             contact="test@contact.com",
             status=status_rejected,
+            submitted_sent=True,
+            processing_sent=True,
+            testing_sent=True,
+            rejected_sent=True,
             service_type="test.service.type",
             devel_url="https://devel.argo.grnet.gr/ui/status/devel",
             rejection_reason="Probe is not working"
@@ -4704,6 +4718,11 @@ ARGO Monitoring team
                 "https://production.argo.grnet.gr/ui/status/new"
             )
             self.assertEqual(candidate.rejection_reason, "")
+            self.assertTrue(candidate.submitted_sent)
+            self.assertTrue(candidate.processing_sent)
+            self.assertTrue(candidate.testing_sent)
+            self.assertTrue(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
 
     def test_put_probe_candidate_deployed_empty_name_superuser(self):
         data = {
@@ -4765,6 +4784,11 @@ ARGO Monitoring team
             )
             self.assertEqual(candidate.production_url, None)
             self.assertEqual(candidate.rejection_reason, None)
+            self.assertTrue(candidate.submitted_sent)
+            self.assertTrue(candidate.processing_sent)
+            self.assertTrue(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
 
     def test_put_probe_candidate_deployed_empty_production_url_superuser(self):
         data = {
@@ -4829,10 +4853,15 @@ ARGO Monitoring team
             )
             self.assertEqual(candidate.production_url, None)
             self.assertEqual(candidate.rejection_reason, None)
+            self.assertTrue(candidate.submitted_sent)
+            self.assertTrue(candidate.processing_sent)
+            self.assertTrue(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
 
     def test_put_probe_candidate_processing_superuser(self):
         data = {
-            "id": self.candidate1.id,
+            "id": self.candidate2.id,
             "name": "new-probe",
             "description": "More detailed description for the new probe",
             "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
@@ -4883,7 +4912,7 @@ ARGO Monitoring team
             self.assertEqual(mail.outbox[0].to, ["meh@example.com"])
             self.assertEqual(mail.outbox[0].bcc, ["argo@argo.test.com"])
             candidate = poem_models.ProbeCandidate.objects.get(
-                id=self.candidate1.id
+                id=self.candidate2.id
             )
             self.assertEqual(candidate.name, "new-probe")
             self.assertEqual(
@@ -4916,10 +4945,15 @@ ARGO Monitoring team
                 "https://production.argo.grnet.gr/ui/status/new"
             )
             self.assertEqual(candidate.rejection_reason, "")
+            self.assertTrue(candidate.submitted_sent)
+            self.assertTrue(candidate.processing_sent)
+            self.assertFalse(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
 
     def test_put_probe_candidate_processing_empty_service_type_superuser(self):
         data = {
-            "id": self.candidate1.id,
+            "id": self.candidate2.id,
             "name": "new-probe",
             "description": "More detailed description for the new probe",
             "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
@@ -4951,39 +4985,36 @@ ARGO Monitoring team
             )
             self.assertEqual(len(mail.outbox), 0)
             candidate = poem_models.ProbeCandidate.objects.get(
-                id=self.candidate1.id
+                id=self.candidate2.id
             )
-            self.assertEqual(candidate.name, "test-probe")
-            self.assertEqual(
-                candidate.description, "Some description for the test probe"
-            )
+            self.assertEqual(candidate.name, "submitted-probe")
+            self.assertEqual(candidate.description, "Description of the probe")
             self.assertEqual(
                 candidate.docurl,
                 "https://github.com/ARGOeu-Metrics/argo-probe-test"
             )
-            self.assertEqual(
-                candidate.rpm, "argo-probe-test-0.1.0-1.el7.noarch.rpm"
-            )
-            self.assertEqual(
-                candidate.yum_baseurl, "http://repo.example.com/devel/centos7/"
-            )
+            self.assertEqual(candidate.rpm, "")
+            self.assertEqual(candidate.yum_baseurl, "")
             self.assertEqual(
                 candidate.command,
                 "/usr/libexec/argo/probes/test/test-probe -H <hostname> "
-                "-t <timeout> --test",
+                "-t <timeout> --test --flag1 --flag2",
             )
             self.assertEqual(candidate.contact, "poem@example.com")
-            self.assertEqual(candidate.status.name, "testing")
-            self.assertEqual(candidate.service_type, "test.service.type")
-            self.assertEqual(
-                candidate.devel_url, "https://test.argo.grnet.gr/ui/status/test"
-            )
+            self.assertEqual(candidate.status.name, "submitted")
+            self.assertEqual(candidate.service_type, None)
+            self.assertEqual(candidate.devel_url, None)
             self.assertEqual(candidate.production_url, None)
             self.assertEqual(candidate.rejection_reason, None)
+            self.assertTrue(candidate.submitted_sent)
+            self.assertFalse(candidate.processing_sent)
+            self.assertFalse(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
 
     def test_put_probe_candidate_testing_superuser(self):
         data = {
-            "id": self.candidate1.id,
+            "id": self.candidate3.id,
             "name": "new-probe",
             "description": "More detailed description for the new probe",
             "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
@@ -5036,7 +5067,7 @@ ARGO Monitoring team
             self.assertEqual(mail.outbox[0].to, ["meh@example.com"])
             self.assertEqual(mail.outbox[0].bcc, ["argo@argo.test.com"])
             candidate = poem_models.ProbeCandidate.objects.get(
-                id=self.candidate1.id
+                id=self.candidate3.id
             )
             self.assertEqual(candidate.name, "new-probe")
             self.assertEqual(
@@ -5069,10 +5100,15 @@ ARGO Monitoring team
                 "https://production.argo.grnet.gr/ui/status/new"
             )
             self.assertEqual(candidate.rejection_reason, "")
+            self.assertTrue(candidate.submitted_sent)
+            self.assertTrue(candidate.processing_sent)
+            self.assertTrue(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
 
     def test_put_probe_candidate_testing_empty_devel_url_superuser(self):
         data = {
-            "id": self.candidate1.id,
+            "id": self.candidate3.id,
             "name": "new-probe",
             "description": "More detailed description for the new probe",
             "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
@@ -5104,35 +5140,34 @@ ARGO Monitoring team
             )
             self.assertEqual(len(mail.outbox), 0)
             candidate = poem_models.ProbeCandidate.objects.get(
-                id=self.candidate1.id
+                id=self.candidate3.id
             )
-            self.assertEqual(candidate.name, "test-probe")
+            self.assertEqual(candidate.name, "processing-probe")
             self.assertEqual(
-                candidate.description, "Some description for the test probe"
+                candidate.description, "Description of the processing probe"
             )
             self.assertEqual(
                 candidate.docurl,
                 "https://github.com/ARGOeu-Metrics/argo-probe-test"
             )
-            self.assertEqual(
-                candidate.rpm, "argo-probe-test-0.1.0-1.el7.noarch.rpm"
-            )
-            self.assertEqual(
-                candidate.yum_baseurl, "http://repo.example.com/devel/centos7/"
-            )
+            self.assertEqual(candidate.rpm, "")
+            self.assertEqual(candidate.yum_baseurl, "")
             self.assertEqual(
                 candidate.command,
                 "/usr/libexec/argo/probes/test/test-probe -H <hostname> "
-                "-t <timeout> --test"
+                "-t <timeout> --test --flag1 --flag2 --flag3"
             )
             self.assertEqual(candidate.contact, "poem@example.com")
-            self.assertEqual(candidate.status.name, "testing")
-            self.assertEqual(candidate.service_type, "test.service.type")
-            self.assertEqual(
-                candidate.devel_url, "https://test.argo.grnet.gr/ui/status/test"
-            )
+            self.assertEqual(candidate.status.name, "processing")
+            self.assertEqual(candidate.service_type, "processing.service.type")
+            self.assertEqual(candidate.devel_url, None)
             self.assertEqual(candidate.production_url, None)
             self.assertEqual(candidate.rejection_reason, None)
+            self.assertTrue(candidate.submitted_sent)
+            self.assertTrue(candidate.processing_sent)
+            self.assertFalse(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
 
     def test_put_probe_candidate_rejected_superuser(self):
         data = {
@@ -5220,6 +5255,11 @@ ARGO Monitoring team
             self.assertEqual(
                 candidate.rejection_reason, "The probe is not stable."
             )
+            self.assertTrue(candidate.submitted_sent)
+            self.assertTrue(candidate.processing_sent)
+            self.assertTrue(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertTrue(candidate.rejected_sent)
 
     def test_put_probe_candidate_rejected_empty_reason_superuser(self):
 
@@ -5285,6 +5325,11 @@ ARGO Monitoring team
             )
             self.assertEqual(candidate.production_url, None)
             self.assertEqual(candidate.rejection_reason, None)
+            self.assertTrue(candidate.submitted_sent)
+            self.assertTrue(candidate.processing_sent)
+            self.assertTrue(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
 
     def test_put_probe_candidate_regular_user(self):
         data = {
@@ -5349,6 +5394,11 @@ ARGO Monitoring team
             )
             self.assertEqual(candidate.production_url, None)
             self.assertEqual(candidate.rejection_reason, None)
+            self.assertTrue(candidate.submitted_sent)
+            self.assertTrue(candidate.processing_sent)
+            self.assertTrue(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
 
     def test_put_probe_candidate_nonexisting_id_superuser(self):
         data = {
@@ -5479,6 +5529,11 @@ ARGO Monitoring team
             )
             self.assertEqual(candidate.production_url, None)
             self.assertEqual(candidate.rejection_reason, None)
+            self.assertTrue(candidate.submitted_sent)
+            self.assertTrue(candidate.processing_sent)
+            self.assertTrue(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
 
     def test_put_probe_candidate_nonexisting_status_regular_user(self):
         data = {
@@ -5543,6 +5598,11 @@ ARGO Monitoring team
             )
             self.assertEqual(candidate.production_url, None)
             self.assertEqual(candidate.rejection_reason, None)
+            self.assertTrue(candidate.submitted_sent)
+            self.assertTrue(candidate.processing_sent)
+            self.assertTrue(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
 
     def test_put_probe_candidate_missing_key_superuser(self):
         data = {
@@ -5605,6 +5665,11 @@ ARGO Monitoring team
             )
             self.assertEqual(candidate.production_url, None)
             self.assertEqual(candidate.rejection_reason, None)
+            self.assertTrue(candidate.submitted_sent)
+            self.assertTrue(candidate.processing_sent)
+            self.assertTrue(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
 
     @patch("Poem.api.internal_views.probes.EmailMessage.send")
     def test_put_probe_candidate_superuser_mail_exception(self, mock_send):
@@ -5677,6 +5742,11 @@ ARGO Monitoring team
                 "https://production.argo.grnet.gr/ui/status/new"
             )
             self.assertEqual(candidate.rejection_reason, "")
+            self.assertTrue(candidate.submitted_sent)
+            self.assertTrue(candidate.processing_sent)
+            self.assertTrue(candidate.testing_sent)
+            self.assertTrue(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
 
 
 class ListProbeCandidateStatuses(TenantTestCase):
