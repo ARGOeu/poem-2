@@ -1602,6 +1602,9 @@ class ProbeCandidateAPITests(TenantTestCase):
                     "-t <timeout> --test",
             contact="poem@example.com",
             status=testing_status,
+            submitted_sent=True,
+            processing_sent=True,
+            testing_sent=True,
             service_type="testing.service.type"
         )
         self.candidate2 = poem_models.ProbeCandidate.objects.create(
@@ -1611,7 +1614,8 @@ class ProbeCandidateAPITests(TenantTestCase):
             command="/usr/libexec/argo/probes/test/test-probe -H <hostname> "
                     "-t <timeout> --test --flag1 --flag2",
             contact="poem@example.com",
-            status=submitted_status
+            status=submitted_status,
+            submitted_sent=True
         )
 
     def test_get_probe_candidates_without_proper_authentication(self):
@@ -1724,6 +1728,11 @@ ARGO Monitoring team
             )
             self.assertEqual(candidate.contact, "poem@example.com")
             self.assertEqual(candidate.status.name, "submitted")
+            self.assertTrue(candidate.submitted_sent)
+            self.assertFalse(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
+            self.assertFalse(candidate.processing_sent)
 
     def test_post_probe_candidate_successfully_different_timeout_arg(self):
         data = {
@@ -1801,6 +1810,11 @@ ARGO Monitoring team
             )
             self.assertEqual(candidate.contact, "poem@example.com")
             self.assertEqual(candidate.status.name, "submitted")
+            self.assertTrue(candidate.submitted_sent)
+            self.assertFalse(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
+            self.assertFalse(candidate.processing_sent)
 
     def test_post_probe_candidate_with_existing_name(self):
         data = {
@@ -1891,6 +1905,16 @@ ARGO Monitoring team
             self.assertEqual(candidate[1].contact, "test@example.com")
             self.assertEqual(candidate[0].status.name, "testing")
             self.assertEqual(candidate[1].status.name, "submitted")
+            self.assertTrue(candidate[0].submitted_sent)
+            self.assertTrue(candidate[1].submitted_sent)
+            self.assertTrue(candidate[0].testing_sent)
+            self.assertFalse(candidate[1].testing_sent)
+            self.assertFalse(candidate[0].deployed_sent)
+            self.assertFalse(candidate[1].deployed_sent)
+            self.assertFalse(candidate[0].rejected_sent)
+            self.assertFalse(candidate[1].rejected_sent)
+            self.assertTrue(candidate[0].processing_sent)
+            self.assertFalse(candidate[1].processing_sent)
 
     def test_post_probe_candidate_with_missing_name(self):
         data = {
@@ -2018,6 +2042,11 @@ ARGO Monitoring team
             )
             self.assertEqual(candidate.contact, "poem@example.com")
             self.assertEqual(candidate.status.name, "submitted")
+            self.assertTrue(candidate.submitted_sent)
+            self.assertFalse(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
+            self.assertFalse(candidate.processing_sent)
 
     def test_post_probe_candidate_with_empty_description(self):
         data = {
@@ -2089,6 +2118,11 @@ ARGO Monitoring team
             )
             self.assertEqual(candidate.contact, "poem@example.com")
             self.assertEqual(candidate.status.name, "submitted")
+            self.assertTrue(candidate.submitted_sent)
+            self.assertFalse(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
+            self.assertFalse(candidate.processing_sent)
 
     def test_post_probe_candidate_with_missing_docurl(self):
         data = {
@@ -2268,6 +2302,11 @@ ARGO Monitoring team
             )
             self.assertEqual(candidate.contact, "poem@example.com")
             self.assertEqual(candidate.status.name, "submitted")
+            self.assertTrue(candidate.submitted_sent)
+            self.assertFalse(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
+            self.assertFalse(candidate.processing_sent)
 
     def test_post_probe_candidate_with_empty_rpm(self):
         data = {
@@ -2343,6 +2382,11 @@ ARGO Monitoring team
             )
             self.assertEqual(candidate.contact, "poem@example.com")
             self.assertEqual(candidate.status.name, "submitted")
+            self.assertTrue(candidate.submitted_sent)
+            self.assertFalse(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
+            self.assertFalse(candidate.processing_sent)
 
     def test_post_probe_candidate_with_missing_yum_baseurl(self):
         data = {
@@ -2417,6 +2461,11 @@ ARGO Monitoring team
             )
             self.assertEqual(candidate.contact, "poem@example.com")
             self.assertEqual(candidate.status.name, "submitted")
+            self.assertTrue(candidate.submitted_sent)
+            self.assertFalse(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
+            self.assertFalse(candidate.processing_sent)
 
     def test_post_probe_candidate_with_empty_yum_baseurl(self):
         data = {
@@ -2492,6 +2541,11 @@ ARGO Monitoring team
             )
             self.assertEqual(candidate.contact, "poem@example.com")
             self.assertEqual(candidate.status.name, "submitted")
+            self.assertTrue(candidate.submitted_sent)
+            self.assertFalse(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
+            self.assertFalse(candidate.processing_sent)
 
     def test_post_probe_candidate_with_invalid_yum_baseurl(self):
         data = {

@@ -560,7 +560,8 @@ class ProbeCandidateAPI(APIView):
                     contact=request.data["contact"],
                     status=models.ProbeCandidateStatus.objects.get(
                         name="submitted"
-                    )
+                    ),
+                    submitted_sent=True
                 )
 
                 body = f"""
