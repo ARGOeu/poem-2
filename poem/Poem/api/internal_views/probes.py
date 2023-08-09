@@ -482,6 +482,7 @@ class ListProbeCandidates(APIView):
                 candidate.docurl = request.data["docurl"]
                 candidate.rpm = request.data["rpm"]
                 candidate.yum_baseurl = request.data["yum_baseurl"]
+                candidate.script = request.data["script"]
                 candidate.command = request.data["command"]
                 candidate.status = poem_models.ProbeCandidateStatus.objects.get(
                     name=request.data["status"]
