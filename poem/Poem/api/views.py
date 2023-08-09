@@ -471,25 +471,25 @@ class ProbeCandidateAPI(APIView):
     def post(self, request):
         if "name" not in request.data or not request.data["name"]:
             return error_response(
-                detail="Name field is mandatory",
+                detail="Field 'name' is mandatory",
                 status_code=status.HTTP_400_BAD_REQUEST
             )
 
         elif "docurl" not in request.data or not request.data["docurl"]:
             return error_response(
-                detail="Docurl field is mandatory",
+                detail="Field 'docurl' is mandatory",
                 status_code=status.HTTP_400_BAD_REQUEST
             )
 
         elif "command" not in request.data or not request.data["command"]:
             return error_response(
-                detail="Command field is mandatory",
+                detail="Field 'command' is mandatory",
                 status_code=status.HTTP_400_BAD_REQUEST
             )
 
         elif "contact" not in request.data or not request.data["contact"]:
             return error_response(
-                detail="Contact field is mandatory",
+                detail="Field 'contact' is mandatory",
                 status_code=status.HTTP_400_BAD_REQUEST
             )
 
@@ -510,13 +510,25 @@ class ProbeCandidateAPI(APIView):
             if "script" in request.data:
                 script = request.data["script"]
 
+            if not (rpm or script):
+                return error_response(
+                    detail="You must provide either 'rpm' or 'script' field",
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
+
+            elif rpm and not yum_baseurl:
+                return error_response(
+                    detail="Field 'yum_baseurl' is mandatory with 'rpm' field",
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
+
             url_validator = URLValidator()
             try:
                 url_validator(request.data["docurl"])
 
             except ValidationError:
                 return error_response(
-                    detail="Docurl field must be defined as valid URL",
+                    detail="Field 'docurl' must be defined as valid URL",
                     status_code=status.HTTP_400_BAD_REQUEST
                 )
 
@@ -526,7 +538,7 @@ class ProbeCandidateAPI(APIView):
 
             except ValidationError:
                 return error_response(
-                    detail="Yum_baseurl field must be defined as valid URL",
+                    detail="Field 'yum_baseurl' must be defined as valid URL",
                     status_code=status.HTTP_400_BAD_REQUEST
                 )
 
@@ -536,7 +548,7 @@ class ProbeCandidateAPI(APIView):
 
             except ValidationError:
                 return error_response(
-                    detail="Script field must be defined as valid URL",
+                    detail="Field 'script' must be defined as valid URL",
                     status_code=status.HTTP_400_BAD_REQUEST
                 )
 
@@ -546,7 +558,7 @@ class ProbeCandidateAPI(APIView):
 
             except ValidationError:
                 return error_response(
-                    detail="Contact field is not valid email",
+                    detail="Field 'contact' is not valid email",
                     status_code=status.HTTP_400_BAD_REQUEST
                 )
 
@@ -556,7 +568,8 @@ class ProbeCandidateAPI(APIView):
 
             if "-t" not in split_command and "--timeout" not in split_command:
                 return error_response(
-                    detail="Command must have -t/--timeout argument. "
+                    detail="Invalid 'command' field. Command must have "
+                           "-t/--timeout argument. "
                            "Please refer to the probe development guidelines: "
                            "https://argoeu.github.io/argo-monitoring/docs/"
                            "monitoring/guidelines",
