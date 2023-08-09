@@ -497,6 +497,7 @@ class ProbeCandidateAPI(APIView):
             description = ""
             yum_baseurl = ""
             rpm = ""
+            script = ""
             if "description" in request.data:
                 description = request.data["description"]
 
@@ -505,6 +506,9 @@ class ProbeCandidateAPI(APIView):
 
             if "rpm" in request.data:
                 rpm = request.data["rpm"]
+
+            if "script" in request.data:
+                script = request.data["script"]
 
             url_validator = URLValidator()
             try:
@@ -556,6 +560,7 @@ class ProbeCandidateAPI(APIView):
                     docurl=request.data["docurl"],
                     rpm=rpm,
                     yum_baseurl=yum_baseurl,
+                    script=script,
                     command=request.data["command"],
                     contact=request.data["contact"],
                     status=models.ProbeCandidateStatus.objects.get(

@@ -1652,7 +1652,7 @@ class ProbeCandidateAPITests(TenantTestCase):
             ]
         )
 
-    def test_post_probe_candidate_successfully(self):
+    def test_post_probe_candidate_successfully_with_rpm(self):
         data = {
             "name": "poem-probe",
             "description":
@@ -1720,6 +1720,87 @@ ARGO Monitoring team
             )
             self.assertEqual(
                 candidate.yum_baseurl, "https://rpm-repo.example.com/centos7"
+            )
+            self.assertEqual(candidate.script, "")
+            self.assertEqual(
+                candidate.command,
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test"
+            )
+            self.assertEqual(candidate.contact, "poem@example.com")
+            self.assertEqual(candidate.status.name, "submitted")
+            self.assertTrue(candidate.submitted_sent)
+            self.assertFalse(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
+            self.assertFalse(candidate.processing_sent)
+
+    def test_post_probe_candidate_successfully_with_script(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "script": "https://some-mock.url.com/script",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@example.com"
+        }
+        with self.settings(
+                EMAILFROM="no-reply@argo.test.com",
+                EMAILUS="argo@argo.test.com"
+        ):
+            request = self.factory.post(
+                self.url, **{'HTTP_X_API_KEY': self.token},
+                data=data,
+                format="json"
+            )
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            self.assertEqual(
+                response.data["detail"],
+                "Probe 'poem-probe' POSTed successfully"
+            )
+            self.assertEqual(len(mail.outbox), 1)
+            self.assertEqual(
+                mail.outbox[0].subject, "[ARGO Monitoring] Probe submitted"
+            )
+            self.assertEqual(
+                mail.outbox[0].body,
+                """
+Dear madam/sir,
+
+your probe 'poem-probe' has been successfully submitted. 
+
+You will receive further instructions after the probe has been inspected.
+
+Best regards,
+ARGO Monitoring team
+"""
+            )
+            self.assertEqual(
+                mail.outbox[0].from_email, "no-reply@argo.test.com"
+            )
+            self.assertEqual(mail.outbox[0].to, ["poem@example.com"])
+            self.assertEqual(mail.outbox[0].bcc, ["argo@argo.test.com"])
+            candidate = poem_models.ProbeCandidate.objects.get(
+                name="poem-probe"
+            )
+            self.assertEqual(
+                candidate.description,
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs"
+            )
+            self.assertEqual(
+                candidate.docurl,
+                "https://github.com/ARGOeu-Metrics/argo-probe-poem"
+            )
+            self.assertEqual(candidate.rpm, "")
+            self.assertEqual(candidate.yum_baseurl, "")
+            self.assertEqual(
+                candidate.script, "https://some-mock.url.com/script"
             )
             self.assertEqual(
                 candidate.command,
@@ -1803,6 +1884,7 @@ ARGO Monitoring team
             self.assertEqual(
                 candidate.yum_baseurl, "https://rpm-repo.example.com/centos7"
             )
+            self.assertEqual(candidate.script, "")
             self.assertEqual(
                 candidate.command,
                 "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
@@ -1891,6 +1973,8 @@ ARGO Monitoring team
             self.assertEqual(
                 candidate[1].yum_baseurl, "https://rpm-repo.example.com/centos7"
             )
+            self.assertEqual(candidate[0].script, None)
+            self.assertEqual(candidate[1].script, "")
             self.assertEqual(
                 candidate[0].command,
                 "/usr/libexec/argo/probes/test/test-probe -H <hostname> "
@@ -2035,6 +2119,7 @@ ARGO Monitoring team
             self.assertEqual(
                 candidate.yum_baseurl, "https://rpm-repo.example.com/centos7"
             )
+            self.assertEqual(candidate.script, "")
             self.assertEqual(
                 candidate.command,
                 "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
@@ -2111,6 +2196,7 @@ ARGO Monitoring team
             self.assertEqual(
                 candidate.yum_baseurl, "https://rpm-repo.example.com/centos7"
             )
+            self.assertEqual(candidate.script, "")
             self.assertEqual(
                 candidate.command,
                 "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
@@ -2295,6 +2381,7 @@ ARGO Monitoring team
             self.assertEqual(
                 candidate.yum_baseurl, "https://rpm-repo.example.com/centos7"
             )
+            self.assertEqual(candidate.script, "")
             self.assertEqual(
                 candidate.command,
                 "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
@@ -2375,6 +2462,7 @@ ARGO Monitoring team
             self.assertEqual(
                 candidate.yum_baseurl, "https://rpm-repo.example.com/centos7"
             )
+            self.assertEqual(candidate.script, "")
             self.assertEqual(
                 candidate.command,
                 "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
@@ -2454,6 +2542,7 @@ ARGO Monitoring team
                 candidate.rpm, "argo-probe-poem-0.1.0-1.el7.noarch.rpm"
             )
             self.assertEqual(candidate.yum_baseurl, "")
+            self.assertEqual(candidate.script, "")
             self.assertEqual(
                 candidate.command,
                 "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
@@ -2534,6 +2623,7 @@ ARGO Monitoring team
                 candidate.rpm, "argo-probe-poem-0.1.0-1.el7.noarch.rpm"
             )
             self.assertEqual(candidate.yum_baseurl, "")
+            self.assertEqual(candidate.script, "")
             self.assertEqual(
                 candidate.command,
                 "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
