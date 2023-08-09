@@ -668,6 +668,7 @@ export const ProbeCandidateChange = (props) => {
       docurl: values.docurl,
       rpm: values.rpm,
       yum_baseurl: values.yum_baseurl,
+      script: values.script,
       command: values.command,
       contact: values.contact,
       status: values.status,
