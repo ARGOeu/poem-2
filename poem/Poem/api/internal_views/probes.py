@@ -397,6 +397,7 @@ class ListProbeCandidates(APIView):
                     "docurl": candidate.docurl,
                     "rpm": candidate.rpm,
                     "yum_baseurl": candidate.yum_baseurl,
+                    "script": candidate.script if candidate.script else "",
                     "command": candidate.command,
                     "contact": candidate.contact,
                     "status": candidate.status.name,
