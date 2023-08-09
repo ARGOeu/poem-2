@@ -2389,6 +2389,89 @@ ARGO Monitoring team
                 name="poem-probe"
             )
 
+    def test_post_probe_candidate_successfully_with_rpm_as_url_and_no_yum(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "rpm": "https://rpm-repo.example.com/centos7/"
+                   "argo-probe-poem-0.1.0-1.el7.noarch.rpm",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@example.com"
+        }
+        with self.settings(
+                EMAILFROM="no-reply@argo.test.com",
+                EMAILUS="argo@argo.test.com"
+        ):
+            request = self.factory.post(
+                self.url, **{'HTTP_X_API_KEY': self.token},
+                data=data,
+                format="json"
+            )
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            self.assertEqual(
+                response.data["detail"],
+                "Probe 'poem-probe' POSTed successfully"
+            )
+            self.assertEqual(len(mail.outbox), 1)
+            self.assertEqual(
+                mail.outbox[0].subject, "[ARGO Monitoring] Probe submitted"
+            )
+            self.assertEqual(
+                mail.outbox[0].body,
+                """
+Dear madam/sir,
+
+your probe 'poem-probe' has been successfully submitted. 
+
+You will receive further instructions after the probe has been inspected.
+
+Best regards,
+ARGO Monitoring team
+"""
+            )
+            self.assertEqual(
+                mail.outbox[0].from_email, "no-reply@argo.test.com"
+            )
+            self.assertEqual(mail.outbox[0].to, ["poem@example.com"])
+            self.assertEqual(mail.outbox[0].bcc, ["argo@argo.test.com"])
+            candidate = poem_models.ProbeCandidate.objects.get(
+                name="poem-probe"
+            )
+            self.assertEqual(
+                candidate.description,
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs"
+            )
+            self.assertEqual(
+                candidate.docurl,
+                "https://github.com/ARGOeu-Metrics/argo-probe-poem"
+            )
+            self.assertEqual(
+                candidate.rpm,
+                "https://rpm-repo.example.com/centos7/"
+                "argo-probe-poem-0.1.0-1.el7.noarch.rpm"
+            )
+            self.assertEqual(candidate.yum_baseurl, "")
+            self.assertEqual(candidate.script, "")
+            self.assertEqual(
+                candidate.command,
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test"
+            )
+            self.assertEqual(candidate.contact, "poem@example.com")
+            self.assertEqual(candidate.status.name, "submitted")
+            self.assertTrue(candidate.submitted_sent)
+            self.assertFalse(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
+            self.assertFalse(candidate.processing_sent)
+
     def test_post_probe_candidate_with_missing_yum_baseurl(self):
         data = {
             "name": "poem-probe",
@@ -2415,7 +2498,8 @@ ARGO Monitoring team
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
             self.assertEqual(
                 response.data["detail"],
-                "Field 'yum_baseurl' is mandatory with 'rpm' field"
+                "Field 'yum_baseurl' is mandatory with 'rpm' field, unless "
+                "'rpm' field is defined as valid URL"
             )
             self.assertEqual(len(mail.outbox), 0)
             self.assertRaises(
@@ -2451,7 +2535,8 @@ ARGO Monitoring team
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
             self.assertEqual(
                 response.data["detail"],
-                "Field 'yum_baseurl' is mandatory with 'rpm' field"
+                "Field 'yum_baseurl' is mandatory with 'rpm' field, unless "
+                "'rpm' field is defined as valid URL"
             )
             self.assertEqual(len(mail.outbox), 0)
             self.assertRaises(

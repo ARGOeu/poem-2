@@ -516,12 +516,6 @@ class ProbeCandidateAPI(APIView):
                     status_code=status.HTTP_400_BAD_REQUEST
                 )
 
-            elif rpm and not yum_baseurl:
-                return error_response(
-                    detail="Field 'yum_baseurl' is mandatory with 'rpm' field",
-                    status_code=status.HTTP_400_BAD_REQUEST
-                )
-
             url_validator = URLValidator()
             try:
                 url_validator(request.data["docurl"])
@@ -531,6 +525,19 @@ class ProbeCandidateAPI(APIView):
                     detail="Field 'docurl' must be defined as valid URL",
                     status_code=status.HTTP_400_BAD_REQUEST
                 )
+
+            try:
+                if rpm:
+                    url_validator(rpm)
+
+            except ValidationError:
+                if rpm and not yum_baseurl:
+                    return error_response(
+                        detail="Field 'yum_baseurl' is mandatory with 'rpm' "
+                               "field, unless 'rpm' field is defined as valid "
+                               "URL",
+                        status_code=status.HTTP_400_BAD_REQUEST
+                    )
 
             try:
                 if yum_baseurl:
