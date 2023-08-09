@@ -2673,6 +2673,41 @@ ARGO Monitoring team
                 name="poem-probe"
             )
 
+    def test_post_probe_candidate_with_invalid_script(self):
+        data = {
+            "name": "poem-probe",
+            "description":
+                "Probe is checking mandatory metric configurations of Tenant "
+                "POEMs",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-poem",
+            "script": "some-test-script",
+            "command":
+                "/usr/libexec/argo/probes/poem/poem-probe -H <hostname> "
+                "-t <timeout> --test",
+            "contact": "poem@example.com"
+        }
+        with self.settings(
+                EMAILFROM="no-reply@argo.test.com",
+                EMAILUS="argo@argo.test.com"
+        ):
+            request = self.factory.post(
+                self.url, **{'HTTP_X_API_KEY': self.token},
+                data=data,
+                format="json"
+            )
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(
+                response.data["detail"],
+                "Script field must be defined as valid URL"
+            )
+            self.assertEqual(len(mail.outbox), 0)
+            self.assertRaises(
+                poem_models.ProbeCandidate.DoesNotExist,
+                poem_models.ProbeCandidate.objects.get,
+                name="poem-probe"
+            )
+
     def test_post_probe_candidate_with_missing_command(self):
         data = {
             "name": "poem-probe",

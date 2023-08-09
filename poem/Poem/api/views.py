@@ -530,6 +530,16 @@ class ProbeCandidateAPI(APIView):
                     status_code=status.HTTP_400_BAD_REQUEST
                 )
 
+            try:
+                if script:
+                    url_validator(script)
+
+            except ValidationError:
+                return error_response(
+                    detail="Script field must be defined as valid URL",
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
+
             email_validator = EmailValidator()
             try:
                 email_validator(request.data["contact"])
