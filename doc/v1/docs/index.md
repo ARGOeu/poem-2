@@ -8,6 +8,7 @@
 - [YUM repos](superadmin_repos.md)
 - [Packages](superadmin_packages.md)
 - [Probes](superadmin_probe.md)
+- [Metric tags](superadmin_metric_tags.md)
 - [Metric templates](superadmin_metric_templates.md)
 
 ## Tenant POEM
