@@ -15,6 +15,7 @@
 ## Tenant POEM
 - [User interface](tenant_ui.md)
 - [Administration](tenant_administration.md)
+    - [Metric configuration overrides](tenant_metric_overrides.md)
     - [Users](tenant_users.md)
     - [Groups of resources](tenant_groups_of_resources.md)
     - [Packages](tenant_packages.md)
