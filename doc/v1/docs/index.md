@@ -19,7 +19,6 @@
     - [Users](tenant_users.md)
     - [Groups of resources](tenant_groups_of_resources.md)
     - [Packages](tenant_packages.md)
-    - [Metric templates](tenant_metric_templates.md)
 - [Probes](tenant_probes.md)
 - [Metrics](tenant_metrics.md)
 - [Reports](tenant_reports.md)
