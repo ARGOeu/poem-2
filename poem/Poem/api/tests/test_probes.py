@@ -4302,7 +4302,9 @@ class ListProbeCandidatesTests(TenantTestCase):
         )
         poem_models.ProbeCandidateStatus.objects.create(name="deployed")
         poem_models.ProbeCandidateStatus.objects.create(name="rejected")
-        poem_models.ProbeCandidateStatus.objects.create(name="processing")
+        status_processing = poem_models.ProbeCandidateStatus.objects.create(
+            name="processing"
+        )
 
         self.candidate1 = poem_models.ProbeCandidate.objects.create(
             name="test-probe",
@@ -4314,16 +4316,27 @@ class ListProbeCandidatesTests(TenantTestCase):
                     "-t <timeout> --test",
             contact="poem@example.com",
             status=status_testing,
-            service_type="test.service.type"
+            service_type="test.service.type",
+            devel_url="https://test.argo.grnet.gr/ui/status/test"
         )
         self.candidate2 = poem_models.ProbeCandidate.objects.create(
-            name="some-probe",
+            name="submitted-probe",
             description="Description of the probe",
             docurl="https://github.com/ARGOeu-Metrics/argo-probe-test",
             command="/usr/libexec/argo/probes/test/test-probe -H <hostname> "
                     "-t <timeout> --test --flag1 --flag2",
             contact="poem@example.com",
             status=status_submitted
+        )
+        self.candidate3 = poem_models.ProbeCandidate.objects.create(
+            name="processing-probe",
+            description="Description of the processing probe",
+            docurl="https://github.com/ARGOeu-Metrics/argo-probe-test",
+            command="/usr/libexec/argo/probes/test/test-probe -H <hostname> "
+                    "-t <timeout> --test --flag1 --flag2 --flag3",
+            contact="poem@example.com",
+            status=status_processing,
+            service_type="processing.service.type"
         )
 
     def test_get_probe_candidates_list_if_not_authenticated(self):
@@ -4339,8 +4352,28 @@ class ListProbeCandidatesTests(TenantTestCase):
         self.assertEqual(
             response.data, [
                 {
+                    "id": self.candidate3.id,
+                    "name": "processing-probe",
+                    "description": "Description of the processing probe",
+                    "docurl":
+                        "https://github.com/ARGOeu-Metrics/argo-probe-test",
+                    "rpm": "",
+                    "yum_baseurl": "",
+                    "command":
+                        "/usr/libexec/argo/probes/test/test-probe -H <hostname>"
+                        " -t <timeout> --test --flag1 --flag2 --flag3",
+                    "contact": "poem@example.com",
+                    "status": "processing",
+                    "service_type": "processing.service.type",
+                    "devel_url": "",
+                    "created":
+                        self.candidate3.created.strftime("%Y-%m-%d %H:%M:%S"),
+                    "last_update": self.candidate3.last_update.strftime(
+                        "%Y-%m-%d %H:%M:%S")
+                },
+                {
                     "id": self.candidate2.id,
-                    "name": "some-probe",
+                    "name": "submitted-probe",
                     "description": "Description of the probe",
                     "docurl":
                         "https://github.com/ARGOeu-Metrics/argo-probe-test",
@@ -4352,6 +4385,7 @@ class ListProbeCandidatesTests(TenantTestCase):
                     "contact": "poem@example.com",
                     "status": "submitted",
                     "service_type": "",
+                    "devel_url": "",
                     "created":
                         self.candidate2.created.strftime("%Y-%m-%d %H:%M:%S"),
                     "last_update": self.candidate2.last_update.strftime(
@@ -4370,6 +4404,7 @@ class ListProbeCandidatesTests(TenantTestCase):
                     "contact": "poem@example.com",
                     "status": "testing",
                     "service_type": "test.service.type",
+                    "devel_url": "https://test.argo.grnet.gr/ui/status/test",
                     "created":
                         self.candidate1.created.strftime("%Y-%m-%d %H:%M:%S"),
                     "last_update": self.candidate1.last_update.strftime(
@@ -4407,6 +4442,7 @@ class ListProbeCandidatesTests(TenantTestCase):
                 "contact": "poem@example.com",
                 "status": "testing",
                 "service_type": "test.service.type",
+                "devel_url": "https://test.argo.grnet.gr/ui/status/test",
                 "created":
                     self.candidate1.created.strftime("%Y-%m-%d %H:%M:%S"),
                 "last_update":
@@ -4455,7 +4491,8 @@ class ListProbeCandidatesTests(TenantTestCase):
                        "-t <timeout> --test",
             "contact": "meh@example.com",
             "status": "deployed",
-            "service_type": "some.service.type"
+            "service_type": "some.service.type",
+            "devel_url": "https://test.argo.grnet.gr/ui/status/new"
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -4487,6 +4524,9 @@ class ListProbeCandidatesTests(TenantTestCase):
         self.assertEqual(candidate.contact, "poem@example.com")
         self.assertEqual(candidate.status.name, "deployed")
         self.assertEqual(candidate.service_type, "some.service.type")
+        self.assertEqual(
+            candidate.devel_url, "https://test.argo.grnet.gr/ui/status/new"
+        )
 
     def test_put_probe_candidate_regular_user(self):
         data = {
@@ -4500,7 +4540,8 @@ class ListProbeCandidatesTests(TenantTestCase):
                        "-t <timeout> --test",
             "contact": "meh@example.com",
             "status": "deployed",
-            "service_type": "some.service.type"
+            "service_type": "some.service.type",
+            "devel_url": "https://test.argo.grnet.gr/ui/status/new"
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -4536,6 +4577,9 @@ class ListProbeCandidatesTests(TenantTestCase):
         self.assertEqual(candidate.contact, "poem@example.com")
         self.assertEqual(candidate.status.name, "testing")
         self.assertEqual(candidate.service_type, "test.service.type")
+        self.assertEqual(
+            candidate.devel_url, "https://test.argo.grnet.gr/ui/status/test"
+        )
 
     def test_put_probe_candidate_nonexisting_id_superuser(self):
         data = {
@@ -4549,7 +4593,8 @@ class ListProbeCandidatesTests(TenantTestCase):
                        "-t <timeout> --test",
             "contact": "meh@example.com",
             "status": "deployed",
-            "service_type": "some.service.type"
+            "service_type": "some.service.type",
+            "devel_url": "https://test.argo.grnet.gr/ui/status/new"
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -4570,7 +4615,8 @@ class ListProbeCandidatesTests(TenantTestCase):
                        "-t <timeout> --test",
             "contact": "meh@example.com",
             "status": "deployed",
-            "service_type": "some.service.type"
+            "service_type": "some.service.type",
+            "devel_url": "https://test.argo.grnet.gr/ui/status/new"
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -4594,7 +4640,8 @@ class ListProbeCandidatesTests(TenantTestCase):
                        "-t <timeout> --test",
             "contact": "meh@example.com",
             "status": "nonexisting",
-            "service_type": "some.service.type"
+            "service_type": "some.service.type",
+            "devel_url": "https://test.argo.grnet.gr/ui/status/new"
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -4603,6 +4650,34 @@ class ListProbeCandidatesTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(
             response.data["detail"], "Probe candidate status not found"
+        )
+        candidate = poem_models.ProbeCandidate.objects.get(
+            id=self.candidate1.id
+        )
+        self.assertEqual(candidate.name, "test-probe")
+        self.assertEqual(
+            candidate.description, "Some description for the test probe"
+        )
+        self.assertEqual(
+            candidate.docurl,
+            "https://github.com/ARGOeu-Metrics/argo-probe-test"
+        )
+        self.assertEqual(
+            candidate.rpm, "argo-probe-test-0.1.0-1.el7.noarch.rpm"
+        )
+        self.assertEqual(
+            candidate.yum_baseurl, "http://repo.example.com/devel/centos7/"
+        )
+        self.assertEqual(
+            candidate.command,
+            "/usr/libexec/argo/probes/test/test-probe -H <hostname> "
+            "-t <timeout> --test"
+        )
+        self.assertEqual(candidate.contact, "poem@example.com")
+        self.assertEqual(candidate.status.name, "testing")
+        self.assertEqual(candidate.service_type, "test.service.type")
+        self.assertEqual(
+            candidate.devel_url, "https://test.argo.grnet.gr/ui/status/test"
         )
 
     def test_put_probe_candidate_nonexisting_status_regular_user(self):
@@ -4617,7 +4692,8 @@ class ListProbeCandidatesTests(TenantTestCase):
                        "-t <timeout> --test",
             "contact": "meh@example.com",
             "status": "nonexisting",
-            "service_type": "some.service.type"
+            "service_type": "some.service.type",
+            "devel_url": "https://test.argo.grnet.gr/ui/status/new"
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -4627,6 +4703,34 @@ class ListProbeCandidatesTests(TenantTestCase):
         self.assertEqual(
             response.data["detail"],
             "You do not have permission to modify probe candidates"
+        )
+        candidate = poem_models.ProbeCandidate.objects.get(
+            id=self.candidate1.id
+        )
+        self.assertEqual(candidate.name, "test-probe")
+        self.assertEqual(
+            candidate.description, "Some description for the test probe"
+        )
+        self.assertEqual(
+            candidate.docurl,
+            "https://github.com/ARGOeu-Metrics/argo-probe-test"
+        )
+        self.assertEqual(
+            candidate.rpm, "argo-probe-test-0.1.0-1.el7.noarch.rpm"
+        )
+        self.assertEqual(
+            candidate.yum_baseurl, "http://repo.example.com/devel/centos7/"
+        )
+        self.assertEqual(
+            candidate.command,
+            "/usr/libexec/argo/probes/test/test-probe -H <hostname> "
+            "-t <timeout> --test"
+        )
+        self.assertEqual(candidate.contact, "poem@example.com")
+        self.assertEqual(candidate.status.name, "testing")
+        self.assertEqual(candidate.service_type, "test.service.type")
+        self.assertEqual(
+            candidate.devel_url, "https://test.argo.grnet.gr/ui/status/test"
         )
 
 

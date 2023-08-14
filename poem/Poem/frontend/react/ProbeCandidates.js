@@ -20,6 +20,7 @@ import {
   Button, 
   Col, 
   Form, 
+  FormFeedback, 
   FormGroup, 
   FormText, 
   Input, 
@@ -32,6 +33,7 @@ import { Link } from "react-router-dom";
 import { Controller, useForm } from "react-hook-form";
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { ErrorMessage } from "@hookform/error-message";
 
 
 const validationSchema = yup.object().shape({
@@ -39,6 +41,10 @@ const validationSchema = yup.object().shape({
   service_type: yup.string().when("status", {
     is: (val) => val !== "submitted",
     then: yup.string().required("Service type is required")
+  }),
+  devel_url: yup.string().url("Invalid URL").when("status", {
+    is: (val) => val === "testing",
+    then: yup.string().required("Devel UI URL is required")
   })
 })
 
@@ -256,7 +262,7 @@ const ProbeCandidateForm = ({
               </InputGroup>
             </Col>
           </Row>
-          <Row>
+          <Row className="mb-2">
             <Col md={ 6 }>
               <InputGroup>
                 <InputGroupText>Service type</InputGroupText>
@@ -278,10 +284,43 @@ const ProbeCandidateForm = ({
                   }
                 />
               </InputGroup>
+              <FormText color="muted">
+                Suggested service type for testing
+              </FormText>
               {
                 errors?.service_type &&
                   <CustomError error={ errors?.service_type.message } />
               }
+            </Col>
+          </Row>
+          <Row className="mb-2">
+            <Col md={ 6 }>
+              <InputGroup>
+                <InputGroupText>Devel UI URL</InputGroupText>
+                <Controller
+                  name="devel_url"
+                  control={ control }
+                  render={ ({ field }) =>
+                    <Input
+                      { ...field }
+                      data-testid="devel_url"
+                      className={ `form-control ${errors?.devel_url && "is-invalid"}` }
+                    />
+                  }
+                />
+                <ErrorMessage
+                  errors={ errors }
+                  name="devel_url"
+                  render={ ({ message }) => 
+                    <FormFeedback invalid="true" className="end-0">
+                      { message }
+                    </FormFeedback>
+                  }
+                />
+              </InputGroup>
+              <FormText color="muted">
+                URL showing the results of probe testing
+              </FormText>
             </Col>
           </Row>
           <Row>
@@ -540,7 +579,8 @@ export const ProbeCandidateChange = (props) => {
       command: values.command,
       contact: values.contact,
       status: values.status,
-      service_type: values.service_type
+      service_type: values.service_type,
+      devel_url: values.devel_url
     }, {
       onSuccess: () => {
         queryClient.invalidateQueries("probecandidate")

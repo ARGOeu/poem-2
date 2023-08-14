@@ -387,6 +387,8 @@ class ListProbeCandidates(APIView):
                         "status": candidate.status.name,
                         "service_type": candidate.service_type if
                         candidate.service_type else "",
+                        "devel_url": candidate.devel_url if candidate.devel_url
+                        else "",
                         "created":
                             candidate.created.strftime("%Y-%m-%d %H:%M:%S"),
                         "last_update":
@@ -416,6 +418,8 @@ class ListProbeCandidates(APIView):
                         "status": candidate.status.name,
                         "service_type": candidate.service_type if
                         candidate.service_type else "",
+                        "devel_url": candidate.devel_url if candidate.devel_url
+                        else "",
                         "created":
                             candidate.created.strftime("%Y-%m-%d %H:%M:%S"),
                         "last_update":
@@ -448,6 +452,7 @@ class ListProbeCandidates(APIView):
                     name=request.data["status"]
                 )
                 candidate.service_type = request.data["service_type"]
+                candidate.devel_url = request.data["devel_url"]
                 candidate.save()
 
                 return Response(status=status.HTTP_201_CREATED)

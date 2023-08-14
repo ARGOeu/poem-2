@@ -44,6 +44,7 @@ const mockListProbeCandidates = [
     contact: "poem@example.com",
     status: "testing",
     service_type: "Some service type",
+    devel_url: "https://test.argo.grnet.gr/ui/status/test",
     created: "2023-05-22 09:55:48",
     last_update: "2023-05-22 10:00:23"
   },
@@ -58,6 +59,7 @@ const mockListProbeCandidates = [
     contact: "poem@example.com",
     status: "submitted",
     service_type: "Test service type",
+    devel_url: "",
     created: "2023-05-22 09:59:59",
     last_update: ""
   }
@@ -73,6 +75,7 @@ const mockProbeCandidateServiceTypeName = {
   command: "/usr/libexec/argo/probes/test/test-probe -H <hostname> -t <timeout> --test --flag1 --flag2",
   contact: "poem@example.com",
   status: "submitted",
+  devel_url: "",
   service_type: "test.service.type",
   created: "2023-05-22 09:59:59",
   last_update: ""
@@ -184,6 +187,29 @@ const renderChangeView2 = () => {
   }
 }
 
+
+const renderChangeView3 = () => {
+  const route = "/ui/administration/probecandidates/1"
+  const history = createMemoryHistory({ initialEntries: [route] })
+
+  return {
+    ...render(
+      <QueryClientProvider client={ queryClient }>
+        <Router history={ history }>
+          <Route
+            path="/ui/administration/probecandidates/:id"
+            render={ props => <ProbeCandidateChange 
+              { ...props } 
+              webapitoken="t0k3n"
+              webapiservicetypes="https://mock.service.types"
+              showtitles={ true }
+            /> }
+          />
+        </Router>
+      </QueryClientProvider>
+    )
+  }
+}
 
 describe("Test list of probe candidates", () => {
   beforeAll(() => {
@@ -351,6 +377,9 @@ describe("Test probe candidate changeview", () => {
       return {
         fetchData: (path) => {
           switch (path) {
+            case "/api/v2/internal/probecandidates/1":
+              return Promise.resolve(mockListProbeCandidates[0])
+
             case "/api/v2/internal/probecandidates/2":
               return Promise.resolve(mockListProbeCandidates[1])
             
@@ -375,7 +404,6 @@ describe("Test probe candidate changeview", () => {
   test("Test that page renders properly", async () => {
     renderChangeView()
 
-
     expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
 
     await waitFor(() => {
@@ -384,6 +412,7 @@ describe("Test probe candidate changeview", () => {
 
     const nameField = screen.getByTestId("name")
     const descriptionField = screen.getByLabelText(/description/i)
+    const develURLField = screen.getByTestId("devel_url")
     const docURLField = screen.queryByRole("link")
     const rpmField = screen.getByTestId("rpm")
     const yumBaseURLField = screen.getByTestId("yum_baseurl")
@@ -394,6 +423,9 @@ describe("Test probe candidate changeview", () => {
 
     expect(nameField.value).toBe("test-probe")
     expect(nameField).toBeEnabled()
+
+    expect(develURLField.value).toBe("")
+    expect(develURLField).toBeEnabled()
 
     expect(descriptionField.value).toBe("Description of the probe")
     expect(descriptionField).toBeEnabled()
@@ -435,6 +467,73 @@ describe("Test probe candidate changeview", () => {
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
   })
 
+  test("Test that page renders properly if candidate with devel URL", async () => {
+    renderChangeView3()
+
+    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /candidate/i }).textContent).toBe("Change probe candidate")
+    })
+
+    const nameField = screen.getByTestId("name")
+    const descriptionField = screen.getByLabelText(/description/i)
+    const develURLField = screen.getByTestId("devel_url")
+    const docURLField = screen.queryByRole("link")
+    const rpmField = screen.getByTestId("rpm")
+    const yumBaseURLField = screen.getByTestId("yum_baseurl")
+    const commandField = screen.getByTestId("command")
+    const contactField = screen.getByTestId("contact")
+    const createdField = screen.getByTestId("created")
+    const updatedField = screen.getByTestId("last_update")
+
+    expect(nameField.value).toBe("some-probe")
+    expect(nameField).toBeEnabled()
+
+    expect(develURLField.value).toBe("https://test.argo.grnet.gr/ui/status/test")
+    expect(develURLField).toBeEnabled()
+
+    expect(descriptionField.value).toBe("Some description for the test probe")
+    expect(descriptionField).toBeEnabled()
+
+    expect(docURLField.closest("a")).toHaveAttribute("href", "https://github.com/ARGOeu-Metrics/argo-probe-test")
+
+    expect(rpmField.value).toBe("")
+    expect(rpmField).toBeEnabled()
+
+    expect(yumBaseURLField.value).toBe("")
+    expect(yumBaseURLField).toBeEnabled()
+
+    expect(commandField.value).toBe("/usr/libexec/argo/probes/test/test-probe -H <hostname> -t <timeout> --test")
+    expect(commandField).toBeEnabled()
+
+    expect(contactField.value).toBe("poem@example.com")
+    expect(contactField).toBeDisabled()
+
+    expect(screen.getByText("testing")).toBeEnabled()
+
+    expect(screen.queryByText("Test service type")).not.toBeInTheDocument()
+    expect(screen.queryByText("Some service type")).toBeInTheDocument()
+    expect(screen.queryByText("Meh service type")).not.toBeInTheDocument()
+
+    expect(screen.queryByText("Some service type")).toBeEnabled()
+
+    selectEvent.openMenu(screen.getByText("Some service type"))
+    expect(screen.queryByText("Test service type")).toBeInTheDocument()
+    expect(screen.queryByText("Meh service type")).toBeInTheDocument()
+
+    expect(createdField.value).toBe("2023-05-22 09:55:48")
+    expect(createdField).toBeDisabled()
+
+    expect(updatedField.value).toBe("2023-05-22 10:00:23")
+    expect(updatedField).toBeDisabled()
+
+    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
+  })
+
   test("Test that page renders properly if service types without titles", async () => {
     renderChangeView2()
 
@@ -445,6 +544,7 @@ describe("Test probe candidate changeview", () => {
     })
 
     const nameField = screen.getByTestId("name")
+    const develURLField = screen.getByTestId("devel_url")
     const descriptionField = screen.getByLabelText(/description/i)
     const docURLField = screen.queryByRole("link")
     const rpmField = screen.getByTestId("rpm")
@@ -456,6 +556,9 @@ describe("Test probe candidate changeview", () => {
 
     expect(nameField.value).toBe("test-probe")
     expect(nameField).toBeEnabled()
+
+    expect(develURLField.value).toBe("")
+    expect(develURLField).toBeEnabled()
 
     expect(descriptionField.value).toBe("Description of the probe")
     expect(descriptionField).toBeEnabled()
@@ -510,6 +613,8 @@ describe("Test probe candidate changeview", () => {
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: "some-probe" } })
 
+    fireEvent.change(screen.getByTestId("devel_url"), { target: { value: "https://test.argo.grnet.gr/ui/status/test" } })
+
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: "More elaborate description of the probe" } })
 
     fireEvent.change(screen.getByTestId("rpm"), { target: { value: "argo-probe-test-0.1.1-1.el7.noarch.rpm" } })
@@ -541,7 +646,8 @@ describe("Test probe candidate changeview", () => {
           command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
           contact: "poem@example.com",
           status: "testing",
-          service_type: "Some service type"
+          service_type: "Some service type",
+          devel_url: "https://test.argo.grnet.gr/ui/status/test"
         }
       )
     })
@@ -563,6 +669,8 @@ describe("Test probe candidate changeview", () => {
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: "some-probe" } })
+
+    fireEvent.change(screen.getByTestId("devel_url"), { target: { value: "https://test.argo.grnet.gr/ui/status/test" } })
 
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: "More elaborate description of the probe" } })
 
@@ -595,7 +703,8 @@ describe("Test probe candidate changeview", () => {
           command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
           contact: "poem@example.com",
           status: "testing",
-          service_type: "some.service.type"
+          service_type: "some.service.type",
+          devel_url: "https://test.argo.grnet.gr/ui/status/test"
         }
       )
     })
@@ -647,7 +756,8 @@ describe("Test probe candidate changeview", () => {
           command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
           contact: "poem@example.com",
           status: "submitted",
-          service_type: ""
+          service_type: "",
+          devel_url: ""
         }
       )
     })
@@ -669,6 +779,8 @@ describe("Test probe candidate changeview", () => {
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: "some-probe" } })
+
+    fireEvent.change(screen.getByTestId("devel_url"), { target: { value: "https://test.argo.grnet.gr/ui/status/test" } })
 
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: "More elaborate description of the probe" } })
 
@@ -710,7 +822,203 @@ describe("Test probe candidate changeview", () => {
           command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
           contact: "poem@example.com",
           status: "testing",
-          service_type: "Test service type"
+          service_type: "Test service type",
+          devel_url: "https://test.argo.grnet.gr/ui/status/test"
+        }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Probe candidate successfully changed", "Changed", 2000
+    )
+  })
+
+  test("Test validation error when changing probe candidate if invalid devel URL", async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: "OK" })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /candidate/i })).toBeInTheDocument()
+    })
+
+    expect(screen.queryByText("Invalid URL")).not.toBeInTheDocument()
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "some-probe" } })
+
+    fireEvent.change(screen.getByTestId("devel_url"), { target: { value: "test.argo.grnet.gr/ui/status/test" } })
+
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: "More elaborate description of the probe" } })
+
+    fireEvent.change(screen.getByTestId("rpm"), { target: { value: "argo-probe-test-0.1.1-1.el7.noarch.rpm" } })
+
+    fireEvent.change(screen.getByTestId("yum_baseurl"), { target: { value: "http://repo.example.com/devel/rocky8/" } })
+
+    fireEvent.change(screen.getByTestId("command"), { target: { value: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test" } })
+
+    await selectEvent.select(screen.getByText("submitted"), "testing")
+
+    await selectEvent.select(screen.getByText("Test service type"), "Some service type")
+
+    fireEvent.click(screen.getByRole("button", { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { title: "change" })).not.toBeInTheDocument()
+    })
+    expect(screen.queryByText("Invalid URL")).toBeInTheDocument()
+
+    fireEvent.change(screen.getByTestId("devel_url"), { target: { value: "https://test.argo.grnet.gr/ui/status/test" } })
+
+    fireEvent.click(screen.getByRole("button", { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { title: "change" })).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole("button", { name: /yes/i }))
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/probecandidates/",
+        {
+          id: "2",
+          name: "some-probe",
+          description: "More elaborate description of the probe",
+          docurl: "https://github.com/ARGOeu-Metrics/argo-probe-test",
+          rpm: "argo-probe-test-0.1.1-1.el7.noarch.rpm",
+          yum_baseurl: "http://repo.example.com/devel/rocky8/",
+          command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
+          contact: "poem@example.com",
+          status: "testing",
+          service_type: "Some service type",
+          devel_url: "https://test.argo.grnet.gr/ui/status/test"
+        }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Probe candidate successfully changed", "Changed", 2000
+    )
+  })
+
+  test("Test validation error when changing probe candidate if invalid devel URL and URL not required", async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: "OK" })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /candidate/i })).toBeInTheDocument()
+    })
+
+    expect(screen.queryByText("Invalid URL")).not.toBeInTheDocument()
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "some-probe" } })
+
+    fireEvent.change(screen.getByTestId("devel_url"), { target: { value: "test.argo.grnet.gr/ui/status/test" } })
+
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: "More elaborate description of the probe" } })
+
+    fireEvent.change(screen.getByTestId("rpm"), { target: { value: "argo-probe-test-0.1.1-1.el7.noarch.rpm" } })
+
+    fireEvent.change(screen.getByTestId("yum_baseurl"), { target: { value: "http://repo.example.com/devel/rocky8/" } })
+
+    fireEvent.change(screen.getByTestId("command"), { target: { value: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test" } })
+
+    fireEvent.click(screen.getByRole("button", { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { title: "change" })).not.toBeInTheDocument()
+    })
+    expect(screen.queryByText("Invalid URL")).toBeInTheDocument()
+
+    fireEvent.change(screen.getByTestId("devel_url"), { target: { value: "" } })
+
+    fireEvent.click(screen.getByRole("button", { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { title: "change" })).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole("button", { name: /yes/i }))
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/probecandidates/",
+        {
+          id: "2",
+          name: "some-probe",
+          description: "More elaborate description of the probe",
+          docurl: "https://github.com/ARGOeu-Metrics/argo-probe-test",
+          rpm: "argo-probe-test-0.1.1-1.el7.noarch.rpm",
+          yum_baseurl: "http://repo.example.com/devel/rocky8/",
+          command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
+          contact: "poem@example.com",
+          status: "submitted",
+          service_type: "Test service type",
+          devel_url: ""
+        }
+      )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Probe candidate successfully changed", "Changed", 2000
+    )
+  })
+
+  test("Test validation error when changing probe candidate if URL required", async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 200, statusText: "OK" })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /candidate/i })).toBeInTheDocument()
+    })
+
+    expect(screen.queryByText("Invalid URL")).not.toBeInTheDocument()
+    expect(screen.queryByText("Devel UI URL is required")).not.toBeInTheDocument()
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "some-probe" } })
+
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: "More elaborate description of the probe" } })
+
+    fireEvent.change(screen.getByTestId("rpm"), { target: { value: "argo-probe-test-0.1.1-1.el7.noarch.rpm" } })
+
+    fireEvent.change(screen.getByTestId("yum_baseurl"), { target: { value: "http://repo.example.com/devel/rocky8/" } })
+
+    fireEvent.change(screen.getByTestId("command"), { target: { value: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test" } })
+
+    await selectEvent.select(screen.getByText("submitted"), "testing")
+
+    fireEvent.click(screen.getByRole("button", { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { title: "change" })).not.toBeInTheDocument()
+    })
+    expect(screen.queryByText("Invalid URL")).not.toBeInTheDocument()
+    expect(screen.queryByText("Devel UI URL is required")).toBeInTheDocument()
+
+    fireEvent.change(screen.getByTestId("devel_url"), { target: { value: "https://test.argo.grnet.gr/ui/status/test" } })
+
+    fireEvent.click(screen.getByRole("button", { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { title: "change" })).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole("button", { name: /yes/i }))
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/probecandidates/",
+        {
+          id: "2",
+          name: "some-probe",
+          description: "More elaborate description of the probe",
+          docurl: "https://github.com/ARGOeu-Metrics/argo-probe-test",
+          rpm: "argo-probe-test-0.1.1-1.el7.noarch.rpm",
+          yum_baseurl: "http://repo.example.com/devel/rocky8/",
+          command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
+          contact: "poem@example.com",
+          status: "testing",
+          service_type: "Test service type",
+          devel_url: "https://test.argo.grnet.gr/ui/status/test"
         }
       )
     })
@@ -732,6 +1040,8 @@ describe("Test probe candidate changeview", () => {
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: "some-probe" } })
+
+    fireEvent.change(screen.getByTestId("devel_url"), { target: { value: "https://test.argo.grnet.gr/ui/status/test" } })
 
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: "More elaborate description of the probe" } })
 
@@ -764,7 +1074,8 @@ describe("Test probe candidate changeview", () => {
           command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
           contact: "poem@example.com",
           status: "testing",
-          service_type: "Some service type"
+          service_type: "Some service type",
+          devel_url: "https://test.argo.grnet.gr/ui/status/test"
         }
       )
     })
@@ -792,6 +1103,8 @@ describe("Test probe candidate changeview", () => {
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: "some-probe" } })
+
+    fireEvent.change(screen.getByTestId("devel_url"), { target: { value: "https://test.argo.grnet.gr/ui/status/test" } })
 
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: "More elaborate description of the probe" } })
 
@@ -822,7 +1135,8 @@ describe("Test probe candidate changeview", () => {
           command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
           contact: "poem@example.com",
           status: "testing",
-          service_type: "Test service type"
+          service_type: "Test service type",
+          devel_url: "https://test.argo.grnet.gr/ui/status/test"
         }
       )
     })
