@@ -50,6 +50,10 @@ const validationSchema = yup.object().shape({
   production_url: yup.string().url("Invalid URL").when("status", {
     is: (val) => val === "deployed",
     then: yup.string().required("Production UI URL is required")
+  }),
+  rejection_reason: yup.string().when("status", {
+    is: (val) => val === "rejected",
+    then: yup.string().required("Rejection reason is required")
   })
 })
 
@@ -267,6 +271,35 @@ const ProbeCandidateForm = ({
               </InputGroup>
             </Col>
           </Row>
+          {
+            getValues("status") === "rejected" &&
+              <Row className="mb-3">
+                <Col md={ 8 }>
+                  <Label for="rejection_reason">Reason for rejection</Label>
+                  <Controller
+                    name="rejection_reason"
+                    control={ control }
+                    render={ ({ field }) =>
+                      <textarea
+                        { ...field }
+                        id="rejection_reason"
+                        rows="10"
+                        className={ `form-control ${errors?.rejection_reason && "is-invalid"}` }
+                      />
+                    }
+                  />
+                  <ErrorMessage
+                    errors={ errors }
+                    name="rejection_reason"
+                    render={ ({ message }) => 
+                      <FormFeedback invalid="true" className="end-0">
+                        { message }
+                      </FormFeedback>
+                    }
+                  />
+                </Col>
+              </Row>
+          }
           <Row>
             <Col md={ 8 }>
               <Label for="description">Description</Label>
@@ -619,7 +652,8 @@ export const ProbeCandidateChange = (props) => {
       status: values.status,
       service_type: values.service_type,
       devel_url: values.devel_url,
-      production_url: values.production_url
+      production_url: values.production_url,
+      rejection_reason: values.rejection_reason
     }, {
       onSuccess: (data) => {
         queryClient.invalidateQueries("probecandidate")
