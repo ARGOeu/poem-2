@@ -8,7 +8,20 @@ It is possible to submit a probe candidate through POEM token protected API. The
 
 Probe candidates are submitted through the token protected API in tenant POEM.
 
-POST data should have the following format:
+```
+POST /api/v2/probes/
+```
+
+#### Request headers
+
+```
+x-api-key: token
+Accept: application/json
+```
+
+#### POST body
+
+POST body should have the following format:
 
 ```json
 {
