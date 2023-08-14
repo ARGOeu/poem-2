@@ -489,12 +489,12 @@ class ListProbeCandidates(APIView):
                 candidate.devel_url = request.data["devel_url"]
                 candidate.production_url = request.data["production_url"]
                 candidate.rejection_reason = request.data["rejection_reason"]
-                candidate.save()
 
                 subject = ""
                 body = ""
 
-                if request.data["status"] == "deployed":
+                if request.data["status"] == "deployed" and \
+                        not candidate.deployed_sent:
                     subject = "[ARGO Monitoring] Probe deployed"
                     body = f"""
 Dear madam/sir,
@@ -507,7 +507,8 @@ Best regards,
 ARGO Monitoring team
 """
 
-                elif request.data["status"] == "processing":
+                elif request.data["status"] == "processing" and \
+                        not candidate.processing_sent:
                     subject = "[ARGO Monitoring] Probe processing"
                     body = f"""
 Dear madam/sir,
@@ -522,7 +523,8 @@ Best regards,
 ARGO Monitoring team
 """
 
-                elif request.data["status"] == "testing":
+                elif request.data["status"] == "testing" and \
+                        not candidate.testing_sent:
                     subject = "[ARGO Monitoring] Probe testing"
                     body = f"""
 Dear madam/sir,
@@ -539,7 +541,8 @@ Best regards,
 ARGO Monitoring team
 """
 
-                elif request.data["status"] == "rejected":
+                elif request.data["status"] == "rejected" and \
+                        not candidate.rejected_sent:
                     subject = "[ARGO Monitoring] Probe rejected"
                     body = f"""
 Dear madam/sir,
@@ -566,13 +569,27 @@ ARGO Monitoring team
 
                         mail.send(fail_silently=False)
 
+                        if request.data["status"] == "processing":
+                            candidate.processing_sent = True
+
+                        if request.data["status"] == "testing":
+                            candidate.testing_sent = True
+
+                        if request.data["status"] == "deployed":
+                            candidate.deployed_sent = True
+
+                        if request.data["status"] == "rejected":
+                            candidate.rejected_sent = True
+
                     except Exception as e:
+                        candidate.save()
                         return Response({
                             "warning": f"Probe candidate has been successfully "
                                        f"modified, but the email was not sent: "
                                        f"{str(e)}"
                         }, status=status.HTTP_201_CREATED)
 
+                candidate.save()
                 return Response(status=status.HTTP_201_CREATED)
 
             except poem_models.ProbeCandidate.DoesNotExist:
