@@ -12,6 +12,7 @@ import {
   LoadingAnim, 
   NotifyError, 
   NotifyOk, 
+  NotifyWarn, 
   ParagraphTitle,
   SelectColumnFilter
 } from "./UIElements";
@@ -620,13 +621,16 @@ export const ProbeCandidateChange = (props) => {
       devel_url: values.devel_url,
       production_url: values.production_url
     }, {
-      onSuccess: () => {
+      onSuccess: (data) => {
         queryClient.invalidateQueries("probecandidate")
-        NotifyOk({
-          msg: "Probe candidate successfully changed",
-          title: "Changed",
-          callback: () => history.push("/ui/administration/probecandidates")
-        })
+        if (data && "warning" in data) {
+          NotifyWarn({ msg: data.warning, title: "Warning" })
+        } else
+          NotifyOk({
+            msg: "Probe candidate successfully changed",
+            title: "Changed",
+            callback: () => history.push("/ui/administration/probecandidates")
+          })
       },
       onError: (error) => {
         NotifyError({
