@@ -45,6 +45,10 @@ const validationSchema = yup.object().shape({
   devel_url: yup.string().url("Invalid URL").when("status", {
     is: (val) => val === "testing",
     then: yup.string().required("Devel UI URL is required")
+  }),
+  production_url: yup.string().url("Invalid URL").when("status", {
+    is: (val) => val === "deployed",
+    then: yup.string().required("Production UI URL is required")
   })
 })
 
@@ -262,6 +266,29 @@ const ProbeCandidateForm = ({
               </InputGroup>
             </Col>
           </Row>
+          <Row>
+            <Col md={ 8 }>
+              <Label for="description">Description</Label>
+              <Controller
+                name="description"
+                control={ control }
+                render={ ({ field }) =>
+                  <textarea
+                    { ...field }
+                    id="description"
+                    rows="10"
+                    className="form-control"
+                  />
+                }
+              />
+            </Col>
+            <FormText color="muted">
+              Free text description outlining the purpose of this probe.
+            </FormText>
+          </Row>
+        </FormGroup>
+        <ParagraphTitle title="Admin info" />
+        <FormGroup>
           <Row className="mb-2">
             <Col md={ 6 }>
               <InputGroup>
@@ -323,25 +350,35 @@ const ProbeCandidateForm = ({
               </FormText>
             </Col>
           </Row>
-          <Row>
-            <Col md={ 8 }>
-              <Label for="description">Description</Label>
-              <Controller
-                name="description"
-                control={ control }
-                render={ ({ field }) =>
-                  <textarea
-                    { ...field }
-                    id="description"
-                    rows="10"
-                    className="form-control"
-                  />
-                }
-              />
+          <Row className="mb-2">
+            <Col md={ 6 }>
+              <InputGroup>
+                <InputGroupText>Production UI URL</InputGroupText>
+                <Controller
+                  name="production_url"
+                  control={ control }
+                  render={ ({ field }) =>
+                    <Input
+                      { ...field }
+                      data-testid="production_url"
+                      className={ `form-control ${errors?.production_url && "is-invalid"}` }
+                    />
+                  }
+                />
+                <ErrorMessage
+                  errors={ errors }
+                  name="production_url"
+                  render={ ({ message }) => 
+                    <FormFeedback invalid="true" className="end-0">
+                      { message }
+                    </FormFeedback>
+                  }
+                />
+              </InputGroup>
+              <FormText color="muted">
+                URL showing the results of deployed probe
+              </FormText>
             </Col>
-            <FormText color="muted">
-              Free text description outlining the purpose of this probe.
-            </FormText>
           </Row>
         </FormGroup>
         <ParagraphTitle title="Creation info"/>
@@ -580,7 +617,8 @@ export const ProbeCandidateChange = (props) => {
       contact: values.contact,
       status: values.status,
       service_type: values.service_type,
-      devel_url: values.devel_url
+      devel_url: values.devel_url,
+      production_url: values.production_url
     }, {
       onSuccess: () => {
         queryClient.invalidateQueries("probecandidate")
