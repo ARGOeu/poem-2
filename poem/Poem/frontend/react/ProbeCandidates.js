@@ -504,7 +504,7 @@ const ProbeCandidateForm = ({
               </FormText>
             </Col>
           </Row>
-          <Row>
+          <Row className="pb-2">
             <Col md={ 8 }>
               <InputGroup>
                 <InputGroupText>YUM base URL</InputGroupText>
@@ -522,6 +522,27 @@ const ProbeCandidateForm = ({
               </InputGroup>
               <FormText color="muted">
                 Base URL of YUM repo containing the probe RPM
+              </FormText>
+            </Col>
+          </Row>
+          <Row>
+            <Col md={ 8 }>
+              <InputGroup>
+                <InputGroupText>Script</InputGroupText>
+                <Controller
+                  name="script"
+                  control={ control }
+                  render={ ({ field }) =>
+                    <Input
+                      { ...field }
+                      data-testid="script"
+                      className="form-control"
+                    />
+                  }
+                />
+              </InputGroup>
+              <FormText color="muted">
+                URL of script with probe code
               </FormText>
             </Col>
           </Row>
@@ -647,6 +668,7 @@ export const ProbeCandidateChange = (props) => {
       docurl: values.docurl,
       rpm: values.rpm,
       yum_baseurl: values.yum_baseurl,
+      script: values.script,
       command: values.command,
       contact: values.contact,
       status: values.status,

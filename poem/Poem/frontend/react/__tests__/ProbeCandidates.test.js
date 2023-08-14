@@ -40,6 +40,7 @@ const mockListProbeCandidates = [
     docurl: "https://github.com/ARGOeu-Metrics/argo-probe-test",
     rpm: "",
     yum_baseurl: "",
+    script: "https://github.com/ARGOeu-Metrics/argo-probe-test/exec/test-probe.py",
     command: "/usr/libexec/argo/probes/test/test-probe -H <hostname> -t <timeout> --test",
     contact: "poem@example.com",
     status: "testing",
@@ -57,6 +58,7 @@ const mockListProbeCandidates = [
     docurl: "https://github.com/ARGOeu-Metrics/argo-probe-test",
     rpm: "argo-probe-test-0.1.0-1.el7.noarch.rpm",
     yum_baseurl: "http://repo.example.com/devel/centos7/",
+    script: "",
     command: "/usr/libexec/argo/probes/test/test-probe -H <hostname> -t <timeout> --test --flag1 --flag2",
     contact: "poem@example.com",
     status: "submitted",
@@ -76,6 +78,7 @@ const mockProbeCandidateServiceTypeName = {
   docurl: "https://github.com/ARGOeu-Metrics/argo-probe-test",
   rpm: "argo-probe-test-0.1.0-1.el7.noarch.rpm",
   yum_baseurl: "http://repo.example.com/devel/centos7/",
+  script: "",
   command: "/usr/libexec/argo/probes/test/test-probe -H <hostname> -t <timeout> --test --flag1 --flag2",
   contact: "poem@example.com",
   status: "submitted",
@@ -94,6 +97,7 @@ const mockDeployedProbeCandidate = {
   docurl: "https://github.com/ARGOeu-Metrics/argo-probe-test",
   rpm: "argo-probe-test-0.1.0-1.el7.noarch.rpm",
   yum_baseurl: "http://repo.example.com/devel/centos7/",
+  script: "",
   command: "/usr/libexec/argo/probes/test/test-probe -H <hostname> -t <timeout> --test --flag1 --flag2",
   contact: "poem@example.com",
   status: "deployed",
@@ -112,6 +116,7 @@ const mockRejectedProbeCandidate = {
   docurl: "https://github.com/ARGOeu-Metrics/argo-probe-bad",
   rpm: "argo-probe-bad-0.1.0-1.el7.noarch.rpm",
   yum_baseurl: "http://repo.example.com/devel/centos7/",
+  script: "",
   command: "/usr/libexec/argo/probes/test/bad-probe -H <hostname> -t <timeout> --faulty-test",
   contact: "bad@example.com",
   status: "rejected",
@@ -520,6 +525,7 @@ describe("Test probe candidate changeview", () => {
     const docURLField = screen.queryByRole("link")
     const rpmField = screen.getByTestId("rpm")
     const yumBaseURLField = screen.getByTestId("yum_baseurl")
+    const scriptField = screen.getByTestId("script")
     const commandField = screen.getByTestId("command")
     const contactField = screen.getByTestId("contact")
     const createdField = screen.getByTestId("created")
@@ -546,6 +552,9 @@ describe("Test probe candidate changeview", () => {
 
     expect(yumBaseURLField.value).toBe("http://repo.example.com/devel/centos7/")
     expect(yumBaseURLField).toBeEnabled()
+
+    expect(scriptField.value).toBe("")
+    expect(scriptField).toBeEnabled()
 
     expect(commandField.value).toBe("/usr/libexec/argo/probes/test/test-probe -H <hostname> -t <timeout> --test --flag1 --flag2")
     expect(commandField).toBeEnabled()
@@ -604,6 +613,7 @@ describe("Test probe candidate changeview", () => {
     const docURLField = screen.queryByRole("link")
     const rpmField = screen.getByTestId("rpm")
     const yumBaseURLField = screen.getByTestId("yum_baseurl")
+    const scriptField = screen.getByTestId("script")
     const commandField = screen.getByTestId("command")
     const contactField = screen.getByTestId("contact")
     const createdField = screen.getByTestId("created")
@@ -631,6 +641,9 @@ describe("Test probe candidate changeview", () => {
 
     expect(yumBaseURLField.value).toBe("http://repo.example.com/devel/centos7/")
     expect(yumBaseURLField).toBeEnabled()
+
+    expect(scriptField.value).toBe("")
+    expect(scriptField).toBeEnabled()
 
     expect(commandField.value).toBe("/usr/libexec/argo/probes/test/bad-probe -H <hostname> -t <timeout> --faulty-test")
     expect(commandField).toBeEnabled()
@@ -688,6 +701,7 @@ describe("Test probe candidate changeview", () => {
     const docURLField = screen.queryByRole("link")
     const rpmField = screen.getByTestId("rpm")
     const yumBaseURLField = screen.getByTestId("yum_baseurl")
+    const scriptField = screen.getByTestId("script")
     const commandField = screen.getByTestId("command")
     const contactField = screen.getByTestId("contact")
     const createdField = screen.getByTestId("created")
@@ -705,6 +719,8 @@ describe("Test probe candidate changeview", () => {
     expect(descriptionField.value).toBe("Some description for the test probe")
     expect(descriptionField).toBeEnabled()
 
+    expect(screen.queryByLabelText(/rejection/)).not.toBeInTheDocument()
+
     expect(docURLField.closest("a")).toHaveAttribute("href", "https://github.com/ARGOeu-Metrics/argo-probe-test")
 
     expect(rpmField.value).toBe("")
@@ -712,6 +728,9 @@ describe("Test probe candidate changeview", () => {
 
     expect(yumBaseURLField.value).toBe("")
     expect(yumBaseURLField).toBeEnabled()
+
+    expect(scriptField.value).toBe("https://github.com/ARGOeu-Metrics/argo-probe-test/exec/test-probe.py")
+    expect(scriptField).toBeEnabled()
 
     expect(commandField.value).toBe("/usr/libexec/argo/probes/test/test-probe -H <hostname> -t <timeout> --test")
     expect(commandField).toBeEnabled()
@@ -770,6 +789,7 @@ describe("Test probe candidate changeview", () => {
     const docURLField = screen.queryByRole("link")
     const rpmField = screen.getByTestId("rpm")
     const yumBaseURLField = screen.getByTestId("yum_baseurl")
+    const scriptField = screen.getByTestId("script")
     const commandField = screen.getByTestId("command")
     const contactField = screen.getByTestId("contact")
     const createdField = screen.getByTestId("created")
@@ -787,6 +807,8 @@ describe("Test probe candidate changeview", () => {
     expect(descriptionField.value).toBe("Description of the probe")
     expect(descriptionField).toBeEnabled()
 
+    expect(screen.queryByLabelText(/rejection/)).not.toBeInTheDocument()
+
     expect(docURLField.closest("a")).toHaveAttribute("href", "https://github.com/ARGOeu-Metrics/argo-probe-test")
 
     expect(rpmField.value).toBe("argo-probe-test-0.1.0-1.el7.noarch.rpm")
@@ -794,6 +816,9 @@ describe("Test probe candidate changeview", () => {
 
     expect(yumBaseURLField.value).toBe("http://repo.example.com/devel/centos7/")
     expect(yumBaseURLField).toBeEnabled()
+
+    expect(scriptField.value).toBe("")
+    expect(scriptField).toBeEnabled()
 
     expect(commandField.value).toBe("/usr/libexec/argo/probes/test/test-probe -H <hostname> -t <timeout> --test --flag1 --flag2")
     expect(commandField).toBeEnabled()
@@ -852,6 +877,7 @@ describe("Test probe candidate changeview", () => {
     const docURLField = screen.queryByRole("link")
     const rpmField = screen.getByTestId("rpm")
     const yumBaseURLField = screen.getByTestId("yum_baseurl")
+    const scriptField = screen.getByTestId("script")
     const commandField = screen.getByTestId("command")
     const contactField = screen.getByTestId("contact")
     const createdField = screen.getByTestId("created")
@@ -869,6 +895,8 @@ describe("Test probe candidate changeview", () => {
     expect(descriptionField.value).toBe("Description of the probe")
     expect(descriptionField).toBeEnabled()
 
+    expect(screen.queryByLabelText(/rejection/)).not.toBeInTheDocument()
+
     expect(docURLField.closest("a")).toHaveAttribute("href", "https://github.com/ARGOeu-Metrics/argo-probe-test")
 
     expect(rpmField.value).toBe("argo-probe-test-0.1.0-1.el7.noarch.rpm")
@@ -876,6 +904,9 @@ describe("Test probe candidate changeview", () => {
 
     expect(yumBaseURLField.value).toBe("http://repo.example.com/devel/centos7/")
     expect(yumBaseURLField).toBeEnabled()
+
+    expect(scriptField.value).toBe("")
+    expect(scriptField).toBeEnabled()
 
     expect(commandField.value).toBe("/usr/libexec/argo/probes/test/test-probe -H <hostname> -t <timeout> --test --flag1 --flag2")
     expect(commandField).toBeEnabled()
@@ -938,6 +969,8 @@ describe("Test probe candidate changeview", () => {
 
     fireEvent.change(screen.getByTestId("yum_baseurl"), { target: { value: "http://repo.example.com/devel/rocky8/" } })
 
+    fireEvent.change(screen.getByTestId("script"), { target: { value: "https://github.com/ARGOeu-Metrics/argo-probe-test/exec/test.pl" } })
+
     fireEvent.change(screen.getByTestId("command"), { target: { value: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test" } })
 
     await selectEvent.select(screen.getByText("submitted"), "testing")
@@ -960,6 +993,7 @@ describe("Test probe candidate changeview", () => {
           docurl: "https://github.com/ARGOeu-Metrics/argo-probe-test",
           rpm: "argo-probe-test-0.1.1-1.el7.noarch.rpm",
           yum_baseurl: "http://repo.example.com/devel/rocky8/",
+          script: "https://github.com/ARGOeu-Metrics/argo-probe-test/exec/test.pl",
           command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
           contact: "poem@example.com",
           status: "testing",
@@ -1013,6 +1047,7 @@ describe("Test probe candidate changeview", () => {
           docurl: "https://github.com/ARGOeu-Metrics/argo-probe-test",
           rpm: "",
           yum_baseurl: "",
+          script: "https://github.com/ARGOeu-Metrics/argo-probe-test/exec/test-probe.py",
           command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --flag",
           contact: "poem@example.com",
           status: "deployed",
@@ -1086,6 +1121,7 @@ describe("Test probe candidate changeview", () => {
           docurl: "https://github.com/ARGOeu-Metrics/argo-probe-test",
           rpm: "argo-probe-test-0.1.1-1.el7.noarch.rpm",
           yum_baseurl: "http://repo.example.com/devel/rocky8/",
+          script: "",
           command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
           contact: "poem@example.com",
           status: "testing",
@@ -1150,6 +1186,7 @@ describe("Test probe candidate changeview", () => {
           docurl: "https://github.com/ARGOeu-Metrics/argo-probe-test",
           rpm: "",
           yum_baseurl: "",
+          script: "https://github.com/ARGOeu-Metrics/argo-probe-test/exec/test-probe.py",
           command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --flag",
           contact: "poem@example.com",
           status: "deployed",
@@ -1209,6 +1246,7 @@ describe("Test probe candidate changeview", () => {
           docurl: "https://github.com/ARGOeu-Metrics/argo-probe-test",
           rpm: "argo-probe-test-0.1.1-1.el7.noarch.rpm",
           yum_baseurl: "http://repo.example.com/devel/rocky8/",
+          script: "",
           command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
           contact: "poem@example.com",
           status: "testing",
@@ -1264,6 +1302,7 @@ describe("Test probe candidate changeview", () => {
           docurl: "https://github.com/ARGOeu-Metrics/argo-probe-test",
           rpm: "argo-probe-test-0.1.1-1.el7.noarch.rpm",
           yum_baseurl: "http://repo.example.com/devel/rocky8/",
+          script: "",
           command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
           contact: "poem@example.com",
           status: "submitted",
@@ -1332,6 +1371,7 @@ describe("Test probe candidate changeview", () => {
           docurl: "https://github.com/ARGOeu-Metrics/argo-probe-test",
           rpm: "argo-probe-test-0.1.1-1.el7.noarch.rpm",
           yum_baseurl: "http://repo.example.com/devel/rocky8/",
+          script: "",
           command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
           contact: "poem@example.com",
           status: "testing",
@@ -1401,6 +1441,7 @@ describe("Test probe candidate changeview", () => {
           docurl: "https://github.com/ARGOeu-Metrics/argo-probe-test",
           rpm: "argo-probe-test-0.1.1-1.el7.noarch.rpm",
           yum_baseurl: "http://repo.example.com/devel/rocky8/",
+          script: "",
           command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
           contact: "poem@example.com",
           status: "testing",
@@ -1466,6 +1507,7 @@ describe("Test probe candidate changeview", () => {
           docurl: "https://github.com/ARGOeu-Metrics/argo-probe-test",
           rpm: "argo-probe-test-0.1.1-1.el7.noarch.rpm",
           yum_baseurl: "http://repo.example.com/devel/rocky8/",
+          script: "",
           command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
           contact: "poem@example.com",
           status: "submitted",
@@ -1533,6 +1575,7 @@ describe("Test probe candidate changeview", () => {
           docurl: "https://github.com/ARGOeu-Metrics/argo-probe-test",
           rpm: "argo-probe-test-0.1.1-1.el7.noarch.rpm",
           yum_baseurl: "http://repo.example.com/devel/rocky8/",
+          script: "",
           command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
           contact: "poem@example.com",
           status: "testing",
@@ -1586,6 +1629,7 @@ describe("Test probe candidate changeview", () => {
           docurl: "https://github.com/ARGOeu-Metrics/argo-probe-test",
           rpm: "argo-probe-test-0.1.0-1.el7.noarch.rpm",
           yum_baseurl: "http://repo.example.com/devel/centos7/",
+          script: "",
           command: "/usr/libexec/argo/probes/test/test-probe -H <hostname> -t <timeout> --test --flag1 --flag2",
           contact: "poem@example.com",
           status: "rejected",
@@ -1642,6 +1686,7 @@ describe("Test probe candidate changeview", () => {
           docurl: "https://github.com/ARGOeu-Metrics/argo-probe-test",
           rpm: "argo-probe-test-0.1.0-1.el7.noarch.rpm",
           yum_baseurl: "http://repo.example.com/devel/centos7/",
+          script: "",
           command: "/usr/libexec/argo/probes/test/test-probe -H <hostname> -t <timeout> --test --flag1 --flag2",
           contact: "poem@example.com",
           status: "rejected",
@@ -1701,6 +1746,7 @@ describe("Test probe candidate changeview", () => {
           docurl: "https://github.com/ARGOeu-Metrics/argo-probe-test",
           rpm: "argo-probe-test-0.1.1-1.el7.noarch.rpm",
           yum_baseurl: "http://repo.example.com/devel/rocky8/",
+          script: "",
           command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
           contact: "poem@example.com",
           status: "testing",
@@ -1764,6 +1810,7 @@ describe("Test probe candidate changeview", () => {
           docurl: "https://github.com/ARGOeu-Metrics/argo-probe-test",
           rpm: "argo-probe-test-0.1.1-1.el7.noarch.rpm",
           yum_baseurl: "http://repo.example.com/devel/rocky8/",
+          script: "",
           command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
           contact: "poem@example.com",
           status: "testing",
@@ -1829,6 +1876,7 @@ describe("Test probe candidate changeview", () => {
           docurl: "https://github.com/ARGOeu-Metrics/argo-probe-test",
           rpm: "argo-probe-test-0.1.1-1.el7.noarch.rpm",
           yum_baseurl: "http://repo.example.com/devel/rocky8/",
+          script: "",
           command: "/usr/libexec/argo/probes/test/some-probe -H <hostname> -t <timeout> --test",
           contact: "poem@example.com",
           status: "testing",

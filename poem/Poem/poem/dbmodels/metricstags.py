@@ -76,6 +76,7 @@ class ProbeCandidate(models.Model):
     docurl = models.URLField(max_length=1024)
     rpm = models.CharField(max_length=1024)
     yum_baseurl = models.URLField(max_length=1024)
+    script = models.URLField(max_length=1024, blank=True, null=True)
     command = models.CharField(max_length=2048)
     contact = models.EmailField()
     status = models.ForeignKey(ProbeCandidateStatus, on_delete=models.CASCADE)

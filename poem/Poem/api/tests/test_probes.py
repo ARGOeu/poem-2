@@ -4332,6 +4332,8 @@ class ListProbeCandidatesTests(TenantTestCase):
             name="submitted-probe",
             description="Description of the probe",
             docurl="https://github.com/ARGOeu-Metrics/argo-probe-test",
+            script="https://github.com/ARGOeu-Metrics/argo-probe-test/exec/"
+                   "probe.py",
             command="/usr/libexec/argo/probes/test/test-probe -H <hostname> "
                     "-t <timeout> --test --flag1 --flag2",
             contact="poem@example.com",
@@ -4342,6 +4344,8 @@ class ListProbeCandidatesTests(TenantTestCase):
             name="processing-probe",
             description="Description of the processing probe",
             docurl="https://github.com/ARGOeu-Metrics/argo-probe-test",
+            script="https://github.com/ARGOeu-Metrics/argo-probe-test/"
+                   "test-probe",
             command="/usr/libexec/argo/probes/test/test-probe -H <hostname> "
                     "-t <timeout> --test --flag1 --flag2 --flag3",
             contact="poem@example.com",
@@ -4354,6 +4358,8 @@ class ListProbeCandidatesTests(TenantTestCase):
             name="deployed-probe",
             description="Description of the production probe",
             docurl="https://github.com/ARGOeu-Metrics/argo-probe-production",
+            script="https://github.com/ARGOeu-Metrics/argo-probe-production/"
+                   "probe.sh",
             command="/usr/libexec/argo/probes/test/prod-probe -H <hostname> "
                     "-t <timeout> --prod",
             contact="poem@example.com",
@@ -4369,6 +4375,7 @@ class ListProbeCandidatesTests(TenantTestCase):
             name="rejected-probe",
             description="Some description of the probe",
             docurl="https://github.com/ARGOeu-Metrics/argo-probe-bad",
+            script="https://github.com/ARGOeu-Metrics/argo-probe-bad/bad.pl",
             command="/usr/libexec/argo/probes/test/test -H <hostname> "
                     "-t <timeout>",
             contact="test@contact.com",
@@ -4402,6 +4409,8 @@ class ListProbeCandidatesTests(TenantTestCase):
                               "production",
                     "rpm": "",
                     "yum_baseurl": "",
+                    "script": "https://github.com/ARGOeu-Metrics/argo-probe-"
+                              "production/probe.sh",
                     "command":
                         "/usr/libexec/argo/probes/test/prod-probe -H <hostname>"
                         " -t <timeout> --prod",
@@ -4425,6 +4434,8 @@ class ListProbeCandidatesTests(TenantTestCase):
                         "https://github.com/ARGOeu-Metrics/argo-probe-test",
                     "rpm": "",
                     "yum_baseurl": "",
+                    "script": "https://github.com/ARGOeu-Metrics/argo-probe-"
+                              "test/test-probe",
                     "command":
                         "/usr/libexec/argo/probes/test/test-probe -H <hostname>"
                         " -t <timeout> --test --flag1 --flag2 --flag3",
@@ -4447,6 +4458,8 @@ class ListProbeCandidatesTests(TenantTestCase):
                         "https://github.com/ARGOeu-Metrics/argo-probe-bad",
                     "rpm": "",
                     "yum_baseurl": "",
+                    "script": "https://github.com/ARGOeu-Metrics/argo-probe-"
+                              "bad/bad.pl",
                     "command": "/usr/libexec/argo/probes/test/test -H "
                                "<hostname> -t <timeout>",
                     "contact": "test@contact.com",
@@ -4468,6 +4481,8 @@ class ListProbeCandidatesTests(TenantTestCase):
                         "https://github.com/ARGOeu-Metrics/argo-probe-test",
                     "rpm": "",
                     "yum_baseurl": "",
+                    "script": "https://github.com/ARGOeu-Metrics/argo-probe-"
+                              "test/exec/probe.py",
                     "command":
                         "/usr/libexec/argo/probes/test/test-probe "
                         "-H <hostname> -t <timeout> --test --flag1 --flag2",
@@ -4489,6 +4504,7 @@ class ListProbeCandidatesTests(TenantTestCase):
                         "https://github.com/ARGOeu-Metrics/argo-probe-test",
                     "rpm": "argo-probe-test-0.1.0-1.el7.noarch.rpm",
                     "yum_baseurl": "http://repo.example.com/devel/centos7/",
+                    "script": "",
                     "command":
                         "/usr/libexec/argo/probes/test/test-probe -H <hostname>"
                         " -t <timeout> --test",
@@ -4529,6 +4545,7 @@ class ListProbeCandidatesTests(TenantTestCase):
                 "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-test",
                 "rpm": "argo-probe-test-0.1.0-1.el7.noarch.rpm",
                 "yum_baseurl": "http://repo.example.com/devel/centos7/",
+                "script": "",
                 "command":
                     "/usr/libexec/argo/probes/test/test-probe -H <hostname>"
                     " -t <timeout> --test",
@@ -4559,6 +4576,8 @@ class ListProbeCandidatesTests(TenantTestCase):
                           "production",
                 "rpm": "",
                 "yum_baseurl": "",
+                "script": "https://github.com/ARGOeu-Metrics/argo-probe-"
+                          "production/probe.sh",
                 "command":
                     "/usr/libexec/argo/probes/test/prod-probe -H <hostname>"
                     " -t <timeout> --prod",
@@ -4589,6 +4608,8 @@ class ListProbeCandidatesTests(TenantTestCase):
                 "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-bad",
                 "rpm": "",
                 "yum_baseurl": "",
+                "script": "https://github.com/ARGOeu-Metrics/argo-probe-bad/"
+                          "bad.pl",
                 "command":
                     "/usr/libexec/argo/probes/test/test -H <hostname> "
                     "-t <timeout>",
@@ -4642,6 +4663,7 @@ class ListProbeCandidatesTests(TenantTestCase):
             "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
             "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
             "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "",
             "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
                        "-t <timeout> --test",
             "contact": "meh@example.com",
@@ -4702,6 +4724,7 @@ ARGO Monitoring team
             self.assertEqual(
                 candidate.yum_baseurl, "http://repo.example.com/devel/rocky8/"
             )
+            self.assertEqual(candidate.script, "")
             self.assertEqual(
                 candidate.command,
                 "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
@@ -4771,6 +4794,7 @@ ARGO Monitoring team
             self.assertEqual(
                 candidate.yum_baseurl, "http://repo.example.com/devel/centos7/"
             )
+            self.assertEqual(candidate.script, None)
             self.assertEqual(
                 candidate.command,
                 "/usr/libexec/argo/probes/test/test-probe -H <hostname> "
@@ -4798,6 +4822,7 @@ ARGO Monitoring team
             "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
             "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
             "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "",
             "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
                        "-t <timeout> --test",
             "contact": "meh@example.com",
@@ -4840,6 +4865,7 @@ ARGO Monitoring team
             self.assertEqual(
                 candidate.yum_baseurl, "http://repo.example.com/devel/centos7/"
             )
+            self.assertEqual(candidate.script, None)
             self.assertEqual(
                 candidate.command,
                 "/usr/libexec/argo/probes/test/test-probe -H <hostname> "
@@ -4867,6 +4893,8 @@ ARGO Monitoring team
             "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
             "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
             "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "https://github.com/ARGOeu-Metrics/argo-probe-test/exec"
+                      "/probe2.py",
             "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
                        "-t <timeout> --test",
             "contact": "meh@example.com",
@@ -4930,6 +4958,11 @@ ARGO Monitoring team
                 candidate.yum_baseurl, "http://repo.example.com/devel/rocky8/"
             )
             self.assertEqual(
+                candidate.script,
+                "https://github.com/ARGOeu-Metrics/argo-probe-test/exec/"
+                "probe2.py"
+            )
+            self.assertEqual(
                 candidate.command,
                 "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
                 "-t <timeout> --test"
@@ -4959,6 +4992,8 @@ ARGO Monitoring team
             "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
             "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
             "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "https://github.com/ARGOeu-Metrics/argo-probe-test/exec"
+                      "/probe2.py",
             "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
                        "-t <timeout> --test",
             "contact": "meh@example.com",
@@ -4996,6 +5031,11 @@ ARGO Monitoring team
             self.assertEqual(candidate.rpm, "")
             self.assertEqual(candidate.yum_baseurl, "")
             self.assertEqual(
+                candidate.script,
+                "https://github.com/ARGOeu-Metrics/argo-probe-test/exec/"
+                "probe.py"
+            )
+            self.assertEqual(
                 candidate.command,
                 "/usr/libexec/argo/probes/test/test-probe -H <hostname> "
                 "-t <timeout> --test --flag1 --flag2",
@@ -5020,6 +5060,8 @@ ARGO Monitoring team
             "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
             "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
             "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "https://github.com/ARGOeu-Metrics/argo-probe-test/"
+                      "meh.pl",
             "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
                        "-t <timeout> --test",
             "contact": "meh@example.com",
@@ -5085,6 +5127,10 @@ ARGO Monitoring team
                 candidate.yum_baseurl, "http://repo.example.com/devel/rocky8/"
             )
             self.assertEqual(
+                candidate.script,
+                "https://github.com/ARGOeu-Metrics/argo-probe-test/meh.pl"
+            )
+            self.assertEqual(
                 candidate.command,
                 "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
                 "-t <timeout> --test"
@@ -5114,6 +5160,8 @@ ARGO Monitoring team
             "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
             "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
             "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "https://github.com/ARGOeu-Metrics/argo-probe-test/"
+                      "meh.pl",
             "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
                        "-t <timeout> --test",
             "contact": "meh@example.com",
@@ -5147,6 +5195,10 @@ ARGO Monitoring team
                 candidate.description, "Description of the processing probe"
             )
             self.assertEqual(
+                candidate.script,
+                "https://github.com/ARGOeu-Metrics/argo-probe-test/test-probe"
+            )
+            self.assertEqual(
                 candidate.docurl,
                 "https://github.com/ARGOeu-Metrics/argo-probe-test"
             )
@@ -5177,6 +5229,7 @@ ARGO Monitoring team
             "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
             "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
             "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "",
             "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
                        "-t <timeout> --test",
             "contact": "meh@example.com",
@@ -5239,6 +5292,7 @@ ARGO Monitoring team
             self.assertEqual(
                 candidate.yum_baseurl, "http://repo.example.com/devel/rocky8/"
             )
+            self.assertEqual(candidate.script, "")
             self.assertEqual(
                 candidate.command,
                 "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
@@ -5262,7 +5316,6 @@ ARGO Monitoring team
             self.assertTrue(candidate.rejected_sent)
 
     def test_put_probe_candidate_rejected_empty_reason_superuser(self):
-
         data = {
             "id": self.candidate1.id,
             "name": "new-probe",
@@ -5270,6 +5323,7 @@ ARGO Monitoring team
             "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
             "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
             "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "",
             "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
                        "-t <timeout> --test",
             "contact": "meh@example.com",
@@ -5312,6 +5366,7 @@ ARGO Monitoring team
             self.assertEqual(
                 candidate.yum_baseurl, "http://repo.example.com/devel/centos7/"
             )
+            self.assertEqual(candidate.script, None)
             self.assertEqual(
                 candidate.command,
                 "/usr/libexec/argo/probes/test/test-probe -H <hostname> "
@@ -5339,6 +5394,7 @@ ARGO Monitoring team
             "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
             "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
             "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "",
             "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
                        "-t <timeout> --test",
             "contact": "meh@example.com",
@@ -5378,6 +5434,7 @@ ARGO Monitoring team
             self.assertEqual(
                 candidate.yum_baseurl, "http://repo.example.com/devel/rocky8/"
             )
+            self.assertEqual(candidate.script, "")
             self.assertEqual(
                 candidate.command,
                 "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
@@ -5408,6 +5465,7 @@ ARGO Monitoring team
             "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
             "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
             "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "",
             "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
                        "-t <timeout> --test",
             "contact": "meh@example.com",
@@ -5447,6 +5505,7 @@ ARGO Monitoring team
             self.assertEqual(
                 candidate.yum_baseurl, "http://repo.example.com/devel/rocky8/"
             )
+            self.assertEqual(candidate.script, "")
             self.assertEqual(
                 candidate.command,
                 "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
@@ -5477,6 +5536,7 @@ ARGO Monitoring team
             "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
             "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
             "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "",
             "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
                        "-t <timeout> --test",
             "contact": "meh@example.com",
@@ -5516,6 +5576,7 @@ ARGO Monitoring team
             self.assertEqual(
                 candidate.yum_baseurl, "http://repo.example.com/devel/rocky8/"
             )
+            self.assertEqual(candidate.script, "")
             self.assertEqual(
                 candidate.command,
                 "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
@@ -5546,6 +5607,7 @@ ARGO Monitoring team
             "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
             "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
             "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "",
             "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
                        "-t <timeout> --test",
             "contact": "meh@example.com",
@@ -5585,6 +5647,7 @@ ARGO Monitoring team
             self.assertEqual(
                 candidate.yum_baseurl, "http://repo.example.com/devel/rocky8/"
             )
+            self.assertEqual(candidate.script, "")
             self.assertEqual(
                 candidate.command,
                 "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
@@ -5615,6 +5678,7 @@ ARGO Monitoring team
             "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
             "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
             "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "",
             "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
                        "-t <timeout> --test",
             "contact": "meh@example.com",
@@ -5654,6 +5718,7 @@ ARGO Monitoring team
             self.assertEqual(
                 candidate.yum_baseurl, "http://repo.example.com/devel/rocky8/"
             )
+            self.assertEqual(candidate.script, "")
             self.assertEqual(
                 candidate.command,
                 "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
@@ -5684,6 +5749,7 @@ ARGO Monitoring team
             "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
             "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
             "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "",
             "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
                        "-t <timeout> --test",
             "contact": "meh@example.com",
@@ -5726,6 +5792,7 @@ ARGO Monitoring team
             self.assertEqual(
                 candidate.yum_baseurl, "http://repo.example.com/devel/centos7/"
             )
+            self.assertEqual(candidate.script, None)
             self.assertEqual(
                 candidate.command,
                 "/usr/libexec/argo/probes/test/test-probe -H <hostname> "
@@ -5753,6 +5820,7 @@ ARGO Monitoring team
             "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
             "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
             "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "",
             "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
                        "-t <timeout> --test",
             "contact": "meh@example.com",
@@ -5786,6 +5854,7 @@ ARGO Monitoring team
             "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
             "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
             "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "",
             "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
                        "-t <timeout> --test",
             "contact": "meh@example.com",
@@ -5820,6 +5889,7 @@ ARGO Monitoring team
             "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
             "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
             "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "",
             "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
                        "-t <timeout> --test",
             "contact": "meh@example.com",
@@ -5888,6 +5958,7 @@ ARGO Monitoring team
             "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
             "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
             "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "",
             "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
                        "-t <timeout> --test",
             "contact": "meh@example.com",
@@ -5930,6 +6001,7 @@ ARGO Monitoring team
             self.assertEqual(
                 candidate.yum_baseurl, "http://repo.example.com/devel/centos7/"
             )
+            self.assertEqual(candidate.script, None)
             self.assertEqual(
                 candidate.command,
                 "/usr/libexec/argo/probes/test/test-probe -H <hostname> "
@@ -5956,6 +6028,7 @@ ARGO Monitoring team
             "description": "More detailed description for the new probe",
             "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
             "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "",
             "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
                        "-t <timeout> --test",
             "contact": "meh@example.com",
@@ -5997,6 +6070,7 @@ ARGO Monitoring team
             self.assertEqual(
                 candidate.yum_baseurl, "http://repo.example.com/devel/centos7/"
             )
+            self.assertEqual(candidate.script, None)
             self.assertEqual(
                 candidate.command,
                 "/usr/libexec/argo/probes/test/test-probe -H <hostname> "
@@ -6026,6 +6100,7 @@ ARGO Monitoring team
             "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
             "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
             "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "https://github.com/ARGOeu-Metrics/argo-probe-new/script",
             "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
                        "-t <timeout> --test",
             "contact": "meh@example.com",
@@ -6069,6 +6144,10 @@ ARGO Monitoring team
             self.assertEqual(
                 candidate.yum_baseurl,
                 "http://repo.example.com/devel/rocky8/"
+            )
+            self.assertEqual(
+                candidate.script,
+                "https://github.com/ARGOeu-Metrics/argo-probe-new/script"
             )
             self.assertEqual(
                 candidate.command,
