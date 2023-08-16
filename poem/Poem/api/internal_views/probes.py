@@ -618,6 +618,33 @@ ARGO Monitoring team
                 detail="You do not have permission to modify probe candidates"
             )
 
+    def delete(self, request, cid=None):
+        if request.user.is_superuser:
+            if cid:
+                try:
+                    poem_models.ProbeCandidate.objects.get(id=cid).delete()
+
+                    return Response(status=status.HTTP_204_NO_CONTENT)
+
+                except poem_models.ProbeCandidate.DoesNotExist:
+                    return error_response(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Probe candidate does not exist"
+                    )
+
+            else:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Probe candidate ID not specified"
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to delete probe "
+                       "candidates"
+            )
+
 
 class ListProbeCandidateStatuses(APIView):
     authentication_classes = (SessionAuthentication,)

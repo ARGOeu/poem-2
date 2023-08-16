@@ -6172,6 +6172,85 @@ ARGO Monitoring team
             self.assertFalse(candidate.deployed_sent)
             self.assertFalse(candidate.rejected_sent)
 
+    def test_delete_probe_candidate_superuser(self):
+        self.assertEqual(poem_models.ProbeCandidate.objects.all().count(), 5)
+        request = self.factory.delete(f"{self.url}/{self.candidate5.id}")
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, f"{self.candidate5.id}")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(poem_models.ProbeCandidate.objects.all().count(), 4)
+        self.assertRaises(
+            poem_models.ProbeCandidate.DoesNotExist,
+            poem_models.ProbeCandidate.objects.get,
+            id=self.candidate5.id
+        )
+
+    def test_delete_probe_candidate_regular_user(self):
+        self.assertEqual(poem_models.ProbeCandidate.objects.all().count(), 5)
+        request = self.factory.delete(f"{self.url}/{self.candidate5.id}")
+        force_authenticate(request, user=self.user)
+        response = self.view(request, f"{self.candidate5.id}")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to delete probe candidates"
+        )
+        self.assertEqual(poem_models.ProbeCandidate.objects.all().count(), 5)
+
+    def test_delete_probe_candidate_without_id_superuser(self):
+        self.assertEqual(poem_models.ProbeCandidate.objects.all().count(), 5)
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["detail"], "Probe candidate ID not specified"
+        )
+        self.assertEqual(poem_models.ProbeCandidate.objects.all().count(), 5)
+
+    def test_delete_probe_candidate_without_id_regular_user(self):
+        self.assertEqual(poem_models.ProbeCandidate.objects.all().count(), 5)
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.user)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to delete probe candidates"
+        )
+        self.assertEqual(poem_models.ProbeCandidate.objects.all().count(), 5)
+
+    def test_delete_nonexisting_probe_candidate_superuser(self):
+        self.assertEqual(poem_models.ProbeCandidate.objects.all().count(), 5)
+        request = self.factory.delete(
+            f"{self.url}/{self.candidate1.id + self.candidate5.id}"
+        )
+        force_authenticate(request, user=self.superuser)
+        response = self.view(
+            request, f"{self.candidate1.id + self.candidate5.id}"
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data["detail"], "Probe candidate does not exist"
+        )
+        self.assertEqual(poem_models.ProbeCandidate.objects.all().count(), 5)
+
+    def test_delete_nonexisting_probe_candidate_regular_user(self):
+        self.assertEqual(poem_models.ProbeCandidate.objects.all().count(), 5)
+        request = self.factory.delete(
+            f"{self.url}/{self.candidate1.id + self.candidate5.id}"
+        )
+        force_authenticate(request, user=self.user)
+        response = self.view(
+            request, f"{self.candidate1.id + self.candidate5.id}"
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to delete probe candidates"
+        )
+        self.assertEqual(poem_models.ProbeCandidate.objects.all().count(), 5)
+
 
 class ListProbeCandidateStatuses(TenantTestCase):
     def setUp(self) -> None:

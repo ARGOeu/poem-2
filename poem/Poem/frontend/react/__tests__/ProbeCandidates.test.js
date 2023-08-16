@@ -31,6 +31,7 @@ beforeEach(() => {
 })
 
 const mockChangeObject = jest.fn()
+const mockDeleteObject = jest.fn()
 
 const mockListProbeCandidates = [
   {
@@ -499,7 +500,8 @@ describe("Test probe candidate changeview", () => {
           }
         }, 
         isActiveSession: () => Promise.resolve(mockActiveSession),
-        changeObject: mockChangeObject
+        changeObject: mockChangeObject,
+        deleteObject: mockDeleteObject
       }
     })
     WebApi.mockImplementation(() => {
@@ -1703,7 +1705,7 @@ describe("Test probe candidate changeview", () => {
     )
   })
 
-  test("Error in changing probe candidate with message", async () => {
+  test("Test error in changing probe candidate with message", async () => {
     mockChangeObject.mockImplementationOnce(() => {
       throw Error("400 BAD REQUEST; There has been an error")
     })
@@ -1769,7 +1771,7 @@ describe("Test probe candidate changeview", () => {
     )
   })
 
-  test("Error in changing probe candidate without message", async () => {
+  test("Test error in changing probe candidate without message", async () => {
     mockChangeObject.mockImplementationOnce(() => {
       throw Error()
     })
@@ -1833,7 +1835,7 @@ describe("Test probe candidate changeview", () => {
     )
   })
 
-  test("Error in changing probe candidate with warning", async () => {
+  test("Test error in changing probe candidate with warning", async () => {
     mockChangeObject.mockReturnValueOnce(
       Promise.resolve({
         warning: "Probe candidate has been successfully modified, but the email was not sent: SMTP error"
@@ -1896,6 +1898,96 @@ describe("Test probe candidate changeview", () => {
         <p>Click to dismiss.</p>
       </div>,
       "Warning",
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test("Test successfully deleting probe candidate", async () => {
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /change probe/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: /delete/i }))
+    await waitFor(() => {
+      expect(screen.getByRole("dialog", { title: "delete" })).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole("button", { name: /yes/i }))
+
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        "/api/v2/internal/probecandidates/2"
+        )
+    })
+
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Probe candidate successfully deleted", "Deleted", 2000
+    )
+  })
+
+  test("Test error deleting probe candidate with message", async () => {
+    mockDeleteObject.mockImplementationOnce(() => {
+      throw Error("404 NOT FOUND; Probe candidate not found")
+    })
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /change probe/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: /delete/i }))
+    await waitFor(() => {
+      expect(screen.getByRole("dialog", { title: "delete" })).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole("button", { name: /yes/i }))
+
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        "/api/v2/internal/probecandidates/2"
+        )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>404 NOT FOUND; Probe candidate not found</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      "Error",
+      0,
+      expect.any(Function)
+    )
+  })
+
+  test("Test error deleting probe candidate without message", async () => {
+    mockDeleteObject.mockImplementationOnce(() => { throw Error() })
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /change probe/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: /delete/i }))
+    await waitFor(() => {
+      expect(screen.getByRole("dialog", { title: "delete" })).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByRole("button", { name: /yes/i }))
+
+    await waitFor(() => {
+      expect(mockDeleteObject).toHaveBeenCalledWith(
+        "/api/v2/internal/probecandidates/2"
+        )
+    })
+
+    expect(NotificationManager.error).toHaveBeenCalledWith(
+      <div>
+        <p>Error deleting probe candidate</p>
+        <p>Click to dismiss.</p>
+      </div>,
+      "Error",
       0,
       expect.any(Function)
     )

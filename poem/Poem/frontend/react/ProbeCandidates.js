@@ -184,6 +184,7 @@ const ProbeCandidateForm = ({
   statuses, 
   serviceTypes,
   doChange,
+  doDelete,
   ...props 
 }) => {
   const location = props.location
@@ -209,6 +210,9 @@ const ProbeCandidateForm = ({
   const onYesCallback = () => {
     if (onYes === "change")
       doChange(getValues())
+
+    if (onYes === "delete")
+      doDelete()
   }
 
   return (
@@ -599,6 +603,12 @@ const ProbeCandidateForm = ({
         <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
           <Button
             color="danger"
+            onClick={ () => {
+              setModalMsg("Are you sure you want to delete probe candidate?")
+              setModalTitle("Delete probe candidate")
+              setOnYes("delete")
+              setAreYouSureModal(!areYouSureModal)
+            }}
           >
             Delete
           </Button>
@@ -631,6 +641,7 @@ export const ProbeCandidateChange = (props) => {
   const queryClient = useQueryClient()
 
   const mutation = useMutation(async (values) => await backend.changeObject("/api/v2/internal/probecandidates/", values))
+  const deleteMutation = useMutation(async () => await backend.deleteObject(`/api/v2/internal/probecandidates/${pcid}`))
 
   const { data: userDetails, error: userDetailsError, isLoading: userDetailsLoading } = useQuery(
     "userdetails", () => fetchUserDetails(true)
@@ -697,6 +708,25 @@ export const ProbeCandidateChange = (props) => {
     })
   }
 
+  const doDelete = () => {
+    deleteMutation.mutate(undefined, {
+      onSuccess: () => {
+        queryClient.invalidateQueries("probecandidate")
+        NotifyOk({
+          msg: "Probe candidate successfully deleted",
+          title: "Deleted",
+          callback: () => history.push("/ui/administration/probecandidates")
+        })
+      },
+      onError: (error) => {
+        NotifyError({
+          title: "Error",
+          msg: error.message ? error.message : "Error deleting probe candidate"
+        })
+      }
+    })
+  }
+
   if (userDetailsLoading || candidateLoading || statusesLoading || serviceTypesLoading)
     return (<LoadingAnim />)
 
@@ -719,6 +749,7 @@ export const ProbeCandidateChange = (props) => {
         statuses={ statuses }
         serviceTypes={ showtitles ? serviceTypes.map(type => type.title) : serviceTypes.map(type => type.name) }
         doChange={ doChange }
+        doDelete={ doDelete }
         { ...props }
       />
     )
