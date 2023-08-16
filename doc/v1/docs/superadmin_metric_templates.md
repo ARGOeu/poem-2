@@ -43,9 +43,9 @@ Mandatory fields in case of active metric template:
 
 ##### Tags
 
-Metric templates can be tagged by any tag. There are, however, two tags that are special. So called internal metrics are tagged with *internal* tag. Those metrics are checking internal processes which are necessary for all tenants. They are automatically imported to a tenant POEM once new tenant is created.
+Metric templates can be tagged by any tag. There are, however, three tags that are special. So-called internal metrics are tagged with *internal* tag. Those metrics are checking internal processes which are necessary for all tenants. They are automatically imported to a tenant POEM once new tenant is created.
 
-Metric templates tagged with *deprecated* tag are no longer being maintained, and are going to be deleted at an appropriate time.
+Metric templates tagged with *deprecated* or *eol* tag are no longer being maintained, and are not used actively.
 
 Tag field is a multiple select field with autocomplete and a possibility to create new entries. So, when SuperAdmin user starts typing, all the already existing tags are listed (filtered by the letters typed-in). If the desired tag does not exist, user can create new one by simply clicking *create entry*.
 
@@ -55,56 +55,122 @@ Attributes are part of metric template definition. They are used to pass values 
 
 Description of attributes is given in the table below.
 
-| Attribute | Description |
-|-----------|-------------|
-| `BDII_PORT` | BDII port. |
-| `BDII_DN` | BDII base DN |
-| `BDII_TYPE` | Type of BDII, can be one of the following: `bdii_top` and `bdii_site`. |
-| `CREAM_PORT` | CREAM CE port. |
-| `CREAM_QUEUE` | CREAM CE queue for a given VO. |
-| `FTS_PORT` | FTS port. |
-| `GRIDFTP_PORT` | GridFTP port. |
-| `GRAM_PORT` | GRAM Gatekeeper port. |
-| `HOST_NAME` | Hostname of the monitored box. Do not use this attribute for parameter `-H` because it is set automatically. |
-| `KEYSTORE` | Location of Java keystore with host certificate. Default value is `/etc/nagios/globus/keystore.jks`.
-| `LL_PORT` | LocalLogger port. |
-| `MYPROXY_PORT` | MYPROXY port. |
-| `NAGIOS_HOST_CERT` | Location of host certificate with nagios user ownership. Value is `/etc/nagios/globus/hostcert.pem`. |
-| `NAGIOS_HOST_KEY` | Location of host certificate key with nagios user ownership. Value is `/etc/nagios/globus/hostkey.pem`. |
-| `PATH` | Path extracted from URL. |
-| `PORT` | Port extracted from URL. |
-| `RGMA_PORT` | RGMA port. |
-| `SE_PATH` | Storage element path for a given VO. |
-| `<serviceType>_URL` | URL extracted topology database (e.g. GOCDB attribute URL); serviceType prefix is used in order to avoid collision in case of multiple serviceTypes on a same host. |
-| `SITE_BDII` | Hostname of Site BDII. |
-| `SITENAME` | Site name. |
-| `SRM1_PORT` | SRM1 port. |
-| `SRM2_PORT` | SRM2.2 port. |
-| `SSL` | Attribute is set if URL scheme is `https://`. |
-| `TOMCAT_PORT` | TOMCAT port. |
-| `TOP_BDII` | Hostname of Top BDII used for generating configuration. |
-| `TRUSTSTORE` | Location of Java truststore with all IGTF CA bundle. Default value is `/etc/nagios/globus/truststore.ts`. |
-| `URL` | URL extracted topology database (e.g. GOCDB attribute URL). |
-| `VOBOX_PORT` | VOBOX port. |
-| `WMPROXY_PORT` | WMPROXY port. |
+| Attribute                   | Description                                                                                                                                                         |
+|-----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `AGORA_PASSWORD`            | Password for Agora Catalogue service.                                                                                                                               |
+| `AGORA_USERNAME`            | Username for Agora Catalogue service.                                                                                                                               |
+| `ARC_CE_MEMORY_LIMIT`       | Memory limit used by jobs in bytes for ARC-CE metrics.                                                                                                              |
+| `ARC_GOOD_SES`              | Value of ARC_GOOD_SES variable for ARC-CE metrics.                                                                                                                  |
+| `ARC_NAGIOS_SERVICE`        | ARC metric being used to check Nagios freshness.                                                                                                                    |
+| `ARGOUI_AR_PATH`            | Path used for checking the ARGO UI A/R report availability.                                                                                                         |
+| `ARGOUI_AR_REGEX`           | Regex used for checking the ARGO UI A/R report availability.                                                                                                        |
+| `ARGOUI_STATUS_PATH`        | Path used for checking the ARGO UI status report availability.                                                                                                      |
+| `ARGOUI_STATUS_REGEX`       | Regex used for checking the ARGO UI A/R report availability.                                                                                                        |
+| `ARGO_AMS_PROJECT`          | Project name used for checking the ARGO AMS availability.                                                                                                           |
+| `ARGO_AMS_TOKEN`            | Token for authentication against ARGO AMS.                                                                                                                          |
+| `ARGO_API_TOKEN`            | Token for authentication against ARGO Web-API.                                                                                                                      |
+| `ARGO_OIDC_SP_URL`          | URL of the Service Provider's AUTHENTICATION link for OIDC.                                                                                                         |
+| `ARGO_SAML_SP_URL`          | URL of the Service Provider's AUTHENTICATION link for SAML.                                                                                                         |
+| `ARGO_STATUS_URL`           | URL of endpoint containing service status.                                                                                                                          |
+| `ARGO_TENANTS_TOKEN`        | POEM token(s) for ARGO tenant(s).                                                                                                                                   |
+| `ARGO_WEBDAV_OPS_URL`       | WebDAV URL containing also the VO ops folder.                                                                                                                       |
+| `ARGO_WEBDAV_SKIP_DIR_TEST` | Use this flag to skip the directory listing test for WebDAV.                                                                                                        |
+| `ARGO_WEBODV_SECRET`        | Token for authentication against WebODV service.                                                                                                                    |
+| `ARGO_XML_XPATH`            | XPath to check in the XML response.                                                                                                                                 |
+| `ARGO_XML_XPATH_OK_VALUE`   | XPath value which will return OK status when checking XML response.                                                                                                 |
+| `ARGO_XROOTD_OPS_URL`       | XRootD base SURL to test (the path where ops VO has write access).                                                                                                  |
+| `ARGUS_SALT`                | Salt for the dynamic DN from Argus                                                                                                                                  |
+| `B2HANDLE_PREFIX`           | B2HANDLE prefix.                                                                                                                                                    |
+| `B2STAGE_API_PASSWORD`      | Password for B2STAGE.                                                                                                                                               |
+| `B2STAGE_API_USERNAME`      | Useername for B2STAGE.                                                                                                                                              |
+| `BDII_PORT`                 | BDII port.                                                                                                                                                          |
+| `BDII_DN`                   | BDII base DN                                                                                                                                                        |
+| `BROKER_PORT`               | Broker port.                                                                                                                                                        |
+| `CREAM_PORT`                | CREAM CE port.                                                                                                                                                      |
+| `CREAM_QUEUE`               | CREAM CE queue for a given VO.                                                                                                                                      |
+| `CVMFS-Stratum-1_PORT`      | CVMFS-Stratum-1 port.                                                                                                                                               |
+| `EDUGAIN_PASSWORD`          | EDUGAIN password.                                                                                                                                                   |
+| `EDUGAIN_USER`              | EDUGAIN username.                                                                                                                                                   |
+| `EGISSO_PASSWORD`           | EGI SSO password.                                                                                                                                                   |
+| `EGISSO_USER`               | EGI SSO username.                                                                                                                                                   |
+| `EOSCCORE_HELPDESK_TOKEN` | Token for EOSCCORE helpdesk API.                                                                                                                                    |
+| `FTS_PORT`                  | FTS port.                                                                                                                                                           |
+| `GITLAB_URL_SECRET` | Gitlab URL containing token.                                                                                                                                        |
+| `GLUE2_BDII_DN` | GLUE2 LDAP base.                                                                                                                                                    |
+| `GRAM_PORT`                 | GRAM Gatekeeper port.                                                                                                                                               |
+| `GRIDFTP_PORT`              | GridFTP port.                                                                                                                                                       |
+| `GRIDPROXY_NAGIOS_SERVICE` | GRIDPROXY metric being used to check Nagios freshness                                                                                                               |
+| `GSISSH_PORT` | GSISSH port.                                                                                                                                                        |
+| `HOSTDN` | Host DN.                                                                                                                                                            |
+| `KEYCLOAK_CLIEND_ID` | Client ID for Keycloak service.                                                                                                                                     |
+| `KEYCLOAK_CLIENT_SECRET` | Client secret for Keycloak service.                                                                                                                                 |
+| `KEYSTORE`                  | Location of Java keystore with host certificate. Default value is `/etc/nagios/globus/keystore.jks`.                                                                
+| `LB_PORT` | LB port.                                                                                                                                                            |
+| `MYPROXY_NAME` | Name of MyProxy credential to use.                                                                                                                                  |
+| `MYPROXY_PORT`              | MYPROXY port.                                                                                                                                                       |
+| `MYPROXY_SERVER` | Name or IP address of MyProxy host to check.                                                                                                                        |
+| `MYPROXY_USER` | Name of MyProxy account under which the credential was stored.                                                                                                      |
+| `NAGIOS_B2ACCESS_LOGIN` | B2ACCESS username.                                                                                                                                                  |
+| `NAGIOS_B2ACCESS_PASSWORD` | B2ACCESS password.                                                                                                                                                  |
+| `NAGIOS_FRESHNESS_PASSWORD` | Nagios password.                                                                                                                                                    |
+| `NAGIOS_FRESHNESS_USERNAME` | Nagios username.                                                                                                                                                    |
+| `NAGIOS_HOST_CERT`          | Location of host certificate with nagios user ownership. Value is `/etc/nagios/globus/hostcert.pem`.                                                                |
+| `NAGIOS_HOST_KEY`           | Location of host certificate key with nagios user ownership. Value is `/etc/nagios/globus/hostkey.pem`.                                                             |
+| `NAGIOS_UI_CREDENTIALS` | Credentials for Nagios UI.                                                                                                                                          |
+| `OCCI_PORT` | OCCI port.                                                                                                                                                          |
+| `OIDC_ACCESS_TOKEN` | OIDC access token.                                                                                                                                                  |
+| `OIDC_CLIENT_ID` | OIDC client ID.                                                                                                                                                     |
+| `OIDC_CLIENT_SECRET` | OIDC client secret.                                                                                                                                                 |
+| `OIDC_REFRESH_TOKEN` | OIDC refresh token.                                                                                                                                                 |
+| `OS_APPDB_IMAGE` | OpenStack AppDB image.                                                                                                                                              
+| `OS_KEYSTONE_HOST` | OpenStack Keystone host.                                                                                                                                            |
+| `OS_KEYSTONE_PORT` | OpenStack Keystone port.                                                                                                                                            |
+| `OS_KEYSTONE_URL` | OpenStack Keystone URL.                                                                                                                                             |
+| `OS_REGION` | OpenStack region.                                                                                                                                                   |
+| `PATH`                      | Path extracted from URL.                                                                                                                                            |
+| `PORT`                      | Port extracted from URL.                                                                                                                                            |
+| `PROXY_LIFETIME` | Lifetime of generated proxy in hours.                                                                                                                               |
+| `QCG-BROKER_PORT` | QCG Broker port.                                                                                                                                                    |
+| `QCG-COMPUTING_PORT` | QCG Computing port.                                                                                                                                                 |
+| `QCG-NOTIFICATION_PORT` | QCG Notification port.                                                                                                                                              |
+| `RM_PORT` | RM port.                                                                                                                                                            |
+| `ROBOT_CERT` | Location of robot certificate.                                                                                                                                      |
+| `ROBOT_KEY` | Location of robot certificate key.                                                                                                                                  |
+| `SENSU_HOST_CERT` | Location of certificate used by Sensu.                                                                                                                              |
+| `SE_PATH`                   | Storage element path for a given VO.                                                                                                                                |
+| `<serviceType>_URL`         | URL extracted topology database (e.g. GOCDB attribute URL); serviceType prefix is used in order to avoid collision in case of multiple serviceTypes on a same host. |
+| `SITE_BDII`                 | Hostname of Site BDII.                                                                                                                                              |
+| `SITENAME`                  | Site name.                                                                                                                                                          |
+| `SRM1_PORT`                 | SRM1 port.                                                                                                                                                          |
+| `SSH_PORT` | SSH port.                                                                                                                                                           |
+| `SSL`                       | Attribute is set if URL scheme is `https://`.                                                                                                                       |
+| `SURL` | SRM base SURL to test.                                                                                                                                              |
+| `TOP_BDII`                  | Hostname of Top BDII used for generating configuration.                                                                                                             |
+| `TRUSTSTORE`                | Location of Java truststore with all IGTF CA bundle. Default value is `/etc/nagios/globus/truststore.ts`.                                                           |
+| `URL`                       | URL extracted topology database (e.g. GOCDB attribute URL).                                                                                                         |
+| `VOMS_PORT` | VOMS port.                                                                                                                                                          |
+| `VONAME` | VO name.                                                                                                                                                            |
+| `VO_FQAN` | VO FQAN.                                                                                                                                                            | 
+| `WMPROXY_PORT`              | WMPROXY port.                                                                                                                                                       |
+| `X509_USER_PROXY` | Location of x509 certificate proxy file. |
 
 ##### Flags
 
-Flags are part of metric definition and control how the NCG configures metric. Below is description currently
+Flags are part of metric definition and control how the metrics are configured on the mon-box. Below is description currently
 supported flags.
 
 | Flag | Description |
 |------|-------------|
-| `NOARGS` |  Metric's command is configured without arguments. |
 | `NOHOSTNAME` | Metric's command is configured without -H parameter. |
-| `NRPE_SERVICE` | Metric is configured to be executed via NRPE on service node. |
+| `NOTIMEOUT` | Metrics command is configured without -t parameter. |
+| `NRPE` | Metric is configured to be executed via NRPE on service node. |
 | `NOPUBLISH` | Metric results are not published to AMS. |
 | `PASSIVE` | If defined, metric is part of a complex check. NCG configures metric as passive check only. Results for the metric should be generated by parent metric or received via message bus. |
 | `VO` | Metric is VO dependent. Metric is configured multiple time for each VO or VO FQAN defined. In case that VO is not supported on a given host, metric is not generated at all. |
 
 ### Passive metric templates
 
-Page for particular **passive** metric template is considerably reduced and it is shown in the image below.
+Page for particular **passive** metric template is considerably reduced, and it is shown in the image below.
 
 ![SuperAdmin passive metric template](figures/superadmin_metric_template_passive.png)
 

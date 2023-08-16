@@ -18,4 +18,4 @@ In **State** section, there are two tables. One shows available status states pr
 
 Default states are necessary since compute engine gives the ability to define completely custom states based on tenants monitoring infrastructure output. Therefore, some custom states must be tagged with specific meaning. These states might not be present in the monitoring messages, but are produced during computations by the compute engine according to a specific logic. Therefore, some of the custom status tenants declare must be "tied" to a specific default state of service.
 
-The available operations are given in the **Operations** section in two truth tables: AND and OR. Every row in table represents an operation (AND or OR) between two states and their result.
+The available operations are given in the **Operations** section in two truth tables: `AND` and `OR`. Every row in table represents an operation (`AND` or `OR`) between two states and their result.

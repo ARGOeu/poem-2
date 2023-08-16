@@ -22,7 +22,7 @@ There are two checkboxes in **Permissions** section. First checkbox sets superus
 
 #### POEM User Permissions
 
-Section **POEM User Permissions** contains groups of resources associated to the user. If a group is associated to the user, (s)he is allowed to modify the resources which belong to the group. In the example shown in the image, group of metrics *EUDAT* is associated to the user, therefore user has permission to modify all the metrics in the said group. If user is a superuser, he has permission to change all the resources, regardless of groups.
+Section **POEM User Permissions** contains groups of resources associated to the user. If a group is associated to the user, (s)he is allowed to modify the resources which belong to the group. In the example shown in the image, group of metrics *TEST* is associated to the user, therefore user has permission to modify all the metrics in the said group. If user is a superuser, he has permission to change all the resources, regardless of groups.
 
 #### Additional Information
 
