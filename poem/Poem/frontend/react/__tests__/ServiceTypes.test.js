@@ -206,7 +206,7 @@ describe('Test service types list - Read Only', () => {
     WebApi.mockImplementation(() => {
       return {
         fetchServiceTypes: () => Promise.resolve(mockServTypes),
-        addServiceTypes: mockAddServiceTypes,
+        addServiceTypes: mockAddServiceTypes
       }
     })
     fetchUserDetails.mockReturnValue(mockUserDetailsTenantUser)
@@ -430,6 +430,39 @@ describe('Test service types list - Read Only', () => {
     expect(screen.getAllByRole("row", { name: "" })).toHaveLength(14)
     rows = screen.getAllByRole("row")
     expect(rows[2].textContent).toBe("1poem.added.twoPOEM extra 22nd service type created from POEM UI and POSTed on WEB-API.poem")
+  })
+})
+
+
+describe("Test service types list if empty", () => {
+  beforeAll(() => {
+    WebApi.mockImplementation(() => {
+      return {
+        fetchServiceTypes: () => Promise.resolve([])
+      }
+    })
+    fetchUserDetails.mockReturnValue(mockUserDetailsTenantUser)
+  })
+
+  test("Test that page renders properly", async () => {
+    renderListView()
+
+    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /service/i }).textContent).toBe("Service types")
+    })
+
+    expect(screen.getAllByRole("columnheader")).toHaveLength(8);
+    expect(screen.getByRole("columnheader", { name: "#" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Service name" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Description" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Source" })).toBeInTheDocument();
+
+    const rows = screen.getAllByRole("row")
+    expect(rows).toHaveLength(17)
+    expect(screen.getAllByPlaceholderText(/search/i)).toHaveLength(2)
+    expect(screen.getByRole("row", { name: /no/i }).textContent).toBe("No service types")
   })
 })
 
