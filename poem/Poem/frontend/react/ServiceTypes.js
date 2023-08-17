@@ -590,7 +590,8 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
     defaultValues: {
       serviceTypes: updatedData,
       searchService: '',
-      searchDesc: ''
+      searchDesc: '',
+      selectAll: false
     }
   })
 
@@ -773,7 +774,21 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
                     </td>
                     <td className="align-middle text-center">
                     </td>
-                    <td></td>
+                    <td className="align-middle text-center">
+                      <Controller
+                        name="selectAll"
+                        control={ control }
+                        render={ ({ field }) => 
+                          <Input
+                            { ...field }
+                            type="checkbox"
+                            data-testid="checkbox-all"
+                            className="mt-2"
+                            checked={ field.checked }
+                          />
+                        }
+                      />
+                    </td>
                   </tr>
                   {
                     fieldsView.length > 0 ?

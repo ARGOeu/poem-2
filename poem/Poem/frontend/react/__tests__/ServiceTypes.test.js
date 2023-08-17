@@ -464,6 +464,27 @@ describe("Test service types list if empty", () => {
     expect(screen.getAllByPlaceholderText(/search/i)).toHaveLength(2)
     expect(screen.getByRole("row", { name: /no/i }).textContent).toBe("No service types")
   })
+
+  test("Test that public page renders properly", async () => {
+    renderListViewPublic()
+
+    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /service/i }).textContent).toBe("Service types")
+    })
+
+    expect(screen.getAllByRole("columnheader")).toHaveLength(8);
+    expect(screen.getByRole("columnheader", { name: "#" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Service name" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Description" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Source" })).toBeInTheDocument();
+
+    const rows = screen.getAllByRole("row")
+    expect(rows).toHaveLength(17)
+    expect(screen.getAllByPlaceholderText(/search/i)).toHaveLength(2)
+    expect(screen.getByRole("row", { name: /no/i }).textContent).toBe("No service types")
+  })
 })
 
 
@@ -494,8 +515,8 @@ describe('Test service types list - Bulk change and delete', () => {
     expect(table.getByRole("columnheader", { name: "Select" })).toBeInTheDocument()
     expect(table.getAllByPlaceholderText(/search/i)).toHaveLength(2)
     expect(table.getAllByTestId(/st-rows-/)).toHaveLength(9)
-    expect(table.getAllByTestId(/checkbox-/)).toHaveLength(9)
-    expect(table.getAllByTestId(/checkbox-/, { checked: false })).toHaveLength(9)
+    expect(table.getAllByTestId(/checkbox-/)).toHaveLength(10)
+    expect(table.getAllByTestId(/checkbox-/, { checked: false })).toHaveLength(10)
 
     expect(screen.getByRole("button", { name: /delete/i })).toBeDisabled()
     expect(screen.getByRole("button", { name: /save/i })).toBeDisabled()
@@ -540,8 +561,8 @@ describe('Test service types list - Bulk change and delete', () => {
     expect(table.getByRole("columnheader", { name: "Select" })).toBeInTheDocument()
     expect(table.getAllByPlaceholderText(/search/i)).toHaveLength(2)
     expect(table.getAllByTestId(/st-rows-/)).toHaveLength(9)
-    expect(table.getAllByTestId(/checkbox-/)).toHaveLength(9)
-    expect(table.getAllByTestId(/checkbox-/, { checked: false })).toHaveLength(9)
+    expect(table.getAllByTestId(/checkbox-/)).toHaveLength(10)
+    expect(table.getAllByTestId(/checkbox-/, { checked: false })).toHaveLength(10)
 
     expect(screen.getByRole("button", { name: /delete/i })).toBeDisabled()
     expect(screen.getByRole("button", { name: /save/i })).toBeDisabled()
