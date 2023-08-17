@@ -165,6 +165,8 @@ function renderListView(withServiceTypesTitles=undefined) {
               webapitoken='token'
               webapiservicetypes="https://mock.servicetypes.com"
               showtitles={ withServiceTypesTitles }
+              tenantName="TENANT"
+              devel={ true }
             />}
           />
         </Router>
@@ -520,6 +522,7 @@ describe('Test service types list - Bulk change and delete', () => {
 
     expect(screen.getByRole("button", { name: /delete/i })).toBeDisabled()
     expect(screen.getByRole("button", { name: /save/i })).toBeDisabled()
+    expect(screen.getByRole("button", { name: /csv/i })).toBeEnabled()
     expect(screen.getByRole("button", { name: /add/i })).toBeEnabled()
 
     const tbody = screen.getAllByRole('rowgroup')[1]
@@ -566,6 +569,7 @@ describe('Test service types list - Bulk change and delete', () => {
 
     expect(screen.getByRole("button", { name: /delete/i })).toBeDisabled()
     expect(screen.getByRole("button", { name: /save/i })).toBeDisabled()
+    expect(screen.getByRole("button", { name: /csv/i })).toBeEnabled()
     expect(screen.getByRole("button", { name: /add/i })).toBeEnabled()
 
     const tbody = screen.getAllByRole('rowgroup')[1]
@@ -658,6 +662,7 @@ describe('Test service types list - Bulk change and delete', () => {
 
     expect(screen.getByRole("button", { name: /delete/i })).toBeEnabled()
     expect(screen.getByRole("button", { name: /save/i })).toBeDisabled()
+    expect(screen.getByRole("button", { name: /csv/i })).toBeEnabled()
     expect(screen.getByRole("button", { name: /add/i })).toBeEnabled()
 
     fireEvent.click(screen.getByRole("button", { name: /delete/i }))
@@ -752,6 +757,7 @@ describe('Test service types list - Bulk change and delete', () => {
 
     expect(screen.getByRole("button", { name: /delete/i })).toBeEnabled()
     expect(screen.getByRole("button", { name: /save/i })).toBeDisabled()
+    expect(screen.getByRole("button", { name: /csv/i })).toBeEnabled()
     expect(screen.getByRole("button", { name: /add/i })).toBeEnabled()
 
     fireEvent.click(screen.getByRole("button", { name: /delete/i }))
@@ -842,6 +848,7 @@ describe('Test service types list - Bulk change and delete', () => {
 
     expect(screen.getByRole("button", { name: /delete/i })).toBeEnabled()
     expect(screen.getByRole("button", { name: /save/i })).toBeDisabled()
+    expect(screen.getByRole("button", { name: /csv/i })).toBeEnabled()
     expect(screen.getByRole("button", { name: /add/i })).toBeEnabled()
 
     fireEvent.click(screen.getByRole("button", { name: /delete/i }))
@@ -925,6 +932,7 @@ describe('Test service types list - Bulk change and delete', () => {
 
     expect(screen.getByRole("button", { name: /delete/i })).toBeEnabled()
     expect(screen.getByRole("button", { name: /save/i })).toBeDisabled()
+    expect(screen.getByRole("button", { name: /csv/i })).toBeEnabled()
     expect(screen.getByRole("button", { name: /add/i })).toBeEnabled()
 
     fireEvent.click(screen.getByRole("button", { name: /delete/i }))
@@ -1012,6 +1020,7 @@ describe('Test service types list - Bulk change and delete', () => {
 
     expect(screen.getByRole("button", { name: /delete/i })).toBeEnabled()
     expect(screen.getByRole("button", { name: /save/i })).toBeDisabled()
+    expect(screen.getByRole("button", { name: /csv/i })).toBeEnabled()
     expect(screen.getByRole("button", { name: /add/i })).toBeEnabled()
 
     fireEvent.click(screen.getByRole("button", { name: /delete/i }))
@@ -1106,6 +1115,7 @@ describe('Test service types list - Bulk change and delete', () => {
 
     expect(screen.getByRole("button", { name: /delete/i })).toBeEnabled()
     expect(screen.getByRole("button", { name: /save/i })).toBeDisabled()
+    expect(screen.getByRole("button", { name: /csv/i })).toBeEnabled()
     expect(screen.getByRole("button", { name: /add/i })).toBeEnabled()
 
     fireEvent.click(screen.getByRole("button", { name: /delete/i }))
@@ -1210,6 +1220,7 @@ describe('Test service types list - Bulk change and delete', () => {
     })
 
     expect(screen.getByRole("button", { name: /delete/i })).toBeDisabled()
+    expect(screen.getByRole("button", { name: /csv/i })).toBeEnabled()
     expect(screen.getByRole("button", { name: /add/i })).toBeEnabled()
 
     fireEvent.click(screen.getByRole("button", { name: /save/i }))
@@ -1305,6 +1316,7 @@ describe('Test service types list - Bulk change and delete', () => {
     })
 
     expect(screen.getByRole("button", { name: /delete/i })).toBeDisabled()
+    expect(screen.getByRole("button", { name: /csv/i })).toBeEnabled()
     expect(screen.getByRole("button", { name: /add/i })).toBeEnabled()
 
     fireEvent.click(screen.getByRole("button", { name: /save/i }))
@@ -1373,6 +1385,34 @@ describe('Test service types list - Bulk change and delete', () => {
         ]
       )
     })
+  })
+
+  test("Test export csv", async () => {
+    const helpers = require("../FileDownload")
+    jest.spyOn(helpers, "downloadCSV").mockReturnValueOnce(null)
+
+    renderListView()
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /service/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: /csv/i }))
+    fireEvent.click(screen.getByRole("menuitem", { name: /export/i }))
+
+    const content = "name,title,description\r\n" + 
+    "argo.api,ARGO API service,ARGO API service for retrieving status and A/R results.\r\n" + 
+    "argo.computeengine,ARGO Compute Engine,ARGO Compute Engine computes availability and reliability of services.\r\n" + 
+    "argo.consumer,ARGO Consumer,ARGO Consumer collects monitoring metrics from monitoring engines.\r\n" + 
+    "argo.mon,ARGO Monitoring Engine,ARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.\r\n" + 
+    "argo.poem,POEM,POEM is system for managing profiles of probes and metrics in ARGO system.\r\n" + 
+    "argo.webui,ARGO web user interface,ARGO web user interface for metric A/R visualization and recalculation management.\r\n" +
+    "poem.added.one,POEM another,Service type created from POEM UI and POSTed on WEB-API.\r\n" + 
+    "poem.added.two,POEM extra 2,2nd service type created from POEM UI and POSTed on WEB-API.\r\n" +
+    "poem.added.three,POEM extra 3,3rd service type created from POEM UI and POSTed on WEB-API."
+
+    expect(helpers.downloadCSV).toHaveBeenCalledTimes(1)
+    expect(helpers.downloadCSV).toHaveBeenCalledWith(content, "TENANT-service-types-devel.csv")
   })
 })
 

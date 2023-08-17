@@ -16,7 +16,10 @@ import {
   PaginationItem,
   PaginationLink,
   Pagination,
-
+  ButtonDropdown,
+  DropdownToggle,
+  DropdownMenu,
+  DropdownItem,
 } from 'reactstrap';
 import {
   BaseArgoTable,
@@ -44,7 +47,8 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { ErrorMessage } from '@hookform/error-message';
 import * as yup from "yup";
 import _ from "lodash";
-
+import PapaParse from 'papaparse';
+import { downloadCSV } from './FileDownload';
 
 const BulkAddContext = React.createContext()
 
@@ -563,6 +567,8 @@ export const ServiceTypesBulkAdd = (props) => {
 
 const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
   const showtitles = props.showtitles
+  const tenantName = props.tenantName
+  const devel = props.devel
 
   const updatedData = data.map( e => {
     return {
@@ -578,6 +584,8 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
 
   const [pageSize, setPageSize] = useState(30)
   const [pageIndex, setPageIndex] = useState(0)
+
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const queryClient = useQueryClient();
   const webapiAddMutation = useMutation(async (values) => await webapi.addServiceTypes(values));
@@ -715,7 +723,28 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
             className="me-3">
             Save
           </Button>
-          <Link className="btn btn-secondary" to="/ui/servicetypes/add" role="button">Add</Link>
+          <Link className="btn btn-secondary me-3" to="/ui/servicetypes/add" role="button">Add</Link>
+          <ButtonDropdown isOpen={ dropdownOpen } toggle={ () => setDropdownOpen(!dropdownOpen) }>
+            <DropdownToggle caret color="secondary">CSV</DropdownToggle>
+            <DropdownMenu>
+              <DropdownItem
+                onClick={ () => {
+                  let csvContent = []
+                  getValues("serviceTypes").forEach((servtype) => 
+                    csvContent.push({ name: servtype.name, title: servtype.title, description: servtype.description })
+                  )
+                  const content = PapaParse.unparse(csvContent)
+                  let filename = `${tenantName}-service-types${devel ? "-devel" : ""}.csv`
+                  downloadCSV(content, filename)
+                }}
+              >
+                Export
+              </DropdownItem>
+              <DropdownItem>
+                Import
+              </DropdownItem>
+            </DropdownMenu>
+          </ButtonDropdown>
         </span>
       </div>
       <div id="argo-contentwrap" className="ms-2 mb-2 mt-2 p-3 border rounded">
