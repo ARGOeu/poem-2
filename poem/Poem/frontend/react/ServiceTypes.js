@@ -586,12 +586,13 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
     setAreYouSureModal(!areYouSureModal)
   }
 
-  const { control, setValue, getValues, handleSubmit, formState: { isDirty } } = useForm({
+  const { control, setValue, getValues, handleSubmit } = useForm({
     defaultValues: {
       serviceTypes: updatedData,
       searchService: '',
       searchDesc: '',
-      selectAll: false
+      selectAll: false,
+      modified: false
     }
   })
 
@@ -709,7 +710,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
           </Button>
           <Button
             color="success"
-            disabled={ !isDirty }
+            disabled={ !getValues("modified") }
             onClick={ () => onSave() }
             className="me-3">
             Save
@@ -784,6 +785,14 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
                             type="checkbox"
                             data-testid="checkbox-all"
                             className="mt-2"
+                            onChange={ e => {
+                              let fieldsIDs = fieldsView.map(e => e.id)
+                              fields.forEach(element => {
+                                if (fieldsIDs.includes(element.id) && element.tags?.indexOf("topology") === -1 ) {
+                                  setValue(`serviceTypes.${lookupIndices[element.id]}.isChecked`, e.target.checked)
+                                }
+                              })
+                            } }
                             checked={ field.checked }
                           />
                         }
@@ -819,6 +828,10 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
                                   disabled={ entry.tags?.indexOf("topology") !== -1 }
                                   rows="2"
                                   className={ `form-control ${serviceTypes[lookupIndices[entry.id]].description !== updatedData[lookupIndices[entry.id]].description && 'border border-danger'}` }
+                                  onChange={e => {
+                                    setValue(`serviceTypes.${lookupIndices[entry.id]}.description`, e.target.value)
+                                    setValue("modified", true)
+                                  }}
                                 />
                               }
                             />
@@ -840,7 +853,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
                                   className="mt-2"
                                   disabled={ entry.tags?.indexOf("topology") !== -1 }
                                   onChange={ e => setValue(`serviceTypes.${lookupIndices[entry.id]}.isChecked`, e.target.checked)}
-                                  checked={ field.checked }
+                                  checked={ getValues(`serviceTypes.${lookupIndices[entry.id]}.isChecked`) }
                                 />
                               }
                             />

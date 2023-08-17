@@ -821,6 +821,370 @@ describe('Test service types list - Bulk change and delete', () => {
     })
   })
 
+  test('Test bulk delete with select all', async () => {
+    renderListView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /service/i })).toBeInTheDocument()
+    })
+
+    expect(screen.getByTestId("checkbox-0")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-1")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-2")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-3")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-4")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-5")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-6")).toBeEnabled()
+    expect(screen.getByTestId("checkbox-7")).toBeEnabled()
+    expect(screen.getByTestId("checkbox-8")).toBeEnabled()
+
+    fireEvent.click(screen.getByTestId("checkbox-all"))
+
+    expect(screen.getByRole("button", { name: /delete/i })).toBeEnabled()
+    expect(screen.getByRole("button", { name: /save/i })).toBeDisabled()
+    expect(screen.getByRole("button", { name: /add/i })).toBeEnabled()
+
+    fireEvent.click(screen.getByRole("button", { name: /delete/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText('Are you sure you want to delete 3 service types?')).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByText(/yes/i))
+
+    const tbodyFiltered = screen.getAllByRole('rowgroup')[1]
+    const tableRowsFiltered = within(tbodyFiltered).getAllByRole('row')
+    expect(tableRowsFiltered[1]).toHaveTextContent('1argo.apiARGO API service for retrieving status and A/R results.topology')
+    expect(tableRowsFiltered[2]).toHaveTextContent('2argo.computeengineARGO Compute Engine computes availability and reliability of services.topology')
+    expect(tableRowsFiltered[3]).toHaveTextContent('3argo.consumerARGO Consumer collects monitoring metrics from monitoring engines.topology')
+    expect(tableRowsFiltered[4]).toHaveTextContent('4argo.monARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.topology')
+    expect(tableRowsFiltered[5]).toHaveTextContent('5argo.poemPOEM is system for managing profiles of probes and metrics in ARGO system.topology')
+    expect(tableRowsFiltered[6]).toHaveTextContent('6argo.webuiARGO web user interface for metric A/R visualization and recalculation management.topology')
+
+    await waitFor(() => {
+      expect(mockAddServiceTypes).toHaveBeenCalledWith(
+        [
+          {
+            "description": "ARGO API service for retrieving status and A/R results.",
+            "title": "ARGO API service",
+            "name": "argo.api",
+            "tags": ["topology"]
+          },
+          {
+            "description": "ARGO Compute Engine computes availability and reliability of services.",
+            "title": "ARGO Compute Engine",
+            "name": "argo.computeengine",
+            "tags": ["topology"]
+          },
+          {
+            "description": "ARGO Consumer collects monitoring metrics from monitoring engines.",
+            "title": "ARGO Consumer",
+            "name": "argo.consumer",
+            "tags": ["topology"]
+          },
+          {
+            "description": "ARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.",
+            "title": "ARGO Monitoring Engine",
+            "name": "argo.mon",
+            "tags": ["topology"]
+          },
+          {
+            "description": "POEM is system for managing profiles of probes and metrics in ARGO system.",
+            "title": "POEM",
+            "name": "argo.poem",
+            "tags": ["topology"]
+          },
+          {
+            "description": "ARGO web user interface for metric A/R visualization and recalculation management.",
+            "title": "ARGO web user interface",
+            "name": "argo.webui",
+            "tags": ["topology"]
+          }
+        ]
+      )
+    })
+  })
+
+  test('Test bulk delete with select all when showing titles', async () => {
+    renderListView(true);
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /service/i })).toBeInTheDocument()
+    })
+
+    expect(screen.getByTestId("checkbox-0")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-1")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-2")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-3")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-4")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-5")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-6")).toBeEnabled()
+    expect(screen.getByTestId("checkbox-7")).toBeEnabled()
+    expect(screen.getByTestId("checkbox-8")).toBeEnabled()
+
+    fireEvent.click(screen.getByTestId("checkbox-all"))
+
+    expect(screen.getByRole("button", { name: /delete/i })).toBeEnabled()
+    expect(screen.getByRole("button", { name: /save/i })).toBeDisabled()
+    expect(screen.getByRole("button", { name: /add/i })).toBeEnabled()
+
+    fireEvent.click(screen.getByRole("button", { name: /delete/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText('Are you sure you want to delete 3 service types?')).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByText(/yes/i))
+
+    const tbodyFiltered = screen.getAllByRole('rowgroup')[1]
+    const tableRowsFiltered = within(tbodyFiltered).getAllByRole('row')
+    expect(tableRowsFiltered[1]).toHaveTextContent('1argo.apiARGO API serviceARGO API service for retrieving status and A/R results.topology')
+    expect(tableRowsFiltered[2]).toHaveTextContent('2argo.computeengineARGO Compute EngineARGO Compute Engine computes availability and reliability of services.topology')
+    expect(tableRowsFiltered[3]).toHaveTextContent('3argo.consumerARGO ConsumerARGO Consumer collects monitoring metrics from monitoring engines.topology')
+    expect(tableRowsFiltered[4]).toHaveTextContent('4argo.monARGO Monitoring EngineARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.topology')
+    expect(tableRowsFiltered[5]).toHaveTextContent('5argo.poemPOEMPOEM is system for managing profiles of probes and metrics in ARGO system.topology')
+    expect(tableRowsFiltered[6]).toHaveTextContent('6argo.webuiARGO web user interfaceARGO web user interface for metric A/R visualization and recalculation management.topology')
+
+    await waitFor(() => {
+      expect(mockAddServiceTypes).toHaveBeenCalledWith(
+        [
+          {
+            "description": "ARGO API service for retrieving status and A/R results.",
+            "title": "ARGO API service",
+            "name": "argo.api",
+            "tags": ["topology"]
+          },
+          {
+            "description": "ARGO Compute Engine computes availability and reliability of services.",
+            "title": "ARGO Compute Engine",
+            "name": "argo.computeengine",
+            "tags": ["topology"]
+          },
+          {
+            "description": "ARGO Consumer collects monitoring metrics from monitoring engines.",
+            "title": "ARGO Consumer",
+            "name": "argo.consumer",
+            "tags": ["topology"]
+          },
+          {
+            "description": "ARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.",
+            "title": "ARGO Monitoring Engine",
+            "name": "argo.mon",
+            "tags": ["topology"]
+          },
+          {
+            "description": "POEM is system for managing profiles of probes and metrics in ARGO system.",
+            "title": "POEM",
+            "name": "argo.poem",
+            "tags": ["topology"]
+          },
+          {
+            "description": "ARGO web user interface for metric A/R visualization and recalculation management.",
+            "title": "ARGO web user interface",
+            "name": "argo.webui",
+            "tags": ["topology"]
+          }
+        ]
+      )
+    })
+  })
+
+  test('Test bulk delete with select and filtering', async () => {
+    renderListView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /service/i })).toBeInTheDocument()
+    })
+
+    expect(screen.getByTestId("checkbox-0")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-1")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-2")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-3")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-4")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-5")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-6")).toBeEnabled()
+    expect(screen.getByTestId("checkbox-7")).toBeEnabled
+    expect(screen.getByTestId("checkbox-8")).toBeEnabled()
+
+    const searchFields = screen.getAllByPlaceholderText(/search/i);
+
+    fireEvent.change(searchFields[0], { target: { value: "poem" } });
+
+    fireEvent.click(screen.getByTestId("checkbox-all"))
+
+    expect(screen.getByRole("button", { name: /delete/i })).toBeEnabled()
+    expect(screen.getByRole("button", { name: /save/i })).toBeDisabled()
+    expect(screen.getByRole("button", { name: /add/i })).toBeEnabled()
+
+    fireEvent.click(screen.getByRole("button", { name: /delete/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText('Are you sure you want to delete 3 service types?')).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByText(/yes/i))
+
+    expect(screen.getAllByTestId(/st-rows-/)).toHaveLength(1)
+
+    expect(screen.getByTestId("st-rows-0").textContent).toBe("1argo.poemPOEM is system for managing profiles of probes and metrics in ARGO system.topology")
+
+    fireEvent.change(searchFields[0], { target: { value: "" } });
+
+    expect(screen.getAllByTestId(/st-rows-/)).toHaveLength(6)
+
+    expect(screen.getByTestId("st-rows-0")).toHaveTextContent('1argo.apiARGO API service for retrieving status and A/R results.topology')
+    expect(screen.getByTestId("st-rows-1")).toHaveTextContent('2argo.computeengineARGO Compute Engine computes availability and reliability of services.topology')
+    expect(screen.getByTestId("st-rows-2")).toHaveTextContent('3argo.consumerARGO Consumer collects monitoring metrics from monitoring engines.topology')
+    expect(screen.getByTestId("st-rows-3")).toHaveTextContent('4argo.monARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.topology')
+    expect(screen.getByTestId("st-rows-4")).toHaveTextContent('5argo.poemPOEM is system for managing profiles of probes and metrics in ARGO system.topology')
+    expect(screen.getByTestId("st-rows-5")).toHaveTextContent('6argo.webuiARGO web user interface for metric A/R visualization and recalculation management.topology')
+
+    await waitFor(() => {
+      expect(mockAddServiceTypes).toHaveBeenCalledWith(
+        [
+          {
+            "description": "ARGO API service for retrieving status and A/R results.",
+            "title": "ARGO API service",
+            "name": "argo.api",
+            "tags": ["topology"]
+          },
+          {
+            "description": "ARGO Compute Engine computes availability and reliability of services.",
+            "title": "ARGO Compute Engine",
+            "name": "argo.computeengine",
+            "tags": ["topology"]
+          },
+          {
+            "description": "ARGO Consumer collects monitoring metrics from monitoring engines.",
+            "title": "ARGO Consumer",
+            "name": "argo.consumer",
+            "tags": ["topology"]
+          },
+          {
+            "description": "ARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.",
+            "title": "ARGO Monitoring Engine",
+            "name": "argo.mon",
+            "tags": ["topology"]
+          },
+          {
+            "description": "POEM is system for managing profiles of probes and metrics in ARGO system.",
+            "title": "POEM",
+            "name": "argo.poem",
+            "tags": ["topology"]
+          },
+          {
+            "description": "ARGO web user interface for metric A/R visualization and recalculation management.",
+            "title": "ARGO web user interface",
+            "name": "argo.webui",
+            "tags": ["topology"]
+          }
+        ]
+      )
+    })
+  })
+
+  test('Test bulk delete when showing titles with select and filtering', async () => {
+    renderListView(true);
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /service/i })).toBeInTheDocument()
+    })
+
+    expect(screen.getByTestId("checkbox-0")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-1")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-2")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-3")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-4")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-5")).toBeDisabled()
+    expect(screen.getByTestId("checkbox-6")).toBeEnabled()
+    expect(screen.getByTestId("checkbox-7")).toBeEnabled()
+    expect(screen.getByTestId("checkbox-8")).toBeEnabled()
+
+    const searchFields = screen.getAllByPlaceholderText(/search/i);
+
+    fireEvent.change(searchFields[0], { target: { value: "extra" } });
+    fireEvent.change(searchFields[1], { target: { value: "2" } })
+
+    fireEvent.click(screen.getByTestId("checkbox-all"))
+
+    expect(screen.getByRole("button", { name: /delete/i })).toBeEnabled()
+    expect(screen.getByRole("button", { name: /save/i })).toBeDisabled()
+    expect(screen.getByRole("button", { name: /add/i })).toBeEnabled()
+
+    fireEvent.click(screen.getByRole("button", { name: /delete/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText('Are you sure you want to delete 1 service types?')).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByText(/yes/i))
+
+    fireEvent.change(searchFields[0], { target: { value: "" } });
+    fireEvent.change(searchFields[1], { target: { value: "" } })
+
+    const tbodyFiltered = screen.getAllByRole('rowgroup')[1]
+    const tableRowsFiltered = within(tbodyFiltered).getAllByRole('row')
+    expect(tableRowsFiltered[1]).toHaveTextContent('1argo.apiARGO API serviceARGO API service for retrieving status and A/R results.topology')
+    expect(tableRowsFiltered[2]).toHaveTextContent('2argo.computeengineARGO Compute EngineARGO Compute Engine computes availability and reliability of services.topology')
+    expect(tableRowsFiltered[3]).toHaveTextContent('3argo.consumerARGO ConsumerARGO Consumer collects monitoring metrics from monitoring engines.topology')
+    expect(tableRowsFiltered[4]).toHaveTextContent('4argo.monARGO Monitoring EngineARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.topology')
+    expect(tableRowsFiltered[5]).toHaveTextContent('5argo.poemPOEMPOEM is system for managing profiles of probes and metrics in ARGO system.topology')
+    expect(tableRowsFiltered[6]).toHaveTextContent('6argo.webuiARGO web user interfaceARGO web user interface for metric A/R visualization and recalculation management.topology')
+    expect(tableRowsFiltered[7]).toHaveTextContent('7poem.added.onePOEM anotherService type created from POEM UI and POSTed on WEB-API.poem')
+    expect(tableRowsFiltered[8]).toHaveTextContent('8poem.added.threePOEM extra 33rd service type created from POEM UI and POSTed on WEB-API.poem')
+
+    await waitFor(() => {
+      expect(mockAddServiceTypes).toHaveBeenCalledWith(
+        [
+          {
+            "description": "ARGO API service for retrieving status and A/R results.",
+            "title": "ARGO API service",
+            "name": "argo.api",
+            "tags": ["topology"]
+          },
+          {
+            "description": "ARGO Compute Engine computes availability and reliability of services.",
+            "title": "ARGO Compute Engine",
+            "name": "argo.computeengine",
+            "tags": ["topology"]
+          },
+          {
+            "description": "ARGO Consumer collects monitoring metrics from monitoring engines.",
+            "title": "ARGO Consumer",
+            "name": "argo.consumer",
+            "tags": ["topology"]
+          },
+          {
+            "description": "ARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.",
+            "title": "ARGO Monitoring Engine",
+            "name": "argo.mon",
+            "tags": ["topology"]
+          },
+          {
+            "description": "POEM is system for managing profiles of probes and metrics in ARGO system.",
+            "title": "POEM",
+            "name": "argo.poem",
+            "tags": ["topology"]
+          },
+          {
+            "description": "ARGO web user interface for metric A/R visualization and recalculation management.",
+            "title": "ARGO web user interface",
+            "name": "argo.webui",
+            "tags": ["topology"]
+          },
+          {
+            "description": "Service type created from POEM UI and POSTed on WEB-API.",
+            "title": "POEM another",
+            "name": "poem.added.one",
+            "tags": ["poem"]
+          },
+          {
+            "description": "3rd service type created from POEM UI and POSTed on WEB-API.",
+            "title": "POEM extra 3",
+            "name": "poem.added.three",
+            "tags": ["poem"]
+          }
+        ]
+      )
+    })
+  })
+
   test('Test change description', async () => {
     renderListView();
 
