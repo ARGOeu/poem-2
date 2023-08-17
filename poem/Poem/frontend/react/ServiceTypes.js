@@ -736,7 +736,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
                       Source
                     </th>
                     <th style={{ width: "60px" }}>
-                      Checked
+                      Select
                     </th>
                   </tr>
                 </thead>
