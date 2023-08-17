@@ -591,6 +591,50 @@ describe('Test service types list - Bulk change and delete', () => {
     expect(paginationLinks[5]).toHaveTextContent('30 service types')
   })
 
+  test('Test filtering service types', async () => {
+    renderListView();
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /service/i })).toBeInTheDocument()
+    })
+
+    const searchFields = screen.getAllByPlaceholderText(/search/i);
+
+    fireEvent.change(searchFields[0], { target: { value: 'co' } });
+    expect(screen.getAllByTestId(/st-rows-/)).toHaveLength(2)
+
+    expect(screen.getByTestId("st-rows-0").textContent).toBe('1argo.computeengineARGO Compute Engine computes availability and reliability of services.topology')
+    expect(screen.getByTestId("st-rows-1").textContent).toBe('2argo.consumerARGO Consumer collects monitoring metrics from monitoring engines.topology')
+
+    fireEvent.change(searchFields[1], { target: { value: 'monitor' } })
+    expect(screen.getAllByTestId(/st-rows-/)).toHaveLength(1)
+    expect(screen.getByTestId("st-rows-0").textContent).toBe('1argo.consumerARGO Consumer collects monitoring metrics from monitoring engines.topology')
+  })
+
+  test("Test filtering service types when showing titles", async () => {
+    renderListView(true)
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /service/i })).toBeInTheDocument()
+    })
+
+    const searchFields = screen.getAllByPlaceholderText(/search/i)
+
+    fireEvent.change(searchFields[0], { target: { value: "poem" } })
+
+    expect(screen.getAllByTestId(/st-rows-/i)).toHaveLength(4)
+
+    expect(screen.getByTestId("st-rows-0").textContent).toBe("1argo.poemPOEMPOEM is system for managing profiles of probes and metrics in ARGO system.topology")
+    expect(screen.getByTestId("st-rows-1").textContent).toBe("2poem.added.onePOEM anotherService type created from POEM UI and POSTed on WEB-API.poem")
+    expect(screen.getByTestId("st-rows-2").textContent).toBe("3poem.added.twoPOEM extra 22nd service type created from POEM UI and POSTed on WEB-API.poem")
+    expect(screen.getByTestId("st-rows-3").textContent).toBe("4poem.added.threePOEM extra 33rd service type created from POEM UI and POSTed on WEB-API.poem")
+
+    fireEvent.change(searchFields[1], { target: { value: "2" } })
+    expect(screen.getAllByTestId(/st-rows-/)).toHaveLength(1)
+
+    expect(screen.getByTestId("st-rows-0").textContent).toBe("1poem.added.twoPOEM extra 22nd service type created from POEM UI and POSTed on WEB-API.poem")
+  })
+
   test('Test bulk delete', async () => {
     renderListView();
 

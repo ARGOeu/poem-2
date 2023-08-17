@@ -676,10 +676,10 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
   let paginationHelp = new TablePaginationHelper(fieldsView.length, pageSize, pageIndex)
 
   if (searchDesc)
-    fieldsView = fields.filter(e => e.description.toLowerCase().includes(searchDesc.toLowerCase()))
+    fieldsView = fieldsView.filter(e => e.description.toLowerCase().includes(searchDesc.toLowerCase()))
 
   if (searchService)
-    fieldsView = fields.filter(e => e.name.toLowerCase().includes(searchService.toLowerCase()) || e.title.toLowerCase().includes(searchService.toLowerCase()))
+    fieldsView = fieldsView.filter(e => e.name.toLowerCase().includes(searchService.toLowerCase()) || e.title.toLowerCase().includes(searchService.toLowerCase()))
 
   paginationHelp.searchNum = fieldsView.length
   paginationHelp.isSearched = searchService || searchDesc ? true : false
@@ -795,7 +795,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
                       fieldsView.map((entry, index) =>
                         <tr key={entry.id} data-testid={`st-rows-${index}`}>
                           <td className="align-middle text-center">
-                            { lookupIndices[entry.id] + 1 }
+                            { index + 1 }
                           </td>
                           <td className="align-middle text-left fw-bold">
                             {
