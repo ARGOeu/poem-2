@@ -191,6 +191,14 @@ const validationSchema = yup.object().shape({
 
       else
         return false
+    })
+    .test("duplicates", "Service type with this name already added", function (value) {
+      let arr = this.options.context.addedServices.map(service => service.name)
+      if (arr.indexOf(value) === -1)
+        return true
+
+      else
+        return false
     }),
   title: yup.string().when("$showtitles", (showtitles, schema) => {
     if (showtitles)
@@ -392,7 +400,11 @@ const ServiceTypesAddForm = (props) => {
 
   const { control, handleSubmit, reset, formState: {errors} } = useForm({
     resolver: yupResolver(validationSchema),
-    context: { showtitles: showtitles, serviceTypes: context.serviceTypes },
+    context: { 
+      showtitles: showtitles, 
+      serviceTypes: context.serviceTypes,
+      addedServices: addedServices
+    },
     defaultValues: {
       name: "",
       title: "",
