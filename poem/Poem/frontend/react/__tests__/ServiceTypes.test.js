@@ -1880,6 +1880,258 @@ describe('Test service types list - Bulk add', () => {
     })
   })
 
+  test("Test add with existing service type name", async () => {
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { level: 2, name: /service type/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByLabelText(/name/i), { target: { value: "service.name.1" } })
+
+    fireEvent.change(screen.getByLabelText(/desc/i), { target: { value: "service description 1" } })
+
+    fireEvent.click(screen.getByRole("button", { name: /add/i }))
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId(/addrow-/)).toHaveLength(1)
+    })
+
+    expect(screen.getByTestId("addrow-0").textContent).toBe("1service.name.1service description 1")
+
+    fireEvent.change(screen.getByLabelText(/name/i), { target: { value: "service.name.2" } })
+    fireEvent.change(screen.getByLabelText(/desc/i), { target: { value: "service description 2" } })
+    fireEvent.click(screen.getByRole("button", { name: /add/i }))
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId(/addrow-/)).toHaveLength(2)
+    })
+
+    expect(screen.getByTestId("addrow-0").textContent).toBe("1service.name.1service description 1")
+    expect(screen.getByTestId("addrow-1").textContent).toBe("2service.name.2service description 2")
+
+    fireEvent.change(screen.getByLabelText(/name/i), { target: { value: "argo.poem" } })
+    fireEvent.change(screen.getByLabelText(/desc/i), { target: { value: "service description 3" } })
+    fireEvent.click(screen.getByRole("button", { name: /add/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText("Service type with this name already exists"))
+    }) 
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId(/addrow-/)).toHaveLength(2)
+    })
+
+    expect(screen.getByTestId("addrow-0").textContent).toBe("1service.name.1service description 1")
+    expect(screen.getByTestId("addrow-1").textContent).toBe("2service.name.2service description 2")
+
+    fireEvent.click(screen.getByRole("button", { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByText("Are you sure you want to add 2 service types?")).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByText(/yes/i))
+
+    await waitFor(() => {
+      expect(mockAddServiceTypes).toHaveBeenCalledWith(
+        [
+          {
+            name: "argo.api",
+            title: "ARGO API service",
+            description: "ARGO API service for retrieving status and A/R results.",
+            tags: ["topology"]
+          },
+          {
+            description: "ARGO Compute Engine computes availability and reliability of services.",
+            title: "ARGO Compute Engine",
+            name: "argo.computeengine",
+            tags: ["topology"]
+          },
+          {
+            description: "ARGO Consumer collects monitoring metrics from monitoring engines.",
+            title: "ARGO Consumer",
+            name: "argo.consumer",
+            tags: ["topology"]
+          },
+          {
+            description: "ARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.",
+            title: "ARGO Monitoring Engine",
+            name: "argo.mon",
+            tags: ["topology"]
+          },
+          {
+            description: "POEM is system for managing profiles of probes and metrics in ARGO system.",
+            title: "POEM",
+            name: "argo.poem",
+            tags: ["topology"]
+          },
+          {
+            description: "ARGO web user interface for metric A/R visualization and recalculation management.",
+            title: "ARGO web user interface",
+            name: "argo.webui",
+            tags: ["topology"]
+          },
+          {
+            name: "poem.added.one",
+            title: "POEM another",
+            description: "Service type created from POEM UI and POSTed on WEB-API.",
+            tags: ["poem"]
+          },
+          {
+            name: "poem.added.three",
+            title: "POEM extra 3",
+            description: "3rd service type created from POEM UI and POSTed on WEB-API.",
+            tags: ["poem"]
+          },
+          {
+            name: "poem.added.two",
+            title: "POEM extra 2",
+            description: "2nd service type created from POEM UI and POSTed on WEB-API.",
+            tags: ["poem"]
+          },
+          {
+            description: "service description 1",
+            title: "",
+            name: "service.name.1",
+            tags: ["poem"]
+          },
+          {
+            description: "service description 2",
+            title: "",
+            name: "service.name.2",
+            tags: ["poem"]
+          }
+        ]
+      )
+    })
+  })
+
+  test("Test add with existing service type name with titles", async () => {
+    renderAddView(true)
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { level: 2, name: /service type/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByLabelText(/name/i), { target: { value: "service.name.1" } })
+    fireEvent.change(screen.getByLabelText(/title/i), { target: { value: "Service title 1" } })
+    fireEvent.change(screen.getByLabelText(/desc/i), { target: { value: "service description 1" } })
+
+    fireEvent.click(screen.getByRole("button", { name: /add/i }))
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId(/addrow-/)).toHaveLength(1)
+    })
+
+    expect(screen.getByTestId("addrow-0").textContent).toBe("1service.name.1Service title 1service description 1")
+
+    fireEvent.change(screen.getByLabelText(/name/i), { target: { value: "service.name.2" } })
+    fireEvent.change(screen.getByLabelText(/title/i), { target: { value: "Service title 2" } })
+    fireEvent.change(screen.getByLabelText(/desc/i), { target: { value: "service description 2" } })
+    fireEvent.click(screen.getByRole("button", { name: /add/i }))
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId(/addrow-/)).toHaveLength(2)
+    })
+
+    expect(screen.getByTestId("addrow-0").textContent).toBe("1service.name.1Service title 1service description 1")
+    expect(screen.getByTestId("addrow-1").textContent).toBe("2service.name.2Service title 2service description 2")
+
+    fireEvent.change(screen.getByLabelText(/name/i), { target: { value: "argo.poem" } })
+    fireEvent.change(screen.getByLabelText(/title/i), { target: { value: "POEM" } })
+    fireEvent.change(screen.getByLabelText(/desc/i), { target: { value: "service description 3" } })
+    fireEvent.click(screen.getByRole("button", { name: /add/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText("Service type with this name already exists"))
+    }) 
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId(/addrow-/)).toHaveLength(2)
+    })
+
+    expect(screen.getByTestId("addrow-0").textContent).toBe("1service.name.1Service title 1service description 1")
+    expect(screen.getByTestId("addrow-1").textContent).toBe("2service.name.2Service title 2service description 2")
+
+    fireEvent.click(screen.getByRole("button", { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByText("Are you sure you want to add 2 service types?")).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByText(/yes/i))
+
+    await waitFor(() => {
+      expect(mockAddServiceTypes).toHaveBeenCalledWith(
+        [
+          {
+            name: "argo.api",
+            title: "ARGO API service",
+            description: "ARGO API service for retrieving status and A/R results.",
+            tags: ["topology"]
+          },
+          {
+            description: "ARGO Compute Engine computes availability and reliability of services.",
+            title: "ARGO Compute Engine",
+            name: "argo.computeengine",
+            tags: ["topology"]
+          },
+          {
+            description: "ARGO Consumer collects monitoring metrics from monitoring engines.",
+            title: "ARGO Consumer",
+            name: "argo.consumer",
+            tags: ["topology"]
+          },
+          {
+            description: "ARGO Monitoring Engine gathers monitoring metrics and publishes to messaging service.",
+            title: "ARGO Monitoring Engine",
+            name: "argo.mon",
+            tags: ["topology"]
+          },
+          {
+            description: "POEM is system for managing profiles of probes and metrics in ARGO system.",
+            title: "POEM",
+            name: "argo.poem",
+            tags: ["topology"]
+          },
+          {
+            description: "ARGO web user interface for metric A/R visualization and recalculation management.",
+            title: "ARGO web user interface",
+            name: "argo.webui",
+            tags: ["topology"]
+          },
+          {
+            name: "poem.added.one",
+            title: "POEM another",
+            description: "Service type created from POEM UI and POSTed on WEB-API.",
+            tags: ["poem"]
+          },
+          {
+            name: "poem.added.three",
+            title: "POEM extra 3",
+            description: "3rd service type created from POEM UI and POSTed on WEB-API.",
+            tags: ["poem"]
+          },
+          {
+            name: "poem.added.two",
+            title: "POEM extra 2",
+            description: "2nd service type created from POEM UI and POSTed on WEB-API.",
+            tags: ["poem"]
+          },
+          {
+            description: "service description 1",
+            title: "Service title 1",
+            name: "service.name.1",
+            tags: ["poem"]
+          },
+          {
+            description: "service description 2",
+            title: "Service title 2",
+            name: "service.name.2",
+            tags: ["poem"]
+          }
+        ]
+      )
+    })
+  })
+
   test('Test add validation', async () => {
     renderAddView();
 
