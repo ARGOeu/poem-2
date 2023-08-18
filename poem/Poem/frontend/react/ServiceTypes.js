@@ -203,6 +203,22 @@ const validationSchema = yup.object().shape({
   title: yup.string().when("$showtitles", (showtitles, schema) => {
     if (showtitles)
       return schema.required("Title cannot be empty.")
+        .test("duplicate", "Service type with this title already exists", function (value) {
+          let arr = this.options.context.serviceTypes.map(service => service.title)
+          if (arr.indexOf(value) === -1)
+            return true
+
+          else
+            return false
+        })
+        .test("dupllicates", "Service type with this title already added", function (value) {
+          let arr = this.options.context.addedServices.map(service => service.title)
+          if (arr.indexOf(value) === -1)
+            return true
+
+          else
+            return false
+        })
 
     return
   }),
