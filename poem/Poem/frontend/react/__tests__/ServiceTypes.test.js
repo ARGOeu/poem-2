@@ -7,6 +7,7 @@ import { ServiceTypesList, ServiceTypesBulkAdd } from '../ServiceTypes';
 import { WebApi } from '../DataManager';
 import { fetchUserDetails } from '../QueryFunctions';
 import { QueryClient, QueryClientProvider } from 'react-query';
+import useEvent from '@testing-library/user-event';
 
 
 jest.mock('../DataManager', () => {
@@ -1408,12 +1409,165 @@ describe('Test service types list - Bulk change and delete', () => {
     "argo.poem,POEM,POEM is system for managing profiles of probes and metrics in ARGO system.\r\n" + 
     "argo.webui,ARGO web user interface,ARGO web user interface for metric A/R visualization and recalculation management.\r\n" +
     "poem.added.one,POEM another,Service type created from POEM UI and POSTed on WEB-API.\r\n" + 
-    "poem.added.two,POEM extra 2,2nd service type created from POEM UI and POSTed on WEB-API.\r\n" +
-    "poem.added.three,POEM extra 3,3rd service type created from POEM UI and POSTed on WEB-API."
+    "poem.added.three,POEM extra 3,3rd service type created from POEM UI and POSTed on WEB-API.\r\n" +
+    "poem.added.two,POEM extra 2,2nd service type created from POEM UI and POSTed on WEB-API."
 
     expect(helpers.downloadCSV).toHaveBeenCalledTimes(1)
     expect(helpers.downloadCSV).toHaveBeenCalledWith(content, "TENANT-service-types-devel.csv")
   })
+
+  test("Test import csv and save", async () => {
+    renderListView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /service/i })).toBeInTheDocument()
+    })
+
+    const csv = "name,title,description\r\n" + 
+    "argo.mon,Internal Checks,Service type for ARGO internal checks\r\n" + 
+    "generic.json,JSON check,Generic service that contains metric that checks JSON response of an API endpoint.\r\n" +
+    "generic.https,HTTPS web service,Generic checks for https web pages - checks response and certificate validity.\r\n"
+
+    const content = new Blob([csv], { type: "text/csv;charset=UTF-8" })
+    const file = new File([content], "service-types.csv", { type: "text/csv;charset=UTF-8" })
+    const input = screen.getByTestId("file_input")
+
+    await waitFor(() => {
+      useEvent.upload(input, file)
+    })
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId(/st-rows-/)).toHaveLength(3)
+    })
+
+    const table = within(screen.getByRole("table"))
+    expect(table.getAllByRole("columnheader")).toHaveLength(5)
+    expect(table.getByRole("columnheader", { name: "#" })).toBeInTheDocument()
+    expect(table.getByRole("columnheader", { name: "Service name" })).toBeInTheDocument()
+    expect(table.getByRole("columnheader", { name: "Service description" })).toBeInTheDocument()
+    expect(table.getByRole("columnheader", { name: "Source" })).toBeInTheDocument()
+    expect(table.getByRole("columnheader", { name: "Select" })).toBeInTheDocument()
+    expect(table.getAllByPlaceholderText(/search/i)).toHaveLength(2)
+    expect(table.getAllByTestId(/checkbox-/)).toHaveLength(4)
+    expect(table.getAllByTestId(/checkbox-/, { checked: false })).toHaveLength(4)
+
+    expect(screen.getByRole("button", { name: /delete/i })).toBeDisabled()
+    expect(screen.getByRole("button", { name: /save/i })).toBeEnabled()
+    expect(screen.getByRole("button", { name: /csv/i })).toBeEnabled()
+    expect(screen.getByRole("button", { name: /add/i })).toBeEnabled()
+
+    expect(screen.getByTestId("st-rows-0").textContent).toBe("1argo.monService type for ARGO internal checkspoem")
+    expect(screen.getByTestId("st-rows-1").textContent).toBe("2generic.httpsGeneric checks for https web pages - checks response and certificate validity.poem")
+    expect(screen.getByTestId("st-rows-2").textContent).toBe("3generic.jsonGeneric service that contains metric that checks JSON response of an API endpoint.poem")
+
+    fireEvent.click(screen.getByRole("button", { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByText("Are you sure you want to change service type?")).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByText(/yes/i))
+
+    await waitFor(() => {
+      expect(mockAddServiceTypes).toHaveBeenCalledWith(
+        [
+          {
+            description: "Service type for ARGO internal checks",
+            title: "Internal Checks",
+            name: "argo.mon",
+            tags: ["poem"]
+          },
+          {
+            description: "Generic checks for https web pages - checks response and certificate validity.",
+            title: "HTTPS web service",
+            name: "generic.https",
+            tags: ["poem"]
+          },
+          {
+            description: "Generic service that contains metric that checks JSON response of an API endpoint.",
+            title: "JSON check",
+            name: "generic.json",
+            tags: ["poem"]
+          }
+        ]
+      )
+    })
+  })
+
+  test("Test import csv with showing titles and save", async () => {
+    renderListView(true)
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /service/i })).toBeInTheDocument()
+    })
+
+    const csv = "name,title,description\r\n" + 
+    "argo.mon,Internal Checks,Service type for ARGO internal checks\r\n" + 
+    "generic.json,JSON check,Generic service that contains metric that checks JSON response of an API endpoint.\r\n" +
+    "generic.https,HTTPS web service,Generic checks for https web pages - checks response and certificate validity.\r\n"
+
+    const content = new Blob([csv], { type: "text/csv;charset=UTF-8" })
+    const file = new File([content], "service-types.csv", { type: "text/csv;charset=UTF-8" })
+    const input = screen.getByTestId("file_input")
+
+    await waitFor(() => {
+      useEvent.upload(input, file)
+    })
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId(/st-rows-/)).toHaveLength(3)
+    })
+
+    const table = within(screen.getByRole("table"))
+    expect(table.getAllByRole("columnheader")).toHaveLength(5)
+    expect(table.getByRole("columnheader", { name: "#" })).toBeInTheDocument()
+    expect(table.getByRole("columnheader", { name: "Service name and title" })).toBeInTheDocument()
+    expect(table.getByRole("columnheader", { name: "Service description" })).toBeInTheDocument()
+    expect(table.getByRole("columnheader", { name: "Source" })).toBeInTheDocument()
+    expect(table.getByRole("columnheader", { name: "Select" })).toBeInTheDocument()
+    expect(table.getAllByPlaceholderText(/search/i)).toHaveLength(2)
+    expect(table.getAllByTestId(/checkbox-/)).toHaveLength(4)
+    expect(table.getAllByTestId(/checkbox-/, { checked: false })).toHaveLength(4)
+
+    expect(screen.getByRole("button", { name: /delete/i })).toBeDisabled()
+    expect(screen.getByRole("button", { name: /save/i })).toBeEnabled()
+    expect(screen.getByRole("button", { name: /csv/i })).toBeEnabled()
+    expect(screen.getByRole("button", { name: /add/i })).toBeEnabled()
+
+    expect(screen.getByTestId("st-rows-0").textContent).toBe("1argo.monInternal ChecksService type for ARGO internal checkspoem")
+    expect(screen.getByTestId("st-rows-1").textContent).toBe("2generic.httpsHTTPS web serviceGeneric checks for https web pages - checks response and certificate validity.poem")
+    expect(screen.getByTestId("st-rows-2").textContent).toBe("3generic.jsonJSON checkGeneric service that contains metric that checks JSON response of an API endpoint.poem")
+
+    fireEvent.click(screen.getByRole("button", { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByText("Are you sure you want to change service type?")).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByText(/yes/i))
+
+    await waitFor(() => {
+      expect(mockAddServiceTypes).toHaveBeenCalledWith(
+        [
+          {
+            description: "Service type for ARGO internal checks",
+            title: "Internal Checks",
+            name: "argo.mon",
+            tags: ["poem"]
+          },
+          {
+            description: "Generic checks for https web pages - checks response and certificate validity.",
+            title: "HTTPS web service",
+            name: "generic.https",
+            tags: ["poem"]
+          },
+          {
+            description: "Generic service that contains metric that checks JSON response of an API endpoint.",
+            title: "JSON check",
+            name: "generic.json",
+            tags: ["poem"]
+          }
+        ]
+      )
+    })
+  })
+
 })
 
 

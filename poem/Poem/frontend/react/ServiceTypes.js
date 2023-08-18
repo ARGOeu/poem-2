@@ -585,7 +585,8 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
   const [pageSize, setPageSize] = useState(30)
   const [pageIndex, setPageIndex] = useState(0)
 
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const hiddenFileInput = React.useRef(null)
 
   const queryClient = useQueryClient();
   const webapiAddMutation = useMutation(async (values) => await webapi.addServiceTypes(values));
@@ -594,7 +595,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
     setAreYouSureModal(!areYouSureModal)
   }
 
-  const { control, setValue, getValues, handleSubmit } = useForm({
+  const { control, setValue, getValues, handleSubmit, resetField } = useForm({
     defaultValues: {
       serviceTypes: updatedData,
       searchService: '',
@@ -610,6 +611,15 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
     return Math.max(...tmpArray)
   }
 
+  const sortServiceTypes = (a, b) => {
+    if ( a.name < b.name )
+      return -1;
+    if ( a.name > b.name )
+      return 1;
+
+    return 0;
+  }
+
   let columnNameWidth = longestName(data) * 8 + 10
   columnNameWidth = Math.max(220, columnNameWidth)
   columnNameWidth = Math.min(360, columnNameWidth)
@@ -617,6 +627,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
   const searchService = useWatch({control, name: "searchService"})
   const searchDesc = useWatch({control, name: "searchDesc"})
   const serviceTypes = useWatch({ control, name: "serviceTypes" })
+  const modified = useWatch({ control, name: "modified" })
 
   const { fields } = useFieldArray({
     control,
@@ -718,7 +729,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
           </Button>
           <Button
             color="success"
-            disabled={ !getValues("modified") }
+            disabled={ !modified }
             onClick={ () => onSave() }
             className="me-3">
             Save
@@ -730,7 +741,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
               <DropdownItem
                 onClick={ () => {
                   let csvContent = []
-                  getValues("serviceTypes").forEach((servtype) => 
+                  getValues("serviceTypes").sort(sortServiceTypes).forEach((servtype) => 
                     csvContent.push({ name: servtype.name, title: servtype.title, description: servtype.description })
                   )
                   const content = PapaParse.unparse(csvContent)
@@ -740,10 +751,40 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
               >
                 Export
               </DropdownItem>
-              <DropdownItem>
+              <DropdownItem
+                onClick={ () => { hiddenFileInput.current.click() } }
+              >
                 Import
               </DropdownItem>
             </DropdownMenu>
+            <input
+              type="file"
+              data-testid="file_input"
+              ref={ hiddenFileInput }
+              onChange={ (e) => {
+                PapaParse.parse(e.target.files[0], {
+                  header: true,
+                  complete: (results) => {
+                    var imported = results.data
+                    // remove entries without keys if there are any
+                    imported = imported.filter(obj => {
+                        return "name" in obj && "title" in obj && "description" in obj
+                    })
+                    imported = imported.map( e => {
+                      return {
+                        ...e,
+                        isChecked: false,
+                        tags: ["poem"]
+                      }
+                    })
+                    resetField("serviceTypes")
+                    setValue("serviceTypes", imported.sort(sortServiceTypes))
+                    setValue("modified", true)
+                  }
+                })
+              }}
+              style={{ display: "none" }}
+            />
           </ButtonDropdown>
         </span>
       </div>
@@ -856,7 +897,7 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
                                   data-testid={ `description-${index}` }
                                   disabled={ entry.tags?.indexOf("topology") !== -1 }
                                   rows="2"
-                                  className={ `form-control ${serviceTypes[lookupIndices[entry.id]].description !== updatedData[lookupIndices[entry.id]].description && 'border border-danger'}` }
+                                  className={ `form-control ${serviceTypes[lookupIndices[entry.id]]?.description !== updatedData[lookupIndices[entry.id]]?.description && 'border border-danger'}` }
                                   onChange={e => {
                                     setValue(`serviceTypes.${lookupIndices[entry.id]}.description`, e.target.value)
                                     setValue("modified", true)
