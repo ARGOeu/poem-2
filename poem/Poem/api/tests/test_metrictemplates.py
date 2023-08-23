@@ -769,11 +769,27 @@ def mocked_syncer_error(*args, **kwargs):
     raise WebApiException("400 BAD REQUEST")
 
 
-class ListMetricTemplatesAPIViewTests(TenantTestCase):
+class ListMetricTemplatesAPIViewGETTests(TenantTestCase):
     def setUp(self):
         self.factory = TenantRequestFactory(self.tenant)
         self.view = views.ListMetricTemplates.as_view()
         self.url = '/api/v2/internal/metrictemplates/'
+
+        self.tenant.name = "test"
+        self.tenant.save()
+
+        with schema_context(get_public_schema_name()):
+            tenant1 = Tenant(name="tenant1", schema_name="tenant1_schema")
+            tenant1.save(verbosity=0)
+            get_tenant_domain_model().objects.create(
+                domain="tenant1", tenant=tenant1, is_primary=True
+            )
+
+            tenant2 = Tenant(name="tenant2", schema_name="tenant2_schema")
+            tenant2.save(verbosity=0)
+            get_tenant_domain_model().objects.create(
+                domain="tenant2", tenant=tenant2, is_primary=True
+            )
 
         mock_db()
 
@@ -825,6 +841,84 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             self.superuser = CustUser.objects.get(username="poem")
             self.user = CustUser.objects.get(username='admin_user')
 
+        with schema_context("tenant1_schema"):
+            group1 = poem_models.GroupOfMetrics.objects.create(name="TENANT1")
+            superuser1 = CustUser.objects.create_user(
+                username="poem1", is_superuser=True
+            )
+
+            metric1 = poem_models.Metric.objects.create(
+                name=self.metrictemplate2.name,
+                config=self.metrictemplate2.config,
+                group=group1
+            )
+
+            poem_models.TenantHistory.objects.create(
+                object_id=metric1.id,
+                serialized_data=serialize_metric(metric1),
+                object_repr=self.metrictemplate2.name,
+                content_type=ContentType.objects.get_for_model(metric1),
+                date_created=datetime.datetime.now(),
+                comment="Initial version.",
+                user=superuser1.username
+            )
+
+            metric2 = poem_models.Metric.objects.create(
+                name=self.metrictemplate4.name,
+                probeversion=self.metrictemplate4.probekey.__str__(),
+                config=self.metrictemplate4.config,
+                group=group1
+            )
+
+            poem_models.TenantHistory.objects.create(
+                object_id=metric2.id,
+                serialized_data=serialize_metric(metric2),
+                object_repr=self.metrictemplate4.name,
+                content_type=ContentType.objects.get_for_model(metric2),
+                date_created=datetime.datetime.now(),
+                comment="Initial version.",
+                user=superuser1.username
+            )
+
+        with schema_context("tenant2_schema"):
+            group2 = poem_models.GroupOfMetrics.objects.create(name="TENANT2")
+            superuser2 = CustUser.objects.create_user(
+                username="poem2", is_superuser=True
+            )
+
+            metric3 = poem_models.Metric.objects.create(
+                name=self.metrictemplate2.name,
+                config=self.metrictemplate2.config,
+                group=group2
+            )
+
+            poem_models.TenantHistory.objects.create(
+                object_id=metric3.id,
+                serialized_data=serialize_metric(metric3),
+                object_repr=self.metrictemplate2.name,
+                content_type=ContentType.objects.get_for_model(metric3),
+                date_created=datetime.datetime.now(),
+                comment="Initial version.",
+                user=superuser2.username
+            )
+
+            metric4 = poem_models.Metric.objects.create(
+                name=self.metrictemplate8.name,
+                probeversion=self.metrictemplate8.probekey.__str__(),
+                config=self.metrictemplate8.config,
+                group=group2
+            )
+
+            poem_models.TenantHistory.objects.create(
+                object_id=metric4.id,
+                serialized_data=serialize_metric(metric4),
+                object_repr=self.metrictemplate8.name,
+                content_type=ContentType.objects.get_for_model(metric4),
+                date_created=datetime.datetime.now(),
+                comment="Initial version.",
+                user=superuser2.username
+            )
+
     def test_get_metric_template_list_super_tenant(self):
         request = self.factory.get(self.url)
         request.tenant = self.public_tenant
@@ -840,6 +934,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                     'description': '',
                     'ostag': ['CentOS 6', 'CentOS 7'],
                     'tags': ['internal', 'test_tag1', 'test_tag2'],
+                    "tenants": ["test"],
                     'probeversion': 'ams-probe (0.1.11)',
                     'parent': '',
                     'probeexecutable': 'ams-probe',
@@ -894,6 +989,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                     'description': '',
                     'ostag': ['CentOS 7'],
                     'tags': [],
+                    "tenants": [],
                     'probeversion': 'ams-publisher-probe (0.1.14)',
                     'parent': '',
                     'probeexecutable': 'ams-publisher-probe',
@@ -951,6 +1047,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                     "description": "",
                     "ostag": ["CentOS 7"],
                     "tags": ["test_tag1"],
+                    "tenants": [],
                     "probeversion": "check_nrpe (3.2.1)",
                     "parent": "",
                     "probeexecutable": "check_nrpe",
@@ -995,6 +1092,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                     "description": "",
                     "ostag": ["CentOS 7"],
                     "tags": [],
+                    "tenants": [],
                     "probeversion": "sdc-nerq-sparq (1.0.1)",
                     "parent": "",
                     "probeexecutable": "sdc-nerq-sparql.sh",
@@ -1049,6 +1147,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                     "description": "",
                     "ostag": ["CentOS 6"],
                     "tags": [],
+                    "tenants": ["tenant2", "test"],
                     "probeversion": "checkhealth (0.4)",
                     "parent": "",
                     "probeexecutable": "checkhealth",
@@ -1115,6 +1214,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                     'description': '',
                     'ostag': [],
                     'tags': ['test_tag2'],
+                    "tenants": ["tenant1", "tenant2", "test"],
                     'probeversion': '',
                     'parent': '',
                     'probeexecutable': '',
@@ -1142,6 +1242,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                     "description": "Description of test.AMS-Check.",
                     "ostag": ["CentOS 6"],
                     "tags": [],
+                    "tenants": ["tenant1", "test"],
                     "probeversion": "ams-probe (0.1.7)",
                     "parent": "",
                     "probeexecutable": "ams-probe",
@@ -1196,6 +1297,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                     "description": "Description of test.AMS-Check.",
                     "ostag": ["CentOS 6"],
                     "tags": [],
+                    "tenants": [],
                     "probeversion": "ams-probe (0.1.7)",
                     "parent": "",
                     "probeexecutable": "ams-probe",
@@ -1812,6 +1914,65 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data, {'detail': 'Metric template not found'})
+
+class ListMetricTemplatesAPIViewTests(TenantTestCase):
+    def setUp(self):
+        self.factory = TenantRequestFactory(self.tenant)
+        self.view = views.ListMetricTemplates.as_view()
+        self.url = '/api/v2/internal/metrictemplates/'
+
+        mock_db()
+
+        self.tenant.name = "test"
+        self.tenant.save()
+
+        self.public_tenant = Tenant.objects.get(name="public")
+        self.tenant_superuser = CustUser.objects.get(username="tenant_poem")
+        self.tenant_user = CustUser.objects.get(username='tenant_user')
+        self.metrictemplate1 = admin_models.MetricTemplate.objects.get(
+            name="argo.AMS-Check"
+        )
+        self.metrictemplate2 = admin_models.MetricTemplate.objects.get(
+            name="org.apel.APEL-Pub"
+        )
+        self.metrictemplate3 = admin_models.MetricTemplate.objects.get(
+            name="argo.AMSPublisher-Check"
+        )
+        self.metrictemplate4 = admin_models.MetricTemplate.objects.get(
+            name="test.AMS-Check"
+        )
+        self.metrictemplate5 = admin_models.MetricTemplate.objects.get(
+            name="argo.EGI-Connectors-Check"
+        )
+        self.metrictemplate6 = admin_models.MetricTemplate.objects.get(
+            name="eu.seadatanet.org.nerc-sparql-check"
+        )
+        self.metrictemplate7 = admin_models.MetricTemplate.objects.get(
+            name="test2.AMS-Check"
+        )
+        self.metrictemplate8 = admin_models.MetricTemplate.objects.get(
+            name="grnet.agora.healthcheck"
+        )
+
+        self.template_active = admin_models.MetricTemplateType.objects.get(
+            name="Active"
+        )
+
+        self.tag1 = admin_models.MetricTags.objects.get(name="internal")
+        self.tag2 = admin_models.MetricTags.objects.get(name="deprecated")
+        self.tag3 = admin_models.MetricTags.objects.get(name="test_tag1")
+        self.tag4 = admin_models.MetricTags.objects.get(name="test_tag2")
+
+        self.ams_probe_7 = admin_models.ProbeHistory.objects.get(
+            name="ams-probe", comment="Initial version."
+        )
+        self.ams_probe_11 = admin_models.ProbeHistory.objects.get(
+            name="ams-probe", comment="Newer version."
+        )
+
+        with schema_context(get_public_schema_name()):
+            self.superuser = CustUser.objects.get(username="poem")
+            self.user = CustUser.objects.get(username='admin_user')
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.inline_metric_for_db')
