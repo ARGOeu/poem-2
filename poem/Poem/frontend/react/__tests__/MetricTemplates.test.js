@@ -129,7 +129,6 @@ const mockTenantListOfMetricTemplates = [
   {
     id: '1',
     name: 'argo.AMS-Check',
-    importable: true,
     mtype: 'Active',
     description: 'Some description of argo.AMS-Check metric template.',
     ostag: ['CentOS 6', 'CentOS 7'],
@@ -160,7 +159,6 @@ const mockTenantListOfMetricTemplates = [
   {
     id: 3,
     name: 'argo.AMS-Publisher',
-    importable: false,
     mtype: 'Active',
     tags: ['internal'],
     probeversion: 'ams-publisher-probe (0.1.12)',
@@ -191,7 +189,6 @@ const mockTenantListOfMetricTemplates = [
   {
     id: 15,
     name: 'argo.POEM-API-MON',
-    importable: true,
     mtype: 'Active',
     tags: [],
     probeversion: 'poem-probe (0.1.12)',
@@ -216,7 +213,6 @@ const mockTenantListOfMetricTemplates = [
   {
     id: 2,
     name: 'org.apel.APEL-Pub',
-    importable: true,
     mtype: 'Passive',
     description: '',
     ostag: [],

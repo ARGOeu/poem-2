@@ -1358,7 +1358,6 @@ class ListMetricTemplatesAPIViewGETTests(TenantTestCase):
             [
                 {
                     'id': self.metrictemplate1.id,
-                    'importable': False,
                     'name': 'argo.AMS-Check',
                     'mtype': 'Active',
                     'description': '',
@@ -1414,7 +1413,6 @@ class ListMetricTemplatesAPIViewGETTests(TenantTestCase):
                 {
                     'id': self.metrictemplate3.id,
                     'name': 'argo.AMSPublisher-Check',
-                    'importable': True,
                     'mtype': 'Active',
                     'description': '',
                     'ostag': ['CentOS 7'],
@@ -1472,7 +1470,6 @@ class ListMetricTemplatesAPIViewGETTests(TenantTestCase):
                 {
                     "id": self.metrictemplate5.id,
                     "name": "argo.EGI-Connectors-Check",
-                    'importable': True,
                     "mtype": "Active",
                     "description": "",
                     "ostag": ["CentOS 7"],
@@ -1517,7 +1514,6 @@ class ListMetricTemplatesAPIViewGETTests(TenantTestCase):
                 {
                     "id": self.metrictemplate6.id,
                     "name": "eu.seadatanet.org.nerc-sparql-check",
-                    'importable': True,
                     "mtype": "Active",
                     "description": "",
                     "ostag": ["CentOS 7"],
@@ -1572,7 +1568,6 @@ class ListMetricTemplatesAPIViewGETTests(TenantTestCase):
                 {
                     "id": self.metrictemplate8.id,
                     "name": "grnet.agora.healthcheck",
-                    'importable': True,
                     "mtype": "Active",
                     "description": "",
                     "ostag": ["CentOS 6"],
@@ -1639,7 +1634,6 @@ class ListMetricTemplatesAPIViewGETTests(TenantTestCase):
                 {
                     'id': self.metrictemplate2.id,
                     'name': 'org.apel.APEL-Pub',
-                    'importable': False,
                     'mtype': 'Passive',
                     'description': '',
                     'ostag': [],
@@ -1667,7 +1661,6 @@ class ListMetricTemplatesAPIViewGETTests(TenantTestCase):
                 {
                     "id": self.metrictemplate4.id,
                     "name": "test.AMS-Check",
-                    'importable': False,
                     "mtype": "Active",
                     "description": "Description of test.AMS-Check.",
                     "ostag": ["CentOS 6"],
@@ -1722,7 +1715,6 @@ class ListMetricTemplatesAPIViewGETTests(TenantTestCase):
                 {
                     "id": self.metrictemplate7.id,
                     "name": "test2.AMS-Check",
-                    'importable': True,
                     "mtype": "Active",
                     "description": "Description of test.AMS-Check.",
                     "ostag": ["CentOS 6"],
@@ -1914,6 +1906,7 @@ class ListMetricTemplatesAPIViewGETTests(TenantTestCase):
         response = self.view(request, 'nonexisting')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data, {'detail': 'Metric template not found'})
+
 
 class ListMetricTemplatesAPIViewTests(TenantTestCase):
     def setUp(self):

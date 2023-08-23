@@ -32,7 +32,6 @@ class ListMetricTemplates(APIView):
 
     def get(self, request, name=None):
         public_tenant = None
-        importable = None
         tenants = dict()
         if name:
             metrictemplates = admin_models.MetricTemplate.objects.filter(
@@ -56,34 +55,23 @@ class ListMetricTemplates(APIView):
                                 tenant.schema_name
                             )
                         })
-                    for metrictemplate in metrictemplates:
-                        if tenant != public_tenant:
-                            mt_versions = [
-                                m.name for m in
-                                admin_models.MetricTemplateHistory.objects.filter(
-                                    object_id=metrictemplate
-                                )
-                            ]
-
-                            tenants.update({
-                                metrictemplate.name: sorted([
-                                    t for t, m in tenants_metrics.items() if
-                                    len(
-                                        set(mt_versions).intersection(set(m))
-                                    ) > 0
-                                ])
-                            })
-
-            else:
-                avail_metrics = Metric.objects.all().values_list(
-                    'name', flat=True
-                )
-                importable = dict()
                 for metrictemplate in metrictemplates:
-                    if metrictemplate.name in avail_metrics:
-                        importable[metrictemplate.name] = False
-                    else:
-                        importable[metrictemplate.name] = True
+                    if request.tenant == public_tenant:
+                        mt_versions = [
+                            m.name for m in
+                            admin_models.MetricTemplateHistory.objects.filter(
+                                object_id=metrictemplate
+                            )
+                        ]
+
+                        tenants.update({
+                            metrictemplate.name: sorted([
+                                t for t, m in tenants_metrics.items() if
+                                len(
+                                    set(mt_versions).intersection(set(m))
+                                ) > 0
+                            ])
+                        })
 
         results = []
         for metrictemplate in metrictemplates:
@@ -129,11 +117,6 @@ class ListMetricTemplates(APIView):
                 "parameter": parameter,
                 "fileparameter": fileparameter
             }
-
-            if not name and request.tenant != public_tenant:
-                result_dict.update({
-                    "importable": importable[metrictemplate.name]
-                })
 
             if not name and request.tenant == public_tenant:
                 if metrictemplate.name in tenants:
