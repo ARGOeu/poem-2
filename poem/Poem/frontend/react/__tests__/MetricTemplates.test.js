@@ -46,6 +46,7 @@ const mockListOfMetricTemplates = [
     description: 'Some description of argo.AMS-Check metric template.',
     ostag: ['CentOS 6', 'CentOS 7'],
     tags: ['test_tag1', 'test_tag2'],
+    tenants: ["tenant1", "tenant2"],
     probeversion: 'ams-probe (0.1.12)',
     parent: '',
     probeexecutable: 'ams-probe',
@@ -76,6 +77,7 @@ const mockListOfMetricTemplates = [
     tags: ['internal'],
     probeversion: 'ams-publisher-probe (0.1.12)',
     ostag: ['CentOS 7'],
+    tenants: ["tenant1"],
     description: '',
     parent: '',
     probeexecutable: 'ams-publisher-probe',
@@ -106,6 +108,7 @@ const mockListOfMetricTemplates = [
     description: '',
     ostag: [],
     tags: [],
+    tenants: [],
     probeversion: '',
     parent: '',
     probeexecutable: '',
@@ -574,6 +577,36 @@ const mockMetricTags = [
   }
 ]
 
+const mockTenants = [
+  {
+    name: "tenant1",
+    schema_name: "tenant1_schema",
+    domain_url: "tenant1.test.com",
+    created_on: "2023-08-23",
+    nr_metrics: 48,
+    nr_probes: 24,
+    combined: false
+  },
+  {
+    name: "tenant2",
+    schema_name: "tenant2_schema",
+    domain_url: "tenant2.test.com",
+    created_on: "2023-08-23",
+    nr_metrics: 12,
+    nr_probes: 7,
+    combined: true
+  },
+  {
+    name: "SuperPOEM Tenant",
+    schema_name: "public",
+    domain_url: "test.com",
+    created_on: "2023-08-23",
+    nr_metrics: 354, 
+    nr_probes: 111,
+    combined: false
+  }
+]
+
 
 function renderListView(publicView=undefined) {
   const route = `/ui/${publicView ? 'public_' : ''}metrictemplates`;
@@ -753,6 +786,12 @@ describe('Test list of metric templates on SuperPOEM', () => {
             case '/api/v2/internal/public_metrictemplates':
               return Promise.resolve(mockListOfMetricTemplates)
 
+            case "/api/v2/internal/tenants":
+              return Promise.resolve(mockTenants)
+
+            case "/api/v2/internal/public_tenants":
+              return Promise.resolve(mockTenants)
+
             case '/api/v2/internal/mttypes':
               return Promise.resolve(['Active', 'Passive'])
 
@@ -789,29 +828,33 @@ describe('Test list of metric templates on SuperPOEM', () => {
     })
 
     // double column header length because search fields are also th
-    expect(screen.getAllByRole('columnheader')).toHaveLength(10);
+    expect(screen.getAllByRole('columnheader')).toHaveLength(12)
     expect(screen.getByRole('columnheader', { name: 'Delete' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /name/i }).textContent).toBe('Name');
     expect(screen.getByRole('columnheader', { name: /probe/i }).textContent).toBe('Probe version');
     expect(screen.getByRole('columnheader', { name: /type/i }).textContent).toBe('Type');
     expect(screen.getByRole('columnheader', { name: /tag/i }).textContent).toBe('Tag');
+    expect(screen.getByRole("columnheader", { name: /tenants/i }).textContent).toBe("Tenants")
     expect(screen.getAllByPlaceholderText('Search')).toHaveLength(2);
-    expect(screen.getAllByRole('columnheader', { name: 'Show all' })).toHaveLength(2);
-    expect(screen.getAllByRole('option', { name: 'Show all' })).toHaveLength(2);
+    expect(screen.getAllByRole('columnheader', { name: 'Show all' })).toHaveLength(3);
+    expect(screen.getAllByRole('option', { name: 'Show all' })).toHaveLength(3);
     expect(screen.getByRole('option', { name: 'Active' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Passive' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'test_tag1' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'test_tag2' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'internal' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'deprecated' })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "tenant1" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "tenant2" })).toBeInTheDocument()
+    expect(screen.queryByRole("option", { name: "SuperPOEM Tenant" })).not.toBeInTheDocument()
     expect(screen.getAllByRole('row')).toHaveLength(52);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(47);
-    expect(screen.getByRole('row', { name: /ams-check/i }).textContent).toBe('argo.AMS-Checkams-probe (0.1.12)Activetest_tag1test_tag2')
-    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('argo.AMS-Publisherams-publisher-probe (0.1.12)Activeinternal')
+    expect(screen.getByRole('row', { name: /ams-check/i }).textContent).toBe('argo.AMS-Checkams-probe (0.1.12)Activetest_tag1test_tag2tenant1tenant2')
+    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('argo.AMS-Publisherams-publisher-probe (0.1.12)Activeinternaltenant1')
     expect(screen.getByTestId('checkbox-argo.AMS-Check')).toBeEnabled();
     expect(screen.getByTestId('checkbox-argo.AMS-Publisher')).toBeEnabled();
     expect(screen.getByTestId('checkbox-org.apel.APEL-Pub')).toBeEnabled();
-    expect(screen.getByRole('row', { name: /apel/i }).textContent).toBe('org.apel.APEL-PubPassivenone')
+    expect(screen.getByRole('row', { name: /apel/i }).textContent).toBe('org.apel.APEL-PubPassivenonenone')
     expect(screen.getByRole('link', { name: /argo.ams-check/i }).closest('a')).toHaveAttribute('href', '/ui/metrictemplates/argo.AMS-Check');
     expect(screen.getByRole('link', { name: /ams-probe/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-probe/history/0.1.12')
     expect(screen.getByRole('link', { name: /argo.ams-publisher/i }).closest('a')).toHaveAttribute('href', '/ui/metrictemplates/argo.AMS-Publisher');
@@ -831,26 +874,30 @@ describe('Test list of metric templates on SuperPOEM', () => {
     })
 
     // double column header length because search fields are also th
-    expect(screen.getAllByRole('columnheader')).toHaveLength(10);
+    expect(screen.getAllByRole('columnheader')).toHaveLength(12);
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /name/i }).textContent).toBe('Name');
     expect(screen.getByRole('columnheader', { name: /probe/i }).textContent).toBe('Probe version');
     expect(screen.getByRole('columnheader', { name: /type/i }).textContent).toBe('Type');
     expect(screen.getByRole('columnheader', { name: /tag/i }).textContent).toBe('Tag');
+    expect(screen.getByRole("columnheader", { name: /tenants/i }).textContent).toBe("Tenants")
     expect(screen.getAllByPlaceholderText('Search')).toHaveLength(2);
-    expect(screen.getAllByRole('columnheader', { name: 'Show all' })).toHaveLength(2);
-    expect(screen.getAllByRole('option', { name: 'Show all' })).toHaveLength(2);
+    expect(screen.getAllByRole('columnheader', { name: 'Show all' })).toHaveLength(3);
+    expect(screen.getAllByRole('option', { name: 'Show all' })).toHaveLength(3);
     expect(screen.getByRole('option', { name: 'Active' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Passive' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'test_tag1' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'test_tag2' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'internal' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'deprecated' })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "tenant1" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "tenant2" })).toBeInTheDocument()
+    expect(screen.queryByRole("option", { name: "SuperPOEM Tenant" })).not.toBeInTheDocument()
     expect(screen.getAllByRole('row')).toHaveLength(52);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(47);
-    expect(screen.getByRole('row', { name: /ams-check/i }).textContent).toBe('1argo.AMS-Checkams-probe (0.1.12)Activetest_tag1test_tag2')
-    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('2argo.AMS-Publisherams-publisher-probe (0.1.12)Activeinternal')
-    expect(screen.getByRole('row', { name: /apel/i }).textContent).toBe('3org.apel.APEL-PubPassivenone')
+    expect(screen.getByRole('row', { name: /ams-check/i }).textContent).toBe('1argo.AMS-Checkams-probe (0.1.12)Activetest_tag1test_tag2tenant1tenant2')
+    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('2argo.AMS-Publisherams-publisher-probe (0.1.12)Activeinternaltenant1')
+    expect(screen.getByRole('row', { name: /apel/i }).textContent).toBe('3org.apel.APEL-PubPassivenonenone')
     expect(screen.getByRole('link', { name: /argo.ams-check/i }).closest('a')).toHaveAttribute('href', '/ui/public_metrictemplates/argo.AMS-Check');
     expect(screen.getByRole('link', { name: /ams-probe/i }).closest('a')).toHaveAttribute('href', '/ui/public_probes/ams-probe/history/0.1.12')
     expect(screen.getByRole('link', { name: /argo.ams-publisher/i }).closest('a')).toHaveAttribute('href', '/ui/public_metrictemplates/argo.AMS-Publisher');
@@ -870,8 +917,8 @@ describe('Test list of metric templates on SuperPOEM', () => {
     fireEvent.change(screen.getAllByPlaceholderText('Search')[0], { target: { value: 'argo' } });
     expect(screen.getAllByRole('row')).toHaveLength(52);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(48);
-    expect(screen.getByRole('row', { name: /ams-check/i }).textContent).toBe('argo.AMS-Checkams-probe (0.1.12)Activetest_tag1test_tag2')
-    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('argo.AMS-Publisherams-publisher-probe (0.1.12)Activeinternal')
+    expect(screen.getByRole('row', { name: /ams-check/i }).textContent).toBe('argo.AMS-Checkams-probe (0.1.12)Activetest_tag1test_tag2tenant1tenant2')
+    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('argo.AMS-Publisherams-publisher-probe (0.1.12)Activeinternaltenant1')
     expect(screen.getByRole('link', { name: /argo.ams-check/i }).closest('a')).toHaveAttribute('href', '/ui/metrictemplates/argo.AMS-Check');
     expect(screen.getByRole('link', { name: /ams-probe/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-probe/history/0.1.12')
     expect(screen.getByRole('link', { name: /argo.ams-publisher/i }).closest('a')).toHaveAttribute('href', '/ui/metrictemplates/argo.AMS-Publisher');
@@ -880,7 +927,7 @@ describe('Test list of metric templates on SuperPOEM', () => {
     fireEvent.change(screen.getAllByDisplayValue('Show all')[1], { target: { value: 'internal' } })
     expect(screen.getAllByRole('row')).toHaveLength(52);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(49);
-    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('argo.AMS-Publisherams-publisher-probe (0.1.12)Activeinternal')
+    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('argo.AMS-Publisherams-publisher-probe (0.1.12)Activeinternaltenant1')
     expect(screen.getByRole('link', { name: /argo.ams-publisher/i }).closest('a')).toHaveAttribute('href', '/ui/metrictemplates/argo.AMS-Publisher');
     expect(screen.getByRole('link', { name: /ams-publisher-probe/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-publisher-probe/history/0.1.12')
   })

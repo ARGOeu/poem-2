@@ -51,7 +51,8 @@ import {
   fetchUserDetails,
   fetchUserGroups,
   fetchMetrics,
-  fetchMetricProfiles
+  fetchMetricProfiles,
+  fetchTenants
 } from './QueryFunctions';
 import * as Yup from 'yup';
 import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
@@ -358,6 +359,11 @@ export const ListOfMetrics = (props) => {
     { enabled: type === "metrics" && (publicView || !!userDetails) }
   )
 
+  const { data: tenants, error: errorTenants, isLoading: loadingTenants } = useQuery(
+    `${publicView ? "public_" : ""}tenant`, () => fetchTenants(),
+    { enabled: type === "metrictemplates" && !isTenantSchema }
+  )
+
   function toggleAreYouSure() {
     setAreYouSureModal(!areYouSureModal);
   }
@@ -489,7 +495,7 @@ export const ListOfMetrics = (props) => {
       },
       {
         Header: 'Type',
-        column_width: `${isTenantSchema ? type === "metrics" ? "10%" : "12%" : "18%"}`,
+        column_width: `${ type === "metrics" ? "10%" : "12%" }`,
         accessor: 'mtype',
         Cell: row =>
           <div style={{textAlign: 'center'}}>
@@ -500,7 +506,7 @@ export const ListOfMetrics = (props) => {
       },
       {
         Header: 'Tag',
-        column_width: `${isTenantSchema ?  type === "metrics" ? "10%" : "12%" : "18%"}`,
+        column_width: `${ type === "metrics" ? "10%" : "12%" }`,
         accessor: 'tags',
         Cell: row =>
           <div style={{textAlign: 'center'}}>
@@ -644,12 +650,41 @@ export const ListOfMetrics = (props) => {
           }
         );
       }
+
+      if (!isTenantSchema && tenants) {
+        var tenants_list = tenants.map(tenant => tenant.name)
+        tenants_list.splice(tenants_list.indexOf("SuperPOEM Tenant"), 1)
+        columns.splice(
+          5,
+          0,
+          {
+            Header: "Tenants",
+            column_width: "10%",
+            accessor: "tenants",
+            Cell: row =>
+              <div style={{ textAlign: "center" }}>
+                {
+                  row.value.length === 0 ?
+                    <Badge color="dark">none</Badge>
+                  :
+                    row.value.map((tenant, i) =>
+                      <Badge className={"me-1"} key={i} color="secondary">
+                        { tenant }
+                      </Badge>
+                    )
+                }
+              </div>,
+            filterList: tenants ? tenants_list : [],
+            Filter: SelectColumnFilter
+          }
+        )
+      }
     }
 
     return columns;
   })
 
-  if (metricsLoading || typesLoading || tagsLoading || OSGroupsLoading || userDetailsLoading || loadingMP)
+  if (metricsLoading || typesLoading || tagsLoading || OSGroupsLoading || userDetailsLoading || loadingMP || loadingTenants)
     return (<LoadingAnim />);
 
   else if (metricsError)
@@ -669,6 +704,9 @@ export const ListOfMetrics = (props) => {
 
   else if (userDetailsError)
     return (<ErrorComponent error={userDetailsError.message}/>);
+
+  else if (errorTenants)
+    return (<ErrorComponent error={ errorTenants.message } />)
 
   else if (metrics && types && tags && OSGroups && (type === "metrictemplates" || metricProfiles)) {
     if (type === 'metrics') {
