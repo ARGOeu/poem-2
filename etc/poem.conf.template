@@ -18,6 +18,17 @@ HostCert = /etc/grid-security/hostcert.pem
 HostKey = /etc/grid-security/hostkey.pem
 SecretKeyPath = %(VENV)s/etc/poem/secret_key
 
+[EMAIL]
+From = ARGO Monitoring <no-reply@argo.grnet.gr>
+Us = argo@grnet.gr
+Host = mx.grnet.gr
+Port = 25
+User =
+Password =
+TLS = True
+SSL = False
+Timeout = 15
+
 [WEBAPI]
 MetricProfile = https://api.devel.argo.grnet.gr/api/v2/metric_profiles
 AggregationProfile = https://api.devel.argo.grnet.gr/api/v2/aggregation_profiles

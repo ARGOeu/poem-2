@@ -1,5 +1,6 @@
 import datetime
 import json
+from unittest.mock import patch
 
 from Poem.api import views_internal as views
 from Poem.helpers.history_helpers import serialize_metric
@@ -8,6 +9,7 @@ from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
 from Poem.users.models import CustUser
 from django.contrib.contenttypes.models import ContentType
+from django.core import mail
 from django_tenants.test.cases import TenantTestCase
 from django_tenants.test.client import TenantRequestFactory
 from django_tenants.utils import schema_context, get_public_schema_name, \
@@ -4300,9 +4302,15 @@ class ListProbeCandidatesTests(TenantTestCase):
         status_testing = poem_models.ProbeCandidateStatus.objects.create(
             name="testing"
         )
-        poem_models.ProbeCandidateStatus.objects.create(name="deployed")
-        poem_models.ProbeCandidateStatus.objects.create(name="rejected")
-        poem_models.ProbeCandidateStatus.objects.create(name="processing")
+        status_deployed = poem_models.ProbeCandidateStatus.objects.create(
+            name="deployed"
+        )
+        status_rejected = poem_models.ProbeCandidateStatus.objects.create(
+            name="rejected"
+        )
+        status_processing = poem_models.ProbeCandidateStatus.objects.create(
+            name="processing"
+        )
 
         self.candidate1 = poem_models.ProbeCandidate.objects.create(
             name="test-probe",
@@ -4314,16 +4322,71 @@ class ListProbeCandidatesTests(TenantTestCase):
                     "-t <timeout> --test",
             contact="poem@example.com",
             status=status_testing,
-            service_type="test.service.type"
+            submitted_sent=True,
+            processing_sent=True,
+            testing_sent=True,
+            service_type="test.service.type",
+            devel_url="https://test.argo.grnet.gr/ui/status/test"
         )
         self.candidate2 = poem_models.ProbeCandidate.objects.create(
-            name="some-probe",
+            name="submitted-probe",
             description="Description of the probe",
             docurl="https://github.com/ARGOeu-Metrics/argo-probe-test",
+            script="https://github.com/ARGOeu-Metrics/argo-probe-test/exec/"
+                   "probe.py",
             command="/usr/libexec/argo/probes/test/test-probe -H <hostname> "
                     "-t <timeout> --test --flag1 --flag2",
             contact="poem@example.com",
-            status=status_submitted
+            status=status_submitted,
+            submitted_sent=True
+        )
+        self.candidate3 = poem_models.ProbeCandidate.objects.create(
+            name="processing-probe",
+            description="Description of the processing probe",
+            docurl="https://github.com/ARGOeu-Metrics/argo-probe-test",
+            script="https://github.com/ARGOeu-Metrics/argo-probe-test/"
+                   "test-probe",
+            command="/usr/libexec/argo/probes/test/test-probe -H <hostname> "
+                    "-t <timeout> --test --flag1 --flag2 --flag3",
+            contact="poem@example.com",
+            status=status_processing,
+            submitted_sent=True,
+            processing_sent=True,
+            service_type="processing.service.type"
+        )
+        self.candidate4 = poem_models.ProbeCandidate.objects.create(
+            name="deployed-probe",
+            description="Description of the production probe",
+            docurl="https://github.com/ARGOeu-Metrics/argo-probe-production",
+            script="https://github.com/ARGOeu-Metrics/argo-probe-production/"
+                   "probe.sh",
+            command="/usr/libexec/argo/probes/test/prod-probe -H <hostname> "
+                    "-t <timeout> --prod",
+            contact="poem@example.com",
+            status=status_deployed,
+            submitted_sent=True,
+            processing_sent=True,
+            testing_sent=True,
+            deployed_sent=True,
+            service_type="production.service.type",
+            production_url="https://production.argo.grnet.gr/ui/status/prod"
+        )
+        self.candidate5 = poem_models.ProbeCandidate.objects.create(
+            name="rejected-probe",
+            description="Some description of the probe",
+            docurl="https://github.com/ARGOeu-Metrics/argo-probe-bad",
+            script="https://github.com/ARGOeu-Metrics/argo-probe-bad/bad.pl",
+            command="/usr/libexec/argo/probes/test/test -H <hostname> "
+                    "-t <timeout>",
+            contact="test@contact.com",
+            status=status_rejected,
+            submitted_sent=True,
+            processing_sent=True,
+            testing_sent=True,
+            rejected_sent=True,
+            service_type="test.service.type",
+            devel_url="https://devel.argo.grnet.gr/ui/status/devel",
+            rejection_reason="Probe is not working"
         )
 
     def test_get_probe_candidates_list_if_not_authenticated(self):
@@ -4339,19 +4402,96 @@ class ListProbeCandidatesTests(TenantTestCase):
         self.assertEqual(
             response.data, [
                 {
+                    "id": self.candidate4.id,
+                    "name": "deployed-probe",
+                    "description": "Description of the production probe",
+                    "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-"
+                              "production",
+                    "rpm": "",
+                    "yum_baseurl": "",
+                    "script": "https://github.com/ARGOeu-Metrics/argo-probe-"
+                              "production/probe.sh",
+                    "command":
+                        "/usr/libexec/argo/probes/test/prod-probe -H <hostname>"
+                        " -t <timeout> --prod",
+                    "contact": "poem@example.com",
+                    "status": "deployed",
+                    "service_type": "production.service.type",
+                    "devel_url": "",
+                    "production_url":
+                        "https://production.argo.grnet.gr/ui/status/prod",
+                    "rejection_reason": "",
+                    "created":
+                        self.candidate4.created.strftime("%Y-%m-%d %H:%M:%S"),
+                    "last_update": self.candidate4.last_update.strftime(
+                        "%Y-%m-%d %H:%M:%S")
+                },
+                {
+                    "id": self.candidate3.id,
+                    "name": "processing-probe",
+                    "description": "Description of the processing probe",
+                    "docurl":
+                        "https://github.com/ARGOeu-Metrics/argo-probe-test",
+                    "rpm": "",
+                    "yum_baseurl": "",
+                    "script": "https://github.com/ARGOeu-Metrics/argo-probe-"
+                              "test/test-probe",
+                    "command":
+                        "/usr/libexec/argo/probes/test/test-probe -H <hostname>"
+                        " -t <timeout> --test --flag1 --flag2 --flag3",
+                    "contact": "poem@example.com",
+                    "status": "processing",
+                    "service_type": "processing.service.type",
+                    "devel_url": "",
+                    "production_url": "",
+                    "rejection_reason": "",
+                    "created":
+                        self.candidate3.created.strftime("%Y-%m-%d %H:%M:%S"),
+                    "last_update": self.candidate3.last_update.strftime(
+                        "%Y-%m-%d %H:%M:%S")
+                },
+                {
+                    "id": self.candidate5.id,
+                    "name": "rejected-probe",
+                    "description": "Some description of the probe",
+                    "docurl":
+                        "https://github.com/ARGOeu-Metrics/argo-probe-bad",
+                    "rpm": "",
+                    "yum_baseurl": "",
+                    "script": "https://github.com/ARGOeu-Metrics/argo-probe-"
+                              "bad/bad.pl",
+                    "command": "/usr/libexec/argo/probes/test/test -H "
+                               "<hostname> -t <timeout>",
+                    "contact": "test@contact.com",
+                    "status": "rejected",
+                    "service_type": "test.service.type",
+                    "devel_url": "https://devel.argo.grnet.gr/ui/status/devel",
+                    "production_url": "",
+                    "rejection_reason": "Probe is not working",
+                    "created":
+                        self.candidate5.created.strftime("%Y-%m-%d %H:%M:%S"),
+                    "last_update": self.candidate5.last_update.strftime(
+                        "%Y-%m-%d %H:%M:%S")
+                },
+                {
                     "id": self.candidate2.id,
-                    "name": "some-probe",
+                    "name": "submitted-probe",
                     "description": "Description of the probe",
                     "docurl":
                         "https://github.com/ARGOeu-Metrics/argo-probe-test",
                     "rpm": "",
                     "yum_baseurl": "",
+                    "script": "https://github.com/ARGOeu-Metrics/argo-probe-"
+                              "test/exec/probe.py",
                     "command":
                         "/usr/libexec/argo/probes/test/test-probe "
                         "-H <hostname> -t <timeout> --test --flag1 --flag2",
                     "contact": "poem@example.com",
                     "status": "submitted",
                     "service_type": "",
+                    "devel_url": "",
+                    "production_url": "",
+                    "rejection_reason": "",
                     "created":
                         self.candidate2.created.strftime("%Y-%m-%d %H:%M:%S"),
                     "last_update": self.candidate2.last_update.strftime(
@@ -4364,12 +4504,16 @@ class ListProbeCandidatesTests(TenantTestCase):
                         "https://github.com/ARGOeu-Metrics/argo-probe-test",
                     "rpm": "argo-probe-test-0.1.0-1.el7.noarch.rpm",
                     "yum_baseurl": "http://repo.example.com/devel/centos7/",
+                    "script": "",
                     "command":
                         "/usr/libexec/argo/probes/test/test-probe -H <hostname>"
                         " -t <timeout> --test",
                     "contact": "poem@example.com",
                     "status": "testing",
                     "service_type": "test.service.type",
+                    "devel_url": "https://test.argo.grnet.gr/ui/status/test",
+                    "production_url": "",
+                    "rejection_reason": "",
                     "created":
                         self.candidate1.created.strftime("%Y-%m-%d %H:%M:%S"),
                     "last_update": self.candidate1.last_update.strftime(
@@ -4401,16 +4545,84 @@ class ListProbeCandidatesTests(TenantTestCase):
                 "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-test",
                 "rpm": "argo-probe-test-0.1.0-1.el7.noarch.rpm",
                 "yum_baseurl": "http://repo.example.com/devel/centos7/",
+                "script": "",
                 "command":
                     "/usr/libexec/argo/probes/test/test-probe -H <hostname>"
                     " -t <timeout> --test",
                 "contact": "poem@example.com",
                 "status": "testing",
                 "service_type": "test.service.type",
+                "devel_url": "https://test.argo.grnet.gr/ui/status/test",
+                "production_url": "",
+                "rejection_reason": "",
                 "created":
                     self.candidate1.created.strftime("%Y-%m-%d %H:%M:%S"),
                 "last_update":
                     self.candidate1.last_update.strftime("%Y-%m-%d %H:%M:%S")
+            }
+        )
+
+    def test_get_probe_candidate_by_id_with_prod_url_superuser(self):
+        request = self.factory.get(f"{self.url}{self.candidate4.id}")
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, self.candidate4.id)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data, {
+                "id": self.candidate4.id,
+                "name": "deployed-probe",
+                "description": "Description of the production probe",
+                "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-"
+                          "production",
+                "rpm": "",
+                "yum_baseurl": "",
+                "script": "https://github.com/ARGOeu-Metrics/argo-probe-"
+                          "production/probe.sh",
+                "command":
+                    "/usr/libexec/argo/probes/test/prod-probe -H <hostname>"
+                    " -t <timeout> --prod",
+                "contact": "poem@example.com",
+                "status": "deployed",
+                "service_type": "production.service.type",
+                "devel_url": "",
+                "production_url":
+                    "https://production.argo.grnet.gr/ui/status/prod",
+                "rejection_reason": "",
+                "created":
+                    self.candidate4.created.strftime("%Y-%m-%d %H:%M:%S"),
+                "last_update": self.candidate4.last_update.strftime(
+                    "%Y-%m-%d %H:%M:%S")
+            }
+        )
+
+    def test_get_probe_candidate_by_id_with_rejection_superuser(self):
+        request = self.factory.get(f"{self.url}{self.candidate5.id}")
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, self.candidate5.id)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data, {
+                "id": self.candidate5.id,
+                "name": "rejected-probe",
+                "description": "Some description of the probe",
+                "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-bad",
+                "rpm": "",
+                "yum_baseurl": "",
+                "script": "https://github.com/ARGOeu-Metrics/argo-probe-bad/"
+                          "bad.pl",
+                "command":
+                    "/usr/libexec/argo/probes/test/test -H <hostname> "
+                    "-t <timeout>",
+                "contact": "test@contact.com",
+                "status": "rejected",
+                "service_type": "test.service.type",
+                "devel_url": "https://devel.argo.grnet.gr/ui/status/devel",
+                "production_url": "",
+                "rejection_reason": "Probe is not working",
+                "created":
+                    self.candidate5.created.strftime("%Y-%m-%d %H:%M:%S"),
+                "last_update": self.candidate5.last_update.strftime(
+                    "%Y-%m-%d %H:%M:%S")
             }
         )
 
@@ -4443,10 +4655,102 @@ class ListProbeCandidatesTests(TenantTestCase):
             "You do not have permission to view probe candidates"
         )
 
-    def test_put_probe_candidate_superuser(self):
+    def test_put_probe_candidate_deployed_superuser(self):
         data = {
             "id": self.candidate1.id,
             "name": "new-probe",
+            "description": "More detailed description for the new probe",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
+            "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "",
+            "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                       "-t <timeout> --test",
+            "contact": "meh@example.com",
+            "status": "deployed",
+            "service_type": "some.service.type",
+            "devel_url": "https://test.argo.grnet.gr/ui/status/new",
+            "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": ""
+        }
+        with self.settings(
+                EMAILFROM="no-reply@argo.test.com",
+                EMAILUS="argo@argo.test.com"
+        ):
+            content, content_type = encode_data(data)
+            request = self.factory.put(
+                self.url, content, content_type=content_type
+            )
+            force_authenticate(request, user=self.superuser)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            self.assertEqual(len(mail.outbox), 1)
+            self.assertEqual(
+                mail.outbox[0].subject, "[ARGO Monitoring] Probe deployed"
+            )
+            self.assertEqual(
+                mail.outbox[0].body,
+                """
+Dear madam/sir,
+
+the probe 'new-probe' has been deployed to production.
+
+You can see the results here: https://production.argo.grnet.gr/ui/status/new
+
+Best regards,
+ARGO Monitoring team
+"""
+            )
+            self.assertEqual(
+                mail.outbox[0].from_email, "no-reply@argo.test.com"
+            )
+            self.assertEqual(mail.outbox[0].to, ["meh@example.com"])
+            self.assertEqual(mail.outbox[0].bcc, ["argo@argo.test.com"])
+            candidate = poem_models.ProbeCandidate.objects.get(
+                id=self.candidate1.id
+            )
+            self.assertEqual(candidate.name, "new-probe")
+            self.assertEqual(
+                candidate.description,
+                "More detailed description for the new probe"
+            )
+            self.assertEqual(
+                candidate.docurl,
+                "https://github.com/ARGOeu-Metrics/argo-probe-new"
+            )
+            self.assertEqual(
+                candidate.rpm, "argo-probe-new-0.1.0-1.el7.noarch.rpm"
+            )
+            self.assertEqual(
+                candidate.yum_baseurl, "http://repo.example.com/devel/rocky8/"
+            )
+            self.assertEqual(candidate.script, "")
+            self.assertEqual(
+                candidate.command,
+                "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                "-t <timeout> --test"
+            )
+            self.assertEqual(candidate.contact, "poem@example.com")
+            self.assertEqual(candidate.status.name, "deployed")
+            self.assertEqual(candidate.service_type, "some.service.type")
+            self.assertEqual(
+                candidate.devel_url, "https://test.argo.grnet.gr/ui/status/new"
+            )
+            self.assertEqual(
+                candidate.production_url,
+                "https://production.argo.grnet.gr/ui/status/new"
+            )
+            self.assertEqual(candidate.rejection_reason, "")
+            self.assertTrue(candidate.submitted_sent)
+            self.assertTrue(candidate.processing_sent)
+            self.assertTrue(candidate.testing_sent)
+            self.assertTrue(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
+
+    def test_put_probe_candidate_deployed_empty_name_superuser(self):
+        data = {
+            "id": self.candidate1.id,
+            "name": "",
             "description": "More detailed description for the new probe",
             "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
             "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
@@ -4455,38 +4759,987 @@ class ListProbeCandidatesTests(TenantTestCase):
                        "-t <timeout> --test",
             "contact": "meh@example.com",
             "status": "deployed",
-            "service_type": "some.service.type"
+            "service_type": "some.service.type",
+            "devel_url": "https://test.argo.grnet.gr/ui/status/new",
+            "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": ""
         }
-        content, content_type = encode_data(data)
-        request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.superuser)
-        response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        candidate = poem_models.ProbeCandidate.objects.get(
-            id=self.candidate1.id
-        )
-        self.assertEqual(candidate.name, "new-probe")
-        self.assertEqual(
-            candidate.description, "More detailed description for the new probe"
-        )
-        self.assertEqual(
-            candidate.docurl,
-            "https://github.com/ARGOeu-Metrics/argo-probe-new"
-        )
-        self.assertEqual(
-            candidate.rpm, "argo-probe-new-0.1.0-1.el7.noarch.rpm"
-        )
-        self.assertEqual(
-            candidate.yum_baseurl, "http://repo.example.com/devel/rocky8/"
-        )
-        self.assertEqual(
-            candidate.command,
-            "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
-            "-t <timeout> --test"
-        )
-        self.assertEqual(candidate.contact, "poem@example.com")
-        self.assertEqual(candidate.status.name, "deployed")
-        self.assertEqual(candidate.service_type, "some.service.type")
+        with self.settings(
+                EMAILFROM="no-reply@argo.test.com",
+                EMAILUS="argo@argo.test.com"
+        ):
+            content, content_type = encode_data(data)
+            request = self.factory.put(
+                self.url, content, content_type=content_type
+            )
+            force_authenticate(request, user=self.superuser)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(response.data["detail"], "Name is mandatory")
+            self.assertEqual(len(mail.outbox), 0)
+            candidate = poem_models.ProbeCandidate.objects.get(
+                id=self.candidate1.id
+            )
+            self.assertEqual(candidate.name, "test-probe")
+            self.assertEqual(
+                candidate.description, "Some description for the test probe"
+            )
+            self.assertEqual(
+                candidate.docurl,
+                "https://github.com/ARGOeu-Metrics/argo-probe-test"
+            )
+            self.assertEqual(
+                candidate.rpm, "argo-probe-test-0.1.0-1.el7.noarch.rpm"
+            )
+            self.assertEqual(
+                candidate.yum_baseurl, "http://repo.example.com/devel/centos7/"
+            )
+            self.assertEqual(candidate.script, None)
+            self.assertEqual(
+                candidate.command,
+                "/usr/libexec/argo/probes/test/test-probe -H <hostname> "
+                "-t <timeout> --test"
+            )
+            self.assertEqual(candidate.contact, "poem@example.com")
+            self.assertEqual(candidate.status.name, "testing")
+            self.assertEqual(candidate.service_type, "test.service.type")
+            self.assertEqual(
+                candidate.devel_url, "https://test.argo.grnet.gr/ui/status/test"
+            )
+            self.assertEqual(candidate.production_url, None)
+            self.assertEqual(candidate.rejection_reason, None)
+            self.assertTrue(candidate.submitted_sent)
+            self.assertTrue(candidate.processing_sent)
+            self.assertTrue(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
+
+    def test_put_probe_candidate_deployed_empty_production_url_superuser(self):
+        data = {
+            "id": self.candidate1.id,
+            "name": "new-probe",
+            "description": "More detailed description for the new probe",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
+            "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "",
+            "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                       "-t <timeout> --test",
+            "contact": "meh@example.com",
+            "status": "deployed",
+            "service_type": "some.service.type",
+            "devel_url": "https://test.argo.grnet.gr/ui/status/new",
+            "production_url": "",
+            "rejection_reason": ""
+        }
+        with self.settings(
+                EMAILFROM="no-reply@argo.test.com",
+                EMAILUS="argo@argo.test.com"
+        ):
+            content, content_type = encode_data(data)
+            request = self.factory.put(
+                self.url, content, content_type=content_type
+            )
+            force_authenticate(request, user=self.superuser)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(
+                response.data["detail"],
+                "Production URL is mandatory when probe status is 'deployed'"
+            )
+            self.assertEqual(len(mail.outbox), 0)
+            candidate = poem_models.ProbeCandidate.objects.get(
+                id=self.candidate1.id
+            )
+            self.assertEqual(candidate.name, "test-probe")
+            self.assertEqual(
+                candidate.description, "Some description for the test probe"
+            )
+            self.assertEqual(
+                candidate.docurl,
+                "https://github.com/ARGOeu-Metrics/argo-probe-test"
+            )
+            self.assertEqual(
+                candidate.rpm, "argo-probe-test-0.1.0-1.el7.noarch.rpm"
+            )
+            self.assertEqual(
+                candidate.yum_baseurl, "http://repo.example.com/devel/centos7/"
+            )
+            self.assertEqual(candidate.script, None)
+            self.assertEqual(
+                candidate.command,
+                "/usr/libexec/argo/probes/test/test-probe -H <hostname> "
+                "-t <timeout> --test"
+            )
+            self.assertEqual(candidate.contact, "poem@example.com")
+            self.assertEqual(candidate.status.name, "testing")
+            self.assertEqual(candidate.service_type, "test.service.type")
+            self.assertEqual(
+                candidate.devel_url, "https://test.argo.grnet.gr/ui/status/test"
+            )
+            self.assertEqual(candidate.production_url, None)
+            self.assertEqual(candidate.rejection_reason, None)
+            self.assertTrue(candidate.submitted_sent)
+            self.assertTrue(candidate.processing_sent)
+            self.assertTrue(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
+
+    def test_put_probe_candidate_processing_superuser(self):
+        data = {
+            "id": self.candidate2.id,
+            "name": "new-probe",
+            "description": "More detailed description for the new probe",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
+            "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "https://github.com/ARGOeu-Metrics/argo-probe-test/exec"
+                      "/probe2.py",
+            "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                       "-t <timeout> --test",
+            "contact": "meh@example.com",
+            "status": "processing",
+            "service_type": "some.service.type",
+            "devel_url": "https://test.argo.grnet.gr/ui/status/new",
+            "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": ""
+        }
+        with self.settings(
+                EMAILFROM="no-reply@argo.test.com",
+                EMAILUS="argo@argo.test.com"
+        ):
+            content, content_type = encode_data(data)
+            request = self.factory.put(
+                self.url, content, content_type=content_type
+            )
+            force_authenticate(request, user=self.superuser)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            self.assertEqual(len(mail.outbox), 1)
+            self.assertEqual(
+                mail.outbox[0].subject, "[ARGO Monitoring] Probe processing"
+            )
+            self.assertEqual(
+                mail.outbox[0].body,
+                """
+Dear madam/sir,
+
+we have started setting up the probe 'new-probe' for testing.
+
+Please add a new monitoring extension for your service with service type some.service.type in https://providers.eosc-portal.eu
+
+You will receive more information after the probe has been deployed to devel infrastructure.
+
+Best regards,
+ARGO Monitoring team
+"""
+            )
+            self.assertEqual(
+                mail.outbox[0].from_email, "no-reply@argo.test.com"
+            )
+            self.assertEqual(mail.outbox[0].to, ["meh@example.com"])
+            self.assertEqual(mail.outbox[0].bcc, ["argo@argo.test.com"])
+            candidate = poem_models.ProbeCandidate.objects.get(
+                id=self.candidate2.id
+            )
+            self.assertEqual(candidate.name, "new-probe")
+            self.assertEqual(
+                candidate.description,
+                "More detailed description for the new probe"
+            )
+            self.assertEqual(
+                candidate.docurl,
+                "https://github.com/ARGOeu-Metrics/argo-probe-new"
+            )
+            self.assertEqual(
+                candidate.rpm, "argo-probe-new-0.1.0-1.el7.noarch.rpm"
+            )
+            self.assertEqual(
+                candidate.yum_baseurl, "http://repo.example.com/devel/rocky8/"
+            )
+            self.assertEqual(
+                candidate.script,
+                "https://github.com/ARGOeu-Metrics/argo-probe-test/exec/"
+                "probe2.py"
+            )
+            self.assertEqual(
+                candidate.command,
+                "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                "-t <timeout> --test"
+            )
+            self.assertEqual(candidate.contact, "poem@example.com")
+            self.assertEqual(candidate.status.name, "processing")
+            self.assertEqual(candidate.service_type, "some.service.type")
+            self.assertEqual(
+                candidate.devel_url, "https://test.argo.grnet.gr/ui/status/new"
+            )
+            self.assertEqual(
+                candidate.production_url,
+                "https://production.argo.grnet.gr/ui/status/new"
+            )
+            self.assertEqual(candidate.rejection_reason, "")
+            self.assertTrue(candidate.submitted_sent)
+            self.assertTrue(candidate.processing_sent)
+            self.assertFalse(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
+
+    def test_put_probe_candidate_processing_empty_service_type_superuser(self):
+        data = {
+            "id": self.candidate2.id,
+            "name": "new-probe",
+            "description": "More detailed description for the new probe",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
+            "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "https://github.com/ARGOeu-Metrics/argo-probe-test/exec"
+                      "/probe2.py",
+            "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                       "-t <timeout> --test",
+            "contact": "meh@example.com",
+            "status": "processing",
+            "service_type": "",
+            "devel_url": "https://test.argo.grnet.gr/ui/status/new",
+            "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": ""
+        }
+        with self.settings(
+                EMAILFROM="no-reply@argo.test.com",
+                EMAILUS="argo@argo.test.com"
+        ):
+            content, content_type = encode_data(data)
+            request = self.factory.put(
+                self.url, content, content_type=content_type
+            )
+            force_authenticate(request, user=self.superuser)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(
+                response.data["detail"],
+                "Service type is mandatory when probe status is 'processing'"
+            )
+            self.assertEqual(len(mail.outbox), 0)
+            candidate = poem_models.ProbeCandidate.objects.get(
+                id=self.candidate2.id
+            )
+            self.assertEqual(candidate.name, "submitted-probe")
+            self.assertEqual(candidate.description, "Description of the probe")
+            self.assertEqual(
+                candidate.docurl,
+                "https://github.com/ARGOeu-Metrics/argo-probe-test"
+            )
+            self.assertEqual(candidate.rpm, "")
+            self.assertEqual(candidate.yum_baseurl, "")
+            self.assertEqual(
+                candidate.script,
+                "https://github.com/ARGOeu-Metrics/argo-probe-test/exec/"
+                "probe.py"
+            )
+            self.assertEqual(
+                candidate.command,
+                "/usr/libexec/argo/probes/test/test-probe -H <hostname> "
+                "-t <timeout> --test --flag1 --flag2",
+            )
+            self.assertEqual(candidate.contact, "poem@example.com")
+            self.assertEqual(candidate.status.name, "submitted")
+            self.assertEqual(candidate.service_type, None)
+            self.assertEqual(candidate.devel_url, None)
+            self.assertEqual(candidate.production_url, None)
+            self.assertEqual(candidate.rejection_reason, None)
+            self.assertTrue(candidate.submitted_sent)
+            self.assertFalse(candidate.processing_sent)
+            self.assertFalse(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
+
+    def test_put_probe_candidate_testing_superuser(self):
+        data = {
+            "id": self.candidate3.id,
+            "name": "new-probe",
+            "description": "More detailed description for the new probe",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
+            "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "https://github.com/ARGOeu-Metrics/argo-probe-test/"
+                      "meh.pl",
+            "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                       "-t <timeout> --test",
+            "contact": "meh@example.com",
+            "status": "testing",
+            "service_type": "some.service.type",
+            "devel_url": "https://test.argo.grnet.gr/ui/status/new",
+            "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": ""
+        }
+        with self.settings(
+                EMAILFROM="no-reply@argo.test.com",
+                EMAILUS="argo@argo.test.com"
+        ):
+            content, content_type = encode_data(data)
+            request = self.factory.put(
+                self.url, content, content_type=content_type
+            )
+            force_authenticate(request, user=self.superuser)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            self.assertEqual(len(mail.outbox), 1)
+            self.assertEqual(
+                mail.outbox[0].subject, "[ARGO Monitoring] Probe testing"
+            )
+            self.assertEqual(
+                mail.outbox[0].body,
+                """
+Dear madam/sir,
+
+the probe 'new-probe' has been deployed to devel infrastructure.
+
+You can see the results here: https://test.argo.grnet.gr/ui/status/new
+
+The probe will be running in the devel infrastructure for a couple of days, and will be moved to production once we make sure it is working properly.
+
+You will receive final email once the probe has been deployed to production infrastructure.
+
+Best regards,
+ARGO Monitoring team
+"""
+            )
+            self.assertEqual(
+                mail.outbox[0].from_email, "no-reply@argo.test.com"
+            )
+            self.assertEqual(mail.outbox[0].to, ["meh@example.com"])
+            self.assertEqual(mail.outbox[0].bcc, ["argo@argo.test.com"])
+            candidate = poem_models.ProbeCandidate.objects.get(
+                id=self.candidate3.id
+            )
+            self.assertEqual(candidate.name, "new-probe")
+            self.assertEqual(
+                candidate.description,
+                "More detailed description for the new probe"
+            )
+            self.assertEqual(
+                candidate.docurl,
+                "https://github.com/ARGOeu-Metrics/argo-probe-new"
+            )
+            self.assertEqual(
+                candidate.rpm, "argo-probe-new-0.1.0-1.el7.noarch.rpm"
+            )
+            self.assertEqual(
+                candidate.yum_baseurl, "http://repo.example.com/devel/rocky8/"
+            )
+            self.assertEqual(
+                candidate.script,
+                "https://github.com/ARGOeu-Metrics/argo-probe-test/meh.pl"
+            )
+            self.assertEqual(
+                candidate.command,
+                "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                "-t <timeout> --test"
+            )
+            self.assertEqual(candidate.contact, "poem@example.com")
+            self.assertEqual(candidate.status.name, "testing")
+            self.assertEqual(candidate.service_type, "some.service.type")
+            self.assertEqual(
+                candidate.devel_url, "https://test.argo.grnet.gr/ui/status/new"
+            )
+            self.assertEqual(
+                candidate.production_url,
+                "https://production.argo.grnet.gr/ui/status/new"
+            )
+            self.assertEqual(candidate.rejection_reason, "")
+            self.assertTrue(candidate.submitted_sent)
+            self.assertTrue(candidate.processing_sent)
+            self.assertTrue(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
+
+    def test_put_probe_candidate_testing_empty_devel_url_superuser(self):
+        data = {
+            "id": self.candidate3.id,
+            "name": "new-probe",
+            "description": "More detailed description for the new probe",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
+            "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "https://github.com/ARGOeu-Metrics/argo-probe-test/"
+                      "meh.pl",
+            "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                       "-t <timeout> --test",
+            "contact": "meh@example.com",
+            "status": "testing",
+            "service_type": "some.service.type",
+            "devel_url": "",
+            "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": ""
+        }
+        with self.settings(
+                EMAILFROM="no-reply@argo.test.com",
+                EMAILUS="argo@argo.test.com"
+        ):
+            content, content_type = encode_data(data)
+            request = self.factory.put(
+                self.url, content, content_type=content_type
+            )
+            force_authenticate(request, user=self.superuser)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(
+                response.data["detail"],
+                "Devel URL is mandatory when probe status is 'testing'"
+            )
+            self.assertEqual(len(mail.outbox), 0)
+            candidate = poem_models.ProbeCandidate.objects.get(
+                id=self.candidate3.id
+            )
+            self.assertEqual(candidate.name, "processing-probe")
+            self.assertEqual(
+                candidate.description, "Description of the processing probe"
+            )
+            self.assertEqual(
+                candidate.script,
+                "https://github.com/ARGOeu-Metrics/argo-probe-test/test-probe"
+            )
+            self.assertEqual(
+                candidate.docurl,
+                "https://github.com/ARGOeu-Metrics/argo-probe-test"
+            )
+            self.assertEqual(candidate.rpm, "")
+            self.assertEqual(candidate.yum_baseurl, "")
+            self.assertEqual(
+                candidate.command,
+                "/usr/libexec/argo/probes/test/test-probe -H <hostname> "
+                "-t <timeout> --test --flag1 --flag2 --flag3"
+            )
+            self.assertEqual(candidate.contact, "poem@example.com")
+            self.assertEqual(candidate.status.name, "processing")
+            self.assertEqual(candidate.service_type, "processing.service.type")
+            self.assertEqual(candidate.devel_url, None)
+            self.assertEqual(candidate.production_url, None)
+            self.assertEqual(candidate.rejection_reason, None)
+            self.assertTrue(candidate.submitted_sent)
+            self.assertTrue(candidate.processing_sent)
+            self.assertFalse(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
+
+    def test_put_probe_candidate_rejected_superuser(self):
+        data = {
+            "id": self.candidate1.id,
+            "name": "new-probe",
+            "description": "More detailed description for the new probe",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
+            "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "",
+            "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                       "-t <timeout> --test",
+            "contact": "meh@example.com",
+            "status": "rejected",
+            "service_type": "some.service.type",
+            "devel_url": "",
+            "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": "The probe is not stable."
+        }
+        with self.settings(
+                EMAILFROM="no-reply@argo.test.com",
+                EMAILUS="argo@argo.test.com"
+        ):
+            content, content_type = encode_data(data)
+            request = self.factory.put(
+                self.url, content, content_type=content_type
+            )
+            force_authenticate(request, user=self.superuser)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            self.assertEqual(len(mail.outbox), 1)
+            self.assertEqual(
+                mail.outbox[0].subject, "[ARGO Monitoring] Probe rejected"
+            )
+            self.assertEqual(
+                mail.outbox[0].body,
+                """
+Dear madam/sir,
+
+the probe 'new-probe' has been rejected for the following reason:
+
+The probe is not stable.
+
+If you make the necessary changes to the probe, please submit the new version.
+
+Best regards,
+ARGO Monitoring team
+"""
+            )
+            self.assertEqual(
+                mail.outbox[0].from_email, "no-reply@argo.test.com"
+            )
+            self.assertEqual(mail.outbox[0].to, ["meh@example.com"])
+            self.assertEqual(mail.outbox[0].bcc, ["argo@argo.test.com"])
+            candidate = poem_models.ProbeCandidate.objects.get(
+                id=self.candidate1.id
+            )
+            self.assertEqual(candidate.name, "new-probe")
+            self.assertEqual(
+                candidate.description,
+                "More detailed description for the new probe"
+            )
+            self.assertEqual(
+                candidate.docurl,
+                "https://github.com/ARGOeu-Metrics/argo-probe-new"
+            )
+            self.assertEqual(
+                candidate.rpm, "argo-probe-new-0.1.0-1.el7.noarch.rpm"
+            )
+            self.assertEqual(
+                candidate.yum_baseurl, "http://repo.example.com/devel/rocky8/"
+            )
+            self.assertEqual(candidate.script, "")
+            self.assertEqual(
+                candidate.command,
+                "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                "-t <timeout> --test"
+            )
+            self.assertEqual(candidate.contact, "poem@example.com")
+            self.assertEqual(candidate.status.name, "rejected")
+            self.assertEqual(candidate.service_type, "some.service.type")
+            self.assertEqual(candidate.devel_url, "")
+            self.assertEqual(
+                candidate.production_url,
+                "https://production.argo.grnet.gr/ui/status/new"
+            )
+            self.assertEqual(
+                candidate.rejection_reason, "The probe is not stable."
+            )
+            self.assertTrue(candidate.submitted_sent)
+            self.assertTrue(candidate.processing_sent)
+            self.assertTrue(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertTrue(candidate.rejected_sent)
+
+    def test_put_probe_candidate_rejected_empty_reason_superuser(self):
+        data = {
+            "id": self.candidate1.id,
+            "name": "new-probe",
+            "description": "More detailed description for the new probe",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
+            "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "",
+            "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                       "-t <timeout> --test",
+            "contact": "meh@example.com",
+            "status": "rejected",
+            "service_type": "some.service.type",
+            "devel_url": "",
+            "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": ""
+        }
+        with self.settings(
+                EMAILFROM="no-reply@argo.test.com",
+                EMAILUS="argo@argo.test.com"
+        ):
+            content, content_type = encode_data(data)
+            request = self.factory.put(
+                self.url, content, content_type=content_type
+            )
+            force_authenticate(request, user=self.superuser)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(
+                response.data["detail"],
+                "Rejection reason is mandatory when probe status is 'rejected'"
+            )
+            self.assertEqual(len(mail.outbox), 0)
+            candidate = poem_models.ProbeCandidate.objects.get(
+                id=self.candidate1.id
+            )
+            self.assertEqual(candidate.name, "test-probe")
+            self.assertEqual(
+                candidate.description, "Some description for the test probe"
+            )
+            self.assertEqual(
+                candidate.docurl,
+                "https://github.com/ARGOeu-Metrics/argo-probe-test"
+            )
+            self.assertEqual(
+                candidate.rpm, "argo-probe-test-0.1.0-1.el7.noarch.rpm"
+            )
+            self.assertEqual(
+                candidate.yum_baseurl, "http://repo.example.com/devel/centos7/"
+            )
+            self.assertEqual(candidate.script, None)
+            self.assertEqual(
+                candidate.command,
+                "/usr/libexec/argo/probes/test/test-probe -H <hostname> "
+                "-t <timeout> --test"
+            )
+            self.assertEqual(candidate.contact, "poem@example.com")
+            self.assertEqual(candidate.status.name, "testing")
+            self.assertEqual(candidate.service_type, "test.service.type")
+            self.assertEqual(
+                candidate.devel_url, "https://test.argo.grnet.gr/ui/status/test"
+            )
+            self.assertEqual(candidate.production_url, None)
+            self.assertEqual(candidate.rejection_reason, None)
+            self.assertTrue(candidate.submitted_sent)
+            self.assertTrue(candidate.processing_sent)
+            self.assertTrue(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
+
+    def test_put_probe_candidate_processing_if_mail_already_sent_superusr(self):
+        data = {
+            "id": self.candidate1.id,
+            "name": "new-probe",
+            "description": "More detailed description for the new probe",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
+            "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "",
+            "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                       "-t <timeout> --test",
+            "contact": "meh@example.com",
+            "status": "processing",
+            "service_type": "some.service.type",
+            "devel_url": "https://test.argo.grnet.gr/ui/status/new",
+            "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": ""
+        }
+        with self.settings(
+                EMAILFROM="no-reply@argo.test.com",
+                EMAILUS="argo@argo.test.com"
+        ):
+            content, content_type = encode_data(data)
+            request = self.factory.put(
+                self.url, content, content_type=content_type
+            )
+            force_authenticate(request, user=self.superuser)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            self.assertEqual(len(mail.outbox), 0)
+            candidate = poem_models.ProbeCandidate.objects.get(
+                id=self.candidate1.id
+            )
+            self.assertEqual(candidate.name, "new-probe")
+            self.assertEqual(
+                candidate.description,
+                "More detailed description for the new probe"
+            )
+            self.assertEqual(
+                candidate.docurl,
+                "https://github.com/ARGOeu-Metrics/argo-probe-new"
+            )
+            self.assertEqual(
+                candidate.rpm, "argo-probe-new-0.1.0-1.el7.noarch.rpm"
+            )
+            self.assertEqual(
+                candidate.yum_baseurl, "http://repo.example.com/devel/rocky8/"
+            )
+            self.assertEqual(candidate.script, "")
+            self.assertEqual(
+                candidate.command,
+                "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                "-t <timeout> --test"
+            )
+            self.assertEqual(candidate.contact, "poem@example.com")
+            self.assertEqual(candidate.status.name, "processing")
+            self.assertEqual(candidate.service_type, "some.service.type")
+            self.assertEqual(
+                candidate.devel_url, "https://test.argo.grnet.gr/ui/status/new"
+            )
+            self.assertEqual(
+                candidate.production_url,
+                "https://production.argo.grnet.gr/ui/status/new"
+            )
+            self.assertEqual(candidate.rejection_reason, "")
+            self.assertTrue(candidate.submitted_sent)
+            self.assertTrue(candidate.processing_sent)
+            self.assertTrue(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
+
+    def test_put_probe_candidate_submitted_if_mail_already_sent_superuser(self):
+        data = {
+            "id": self.candidate1.id,
+            "name": "new-probe",
+            "description": "More detailed description for the new probe",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
+            "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "",
+            "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                       "-t <timeout> --test",
+            "contact": "meh@example.com",
+            "status": "submitted",
+            "service_type": "some.service.type",
+            "devel_url": "https://test.argo.grnet.gr/ui/status/new",
+            "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": ""
+        }
+        with self.settings(
+                EMAILFROM="no-reply@argo.test.com",
+                EMAILUS="argo@argo.test.com"
+        ):
+            content, content_type = encode_data(data)
+            request = self.factory.put(
+                self.url, content, content_type=content_type
+            )
+            force_authenticate(request, user=self.superuser)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            self.assertEqual(len(mail.outbox), 0)
+            candidate = poem_models.ProbeCandidate.objects.get(
+                id=self.candidate1.id
+            )
+            self.assertEqual(candidate.name, "new-probe")
+            self.assertEqual(
+                candidate.description,
+                "More detailed description for the new probe"
+            )
+            self.assertEqual(
+                candidate.docurl,
+                "https://github.com/ARGOeu-Metrics/argo-probe-new"
+            )
+            self.assertEqual(
+                candidate.rpm, "argo-probe-new-0.1.0-1.el7.noarch.rpm"
+            )
+            self.assertEqual(
+                candidate.yum_baseurl, "http://repo.example.com/devel/rocky8/"
+            )
+            self.assertEqual(candidate.script, "")
+            self.assertEqual(
+                candidate.command,
+                "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                "-t <timeout> --test"
+            )
+            self.assertEqual(candidate.contact, "poem@example.com")
+            self.assertEqual(candidate.status.name, "submitted")
+            self.assertEqual(candidate.service_type, "some.service.type")
+            self.assertEqual(
+                candidate.devel_url, "https://test.argo.grnet.gr/ui/status/new"
+            )
+            self.assertEqual(
+                candidate.production_url,
+                "https://production.argo.grnet.gr/ui/status/new"
+            )
+            self.assertEqual(candidate.rejection_reason, "")
+            self.assertTrue(candidate.submitted_sent)
+            self.assertTrue(candidate.processing_sent)
+            self.assertTrue(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
+
+    def test_put_probe_candidate_testing_if_mail_already_sent_superuser(self):
+        data = {
+            "id": self.candidate1.id,
+            "name": "new-probe",
+            "description": "More detailed description for the new probe",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
+            "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "",
+            "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                       "-t <timeout> --test",
+            "contact": "meh@example.com",
+            "status": "testing",
+            "service_type": "some.service.type",
+            "devel_url": "https://test.argo.grnet.gr/ui/status/new",
+            "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": ""
+        }
+        with self.settings(
+                EMAILFROM="no-reply@argo.test.com",
+                EMAILUS="argo@argo.test.com"
+        ):
+            content, content_type = encode_data(data)
+            request = self.factory.put(
+                self.url, content, content_type=content_type
+            )
+            force_authenticate(request, user=self.superuser)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            self.assertEqual(len(mail.outbox), 0)
+            candidate = poem_models.ProbeCandidate.objects.get(
+                id=self.candidate1.id
+            )
+            self.assertEqual(candidate.name, "new-probe")
+            self.assertEqual(
+                candidate.description,
+                "More detailed description for the new probe"
+            )
+            self.assertEqual(
+                candidate.docurl,
+                "https://github.com/ARGOeu-Metrics/argo-probe-new"
+            )
+            self.assertEqual(
+                candidate.rpm, "argo-probe-new-0.1.0-1.el7.noarch.rpm"
+            )
+            self.assertEqual(
+                candidate.yum_baseurl, "http://repo.example.com/devel/rocky8/"
+            )
+            self.assertEqual(candidate.script, "")
+            self.assertEqual(
+                candidate.command,
+                "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                "-t <timeout> --test"
+            )
+            self.assertEqual(candidate.contact, "poem@example.com")
+            self.assertEqual(candidate.status.name, "testing")
+            self.assertEqual(candidate.service_type, "some.service.type")
+            self.assertEqual(
+                candidate.devel_url, "https://test.argo.grnet.gr/ui/status/new"
+            )
+            self.assertEqual(
+                candidate.production_url,
+                "https://production.argo.grnet.gr/ui/status/new"
+            )
+            self.assertEqual(candidate.rejection_reason, "")
+            self.assertTrue(candidate.submitted_sent)
+            self.assertTrue(candidate.processing_sent)
+            self.assertTrue(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
+
+    def test_put_probe_candidate_deployed_if_mail_already_sent_superuser(self):
+        data = {
+            "id": self.candidate4.id,
+            "name": "new-probe",
+            "description": "More detailed description for the new probe",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
+            "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "",
+            "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                       "-t <timeout> --test",
+            "contact": "meh@example.com",
+            "status": "deployed",
+            "service_type": "some.service.type",
+            "devel_url": "https://test.argo.grnet.gr/ui/status/new",
+            "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": ""
+        }
+        with self.settings(
+                EMAILFROM="no-reply@argo.test.com",
+                EMAILUS="argo@argo.test.com"
+        ):
+            content, content_type = encode_data(data)
+            request = self.factory.put(
+                self.url, content, content_type=content_type
+            )
+            force_authenticate(request, user=self.superuser)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            self.assertEqual(len(mail.outbox), 0)
+            candidate = poem_models.ProbeCandidate.objects.get(
+                id=self.candidate4.id
+            )
+            self.assertEqual(candidate.name, "new-probe")
+            self.assertEqual(
+                candidate.description,
+                "More detailed description for the new probe"
+            )
+            self.assertEqual(
+                candidate.docurl,
+                "https://github.com/ARGOeu-Metrics/argo-probe-new"
+            )
+            self.assertEqual(
+                candidate.rpm, "argo-probe-new-0.1.0-1.el7.noarch.rpm"
+            )
+            self.assertEqual(
+                candidate.yum_baseurl, "http://repo.example.com/devel/rocky8/"
+            )
+            self.assertEqual(candidate.script, "")
+            self.assertEqual(
+                candidate.command,
+                "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                "-t <timeout> --test"
+            )
+            self.assertEqual(candidate.contact, "poem@example.com")
+            self.assertEqual(candidate.status.name, "deployed")
+            self.assertEqual(candidate.service_type, "some.service.type")
+            self.assertEqual(
+                candidate.devel_url, "https://test.argo.grnet.gr/ui/status/new"
+            )
+            self.assertEqual(
+                candidate.production_url,
+                "https://production.argo.grnet.gr/ui/status/new"
+            )
+            self.assertEqual(candidate.rejection_reason, "")
+            self.assertTrue(candidate.submitted_sent)
+            self.assertTrue(candidate.processing_sent)
+            self.assertTrue(candidate.testing_sent)
+            self.assertTrue(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
+
+    def test_put_probe_candidate_rejected_if_mail_already_sent_superuser(self):
+        data = {
+            "id": self.candidate5.id,
+            "name": "new-probe",
+            "description": "More detailed description for the new probe",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
+            "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "",
+            "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                       "-t <timeout> --test",
+            "contact": "meh@example.com",
+            "status": "rejected",
+            "service_type": "some.service.type",
+            "devel_url": "https://test.argo.grnet.gr/ui/status/new",
+            "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": "Not working properly"
+        }
+        with self.settings(
+                EMAILFROM="no-reply@argo.test.com",
+                EMAILUS="argo@argo.test.com"
+        ):
+            content, content_type = encode_data(data)
+            request = self.factory.put(
+                self.url, content, content_type=content_type
+            )
+            force_authenticate(request, user=self.superuser)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            self.assertEqual(len(mail.outbox), 0)
+            candidate = poem_models.ProbeCandidate.objects.get(
+                id=self.candidate5.id
+            )
+            self.assertEqual(candidate.name, "new-probe")
+            self.assertEqual(
+                candidate.description,
+                "More detailed description for the new probe"
+            )
+            self.assertEqual(
+                candidate.docurl,
+                "https://github.com/ARGOeu-Metrics/argo-probe-new"
+            )
+            self.assertEqual(
+                candidate.rpm, "argo-probe-new-0.1.0-1.el7.noarch.rpm"
+            )
+            self.assertEqual(
+                candidate.yum_baseurl, "http://repo.example.com/devel/rocky8/"
+            )
+            self.assertEqual(candidate.script, "")
+            self.assertEqual(
+                candidate.command,
+                "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                "-t <timeout> --test"
+            )
+            self.assertEqual(candidate.contact, "test@contact.com")
+            self.assertEqual(candidate.status.name, "rejected")
+            self.assertEqual(candidate.service_type, "some.service.type")
+            self.assertEqual(
+                candidate.devel_url, "https://test.argo.grnet.gr/ui/status/new"
+            )
+            self.assertEqual(
+                candidate.production_url,
+                "https://production.argo.grnet.gr/ui/status/new"
+            )
+            self.assertEqual(candidate.rejection_reason, "Not working properly")
+            self.assertTrue(candidate.submitted_sent)
+            self.assertTrue(candidate.processing_sent)
+            self.assertTrue(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertTrue(candidate.rejected_sent)
 
     def test_put_probe_candidate_regular_user(self):
         data = {
@@ -4496,46 +5749,68 @@ class ListProbeCandidatesTests(TenantTestCase):
             "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
             "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
             "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "",
             "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
                        "-t <timeout> --test",
             "contact": "meh@example.com",
             "status": "deployed",
-            "service_type": "some.service.type"
+            "service_type": "some.service.type",
+            "devel_url": "https://test.argo.grnet.gr/ui/status/new",
+            "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": ""
         }
-        content, content_type = encode_data(data)
-        request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user)
-        response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(
-            response.data["detail"],
-            "You do not have permission to modify probe candidates"
-        )
-        candidate = poem_models.ProbeCandidate.objects.get(
-            id=self.candidate1.id
-        )
-        self.assertEqual(candidate.name, "test-probe")
-        self.assertEqual(
-            candidate.description, "Some description for the test probe"
-        )
-        self.assertEqual(
-            candidate.docurl,
-            "https://github.com/ARGOeu-Metrics/argo-probe-test"
-        )
-        self.assertEqual(
-            candidate.rpm, "argo-probe-test-0.1.0-1.el7.noarch.rpm"
-        )
-        self.assertEqual(
-            candidate.yum_baseurl, "http://repo.example.com/devel/centos7/"
-        )
-        self.assertEqual(
-            candidate.command,
-            "/usr/libexec/argo/probes/test/test-probe -H <hostname> "
-            "-t <timeout> --test"
-        )
-        self.assertEqual(candidate.contact, "poem@example.com")
-        self.assertEqual(candidate.status.name, "testing")
-        self.assertEqual(candidate.service_type, "test.service.type")
+        with self.settings(
+                EMAILFROM="no-reply@argo.test.com",
+                EMAILUS="argo@argo.test.com"
+        ):
+            content, content_type = encode_data(data)
+            request = self.factory.put(
+                self.url, content, content_type=content_type
+            )
+            force_authenticate(request, user=self.user)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+            self.assertEqual(
+                response.data["detail"],
+                "You do not have permission to modify probe candidates"
+            )
+            self.assertEqual(len(mail.outbox), 0)
+            candidate = poem_models.ProbeCandidate.objects.get(
+                id=self.candidate1.id
+            )
+            self.assertEqual(candidate.name, "test-probe")
+            self.assertEqual(
+                candidate.description, "Some description for the test probe"
+            )
+            self.assertEqual(
+                candidate.docurl,
+                "https://github.com/ARGOeu-Metrics/argo-probe-test"
+            )
+            self.assertEqual(
+                candidate.rpm, "argo-probe-test-0.1.0-1.el7.noarch.rpm"
+            )
+            self.assertEqual(
+                candidate.yum_baseurl, "http://repo.example.com/devel/centos7/"
+            )
+            self.assertEqual(candidate.script, None)
+            self.assertEqual(
+                candidate.command,
+                "/usr/libexec/argo/probes/test/test-probe -H <hostname> "
+                "-t <timeout> --test"
+            )
+            self.assertEqual(candidate.contact, "poem@example.com")
+            self.assertEqual(candidate.status.name, "testing")
+            self.assertEqual(candidate.service_type, "test.service.type")
+            self.assertEqual(
+                candidate.devel_url, "https://test.argo.grnet.gr/ui/status/test"
+            )
+            self.assertEqual(candidate.production_url, None)
+            self.assertEqual(candidate.rejection_reason, None)
+            self.assertTrue(candidate.submitted_sent)
+            self.assertTrue(candidate.processing_sent)
+            self.assertTrue(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
 
     def test_put_probe_candidate_nonexisting_id_superuser(self):
         data = {
@@ -4545,18 +5820,31 @@ class ListProbeCandidatesTests(TenantTestCase):
             "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
             "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
             "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "",
             "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
                        "-t <timeout> --test",
             "contact": "meh@example.com",
             "status": "deployed",
-            "service_type": "some.service.type"
+            "service_type": "some.service.type",
+            "devel_url": "https://test.argo.grnet.gr/ui/status/new",
+            "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": ""
         }
-        content, content_type = encode_data(data)
-        request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.superuser)
-        response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data["detail"], "Probe candidate not found")
+        with self.settings(
+                EMAILFROM="no-reply@argo.test.com",
+                EMAILUS="argo@argo.test.com"
+        ):
+            content, content_type = encode_data(data)
+            request = self.factory.put(
+                self.url, content, content_type=content_type
+            )
+            force_authenticate(request, user=self.superuser)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+            self.assertEqual(
+                response.data["detail"], "Probe candidate not found"
+            )
+            self.assertEqual(len(mail.outbox), 0)
 
     def test_put_probe_candidate_nonexisting_id_regular_user(self):
         data = {
@@ -4566,21 +5854,32 @@ class ListProbeCandidatesTests(TenantTestCase):
             "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
             "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
             "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "",
             "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
                        "-t <timeout> --test",
             "contact": "meh@example.com",
             "status": "deployed",
-            "service_type": "some.service.type"
+            "service_type": "some.service.type",
+            "devel_url": "https://test.argo.grnet.gr/ui/status/new",
+            "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": ""
         }
-        content, content_type = encode_data(data)
-        request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.user)
-        response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertEqual(
-            response.data["detail"],
-            "You do not have permission to modify probe candidates"
-        )
+        with self.settings(
+                EMAILFROM="no-reply@argo.test.com",
+                EMAILUS="argo@argo.test.com"
+        ):
+            content, content_type = encode_data(data)
+            request = self.factory.put(
+                self.url, content, content_type=content_type
+            )
+            force_authenticate(request, user=self.user)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+            self.assertEqual(
+                response.data["detail"],
+                "You do not have permission to modify probe candidates"
+            )
+            self.assertEqual(len(mail.outbox), 0)
 
     def test_put_probe_candidate_nonexisting_status_superuser(self):
         data = {
@@ -4590,20 +5889,66 @@ class ListProbeCandidatesTests(TenantTestCase):
             "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
             "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
             "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "",
             "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
                        "-t <timeout> --test",
             "contact": "meh@example.com",
             "status": "nonexisting",
-            "service_type": "some.service.type"
+            "service_type": "some.service.type",
+            "devel_url": "https://test.argo.grnet.gr/ui/status/new",
+            "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": ""
         }
-        content, content_type = encode_data(data)
-        request = self.factory.put(self.url, content, content_type=content_type)
-        force_authenticate(request, user=self.superuser)
-        response = self.view(request)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(
-            response.data["detail"], "Probe candidate status not found"
-        )
+        with self.settings(
+                EMAILFROM="no-reply@argo.test.com",
+                EMAILUS="argo@argo.test.com"
+        ):
+            content, content_type = encode_data(data)
+            request = self.factory.put(
+                self.url, content, content_type=content_type
+            )
+            force_authenticate(request, user=self.superuser)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+            self.assertEqual(
+                response.data["detail"], "Probe candidate status not found"
+            )
+            self.assertEqual(len(mail.outbox), 0)
+            candidate = poem_models.ProbeCandidate.objects.get(
+                id=self.candidate1.id
+            )
+            self.assertEqual(candidate.name, "test-probe")
+            self.assertEqual(
+                candidate.description, "Some description for the test probe"
+            )
+            self.assertEqual(
+                candidate.docurl,
+                "https://github.com/ARGOeu-Metrics/argo-probe-test"
+            )
+            self.assertEqual(
+                candidate.rpm, "argo-probe-test-0.1.0-1.el7.noarch.rpm"
+            )
+            self.assertEqual(
+                candidate.yum_baseurl, "http://repo.example.com/devel/centos7/"
+            )
+            self.assertEqual(
+                candidate.command,
+                "/usr/libexec/argo/probes/test/test-probe -H <hostname> "
+                "-t <timeout> --test"
+            )
+            self.assertEqual(candidate.contact, "poem@example.com")
+            self.assertEqual(candidate.status.name, "testing")
+            self.assertEqual(candidate.service_type, "test.service.type")
+            self.assertEqual(
+                candidate.devel_url, "https://test.argo.grnet.gr/ui/status/test"
+            )
+            self.assertEqual(candidate.production_url, None)
+            self.assertEqual(candidate.rejection_reason, None)
+            self.assertTrue(candidate.submitted_sent)
+            self.assertTrue(candidate.processing_sent)
+            self.assertTrue(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
 
     def test_put_probe_candidate_nonexisting_status_regular_user(self):
         data = {
@@ -4613,21 +5958,298 @@ class ListProbeCandidatesTests(TenantTestCase):
             "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
             "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
             "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "",
             "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
                        "-t <timeout> --test",
             "contact": "meh@example.com",
             "status": "nonexisting",
-            "service_type": "some.service.type"
+            "service_type": "some.service.type",
+            "devel_url": "https://test.argo.grnet.gr/ui/status/new",
+            "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": ""
         }
-        content, content_type = encode_data(data)
-        request = self.factory.put(self.url, content, content_type=content_type)
+        with self.settings(
+                EMAILFROM="no-reply@argo.test.com",
+                EMAILUS="argo@argo.test.com"
+        ):
+            content, content_type = encode_data(data)
+            request = self.factory.put(
+                self.url, content, content_type=content_type
+            )
+            force_authenticate(request, user=self.user)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+            self.assertEqual(
+                response.data["detail"],
+                "You do not have permission to modify probe candidates"
+            )
+            self.assertEqual(len(mail.outbox), 0)
+            candidate = poem_models.ProbeCandidate.objects.get(
+                id=self.candidate1.id
+            )
+            self.assertEqual(candidate.name, "test-probe")
+            self.assertEqual(
+                candidate.description, "Some description for the test probe"
+            )
+            self.assertEqual(
+                candidate.docurl,
+                "https://github.com/ARGOeu-Metrics/argo-probe-test"
+            )
+            self.assertEqual(
+                candidate.rpm, "argo-probe-test-0.1.0-1.el7.noarch.rpm"
+            )
+            self.assertEqual(
+                candidate.yum_baseurl, "http://repo.example.com/devel/centos7/"
+            )
+            self.assertEqual(candidate.script, None)
+            self.assertEqual(
+                candidate.command,
+                "/usr/libexec/argo/probes/test/test-probe -H <hostname> "
+                "-t <timeout> --test"
+            )
+            self.assertEqual(candidate.contact, "poem@example.com")
+            self.assertEqual(candidate.status.name, "testing")
+            self.assertEqual(candidate.service_type, "test.service.type")
+            self.assertEqual(
+                candidate.devel_url, "https://test.argo.grnet.gr/ui/status/test"
+            )
+            self.assertEqual(candidate.production_url, None)
+            self.assertEqual(candidate.rejection_reason, None)
+            self.assertTrue(candidate.submitted_sent)
+            self.assertTrue(candidate.processing_sent)
+            self.assertTrue(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
+
+    def test_put_probe_candidate_missing_key_superuser(self):
+        data = {
+            "id": self.candidate1.id,
+            "name": "new-probe",
+            "description": "More detailed description for the new probe",
+            "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "",
+            "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                       "-t <timeout> --test",
+            "contact": "meh@example.com",
+            "status": "deployed",
+            "service_type": "some.service.type",
+            "devel_url": "https://test.argo.grnet.gr/ui/status/new",
+            "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": ""
+        }
+        with self.settings(
+                EMAILFROM="no-reply@argo.test.com",
+                EMAILUS="argo@argo.test.com"
+        ):
+            content, content_type = encode_data(data)
+            request = self.factory.put(
+                self.url, content, content_type=content_type
+            )
+            force_authenticate(request, user=self.superuser)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(
+                response.data["detail"], "Missing data key: docurl"
+            )
+            self.assertEqual(len(mail.outbox), 0)
+            candidate = poem_models.ProbeCandidate.objects.get(
+                id=self.candidate1.id
+            )
+            self.assertEqual(candidate.name, "test-probe")
+            self.assertEqual(
+                candidate.description, "Some description for the test probe"
+            )
+            self.assertEqual(
+                candidate.docurl,
+                "https://github.com/ARGOeu-Metrics/argo-probe-test"
+            )
+            self.assertEqual(
+                candidate.rpm, "argo-probe-test-0.1.0-1.el7.noarch.rpm",
+            )
+            self.assertEqual(
+                candidate.yum_baseurl, "http://repo.example.com/devel/centos7/"
+            )
+            self.assertEqual(candidate.script, None)
+            self.assertEqual(
+                candidate.command,
+                "/usr/libexec/argo/probes/test/test-probe -H <hostname> "
+                "-t <timeout> --test"
+            )
+            self.assertEqual(candidate.contact, "poem@example.com")
+            self.assertEqual(candidate.status.name, "testing")
+            self.assertEqual(candidate.service_type, "test.service.type")
+            self.assertEqual(
+                candidate.devel_url, "https://test.argo.grnet.gr/ui/status/test"
+            )
+            self.assertEqual(candidate.production_url, None)
+            self.assertEqual(candidate.rejection_reason, None)
+            self.assertTrue(candidate.submitted_sent)
+            self.assertTrue(candidate.processing_sent)
+            self.assertTrue(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
+
+    @patch("Poem.api.internal_views.probes.EmailMessage.send")
+    def test_put_probe_candidate_superuser_mail_exception(self, mock_send):
+        mock_send.side_effect = Exception("Error sending email")
+        data = {
+            "id": self.candidate1.id,
+            "name": "new-probe",
+            "description": "More detailed description for the new probe",
+            "docurl": "https://github.com/ARGOeu-Metrics/argo-probe-new",
+            "rpm": "argo-probe-new-0.1.0-1.el7.noarch.rpm",
+            "yum_baseurl": "http://repo.example.com/devel/rocky8/",
+            "script": "https://github.com/ARGOeu-Metrics/argo-probe-new/script",
+            "command": "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                       "-t <timeout> --test",
+            "contact": "meh@example.com",
+            "status": "deployed",
+            "service_type": "some.service.type",
+            "devel_url": "https://test.argo.grnet.gr/ui/status/new",
+            "production_url": "https://production.argo.grnet.gr/ui/status/new",
+            "rejection_reason": ""
+        }
+        with self.settings(
+                EMAILFROM="no-reply@argo.test.com",
+                EMAILUS="argo@argo.test.com"
+        ):
+            content, content_type = encode_data(data)
+            request = self.factory.put(
+                self.url, content, content_type=content_type
+            )
+            force_authenticate(request, user=self.superuser)
+            response = self.view(request)
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            self.assertEqual(
+                response.data["warning"],
+                "Probe candidate has been successfully modified, but the email "
+                "was not sent: Error sending email"
+            )
+            candidate = poem_models.ProbeCandidate.objects.get(
+                id=self.candidate1.id
+            )
+            self.assertEqual(candidate.name, "new-probe")
+            self.assertEqual(
+                candidate.description,
+                "More detailed description for the new probe"
+            )
+            self.assertEqual(
+                candidate.docurl,
+                "https://github.com/ARGOeu-Metrics/argo-probe-new"
+            )
+            self.assertEqual(
+                candidate.rpm, "argo-probe-new-0.1.0-1.el7.noarch.rpm"
+            )
+            self.assertEqual(
+                candidate.yum_baseurl,
+                "http://repo.example.com/devel/rocky8/"
+            )
+            self.assertEqual(
+                candidate.script,
+                "https://github.com/ARGOeu-Metrics/argo-probe-new/script"
+            )
+            self.assertEqual(
+                candidate.command,
+                "/usr/libexec/argo/probes/test/new-probe -H <hostname> "
+                "-t <timeout> --test"
+            )
+            self.assertEqual(candidate.contact, "poem@example.com")
+            self.assertEqual(candidate.status.name, "deployed")
+            self.assertEqual(candidate.service_type, "some.service.type")
+            self.assertEqual(
+                candidate.devel_url,
+                "https://test.argo.grnet.gr/ui/status/new"
+            )
+            self.assertEqual(
+                candidate.production_url,
+                "https://production.argo.grnet.gr/ui/status/new"
+            )
+            self.assertEqual(candidate.rejection_reason, "")
+            self.assertTrue(candidate.submitted_sent)
+            self.assertTrue(candidate.processing_sent)
+            self.assertTrue(candidate.testing_sent)
+            self.assertFalse(candidate.deployed_sent)
+            self.assertFalse(candidate.rejected_sent)
+
+    def test_delete_probe_candidate_superuser(self):
+        self.assertEqual(poem_models.ProbeCandidate.objects.all().count(), 5)
+        request = self.factory.delete(f"{self.url}/{self.candidate5.id}")
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, f"{self.candidate5.id}")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(poem_models.ProbeCandidate.objects.all().count(), 4)
+        self.assertRaises(
+            poem_models.ProbeCandidate.DoesNotExist,
+            poem_models.ProbeCandidate.objects.get,
+            id=self.candidate5.id
+        )
+
+    def test_delete_probe_candidate_regular_user(self):
+        self.assertEqual(poem_models.ProbeCandidate.objects.all().count(), 5)
+        request = self.factory.delete(f"{self.url}/{self.candidate5.id}")
+        force_authenticate(request, user=self.user)
+        response = self.view(request, f"{self.candidate5.id}")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to delete probe candidates"
+        )
+        self.assertEqual(poem_models.ProbeCandidate.objects.all().count(), 5)
+
+    def test_delete_probe_candidate_without_id_superuser(self):
+        self.assertEqual(poem_models.ProbeCandidate.objects.all().count(), 5)
+        request = self.factory.delete(self.url)
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["detail"], "Probe candidate ID not specified"
+        )
+        self.assertEqual(poem_models.ProbeCandidate.objects.all().count(), 5)
+
+    def test_delete_probe_candidate_without_id_regular_user(self):
+        self.assertEqual(poem_models.ProbeCandidate.objects.all().count(), 5)
+        request = self.factory.delete(self.url)
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(
             response.data["detail"],
-            "You do not have permission to modify probe candidates"
+            "You do not have permission to delete probe candidates"
         )
+        self.assertEqual(poem_models.ProbeCandidate.objects.all().count(), 5)
+
+    def test_delete_nonexisting_probe_candidate_superuser(self):
+        self.assertEqual(poem_models.ProbeCandidate.objects.all().count(), 5)
+        request = self.factory.delete(
+            f"{self.url}/{self.candidate1.id + self.candidate5.id}"
+        )
+        force_authenticate(request, user=self.superuser)
+        response = self.view(
+            request, f"{self.candidate1.id + self.candidate5.id}"
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.data["detail"], "Probe candidate does not exist"
+        )
+        self.assertEqual(poem_models.ProbeCandidate.objects.all().count(), 5)
+
+    def test_delete_nonexisting_probe_candidate_regular_user(self):
+        self.assertEqual(poem_models.ProbeCandidate.objects.all().count(), 5)
+        request = self.factory.delete(
+            f"{self.url}/{self.candidate1.id + self.candidate5.id}"
+        )
+        force_authenticate(request, user=self.user)
+        response = self.view(
+            request, f"{self.candidate1.id + self.candidate5.id}"
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to delete probe candidates"
+        )
+        self.assertEqual(poem_models.ProbeCandidate.objects.all().count(), 5)
 
 
 class ListProbeCandidateStatuses(TenantTestCase):

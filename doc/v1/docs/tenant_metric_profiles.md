@@ -18,7 +18,7 @@ In the upper part of the page, there are **Name**, **Description** and **Group**
 
 #### Metric instances
 
-In the **Metric instances** section, user may add new, or delete the existing service type - metric pairs. New empty fields are created by clicking the button with "+" sign, and by clicking "x" next to the service type - metric pair, that pair is removed from the metric profile. All the fields are autocomplete, so when the user starts typing, existing service types/metrics are suggested.
+In the **Metric instances** section, user may add new, or delete the existing service type - metric pairs. New empty fields are created by clicking the button with `+` sign, and by clicking `x` next to the service type - metric pair, that pair is removed from the metric profile. All the fields are selectable, so when the user starts typing, existing service types/metric templates are suggested. If a metric template is selected which was not used prior in the tenant POEM, it is automatically imported, and the user is informed of that.
 
 Same as for other resources, only users with appropriate permission may modify metric profile. That is, users that have metric group the profile belongs to assigned to them, or users with superuser permission.
 
@@ -51,18 +51,12 @@ Adding or editing of pairs in _filtered view_ is also allowed, but what should b
 
 There is a feature of importing and exporting table in the **Metric instances** section in a .csv file. 
 
-When exporting, user clicks **Export** in **CSV** dropdown button, and file is stored to the computer. The name of the file is *PROFILE_NAME.csv* (in this example it would be *FEDCLOUD.csv*).
+When exporting, user clicks **Export** in **CSV** dropdown button, and file is stored to the computer. The name of the file is *PROFILE_NAME.csv* (in this example it would be *ARGO_MON_OPERATORS.csv*).
 
 When importing, user clicks **Import** in **CSV** dropdown button, and selects the file (s)he wants to import. Metric instances are then overridden with values from imported .csv file.
 
-When the metrics have been imported, they are also validated, and the user is informed if the metric is not present in the tenant's POEM database. If that is the case, user should import the missing metrics as described in [metric template page](tenant_metric_templates.md).
-
-### Metric profile history
-
-By clicking the **History** button, the user can see all the changes made to the profile, when they were made and by whom (image below).
-
-![Tenant Metric Profile History](figures/tenant_metric_profiles_history.png)
+When the metrics have been imported, they are also validated.
 
 ### Metric profile clone
 
-By clicking the **Clone** button, the user can easily derive new profile from existing one meaning that description and metric instances tuples will be copied, while profile name will be changed to `Cloned <original_profile_name>`. User is free to change the name of profile to his/her needs.
+By clicking the **Clone** button, the user can easily derive new profile from existing one meaning that description and metric instances tuples will be copied, while profile name will be changed to `Cloned <original_profile_name>`. Users are free to change the name of profile to their needs.

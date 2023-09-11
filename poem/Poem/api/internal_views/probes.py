@@ -6,6 +6,8 @@ from Poem.helpers.history_helpers import create_history, update_comment
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
+from django.conf import settings
+from django.core.mail import EmailMessage
 from django.db import IntegrityError
 from django_tenants.utils import schema_context, get_public_schema_name
 from rest_framework import status
@@ -373,27 +375,11 @@ class ListProbeCandidates(APIView):
     def get(self, request, cid=None):
         if request.user.is_superuser:
             if cid:
-                try:
-                    candidate = poem_models.ProbeCandidate.objects.get(id=cid)
-                    results = {
-                        "id": candidate.id,
-                        "name": candidate.name,
-                        "description": candidate.description,
-                        "docurl": candidate.docurl,
-                        "rpm": candidate.rpm,
-                        "yum_baseurl": candidate.yum_baseurl,
-                        "command": candidate.command,
-                        "contact": candidate.contact,
-                        "status": candidate.status.name,
-                        "service_type": candidate.service_type if
-                        candidate.service_type else "",
-                        "created":
-                            candidate.created.strftime("%Y-%m-%d %H:%M:%S"),
-                        "last_update":
-                            candidate.last_update.strftime("%Y-%m-%d %H:%M:%S")
-                    }
+                candidates = poem_models.ProbeCandidate.objects.filter(
+                    id=cid
+                )
 
-                except poem_models.ProbeCandidate.DoesNotExist:
+                if len(candidates) == 0:
                     return error_response(
                         status_code=status.HTTP_404_NOT_FOUND,
                         detail="Probe candidate not found"
@@ -402,29 +388,40 @@ class ListProbeCandidates(APIView):
             else:
                 candidates = poem_models.ProbeCandidate.objects.all()
 
-                results = list()
-                for candidate in candidates:
-                    results.append({
-                        "id": candidate.id,
-                        "name": candidate.name,
-                        "description": candidate.description,
-                        "docurl": candidate.docurl,
-                        "rpm": candidate.rpm,
-                        "yum_baseurl": candidate.yum_baseurl,
-                        "command": candidate.command,
-                        "contact": candidate.contact,
-                        "status": candidate.status.name,
-                        "service_type": candidate.service_type if
-                        candidate.service_type else "",
-                        "created":
-                            candidate.created.strftime("%Y-%m-%d %H:%M:%S"),
-                        "last_update":
-                            candidate.last_update.strftime("%Y-%m-%d %H:%M:%S")
-                    })
+            results = list()
+            for candidate in candidates:
+                results.append({
+                    "id": candidate.id,
+                    "name": candidate.name,
+                    "description": candidate.description,
+                    "docurl": candidate.docurl,
+                    "rpm": candidate.rpm,
+                    "yum_baseurl": candidate.yum_baseurl,
+                    "script": candidate.script if candidate.script else "",
+                    "command": candidate.command,
+                    "contact": candidate.contact,
+                    "status": candidate.status.name,
+                    "service_type": candidate.service_type if
+                    candidate.service_type else "",
+                    "devel_url": candidate.devel_url if candidate.devel_url
+                    else "",
+                    "production_url": candidate.production_url if
+                    candidate.production_url else "",
+                    "rejection_reason": candidate.rejection_reason if
+                    candidate.rejection_reason else "",
+                    "created":
+                        candidate.created.strftime("%Y-%m-%d %H:%M:%S"),
+                    "last_update":
+                        candidate.last_update.strftime("%Y-%m-%d %H:%M:%S")
+                })
 
-                results = sorted(results, key=lambda k: k["name"])
+            results = sorted(results, key=lambda k: k["name"])
 
-            return Response(results)
+            if cid:
+                return Response(results[0])
+
+            else:
+                return Response(results)
 
         else:
             return error_response(
@@ -438,18 +435,163 @@ class ListProbeCandidates(APIView):
                 candidate = poem_models.ProbeCandidate.objects.get(
                     id=request.data["id"]
                 )
+
+                for key in [
+                    "name", "description", "docurl", "command", "status"
+                ]:
+                    if not request.data[key]:
+                        return error_response(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=f"{key.capitalize()} is mandatory"
+                        )
+
+                if request.data["status"] == "deployed" and \
+                        not request.data["production_url"]:
+                    return error_response(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Production URL is mandatory when probe status "
+                               "is 'deployed'"
+                    )
+
+                if request.data["status"] == "processing" and \
+                        not request.data["service_type"]:
+                    return error_response(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Service type is mandatory when probe status is "
+                               "'processing'"
+                    )
+
+                if request.data["status"] == "testing" and \
+                        not request.data["devel_url"]:
+                    return error_response(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Devel URL is mandatory when probe status is "
+                               "'testing'"
+                    )
+
+                if (request.data["status"] == "rejected" and
+                        not request.data["rejection_reason"]):
+                    return error_response(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Rejection reason is mandatory when probe "
+                               "status is 'rejected'"
+                    )
+
                 candidate.name = request.data["name"]
                 candidate.description = request.data["description"]
                 candidate.docurl = request.data["docurl"]
                 candidate.rpm = request.data["rpm"]
                 candidate.yum_baseurl = request.data["yum_baseurl"]
+                candidate.script = request.data["script"]
                 candidate.command = request.data["command"]
                 candidate.status = poem_models.ProbeCandidateStatus.objects.get(
                     name=request.data["status"]
                 )
                 candidate.service_type = request.data["service_type"]
-                candidate.save()
+                candidate.devel_url = request.data["devel_url"]
+                candidate.production_url = request.data["production_url"]
+                candidate.rejection_reason = request.data["rejection_reason"]
 
+                subject = ""
+                body = ""
+
+                if request.data["status"] == "deployed" and \
+                        not candidate.deployed_sent:
+                    subject = "[ARGO Monitoring] Probe deployed"
+                    body = f"""
+Dear madam/sir,
+
+the probe '{request.data["name"]}' has been deployed to production.
+
+You can see the results here: {request.data["production_url"]}
+
+Best regards,
+ARGO Monitoring team
+"""
+
+                elif request.data["status"] == "processing" and \
+                        not candidate.processing_sent:
+                    subject = "[ARGO Monitoring] Probe processing"
+                    body = f"""
+Dear madam/sir,
+
+we have started setting up the probe '{request.data["name"]}' for testing.
+
+Please add a new monitoring extension for your service with service type {request.data["service_type"]} in https://providers.eosc-portal.eu
+
+You will receive more information after the probe has been deployed to devel infrastructure.
+
+Best regards,
+ARGO Monitoring team
+"""
+
+                elif request.data["status"] == "testing" and \
+                        not candidate.testing_sent:
+                    subject = "[ARGO Monitoring] Probe testing"
+                    body = f"""
+Dear madam/sir,
+
+the probe '{request.data["name"]}' has been deployed to devel infrastructure.
+
+You can see the results here: {request.data["devel_url"]}
+
+The probe will be running in the devel infrastructure for a couple of days, and will be moved to production once we make sure it is working properly.
+
+You will receive final email once the probe has been deployed to production infrastructure.
+
+Best regards,
+ARGO Monitoring team
+"""
+
+                elif request.data["status"] == "rejected" and \
+                        not candidate.rejected_sent:
+                    subject = "[ARGO Monitoring] Probe rejected"
+                    body = f"""
+Dear madam/sir,
+
+the probe '{request.data["name"]}' has been rejected for the following reason:
+
+{request.data["rejection_reason"]}
+
+If you make the necessary changes to the probe, please submit the new version.
+
+Best regards,
+ARGO Monitoring team
+"""
+
+                if subject and body:
+                    try:
+                        mail = EmailMessage(
+                            subject,
+                            body,
+                            settings.EMAILFROM,
+                            [request.data["contact"]],
+                            [settings.EMAILUS]
+                        )
+
+                        mail.send(fail_silently=False)
+
+                        if request.data["status"] == "processing":
+                            candidate.processing_sent = True
+
+                        if request.data["status"] == "testing":
+                            candidate.testing_sent = True
+
+                        if request.data["status"] == "deployed":
+                            candidate.deployed_sent = True
+
+                        if request.data["status"] == "rejected":
+                            candidate.rejected_sent = True
+
+                    except Exception as e:
+                        candidate.save()
+                        return Response({
+                            "warning": f"Probe candidate has been successfully "
+                                       f"modified, but the email was not sent: "
+                                       f"{str(e)}"
+                        }, status=status.HTTP_201_CREATED)
+
+                candidate.save()
                 return Response(status=status.HTTP_201_CREATED)
 
             except poem_models.ProbeCandidate.DoesNotExist:
@@ -464,10 +606,43 @@ class ListProbeCandidates(APIView):
                     detail="Probe candidate status not found"
                 )
 
+            except KeyError as e:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Missing data key: {e.args[0]}"
+                )
+
         else:
             return error_response(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You do not have permission to modify probe candidates"
+            )
+
+    def delete(self, request, cid=None):
+        if request.user.is_superuser:
+            if cid:
+                try:
+                    poem_models.ProbeCandidate.objects.get(id=cid).delete()
+
+                    return Response(status=status.HTTP_204_NO_CONTENT)
+
+                except poem_models.ProbeCandidate.DoesNotExist:
+                    return error_response(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Probe candidate does not exist"
+                    )
+
+            else:
+                return error_response(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Probe candidate ID not specified"
+                )
+
+        else:
+            return error_response(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to delete probe "
+                       "candidates"
             )
 
 
