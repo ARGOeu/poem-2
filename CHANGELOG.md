@@ -1,5 +1,26 @@
 # Changelog
 
+## [3.4.10] - 2023-09-11
+
+### Added
+
+* ARGO-4356 Sending info emails
+* ARGO-4357 Add option to submit script as probe candidate
+* ARGO-4360 Add devel UI URL field to probe candidate model
+* ARGO-4361 Add production UI URL field to probe candidate model
+* ARGO-4368 Send an email when the probe candidate is rejected
+* ARGO-4375 Implement internal DELETE method
+
+### Fixed
+
+* ARGO-4371 Script error in public metric profile changeview
+* ARGO-4374 Fix parsing of email settings
+
+### Changed
+
+* ARGO-4369 Include flags to stop sending of duplicate emails
+* ARGO-4370 Update POEM documentation
+
 ## [3.4.9] - 2023-08-03
 
 ### Added
