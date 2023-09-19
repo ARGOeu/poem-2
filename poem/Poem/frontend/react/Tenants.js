@@ -30,11 +30,12 @@ import { faIdBadge } from '@fortawesome/free-solid-svg-icons';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { fetchTenants } from './QueryFunctions';
 import { Controller, useForm } from 'react-hook-form';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 
 
 export const TenantList = (props) => {
-  const location = props.location;
-  const history = props.history;
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const { data: tenants, error, status } = useQuery(
     'tenant', () => fetchTenants()
@@ -54,7 +55,7 @@ export const TenantList = (props) => {
         if ((i + j) < tenants.length)
           cards.push(
             <Card data-testid={`${tenants[i + j].name}-card`} className='me-3' key={ j + 1 }>
-              <CardTitle className='text-center' onClick={() => history.push(`/ui/tenants/${tenants[i + j].name}`)} style={{cursor: 'pointer', color: 'black'}}>
+              <CardTitle className='text-center' onClick={() => navigate(`/ui/tenants/${tenants[i + j].name}`)} style={{cursor: 'pointer', color: 'black'}}>
                 <h3>{tenants[i + j].name}</h3>
               </CardTitle>
               <CardSubtitle className='mb-4 mt-3 text-center'>
@@ -274,8 +275,8 @@ const TenantForm = ({
 
 
 export const TenantChange = (props) => {
-  const name = props.match.params.name;
-  const history = props.history;
+  const { name } = useParams();
+  const navigate = useNavigate();
 
   const backend = new Backend();
 
@@ -303,7 +304,7 @@ export const TenantChange = (props) => {
           NotifyOk({
             msg: 'Tenant successfully deleted',
             title: 'Deleted',
-            callback: () => history.push('/ui/tenants')
+            callback: () => navigate('/ui/tenants')
           })
         }
       })

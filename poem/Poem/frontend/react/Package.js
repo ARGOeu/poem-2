@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Backend } from './DataManager';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import{
   LoadingAnim,
   BaseArgoView,
@@ -54,7 +54,7 @@ const validationSchema = Yup.object().shape({
 
 
 export const PackageList = (props) => {
-  const location = props.location;
+  const location = useLocation();
   const isTenantSchema = props.isTenantSchema;
 
   const { data: packages, error: errorPackages, status: statusPackages } = useQuery(
@@ -151,8 +151,9 @@ function splitRepos(repos) {
 
 
 const PackageForm = ({
-  nameversion, addview, cloneview, disabled, location, history, pkg={}, probes=[], repos6=[], repos7=[], packageVersions=[]
+  nameversion, addview, cloneview, disabled, location, pkg={}, probes=[], repos6=[], repos7=[], packageVersions=[]
 }) => {
+  const navigate = useNavigate()
   const backend = new Backend()
   const queryClient = useQueryClient()
 
@@ -272,7 +273,7 @@ const PackageForm = ({
           NotifyOk({
             msg: json.updated,
             title: 'Updated',
-            callback: () => history.push('/ui/administration/packages')
+            callback: () => navigate('/ui/administration/packages')
           });
         if ('warning' in json)
           NotifyWarn({msg: json.warning, title: 'Warning'})
@@ -308,7 +309,7 @@ const PackageForm = ({
           NotifyOk({
             msg: 'Package successfully added',
             title: 'Added',
-            callback: () => history.push('/ui/packages')
+            callback: () => navigate('/ui/packages')
           })
         },
         onError: (error) => {
@@ -324,7 +325,7 @@ const PackageForm = ({
           NotifyOk({
             msg: 'Package successfully changed',
             title: 'Changed',
-            callback: () => history.push('/ui/packages')
+            callback: () => navigate('/ui/packages')
           })
         },
         onError: (error) => {
@@ -344,7 +345,7 @@ const PackageForm = ({
         NotifyOk({
           msg: 'Package successfully deleted',
           title: 'Deleted',
-          callback: () => history.push('/ui/packages')
+          callback: () => navigate('/ui/packages')
         })
       },
       onError: (error) => {
@@ -623,12 +624,11 @@ const PackageForm = ({
 
 
 export const PackageComponent = (props) => {
-  const nameversion = props.match.params.nameversion;
+  const { nameversion } = useParams();
   const addview = props.addview;
   const cloneview = props.cloneview;
   const disabled = props.disabled;
-  const location = props.location;
-  const history = props.history;
+  const location = useLocation();
 
   const backend = new Backend();
   const queryClient = useQueryClient();
@@ -713,7 +713,6 @@ export const PackageComponent = (props) => {
         cloneview={cloneview}
         disabled={disabled}
         location={location}
-        history={history}
       />
     )
 

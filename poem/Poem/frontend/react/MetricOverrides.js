@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "react-query"
-import { Link } from "react-router-dom"
+import { Link, useLocation, useParams, useNavigate } from "react-router-dom"
 import { Backend } from "./DataManager"
 import { fetchUserDetails } from "./QueryFunctions"
 import {
@@ -130,7 +130,7 @@ const fetchOverrides = async () => {
 
 
 export const MetricOverrideList = (props) => {
-  const location = props.location
+  const location = useLocation()
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
     "userdetails", () => fetchUserDetails(true)
@@ -195,10 +195,10 @@ const MetricOverrideForm = ({
   isSuperuser=false,
   addview=false,
   location=undefined,
-  history=undefined
 }) => {
   const backend = new Backend()
   const queryClient = useQueryClient()
+  const navigate = useNavigate() /////
 
   const addMutation = useMutation(async (values) => await backend.addObject("/api/v2/internal/metricconfiguration/", values))
   const changeMutation = useMutation(async (values) => await backend.changeObject("/api/v2/internal/metricconfiguration/", values))
@@ -292,7 +292,7 @@ const MetricOverrideForm = ({
             NotifyOk({
               msg: "Metric configuration override successfully added",
               title: "Added",
-              callback: () => history.push("/ui/administration/metricoverrides")
+              callback: () => navigate("/ui/administration/metricoverrides")
             })
           },
           onError: (error) => {
@@ -311,7 +311,7 @@ const MetricOverrideForm = ({
             NotifyOk({
               msg: "Metric configuration override successfully changed",
               title: "Changed",
-              callback: () => history.push("/ui/administration/metricoverrides")
+              callback: () => navigate("/ui/administration/metricoverrides")
             })
           },
           onError: (error) => {
@@ -332,7 +332,7 @@ const MetricOverrideForm = ({
         NotifyOk({
           msg: "Metric configuration override successfully deleted",
           title: "Deleted",
-          callback: () => history.push("/ui/administration/metricoverrides")
+          callback: () => navigate("/ui/administration/metricoverrides")
         })
       },
       onError: (error) => {
@@ -774,10 +774,9 @@ const MetricOverrideForm = ({
 
 
 export const MetricOverrideChange = (props) => {
-  const name = props.match.params.name
+  const { name } = useParams()
   const addview = props.addview
-  const location = props.location
-  const history = props.history
+  const location = useLocation()
 
   const backend = new Backend()
 
@@ -804,7 +803,6 @@ export const MetricOverrideChange = (props) => {
         isSuperuser={ userDetails.is_superuser }
         addview={ addview }
         location={ location }
-        history={ history }
       />
     )
   else

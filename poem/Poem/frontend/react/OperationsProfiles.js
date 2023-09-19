@@ -1,6 +1,6 @@
 import React from 'react';
 import { WebApi } from './DataManager';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import {
   LoadingAnim,
   ErrorComponent,
@@ -24,7 +24,7 @@ import { fetchOperationsProfiles } from './QueryFunctions';
 
 
 export const OperationsProfilesList = (props) => {
-  const location = props.location;
+  const location = useLocation();
   const publicView = props.publicView;
   const webapi = new WebApi({
     token: props.webapitoken,
@@ -85,7 +85,7 @@ export const OperationsProfilesList = (props) => {
 
 
 export const OperationsProfileDetails = (props) => {
-  const name = props.match.params.name;
+  const { name } = useParams();
   const token = props.webapitoken;
   const webapioperations = props.webapioperations;
   const publicView = props.publicView;

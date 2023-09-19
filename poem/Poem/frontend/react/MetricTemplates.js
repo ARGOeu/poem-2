@@ -10,22 +10,24 @@ import {
 } from './UIElements';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { fetchMetricTags, fetchMetricTemplates, fetchMetricTemplateTypes, fetchMetricTemplateVersion, fetchProbeVersion, fetchProbeVersions } from './QueryFunctions';
-
+import { useNavigate, useParams } from 'react-router-dom';
 
 export const MetricTemplateComponent = (props) => {
+  let { name, metrictemplatename } = useParams();
   const probeview = props.probeview;
 
-  var name = undefined;
-  if (probeview)
-    name = props.match.params.metrictemplatename;
-  else
-    name = props.match.params.name;
+  if (probeview) {
+    name = metrictemplatename;
+  }
+  else {
+    name;
+  }
 
   const addview = props.addview;
   const cloneview = props.cloneview;
   const publicView = props.publicView;
   const tenantview = props.tenantview;
-  const history = props.history;
+  const navigate = useNavigate();
 
   const backend = new Backend();
   const queryClient = useQueryClient();
@@ -124,7 +126,7 @@ export const MetricTemplateComponent = (props) => {
           NotifyOk({
             msg: 'Metric template successfully added',
             title: 'Added',
-            callback: () => history.push('/ui/metrictemplates')
+            callback: () => navigate('/ui/metrictemplates')
           })
 
           if (data && "warning" in data)
@@ -145,7 +147,7 @@ export const MetricTemplateComponent = (props) => {
           NotifyOk({
             msg: 'Metric template successfully changed',
             title: 'Changed',
-            callback: () => history.push('/ui/metrictemplates')
+            callback: () => navigate('/ui/metrictemplates')
           })
 
           if (data && "warning" in data)
@@ -178,7 +180,7 @@ export const MetricTemplateComponent = (props) => {
         NotifyOk({
           msg: 'Metric template successfully deleted',
           title: 'Deleted',
-          callback: () => history.push('/ui/metrictemplates')
+          callback: () => navigate('/ui/metrictemplates')
         });
       },
       onError: (error) => {
@@ -248,8 +250,7 @@ export const MetricTemplateComponent = (props) => {
 
 
 export const MetricTemplateVersionDetails = (props) => {
-  const name = props.match.params.name;
-  const version = props.match.params.version;
+  const { name, version } = useParams();
   const publicView = props.publicView;
 
   const { data: mts, error: errorMts, isLoading: loadingMts } = useQuery(

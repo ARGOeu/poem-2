@@ -13,7 +13,7 @@ import {
   CustomReactCreatable,
   CustomError
  } from './UIElements';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import {
@@ -327,8 +327,14 @@ const ReportsSchema = Yup.object().shape({
   )
 })
 
-export const ReportsAdd = (props) => <ReportsComponent addview={true} {...props}/>;
-export const ReportsChange = (props) => <ReportsComponent {...props}/>;
+export const ReportsAdd = (props) => {
+  const { name } = useParams();
+  return <ReportsComponent addview={true} {...props} name={name}/>;
+}
+export const ReportsChange = (props) => {
+  const { name } = useParams();
+  return <ReportsComponent {...props} name={name}/>;
+}  
 
 
 const getInvalidValues = (values, tagValues) => {
@@ -402,7 +408,7 @@ const fetchReport = async (webapi, name) => {
 
 
 export const ReportsList = (props) => {
-  const location = props.location;
+  const location = useLocation();
   const publicView = props.publicView;
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
@@ -2099,10 +2105,10 @@ const ReportsForm = ({
 
 
 export const ReportsComponent = (props) => {
-  const report_name = props.match.params.name;
+  const { name: report_name } = props;
   const addview = props.addview
   const publicView = props.publicView
-  const history = props.history;
+  const navigate = useNavigate();
 
   const backend = new Backend();
   const webapi = new WebApi({
@@ -2427,7 +2433,7 @@ export const ReportsComponent = (props) => {
             NotifyOk({
               msg: 'Report successfully deleted',
               title: 'Deleted',
-              callback: () => history.push('/ui/reports')
+              callback: () => navigate('/ui/reports')
             });
           },
           onError: (error) => {
@@ -2499,7 +2505,7 @@ export const ReportsComponent = (props) => {
               NotifyOk({
                 msg: 'Report successfully added',
                 title: 'Added',
-                callback: () => history.push('/ui/reports')
+                callback: () => navigate('/ui/reports')
               });
             },
             onError: (error) => {
@@ -2533,7 +2539,7 @@ export const ReportsComponent = (props) => {
               NotifyOk({
                 msg: 'Report successfully changed',
                 title: 'Changed',
-                callback: () => history.push('/ui/reports')
+                callback: () => navigate('/ui/reports')
               });
             },
             onError: (error) => NotifyError({

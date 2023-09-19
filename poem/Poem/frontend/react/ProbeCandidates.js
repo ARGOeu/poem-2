@@ -27,7 +27,7 @@ import {
   Label, 
   Row 
 } from "reactstrap";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Controller, useForm } from "react-hook-form";
 
 
@@ -46,7 +46,7 @@ const fetchStatuses = async () => {
 
 
 export const ProbeCandidateList = (props) => {
-  const location = props.location
+  const location = useLocation();
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
     "userDetails", () => fetchUserDetails(true)
@@ -441,7 +441,7 @@ const ProbeCandidateForm = ({
 
 export const ProbeCandidateChange = (props) => {
   const pcid = props.match.params.id
-  const history = props.history
+  const navigate = useNavigate()
 
   const backend = new Backend()
   const queryClient = useQueryClient()
@@ -486,7 +486,7 @@ export const ProbeCandidateChange = (props) => {
         NotifyOk({
           msg: "Probe candidate successfully changed",
           title: "Changed",
-          callback: () => history.push("/ui/administration/probecandidates")
+          callback: () => navigate("/ui/administration/probecandidates")
         })
       },
       onError: (error) => {

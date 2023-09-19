@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Backend } from './DataManager';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import {
@@ -59,7 +59,7 @@ const fetchAPIKey = async(name) => {
 
 
 export const APIKeyList = (props) => {
-  const location = props.location;
+  const location = useLocation();
 
   const queryClient = useQueryClient();
 
@@ -161,9 +161,9 @@ const APIKeyForm = ({
   doDelete,
   ...props
 }) => {
-  const name = props.match.params.name;
+  const { name } = useParams();
   const isTenantSchema = props.isTenantSchema
-  const location = props.location;
+  const location = useLocation();
   const addview = props.addview;
 
   const [areYouSureModal, setAreYouSureModal] = useState(false)
@@ -384,9 +384,9 @@ const APIKeyForm = ({
 
 
 export const APIKeyChange = (props) => {
-  const name = props.match.params.name;
+  const { name } = useParams();
   const addview = props.addview;
-  const history = props.history;
+  const navigate = useNavigate()
 
   const queryClient = useQueryClient()
 
@@ -410,7 +410,7 @@ export const APIKeyChange = (props) => {
             NotifyOk({
               msg: 'API key successfully changed',
               title: 'Changed',
-              callback: () => history.push('/ui/administration/apikey')
+              callback: () => navigate('/ui/administration/apikey')
             });
           },
           onError: (error) => {
@@ -428,7 +428,7 @@ export const APIKeyChange = (props) => {
           NotifyOk({
             msg: 'API key successfully added',
             title: 'Added',
-            callback: () => history.push('/ui/administration/apikey')
+            callback: () => navigate('/ui/administration/apikey')
           })
         },
         onError: (error) => {
@@ -448,7 +448,7 @@ export const APIKeyChange = (props) => {
         NotifyOk({
           msg: 'API key successfully deleted',
           title: 'Deleted',
-          callback: () => history.push('/ui/administration/apikey')
+          callback: () => navigate('/ui/administration/apikey')
         })
       },
       onError: (error) => {

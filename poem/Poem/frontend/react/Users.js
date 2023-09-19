@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import { Backend } from './DataManager';
 import {
   LoadingAnim,
@@ -95,7 +95,7 @@ const fetchGroupsForUser = async (isTenantSchema, username) => {
 
 
 export const UsersList = (props) => {
-    const location = props.location;
+    const location = useLocation();
     const isTenantSchema = props.isTenantSchema;
 
     const queryClient = useQueryClient();
@@ -233,10 +233,10 @@ const UserChangeForm = ({
   userDetails=undefined,
   isTenantSchema=undefined,
   location=undefined,
-  history=undefined
 }) => {
   const queryClient = useQueryClient()
   const backend = new Backend()
+  const navigate = useNavigate()
 
   const changeUserMutation = useMutation(async(values) => backend.changeObject('/api/v2/internal/users/', values))
   const changeUserProfileMutation = useMutation(async(values) => backend.changeObject('/api/v2/internal/userprofile/', values))
@@ -325,7 +325,7 @@ const UserChangeForm = ({
                 NotifyOk({
                   msg: 'User successfully changed',
                   title: 'Changed',
-                  callback: () => history.push('/ui/administration/users')
+                  callback: () => navigate('/ui/administration/users')
                 })
               },
               onError: (error) => {
@@ -339,7 +339,7 @@ const UserChangeForm = ({
             NotifyOk({
               msg: 'User successfully changed',
               title: 'Changed',
-              callback: () => history.push('/ui/administration/users')
+              callback: () => navigate('/ui/administration/users')
             })
           }
         },
@@ -361,7 +361,7 @@ const UserChangeForm = ({
                 NotifyOk({
                   msg: 'User successfully added',
                   title: 'Added',
-                  callback: () => history.push('/ui/administration/users')
+                  callback: () => navigate('/ui/administration/users')
                 })
               },
               onError: (error) => {
@@ -375,7 +375,7 @@ const UserChangeForm = ({
             NotifyOk({
               msg: 'User successfully added',
               title: 'Added',
-              callback: () => history.push('/ui/administration/users')
+              callback: () => navigate('/ui/administration/users')
             })
           }
         },
@@ -398,7 +398,7 @@ const UserChangeForm = ({
         NotifyOk({
           msg: 'User successfully deleted',
           title: 'Deleted',
-          callback: () => history.push('/ui/administration/users')
+          callback: () => navigate('/ui/administration/users')
         })
       },
       onError: (error) => {
@@ -914,11 +914,10 @@ const UserChangeForm = ({
 
 
 export const UserChange = (props) => {
-  const user_name = props.match.params.user_name;
+  const { user_name } = useParams();
   const addview = props.addview;
   const isTenantSchema = props.isTenantSchema;
-  const location = props.location;
-  const history = props.history;
+  const location = useLocation();
 
   const queryClient = useQueryClient();
 
@@ -982,7 +981,6 @@ export const UserChange = (props) => {
         userDetails={ userDetails }
         isTenantSchema={ isTenantSchema }
         location={ location }
-        history={ history }
       />
     )
   } else
@@ -994,10 +992,10 @@ const ChangePasswordForm = ({
   name=undefined,
   userDetails=undefined,
   location=undefined,
-  history=undefined
 }) => {
 
   const backend = new Backend()
+  const navigate = useNavigate()
 
   const [areYouSureModal, setAreYouSureModal] = useState(false);
   const [modalTitle, setModalTitle] = useState(undefined);
@@ -1067,7 +1065,7 @@ const ChangePasswordForm = ({
       NotifyOk({
         msg: 'Password successfully changed',
         title: 'Changed',
-        callback: () => history.push('/ui/administration/users')
+        callback: () => navigate('/ui/administration/users')
       });
     }
   }
@@ -1164,9 +1162,8 @@ const ChangePasswordForm = ({
 
 
 export const ChangePassword = (props) => {
-  const name = props.match.params.user_name;
-  const location = props.locaation;
-  const history = props.history;
+  const { name } = useParams();
+  const location = useLocation();
 
   const { data: userDetails, isLoading: loading} = useQuery(
     'userdetails', () => fetchUserDetails(false)
@@ -1181,7 +1178,6 @@ export const ChangePassword = (props) => {
         userDetails={ userDetails }
         name={ name }
         location={ location }
-        history={ history }
       />
     )
   } else

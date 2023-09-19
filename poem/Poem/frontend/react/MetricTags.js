@@ -1,6 +1,6 @@
 import React, { useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "react-query"
-import { Link } from "react-router-dom"
+import { Link, useLocation, useParams, useNavigate } from "react-router-dom"
 import { fetchMetricTags, fetchMetricTemplates, fetchUserDetails } from "./QueryFunctions"
 import {
   BaseArgoTable,
@@ -43,7 +43,7 @@ const validationSchema = Yup.object().shape({
 
 
 export const MetricTagsList = (props) => {
-  const location = props.location
+  const location = useLocation();
   const publicView = props.publicView
 
   const { data: tags, error, status } = useQuery(
@@ -124,6 +124,7 @@ const MetricTagsForm = ({
 
   const backend = new Backend()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
 
   const [areYouSureModal, setAreYouSureModal] = useState(false);
   const [modalFlag, setModalFlag] = useState(undefined);
@@ -182,9 +183,9 @@ const MetricTagsForm = ({
           NotifyOk({
             msg: "Metric tag successfully added",
             title: "Added",
-            callback: () => history.push("/ui/metrictags")
+            callback: () => navigate("/ui/metrictags")
           })
-          if ("detail" in response) {
+          if (response && "detail" in response) {
             let msgs = response.detail.split("\n")
             msgs.forEach(msg => NotifyWarn({ title: "Warning", msg: msg }))
           }
@@ -209,7 +210,7 @@ const MetricTagsForm = ({
           NotifyOk({
             msg: "Metric tag successfully changed",
             title: "Changed",
-            callback: () => history.push("/ui/metrictags")
+            callback: () => navigate("/ui/metrictags")
           })
           if ("detail" in response) {
             let msgs = response.detail.split("\n")
@@ -237,7 +238,7 @@ const MetricTagsForm = ({
         NotifyOk({
           msg: "Metric tag successfully deleted",
           title: "Deleted",
-          callback: () => history.push("/ui/metrictags")
+          callback: () => navigate("/ui/metrictags")
         })
       },
       onError: (error) => {
@@ -449,11 +450,11 @@ const MetricTagsForm = ({
 
 
 export const MetricTagsComponent = (props) => {
-  const name = props.match.params.name
+  const { name } = useParams()
   const publicView = props.publicView
   const addview = props.addview
-  const location = props.location
-  const history = props.history
+  const location = useLocation()
+  // const navigate = useNavigate()
 
   const backend = new Backend()
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Backend, WebApi } from './DataManager';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import {
   LoadingAnim,
   BaseArgoView,
@@ -297,7 +297,7 @@ const sortMP = (a, b) => {
 
 
 export const ListOfMetrics = (props) => {
-  const location = props.location;
+  const location = useLocation();
   const type = props.type;
   const publicView = props.publicView;
   const isTenantSchema = props.isTenantSchema;
@@ -783,7 +783,6 @@ export const MetricForm =
     const tenantview = props.tenantview
     const publicView = props.publicView
     const probeview = props.probeview
-    const location = props.location
 
     const resourcename_beautify = resourcename === "metric" ? "metric" : "metric template"
 
@@ -1394,9 +1393,7 @@ export const MetricForm =
 
 
 export const CompareMetrics = (props) => {
-  const version1 = props.match.params.id1;
-  const version2 = props.match.params.id2;
-  const name = props.match.params.name;
+  const { name, id1: version1, id2: version2 } = useParams();
   const publicView = props.publicView;
   const type = props.type;
 
@@ -1487,8 +1484,8 @@ export const CompareMetrics = (props) => {
 
 
 export const MetricChange = (props) => {
-  const name = props.match.params.name;
-  const history = props.history;
+  const { name } = useParams();
+  const navigate = useNavigate()
   const publicView = props.publicView;
 
   const backend = new Backend();
@@ -1557,7 +1554,7 @@ export const MetricChange = (props) => {
         NotifyOk({
           msg: 'Metric successfully changed',
           title: 'Changed',
-          callback: () => history.push('/ui/metrics')
+          callback: () => navigate('/ui/metrics')
         })
       },
       onError: (error) => {
@@ -1577,7 +1574,7 @@ export const MetricChange = (props) => {
         NotifyOk({
           msg: 'Metric successfully deleted',
           title: 'Deleted',
-          callback: () => history.push('/ui/metrics')
+          callback: () => navigate('/ui/metrics')
         })
       },
       onError: (error) => {
@@ -1664,8 +1661,7 @@ const fetchMetricVersions = async (publicView, name) => {
 
 
 export const MetricVersionDetails = (props) => {
-  const name = props.match.params.name;
-  const version = props.match.params.version;
+  const { name, version } = useParams();
 
   const { data: metrics, error: errorMetric, isLoading: loadingMetric } = useQuery(
     ['metric', 'tenantversion', name], () => fetchMetricVersions(false, name)

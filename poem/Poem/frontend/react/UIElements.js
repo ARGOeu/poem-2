@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Children } from 'react';
 import Cookies from 'universal-cookie';
 import {
   Alert,
@@ -38,7 +38,7 @@ import {
   Input,
   FormFeedback
 } from 'reactstrap';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import ArgoLogo from './argologo_color.svg';
 import ArgoLogoAnim from './argologo_anim.svg';
 import EULogo from './eu.png';
@@ -365,8 +365,7 @@ export const SearchField = ({field, forwardedRef=undefined, ...rest}) =>
   </div>
 
 
-const doLogout = async (history, onLogout) =>
-{
+const doLogout = async (navigate, onLogout) => {
   let cookies = new Cookies();
 
   onLogout();
@@ -383,7 +382,7 @@ const doLogout = async (history, onLogout) =>
       'Referer': 'same-origin'
     }});
     if (response.ok)
-      history.push('/ui/login');
+      navigate('/ui/login');
 }
 
 
@@ -405,8 +404,9 @@ export const ModalAreYouSure = ({isOpen, toggle, title, msg, onYes, callbackOnYe
 )
 
 
-export const CustomBreadcrumb = ({location, publicView=false}) =>
+export const CustomBreadcrumb = ({publicView=false}) =>
 {
+  const location = useLocation();
   let spliturl = new Array()
   let breadcrumb_elements = new Array()
   let two_level = new Object()
@@ -635,10 +635,11 @@ const UserDetailsToolTip = ({userDetails, isTenantSchema, publicView}) =>
 }
 
 
-export const NavigationBar = ({history, onLogout, isOpenModal, toggle,
+export const NavigationBar = ({onLogout, isOpenModal, toggle,
   titleModal, msgModal, userDetails, isTenantSchema, publicView}) =>
 {
   const [tooltipOpen, setTooltipOpen] = useState(false);
+  let navigate = useNavigate();
 
   return (
     <React.Fragment>
@@ -647,7 +648,7 @@ export const NavigationBar = ({history, onLogout, isOpenModal, toggle,
         toggle={toggle}
         title={titleModal}
         msg={msgModal}
-        onYes={() => doLogout(history, onLogout)} />
+        onYes={() => doLogout(navigate, onLogout)} />
       <Navbar expand="md" id="argo-nav" className="border rounded">
         <NavbarBrand className="text-light">
           <img src={ArgoLogo} alt="ARGO logo" className="img-responsive"/>
@@ -689,8 +690,9 @@ export const NavigationBar = ({history, onLogout, isOpenModal, toggle,
 }
 
 
-export const NavigationLinks = ({location, isTenantSchema, userDetails}) => {
+export const NavigationLinks = ({isTenantSchema, userDetails}) => {
   var data = undefined;
+  const location = useLocation();
 
   !isTenantSchema ? data = admin_list_pages : data = list_pages
   if (!userDetails.is_superuser)
@@ -714,7 +716,9 @@ export const NavigationLinks = ({location, isTenantSchema, userDetails}) => {
 }
 
 
-export const NavigationAbout = ({ location, poemVersion, termsLink, privacyLink }) => {
+export const NavigationAbout = ({ poemVersion, termsLink, privacyLink }) => {
+  const location = useLocation();
+
   return (
     <React.Fragment>
       <div className="bg-white border-left border-right ps-3 mt-0 pt-5 text-uppercase">
@@ -1076,8 +1080,8 @@ export const DropdownFilterComponent = ({value, onChange, data}) => (
 
 
 export const HistoryComponent = (props) => {
-  const name = props.match.params.name;
-  const history = props.history;
+  let { name } = useParams();  
+  const navigate = useNavigate();
   const publicView = props.publicView
   const tenantView = props.tenantView;
   const obj = props.object;
@@ -1139,7 +1143,7 @@ export const HistoryComponent = (props) => {
                   <Button
                       color='info'
                       onClick={() =>
-                        history.push(
+                        navigate(
                           `${compareUrl}/compare/${compare1}/${compare2}`,
                       )
                       }
@@ -1627,8 +1631,9 @@ export const ProfilesListTable = ({ columns, data, type }) => {
 };
 
 
-export const DocumentTitle = ({ location, publicView=false }) => {
+export const DocumentTitle = ({ publicView=false }) => {
   let url = new Array();
+  const location = useLocation();
 
   if (!publicView)
     url = location.pathname.split('/');
