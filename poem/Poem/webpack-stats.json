@@ -80,12 +80,22 @@
       "name": "main.1872c7a5c08e21a1b988.hot-update.json",
       "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.1872c7a5c08e21a1b988.hot-update.json",
       "publicPath": "http://localhost:3000/main.1872c7a5c08e21a1b988.hot-update.json"
+    },
+    "main.5fa24da72c8e815fe031.hot-update.js": {
+      "name": "main.5fa24da72c8e815fe031.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.5fa24da72c8e815fe031.hot-update.js",
+      "publicPath": "http://localhost:3000/main.5fa24da72c8e815fe031.hot-update.js"
+    },
+    "main.5fa24da72c8e815fe031.hot-update.json": {
+      "name": "main.5fa24da72c8e815fe031.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.5fa24da72c8e815fe031.hot-update.json",
+      "publicPath": "http://localhost:3000/main.5fa24da72c8e815fe031.hot-update.json"
     }
   },
   "chunks": {
     "main": [
       "main.js",
-      "main.1872c7a5c08e21a1b988.hot-update.js"
+      "main.5fa24da72c8e815fe031.hot-update.js"
     ]
   },
   "publicPath": "http://localhost:3000/"
