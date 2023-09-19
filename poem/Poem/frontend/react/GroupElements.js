@@ -32,6 +32,7 @@ import { Controller, useForm, useWatch } from 'react-hook-form';
 import { ErrorMessage } from '@hookform/error-message';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from "yup";
+import { CustomButton, CustomHeadline, CustomInput, CustomProfilesList, CustomSubtitle, CustomTable } from './CustomPlaceholders';
 
 
 const validationSchema = Yup.object().shape({
@@ -70,7 +71,7 @@ export const GroupList = (props) => {
   );
 
   if (status === 'loading')
-    return (<LoadingAnim/>);
+    return (<CustomProfilesList/>);
 
   else if (status === 'error')
     return (<ErrorComponent error={error}/>);
@@ -429,7 +430,41 @@ export const GroupChange = (props) => {
   )
 
   if (loadingItems || loadingFreeItems)
-    return (<LoadingAnim/>);
+    return (
+      <>
+        <CustomHeadline width="365px" height="38.4px"  />
+        <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
+          <CustomInput height="37.6px" width="50%" custStyle="mt-2" />
+          <CustomSubtitle height="36.8px" custStyle="mt-2" />
+          <Row className='d-flex flex-row align-items-center mb-2'>
+            <Col md={8} className='d-flex flex-column'>
+              <CustomInput height="38px" />
+            </Col>
+            <Col md={2} className='d-flex flex-column'>
+              <CustomButton height="38px" />
+            </Col>
+          </Row>
+          {
+            /\/add$/.test(window.location.pathname)
+            ? 
+            <>
+              <CustomTable height="80px" width="85%" />
+              <div className='ms-2 mb-2 mt-4 p-3 border placeholder-glow rounded d-flex justify-content-end'>
+                <CustomButton height="37.6px" width="80px" />
+              </div>
+            </>
+            :
+            <>
+              <CustomTable height="434px" width="85%" />     
+              <div className='ms-2 mb-2 mt-4 p-3 border placeholder-glow rounded d-flex justify-content-between'>
+                <CustomButton height="37.6px" width="100px" />
+                <CustomButton height="37.6px" width="100px" />
+              </div>
+            </>
+          }
+        </Form>
+      </>
+    );
 
   else if (errorItems)
     return (<ErrorComponent error={errorItems} />);

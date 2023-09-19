@@ -29,6 +29,7 @@ import {
 } from "reactstrap";
 import { Link } from "react-router-dom";
 import { Controller, useForm } from "react-hook-form";
+import { CustomProfilesList } from "./CustomPlaceholders";
 
 
 const fetchCandidates = async () => {
@@ -119,7 +120,7 @@ export const ProbeCandidateList = (props) => {
   ])
 
   if (loadingUserDetails || loadingProbeCandidates || loadingStatuses )
-    return (<LoadingAnim />)
+    return (<CustomProfilesList pathname={window.location.pathname} />)
 
   else if (errorUserDetails)
     return (<ErrorComponent error={ errorUserDetails } />)

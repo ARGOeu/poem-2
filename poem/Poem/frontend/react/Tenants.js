@@ -30,6 +30,7 @@ import { faIdBadge } from '@fortawesome/free-solid-svg-icons';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { fetchTenants } from './QueryFunctions';
 import { Controller, useForm } from 'react-hook-form';
+import { CustomButton, CustomHeadline, CustomInput, CustomSubtitle, CustomTable } from './CustomPlaceholders';
 
 
 export const TenantList = (props) => {
@@ -41,7 +42,21 @@ export const TenantList = (props) => {
   );
 
   if (status === 'loading')
-    return (<LoadingAnim/>);
+    return (
+      <>
+        <CustomHeadline height="38.4px" width="358px" />
+        <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
+          <Row>
+            <Col md={4}>
+              <CustomTable height="322px" />
+            </Col>
+            <Col md={4}>
+              <CustomTable height="322px" />
+            </Col>
+          </Row>
+        </Form>
+      </>
+    );
 
   else if (status === 'error')
     return (<ErrorComponent error={error}/>);
@@ -284,8 +299,20 @@ export const TenantChange = (props) => {
     () => backend.deleteObject(`/api/v2/internal/tenants/${name.trim().split(' ').join('_')}`)
   );
 
+  // const { data: tenant, error, status } = useQuery(
+  //   ['tenant', name], async () => {
+  //     return await backend.fetchData(`/api/v2/internal/tenants/${name.trim().split(' ').join('_')}`);
+  //   },
+  //   {
+  //     initialData: () => {
+  //       return queryClient.getQueryData('tenant')?.find(ten => ten.name === name)
+  //     }
+  //   }
+  // )
+
   const { data: tenant, error, status } = useQuery(
     ['tenant', name], async () => {
+      await new Promise(resolve => setTimeout(resolve, 3000)); // Delay for 3 seconds
       return await backend.fetchData(`/api/v2/internal/tenants/${name.trim().split(' ').join('_')}`);
     },
     {
@@ -293,7 +320,8 @@ export const TenantChange = (props) => {
         return queryClient.getQueryData('tenant')?.find(ten => ten.name === name)
       }
     }
-  )
+  );
+  
 
   async function doDelete() {
     try {
@@ -315,7 +343,23 @@ export const TenantChange = (props) => {
   }
 
   if (status === 'loading')
-    return (<LoadingAnim/>);
+    return (
+      <>
+        <CustomHeadline height="38.4px" width="211px" />
+
+        <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
+          <CustomInput height="48px" width="50%" custStyle="mb-3" />
+          <CustomSubtitle height="36.8px" custStyle="mb-2" />
+          <CustomInput height="37.6px" width="50%" custStyle="mb-2" />
+          <CustomInput height="37.6px" width="50%" custStyle="mb-2" />
+          <CustomInput height="37.6px" width="50%" custStyle="mb-2" />
+
+          <div className='ms-2 mb-2 mt-5 p-3 border placeholder-glow rounded d-flex justify-content-start'>
+              <CustomButton height="37.6px" width="100px" />
+          </div>
+        </Form>
+      </>
+    );
 
   else if (status === 'error')
     return (<ErrorComponent error={error}/>);

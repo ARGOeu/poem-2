@@ -34,6 +34,7 @@ import {
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from "yup";
 import { ErrorMessage } from "@hookform/error-message"
+import { CustomButton, CustomHeadline, CustomInput, CustomProfilesList, CustomSubtitle, CustomTable } from "./CustomPlaceholders"
 
 
 const hostnameRegex = /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9-]*[A-Za-z0-9])([_][A-Za-z0-9.\-_]*)*$/
@@ -160,7 +161,7 @@ export const MetricOverrideList = (props) => {
   ])
 
   if (loadingUserDetails || loadingConfs)
-    return (<LoadingAnim />)
+    return (<CustomProfilesList />)
 
   else if (errorUserDetails)
     return (<ErrorComponent error={errorUserDetails} />)
@@ -791,7 +792,31 @@ export const MetricOverrideChange = (props) => {
   )
 
   if (loading || loadingOverride)
-    return (<LoadingAnim />)
+    return (
+      <>
+        <CustomHeadline width="557px" height="38.4px"/>
+        <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
+          <CustomInput height="48px" width="50%" custStyle="mb-3" />
+          <CustomSubtitle height="37.6px" />
+          <CustomTable height="80px" custStyle="mb-3" />
+          <CustomSubtitle height="37.6px" />
+          <CustomTable height="80px" custStyle="mb-3" />
+          <CustomSubtitle height="37.6px" />
+          <CustomTable height="80px" />
+
+          {window.location.pathname === "/ui/administration/metricoverrides/add" ? 
+            <div className='ms-2 mb-2 mt-4 p-3 border placeholder-glow rounded d-flex justify-content-end'>
+              <CustomButton height="37.6px" width="60px" />
+            </div>
+            :
+            <div className='ms-2 mb-2 mt-4 p-3 border placeholder-glow rounded d-flex justify-content-between'>
+              <CustomButton height="37.6px" width="100px" />
+              <CustomButton height="37.6px" width="60px" />
+            </div>
+          }
+        </Form>
+      </>
+    )
 
   else if (errorOverride)
     return (<ErrorComponent error={errorOverride} />)

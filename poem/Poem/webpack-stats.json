@@ -3,532 +3,1139 @@
   "assets": {
     "main.js": {
       "name": "main.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.js",
       "publicPath": "http://localhost:3000/main.js"
     },
     "9f1772748c39cc35a994.svg": {
       "name": "9f1772748c39cc35a994.svg",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/9f1772748c39cc35a994.svg",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/9f1772748c39cc35a994.svg",
       "publicPath": "http://localhost:3000/9f1772748c39cc35a994.svg"
     },
     "3e7613d8583ea266dfeb.svg": {
       "name": "3e7613d8583ea266dfeb.svg",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/3e7613d8583ea266dfeb.svg",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/3e7613d8583ea266dfeb.svg",
       "publicPath": "http://localhost:3000/3e7613d8583ea266dfeb.svg"
     },
     "dd46c5e52c76e4542afe.png": {
       "name": "dd46c5e52c76e4542afe.png",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/dd46c5e52c76e4542afe.png",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/dd46c5e52c76e4542afe.png",
       "publicPath": "http://localhost:3000/dd46c5e52c76e4542afe.png"
     },
     "5ae655538d1c6dfc473a.png": {
       "name": "5ae655538d1c6dfc473a.png",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/5ae655538d1c6dfc473a.png",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/5ae655538d1c6dfc473a.png",
       "publicPath": "http://localhost:3000/5ae655538d1c6dfc473a.png"
     },
     "3657084dc0419605a91c.eot": {
       "name": "3657084dc0419605a91c.eot",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/3657084dc0419605a91c.eot",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/3657084dc0419605a91c.eot",
       "publicPath": "http://localhost:3000/3657084dc0419605a91c.eot"
     },
     "3657084dc0419605a91c.eot?s3g3t9": {
       "name": "3657084dc0419605a91c.eot?s3g3t9",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/3657084dc0419605a91c.eot",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/3657084dc0419605a91c.eot",
       "publicPath": "http://localhost:3000/3657084dc0419605a91c.eot?s3g3t9"
     },
     "5d0158671dd860c714c4.svg?s3g3t9": {
       "name": "5d0158671dd860c714c4.svg?s3g3t9",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/5d0158671dd860c714c4.svg",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/5d0158671dd860c714c4.svg",
       "publicPath": "http://localhost:3000/5d0158671dd860c714c4.svg?s3g3t9"
     },
     "c5d9251ea82e42f75381.ttf?s3g3t9": {
       "name": "c5d9251ea82e42f75381.ttf?s3g3t9",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/c5d9251ea82e42f75381.ttf",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/c5d9251ea82e42f75381.ttf",
       "publicPath": "http://localhost:3000/c5d9251ea82e42f75381.ttf?s3g3t9"
     },
     "c392cd33d9d9de730f9d.woff?s3g3t9": {
       "name": "c392cd33d9d9de730f9d.woff?s3g3t9",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/c392cd33d9d9de730f9d.woff",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/c392cd33d9d9de730f9d.woff",
       "publicPath": "http://localhost:3000/c392cd33d9d9de730f9d.woff?s3g3t9"
     },
-    "main.38dc64a091dc41c9f79c.hot-update.js": {
-      "name": "main.38dc64a091dc41c9f79c.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.38dc64a091dc41c9f79c.hot-update.js",
-      "publicPath": "http://localhost:3000/main.38dc64a091dc41c9f79c.hot-update.js"
-    },
-    "main.38dc64a091dc41c9f79c.hot-update.json": {
-      "name": "main.38dc64a091dc41c9f79c.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.38dc64a091dc41c9f79c.hot-update.json",
-      "publicPath": "http://localhost:3000/main.38dc64a091dc41c9f79c.hot-update.json"
-    },
-    "main.0907cd818e549f882ffa.hot-update.js": {
-      "name": "main.0907cd818e549f882ffa.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.0907cd818e549f882ffa.hot-update.js",
-      "publicPath": "http://localhost:3000/main.0907cd818e549f882ffa.hot-update.js"
-    },
-    "main.0907cd818e549f882ffa.hot-update.json": {
-      "name": "main.0907cd818e549f882ffa.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.0907cd818e549f882ffa.hot-update.json",
-      "publicPath": "http://localhost:3000/main.0907cd818e549f882ffa.hot-update.json"
-    },
-    "main.44b2d8162f39c20eddaa.hot-update.js": {
-      "name": "main.44b2d8162f39c20eddaa.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.44b2d8162f39c20eddaa.hot-update.js",
-      "publicPath": "http://localhost:3000/main.44b2d8162f39c20eddaa.hot-update.js"
-    },
-    "main.44b2d8162f39c20eddaa.hot-update.json": {
-      "name": "main.44b2d8162f39c20eddaa.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.44b2d8162f39c20eddaa.hot-update.json",
-      "publicPath": "http://localhost:3000/main.44b2d8162f39c20eddaa.hot-update.json"
-    },
-    "main.ef4f34f643fee7dc2ace.hot-update.js": {
-      "name": "main.ef4f34f643fee7dc2ace.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.ef4f34f643fee7dc2ace.hot-update.js",
-      "publicPath": "http://localhost:3000/main.ef4f34f643fee7dc2ace.hot-update.js"
-    },
-    "main.ef4f34f643fee7dc2ace.hot-update.json": {
-      "name": "main.ef4f34f643fee7dc2ace.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.ef4f34f643fee7dc2ace.hot-update.json",
-      "publicPath": "http://localhost:3000/main.ef4f34f643fee7dc2ace.hot-update.json"
-    },
-    "main.c4ff46ff0880d8ad9a35.hot-update.js": {
-      "name": "main.c4ff46ff0880d8ad9a35.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.c4ff46ff0880d8ad9a35.hot-update.js",
-      "publicPath": "http://localhost:3000/main.c4ff46ff0880d8ad9a35.hot-update.js"
-    },
-    "main.c4ff46ff0880d8ad9a35.hot-update.json": {
-      "name": "main.c4ff46ff0880d8ad9a35.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.c4ff46ff0880d8ad9a35.hot-update.json",
-      "publicPath": "http://localhost:3000/main.c4ff46ff0880d8ad9a35.hot-update.json"
-    },
-    "main.06697aac3de58b45e84b.hot-update.js": {
-      "name": "main.06697aac3de58b45e84b.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.06697aac3de58b45e84b.hot-update.js",
-      "publicPath": "http://localhost:3000/main.06697aac3de58b45e84b.hot-update.js"
-    },
-    "main.06697aac3de58b45e84b.hot-update.json": {
-      "name": "main.06697aac3de58b45e84b.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.06697aac3de58b45e84b.hot-update.json",
-      "publicPath": "http://localhost:3000/main.06697aac3de58b45e84b.hot-update.json"
-    },
-    "main.a9d04bef776a18928257.hot-update.js": {
-      "name": "main.a9d04bef776a18928257.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.a9d04bef776a18928257.hot-update.js",
-      "publicPath": "http://localhost:3000/main.a9d04bef776a18928257.hot-update.js"
-    },
-    "main.a9d04bef776a18928257.hot-update.json": {
-      "name": "main.a9d04bef776a18928257.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.a9d04bef776a18928257.hot-update.json",
-      "publicPath": "http://localhost:3000/main.a9d04bef776a18928257.hot-update.json"
-    },
-    "main.bb7633afa9d5108211a3.hot-update.js": {
-      "name": "main.bb7633afa9d5108211a3.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.bb7633afa9d5108211a3.hot-update.js",
-      "publicPath": "http://localhost:3000/main.bb7633afa9d5108211a3.hot-update.js"
-    },
-    "main.bb7633afa9d5108211a3.hot-update.json": {
-      "name": "main.bb7633afa9d5108211a3.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.bb7633afa9d5108211a3.hot-update.json",
-      "publicPath": "http://localhost:3000/main.bb7633afa9d5108211a3.hot-update.json"
-    },
-    "main.3168c3423d12a402b63d.hot-update.js": {
-      "name": "main.3168c3423d12a402b63d.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.3168c3423d12a402b63d.hot-update.js",
-      "publicPath": "http://localhost:3000/main.3168c3423d12a402b63d.hot-update.js"
-    },
-    "main.3168c3423d12a402b63d.hot-update.json": {
-      "name": "main.3168c3423d12a402b63d.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.3168c3423d12a402b63d.hot-update.json",
-      "publicPath": "http://localhost:3000/main.3168c3423d12a402b63d.hot-update.json"
-    },
-    "main.174f5e1fd28c075c07db.hot-update.js": {
-      "name": "main.174f5e1fd28c075c07db.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.174f5e1fd28c075c07db.hot-update.js",
-      "publicPath": "http://localhost:3000/main.174f5e1fd28c075c07db.hot-update.js"
-    },
-    "main.174f5e1fd28c075c07db.hot-update.json": {
-      "name": "main.174f5e1fd28c075c07db.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.174f5e1fd28c075c07db.hot-update.json",
-      "publicPath": "http://localhost:3000/main.174f5e1fd28c075c07db.hot-update.json"
-    },
-    "main.ff8b97a6e00deb8d54c9.hot-update.js": {
-      "name": "main.ff8b97a6e00deb8d54c9.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.ff8b97a6e00deb8d54c9.hot-update.js",
-      "publicPath": "http://localhost:3000/main.ff8b97a6e00deb8d54c9.hot-update.js"
-    },
-    "main.ff8b97a6e00deb8d54c9.hot-update.json": {
-      "name": "main.ff8b97a6e00deb8d54c9.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.ff8b97a6e00deb8d54c9.hot-update.json",
-      "publicPath": "http://localhost:3000/main.ff8b97a6e00deb8d54c9.hot-update.json"
-    },
-    "main.e51085cec38ce14ca49c.hot-update.js": {
-      "name": "main.e51085cec38ce14ca49c.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.e51085cec38ce14ca49c.hot-update.js",
-      "publicPath": "http://localhost:3000/main.e51085cec38ce14ca49c.hot-update.js"
-    },
-    "main.e51085cec38ce14ca49c.hot-update.json": {
-      "name": "main.e51085cec38ce14ca49c.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.e51085cec38ce14ca49c.hot-update.json",
-      "publicPath": "http://localhost:3000/main.e51085cec38ce14ca49c.hot-update.json"
-    },
-    "main.4eac8934d71aec58f5b9.hot-update.js": {
-      "name": "main.4eac8934d71aec58f5b9.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.4eac8934d71aec58f5b9.hot-update.js",
-      "publicPath": "http://localhost:3000/main.4eac8934d71aec58f5b9.hot-update.js"
-    },
-    "main.4eac8934d71aec58f5b9.hot-update.json": {
-      "name": "main.4eac8934d71aec58f5b9.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.4eac8934d71aec58f5b9.hot-update.json",
-      "publicPath": "http://localhost:3000/main.4eac8934d71aec58f5b9.hot-update.json"
-    },
-    "main.d88b4a8af00f917d857b.hot-update.js": {
-      "name": "main.d88b4a8af00f917d857b.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.d88b4a8af00f917d857b.hot-update.js",
-      "publicPath": "http://localhost:3000/main.d88b4a8af00f917d857b.hot-update.js"
-    },
-    "main.d88b4a8af00f917d857b.hot-update.json": {
-      "name": "main.d88b4a8af00f917d857b.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.d88b4a8af00f917d857b.hot-update.json",
-      "publicPath": "http://localhost:3000/main.d88b4a8af00f917d857b.hot-update.json"
-    },
-    "main.e9a645b2fe373f53ddb5.hot-update.js": {
-      "name": "main.e9a645b2fe373f53ddb5.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.e9a645b2fe373f53ddb5.hot-update.js",
-      "publicPath": "http://localhost:3000/main.e9a645b2fe373f53ddb5.hot-update.js"
-    },
-    "main.e9a645b2fe373f53ddb5.hot-update.json": {
-      "name": "main.e9a645b2fe373f53ddb5.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.e9a645b2fe373f53ddb5.hot-update.json",
-      "publicPath": "http://localhost:3000/main.e9a645b2fe373f53ddb5.hot-update.json"
-    },
-    "main.09dc9ffccd1d6728196b.hot-update.js": {
-      "name": "main.09dc9ffccd1d6728196b.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.09dc9ffccd1d6728196b.hot-update.js",
-      "publicPath": "http://localhost:3000/main.09dc9ffccd1d6728196b.hot-update.js"
-    },
-    "main.09dc9ffccd1d6728196b.hot-update.json": {
-      "name": "main.09dc9ffccd1d6728196b.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.09dc9ffccd1d6728196b.hot-update.json",
-      "publicPath": "http://localhost:3000/main.09dc9ffccd1d6728196b.hot-update.json"
-    },
-    "main.9cd9111dbbfa1b9a2ff3.hot-update.js": {
-      "name": "main.9cd9111dbbfa1b9a2ff3.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.9cd9111dbbfa1b9a2ff3.hot-update.js",
-      "publicPath": "http://localhost:3000/main.9cd9111dbbfa1b9a2ff3.hot-update.js"
-    },
-    "main.9cd9111dbbfa1b9a2ff3.hot-update.json": {
-      "name": "main.9cd9111dbbfa1b9a2ff3.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.9cd9111dbbfa1b9a2ff3.hot-update.json",
-      "publicPath": "http://localhost:3000/main.9cd9111dbbfa1b9a2ff3.hot-update.json"
-    },
-    "main.fa1589ad3b0feee19dbe.hot-update.js": {
-      "name": "main.fa1589ad3b0feee19dbe.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.fa1589ad3b0feee19dbe.hot-update.js",
-      "publicPath": "http://localhost:3000/main.fa1589ad3b0feee19dbe.hot-update.js"
-    },
-    "main.fa1589ad3b0feee19dbe.hot-update.json": {
-      "name": "main.fa1589ad3b0feee19dbe.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.fa1589ad3b0feee19dbe.hot-update.json",
-      "publicPath": "http://localhost:3000/main.fa1589ad3b0feee19dbe.hot-update.json"
-    },
-    "main.c80f2b35066e61da7422.hot-update.js": {
-      "name": "main.c80f2b35066e61da7422.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.c80f2b35066e61da7422.hot-update.js",
-      "publicPath": "http://localhost:3000/main.c80f2b35066e61da7422.hot-update.js"
-    },
-    "main.c80f2b35066e61da7422.hot-update.json": {
-      "name": "main.c80f2b35066e61da7422.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.c80f2b35066e61da7422.hot-update.json",
-      "publicPath": "http://localhost:3000/main.c80f2b35066e61da7422.hot-update.json"
-    },
-    "main.2ab66003a3a59e8b926c.hot-update.js": {
-      "name": "main.2ab66003a3a59e8b926c.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.2ab66003a3a59e8b926c.hot-update.js",
-      "publicPath": "http://localhost:3000/main.2ab66003a3a59e8b926c.hot-update.js"
-    },
-    "main.2ab66003a3a59e8b926c.hot-update.json": {
-      "name": "main.2ab66003a3a59e8b926c.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.2ab66003a3a59e8b926c.hot-update.json",
-      "publicPath": "http://localhost:3000/main.2ab66003a3a59e8b926c.hot-update.json"
-    },
-    "main.d01c0a891d8f8603d48e.hot-update.js": {
-      "name": "main.d01c0a891d8f8603d48e.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.d01c0a891d8f8603d48e.hot-update.js",
-      "publicPath": "http://localhost:3000/main.d01c0a891d8f8603d48e.hot-update.js"
-    },
-    "main.d01c0a891d8f8603d48e.hot-update.json": {
-      "name": "main.d01c0a891d8f8603d48e.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.d01c0a891d8f8603d48e.hot-update.json",
-      "publicPath": "http://localhost:3000/main.d01c0a891d8f8603d48e.hot-update.json"
-    },
-    "main.62c3c7ba3836e7d2ff0e.hot-update.js": {
-      "name": "main.62c3c7ba3836e7d2ff0e.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.62c3c7ba3836e7d2ff0e.hot-update.js",
-      "publicPath": "http://localhost:3000/main.62c3c7ba3836e7d2ff0e.hot-update.js"
-    },
-    "main.62c3c7ba3836e7d2ff0e.hot-update.json": {
-      "name": "main.62c3c7ba3836e7d2ff0e.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.62c3c7ba3836e7d2ff0e.hot-update.json",
-      "publicPath": "http://localhost:3000/main.62c3c7ba3836e7d2ff0e.hot-update.json"
-    },
-    "main.36be6d0eba5dbd4509c0.hot-update.js": {
-      "name": "main.36be6d0eba5dbd4509c0.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.36be6d0eba5dbd4509c0.hot-update.js",
-      "publicPath": "http://localhost:3000/main.36be6d0eba5dbd4509c0.hot-update.js"
-    },
-    "main.36be6d0eba5dbd4509c0.hot-update.json": {
-      "name": "main.36be6d0eba5dbd4509c0.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.36be6d0eba5dbd4509c0.hot-update.json",
-      "publicPath": "http://localhost:3000/main.36be6d0eba5dbd4509c0.hot-update.json"
-    },
-    "main.9552e6d83c56b50c7e43.hot-update.js": {
-      "name": "main.9552e6d83c56b50c7e43.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.9552e6d83c56b50c7e43.hot-update.js",
-      "publicPath": "http://localhost:3000/main.9552e6d83c56b50c7e43.hot-update.js"
-    },
-    "main.9552e6d83c56b50c7e43.hot-update.json": {
-      "name": "main.9552e6d83c56b50c7e43.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.9552e6d83c56b50c7e43.hot-update.json",
-      "publicPath": "http://localhost:3000/main.9552e6d83c56b50c7e43.hot-update.json"
-    },
-    "main.e392b99ff55379a3339e.hot-update.js": {
-      "name": "main.e392b99ff55379a3339e.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.e392b99ff55379a3339e.hot-update.js",
-      "publicPath": "http://localhost:3000/main.e392b99ff55379a3339e.hot-update.js"
-    },
-    "main.e392b99ff55379a3339e.hot-update.json": {
-      "name": "main.e392b99ff55379a3339e.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.e392b99ff55379a3339e.hot-update.json",
-      "publicPath": "http://localhost:3000/main.e392b99ff55379a3339e.hot-update.json"
-    },
-    "main.197c683df029afa616e9.hot-update.js": {
-      "name": "main.197c683df029afa616e9.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.197c683df029afa616e9.hot-update.js",
-      "publicPath": "http://localhost:3000/main.197c683df029afa616e9.hot-update.js"
-    },
-    "main.197c683df029afa616e9.hot-update.json": {
-      "name": "main.197c683df029afa616e9.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.197c683df029afa616e9.hot-update.json",
-      "publicPath": "http://localhost:3000/main.197c683df029afa616e9.hot-update.json"
-    },
-    "main.5dd38dd2f7e5c15f3e07.hot-update.js": {
-      "name": "main.5dd38dd2f7e5c15f3e07.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.5dd38dd2f7e5c15f3e07.hot-update.js",
-      "publicPath": "http://localhost:3000/main.5dd38dd2f7e5c15f3e07.hot-update.js"
-    },
-    "main.5dd38dd2f7e5c15f3e07.hot-update.json": {
-      "name": "main.5dd38dd2f7e5c15f3e07.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.5dd38dd2f7e5c15f3e07.hot-update.json",
-      "publicPath": "http://localhost:3000/main.5dd38dd2f7e5c15f3e07.hot-update.json"
-    },
-    "main.bf62a0a836a4582636a5.hot-update.js": {
-      "name": "main.bf62a0a836a4582636a5.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.bf62a0a836a4582636a5.hot-update.js",
-      "publicPath": "http://localhost:3000/main.bf62a0a836a4582636a5.hot-update.js"
-    },
-    "main.bf62a0a836a4582636a5.hot-update.json": {
-      "name": "main.bf62a0a836a4582636a5.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.bf62a0a836a4582636a5.hot-update.json",
-      "publicPath": "http://localhost:3000/main.bf62a0a836a4582636a5.hot-update.json"
-    },
-    "main.4fa40b316eab1b573c1a.hot-update.js": {
-      "name": "main.4fa40b316eab1b573c1a.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.4fa40b316eab1b573c1a.hot-update.js",
-      "publicPath": "http://localhost:3000/main.4fa40b316eab1b573c1a.hot-update.js"
-    },
-    "main.4fa40b316eab1b573c1a.hot-update.json": {
-      "name": "main.4fa40b316eab1b573c1a.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.4fa40b316eab1b573c1a.hot-update.json",
-      "publicPath": "http://localhost:3000/main.4fa40b316eab1b573c1a.hot-update.json"
-    },
-    "main.0125f38dd9cb0b30c366.hot-update.js": {
-      "name": "main.0125f38dd9cb0b30c366.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.0125f38dd9cb0b30c366.hot-update.js",
-      "publicPath": "http://localhost:3000/main.0125f38dd9cb0b30c366.hot-update.js"
-    },
-    "main.0125f38dd9cb0b30c366.hot-update.json": {
-      "name": "main.0125f38dd9cb0b30c366.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.0125f38dd9cb0b30c366.hot-update.json",
-      "publicPath": "http://localhost:3000/main.0125f38dd9cb0b30c366.hot-update.json"
-    },
-    "main.d78b96f40e95cc02175f.hot-update.js": {
-      "name": "main.d78b96f40e95cc02175f.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.d78b96f40e95cc02175f.hot-update.js",
-      "publicPath": "http://localhost:3000/main.d78b96f40e95cc02175f.hot-update.js"
-    },
-    "main.d78b96f40e95cc02175f.hot-update.json": {
-      "name": "main.d78b96f40e95cc02175f.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.d78b96f40e95cc02175f.hot-update.json",
-      "publicPath": "http://localhost:3000/main.d78b96f40e95cc02175f.hot-update.json"
-    },
-    "main.b370e3bb4c2337226b39.hot-update.js": {
-      "name": "main.b370e3bb4c2337226b39.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.b370e3bb4c2337226b39.hot-update.js",
-      "publicPath": "http://localhost:3000/main.b370e3bb4c2337226b39.hot-update.js"
-    },
-    "main.b370e3bb4c2337226b39.hot-update.json": {
-      "name": "main.b370e3bb4c2337226b39.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.b370e3bb4c2337226b39.hot-update.json",
-      "publicPath": "http://localhost:3000/main.b370e3bb4c2337226b39.hot-update.json"
-    },
-    "main.fe34c8e2495dbd94db13.hot-update.js": {
-      "name": "main.fe34c8e2495dbd94db13.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.fe34c8e2495dbd94db13.hot-update.js",
-      "publicPath": "http://localhost:3000/main.fe34c8e2495dbd94db13.hot-update.js"
-    },
-    "main.fe34c8e2495dbd94db13.hot-update.json": {
-      "name": "main.fe34c8e2495dbd94db13.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.fe34c8e2495dbd94db13.hot-update.json",
-      "publicPath": "http://localhost:3000/main.fe34c8e2495dbd94db13.hot-update.json"
-    },
-    "main.e7588294dd96cbd654aa.hot-update.js": {
-      "name": "main.e7588294dd96cbd654aa.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.e7588294dd96cbd654aa.hot-update.js",
-      "publicPath": "http://localhost:3000/main.e7588294dd96cbd654aa.hot-update.js"
-    },
-    "main.e7588294dd96cbd654aa.hot-update.json": {
-      "name": "main.e7588294dd96cbd654aa.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.e7588294dd96cbd654aa.hot-update.json",
-      "publicPath": "http://localhost:3000/main.e7588294dd96cbd654aa.hot-update.json"
-    },
-    "main.a035f959ffca48143902.hot-update.js": {
-      "name": "main.a035f959ffca48143902.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.a035f959ffca48143902.hot-update.js",
-      "publicPath": "http://localhost:3000/main.a035f959ffca48143902.hot-update.js"
-    },
-    "main.a035f959ffca48143902.hot-update.json": {
-      "name": "main.a035f959ffca48143902.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.a035f959ffca48143902.hot-update.json",
-      "publicPath": "http://localhost:3000/main.a035f959ffca48143902.hot-update.json"
-    },
-    "main.eab628ac070544f3ddfd.hot-update.js": {
-      "name": "main.eab628ac070544f3ddfd.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.eab628ac070544f3ddfd.hot-update.js",
-      "publicPath": "http://localhost:3000/main.eab628ac070544f3ddfd.hot-update.js"
-    },
-    "main.eab628ac070544f3ddfd.hot-update.json": {
-      "name": "main.eab628ac070544f3ddfd.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.eab628ac070544f3ddfd.hot-update.json",
-      "publicPath": "http://localhost:3000/main.eab628ac070544f3ddfd.hot-update.json"
-    },
-    "main.51081fecd48b4d0efc3e.hot-update.js": {
-      "name": "main.51081fecd48b4d0efc3e.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.51081fecd48b4d0efc3e.hot-update.js",
-      "publicPath": "http://localhost:3000/main.51081fecd48b4d0efc3e.hot-update.js"
-    },
-    "main.51081fecd48b4d0efc3e.hot-update.json": {
-      "name": "main.51081fecd48b4d0efc3e.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.51081fecd48b4d0efc3e.hot-update.json",
-      "publicPath": "http://localhost:3000/main.51081fecd48b4d0efc3e.hot-update.json"
-    },
-    "main.cd52881b75e1b04b5de1.hot-update.js": {
-      "name": "main.cd52881b75e1b04b5de1.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.cd52881b75e1b04b5de1.hot-update.js",
-      "publicPath": "http://localhost:3000/main.cd52881b75e1b04b5de1.hot-update.js"
-    },
-    "main.cd52881b75e1b04b5de1.hot-update.json": {
-      "name": "main.cd52881b75e1b04b5de1.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.cd52881b75e1b04b5de1.hot-update.json",
-      "publicPath": "http://localhost:3000/main.cd52881b75e1b04b5de1.hot-update.json"
-    },
-    "main.da1a149ada883c282b7f.hot-update.js": {
-      "name": "main.da1a149ada883c282b7f.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.da1a149ada883c282b7f.hot-update.js",
-      "publicPath": "http://localhost:3000/main.da1a149ada883c282b7f.hot-update.js"
-    },
-    "main.da1a149ada883c282b7f.hot-update.json": {
-      "name": "main.da1a149ada883c282b7f.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.da1a149ada883c282b7f.hot-update.json",
-      "publicPath": "http://localhost:3000/main.da1a149ada883c282b7f.hot-update.json"
-    },
-    "main.5fead16724265307d7fe.hot-update.js": {
-      "name": "main.5fead16724265307d7fe.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.5fead16724265307d7fe.hot-update.js",
-      "publicPath": "http://localhost:3000/main.5fead16724265307d7fe.hot-update.js"
-    },
-    "main.5fead16724265307d7fe.hot-update.json": {
-      "name": "main.5fead16724265307d7fe.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.5fead16724265307d7fe.hot-update.json",
-      "publicPath": "http://localhost:3000/main.5fead16724265307d7fe.hot-update.json"
-    },
-    "main.aef1072186c99eb7e53e.hot-update.js": {
-      "name": "main.aef1072186c99eb7e53e.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.aef1072186c99eb7e53e.hot-update.js",
-      "publicPath": "http://localhost:3000/main.aef1072186c99eb7e53e.hot-update.js"
-    },
-    "main.aef1072186c99eb7e53e.hot-update.json": {
-      "name": "main.aef1072186c99eb7e53e.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.aef1072186c99eb7e53e.hot-update.json",
-      "publicPath": "http://localhost:3000/main.aef1072186c99eb7e53e.hot-update.json"
-    },
-    "main.1f022045d72fba65f9ac.hot-update.js": {
-      "name": "main.1f022045d72fba65f9ac.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.1f022045d72fba65f9ac.hot-update.js",
-      "publicPath": "http://localhost:3000/main.1f022045d72fba65f9ac.hot-update.js"
-    },
-    "main.1f022045d72fba65f9ac.hot-update.json": {
-      "name": "main.1f022045d72fba65f9ac.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.1f022045d72fba65f9ac.hot-update.json",
-      "publicPath": "http://localhost:3000/main.1f022045d72fba65f9ac.hot-update.json"
-    },
-    "main.1b59517566e06892c52b.hot-update.js": {
-      "name": "main.1b59517566e06892c52b.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.1b59517566e06892c52b.hot-update.js",
-      "publicPath": "http://localhost:3000/main.1b59517566e06892c52b.hot-update.js"
-    },
-    "main.1b59517566e06892c52b.hot-update.json": {
-      "name": "main.1b59517566e06892c52b.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.1b59517566e06892c52b.hot-update.json",
-      "publicPath": "http://localhost:3000/main.1b59517566e06892c52b.hot-update.json"
-    },
-    "main.0f3ee3da20bddc8dda8f.hot-update.js": {
-      "name": "main.0f3ee3da20bddc8dda8f.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.0f3ee3da20bddc8dda8f.hot-update.js",
-      "publicPath": "http://localhost:3000/main.0f3ee3da20bddc8dda8f.hot-update.js"
-    },
-    "main.0f3ee3da20bddc8dda8f.hot-update.json": {
-      "name": "main.0f3ee3da20bddc8dda8f.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.0f3ee3da20bddc8dda8f.hot-update.json",
-      "publicPath": "http://localhost:3000/main.0f3ee3da20bddc8dda8f.hot-update.json"
-    },
-    "main.0602cb8c24de09cee2b1.hot-update.js": {
-      "name": "main.0602cb8c24de09cee2b1.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.0602cb8c24de09cee2b1.hot-update.js",
-      "publicPath": "http://localhost:3000/main.0602cb8c24de09cee2b1.hot-update.js"
-    },
-    "main.0602cb8c24de09cee2b1.hot-update.json": {
-      "name": "main.0602cb8c24de09cee2b1.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.0602cb8c24de09cee2b1.hot-update.json",
-      "publicPath": "http://localhost:3000/main.0602cb8c24de09cee2b1.hot-update.json"
-    },
-    "main.27b2e77b19a88b1bff3d.hot-update.js": {
-      "name": "main.27b2e77b19a88b1bff3d.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.27b2e77b19a88b1bff3d.hot-update.js",
-      "publicPath": "http://localhost:3000/main.27b2e77b19a88b1bff3d.hot-update.js"
-    },
-    "main.27b2e77b19a88b1bff3d.hot-update.json": {
-      "name": "main.27b2e77b19a88b1bff3d.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.27b2e77b19a88b1bff3d.hot-update.json",
-      "publicPath": "http://localhost:3000/main.27b2e77b19a88b1bff3d.hot-update.json"
-    },
-    "main.e1c65eb50a84b2aa1b2f.hot-update.js": {
-      "name": "main.e1c65eb50a84b2aa1b2f.hot-update.js",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.e1c65eb50a84b2aa1b2f.hot-update.js",
-      "publicPath": "http://localhost:3000/main.e1c65eb50a84b2aa1b2f.hot-update.js"
-    },
-    "main.e1c65eb50a84b2aa1b2f.hot-update.json": {
-      "name": "main.e1c65eb50a84b2aa1b2f.hot-update.json",
-      "path": "/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/dist/main.e1c65eb50a84b2aa1b2f.hot-update.json",
-      "publicPath": "http://localhost:3000/main.e1c65eb50a84b2aa1b2f.hot-update.json"
+    "main.d49f2ace73b3f806ab12.hot-update.js": {
+      "name": "main.d49f2ace73b3f806ab12.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.d49f2ace73b3f806ab12.hot-update.js",
+      "publicPath": "http://localhost:3000/main.d49f2ace73b3f806ab12.hot-update.js"
+    },
+    "main.d49f2ace73b3f806ab12.hot-update.json": {
+      "name": "main.d49f2ace73b3f806ab12.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.d49f2ace73b3f806ab12.hot-update.json",
+      "publicPath": "http://localhost:3000/main.d49f2ace73b3f806ab12.hot-update.json"
+    },
+    "main.c467af0a7cded4d5d0b5.hot-update.js": {
+      "name": "main.c467af0a7cded4d5d0b5.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.c467af0a7cded4d5d0b5.hot-update.js",
+      "publicPath": "http://localhost:3000/main.c467af0a7cded4d5d0b5.hot-update.js"
+    },
+    "main.c467af0a7cded4d5d0b5.hot-update.json": {
+      "name": "main.c467af0a7cded4d5d0b5.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.c467af0a7cded4d5d0b5.hot-update.json",
+      "publicPath": "http://localhost:3000/main.c467af0a7cded4d5d0b5.hot-update.json"
+    },
+    "main.4804c2c71546d22c06b8.hot-update.js": {
+      "name": "main.4804c2c71546d22c06b8.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.4804c2c71546d22c06b8.hot-update.js",
+      "publicPath": "http://localhost:3000/main.4804c2c71546d22c06b8.hot-update.js"
+    },
+    "main.4804c2c71546d22c06b8.hot-update.json": {
+      "name": "main.4804c2c71546d22c06b8.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.4804c2c71546d22c06b8.hot-update.json",
+      "publicPath": "http://localhost:3000/main.4804c2c71546d22c06b8.hot-update.json"
+    },
+    "main.8ea472050b2fc85da7fa.hot-update.js": {
+      "name": "main.8ea472050b2fc85da7fa.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.8ea472050b2fc85da7fa.hot-update.js",
+      "publicPath": "http://localhost:3000/main.8ea472050b2fc85da7fa.hot-update.js"
+    },
+    "main.8ea472050b2fc85da7fa.hot-update.json": {
+      "name": "main.8ea472050b2fc85da7fa.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.8ea472050b2fc85da7fa.hot-update.json",
+      "publicPath": "http://localhost:3000/main.8ea472050b2fc85da7fa.hot-update.json"
+    },
+    "main.063aee7384b008dbe640.hot-update.js": {
+      "name": "main.063aee7384b008dbe640.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.063aee7384b008dbe640.hot-update.js",
+      "publicPath": "http://localhost:3000/main.063aee7384b008dbe640.hot-update.js"
+    },
+    "main.063aee7384b008dbe640.hot-update.json": {
+      "name": "main.063aee7384b008dbe640.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.063aee7384b008dbe640.hot-update.json",
+      "publicPath": "http://localhost:3000/main.063aee7384b008dbe640.hot-update.json"
+    },
+    "main.67a0453050efd4aa3362.hot-update.js": {
+      "name": "main.67a0453050efd4aa3362.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.67a0453050efd4aa3362.hot-update.js",
+      "publicPath": "http://localhost:3000/main.67a0453050efd4aa3362.hot-update.js"
+    },
+    "main.67a0453050efd4aa3362.hot-update.json": {
+      "name": "main.67a0453050efd4aa3362.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.67a0453050efd4aa3362.hot-update.json",
+      "publicPath": "http://localhost:3000/main.67a0453050efd4aa3362.hot-update.json"
+    },
+    "main.11c2a52acee90eed98d5.hot-update.js": {
+      "name": "main.11c2a52acee90eed98d5.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.11c2a52acee90eed98d5.hot-update.js",
+      "publicPath": "http://localhost:3000/main.11c2a52acee90eed98d5.hot-update.js"
+    },
+    "main.11c2a52acee90eed98d5.hot-update.json": {
+      "name": "main.11c2a52acee90eed98d5.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.11c2a52acee90eed98d5.hot-update.json",
+      "publicPath": "http://localhost:3000/main.11c2a52acee90eed98d5.hot-update.json"
+    },
+    "main.c58fe7770f3f0357d37d.hot-update.js": {
+      "name": "main.c58fe7770f3f0357d37d.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.c58fe7770f3f0357d37d.hot-update.js",
+      "publicPath": "http://localhost:3000/main.c58fe7770f3f0357d37d.hot-update.js"
+    },
+    "main.c58fe7770f3f0357d37d.hot-update.json": {
+      "name": "main.c58fe7770f3f0357d37d.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.c58fe7770f3f0357d37d.hot-update.json",
+      "publicPath": "http://localhost:3000/main.c58fe7770f3f0357d37d.hot-update.json"
+    },
+    "main.cfc166811684045fc9bc.hot-update.js": {
+      "name": "main.cfc166811684045fc9bc.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.cfc166811684045fc9bc.hot-update.js",
+      "publicPath": "http://localhost:3000/main.cfc166811684045fc9bc.hot-update.js"
+    },
+    "main.cfc166811684045fc9bc.hot-update.json": {
+      "name": "main.cfc166811684045fc9bc.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.cfc166811684045fc9bc.hot-update.json",
+      "publicPath": "http://localhost:3000/main.cfc166811684045fc9bc.hot-update.json"
+    },
+    "main.334e4a125c4a636d8019.hot-update.js": {
+      "name": "main.334e4a125c4a636d8019.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.334e4a125c4a636d8019.hot-update.js",
+      "publicPath": "http://localhost:3000/main.334e4a125c4a636d8019.hot-update.js"
+    },
+    "main.334e4a125c4a636d8019.hot-update.json": {
+      "name": "main.334e4a125c4a636d8019.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.334e4a125c4a636d8019.hot-update.json",
+      "publicPath": "http://localhost:3000/main.334e4a125c4a636d8019.hot-update.json"
+    },
+    "main.4161fc62a58746e6e85e.hot-update.js": {
+      "name": "main.4161fc62a58746e6e85e.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.4161fc62a58746e6e85e.hot-update.js",
+      "publicPath": "http://localhost:3000/main.4161fc62a58746e6e85e.hot-update.js"
+    },
+    "main.4161fc62a58746e6e85e.hot-update.json": {
+      "name": "main.4161fc62a58746e6e85e.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.4161fc62a58746e6e85e.hot-update.json",
+      "publicPath": "http://localhost:3000/main.4161fc62a58746e6e85e.hot-update.json"
+    },
+    "main.8c3f6271120003c724db.hot-update.js": {
+      "name": "main.8c3f6271120003c724db.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.8c3f6271120003c724db.hot-update.js",
+      "publicPath": "http://localhost:3000/main.8c3f6271120003c724db.hot-update.js"
+    },
+    "main.8c3f6271120003c724db.hot-update.json": {
+      "name": "main.8c3f6271120003c724db.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.8c3f6271120003c724db.hot-update.json",
+      "publicPath": "http://localhost:3000/main.8c3f6271120003c724db.hot-update.json"
+    },
+    "main.0f5f13a04440a788807b.hot-update.js": {
+      "name": "main.0f5f13a04440a788807b.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.0f5f13a04440a788807b.hot-update.js",
+      "publicPath": "http://localhost:3000/main.0f5f13a04440a788807b.hot-update.js"
+    },
+    "main.0f5f13a04440a788807b.hot-update.json": {
+      "name": "main.0f5f13a04440a788807b.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.0f5f13a04440a788807b.hot-update.json",
+      "publicPath": "http://localhost:3000/main.0f5f13a04440a788807b.hot-update.json"
+    },
+    "main.2de18fb91386a5911551.hot-update.js": {
+      "name": "main.2de18fb91386a5911551.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.2de18fb91386a5911551.hot-update.js",
+      "publicPath": "http://localhost:3000/main.2de18fb91386a5911551.hot-update.js"
+    },
+    "main.2de18fb91386a5911551.hot-update.json": {
+      "name": "main.2de18fb91386a5911551.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.2de18fb91386a5911551.hot-update.json",
+      "publicPath": "http://localhost:3000/main.2de18fb91386a5911551.hot-update.json"
+    },
+    "main.c3a41d387495c13ed03e.hot-update.js": {
+      "name": "main.c3a41d387495c13ed03e.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.c3a41d387495c13ed03e.hot-update.js",
+      "publicPath": "http://localhost:3000/main.c3a41d387495c13ed03e.hot-update.js"
+    },
+    "main.c3a41d387495c13ed03e.hot-update.json": {
+      "name": "main.c3a41d387495c13ed03e.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.c3a41d387495c13ed03e.hot-update.json",
+      "publicPath": "http://localhost:3000/main.c3a41d387495c13ed03e.hot-update.json"
+    },
+    "main.f46257675a68505b5648.hot-update.js": {
+      "name": "main.f46257675a68505b5648.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.f46257675a68505b5648.hot-update.js",
+      "publicPath": "http://localhost:3000/main.f46257675a68505b5648.hot-update.js"
+    },
+    "main.f46257675a68505b5648.hot-update.json": {
+      "name": "main.f46257675a68505b5648.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.f46257675a68505b5648.hot-update.json",
+      "publicPath": "http://localhost:3000/main.f46257675a68505b5648.hot-update.json"
+    },
+    "main.aed4964362061e11dce1.hot-update.js": {
+      "name": "main.aed4964362061e11dce1.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.aed4964362061e11dce1.hot-update.js",
+      "publicPath": "http://localhost:3000/main.aed4964362061e11dce1.hot-update.js"
+    },
+    "main.aed4964362061e11dce1.hot-update.json": {
+      "name": "main.aed4964362061e11dce1.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.aed4964362061e11dce1.hot-update.json",
+      "publicPath": "http://localhost:3000/main.aed4964362061e11dce1.hot-update.json"
+    },
+    "main.2fd27d9c4f79e9e3e294.hot-update.js": {
+      "name": "main.2fd27d9c4f79e9e3e294.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.2fd27d9c4f79e9e3e294.hot-update.js",
+      "publicPath": "http://localhost:3000/main.2fd27d9c4f79e9e3e294.hot-update.js"
+    },
+    "main.2fd27d9c4f79e9e3e294.hot-update.json": {
+      "name": "main.2fd27d9c4f79e9e3e294.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.2fd27d9c4f79e9e3e294.hot-update.json",
+      "publicPath": "http://localhost:3000/main.2fd27d9c4f79e9e3e294.hot-update.json"
+    },
+    "main.6a98408bcd8ab3470643.hot-update.js": {
+      "name": "main.6a98408bcd8ab3470643.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.6a98408bcd8ab3470643.hot-update.js",
+      "publicPath": "http://localhost:3000/main.6a98408bcd8ab3470643.hot-update.js"
+    },
+    "main.6a98408bcd8ab3470643.hot-update.json": {
+      "name": "main.6a98408bcd8ab3470643.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.6a98408bcd8ab3470643.hot-update.json",
+      "publicPath": "http://localhost:3000/main.6a98408bcd8ab3470643.hot-update.json"
+    },
+    "main.25a8ccadf1ca90522735.hot-update.js": {
+      "name": "main.25a8ccadf1ca90522735.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.25a8ccadf1ca90522735.hot-update.js",
+      "publicPath": "http://localhost:3000/main.25a8ccadf1ca90522735.hot-update.js"
+    },
+    "main.25a8ccadf1ca90522735.hot-update.json": {
+      "name": "main.25a8ccadf1ca90522735.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.25a8ccadf1ca90522735.hot-update.json",
+      "publicPath": "http://localhost:3000/main.25a8ccadf1ca90522735.hot-update.json"
+    },
+    "main.098fd847f2f391370f93.hot-update.js": {
+      "name": "main.098fd847f2f391370f93.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.098fd847f2f391370f93.hot-update.js",
+      "publicPath": "http://localhost:3000/main.098fd847f2f391370f93.hot-update.js"
+    },
+    "main.098fd847f2f391370f93.hot-update.json": {
+      "name": "main.098fd847f2f391370f93.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.098fd847f2f391370f93.hot-update.json",
+      "publicPath": "http://localhost:3000/main.098fd847f2f391370f93.hot-update.json"
+    },
+    "main.262d3236a20aafbb8a2e.hot-update.js": {
+      "name": "main.262d3236a20aafbb8a2e.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.262d3236a20aafbb8a2e.hot-update.js",
+      "publicPath": "http://localhost:3000/main.262d3236a20aafbb8a2e.hot-update.js"
+    },
+    "main.262d3236a20aafbb8a2e.hot-update.json": {
+      "name": "main.262d3236a20aafbb8a2e.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.262d3236a20aafbb8a2e.hot-update.json",
+      "publicPath": "http://localhost:3000/main.262d3236a20aafbb8a2e.hot-update.json"
+    },
+    "main.d595ab5f3468b2527d86.hot-update.js": {
+      "name": "main.d595ab5f3468b2527d86.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.d595ab5f3468b2527d86.hot-update.js",
+      "publicPath": "http://localhost:3000/main.d595ab5f3468b2527d86.hot-update.js"
+    },
+    "main.d595ab5f3468b2527d86.hot-update.json": {
+      "name": "main.d595ab5f3468b2527d86.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.d595ab5f3468b2527d86.hot-update.json",
+      "publicPath": "http://localhost:3000/main.d595ab5f3468b2527d86.hot-update.json"
+    },
+    "main.3678c5e862be6980ab24.hot-update.js": {
+      "name": "main.3678c5e862be6980ab24.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.3678c5e862be6980ab24.hot-update.js",
+      "publicPath": "http://localhost:3000/main.3678c5e862be6980ab24.hot-update.js"
+    },
+    "main.3678c5e862be6980ab24.hot-update.json": {
+      "name": "main.3678c5e862be6980ab24.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.3678c5e862be6980ab24.hot-update.json",
+      "publicPath": "http://localhost:3000/main.3678c5e862be6980ab24.hot-update.json"
+    },
+    "main.98c2c4b105d30381b026.hot-update.js": {
+      "name": "main.98c2c4b105d30381b026.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.98c2c4b105d30381b026.hot-update.js",
+      "publicPath": "http://localhost:3000/main.98c2c4b105d30381b026.hot-update.js"
+    },
+    "main.98c2c4b105d30381b026.hot-update.json": {
+      "name": "main.98c2c4b105d30381b026.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.98c2c4b105d30381b026.hot-update.json",
+      "publicPath": "http://localhost:3000/main.98c2c4b105d30381b026.hot-update.json"
+    },
+    "main.2221f67fb9eb7e381428.hot-update.js": {
+      "name": "main.2221f67fb9eb7e381428.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.2221f67fb9eb7e381428.hot-update.js",
+      "publicPath": "http://localhost:3000/main.2221f67fb9eb7e381428.hot-update.js"
+    },
+    "main.2221f67fb9eb7e381428.hot-update.json": {
+      "name": "main.2221f67fb9eb7e381428.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.2221f67fb9eb7e381428.hot-update.json",
+      "publicPath": "http://localhost:3000/main.2221f67fb9eb7e381428.hot-update.json"
+    },
+    "main.205860fb74da7977f4c4.hot-update.js": {
+      "name": "main.205860fb74da7977f4c4.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.205860fb74da7977f4c4.hot-update.js",
+      "publicPath": "http://localhost:3000/main.205860fb74da7977f4c4.hot-update.js"
+    },
+    "main.205860fb74da7977f4c4.hot-update.json": {
+      "name": "main.205860fb74da7977f4c4.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.205860fb74da7977f4c4.hot-update.json",
+      "publicPath": "http://localhost:3000/main.205860fb74da7977f4c4.hot-update.json"
+    },
+    "main.a76eabf7d11d8e5578d5.hot-update.js": {
+      "name": "main.a76eabf7d11d8e5578d5.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.a76eabf7d11d8e5578d5.hot-update.js",
+      "publicPath": "http://localhost:3000/main.a76eabf7d11d8e5578d5.hot-update.js"
+    },
+    "main.a76eabf7d11d8e5578d5.hot-update.json": {
+      "name": "main.a76eabf7d11d8e5578d5.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.a76eabf7d11d8e5578d5.hot-update.json",
+      "publicPath": "http://localhost:3000/main.a76eabf7d11d8e5578d5.hot-update.json"
+    },
+    "main.ac271de77d2ca25520bd.hot-update.js": {
+      "name": "main.ac271de77d2ca25520bd.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.ac271de77d2ca25520bd.hot-update.js",
+      "publicPath": "http://localhost:3000/main.ac271de77d2ca25520bd.hot-update.js"
+    },
+    "main.ac271de77d2ca25520bd.hot-update.json": {
+      "name": "main.ac271de77d2ca25520bd.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.ac271de77d2ca25520bd.hot-update.json",
+      "publicPath": "http://localhost:3000/main.ac271de77d2ca25520bd.hot-update.json"
+    },
+    "main.c4d5e8991fc801df42f7.hot-update.js": {
+      "name": "main.c4d5e8991fc801df42f7.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.c4d5e8991fc801df42f7.hot-update.js",
+      "publicPath": "http://localhost:3000/main.c4d5e8991fc801df42f7.hot-update.js"
+    },
+    "main.c4d5e8991fc801df42f7.hot-update.json": {
+      "name": "main.c4d5e8991fc801df42f7.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.c4d5e8991fc801df42f7.hot-update.json",
+      "publicPath": "http://localhost:3000/main.c4d5e8991fc801df42f7.hot-update.json"
+    },
+    "main.04b4c7ec7ba584fec41d.hot-update.js": {
+      "name": "main.04b4c7ec7ba584fec41d.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.04b4c7ec7ba584fec41d.hot-update.js",
+      "publicPath": "http://localhost:3000/main.04b4c7ec7ba584fec41d.hot-update.js"
+    },
+    "main.04b4c7ec7ba584fec41d.hot-update.json": {
+      "name": "main.04b4c7ec7ba584fec41d.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.04b4c7ec7ba584fec41d.hot-update.json",
+      "publicPath": "http://localhost:3000/main.04b4c7ec7ba584fec41d.hot-update.json"
+    },
+    "main.08be11790d31ba6da3c5.hot-update.js": {
+      "name": "main.08be11790d31ba6da3c5.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.08be11790d31ba6da3c5.hot-update.js",
+      "publicPath": "http://localhost:3000/main.08be11790d31ba6da3c5.hot-update.js"
+    },
+    "main.08be11790d31ba6da3c5.hot-update.json": {
+      "name": "main.08be11790d31ba6da3c5.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.08be11790d31ba6da3c5.hot-update.json",
+      "publicPath": "http://localhost:3000/main.08be11790d31ba6da3c5.hot-update.json"
+    },
+    "main.4089148aaafc8f0e11b6.hot-update.js": {
+      "name": "main.4089148aaafc8f0e11b6.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.4089148aaafc8f0e11b6.hot-update.js",
+      "publicPath": "http://localhost:3000/main.4089148aaafc8f0e11b6.hot-update.js"
+    },
+    "main.4089148aaafc8f0e11b6.hot-update.json": {
+      "name": "main.4089148aaafc8f0e11b6.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.4089148aaafc8f0e11b6.hot-update.json",
+      "publicPath": "http://localhost:3000/main.4089148aaafc8f0e11b6.hot-update.json"
+    },
+    "main.62d33094957e8fb7de37.hot-update.js": {
+      "name": "main.62d33094957e8fb7de37.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.62d33094957e8fb7de37.hot-update.js",
+      "publicPath": "http://localhost:3000/main.62d33094957e8fb7de37.hot-update.js"
+    },
+    "main.62d33094957e8fb7de37.hot-update.json": {
+      "name": "main.62d33094957e8fb7de37.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.62d33094957e8fb7de37.hot-update.json",
+      "publicPath": "http://localhost:3000/main.62d33094957e8fb7de37.hot-update.json"
+    },
+    "main.7e49415801c632d0fc6c.hot-update.js": {
+      "name": "main.7e49415801c632d0fc6c.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.7e49415801c632d0fc6c.hot-update.js",
+      "publicPath": "http://localhost:3000/main.7e49415801c632d0fc6c.hot-update.js"
+    },
+    "main.7e49415801c632d0fc6c.hot-update.json": {
+      "name": "main.7e49415801c632d0fc6c.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.7e49415801c632d0fc6c.hot-update.json",
+      "publicPath": "http://localhost:3000/main.7e49415801c632d0fc6c.hot-update.json"
+    },
+    "main.613e7e9b0e005cc1e4ff.hot-update.js": {
+      "name": "main.613e7e9b0e005cc1e4ff.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.613e7e9b0e005cc1e4ff.hot-update.js",
+      "publicPath": "http://localhost:3000/main.613e7e9b0e005cc1e4ff.hot-update.js"
+    },
+    "main.613e7e9b0e005cc1e4ff.hot-update.json": {
+      "name": "main.613e7e9b0e005cc1e4ff.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.613e7e9b0e005cc1e4ff.hot-update.json",
+      "publicPath": "http://localhost:3000/main.613e7e9b0e005cc1e4ff.hot-update.json"
+    },
+    "main.c265cc95b77117b06ae3.hot-update.js": {
+      "name": "main.c265cc95b77117b06ae3.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.c265cc95b77117b06ae3.hot-update.js",
+      "publicPath": "http://localhost:3000/main.c265cc95b77117b06ae3.hot-update.js"
+    },
+    "main.c265cc95b77117b06ae3.hot-update.json": {
+      "name": "main.c265cc95b77117b06ae3.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.c265cc95b77117b06ae3.hot-update.json",
+      "publicPath": "http://localhost:3000/main.c265cc95b77117b06ae3.hot-update.json"
+    },
+    "main.e6fb5ebd67f2248b7172.hot-update.js": {
+      "name": "main.e6fb5ebd67f2248b7172.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.e6fb5ebd67f2248b7172.hot-update.js",
+      "publicPath": "http://localhost:3000/main.e6fb5ebd67f2248b7172.hot-update.js"
+    },
+    "main.e6fb5ebd67f2248b7172.hot-update.json": {
+      "name": "main.e6fb5ebd67f2248b7172.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.e6fb5ebd67f2248b7172.hot-update.json",
+      "publicPath": "http://localhost:3000/main.e6fb5ebd67f2248b7172.hot-update.json"
+    },
+    "main.19753469878fc5904550.hot-update.js": {
+      "name": "main.19753469878fc5904550.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.19753469878fc5904550.hot-update.js",
+      "publicPath": "http://localhost:3000/main.19753469878fc5904550.hot-update.js"
+    },
+    "main.19753469878fc5904550.hot-update.json": {
+      "name": "main.19753469878fc5904550.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.19753469878fc5904550.hot-update.json",
+      "publicPath": "http://localhost:3000/main.19753469878fc5904550.hot-update.json"
+    },
+    "main.9641dbdec6746d36997b.hot-update.js": {
+      "name": "main.9641dbdec6746d36997b.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.9641dbdec6746d36997b.hot-update.js",
+      "publicPath": "http://localhost:3000/main.9641dbdec6746d36997b.hot-update.js"
+    },
+    "main.9641dbdec6746d36997b.hot-update.json": {
+      "name": "main.9641dbdec6746d36997b.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.9641dbdec6746d36997b.hot-update.json",
+      "publicPath": "http://localhost:3000/main.9641dbdec6746d36997b.hot-update.json"
+    },
+    "main.0093bca4f5f3dd54ddf8.hot-update.js": {
+      "name": "main.0093bca4f5f3dd54ddf8.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.0093bca4f5f3dd54ddf8.hot-update.js",
+      "publicPath": "http://localhost:3000/main.0093bca4f5f3dd54ddf8.hot-update.js"
+    },
+    "main.0093bca4f5f3dd54ddf8.hot-update.json": {
+      "name": "main.0093bca4f5f3dd54ddf8.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.0093bca4f5f3dd54ddf8.hot-update.json",
+      "publicPath": "http://localhost:3000/main.0093bca4f5f3dd54ddf8.hot-update.json"
+    },
+    "main.cd254555c7c4a983ab89.hot-update.js": {
+      "name": "main.cd254555c7c4a983ab89.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.cd254555c7c4a983ab89.hot-update.js",
+      "publicPath": "http://localhost:3000/main.cd254555c7c4a983ab89.hot-update.js"
+    },
+    "main.cd254555c7c4a983ab89.hot-update.json": {
+      "name": "main.cd254555c7c4a983ab89.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.cd254555c7c4a983ab89.hot-update.json",
+      "publicPath": "http://localhost:3000/main.cd254555c7c4a983ab89.hot-update.json"
+    },
+    "main.a8117463d0565f0fc866.hot-update.js": {
+      "name": "main.a8117463d0565f0fc866.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.a8117463d0565f0fc866.hot-update.js",
+      "publicPath": "http://localhost:3000/main.a8117463d0565f0fc866.hot-update.js"
+    },
+    "main.a8117463d0565f0fc866.hot-update.json": {
+      "name": "main.a8117463d0565f0fc866.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.a8117463d0565f0fc866.hot-update.json",
+      "publicPath": "http://localhost:3000/main.a8117463d0565f0fc866.hot-update.json"
+    },
+    "main.9150e10d65885202b8be.hot-update.js": {
+      "name": "main.9150e10d65885202b8be.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.9150e10d65885202b8be.hot-update.js",
+      "publicPath": "http://localhost:3000/main.9150e10d65885202b8be.hot-update.js"
+    },
+    "main.9150e10d65885202b8be.hot-update.json": {
+      "name": "main.9150e10d65885202b8be.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.9150e10d65885202b8be.hot-update.json",
+      "publicPath": "http://localhost:3000/main.9150e10d65885202b8be.hot-update.json"
+    },
+    "main.8501dd44095126c22275.hot-update.js": {
+      "name": "main.8501dd44095126c22275.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.8501dd44095126c22275.hot-update.js",
+      "publicPath": "http://localhost:3000/main.8501dd44095126c22275.hot-update.js"
+    },
+    "main.8501dd44095126c22275.hot-update.json": {
+      "name": "main.8501dd44095126c22275.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.8501dd44095126c22275.hot-update.json",
+      "publicPath": "http://localhost:3000/main.8501dd44095126c22275.hot-update.json"
+    },
+    "main.3d64051edf03d41a2099.hot-update.js": {
+      "name": "main.3d64051edf03d41a2099.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.3d64051edf03d41a2099.hot-update.js",
+      "publicPath": "http://localhost:3000/main.3d64051edf03d41a2099.hot-update.js"
+    },
+    "main.3d64051edf03d41a2099.hot-update.json": {
+      "name": "main.3d64051edf03d41a2099.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.3d64051edf03d41a2099.hot-update.json",
+      "publicPath": "http://localhost:3000/main.3d64051edf03d41a2099.hot-update.json"
+    },
+    "main.3a488a26abc655fc8334.hot-update.js": {
+      "name": "main.3a488a26abc655fc8334.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.3a488a26abc655fc8334.hot-update.js",
+      "publicPath": "http://localhost:3000/main.3a488a26abc655fc8334.hot-update.js"
+    },
+    "main.3a488a26abc655fc8334.hot-update.json": {
+      "name": "main.3a488a26abc655fc8334.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.3a488a26abc655fc8334.hot-update.json",
+      "publicPath": "http://localhost:3000/main.3a488a26abc655fc8334.hot-update.json"
+    },
+    "main.2acdcef2ba071785039a.hot-update.js": {
+      "name": "main.2acdcef2ba071785039a.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.2acdcef2ba071785039a.hot-update.js",
+      "publicPath": "http://localhost:3000/main.2acdcef2ba071785039a.hot-update.js"
+    },
+    "main.2acdcef2ba071785039a.hot-update.json": {
+      "name": "main.2acdcef2ba071785039a.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.2acdcef2ba071785039a.hot-update.json",
+      "publicPath": "http://localhost:3000/main.2acdcef2ba071785039a.hot-update.json"
+    },
+    "main.c3bd74a6882832a6b6c8.hot-update.js": {
+      "name": "main.c3bd74a6882832a6b6c8.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.c3bd74a6882832a6b6c8.hot-update.js",
+      "publicPath": "http://localhost:3000/main.c3bd74a6882832a6b6c8.hot-update.js"
+    },
+    "main.c3bd74a6882832a6b6c8.hot-update.json": {
+      "name": "main.c3bd74a6882832a6b6c8.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.c3bd74a6882832a6b6c8.hot-update.json",
+      "publicPath": "http://localhost:3000/main.c3bd74a6882832a6b6c8.hot-update.json"
+    },
+    "main.e9433764860d28f13381.hot-update.js": {
+      "name": "main.e9433764860d28f13381.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.e9433764860d28f13381.hot-update.js",
+      "publicPath": "http://localhost:3000/main.e9433764860d28f13381.hot-update.js"
+    },
+    "main.e9433764860d28f13381.hot-update.json": {
+      "name": "main.e9433764860d28f13381.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.e9433764860d28f13381.hot-update.json",
+      "publicPath": "http://localhost:3000/main.e9433764860d28f13381.hot-update.json"
+    },
+    "main.a4e2fcf88d171b38dc92.hot-update.js": {
+      "name": "main.a4e2fcf88d171b38dc92.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.a4e2fcf88d171b38dc92.hot-update.js",
+      "publicPath": "http://localhost:3000/main.a4e2fcf88d171b38dc92.hot-update.js"
+    },
+    "main.a4e2fcf88d171b38dc92.hot-update.json": {
+      "name": "main.a4e2fcf88d171b38dc92.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.a4e2fcf88d171b38dc92.hot-update.json",
+      "publicPath": "http://localhost:3000/main.a4e2fcf88d171b38dc92.hot-update.json"
+    },
+    "main.68150ecb569fe0d29676.hot-update.js": {
+      "name": "main.68150ecb569fe0d29676.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.68150ecb569fe0d29676.hot-update.js",
+      "publicPath": "http://localhost:3000/main.68150ecb569fe0d29676.hot-update.js"
+    },
+    "main.68150ecb569fe0d29676.hot-update.json": {
+      "name": "main.68150ecb569fe0d29676.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.68150ecb569fe0d29676.hot-update.json",
+      "publicPath": "http://localhost:3000/main.68150ecb569fe0d29676.hot-update.json"
+    },
+    "main.3027c0b0ee3e8db83e0a.hot-update.js": {
+      "name": "main.3027c0b0ee3e8db83e0a.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.3027c0b0ee3e8db83e0a.hot-update.js",
+      "publicPath": "http://localhost:3000/main.3027c0b0ee3e8db83e0a.hot-update.js"
+    },
+    "main.3027c0b0ee3e8db83e0a.hot-update.json": {
+      "name": "main.3027c0b0ee3e8db83e0a.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.3027c0b0ee3e8db83e0a.hot-update.json",
+      "publicPath": "http://localhost:3000/main.3027c0b0ee3e8db83e0a.hot-update.json"
+    },
+    "main.5a374598cd548addec82.hot-update.js": {
+      "name": "main.5a374598cd548addec82.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.5a374598cd548addec82.hot-update.js",
+      "publicPath": "http://localhost:3000/main.5a374598cd548addec82.hot-update.js"
+    },
+    "main.5a374598cd548addec82.hot-update.json": {
+      "name": "main.5a374598cd548addec82.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.5a374598cd548addec82.hot-update.json",
+      "publicPath": "http://localhost:3000/main.5a374598cd548addec82.hot-update.json"
+    },
+    "main.fb17aaba1b2f4e1c66d3.hot-update.js": {
+      "name": "main.fb17aaba1b2f4e1c66d3.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.fb17aaba1b2f4e1c66d3.hot-update.js",
+      "publicPath": "http://localhost:3000/main.fb17aaba1b2f4e1c66d3.hot-update.js"
+    },
+    "main.fb17aaba1b2f4e1c66d3.hot-update.json": {
+      "name": "main.fb17aaba1b2f4e1c66d3.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.fb17aaba1b2f4e1c66d3.hot-update.json",
+      "publicPath": "http://localhost:3000/main.fb17aaba1b2f4e1c66d3.hot-update.json"
+    },
+    "main.07d178601ef5b4af36dd.hot-update.js": {
+      "name": "main.07d178601ef5b4af36dd.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.07d178601ef5b4af36dd.hot-update.js",
+      "publicPath": "http://localhost:3000/main.07d178601ef5b4af36dd.hot-update.js"
+    },
+    "main.07d178601ef5b4af36dd.hot-update.json": {
+      "name": "main.07d178601ef5b4af36dd.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.07d178601ef5b4af36dd.hot-update.json",
+      "publicPath": "http://localhost:3000/main.07d178601ef5b4af36dd.hot-update.json"
+    },
+    "main.a92bd9ca483f650957d7.hot-update.js": {
+      "name": "main.a92bd9ca483f650957d7.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.a92bd9ca483f650957d7.hot-update.js",
+      "publicPath": "http://localhost:3000/main.a92bd9ca483f650957d7.hot-update.js"
+    },
+    "main.a92bd9ca483f650957d7.hot-update.json": {
+      "name": "main.a92bd9ca483f650957d7.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.a92bd9ca483f650957d7.hot-update.json",
+      "publicPath": "http://localhost:3000/main.a92bd9ca483f650957d7.hot-update.json"
+    },
+    "main.f125ac9b61ef3a8eecc6.hot-update.js": {
+      "name": "main.f125ac9b61ef3a8eecc6.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.f125ac9b61ef3a8eecc6.hot-update.js",
+      "publicPath": "http://localhost:3000/main.f125ac9b61ef3a8eecc6.hot-update.js"
+    },
+    "main.f125ac9b61ef3a8eecc6.hot-update.json": {
+      "name": "main.f125ac9b61ef3a8eecc6.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.f125ac9b61ef3a8eecc6.hot-update.json",
+      "publicPath": "http://localhost:3000/main.f125ac9b61ef3a8eecc6.hot-update.json"
+    },
+    "main.798d52416ed0dd65f3f6.hot-update.js": {
+      "name": "main.798d52416ed0dd65f3f6.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.798d52416ed0dd65f3f6.hot-update.js",
+      "publicPath": "http://localhost:3000/main.798d52416ed0dd65f3f6.hot-update.js"
+    },
+    "main.798d52416ed0dd65f3f6.hot-update.json": {
+      "name": "main.798d52416ed0dd65f3f6.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.798d52416ed0dd65f3f6.hot-update.json",
+      "publicPath": "http://localhost:3000/main.798d52416ed0dd65f3f6.hot-update.json"
+    },
+    "main.c7cedcc4ff4d73a7501f.hot-update.js": {
+      "name": "main.c7cedcc4ff4d73a7501f.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.c7cedcc4ff4d73a7501f.hot-update.js",
+      "publicPath": "http://localhost:3000/main.c7cedcc4ff4d73a7501f.hot-update.js"
+    },
+    "main.c7cedcc4ff4d73a7501f.hot-update.json": {
+      "name": "main.c7cedcc4ff4d73a7501f.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.c7cedcc4ff4d73a7501f.hot-update.json",
+      "publicPath": "http://localhost:3000/main.c7cedcc4ff4d73a7501f.hot-update.json"
+    },
+    "main.aa3a14e0bb5b9dde130d.hot-update.js": {
+      "name": "main.aa3a14e0bb5b9dde130d.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.aa3a14e0bb5b9dde130d.hot-update.js",
+      "publicPath": "http://localhost:3000/main.aa3a14e0bb5b9dde130d.hot-update.js"
+    },
+    "main.aa3a14e0bb5b9dde130d.hot-update.json": {
+      "name": "main.aa3a14e0bb5b9dde130d.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.aa3a14e0bb5b9dde130d.hot-update.json",
+      "publicPath": "http://localhost:3000/main.aa3a14e0bb5b9dde130d.hot-update.json"
+    },
+    "main.c57520affec725ce969f.hot-update.js": {
+      "name": "main.c57520affec725ce969f.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.c57520affec725ce969f.hot-update.js",
+      "publicPath": "http://localhost:3000/main.c57520affec725ce969f.hot-update.js"
+    },
+    "main.c57520affec725ce969f.hot-update.json": {
+      "name": "main.c57520affec725ce969f.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.c57520affec725ce969f.hot-update.json",
+      "publicPath": "http://localhost:3000/main.c57520affec725ce969f.hot-update.json"
+    },
+    "main.3cd3149adf67b2a8092b.hot-update.js": {
+      "name": "main.3cd3149adf67b2a8092b.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.3cd3149adf67b2a8092b.hot-update.js",
+      "publicPath": "http://localhost:3000/main.3cd3149adf67b2a8092b.hot-update.js"
+    },
+    "main.3cd3149adf67b2a8092b.hot-update.json": {
+      "name": "main.3cd3149adf67b2a8092b.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.3cd3149adf67b2a8092b.hot-update.json",
+      "publicPath": "http://localhost:3000/main.3cd3149adf67b2a8092b.hot-update.json"
+    },
+    "main.cfe002f51d59d6a6d632.hot-update.js": {
+      "name": "main.cfe002f51d59d6a6d632.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.cfe002f51d59d6a6d632.hot-update.js",
+      "publicPath": "http://localhost:3000/main.cfe002f51d59d6a6d632.hot-update.js"
+    },
+    "main.cfe002f51d59d6a6d632.hot-update.json": {
+      "name": "main.cfe002f51d59d6a6d632.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.cfe002f51d59d6a6d632.hot-update.json",
+      "publicPath": "http://localhost:3000/main.cfe002f51d59d6a6d632.hot-update.json"
+    },
+    "main.8644ff343a82303f45dc.hot-update.js": {
+      "name": "main.8644ff343a82303f45dc.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.8644ff343a82303f45dc.hot-update.js",
+      "publicPath": "http://localhost:3000/main.8644ff343a82303f45dc.hot-update.js"
+    },
+    "main.8644ff343a82303f45dc.hot-update.json": {
+      "name": "main.8644ff343a82303f45dc.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.8644ff343a82303f45dc.hot-update.json",
+      "publicPath": "http://localhost:3000/main.8644ff343a82303f45dc.hot-update.json"
+    },
+    "main.bb3dc0ba361afa051c6b.hot-update.js": {
+      "name": "main.bb3dc0ba361afa051c6b.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.bb3dc0ba361afa051c6b.hot-update.js",
+      "publicPath": "http://localhost:3000/main.bb3dc0ba361afa051c6b.hot-update.js"
+    },
+    "main.bb3dc0ba361afa051c6b.hot-update.json": {
+      "name": "main.bb3dc0ba361afa051c6b.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.bb3dc0ba361afa051c6b.hot-update.json",
+      "publicPath": "http://localhost:3000/main.bb3dc0ba361afa051c6b.hot-update.json"
+    },
+    "main.c3993f2f2c1234ecefcf.hot-update.js": {
+      "name": "main.c3993f2f2c1234ecefcf.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.c3993f2f2c1234ecefcf.hot-update.js",
+      "publicPath": "http://localhost:3000/main.c3993f2f2c1234ecefcf.hot-update.js"
+    },
+    "main.c3993f2f2c1234ecefcf.hot-update.json": {
+      "name": "main.c3993f2f2c1234ecefcf.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.c3993f2f2c1234ecefcf.hot-update.json",
+      "publicPath": "http://localhost:3000/main.c3993f2f2c1234ecefcf.hot-update.json"
+    },
+    "main.e2c6e0e511a63e8e74d9.hot-update.js": {
+      "name": "main.e2c6e0e511a63e8e74d9.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.e2c6e0e511a63e8e74d9.hot-update.js",
+      "publicPath": "http://localhost:3000/main.e2c6e0e511a63e8e74d9.hot-update.js"
+    },
+    "main.e2c6e0e511a63e8e74d9.hot-update.json": {
+      "name": "main.e2c6e0e511a63e8e74d9.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.e2c6e0e511a63e8e74d9.hot-update.json",
+      "publicPath": "http://localhost:3000/main.e2c6e0e511a63e8e74d9.hot-update.json"
+    },
+    "main.42705e0af25fad110e0c.hot-update.js": {
+      "name": "main.42705e0af25fad110e0c.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.42705e0af25fad110e0c.hot-update.js",
+      "publicPath": "http://localhost:3000/main.42705e0af25fad110e0c.hot-update.js"
+    },
+    "main.42705e0af25fad110e0c.hot-update.json": {
+      "name": "main.42705e0af25fad110e0c.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.42705e0af25fad110e0c.hot-update.json",
+      "publicPath": "http://localhost:3000/main.42705e0af25fad110e0c.hot-update.json"
+    },
+    "main.de0e928ac359b91724a1.hot-update.js": {
+      "name": "main.de0e928ac359b91724a1.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.de0e928ac359b91724a1.hot-update.js",
+      "publicPath": "http://localhost:3000/main.de0e928ac359b91724a1.hot-update.js"
+    },
+    "main.de0e928ac359b91724a1.hot-update.json": {
+      "name": "main.de0e928ac359b91724a1.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.de0e928ac359b91724a1.hot-update.json",
+      "publicPath": "http://localhost:3000/main.de0e928ac359b91724a1.hot-update.json"
+    },
+    "main.e2e6f70d1449bee08372.hot-update.js": {
+      "name": "main.e2e6f70d1449bee08372.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.e2e6f70d1449bee08372.hot-update.js",
+      "publicPath": "http://localhost:3000/main.e2e6f70d1449bee08372.hot-update.js"
+    },
+    "main.e2e6f70d1449bee08372.hot-update.json": {
+      "name": "main.e2e6f70d1449bee08372.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.e2e6f70d1449bee08372.hot-update.json",
+      "publicPath": "http://localhost:3000/main.e2e6f70d1449bee08372.hot-update.json"
+    },
+    "main.92854f9b40fce4fc3cbe.hot-update.js": {
+      "name": "main.92854f9b40fce4fc3cbe.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.92854f9b40fce4fc3cbe.hot-update.js",
+      "publicPath": "http://localhost:3000/main.92854f9b40fce4fc3cbe.hot-update.js"
+    },
+    "main.92854f9b40fce4fc3cbe.hot-update.json": {
+      "name": "main.92854f9b40fce4fc3cbe.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.92854f9b40fce4fc3cbe.hot-update.json",
+      "publicPath": "http://localhost:3000/main.92854f9b40fce4fc3cbe.hot-update.json"
+    },
+    "main.9550200a18c3f756a424.hot-update.js": {
+      "name": "main.9550200a18c3f756a424.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.9550200a18c3f756a424.hot-update.js",
+      "publicPath": "http://localhost:3000/main.9550200a18c3f756a424.hot-update.js"
+    },
+    "main.9550200a18c3f756a424.hot-update.json": {
+      "name": "main.9550200a18c3f756a424.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.9550200a18c3f756a424.hot-update.json",
+      "publicPath": "http://localhost:3000/main.9550200a18c3f756a424.hot-update.json"
+    },
+    "main.3706c2c48d86194d12e9.hot-update.js": {
+      "name": "main.3706c2c48d86194d12e9.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.3706c2c48d86194d12e9.hot-update.js",
+      "publicPath": "http://localhost:3000/main.3706c2c48d86194d12e9.hot-update.js"
+    },
+    "main.3706c2c48d86194d12e9.hot-update.json": {
+      "name": "main.3706c2c48d86194d12e9.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.3706c2c48d86194d12e9.hot-update.json",
+      "publicPath": "http://localhost:3000/main.3706c2c48d86194d12e9.hot-update.json"
+    },
+    "main.62e74167e3a040b47c05.hot-update.js": {
+      "name": "main.62e74167e3a040b47c05.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.62e74167e3a040b47c05.hot-update.js",
+      "publicPath": "http://localhost:3000/main.62e74167e3a040b47c05.hot-update.js"
+    },
+    "main.62e74167e3a040b47c05.hot-update.json": {
+      "name": "main.62e74167e3a040b47c05.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.62e74167e3a040b47c05.hot-update.json",
+      "publicPath": "http://localhost:3000/main.62e74167e3a040b47c05.hot-update.json"
+    },
+    "main.da76954e682166638159.hot-update.js": {
+      "name": "main.da76954e682166638159.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.da76954e682166638159.hot-update.js",
+      "publicPath": "http://localhost:3000/main.da76954e682166638159.hot-update.js"
+    },
+    "main.da76954e682166638159.hot-update.json": {
+      "name": "main.da76954e682166638159.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.da76954e682166638159.hot-update.json",
+      "publicPath": "http://localhost:3000/main.da76954e682166638159.hot-update.json"
+    },
+    "main.bd54c68b2697c54aa4bd.hot-update.js": {
+      "name": "main.bd54c68b2697c54aa4bd.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.bd54c68b2697c54aa4bd.hot-update.js",
+      "publicPath": "http://localhost:3000/main.bd54c68b2697c54aa4bd.hot-update.js"
+    },
+    "main.bd54c68b2697c54aa4bd.hot-update.json": {
+      "name": "main.bd54c68b2697c54aa4bd.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.bd54c68b2697c54aa4bd.hot-update.json",
+      "publicPath": "http://localhost:3000/main.bd54c68b2697c54aa4bd.hot-update.json"
+    },
+    "main.33a8108adf99566b9330.hot-update.js": {
+      "name": "main.33a8108adf99566b9330.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.33a8108adf99566b9330.hot-update.js",
+      "publicPath": "http://localhost:3000/main.33a8108adf99566b9330.hot-update.js"
+    },
+    "main.33a8108adf99566b9330.hot-update.json": {
+      "name": "main.33a8108adf99566b9330.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.33a8108adf99566b9330.hot-update.json",
+      "publicPath": "http://localhost:3000/main.33a8108adf99566b9330.hot-update.json"
+    },
+    "main.85cef9b019b8cd75567b.hot-update.js": {
+      "name": "main.85cef9b019b8cd75567b.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.85cef9b019b8cd75567b.hot-update.js",
+      "publicPath": "http://localhost:3000/main.85cef9b019b8cd75567b.hot-update.js"
+    },
+    "main.85cef9b019b8cd75567b.hot-update.json": {
+      "name": "main.85cef9b019b8cd75567b.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.85cef9b019b8cd75567b.hot-update.json",
+      "publicPath": "http://localhost:3000/main.85cef9b019b8cd75567b.hot-update.json"
+    },
+    "main.9bd10cb51ef0c2258073.hot-update.js": {
+      "name": "main.9bd10cb51ef0c2258073.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.9bd10cb51ef0c2258073.hot-update.js",
+      "publicPath": "http://localhost:3000/main.9bd10cb51ef0c2258073.hot-update.js"
+    },
+    "main.9bd10cb51ef0c2258073.hot-update.json": {
+      "name": "main.9bd10cb51ef0c2258073.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.9bd10cb51ef0c2258073.hot-update.json",
+      "publicPath": "http://localhost:3000/main.9bd10cb51ef0c2258073.hot-update.json"
+    },
+    "main.452fb2b2d87bdf2cbd3f.hot-update.js": {
+      "name": "main.452fb2b2d87bdf2cbd3f.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.452fb2b2d87bdf2cbd3f.hot-update.js",
+      "publicPath": "http://localhost:3000/main.452fb2b2d87bdf2cbd3f.hot-update.js"
+    },
+    "main.452fb2b2d87bdf2cbd3f.hot-update.json": {
+      "name": "main.452fb2b2d87bdf2cbd3f.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.452fb2b2d87bdf2cbd3f.hot-update.json",
+      "publicPath": "http://localhost:3000/main.452fb2b2d87bdf2cbd3f.hot-update.json"
+    },
+    "main.dd64c9826afe566ebc0b.hot-update.js": {
+      "name": "main.dd64c9826afe566ebc0b.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.dd64c9826afe566ebc0b.hot-update.js",
+      "publicPath": "http://localhost:3000/main.dd64c9826afe566ebc0b.hot-update.js"
+    },
+    "main.dd64c9826afe566ebc0b.hot-update.json": {
+      "name": "main.dd64c9826afe566ebc0b.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.dd64c9826afe566ebc0b.hot-update.json",
+      "publicPath": "http://localhost:3000/main.dd64c9826afe566ebc0b.hot-update.json"
+    },
+    "main.e73675631442fb39367f.hot-update.js": {
+      "name": "main.e73675631442fb39367f.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.e73675631442fb39367f.hot-update.js",
+      "publicPath": "http://localhost:3000/main.e73675631442fb39367f.hot-update.js"
+    },
+    "main.e73675631442fb39367f.hot-update.json": {
+      "name": "main.e73675631442fb39367f.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.e73675631442fb39367f.hot-update.json",
+      "publicPath": "http://localhost:3000/main.e73675631442fb39367f.hot-update.json"
+    },
+    "main.35265a3cc20fd3279399.hot-update.js": {
+      "name": "main.35265a3cc20fd3279399.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.35265a3cc20fd3279399.hot-update.js",
+      "publicPath": "http://localhost:3000/main.35265a3cc20fd3279399.hot-update.js"
+    },
+    "main.35265a3cc20fd3279399.hot-update.json": {
+      "name": "main.35265a3cc20fd3279399.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.35265a3cc20fd3279399.hot-update.json",
+      "publicPath": "http://localhost:3000/main.35265a3cc20fd3279399.hot-update.json"
+    },
+    "main.1379e809dba3a7ad7d13.hot-update.js": {
+      "name": "main.1379e809dba3a7ad7d13.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.1379e809dba3a7ad7d13.hot-update.js",
+      "publicPath": "http://localhost:3000/main.1379e809dba3a7ad7d13.hot-update.js"
+    },
+    "main.1379e809dba3a7ad7d13.hot-update.json": {
+      "name": "main.1379e809dba3a7ad7d13.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.1379e809dba3a7ad7d13.hot-update.json",
+      "publicPath": "http://localhost:3000/main.1379e809dba3a7ad7d13.hot-update.json"
+    },
+    "main.733e7bbe50a1547d10c6.hot-update.js": {
+      "name": "main.733e7bbe50a1547d10c6.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.733e7bbe50a1547d10c6.hot-update.js",
+      "publicPath": "http://localhost:3000/main.733e7bbe50a1547d10c6.hot-update.js"
+    },
+    "main.733e7bbe50a1547d10c6.hot-update.json": {
+      "name": "main.733e7bbe50a1547d10c6.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.733e7bbe50a1547d10c6.hot-update.json",
+      "publicPath": "http://localhost:3000/main.733e7bbe50a1547d10c6.hot-update.json"
+    },
+    "main.478e3fca9b2124bf1452.hot-update.js": {
+      "name": "main.478e3fca9b2124bf1452.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.478e3fca9b2124bf1452.hot-update.js",
+      "publicPath": "http://localhost:3000/main.478e3fca9b2124bf1452.hot-update.js"
+    },
+    "main.478e3fca9b2124bf1452.hot-update.json": {
+      "name": "main.478e3fca9b2124bf1452.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.478e3fca9b2124bf1452.hot-update.json",
+      "publicPath": "http://localhost:3000/main.478e3fca9b2124bf1452.hot-update.json"
+    },
+    "main.211ded73e49f39cf02c1.hot-update.js": {
+      "name": "main.211ded73e49f39cf02c1.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.211ded73e49f39cf02c1.hot-update.js",
+      "publicPath": "http://localhost:3000/main.211ded73e49f39cf02c1.hot-update.js"
+    },
+    "main.211ded73e49f39cf02c1.hot-update.json": {
+      "name": "main.211ded73e49f39cf02c1.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.211ded73e49f39cf02c1.hot-update.json",
+      "publicPath": "http://localhost:3000/main.211ded73e49f39cf02c1.hot-update.json"
+    },
+    "main.a94911b09c403562585b.hot-update.js": {
+      "name": "main.a94911b09c403562585b.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.a94911b09c403562585b.hot-update.js",
+      "publicPath": "http://localhost:3000/main.a94911b09c403562585b.hot-update.js"
+    },
+    "main.a94911b09c403562585b.hot-update.json": {
+      "name": "main.a94911b09c403562585b.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.a94911b09c403562585b.hot-update.json",
+      "publicPath": "http://localhost:3000/main.a94911b09c403562585b.hot-update.json"
+    },
+    "main.2c2bfebd36e884fd4208.hot-update.js": {
+      "name": "main.2c2bfebd36e884fd4208.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.2c2bfebd36e884fd4208.hot-update.js",
+      "publicPath": "http://localhost:3000/main.2c2bfebd36e884fd4208.hot-update.js"
+    },
+    "main.2c2bfebd36e884fd4208.hot-update.json": {
+      "name": "main.2c2bfebd36e884fd4208.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.2c2bfebd36e884fd4208.hot-update.json",
+      "publicPath": "http://localhost:3000/main.2c2bfebd36e884fd4208.hot-update.json"
+    },
+    "main.bd1a9b5df82c49fa39e6.hot-update.js": {
+      "name": "main.bd1a9b5df82c49fa39e6.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.bd1a9b5df82c49fa39e6.hot-update.js",
+      "publicPath": "http://localhost:3000/main.bd1a9b5df82c49fa39e6.hot-update.js"
+    },
+    "main.bd1a9b5df82c49fa39e6.hot-update.json": {
+      "name": "main.bd1a9b5df82c49fa39e6.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.bd1a9b5df82c49fa39e6.hot-update.json",
+      "publicPath": "http://localhost:3000/main.bd1a9b5df82c49fa39e6.hot-update.json"
+    },
+    "main.15f7c8f33f08de205b1e.hot-update.js": {
+      "name": "main.15f7c8f33f08de205b1e.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.15f7c8f33f08de205b1e.hot-update.js",
+      "publicPath": "http://localhost:3000/main.15f7c8f33f08de205b1e.hot-update.js"
+    },
+    "main.15f7c8f33f08de205b1e.hot-update.json": {
+      "name": "main.15f7c8f33f08de205b1e.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.15f7c8f33f08de205b1e.hot-update.json",
+      "publicPath": "http://localhost:3000/main.15f7c8f33f08de205b1e.hot-update.json"
+    },
+    "main.e0bf8106f4136c036cf9.hot-update.js": {
+      "name": "main.e0bf8106f4136c036cf9.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.e0bf8106f4136c036cf9.hot-update.js",
+      "publicPath": "http://localhost:3000/main.e0bf8106f4136c036cf9.hot-update.js"
+    },
+    "main.e0bf8106f4136c036cf9.hot-update.json": {
+      "name": "main.e0bf8106f4136c036cf9.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.e0bf8106f4136c036cf9.hot-update.json",
+      "publicPath": "http://localhost:3000/main.e0bf8106f4136c036cf9.hot-update.json"
+    },
+    "main.55656e934d1e9d8995f3.hot-update.js": {
+      "name": "main.55656e934d1e9d8995f3.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.55656e934d1e9d8995f3.hot-update.js",
+      "publicPath": "http://localhost:3000/main.55656e934d1e9d8995f3.hot-update.js"
+    },
+    "main.55656e934d1e9d8995f3.hot-update.json": {
+      "name": "main.55656e934d1e9d8995f3.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.55656e934d1e9d8995f3.hot-update.json",
+      "publicPath": "http://localhost:3000/main.55656e934d1e9d8995f3.hot-update.json"
+    },
+    "main.06f9688c05c12db1b847.hot-update.js": {
+      "name": "main.06f9688c05c12db1b847.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.06f9688c05c12db1b847.hot-update.js",
+      "publicPath": "http://localhost:3000/main.06f9688c05c12db1b847.hot-update.js"
+    },
+    "main.06f9688c05c12db1b847.hot-update.json": {
+      "name": "main.06f9688c05c12db1b847.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.06f9688c05c12db1b847.hot-update.json",
+      "publicPath": "http://localhost:3000/main.06f9688c05c12db1b847.hot-update.json"
+    },
+    "main.14e1da56aa5867cebc66.hot-update.js": {
+      "name": "main.14e1da56aa5867cebc66.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.14e1da56aa5867cebc66.hot-update.js",
+      "publicPath": "http://localhost:3000/main.14e1da56aa5867cebc66.hot-update.js"
+    },
+    "main.14e1da56aa5867cebc66.hot-update.json": {
+      "name": "main.14e1da56aa5867cebc66.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.14e1da56aa5867cebc66.hot-update.json",
+      "publicPath": "http://localhost:3000/main.14e1da56aa5867cebc66.hot-update.json"
+    },
+    "main.864ed1c28736f35653f9.hot-update.js": {
+      "name": "main.864ed1c28736f35653f9.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.864ed1c28736f35653f9.hot-update.js",
+      "publicPath": "http://localhost:3000/main.864ed1c28736f35653f9.hot-update.js"
+    },
+    "main.864ed1c28736f35653f9.hot-update.json": {
+      "name": "main.864ed1c28736f35653f9.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.864ed1c28736f35653f9.hot-update.json",
+      "publicPath": "http://localhost:3000/main.864ed1c28736f35653f9.hot-update.json"
+    },
+    "main.54056cf056bbc14911cd.hot-update.js": {
+      "name": "main.54056cf056bbc14911cd.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.54056cf056bbc14911cd.hot-update.js",
+      "publicPath": "http://localhost:3000/main.54056cf056bbc14911cd.hot-update.js"
+    },
+    "main.54056cf056bbc14911cd.hot-update.json": {
+      "name": "main.54056cf056bbc14911cd.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.54056cf056bbc14911cd.hot-update.json",
+      "publicPath": "http://localhost:3000/main.54056cf056bbc14911cd.hot-update.json"
+    },
+    "main.38ae7b167d7e19267490.hot-update.js": {
+      "name": "main.38ae7b167d7e19267490.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.38ae7b167d7e19267490.hot-update.js",
+      "publicPath": "http://localhost:3000/main.38ae7b167d7e19267490.hot-update.js"
+    },
+    "main.38ae7b167d7e19267490.hot-update.json": {
+      "name": "main.38ae7b167d7e19267490.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.38ae7b167d7e19267490.hot-update.json",
+      "publicPath": "http://localhost:3000/main.38ae7b167d7e19267490.hot-update.json"
+    },
+    "main.697c1f6ce4a19f037ddc.hot-update.js": {
+      "name": "main.697c1f6ce4a19f037ddc.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.697c1f6ce4a19f037ddc.hot-update.js",
+      "publicPath": "http://localhost:3000/main.697c1f6ce4a19f037ddc.hot-update.js"
+    },
+    "main.697c1f6ce4a19f037ddc.hot-update.json": {
+      "name": "main.697c1f6ce4a19f037ddc.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.697c1f6ce4a19f037ddc.hot-update.json",
+      "publicPath": "http://localhost:3000/main.697c1f6ce4a19f037ddc.hot-update.json"
+    },
+    "main.305989288a1c093cff27.hot-update.js": {
+      "name": "main.305989288a1c093cff27.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.305989288a1c093cff27.hot-update.js",
+      "publicPath": "http://localhost:3000/main.305989288a1c093cff27.hot-update.js"
+    },
+    "main.305989288a1c093cff27.hot-update.json": {
+      "name": "main.305989288a1c093cff27.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.305989288a1c093cff27.hot-update.json",
+      "publicPath": "http://localhost:3000/main.305989288a1c093cff27.hot-update.json"
+    },
+    "main.f706a40fb54ffce85404.hot-update.js": {
+      "name": "main.f706a40fb54ffce85404.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.f706a40fb54ffce85404.hot-update.js",
+      "publicPath": "http://localhost:3000/main.f706a40fb54ffce85404.hot-update.js"
+    },
+    "main.f706a40fb54ffce85404.hot-update.json": {
+      "name": "main.f706a40fb54ffce85404.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.f706a40fb54ffce85404.hot-update.json",
+      "publicPath": "http://localhost:3000/main.f706a40fb54ffce85404.hot-update.json"
+    },
+    "main.1e494c651aa364582bba.hot-update.js": {
+      "name": "main.1e494c651aa364582bba.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.1e494c651aa364582bba.hot-update.js",
+      "publicPath": "http://localhost:3000/main.1e494c651aa364582bba.hot-update.js"
+    },
+    "main.1e494c651aa364582bba.hot-update.json": {
+      "name": "main.1e494c651aa364582bba.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.1e494c651aa364582bba.hot-update.json",
+      "publicPath": "http://localhost:3000/main.1e494c651aa364582bba.hot-update.json"
+    },
+    "main.1e5847badf49d3ad16f5.hot-update.js": {
+      "name": "main.1e5847badf49d3ad16f5.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.1e5847badf49d3ad16f5.hot-update.js",
+      "publicPath": "http://localhost:3000/main.1e5847badf49d3ad16f5.hot-update.js"
+    },
+    "main.1e5847badf49d3ad16f5.hot-update.json": {
+      "name": "main.1e5847badf49d3ad16f5.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.1e5847badf49d3ad16f5.hot-update.json",
+      "publicPath": "http://localhost:3000/main.1e5847badf49d3ad16f5.hot-update.json"
+    },
+    "main.6f7fb8ecaf380ebf7821.hot-update.js": {
+      "name": "main.6f7fb8ecaf380ebf7821.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.6f7fb8ecaf380ebf7821.hot-update.js",
+      "publicPath": "http://localhost:3000/main.6f7fb8ecaf380ebf7821.hot-update.js"
+    },
+    "main.6f7fb8ecaf380ebf7821.hot-update.json": {
+      "name": "main.6f7fb8ecaf380ebf7821.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.6f7fb8ecaf380ebf7821.hot-update.json",
+      "publicPath": "http://localhost:3000/main.6f7fb8ecaf380ebf7821.hot-update.json"
+    },
+    "main.e116f13339e777e7d476.hot-update.js": {
+      "name": "main.e116f13339e777e7d476.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.e116f13339e777e7d476.hot-update.js",
+      "publicPath": "http://localhost:3000/main.e116f13339e777e7d476.hot-update.js"
+    },
+    "main.e116f13339e777e7d476.hot-update.json": {
+      "name": "main.e116f13339e777e7d476.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.e116f13339e777e7d476.hot-update.json",
+      "publicPath": "http://localhost:3000/main.e116f13339e777e7d476.hot-update.json"
+    },
+    "main.8d7bfd05e02021331684.hot-update.js": {
+      "name": "main.8d7bfd05e02021331684.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.8d7bfd05e02021331684.hot-update.js",
+      "publicPath": "http://localhost:3000/main.8d7bfd05e02021331684.hot-update.js"
+    },
+    "main.8d7bfd05e02021331684.hot-update.json": {
+      "name": "main.8d7bfd05e02021331684.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.8d7bfd05e02021331684.hot-update.json",
+      "publicPath": "http://localhost:3000/main.8d7bfd05e02021331684.hot-update.json"
+    },
+    "main.9a270e6ef9c54485baca.hot-update.js": {
+      "name": "main.9a270e6ef9c54485baca.hot-update.js",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.9a270e6ef9c54485baca.hot-update.js",
+      "publicPath": "http://localhost:3000/main.9a270e6ef9c54485baca.hot-update.js"
+    },
+    "main.9a270e6ef9c54485baca.hot-update.json": {
+      "name": "main.9a270e6ef9c54485baca.hot-update.json",
+      "path": "/home/dean/Desktop/posao/poem-2/poem/Poem/dist/main.9a270e6ef9c54485baca.hot-update.json",
+      "publicPath": "http://localhost:3000/main.9a270e6ef9c54485baca.hot-update.json"
     }
   },
   "chunks": {
     "main": [
-      "main.js",
-      "main.e1c65eb50a84b2aa1b2f.hot-update.js"
+      "main.js"
     ]
   },
-  "publicPath": "http://localhost:3000/",
-  "error": "ModuleBuildError",
-  "message": "Module build failed (from ./node_modules/babel-loader/lib/index.js):\nSyntaxError: /home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/frontend/react/APIKey.js: Unexpected token, expected \",\" (248:10)\n\n  246 |                 </Col>\n  247 |               </Row>\n> 248 |           }\n      |           ^\n  249 |           <Row className='mt-2'>\n  250 |             <Col md={6}>\n  251 |               <Row>\n    at instantiate (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:67:32)\n    at constructor (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:364:12)\n    at JSXParserMixin.raise (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:3363:19)\n    at JSXParserMixin.unexpected (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:3396:16)\n    at JSXParserMixin.expect (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:3758:28)\n    at JSXParserMixin.parseParenAndDistinguishExpression (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:11814:14)\n    at JSXParserMixin.parseExprAtom (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:11457:23)\n    at JSXParserMixin.parseExprAtom (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:7236:20)\n    at JSXParserMixin.parseExprSubscripts (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:11182:23)\n    at JSXParserMixin.parseUpdate (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:11164:21)\n    at JSXParserMixin.parseMaybeUnary (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:11138:23)\n    at JSXParserMixin.parseMaybeUnaryOrPrivate (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:10967:61)\n    at JSXParserMixin.parseExprOps (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:10973:23)\n    at JSXParserMixin.parseMaybeConditional (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:10948:23)\n    at JSXParserMixin.parseMaybeAssign (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:10906:21)\n    at JSXParserMixin.parseExpressionBase (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:10856:23)\n    at /home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:10851:39\n    at JSXParserMixin.allowInAnd (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:12651:12)\n    at JSXParserMixin.parseExpression (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:10851:17)\n    at JSXParserMixin.jsxParseExpressionContainer (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:7090:31)\n    at JSXParserMixin.jsxParseElementAt (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:7173:36)\n    at JSXParserMixin.jsxParseElementAt (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:7160:32)\n    at JSXParserMixin.jsxParseElementAt (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:7160:32)\n    at JSXParserMixin.jsxParseElement (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:7218:17)\n    at JSXParserMixin.parseExprAtom (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:7231:19)\n    at JSXParserMixin.parseExprSubscripts (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:11182:23)\n    at JSXParserMixin.parseUpdate (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:11164:21)\n    at JSXParserMixin.parseMaybeUnary (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:11138:23)\n    at JSXParserMixin.parseMaybeUnaryOrPrivate (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:10967:61)\n    at JSXParserMixin.parseExprOps (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:10973:23)\n    at JSXParserMixin.parseMaybeConditional (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:10948:23)\n    at JSXParserMixin.parseMaybeAssign (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:10906:21)\n    at /home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:10874:39\n    at JSXParserMixin.allowInAnd (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:12651:12)\n    at JSXParserMixin.parseMaybeAssignAllowIn (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:10874:17)\n    at JSXParserMixin.parseParenAndDistinguishExpression (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:11828:28)\n    at JSXParserMixin.parseExprAtom (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:11457:23)\n    at JSXParserMixin.parseExprAtom (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:7236:20)\n    at JSXParserMixin.parseExprSubscripts (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:11182:23)\n    at JSXParserMixin.parseUpdate (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:11164:21)\n    at JSXParserMixin.parseMaybeUnary (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:11138:23)\n    at JSXParserMixin.parseMaybeUnaryOrPrivate (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:10967:61)\n    at JSXParserMixin.parseExprOps (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:10973:23)\n    at JSXParserMixin.parseMaybeConditional (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:10948:23)\n    at JSXParserMixin.parseMaybeAssign (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:10906:21)\n    at JSXParserMixin.parseExpressionBase (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:10856:23)\n    at /home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:10851:39\n    at JSXParserMixin.allowInAnd (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:12646:16)\n    at JSXParserMixin.parseExpression (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:10851:17)\n    at JSXParserMixin.parseReturnStatement (/home/kzailac/Documents/posao/argo/poem-2/kzailac/poem-2/poem/Poem/node_modules/@babel/parser/lib/index.js:13364:28)"
+  "publicPath": "http://localhost:3000/"
 }

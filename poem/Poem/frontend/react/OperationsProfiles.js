@@ -21,6 +21,7 @@ import {
 } from 'reactstrap';
 import { useQuery, useQueryClient } from 'react-query';
 import { fetchOperationsProfiles } from './QueryFunctions';
+import { CustomButton, CustomHeadline, CustomInput, CustomProfilesList, CustomSubtitle, CustomTable, CustomSpan } from './CustomPlaceholders';
 
 
 export const OperationsProfilesList = (props) => {
@@ -58,7 +59,7 @@ export const OperationsProfilesList = (props) => {
   ], [publicView]);
 
   if (status === 'loading')
-    return (<LoadingAnim/>);
+    return (<CustomProfilesList pathname={window.location.pathname}/>);
 
   else if (status === 'error')
     return (<ErrorComponent error={error}/>);
@@ -108,8 +109,43 @@ export const OperationsProfileDetails = (props) => {
     }
   )
 
-  if (status === 'loading')
-    return (<LoadingAnim/>);
+  if (status === "loading") {
+    return (
+      <>
+        <CustomHeadline height="38.4px" width="383px" />
+        <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded'>
+          <FormGroup>
+            <Row>
+              <Col className='d-flex flex-column' md={6}>
+                <CustomInput height="40px" width="393.862px" />
+                <CustomSpan custStyle="mt-1" height="10px" width="160px" />
+              </Col>
+            </Row>
+            <CustomSubtitle height="35px" width="100%" />
+            <Row>
+              <Col md={4}>
+                <CustomTable height="246.4px" />
+              </Col>
+              <Col md={5}>
+                <CustomTable height="164px" />
+              </Col>
+            </Row>
+            <CustomSubtitle height="35px" width="100%" />
+            <Row>
+              <Col className="d-flex flex-column align-items-center" md={5}>
+                <CustomSubtitle width="55px" />
+                <CustomTable height="373.112px" />
+              </Col>
+              <Col className="d-flex flex-column align-items-center" md={5}>
+                <CustomSubtitle width="65px" />
+                <CustomTable height="373.112px" />
+              </Col>
+            </Row>
+          </FormGroup>
+        </Form>
+      </>
+    )
+  }
 
   else if (status === 'error')
     return (<ErrorComponent error={error}/>);
