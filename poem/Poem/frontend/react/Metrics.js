@@ -57,7 +57,8 @@ import * as Yup from 'yup';
 import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { ErrorMessage } from '@hookform/error-message';
 import { yupResolver } from '@hookform/resolvers/yup';
-
+import { CustomButton, CustomDescriptionArea, CustomHeadline, CustomInput, CustomProfilesList, CustomSpan, CustomSubtitle } from './CustomPlaceholders';
+import { CustomMetricProfilesPlaceholders } from './MetricTemplates';
 
 const metricValidationSchema = Yup.object().shape({
   name: Yup.string()
@@ -650,7 +651,7 @@ export const ListOfMetrics = (props) => {
   })
 
   if (metricsLoading || typesLoading || tagsLoading || OSGroupsLoading || userDetailsLoading || loadingMP)
-    return (<LoadingAnim />);
+    return (<CustomProfilesList pathname={window.location.pathname} />)
 
   else if (metricsError)
     return (<ErrorComponent error={metricsError.message}/>);
@@ -1406,7 +1407,14 @@ export const CompareMetrics = (props) => {
   )
 
   if (loading)
-    return (<LoadingAnim/>);
+    return (
+      <>
+        <CustomHeadline height="38.4px" width="383px" />
+        <div className='ms-3 mt-4 placeholder-glow rounded'>
+          <CustomTable height="230px" />
+        </div>
+      </>
+    );
 
   else if (error)
     return (<ErrorComponent error={error}/>);
@@ -1587,7 +1595,7 @@ export const MetricChange = (props) => {
   }
 
   if (metricLoading || userDetailsLoading || probesLoading)
-    return (<LoadingAnim/>);
+    return (<CustomMetricProfilesPlaceholders/>);
 
   else if (metricError)
     return (<ErrorComponent error={metricError}/>);
@@ -1675,7 +1683,7 @@ export const MetricVersionDetails = (props) => {
   )
 
   if (loadingMetric || loadingProbes)
-    return (<LoadingAnim/>);
+    return (<CustomMetricProfilesPlaceholders />);
 
   else if (errorMetric)
     return (<ErrorComponent error={errorMetric}/>);

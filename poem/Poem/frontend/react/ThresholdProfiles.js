@@ -43,7 +43,7 @@ import {
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext, useWatch } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { ErrorMessage } from '@hookform/error-message';
-
+import { CustomHeadline, CustomTable, CustomButton, CustomInput, CustomSubtitle, CustomProfilesList, CustomSpan } from './CustomPlaceholders';
 
 const ThresholdsProfilesChangeContext = React.createContext()
 
@@ -1065,7 +1065,7 @@ export const ThresholdsProfilesList = (props) => {
   ], [publicView, queryClient, webapithresholds, webapitoken]);
 
   if (statusUserDetails === 'loading' || statusThresholdsProfiles === 'loading')
-    return (<LoadingAnim/>);
+    return (<CustomProfilesList/>);
 
   else if (statusThresholdsProfiles === 'error')
     return (<ErrorComponent error={errorThresholdsProfiles}/>);
@@ -1327,8 +1327,48 @@ export const ThresholdsProfilesChange = (props) => {
 
   const loading = loadingBackendTP || loadingWebApiTP || loadingUserDetails || loadingAllMetrics || loadingMetricProfiles || loadingTopologyEndpoints || loadingReports
 
-  if (loading)
-    return (<LoadingAnim/>);
+  if (loading) {
+    // one component has customized placeholder for two different paths 
+    if (window.location.pathname === "/ui/thresholdsprofiles/add") {
+      return (
+        <>
+          <CustomHeadline width="333px" height="38.4px"/>
+          <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
+            <CustomInput height="40px" width="50%"/>
+            <CustomSpan custStyle="mt-1" height="10px" width="15%" />
+            <CustomInput custStyle='mt-5' height="37.6px" width="25%" />
+            <CustomSpan custStyle="mt-1" height="10px" width="22%" />
+            <CustomSubtitle height="37.6px" custStyle="mt-3" />
+            <CustomButton height="37.6px" width="150px" />
+            <div className='mb-2 mt-5 p-3 border placeholder-glow rounded d-flex justify-content-end'>
+              <CustomButton width="158.33px" height="37.6px" />
+            </div>
+          </Form>
+        </>
+      );
+    } else
+    return (
+      <>
+        <div className='mt-4 d-flex justify-content-between placeholder-glow'>
+          <CustomHeadline width="450px" height="38.4px"/>
+          <CustomButton height="37.6px" width="120px" />
+        </div>
+        <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
+          <CustomInput height="45px" width="50%" />
+          <CustomSpan custStyle="mt-1 mb-3" height="10px" width="20%" />
+          <CustomInput height="40px" width="40%" />
+          <CustomSpan custStyle="mt-1 mb-2" height="10px" width="35%" />
+          <CustomSubtitle height="37.6px" />
+          <CustomTable height="440px" />
+          <CustomButton height="37.6px" width="150px" />
+        </Form>
+        <div className='ms-2 mb-2 mt-5 p-3 border placeholder-glow rounded d-flex justify-content-between'>
+          <CustomButton height="37.6px" width="100px" />
+          <CustomButton height="37.6px" width="100px" />
+        </div>
+      </>
+    )
+  }
 
   else if (errorBackendTP)
     return (<ErrorComponent error={errorBackendTP}/>);
@@ -1459,8 +1499,16 @@ export const ThresholdsProfileVersionCompare = (props) => {
     ['thresholdsprofile', 'version', name], () => fetchThresholdsProfilesVersions(name)
   )
 
-  if (status === 'loading')
-    return (<LoadingAnim/>);
+  if (status === 'loading') {
+    return (
+      <>
+        <CustomHeadline height="38.4px" width="383px" />
+        <div className='ms-3 mt-4 placeholder-glow rounded'>
+          <CustomTable height="230px" />
+        </div>
+      </>
+    );
+  }
 
   else if (status === 'error')
     return (<ErrorComponent error={error}/>);
@@ -1509,8 +1557,23 @@ export const ThresholdsProfileVersionDetail = (props) => {
     ['thresholdsprofile', 'version', name], () => fetchThresholdsProfilesVersions(name)
   )
 
-  if (status === 'loading')
-    return (<LoadingAnim/>);
+  if (status === 'loading') {
+    return (
+      <>
+        <div className='mt-4 d-flex justify-content-between placeholder-glow'>
+          <CustomHeadline width="450px" height="38.4px"/>
+        </div>
+        <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
+          <CustomInput height="45px" width="50%" />
+          <CustomSpan custStyle="mt-1 mb-3" height="10px" width="20%" />
+          <CustomInput height="40px" width="25%" />
+          <CustomSpan custStyle="mt-1 mb-3" height="10px" width="24%" />
+          <CustomSubtitle height="37.6px" />
+          <CustomTable height="300px" />
+        </Form>
+      </>
+    )
+  }
 
   else if (status === 'error')
     return (<ErrorComponent error={error}/>);

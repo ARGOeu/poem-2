@@ -36,6 +36,7 @@ import {
 import { ErrorMessage } from '@hookform/error-message';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from "yup";
+import { CustomProfilesList } from './CustomPlaceholders';
 
 
 const validationSchema = Yup.object().shape({
@@ -331,7 +332,7 @@ export const DefaultPortsList = () => {
   )
 
   if (status === 'loading')
-    return (<LoadingAnim/>);
+    return (<CustomProfilesList pathname={window.location.pathname}/>);
 
   else if (status === 'error')
     return (<ErrorComponent error={error}/>);

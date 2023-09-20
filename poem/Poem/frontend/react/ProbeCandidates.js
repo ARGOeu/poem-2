@@ -29,7 +29,7 @@ import {
 } from "reactstrap";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Controller, useForm } from "react-hook-form";
-
+import { CustomProfilesList } from "./CustomPlaceholders";
 
 const fetchCandidates = async () => {
   const backend = new Backend()
@@ -119,7 +119,7 @@ export const ProbeCandidateList = (props) => {
   ])
 
   if (loadingUserDetails || loadingProbeCandidates || loadingStatuses )
-    return (<LoadingAnim />)
+    return (<CustomProfilesList pathname={window.location.pathname} />)
 
   else if (errorUserDetails)
     return (<ErrorComponent error={ errorUserDetails } />)

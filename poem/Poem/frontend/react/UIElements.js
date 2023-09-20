@@ -82,7 +82,7 @@ import Select, { components } from 'react-select';
 import CreatableSelect from 'react-select/creatable';
 import { Controller, useFormContext } from 'react-hook-form';
 import { ErrorMessage } from '@hookform/error-message';
-
+import { CustomHeadline, CustomTable } from './CustomPlaceholders';
 
 var list_pages = ['administration', 'probes',
                   'metrics', 'reports', 'servicetypes', 'metricprofiles', 'aggregationprofiles',
@@ -1122,8 +1122,16 @@ export const HistoryComponent = (props) => {
     fetchData();
   }, [obj, name, apiUrl]);
 
-  if (loading)
-    return (<LoadingAnim />);
+  if (loading) {
+    return (
+      <>
+        <CustomHeadline height="38.4px" width="225px" />
+        <div className='ms-3 placeholder-glow rounded'>
+          <CustomTable height="170px" />
+        </div>
+      </>
+    )
+  }
 
   else if (error)
     return (<ErrorComponent error={error}/>);

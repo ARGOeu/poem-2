@@ -33,7 +33,7 @@ import { fetchUserGroups, fetchUsers, fetchUserDetails  } from './QueryFunctions
 import { Controller, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { ErrorMessage } from '@hookform/error-message';
-
+import { CustomButton, CustomHeadline, CustomInput, CustomProfilesList, CustomSpan, CustomSubtitle } from './CustomPlaceholders';
 
 const UserSchema = Yup.object().shape({
   username: Yup.string()
@@ -177,7 +177,7 @@ export const UsersList = (props) => {
   ], [isTenantSchema, queryClient]);
 
   if (loading)
-    return (<LoadingAnim />);
+    return (<CustomProfilesList />);
 
   else if (error)
     return (<ErrorComponent error={error}/>);
@@ -952,7 +952,77 @@ export const UserChange = (props) => {
   );
 
   if (statusUser === 'loading' || statusUserProfile === 'loading' || statusUserGroups === 'loading' || statusAllGroups === 'loading' || statusUserDetails === 'loading')
-    return(<LoadingAnim />)
+    return(
+      <>
+        <CustomHeadline width="184px" height="38.4px"/>
+        <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
+          <CustomInput height="37.6px" width="50%" custStyle="mb-3" />
+          <CustomSubtitle height="37.6px" custStyle="mb-2" />
+          <CustomInput height="37.6px" width="50%" custStyle="mb-2" />
+          <CustomInput height="37.6px" width="50%" custStyle="mb-2" />
+          <CustomInput height="37.6px" width="50%" custStyle="mb-2" />
+          <CustomInput height="37.6px" width="50%" custStyle="mb-2" />
+          <CustomInput height="37.6px" width="50%" custStyle="mb-3" />
+          <CustomSubtitle height="37.6px" custStyle="mb-3" />
+          <div className='d-flex flex-row align-items-center'>
+            <CustomSpan custStyle="me-2" width="24px" height="24px" />
+            <CustomInput height="24px" width="122px" />
+          </div>
+          <CustomSpan custStyle="mt-1 mb-3" height="20px" width="35%" />
+          <div className='d-flex flex-row align-items-center'>
+            <CustomSpan custStyle="me-2" width="24px" height="24px" />
+            <CustomInput height="24px" width="80px" />
+          </div>
+          <CustomSpan custStyle="mt-1 mb-3" height="20px" width="45%" />
+          {isTenantSchema && 
+            <>
+              <CustomSubtitle height="37.6px" custStyle="mb-3" />
+              <Row className='d-flex flex-row align-items-center'>
+                <Col md={5} className='d-flex flex-column'>
+                  <CustomSpan custStyle="mt-1 mb-1" height="24px" width="45%" />
+                  <CustomInput height="37.6px" />
+                  <CustomSpan custStyle="mt-1 mb-3" height="14.4px" width="45%" />
+                </Col>
+                <Col md={5} className='d-flex flex-column'>
+                  <CustomSpan custStyle="mt-1 mb-1" height="24px" width="45%" />
+                  <CustomInput height="37.6px" />
+                  <CustomSpan custStyle="mt-1 mb-3" height="14.4px" width="45%" />
+                </Col>
+                <Col md={5} className='d-flex flex-column'>
+                  <CustomSpan custStyle="mt-1 mb-1" height="24px" width="45%" />
+                  <CustomInput height="37.6px" />
+                  <CustomSpan custStyle="mt-1 mb-3" height="14.4px" width="45%" />
+                </Col>
+                <Col md={5} className='d-flex flex-column'>
+                  <CustomSpan custStyle="mt-1 mb-1" height="24px" width="45%" />
+                  <CustomInput height="37.6px" />
+                  <CustomSpan custStyle="mt-1 mb-3" height="14.4px" width="45%" />
+                </Col>
+                <Col md={5} className='d-flex flex-column'>
+                  <CustomSpan custStyle="mt-1 mb-1" height="24px" width="45%" />
+                  <CustomInput height="37.6px" />
+                  <CustomSpan custStyle="mt-1 mb-2" height="14.4px" width="45%" />
+                </Col>
+              </Row>
+              <CustomSubtitle height="37.6px" custStyle="mb-1" />
+              <CustomInput height="37.6px" custStyle="mb-2" />
+              <CustomInput height="37.6px" width="65%" custStyle="mb-2"/>
+              <CustomInput height="37.6px" width="50%" />
+            </>
+          }
+          {window.location.pathname === "/ui/administration/users/add" ? 
+            <div className='ms-2 mb-2 mt-5 p-3 border placeholder-glow rounded d-flex justify-content-end'>
+              <CustomButton height="37.6px" width="70px" />
+            </div>
+          :
+            <div className='ms-2 mb-2 mt-5 p-3 border placeholder-glow rounded d-flex justify-content-between'>
+              <CustomButton height="37.6px" width="100px" />
+              <CustomButton height="37.6px" width="100px" />
+            </div>
+          }
+        </Form>
+      </>
+    )
 
   else if (statusUser === 'error')
     return (<ErrorComponent error={errorUser}/>);
@@ -1167,10 +1237,24 @@ export const ChangePassword = (props) => {
 
   const { data: userDetails, isLoading: loading} = useQuery(
     'userdetails', () => fetchUserDetails(false)
-  );
+  ); 
 
   if (loading)
-    return (<LoadingAnim/>);
+    return (
+      <>
+        <CustomHeadline height="38.4px" width="260px" />
+        <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
+          <CustomInput height="37.6px" width="50%" custStyle="mb-2" />
+          <CustomInput height="37.6px" width="50%" custStyle="mb-4" />
+          {!/\/change_password/.test(window.location.pathname) &&         
+          (
+            <div className='mb-2 mt-4 p-3 border placeholder-glow rounded d-flex justify-content-end'>
+              <CustomButton height="37.6px" width="60px" />
+            </div>
+          )}
+        </Form>
+      </>
+    );
 
   else if (userDetails) {
     return (

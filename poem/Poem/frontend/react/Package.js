@@ -34,7 +34,7 @@ import { Controller, useForm, useWatch } from 'react-hook-form';
 import { ErrorMessage } from '@hookform/error-message';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from "yup";
-
+import { CustomButton, CustomHeadline, CustomInput, CustomProfilesList, CustomSpan, CustomSubtitle } from './CustomPlaceholders';
 
 const validationSchema = Yup.object().shape({
   name: Yup.string()
@@ -105,7 +105,7 @@ export const PackageList = (props) => {
   ], [isTenantSchema, listRepos]);
 
   if (statusPackages === 'loading' || statusRepos === 'loading')
-    return (<LoadingAnim/>);
+    return (<CustomProfilesList pathname={window.location.pathname} />);
 
   else if (statusPackages === 'error')
     return (<ErrorComponent error={errorPackages}/>);
@@ -667,7 +667,56 @@ export const PackageComponent = (props) => {
   )
 
   if (statusPkg === 'loading' || statusRepos === 'loading' || statusProbes === 'loading' || statusPackageVersions === 'loading')
-    return (<LoadingAnim/>);
+    return (
+      <>
+        <CustomHeadline height="38.4px" width="231px" />
+        <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
+          <Row className='d-flex flex-row align-items-center'>
+            <Col md={6} className='d-flex flex-column'>
+              <CustomInput height="37.6px" custStyle="mb-1" />
+              <CustomSpan custStyle="mt-1 mb-2" height="14.4px" width="45%" />
+            </Col>
+            <Col md={2} className='d-flex flex-column'>
+              <CustomInput height="37.6px" custStyle="mb-1" />
+              <CustomSpan custStyle="mt-1 mb-2" height="14.4px" width="45%" />
+            </Col>
+            <Col md={2} className='d-flex flex-row ms-3 mb-3'>
+              <CustomSpan height="20px" width="20px" />
+              <CustomSpan custStyle="ms-2" height="38px" width="100%" />
+            </Col>
+          </Row>
+          <CustomSubtitle height="36.8px" />
+          <Row>
+            <Col md={8} className='d-flex flex-column'>
+              <CustomInput height="37.6px" custStyle="mb-1" />
+              <CustomSpan custStyle="mb-4" height="14.4px" width="45%" />
+            </Col>
+            <Col md={8} className='d-flex flex-column'>
+              <CustomInput height="37.6px" custStyle="mb-1" />
+              <CustomSpan custStyle="mb-4" height="14.4px" width="45%" />
+            </Col>
+          </Row>
+          {!/\/(add|clone)/.test(window.location.pathname) && 
+            (
+              <>
+                <CustomSpan custStyle="mb-1" height="24.4px" width="10%" />
+                <CustomSpan custStyle="mb-2" height="24.4px" width="15%" />
+              </>
+            )
+          }
+          {/\/(add|clone)/.test(window.location.pathname) ?
+            <div className='mb-2 mt-4 p-3 border placeholder-glow rounded d-flex justify-content-end'>
+              <CustomButton height="37.6px" width="60px" />
+            </div>
+          :
+            <div className='mb-2 mt-4 p-3 border placeholder-glow rounded d-flex justify-content-between'>
+              <CustomButton height="37.6px" width="60px" />
+              <CustomButton height="37.6px" width="70px" />
+            </div>
+          }
+        </Form>
+      </>
+    );
 
   else if (statusPkg === 'error')
     return (<ErrorComponent error={errorPkg}/>);
@@ -694,9 +743,11 @@ export const PackageComponent = (props) => {
         repos7.push(`${repo.name} (${repo.tag})`)
     })
 
-    if (probes) {
+    if (probes && pkg && pkg.name) {
       probes.forEach(probe => {
-        if (probe.fields.package === `${pkg.name} (${pkg.version})`)
+        console.log("pkg.name: ", pkg.name)
+        console.log("probe.fields.package: ", probe.fields.package)
+        if (probe.fields.package === `${pkg.name} (${pkg.version})` )
           listProbes.push(probe.fields.name)
       })
     }

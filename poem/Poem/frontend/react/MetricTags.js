@@ -35,7 +35,7 @@ import { Controller, useForm, useWatch } from "react-hook-form"
 import { ErrorMessage } from '@hookform/error-message'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as Yup from "yup"
-
+import { CustomButton, CustomHeadline, CustomInput, CustomProfilesList, CustomSubtitle, CustomTable } from "./CustomPlaceholders"
 
 const validationSchema = Yup.object().shape({
   name: Yup.string().required("This field is required")
@@ -87,7 +87,7 @@ export const MetricTagsList = (props) => {
   ], [])
 
   if (status === "loading")
-    return (<LoadingAnim />)
+    return (<CustomProfilesList />)
 
   else if (status === "error")
     return (<ErrorComponent error={error} />)
@@ -476,7 +476,26 @@ export const MetricTagsComponent = (props) => {
   )
 
   if (loadingUserDetails || loadingTag || loadingAllMetrics)
-    return (<LoadingAnim/>)
+    return (
+      <>
+        <CustomHeadline height="38.4px" width="272px" />
+        <Form className='ms-2 mb-1 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
+          <CustomInput height="37.6px" width="50%" custStyle="mb-3"/>
+          <CustomSubtitle height="36.8px" custStyle="mb-2" />
+          <CustomTable height="126px" width="95%" />
+          {/\/add/.test(window.location.pathname) ? 
+            <div className='ms-2 mb-2 mt-5 p-3 border placeholder-glow rounded d-flex justify-content-end'>
+              <CustomButton height="37.6px" width="100px" />
+            </div> 
+            :
+            <div className='ms-2 mb-2 mt-5 p-3 border placeholder-glow rounded d-flex justify-content-between'>
+              <CustomButton height="37.6px" width="100px" />
+              <CustomButton height="37.6px" width="100px" />
+            </div>
+          }
+        </Form>
+      </>
+    )
 
   else if (errorUserDetails)
     return (<ErrorComponent error={errorUserDetails} />)
