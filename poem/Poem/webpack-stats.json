@@ -2024,8 +2024,7 @@
   },
   "chunks": {
     "main": [
-      "main.js",
-      "main.2c21527b98e626fca4f3.hot-update.js"
+      "main.js"
     ]
   },
   "publicPath": "http://localhost:3000/",

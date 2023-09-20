@@ -1272,7 +1272,6 @@ const App = () => {
                   </PublicPage>
                 }
               />
-
               <Route
                 path="/ui/public_metrics"
                 element={
