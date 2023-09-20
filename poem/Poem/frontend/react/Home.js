@@ -7,6 +7,7 @@ import { Backend } from './DataManager';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faIdBadge } from '@fortawesome/free-solid-svg-icons';
 import { useQuery } from 'react-query';
+import { CustomHeadline, CustomInput, CustomSubtitle, CustomTable } from './CustomPlaceholders';
 
 const Home = () =>
 (
@@ -38,7 +39,14 @@ export const PublicHome = (props) => {
 
   if (isSuperAdmin) {
     if (loading)
-      return (<LoadingAnim/>);
+      return (
+        <div className='d-flex flex-column placeholder-glow'>
+          <CustomHeadline height="38.4px" width="180px" custStyle="mb-3" />
+          <CustomTable height="142px" custStyle="mb-1" />
+          <CustomSubtitle height="36.8px" custStyle="mb-2" />
+          <CustomTable height="473px" width="33%" />
+        </div>
+      );
 
     else if (error)
       return (<ErrorComponent error={error}/>);

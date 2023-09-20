@@ -48,7 +48,7 @@ import {
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext, useWatch } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { ErrorMessage } from '@hookform/error-message';
-
+import { CustomButton, CustomHeadline, CustomInput, CustomProfilesList, CustomSpan, CustomSubtitle, CustomTable } from './CustomPlaceholders';
 
 const ReportsChangeContext = React.createContext()
 
@@ -457,7 +457,7 @@ export const ReportsList = (props) => {
   );
 
   if (loadingReports || loadingUserDetails)
-    return (<LoadingAnim/>);
+    return (<CustomProfilesList />);
 
   else if (errorReports)
     return (<ErrorComponent error={errorReports}/>);
@@ -2581,8 +2581,88 @@ export const ReportsComponent = (props) => {
   :
     loadingUserDetails || loadingBackendReport || loadingWebApiReport || listMetricProfilesLoading || listAggregationProfilesLoading || listOperationsProfilesLoading || listThresholdsProfilesLoading || loadingTopologyTags || loadingTopologyGroups || loadingTopologyEndpoints
 
-  if (loading)
-    return (<LoadingAnim/>);
+    if (loading)
+    return (
+      <>
+        <CustomHeadline height="38.4px" width="162px" />
+        <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
+          <Row>
+            <Col md={6} className='d-flex flex-column'>
+              <CustomInput height="37.6px" custStyle="mb-1" />
+              <CustomSpan custStyle="mt-1 mb-2" height="14.4px" width="45%" />
+            </Col>
+            <Col md={2} className='d-flex flex-column'>
+              <div className="d-flex flex-row pt-2 mb-1">
+                <CustomSpan custStyle="me-1 mt-1 mb-1" height="24.4px" width="24.4px" />
+                <CustomSpan custStyle="mt-1 mb-1" height="24.4px" width="65%" />
+              </div>
+              <CustomSpan custStyle="mt-1 mb-2" height="14.4px" width="45%" />
+            </Col>
+          </Row>
+          <CustomSpan custStyle="mt-4 mb-2" height="24px" width="87px" />
+          <CustomInput height="109px" width="80%" />
+          <CustomSpan custStyle="mt-1 mb-3" height="14.4px" width="15%" />
+          <CustomInput height="37.6px" width="25%" custStyle="mb-1 mt-1" />
+          <CustomSpan custStyle="mb-3" height="14.4px" width="15%" />
+          <CustomSubtitle height="36.8px" custStyle="mb-2" />
+          <Row>
+            <Col md={4} className='d-flex flex-column'>
+              <CustomSpan height="24px" width="120px" custStyle="mb-1" />
+              <CustomInput height="37.6px" custStyle="mb-3" />
+            </Col>
+            <Col md={4} className='d-flex flex-column'>
+              <CustomSpan height="24px" width="120px" custStyle="mb-1" />
+              <CustomInput height="37.6px" custStyle="mb-3" />
+            </Col>
+            <Col md={4} className='d-flex flex-column'>
+              <CustomSpan height="24px" width="120px" custStyle="mb-1" />
+              <CustomInput height="37.6px" custStyle="mb-3" />
+            </Col>
+            <Col md={4} className='d-flex flex-column'>
+              <CustomSpan height="24px" width="120px" custStyle="mb-1" />
+              <CustomInput height="37.6px" custStyle="mb-3" />
+            </Col>
+          </Row>
+          <CustomSubtitle height="36.8px" custStyle="mb-2" />
+          <CustomSpan height="24px" width="120px" custStyle="mb-1" />
+          <CustomInput height="37.6px" width="15%" custStyle="mb-3" />
+          <Row>
+            <Col md={6}>
+              <CustomTable height="500px" />
+            </Col>
+            <Col md={6}>
+              <CustomTable height="500px" />
+            </Col>
+          </Row>
+          <CustomSubtitle height="36.8px" custStyle="mb-2" />
+          <Row>
+            <Col className='d-flex flex-column'>
+              <CustomSpan height="24px" width="80px" custStyle="mb-2" />
+              <CustomInput height="37.6px" custStyle="mb-3" />
+            </Col>
+            <Col className='d-flex flex-column'>
+              <CustomSpan height="24px" width="80px" custStyle="mb-2" />
+              <CustomInput height="37.6px" custStyle="mb-3" />
+            </Col>
+            <Col className='d-flex flex-column'>
+              <CustomSpan height="24px" width="80px" custStyle="mb-2" />
+              <CustomInput height="37.6px" custStyle="mb-3" />
+            </Col>
+            <Col className='d-flex flex-column'>
+              <CustomSpan height="24px" width="80px" custStyle="mb-2" />
+              <CustomInput height="37.6px" custStyle="mb-3" />
+            </Col>
+            <Col className='d-flex flex-column'>
+              <CustomSpan height="24px" width="80px" custStyle="mb-2" />
+              <CustomInput height="37.6px" custStyle="mb-3" />
+            </Col>
+          </Row>
+          <div className='mb-2 mt-4 p-3 border placeholder-glow rounded d-flex justify-content-end'>
+            <CustomButton height="37.6px" width="120px" />
+          </div>
+        </Form>
+      </>
+    );
 
   else if (errorUserDetails)
     return (<ErrorComponent error={errorUserDetails}/>);

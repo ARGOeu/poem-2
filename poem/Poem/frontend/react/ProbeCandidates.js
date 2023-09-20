@@ -57,6 +57,7 @@ const validationSchema = yup.object().shape({
   })
 })
 
+import { CustomProfilesList } from "./CustomPlaceholders";
 
 const fetchCandidates = async () => {
   const backend = new Backend()
@@ -146,7 +147,7 @@ export const ProbeCandidateList = () => {
   ])
 
   if (loadingUserDetails || loadingProbeCandidates || loadingStatuses )
-    return (<LoadingAnim />)
+    return (<CustomProfilesList pathname={window.location.pathname} />)
 
   else if (errorUserDetails)
     return (<ErrorComponent error={ errorUserDetails } />)

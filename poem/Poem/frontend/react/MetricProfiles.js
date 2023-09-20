@@ -47,7 +47,7 @@ import './MetricProfiles.css';
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext, useWatch } from 'react-hook-form';
 import * as yup from "yup"
 import { yupResolver } from '@hookform/resolvers/yup';
-
+import { CustomButton, CustomDescriptionArea, CustomHeadline, CustomInput, CustomProfilesList, CustomSpan, CustomSubtitle, CustomTable } from './CustomPlaceholders';
 
 export const MetricProfilesClone = (props) => {
   return <MetricProfilesComponent cloneview={true} {...props} />
@@ -941,8 +941,53 @@ export const MetricProfilesComponent = (props) => {
     }
   }
 
-  if (loadingUserDetails || loadingBackendMP || loadingWebApiMP || loadingMetricsAll || loadingWebApiST || loadingAggrProfiles || loadingReports || loadingTenantsProfiles)
-    return (<LoadingAnim />)
+  if (loadingUserDetails || loadingBackendMP || loadingWebApiMP || loadingMetricsAll || loadingWebApiST || loadingAggrProfiles || loadingReports || loadingTenantsProfiles) {
+    if (window.location.pathname === "/ui/metricprofiles/add") {
+      return (
+        <>
+          <CustomHeadline width="271px" height="38.4px"/>
+          <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
+            <CustomInput height="45px" width="50%" />
+            <CustomSpan custStyle="mt-1 mb-4" height="10px" width="18%" />
+            <CustomDescriptionArea heightTable="109px" widthTable="85%" heightBottom="10px" widthBottom="30%" />
+            <CustomInput height="37.6px" width="25%" custStyle="mt-4"/>
+            <CustomSpan custStyle="mt-1 mb-3" height="10px" width="18%" />
+            <CustomSubtitle height="37.6px" />
+            <CustomTable height="100px" />
+            <div className='d-flex justify-content-end border placeholder-glow rounded mt-4 p-3'>
+              <CustomButton width="59px" height="37.6px" />
+            </div>
+          </Form>
+        </>
+      )
+    } else {
+      return (
+        <>
+          <div className='mt-4 d-flex justify-content-between placeholder-glow'>
+            <CustomHeadline width="450px" height="38.4px"/>
+            <div>
+              <CustomButton height="37.6px" width="80px" custStyle="mx-2" />
+              <CustomButton height="37.6px" width="80px" />
+              <CustomButton height="37.6px" width="80px" custStyle="ms-3"/>
+            </div>
+          </div>
+          <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
+            <CustomInput height="45px" width="50%" />
+            <CustomSpan custStyle="mt-1 mb-2" height="10px" width="15%" />
+            <CustomDescriptionArea heightTable="109px" widthTable="85%" heightBottom="10px" widthBottom="30%" />
+            <CustomInput height="38px" width="25%" custStyle="mt-4" />
+            <CustomSpan custStyle="mt-1 mb-2" height="10px" width="20%" />
+            <CustomSubtitle height="37.6px" />
+            <CustomTable height="500px" />
+            <div className='ms-1 mb-2 mt-4 p-3 border placeholder-glow rounded d-flex justify-content-between'>
+              <CustomButton height="37.6px" width="75px" />
+              <CustomButton height="37.6px" width="59px" />
+            </div>
+          </Form>
+        </>
+      )
+    }
+  }
 
   else if (errorUserDetails)
     return (<ErrorComponent error={errorUserDetails}/>);
@@ -1056,7 +1101,7 @@ export const MetricProfilesList = (props) => {
   ], [])
 
   if (statusUserDetails === 'loading' || statusMetricProfiles === 'loading')
-    return (<LoadingAnim />)
+    return (<CustomProfilesList />)
 
   else if (statusMetricProfiles === 'error')
     return (<ErrorComponent error={errorMetricProfiles}/>);
@@ -1127,7 +1172,14 @@ export const MetricProfileVersionCompare = () => {
   )
 
   if (status === 'loading')
-    return (<LoadingAnim/>);
+    return (
+      <>
+        <CustomHeadline height="38.4px" width="383px" />
+        <div className='ms-3 mt-4 placeholder-glow rounded'>
+          <CustomTable height="230px" />
+        </div>
+      </>  
+    );
 
   if (status === 'error')
     return (<ErrorComponent error={error}/>);
@@ -1183,7 +1235,20 @@ export const MetricProfileVersionDetails = (props) => {
   )
 
   if (loadingUserDetails || loading)
-    return (<LoadingAnim/>);
+    return (
+      <>
+        <CustomHeadline width="450px" height="38.4px"/>
+         <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
+          <CustomInput height="45px" width="50%" />
+          <CustomSpan custStyle="mt-1 mb-3" height="10px" width="15%" />
+          <CustomDescriptionArea custStyle="mb-2" heightTable="109px" widthTable="85%" heightBottom="10px" widthBottom="30%" />
+          <CustomInput height="38px" width="25%" custStyle="mt-4" />
+          <CustomSpan custStyle="mt-1 mb-2" height="10px" width="20%" />
+          <CustomSubtitle height="37.6px" />
+          <CustomTable height="500px" />
+        </Form>
+      </>
+    );
 
   else if (error)
     return (<ErrorComponent error={error}/>);
