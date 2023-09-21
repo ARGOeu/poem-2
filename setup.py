@@ -30,7 +30,7 @@ setup(name=NAME,
           "Operating System :: POSIX :: Linux",
       ),
       install_requires=[
-          'cryptography==36.*',
+          'cryptography>=36,<42',
           'deepdiff==4.*',
           'dj-rest-auth==2.2.*',
           'django-tenants==3.4.*',
