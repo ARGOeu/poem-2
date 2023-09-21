@@ -431,7 +431,6 @@ const TenantRouteSwitch = ({
       />
     </Route>
 
-    {/* OVO TREBA PROVJERITI!!! DODATI PROBE CANDIDATES KROZ API I TESTIRATI */}
     <Route element={<SuperUserRoute isSuperUser={isSuperUser} />}>
       <Route
         path="/ui/administration/probecandidates/:id"

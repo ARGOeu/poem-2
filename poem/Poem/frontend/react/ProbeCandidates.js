@@ -29,7 +29,7 @@ import {
 } from "reactstrap";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Controller, useForm } from "react-hook-form";
-import { CustomProfilesList } from "./CustomPlaceholders";
+import { CustomButton, CustomHeadline, CustomInput, CustomProfilesList, CustomSpan, CustomSubtitle, CustomTable } from "./CustomPlaceholders";
 
 const fetchCandidates = async () => {
   const backend = new Backend()
@@ -499,7 +499,69 @@ export const ProbeCandidateChange = (props) => {
   }
 
   if (userDetailsLoading || candidateLoading || statusesLoading)
-    return (<LoadingAnim />)
+    return (
+      <>
+        <CustomHeadline width="557px" height="38.4px"/>
+        <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
+          <Row>
+            <Col md={6} className="d-flex flex-column" >
+              <CustomInput height="37.6px" width="100%" custStyle="mb-1" />
+              <CustomSpan height="10px" width="80px" />
+            </Col>
+            <Col md={2}>
+              <CustomInput height="37.6px" width="100%" custStyle="mt-1 ms-2" />
+            </Col>
+          </Row>
+          <CustomSpan custStyle="mt-4 mb-2" height="24px" width="87px" />
+          <Col md={8}>
+            <CustomTable height="220px" custStyle="mb-0" />
+            <CustomSpan height="10px" width="210px" />
+          </Col>
+          <CustomSubtitle height="37.6px" custStyle="mb-3" />
+          <Col md={6} className="p-0">
+            <CustomInput height="37.6px" width="100%" custStyle="mb-1" />
+            <CustomSpan height="10px" width="170px" custStyle="mb-3" />
+            <CustomInput height="37.6px" width="100%" custStyle="mb-1" />
+            <CustomSpan height="10px" width="185px" custStyle="mb-3" />
+            <CustomInput height="37.6px" width="100%" custStyle="mb-1" />
+            <CustomSpan height="10px" width="185px" custStyle="mb-3" />
+          </Col>
+          <CustomSubtitle height="37.6px" custStyle="mb-3" />
+          <Col md={8} className="p-0">
+            <CustomInput height="37.6px" width="100%" custStyle="mb-1" />
+            <CustomSpan height="10px" width="150px" custStyle="mb-2" />
+            <CustomInput height="37.6px" width="100%" custStyle="mb-1" />
+            <CustomSpan height="10px" width="150px" custStyle="mb-2" />
+          </Col>
+          <CustomSubtitle height="37.6px" custStyle="mb-3" />
+          <Col md={8} className="p-0">
+            <CustomInput height="37.6px" width="100%" custStyle="mb-1" />
+            <CustomSpan height="10px" width="140px" custStyle="mb-2" />
+            <CustomInput height="37.6px" width="100%" custStyle="mb-1" />
+            <CustomSpan height="10px" width="170px" custStyle="mb-2" />
+            <CustomInput height="37.6px" width="100%" custStyle="mb-1" />
+            <CustomSpan height="10px" width="190px" custStyle="mb-2" />
+            <CustomInput height="37.6px" width="100%" custStyle="mb-1" />
+            <CustomSpan height="10px" width="160px" custStyle="mb-2" />
+          </Col>
+          <CustomSubtitle height="37.6px" custStyle="mb-3" />
+          <CustomSpan custStyle="mb-1" height="24px" width="87px" />
+          <Col md={8} className="mb-2">
+            <CustomTable height="120px" custStyle="mb-0" />
+            <CustomSpan height="10px" width="130px" />
+          </Col>
+          <CustomSubtitle height="37.6px" custStyle="mb-2" />
+          <Col md={8} className="p-0 mb-4">
+            <CustomInput height="37.6px" width="100%" custStyle="mb-1" />
+            <CustomSpan height="10px" width="120px" custStyle="mb-2" />
+          </Col>
+          <div className='ms-1 mb-2 mt-4 p-3 border placeholder-glow rounded d-flex justify-content-between'>
+            <CustomButton height="37.6px" width="100px" />
+            <CustomButton height="37.6px" width="60px" />
+          </div>
+        </Form>
+      </>
+    )
 
   else if (userDetailsError)
     return (<ErrorComponent error={ userDetailsError } />)
