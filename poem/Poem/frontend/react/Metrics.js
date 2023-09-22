@@ -38,7 +38,7 @@ import {
 } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
-import ReactDiffViewer from 'react-diff-viewer';
+import ReactDiffViewer from "react-diff-viewer-continued"
 import CreatableSelect from 'react-select/creatable';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import {

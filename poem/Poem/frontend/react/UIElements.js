@@ -74,7 +74,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
 import { Backend } from './DataManager';
-import ReactDiffViewer from 'react-diff-viewer';
+import ReactDiffViewer from "react-diff-viewer-continued"
 import { CookiePolicy } from './CookiePolicy';
 import { useTable, usePagination, useFilters } from 'react-table';
 import { Helmet } from 'react-helmet';
