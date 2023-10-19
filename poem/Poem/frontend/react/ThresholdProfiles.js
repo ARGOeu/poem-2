@@ -1135,11 +1135,12 @@ export const ThresholdsProfilesChange = (props) => {
     {
       enabled: !addview && (!publicView ? !!userDetails : true),
       initialData: () => {
-        return queryClient.getQueryData(
-          [`${publicView ? 'public_' : ''}thresholdsprofile`, "backend"]
-        )?.find(
-          profile => profile.name === profile_name
-        )
+        if (!addview)
+          return queryClient.getQueryData(
+            [`${publicView ? 'public_' : ''}thresholdsprofile`, "backend"]
+          )?.find(
+            profile => profile.name === profile_name
+          )
       }
     }
   )
@@ -1152,7 +1153,8 @@ export const ThresholdsProfilesChange = (props) => {
     {
       enabled: !!backendTP,
       initialData: () => {
-        return queryClient.getQueryData([`${publicView ? "public_" : ""}thresholdsprofile`, "webapi"])?.find(profile => profile.id === backendTP.apiid)
+        if (!addview)
+          return queryClient.getQueryData([`${publicView ? "public_" : ""}thresholdsprofile`, "webapi"])?.find(profile => profile.id === backendTP.apiid)
       }
     }
   )
