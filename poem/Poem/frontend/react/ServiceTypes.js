@@ -685,6 +685,8 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
 
   fieldsView = fieldsView.slice(paginationHelp.start, paginationHelp.end)
 
+  let n = Math.ceil(pageSize / 2)
+
   return (
     <>
       <ModalAreYouSure
@@ -774,61 +776,77 @@ const ServiceTypesBulkDeleteChange = ({data, webapi, ...props}) => {
                     <td></td>
                   </tr>
                   {
-                    fieldsView.map((entry, index) =>
-                      <tr key={entry.id} data-testid={`st-rows-${index}`}>
-                        <td className="align-middle text-center">
-                          { lookupIndices[entry.id] + 1 }
-                        </td>
-                        <td className="align-middle text-left fw-bold">
-                          {
-                            showtitles ?
-                              <div>
-                                <p className="fw-bold m-0">{ entry.name }</p>
-                                <p className="fw-normal m-0"><small>{ entry.title }</small></p>
-                              </div>
-                            :
-                              <span className="ms-2">{ entry.name }</span>
-                          }
-                        </td>
-                        <td>
-                          <Controller
-                            name={`serviceTypes.${lookupIndices[entry.id]}.description`}
-                            control={control}
-                            render={ ({field}) =>
-                              <textarea
-                                {...field}
-                                data-testid={ `description-${index}` }
-                                disabled={ entry.tags?.indexOf("topology") !== -1 }
-                                rows="2"
-                                className={ `form-control ${serviceTypes[lookupIndices[entry.id]].description !== updatedData[lookupIndices[entry.id]].description && 'border border-danger'}` }
-                              />
+                    fieldsView.length > 0 ?
+                      fieldsView.map((entry, index) =>
+                        <tr key={entry.id} data-testid={`st-rows-${index}`}>
+                          <td className="align-middle text-center">
+                            { lookupIndices[entry.id] + 1 }
+                          </td>
+                          <td className="align-middle text-left fw-bold">
+                            {
+                              showtitles ?
+                                <div>
+                                  <p className="fw-bold m-0">{ entry.name }</p>
+                                  <p className="fw-normal m-0"><small>{ entry.title }</small></p>
+                                </div>
+                              :
+                                <span className="ms-2">{ entry.name }</span>
                             }
-                          />
-                        </td>
-                        <td className="text-center align-middle">
-                          <Badge color={`${entry.tags?.indexOf("topology") !== -1 ? "secondary" : "success"}`}>
-                            { entry.tags[0] }
-                          </Badge>
-                        </td>
-                        <td className="text-center align-middle">
-                          <Controller
-                            name={`serviceTypes.${lookupIndices[entry.id]}.isChecked`}
-                            control={control}
-                            render={ ({field}) =>
-                              <Input
-                                { ...field }
-                                type="checkbox"
-                                data-testid={`checkbox-${index}`}
-                                className="mt-2"
-                                disabled={ entry.tags?.indexOf("topology") !== -1 }
-                                onChange={ e => setValue(`serviceTypes.${lookupIndices[entry.id]}.isChecked`, e.target.checked)}
-                                checked={ field.checked }
-                              />
+                          </td>
+                          <td>
+                            <Controller
+                              name={`serviceTypes.${lookupIndices[entry.id]}.description`}
+                              control={control}
+                              render={ ({field}) =>
+                                <textarea
+                                  {...field}
+                                  data-testid={ `description-${index}` }
+                                  disabled={ entry.tags?.indexOf("topology") !== -1 }
+                                  rows="2"
+                                  className={ `form-control ${serviceTypes[lookupIndices[entry.id]].description !== updatedData[lookupIndices[entry.id]].description && 'border border-danger'}` }
+                                />
+                              }
+                            />
+                          </td>
+                          <td className="text-center align-middle">
+                            <Badge color={`${entry.tags?.indexOf("topology") !== -1 ? "secondary" : "success"}`}>
+                              { entry.tags[0] }
+                            </Badge>
+                          </td>
+                          <td className="text-center align-middle">
+                            <Controller
+                              name={`serviceTypes.${lookupIndices[entry.id]}.isChecked`}
+                              control={control}
+                              render={ ({field}) =>
+                                <Input
+                                  { ...field }
+                                  type="checkbox"
+                                  data-testid={`checkbox-${index}`}
+                                  className="mt-2"
+                                  disabled={ entry.tags?.indexOf("topology") !== -1 }
+                                  onChange={ e => setValue(`serviceTypes.${lookupIndices[entry.id]}.isChecked`, e.target.checked)}
+                                  checked={ field.checked }
+                                />
+                              }
+                            />
+                          </td>
+                        </tr>
+                      )
+                    :
+                      [...Array(pageSize)].map((e, i) => {
+                        return (
+                          <tr key={ i }>
+                            {
+                              i === n - 1 ?
+                                <td colSpan={ 5 } style={{height: '49px'}} className='align-middle text-center text-muted'>{`No service types`}</td>
+                              :
+                                [...Array( 5 )].map((e, j) =>
+                                  <td style={{height: '49px'}} key={j} className='align-middle'>{''}</td>
+                  )
                             }
-                          />
-                        </td>
-                      </tr>
-                    )
+                          </tr>
+                        )
+                      })
                   }
                 </tbody>
               </Table>
