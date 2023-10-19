@@ -182,10 +182,43 @@ class TablePaginationHelper {
 
 
 const validationSchema = yup.object().shape({
-  name: yup.string().matches(/^[A-Za-z0-9\\.\-_]+$/g, {message: 'Name can only contain alphanumeric characters, punctuations, underscores and minuses', excludeEmptyString: false}),
+  name: yup.string()
+    .matches(/^[A-Za-z0-9\\.\-_]+$/g, {message: 'Name can only contain alphanumeric characters, punctuations, underscores and minuses', excludeEmptyString: false})
+    .test("duplicate", "Service type with this name already exists", function (value) {
+      let arr = this.options.context.serviceTypes.map(stype => stype.name)
+      if (arr.indexOf(value) === -1)
+        return true
+
+      else
+        return false
+    })
+    .test("duplicates", "Service type with this name already added", function (value) {
+      let arr = this.options.context.addedServices.map(service => service.name)
+      if (arr.indexOf(value) === -1)
+        return true
+
+      else
+        return false
+    }),
   title: yup.string().when("$showtitles", (showtitles, schema) => {
     if (showtitles)
       return schema.required("Title cannot be empty.")
+        .test("duplicate", "Service type with this title already exists", function (value) {
+          let arr = this.options.context.serviceTypes.map(service => service.title)
+          if (arr.indexOf(value) === -1)
+            return true
+
+          else
+            return false
+        })
+        .test("dupllicates", "Service type with this title already added", function (value) {
+          let arr = this.options.context.addedServices.map(service => service.title)
+          if (arr.indexOf(value) === -1)
+            return true
+
+          else
+            return false
+        })
 
     return
   }),
@@ -251,7 +284,7 @@ const ServiceTypesListAdded = ({ data, ...props }) => {
   }
 
   const doSave = () => {
-    let tmpArray = [...getValues('serviceTypes'), ...context.serviceTypesDescriptions]
+    let tmpArray = [...getValues('serviceTypes'), ...context.serviceTypes]
     let pairs = _.orderBy(tmpArray, [service => service.name.toLowerCase()], ['asc'])
     postServiceTypesWebApi([...pairs.map(
       e => Object(
@@ -374,11 +407,168 @@ const ServiceTypesListAdded = ({ data, ...props }) => {
 }
 
 
-export const ServiceTypesBulkAdd = (props) => {
+const ServiceTypesAddForm = (props) => {
+  const context = useContext(BulkAddContext)
+
   const showtitles = props.showtitles
 
   const [addedServices, setAddedServices] = useState([])
 
+  const { control, handleSubmit, reset, formState: {errors} } = useForm({
+    resolver: yupResolver(validationSchema),
+    context: { 
+      showtitles: showtitles, 
+      serviceTypes: context.serviceTypes,
+      addedServices: addedServices
+    },
+    defaultValues: {
+      name: "",
+      title: "",
+      description: "",
+      tags: ['poem']
+    }
+  })
+
+  const onSubmit = data => {
+    let tmpArray = [ ...addedServices ]
+    tmpArray.push(data)
+    setAddedServices(tmpArray)
+    reset({
+      name: "",
+      title: "",
+      description: "",
+      tags: ['poem']
+    })
+  }
+
+  const DescriptionInputGroup = <>
+    <Label className="fw-bold" for="description">
+      Description:
+    </Label>
+    <InputGroup>
+      <Controller
+        name="description"
+        control={ control }
+        render={ ({ field }) =>
+          <textarea
+            { ...field }
+            id="description"
+            rows="3"
+            className={`form-control ${ errors?.description && "is-invalid" }`}
+          />
+        }
+      />
+      <ErrorMessage
+        errors={errors}
+        name="description"
+        render={({ message }) =>
+          <FormFeedback invalid="true" className="end-0">
+            { message }
+          </FormFeedback>
+        }
+      />
+    </InputGroup>
+  </>
+
+  return (
+    <>
+      <div className="d-flex align-items-center justify-content-between">
+        <h2 className="ms-3 mt-1 mb-4">Add service types</h2>
+      </div>
+      <div id="argo-contentwrap" className="ms-2 mb-2 mt-2 p-3 border rounded">
+        <Form onSubmit={handleSubmit(onSubmit)} className="needs-validation">
+          <Row>
+            <Col sm={{size: 4}}>
+              <Label className="fw-bold" for="name">
+                Name:
+              </Label>
+              <InputGroup>
+                <Controller
+                  name="name"
+                  control={control}
+                  render={ ({field}) =>
+                    <Input
+                      {...field}
+                      id="name"
+                      className={`form-control ${errors?.name && "is-invalid" }`}
+                    />
+                  }
+                />
+                <ErrorMessage
+                  errors={errors}
+                  name="name"
+                  render={({ message }) =>
+                    <FormFeedback invalid="true" className="end-0">
+                      { message }
+                    </FormFeedback>
+                  }
+                />
+              </InputGroup>
+            </Col>
+            {
+              showtitles ?
+                <Col sm={{size: 7}}>
+                  <Label className="fw-bold" for="title">
+                    Title:
+                  </Label>
+                  <InputGroup>
+                    <Controller
+                      name="title"
+                      control={ control }
+                      render={ ({ field }) =>
+                        <Input
+                          { ...field }
+                          id="title"
+                          className={ `form-control ${errors?.title && "is-invalid"}` }
+                        />
+                      }
+                    />
+                    <ErrorMessage
+                      errors={errors}
+                      name="title"
+                      render={({ message }) =>
+                        <FormFeedback invalid="true" className="end-0">
+                          { message }
+                        </FormFeedback>
+                      }
+                    />
+                  </InputGroup>
+                </Col>
+              :
+                <>
+                  <Col sm={{ size: 7 }}>
+                    { DescriptionInputGroup }
+                  </Col>
+                  <Col sm={{size: 1}} className="text-center">
+                    <Button className="mt-5" color="success" type="submit">
+                      Add new
+                    </Button>
+                  </Col>
+                </>
+            }
+          </Row>
+          {
+            showtitles &&
+              <Row className="mt-3">
+                <Col sm={{ size: 11 }}>
+                  { DescriptionInputGroup }
+                </Col>
+                <Col sm={{size: 1}} className="text-center">
+                  <Button className="mt-5" color="success" type="submit">
+                    Add new
+                  </Button>
+                </Col>
+              </Row>
+          }
+        </Form>
+      </div>
+      <ServiceTypesListAdded data={ addedServices } { ...props } />
+    </>
+  )
+}
+
+
+export const ServiceTypesBulkAdd = (props) => {
   const webapi = new WebApi({
     token: props.webapitoken,
     serviceTypes: props.webapiservicetypes
@@ -388,176 +578,31 @@ export const ServiceTypesBulkAdd = (props) => {
     'userdetails', () => fetchUserDetails(true)
   );
 
-  const { data: serviceTypesDescriptions, errorServiceTypesDescriptions, isLoading: loadingServiceTypesDescriptions} = useQuery(
+  const { data: serviceTypes, errorServiceTypes, isLoading: loadingServiceTypes } = useQuery(
     'servicetypes', async () => {
       return await webapi.fetchServiceTypes();
     },
     { enabled: !!userDetails }
   )
 
-  const { control, handleSubmit, reset, formState: {errors} } = useForm({
-    resolver: yupResolver(validationSchema),
-    context: { showtitles: showtitles },
-    defaultValues: {
-      name: '',
-      title: "",
-      description: '',
-      tags: ['poem']
-    }
-  })
-
-  const onSubmit = data => {
-    let tmpArray = [...addedServices]
-    tmpArray.push(data)
-    setAddedServices(tmpArray)
-    reset({
-      name: '',
-      title: "",
-      description: '',
-      tags: ['poem']
-    })
-  }
-
-  if (loadingUserDetails || loadingServiceTypesDescriptions)
+  if (loadingUserDetails || loadingServiceTypes)
     return (<LoadingAnim/>);
 
   else if (errorUserDetails)
     return (<ErrorComponent error={errorUserDetails}/>);
 
-  else if (errorServiceTypesDescriptions)
-    return (<ErrorComponent error={errorServiceTypesDescriptions}/>);
+  else if (errorServiceTypes)
+    return (<ErrorComponent error={errorServiceTypes}/>);
 
-  if (userDetails?.is_superuser && serviceTypesDescriptions) {
-    const DescriptionInputGroup = <>
-      <Label className="fw-bold" for="description">
-        Description:
-      </Label>
-      <InputGroup>
-        <Controller
-          name="description"
-          control={ control }
-          render={ ({field}) =>
-            <textarea
-              {...field}
-              id="description"
-              rows="3"
-              className={`form-control ${errors?.description && "is-invalid" }`}
-            />
-          }
-        />
-        <ErrorMessage
-          errors={errors}
-          name="description"
-          render={({ message }) =>
-            <FormFeedback invalid="true" className="end-0">
-              { message }
-            </FormFeedback>
-          }
-        />
-      </InputGroup>
-    </>
-
+  else if (userDetails && serviceTypes) {
     return (
-      <>
-        <div className="d-flex align-items-center justify-content-between">
-          <h2 className="ms-3 mt-1 mb-4">Add service types</h2>
-        </div>
-        <div id="argo-contentwrap" className="ms-2 mb-2 mt-2 p-3 border rounded">
-          <Form onSubmit={handleSubmit(onSubmit)} className="needs-validation">
-            <Row>
-              <Col sm={{size: 4}}>
-                <Label className="fw-bold" for="name">
-                  Name:
-                </Label>
-                <InputGroup>
-                  <Controller
-                    name="name"
-                    control={control}
-                    render={ ({field}) =>
-                      <Input
-                        {...field}
-                        id="name"
-                        className={`form-control ${errors?.name && "is-invalid" }`}
-                      />
-                    }
-                  />
-                  <ErrorMessage
-                    errors={errors}
-                    name="name"
-                    render={({ message }) =>
-                      <FormFeedback invalid="true" className="end-0">
-                        { message }
-                      </FormFeedback>
-                    }
-                  />
-                </InputGroup>
-              </Col>
-              {
-                showtitles ?
-                  <Col sm={{size: 7}}>
-                    <Label className="fw-bold" for="title">
-                      Title:
-                    </Label>
-                    <InputGroup>
-                      <Controller
-                        name="title"
-                        control={ control }
-                        render={ ({ field }) =>
-                          <Input
-                            { ...field }
-                            id="title"
-                            className={ `form-control ${errors?.title && "is-invalid"}` }
-                          />
-                        }
-                      />
-                      <ErrorMessage
-                        errors={errors}
-                        name="title"
-                        render={({ message }) =>
-                          <FormFeedback invalid="true" className="end-0">
-                            { message }
-                          </FormFeedback>
-                        }
-                      />
-                    </InputGroup>
-                  </Col>
-                :
-                  <>
-                    <Col sm={{ size: 7 }}>
-                      { DescriptionInputGroup }
-                    </Col>
-                    <Col sm={{size: 1}} className="text-center">
-                      <Button className="mt-5" color="success" type="submit">
-                        Add new
-                      </Button>
-                    </Col>
-                  </>
-              }
-            </Row>
-            {
-              showtitles &&
-                <Row className="mt-3">
-                  <Col sm={{ size: 11 }}>
-                    { DescriptionInputGroup }
-                  </Col>
-                  <Col sm={{size: 1}} className="text-center">
-                    <Button className="mt-5" color="success" type="submit">
-                      Add new
-                    </Button>
-                  </Col>
-                </Row>
-            }
-          </Form>
-        </div>
-        <BulkAddContext.Provider value={{
-          setCallback: setAddedServices,
-          userDetails: userDetails,
-          serviceTypesDescriptions: serviceTypesDescriptions,
-          webapi: webapi
-        }}>
-          <ServiceTypesListAdded data={addedServices} { ...props } />
-        </BulkAddContext.Provider>
-      </>
+      <BulkAddContext.Provider value={{
+        userDetails: userDetails,
+        serviceTypes: serviceTypes,
+        webapi: webapi
+      }}>
+        <ServiceTypesAddForm { ...props } />
+      </BulkAddContext.Provider>
     )
   }
   else
