@@ -582,6 +582,8 @@ const TenantRouteSwitch = ({
         webapitoken={token}
         webapiservicetypes={webApiServiceTypes}
         showtitles={showServiceTitle}
+        tenantName={ tenantName }
+        devel={ webApiServiceTypes?.includes("devel") }
       />}
     />
     <SuperUserRoute
