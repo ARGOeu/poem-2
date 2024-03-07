@@ -203,11 +203,13 @@ class Repos(APIView):
     permission_classes = (MyHasAPIKey,)
 
     def _get_packages(self, tag, metrics):
-        if tag == 'centos7':
-            ostag = admin_models.OSTag.objects.get(name='CentOS 7')
-        elif tag == 'centos6':
-            ostag = admin_models.OSTag.objects.get(name='CentOS 6')
-        else:
+        try:
+            ostag = [
+                t for t in admin_models.OSTag.objects.all() if
+                t.name.lower().replace(" ", "") == tag
+            ][0]
+
+        except IndexError:
             raise NotFound(status=404, detail='YUM repo tag not found.')
 
         packages = set()
@@ -304,7 +306,6 @@ class ListRepos(Repos):
 
 
 class ListReposInternal(Repos):
-
     def get(self, request, tag=None):
         if not tag:
             return Response(
