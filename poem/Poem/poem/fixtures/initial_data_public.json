@@ -26,5 +26,12 @@
     "fields": {
       "name": "CentOS 7"
     }
+  },
+  {
+    "model": "poem_super_admin.OSTag",
+    "pk": 3,
+    "fields": {
+      "name": "Rocky 9"
+    }
   }
 ]
