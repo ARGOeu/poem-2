@@ -1,11 +1,11 @@
 from Poem.api.views import NotFound
 from Poem.poem_super_admin import models as admin_models
 from django.db import IntegrityError
+from django_tenants.utils import get_public_schema_name
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django_tenants.utils import get_public_schema_name
 
 from .utils import error_response
 
@@ -16,10 +16,10 @@ class ListYumRepos(APIView):
     def get(self, request, name=None, tag=None):
         if name and tag:
             try:
-                if tag == 'centos6':
-                    ostag = admin_models.OSTag.objects.get(name='CentOS 6')
-                else:
-                    ostag = admin_models.OSTag.objects.get(name='CentOS 7')
+                ostag = [
+                    t for t in admin_models.OSTag.objects.all() if
+                    t.name.lower().replace(" ", "") == tag
+                ][0]
 
                 repo = admin_models.YumRepo.objects.get(name=name, tag=ostag)
                 result = {
@@ -31,7 +31,7 @@ class ListYumRepos(APIView):
                 }
                 return Response(result)
 
-            except admin_models.YumRepo.DoesNotExist:
+            except (IndexError, admin_models.YumRepo.DoesNotExist):
                 return Response(status=status.HTTP_404_NOT_FOUND)
 
         elif not name and not tag:
