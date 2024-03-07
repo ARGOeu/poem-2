@@ -40,14 +40,14 @@ const mockListPackages = [
     'name': 'nagios-plugins-argo',
     'version': '0.1.11',
     'use_present_version': false,
-    'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
+    'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)', "repo-4 (Rocky 9)"]
   },
   {
     'id': '4',
     'name': 'nagios-plugins-fedcloud',
     'version': '0.5.0',
     'use_present_version': false,
-    'repos': ['repo-2 (CentOS 7)']
+    'repos': ['repo-2 (CentOS 7)', "repo-4 (Rocky 9)"]
   },
   {
     'id': '1',
@@ -61,7 +61,7 @@ const mockListPackages = [
     'name': 'nagios-plugins-http',
     'version': 'present',
     'use_present_version': true,
-    'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
+    'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)', "repo-4 (Rocky 9)"]
   }
 ];
 
@@ -86,6 +86,13 @@ const mockYUMRepos = [
     'tag': 'CentOS 7',
     'content': 'content1=content1\ncontent2=content2',
     'description': 'Repo 3 description'
+  },
+  {
+    "id": "4",
+    "name": "repo-4",
+    "tag": "Rocky 9",
+    "content": "content8=content8\ncontent9=content9",
+    "description": "Repo 4 description"
   }
 ];
 
@@ -94,7 +101,7 @@ const mockPackage = {
   'name': 'nagios-plugins-argo',
   'version': '0.1.11',
   'use_present_version': false,
-  'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
+  'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)', "repo-4 (Rocky 9)"]
 }
 
 const mockProbeVersions = [
@@ -157,14 +164,14 @@ const mockPackageVersions = [
     'name': 'nagios-plugins-argo-new',
     'version': '0.1.12',
     'use_present_version': false,
-    'repos': ['repo-2 (CentOS 7)']
+    'repos': ['repo-2 (CentOS 7)', "repo-4 (Rocky 9)"]
   },
   {
     'id': '9',
     'name': 'nagios-plugins-argo',
     'version': '0.1.11',
     'use_present_version': false,
-    'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
+    'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)', "repo-4 (Rocky 9)"]
   },
   {
     'id': '12',
@@ -333,17 +340,18 @@ describe('Test list of packages on SuperAdmin POEM', () => {
     expect(screen.getByRole('columnheader', { name: /repo/i }).textContent).toBe('Repo');
     expect(screen.getAllByPlaceholderText('Search')).toHaveLength(1);
     expect(screen.getAllByRole('columnheader', { name: 'Show all' })).toHaveLength(1);
-    expect(screen.getAllByRole('option', { name: /repo/i })).toHaveLength(3);
+    expect(screen.getAllByRole('option', { name: /repo/i })).toHaveLength(4);
     expect(screen.getByRole('option', { name: 'Show all' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'repo-1 (CentOS 6)' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'repo-2 (CentOS 7)' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'repo-3 (CentOS 7)' })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "repo-4 (Rocky 9)" })).toBeInTheDocument()
     expect(screen.getAllByRole('row')).toHaveLength(32);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(26);
-    expect(screen.getByRole('row', { name: /argo/i }).textContent).toBe('1nagios-plugins-argo0.1.11repo-1 (CentOS 6), repo-2 (CentOS 7)');
-    expect(screen.getByRole('row', { name: /fedcloud/i }).textContent).toBe('2nagios-plugins-fedcloud0.5.0repo-2 (CentOS 7)');
+    expect(screen.getByRole('row', { name: /argo/i }).textContent).toBe('1nagios-plugins-argo0.1.11repo-1 (CentOS 6), repo-2 (CentOS 7), repo-4 (Rocky 9)');
+    expect(screen.getByRole('row', { name: /fedcloud/i }).textContent).toBe('2nagios-plugins-fedcloud0.5.0repo-2 (CentOS 7), repo-4 (Rocky 9)');
     expect(screen.getByRole('row', { name: /globus/i }).textContent).toBe('3nagios-plugins-globus0.1.5repo-2 (CentOS 7)');
-    expect(screen.getByRole('row', { name: /http/i }).textContent).toBe('4nagios-plugins-httppresentrepo-1 (CentOS 6), repo-2 (CentOS 7)');
+    expect(screen.getByRole('row', { name: /http/i }).textContent).toBe('4nagios-plugins-httppresentrepo-1 (CentOS 6), repo-2 (CentOS 7), repo-4 (Rocky 9)');
     expect(screen.getByRole('link', { name: /argo/i }).closest('a')).toHaveAttribute('href', '/ui/packages/nagios-plugins-argo-0.1.11');
     expect(screen.getByRole('link', { name: /fedcloud/i }).closest('a')).toHaveAttribute('href', '/ui/packages/nagios-plugins-fedcloud-0.5.0');
     expect(screen.getByRole('link', { name: /globus/i }).closest('a')).toHaveAttribute('href', '/ui/packages/nagios-plugins-globus-0.1.5');
@@ -361,25 +369,25 @@ describe('Test list of packages on SuperAdmin POEM', () => {
     fireEvent.change(screen.getByDisplayValue('Show all'), { target: { value: 'repo-1 (CentOS 6)' } });
     expect(screen.getAllByRole('row')).toHaveLength(32);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(28);
-    expect(screen.getByRole('row', { name: /argo/i }).textContent).toBe('1nagios-plugins-argo0.1.11repo-1 (CentOS 6), repo-2 (CentOS 7)');
-    expect(screen.getByRole('row', { name: /http/i }).textContent).toBe('2nagios-plugins-httppresentrepo-1 (CentOS 6), repo-2 (CentOS 7)');
+    expect(screen.getByRole('row', { name: /argo/i }).textContent).toBe('1nagios-plugins-argo0.1.11repo-1 (CentOS 6), repo-2 (CentOS 7), repo-4 (Rocky 9)');
+    expect(screen.getByRole('row', { name: /http/i }).textContent).toBe('2nagios-plugins-httppresentrepo-1 (CentOS 6), repo-2 (CentOS 7), repo-4 (Rocky 9)');
     expect(screen.getByRole('link', { name: /argo/i }).closest('a')).toHaveAttribute('href', '/ui/packages/nagios-plugins-argo-0.1.11');
     expect(screen.getByRole('link', { name: /http/i }).closest('a')).toHaveAttribute('href', '/ui/packages/nagios-plugins-http-present');
 
     fireEvent.change(screen.getByPlaceholderText('Search'), { target: { value: 'argo' } });
     expect(screen.getAllByRole('row')).toHaveLength(32);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(29);
-    expect(screen.getByRole('row', { name: /-argo/i }).textContent).toBe('1nagios-plugins-argo0.1.11repo-1 (CentOS 6), repo-2 (CentOS 7)');
+    expect(screen.getByRole('row', { name: /-argo/i }).textContent).toBe('1nagios-plugins-argo0.1.11repo-1 (CentOS 6), repo-2 (CentOS 7), repo-4 (Rocky 9)');
     expect(screen.getByRole('link', { name: /argo/i }).closest('a')).toHaveAttribute('href', '/ui/packages/nagios-plugins-argo-0.1.11');
 
     fireEvent.change(screen.getByDisplayValue('argo'), { target: { value: '' } });
     fireEvent.change(screen.getByDisplayValue('repo-1 (CentOS 6)'), { target: { value: 'repo-2 (CentOS 7)' } });
     expect(screen.getAllByRole('row')).toHaveLength(32);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(26);
-    expect(screen.getByRole('row', { name: /argo/i }).textContent).toBe('1nagios-plugins-argo0.1.11repo-1 (CentOS 6), repo-2 (CentOS 7)');
-    expect(screen.getByRole('row', { name: /fedcloud/i }).textContent).toBe('2nagios-plugins-fedcloud0.5.0repo-2 (CentOS 7)');
+    expect(screen.getByRole('row', { name: /argo/i }).textContent).toBe('1nagios-plugins-argo0.1.11repo-1 (CentOS 6), repo-2 (CentOS 7), repo-4 (Rocky 9)');
+    expect(screen.getByRole('row', { name: /fedcloud/i }).textContent).toBe('2nagios-plugins-fedcloud0.5.0repo-2 (CentOS 7), repo-4 (Rocky 9)');
     expect(screen.getByRole('row', { name: /globus/i }).textContent).toBe('3nagios-plugins-globus0.1.5repo-2 (CentOS 7)');
-    expect(screen.getByRole('row', { name: /http/i }).textContent).toBe('4nagios-plugins-httppresentrepo-1 (CentOS 6), repo-2 (CentOS 7)');
+    expect(screen.getByRole('row', { name: /http/i }).textContent).toBe('4nagios-plugins-httppresentrepo-1 (CentOS 6), repo-2 (CentOS 7), repo-4 (Rocky 9)');
     expect(screen.getByRole('link', { name: /argo/i }).closest('a')).toHaveAttribute('href', '/ui/packages/nagios-plugins-argo-0.1.11');
     expect(screen.getByRole('link', { name: /fedcloud/i }).closest('a')).toHaveAttribute('href', '/ui/packages/nagios-plugins-fedcloud-0.5.0');
     expect(screen.getByRole('link', { name: /globus/i }).closest('a')).toHaveAttribute('href', '/ui/packages/nagios-plugins-globus-0.1.5');
@@ -422,17 +430,18 @@ describe('Test list of packages on tenant POEM', () => {
     expect(screen.getByRole('columnheader', { name: /repo/i }).textContent).toBe('Repo');
     expect(screen.getAllByPlaceholderText('Search')).toHaveLength(1);
     expect(screen.getAllByRole('columnheader', { name: 'Show all' })).toHaveLength(1);
-    expect(screen.getAllByRole('option', { name: /repo/i })).toHaveLength(3);
+    expect(screen.getAllByRole('option', { name: /repo/i })).toHaveLength(4);
     expect(screen.getByRole('option', { name: 'Show all' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'repo-1 (CentOS 6)' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'repo-2 (CentOS 7)' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'repo-3 (CentOS 7)' })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "repo-4 (Rocky 9)" })).toBeInTheDocument()
     expect(screen.getAllByRole('row')).toHaveLength(32);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(26);
-    expect(screen.getByRole('row', { name: /argo/i }).textContent).toBe('1nagios-plugins-argo0.1.11repo-1 (CentOS 6), repo-2 (CentOS 7)');
-    expect(screen.getByRole('row', { name: /fedcloud/i }).textContent).toBe('2nagios-plugins-fedcloud0.5.0repo-2 (CentOS 7)');
+    expect(screen.getByRole('row', { name: /argo/i }).textContent).toBe('1nagios-plugins-argo0.1.11repo-1 (CentOS 6), repo-2 (CentOS 7), repo-4 (Rocky 9)');
+    expect(screen.getByRole('row', { name: /fedcloud/i }).textContent).toBe('2nagios-plugins-fedcloud0.5.0repo-2 (CentOS 7), repo-4 (Rocky 9)');
     expect(screen.getByRole('row', { name: /globus/i }).textContent).toBe('3nagios-plugins-globus0.1.5repo-2 (CentOS 7)');
-    expect(screen.getByRole('row', { name: /http/i }).textContent).toBe('4nagios-plugins-httppresentrepo-1 (CentOS 6), repo-2 (CentOS 7)');
+    expect(screen.getByRole('row', { name: /http/i }).textContent).toBe('4nagios-plugins-httppresentrepo-1 (CentOS 6), repo-2 (CentOS 7), repo-4 (Rocky 9)');
     expect(screen.getByRole('link', { name: /argo/i }).closest('a')).toHaveAttribute('href', '/ui/administration/packages/nagios-plugins-argo-0.1.11');
     expect(screen.getByRole('link', { name: /fedcloud/i }).closest('a')).toHaveAttribute('href', '/ui/administration/packages/nagios-plugins-fedcloud-0.5.0');
     expect(screen.getByRole('link', { name: /globus/i }).closest('a')).toHaveAttribute('href', '/ui/administration/packages/nagios-plugins-globus-0.1.5');
@@ -450,25 +459,25 @@ describe('Test list of packages on tenant POEM', () => {
     fireEvent.change(screen.getByDisplayValue('Show all'), { target: { value: 'repo-1 (CentOS 6)' } });
     expect(screen.getAllByRole('row')).toHaveLength(32);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(28);
-    expect(screen.getByRole('row', { name: /argo/i }).textContent).toBe('1nagios-plugins-argo0.1.11repo-1 (CentOS 6), repo-2 (CentOS 7)');
-    expect(screen.getByRole('row', { name: /http/i }).textContent).toBe('2nagios-plugins-httppresentrepo-1 (CentOS 6), repo-2 (CentOS 7)');
+    expect(screen.getByRole('row', { name: /argo/i }).textContent).toBe('1nagios-plugins-argo0.1.11repo-1 (CentOS 6), repo-2 (CentOS 7), repo-4 (Rocky 9)');
+    expect(screen.getByRole('row', { name: /http/i }).textContent).toBe('2nagios-plugins-httppresentrepo-1 (CentOS 6), repo-2 (CentOS 7), repo-4 (Rocky 9)');
     expect(screen.getByRole('link', { name: /argo/i }).closest('a')).toHaveAttribute('href', '/ui/administration/packages/nagios-plugins-argo-0.1.11');
     expect(screen.getByRole('link', { name: /http/i }).closest('a')).toHaveAttribute('href', '/ui/administration/packages/nagios-plugins-http-present');
 
     fireEvent.change(screen.getByPlaceholderText('Search'), { target: { value: 'argo' } });
     expect(screen.getAllByRole('row')).toHaveLength(32);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(29);
-    expect(screen.getByRole('row', { name: /-argo/i }).textContent).toBe('1nagios-plugins-argo0.1.11repo-1 (CentOS 6), repo-2 (CentOS 7)');
+    expect(screen.getByRole('row', { name: /-argo/i }).textContent).toBe('1nagios-plugins-argo0.1.11repo-1 (CentOS 6), repo-2 (CentOS 7), repo-4 (Rocky 9)');
     expect(screen.getByRole('link', { name: /argo/i }).closest('a')).toHaveAttribute('href', '/ui/administration/packages/nagios-plugins-argo-0.1.11');
 
     fireEvent.change(screen.getByDisplayValue('argo'), { target: { value: '' } });
     fireEvent.change(screen.getByDisplayValue('repo-1 (CentOS 6)'), { target: { value: 'repo-2 (CentOS 7)' } });
     expect(screen.getAllByRole('row')).toHaveLength(32);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(26);
-    expect(screen.getByRole('row', { name: /argo/i }).textContent).toBe('1nagios-plugins-argo0.1.11repo-1 (CentOS 6), repo-2 (CentOS 7)');
-    expect(screen.getByRole('row', { name: /fedcloud/i }).textContent).toBe('2nagios-plugins-fedcloud0.5.0repo-2 (CentOS 7)');
+    expect(screen.getByRole('row', { name: /argo/i }).textContent).toBe('1nagios-plugins-argo0.1.11repo-1 (CentOS 6), repo-2 (CentOS 7), repo-4 (Rocky 9)');
+    expect(screen.getByRole('row', { name: /fedcloud/i }).textContent).toBe('2nagios-plugins-fedcloud0.5.0repo-2 (CentOS 7), repo-4 (Rocky 9)');
     expect(screen.getByRole('row', { name: /globus/i }).textContent).toBe('3nagios-plugins-globus0.1.5repo-2 (CentOS 7)');
-    expect(screen.getByRole('row', { name: /http/i }).textContent).toBe('4nagios-plugins-httppresentrepo-1 (CentOS 6), repo-2 (CentOS 7)');
+    expect(screen.getByRole('row', { name: /http/i }).textContent).toBe('4nagios-plugins-httppresentrepo-1 (CentOS 6), repo-2 (CentOS 7), repo-4 (Rocky 9)');
     expect(screen.getByRole('link', { name: /argo/i }).closest('a')).toHaveAttribute('href', '/ui/administration/packages/nagios-plugins-argo-0.1.11');
     expect(screen.getByRole('link', { name: /fedcloud/i }).closest('a')).toHaveAttribute('href', '/ui/administration/packages/nagios-plugins-fedcloud-0.5.0');
     expect(screen.getByRole('link', { name: /globus/i }).closest('a')).toHaveAttribute('href', '/ui/administration/packages/nagios-plugins-globus-0.1.5');
