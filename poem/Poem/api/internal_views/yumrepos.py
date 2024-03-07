@@ -143,13 +143,13 @@ class ListYumRepos(APIView):
         if request.tenant.schema_name == get_public_schema_name() and \
                 request.user.is_superuser:
             if name and tag:
-                if tag == 'centos6':
-                    ostag = admin_models.OSTag.objects.get(name='CentOS 6')
+                try:
+                    ostag = [
+                        t for t in admin_models.OSTag.objects.all() if
+                        t.name.lower().replace(" ", "") == tag
+                    ][0]
 
-                elif tag == 'centos7':
-                    ostag = admin_models.OSTag.objects.get(name='CentOS 7')
-
-                else:
+                except IndexError:
                     raise NotFound(status=404, detail='OS tag does not exist.')
 
                 try:

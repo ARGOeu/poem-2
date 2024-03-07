@@ -1208,6 +1208,20 @@ class ListYumReposAPIViewTests(TenantTestCase):
             name='repo-1'
         )
 
+    def test_delete_yum_repo_sp_superuser_new_tag(self):
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
+        request = self.factory.delete(self.url + 'repo-3/rocky9')
+        request.tenant = self.super_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, 'repo-3', 'rocky9')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertRaises(
+            admin_models.YumRepo.DoesNotExist,
+            admin_models.YumRepo.objects.get,
+            name='repo-3'
+        )
+
     def test_delete_yum_repo_sp_user(self):
         self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
         request = self.factory.delete(self.url + 'repo-1/centos6')
