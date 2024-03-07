@@ -527,6 +527,7 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
     const versionField = screen.getByTestId('version');
     const repo6Field = screen.getByText('repo-1 (CentOS 6)');
     const repo7Field = screen.getByText('repo-2 (CentOS 7)');
+    const repo9Field = screen.getByText("repo-4 (Rocky 9)")
     const checkboxField = screen.getByRole('checkbox')
 
     expect(nameField.value).toBe('nagios-plugins-argo');
@@ -537,6 +538,7 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
     expect(checkboxField.checked).toEqual(false);
     expect(repo6Field).toBeEnabled();
     expect(repo7Field).toBeEnabled();
+    expect(repo9Field).toBeEnabled()
 
     expect(screen.queryByText('repo-3 (CentOS 7)')).not.toBeInTheDocument()
     selectEvent.openMenu(repo7Field)
@@ -647,10 +649,12 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
     })
 
     await selectEvent.clearFirst(screen.getByText("repo-1 (CentOS 6)"))
+    await selectEvent.clearFirst(screen.getByText("repo-4 (Rocky 9)"))
     await selectEvent.select(screen.getByText("repo-2 (CentOS 7)"), "repo-3 (CentOS 7)")
 
     expect(screen.queryByText("repo-1 (CentOS 6)")).not.toBeInTheDocument()
     expect(screen.queryByText("repo-2 (CentOS 7)")).not.toBeInTheDocument()
+    expect(screen.queryByText("repo-4 (Rocky 9)")).not.toBeInTheDocument()
     expect(screen.getByText("repo-3 (CentOS 7)")).toBeInTheDocument()
 
     await selectEvent.clearFirst(screen.getByText("repo-3 (CentOS 7)"))
@@ -688,7 +692,7 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
           name: 'new-nagios-plugins-argo',
           version: '0.1.12',
           use_present_version: false,
-          repos: ['repo-3 (CentOS 7)']
+          repos: ['repo-3 (CentOS 7)', "repo-4 (Rocky 9)"]
         }
       )
     })
@@ -727,7 +731,7 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
           name: 'new-nagios-plugins-argo',
           version: 'present',
           use_present_version: true,
-          repos: ['repo-3 (CentOS 7)']
+          repos: ['repo-3 (CentOS 7)', "repo-4 (Rocky 9)"]
         }
       )
     })
@@ -768,7 +772,7 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
           name: 'new-nagios-plugins-argo',
           version: '0.1.12',
           use_present_version: false,
-          repos: ['repo-3 (CentOS 7)']
+          repos: ['repo-3 (CentOS 7)', "repo-4 (Rocky 9)"]
         }
       )
     })
@@ -813,7 +817,7 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
           name: 'new-nagios-plugins-argo',
           version: '0.1.12',
           use_present_version: false,
-          repos: ['repo-3 (CentOS 7)']
+          repos: ['repo-3 (CentOS 7)', "repo-4 (Rocky 9)"]
         }
       )
     })
@@ -965,6 +969,7 @@ describe('Tests for package changeview on tenant POEM', () => {
     const versionField = screen.getByText('0.1.11');
     const repo6Field = screen.getByTestId('repo_6');
     const repo7Field = screen.getByTestId('repo_7');
+    const repo9Field = screen.getByTestId("repo_9")
     const updateButton = screen.getByRole('button', { name: /update/i });
 
     expect(nameField.value).toBe('nagios-plugins-argo');
@@ -983,6 +988,8 @@ describe('Tests for package changeview on tenant POEM', () => {
     expect(repo6Field).toBeDisabled();
     expect(repo7Field.value).toBe('repo-2 (CentOS 7)');
     expect(repo7Field).toBeDisabled();
+    expect(repo9Field.value).toBe("repo-4 (Rocky 9)")
+    expect(repo9Field).toBeDisabled()
 
     expect(screen.getByRole('link', { name: /ams/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-publisher-probe/history/0.1.11')
     expect(screen.getByRole('link', { name: /poem/i }).closest('a')).toHaveAttribute('href', '/ui/probes/poem-probe-new/history/0.1.11');
@@ -1038,12 +1045,15 @@ describe('Tests for package changeview on tenant POEM', () => {
     const nameField = screen.getByTestId('name');
     const repo6Field = screen.getByTestId('repo_6');
     const repo7Field = screen.getByTestId('repo_7');
+    const repo9Field = screen.getByTestId("repo_9")
     expect(screen.getByTestId('name').value).toBe('nagios-plugins-argo-new');
     expect(nameField).toBeDisabled();
     expect(repo6Field.value).toBe('');
     expect(repo6Field).toBeDisabled();
     expect(repo7Field.value).toBe('repo-2 (CentOS 7)');
     expect(repo7Field).toBeDisabled();
+    expect(repo9Field.value).toBe("repo-4 (Rocky 9)")
+    expect(repo9Field).toBeDisabled()
 
     await selectEvent.select(versionField, '0.1.11')
 
@@ -1056,6 +1066,8 @@ describe('Tests for package changeview on tenant POEM', () => {
     expect(repo6Field).toBeDisabled();
     expect(repo7Field.value).toBe('repo-2 (CentOS 7)');
     expect(repo7Field).toBeDisabled();
+    expect(repo9Field.value).toBe("repo-4 (Rocky 9)")
+    expect(repo9Field).toBeDisabled()
 
     await selectEvent.select(versionField, '0.1.12')
 
@@ -1068,6 +1080,8 @@ describe('Tests for package changeview on tenant POEM', () => {
     expect(repo6Field).toBeDisabled();
     expect(repo7Field.value).toBe('repo-2 (CentOS 7)');
     expect(repo7Field).toBeDisabled();
+    expect(repo9Field.value).toBe("repo-4 (Rocky 9)")
+    expect(repo9Field).toBeDisabled()
 
     expect(mockFetchData).not.toHaveBeenCalledWith(
       '/api/v2/internal/updatemetricsversions/nagios-plugins-argo-new-0.1.12'
@@ -1287,6 +1301,7 @@ describe('Tests for package addview', () => {
     const repo6Field = screen.getAllByText(/select/i)[0]
     // there is word 'selected' in field description, therefore repo7Field has index 2
     const repo7Field = screen.getAllByText(/select/i)[2]
+    const repo9Field = screen.getAllByText(/select/i)[4]
     const checkboxField = screen.getByRole('checkbox')
 
     expect(nameField.value).toBe('');
@@ -1297,19 +1312,26 @@ describe('Tests for package addview', () => {
     expect(checkboxField.checked).toEqual(false);
     expect(repo6Field).toBeEnabled();
     expect(repo7Field).toBeEnabled();
+    expect(repo9Field).toBeEnabled()
 
     expect(screen.queryByText('repo-1 (CentOS 6)')).not.toBeInTheDocument()
     expect(screen.queryByText('repo-2 (CentOS 7)')).not.toBeInTheDocument()
     expect(screen.queryByText('repo-3 (CentOS 7)')).not.toBeInTheDocument()
+    expect(screen.queryByText("repo-4 (Rocky 9)")).not.toBeInTheDocument()
 
     selectEvent.openMenu(repo6Field)
     expect(screen.queryByText('repo-1 (CentOS 6)')).toBeInTheDocument()
     expect(screen.queryByText('repo-2 (CentOS 7)')).not.toBeInTheDocument()
     expect(screen.queryByText('repo-3 (CentOS 7)')).not.toBeInTheDocument()
+    expect(screen.queryByText("repo-4 (Rocky 9)")).not.toBeInTheDocument()
 
     selectEvent.openMenu(repo7Field)
     expect(screen.queryByText('repo-2 (CentOS 7)')).toBeInTheDocument()
     expect(screen.queryByText('repo-3 (CentOS 7)')).toBeInTheDocument()
+    expect(screen.queryByText("repo-4 (Rocky 9)")).not.toBeInTheDocument()
+
+    selectEvent.openMenu(repo9Field)
+    expect(screen.getByText("repo-4 (Rocky 9)")).toBeInTheDocument()
 
     expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
@@ -1429,6 +1451,7 @@ describe('Tests for package addview', () => {
 
     await selectEvent.select(screen.getAllByText(/select/i)[0], 'repo-1 (CentOS 6)')
     await selectEvent.select(screen.getAllByText(/select/i)[1], 'repo-2 (CentOS 7)')
+    await selectEvent.select(screen.getAllByText(/select/i)[2], "repo-4 (Rocky 9)")
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
@@ -1443,7 +1466,7 @@ describe('Tests for package addview', () => {
           name: 'argo-nagios-tools',
           version: '1.1.0',
           use_present_version: false,
-          repos: ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
+          repos: ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)', "repo-4 (Rocky 9)"]
         }
       )
     })
@@ -1463,8 +1486,8 @@ describe('Tests for package addview', () => {
     fireEvent.change(screen.getByTestId("name"), { target: { value: 'argo-nagios-tools' } });
     fireEvent.click(screen.getByRole("checkbox"))
 
-    await selectEvent.select(screen.getAllByText(/select/i)[0], 'repo-1 (CentOS 6)')
-    await selectEvent.select(screen.getAllByText(/select/i)[1], 'repo-2 (CentOS 7)')
+    await selectEvent.select(screen.getAllByText(/select/i)[2], 'repo-2 (CentOS 7)')
+    await selectEvent.select(screen.getAllByText(/select/i)[3], "repo-4 (Rocky 9)")
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
@@ -1479,7 +1502,7 @@ describe('Tests for package addview', () => {
           name: 'argo-nagios-tools',
           version: 'present',
           use_present_version: true,
-          repos: ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
+          repos: ['repo-2 (CentOS 7)', "repo-4 (Rocky 9)"]
         }
       )
     })
@@ -1621,6 +1644,7 @@ describe('Tests for package cloneview', () => {
     const versionField = screen.getByTestId('version');
     const repo6Field = screen.getByText('repo-1 (CentOS 6)');
     const repo7Field = screen.getByText('repo-2 (CentOS 7)');
+    const repo9Field = screen.getByText("repo-4 (Rocky 9)")
     const checkboxField = screen.getByRole('checkbox')
 
     expect(nameField.value).toBe('nagios-plugins-argo');
@@ -1631,6 +1655,7 @@ describe('Tests for package cloneview', () => {
     expect(checkboxField.checked).toEqual(false);
     expect(repo6Field).toBeEnabled();
     expect(repo7Field).toBeEnabled();
+    expect(repo9Field).toBeEnabled()
 
     expect(screen.queryByText('repo-3 (CentOS 7)')).not.toBeInTheDocument()
     selectEvent.openMenu(repo7Field)
@@ -1738,10 +1763,12 @@ describe('Tests for package cloneview', () => {
 
     await selectEvent.clearFirst(screen.getByText("repo-1 (CentOS 6)"))
     await selectEvent.select(screen.getByText("repo-2 (CentOS 7)"), "repo-3 (CentOS 7)")
+    await selectEvent.clearFirst(screen.getByText("repo-4 (Rocky 9)"))
 
     expect(screen.queryByText("repo-1 (CentOS 6)")).not.toBeInTheDocument()
     expect(screen.queryByText("repo-2 (CentOS 7)")).not.toBeInTheDocument()
     expect(screen.getByText("repo-3 (CentOS 7)")).toBeInTheDocument()
+    expect(screen.queryByText("repo-4 (Rocky 9)")).not.toBeInTheDocument()
 
     await selectEvent.clearFirst(screen.getByText("repo-3 (CentOS 7)"))
     expect(screen.getByRole("alert").textContent).toBe("You must provide at least one repo")
@@ -1776,7 +1803,7 @@ describe('Tests for package cloneview', () => {
           name: 'argo-nagios-tools',
           version: '1.1.0',
           use_present_version: false,
-          repos: ['repo-2 (CentOS 7)']
+          repos: ['repo-2 (CentOS 7)', "repo-4 (Rocky 9)"]
         }
       )
     })
@@ -1815,7 +1842,7 @@ describe('Tests for package cloneview', () => {
           name: 'argo-nagios-tools',
           version: 'present',
           use_present_version: true,
-          repos: ['repo-2 (CentOS 7)']
+          repos: ['repo-2 (CentOS 7)', "repo-4 (Rocky 9)"]
         }
       )
     })
@@ -1838,9 +1865,12 @@ describe('Tests for package cloneview', () => {
 
     const nameField = screen.getByTestId('name');
     const versionField = screen.getByTestId('version');
+    const repo9Field = screen.getByText("repo-4 (Rocky 9)")
 
     fireEvent.change(nameField, { target: { value: 'argo-nagios-tools' } });
     fireEvent.change(versionField, { target: { value: '1.1.0' } });
+
+    await selectEvent.clearAll(repo9Field)
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
@@ -1899,7 +1929,7 @@ describe('Tests for package cloneview', () => {
           name: 'argo-nagios-tools',
           version: '1.1.0',
           use_present_version: false,
-          repos: ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
+          repos: ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)', "repo-4 (Rocky 9)"]
         }
       )
     })
