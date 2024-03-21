@@ -1,8 +1,7 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
-import { createMemoryHistory } from 'history';
-import { Route, Router } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
 import { Backend } from '../DataManager';
 import Login from '../Login';
 
@@ -40,16 +39,14 @@ const mockConfigOptions = {
 
 function renderView() {
   const route = '/ui/';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
-      <Router history={history}>
-        <Route
-          path='/ui/'
-          render={ props => <Login onLogin={mockOnLogin} {...props} /> }
+      <MemoryRouter initialEntries={ [ route ] }>
+        <Login
+          onLogin={ mockOnLogin }
         />
-      </Router>
+      </MemoryRouter>
     )
   }
 }
