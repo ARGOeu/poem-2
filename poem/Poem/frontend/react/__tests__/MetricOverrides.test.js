@@ -1,9 +1,8 @@
 import React from "react"
 import "@testing-library/jest-dom/extend-expect"
 import { QueryClient, QueryClientProvider, setLogger } from "react-query"
-import { createMemoryHistory } from "history"
 import { fireEvent, render, screen, waitFor } from "@testing-library/react"
-import { Route, Router } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { Backend } from "../DataManager"
 import { MetricOverrideChange, MetricOverrideList } from "../MetricOverrides"
 import { NotificationManager } from "react-notifications"
@@ -110,17 +109,13 @@ const mockActiveSession = {
 
 function renderListView() {
   const route = "/ui/administration/metricoverrides"
-  const history = createMemoryHistory({ initialEntries: [route] })
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path="/ui/administration/metricoverrides"
-            render={ props => <MetricOverrideList {...props} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <MetricOverrideList />
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -129,20 +124,13 @@ function renderListView() {
 
 function renderAddView() {
   const route = "/ui/administration/metricoverrides/add"
-  const history = createMemoryHistory({ initialEntries: [route] })
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/administration/metricoverrides/add'
-            render={ props => <MetricOverrideChange
-              {...props}
-              addview={true}
-            /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <MetricOverrideChange addview={ true } />
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -151,17 +139,18 @@ function renderAddView() {
 
 function renderChangeView() {
   const route = "/ui/administration/metricoverrides/local"
-  const history = createMemoryHistory({ initialEntries: [route] })
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path="/ui/administration/metricoverrides/:name"
-            render={ props => <MetricOverrideChange {...props} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path="/ui/administration/metricoverrides/:name"
+              element={ <MetricOverrideChange /> }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
