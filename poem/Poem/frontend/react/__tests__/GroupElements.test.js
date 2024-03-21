@@ -1,7 +1,6 @@
 import '@testing-library/jest-dom/extend-expect';
 import React from 'react';
-import { createMemoryHistory } from 'history';
-import { Route, Router } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { GroupList, GroupChange } from '../GroupElements';
 import { render, waitFor, screen, fireEvent, within } from '@testing-library/react';
 import { Backend } from '../DataManager';
@@ -23,14 +22,18 @@ function renderListView(
   id = 'groupofmetrics',
   name = 'group of metrics'
 ) {
-  const history = createMemoryHistory();
+  const route = `/ui/administration/groupof${group}`
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route render={props => <GroupList {...props} group={group} id={id} name={name} />} />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <GroupList 
+            group={ group }
+            id={ id }
+            name={ name }
+          />
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -38,21 +41,24 @@ function renderListView(
 
 function renderChangeView() {
   const route = '/ui/administration/group/TestGroup';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route path='/ui/administration/group/:name' render={
-            props => <GroupChange
-              {...props}
-              group='metrics'
-              id='groupofmetrics'
-              title='metrics'
-            />}
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path='/ui/administration/group/:name'
+              element={
+                <GroupChange
+                  group='metrics'
+                  id='groupofmetrics'
+                  title='metrics'
+                />
+              }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -60,22 +66,18 @@ function renderChangeView() {
 
 function renderAddView() {
   const route = '/ui/administration/group/add';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route render={
-            props => <GroupChange
-              {...props}
-              group='metrics'
-              id='groupofmetrics'
-              title='metrics'
-              addview={true}
-            />}
+        <MemoryRouter initialEntries={ [ route ] }>
+          <GroupChange
+            group='metrics'
+            id='groupofmetrics'
+            title='metrics'
+            addview={true}
           />
-        </Router>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
