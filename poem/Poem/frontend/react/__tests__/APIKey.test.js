@@ -1,8 +1,7 @@
 import '@testing-library/jest-dom/extend-expect';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { createMemoryHistory } from 'history';
 import React from "react";
-import { Route, Router } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { APIKeyChange, APIKeyList } from '../APIKey';
 import { Backend } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
@@ -19,17 +18,13 @@ setLogger({
 
 function renderListView() {
   const route = "/ui/administration/apikey"
-  const history = createMemoryHistory({ initialEntries: [route] })
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            exact path="/ui/administration/apikey"
-            component={APIKeyList}
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <APIKeyList />
+        </MemoryRouter>
       </QueryClientProvider>
     )
   };
@@ -38,20 +33,20 @@ function renderListView() {
 
 function renderChangeView(isTenant=false, webapi=false) {
   const route = `/ui/administration/apikey/${webapi ? "WEB-API-TENANT" : "FIRST_TOKEN"}`
-  const history = createMemoryHistory({ initialEntries: [route] })
 
   return {
     ...render(
       <QueryClientProvider client={ queryClient }>
-        <Router history={ history }>
-          <Route
-            exact path="/ui/administration/apikey/:name"
-            render={ props => <APIKeyChange
-              { ...props }
-              isTenantSchema={ isTenant }
-            />}
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route 
+              path="/ui/administration/apikey/:name"
+              element={
+                <APIKeyChange isTenantSchema={ isTenant } />
+              }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -59,14 +54,17 @@ function renderChangeView(isTenant=false, webapi=false) {
 
 
 function renderAddview(isTenant=false) {
-  const history = createMemoryHistory();
+  const route = "/ui/administration/apikey/add"
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route render={props => <APIKeyChange {...props} addview={ true } isTenantSchema={ isTenant } />} />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <APIKeyChange 
+            addview={ true }
+            isTenantSchema={ isTenant } 
+          />
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
