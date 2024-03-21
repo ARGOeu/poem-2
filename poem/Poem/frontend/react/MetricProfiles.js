@@ -50,13 +50,11 @@ import { yupResolver } from '@hookform/resolvers/yup';
 
 
 export const MetricProfilesClone = (props) => {
-  const { name } = useParams();
-  return <MetricProfilesComponent cloneview={true} {...props} profile_name={name} />;
+  return <MetricProfilesComponent cloneview={true} {...props} />
 };
 
 export const MetricProfilesChange = (props) => { 
-  const { name } = useParams();
-  return <MetricProfilesComponent {...props} profile_name={name} />;
+  return <MetricProfilesComponent {...props} />
 };
 
 
@@ -331,7 +329,7 @@ const MetricProfilesForm = ({
   historyview=false,
   ...props
 }) => {
-  const { profile_name } = useParams();
+  const profile_name = props.profile_name
   const addview = props.addview
   const location = useLocation();
   const cloneview = props.cloneview;
@@ -638,7 +636,7 @@ const MetricProfilesForm = ({
 
 
 export const MetricProfilesComponent = (props) => {
-  const { profile_name } = props;
+  const { name: profile_name } = useParams()
   const navigate = useNavigate()
   const addview = props.addview
   const cloneview = props.cloneview;
@@ -991,6 +989,7 @@ export const MetricProfilesComponent = (props) => {
     return (
       <MetricProfilesForm
         { ...props }
+        profile_name={ profile_name }
         metricProfile={ metricProfile }
         userDetails={ userDetails }
         metricsAll={ metricsAll ? metricsAll : [] }
@@ -1120,7 +1119,7 @@ const fetchMetricProfileVersions = async (name) => {
 }
 
 
-export const MetricProfileVersionCompare = (props) => {
+export const MetricProfileVersionCompare = () => {
   const { name, id1: version1, id2: version2 } = useParams();
 
   const { data: metricProfileVersions, error, status } = useQuery(
@@ -1208,6 +1207,7 @@ export const MetricProfileVersionDetails = (props) => {
     return (
       <MetricProfilesForm
         { ...props }
+        profile_name={ name }
         historyview={ true }
         metricProfile={ metricProfile }
         userDetails={ userDetails }
