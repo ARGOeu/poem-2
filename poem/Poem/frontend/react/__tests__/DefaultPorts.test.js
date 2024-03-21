@@ -7,8 +7,7 @@ import {
   within
 } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
-import { createMemoryHistory } from 'history';
-import { Route, Router } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
 import { DefaultPortsList } from '../DefaultPorts';
 import { Backend } from '../DataManager';
 import { QueryClient, QueryClientProvider, setLogger } from 'react-query';
@@ -64,17 +63,13 @@ const mockDefaultPorts = [
 
 function renderView() {
   const route = "/ui/administration/default_ports"
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path="/ui/administration/default_ports"
-            component={DefaultPortsList}
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <DefaultPortsList />
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
