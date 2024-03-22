@@ -1,7 +1,6 @@
 import "@testing-library/jest-dom/extend-expect"
 import React from "react"
-import { createMemoryHistory } from "history"
-import { Route, Router } from "react-router-dom"
+import { MemoryRouter, Routes, Route } from "react-router-dom"
 import { QueryClient, QueryClientProvider, setLogger } from "react-query"
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { MetricTagsComponent, MetricTagsList } from "../MetricTags"
@@ -231,17 +230,14 @@ const mockMetricTemplates = [
 
 function renderListView(publicView) {
   const route = `/ui/${publicView ? "public_" : ""}metrictags`
-  const history = createMemoryHistory({ initialEntries: [route] })
 
   if (publicView)
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              render={ props => <MetricTagsList {...props} publicView={true} /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <MetricTagsList publicView={ true } />
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -250,11 +246,9 @@ function renderListView(publicView) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              render={ props => <MetricTagsList {...props} /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <MetricTagsList />
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -263,18 +257,19 @@ function renderListView(publicView) {
 
 function renderChangeView(publicView) {
   const route = `/ui/${publicView ? "public_" : ""}metrictags/harmonized`
-  const history = createMemoryHistory({ initialEntries: [route] })
 
   if (publicView)
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path="/ui/public_metrictags/:name"
-              render={ props => <MetricTagsComponent {...props} publicView={true} /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route
+                path="/ui/public_metrictags/:name"
+                element={ <MetricTagsComponent publicView={ true } /> }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -283,12 +278,14 @@ function renderChangeView(publicView) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path="/ui/metrictags/:name"
-              render={ props => <MetricTagsComponent {...props} /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route
+                path="/ui/metrictags/:name"
+                element={ <MetricTagsComponent /> }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -297,17 +294,13 @@ function renderChangeView(publicView) {
 
 function renderAddView() {
   const route = "/ui/metrictags/add"
-  const history = createMemoryHistory({ initialEntries: [route] })
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path="/ui/metrictags/add"
-            render={ props => <MetricTagsComponent {...props} addview={true} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <MetricTagsComponent addview={ true } />
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }

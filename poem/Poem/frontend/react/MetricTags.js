@@ -118,8 +118,7 @@ const MetricTagsForm = ({
   allMetrics=undefined,
   publicView=false,
   addview=false,
-  location=undefined,
-  history=undefined
+  location=undefined
 }) => {
 
   const backend = new Backend()
