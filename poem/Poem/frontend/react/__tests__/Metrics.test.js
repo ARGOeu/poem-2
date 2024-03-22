@@ -1,8 +1,7 @@
 import React from 'react';
 import '@testing-library/jest-dom/extend-expect';
-import { createMemoryHistory } from 'history';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { Route, Router } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { CompareMetrics, ListOfMetrics, MetricChange, MetricVersionDetails } from '../Metrics';
 import { Backend, WebApi } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
@@ -334,25 +333,21 @@ beforeEach(() => {
 
 
 function renderListView(publicView=false) {
-  const history = createMemoryHistory();
+  const route = `/ui/${publicView ? "public_" : ""}metrics`
 
   if (publicView)
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              render={
-                props => <ListOfMetrics
-                  {...props}
-                  type='metrics'
-                  isTenantSchema={true}
-                  publicView={true}
-                  webapimetric='https://mock.metrics.com'
-                  webapitoken='token'
-                />}
+          <MemoryRouter initialEntries={ [ route ] }>
+            <ListOfMetrics
+              type='metrics'
+              isTenantSchema={ true }
+              publicView={ true }
+              webapimetric='https://mock.metrics.com'
+              webapitoken='token'
             />
-          </Router>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -360,19 +355,14 @@ function renderListView(publicView=false) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              render={
-                props => <ListOfMetrics
-                  {...props}
-                  type='metrics'
-                  isTenantSchema={true}
-                  webapimetric='https://mock.metrics.com'
-                  webapitoken='token'
-                />
-              }
+          <MemoryRouter initialEntries={ [ route ] }>
+            <ListOfMetrics
+              type='metrics'
+              isTenantSchema={ true }
+              webapimetric='https://mock.metrics.com'
+              webapitoken='token'
             />
-          </Router>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -385,18 +375,23 @@ function renderChangeView(options = {}) {
     options.route
   :
     `/ui/${publicView ? 'public_' : ''}metrics/argo.AMS-Check`;
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   if (publicView)
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/public_metrics/:name'
-              render={props => <MetricChange {...props} publicView={true} />}
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route
+                path="/ui/public_metrics/:name"
+                element={
+                  <MetricChange
+                    publicView={ true }
+                  />
+                }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -404,12 +399,14 @@ function renderChangeView(options = {}) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/metrics/:name'
-              render={ props => <MetricChange {...props} /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route
+                path="/ui/metrics/:name"
+                element={ <MetricChange /> }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -418,17 +415,18 @@ function renderChangeView(options = {}) {
 
 function renderVersionDetailsView() {
   const route = '/ui/metrics/argo.AMS-Check/history/20201130-132348';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/metrics/:name/history/:version'
-            render={ props => <MetricVersionDetails {...props} />}
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path="/ui/metrics/:name/history/:version"
+              element={ <MetricVersionDetails /> }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -437,17 +435,18 @@ function renderVersionDetailsView() {
 
 function renderCompareView() {
   const route = '/ui/metrics/argo.AMS-Check/history/compare/20201130-132348/20201207-131823';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/metrics/:name/history/compare/:id1/:id2'
-            render={ props => <CompareMetrics {...props} type='metric' /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path="/ui/metrics/:name/history/compare/:id1/:id2"
+              element={ <CompareMetrics type="metric" /> }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
