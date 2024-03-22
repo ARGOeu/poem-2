@@ -30,7 +30,7 @@ import {
   Label, 
   Row 
 } from "reactstrap";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Controller, useForm } from "react-hook-form";
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -627,7 +627,7 @@ const ProbeCandidateForm = ({
 
 
 export const ProbeCandidateChange = (props) => {
-  const pcid = props.match.params.id
+  const { id: pcid } = useParams()
   const navigate = useNavigate()
   const history = props.history
   const showtitles = props.showtitles
