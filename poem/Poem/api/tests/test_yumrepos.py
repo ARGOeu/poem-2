@@ -36,6 +36,7 @@ class ListYumReposAPIViewTests(TenantTestCase):
 
         self.tag1 = admin_models.OSTag.objects.create(name='CentOS 6')
         self.tag2 = admin_models.OSTag.objects.create(name='CentOS 7')
+        self.tag3 = admin_models.OSTag.objects.create(name="Rocky 9")
 
         self.repo1 = admin_models.YumRepo.objects.create(
             name='repo-1',
@@ -47,8 +48,15 @@ class ListYumReposAPIViewTests(TenantTestCase):
         self.repo2 = admin_models.YumRepo.objects.create(
             name='repo-2',
             tag=self.tag2,
-            content='content1=content1\ncontent2=content2',
+            content='content3=content3\ncontent4=content4',
             description='Repo 2 description.'
+        )
+
+        self.repo3 = admin_models.YumRepo.objects.create(
+            name="repo-3",
+            tag=self.tag3,
+            content="content5=content5\ncontent6=content6",
+            description="Repo 3 description"
         )
 
     def test_get_list_of_yum_repos_sp_superuser(self):
@@ -70,8 +78,15 @@ class ListYumReposAPIViewTests(TenantTestCase):
                     'id': self.repo2.id,
                     'name': 'repo-2',
                     'tag': 'CentOS 7',
-                    'content': 'content1=content1\ncontent2=content2',
+                    'content': 'content3=content3\ncontent4=content4',
                     'description': 'Repo 2 description.'
+                },
+                {
+                    "id": self.repo3.id,
+                    "name": "repo-3",
+                    "tag": "Rocky 9",
+                    "content": "content5=content5\ncontent6=content6",
+                    "description": "Repo 3 description"
                 }
             ]
         )
@@ -95,8 +110,15 @@ class ListYumReposAPIViewTests(TenantTestCase):
                     'id': self.repo2.id,
                     'name': 'repo-2',
                     'tag': 'CentOS 7',
-                    'content': 'content1=content1\ncontent2=content2',
+                    'content': 'content3=content3\ncontent4=content4',
                     'description': 'Repo 2 description.'
+                },
+                {
+                    "id": self.repo3.id,
+                    "name": "repo-3",
+                    "tag": "Rocky 9",
+                    "content": "content5=content5\ncontent6=content6",
+                    "description": "Repo 3 description"
                 }
             ]
         )
@@ -120,8 +142,15 @@ class ListYumReposAPIViewTests(TenantTestCase):
                     'id': self.repo2.id,
                     'name': 'repo-2',
                     'tag': 'CentOS 7',
-                    'content': 'content1=content1\ncontent2=content2',
+                    'content': 'content3=content3\ncontent4=content4',
                     'description': 'Repo 2 description.'
+                },
+                {
+                    "id": self.repo3.id,
+                    "name": "repo-3",
+                    "tag": "Rocky 9",
+                    "content": "content5=content5\ncontent6=content6",
+                    "description": "Repo 3 description"
                 }
             ]
         )
@@ -145,8 +174,15 @@ class ListYumReposAPIViewTests(TenantTestCase):
                     'id': self.repo2.id,
                     'name': 'repo-2',
                     'tag': 'CentOS 7',
-                    'content': 'content1=content1\ncontent2=content2',
+                    'content': 'content3=content3\ncontent4=content4',
                     'description': 'Repo 2 description.'
+                },
+                {
+                    "id": self.repo3.id,
+                    "name": "repo-3",
+                    "tag": "Rocky 9",
+                    "content": "content5=content5\ncontent6=content6",
+                    "description": "Repo 3 description"
                 }
             ]
         )
@@ -168,6 +204,23 @@ class ListYumReposAPIViewTests(TenantTestCase):
             }
         )
 
+    def test_get_yum_repo_by_name_sp_superuser_new_tag(self):
+        request = self.factory.get(self.url + "repo-3/rocky9")
+        request.tenant = self.super_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, "repo-3", "rocky9")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data,
+            {
+                "id": self.repo3.id,
+                "name": "repo-3",
+                "tag": 'Rocky 9',
+                "content": "content5=content5\ncontent6=content6",
+                "description": "Repo 3 description"
+            }
+        )
+
     def test_get_yum_repo_by_name_sp_user(self):
         request = self.factory.get(self.url + 'repo-1/centos6')
         request.tenant = self.super_tenant
@@ -182,6 +235,23 @@ class ListYumReposAPIViewTests(TenantTestCase):
                 'tag': 'CentOS 6',
                 'content': 'content1=content1\ncontent2=content2',
                 'description': 'Repo 1 description.'
+            }
+        )
+
+    def test_get_yum_repo_by_name_sp_user_new_tag(self):
+        request = self.factory.get(self.url + "repo-3/rocky9")
+        request.tenant = self.super_tenant
+        force_authenticate(request, user=self.user)
+        response = self.view(request, "repo-3", "rocky9")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data,
+            {
+                "id": self.repo3.id,
+                "name": "repo-3",
+                "tag": 'Rocky 9',
+                "content": "content5=content5\ncontent6=content6",
+                "description": "Repo 3 description"
             }
         )
 
@@ -202,6 +272,23 @@ class ListYumReposAPIViewTests(TenantTestCase):
             }
         )
 
+    def test_get_yum_repo_by_name_tenant_superuser_new_tag(self):
+        request = self.factory.get(self.url + "repo-3/rocky9")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_superuser)
+        response = self.view(request, "repo-3", "rocky9")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data,
+            {
+                "id": self.repo3.id,
+                "name": "repo-3",
+                "tag": 'Rocky 9',
+                "content": "content5=content5\ncontent6=content6",
+                "description": "Repo 3 description"
+            }
+        )
+
     def test_get_yum_repo_by_name_tenant_user(self):
         request = self.factory.get(self.url + 'repo-1/centos6')
         request.tenant = self.tenant
@@ -216,6 +303,23 @@ class ListYumReposAPIViewTests(TenantTestCase):
                 'tag': 'CentOS 6',
                 'content': 'content1=content1\ncontent2=content2',
                 'description': 'Repo 1 description.'
+            }
+        )
+
+    def test_get_yum_repo_by_name_tenant_user_new_tag(self):
+        request = self.factory.get(self.url + "repo-3/rocky9")
+        request.tenant = self.tenant
+        force_authenticate(request, user=self.tenant_user)
+        response = self.view(request, "repo-3", "rocky9")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data,
+            {
+                "id": self.repo3.id,
+                "name": "repo-3",
+                "tag": 'Rocky 9',
+                "content": "content5=content5\ncontent6=content6",
+                "description": "Repo 3 description"
             }
         )
 
@@ -249,30 +353,31 @@ class ListYumReposAPIViewTests(TenantTestCase):
 
     def test_post_yum_repo_sp_superuser(self):
         data = {
-            'name': 'repo-3',
-            'tag': 'CentOS 6',
+            'name': 'repo-4',
+            'tag': 'Rocky 9',
             'content': 'content1=content1\ncontent2=content2',
-            'description': 'Repo 3 description'
+            'description': 'Repo 4 description'
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.super_tenant
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        repo = admin_models.YumRepo.objects.get(name='repo-3')
-        self.assertEqual(repo.tag, self.tag1)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 4)
+        repo = admin_models.YumRepo.objects.get(name='repo-4')
+        self.assertEqual(repo.tag, self.tag3)
         self.assertEqual(
             repo.content,
             'content1=content1\ncontent2=content2'
         )
-        self.assertEqual(repo.description, 'Repo 3 description')
+        self.assertEqual(repo.description, 'Repo 4 description')
 
     def test_post_yum_repo_sp_user(self):
         data = {
-            'name': 'repo-3',
-            'tag': 'CentOS 6',
+            'name': 'repo-4',
+            'tag': 'CentOS 7',
             'content': 'content1=content1\ncontent2=content2',
-            'description': 'Repo 3 description'
+            'description': 'Repo 4 description'
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.super_tenant
@@ -283,19 +388,19 @@ class ListYumReposAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to add YUM repos.'
         )
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
         self.assertRaises(
             admin_models.YumRepo.DoesNotExist,
             admin_models.YumRepo.objects.get,
-            name='repo-3'
+            name='repo-4'
         )
 
     def test_post_yum_repo_tenant_superuser(self):
         data = {
-            'name': 'repo-3',
+            'name': 'repo-4',
             'tag': 'CentOS 6',
             'content': 'content1=content1\ncontent2=content2',
-            'description': 'Repo 3 description'
+            'description': 'Repo 4 description'
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.tenant
@@ -306,19 +411,19 @@ class ListYumReposAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to add YUM repos.'
         )
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
         self.assertRaises(
             admin_models.YumRepo.DoesNotExist,
             admin_models.YumRepo.objects.get,
-            name='repo-3'
+            name='repo-4'
         )
 
     def test_post_yum_repo_tenant_user(self):
         data = {
-            'name': 'repo-3',
-            'tag': 'CentOS 6',
+            'name': 'repo-4',
+            'tag': 'Rocky 9',
             'content': 'content1=content1\ncontent2=content2',
-            'description': 'Repo 3 description'
+            'description': 'Repo 4 description'
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.tenant
@@ -329,11 +434,11 @@ class ListYumReposAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to add YUM repos.'
         )
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
         self.assertRaises(
             admin_models.YumRepo.DoesNotExist,
             admin_models.YumRepo.objects.get,
-            name='repo-3'
+            name='repo-4'
         )
 
     def test_post_yum_repo_with_name_and_tag_that_already_exist_sp_sprusr(self):
@@ -498,10 +603,10 @@ class ListYumReposAPIViewTests(TenantTestCase):
 
     def test_post_yum_repo_with_nonexisting_tag_sp_superuser(self):
         data = {
-            'name': 'repo-3',
+            'name': 'repo-4',
             'tag': 'nonexisting',
             'content': 'content1=content1\ncontent2=content2',
-            'description': 'Repo 3 description'
+            'description': 'Repo 4 description'
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.super_tenant
@@ -509,19 +614,19 @@ class ListYumReposAPIViewTests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data['detail'], 'OS tag does not exist.')
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
         self.assertRaises(
             admin_models.YumRepo.DoesNotExist,
             admin_models.YumRepo.objects.get,
-            name='repo-3'
+            name='repo-4'
         )
 
     def test_post_yum_repo_with_nonexisting_tag_sp_user(self):
         data = {
-            'name': 'repo-3',
+            'name': 'repo-4',
             'tag': 'nonexisting',
             'content': 'content1=content1\ncontent2=content2',
-            'description': 'Repo 3 description'
+            'description': 'Repo 4 description'
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.super_tenant
@@ -532,19 +637,19 @@ class ListYumReposAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to add YUM repos.'
         )
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
         self.assertRaises(
             admin_models.YumRepo.DoesNotExist,
             admin_models.YumRepo.objects.get,
-            name='repo-3'
+            name='repo-4'
         )
 
     def test_post_yum_repo_with_nonexisting_tag_tenant_superuser(self):
         data = {
-            'name': 'repo-3',
+            'name': 'repo-4',
             'tag': 'nonexisting',
             'content': 'content1=content1\ncontent2=content2',
-            'description': 'Repo 3 description'
+            'description': 'Repo 4 description'
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.tenant
@@ -555,19 +660,19 @@ class ListYumReposAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to add YUM repos.'
         )
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
         self.assertRaises(
             admin_models.YumRepo.DoesNotExist,
             admin_models.YumRepo.objects.get,
-            name='repo-3'
+            name='repo-4'
         )
 
     def test_post_yum_repo_with_nonexisting_tag_tenant_user(self):
         data = {
-            'name': 'repo-3',
+            'name': 'repo-4',
             'tag': 'nonexisting',
             'content': 'content1=content1\ncontent2=content2',
-            'description': 'Repo 3 description'
+            'description': 'Repo 4 description'
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.tenant
@@ -578,18 +683,18 @@ class ListYumReposAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to add YUM repos.'
         )
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
         self.assertRaises(
             admin_models.YumRepo.DoesNotExist,
             admin_models.YumRepo.objects.get,
-            name='repo-3'
+            name='repo-4'
         )
 
     def test_post_yum_repo_with_missing_data_key_sp_superuser(self):
         data = {
-            'name': 'repo-3',
+            'name': 'repo-4',
             'content': 'content1=content1\ncontent2=content2',
-            'description': 'Repo 3 description'
+            'description': 'Repo 4 description'
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.super_tenant
@@ -597,18 +702,18 @@ class ListYumReposAPIViewTests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['detail'], 'Missing data key: tag')
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
         self.assertRaises(
             admin_models.YumRepo.DoesNotExist,
             admin_models.YumRepo.objects.get,
-            name='repo-3'
+            name='repo-4'
         )
 
     def test_post_yum_repo_with_missing_data_key_sp_user(self):
         data = {
-            'name': 'repo-3',
+            'name': 'repo-4',
             'content': 'content1=content1\ncontent2=content2',
-            'description': 'Repo 3 description'
+            'description': 'Repo 4 description'
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.super_tenant
@@ -619,18 +724,18 @@ class ListYumReposAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to add YUM repos.'
         )
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
         self.assertRaises(
             admin_models.YumRepo.DoesNotExist,
             admin_models.YumRepo.objects.get,
-            name='repo-3'
+            name='repo-4'
         )
 
     def test_post_yum_repo_with_missing_data_key_tenant_superuser(self):
         data = {
-            'name': 'repo-3',
+            'name': 'repo-4',
             'content': 'content1=content1\ncontent2=content2',
-            'description': 'Repo 3 description'
+            'description': 'Repo 4 description'
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.tenant
@@ -641,18 +746,18 @@ class ListYumReposAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to add YUM repos.'
         )
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
         self.assertRaises(
             admin_models.YumRepo.DoesNotExist,
             admin_models.YumRepo.objects.get,
-            name='repo-3'
+            name='repo-4'
         )
 
     def test_post_yum_repo_with_missing_data_key_tenant_user(self):
         data = {
-            'name': 'repo-3',
+            'name': 'repo-4',
             'content': 'content1=content1\ncontent2=content2',
-            'description': 'Repo 3 description'
+            'description': 'Repo 4 description'
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.tenant
@@ -663,11 +768,11 @@ class ListYumReposAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to add YUM repos.'
         )
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
         self.assertRaises(
             admin_models.YumRepo.DoesNotExist,
             admin_models.YumRepo.objects.get,
-            name='repo-3'
+            name='repo-4'
         )
 
     def test_put_yum_repo_with_existing_name_and_tag_sp_superuser(self):
@@ -1090,21 +1195,35 @@ class ListYumReposAPIViewTests(TenantTestCase):
         self.assertEqual(repo.description, 'Repo 1 description.')
 
     def test_delete_yum_repo_sp_superuser(self):
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
         request = self.factory.delete(self.url + 'repo-1/centos6')
         request.tenant = self.super_tenant
         force_authenticate(request, user=self.superuser)
         response = self.view(request, 'repo-1', 'centos6')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 1)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
         self.assertRaises(
             admin_models.YumRepo.DoesNotExist,
             admin_models.YumRepo.objects.get,
             name='repo-1'
         )
 
-    def test_delete_yum_repo_sp_user(self):
+    def test_delete_yum_repo_sp_superuser_new_tag(self):
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
+        request = self.factory.delete(self.url + 'repo-3/rocky9')
+        request.tenant = self.super_tenant
+        force_authenticate(request, user=self.superuser)
+        response = self.view(request, 'repo-3', 'rocky9')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertRaises(
+            admin_models.YumRepo.DoesNotExist,
+            admin_models.YumRepo.objects.get,
+            name='repo-3'
+        )
+
+    def test_delete_yum_repo_sp_user(self):
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
         request = self.factory.delete(self.url + 'repo-1/centos6')
         request.tenant = self.super_tenant
         force_authenticate(request, user=self.user)
@@ -1114,12 +1233,12 @@ class ListYumReposAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to delete YUM repos.'
         )
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
         repo = admin_models.YumRepo.objects.get(name='repo-1')
         assert repo
 
     def test_delete_yum_repo_tenant_superuser(self):
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
         request = self.factory.delete(self.url + 'repo-1/centos6')
         request.tenant = self.tenant
         force_authenticate(request, user=self.tenant_superuser)
@@ -1129,12 +1248,12 @@ class ListYumReposAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to delete YUM repos.'
         )
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
         repo = admin_models.YumRepo.objects.get(name='repo-1')
         assert repo
 
     def test_delete_yum_repo_tenant_user(self):
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
         request = self.factory.delete(self.url + 'repo-1/centos6')
         request.tenant = self.tenant
         force_authenticate(request, user=self.tenant_user)
@@ -1144,12 +1263,12 @@ class ListYumReposAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to delete YUM repos.'
         )
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
         repo = admin_models.YumRepo.objects.get(name='repo-1')
         assert repo
 
     def test_delete_yum_repo_without_name_sp_superuser(self):
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
         request = self.factory.delete(self.url)
         request.tenant = self.super_tenant
         force_authenticate(request, user=self.superuser)
@@ -1159,10 +1278,10 @@ class ListYumReposAPIViewTests(TenantTestCase):
             response.data['detail'],
             'YUM repo name and/or tag should be specified.'
         )
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
 
     def test_delete_yum_repo_without_name_sp_user(self):
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
         request = self.factory.delete(self.url)
         request.tenant = self.super_tenant
         force_authenticate(request, user=self.user)
@@ -1172,10 +1291,10 @@ class ListYumReposAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to delete YUM repos.'
         )
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
 
     def test_delete_yum_repo_without_name_tenant_superuser(self):
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
         request = self.factory.delete(self.url)
         request.tenant = self.tenant
         force_authenticate(request, user=self.tenant_superuser)
@@ -1185,10 +1304,10 @@ class ListYumReposAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to delete YUM repos.'
         )
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
 
     def test_delete_yum_repo_without_name_tenant_user(self):
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
         request = self.factory.delete(self.url)
         request.tenant = self.tenant
         force_authenticate(request, user=self.tenant_user)
@@ -1198,20 +1317,20 @@ class ListYumReposAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to delete YUM repos.'
         )
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
 
     def test_delete_yum_repo_nonexisting_name_sp_superuser(self):
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
         request = self.factory.delete(self.url + 'nonexisting/centos7')
         request.tenant = self.super_tenant
         force_authenticate(request, user=self.superuser)
         response = self.view(request, 'nonexisting', 'centos7')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data['detail'], 'YUM repo does not exist.')
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
 
     def test_delete_yum_repo_nonexisting_name_sp_user(self):
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
         request = self.factory.delete(self.url + 'nonexisting/centos7')
         request.tenant = self.super_tenant
         force_authenticate(request, user=self.user)
@@ -1221,10 +1340,10 @@ class ListYumReposAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to delete YUM repos.'
         )
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
 
     def test_delete_yum_repo_nonexisting_name_tenant_superuser(self):
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
         request = self.factory.delete(self.url + 'nonexisting/centos7')
         request.tenant = self.tenant
         force_authenticate(request, user=self.tenant_superuser)
@@ -1234,10 +1353,10 @@ class ListYumReposAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to delete YUM repos.'
         )
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
 
     def test_delete_yum_repo_nonexisting_name_tenant_user(self):
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
         request = self.factory.delete(self.url + 'nonexisting/centos7')
         request.tenant = self.tenant
         force_authenticate(request, user=self.tenant_user)
@@ -1247,7 +1366,7 @@ class ListYumReposAPIViewTests(TenantTestCase):
             response.data['detail'],
             'You do not have permission to delete YUM repos.'
         )
-        self.assertEqual(admin_models.YumRepo.objects.all().count(), 2)
+        self.assertEqual(admin_models.YumRepo.objects.all().count(), 3)
 
 
 class ListOSTagsAPIViewTests(TenantTestCase):

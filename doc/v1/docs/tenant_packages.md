@@ -1,10 +1,10 @@
 # Packages
 
-Packages are `.rpm` packages which provide probes. 
+The resource we call `packages` are configurations of `.rpm` packages which provide probes. 
 
 ## List of packages
 
-The page shows packages that provide probes and metrics the tenant uses. It is shown in the image below. It is available through [Administration page](tenant_administration.md), and as such is only available to super users. 
+The page shows packages that provide probes and metrics the tenant uses. The layout is shown in the figure below. It is available through [Administration page](tenant_administration.md), and as such is only available to super users. 
 
 Packages can be filtered by name, and repo they are part of. 
 
@@ -12,7 +12,7 @@ Packages can be filtered by name, and repo they are part of.
 
 ## Package details
 
-By clicking the package name, the user is redirected to package detail page. It is shown in the image below. 
+By clicking the package name, the user is redirected to package detail page. The layout is shown in the figure below. 
 
 ![Tenant Package Details](figures/tenant_package_details.png)
 

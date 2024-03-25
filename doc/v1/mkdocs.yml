@@ -10,7 +10,8 @@ nav:
     - Home: index.md
 - SuperAdmin POEM:
     - Administration: superadmin_administration.md
-    - Users: superadmin_users.md
+        - Default ports: superadmin_default_ports.md
+        - Users: superadmin_users.md
     - Tenants: superadmin_tenants.md
     - YUM repos: superadmin_repos.md
     - Packages: superadmin_packages.md
@@ -19,10 +20,11 @@ nav:
 
 - Tenant POEM:
     - Administration: tenant_administration.md
-    - Groups of resources: tenant_groups_of_resources.md
-    - Users: tenant_users.md
-    - Packages: tenant_packages.md
-    - Metric templates: tenant_metric_templates.md
+        - Metric configuration overrides: tenant_metric_overrides.md
+        - Probe candidates: tenant_probe_candidates.md
+        - Users: tenant_users.md
+        - Groups of resources: tenant_groups_of_resources.md
+        - Packages: tenant_packages.md
     - Probes: tenant_probes.md
     - Metrics: tenant_metrics.md
     - Aggregation profiles: tenant_aggregation_profiles.md

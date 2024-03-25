@@ -3,16 +3,16 @@
 ## Adding users
 **Step 1:** Go to [Administration page](superadmin_administration.md).
 
-**Step 2:** Click **Users** in **Authentication and Authorization** section.
+**Step 2:** Select **Users** in **Authentication and Authorization** section.
 
-**Step 3:** Click the **Add** button in [users page](superadmin_users.md#list-of-users).
+**Step 3:** Click the `Add` button in [users page](superadmin_users.md#list-of-users).
 
-**Step 4:** Fill in the necessary fields before hitting **Save** button. The fields are described in [users documentation](superadmin_users.md#user-details).
+**Step 4:** Fill in the necessary fields before hitting `Save` button. The fields are described in [users documentation](superadmin_users.md#user-details).
 
 ## Adding YUM repo
 **Step 1:** Go to [YUM repos page](superadmin_repos.md).
 
-**Step 2:** Click the **Add** button.
+**Step 2:** Click the `Add` button.
 
 **Step 3:** Fill in the necessary data. The fields are described in [YUM repo documentation](superadmin_repos.md#fields).
 
@@ -24,7 +24,7 @@
 
 **Step 2:** Go to [package page](superadmin_packages.md#list-of-packages).
 
-**Step 3:** Click the **Add** button.
+**Step 3:** Click the `Add` button.
 
 **Step 4:** Fill in the form with appropriate data. Fields are described in [package documentation page](superadmin_packages.md#fields).
 
@@ -36,7 +36,7 @@
 
 **Step 2:** Go to [probe page](superadmin_probe.md#list-of-probes).
 
-**Step 3:** Click the **Add** button.
+**Step 3:** Click the `Add` button.
 
 **Step 4:** Fill in the form with appropriate data. Fields are described in [probe documentation](superadmin_probe.md#fields).
 
@@ -48,6 +48,6 @@
 
 **Step 2:** Go to [metric templates page](superadmin_metric_templates.md#list-of-metric-templates).
 
-**Step 3:** Click the **Add** button.
+**Step 3:** Click the `Add` button.
 
 **Step 4:** Fill in the form with appropriate data. Fields are described in [metric template documentation](superadmin_metric_templates.md#field-descriptions).

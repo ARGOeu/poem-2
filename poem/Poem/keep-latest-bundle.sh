@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 latest=$(ls -t1 frontend/bundles/reactbundle/main*.js | head -n1)
 

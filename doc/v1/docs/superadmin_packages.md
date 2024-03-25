@@ -23,8 +23,9 @@ Mandatory fields:
 * **YUM repo** - **at least one** YUM repo must be defined; YUM repo which provides the given package:
     * **CentOS 6 repo** - repo tagged with CentOS 6 tag,
     * **CentOS 7 repo** - repo tagged with CentOS 7 tag.
+    * **Rocky 9 repo** - repo tagged with Rocky 9 tag.
     
-If **Use version which is present in repo** is checked, package version is going to be tagged as present, and the version which exists in the repo is going to be installed on the monitoring box.
+If the **Use version which is present in repo** is checked, package version is going to be tagged as present, and the version which exists in the repo is going to be installed on the monitoring box.
 
 
 ### List of probes provided by the package

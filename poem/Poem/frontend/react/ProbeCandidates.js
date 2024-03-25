@@ -1,16 +1,18 @@
 import React, { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { fetchUserDetails } from "./QueryFunctions";
-import { Backend } from "./DataManager";
+import { Backend, WebApi } from "./DataManager";
 import { 
   BaseArgoTable, 
   BaseArgoView, 
+  CustomError, 
   DefaultColumnFilter, 
   DropdownWithFormText, 
   ErrorComponent, 
   LoadingAnim, 
   NotifyError, 
   NotifyOk, 
+  NotifyWarn, 
   ParagraphTitle,
   SelectColumnFilter
 } from "./UIElements";
@@ -19,6 +21,7 @@ import {
   Button, 
   Col, 
   Form, 
+  FormFeedback, 
   FormGroup, 
   FormText, 
   Input, 
@@ -29,6 +32,30 @@ import {
 } from "reactstrap";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Controller, useForm } from "react-hook-form";
+import * as yup from 'yup';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { ErrorMessage } from "@hookform/error-message";
+
+
+const validationSchema = yup.object().shape({
+  status: yup.string(),
+  service_type: yup.string().when("status", {
+    is: (val) => val !== "submitted",
+    then: yup.string().required("Service type is required")
+  }),
+  devel_url: yup.string().url("Invalid URL").when("status", {
+    is: (val) => val === "testing",
+    then: yup.string().required("Devel UI URL is required")
+  }),
+  production_url: yup.string().url("Invalid URL").when("status", {
+    is: (val) => val === "deployed",
+    then: yup.string().required("Production UI URL is required")
+  }),
+  rejection_reason: yup.string().when("status", {
+    is: (val) => val === "rejected",
+    then: yup.string().required("Rejection reason is required")
+  })
+})
 
 
 const fetchCandidates = async () => {
@@ -155,7 +182,9 @@ export const ProbeCandidateList = (props) => {
 const ProbeCandidateForm = ({ 
   data, 
   statuses, 
+  serviceTypes,
   doChange,
+  doDelete,
   ...props 
 }) => {
   const location = props.location
@@ -165,8 +194,10 @@ const ProbeCandidateForm = ({
   const [modalTitle, setModalTitle] = useState(undefined)
   const [onYes, setOnYes] = useState("")
 
-  const { control, setValue, handleSubmit, getValues } = useForm({
-    defaultValues: data
+  const { control, setValue, handleSubmit, getValues, trigger, formState: { errors } } = useForm({
+    defaultValues: data,
+    mode: "all",
+    resolver: yupResolver(validationSchema)
   })
 
   const onSubmitHandle = () => {
@@ -179,6 +210,9 @@ const ProbeCandidateForm = ({
   const onYesCallback = () => {
     if (onYes === "change")
       doChange(getValues())
+
+    if (onYes === "delete")
+      doDelete()
   }
 
   return (
@@ -229,7 +263,10 @@ const ProbeCandidateForm = ({
                   render={ ({ field }) =>
                     <DropdownWithFormText
                       forwardedRef={ field.ref }
-                      onChange={ e => setValue("status", e.value) }
+                      onChange={ e => {
+                        setValue("status", e.value) 
+                        trigger("service_type")
+                      }}
                       options={ statuses }
                       value={ field.value }
                     />
@@ -238,6 +275,35 @@ const ProbeCandidateForm = ({
               </InputGroup>
             </Col>
           </Row>
+          {
+            getValues("status") === "rejected" &&
+              <Row className="mb-3">
+                <Col md={ 8 }>
+                  <Label for="rejection_reason">Reason for rejection</Label>
+                  <Controller
+                    name="rejection_reason"
+                    control={ control }
+                    render={ ({ field }) =>
+                      <textarea
+                        { ...field }
+                        id="rejection_reason"
+                        rows="10"
+                        className={ `form-control ${errors?.rejection_reason && "is-invalid"}` }
+                      />
+                    }
+                  />
+                  <ErrorMessage
+                    errors={ errors }
+                    name="rejection_reason"
+                    render={ ({ message }) => 
+                      <FormFeedback invalid="true" className="end-0">
+                        { message }
+                      </FormFeedback>
+                    }
+                  />
+                </Col>
+              </Row>
+          }
           <Row>
             <Col md={ 8 }>
               <Label for="description">Description</Label>
@@ -257,6 +323,100 @@ const ProbeCandidateForm = ({
             <FormText color="muted">
               Free text description outlining the purpose of this probe.
             </FormText>
+          </Row>
+        </FormGroup>
+        <ParagraphTitle title="Admin info" />
+        <FormGroup>
+          <Row className="mb-2">
+            <Col md={ 6 }>
+              <InputGroup>
+                <InputGroupText>Service type</InputGroupText>
+                <Controller
+                  name="service_type"
+                  control={ control }
+                  render={ ({ field }) =>
+                    <DropdownWithFormText
+                      forwardedRef={ field.ref }
+                      onChange={ e => {
+                        setValue("service_type", e ? e.value : "") 
+                        trigger("service_type")
+                      }}
+                      options={ serviceTypes }
+                      value={ field.value }
+                      isClearable={ true }
+                      error={ errors.service_type }
+                    />
+                  }
+                />
+              </InputGroup>
+              <FormText color="muted">
+                Suggested service type for testing
+              </FormText>
+              {
+                errors?.service_type &&
+                  <CustomError error={ errors?.service_type.message } />
+              }
+            </Col>
+          </Row>
+          <Row className="mb-2">
+            <Col md={ 6 }>
+              <InputGroup>
+                <InputGroupText>Devel UI URL</InputGroupText>
+                <Controller
+                  name="devel_url"
+                  control={ control }
+                  render={ ({ field }) =>
+                    <Input
+                      { ...field }
+                      data-testid="devel_url"
+                      className={ `form-control ${errors?.devel_url && "is-invalid"}` }
+                    />
+                  }
+                />
+                <ErrorMessage
+                  errors={ errors }
+                  name="devel_url"
+                  render={ ({ message }) => 
+                    <FormFeedback invalid="true" className="end-0">
+                      { message }
+                    </FormFeedback>
+                  }
+                />
+              </InputGroup>
+              <FormText color="muted">
+                URL showing the results of probe testing
+              </FormText>
+            </Col>
+          </Row>
+          <Row className="mb-2">
+            <Col md={ 6 }>
+              <InputGroup>
+                <InputGroupText>Production UI URL</InputGroupText>
+                <Controller
+                  name="production_url"
+                  control={ control }
+                  render={ ({ field }) =>
+                    <Input
+                      { ...field }
+                      data-testid="production_url"
+                      className={ `form-control ${errors?.production_url && "is-invalid"}` }
+                    />
+                  }
+                />
+                <ErrorMessage
+                  errors={ errors }
+                  name="production_url"
+                  render={ ({ message }) => 
+                    <FormFeedback invalid="true" className="end-0">
+                      { message }
+                    </FormFeedback>
+                  }
+                />
+              </InputGroup>
+              <FormText color="muted">
+                URL showing the results of deployed probe
+              </FormText>
+            </Col>
           </Row>
         </FormGroup>
         <ParagraphTitle title="Creation info"/>
@@ -316,7 +476,7 @@ const ProbeCandidateForm = ({
                   name="docurl"
                   control={ control }
                   render={ ({ field }) =>
-                    <div className='form-control' style={{backgroundColor: '#e9ecef', overflow: 'hidden', textOverflow: 'ellipsis'}}>
+                    <div className='form-control' style={{backgroundColor: '#f8f9fa', overflow: 'hidden', textOverflow: 'ellipsis'}}>
                       <a href={ field.value } style={{'whiteSpace': 'nowrap'}}>{ field.value }</a>
                     </div>
                   }
@@ -348,7 +508,7 @@ const ProbeCandidateForm = ({
               </FormText>
             </Col>
           </Row>
-          <Row>
+          <Row className="pb-2">
             <Col md={ 8 }>
               <InputGroup>
                 <InputGroupText>YUM base URL</InputGroupText>
@@ -366,6 +526,27 @@ const ProbeCandidateForm = ({
               </InputGroup>
               <FormText color="muted">
                 Base URL of YUM repo containing the probe RPM
+              </FormText>
+            </Col>
+          </Row>
+          <Row>
+            <Col md={ 8 }>
+              <InputGroup>
+                <InputGroupText>Script</InputGroupText>
+                <Controller
+                  name="script"
+                  control={ control }
+                  render={ ({ field }) =>
+                    <Input
+                      { ...field }
+                      data-testid="script"
+                      className="form-control"
+                    />
+                  }
+                />
+              </InputGroup>
+              <FormText color="muted">
+                URL of script with probe code
               </FormText>
             </Col>
           </Row>
@@ -422,6 +603,12 @@ const ProbeCandidateForm = ({
         <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
           <Button
             color="danger"
+            onClick={ () => {
+              setModalMsg("Are you sure you want to delete probe candidate?")
+              setModalTitle("Delete probe candidate")
+              setOnYes("delete")
+              setAreYouSureModal(!areYouSureModal)
+            }}
           >
             Delete
           </Button>
@@ -442,11 +629,20 @@ const ProbeCandidateForm = ({
 export const ProbeCandidateChange = (props) => {
   const pcid = props.match.params.id
   const navigate = useNavigate()
+  const history = props.history
+  const showtitles = props.showtitles
 
   const backend = new Backend()
+
+  const webapi = new WebApi({
+    token: props.webapitoken,
+    serviceTypes: props.webapiservicetypes
+  })
+
   const queryClient = useQueryClient()
 
   const mutation = useMutation(async (values) => await backend.changeObject("/api/v2/internal/probecandidates/", values))
+  const deleteMutation = useMutation(async () => await backend.deleteObject(`/api/v2/internal/probecandidates/${pcid}`))
 
   const { data: userDetails, error: userDetailsError, isLoading: userDetailsLoading } = useQuery(
     "userdetails", () => fetchUserDetails(true)
@@ -469,6 +665,13 @@ export const ProbeCandidateChange = (props) => {
     { enabled: !!userDetails }
   )
 
+  const { data: serviceTypes, error: serviceTypesError, isLoading: serviceTypesLoading } = useQuery(
+    ["servicetypes", "webapi"], async () => {
+      return await webapi.fetchServiceTypes()
+    },
+    { enabled: !!userDetails }
+  )
+
   const doChange = ( values ) => {
     mutation.mutate({
       id: values.id,
@@ -477,17 +680,25 @@ export const ProbeCandidateChange = (props) => {
       docurl: values.docurl,
       rpm: values.rpm,
       yum_baseurl: values.yum_baseurl,
+      script: values.script,
       command: values.command,
       contact: values.contact,
-      status: values.status
+      status: values.status,
+      service_type: values.service_type,
+      devel_url: values.devel_url,
+      production_url: values.production_url,
+      rejection_reason: values.rejection_reason
     }, {
-      onSuccess: () => {
+      onSuccess: (data) => {
         queryClient.invalidateQueries("probecandidate")
-        NotifyOk({
-          msg: "Probe candidate successfully changed",
-          title: "Changed",
-          callback: () => navigate("/ui/administration/probecandidates")
-        })
+        if (data && "warning" in data) {
+          NotifyWarn({ msg: data.warning, title: "Warning" })
+        } else
+          NotifyOk({
+            msg: "Probe candidate successfully changed",
+            title: "Changed",
+            callback: () => history.push("/ui/administration/probecandidates")
+          })
       },
       onError: (error) => {
         NotifyError({
@@ -498,7 +709,26 @@ export const ProbeCandidateChange = (props) => {
     })
   }
 
-  if (userDetailsLoading || candidateLoading || statusesLoading)
+  const doDelete = () => {
+    deleteMutation.mutate(undefined, {
+      onSuccess: () => {
+        queryClient.invalidateQueries("probecandidate")
+        NotifyOk({
+          msg: "Probe candidate successfully deleted",
+          title: "Deleted",
+          callback: () => navigate("/ui/administration/probecandidates")
+        })
+      },
+      onError: (error) => {
+        NotifyError({
+          title: "Error",
+          msg: error.message ? error.message : "Error deleting probe candidate"
+        })
+      }
+    })
+  }
+
+  if (userDetailsLoading || candidateLoading || statusesLoading || serviceTypesLoading)
     return (<LoadingAnim />)
 
   else if (userDetailsError)
@@ -510,12 +740,17 @@ export const ProbeCandidateChange = (props) => {
   else if (statusesError)
     return (<ErrorComponent error={ statusesError } />)
 
-  else if (userDetails && candidate && statuses)
+  else if (serviceTypesError)
+    return (<ErrorComponent error={ serviceTypesError } />)
+
+  else if (userDetails && candidate && statuses && serviceTypes)
     return (
       <ProbeCandidateForm 
         data={ candidate } 
         statuses={ statuses }
+        serviceTypes={ showtitles ? serviceTypes.map(type => type.title) : serviceTypes.map(type => type.name) }
         doChange={ doChange }
+        doDelete={ doDelete }
         { ...props }
       />
     )

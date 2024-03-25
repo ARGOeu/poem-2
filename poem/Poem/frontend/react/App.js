@@ -940,8 +940,9 @@ const App = () => {
   const [token, setToken] = useState(undefined);
   const [version, setVersion] = useState(undefined);
   const [isTenantSchema, setIsTenantSchema] = useState(null);
-  const [showServiceTitle, setShowServiceTitle] = useState(undefined);
-  const [tenantDetails, setTenantDetails] = useState(undefined);
+  const [showServiceTitle, setShowServiceTitle] = useState(undefined)
+  const [tenantDetails, setTenantDetails] = useState({ combined: false, tenants: {} })
+  
 
   async function onLogin(response) {
     let isTenantSchema = await backend.isTenantSchema();

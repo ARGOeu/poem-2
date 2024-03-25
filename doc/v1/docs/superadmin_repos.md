@@ -19,6 +19,7 @@ All the fields are mandatory:
 * **Name** - name of YUM repo (**without** `.repo` file extension);
 * **Tag** - tag which marks for which OS the repo is defined:
     * CentOS 6,
-    * CentOS 7;
+    * CentOS 7,
+    * Rocky 9;
 * **File content** - content of the YUM repo file;
 * **Description** - short free text description, shown in the YUM repo list.
