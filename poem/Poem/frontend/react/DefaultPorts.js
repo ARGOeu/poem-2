@@ -36,7 +36,7 @@ import {
 import { ErrorMessage } from '@hookform/error-message';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from "yup";
-import { CustomProfilesList } from './CustomPlaceholders';
+import { CustomProfilesList } from './Placeholders';
 
 
 const validationSchema = Yup.object().shape({

@@ -11,7 +11,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { fetchMetricTags, fetchMetricTemplates, fetchMetricTemplateTypes, fetchMetricTemplateVersion, fetchProbeVersion, fetchProbeVersions } from './QueryFunctions';
 import { useNavigate, useParams } from 'react-router-dom';
-import { CustomSubtitle, CustomHeadline, CustomInput, CustomButton, CustomTable, CustomSpan } from './CustomPlaceholders';
+import { CustomSubtitle, CustomHeadline, CustomInput, CustomButton, CustomTable, CustomSpan } from './Placeholders';
 import { Form, Row, Col } from 'reactstrap';
 
 export const MetricTemplateComponent = (props) => {

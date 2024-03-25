@@ -57,7 +57,7 @@ const validationSchema = yup.object().shape({
   })
 })
 
-import { CustomProfilesList } from "./CustomPlaceholders";
+import { CustomProfilesList } from "./Placeholders";
 
 const fetchCandidates = async () => {
   const backend = new Backend()

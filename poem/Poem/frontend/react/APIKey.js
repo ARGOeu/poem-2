@@ -34,7 +34,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from "yup";
 import { ErrorMessage } from "@hookform/error-message"
-import { CustomButton, CustomHeadline, CustomInput, CustomProfilesList, CustomSpan, CustomSubtitle } from './CustomPlaceholders';
+import { CustomButton, CustomHeadline, CustomInput, CustomProfilesList, CustomSpan, CustomSubtitle } from './Placeholders';
 
 const validationSchema = yup.object().shape({
   name: yup.string().required("Name field is required")

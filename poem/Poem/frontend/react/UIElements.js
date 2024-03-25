@@ -13,6 +13,7 @@ import {
   Col,
   Collapse,
   Container,
+  Form,
   FormGroup,
   FormText,
   InputGroup,
@@ -82,7 +83,7 @@ import Select, { components } from 'react-select';
 import CreatableSelect from 'react-select/creatable';
 import { Controller, useFormContext } from 'react-hook-form';
 import { ErrorMessage } from '@hookform/error-message';
-import { CustomHeadline, CustomTable } from './CustomPlaceholders';
+import { CustomHeadline, CustomTable } from './Placeholders';
 
 var list_pages = ['administration', 'probes',
                   'metrics', 'reports', 'servicetypes', 'metricprofiles', 'aggregationprofiles',

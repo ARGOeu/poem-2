@@ -43,7 +43,7 @@ import {
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext, useWatch } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { ErrorMessage } from '@hookform/error-message';
-import { CustomHeadline, CustomTable, CustomButton, CustomInput, CustomSubtitle, CustomProfilesList, CustomSpan } from './CustomPlaceholders';
+import { CustomHeadline, CustomTable, CustomButton, CustomInput, CustomSubtitle, CustomProfilesList, CustomSpan } from './Placeholders';
 
 const ThresholdsProfilesChangeContext = React.createContext()
 

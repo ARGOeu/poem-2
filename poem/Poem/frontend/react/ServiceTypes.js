@@ -49,7 +49,7 @@ import * as yup from "yup";
 import _ from "lodash";
 import PapaParse from 'papaparse';
 import { downloadCSV } from './FileDownload';
-import { CustomButton, CustomHeadline, CustomInput, CustomProfilesList, CustomSpan, CustomSubtitle, CustomTable } from './CustomPlaceholders';
+import { CustomButton, CustomHeadline, CustomInput, CustomProfilesList, CustomSpan, CustomSubtitle, CustomTable } from './Placeholders';
 
 const BulkAddContext = React.createContext()
 

@@ -34,7 +34,7 @@ import {
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from "yup";
 import { ErrorMessage } from "@hookform/error-message"
-import { CustomButton, CustomHeadline, CustomInput, CustomProfilesList, CustomSubtitle, CustomTable } from "./CustomPlaceholders"
+import { CustomButton, CustomHeadline, CustomInput, CustomProfilesList, CustomSubtitle, CustomTable } from "./Placeholders"
 
 const hostnameRegex = /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9-]*[A-Za-z0-9])([_][A-Za-z0-9.\-_]*)*$/
 

@@ -7,7 +7,7 @@ import { Backend } from './DataManager';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faIdBadge } from '@fortawesome/free-solid-svg-icons';
 import { useQuery } from 'react-query';
-import { CustomHeadline, CustomInput, CustomSubtitle, CustomTable } from './CustomPlaceholders';
+import { CustomHeadline, CustomInput, CustomSubtitle, CustomTable } from './Placeholders';
 
 const Home = () =>
 (

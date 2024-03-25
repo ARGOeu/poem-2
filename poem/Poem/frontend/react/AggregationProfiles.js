@@ -51,7 +51,13 @@ import {
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext, useWatch } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { ErrorMessage } from '@hookform/error-message';
-import { CustomButton, CustomHeadline, CustomInput, CustomProfilesList, CustomSpan, CustomSubtitle, CustomTable } from './CustomPlaceholders';
+import { 
+  ChangeViewPlaceholder,
+  InputPlaceholder,
+  ListViewPlaceholder, 
+  ProfileMainPlaceholder,
+  VersionComparePlaceholder
+} from './Placeholders';
 
 const AggregationProfilesChangeContext = React.createContext()
 
@@ -402,6 +408,81 @@ const Service = ({
     </React.Fragment>
   )
 }
+
+
+const AggregationProfilesPlaceholder = ({ history }) => 
+  <ChangeViewPlaceholder
+    history={ history }
+  >
+    <>
+      <ProfileMainPlaceholder profiletype="aggregation" />
+      <ParagraphTitle title="Operations, endpoint group and metric profile"/>
+      <Row>
+        <Col md={ 4 }>
+          <FormGroup>
+            <Row>
+              <Col md={12}>
+                <Label>Metric operation:</Label>
+              </Col>
+              <Col md={5}>
+                <InputPlaceholder width="100%" />
+              </Col>
+            </Row>
+            <Row>
+              <Col md={12}>
+                <FormText>
+                  Logical operation that will be applied between metrics of each service flavour
+                </FormText>
+              </Col>
+            </Row>
+          </FormGroup>
+        </Col>
+        <Col md={4}>
+          <FormGroup>
+            <Row>
+              <Col md={12}>
+                <Label>Aggregation operation:</Label>
+              </Col>
+              <Col md={5}>
+                <InputPlaceholder width="100%" />
+              </Col>
+            </Row>
+            <Row>
+              <Col md={12}>
+                <FormText>
+                  Logical operation that will be applied between defined service flavour groups
+                </FormText>
+              </Col>
+            </Row>
+          </FormGroup>
+        </Col>
+        <Col md={4}>
+          <FormGroup>
+            <Row>
+              <Col md={12}>
+                <Label>Endpoint group:</Label>
+              </Col>
+              <Col md={5}>
+                <InputPlaceholder width="100%" />
+              </Col>
+            </Row>
+          </FormGroup>
+        </Col>
+      </Row>
+      <Row className='mt-4'>
+        <Col md={5}>
+          <FormGroup>
+            <Label>Metric profile:</Label>
+            <InputPlaceholder width="100%" />
+            <FormText>
+              Metric profile associated to Aggregation profile. Service flavours defined in service flavour groups originate from selected metric profile.
+            </FormText>
+          </FormGroup>
+        </Col>
+      </Row>
+      <ParagraphTitle title='Service flavour groups'/>
+    </>
+  </ChangeViewPlaceholder>
 
 
 const AggregationProfilesForm = ({
@@ -1216,116 +1297,9 @@ export const AggregationProfilesChange = (props) => {
   }
 
   if (loadingUserDetails || loadingBackendAP || loadingWebApiAP || loadingMetricProfiles || loadingReports) {
-    // one component has customized placeholder for two different paths 
-    if (window.location.pathname === "/ui/aggregationprofiles/add") {
-      return (
-        <>
-          <CustomHeadline width="357px" height="38.4px"/>
-          <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
-            <CustomInput height="45px" width="50%" />
-            <CustomSpan custStyle="mt-1 mb-4" height="10px" width="18%" />
-            <CustomInput height="40px" width="25%" />
-            <CustomSpan custStyle="mt-1 mb-2" height="10px" width="24%" />
-            <CustomSubtitle height="37.6px" custStyle="mb-3" />
-            <Row>
-              <Col md={4} className='d-flex flex-column'>
-                <CustomSpan custStyle="mt-2 mb-1" height="10px" width="35%" />
-                <CustomButton height="38px" width="35%" />
-                <CustomSpan custStyle="mt-1" height="25px" width="75%" />
-              </Col>
-              <Col md={4} className='d-flex flex-column'>
-                <CustomSpan custStyle="mt-2 mb-1" height="10px" width="35%" />
-                <CustomButton height="38px" width="35%" />
-                <CustomSpan custStyle="mt-1" height="25px" width="75%" />
-              </Col>
-              <Col md={4} className='d-flex flex-column'>
-                <CustomSpan custStyle="mt-2 mb-1" height="10px" width="35%" />
-                <CustomButton height="38px" width="35%" />
-              </Col>
-            </Row>
-            <Col className='mt-4 mb-3 d-flex flex-column'>
-              <CustomSpan custStyle="mt-2 mb-1" height="10px" width="25%" />
-              <CustomButton height="38px" width="45%" />
-              <CustomSpan custStyle="mt-1" height="25px" width="40%" />
-            </Col>
-            <CustomSubtitle height="37.6px" custStyle="mt-2" />
-            <div className='mt-4 mb-2 d-flex justify-content-center align-items-center col-sm-12 col-md-6'>
-              <CustomButton width="172px" height="47px" />
-            </div>
-            <div className='d-flex align-items-center justify-content-end bg-light p-3 mt-5 rounded'>
-              <CustomButton width="59px" height="39.6px" />
-            </div>
-          </Form>
-        </>
-      )
-    } else {
-      return (
-        <>
-          <div className='mt-4 d-flex justify-content-between placeholder-glow'>
-            <CustomHeadline width="450px" height="38.4px"/>
-            <div>
-              <CustomButton height="37.6px" width="80px" custStyle="mx-2" />
-              <CustomButton height="37.6px" width="80px" />
-            </div>
-          </div>
-          <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
-            <CustomInput height="45px" width="50%" />
-            <CustomSpan custStyle="mt-1 mb-4" height="10px" width="18%" />
-            <CustomInput height="40px" width="25%" />
-            <CustomSpan custStyle="mt-1 mb-2" height="10px" width="24%" />
-            <CustomSubtitle height="37.6px" />
-            <Row>
-              <Col md={4} className='d-flex flex-column'>
-                <CustomSpan custStyle="mt-2 mb-1" height="10px" width="35%" />
-                <CustomButton height="38px" width="35%" />
-                <CustomSpan custStyle="mt-1" height="25px" width="75%" />
-              </Col>
-              <Col md={4} className='d-flex flex-column'>
-                <CustomSpan custStyle="mt-2 mb-1" height="10px" width="35%" />
-                <CustomButton height="38px" width="35%" />
-                <CustomSpan custStyle="mt-1" height="25px" width="75%" />
-              </Col>
-              <Col md={4} className='d-flex flex-column'>
-                <CustomSpan custStyle="mt-2 mb-1" height="10px" width="35%" />
-                <CustomButton height="38px" width="35%" />
-              </Col>
-            </Row>
-            <Col className='mt-5 mb-3 d-flex flex-column'>
-              <CustomSpan custStyle="mt-2 mb-1" height="10px" width="25%" />
-              <CustomButton height="38px" width="45%" />
-              <CustomSpan custStyle="mt-1" height="25px" width="40%" />
-            </Col>
-            <CustomSubtitle height="37.6px" custStyle="mt-2" />
-            <Row>
-              <Col md={6} className='d-flex flex-row'>
-                <CustomTable height="148px" />
-                <CustomButton width="15%" height="38px" custStyle="ms-4"/>
-              </Col>
-              <Col md={6} className='d-flex flex-row'>
-                <CustomTable height="148px" />
-                <CustomButton width="15%" height="38px" custStyle="ms-4"/>
-              </Col>
-              <Col md={6} className='d-flex flex-row'>
-                <CustomTable height="148px" />
-                <CustomButton width="15%" height="38px" custStyle="ms-4"/>
-              </Col>
-              <Col md={6} className='d-flex flex-row'>
-                <CustomTable height="148px" />
-                <CustomButton width="15%" height="38px" custStyle="ms-4"/>
-              </Col>
-              <Col md={6} className='d-flex flex-row'>
-                <CustomTable height="148px" />
-                <CustomButton width="15%" height="38px" custStyle="ms-4"/>
-              </Col>
-              <Col md={6} className='d-flex flex-row'>
-                <CustomTable height="148px" />
-                <CustomButton width="15%" height="38px" custStyle="ms-4"/>
-              </Col>
-            </Row>
-          </Form>
-        </>
-      )
-    }
+    return (
+      <AggregationProfilesPlaceholder history={ publicView }/>
+    )
   }
 
   else if (errorBackendAP)
@@ -1444,7 +1418,7 @@ export const AggregationProfilesList = (props) => {
   ], [])
 
   if (loadingUserDetails || loadingAggregations)
-    return (<CustomProfilesList />)
+    return (<ListViewPlaceholder />)
 
   else if (errorAggregations)
     return (<ErrorComponent error={errorAggregations}/>);
@@ -1530,13 +1504,8 @@ export const AggregationProfileVersionCompare = () => {
 
   if (loading) {
     return (
-      <>
-        <CustomHeadline height="38.4px" width="383px" />
-        <div className='ms-3 mt-4 placeholder-glow rounded'>
-          <CustomTable height="230px" />
-        </div>
-      </>
-    );
+      <VersionComparePlaceholder />
+    )
   }
 
   else if (error)
@@ -1609,65 +1578,8 @@ export const AggregationProfileVersionDetails = () => {
 
   if (loading) {
     return (
-      <>
-        <CustomHeadline width="450px" height="38.4px"/>
-        <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
-          <CustomInput height="45px" width="50%" />
-          <CustomSpan custStyle="mt-1 mb-4" height="10px" width="18%" />
-          <CustomInput height="40px" width="25%" />
-          <CustomSpan custStyle="mt-1 mb-2" height="10px" width="24%" />
-          <CustomSubtitle height="37.6px" />
-          <Row>
-            <Col md={4} className='d-flex flex-column'>
-              <CustomSpan custStyle="mt-2 mb-1" height="10px" width="35%" />
-              <CustomButton height="38px" width="35%" />
-              <CustomSpan custStyle="mt-1" height="25px" width="75%" />
-            </Col>
-            <Col md={4} className='d-flex flex-column'>
-              <CustomSpan custStyle="mt-2 mb-1" height="10px" width="35%" />
-              <CustomButton height="38px" width="35%" />
-              <CustomSpan custStyle="mt-1 mb-3" height="10px" width="28%" />
-            </Col>
-            <Col md={4} className='d-flex flex-column'>
-              <CustomSpan custStyle="mt-2 mb-1" height="10px" width="35%" />
-              <CustomButton height="38px" width="35%" />
-            </Col>
-          </Row>
-          <Col className='mt-4 mb-3 d-flex flex-column'>
-            <CustomSpan custStyle="mt-2 mb-1" height="10px" width="25%" />
-            <CustomButton height="38px" width="45%" />
-            <CustomSpan custStyle="mt-1" height="25px" width="40%" />
-          </Col>
-          <CustomSubtitle height="37.6px" custStyle="mt-2" />
-          <Row>
-            <Col md={6} className='d-flex flex-row'>
-              <CustomTable height="148px" />
-              <CustomButton width="15%" height="38px" custStyle="ms-4"/>
-            </Col>
-            <Col md={6} className='d-flex flex-row'>
-              <CustomTable height="148px" />
-              <CustomButton width="15%" height="38px" custStyle="ms-4"/>
-            </Col>
-            <Col md={6} className='d-flex flex-row'>
-              <CustomTable height="148px" />
-              <CustomButton width="15%" height="38px" custStyle="ms-4"/>
-            </Col>
-            <Col md={6} className='d-flex flex-row'>
-              <CustomTable height="148px" />
-              <CustomButton width="15%" height="38px" custStyle="ms-4"/>
-            </Col>
-            <Col md={6} className='d-flex flex-row'>
-              <CustomTable height="148px" />
-              <CustomButton width="15%" height="38px" custStyle="ms-4"/>
-            </Col>
-            <Col md={6} className='d-flex flex-row'>
-              <CustomTable height="148px" />
-              <CustomButton width="15%" height="38px" custStyle="ms-4"/>
-            </Col>
-          </Row>
-        </Form>
-      </>
-    );
+      <AggregationProfilesPlaceholder history={ true } />
+    )
   }
 
   else if (error)

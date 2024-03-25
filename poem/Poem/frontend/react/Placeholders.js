@@ -1,5 +1,13 @@
 import React from "react";
-import { Table, Form, Row } from "reactstrap";
+import { 
+  Col, 
+  Form, 
+  FormGroup, 
+  FormText, 
+  Label,
+  Row, 
+  Table 
+} from "reactstrap";
 
 export const CustomSpan = ({height, width, custStyle}) => (
   <span className={`placeholder rounded ${custStyle}`} style={{ height: height, width: width }} />
@@ -71,3 +79,102 @@ export const CustomProfilesList = ({ pathname }) => {
       </>
     );
 };
+
+
+const HeaderPlaceholder = () => 
+  <span className={"ms-3 mt-1 mb-4 placeholder rounded"} style={{ height: "45px", width: "500px" }} />
+
+
+export const InputPlaceholder = ({ height="38px", width }) => 
+  <span className="placeholder rounded" style={{ height: height, width: width }} />
+
+
+const ButtonPlaceholder = () => 
+  <span className={"placeholder rounded"} style={{ height: "45px", width: "100px" }} />
+
+
+const TextAreaPlaceholder = ({ width }) => 
+  <span className="placeholder rounded" style={{ height: "152px", width: width }} />
+
+
+const SubmitRowPlaceholder = () => 
+  <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5"></div>
+
+
+export const ListViewPlaceholder = () => 
+  <>
+    <div className={"d-flex flex-row placeholder-glow justify-content-between"}>
+      <HeaderPlaceholder />
+      <span className={"placeholder rounded"} style={{ height: "38.4px", width: "55px" }} />
+    </div>
+    <Form className="ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded">
+      <Table className={"placeholder rounded"} style={{ height: "800px" }} />
+    </Form>
+  </>
+
+
+export const ChangeViewPlaceholder = ({ history=false, children }) => 
+  <>
+    <div className={"d-flex flex-row placeholder-glow justify-content-between"}>
+      <HeaderPlaceholder />
+      <div>
+        <ButtonPlaceholder />
+        {
+          history && <ButtonPlaceholder />
+        }
+
+      </div>
+    </div>
+    <Form className="ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded">
+      { children }
+    </Form>
+    <SubmitRowPlaceholder />
+  </>
+
+
+export const ProfileMainPlaceholder = ({ profiletype, description=undefined }) => 
+  <FormGroup>
+    <Row>
+      <Col md={6}>
+        <Row>
+          <InputPlaceholder height="45px" width="100%"/>
+        </Row>
+        <Row>
+          <FormText color='text-muted'>
+            { `Name of ${profiletype} profile` }
+          </FormText>
+        </Row>
+      </Col>
+    </Row>
+    {
+      description &&
+        <Row className='mt-3'>
+          <Col md={10}>
+            <Label>Description:</Label>
+            <TextAreaPlaceholder width={"100%"} />
+            <FormText color="muted">
+              Free text description outlining the purpose of this profile.
+            </FormText>
+          </Col>
+        </Row>
+    }
+    <Row className='mt-4'>
+      <Col md={3}>
+        <Row>
+          <InputPlaceholder width="50%" />
+        </Row>
+        <Row>
+          <FormText color="muted">
+            { `${profiletype.charAt(0).toUpperCase() + profiletype.slice(1)} profile is member of given group.` }
+          </FormText>
+        </Row>
+      </Col>
+    </Row>
+  </FormGroup>
+
+
+export const VersionComparePlaceholder = () => 
+  <>
+    <HeaderPlaceholder />
+    <Table className={"placeholder rounded"} style={{ height: "800px" }} />
+  </>

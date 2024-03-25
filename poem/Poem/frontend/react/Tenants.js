@@ -31,7 +31,7 @@ import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { fetchTenants } from './QueryFunctions';
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { CustomButton, CustomHeadline, CustomInput, CustomSubtitle, CustomTable } from './CustomPlaceholders';
+import { CustomButton, CustomHeadline, CustomInput, CustomSubtitle, CustomTable } from './Placeholders';
 
 export const TenantList = () => {
   const location = useLocation();

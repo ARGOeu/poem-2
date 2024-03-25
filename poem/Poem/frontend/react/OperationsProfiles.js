@@ -21,7 +21,7 @@ import {
 } from 'reactstrap';
 import { useQuery, useQueryClient } from 'react-query';
 import { fetchOperationsProfiles } from './QueryFunctions';
-import { CustomButton, CustomHeadline, CustomInput, CustomProfilesList, CustomSubtitle, CustomTable, CustomSpan } from './CustomPlaceholders';
+import { CustomButton, CustomHeadline, CustomInput, CustomProfilesList, CustomSubtitle, CustomTable, CustomSpan } from './Placeholders';
 
 export const OperationsProfilesList = (props) => {
   const location = useLocation();
