@@ -92,7 +92,7 @@
     "@fortawesome/react-fontawesome": "^0.1.19",
     "@popperjs/core": "^2.11.8",
     "async": "^2.6.4",
-    "caniuse-lite": "^1.0.30001519",
+    "caniuse-lite": "^1.0.30001600",
     "decode-uri-component": "^0.2.2",
     "loader-utils": "^2.0.4",
     "lodash": "^4.17.21",
