@@ -1,9 +1,8 @@
 import React from "react";
 import '@testing-library/jest-dom/extend-expect';
 import { QueryClient, QueryClientProvider, setLogger } from "react-query";
-import { createMemoryHistory } from 'history';
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { Route, Router } from "react-router";
+import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { ProbeCandidateChange, ProbeCandidateList } from "../ProbeCandidates";
 import { Backend, WebApi } from "../DataManager";
 import selectEvent from "react-select-event";
@@ -178,16 +177,13 @@ const mockServiceTypes = [
 
 const renderListView = () => {
   const route = "/ui/administration/probecandidates"
-  const history = createMemoryHistory({ initialEntries: [route] })
 
   return {
     ...render(
       <QueryClientProvider client={ queryClient }>
-        <Router history={ history }>
-          <Route
-            render={ props => <ProbeCandidateList { ...props } /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <ProbeCandidateList />
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -196,22 +192,24 @@ const renderListView = () => {
 
 const renderChangeView = () => {
   const route = "/ui/administration/probecandidates/2"
-  const history = createMemoryHistory({ initialEntries: [route] })
 
   return {
     ...render(
       <QueryClientProvider client={ queryClient }>
-        <Router history={ history }>
-          <Route
-            path="/ui/administration/probecandidates/:id"
-            render={ props => <ProbeCandidateChange 
-              { ...props } 
-              webapitoken="t0k3n"
-              webapiservicetypes="https://mock.service.types"
-              showtitles={ true }
-            /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path="/ui/administration/probecandidates/:id"
+              element={ 
+                <ProbeCandidateChange 
+                  webapitoken="t0k3n"
+                  webapiservicetypes="https://mock.service.types"
+                  showtitles={ true }
+                /> 
+              }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -220,21 +218,23 @@ const renderChangeView = () => {
 
 const renderChangeView2 = () => {
   const route = "/ui/administration/probecandidates/3"
-  const history = createMemoryHistory({ initialEntries: [route] })
 
   return {
     ...render(
       <QueryClientProvider client={ queryClient }>
-        <Router history={ history }>
-          <Route
-            path="/ui/administration/probecandidates/:id"
-            render={ props => <ProbeCandidateChange 
-              { ...props } 
-              webapitoken="t0k3n"
-              webapiservicetypes="https://mock.service.types"
-            /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path="/ui/administration/probecandidates/:id"
+              element={ 
+                <ProbeCandidateChange 
+                  webapitoken="t0k3n"
+                  webapiservicetypes="https://mock.service.types"
+                /> 
+              }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -243,22 +243,24 @@ const renderChangeView2 = () => {
 
 const renderChangeView3 = () => {
   const route = "/ui/administration/probecandidates/1"
-  const history = createMemoryHistory({ initialEntries: [route] })
 
   return {
     ...render(
       <QueryClientProvider client={ queryClient }>
-        <Router history={ history }>
-          <Route
-            path="/ui/administration/probecandidates/:id"
-            render={ props => <ProbeCandidateChange 
-              { ...props } 
-              webapitoken="t0k3n"
-              webapiservicetypes="https://mock.service.types"
-              showtitles={ true }
-            /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path="/ui/administration/probecandidates/:id"
+              element={ 
+                <ProbeCandidateChange 
+                  webapitoken="t0k3n"
+                  webapiservicetypes="https://mock.service.types"
+                  showtitles={ true }
+                /> 
+              }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -267,22 +269,24 @@ const renderChangeView3 = () => {
 
 const renderChangeView4 = () => {
   const route = "/ui/administration/probecandidates/4"
-  const history = createMemoryHistory({ initialEntries: [route] })
 
   return {
     ...render(
       <QueryClientProvider client={ queryClient }>
-        <Router history={ history }>
-          <Route
-            path="/ui/administration/probecandidates/:id"
-            render={ props => <ProbeCandidateChange 
-              { ...props } 
-              webapitoken="t0k3n"
-              webapiservicetypes="https://mock.service.types"
-              showtitles={ true }
-            /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path="/ui/administration/probecandidates/:id"
+              element={ 
+                <ProbeCandidateChange 
+                  webapitoken="t0k3n"
+                  webapiservicetypes="https://mock.service.types"
+                  showtitles={ true }
+                /> 
+              }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -291,22 +295,24 @@ const renderChangeView4 = () => {
 
 const renderChangeView5 = () => {
   const route = "/ui/administration/probecandidates/5"
-  const history = createMemoryHistory({ initialEntries: [route] })
 
   return {
     ...render(
       <QueryClientProvider client={ queryClient }>
-        <Router history={ history }>
-          <Route
-            path="/ui/administration/probecandidates/:id"
-            render={ props => <ProbeCandidateChange 
-              { ...props } 
-              webapitoken="t0k3n"
-              webapiservicetypes="https://mock.service.types"
-              showtitles={ true }
-            /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path="/ui/administration/probecandidates/:id"
+              element={ 
+                <ProbeCandidateChange 
+                  webapitoken="t0k3n"
+                  webapiservicetypes="https://mock.service.types"
+                  showtitles={ true }
+                /> 
+              }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }

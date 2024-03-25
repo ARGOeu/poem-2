@@ -559,8 +559,6 @@ export const ProbeList = (props) => {
   const publicView = props.publicView;
   const isTenantSchema = props.isTenantSchema;
 
-  const queryClient = useQueryClient();
-
   const { data: probes, error, isLoading: loading } = useQuery(
     `${publicView ? 'public_' : ''}probe`, () => fetchProbes(publicView)
   );
@@ -607,7 +605,7 @@ export const ProbeList = (props) => {
       accessor: 'description',
       Filter: DefaultColumnFilter
     }
-  ], [publicView, queryClient]);
+  ], [publicView]);
 
   if (loading)
     return (<LoadingAnim/>);

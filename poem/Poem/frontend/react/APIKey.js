@@ -58,7 +58,7 @@ const fetchAPIKey = async(name) => {
 }
 
 
-export const APIKeyList = (props) => {
+export const APIKeyList = () => {
   const location = useLocation();
 
   const queryClient = useQueryClient();

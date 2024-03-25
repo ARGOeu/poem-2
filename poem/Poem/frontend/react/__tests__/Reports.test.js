@@ -1,8 +1,7 @@
 import React from 'react';
 import { render, waitFor, screen, within, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
-import { createMemoryHistory } from 'history';
-import { Route, Router } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { Backend, WebApi } from '../DataManager';
 import { ReportsList, ReportsChange, ReportsAdd } from '../Reports';
 import { QueryClient, QueryClientProvider, setLogger } from 'react-query';
@@ -1570,27 +1569,22 @@ const webapireports = {
 
 function renderListView(publicView=false) {
   const route = `/ui/${publicView ? 'public_' : ''}reports`;
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   if (publicView)
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/public_reports'
-              render={ props => <ReportsList
-                {...props}
-                publicView={true}
-                webapitoken='public_token'
-                webapireports={webapireports}
-                webapimetric='https://mock.metric.com'
-                webapiaggregation='https://mock.aggr.com'
-                webapioperations='https://mock.operations.com'
-                webapithresholds='https://mock.thresholds.com'
-              /> }
+          <MemoryRouter initialEntries={ [ route ] }>
+            <ReportsList
+              publicView={ true }
+              webapitoken="public_token"
+              webapireports={ webapireports }
+              webapimetric="https://mock.metric.com"
+              webapiaggregation="https://mock.aggr.com"
+              webapioperations="https://mock.operations.com"
+              webapithresholds="https://mock.thresholds.com"
             />
-          </Router>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -1599,20 +1593,16 @@ function renderListView(publicView=false) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/reports'
-              render={ props => <ReportsList
-                {...props}
-                webapitoken='token'
-                webapireports={webapireports}
-                webapimetric='https://mock.metric.com'
-                webapiaggregation='https://mock.aggr.com'
-                webapioperations='https://mock.operations.com'
-                webapithresholds='https://mock.thresholds.com'
-              /> }
+          <MemoryRouter initialEntries={ [ route ] }>
+            <ReportsList
+              webapitoken="token"
+              webapireports={ webapireports }
+              webapimetric="https://mock.metric.com"
+              webapiaggregation="https://mock.aggr.com"
+              webapioperations="https://mock.operations.com"
+              webapithresholds="https://mock.thresholds.com"
             />
-          </Router>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -1621,27 +1611,29 @@ function renderListView(publicView=false) {
 
 function renderChangeView(publicView=false) {
   const route = `/ui/${publicView ? 'public_' : ''}reports/Critical`;
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   if (publicView)
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/public_reports/:name'
-              render={ props => <ReportsChange
-                {...props}
-                webapitoken='public_token'
-                webapireports={webapireports}
-                webapimetric='https://mock.metric.com'
-                webapiaggregation='https://mock.aggr.com'
-                webapioperations='https://mock.operations.com'
-                webapithresholds='https://mock.thresholds.com'
-                publicView={true}
-              /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route
+                path="/ui/public_reports/:name"
+                element={ 
+                  <ReportsChange
+                    webapitoken="public_token"
+                    webapireports={ webapireports }
+                    webapimetric="https://mock.metric.com"
+                    webapiaggregation="https://mock.aggr.com"
+                    webapioperations="https://mock.operations.com"
+                    webapithresholds="https://mock.thresholds.com"
+                    publicView={ true }
+                  /> 
+                }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -1650,20 +1642,23 @@ function renderChangeView(publicView=false) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/reports/:name'
-              render={ props => <ReportsChange
-                {...props}
-                webapitoken='token'
-                webapireports={webapireports}
-                webapimetric='https://mock.metric.com'
-                webapiaggregation='https://mock.aggr.com'
-                webapioperations='https://mock.operations.com'
-                webapithresholds='https://mock.thresholds.com'
-              /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route
+                path="/ui/reports/:name"
+                element={ 
+                  <ReportsChange
+                    webapitoken="token"
+                    webapireports={ webapireports }
+                    webapimetric="https://mock.metric.com"
+                    webapiaggregation="https://mock.aggr.com"
+                    webapioperations="https://mock.operations.com"
+                    webapithresholds="https://mock.thresholds.com"
+                  /> 
+                }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -1672,25 +1667,20 @@ function renderChangeView(publicView=false) {
 
 function renderAddView() {
   const route = '/ui/reports/add';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/reports/add'
-            render={ props => <ReportsAdd
-              {...props}
-              webapitoken='token'
-              webapireports={webapireports}
-              webapimetric='https://mock.metric.com'
-              webapiaggregation='https://mock.aggr.com'
-              webapioperations='https://mock.operations.com'
-              webapithresholds='https://mock.thresholds.com'
-            /> }
+        <MemoryRouter initialEntries={ [ route ] }>
+          <ReportsAdd
+            webapitoken="token"
+            webapireports={ webapireports }
+            webapimetric="https://mock.metric.com"
+            webapiaggregation="https://mock.aggr.com"
+            webapioperations="https://mock.operations.com"
+            webapithresholds="https://mock.thresholds.com"
           />
-        </Router>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }

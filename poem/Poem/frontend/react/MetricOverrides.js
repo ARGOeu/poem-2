@@ -129,7 +129,7 @@ const fetchOverrides = async () => {
 }
 
 
-export const MetricOverrideList = (props) => {
+export const MetricOverrideList = () => {
   const location = useLocation()
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(

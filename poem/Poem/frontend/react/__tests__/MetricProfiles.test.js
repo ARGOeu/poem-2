@@ -1,8 +1,7 @@
 import React from 'react';
 import { render, waitFor, screen, within, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
-import { createMemoryHistory } from 'history';
-import { Route, Router } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { Backend, WebApi, fetchTenantsMetricProfiles } from '../DataManager';
 import { QueryClient, QueryClientProvider, setLogger } from 'react-query';
 import {
@@ -515,23 +514,18 @@ const mockReports = [
 
 function renderListView(publicView=false) {
   const route = `/ui/${publicView ? 'public_' : ''}metricprofiles`;
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   if (publicView)
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/public_metricprofiles'
-              render={ props => <MetricProfilesList
-                {...props}
-                webapimetric='https://mock.metrics.com'
-                webapitoken='token'
-                publicView={true}
-              /> }
+          <MemoryRouter initialEntries={ [ route ] }>
+            <MetricProfilesList
+              webapimetric='https://mock.metrics.com'
+              webapitoken='token'
+              publicView={ true }
             />
-          </Router>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -540,15 +534,12 @@ function renderListView(publicView=false) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route path='/ui/metricprofiles'
-              render={ props => <MetricProfilesList
-                {...props}
-                webapimetric='https://mock.metrics.com'
-                webapitoken='token'
-              /> }
+          <MemoryRouter initialEntries={ [ route ] }>
+            <MetricProfilesList
+              webapimetric='https://mock.metrics.com'
+              webapitoken='token'
             />
-          </Router>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -557,7 +548,6 @@ function renderListView(publicView=false) {
 
 function renderChangeView(publicView=false, combined=false) {
   const route = `/ui/${publicView ? 'public_' : ''}metricprofiles/ARGO_MON`;
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   let tenants = {}
   if (combined && !publicView)
@@ -567,22 +557,25 @@ function renderChangeView(publicView=false, combined=false) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/public_metricprofiles/:name'
-              render={ props => <MetricProfilesChange
-                {...props}
-                webapimetric='https://mock.metrics.com'
-                webapitoken='token'
-                tenantname='TENANT'
-                publicView={true}
-                tenantDetails={{
-                  combined: combined,
-                  tenants: tenants
-                }}
-              /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route
+                path="/ui/public_metricprofiles/:name"
+                element={
+                  <MetricProfilesChange
+                    webapimetric='https://mock.metrics.com'
+                    webapitoken='token'
+                    tenantname='TENANT'
+                    publicView={ true }
+                    tenantDetails={{
+                      combined: combined,
+                      tenants: tenants
+                    }}
+                  />
+                }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -591,28 +584,31 @@ function renderChangeView(publicView=false, combined=false) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/metricprofiles/:name'
-              render={props => <MetricProfilesChange
-                {...props}
-                webapimetric='https://mock.metrics.com'
-                webapiaggregation="https://mock.aggregation.com"
-                webapireports={{
-                  main: 'https://reports.com',
-                  tags: 'https://reports-tags.com',
-                  topologygroups: 'https://topology-groups.com',
-                  topologyendpoints: 'https://endpoints.com'
-                }}
-                webapitoken='token'
-                tenantname='TENANT'
-                tenantDetails={{
-                  combined: combined,
-                  tenants: tenants
-                }}
-              /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route
+                path="/ui/metricprofiles/:name"
+                element={
+                  <MetricProfilesChange
+                    webapimetric='https://mock.metrics.com'
+                    webapiaggregation="https://mock.aggregation.com"
+                    webapireports={{
+                      main: 'https://reports.com',
+                      tags: 'https://reports-tags.com',
+                      topologygroups: 'https://topology-groups.com',
+                      topologyendpoints: 'https://endpoints.com'
+                    }}
+                    webapitoken='token'
+                    tenantname='TENANT'
+                    tenantDetails={{
+                      combined: combined,
+                      tenants: tenants
+                    }}
+                  />
+                }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -621,31 +617,26 @@ function renderChangeView(publicView=false, combined=false) {
 
 function renderAddView(combined=false) {
   const route = '/ui/metricprofiles/add';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   if (combined)
     return {
       ...render(
         <QueryClientProvider client={ queryClient }>
-          <Router history={ history }>
-            <Route
-              path="/ui/metricprofiles/add"
-              render={ props => <MetricProfilesChange
-                { ...props }
-                webapimetric='https://mock.metrics.com'
-                webapitoken='token'
-                tenantname='TENANT'
-                addview={true}
-                tenantDetails={ {
-                  combined: combined,
-                  tenants: {
-                    TENANT1: "mock_tenant1_token",
-                    TENANT2: "mock_tenant2_token"
-                  }
-                } }
-              /> }
+          <MemoryRouter initialEntries={ [ route ] }>
+            <MetricProfilesChange
+              webapimetric='https://mock.metrics.com'
+              webapitoken='token'
+              tenantname='TENANT'
+              addview={ true }
+              tenantDetails={ {
+                combined: combined,
+                tenants: {
+                  TENANT1: "mock_tenant1_token",
+                  TENANT2: "mock_tenant2_token"
+                }
+              } }
             />
-          </Router>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -654,22 +645,18 @@ function renderAddView(combined=false) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/metricprofiles/add'
-              render={props => <MetricProfilesChange
-                {...props}
-                webapimetric='https://mock.metrics.com'
-                webapitoken='token'
-                tenantname='TENANT'
-                addview={true}
-                tenantDetails={ {
-                  combined: combined,
-                  tenants: {}
-                } }
-              /> }
+          <MemoryRouter initialEntries={ [ route ] }>
+            <MetricProfilesChange
+              webapimetric='https://mock.metrics.com'
+              webapitoken='token'
+              tenantname='TENANT'
+              addview={ true }
+              tenantDetails={ {
+                combined: combined,
+                tenants: {}
+              } }
             />
-          </Router>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -678,7 +665,6 @@ function renderAddView(combined=false) {
 
 function renderCloneView(combined=false) {
   const route = '/ui/metricprofiles/ARGO_MON2/clone';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   let tenants = {}
   if (combined)
@@ -687,21 +673,24 @@ function renderCloneView(combined=false) {
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path="/ui/metricprofiles/:name/clone"
-            render={props => <MetricProfilesClone
-              {...props}
-              webapimetric='https://mock.metrics.com'
-              webapitoken='token'
-              tenantname='TENANT'
-              tenantDetails={ {
-                combined: combined,
-                tenants: tenants
-              } }
-            /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path="/ui/metricprofiles/:name/clone"
+              element={
+                <MetricProfilesClone
+                  webapimetric='https://mock.metrics.com'
+                  webapitoken='token'
+                  tenantname='TENANT'
+                  tenantDetails={ {
+                    combined: combined,
+                    tenants: tenants
+                  } }
+                />
+              }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -710,17 +699,20 @@ function renderCloneView(combined=false) {
 
 function renderVersionDetailsView() {
   const route = '/ui/metricprofiles/TEST_PROFILE/history/20201214-085323';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/metricprofiles/:name/history/:version'
-            render={ props => <MetricProfileVersionDetails {...props} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path='/ui/metricprofiles/:name/history/:version'
+              element={
+                <MetricProfileVersionDetails />
+              }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }

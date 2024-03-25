@@ -1,8 +1,7 @@
 import React from 'react';
 import '@testing-library/jest-dom/extend-expect';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import { createMemoryHistory } from 'history';
-import { Route, Router } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { ListOfMetrics } from '../Metrics';
 import { Backend } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
@@ -606,17 +605,14 @@ const mockTenants = [
 
 function renderListView(publicView=undefined) {
   const route = `/ui/${publicView ? 'public_' : ''}metrictemplates`;
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   if (publicView)
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              render={props => <ListOfMetrics {...props} type='metrictemplates' publicView={true} />}
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <ListOfMetrics type='metrictemplates' publicView={ true } />
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -624,11 +620,9 @@ function renderListView(publicView=undefined) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              render = { props => <ListOfMetrics {...props} type='metrictemplates' /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <ListOfMetrics type="metrictemplates" />
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -637,16 +631,13 @@ function renderListView(publicView=undefined) {
 
 function renderTenantListView() {
   const route = '/ui/administration/metrictemplates';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history} >
-          <Route
-            render={props => <ListOfMetrics {...props} type='metrictemplates' isTenantSchema={true} />}
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <ListOfMetrics type='metrictemplates' isTenantSchema={true} />
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -658,18 +649,19 @@ function renderChangeView(options = {}) {
   const publicView = options.publicView ? options.publicView : false;
 
   const route = `/ui/${publicView ? 'public_' : ''}metrictemplates/${passive ? 'org.apel.APEL-Pub' : 'argo.AMS-Check'}`;
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   if (publicView)
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/public_metrictemplates/:name'
-              render={ props => <MetricTemplateComponent {...props} publicView={true} /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route
+                path="/ui/public_metrictemplates/:name"
+                element={ <MetricTemplateComponent publicView={true} /> }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -678,12 +670,14 @@ function renderChangeView(options = {}) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/metrictemplates/:name'
-              render={ props => <MetricTemplateComponent {...props} /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route
+                path='/ui/metrictemplates/:name'
+                element={ <MetricTemplateComponent /> }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -692,17 +686,13 @@ function renderChangeView(options = {}) {
 
 function renderAddView() {
   const route = '/ui/metrictemplates/add';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/metrictemplates/add'
-            render = { props => <MetricTemplateComponent {...props} addview={true} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <MetricTemplateComponent addview={ true } />
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -711,17 +701,18 @@ function renderAddView() {
 
 function renderCloneView(options = {passive: false}) {
   const route = `/ui/metrictemplates/${options.passive ? 'org.apel.APEL-Pub' : 'argo.AMS-Check'}/clone`
-  const history = createMemoryHistory({ initialEntries: [route] })
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/metrictemplates/:name/clone'
-            render={ props => <MetricTemplateComponent {...props} cloneview={true} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path="/ui/metrictemplates/:name/clone"
+              element={ <MetricTemplateComponent cloneview={true} /> }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -730,17 +721,18 @@ function renderCloneView(options = {passive: false}) {
 
 function renderTenantChangeView(options = { passive: false }) {
   const route = `/ui/administration/metrictemplates/${options.passive ? 'org.apel.APEL-Pub' : 'argo.AMS-Check'}`;
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/administration/metrictemplates/:name'
-            render={ props => <MetricTemplateComponent {...props} tenantview={true} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [route] }>
+          <Routes>
+            <Route
+              path="/ui/administration/metrictemplates/:name"
+              element={ <MetricTemplateComponent tenantview={true} /> }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -749,17 +741,18 @@ function renderTenantChangeView(options = { passive: false }) {
 
 function renderVersionDetailsView(options = { passive: false }) {
   const route = `/ui/metrictemplates/${options.passive ? 'org.apel.APEL-Pub' : 'argo.AMS-Check'}/history/${options.passive ? '20191209-092420' : '0.1.12'}`
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/metrictemplates/:name/history/:version'
-            render={ props => <MetricTemplateVersionDetails {...props} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path="/ui/metrictemplates/:name/history/:version"
+              element={ <MetricTemplateVersionDetails /> }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }

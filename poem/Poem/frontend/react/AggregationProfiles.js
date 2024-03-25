@@ -1412,7 +1412,7 @@ const fetchAggregationProfileVersions = async (name) => {
 }
 
 
-export const AggregationProfileVersionCompare = (props) => {
+export const AggregationProfileVersionCompare = () => {
   const { name, id1: version1, id2: version2 } = useParams();
 
   const { data: versions, error, isLoading: loading } = useQuery(
@@ -1483,7 +1483,7 @@ export const AggregationProfileVersionCompare = (props) => {
 }
 
 
-export const AggregationProfileVersionDetails = (props) => {
+export const AggregationProfileVersionDetails = () => {
   const { name, version } = useParams();
 
   const { data: versions, error, isLoading: loading } = useQuery(

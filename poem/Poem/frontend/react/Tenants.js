@@ -33,7 +33,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 
 
-export const TenantList = (props) => {
+export const TenantList = () => {
   const location = useLocation();
   const navigate = useNavigate();
 

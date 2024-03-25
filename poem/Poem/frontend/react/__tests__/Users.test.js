@@ -1,8 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
-import { createMemoryHistory } from 'history';
-import { Route, Router } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider, setLogger } from 'react-query';
 import { ChangePassword, UserChange, UsersList } from '../Users';
 import { Backend } from '../DataManager';
@@ -64,7 +63,6 @@ const mockUsers = [
   }
 ]
 
-
 const mockUser = {
     first_name: 'Alan',
     last_name: 'Ford',
@@ -117,17 +115,13 @@ const mockAllUserGroups = {
 
 function renderListView() {
   const route = '/ui/administration/users';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route path='/ui/administration/users'
-            render={ props =>
-              <UsersList {...props} isTenantSchema={true} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <UsersList isTenantSchema={ true } />
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -136,17 +130,18 @@ function renderListView() {
 
 function renderChangeView(username='Alan_Ford') {
   const route = `/ui/administration/users/${username}`;
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/administration/users/:user_name'
-            render={ props => <UserChange {...props} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path="/ui/administration/users/:user_name"
+              element={ <UserChange /> }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -155,17 +150,13 @@ function renderChangeView(username='Alan_Ford') {
 
 function renderAddView() {
   const route = '/ui/administration/users/add';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/administration/users/add'
-            render={ props => <UserChange {...props} addview={true} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <UserChange addview={ true } />
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -174,17 +165,18 @@ function renderAddView() {
 
 function renderTenantChangeView(username='Alan_Ford') {
   const route = `/ui/administration/users/${username}`;
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/administration/users/:user_name'
-            render={ props => <UserChange {...props} isTenantSchema={true} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path="/ui/administration/users/:user_name"
+              element={ <UserChange isTenantSchema={ true } /> }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -193,17 +185,13 @@ function renderTenantChangeView(username='Alan_Ford') {
 
 function renderTenantAddview() {
   const route = '/ui/administration/users/add';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/administration/users/add'
-            render={ props => <UserChange {...props} addview={true} isTenantSchema={true} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <UserChange addview={ true } isTenantSchema={ true } />
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -212,17 +200,18 @@ function renderTenantAddview() {
 
 function renderChangePassword() {
   const route = '/ui/administration/users/poem/change_password';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/administration/users/:user_name/change_password'
-            render={ props => <ChangePassword {...props} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path="/ui/administration/users/:user_name/change_password"
+              element={ <ChangePassword /> }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }

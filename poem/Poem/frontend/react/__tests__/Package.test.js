@@ -1,8 +1,7 @@
 import React from 'react';
 import '@testing-library/jest-dom/extend-expect';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import { createMemoryHistory } from 'history';
-import { Route, Router } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { PackageComponent, PackageList } from '../Package';
 import { Backend } from '../DataManager';
 import { QueryClient, QueryClientProvider, setLogger } from 'react-query';
@@ -196,16 +195,13 @@ const mockUpdateWithWarn = {
 
 function renderListView() {
   const route = '/ui/packages';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            render={ props => <PackageList {...props} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <PackageList />
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -214,16 +210,13 @@ function renderListView() {
 
 function renderTenantListView() {
   const route = '/ui/administration/packages';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            render={ props => <PackageList {...props} isTenantSchema={true} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <PackageList isTenantSchema={ true } />
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -232,17 +225,18 @@ function renderTenantListView() {
 
 function renderChangeView() {
   const route = '/ui/packages/nagios-plugins-argo-0.1.11';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/packages/:nameversion'
-            render={ props => <PackageComponent {...props} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path="/ui/packages/:nameversion"
+              element={ <PackageComponent /> }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -251,17 +245,18 @@ function renderChangeView() {
 
 function renderTenantChangeView() {
   const route='/ui/administration/packages/nagios-plugins-argo-0.1.11';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/administration/packages/:nameversion'
-            render={ props => <PackageComponent {...props} disabled={true} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path="/ui/administration/packages/:nameversion"
+              element={ <PackageComponent disabled={ true } /> }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -270,17 +265,13 @@ function renderTenantChangeView() {
 
 function renderAddView() {
   const route = '/ui/packages/add';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/packages/add'
-            render={ props => <PackageComponent {...props} addview={true} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <PackageComponent addview={ true } />
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -289,17 +280,18 @@ function renderAddView() {
 
 function renderCloneView() {
   const route = '/ui/packages/nagios-plugins-argo-0.1.11/clone';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/packages/:nameversion/clone'
-            render={ props => <PackageComponent {...props} cloneview={true} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path="/ui/packages/:nameversion/clone"
+              element={ <PackageComponent cloneview={ true } /> }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }

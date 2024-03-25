@@ -453,7 +453,7 @@ export const ReportsList = (props) => {
           </div>,
         column_width: '8%'
       }
-    ], []
+    ], [publicView]
   );
 
   if (loadingReports || loadingUserDetails)

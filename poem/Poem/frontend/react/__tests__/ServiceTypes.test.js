@@ -1,8 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
-import { createMemoryHistory } from 'history';
-import { Route, Router } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
 import { ServiceTypesList, ServiceTypesBulkAdd } from '../ServiceTypes';
 import { WebApi } from '../DataManager';
 import { fetchUserDetails } from '../QueryFunctions';
@@ -130,22 +129,17 @@ const mockServTypes = [
 
 function renderAddView(withServiceTypesTitles=undefined) {
   const route = `/ui/servicetypes/add`;
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/servicetypes/add'
-            render={ props => <ServiceTypesBulkAdd
-              { ...props }
-              webapitoken="token"
-              webapiservicetypes="https://mock.servicetypes.com"
-              showtitles={ withServiceTypesTitles }
-            />}
+        <MemoryRouter initialEntries={ [ route ] }>
+          <ServiceTypesBulkAdd
+            webapitoken="token"
+            webapiservicetypes="https://mock.servicetypes.com"
+            showtitles={ withServiceTypesTitles }
           />
-        </Router>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -154,23 +148,19 @@ function renderAddView(withServiceTypesTitles=undefined) {
 
 function renderListView(withServiceTypesTitles=undefined) {
   const route = '/ui/servicetypes';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            render={props => <ServiceTypesList
-              {...props}
-              webapitoken='token'
-              webapiservicetypes="https://mock.servicetypes.com"
-              showtitles={ withServiceTypesTitles }
-              tenantName="TENANT"
-              devel={ true }
-            />}
+        <MemoryRouter initialEntries={ [ route ] }>
+          <ServiceTypesList
+            webapitoken='token'
+            webapiservicetypes="https://mock.servicetypes.com"
+            showtitles={ withServiceTypesTitles }
+            tenantName="TENANT"
+            devel={ true }
           />
-        </Router>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -179,25 +169,18 @@ function renderListView(withServiceTypesTitles=undefined) {
 
 function renderListViewPublic(withServiceTypesTitles=false) {
   const route = '/ui/public_servicetypes';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            exact path='/ui/public_servicetypes/'
-            render={
-              props => <ServiceTypesList
-                { ...props }
-                webapitoken="token"
-                webapiservicetypes="https://mock.servicetypes.com"
-                showtitles={ withServiceTypesTitles }
-                publicView={ true }
-              />
-            }
+        <MemoryRouter initialEntries={ [ route ] }>
+          <ServiceTypesList
+            webapitoken="token"
+            webapiservicetypes="https://mock.servicetypes.com"
+            showtitles={ withServiceTypesTitles }
+            publicView={ true }
           />
-        </Router>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }

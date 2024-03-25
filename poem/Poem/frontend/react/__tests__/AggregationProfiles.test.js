@@ -1,8 +1,7 @@
 import React from 'react';
 import { render, waitFor, screen, within, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
-import { createMemoryHistory } from 'history';
-import { Route, Router } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { Backend, WebApi } from '../DataManager';
 import {
   AggregationProfilesChange,
@@ -575,23 +574,19 @@ const mockReports = [
 
 function renderListView(publicView = false) {
   const route = `/ui/${publicView ? 'public_' : ''}aggregationprofiles`;
-  const history = createMemoryHistory({ initialEntries: [ route ] });
 
   if (publicView)
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              render={props => <AggregationProfilesList
-                {...props}
-                publicView={true}
-                webapimetric='https://mock.metrics.com'
-                webapiaggregation='https://mock.aggregations.com'
-                webapitoken='token'
-              />}
+          <MemoryRouter initialEntries={ [ route ] }>
+            <AggregationProfilesList
+              publicView={true}
+              webapimetric='https://mock.metrics.com'
+              webapiaggregation='https://mock.aggregations.com'
+              webapitoken='token'
             />
-          </Router>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -600,16 +595,13 @@ function renderListView(publicView = false) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              render={props => <AggregationProfilesList
-                {...props}
-                webapimetric='https://mock.metrics.com'
-                webapiaggregation='https://mock.aggregations.com'
-                webapitoken='token'
-              />}
+          <MemoryRouter initialEntries={ [ route ] }>
+            <AggregationProfilesList
+              webapimetric='https://mock.metrics.com'
+              webapiaggregation='https://mock.aggregations.com'
+              webapitoken='token'
             />
-          </Router>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -618,31 +610,33 @@ function renderListView(publicView = false) {
 
 function renderChangeView(publicView = false) {
   const route = `/ui/${publicView ? 'public_' : ''}aggregationprofiles/TEST_PROFILE`;
-  const history = createMemoryHistory({ initialEntries: [ route ] });
 
   if (publicView)
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/public_aggregationprofiles/:name'
-              render={props => <AggregationProfilesChange
-                {...props}
-                webapimetric='https://mock.metrics.com'
-                webapiaggregation='https://mock.aggregations.com'
-                webapireports={{
-                  main: 'https://reports.com',
-                  tags: 'https://reports-tags.com',
-                  topologygroups: 'https://topology-groups.com',
-                  topologyendpoints: 'https://endpoints.com'
-                }}
-                webapitoken='token'
-                tenantname='TENANT'
-                publicView={true}
-              />}
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route 
+                path="/ui/public_aggregationprofiles/:name"
+                element={
+                  <AggregationProfilesChange
+                    webapimetric='https://mock.metrics.com'
+                    webapiaggregation='https://mock.aggregations.com'
+                    webapireports={{
+                      main: 'https://reports.com',
+                      tags: 'https://reports-tags.com',
+                      topologygroups: 'https://topology-groups.com',
+                      topologyendpoints: 'https://endpoints.com'
+                    }}
+                    webapitoken='token'
+                    tenantname='TENANT'
+                    publicView={true}
+                  />
+                }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -651,16 +645,21 @@ function renderChangeView(publicView = false) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route exact path="/ui/aggregationprofiles/:name"
-              render={props => <AggregationProfilesChange
-                {...props}
-                webapiaggregation='https://mock.aggregations.com'
-                webapimetric='https://mock.metrics.com'
-                webapitoken='token'
-                tenantname='TENANT' />}
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route
+                path="/ui/aggregationprofiles/:name"
+                element={
+                  <AggregationProfilesChange
+                    webapiaggregation='https://mock.aggregations.com'
+                    webapimetric='https://mock.metrics.com'
+                    webapitoken='token'
+                    tenantname='TENANT' 
+                  />
+                }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -669,24 +668,19 @@ function renderChangeView(publicView = false) {
 
 function renderAddview() {
   const route = '/ui/aggregationprofiles/add';
-  const history = createMemoryHistory({ initialEntries: [ route ] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/aggregationprofiles/add'
-            render={props => <AggregationProfilesChange
-              {...props}
-              webapiaggregation='https://mock.aggregations.com'
-              webapimetric='https://mock.metrics.com'
-              webapitoken='token'
-              tenantname='TENANT'
-              addview={true}
-            />}
+        <MemoryRouter initialEntries={ [ route ] }>
+          <AggregationProfilesChange
+            webapiaggregation='https://mock.aggregations.com'
+            webapimetric='https://mock.metrics.com'
+            webapitoken='token'
+            tenantname='TENANT'
+            addview={true}
           />
-        </Router>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -695,17 +689,18 @@ function renderAddview() {
 
 function renderVersionDetailsView() {
   const route = '/ui/aggregationprofiles/TEST_PROFILE/history/20201228-145348';
-  const history = createMemoryHistory({ initialEntries: [ route ] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/aggregationprofiles/:name/history/:version'
-            render={props => <AggregationProfileVersionDetails {...props} />}
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path="/ui/aggregationprofiles/:name/history/:version"
+              element={ <AggregationProfileVersionDetails /> }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }

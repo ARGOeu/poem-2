@@ -821,6 +821,7 @@ export const MetricForm =
     const tenantview = props.tenantview
     const publicView = props.publicView
     const probeview = props.probeview
+    const location = useLocation()
 
     const resourcename_beautify = resourcename === "metric" ? "metric" : "metric template"
 
