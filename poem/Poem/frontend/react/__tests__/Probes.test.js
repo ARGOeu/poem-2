@@ -1,8 +1,7 @@
 import React from 'react';
 import '@testing-library/jest-dom/extend-expect';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { createMemoryHistory } from 'history';
-import { Route, Router } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { ProbeComponent, ProbeList, ProbeVersionDetails } from '../Probes';
 import { Backend } from '../DataManager';
 import { QueryClientProvider, QueryClient, setLogger } from 'react-query';
@@ -157,17 +156,14 @@ const mockProbeVersions = [
 
 function renderListView({ publicView=false, isTenantSchema=false }) {
   const route = `/ui/${publicView ? 'public_' : ''}probes`;
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   if (publicView)
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              render={ props => <ProbeList {...props} publicView={true} isTenantSchema={isTenantSchema} /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <ProbeList publicView={ true } isTenantSchema={ isTenantSchema } />
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -176,11 +172,9 @@ function renderListView({ publicView=false, isTenantSchema=false }) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              render={ props => <ProbeList {...props} isTenantSchema={isTenantSchema} /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <ProbeList isTenantSchema={isTenantSchema} /> 
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -189,18 +183,19 @@ function renderListView({ publicView=false, isTenantSchema=false }) {
 
 function renderChangeView({ publicView=false, isTenantSchema=false }) {
   const route = `/ui/${publicView ? 'public_' : ''}probes/ams-probe`;
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   if (publicView)
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/public_probes/:name'
-              render={ props => <ProbeComponent {...props} publicView={true} isTenantSchema={isTenantSchema} /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route
+                path="/ui/public_probes/:name"
+                element={ <ProbeComponent publicView={ true } isTenantSchema={ isTenantSchema } /> }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -208,12 +203,14 @@ function renderChangeView({ publicView=false, isTenantSchema=false }) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/probes/:name'
-              render = { props => <ProbeComponent {...props} isTenantSchema={isTenantSchema} /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route
+                path="/ui/probes/:name"
+                element={ <ProbeComponent isTenantSchema={ isTenantSchema } /> }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -222,17 +219,13 @@ function renderChangeView({ publicView=false, isTenantSchema=false }) {
 
 function renderAddView() {
   const route = '/ui/probes/add';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/probes/add'
-            render = { props => <ProbeComponent {...props} addview={true} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <ProbeComponent addview={ true } />
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -241,17 +234,18 @@ function renderAddView() {
 
 function renderCloneView() {
   const route = '/ui/probes/ams-probe/clone';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/probes/:name/clone'
-            render = { props => <ProbeComponent {...props} cloneview={true} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path="/ui/probes/:name/clone"
+              element = { <ProbeComponent cloneview={true} /> }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -260,18 +254,19 @@ function renderCloneView() {
 
 function renderVersionDetailsView(publicView=false) {
   const route = `/ui/${publicView ? 'public_' : ''}probes/ams-probe/history/0.1.12`;
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   if (publicView)
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/public_probes/:name/history/:version'
-              render={ props => <ProbeVersionDetails {...props} publicView={true} /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route
+                path="/ui/public_probes/:name/history/:version"
+                element={ <ProbeVersionDetails publicView={true} /> }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -279,12 +274,14 @@ function renderVersionDetailsView(publicView=false) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/probes/:name/history/:version'
-              render = { props => <ProbeVersionDetails {...props} /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route
+                path="/ui/probes/:name/history/:version"
+                element={ <ProbeVersionDetails /> }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
