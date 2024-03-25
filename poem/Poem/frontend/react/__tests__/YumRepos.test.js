@@ -1,8 +1,7 @@
 import React from 'react';
 import '@testing-library/jest-dom/extend-expect';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { createMemoryHistory } from 'history';
-import { Route, Router } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { YumRepoComponent, YumRepoList } from '../YumRepos';
 import { Backend } from '../DataManager';
 import { QueryClientProvider, QueryClient, setLogger } from 'react-query';
@@ -72,17 +71,14 @@ const mockYUMRepo = {
 
 function renderListView(tenant=false) {
   const route = `/ui/${tenant ? 'administration/' : ''}yumrepos`;
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   if (tenant)
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              render={ props => <YumRepoList {...props} isTenantSchema={true} /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <YumRepoList isTenantSchema={ true } />
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -91,11 +87,9 @@ function renderListView(tenant=false) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              render={ props => <YumRepoList {...props} /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <YumRepoList />
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -104,18 +98,19 @@ function renderListView(tenant=false) {
 
 function renderChangeView(tenant=false) {
   const route = `/ui/${tenant ? 'administration/' : ''}yumrepos/argo-centos6`;
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   if (tenant)
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/administration/yumrepos/:name'
-              render={ props => <YumRepoComponent {...props} disabled={true} /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route
+                path="/ui/administration/yumrepos/:name"
+                element={ <YumRepoComponent disabled={ true } /> }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -124,12 +119,14 @@ function renderChangeView(tenant=false) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/yumrepos/:name'
-              render={ props => <YumRepoComponent {...props} /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route
+                path="/ui/yumrepos/:name"
+                element={ <YumRepoComponent /> }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -138,17 +135,13 @@ function renderChangeView(tenant=false) {
 
 function renderAddView() {
   const route = '/ui/yumrepos/add';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/yumrepos/add'
-            render={ props => <YumRepoComponent {...props} addview={true} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <YumRepoComponent addview={ true } />
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -157,17 +150,18 @@ function renderAddView() {
 
 function renderCloneView() {
   const route = '/ui/yumrepos/argo-centos6/clone'
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/yumrepos/:name/clone'
-            render={ props => <YumRepoComponent {...props} cloneview={true} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path="/ui/yumrepos/:name/clone"
+              element={ <YumRepoComponent cloneview={ true } /> }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
