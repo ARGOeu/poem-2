@@ -1,8 +1,7 @@
 import React from 'react';
 import '@testing-library/jest-dom/extend-expect';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { createMemoryHistory } from 'history';
-import { Route, Router } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { ThresholdsProfilesChange, ThresholdsProfilesList, ThresholdsProfileVersionDetail } from '../ThresholdProfiles';
 import { Backend, WebApi } from '../DataManager';
 import { QueryClient, QueryClientProvider, setLogger } from 'react-query';
@@ -576,22 +575,18 @@ const mockReports = [
 
 function renderListView(publicView=false) {
   const route = `/ui/${publicView ? 'public_' : ''}thresholdsprofiles`;
-  const history = createMemoryHistory({ initialEntries: [route] })
 
   if (publicView)
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              render={ props => <ThresholdsProfilesList
-                {...props}
-                webapithresholds='https://mock.thresholds.com'
-                webapitoken='token'
-                publicView={true}
-              /> }
+          <MemoryRouter initialEntries={ [ route ] }>
+            <ThresholdsProfilesList
+              webapithresholds="https://mock.thresholds.com"
+              webapitoken="token"
+              publicView={ true }
             />
-          </Router>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -600,15 +595,12 @@ function renderListView(publicView=false) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              render={ props => <ThresholdsProfilesList
-                {...props}
-                webapithresholds='https://mock.thresholds.com'
-                webapitoken='token'
-              /> }
+          <MemoryRouter initialEntries={ [ route ] }>
+            <ThresholdsProfilesList
+              webapithresholds="https://mock.thresholds.com"
+              webapitoken="token"
             />
-          </Router>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -617,24 +609,26 @@ function renderListView(publicView=false) {
 
 function renderChangeView(publicView=false) {
   const route = `/ui/${publicView ? 'public_' : ''}thresholdsprofiles/TEST_PROFILE`;
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   if (publicView)
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/public_thresholdsprofiles/:name'
-              render={ props => <ThresholdsProfilesChange
-                {...props}
-                webapithresholds='https://mock.thresholds.com'
-                webapitoken='token'
-                tenantname='TENANT'
-                publicView={true}
-              /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route
+                path="/ui/public_thresholdsprofiles/:name"
+                element={ 
+                  <ThresholdsProfilesChange
+                    webapithresholds="https://mock.thresholds.com"
+                    webapitoken="token"
+                    tenantname="TENANT"
+                    publicView={ true }
+                  /> 
+                }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -643,17 +637,20 @@ function renderChangeView(publicView=false) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/thresholdsprofiles/:name'
-              render={ props => <ThresholdsProfilesChange
-                {...props}
-                webapithresholds='https://mock.thresholds.com'
-                webapitoken='token'
-                tenantname='TENANT'
-              /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route
+                path="/ui/thresholdsprofiles/:name"
+                element={ 
+                  <ThresholdsProfilesChange
+                    webapithresholds="https://mock.thresholds.com"
+                    webapitoken="token"
+                    tenantname="TENANT"
+                  /> 
+                }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -662,23 +659,18 @@ function renderChangeView(publicView=false) {
 
 function renderAddView() {
   const route = '/ui/thresholdsprofiles/add';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/thresholdsprofiles/add'
-            render={ props => <ThresholdsProfilesChange
-              {...props}
-              webapithresholds='https://mock.thresholds.com'
-              webapitoken='token'
-              tenantname='TENANT'
-              addview={true}
-            /> }
+        <MemoryRouter initialEntries={ [ route ] }>
+          <ThresholdsProfilesChange
+            webapithresholds="https://mock.thresholds.com"
+            webapitoken="token"
+            tenantname="TENANT"
+            addview={ true }
           />
-        </Router>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -687,17 +679,18 @@ function renderAddView() {
 
 function renderVersionDetailsView() {
   const route = '/ui/thresholdsprofiles/TEST_PROFILE/history/20201224-035847';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/thresholdsprofiles/:name/history/:version'
-            render={ props =>  <ThresholdsProfileVersionDetail {...props} />}
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path="/ui/thresholdsprofiles/:name/history/:version"
+              element={ <ThresholdsProfileVersionDetail />}
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }

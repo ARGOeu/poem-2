@@ -1013,10 +1013,6 @@ const fetchTopologyEndpoints = async ( webapi ) => {
 export const ThresholdsProfilesList = (props) => {
   const location = useLocation();
   const publicView = props.publicView;
-  const webapitoken = props.webapitoken;
-  const webapithresholds = props.webapithresholds;
-
-  const queryClient = useQueryClient();
 
   const { data: userDetails, error: errorUserDetails, status: statusUserDetails } = useQuery(
     'userdetails', () => fetchUserDetails(true)
@@ -1062,7 +1058,7 @@ export const ThresholdsProfilesList = (props) => {
           {row.value}
         </div>
     }
-  ], [publicView, queryClient, webapithresholds, webapitoken]);
+  ], [publicView]);
 
   if (statusUserDetails === 'loading' || statusThresholdsProfiles === 'loading')
     return (<LoadingAnim/>);
@@ -1453,7 +1449,7 @@ const fetchThresholdsProfilesVersions = async (name) => {
 }
 
 
-export const ThresholdsProfileVersionCompare = (props) => {
+export const ThresholdsProfileVersionCompare = () => {
   const { name, id1: version1, id2: version2 } = useParams();
 
   const { data: versions, error: error, status: status } = useQuery(
