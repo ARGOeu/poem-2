@@ -1,8 +1,7 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { createMemoryHistory } from 'history';
 import { render, screen } from '@testing-library/react';
-import { Router, Route } from 'react-router';
+import { MemoryRouter } from 'react-router-dom';
 import { SuperAdminAdministration, TenantAdministration } from '../Administration';
 
 
@@ -16,17 +15,13 @@ beforeEach(() => {
 
 function renderTenantAdministration() {
   const route = '/ui/administration';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/administration'
-            component={TenantAdministration}
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <TenantAdministration />
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -35,17 +30,13 @@ function renderTenantAdministration() {
 
 function renderSuperAdminAdministration() {
   const route = '/ui/administration';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/administration'
-            component={SuperAdminAdministration}
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <SuperAdminAdministration />
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
