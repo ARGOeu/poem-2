@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useContext, useEffect } from 'react';
 import {Link, useLocation, useParams, useNavigate} from 'react-router-dom';
 import {
-  LoadingAnim,
   BaseArgoView,
   NotifyOk,
   DiffElement,
@@ -1292,9 +1291,9 @@ export const AggregationProfilesChange = (props) => {
               </Col>
             </Row>
             <Col className='mt-5 mb-3 d-flex flex-column'>
-                <CustomSpan custStyle="mt-2 mb-1" height="10px" width="25%" />
-                <CustomButton height="38px" width="45%" />
-                <CustomSpan custStyle="mt-1" height="25px" width="40%" />
+              <CustomSpan custStyle="mt-2 mb-1" height="10px" width="25%" />
+              <CustomButton height="38px" width="45%" />
+              <CustomSpan custStyle="mt-1" height="25px" width="40%" />
             </Col>
             <CustomSubtitle height="37.6px" custStyle="mt-2" />
             <Row>
@@ -1635,9 +1634,9 @@ export const AggregationProfileVersionDetails = () => {
             </Col>
           </Row>
           <Col className='mt-4 mb-3 d-flex flex-column'>
-              <CustomSpan custStyle="mt-2 mb-1" height="10px" width="25%" />
-              <CustomButton height="38px" width="45%" />
-              <CustomSpan custStyle="mt-1" height="25px" width="40%" />
+            <CustomSpan custStyle="mt-2 mb-1" height="10px" width="25%" />
+            <CustomButton height="38px" width="45%" />
+            <CustomSpan custStyle="mt-1" height="25px" width="40%" />
           </Col>
           <CustomSubtitle height="37.6px" custStyle="mt-2" />
           <Row>
