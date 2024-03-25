@@ -72,7 +72,7 @@ const fetchStatuses = async () => {
 }
 
 
-export const ProbeCandidateList = (props) => {
+export const ProbeCandidateList = () => {
   const location = useLocation();
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
@@ -629,7 +629,6 @@ const ProbeCandidateForm = ({
 export const ProbeCandidateChange = (props) => {
   const { id: pcid } = useParams()
   const navigate = useNavigate()
-  const history = props.history
   const showtitles = props.showtitles
 
   const backend = new Backend()
@@ -697,7 +696,7 @@ export const ProbeCandidateChange = (props) => {
           NotifyOk({
             msg: "Probe candidate successfully changed",
             title: "Changed",
-            callback: () => history.push("/ui/administration/probecandidates")
+            callback: () => navigate("/ui/administration/probecandidates")
           })
       },
       onError: (error) => {
