@@ -98,8 +98,6 @@ export const UsersList = (props) => {
     const location = useLocation();
     const isTenantSchema = props.isTenantSchema;
 
-    const queryClient = useQueryClient();
-
     const { data: listUsers, error: error, isLoading: loading } = useQuery(
       'user', () => fetchUsers()
     );
@@ -174,7 +172,7 @@ export const UsersList = (props) => {
           }
         </div>
     }
-  ], [isTenantSchema, queryClient]);
+  ], [isTenantSchema]);
 
   if (loading)
     return (<LoadingAnim />);
@@ -1161,8 +1159,8 @@ const ChangePasswordForm = ({
 }
 
 
-export const ChangePassword = (props) => {
-  const { name } = useParams();
+export const ChangePassword = () => {
+  const { user_name: name } = useParams();
   const location = useLocation();
 
   const { data: userDetails, isLoading: loading} = useQuery(
