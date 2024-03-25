@@ -1,5 +1,5 @@
 import React, { useContext, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import { Backend, WebApi } from './DataManager';
 import {
   LoadingAnim,
@@ -854,9 +854,9 @@ const ThresholdsProfilesForm = ({
   doDelete=undefined,
   ...props
 }) => {
-  const name = props.match.params.name;
+  const { name } = useParams()
   const addview = props.addview;
-  const location = props.location;
+  const location = useLocation();
   const publicView = props.publicView;
 
   const context = useContext(ThresholdsProfilesChangeContext)
@@ -1011,7 +1011,7 @@ const fetchTopologyEndpoints = async ( webapi ) => {
 
 
 export const ThresholdsProfilesList = (props) => {
-  const location = props.location;
+  const location = useLocation();
   const publicView = props.publicView;
   const webapitoken = props.webapitoken;
   const webapithresholds = props.webapithresholds;
@@ -1096,9 +1096,9 @@ export const ThresholdsProfilesList = (props) => {
 
 
 export const ThresholdsProfilesChange = (props) => {
-  const profile_name = props.match.params.name;
+  const { name: profile_name } = useParams();
+  const navigate = useNavigate();
   const addview = props.addview;
-  const history = props.history;
   const publicView = props.publicView;
   const webapitoken = props.webapitoken
   const webapithresholds = props.webapithresholds;
@@ -1151,7 +1151,7 @@ export const ThresholdsProfilesChange = (props) => {
       return webapi.fetchThresholdsProfile(backendTP.apiid)
     },
     {
-      enabled: !!backendTP,
+      enabled: !!backendTP && !addview,
       initialData: () => {
         if (!addview)
           return queryClient.getQueryData([`${publicView ? "public_" : ""}thresholdsprofile`, "webapi"])?.find(profile => profile.id === backendTP.apiid)
@@ -1231,7 +1231,7 @@ export const ThresholdsProfilesChange = (props) => {
                 NotifyOk({
                   msg: 'Thresholds profile successfully added',
                   title: 'Added',
-                  callback: () => history.push('/ui/thresholdsprofiles')
+                  callback: () => navigate('/ui/thresholdsprofiles')
                 })
               },
               onError: (error) => {
@@ -1267,7 +1267,7 @@ export const ThresholdsProfilesChange = (props) => {
               NotifyOk({
                 msg: 'Thresholds profile successfully changed',
                 title: 'Changed',
-                callback: () => history.push('/ui/thresholdsprofiles')
+                callback: () => navigate('/ui/thresholdsprofiles')
               })
             },
             onError: (error) => {
@@ -1300,7 +1300,7 @@ export const ThresholdsProfilesChange = (props) => {
               NotifyOk({
                 msg: 'Thresholds profile successfully deleted',
                 title: 'Deleted',
-                callback: () => history.push('/ui/thresholdsprofiles')
+                callback: () => navigate('/ui/thresholdsprofiles')
               })
             },
             onError: (error) => {
@@ -1454,9 +1454,7 @@ const fetchThresholdsProfilesVersions = async (name) => {
 
 
 export const ThresholdsProfileVersionCompare = (props) => {
-  const version1 = props.match.params.id1;
-  const version2 = props.match.params.id2;
-  const name = props.match.params.name;
+  const { name, id1: version1, id2: version2 } = useParams();
 
   const { data: versions, error: error, status: status } = useQuery(
     ['thresholdsprofile', 'version', name], () => fetchThresholdsProfilesVersions(name)
@@ -1506,8 +1504,7 @@ export const ThresholdsProfileVersionCompare = (props) => {
 
 
 export const ThresholdsProfileVersionDetail = (props) => {
-  const name = props.match.params.name;
-  const version = props.match.params.version;
+  const { name, version } = useParams();
 
   const { data: versions, error: error, status: status } = useQuery(
     ['thresholdsprofile', 'version', name], () => fetchThresholdsProfilesVersions(name)

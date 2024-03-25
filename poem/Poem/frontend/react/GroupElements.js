@@ -11,7 +11,7 @@ import {
   SearchField,
   BaseArgoTable
 } from './UIElements';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import {
   FormGroup,
   Row,
@@ -42,8 +42,8 @@ const validationSchema = Yup.object().shape({
 
 
 export const GroupList = (props) => {
-  const location = props.location;
   const name = props.name;
+  const location = useLocation();
   const id = props.id;
   const group = props.group;
 
@@ -95,8 +95,9 @@ export const GroupList = (props) => {
 };
 
 
-const GroupChangeForm = ({ id, items, freeItems, group, groupname, title, addview, location, history }) => {
+const GroupChangeForm = ({ id, items, freeItems, group, groupname, title, addview, location }) => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const backend = new Backend();
 
@@ -157,7 +158,7 @@ const GroupChangeForm = ({ id, items, freeItems, group, groupname, title, addvie
           NotifyOk({
             msg: `Group of ${title} successfully changed`,
             title: 'Changed',
-            callback: () => history.push(`/ui/administration/${id}`)
+            callback: () => navigate(`/ui/administration/${id}`)
           });
         },
         onError: (error) => {
@@ -176,7 +177,7 @@ const GroupChangeForm = ({ id, items, freeItems, group, groupname, title, addvie
           NotifyOk({
             msg: `Group of ${title} successfully added`,
             title: 'Added',
-            callback: () => history.push(`/ui/administration/${id}`)
+            callback: () => navigate(`/ui/administration/${id}`)
           });
         },
         onError: (error) => {
@@ -198,7 +199,7 @@ const GroupChangeForm = ({ id, items, freeItems, group, groupname, title, addvie
         NotifyOk({
           msg: `Group of ${title} successfully deleted`,
           title: 'Deleted',
-          callback: () => history.push(`/ui/administration/${id}`)
+          callback: () => navigate(`/ui/administration/${id}`)
         });
       },
       onError: (error) => {
@@ -400,14 +401,13 @@ const GroupChangeForm = ({ id, items, freeItems, group, groupname, title, addvie
 
 
 export const GroupChange = (props) => {
-  const groupname = props.match.params.name;
+  const { name: groupname } = useParams();
   const group = props.group;
   const id = props.id;
   const title = props.title;
   const addview = props.addview;
 
-  const location = props.location;
-  const history = props.history;
+  const location = useLocation();
 
   const backend = new Backend()
 
@@ -439,7 +439,7 @@ export const GroupChange = (props) => {
 
   else if ((items || addview) && freeItems) {
     return (
-      <GroupChangeForm id={id} items={items} freeItems={freeItems} group={group} groupname={groupname} title={title} addview={addview} location={location} history={history} />
+      <GroupChangeForm id={id} items={items} freeItems={freeItems} group={group} groupname={groupname} title={title} addview={addview} location={location} />
     )
   }
   else

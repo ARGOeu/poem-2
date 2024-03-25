@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Backend } from './DataManager';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import {
   LoadingAnim,
   BaseArgoView,
@@ -65,10 +65,10 @@ const ProbeForm = ({
   list_packages=[],
   metrictemplatelist=[],
   location=undefined,
-  history=undefined
 }) => {
   const backend = new Backend()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
 
   const addMutation = useMutation(async (values) => await backend.addObject('/api/v2/internal/probes/', values))
   const changeMutation = useMutation(async (values) => await backend.changeObject('/api/v2/internal/probes/', values))
@@ -148,7 +148,7 @@ const ProbeForm = ({
           NotifyOk({
             msg: 'Probe successfully added',
             title: 'Added',
-            callback: () => history.push('/ui/probes')
+            callback: () => navigate('/ui/probes')
           })
         },
         onError: (error) => {
@@ -167,7 +167,7 @@ const ProbeForm = ({
             NotifyOk({
               msg: 'Probe successfully changed',
               title: 'Changed',
-              callback: () => history.push('/ui/probes')
+              callback: () => navigate('/ui/probes')
             })
           },
           onError: (error) => {
@@ -189,7 +189,7 @@ const ProbeForm = ({
         NotifyOk({
           msg: 'Probe successfully deleted',
           title: 'Deleted',
-          callback: () => history.push('/ui/probes')
+          callback: () => navigate('/ui/probes')
         })
       },
       onError: (error) => {
@@ -555,7 +555,7 @@ const fetchMetrics = async (publicView, name, version) => {
 
 
 export const ProbeList = (props) => {
-  const location = props.location;
+  const location = useLocation();
   const publicView = props.publicView;
   const isTenantSchema = props.isTenantSchema;
 
@@ -638,11 +638,10 @@ export const ProbeList = (props) => {
 
 
 export const ProbeComponent = (props) => {
-  const name = props.match.params.name;
+  let { name } = useParams();   
+  const location = useLocation();
   const addview = props.addview;
   const cloneview = props.cloneview;
-  const location = props.location;
-  const history = props.history;
   const publicView = props.publicView;
   const isTenantSchema = props.isTenantSchema;
 
@@ -693,7 +692,6 @@ export const ProbeComponent = (props) => {
         list_packages={ packages.map(pkg => `${pkg.name} (${pkg.version})`) }
         metrictemplatelist={ metricTemplates ? metricTemplates : [] }
         location={ location }
-        history={ history }
       />
     )
   } else
@@ -702,9 +700,7 @@ export const ProbeComponent = (props) => {
 
 
 export const ProbeVersionCompare = (props) => {
-  const version1 = props.match.params.id1;
-  const version2 = props.match.params.id2;
-  const name = props.match.params.name;
+  let { name, id1: version1, id2: version2 } = useParams();
   const publicView = props.publicView;
 
   const { data: versions, error, isLoading: loading } = useQuery(
@@ -776,8 +772,7 @@ export const ProbeVersionCompare = (props) => {
 
 
 export const ProbeVersionDetails = (props) => {
-  const name = props.match.params.name;
-  const version = props.match.params.version;
+  let { name, version } = useParams();
   const publicView = props.publicView;
 
   const { data: versions, error, isLoading: loading } = useQuery(

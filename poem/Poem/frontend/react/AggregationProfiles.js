@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useContext, useEffect } from 'react';
-import {Link} from 'react-router-dom';
+import {Link, useLocation, useParams, useNavigate} from 'react-router-dom';
 import {
   LoadingAnim,
   BaseArgoView,
@@ -969,11 +969,11 @@ const removeIsNewFlag = (values) => {
 
 
 export const AggregationProfilesChange = (props) => {
+  const { name: profile_name } = useParams();
   const tenant_name = props.tenantname;
-  const profile_name = props.match.params.name;
   const addview = props.addview
-  const history = props.history;
-  const location = props.location;
+  const navigate = useNavigate();
+  const location = useLocation();
   const publicView = props.publicView;
 
   const backend = new Backend();
@@ -1119,7 +1119,7 @@ export const AggregationProfilesChange = (props) => {
               NotifyOk({
                 msg: 'Aggregation profile successfully changed',
                 title: 'Changed',
-                callback: () => history.push('/ui/aggregationprofiles')
+                callback: () => navigate('/ui/aggregationprofiles')
               });
             },
             onError: (error) => {
@@ -1156,7 +1156,7 @@ export const AggregationProfilesChange = (props) => {
               NotifyOk({
                 msg: 'Aggregation profile successfully added',
                 title: 'Added',
-                callback: () => history.push('/ui/aggregationprofiles')
+                callback: () => navigate('/ui/aggregationprofiles')
               })
             },
             onError: (error) => {
@@ -1190,7 +1190,7 @@ export const AggregationProfilesChange = (props) => {
               NotifyOk({
                 msg: 'Aggregation profile successfully deleted',
                 title: 'Deleted',
-                callback: () => history.push('/ui/aggregationprofiles')
+                callback: () => navigate('/ui/aggregationprofiles')
               });
             },
             onError: (error) => {
@@ -1288,7 +1288,7 @@ export const AggregationProfilesChange = (props) => {
 
 
 export const AggregationProfilesList = (props) => {
-  const location = props.location;
+  const location = useLocation();
   const publicView = props.publicView
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
@@ -1413,9 +1413,7 @@ const fetchAggregationProfileVersions = async (name) => {
 
 
 export const AggregationProfileVersionCompare = (props) => {
-  const version1 = props.match.params.id1;
-  const version2 = props.match.params.id2;
-  const name = props.match.params.name;
+  const { name, id1: version1, id2: version2 } = useParams();
 
   const { data: versions, error, isLoading: loading } = useQuery(
     ['aggregationprofile', 'tenantversion', name], () => fetchAggregationProfileVersions(name)
@@ -1486,8 +1484,7 @@ export const AggregationProfileVersionCompare = (props) => {
 
 
 export const AggregationProfileVersionDetails = (props) => {
-  const name = props.match.params.name;
-  const version = props.match.params.version;
+  const { name, version } = useParams();
 
   const { data: versions, error, isLoading: loading } = useQuery(
     ['aggregationprofile', 'tenantversion', name], () => fetchAggregationProfileVersions(name)

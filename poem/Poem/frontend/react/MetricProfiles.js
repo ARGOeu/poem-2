@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useContext, useEffect } from 'react';
-import {Link} from 'react-router-dom';
+import {Link, useLocation, useParams, useNavigate} from 'react-router-dom';
 import {
   Backend, 
   WebApi,
@@ -49,8 +49,15 @@ import * as yup from "yup"
 import { yupResolver } from '@hookform/resolvers/yup';
 
 
-export const MetricProfilesClone = (props) => <MetricProfilesComponent cloneview={true} {...props}/>;
-export const MetricProfilesChange = (props) => <MetricProfilesComponent {...props}/>;
+export const MetricProfilesClone = (props) => {
+  const { name } = useParams();
+  return <MetricProfilesComponent cloneview={true} {...props} profile_name={name} />;
+};
+
+export const MetricProfilesChange = (props) => { 
+  const { name } = useParams();
+  return <MetricProfilesComponent {...props} profile_name={name} />;
+};
 
 
 const MetricProfilesComponentContext = React.createContext();
@@ -324,9 +331,9 @@ const MetricProfilesForm = ({
   historyview=false,
   ...props
 }) => {
-  const profile_name = props.match.params.name;
+  const { profile_name } = useParams();
   const addview = props.addview
-  const location = props.location;
+  const location = useLocation();
   const cloneview = props.cloneview;
   const publicView = props.publicView;
   const combined = props.combined
@@ -631,14 +638,13 @@ const MetricProfilesForm = ({
 
 
 export const MetricProfilesComponent = (props) => {
-  const profile_name = props.match.params.name;
+  const { profile_name } = props;
+  const navigate = useNavigate()
   const addview = props.addview
-  const history = props.history;
   const cloneview = props.cloneview;
   const publicView = props.publicView;
-  const tenantDetails = props.tenantDetails
-  const combined = props.tenantDetails.combined
-
+  const tenantDetails = props.tenantDetails !== undefined ? props.tenantDetails : "";
+  const combined = props.tenantDetails && props.tenantDetails.combined !== undefined ? props.tenantDetails.combined : false;  
   const backend = new Backend();
   const webapi = new WebApi({
     token: props.webapitoken,
@@ -756,7 +762,7 @@ export const MetricProfilesComponent = (props) => {
               NotifyOk({
                 msg: msg,
                 title: 'Deleted',
-                callback: () => history.push('/ui/metricprofiles')
+                callback: () => navigate('/ui/metricprofiles')
               });
             },
             onError: (error) => {
@@ -851,7 +857,7 @@ export const MetricProfilesComponent = (props) => {
               NotifyOk({
                 msg: msg,
                 title: 'Changed',
-                callback: () => history.push('/ui/metricprofiles')
+                callback: () => navigate('/ui/metricprofiles')
               });
 
               if (warn_msg)
@@ -913,7 +919,7 @@ export const MetricProfilesComponent = (props) => {
               NotifyOk({
                 msg: msg,
                 title: 'Added',
-                callback: () => history.push('/ui/metricprofiles')
+                callback: () => navigate('/ui/metricprofiles')
               })
 
               if (warn_msg)
@@ -1003,7 +1009,7 @@ export const MetricProfilesComponent = (props) => {
 
 
 export const MetricProfilesList = (props) => {
-  const location = props.location;
+  const location = useLocation();
   const publicView = props.publicView
 
   const { data: userDetails, error: errorUserDetails, status: statusUserDetails } = useQuery(
@@ -1115,9 +1121,7 @@ const fetchMetricProfileVersions = async (name) => {
 
 
 export const MetricProfileVersionCompare = (props) => {
-  const version1 = props.match.params.id1;
-  const version2 = props.match.params.id2;
-  const name = props.match.params.name;
+  const { name, id1: version1, id2: version2 } = useParams();
 
   const { data: metricProfileVersions, error, status } = useQuery(
     ['metricprofile', 'versions', name], () => fetchMetricProfileVersions(name)
@@ -1168,8 +1172,7 @@ export const MetricProfileVersionCompare = (props) => {
 
 
 export const MetricProfileVersionDetails = (props) => {
-  const name = props.match.params.name;
-  const version = props.match.params.version;
+  const { name, version } = useParams();
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
     'userdetails', () => fetchUserDetails(true)
