@@ -1,8 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
-import { createMemoryHistory } from 'history';
-import { Route, Router } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { TenantChange, TenantList } from '../Tenants';
 import { Backend } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
@@ -65,14 +64,13 @@ const mockTenants = [
 
 function renderTenantList() {
   const route = '/ui/tenants';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route path='/ui/tenants' component={TenantList} />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <TenantList />
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -81,17 +79,18 @@ function renderTenantList() {
 
 function renderTenantChangeView() {
   const route = '/ui/tenants/TENANT1';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/tenants/:name'
-            render={ props => <TenantChange {...props} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path="/ui/tenants/:name"
+              element={ <TenantChange /> }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
