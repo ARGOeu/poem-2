@@ -84,7 +84,7 @@ export const CustomProfilesList = ({ pathname }) => {
 
 
 const HeaderPlaceholder = () => 
-  <span className={"ms-3 mt-1 mb-4 placeholder rounded"} style={{ height: "45px", width: "500px" }} />
+  <span className="ms-3 mt-1 mb-4 placeholder placeholder-glow rounded" style={{ height: "45px", width: "500px" }} />
 
 
 export const InputPlaceholder = ({ height="38px", width }) => 
@@ -111,7 +111,7 @@ export const ListViewPlaceholder = ({ resourcename, changeable=true }) =>
       <span className={"placeholder rounded"} style={{ height: "38.4px", width: "55px" }} />
     </div>
     <Form className="ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded">
-      <Table className={"placeholder rounded"} style={{ height: "800px" }} />
+      <Table className="placeholder rounded" style={{ height: "800px" }} />
     </Form>
     <Footer />
   </>
@@ -134,6 +134,7 @@ export const ChangeViewPlaceholder = ({ resourcename, infoview=false, addview=fa
       { children }
     </Form>
     <SubmitRowPlaceholder />
+    <Footer />
   </>
 
 
@@ -181,5 +182,16 @@ export const ProfileMainPlaceholder = ({ profiletype, description=undefined }) =
 export const VersionComparePlaceholder = () => 
   <>
     <HeaderPlaceholder />
-    <Table className={"placeholder rounded"} style={{ height: "800px" }} />
+    <Table className="placeholder rounded" style={{ height: "800px" }} />
+    <Footer />
+  </>
+
+
+export const HistoryPlaceholder = () => 
+  <>
+    <div className="d-flex align-items-center justify-content-between">
+      <h2 className="ms-3 mt-1 mb-4">Version history</h2>
+    </div>
+    <Table className="placeholder rounded" style={{ height: "400px" }} />
+    <Footer />
   </>
