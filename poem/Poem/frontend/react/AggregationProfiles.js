@@ -410,9 +410,16 @@ const Service = ({
 }
 
 
-const AggregationProfilesPlaceholder = () => 
+const AggregationProfilesPlaceholder = ( props ) => 
   <ChangeViewPlaceholder
     resourcename="aggregation profile"
+    buttons={
+      !props.addview && !props.publicView && !props.historyview && 
+        <div>
+          <Button color="secondary">JSON</Button>
+          <Button className="ms-2" color="secondary">History</Button>
+        </div>
+    }
   >
     <>
       <ProfileMainPlaceholder profiletype="aggregation" />
@@ -1298,7 +1305,7 @@ export const AggregationProfilesChange = (props) => {
 
   if (loadingUserDetails || loadingBackendAP || loadingWebApiAP || loadingMetricProfiles || loadingReports) {
     return (
-      <AggregationProfilesPlaceholder />
+      <AggregationProfilesPlaceholder { ...props } />
     )
   }
 
@@ -1418,7 +1425,12 @@ export const AggregationProfilesList = (props) => {
   ], [])
 
   if (loadingUserDetails || loadingAggregations)
-    return (<ListViewPlaceholder resourcename="aggregation profile" />)
+    return (
+      <ListViewPlaceholder 
+        resourcename="aggregation profile" 
+        publicview={ publicView }
+      />
+    )
 
   else if (errorAggregations)
     return (<ErrorComponent error={errorAggregations}/>);
@@ -1578,7 +1590,7 @@ export const AggregationProfileVersionDetails = () => {
 
   if (loading) {
     return (
-      <AggregationProfilesPlaceholder history={ true } />
+      <AggregationProfilesPlaceholder historyview={ true } />
     )
   }
 

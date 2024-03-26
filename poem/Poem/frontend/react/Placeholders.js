@@ -100,7 +100,7 @@ const SubmitRowPlaceholder = () =>
   <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5"></div>
 
 
-export const ListViewPlaceholder = ({ resourcename, changeable=true, title, buttons }) => 
+export const ListViewPlaceholder = ({ resourcename, changeable=true, publicview=false, title, buttons }) => 
   <>
     <div className="d-flex align-items-center justify-content-between">
       {
@@ -113,7 +113,7 @@ export const ListViewPlaceholder = ({ resourcename, changeable=true, title, butt
         buttons ? 
           buttons
         :
-          <Button color="secondary">Add</Button>
+          !publicview && <Button color="secondary">Add</Button>
       }
     </div>
     <Form className="ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded">
@@ -123,7 +123,7 @@ export const ListViewPlaceholder = ({ resourcename, changeable=true, title, butt
   </>
 
 
-export const ChangeViewPlaceholder = ({ resourcename, infoview=false, addview=false, children }) => 
+export const ChangeViewPlaceholder = ({ resourcename, infoview=false, addview=false, buttons, children }) => 
   <>
     <div className="d-flex align-items-center justify-content-between">
       {
@@ -134,6 +134,9 @@ export const ChangeViewPlaceholder = ({ resourcename, infoview=false, addview=fa
             <h2 className="ms-3 mt-1 mb-4">{`Add ${resourcename}`}</h2>
           :
             <h2 className="ms-3 mt-1 mb-4">{`Change ${resourcename}`}</h2>
+      }
+      {
+        buttons && buttons
       }
     </div>
     <Form className="ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded">
