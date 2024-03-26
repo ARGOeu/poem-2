@@ -8,6 +8,8 @@ import {
   Row, 
   Table 
 } from "reactstrap";
+import { Footer } from "./UIElements";
+
 
 export const CustomSpan = ({height, width, custStyle}) => (
   <span className={`placeholder rounded ${custStyle}`} style={{ height: height, width: width }} />
@@ -89,10 +91,6 @@ export const InputPlaceholder = ({ height="38px", width }) =>
   <span className="placeholder rounded" style={{ height: height, width: width }} />
 
 
-const ButtonPlaceholder = () => 
-  <span className={"placeholder rounded"} style={{ height: "45px", width: "100px" }} />
-
-
 const TextAreaPlaceholder = ({ width }) => 
   <span className="placeholder rounded" style={{ height: "152px", width: width }} />
 
@@ -101,29 +99,36 @@ const SubmitRowPlaceholder = () =>
   <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5"></div>
 
 
-export const ListViewPlaceholder = () => 
+export const ListViewPlaceholder = ({ resourcename, changeable=true }) => 
   <>
-    <div className={"d-flex flex-row placeholder-glow justify-content-between"}>
-      <HeaderPlaceholder />
+    <div className="d-flex align-items-center justify-content-between">
+      {
+        changeable ?
+          <h2 className="ms-3 mt-1 mb-4">{ `Select ${resourcename} to change`}</h2>
+        :
+          <h2 className='ms-3 mt-1 mb-4'>{`Select ${resourcename} for details`}</h2>
+      }
       <span className={"placeholder rounded"} style={{ height: "38.4px", width: "55px" }} />
     </div>
     <Form className="ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded">
       <Table className={"placeholder rounded"} style={{ height: "800px" }} />
     </Form>
+    <Footer />
   </>
 
 
-export const ChangeViewPlaceholder = ({ history=false, children }) => 
+export const ChangeViewPlaceholder = ({ resourcename, infoview=false, addview=false, children }) => 
   <>
-    <div className={"d-flex flex-row placeholder-glow justify-content-between"}>
-      <HeaderPlaceholder />
-      <div>
-        <ButtonPlaceholder />
-        {
-          history && <ButtonPlaceholder />
-        }
-
-      </div>
+    <div className="d-flex align-items-center justify-content-between">
+      {
+        infoview ? 
+          <h2 className="ms-3 mt-1 mb-4">{resourcename}</h2>
+        :
+          addview ?
+            <h2 className="ms-3 mt-1 mb-4">{`Add ${resourcename}`}</h2>
+          :
+            <h2 className="ms-3 mt-1 mb-4">{`Change ${resourcename}`}</h2>
+      }
     </div>
     <Form className="ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded">
       { children }

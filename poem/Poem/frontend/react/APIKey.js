@@ -4,7 +4,6 @@ import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import {
-  LoadingAnim,
   BaseArgoView,
   NotifyOk,
   NotifyError,
@@ -34,7 +33,11 @@ import { Controller, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from "yup";
 import { ErrorMessage } from "@hookform/error-message"
-import { CustomButton, CustomHeadline, CustomInput, CustomProfilesList, CustomSpan, CustomSubtitle } from './Placeholders';
+import { 
+  ChangeViewPlaceholder,
+  InputPlaceholder, 
+  ListViewPlaceholder 
+} from './Placeholders';
 
 const validationSchema = yup.object().shape({
   name: yup.string().required("Name field is required")
@@ -129,7 +132,7 @@ export const APIKeyList = () => {
   );
 
   if (loading)
-    return (<CustomProfilesList />)
+    return (<ListViewPlaceholder resourcename="API key" />)
 
   else if (error)
     return (<ErrorComponent error={ error } />)
@@ -383,6 +386,74 @@ const APIKeyForm = ({
 }
 
 
+const APIKeyPlaceholderForm = ( props ) => {
+  const addview = props.addview
+  const isTenantSchema = props.isTenantSchema
+
+  return (
+    <ChangeViewPlaceholder
+      resourcename="API key"
+    >
+      <FormGroup>
+        <Row>
+          <Col md={6}>
+            <Label for='name'>Name</Label>
+            <InputPlaceholder width="100%" />
+            <FormText color='muted'>
+              A free-form unique identifier of the client. 50 characters max.
+            </FormText>
+          </Col>
+        </Row>
+        {
+          (addview && !isTenantSchema) &&
+            <Row className='mt-2'>
+              <Col md={6}>
+                <Row>
+                  <InputPlaceholder width="30%" />
+                </Row>
+                <Row>
+                  <FormText color="muted">
+                    Mark this checkbox if the key being saved is going to be used for web API authentication.
+                  </FormText>
+                </Row>
+              </Col>
+            </Row>
+        }
+        <Row className='mt-2'>
+          <Col md={6}>
+            <Row>
+              <InputPlaceholder width="30%" />
+            </Row>
+            <Row>
+              <FormText color='muted'>
+                If the API key is revoked, clients cannot use it any more. (This cannot be undone.)
+              </FormText>
+            </Row>
+          </Col>
+        </Row>
+      </FormGroup>
+      <FormGroup>
+        <ParagraphTitle title='Credentials'/>
+        {
+          addview &&
+            <Alert color="info" className="text-center">
+              If token field is <b>left empty</b>, value will be automatically generated on save.
+            </Alert>
+        }
+        <Row className="g-0">
+          <Col sm={6}>
+            <InputPlaceholder width="100%" />
+            <FormText color='muted'>
+              A public, unique identifier for this API key.
+            </FormText>
+          </Col>
+        </Row>
+      </FormGroup>
+    </ChangeViewPlaceholder>
+  )
+}
+
+
 export const APIKeyChange = (props) => {
   const { name } = useParams();
   const addview = props.addview;
@@ -462,30 +533,8 @@ export const APIKeyChange = (props) => {
 
   if (status === 'loading')
     return (
-      <>
-        <CustomHeadline width="229px" height="38.4px"  />
-        <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
-          <CustomSpan custStyle="mt-1 mb-1" height="24px" width="42px" />
-          <CustomInput height="37.6px" width="50%" />
-          <CustomSpan custStyle="mt-1 mb-1" height="15x" width="355px" />
-          <div className='d-flex flex-row mt-3'>
-            <CustomSpan custStyle="mt-1 mb-1 me-2" height="24px" width="24px" /> 
-            <CustomSpan custStyle='mt-1 mb-1' height="24px" width="62px" />
-          </div>
-          <CustomSpan custStyle='mt-1 mb-1' height="15px" width="490px" />
-          <CustomSubtitle height="36.8px" custStyle="mt-2" />
-          <div className='d-flex flex-row'>
-            <CustomInput height="37.6px" width="501px" />
-            <CustomButton height="37.6px" width="41px" />
-          </div>
-          <CustomSpan custStyle='mt-1 mb-1' height="14.5px" width="243px" />
-          <div className='ms-1 mt-5 p-3 border placeholder-glow rounded d-flex justify-content-between'>
-            <CustomButton height="37.6px" width="74px" />
-            <CustomButton height="37.6px" width="59px" />
-          </div>
-        </Form>
-      </>
-    );
+      <APIKeyPlaceholderForm { ...props } />
+    )
 
   else if (status === 'error')
     return (<ErrorComponent error={error}/>);

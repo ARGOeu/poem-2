@@ -151,8 +151,6 @@ describe("Tests for API keys listview", () => {
   it('Render properly', async () => {
     renderListView()
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
       expect(screen.getByRole('heading', {name: /api/i}).textContent).toBe('Select API key to change')
     })
@@ -187,8 +185,6 @@ describe("Tests for API keys listview", () => {
     })
 
     renderListView()
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', {name: /api/i}).textContent).toBe('Select API key to change')
@@ -252,8 +248,6 @@ describe('Tests for tenant API key change', () => {
   it('Test that page renders properly', async () => {
     renderChangeView(true)
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
       expect(screen.getByRole('heading', {name: /api/i}).textContent).toBe('Change API key')
     });
@@ -273,8 +267,6 @@ describe('Tests for tenant API key change', () => {
 
   it('Test that page renders properly if webapi key', async () => {
     renderChangeView(true, true)
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', {name: /api/i}).textContent).toBe('Change API key')
@@ -312,8 +304,6 @@ describe('Tests for tenant API key change', () => {
 
     renderChangeView(true)
 
-    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
-
     await waitFor(() => {
       expect(screen.getByRole("heading", {name: /api/i}).textContent).toBe("Change API key")
     });
@@ -350,8 +340,6 @@ describe('Tests for tenant API key change', () => {
     })
 
     renderChangeView(true)
-
-    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
 
     await waitFor(() => {
       expect(screen.getByRole("heading", {name: /api/i}).textContent).toBe("Change API key")
@@ -542,8 +530,6 @@ describe('Tests for super POEM API key change', () => {
   it('Test that page renders properly', async () => {
     renderChangeView()
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
       expect(screen.getByRole('heading', {name: /api/i}).textContent).toBe('Change API key')
     });
@@ -563,8 +549,6 @@ describe('Tests for super POEM API key change', () => {
 
   it('Test that page renders properly if webapi key', async () => {
     renderChangeView(false, true)
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', {name: /api/i}).textContent).toBe('Change API key')
@@ -602,8 +586,6 @@ describe('Tests for super POEM API key change', () => {
 
     renderChangeView()
 
-    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
-
     await waitFor(() => {
       expect(screen.getByRole("heading", {name: /api/i}).textContent).toBe("Change API key")
     });
@@ -640,8 +622,6 @@ describe('Tests for super POEM API key change', () => {
     })
 
     renderChangeView(false, true)
-
-    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
 
     await waitFor(() => {
       expect(screen.getByRole("heading", {name: /api/i}).textContent).toBe("Change API key")
