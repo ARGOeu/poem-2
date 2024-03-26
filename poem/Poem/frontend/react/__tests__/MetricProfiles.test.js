@@ -732,8 +732,6 @@ describe('Tests for metric profiles listview', () => {
   test('Test that page renders properly', async () => {
     renderListView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Select metric profile to change');
     })
@@ -757,8 +755,6 @@ describe('Tests for metric profiles listview', () => {
 
   test('Test that public page renders properly', async () => {
     renderListView(true);
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Select metric profile for details');
@@ -814,8 +810,6 @@ describe('Tests for metric profiles changeview', () => {
 
   test('Test that page renders properly', async () => {
     renderChangeView();
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change metric profile');
@@ -873,8 +867,6 @@ describe('Tests for metric profiles changeview', () => {
 
   test('Test that page renders properly for combined tenant', async () => {
     renderChangeView(false, true)
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change metric profile');
@@ -965,8 +957,6 @@ describe('Tests for metric profiles changeview', () => {
   test('Test that public page renders properly', async () => {
     renderChangeView(true);
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Metric profile details');
     })
@@ -1015,8 +1005,6 @@ describe('Tests for metric profiles changeview', () => {
 
   test('Test that public page renders properly for combined tenant', async () => {
     renderChangeView(true, true);
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Metric profile details');
@@ -4739,8 +4727,6 @@ describe('Tests for metric profile cloneview', () => {
   test('Test that page renders properly', async () => {
     renderCloneView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Clone metric profile');
     })
@@ -4799,8 +4785,6 @@ describe('Tests for metric profile cloneview', () => {
 
   test('Test that page renders properly for combined tenant', async () => {
     renderCloneView(true)
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Clone metric profile');
@@ -6336,8 +6320,6 @@ describe('Test for metric profile version detail page', () => {
 
   test('Test that page renders properly', async () => {
     renderVersionDetailsView();
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /test/i }).textContent).toBe('TEST_PROFILE (2020-12-14 08:53:23)')

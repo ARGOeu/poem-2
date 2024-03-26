@@ -191,7 +191,7 @@ export const ProfileMainPlaceholder = ({ profiletype, description=undefined }) =
 export const VersionComparePlaceholder = () => 
   <>
     <HeaderPlaceholder />
-    <Table className="placeholder rounded" style={{ height: "800px" }} />
+    <Table className="placeholder rounded" style={{ height: "600px" }} />
     <Footer />
   </>
 
