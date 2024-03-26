@@ -410,9 +410,9 @@ const Service = ({
 }
 
 
-const AggregationProfilesPlaceholder = ({ history }) => 
+const AggregationProfilesPlaceholder = () => 
   <ChangeViewPlaceholder
-    history={ history }
+    resourcename="aggregation profile"
   >
     <>
       <ProfileMainPlaceholder profiletype="aggregation" />
@@ -1418,7 +1418,7 @@ export const AggregationProfilesList = (props) => {
   ], [])
 
   if (loadingUserDetails || loadingAggregations)
-    return (<ListViewPlaceholder />)
+    return (<ListViewPlaceholder resourcename="aggregation profile" />)
 
   else if (errorAggregations)
     return (<ErrorComponent error={errorAggregations}/>);
