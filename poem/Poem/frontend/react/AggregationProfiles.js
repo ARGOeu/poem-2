@@ -1298,7 +1298,7 @@ export const AggregationProfilesChange = (props) => {
 
   if (loadingUserDetails || loadingBackendAP || loadingWebApiAP || loadingMetricProfiles || loadingReports) {
     return (
-      <AggregationProfilesPlaceholder history={ publicView }/>
+      <AggregationProfilesPlaceholder />
     )
   }
 
