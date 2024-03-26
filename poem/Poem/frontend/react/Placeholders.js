@@ -99,12 +99,12 @@ const SubmitRowPlaceholder = () =>
   <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5"></div>
 
 
-export const ListViewPlaceholder = ({ resourcename, changeable=true }) => 
+export const ListViewPlaceholder = ({ resourcename, changeable=true, title }) => 
   <>
     <div className="d-flex align-items-center justify-content-between">
       {
         changeable ?
-          <h2 className="ms-3 mt-1 mb-4">{ `Select ${resourcename} to change`}</h2>
+          <h2 className="ms-3 mt-1 mb-4">{ title ? title : `Select ${resourcename} to change`}</h2>
         :
           <h2 className='ms-3 mt-1 mb-4'>{`Select ${resourcename} for details`}</h2>
       }

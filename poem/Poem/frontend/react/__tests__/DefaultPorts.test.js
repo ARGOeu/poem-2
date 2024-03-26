@@ -93,8 +93,6 @@ describe("Test default ports list", () => {
   test("Test that page renders properly", async () => {
     renderView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
     })
@@ -355,8 +353,6 @@ describe("Test default ports list", () => {
     })
 
     renderView();
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
