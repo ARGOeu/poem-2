@@ -331,7 +331,14 @@ export const DefaultPortsList = () => {
   )
 
   if (status === 'loading')
-    return (<ListViewPlaceholder title="Default ports" />)
+    return (
+      <ListViewPlaceholder 
+        title="Default ports" 
+        buttons={
+          <Button color="success" disabled>Save</Button>
+        }
+      />
+    )
 
   else if (status === 'error')
     return (<ErrorComponent error={error}/>);

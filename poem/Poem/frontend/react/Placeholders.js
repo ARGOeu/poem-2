@@ -100,7 +100,7 @@ const SubmitRowPlaceholder = () =>
   <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5"></div>
 
 
-export const ListViewPlaceholder = ({ resourcename, changeable=true, title }) => 
+export const ListViewPlaceholder = ({ resourcename, changeable=true, title, buttons }) => 
   <>
     <div className="d-flex align-items-center justify-content-between">
       {
@@ -109,7 +109,12 @@ export const ListViewPlaceholder = ({ resourcename, changeable=true, title }) =>
         :
           <h2 className='ms-3 mt-1 mb-4'>{`Select ${resourcename} for details`}</h2>
       }
-      <Button color="secondary">Add</Button>
+      {
+        buttons ? 
+          buttons
+        :
+          <Button color="secondary">Add</Button>
+      }
     </div>
     <Form className="ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded">
       <Table className="placeholder rounded" style={{ height: "600px" }} />
