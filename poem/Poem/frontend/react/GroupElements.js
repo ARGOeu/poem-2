@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Backend } from './DataManager';
 import {
-  LoadingAnim,
   BaseArgoView,
   NotifyOk,
   NotifyError,
@@ -21,7 +20,8 @@ import {
   InputGroupText,
   Input,
   Form,
-  FormFeedback
+  FormFeedback,
+  Table
 } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
@@ -32,7 +32,11 @@ import { Controller, useForm, useWatch } from 'react-hook-form';
 import { ErrorMessage } from '@hookform/error-message';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from "yup";
-import { CustomButton, CustomHeadline, CustomInput, CustomProfilesList, CustomSubtitle, CustomTable } from './Placeholders';
+import { 
+  ChangeViewPlaceholder,
+  InputPlaceholder,
+  ListViewPlaceholder 
+} from './Placeholders';
 
 
 const validationSchema = Yup.object().shape({
@@ -71,7 +75,7 @@ export const GroupList = (props) => {
   );
 
   if (status === 'loading')
-    return (<CustomProfilesList />);
+    return (<ListViewPlaceholder resourcename={ name } />);
 
   else if (status === 'error')
     return (<ErrorComponent error={error}/>);
@@ -431,40 +435,35 @@ export const GroupChange = (props) => {
 
   if (loadingItems || loadingFreeItems)
     return (
-      <>
-        <CustomHeadline width="365px" height="38.4px"  />
-        <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
-          <CustomInput height="37.6px" width="50%" custStyle="mt-2" />
-          <CustomSubtitle height="36.8px" custStyle="mt-2" />
-          <Row className='d-flex flex-row align-items-center mb-2'>
-            <Col md={8} className='d-flex flex-column'>
-              <CustomInput height="38px" />
-            </Col>
-            <Col md={2} className='d-flex flex-column'>
-              <CustomButton height="38px" />
+      <ChangeViewPlaceholder
+        resourcename={ `group of ${title}` }
+        addview={ addview }
+      >
+        <FormGroup>
+          <Row>
+            <Col md={6}>
+              <InputPlaceholder width="100%" />
             </Col>
           </Row>
-          {
-            /\/add$/.test(window.location.pathname)
-            ? 
-            <>
-              <CustomTable height="80px" width="85%" />
-              <div className='ms-2 mb-2 mt-4 p-3 border placeholder-glow rounded d-flex justify-content-end'>
-                <CustomButton height="37.6px" width="80px" />
-              </div>
-            </>
-            :
-            <>
-              <CustomTable height="434px" width="85%" />     
-              <div className='ms-2 mb-2 mt-4 p-3 border placeholder-glow rounded d-flex justify-content-between'>
-                <CustomButton height="37.6px" width="100px" />
-                <CustomButton height="37.6px" width="100px" />
-              </div>
-            </>
-          }
-        </Form>
-      </>
-    );
+        </FormGroup>
+        <FormGroup>
+          <ParagraphTitle title={title}/>
+          <Row className='mb-2'>
+            <Col md={8} data-testid='available_metrics' >
+              <InputPlaceholder width="100%" />
+            </Col>
+            <Col md={2}>
+              <Button
+                color="success"
+              >
+                { `Add new ${ title } to group` }
+              </Button>
+            </Col>
+          </Row>
+          <Table className="placeholder rounded" style={{ height: "400px" }} />
+        </FormGroup>
+      </ChangeViewPlaceholder>
+    )
 
   else if (errorItems)
     return (<ErrorComponent error={errorItems} />);
