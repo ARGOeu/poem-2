@@ -1,13 +1,13 @@
 import React from 'react';
 import { Card, CardBody, CardTitle, CardSubtitle, CardGroup } from 'reactstrap';
 import { CustomCardHeader } from './Administration';
-import { Icon, LoadingAnim, ErrorComponent, ParagraphTitle } from './UIElements';
+import { Icon, ErrorComponent, ParagraphTitle } from './UIElements';
 import { Link } from 'react-router-dom';
 import { Backend } from './DataManager';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faIdBadge } from '@fortawesome/free-solid-svg-icons';
 import { useQuery } from 'react-query';
-import { CustomHeadline, CustomInput, CustomSubtitle, CustomTable } from './Placeholders';
+
 
 const Home = () =>
 (
@@ -40,13 +40,40 @@ export const PublicHome = (props) => {
   if (isSuperAdmin) {
     if (loading)
       return (
-        <div className='d-flex flex-column placeholder-glow'>
-          <CustomHeadline height="38.4px" width="180px" custStyle="mb-3" />
-          <CustomTable height="142px" custStyle="mb-1" />
-          <CustomSubtitle height="36.8px" custStyle="mb-2" />
-          <CustomTable height="473px" width="33%" />
+        <div className="placeholder-glow">
+          <h2 className='ms-3 mt-1 mb-4'>Public pages</h2>
+          <Card className='mb-2'>
+            <CustomCardHeader title='Shared resources'/>
+            <CardBody>
+              <div className='p-1 align-items-center'>
+                <Icon i='probes'/> <Link to={'/ui/public_probes'}>Probes</Link>
+              </div>
+              <div className='p-1 align-items-center'>
+                <Icon i='metrictemplates'/> <Link to={'/ui/public_metrictemplates'}>Metric templates</Link>
+              </div>
+            </CardBody>
+          </Card>
+          <ParagraphTitle title='Tenants'/>
+          <CardGroup style={{ width: "66.6666%" }}>
+            <Card className="me-3">
+              <CardSubtitle className='mb-4 mt-3 text-center'>
+                <FontAwesomeIcon icon={faIdBadge} size='5x'/>
+              </CardSubtitle>
+              <CardBody>
+                <span className="placeholder rounded" style={{ height: "152px", width: "100%" }} />
+              </CardBody>
+            </Card>
+            <Card>
+              <CardSubtitle className='mb-4 mt-3 text-center'>
+                <FontAwesomeIcon icon={faIdBadge} size='5x'/>
+              </CardSubtitle>
+              <CardBody>
+                <span className="placeholder rounded" style={{ height: "152px", width: "100%" }} />
+              </CardBody>
+            </Card>
+          </CardGroup>
         </div>
-      );
+      )
 
     else if (error)
       return (<ErrorComponent error={error}/>);
