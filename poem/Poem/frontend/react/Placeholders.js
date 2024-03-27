@@ -118,7 +118,7 @@ export const ListViewPlaceholder = ({ resourcename, changeable=true, publicview=
   </>
 
 
-export const ChangeViewPlaceholder = ({ resourcename, infoview=false, addview=false, publicview=false, buttons, children }) => 
+export const ChangeViewPlaceholder = ({ resourcename, infoview=false, addview=false, cloneview=false, buttons, children }) => 
   <>
     <div className="d-flex align-items-center justify-content-between">
       {
@@ -128,7 +128,10 @@ export const ChangeViewPlaceholder = ({ resourcename, infoview=false, addview=fa
           addview ?
             <h2 className="ms-3 mt-1 mb-4">{`Add ${resourcename}`}</h2>
           :
-            <h2 className="ms-3 mt-1 mb-4">{`Change ${resourcename}`}</h2>
+            cloneview ?
+              <h2 className="ms-3 mt-1 mb-4">{`Clone ${resourcename}`}</h2>
+            :
+              <h2 className="ms-3 mt-1 mb-4">{`Change ${resourcename}`}</h2>
       }
       {
         buttons && buttons
@@ -264,14 +267,34 @@ export const MetricFormPlaceholder = ( props ) => {
     const addview = props.addview
     const historyview = props.historyview
     const title = props.title
+    const tenantview = props.tenantview
+    const cloneview = props.cloneview
+    
+    const resourcename = obj_label == "metric" ? 
+      publicview ? "Metric details" : historyview ? title : "metric"
+    :
+      (tenantview || publicview) ? "Metric template details" : historyview ? title : "metric template"
 
   return (
     <ChangeViewPlaceholder
-      resourcename={ publicview ? 'Metric details' : historyview ? title : "metric" }
-      infoview={ publicview || historyview }
+      resourcename={ resourcename }
+      infoview={ publicview || historyview || tenantview }
       addview={ addview }
+      cloneview={ cloneview }
       buttons={
-        (!publicview && !historyview) && <Button color="secondary">History</Button>
+        obj_label === "metric" ?
+          (!publicview && !historyview) && <Button color="secondary">History</Button>
+        :
+          (publicview || (!publicview && tenantview)) ?
+            <Button color="secondary">History</Button>
+          :
+            (historyview || addview || cloneview) ?
+              <></>
+            :
+              <div>
+                <Button color="secondary">Clone</Button>
+                <Button className="ms-2" color="secondary">History</Button>
+              </div>
       }
     >
       <FormGroup>

@@ -11,13 +11,9 @@ import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { fetchMetricTags, fetchMetricTemplates, fetchMetricTemplateTypes, fetchMetricTemplateVersion, fetchProbeVersion, fetchProbeVersions } from './QueryFunctions';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
-  CustomSubtitle, 
-  CustomHeadline, 
-  CustomInput, 
-  CustomButton, 
-  CustomSpan 
+  MetricFormPlaceholder
 } from './Placeholders';
-import { Form, Row, Col } from 'reactstrap';
+
 
 export const MetricTemplateComponent = (props) => {
   let { name, metrictemplatename } = useParams();
@@ -200,7 +196,7 @@ export const MetricTemplateComponent = (props) => {
   }
 
   if ((metricTemplateLoading) || typesLoading || tagsLoading || probeVersionsLoading || metricTemplatesLoading) 
-    return (<CustomMetricProfilesPlaceholders />)
+    return (<MetricFormPlaceholder obj_label="metrictemplate" { ...props } />)
 
   else if (metricTemplateError)
     return (<ErrorComponent error={metricTemplateError.message}/>);
@@ -274,7 +270,13 @@ export const MetricTemplateVersionDetails = (props) => {
   )
 
   if (loadingMts || loadingProbes) 
-    return (<CustomMetricProfilesPlaceholders/>)
+    return (
+      <MetricFormPlaceholder 
+        obj_label='metrictemplate'
+        title={ `${name} [${version}]`}
+        historyview={ true }
+      />
+    )
 
   else if (errorMts)
     return (<ErrorComponent error={errorMts}/>);
@@ -321,116 +323,3 @@ export const MetricTemplateVersionDetails = (props) => {
   } else
     return null;
 };
-
-const DoubleInputComponent = () => {
-  return (
-    <>
-      <CustomSpan custStyle="mt-4 mb-1" height="19.2px" width="200px" />
-      <Row className='d-flex flex-row align-items-center'>
-        <Col md={5} className='d-flex flex-column'>
-          <CustomSpan custStyle="mt-3 mb-1" height="24px" width="120px" />
-          <CustomInput height="37.6px" />
-        </Col>
-        <Col md={5} className='d-flex flex-column'>
-          <CustomSpan custStyle="mt-3 mb-1" height="24px" width="150px" />
-          <CustomInput height="37.6px" />
-        </Col>
-      </Row>
-    </>
-  )
-}
-
-const SingleInputComponent = () => {
-  return (
-    <>
-      <CustomSpan custStyle="mt-4 mb-1" height="19.2px" width="200px" />
-      <Row className='d-flex flex-row align-items-center'>
-        <Col md={5} className='d-flex flex-column'>
-          <CustomInput height="37.6px" />
-        </Col>
-      </Row>
-    </>
-  )
-}
-
-export const CustomMetricProfilesPlaceholders = () => (
-  <>
-    {
-      /\/(metrictemplates|public_metrictemplates)(?=.*\/history)/.test(window.location.pathname)
-      ?
-      <CustomHeadline width="722px" height="38.4px"/> 
-      :
-      <div className='placeholder-glow d-flex flex-row justify-content-between align-items-center'>
-        <CustomHeadline width="348px" height="38.4px"/>
-        <CustomButton width="78px" height="37.6px"/>
-      </div>
-    }
-    <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
-      <Row className='d-flex flex-row align-items-center'>
-        <Col md={6} className='d-flex flex-column'>
-          <CustomInput height="37.6px" />
-          <CustomSpan custStyle="mt-1 mb-3" height="10px" width="15%" />
-        </Col>
-        <Col md={4} className='d-flex flex-column'>
-          <CustomInput height="37.6px" />
-          <CustomSpan custStyle="mt-1 mb-3" height="10px" width="22%" />
-        </Col>
-      </Row>
-      <Row className='d-flex flex-row align-items-center'>
-        <Col md={6} className='d-flex flex-column'>
-          <CustomInput height="37.6px" />
-          <CustomSpan custStyle="mt-1 mb-3" height="10px" width="25%" />
-        </Col>
-        <Col md={4} className='d-flex flex-column'>
-          <CustomInput height="37.6px" />
-          <CustomSpan custStyle="mt-1 mb-3" height="10px" width="28%" />
-        </Col>
-      </Row>
-      <div className='d-flex flex-column mb-4'>
-        <CustomSpan custStyle="mt-1" height="24px" width="40px" />
-        <div className='rounded'>
-          <CustomSpan custStyle="me-1" height="20px" width="75px" />
-          <CustomSpan custStyle="me-1" height="20px" width="33px" />
-          <CustomSpan custStyle="me-1" height="20px" width="65px" />
-          <CustomSpan custStyle="me-1" height="20px" width="67px" />
-        </div>
-      </div>
-      <CustomSpan custStyle="mb-2" height="24px" width="87px" />
-      <CustomInput custStyle="mb-3" width="83%" height="61px" />
-
-      {/\/metrics/.test(window.location.pathname) && (
-        <>
-          <CustomInput custStyle="mb-1" width="25%" height="37.6px" />
-          <CustomSpan custStyle="mb-3" height="14.4px" width="209px" />
-        </>
-      )}
-
-      <CustomSubtitle height="37.6px" custStyle="mt-2" />
-      <SingleInputComponent />
-      <CustomSpan custStyle="mt-4 mb-1" height="19.2px" width="150px" />
-      <Row className='d-flex flex-row align-items-center'>
-        <Col md={5} className='d-flex flex-column'>
-          <CustomSpan custStyle="mt-1 mb-1" height="24px" width="120px" />
-          <CustomInput height="37.6px" />
-          <CustomInput height="37.6px" />
-          <CustomInput height="37.6px" />
-          <CustomInput height="37.6px" />
-          <CustomInput height="37.6px" />
-        </Col>
-        <Col md={5} className='d-flex flex-column'>
-        <CustomSpan custStyle="mt-1 mb-1" height="24px" width="150px" />
-          <CustomInput height="37.6px" />
-          <CustomInput height="37.6px" />
-          <CustomInput height="37.6px" />
-          <CustomInput height="37.6px" />
-          <CustomInput height="37.6px" />
-        </Col>
-      </Row>
-      <DoubleInputComponent />
-      <DoubleInputComponent />
-      <DoubleInputComponent />
-      <DoubleInputComponent />
-      <SingleInputComponent />
-    </Form>
-  </>
-);
