@@ -9,7 +9,6 @@ import {
   DefaultColumnFilter, 
   DropdownWithFormText, 
   ErrorComponent, 
-  LoadingAnim, 
   NotifyError, 
   NotifyOk, 
   NotifyWarn, 
@@ -57,7 +56,13 @@ const validationSchema = yup.object().shape({
   })
 })
 
-import { CustomProfilesList } from "./Placeholders";
+import { 
+  ChangeViewPlaceholder, 
+  InputPlaceholder, 
+  ListViewPlaceholder, 
+  TextAreaPlaceholder 
+} from "./Placeholders";
+
 
 const fetchCandidates = async () => {
   const backend = new Backend()
@@ -147,7 +152,12 @@ export const ProbeCandidateList = () => {
   ])
 
   if (loadingUserDetails || loadingProbeCandidates || loadingStatuses )
-    return (<CustomProfilesList pathname={window.location.pathname} />)
+    return (
+      <ListViewPlaceholder 
+        title="Select probe candidate to change"
+        infoview={ true }
+      />
+    )
 
   else if (errorUserDetails)
     return (<ErrorComponent error={ errorUserDetails } />)
@@ -729,7 +739,138 @@ export const ProbeCandidateChange = (props) => {
   }
 
   if (userDetailsLoading || candidateLoading || statusesLoading || serviceTypesLoading)
-    return (<LoadingAnim />)
+    return (
+      <ChangeViewPlaceholder
+        resourcename="probe candidate"
+      >
+        <FormGroup>
+          <Row className="mb-2">
+            <Col md={ 6 }>
+              <InputPlaceholder />
+              <FormText color="muted">
+                Probe name
+              </FormText>
+            </Col>
+            <Col md={ 2 } className="mt-1">
+              <InputPlaceholder />
+            </Col>
+          </Row>
+          <Row>
+            <Col md={ 8 }>
+              <Label>Description</Label>
+              <TextAreaPlaceholder />
+            </Col>
+            <FormText color="muted">
+              Free text description outlining the purpose of this probe.
+            </FormText>
+          </Row>
+        </FormGroup>
+        <ParagraphTitle title="Admin info" />
+        <FormGroup>
+          <Row className="mb-2">
+            <Col md={ 6 }>
+              <InputPlaceholder />
+              <FormText color="muted">
+                Suggested service type for testing
+              </FormText>
+            </Col>
+          </Row>
+          <Row className="mb-2">
+            <Col md={ 6 }>
+              <InputPlaceholder />
+              <FormText color="muted">
+                URL showing the results of probe testing
+              </FormText>
+            </Col>
+          </Row>
+          <Row className="mb-2">
+            <Col md={ 6 }>
+              <InputPlaceholder />
+              <FormText color="muted">
+                URL showing the results of deployed probe
+              </FormText>
+            </Col>
+          </Row>
+        </FormGroup>
+        <ParagraphTitle title="Creation info"/>
+        <FormGroup>
+          <Row className="pb-2">
+            <Col md={ 8 }>
+              <InputPlaceholder />
+              <FormText color="muted">
+                Date and time of creation
+              </FormText>
+            </Col>
+          </Row>
+          <Row>
+            <Col md={ 8 }>
+              <InputPlaceholder />
+              <FormText color="muted">
+                Date and time of last update
+              </FormText>
+            </Col>
+          </Row>
+        </FormGroup>
+        <ParagraphTitle title="Probe metadata" />
+        <FormGroup>
+          <Row className="pb-2">
+            <Col md={ 8 }>
+              <InputPlaceholder />
+              <FormText color="muted">
+                Probe documentation URL
+              </FormText>
+            </Col>
+          </Row>
+          <Row className="pb-2">
+            <Col md={ 8 }>
+              <InputPlaceholder />
+              <FormText color="muted">
+                Name of RPM containing the probe
+              </FormText>
+            </Col>
+          </Row>
+          <Row className="pb-2">
+            <Col md={ 8 }>
+              <InputPlaceholder />
+              <FormText color="muted">
+                Base URL of YUM repo containing the probe RPM
+              </FormText>
+            </Col>
+          </Row>
+          <Row>
+            <Col md={ 8 }>
+              <InputPlaceholder />
+              <FormText color="muted">
+                URL of script with probe code
+              </FormText>
+            </Col>
+          </Row>
+        </FormGroup>
+        <ParagraphTitle title="Metric info"/>
+        <FormGroup>
+          <Row>
+            <Col md={ 8 }>
+              <Label>Command</Label>
+              <InputPlaceholder />
+              <FormText color="muted">
+                Command to execute
+              </FormText>
+            </Col>
+          </Row>
+        </FormGroup>
+        <ParagraphTitle title="Contact info"/>
+        <FormGroup>
+          <Row>
+            <Col md={ 8 }>
+              <InputPlaceholder />
+              <FormText color="muted">
+                Contact email
+              </FormText>
+            </Col>
+          </Row>
+        </FormGroup>
+      </ChangeViewPlaceholder>
+    )
 
   else if (userDetailsError)
     return (<ErrorComponent error={ userDetailsError } />)

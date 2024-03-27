@@ -340,8 +340,6 @@ describe("Test list of probe candidates", () => {
   test("Test that page renders properly", async () => {
     renderListView()
 
-    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
-
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: /candidate/i }).textContent).toBe("Select probe candidate to change")
     })
@@ -454,8 +452,6 @@ describe("Test list of probe candidates if empty", () => {
   test("Test that page renders properly if empty response", async () => {
     renderListView()
 
-    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
-
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: /candidate/i }).textContent).toBe("Select probe candidate to change")
     })
@@ -519,8 +515,6 @@ describe("Test probe candidate changeview", () => {
 
   test("Test that page renders properly", async () => {
     renderChangeView()
-
-    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: /candidate/i }).textContent).toBe("Change probe candidate")
@@ -606,8 +600,6 @@ describe("Test probe candidate changeview", () => {
 
   test("Test that page renders properly if candidate rejected", async () => {
     renderChangeView5()
-
-    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: /candidate/i }).textContent).toBe("Change probe candidate")
@@ -696,8 +688,6 @@ describe("Test probe candidate changeview", () => {
   test("Test that page renders properly if candidate with devel URL", async () => {
     renderChangeView3()
 
-    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
-
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: /candidate/i }).textContent).toBe("Change probe candidate")
     })
@@ -784,8 +774,6 @@ describe("Test probe candidate changeview", () => {
   test("Test that page renders properly if candidate with production URL", async () => {
     renderChangeView4()
 
-    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
-
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: /candidate/i }).textContent).toBe("Change probe candidate")
     })
@@ -871,8 +859,6 @@ describe("Test probe candidate changeview", () => {
 
   test("Test that page renders properly if service types without titles", async () => {
     renderChangeView2()
-
-    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: /candidate/i }).textContent).toBe("Change probe candidate")
