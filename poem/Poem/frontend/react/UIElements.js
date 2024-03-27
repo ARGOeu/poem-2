@@ -983,7 +983,7 @@ export const BaseArgoView = ({resourcename='', location=undefined,
                   addnew ?
                     <h2 className="ms-3 mt-1 mb-4">{ title ? title : `Select ${resourcename} to change`}</h2>
                   :
-                    <h2 className='ms-3 mt-1 mb-4'>{`Select ${resourcename} for details`}</h2>
+                    <h2 className='ms-3 mt-1 mb-4'>{title ? title : `Select ${resourcename} for details`}</h2>
                 }
                 {
                   (addnew && addperm) &&

@@ -96,11 +96,11 @@ export const TextAreaPlaceholder = ({ height="152px", width="100%" }) =>
   <span className="placeholder rounded" style={{ height: height, width: width }} />
 
 
-export const ListViewPlaceholder = ({ resourcename, changeable=true, infoview=false, publicview=false, title, buttons }) => 
+export const ListViewPlaceholder = ({ resourcename, infoview=false, publicview=false, title, buttons }) => 
   <>
     <div className="d-flex align-items-center justify-content-between">
       {
-        changeable ?
+        !infoview ?
           <h2 className="ms-3 mt-1 mb-4">{ title ? title : `Select ${resourcename} to change`}</h2>
         :
           <h2 className='ms-3 mt-1 mb-4'>{`Select ${resourcename} for details`}</h2>

@@ -692,7 +692,7 @@ export const ListOfMetrics = (props) => {
     return (
       <ListViewPlaceholder
         resourcename={ type === "metrics" ? "metric" : "metric template" }
-        changeable={ !isTenantSchema && !publicView && type === "metrictemplates" }
+        infoview={ isTenantSchema && publicView && type === "metrics" }
         buttons={
           type === "metrics" ? 
             <></>
@@ -737,6 +737,7 @@ export const ListOfMetrics = (props) => {
           location={location}
           listview={true}
           addnew={false}
+          title={ !publicView ? "Select metric to change" : undefined }
         >
           <BaseArgoTable
             data={metrics}

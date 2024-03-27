@@ -94,7 +94,6 @@ export const MetricTagsList = (props) => {
     return (
       <ListViewPlaceholder 
         resourcename="metric tag" 
-        changeable={ true } 
       />
     )
 

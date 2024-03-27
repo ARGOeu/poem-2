@@ -64,7 +64,6 @@ export const OperationsProfilesList = (props) => {
     return (
       <ListViewPlaceholder 
         resourcename='operations profile'
-        changeable={ false }
         infoview={ true }
       />
     )
