@@ -2,7 +2,6 @@ import React, { useContext, useState } from 'react';
 import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import { Backend, WebApi } from './DataManager';
 import {
-  LoadingAnim,
   BaseArgoView,
   NotifyOk,
   DiffElement,
@@ -27,7 +26,8 @@ import {
   Label,
   Form,
   Input,
-  FormFeedback
+  FormFeedback,
+  Table
 } from 'reactstrap';
 import * as Yup from 'yup';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -43,7 +43,11 @@ import {
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext, useWatch } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { ErrorMessage } from '@hookform/error-message';
-import { CustomHeadline, CustomTable, CustomButton, CustomInput, CustomSubtitle, CustomProfilesList, CustomSpan } from './Placeholders';
+import { 
+  ListViewPlaceholder,
+  ChangeViewPlaceholder,
+  ProfileMainPlaceholder
+} from './Placeholders';
 
 const ThresholdsProfilesChangeContext = React.createContext()
 
@@ -1005,6 +1009,35 @@ const ThresholdsProfilesForm = ({
 }
 
 
+const ThresholdsProfilesFormPlaceholder = ( props ) => {
+  const addview = props.addview
+  const publicview = props.publicView
+  const historyview = props.historview
+  const title = props.title
+
+  return (
+    <ChangeViewPlaceholder
+      resourcename={ historyview ? title : publicview ? "Thresholds profile details" : "thresholds profile" }
+      infoview={ historyview || publicview }
+      addview={ addview }
+      buttons={
+        (!addview && !publicview && !historyview) && <Button color="secondary" disabled>History</Button>
+      }
+    >
+      <ProfileMainPlaceholder 
+        profiletype="thresholds"
+      />
+      <ParagraphTitle title='Thresholds rules'/>
+      <Row>
+        <Col md={12}>
+          <Table className="placeholder rounded" style={{ height: "600px" }} />
+        </Col>
+      </Row>
+    </ChangeViewPlaceholder>
+  )
+}
+
+
 const fetchTopologyEndpoints = async ( webapi ) => {
   return await webapi.fetchReportsTopologyEndpoints()
 }
@@ -1061,7 +1094,12 @@ export const ThresholdsProfilesList = (props) => {
   ], [publicView]);
 
   if (statusUserDetails === 'loading' || statusThresholdsProfiles === 'loading')
-    return (<CustomProfilesList/>);
+    return (
+      <ListViewPlaceholder 
+        resourcename="thresholds profile"
+        infoview={ publicView }
+      />
+    )
 
   else if (statusThresholdsProfiles === 'error')
     return (<ErrorComponent error={errorThresholdsProfiles}/>);
@@ -1325,46 +1363,7 @@ export const ThresholdsProfilesChange = (props) => {
   const loading = loadingBackendTP || loadingWebApiTP || loadingUserDetails || loadingAllMetrics || loadingMetricProfiles || loadingTopologyEndpoints || loadingReports
 
   if (loading) {
-    // one component has customized placeholder for two different paths 
-    if (window.location.pathname === "/ui/thresholdsprofiles/add") {
-      return (
-        <>
-          <CustomHeadline width="333px" height="38.4px"/>
-          <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
-            <CustomInput height="40px" width="50%"/>
-            <CustomSpan custStyle="mt-1" height="10px" width="15%" />
-            <CustomInput custStyle='mt-5' height="37.6px" width="25%" />
-            <CustomSpan custStyle="mt-1" height="10px" width="22%" />
-            <CustomSubtitle height="37.6px" custStyle="mt-3" />
-            <CustomButton height="37.6px" width="150px" />
-            <div className='mb-2 mt-5 p-3 border placeholder-glow rounded d-flex justify-content-end'>
-              <CustomButton width="158.33px" height="37.6px" />
-            </div>
-          </Form>
-        </>
-      );
-    } else
-    return (
-      <>
-        <div className='mt-4 d-flex justify-content-between placeholder-glow'>
-          <CustomHeadline width="450px" height="38.4px"/>
-          <CustomButton height="37.6px" width="120px" />
-        </div>
-        <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
-          <CustomInput height="45px" width="50%" />
-          <CustomSpan custStyle="mt-1 mb-3" height="10px" width="20%" />
-          <CustomInput height="40px" width="40%" />
-          <CustomSpan custStyle="mt-1 mb-2" height="10px" width="35%" />
-          <CustomSubtitle height="37.6px" />
-          <CustomTable height="440px" />
-          <CustomButton height="37.6px" width="150px" />
-        </Form>
-        <div className='ms-2 mb-2 mt-5 p-3 border placeholder-glow rounded d-flex justify-content-between'>
-          <CustomButton height="37.6px" width="100px" />
-          <CustomButton height="37.6px" width="100px" />
-        </div>
-      </>
-    )
+    return (<ThresholdsProfilesFormPlaceholder { ...props } />)
   }
 
   else if (errorBackendTP)
@@ -1499,10 +1498,8 @@ export const ThresholdsProfileVersionCompare = () => {
   if (status === 'loading') {
     return (
       <>
-        <CustomHeadline height="38.4px" width="383px" />
-        <div className='ms-3 mt-4 placeholder-glow rounded'>
-          <CustomTable height="230px" />
-        </div>
+        <h2 className='ms-3 mt-1 mb-4'>{`Compare ${name} versions`}</h2>
+        <Table className="placeholder rounded" style={{ height: "600px" }} />
       </>
     );
   }
@@ -1556,19 +1553,10 @@ export const ThresholdsProfileVersionDetail = (props) => {
 
   if (status === 'loading') {
     return (
-      <>
-        <div className='mt-4 d-flex justify-content-between placeholder-glow'>
-          <CustomHeadline width="450px" height="38.4px"/>
-        </div>
-        <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
-          <CustomInput height="45px" width="50%" />
-          <CustomSpan custStyle="mt-1 mb-3" height="10px" width="20%" />
-          <CustomInput height="40px" width="25%" />
-          <CustomSpan custStyle="mt-1 mb-3" height="10px" width="24%" />
-          <CustomSubtitle height="37.6px" />
-          <CustomTable height="300px" />
-        </Form>
-      </>
+      <ThresholdsProfilesFormPlaceholder
+        historview={ true }
+        title={ `${name} (${version})` }
+      />
     )
   }
 
