@@ -18,22 +18,23 @@ import {
   CustomReactSelect
  } from './UIElements';
 import {
+  Badge,
+  Button,
+  ButtonToolbar,
+  Col,
   Form,
   FormGroup,
-  Row,
-  Col,
-  Label,
+  FormFeedback,
   FormText,
-  Button,
+  Input,
+  InputGroup,
+  InputGroupText,
+  Label,
   Popover,
   PopoverBody,
   PopoverHeader,
-  InputGroup,
-  InputGroupText,
-  ButtonToolbar,
-  Badge,
-  Input,
-  FormFeedback
+  Row,
+  Table
 } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
@@ -58,11 +59,10 @@ import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { ErrorMessage } from '@hookform/error-message';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { 
-  CustomHeadline, 
-  CustomTable,
-  ListViewPlaceholder
+  ListViewPlaceholder,
+  MetricFormPlaceholder
 } from './Placeholders';
-import { CustomMetricProfilesPlaceholders } from './MetricTemplates';
+
 
 const metricValidationSchema = Yup.object().shape({
   name: Yup.string()
@@ -1449,7 +1449,7 @@ export const MetricForm =
         </Form>
       </BaseArgoView>
     )
-  }
+}
 
 
 export const CompareMetrics = (props) => {
@@ -1468,9 +1468,9 @@ export const CompareMetrics = (props) => {
   if (loading)
     return (
       <>
-        <CustomHeadline height="38.4px" width="383px" />
+        <h2 className='ms-3 mt-1 mb-4'>{`Compare ${name}`}</h2>
         <div className='ms-3 mt-4 placeholder-glow rounded'>
-          <CustomTable height="230px" />
+          <Table className="placeholder rounded" style={{ height: "250px" }} />
         </div>
       </>
     );
@@ -1654,7 +1654,7 @@ export const MetricChange = (props) => {
   }
 
   if (metricLoading || userDetailsLoading || probesLoading)
-    return (<CustomMetricProfilesPlaceholders/>);
+    return (<MetricFormPlaceholder obj_label="metric" { ...props } />)
 
   else if (metricError)
     return (<ErrorComponent error={metricError}/>);
@@ -1742,7 +1742,13 @@ export const MetricVersionDetails = (props) => {
   )
 
   if (loadingMetric || loadingProbes)
-    return (<CustomMetricProfilesPlaceholders />);
+    return (
+      <MetricFormPlaceholder 
+        obj_label="metric" 
+        historyview={ true } 
+        title={ `${name} (${version})` }
+      />
+    )
 
   else if (errorMetric)
     return (<ErrorComponent error={errorMetric}/>);
