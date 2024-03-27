@@ -96,7 +96,7 @@ export const TextAreaPlaceholder = ({ height="152px", width="100%" }) =>
   <span className="placeholder rounded" style={{ height: height, width: width }} />
 
 
-export const ListViewPlaceholder = ({ resourcename, changeable=true, publicview=false, title, buttons }) => 
+export const ListViewPlaceholder = ({ resourcename, changeable=true, infoview=false, publicview=false, title, buttons }) => 
   <>
     <div className="d-flex align-items-center justify-content-between">
       {
@@ -109,7 +109,7 @@ export const ListViewPlaceholder = ({ resourcename, changeable=true, publicview=
         buttons ? 
           buttons
         :
-          !publicview && <Button color="secondary">Add</Button>
+          (!publicview && !infoview) && <Button color="secondary">Add</Button>
       }
     </div>
     <Form className="ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded">
