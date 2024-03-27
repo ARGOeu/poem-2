@@ -319,8 +319,6 @@ describe('Test list of packages on SuperAdmin POEM', () => {
   test('Test that page renders properly', async () => {
     renderListView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /package/i }).textContent).toBe('Select package to change');
     })
@@ -408,8 +406,6 @@ describe('Test list of packages on tenant POEM', () => {
 
   test('Test that page renders properly', async () => {
     renderTenantListView();
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /package/i }).textContent).toBe('Select package for details');
@@ -508,8 +504,6 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
 
   test('Test that page renders properly', async () => {
     renderChangeView();
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /package/i }).textContent).toBe('Change package');
@@ -951,8 +945,6 @@ describe('Tests for package changeview on tenant POEM', () => {
     })
     renderTenantChangeView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /package/i }).textContent).toBe('Package details');
     })
@@ -1281,8 +1273,6 @@ describe('Tests for package addview', () => {
 
   test('Test that page renders properly', async () => {
     renderAddView();
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /package/i }).textContent).toBe('Add package');
@@ -1625,8 +1615,6 @@ describe('Tests for package cloneview', () => {
 
   test('Test that page renders properly', async () => {
     renderCloneView();
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /package/i }).textContent).toBe('Clone package');

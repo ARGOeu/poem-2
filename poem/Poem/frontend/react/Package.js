@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Backend } from './DataManager';
 import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import{
-  LoadingAnim,
   BaseArgoView,
   NotifyOk,
   NotifyError,
@@ -34,7 +33,11 @@ import { Controller, useForm, useWatch } from 'react-hook-form';
 import { ErrorMessage } from '@hookform/error-message';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from "yup";
-import { CustomButton, CustomHeadline, CustomInput, CustomProfilesList, CustomSpan, CustomSubtitle } from './Placeholders';
+import { 
+  ChangeViewPlaceholder,
+  InputPlaceholder, 
+  ListViewPlaceholder 
+} from './Placeholders';
 
 const validationSchema = Yup.object().shape({
   name: Yup.string()
@@ -108,7 +111,12 @@ export const PackageList = (props) => {
   ], [isTenantSchema, listRepos]);
 
   if (statusPackages === 'loading' || statusRepos === 'loading')
-    return (<CustomProfilesList pathname={window.location.pathname} />);
+    return (
+      <ListViewPlaceholder
+        resourcename="package"
+        infoview={ isTenantSchema }
+      />
+    )
 
   else if (statusPackages === 'error')
     return (<ErrorComponent error={errorPackages}/>);
@@ -158,7 +166,7 @@ function splitRepos(repos) {
 
 
 const PackageForm = ({
-  nameversion, addview, cloneview, disabled, location, history, pkg={}, probes=[], repos6=[], repos7=[], repos9=[], packageVersions=[]
+  nameversion, addview, cloneview, disabled, location, pkg={}, probes=[], repos6=[], repos7=[], repos9=[], packageVersions=[]
 }) => {
   const navigate = useNavigate()
   const backend = new Backend()
@@ -715,55 +723,70 @@ export const PackageComponent = (props) => {
 
   if (statusPkg === 'loading' || statusRepos === 'loading' || statusProbes === 'loading' || statusPackageVersions === 'loading')
     return (
-      <>
-        <CustomHeadline height="38.4px" width="231px" />
-        <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
-          <Row className='d-flex flex-row align-items-center'>
-            <Col md={6} className='d-flex flex-column'>
-              <CustomInput height="37.6px" custStyle="mb-1" />
-              <CustomSpan custStyle="mt-1 mb-2" height="14.4px" width="45%" />
+      <ChangeViewPlaceholder
+        resourcename={ disabled ? 'Package details' : 'package' }
+        infoview={ disabled }
+        addview={ addview }
+        cloneview={ cloneview }
+        buttons={
+          (!disabled && !addview) && <Button color="secondary">Clone</Button>
+        }
+      >
+        <FormGroup>
+          <Row className='align-items-center'>
+            <Col md={6}>
+              <InputPlaceholder />
+              <FormText color='muted'>
+                Package name.
+              </FormText>
             </Col>
-            <Col md={2} className='d-flex flex-column'>
-              <CustomInput height="37.6px" custStyle="mb-1" />
-              <CustomSpan custStyle="mt-1 mb-2" height="14.4px" width="45%" />
+            <Col md={2}>
+              <Row>
+                <Col md={12}>
+                  <InputPlaceholder />
+                  <FormText color='muted'>
+                    Package version.
+                  </FormText>
+                </Col>
+              </Row>
             </Col>
-            <Col md={2} className='d-flex flex-row ms-3 mb-3'>
-              <CustomSpan height="20px" width="20px" />
-              <CustomSpan custStyle="ms-2" height="38px" width="100%" />
-            </Col>
+            {
+              !disabled &&
+                <Col md={3}>
+                  <InputPlaceholder />
+                </Col>
+            }
           </Row>
-          <CustomSubtitle height="36.8px" />
+        </FormGroup>
+        <FormGroup>
+          <ParagraphTitle title='YUM repo'/>
           <Row>
-            <Col md={8} className='d-flex flex-column'>
-              <CustomInput height="37.6px" custStyle="mb-1" />
-              <CustomSpan custStyle="mb-4" height="14.4px" width="45%" />
-            </Col>
-            <Col md={8} className='d-flex flex-column'>
-              <CustomInput height="37.6px" custStyle="mb-1" />
-              <CustomSpan custStyle="mb-4" height="14.4px" width="45%" />
+            <Col md={8}>
+              <InputPlaceholder />
+              <FormText color='muted'>
+                Package is part of selected CentOS 6 repo.
+              </FormText>
             </Col>
           </Row>
-          {!/\/(add|clone)/.test(window.location.pathname) && 
-            (
-              <>
-                <CustomSpan custStyle="mb-1" height="24.4px" width="10%" />
-                <CustomSpan custStyle="mb-2" height="24.4px" width="15%" />
-              </>
-            )
-          }
-          {/\/(add|clone)/.test(window.location.pathname) ?
-            <div className='mb-2 mt-4 p-3 border placeholder-glow rounded d-flex justify-content-end'>
-              <CustomButton height="37.6px" width="60px" />
-            </div>
-          :
-            <div className='mb-2 mt-4 p-3 border placeholder-glow rounded d-flex justify-content-between'>
-              <CustomButton height="37.6px" width="60px" />
-              <CustomButton height="37.6px" width="70px" />
-            </div>
-          }
-        </Form>
-      </>
-    );
+          <Row className='mt-4'>
+            <Col md={8}>
+              <InputPlaceholder />
+              <FormText color='muted'>
+                Package is part of selected CentOS 7 repo.
+              </FormText>
+            </Col>
+          </Row>
+          <Row className='mt-4'>
+            <Col md={8}>
+              <InputPlaceholder />
+              <FormText color='muted'>
+                Package is part of selected CentOS 7 repo.
+              </FormText>
+            </Col>
+          </Row>
+        </FormGroup>
+      </ChangeViewPlaceholder>
+    )
 
   else if (statusPkg === 'error')
     return (<ErrorComponent error={errorPkg}/>);
