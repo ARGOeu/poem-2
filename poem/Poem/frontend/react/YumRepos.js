@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Backend } from './DataManager';
 import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import {
-  LoadingAnim,
   BaseArgoView,
   NotifyOk,
   NotifyError,
@@ -31,7 +30,12 @@ import { fetchYumRepos, fetchOStags } from './QueryFunctions';
 import { Controller, useForm } from 'react-hook-form';
 import { ErrorMessage } from '@hookform/error-message';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { CustomDescriptionArea, CustomHeadline, CustomInput, CustomProfilesList, CustomSpan, CustomSubtitle, CustomTable } from './Placeholders';
+import { 
+  ChangeViewPlaceholder,
+  InputPlaceholder,
+  ListViewPlaceholder,
+  TextAreaPlaceholder
+} from './Placeholders';
 
 const RepoSchema = Yup.object().shape({
   name: Yup.string()
@@ -88,7 +92,12 @@ export const YumRepoList = (props) => {
   ], [isTenantSchema, tags]);
 
   if (statusRepos === 'loading' || statusTags === 'loading')
-    return (<CustomProfilesList pathname={window.location.pathname} />);
+    return (
+      <ListViewPlaceholder 
+        resourcename="YUM repo"
+        infoview={ isTenantSchema }
+      />
+      )
 
   else if (statusRepos === 'error')
     return (<ErrorComponent error={errorRepos}/>);
@@ -458,35 +467,52 @@ export const YumRepoComponent = (props) => {
 
   if (statusRepo === 'loading' || statusTags === 'loading')
     return (
-      <>
-        <CustomHeadline width="255px" height="38.4px"/>
-        <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
+      <ChangeViewPlaceholder
+        resourcename={ `${ disabled ? 'YUM repo details' : 'YUM repo' }` }
+        addview={ addview }
+        cloneview={ cloneview }
+        infoview={ disabled }
+        buttons={ !addview && !cloneview && !disabled && <Button color="secondary" disabled>Clone</Button> }
+      >
+        <FormGroup>
           <Row>
-            <Col md={6} className='d-flex flex-column'>
-              <CustomInput height="37.6px" custStyle="mb-1" />
-              <CustomSpan custStyle="mt-1 mb-2" height="14.4px" width="45%" />
+            <Col md={6}>
+              <InputPlaceholder />
+              <FormText color='muted'>
+                Name of YUM repo file.
+              </FormText>
             </Col>
-            <Col md={2} className='d-flex flex-column'>
-              <CustomInput height="37.6px" custStyle="mb-1" />
-              <CustomSpan custStyle="mt-1 mb-2" height="14.4px" width="45%" />
+            <Col md={2}>
+              <InputPlaceholder />
+              <FormText color='muted'>
+                OS tag.
+              </FormText>
             </Col>
           </Row>
+        </FormGroup>
+        <FormGroup>
           <Row>
-            <Col md={8} className='d-flex flex-column'>
-              <CustomSpan custStyle="mt-1 mb-2" height="24.4px" width="15%" />
-              <CustomInput custStyle="mb-1" height="493px" />
-              <CustomSpan custStyle="mb-3" height="14.4px" width="20%" />
+            <Col md={8}>
+              <Label>File content</Label>
+              <TextAreaPlaceholder />
+              <FormText color='muted'>
+                Content of the repo file.
+              </FormText>
             </Col>
           </Row>
+        </FormGroup>
+        <FormGroup>
           <Row>
-            <Col md={8} className='d-flex flex-column'>
-              <CustomSpan custStyle="mt-1 mb-2" height="24.4px" width="15%" />
-              <CustomInput custStyle="mb-1" height="133px" />
-              <CustomSpan custStyle="mb-3" height="14.4px" width="20%" />
+            <Col md={8}>
+              <Label>Description</Label>
+              <TextAreaPlaceholder />
+              <FormText color='muted'>
+                Short free text description.
+              </FormText>
             </Col>
           </Row>
-        </Form>
-      </>
+        </FormGroup>
+      </ChangeViewPlaceholder>
     )
 
   else if (statusRepo === 'error')

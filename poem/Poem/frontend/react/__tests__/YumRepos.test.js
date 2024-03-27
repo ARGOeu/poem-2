@@ -188,8 +188,6 @@ describe('Test list of YUM repos on SuperAdmin POEM', () => {
   test('Test that page renders properly', async () => {
     renderListView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /repo/i }).textContent).toBe('Select YUM repo to change')
     })
@@ -262,8 +260,6 @@ describe('Test list of YUM repos on tenant POEM', () => {
 
   test('Test that page renders properly', async () => {
     renderListView(true);
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /repo/i }).textContent).toBe('Select YUM repo for details')
@@ -342,8 +338,6 @@ describe('Tests for YUM repos changeview on SuperAdmin POEM', () => {
 
   test('Test that page renders properly', async () => {
     renderChangeView();
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /yum/i }).textContent).toBe('Change YUM repo')
@@ -632,8 +626,6 @@ describe('Tests for YUM repos changeview on tenant POEM', () => {
   test('Test that page renders properly', async () => {
     renderChangeView(true);
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /yum/i }).textContent).toBe('YUM repo details')
     })
@@ -675,8 +667,6 @@ describe('Tests for YUM repo addview', () => {
 
   test('Test that page renders properly', async () => {
     renderAddView();
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /yum/i }).textContent).toBe('Add YUM repo')
@@ -860,8 +850,6 @@ describe('Tests for YUM repo cloneview', () => {
 
   test('Test that page renders properly', async () => {
     renderCloneView();
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /yum/i }).textContent).toBe('Clone YUM repo')
