@@ -119,7 +119,6 @@ export const ListViewPlaceholder = ({ resourcename, changeable=true, publicview=
     <Form className="ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded">
       <Table className="placeholder rounded" style={{ height: "600px" }} />
     </Form>
-    <Footer />
   </>
 
 

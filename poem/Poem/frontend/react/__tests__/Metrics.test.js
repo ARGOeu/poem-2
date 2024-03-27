@@ -492,8 +492,6 @@ describe('Tests for metrics listview', () => {
   test('Test that metrics listview renders properly', async () => {
     renderListView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
       expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric for details')
     })
@@ -718,8 +716,6 @@ describe('Tests for metric change', () => {
 
   test('Test that page renders properly', async () => {
     renderChangeView();
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric');
@@ -989,8 +985,6 @@ describe('Tests for metric change', () => {
   test('Test that passive metric changeview renders properly', async () => {
     renderChangeView({ route: '/ui/metrics/org.apel.APEL-Pub' });
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric');
     })
@@ -1079,8 +1073,6 @@ describe('Tests for metric change', () => {
 
   test('Test that passive metric public changeview renders properly', async () => {
     renderChangeView({ publicView: true, route: '/ui/public_metrics/org.apel.APEL-Pub' });
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /detail/i }).textContent).toBe('Metric details');
@@ -1577,8 +1569,6 @@ describe('Tests for metric history', () => {
   test('Test that version details page renders properly', async () => {
     renderVersionDetailsView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /argo/i }).textContent).toBe('argo.AMS-Check (2020-11-30 13:23:48)');
     })
@@ -1672,8 +1662,6 @@ describe('Tests for metric history', () => {
 
   test('Test for metric compare versions view', async () => {
     renderCompareView();
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /compare/i }).textContent).toBe('Compare argo.AMS-Check');

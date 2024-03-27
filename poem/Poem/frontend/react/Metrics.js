@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Backend, WebApi } from './DataManager';
 import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import {
-  LoadingAnim,
   BaseArgoView,
   NotifyOk,
   DiffElement,
@@ -58,7 +57,11 @@ import * as Yup from 'yup';
 import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { ErrorMessage } from '@hookform/error-message';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { CustomButton, CustomDescriptionArea, CustomHeadline, CustomInput, CustomProfilesList, CustomSpan, CustomSubtitle } from './Placeholders';
+import { 
+  CustomHeadline, 
+  CustomTable,
+  ListViewPlaceholder
+} from './Placeholders';
 import { CustomMetricProfilesPlaceholders } from './MetricTemplates';
 
 const metricValidationSchema = Yup.object().shape({
@@ -686,7 +689,24 @@ export const ListOfMetrics = (props) => {
   })
 
   if (metricsLoading || typesLoading || tagsLoading || OSGroupsLoading || userDetailsLoading || loadingMP || loadingTenants)
-    return (<CustomProfilesList pathname={window.location.pathname} />)
+    return (
+      <ListViewPlaceholder
+        resourcename={ type === "metrics" ? "metric" : "metric template" }
+        changeable={ !isTenantSchema && !publicView && type === "metrictemplates" }
+        buttons={
+          type === "metrics" ? 
+            <></>
+          :
+            (isTenantSchema || publicView) ? 
+              <></>
+            :
+              <div>
+                <Button color="secondary">Add</Button>
+                <Button className="ms-2" color="secondary">Delete</Button>
+              </div>
+        }
+      />
+    )
 
   else if (metricsError)
     return (<ErrorComponent error={metricsError.message}/>);
