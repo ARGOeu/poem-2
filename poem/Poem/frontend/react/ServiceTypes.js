@@ -27,7 +27,6 @@ import {
   DefaultColumnFilter,
   ErrorComponent,
   Icon,
-  LoadingAnim,
   ModalAreYouSure,
   NotifyError,
   NotifyOk,
@@ -49,7 +48,12 @@ import * as yup from "yup";
 import _ from "lodash";
 import PapaParse from 'papaparse';
 import { downloadCSV } from './FileDownload';
-import { CustomButton, CustomHeadline, CustomInput, CustomProfilesList, CustomSpan, CustomSubtitle, CustomTable } from './Placeholders';
+import { 
+  ChangeViewPlaceholder,
+  InputPlaceholder, 
+  ListViewPlaceholder,
+  TextAreaPlaceholder
+} from './Placeholders';
 
 const BulkAddContext = React.createContext()
 
@@ -574,6 +578,8 @@ export const ServiceTypesBulkAdd = (props) => {
     token: props.webapitoken,
     serviceTypes: props.webapiservicetypes
   })
+  
+  const showtitles = props.showtitles
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
     'userdetails', () => fetchUserDetails(true)
@@ -588,28 +594,44 @@ export const ServiceTypesBulkAdd = (props) => {
 
   if (loadingUserDetails || loadingServiceTypes)
     return (
-      <>
-        <CustomHeadline height="38.4px" width="261px" />
-        <Form className='ms-2 mb-1 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
-          <Row className='d-flex flex-row align-items-start'>
-            <Col md={4} className='d-flex flex-column'>
-              <CustomSpan height="24px" width="50px" custStyle="mb-2" />
-              <CustomInput height="37.6px" />
-            </Col>
-            <Col md={7} className='d-flex flex-column'>
-              <CustomSpan height="24px" width="95px" custStyle="mb-2" />
-              <CustomInput height="85.6px" />
-            </Col>
-            <Col md={1} className='d-flex flex-column mt-5'>
-              <CustomButton height="62px" width="62px" />
-            </Col>
-          </Row>
-        </Form>
-        <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
-          <CustomSubtitle height="36.8px" custStyle="mb-1" />
-          <CustomInput height="108px" />
-        </Form>
-      </>
+      <ChangeViewPlaceholder>
+        <Row>
+          <Col sm={{size: 4}}>
+            <Label className="fw-bold">Name:</Label>
+            <InputPlaceholder />
+          </Col>
+          {
+            showtitles ?
+              <Col sm={{size: 7}}>
+                <Label className="fw-bold">Title:</Label>
+                <InputPlaceholder />
+              </Col>
+            :
+              <>
+                <Col sm={{ size: 7 }}>
+                  <Label className="fw-bold">Description:</Label>
+                  <TextAreaPlaceholder />
+                </Col>
+              </>
+          }
+        </Row>
+        {
+          showtitles &&
+            <Row className="mt-3">
+              <Col sm={{ size: 11 }}>
+                <Label className="fw-bold">Description:</Label>
+                <TextAreaPlaceholder />
+                <Col sm={{size: 1}} className="text-center">
+                  <Button className="mt-5" color="success" disabled>
+                    Add new
+                  </Button>
+                </Col>
+              </Col>
+            </Row>
+        }
+        <ParagraphTitle title='Service types prepared for submission'/>
+        <Table className="placeholder rounded" style={{ height: "400px" }} />
+      </ChangeViewPlaceholder>
     );
 
   else if (errorUserDetails)
@@ -1142,23 +1164,10 @@ export const ServiceTypesList = (props) => {
 
   if (loadingUserDetails || loadingServiceTypesDescriptions)
     return (
-      <>
-        <div className="d-flex flex-row align-items-center justify-content-between placeholder-glow">
-          <CustomHeadline height="38.4px" width="528.71px" />
-          <div className='d-flex flex-row justify-content-between'>
-            <CustomButton height="37.6px" width="114.85px" custStyle="me-3" />
-            <CustomButton height="37.6px" width="54.85px" custStyle="me-3" />
-            <CustomButton height="37.6px" width="54.85px" custStyle="me-3" />
-          </div>
-        </div>
-        <Form className="ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded">
-          <CustomTable height="523px" />
-          <Row className="d-flex flex-row align-items-center justify-content-center">
-            <CustomButton custStyle="mx-1" height="37.6px" width="158.33px" />
-            <CustomButton custStyle="mx-1" height="37.6px" width="180px" />
-          </Row>
-        </Form>
-      </>
+      <ListViewPlaceholder
+        title="Service types"
+        infoview={ true }
+      />
     );
 
   else if (errorUserDetails)

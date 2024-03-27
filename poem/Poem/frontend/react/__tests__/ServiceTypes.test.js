@@ -201,8 +201,6 @@ describe('Test service types list - Read Only', () => {
   test('Test that page renders properly', async () => {
     renderListView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Service types');
     })
@@ -232,8 +230,6 @@ describe('Test service types list - Read Only', () => {
 
   test('Test filtering service types', async () => {
     renderListView();
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Service types');
@@ -311,8 +307,6 @@ describe('Test service types list - Read Only', () => {
   test('Test that public page renders properly', async () => {
     renderListViewPublic();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Service types');
     })
@@ -342,8 +336,6 @@ describe('Test service types list - Read Only', () => {
 
   test('Test filtering public service types', async () => {
     renderListViewPublic()
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Service types');
@@ -433,8 +425,6 @@ describe("Test service types list if empty", () => {
   test("Test that page renders properly", async () => {
     renderListView()
 
-    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
-
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: /service/i }).textContent).toBe("Service types")
     })
@@ -453,8 +443,6 @@ describe("Test service types list if empty", () => {
 
   test("Test that public page renders properly", async () => {
     renderListViewPublic()
-
-    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: /service/i }).textContent).toBe("Service types")
@@ -485,8 +473,6 @@ describe('Test service types list - Bulk change and delete', () => {
 
   test('Test that page renders properly', async () => {
     renderListView();
-
-    expect(screen.getByRole('heading', {'level': 4})).toHaveTextContent(/loading data/i)
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Service types');
@@ -1566,8 +1552,6 @@ describe('Test service types list - Bulk add', () => {
   test('Test that page renders properly', async () => {
     renderAddView();
 
-    expect(screen.getByRole('heading', {'level': 4})).toHaveTextContent(/loading data/i)
-
     await waitFor(() => {
       expect(screen.getByRole('heading', {'level': 2})).toHaveTextContent(/Add service types/i)
     })
@@ -1589,8 +1573,6 @@ describe('Test service types list - Bulk add', () => {
 
   test('Test that page renders properly with title', async () => {
     renderAddView(true);
-
-    expect(screen.getByRole('heading', {'level': 4})).toHaveTextContent(/loading data/i)
 
     await waitFor(() => {
       expect(screen.getByRole('heading', {'level': 2})).toHaveTextContent(/Add service types/i)
@@ -2621,8 +2603,6 @@ describe('Test service types list - Bulk add', () => {
 
   test('Test add validation', async () => {
     renderAddView();
-
-    expect(screen.getByRole('heading', {'level': 4})).toHaveTextContent(/loading data/i)
 
     await waitFor(() => {
       expect(screen.getByRole('heading', {'level': 2})).toHaveTextContent(/Add service types/i)
