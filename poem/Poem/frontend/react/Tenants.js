@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Backend } from './DataManager';
 import { 
-  LoadingAnim, 
   ErrorComponent, 
   BaseArgoView, 
   ParagraphTitle, 
@@ -9,21 +8,22 @@ import {
   NotifyOk 
 } from './UIElements';
 import {
-  FormGroup,
-  Row,
-  Col,
-  InputGroup,
-  InputGroupText,
-  Card,
-  CardText,
-  CardGroup,
-  CardFooter,
   Badge,
+  Button,
+  Col,
+  Card,
+  CardBody,
+  CardFooter,
+  CardGroup,
+  CardText,
   CardTitle,
   CardSubtitle,
-  Button,
   Form,
-  Input
+  FormGroup,
+  Input,
+  InputGroup,
+  InputGroupText,
+  Row
 } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faIdBadge } from '@fortawesome/free-solid-svg-icons';
@@ -31,7 +31,7 @@ import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { fetchTenants } from './QueryFunctions';
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { CustomButton, CustomHeadline, CustomInput, CustomSubtitle, CustomTable } from './Placeholders';
+import { ChangeViewPlaceholder, InputPlaceholder } from './Placeholders';
 
 export const TenantList = () => {
   const location = useLocation();
@@ -43,19 +43,29 @@ export const TenantList = () => {
 
   if (status === 'loading')
     return (
-      <>
-        <CustomHeadline height="38.4px" width="358px" />
-        <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
-          <Row>
-            <Col md={4}>
-              <CustomTable height="322px" />
-            </Col>
-            <Col md={4}>
-              <CustomTable height="322px" />
-            </Col>
-          </Row>
-        </Form>
-      </>
+      <ChangeViewPlaceholder
+        resourcename="Select tenant for details"
+        infoview={ true }
+      >
+        <CardGroup className='mb-3' style={{width: "66.6666%"}}>
+          <Card className="me-3">
+            <CardSubtitle className='mb-4 mt-3 text-center'>
+              <FontAwesomeIcon icon={faIdBadge} size='5x'/>
+            </CardSubtitle>
+            <CardBody>
+              <span className="placeholder rounded" style={{ height: "152px", width: "100%" }} />
+            </CardBody>
+          </Card>
+          <Card className="me-3">
+            <CardSubtitle className='mb-4 mt-3 text-center'>
+              <FontAwesomeIcon icon={faIdBadge} size='5x'/>
+            </CardSubtitle>
+            <CardBody>
+              <span className="placeholder rounded" style={{ height: "152px", width: "100%" }} />
+            </CardBody>
+          </Card>
+        </CardGroup>
+      </ChangeViewPlaceholder>
     );
 
   else if (status === 'error')
@@ -331,22 +341,37 @@ export const TenantChange = (props) => {
 
   if (status === 'loading')
     return (
-      <>
-        <CustomHeadline height="38.4px" width="211px" />
-
-        <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
-          <CustomInput height="48px" width="50%" custStyle="mb-3" />
-          <CustomSubtitle height="36.8px" custStyle="mb-2" />
-          <CustomInput height="37.6px" width="50%" custStyle="mb-2" />
-          <CustomInput height="37.6px" width="50%" custStyle="mb-2" />
-          <CustomInput height="37.6px" width="50%" custStyle="mb-2" />
-
-          <div className='ms-2 mb-2 mt-5 p-3 border placeholder-glow rounded d-flex justify-content-start'>
-              <CustomButton height="37.6px" width="100px" />
-          </div>
-        </Form>
-      </>
-    );
+      <ChangeViewPlaceholder
+        resourcename="Tenant details"
+        infoview={ true }
+      >
+        <FormGroup>
+          <Row>
+            <Col md={6}>
+              <InputPlaceholder />
+            </Col>
+          </Row>
+        </FormGroup>
+        <FormGroup>
+          <ParagraphTitle title='basic info'/>
+          <Row>
+            <Col md={6}>
+              <InputPlaceholder />
+            </Col>
+          </Row>
+          <Row>
+            <Col md={6}>
+              <InputPlaceholder />
+            </Col>
+          </Row>
+          <Row>
+            <Col md={6}>
+              <InputPlaceholder />
+            </Col>
+          </Row>
+        </FormGroup>
+      </ChangeViewPlaceholder>
+    )
 
   else if (status === 'error')
     return (<ErrorComponent error={error}/>);

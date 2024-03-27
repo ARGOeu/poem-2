@@ -109,8 +109,6 @@ describe('Test list of tenants', () => {
   test('Test that page renders properly', async () => {
     renderTenantList();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /select tenant/i }).textContent).toBe('Select tenant for details');
     })
@@ -173,8 +171,6 @@ describe('Test tenants changeview', () => {
 
   test('Test that page renders properly', async () => {
     renderTenantChangeView();
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /tenant/i }).textContent).toBe('Tenant details');
