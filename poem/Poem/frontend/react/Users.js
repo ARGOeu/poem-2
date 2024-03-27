@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import { Backend } from './DataManager';
 import {
-  LoadingAnim,
   BaseArgoView,
   NotifyOk,
   NotifyError,
@@ -33,7 +32,12 @@ import { fetchUserGroups, fetchUsers, fetchUserDetails  } from './QueryFunctions
 import { Controller, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { ErrorMessage } from '@hookform/error-message';
-import { CustomButton, CustomHeadline, CustomInput, CustomProfilesList, CustomSpan, CustomSubtitle } from './Placeholders';
+import { 
+  ChangeViewPlaceholder,
+  InputPlaceholder, 
+  ListViewPlaceholder
+} from './Placeholders';
+
 
 const UserSchema = Yup.object().shape({
   username: Yup.string()
@@ -175,7 +179,11 @@ export const UsersList = (props) => {
   ], [isTenantSchema]);
 
   if (loading)
-    return (<CustomProfilesList />);
+    return (
+      <ListViewPlaceholder
+        resourcename="user"
+      />
+    )
 
   else if (error)
     return (<ErrorComponent error={error}/>);
@@ -951,75 +959,158 @@ export const UserChange = (props) => {
 
   if (statusUser === 'loading' || statusUserProfile === 'loading' || statusUserGroups === 'loading' || statusAllGroups === 'loading' || statusUserDetails === 'loading')
     return(
-      <>
-        <CustomHeadline width="184px" height="38.4px"/>
-        <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
-          <CustomInput height="37.6px" width="50%" custStyle="mb-3" />
-          <CustomSubtitle height="37.6px" custStyle="mb-2" />
-          <CustomInput height="37.6px" width="50%" custStyle="mb-2" />
-          <CustomInput height="37.6px" width="50%" custStyle="mb-2" />
-          <CustomInput height="37.6px" width="50%" custStyle="mb-2" />
-          <CustomInput height="37.6px" width="50%" custStyle="mb-2" />
-          <CustomInput height="37.6px" width="50%" custStyle="mb-3" />
-          <CustomSubtitle height="37.6px" custStyle="mb-3" />
-          <div className='d-flex flex-row align-items-center'>
-            <CustomSpan custStyle="me-2" width="24px" height="24px" />
-            <CustomInput height="24px" width="122px" />
-          </div>
-          <CustomSpan custStyle="mt-1 mb-3" height="20px" width="35%" />
-          <div className='d-flex flex-row align-items-center'>
-            <CustomSpan custStyle="me-2" width="24px" height="24px" />
-            <CustomInput height="24px" width="80px" />
-          </div>
-          <CustomSpan custStyle="mt-1 mb-3" height="20px" width="45%" />
-          {isTenantSchema && 
-            <>
-              <CustomSubtitle height="37.6px" custStyle="mb-3" />
-              <Row className='d-flex flex-row align-items-center'>
-                <Col md={5} className='d-flex flex-column'>
-                  <CustomSpan custStyle="mt-1 mb-1" height="24px" width="45%" />
-                  <CustomInput height="37.6px" />
-                  <CustomSpan custStyle="mt-1 mb-3" height="14.4px" width="45%" />
-                </Col>
-                <Col md={5} className='d-flex flex-column'>
-                  <CustomSpan custStyle="mt-1 mb-1" height="24px" width="45%" />
-                  <CustomInput height="37.6px" />
-                  <CustomSpan custStyle="mt-1 mb-3" height="14.4px" width="45%" />
-                </Col>
-                <Col md={5} className='d-flex flex-column'>
-                  <CustomSpan custStyle="mt-1 mb-1" height="24px" width="45%" />
-                  <CustomInput height="37.6px" />
-                  <CustomSpan custStyle="mt-1 mb-3" height="14.4px" width="45%" />
-                </Col>
-                <Col md={5} className='d-flex flex-column'>
-                  <CustomSpan custStyle="mt-1 mb-1" height="24px" width="45%" />
-                  <CustomInput height="37.6px" />
-                  <CustomSpan custStyle="mt-1 mb-3" height="14.4px" width="45%" />
-                </Col>
-                <Col md={5} className='d-flex flex-column'>
-                  <CustomSpan custStyle="mt-1 mb-1" height="24px" width="45%" />
-                  <CustomInput height="37.6px" />
-                  <CustomSpan custStyle="mt-1 mb-2" height="14.4px" width="45%" />
-                </Col>
+      <ChangeViewPlaceholder
+        resourcename="user"
+      >
+        <FormGroup>
+          <Row>
+            <Col md={6}>
+              <InputPlaceholder />
+            </Col>
+          </Row>
+          {
+            addview &&
+              <>
+                <Row>
+                  <Col md={6}>
+                    <InputPlaceholder />
+                  </Col>
+                </Row>
+                <Row>
+                  <Col md={6}>
+                    <InputPlaceholder />
+                  </Col>
+                </Row>
+              </>
+          }
+        </FormGroup>
+        <FormGroup>
+          <ParagraphTitle title='Personal info'/>
+          <Row>
+            <Col md={6}>
+              <InputPlaceholder />
+            </Col>
+          </Row>
+          <Row>
+            <Col md={6}>
+              <InputPlaceholder />
+            </Col>
+          </Row>
+          <Row>
+            <Col md={6}>
+              <InputPlaceholder />
+            </Col>
+          </Row>
+          {
+            !addview &&
+              <>
+                <Row>
+                  <Col md={6}>
+                    <InputPlaceholder />
+                  </Col>
+                </Row>
+                <Row>
+                  <Col md={6}>
+                    <InputPlaceholder />
+                  </Col>
+                </Row>
+              </>
+          }
+        </FormGroup>
+        <FormGroup>
+          <ParagraphTitle title='permissions'/>
+          <Row>
+            <Col md={6}>
+              <Row>
+                <InputPlaceholder />
               </Row>
-              <CustomSubtitle height="37.6px" custStyle="mb-1" />
-              <CustomInput height="37.6px" custStyle="mb-2" />
-              <CustomInput height="37.6px" width="65%" custStyle="mb-2"/>
-              <CustomInput height="37.6px" width="50%" />
+              <Row>
+                <FormText color="muted">
+                  Designates that this user has all permissions without explicitly assigning them.
+                </FormText>
+              </Row>
+            </Col>
+          </Row>
+          <Row>
+            <Col md={6}>
+              <Row>
+                <InputPlaceholder />
+              </Row>
+              <Row className='mt-0'>
+                <FormText color="muted">
+                  Designates whether this user should be treated as active. Unselect this instead of deleting accounts.
+                </FormText>
+              </Row>
+            </Col>
+          </Row>
+        </FormGroup>
+        {
+          isTenantSchema &&
+            <>
+              <FormGroup>
+                <ParagraphTitle title='POEM user permissions'/>
+                <Row>
+                  <Col md={5}>
+                    <InputPlaceholder />
+                    <FormText color="muted">
+                      The groups of reports that user will control.
+                    </FormText>
+                  </Col>
+                  <Col md={5}>
+                    <InputPlaceholder />
+                    <FormText color="muted">
+                      The groups of metrics that user will control.
+                    </FormText>
+                  </Col>
+                </Row>
+                <Row className='mt-3'>
+                  <Col md={5}>
+                    <InputPlaceholder />
+                    <FormText color="muted">
+                      The groups of metric profiles that user will control.
+                    </FormText>
+                  </Col>
+                  <Col md={5}>
+                    <InputPlaceholder />
+                    <FormText color="muted">
+                      The groups of aggregations that user will control.
+                    </FormText>
+                  </Col>
+                </Row>
+                <Row className='mt-3'>
+                  <Col md={5}>
+                    <InputPlaceholder />
+                    <FormText color="muted">
+                      The groups of thresholds profiles that user will control.
+                    </FormText>
+                  </Col>
+                </Row>
+              </FormGroup>
+              <FormGroup>
+                <ParagraphTitle title='Additional information'/>
+                <Row>
+                  <Col md={12}>
+                    <InputPlaceholder />
+                  </Col>
+                </Row>
+              </FormGroup>
+              <FormGroup>
+                <Row>
+                  <Col md={8}>
+                    <InputPlaceholder />
+                  </Col>
+                </Row>
+              </FormGroup>
+              <FormGroup>
+                <Row>
+                  <Col md={6}>
+                    <InputPlaceholder />
+                  </Col>
+                </Row>
+              </FormGroup>
             </>
-          }
-          {window.location.pathname === "/ui/administration/users/add" ? 
-            <div className='ms-2 mb-2 mt-5 p-3 border placeholder-glow rounded d-flex justify-content-end'>
-              <CustomButton height="37.6px" width="70px" />
-            </div>
-          :
-            <div className='ms-2 mb-2 mt-5 p-3 border placeholder-glow rounded d-flex justify-content-between'>
-              <CustomButton height="37.6px" width="100px" />
-              <CustomButton height="37.6px" width="100px" />
-            </div>
-          }
-        </Form>
-      </>
+        }
+      </ChangeViewPlaceholder>
     )
 
   else if (statusUser === 'error')
@@ -1239,19 +1330,20 @@ export const ChangePassword = () => {
 
   if (loading)
     return (
-      <>
-        <CustomHeadline height="38.4px" width="260px" />
-        <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
-          <CustomInput height="37.6px" width="50%" custStyle="mb-2" />
-          <CustomInput height="37.6px" width="50%" custStyle="mb-4" />
-          {!/\/change_password/.test(window.location.pathname) &&         
-          (
-            <div className='mb-2 mt-4 p-3 border placeholder-glow rounded d-flex justify-content-end'>
-              <CustomButton height="37.6px" width="60px" />
-            </div>
-          )}
-        </Form>
-      </>
+      <ChangeViewPlaceholder
+        resourcename="password"
+      >
+        <Row>
+          <Col md={6}>
+            <InputPlaceholder />
+          </Col>
+        </Row>
+        <Row>
+          <Col md={6}>
+            <InputPlaceholder />
+          </Col>
+        </Row>
+      </ChangeViewPlaceholder>
     );
 
   else if (userDetails) {
