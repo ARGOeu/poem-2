@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Backend } from './DataManager';
 import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import {
-  LoadingAnim,
   BaseArgoView,
   NotifyOk,
   DiffElement,
@@ -14,17 +13,18 @@ import {
   DropdownWithFormText
 } from './UIElements';
 import {
-  FormGroup,
-  Label,
-  FormText,
-  Row,
-  Col,
   Button,
+  Col,
+  Form,
+  FormFeedback,
+  FormGroup,
+  FormText,
+  Input,
   InputGroup,
   InputGroupText,
-  Input,
-  Form,
-  FormFeedback
+  Label,
+  Row,
+  Table
 } from 'reactstrap';
 import * as Yup from 'yup';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
@@ -32,7 +32,12 @@ import { fetchPackages, fetchProbes, fetchProbeVersion } from './QueryFunctions'
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { ErrorMessage } from '@hookform/error-message';
-import { CustomButton, CustomDescriptionArea, CustomHeadline, CustomInput, CustomProfilesList, CustomSpan, CustomSubtitle, CustomTable } from './Placeholders';
+import { 
+  ChangeViewPlaceholder,
+  InputPlaceholder, 
+  ListViewPlaceholder,
+  TextAreaPlaceholder
+} from './Placeholders';
 
 
 const ProbeSchema = Yup.object().shape({
@@ -541,6 +546,112 @@ const ProbeForm = ({
 }
 
 
+const ProbeFormPlaceholder = ( props ) => {
+  const addview = props.addview
+  const cloneview = props.cloneview
+  const isTenantSchema = props.isTenantSchema
+  const historyview = props.isHistory
+  const publicview = props.publicView
+  const title = props.title
+
+  return (
+    <ChangeViewPlaceholder
+      resourcename={ `${ historyview ? title : (publicview || isTenantSchema) ? "Probe details" : "probe" }` }
+      addview={ addview }
+      cloneview={ cloneview }
+      infoview={ historyview || isTenantSchema || publicview }
+      buttons={
+        (isTenantSchema || (publicview && !historyview)) ?
+          <Button color="secondary">History</Button>
+        :
+          (!publicview && !historyview && !cloneview && !addview) &&
+            <div>
+              <Button color="secondary">Clone</Button>
+              <Button className="ms-2" color="secondary">History</Button>
+            </div>
+      }
+    >
+      <FormGroup>
+        <Row>
+          <Col md={6}>
+            <InputPlaceholder />
+            <FormText color="muted">
+              Name of this probe.
+            </FormText>
+          </Col>
+          <Col md={2}>
+            <InputPlaceholder />
+            <FormText color="muted">
+              Version of the probe.
+            </FormText>
+          </Col>
+          {
+            (!addview && !cloneview && !isTenantSchema && !historyview && !publicview) &&
+              <Col md={2}>
+                <Row>
+                  <FormGroup check inline className='ms-3'>
+                    <InputPlaceholder />
+                  </FormGroup>
+                </Row>
+                <Row>
+                  <FormText color='muted'>
+                    Update all associated metric templates.
+                  </FormText>
+                </Row>
+              </Col>
+          }
+        </Row>
+        <Row className='mt-3'>
+          <Col md={8}>
+            <InputPlaceholder />
+            <FormText color='muted'>
+              Probe is part of selected package.
+            </FormText>
+          </Col>
+        </Row>
+      </FormGroup>
+      <FormGroup>
+        <ParagraphTitle title='Probe metadata'/>
+        <Row className='mt-4 mb-3 align-items-top'>
+          <Col md={8}>
+            <InputPlaceholder />
+            <FormText color='muted'>
+              Probe repository URL.
+            </FormText>
+          </Col>
+        </Row>
+        <Row className='mb-3 align-items-top'>
+          <Col md={8}>
+            <InputPlaceholder />
+            <FormText color='muted'>
+              Documentation URL.
+            </FormText>
+          </Col>
+        </Row>
+        <Row className='mb-3 align-items-top'>
+          <Col md={8}>
+            <Label>Description</Label>
+            <TextAreaPlaceholder />
+            <FormText color='muted'>
+              Free text description outlining the purpose of this probe.
+            </FormText>
+          </Col>
+        </Row>
+        <Row className='mb-3 align-items-top'>
+          <Col md={8}>
+            <Label>Comment</Label>
+            <TextAreaPlaceholder />
+            <FormText color='muted'>
+              Short comment about this version.
+            </FormText>
+          </Col>
+        </Row>
+      </FormGroup>
+    </ChangeViewPlaceholder>
+  )
+}
+
+
 const fetchProbe = async (publicView, name) => {
   const backend = new Backend();
 
@@ -609,7 +720,13 @@ export const ProbeList = (props) => {
   ], [publicView]);
 
   if (loading)
-    return (<CustomProfilesList pathname={window.location.pathname}/>);
+    return (
+      <ListViewPlaceholder
+        resourcename="probe"
+        infoview={ isTenantSchema || publicView }
+        publicview={ publicView }
+      />
+    )
 
   else if (error)
     return (<ErrorComponent error={error.message}/>);
@@ -668,49 +785,7 @@ export const ProbeComponent = (props) => {
   const loading = probeLoading || metricTemplatesLoading || packagesLoading;
 
   if (loading)
-    return(
-      <>
-        {/\/add/.test(window.location.pathname) ? 
-        <div className='placeholder-glow d-flex flex-row align-items-center justify-content-start mb-3 mt-3'>
-          <CustomHeadline width="155px" height="38.4px"/>
-      </div>
-        :
-        <div className='placeholder-glow d-flex flex-row align-items-center justify-content-between mb-3 mt-3'>
-          <CustomHeadline width="357px" height="38.4px"/>
-          <CustomButton width="78px" height="37.6px" custStyle="mt-1 mb-4" />
-        </div>
-        }
-        <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
-          <Row>
-            <Col md={5}>
-              <CustomInput height="37.6px" width="100%" />
-              <CustomSpan custStyle="mt-1 mb-3" height="10px" width="25%" />
-            </Col>
-            <Col md={3} className='ms-2'>
-              <CustomInput height="37.6px" width="100%" />
-              <CustomSpan custStyle="mt-1 mb-3" height="10px" width="25%" />
-            </Col>
-          </Row>
-          <Col md={8}>
-            <CustomInput height="37.6px" width="100%" />
-            <CustomSpan custStyle="mt-1 mb-3" height="10px" width="25%" />
-          </Col>
-          <CustomSubtitle height="37.6px" custStyle="mt-2 mb-4" />
-          <Col md={8}>
-            <CustomInput height="37.6px" width="100%" />
-            <CustomSpan custStyle="mt-1 mb-3" height="10px" width="25%" />
-          </Col>
-          <Col md={8}>
-            <CustomInput height="37.6px" width="100%" />
-            <CustomSpan custStyle="mt-1 mb-3" height="10px" width="25%" />
-          </Col>
-          <CustomDescriptionArea heightTable="373px" widthTable="66.5%" heightBottom="14.4px" widthBottom="391px" />
-          <CustomDescriptionArea heightTable="133px" widthTable="66.5%" heightBottom="14.4px" widthBottom="209px" custStyle="mt-3" />
-          <CustomSpan custStyle="mt-3" height="23px" width="160px" />
-          <CustomSpan custStyle="mt-1 mb-3" height="23px" width="192px" />
-        </Form>
-      </>  
-    )
+    return(<ProbeFormPlaceholder { ...props } />)
 
   else if (probeError)
     return (<ErrorComponent error={probeError.message}/>);
@@ -751,10 +826,8 @@ export const ProbeVersionCompare = (props) => {
   if (loading)
     return (
       <>
-        <CustomHeadline height="38.4px" width="383px" />
-        <div className='ms-3 mt-4 placeholder-glow rounded'>
-          <CustomTable height="230px" />
-        </div>
+        <h2 className='ms-3 mt-1 mb-4'>{`Compare ${name}`}</h2>
+        <Table className="placeholder rounded" style={{ height: "600px" }} />
       </>
     );
 
@@ -829,36 +902,11 @@ export const ProbeVersionDetails = (props) => {
 
   if (loading)
     return(
-      <>
-        <CustomHeadline width="357px" height="38.4px"/>
-        <Form className='ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded d-flex flex-column'>
-          <Row>
-            <Col md={6}>
-              <CustomInput height="37.6px" width="100%" />
-              <CustomSpan custStyle="mt-1 mb-3" height="10px" width="25%" />
-            </Col>
-            <Col md={2} className='ms-2'>
-              <CustomInput height="37.6px" width="100%" />
-              <CustomSpan custStyle="mt-1 mb-3" height="10px" width="15%" />
-            </Col>
-          </Row>
-          <Col md={8}>
-            <CustomInput height="37.6px" width="100%" />
-            <CustomSpan custStyle="mt-1 mb-3" height="10px" width="25%" />
-          </Col>
-          <CustomSubtitle height="37.6px" custStyle="mt-2 mb-4" />
-          <Col md={8}>
-            <CustomInput height="37.6px" width="100%" />
-            <CustomSpan custStyle="mt-1 mb-3" height="10px" width="25%" />
-          </Col>
-          <Col md={8}>
-            <CustomInput height="37.6px" width="100%" />
-            <CustomSpan custStyle="mt-1 mb-3" height="10px" width="25%" />
-          </Col>
-          <CustomDescriptionArea heightTable="373px" widthTable="66.5%" heightBottom="14.4px" widthBottom="391px" />
-          <CustomDescriptionArea heightTable="133px" widthTable="66.5%" heightBottom="14.4px" widthBottom="209px" custStyle="mt-3" />
-        </Form>
-      </>  
+      <ProbeFormPlaceholder
+        { ...props }
+        title={ `${name} (${version})` }
+        isHistory={ true }
+      />
     )
 
   else if (error)
