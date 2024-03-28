@@ -701,8 +701,8 @@ export const ListOfMetrics = (props) => {
               <></>
             :
               <div>
-                <Button color="secondary">Add</Button>
-                <Button className="ms-2" color="secondary">Delete</Button>
+                <Button color="secondary" disabled>Add</Button>
+                <Button className="ms-2" color="secondary" disabled>Delete</Button>
               </div>
         }
       />
