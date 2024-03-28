@@ -211,17 +211,17 @@ export const MetricFormPlaceholder = ( props ) => {
       cloneview={ cloneview }
       buttons={
         obj_label === "metric" ?
-          (!publicview && !historyview) && <Button color="secondary">History</Button>
+          (!publicview && !historyview) && <Button color="secondary" disabled>History</Button>
         :
           (publicview || (!publicview && tenantview)) ?
-            <Button color="secondary">History</Button>
+            <Button color="secondary" disabled>History</Button>
           :
             (historyview || addview || cloneview) ?
               <></>
             :
               <div>
-                <Button color="secondary">Clone</Button>
-                <Button className="ms-2" color="secondary">History</Button>
+                <Button color="secondary" disabled>Clone</Button>
+                <Button className="ms-2" color="secondary" disabled>History</Button>
               </div>
       }
     >
