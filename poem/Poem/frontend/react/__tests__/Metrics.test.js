@@ -493,7 +493,7 @@ describe('Tests for metrics listview', () => {
     renderListView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric for details')
+      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric to change')
     })
     // double column header length because search fields are also th
     expect(screen.getAllByRole('columnheader')).toHaveLength(14);
@@ -533,7 +533,7 @@ describe('Tests for metrics listview', () => {
     renderListView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric for details')
+      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric to change')
     })
 
     fireEvent.change(screen.getAllByPlaceholderText('Search')[0], { target: { value: 'argo' } });
@@ -649,7 +649,7 @@ describe('Tests for metrics listview', () => {
     renderListView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric for details')
+      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric to change')
     })
     expect(screen.getAllByRole('columnheader')).toHaveLength(14);
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
