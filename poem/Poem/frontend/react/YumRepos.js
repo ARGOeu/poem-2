@@ -494,7 +494,7 @@ export const YumRepoComponent = (props) => {
           <Row>
             <Col md={8}>
               <Label>File content</Label>
-              <TextAreaPlaceholder />
+              <TextAreaPlaceholder height="494px" />
               <FormText color='muted'>
                 Content of the repo file.
               </FormText>
