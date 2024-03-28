@@ -631,7 +631,7 @@ const ProbeFormPlaceholder = ( props ) => {
         <Row className='mb-3 align-items-top'>
           <Col md={8}>
             <Label>Description</Label>
-            <TextAreaPlaceholder />
+            <TextAreaPlaceholder height="374px" />
             <FormText color='muted'>
               Free text description outlining the purpose of this probe.
             </FormText>
@@ -647,6 +647,16 @@ const ProbeFormPlaceholder = ( props ) => {
           </Col>
         </Row>
       </FormGroup>
+      {
+        (!historyview && !addview && !cloneview) &&
+          <Row>
+            <Col md={8}>
+              <div>
+                Metric templates:
+              </div>
+            </Col>
+          </Row>
+      }
     </ChangeViewPlaceholder>
   )
 }
