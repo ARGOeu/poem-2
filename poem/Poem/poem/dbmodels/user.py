@@ -25,13 +25,13 @@ class UserProfile(models.Model):
         on_delete=models.DO_NOTHING
     )
     subject = models.CharField(
-        'distinguishedName',
+        'voPersonCertificateDN',
         max_length=512,
         blank=True,
         null=True
     )
     egiid = models.CharField(
-        'eduPersonUniqueId',
+        'voPersonID',
         max_length=255,
         blank=True,
         null=True,
