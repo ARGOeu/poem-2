@@ -410,18 +410,25 @@ const Service = ({
 }
 
 
-const AggregationProfilesPlaceholder = ( props ) => 
-  <ChangeViewPlaceholder
-    resourcename="aggregation profile"
-    buttons={
-      !props.addview && !props.publicView && !props.historyview && 
-        <div>
-          <Button color="secondary">JSON</Button>
-          <Button className="ms-2" color="secondary">History</Button>
-        </div>
-    }
-  >
-    <>
+const AggregationProfilesPlaceholder = ( props ) => {
+  const addview = props.addview
+  const publicview = props.publicView
+  const historyview = props.historyview
+  const title = props.title
+
+  return (
+    <ChangeViewPlaceholder
+      resourcename={ `${ publicview ? "Aggregation profile details" : historyview ? title : "aggregation profile" }` }
+      infoview={ publicview || historyview }
+      addview={ addview }
+      buttons={
+        !addview && !publicview && !historyview && 
+          <div>
+            <Button color="secondary" disabled>JSON</Button>
+            <Button className="ms-2" color="secondary" disabled>History</Button>
+          </div>
+      }
+    >
       <ProfileMainPlaceholder profiletype="aggregation" />
       <ParagraphTitle title="Operations, endpoint group and metric profile"/>
       <Row>
@@ -488,8 +495,48 @@ const AggregationProfilesPlaceholder = ( props ) =>
         </Col>
       </Row>
       <ParagraphTitle title='Service flavour groups'/>
-    </>
-  </ChangeViewPlaceholder>
+      {
+        !addview &&
+          <Row>
+            <Col sm={{size: 8}} md={{size: 5}} className="mt-4 mb-2">
+              <Card>
+                <CardHeader>
+                  <Row className="d-flex align-items-center g-0">
+                    <Col sm={{size: 10}} md={{size: 11}}>
+                      <InputPlaceholder />
+                    </Col>
+                  </Row>
+                </CardHeader>
+                <CardBody className="p-1">
+                  <span className="placeholder rounded" style={{ height: "192px", width: "100%" }} />
+                </CardBody>
+              </Card>
+            </Col>
+            <Col sm={{size: 4}} md={{size: 1}} className="mt-5">
+              <InputPlaceholder />
+            </Col>
+            <Col sm={{size: 8}} md={{size: 5}} className="mt-4 mb-2">
+              <Card>
+                <CardHeader>
+                  <Row className="d-flex align-items-center g-0">
+                    <Col sm={{size: 10}} md={{size: 11}}>
+                      <InputPlaceholder />
+                    </Col>
+                  </Row>
+                </CardHeader>
+                <CardBody className="p-1">
+                  <span className="placeholder rounded" style={{ height: "192px", width: "100%" }} />
+                </CardBody>
+              </Card>
+            </Col>
+            <Col sm={{size: 4}} md={{size: 1}} className="mt-5">
+              <InputPlaceholder />
+            </Col>
+          </Row>
+      }
+    </ChangeViewPlaceholder>
+  )
+}
 
 
 const AggregationProfilesForm = ({
@@ -1428,7 +1475,7 @@ export const AggregationProfilesList = (props) => {
     return (
       <ListViewPlaceholder 
         resourcename="aggregation profile" 
-        publicview={ publicView }
+        infoview={ publicView }
       />
     )
 
@@ -1590,7 +1637,7 @@ export const AggregationProfileVersionDetails = () => {
 
   if (loading) {
     return (
-      <AggregationProfilesPlaceholder historyview={ true } />
+      <AggregationProfilesPlaceholder historyview={ true } title={ `${name} (${version})` } />
     )
   }
 
