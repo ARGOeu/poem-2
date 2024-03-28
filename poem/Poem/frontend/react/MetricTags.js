@@ -9,7 +9,6 @@ import {
   DefaultColumnFilter,
   ErrorComponent,
   Icon,
-  LoadingAnim,
   NotifyError,
   NotifyOk,
   NotifyWarn,
@@ -18,16 +17,17 @@ import {
 } from "./UIElements"
 import { Backend } from "./DataManager"
 import {
+  Badge,
+  Button,
+  Col,
   Form,
   FormGroup,
+  FormFeedback,
+  Input,
   InputGroup,
   InputGroupText,
   Row,
-  Col,
-  Button,
-  Badge,
-  Input,
-  FormFeedback
+  Table
  } from "reactstrap"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faSearch,faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -35,7 +35,11 @@ import { Controller, useForm, useWatch } from "react-hook-form"
 import { ErrorMessage } from '@hookform/error-message'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as Yup from "yup"
-
+import { 
+  ChangeViewPlaceholder,
+  InputPlaceholder, 
+  ListViewPlaceholder
+} from "./Placeholders"
 
 const validationSchema = Yup.object().shape({
   name: Yup.string().required("This field is required")
@@ -87,7 +91,11 @@ export const MetricTagsList = (props) => {
   ], [])
 
   if (status === "loading")
-    return (<LoadingAnim />)
+    return (
+      <ListViewPlaceholder 
+        resourcename="metric tag" 
+      />
+    )
 
   else if (status === "error")
     return (<ErrorComponent error={error} />)
@@ -453,7 +461,6 @@ export const MetricTagsComponent = (props) => {
   const publicView = props.publicView
   const addview = props.addview
   const location = useLocation()
-  // const navigate = useNavigate()
 
   const backend = new Backend()
 
@@ -475,7 +482,24 @@ export const MetricTagsComponent = (props) => {
   )
 
   if (loadingUserDetails || loadingTag || loadingAllMetrics)
-    return (<LoadingAnim/>)
+    return (
+      <ChangeViewPlaceholder
+        resourcename={ publicView ? "Metric tag details" : "metric tag" }
+        infoview={ publicView }
+      >
+        <FormGroup>
+          <Row>
+            <Col md={6}>
+              <InputPlaceholder />
+            </Col>
+          </Row>
+        </FormGroup>
+        <FormGroup>
+          <ParagraphTitle title="Metric templates" />
+          <Table className="placeholder rounded" style={{ height: "500px" }} />
+        </FormGroup>
+      </ChangeViewPlaceholder>
+    )
 
   else if (errorUserDetails)
     return (<ErrorComponent error={errorUserDetails} />)

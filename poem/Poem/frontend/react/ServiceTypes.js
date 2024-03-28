@@ -27,7 +27,6 @@ import {
   DefaultColumnFilter,
   ErrorComponent,
   Icon,
-  LoadingAnim,
   ModalAreYouSure,
   NotifyError,
   NotifyOk,
@@ -49,6 +48,12 @@ import * as yup from "yup";
 import _ from "lodash";
 import PapaParse from 'papaparse';
 import { downloadCSV } from './FileDownload';
+import { 
+  ChangeViewPlaceholder,
+  InputPlaceholder, 
+  ListViewPlaceholder,
+  TextAreaPlaceholder
+} from './Placeholders';
 
 const BulkAddContext = React.createContext()
 
@@ -573,6 +578,8 @@ export const ServiceTypesBulkAdd = (props) => {
     token: props.webapitoken,
     serviceTypes: props.webapiservicetypes
   })
+  
+  const showtitles = props.showtitles
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
     'userdetails', () => fetchUserDetails(true)
@@ -586,7 +593,46 @@ export const ServiceTypesBulkAdd = (props) => {
   )
 
   if (loadingUserDetails || loadingServiceTypes)
-    return (<LoadingAnim/>);
+    return (
+      <ChangeViewPlaceholder>
+        <Row>
+          <Col sm={{size: 4}}>
+            <Label className="fw-bold">Name:</Label>
+            <InputPlaceholder />
+          </Col>
+          {
+            showtitles ?
+              <Col sm={{size: 7}}>
+                <Label className="fw-bold">Title:</Label>
+                <InputPlaceholder />
+              </Col>
+            :
+              <>
+                <Col sm={{ size: 7 }}>
+                  <Label className="fw-bold">Description:</Label>
+                  <TextAreaPlaceholder />
+                </Col>
+              </>
+          }
+        </Row>
+        {
+          showtitles &&
+            <Row className="mt-3">
+              <Col sm={{ size: 11 }}>
+                <Label className="fw-bold">Description:</Label>
+                <TextAreaPlaceholder />
+                <Col sm={{size: 1}} className="text-center">
+                  <Button className="mt-5" color="success" disabled>
+                    Add new
+                  </Button>
+                </Col>
+              </Col>
+            </Row>
+        }
+        <ParagraphTitle title='Service types prepared for submission'/>
+        <Table className="placeholder rounded" style={{ height: "400px" }} />
+      </ChangeViewPlaceholder>
+    );
 
   else if (errorUserDetails)
     return (<ErrorComponent error={errorUserDetails}/>);
@@ -1117,7 +1163,12 @@ export const ServiceTypesList = (props) => {
   ], [showtitles])
 
   if (loadingUserDetails || loadingServiceTypesDescriptions)
-    return (<LoadingAnim/>);
+    return (
+      <ListViewPlaceholder
+        title="Service types"
+        infoview={ true }
+      />
+    );
 
   else if (errorUserDetails)
     return (<ErrorComponent error={errorUserDetails}/>);

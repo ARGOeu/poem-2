@@ -2,7 +2,6 @@ import React from 'react';
 import { WebApi } from './DataManager';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import {
-  LoadingAnim,
   ErrorComponent,
   BaseArgoView,
   ParagraphTitle,
@@ -21,7 +20,11 @@ import {
 } from 'reactstrap';
 import { useQuery, useQueryClient } from 'react-query';
 import { fetchOperationsProfiles } from './QueryFunctions';
-
+import { 
+  ListViewPlaceholder,
+  ChangeViewPlaceholder,
+  InputPlaceholder
+} from './Placeholders';
 
 export const OperationsProfilesList = (props) => {
   const location = useLocation();
@@ -58,7 +61,12 @@ export const OperationsProfilesList = (props) => {
   ], [publicView]);
 
   if (status === 'loading')
-    return (<LoadingAnim/>);
+    return (
+      <ListViewPlaceholder 
+        resourcename='operations profile'
+        infoview={ true }
+      />
+    )
 
   else if (status === 'error')
     return (<ErrorComponent error={error}/>);
@@ -108,8 +116,38 @@ export const OperationsProfileDetails = (props) => {
     }
   )
 
-  if (status === 'loading')
-    return (<LoadingAnim/>);
+  if (status === "loading") {
+    return (
+      <ChangeViewPlaceholder
+        resourcename="Operations profile details"
+        infoview={ true }
+      >
+        <FormGroup>
+          <Row>
+            <Col md={6}>
+              <InputPlaceholder />
+              <FormText color='muted'>
+                Name of operations profile.
+              </FormText>
+            </Col>
+          </Row>
+        </FormGroup>
+        <ParagraphTitle title='States'/>
+        <Row>
+          <Col md={4}>
+            <Table className="placeholder rounded" style={{ height: "200px" }} />
+          </Col>
+          <Col md={5}>
+            <Table className="placeholder rounded" style={{ height: "200px" }} />
+          </Col>
+        </Row>
+        <ParagraphTitle title='Operations'/>
+        <Row>
+          <Table className="placeholder rounded" style={{ height: "200px" }} />
+        </Row>
+      </ChangeViewPlaceholder>
+    )
+  }
 
   else if (status === 'error')
     return (<ErrorComponent error={error}/>);

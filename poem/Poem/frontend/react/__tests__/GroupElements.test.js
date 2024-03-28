@@ -115,8 +115,6 @@ describe('Tests for groups listviews', () => {
   test('Render group of metrics listview', async () => {
     renderListView()
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
       expect(screen.getByRole('heading', {name: /group/i}).textContent).toBe('Select group of metrics to change')
     })
@@ -135,8 +133,6 @@ describe('Tests for groups listviews', () => {
 
   test('Render group of aggregations listview', async () => {
     renderListView('aggregations', 'groupofaggregations', 'group of aggregations')
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', {name: /group/i}).textContent).toBe('Select group of aggregations to change')
@@ -157,8 +153,6 @@ describe('Tests for groups listviews', () => {
   test('Render group of metric profiles listview', async () => {
     renderListView('metricprofiles', 'groupofmetricprofiles', 'group of metric profiles')
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
       expect(screen.getByRole('heading', {name: /group/i}).textContent).toBe('Select group of metric profiles to change')
     })
@@ -177,8 +171,6 @@ describe('Tests for groups listviews', () => {
 
   test('Render group of thresholds profiles listview', async () => {
     renderListView('thresholdsprofiles', 'groupofthresholdsprofiles', 'group of thresholds profiles')
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', {name: /group/i}).textContent).toBe('Select group of thresholds profiles to change')
@@ -209,8 +201,6 @@ describe('Tests for groups listviews', () => {
     })
 
     renderListView()
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', {name: /group/i}).textContent).toBe('Select group of metrics to change')
@@ -263,8 +253,6 @@ describe('Tests for group elements changeview', () => {
   test('Test changeview renders properly', async () => {
     renderChangeView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
-
     await waitFor(() => {
       expect(screen.getByRole('heading', {name: /group/i}).textContent).toBe('Change group of metrics')
     });
@@ -296,8 +284,6 @@ describe('Tests for group elements changeview', () => {
     })
 
     renderChangeView();
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
 
     await waitFor(() => {
       expect(screen.getByRole('heading', {name: /group/i}).textContent).toBe('Change group of metrics')
@@ -604,8 +590,6 @@ describe('Tests for groups addviews', () => {
 
   test('Test that addview renders properly', async () => {
     renderAddView();
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
 
     await waitFor(() => {
       expect(screen.getByRole('heading', {name: /group/i}).textContent).toBe('Add group of metrics')

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { MetricForm} from './Metrics';
 import { Backend } from './DataManager';
 import {
-  LoadingAnim,
   NotifyOk,
   NotifyError,
   NotifyWarn,
@@ -11,6 +10,10 @@ import {
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { fetchMetricTags, fetchMetricTemplates, fetchMetricTemplateTypes, fetchMetricTemplateVersion, fetchProbeVersion, fetchProbeVersions } from './QueryFunctions';
 import { useNavigate, useParams } from 'react-router-dom';
+import { 
+  MetricFormPlaceholder
+} from './Placeholders';
+
 
 export const MetricTemplateComponent = (props) => {
   let { name, metrictemplatename } = useParams();
@@ -192,8 +195,8 @@ export const MetricTemplateComponent = (props) => {
     })
   }
 
-  if ((metricTemplateLoading) || typesLoading || tagsLoading || probeVersionsLoading || metricTemplatesLoading)
-    return (<LoadingAnim/>)
+  if ((metricTemplateLoading) || typesLoading || tagsLoading || probeVersionsLoading || metricTemplatesLoading) 
+    return (<MetricFormPlaceholder obj_label="metrictemplate" { ...props } />)
 
   else if (metricTemplateError)
     return (<ErrorComponent error={metricTemplateError.message}/>);
@@ -266,8 +269,14 @@ export const MetricTemplateVersionDetails = (props) => {
     { enabled: !!mtProbe }
   )
 
-  if (loadingMts || loadingProbes)
-    return (<LoadingAnim/>);
+  if (loadingMts || loadingProbes) 
+    return (
+      <MetricFormPlaceholder 
+        obj_label='metrictemplate'
+        title={ `${name} [${version}]`}
+        historyview={ true }
+      />
+    )
 
   else if (errorMts)
     return (<ErrorComponent error={errorMts}/>);

@@ -359,8 +359,6 @@ describe('Test list of operations profiles', () => {
   test('Test that page renders properly', async () => {
     renderListView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Select operations profile for details')
     })
@@ -378,8 +376,6 @@ describe('Test list of operations profiles', () => {
 
   test('Test that public page renders properly', async () => {
     renderListView(true);
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Select operations profile for details')
@@ -409,8 +405,6 @@ describe('Tests for operations profiles detail view', () => {
 
   test('Test that page renders properly', async () => {
     renderDetailsView();
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Operations profile details')
@@ -497,8 +491,6 @@ describe('Tests for operations profiles detail view', () => {
 
   test('Test that public page renders properly', async () => {
     renderDetailsView(true);
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Operations profile details')

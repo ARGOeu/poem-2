@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Backend } from './DataManager';
 import {
-  LoadingAnim,
   BaseArgoView,
   NotifyOk,
   NotifyError,
@@ -21,7 +20,8 @@ import {
   InputGroupText,
   Input,
   Form,
-  FormFeedback
+  FormFeedback,
+  Table
 } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
@@ -32,6 +32,11 @@ import { Controller, useForm, useWatch } from 'react-hook-form';
 import { ErrorMessage } from '@hookform/error-message';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from "yup";
+import { 
+  ChangeViewPlaceholder,
+  InputPlaceholder,
+  ListViewPlaceholder 
+} from './Placeholders';
 
 
 const validationSchema = Yup.object().shape({
@@ -70,7 +75,7 @@ export const GroupList = (props) => {
   );
 
   if (status === 'loading')
-    return (<LoadingAnim/>);
+    return (<ListViewPlaceholder resourcename={ name } />);
 
   else if (status === 'error')
     return (<ErrorComponent error={error}/>);
@@ -429,7 +434,36 @@ export const GroupChange = (props) => {
   )
 
   if (loadingItems || loadingFreeItems)
-    return (<LoadingAnim/>);
+    return (
+      <ChangeViewPlaceholder
+        resourcename={ `group of ${title}` }
+        addview={ addview }
+      >
+        <FormGroup>
+          <Row>
+            <Col md={6}>
+              <InputPlaceholder width="100%" />
+            </Col>
+          </Row>
+        </FormGroup>
+        <FormGroup>
+          <ParagraphTitle title={title}/>
+          <Row className='mb-2'>
+            <Col md={8} data-testid='available_metrics' >
+              <InputPlaceholder width="100%" />
+            </Col>
+            <Col md={2}>
+              <Button
+                color="success"
+              >
+                { `Add new ${ title } to group` }
+              </Button>
+            </Col>
+          </Row>
+          <Table className="placeholder rounded" style={{ height: "400px" }} />
+        </FormGroup>
+      </ChangeViewPlaceholder>
+    )
 
   else if (errorItems)
     return (<ErrorComponent error={errorItems} />);

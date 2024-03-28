@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Backend } from './DataManager';
 import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import {
-  LoadingAnim,
   BaseArgoView,
   NotifyOk,
   DiffElement,
@@ -14,17 +13,18 @@ import {
   DropdownWithFormText
 } from './UIElements';
 import {
-  FormGroup,
-  Label,
-  FormText,
-  Row,
-  Col,
   Button,
+  Col,
+  Form,
+  FormFeedback,
+  FormGroup,
+  FormText,
+  Input,
   InputGroup,
   InputGroupText,
-  Input,
-  Form,
-  FormFeedback
+  Label,
+  Row,
+  Table
 } from 'reactstrap';
 import * as Yup from 'yup';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
@@ -32,6 +32,12 @@ import { fetchPackages, fetchProbes, fetchProbeVersion } from './QueryFunctions'
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { ErrorMessage } from '@hookform/error-message';
+import { 
+  ChangeViewPlaceholder,
+  InputPlaceholder, 
+  ListViewPlaceholder,
+  TextAreaPlaceholder
+} from './Placeholders';
 
 
 const ProbeSchema = Yup.object().shape({
@@ -540,6 +546,122 @@ const ProbeForm = ({
 }
 
 
+const ProbeFormPlaceholder = ( props ) => {
+  const addview = props.addview
+  const cloneview = props.cloneview
+  const isTenantSchema = props.isTenantSchema
+  const historyview = props.isHistory
+  const publicview = props.publicView
+  const title = props.title
+
+  return (
+    <ChangeViewPlaceholder
+      resourcename={ `${ historyview ? title : (publicview || isTenantSchema) ? "Probe details" : "probe" }` }
+      addview={ addview }
+      cloneview={ cloneview }
+      infoview={ historyview || isTenantSchema || publicview }
+      buttons={
+        (isTenantSchema || (publicview && !historyview)) ?
+          <Button color="secondary" disabled>History</Button>
+        :
+          (!publicview && !historyview && !cloneview && !addview) &&
+            <div>
+              <Button color="secondary" disabled>Clone</Button>
+              <Button className="ms-2" color="secondary" disabled>History</Button>
+            </div>
+      }
+    >
+      <FormGroup>
+        <Row>
+          <Col md={6}>
+            <InputPlaceholder />
+            <FormText color="muted">
+              Name of this probe.
+            </FormText>
+          </Col>
+          <Col md={2}>
+            <InputPlaceholder />
+            <FormText color="muted">
+              Version of the probe.
+            </FormText>
+          </Col>
+          {
+            (!addview && !cloneview && !isTenantSchema && !historyview && !publicview) &&
+              <Col md={2}>
+                <Row>
+                  <FormGroup check inline className='ms-3'>
+                    <InputPlaceholder />
+                  </FormGroup>
+                </Row>
+                <Row>
+                  <FormText color='muted'>
+                    Update all associated metric templates.
+                  </FormText>
+                </Row>
+              </Col>
+          }
+        </Row>
+        <Row className='mt-3'>
+          <Col md={8}>
+            <InputPlaceholder />
+            <FormText color='muted'>
+              Probe is part of selected package.
+            </FormText>
+          </Col>
+        </Row>
+      </FormGroup>
+      <FormGroup>
+        <ParagraphTitle title='Probe metadata'/>
+        <Row className='mt-4 mb-3 align-items-top'>
+          <Col md={8}>
+            <InputPlaceholder />
+            <FormText color='muted'>
+              Probe repository URL.
+            </FormText>
+          </Col>
+        </Row>
+        <Row className='mb-3 align-items-top'>
+          <Col md={8}>
+            <InputPlaceholder />
+            <FormText color='muted'>
+              Documentation URL.
+            </FormText>
+          </Col>
+        </Row>
+        <Row className='mb-3 align-items-top'>
+          <Col md={8}>
+            <Label>Description</Label>
+            <TextAreaPlaceholder height="374px" />
+            <FormText color='muted'>
+              Free text description outlining the purpose of this probe.
+            </FormText>
+          </Col>
+        </Row>
+        <Row className='mb-3 align-items-top'>
+          <Col md={8}>
+            <Label>Comment</Label>
+            <TextAreaPlaceholder />
+            <FormText color='muted'>
+              Short comment about this version.
+            </FormText>
+          </Col>
+        </Row>
+      </FormGroup>
+      {
+        (!historyview && !addview && !cloneview) &&
+          <Row>
+            <Col md={8}>
+              <div>
+                Metric templates:
+              </div>
+            </Col>
+          </Row>
+      }
+    </ChangeViewPlaceholder>
+  )
+}
+
+
 const fetchProbe = async (publicView, name) => {
   const backend = new Backend();
 
@@ -608,7 +730,13 @@ export const ProbeList = (props) => {
   ], [publicView]);
 
   if (loading)
-    return (<LoadingAnim/>);
+    return (
+      <ListViewPlaceholder
+        resourcename="probe"
+        infoview={ isTenantSchema || publicView }
+        publicview={ publicView }
+      />
+    )
 
   else if (error)
     return (<ErrorComponent error={error.message}/>);
@@ -667,7 +795,7 @@ export const ProbeComponent = (props) => {
   const loading = probeLoading || metricTemplatesLoading || packagesLoading;
 
   if (loading)
-    return(<LoadingAnim/>)
+    return(<ProbeFormPlaceholder { ...props } />)
 
   else if (probeError)
     return (<ErrorComponent error={probeError.message}/>);
@@ -706,7 +834,12 @@ export const ProbeVersionCompare = (props) => {
   )
 
   if (loading)
-    return (<LoadingAnim/>);
+    return (
+      <>
+        <h2 className='ms-3 mt-1 mb-4'>{`Compare ${name}`}</h2>
+        <Table className="placeholder rounded" style={{ height: "600px" }} />
+      </>
+    );
 
   else if (error)
     return (<ErrorComponent error={error}/>);
@@ -778,7 +911,13 @@ export const ProbeVersionDetails = (props) => {
   )
 
   if (loading)
-    return (<LoadingAnim/>);
+    return(
+      <ProbeFormPlaceholder
+        { ...props }
+        title={ `${name} (${version})` }
+        isHistory={ true }
+      />
+    )
 
   else if (error)
     return (<ErrorComponent error={error}/>);

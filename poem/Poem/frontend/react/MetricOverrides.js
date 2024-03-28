@@ -7,20 +7,20 @@ import {
   BaseArgoTable,
   BaseArgoView,
   ErrorComponent,
-  LoadingAnim,
   NotifyError,
   NotifyOk
 } from "./UIElements"
 import {
+  Button,
+  Col,
+  Form,
   FormGroup,
+  FormFeedback,
+  Input,
   InputGroup,
   InputGroupText,
   Row,
-  Col,
-  Button,
-  Form,
-  Input,
-  FormFeedback
+  Table
 } from "reactstrap"
 import { ParagraphTitle } from "./UIElements"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
@@ -34,7 +34,11 @@ import {
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from "yup";
 import { ErrorMessage } from "@hookform/error-message"
-
+import { 
+  ChangeViewPlaceholder, 
+  InputPlaceholder, 
+  ListViewPlaceholder 
+} from "./Placeholders"
 
 const hostnameRegex = /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9-]*[A-Za-z0-9])([_][A-Za-z0-9.\-_]*)*$/
 
@@ -160,7 +164,11 @@ export const MetricOverrideList = () => {
   ])
 
   if (loadingUserDetails || loadingConfs)
-    return (<LoadingAnim />)
+    return (
+      <ListViewPlaceholder
+        resourcename="metric configuration override"
+      />
+    )
 
   else if (errorUserDetails)
     return (<ErrorComponent error={errorUserDetails} />)
@@ -790,7 +798,30 @@ export const MetricOverrideChange = (props) => {
   )
 
   if (loading || loadingOverride)
-    return (<LoadingAnim />)
+    return (
+      <ChangeViewPlaceholder
+        resourcename="metric configuration override"
+        addview={ addview }
+      >
+        <FormGroup>
+          <Row>
+            <Col md={6}>
+              <InputPlaceholder width="100%" />
+            </Col>
+          </Row>
+        </FormGroup>
+        <FormGroup>
+          <ParagraphTitle title="Global attributes" />
+          <Table className="placeholder rounded" style={{ height: "200px" }} />
+          <ParagraphTitle title="Host attributes" />
+          <Table className="placeholder rounded" style={{ height: "200px" }} />
+        </FormGroup>
+        <FormGroup>
+          <ParagraphTitle title="Metrics' parameters" />
+          <Table className="placeholder rounded" style={{ height: "200px" }} />
+        </FormGroup>
+      </ChangeViewPlaceholder>
+    )
 
   else if (errorOverride)
     return (<ErrorComponent error={errorOverride} />)

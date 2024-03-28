@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import { Backend } from './DataManager';
 import {
-  LoadingAnim,
   BaseArgoView,
   NotifyOk,
   NotifyError,
@@ -33,6 +32,11 @@ import { fetchUserGroups, fetchUsers, fetchUserDetails  } from './QueryFunctions
 import { Controller, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { ErrorMessage } from '@hookform/error-message';
+import { 
+  ChangeViewPlaceholder,
+  InputPlaceholder, 
+  ListViewPlaceholder
+} from './Placeholders';
 
 
 const UserSchema = Yup.object().shape({
@@ -175,7 +179,11 @@ export const UsersList = (props) => {
   ], [isTenantSchema]);
 
   if (loading)
-    return (<LoadingAnim />);
+    return (
+      <ListViewPlaceholder
+        resourcename="user"
+      />
+    )
 
   else if (error)
     return (<ErrorComponent error={error}/>);
@@ -950,7 +958,160 @@ export const UserChange = (props) => {
   );
 
   if (statusUser === 'loading' || statusUserProfile === 'loading' || statusUserGroups === 'loading' || statusAllGroups === 'loading' || statusUserDetails === 'loading')
-    return(<LoadingAnim />)
+    return(
+      <ChangeViewPlaceholder
+        resourcename="user"
+      >
+        <FormGroup>
+          <Row>
+            <Col md={6}>
+              <InputPlaceholder />
+            </Col>
+          </Row>
+          {
+            addview &&
+              <>
+                <Row>
+                  <Col md={6}>
+                    <InputPlaceholder />
+                  </Col>
+                </Row>
+                <Row>
+                  <Col md={6}>
+                    <InputPlaceholder />
+                  </Col>
+                </Row>
+              </>
+          }
+        </FormGroup>
+        <FormGroup>
+          <ParagraphTitle title='Personal info'/>
+          <Row>
+            <Col md={6}>
+              <InputPlaceholder />
+            </Col>
+          </Row>
+          <Row>
+            <Col md={6}>
+              <InputPlaceholder />
+            </Col>
+          </Row>
+          <Row>
+            <Col md={6}>
+              <InputPlaceholder />
+            </Col>
+          </Row>
+          {
+            !addview &&
+              <>
+                <Row>
+                  <Col md={6}>
+                    <InputPlaceholder />
+                  </Col>
+                </Row>
+                <Row>
+                  <Col md={6}>
+                    <InputPlaceholder />
+                  </Col>
+                </Row>
+              </>
+          }
+        </FormGroup>
+        <FormGroup>
+          <ParagraphTitle title='permissions'/>
+          <Row>
+            <Col md={6}>
+              <Row>
+                <InputPlaceholder />
+              </Row>
+              <Row>
+                <FormText color="muted">
+                  Designates that this user has all permissions without explicitly assigning them.
+                </FormText>
+              </Row>
+            </Col>
+          </Row>
+          <Row>
+            <Col md={6}>
+              <Row>
+                <InputPlaceholder />
+              </Row>
+              <Row className='mt-0'>
+                <FormText color="muted">
+                  Designates whether this user should be treated as active. Unselect this instead of deleting accounts.
+                </FormText>
+              </Row>
+            </Col>
+          </Row>
+        </FormGroup>
+        {
+          isTenantSchema &&
+            <>
+              <FormGroup>
+                <ParagraphTitle title='POEM user permissions'/>
+                <Row>
+                  <Col md={5}>
+                    <InputPlaceholder />
+                    <FormText color="muted">
+                      The groups of reports that user will control.
+                    </FormText>
+                  </Col>
+                  <Col md={5}>
+                    <InputPlaceholder />
+                    <FormText color="muted">
+                      The groups of metrics that user will control.
+                    </FormText>
+                  </Col>
+                </Row>
+                <Row className='mt-3'>
+                  <Col md={5}>
+                    <InputPlaceholder />
+                    <FormText color="muted">
+                      The groups of metric profiles that user will control.
+                    </FormText>
+                  </Col>
+                  <Col md={5}>
+                    <InputPlaceholder />
+                    <FormText color="muted">
+                      The groups of aggregations that user will control.
+                    </FormText>
+                  </Col>
+                </Row>
+                <Row className='mt-3'>
+                  <Col md={5}>
+                    <InputPlaceholder />
+                    <FormText color="muted">
+                      The groups of thresholds profiles that user will control.
+                    </FormText>
+                  </Col>
+                </Row>
+              </FormGroup>
+              <FormGroup>
+                <ParagraphTitle title='Additional information'/>
+                <Row>
+                  <Col md={12}>
+                    <InputPlaceholder />
+                  </Col>
+                </Row>
+              </FormGroup>
+              <FormGroup>
+                <Row>
+                  <Col md={8}>
+                    <InputPlaceholder />
+                  </Col>
+                </Row>
+              </FormGroup>
+              <FormGroup>
+                <Row>
+                  <Col md={6}>
+                    <InputPlaceholder />
+                  </Col>
+                </Row>
+              </FormGroup>
+            </>
+        }
+      </ChangeViewPlaceholder>
+    )
 
   else if (statusUser === 'error')
     return (<ErrorComponent error={errorUser}/>);
@@ -1165,10 +1326,25 @@ export const ChangePassword = () => {
 
   const { data: userDetails, isLoading: loading} = useQuery(
     'userdetails', () => fetchUserDetails(false)
-  );
+  ); 
 
   if (loading)
-    return (<LoadingAnim/>);
+    return (
+      <ChangeViewPlaceholder
+        resourcename="password"
+      >
+        <Row>
+          <Col md={6}>
+            <InputPlaceholder />
+          </Col>
+        </Row>
+        <Row>
+          <Col md={6}>
+            <InputPlaceholder />
+          </Col>
+        </Row>
+      </ChangeViewPlaceholder>
+    );
 
   else if (userDetails) {
     return (

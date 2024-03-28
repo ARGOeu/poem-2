@@ -116,10 +116,10 @@ export const fetchAPIKeys = async () => {
 }
 
 
-export const fetchTenants = async () => {
+export const fetchTenants = async (publicview=false) => {
   const backend = new  Backend();
 
-  return await backend.fetchData('/api/v2/internal/tenants');
+  return await backend.fetchData(`/api/v2/internal/${publicview ? "public_": ""}tenants`);
 }
 
 

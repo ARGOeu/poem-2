@@ -718,8 +718,6 @@ describe('Tests for thresholds profiles listview', () => {
   test('Test that page renders properly', async () => {
     renderListView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Select thresholds profile to change')
     })
@@ -742,8 +740,6 @@ describe('Tests for thresholds profiles listview', () => {
 
   test('Test that public page renders properly', async () => {
     renderListView(true);
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Select thresholds profile for details')
@@ -805,8 +801,6 @@ describe('Tests for threshols profile changeview', () => {
 
   test('Test that page renders properly', async () => {
     renderChangeView();
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change thresholds profile');
@@ -953,8 +947,6 @@ describe('Tests for threshols profile changeview', () => {
 
   test('Test that public page renders properly', async () => {
     renderChangeView(true);
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Thresholds profile details');
@@ -2557,8 +2549,6 @@ describe('Tests for thresholds profiles addview', () => {
   test('Test that page renders properly', async () => {
     renderAddView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Add thresholds profile');
     })
@@ -3957,8 +3947,6 @@ describe('Tests for thresholds profile version detail page', () => {
 
   test('Test that page renders properly', async () => {
     renderVersionDetailsView();
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('TEST_PROFILE (2020-12-24 03:58:47)');

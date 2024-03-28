@@ -1722,8 +1722,6 @@ describe('Tests for reports listview', () => {
   test('Test that public page renders properly', async () => {
     renderListView(true)
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Select report for details')
     })
@@ -6985,10 +6983,6 @@ describe('Tests for reports addview', () => {
 
   test('Test that page renders properly', async () => {
     renderAddView();
-
-    await waitFor(() => {
-      expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-    })
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');

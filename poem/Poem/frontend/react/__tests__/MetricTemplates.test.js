@@ -810,8 +810,6 @@ describe('Test list of metric templates on SuperPOEM', () => {
   test('Test that listview renders properly', async () => {
     renderListView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /metric/i }).textContent).toBe('Select metric template to change')
     })
@@ -855,8 +853,6 @@ describe('Test list of metric templates on SuperPOEM', () => {
 
   test('Test that public listview renders properly', async () => {
     renderListView(true);
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /metric/i }).textContent).toBe('Select metric template for details')
@@ -1262,8 +1258,6 @@ describe('Test list of metric templates on tenant POEM', () => {
   test('Test that listview renders properly', async () => {
     renderTenantListView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /metric/i }).textContent).toBe('Select metric template for details')
     })
@@ -1407,8 +1401,6 @@ describe('Test metric template changeview on SuperPOEM', () => {
   test('Test that page renders properly', async () => {
     renderChangeView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template');
     })
@@ -1542,8 +1534,6 @@ describe('Test metric template changeview on SuperPOEM', () => {
 
   test('Test that public changeview for active metric template renders properly', async () => {
     renderChangeView({ publicView: true });
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /metric template/i }).textContent).toBe('Metric template details');
@@ -2479,8 +2469,6 @@ describe('Test metric template changeview on SuperPOEM', () => {
   test('Test that passive metric template page renders properly', async () => {
     renderChangeView({ passive: true });
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template');
     })
@@ -2573,8 +2561,6 @@ describe('Test metric template changeview on SuperPOEM', () => {
 
   test('Test that public page for passive metric template renders properly', async () => {
     renderChangeView({ passive: true, publicView: true });
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /metric template/i }).textContent).toBe('Metric template details');
@@ -2678,8 +2664,6 @@ describe('Test metric template changeview on SuperPOEM', () => {
 
   test('Test changing passive/active metric template', async () => {
     renderChangeView({ passive: true });
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template');
@@ -2792,8 +2776,6 @@ describe('Test metric template changeview on SuperPOEM', () => {
 
   test('Test changing active/passive metric template', async () => {
     renderChangeView();
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template');
@@ -2970,8 +2952,6 @@ describe('Test metric template changeview on SuperPOEM', () => {
 
     renderChangeView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template');
     })
@@ -3053,8 +3033,6 @@ describe('Test metric template addview on SuperPOEM', () => {
 
   test('Test that page renders properly', async () => {
     renderAddView();
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /add metric/i }).textContent).toBe('Add metric template');
@@ -4501,8 +4479,6 @@ describe('Test metric template cloneview on SuperPOEM', () => {
   test('Test that page renders properly', async () => {
     renderCloneView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /clone metric/i }).textContent).toBe('Clone metric template');
     })
@@ -4901,8 +4877,6 @@ describe('Test metric template detail view on tenant POEM', () => {
 
   test('Test that page renders properly', async () => {
     renderTenantChangeView();
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /metric template/i }).textContent).toBe('Metric template details');

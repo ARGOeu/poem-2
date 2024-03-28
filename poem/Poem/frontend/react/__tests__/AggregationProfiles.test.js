@@ -720,8 +720,6 @@ describe('Tests for aggregation profiles listview', () => {
   test('Test that page renders properly', async () => {
     renderListView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Select aggregation profile to change')
     })
@@ -745,8 +743,6 @@ describe('Tests for aggregation profiles listview', () => {
 
   test('Test that page public renders properly', async () => {
     renderListView(true);
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Select aggregation profile for details')
@@ -798,10 +794,6 @@ describe('Tests for aggregation profiles changeview', () => {
 
   test('Test that page renders properly without alerts', async () => {
     renderChangeView();
-
-    await waitFor(() => {
-      expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
-    })
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change aggregation profile');
@@ -883,10 +875,6 @@ describe('Tests for aggregation profiles changeview', () => {
 
   test('Test that public page renders properly', async () => {
     renderChangeView(true);
-
-    await waitFor(() => {
-      expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
-    })
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /details/i }).textContent).toBe('Aggregation profile details');
@@ -2649,10 +2637,6 @@ describe('Tests for aggregation profile addview', () => {
     renderAddview();
 
     await waitFor(() => {
-      expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
-    })
-
-    await waitFor(() => {
       expect(screen.getByRole('heading', { name: /aggregation profile/i }).textContent).toBe('Add aggregation profile');
     })
 
@@ -3551,8 +3535,6 @@ describe('Test for aggregation profile version detail page', () => {
 
   test('Test that page renders properly', async () => {
     renderVersionDetailsView();
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /test/i }).textContent).toBe('TEST_PROFILE (2020-12-28 14:53:48)')

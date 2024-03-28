@@ -230,8 +230,6 @@ describe('Test users listview', () => {
   test('Test that page renders properly', async () => {
     renderListView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Select user to change');
     })
@@ -283,8 +281,6 @@ describe('Test user changeview on SuperAdmin POEM', () => {
     mockFetchData.mockReturnValue(Promise.resolve(mockUser))
     renderChangeView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Change user');
     })
@@ -329,8 +325,6 @@ describe('Test user changeview on SuperAdmin POEM', () => {
     )
 
     renderChangeView('poem');
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Change user');
@@ -644,8 +638,6 @@ describe('Tests for user addview on SuperAdmin POEM', () => {
   test('Test page renders properly', async () => {
     renderAddView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Add user');
     })
@@ -879,8 +871,6 @@ describe('Tests for user changeview on tenant POEM', () => {
 
   test('Test that page renders properly', async () => {
     renderTenantChangeView();
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /change user/i }).textContent).toBe('Change user')
@@ -1446,8 +1436,6 @@ describe('Tests for user addview on tenant POEM', () => {
   test('Test page renders properly', async () => {
     renderTenantAddview();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /add user/i }).textContent).toBe('Add user');
     })
@@ -1908,8 +1896,6 @@ describe('Tests for changing password', () => {
 
   test('Test that page renders properly', async () => {
     renderChangePassword();
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /password/i }).textContent).toBe('Change password')

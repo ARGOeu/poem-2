@@ -170,8 +170,6 @@ describe("Tests for metric overrides listview", () => {
   test("Test that page renders properly", async () => {
     renderListView()
 
-    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
-
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: /override/i }).textContent).toBe("Select metric configuration override to change")
     })
@@ -209,7 +207,6 @@ describe("Tests for metric configuration overrides addview", () => {
 
   test("Test that page renders properly", async () => {
     renderAddView()
-    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: /override/i }).textContent).toBe("Add metric configuration override")
@@ -1264,8 +1261,6 @@ describe("Tests for metric configuration overrides changeview", () => {
 
   test("Test that page renders properly", async () => {
     renderChangeView()
-
-    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: /override/i }).textContent).toBe("Change metric configuration override")

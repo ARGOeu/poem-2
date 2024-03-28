@@ -319,8 +319,6 @@ describe("Test list of metric tags", () => {
   test("Test that page renders properly", async () => {
     renderListView()
 
-    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
-
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: /metric tag/i }).textContent).toBe("Select metric tag to change")
     })
@@ -347,8 +345,6 @@ describe("Test list of metric tags", () => {
 
   test("Test that public page renders properly", async () => {
     renderListView(true)
-
-    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: /metric tag/i }).textContent).toBe("Select metric tag for details")
@@ -406,8 +402,6 @@ describe("Test metric tags changeview", () => {
 
   test("Test that page renders properly", async () => {
     renderChangeView()
-
-    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: /metric tag/i }).textContent).toBe("Change metric tag")
@@ -474,8 +468,6 @@ describe("Test metric tags changeview", () => {
 
   test("Test that public page renders properly", async () => {
     renderChangeView(true)
-
-    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: /metric tag/i }).textContent).toBe("Metric tag details")
@@ -989,8 +981,6 @@ describe("Test metric tags addview", () => {
 
   test("Test that page renders properly", async () => {
     renderAddView()
-
-    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: /metric tag/i }).textContent).toBe("Add metric tag")

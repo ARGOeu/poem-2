@@ -2,7 +2,6 @@ import React, { useContext, useState } from 'react';
 import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import { Backend, WebApi } from './DataManager';
 import {
-  LoadingAnim,
   BaseArgoView,
   NotifyOk,
   DiffElement,
@@ -27,7 +26,8 @@ import {
   Label,
   Form,
   Input,
-  FormFeedback
+  FormFeedback,
+  Table
 } from 'reactstrap';
 import * as Yup from 'yup';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -43,7 +43,11 @@ import {
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext, useWatch } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { ErrorMessage } from '@hookform/error-message';
-
+import { 
+  ListViewPlaceholder,
+  ChangeViewPlaceholder,
+  ProfileMainPlaceholder
+} from './Placeholders';
 
 const ThresholdsProfilesChangeContext = React.createContext()
 
@@ -1005,6 +1009,38 @@ const ThresholdsProfilesForm = ({
 }
 
 
+const ThresholdsProfilesFormPlaceholder = ( props ) => {
+  const addview = props.addview
+  const publicview = props.publicView
+  const historyview = props.historview
+  const title = props.title
+
+  return (
+    <ChangeViewPlaceholder
+      resourcename={ historyview ? title : publicview ? "Thresholds profile details" : "thresholds profile" }
+      infoview={ historyview || publicview }
+      addview={ addview }
+      buttons={
+        (!addview && !publicview && !historyview) && <Button color="secondary" disabled>History</Button>
+      }
+    >
+      <ProfileMainPlaceholder 
+        profiletype="thresholds"
+      />
+      <ParagraphTitle title='Thresholds rules'/>
+      {
+        !addview &&
+          <Row>
+            <Col md={12}>
+              <Table className="placeholder rounded" style={{ height: "600px" }} />
+            </Col>
+          </Row>
+      }
+    </ChangeViewPlaceholder>
+  )
+}
+
+
 const fetchTopologyEndpoints = async ( webapi ) => {
   return await webapi.fetchReportsTopologyEndpoints()
 }
@@ -1061,7 +1097,12 @@ export const ThresholdsProfilesList = (props) => {
   ], [publicView]);
 
   if (statusUserDetails === 'loading' || statusThresholdsProfiles === 'loading')
-    return (<LoadingAnim/>);
+    return (
+      <ListViewPlaceholder 
+        resourcename="thresholds profile"
+        infoview={ publicView }
+      />
+    )
 
   else if (statusThresholdsProfiles === 'error')
     return (<ErrorComponent error={errorThresholdsProfiles}/>);
@@ -1161,18 +1202,18 @@ export const ThresholdsProfilesChange = (props) => {
   );
 
   const { data: topologyEndpoints, error: errorTopologyEndpoints, isLoading: loadingTopologyEndpoints } = useQuery(
-    'topologyendpoints', () => fetchTopologyEndpoints(webapi),
-    { enabled: !publicView }
-  )
+    "topologyendpoints", () => fetchTopologyEndpoints(webapi),
+    { enabled: !!userDetails }
+  );
 
   const { data: metricProfiles, error: errorMetricProfiles, isLoading: loadingMetricProfiles } = useQuery(
     ['metricprofile', 'webapi'], () => fetchMetricProfiles(webapi),
-    { enabled: !publicView }
+    { enabled: !!userDetails }
   )
 
   const { data: reports, error: errorReports, isLoading: loadingReports } = useQuery(
     ["report", "webapi"], async () => webapi.fetchReports(),
-    { enabled: !publicView && !addview && !!userDetails }
+    { enabled: !addview && !!userDetails }
   )
 
   function thresholdsToString(rules) {
@@ -1324,8 +1365,9 @@ export const ThresholdsProfilesChange = (props) => {
 
   const loading = loadingBackendTP || loadingWebApiTP || loadingUserDetails || loadingAllMetrics || loadingMetricProfiles || loadingTopologyEndpoints || loadingReports
 
-  if (loading)
-    return (<LoadingAnim/>);
+  if (loading) {
+    return (<ThresholdsProfilesFormPlaceholder { ...props } />)
+  }
 
   else if (errorBackendTP)
     return (<ErrorComponent error={errorBackendTP}/>);
@@ -1456,8 +1498,14 @@ export const ThresholdsProfileVersionCompare = () => {
     ['thresholdsprofile', 'version', name], () => fetchThresholdsProfilesVersions(name)
   )
 
-  if (status === 'loading')
-    return (<LoadingAnim/>);
+  if (status === 'loading') {
+    return (
+      <>
+        <h2 className='ms-3 mt-1 mb-4'>{`Compare ${name} versions`}</h2>
+        <Table className="placeholder rounded" style={{ height: "600px" }} />
+      </>
+    );
+  }
 
   else if (status === 'error')
     return (<ErrorComponent error={error}/>);
@@ -1506,8 +1554,14 @@ export const ThresholdsProfileVersionDetail = (props) => {
     ['thresholdsprofile', 'version', name], () => fetchThresholdsProfilesVersions(name)
   )
 
-  if (status === 'loading')
-    return (<LoadingAnim/>);
+  if (status === 'loading') {
+    return (
+      <ThresholdsProfilesFormPlaceholder
+        historview={ true }
+        title={ `${name} (${version})` }
+      />
+    )
+  }
 
   else if (status === 'error')
     return (<ErrorComponent error={error}/>);

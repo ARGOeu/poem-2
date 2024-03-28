@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Backend, WebApi } from './DataManager';
 import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import {
-  LoadingAnim,
   BaseArgoView,
   NotifyOk,
   DiffElement,
@@ -19,22 +18,23 @@ import {
   CustomReactSelect
  } from './UIElements';
 import {
+  Badge,
+  Button,
+  ButtonToolbar,
+  Col,
   Form,
   FormGroup,
-  Row,
-  Col,
-  Label,
+  FormFeedback,
   FormText,
-  Button,
+  Input,
+  InputGroup,
+  InputGroupText,
+  Label,
   Popover,
   PopoverBody,
   PopoverHeader,
-  InputGroup,
-  InputGroupText,
-  ButtonToolbar,
-  Badge,
-  Input,
-  FormFeedback
+  Row,
+  Table
 } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
@@ -58,6 +58,10 @@ import * as Yup from 'yup';
 import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { ErrorMessage } from '@hookform/error-message';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { 
+  ListViewPlaceholder,
+  MetricFormPlaceholder
+} from './Placeholders';
 
 
 const metricValidationSchema = Yup.object().shape({
@@ -360,7 +364,7 @@ export const ListOfMetrics = (props) => {
   )
 
   const { data: tenants, error: errorTenants, isLoading: loadingTenants } = useQuery(
-    `${publicView ? "public_" : ""}tenant`, () => fetchTenants(),
+    `${publicView ? "public_" : ""}tenant`, () => fetchTenants(publicView),
     { enabled: type === "metrictemplates" && !isTenantSchema }
   )
 
@@ -685,7 +689,24 @@ export const ListOfMetrics = (props) => {
   })
 
   if (metricsLoading || typesLoading || tagsLoading || OSGroupsLoading || userDetailsLoading || loadingMP || loadingTenants)
-    return (<LoadingAnim />);
+    return (
+      <ListViewPlaceholder
+        resourcename={ type === "metrics" ? "metric" : "metric template" }
+        infoview={ isTenantSchema && publicView && type === "metrics" }
+        buttons={
+          type === "metrics" ? 
+            <></>
+          :
+            (isTenantSchema || publicView) ? 
+              <></>
+            :
+              <div>
+                <Button color="secondary">Add</Button>
+                <Button className="ms-2" color="secondary">Delete</Button>
+              </div>
+        }
+      />
+    )
 
   else if (metricsError)
     return (<ErrorComponent error={metricsError.message}/>);
@@ -716,6 +737,7 @@ export const ListOfMetrics = (props) => {
           location={location}
           listview={true}
           addnew={false}
+          title={ !publicView ? "Select metric to change" : undefined }
         >
           <BaseArgoTable
             data={metrics}
@@ -1428,7 +1450,7 @@ export const MetricForm =
         </Form>
       </BaseArgoView>
     )
-  }
+}
 
 
 export const CompareMetrics = (props) => {
@@ -1445,7 +1467,14 @@ export const CompareMetrics = (props) => {
   )
 
   if (loading)
-    return (<LoadingAnim/>);
+    return (
+      <>
+        <h2 className='ms-3 mt-1 mb-4'>{`Compare ${name}`}</h2>
+        <div className='ms-3 mt-4 placeholder-glow rounded'>
+          <Table className="placeholder rounded" style={{ height: "250px" }} />
+        </div>
+      </>
+    );
 
   else if (error)
     return (<ErrorComponent error={error}/>);
@@ -1626,7 +1655,7 @@ export const MetricChange = (props) => {
   }
 
   if (metricLoading || userDetailsLoading || probesLoading)
-    return (<LoadingAnim/>);
+    return (<MetricFormPlaceholder obj_label="metric" { ...props } />)
 
   else if (metricError)
     return (<ErrorComponent error={metricError}/>);
@@ -1714,7 +1743,13 @@ export const MetricVersionDetails = (props) => {
   )
 
   if (loadingMetric || loadingProbes)
-    return (<LoadingAnim/>);
+    return (
+      <MetricFormPlaceholder 
+        obj_label="metric" 
+        historyview={ true } 
+        title={ `${name} (${version})` }
+      />
+    )
 
   else if (errorMetric)
     return (<ErrorComponent error={errorMetric}/>);

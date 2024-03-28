@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Backend } from './DataManager';
 import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import{
-  LoadingAnim,
   BaseArgoView,
   NotifyOk,
   NotifyError,
@@ -34,7 +33,11 @@ import { Controller, useForm, useWatch } from 'react-hook-form';
 import { ErrorMessage } from '@hookform/error-message';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from "yup";
-
+import { 
+  ChangeViewPlaceholder,
+  InputPlaceholder, 
+  ListViewPlaceholder 
+} from './Placeholders';
 
 const validationSchema = Yup.object().shape({
   name: Yup.string()
@@ -108,7 +111,12 @@ export const PackageList = (props) => {
   ], [isTenantSchema, listRepos]);
 
   if (statusPackages === 'loading' || statusRepos === 'loading')
-    return (<LoadingAnim/>);
+    return (
+      <ListViewPlaceholder
+        resourcename="package"
+        infoview={ isTenantSchema }
+      />
+    )
 
   else if (statusPackages === 'error')
     return (<ErrorComponent error={errorPackages}/>);
@@ -158,7 +166,7 @@ function splitRepos(repos) {
 
 
 const PackageForm = ({
-  nameversion, addview, cloneview, disabled, location, history, pkg={}, probes=[], repos6=[], repos7=[], repos9=[], packageVersions=[]
+  nameversion, addview, cloneview, disabled, location, pkg={}, probes=[], repos6=[], repos7=[], repos9=[], packageVersions=[]
 }) => {
   const navigate = useNavigate()
   const backend = new Backend()
@@ -714,7 +722,79 @@ export const PackageComponent = (props) => {
   )
 
   if (statusPkg === 'loading' || statusRepos === 'loading' || statusProbes === 'loading' || statusPackageVersions === 'loading')
-    return (<LoadingAnim/>);
+    return (
+      <ChangeViewPlaceholder
+        resourcename={ disabled ? 'Package details' : 'package' }
+        infoview={ disabled }
+        addview={ addview }
+        cloneview={ cloneview }
+        buttons={
+          (!disabled && !addview && !cloneview) && <Button color="secondary" disabled>Clone</Button>
+        }
+      >
+        <FormGroup>
+          <Row className='align-items-center'>
+            <Col md={6}>
+              <InputPlaceholder />
+              <FormText color='muted'>
+                Package name.
+              </FormText>
+            </Col>
+            <Col md={2}>
+              <Row>
+                <Col md={12}>
+                  <InputPlaceholder />
+                  <FormText color='muted'>
+                    Package version.
+                  </FormText>
+                </Col>
+              </Row>
+            </Col>
+            {
+              !disabled &&
+                <Col md={3}>
+                  <InputPlaceholder />
+                </Col>
+            }
+          </Row>
+        </FormGroup>
+        <FormGroup>
+          <ParagraphTitle title='YUM repo'/>
+          <Row>
+            <Col md={8}>
+              <InputPlaceholder />
+              <FormText color='muted'>
+                Package is part of selected CentOS 6 repo.
+              </FormText>
+            </Col>
+          </Row>
+          <Row className='mt-4'>
+            <Col md={8}>
+              <InputPlaceholder />
+              <FormText color='muted'>
+                Package is part of selected CentOS 7 repo.
+              </FormText>
+            </Col>
+          </Row>
+          <Row className='mt-4'>
+            <Col md={8}>
+              <InputPlaceholder />
+              <FormText color='muted'>
+                Package is part of selected CentOS 7 repo.
+              </FormText>
+            </Col>
+          </Row>
+        </FormGroup>
+        {
+          (!addview && !cloneview) &&
+            <Row className='mt-3'>
+              <Col md={8}>
+                Probes:
+              </Col>
+            </Row>
+        }
+      </ChangeViewPlaceholder>
+    )
 
   else if (statusPkg === 'error')
     return (<ErrorComponent error={errorPkg}/>);
@@ -745,9 +825,11 @@ export const PackageComponent = (props) => {
         repos9.push(`${repo.name} (${repo.tag})`)
     })
 
-    if (probes) {
+    if (probes && pkg && pkg.name) {
       probes.forEach(probe => {
-        if (probe.fields.package === `${pkg.name} (${pkg.version})`)
+        console.log("pkg.name: ", pkg.name)
+        console.log("probe.fields.package: ", probe.fields.package)
+        if (probe.fields.package === `${pkg.name} (${pkg.version})` )
           listProbes.push(probe.fields.name)
       })
     }

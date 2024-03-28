@@ -308,8 +308,6 @@ describe('Test list of probes on SuperAdmin POEM', () => {
   test('Test that listview renders properly', async () => {
     renderListView({});
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe to change');
     })
@@ -338,8 +336,6 @@ describe('Test list of probes on SuperAdmin POEM', () => {
 
   test('Test that public listview renders properly', async () => {
     renderListView({ publicView: true });
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe for details');
@@ -439,8 +435,6 @@ describe('Test list of probes on tenant POEM', () => {
   test('Test that listview renders properly', async () => {
     renderListView({ isTenantSchema: true });
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe for details');
     })
@@ -469,8 +463,6 @@ describe('Test list of probes on tenant POEM', () => {
 
   test('Test that public listview renders properly', async () => {
     renderListView({ publicView: true, isTenantSchema: true });
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe for details');
@@ -587,8 +579,6 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
   test('Test that page renders properly', async () => {
     renderChangeView({});
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /change probe/i }).textContent).toBe('Change probe');
     })
@@ -638,8 +628,6 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
 
   test('Test that public page renders properly', async () => {
     renderChangeView({ publicView: true });
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /probe detail/i }).textContent).toBe('Probe details');
@@ -991,8 +979,6 @@ describe('Test probe changeview on tenant POEM', () => {
   test('Test that page renders properly', async () => {
     renderChangeView({ isTenantSchema: true });
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /probe details/i }).textContent).toBe('Probe details');
     })
@@ -1055,8 +1041,6 @@ describe('Test probe addview', () => {
 
   test('Test that page renders properly', async () => {
     renderAddView();
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /add probe/i }).textContent).toBe('Add probe');
@@ -1317,8 +1301,6 @@ describe('Test probe cloneview', () => {
   test('Test that page renders properly', async () => {
     renderCloneView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /clone probe/i }).textContent).toBe('Clone probe');
     })
@@ -1539,8 +1521,6 @@ describe('Test probe version details view', () => {
   test('Test page renders properly', async () => {
     renderVersionDetailsView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /ams-probe/i }).textContent).toBe('ams-probe (0.1.12)')
     })
@@ -1579,8 +1559,6 @@ describe('Test probe version details view', () => {
 
   test('Test public page renders properly', async () => {
     renderVersionDetailsView(true);
-
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /ams-probe/i }).textContent).toBe('ams-probe (0.1.12)')
