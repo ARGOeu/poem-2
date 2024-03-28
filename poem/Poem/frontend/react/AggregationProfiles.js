@@ -39,7 +39,7 @@ import { useQuery, useMutation, useQueryClient } from 'react-query';
 import * as Yup from 'yup';
 import { downloadJSON } from './FileDownload';
 
-import ReactDiffViewer from 'react-diff-viewer';
+import ReactDiffViewer from 'react-diff-viewer-continued';
 
 import "react-notifications/lib/notifications.css";
 import './AggregationProfiles.css';
