@@ -562,12 +562,12 @@ const ProbeFormPlaceholder = ( props ) => {
       infoview={ historyview || isTenantSchema || publicview }
       buttons={
         (isTenantSchema || (publicview && !historyview)) ?
-          <Button color="secondary">History</Button>
+          <Button color="secondary" disabled>History</Button>
         :
           (!publicview && !historyview && !cloneview && !addview) &&
             <div>
-              <Button color="secondary">Clone</Button>
-              <Button className="ms-2" color="secondary">History</Button>
+              <Button color="secondary" disabled>Clone</Button>
+              <Button className="ms-2" color="secondary" disabled>History</Button>
             </div>
       }
     >
