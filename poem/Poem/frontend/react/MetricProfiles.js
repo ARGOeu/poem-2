@@ -645,17 +645,20 @@ const MetricProfilesFormPlaceholder = ( props ) => {
   const publicview = props.publicView
   const historyview = props.historyview
   const cloneview = props.cloneview
+  const title = props.title
 
   return (
     <ChangeViewPlaceholder
-      resourcename="metric profile"
-      addview={ addview || cloneview }
+      resourcename={ `${publicview ? "Metric profile details" : historyview ? title : "metric profile"}` }
+      addview={ addview }
+      cloneview={ cloneview }
+      infoview={ publicview || historyview }
       buttons={
         !addview && !publicview && !cloneview && !historyview &&
           <div>
-            <Button color="secondary">CSV</Button>
-            <Button className="ms-3" color="secondary">Clone</Button>
-            <Button className="ms-3" color="secondary">History</Button>
+            <Button color="secondary" disabled>CSV</Button>
+            <Button className="ms-3" color="secondary" disabled>Clone</Button>
+            <Button className="ms-3" color="secondary" disabled>History</Button>
           </div>
       }
     >
@@ -1095,6 +1098,7 @@ export const MetricProfilesList = (props) => {
     return (
       <ListViewPlaceholder
         resourcename="metric profile"
+        infoview={ publicView }
       />
     )
 
@@ -1226,7 +1230,7 @@ export const MetricProfileVersionDetails = (props) => {
 
   if (loadingUserDetails || loading)
     return (
-      <MetricProfilesFormPlaceholder historyview={ true } />
+      <MetricProfilesFormPlaceholder historyview={ true } title={ `${name} (${version})` } />
     )
 
   else if (error)
