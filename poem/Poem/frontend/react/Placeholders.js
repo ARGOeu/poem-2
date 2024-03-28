@@ -37,7 +37,7 @@ export const ListViewPlaceholder = ({ resourcename, infoview=false, publicview=f
         buttons ? 
           buttons
         :
-          (!publicview && !infoview) && <Button color="secondary">Add</Button>
+          (!publicview && !infoview) && <Button color="secondary" disabled>Add</Button>
       }
     </div>
     <Form className="ms-2 mb-2 mt-2 p-3 border placeholder-glow rounded">
