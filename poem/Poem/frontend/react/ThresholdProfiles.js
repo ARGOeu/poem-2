@@ -1028,11 +1028,14 @@ const ThresholdsProfilesFormPlaceholder = ( props ) => {
         profiletype="thresholds"
       />
       <ParagraphTitle title='Thresholds rules'/>
-      <Row>
-        <Col md={12}>
-          <Table className="placeholder rounded" style={{ height: "600px" }} />
-        </Col>
-      </Row>
+      {
+        !addview &&
+          <Row>
+            <Col md={12}>
+              <Table className="placeholder rounded" style={{ height: "600px" }} />
+            </Col>
+          </Row>
+      }
     </ChangeViewPlaceholder>
   )
 }
@@ -1199,18 +1202,18 @@ export const ThresholdsProfilesChange = (props) => {
   );
 
   const { data: topologyEndpoints, error: errorTopologyEndpoints, isLoading: loadingTopologyEndpoints } = useQuery(
-    'topologyendpoints', () => fetchTopologyEndpoints(webapi),
-    { enabled: !publicView }
-  )
+    "topologyendpoints", () => fetchTopologyEndpoints(webapi),
+    { enabled: !!userDetails }
+  );
 
   const { data: metricProfiles, error: errorMetricProfiles, isLoading: loadingMetricProfiles } = useQuery(
     ['metricprofile', 'webapi'], () => fetchMetricProfiles(webapi),
-    { enabled: !publicView }
+    { enabled: !!userDetails }
   )
 
   const { data: reports, error: errorReports, isLoading: loadingReports } = useQuery(
     ["report", "webapi"], async () => webapi.fetchReports(),
-    { enabled: !publicView && !addview && !!userDetails }
+    { enabled: !addview && !!userDetails }
   )
 
   function thresholdsToString(rules) {
