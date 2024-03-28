@@ -364,7 +364,7 @@ export const ListOfMetrics = (props) => {
   )
 
   const { data: tenants, error: errorTenants, isLoading: loadingTenants } = useQuery(
-    `${publicView ? "public_" : ""}tenant`, () => fetchTenants(),
+    `${publicView ? "public_" : ""}tenant`, () => fetchTenants(publicView),
     { enabled: type === "metrictemplates" && !isTenantSchema }
   )
 
