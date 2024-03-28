@@ -729,7 +729,7 @@ export const PackageComponent = (props) => {
         addview={ addview }
         cloneview={ cloneview }
         buttons={
-          (!disabled && !addview) && <Button color="secondary">Clone</Button>
+          (!disabled && !addview && !cloneview) && <Button color="secondary" disabled>Clone</Button>
         }
       >
         <FormGroup>
@@ -785,6 +785,14 @@ export const PackageComponent = (props) => {
             </Col>
           </Row>
         </FormGroup>
+        {
+          (!addview && !cloneview) &&
+            <Row className='mt-3'>
+              <Col md={8}>
+                Probes:
+              </Col>
+            </Row>
+        }
       </ChangeViewPlaceholder>
     )
 
