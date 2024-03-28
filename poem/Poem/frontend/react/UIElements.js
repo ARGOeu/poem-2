@@ -7,9 +7,6 @@ import {
   BreadcrumbItem,
   Button,
   ButtonToolbar,
-  Card,
-  CardBody,
-  CardHeader,
   Col,
   Collapse,
   Container,
@@ -40,7 +37,6 @@ import {
 } from 'reactstrap';
 import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import ArgoLogo from './argologo_color.svg';
-import ArgoLogoAnim from './argologo_anim.svg';
 import EULogo from './eu.png';
 import EOSCLogo from './eosc.png';
 import './UIElements.css';
@@ -845,23 +841,6 @@ export const Footer = ({ termsLink, privacyLink, loginPage=false, publicPage=fal
     )
   }
 }
-
-
-export const LoadingAnim = () =>
-(
-  <Row className="ms-2 me-1 border rounded" style={{height: '90%', backgroundColor: 'white'}}>
-    <Col className="d-flex flex-column align-items-center align-self-center" md={{size: 8, offset: 2}}>
-      <Card className="text-center border-0">
-        <CardHeader className="bg-light">
-          <h4 className="text-dark">Loading data...</h4>
-        </CardHeader>
-        <CardBody>
-          <img src={ArgoLogoAnim} alt="ARGO logo anim" className="img-responsive" height="400px"/>
-        </CardBody>
-      </Card>
-    </Col>
-  </Row>
-)
 
 
 export const NotifyOk = ({msg='', title='', callback=undefined}) => {
