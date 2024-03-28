@@ -100,7 +100,7 @@ export const ProfileMainPlaceholder = ({ profiletype, description=undefined }) =
     <Row className='mt-4'>
       <Col md={3}>
         <Row>
-          <InputPlaceholder width="50%" />
+          <InputPlaceholder />
         </Row>
         <Row>
           <FormText color="muted">
