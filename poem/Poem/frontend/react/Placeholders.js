@@ -20,7 +20,7 @@ export const InputPlaceholder = ({ height="38px", width="100%" }) =>
   <span className="placeholder rounded" style={{ height: height, width: width }} />
 
 
-export const TextAreaPlaceholder = ({ height="152px", width="100%" }) => 
+export const TextAreaPlaceholder = ({ height="134px", width="100%" }) => 
   <span className="placeholder rounded" style={{ height: height, width: width }} />
 
 
