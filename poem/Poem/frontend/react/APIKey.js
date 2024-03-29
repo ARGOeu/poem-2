@@ -43,13 +43,13 @@ const validationSchema = yup.object().shape({
   name: yup.string().required("Name field is required")
     .when("used_by", {
       is: (value) => value === "poem",
-      then: yup.string().test("must_not_start", "Name can contain alphanumeric characters, dash and underscore, must always begin with a letter, but not with WEB-API-", function (value) {
+      then: (schema) => schema.test("must_not_start", "Name can contain alphanumeric characters, dash and underscore, must always begin with a letter, but not with WEB-API-", (value) => {
         if (!value.startsWith("WEB-API-") && value.match(/^[a-zA-Z][A-Za-z0-9\-_]*$/))
           return true
         else
           return false
       }),
-      otherwise: yup.string().matches(/^WEB-API-\S*(-RO)?$/, "Name must have form WEB-API-<tenant_name> or WEB-API-<tenant_name>-RO")
+      otherwise: (schema) => schema.matches(/^WEB-API-\S*(-RO)?$/, "Name must have form WEB-API-<tenant_name> or WEB-API-<tenant_name>-RO")
     })
 })
 
