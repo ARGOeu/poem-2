@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, waitFor, screen, within, fireEvent } from '@testing-library/react';
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { Backend, WebApi } from '../DataManager';
 import {
@@ -721,10 +721,11 @@ describe('Tests for aggregation profiles listview', () => {
     renderListView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Select aggregation profile to change')
+      expect(screen.getAllByRole('columnheader')).toHaveLength(4);
     })
 
-    expect(screen.getAllByRole('columnheader')).toHaveLength(4);
+    expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Select aggregation profile to change')
+
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Name' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Description' })).toBeInTheDocument();
@@ -745,10 +746,11 @@ describe('Tests for aggregation profiles listview', () => {
     renderListView(true);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Select aggregation profile for details')
+      expect(screen.getAllByRole('columnheader')).toHaveLength(4);
     })
 
-    expect(screen.getAllByRole('columnheader')).toHaveLength(4);
+    expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Select aggregation profile for details')
+
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Name' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Description' })).toBeInTheDocument();
@@ -796,8 +798,10 @@ describe('Tests for aggregation profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change aggregation profile');
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
+
+    expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change aggregation profile');
 
     const nameField = screen.getByTestId('name');
     const groupField = screen.getByText('EGI');
@@ -863,7 +867,6 @@ describe('Tests for aggregation profiles changeview', () => {
     expect(card3.getAllByTestId(/remove/i)).toHaveLength(2);
     expect(card3.getAllByTestId(/insert/i)).toHaveLength(1);
 
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /history/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /history/i }).closest('a')).toHaveAttribute('href', '/ui/aggregationprofiles/TEST_PROFILE/history')
@@ -877,8 +880,10 @@ describe('Tests for aggregation profiles changeview', () => {
     renderChangeView(true);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /details/i }).textContent).toBe('Aggregation profile details');
+      expect(screen.getByTestId("name")).toBeInTheDocument()
     })
+
+    expect(screen.getByRole('heading', { name: /details/i }).textContent).toBe('Aggregation profile details');
 
     const nameField = screen.getByTestId('name');
     const groupField = screen.getByTestId('groupname');
@@ -968,7 +973,7 @@ describe('Tests for aggregation profiles changeview', () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /change/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
 
     const nameField = screen.getByTestId("name")
@@ -1006,7 +1011,7 @@ describe('Tests for aggregation profiles changeview', () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /change/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
 
     expect(screen.getByText("servicegroups")).toBeInTheDocument()
@@ -1058,7 +1063,7 @@ describe('Tests for aggregation profiles changeview', () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /change/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
 
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
@@ -1116,7 +1121,9 @@ describe('Tests for aggregation profiles changeview', () => {
     expect(screen.queryByTestId('alert-missing')).not.toBeInTheDocument()
     expect(screen.queryByTestId('alert-extra')).toBeInTheDocument()
 
-    await selectEvent.select(card0.getAllByText(/select/i)[0], "webdav")
+    await waitFor(async () => {
+      await selectEvent.select(card0.getAllByText(/select/i)[0], "webdav")
+    })
 
     expect(card0.getByText("ARC-CE")).toBeInTheDocument()
     expect(card0.getByText("GRAM5")).toBeInTheDocument()
@@ -1180,7 +1187,7 @@ describe('Tests for aggregation profiles changeview', () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /change/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
 
     expect(screen.getAllByTestId(/card/i)).toHaveLength(4)
@@ -1227,7 +1234,7 @@ describe('Tests for aggregation profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change aggregation profile');
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
 
     fireEvent.click(screen.getByRole('button', { name: /json/i }));
@@ -1266,8 +1273,11 @@ describe('Tests for aggregation profiles changeview', () => {
       useEvent.upload(input, file);
     })
 
-    expect(input.files[0]).toStrictEqual(file)
-    expect(input.files.item(0)).toStrictEqual(file)
+    await waitFor(() => {
+      expect(input.files[0]).toBe(file)
+    })
+
+    expect(input.files.item(0)).toBe(file)
     expect(input.files).toHaveLength(1)
 
     await waitFor(() => {
@@ -1321,7 +1331,7 @@ describe('Tests for aggregation profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change aggregation profile');
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
 
     fireEvent.click(screen.getByRole('button', { name: /json/i }));
@@ -1399,7 +1409,7 @@ describe('Tests for aggregation profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change aggregation profile');
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
 
     await selectEvent.select(screen.getByText('EGI'), 'ARGO')
@@ -1421,7 +1431,10 @@ describe('Tests for aggregation profiles changeview', () => {
     await selectEvent.select(card0.getAllByText("OR")[1], "AND")
 
     fireEvent.click(card1.getByTestId('insert-0'));
-    await selectEvent.select(card1.getAllByText(/select/i)[0], "webdav")
+    
+    await waitFor(async () => {
+      await selectEvent.select(card1.getAllByText(/select/i)[0], "webdav")
+    })
 
     await selectEvent.select(within(screen.getByTestId('card-3')).getAllByText("OR")[1], "AND")
 
@@ -1493,7 +1506,7 @@ describe('Tests for aggregation profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change aggregation profile');
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
 
     await selectEvent.select(screen.getByText('EGI'), 'ARGO')
@@ -1510,7 +1523,10 @@ describe('Tests for aggregation profiles changeview', () => {
     await selectEvent.select(card0.getAllByText("OR")[1], "AND")
 
     fireEvent.click(card1.getByTestId('insert-0'));
-    await selectEvent.select(card1.getAllByText(/select/i)[0], "webdav")
+
+    await waitFor(async () => {
+      await selectEvent.select(card1.getAllByText(/select/i)[0], "webdav")
+    })
 
     await selectEvent.select(within(screen.getByTestId("card-3")).getAllByText("OR")[1], "AND")
 
@@ -1604,7 +1620,7 @@ describe('Tests for aggregation profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change aggregation profile');
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
 
     await selectEvent.select(screen.getByText('EGI'), 'ARGO')
@@ -1621,7 +1637,10 @@ describe('Tests for aggregation profiles changeview', () => {
     await selectEvent.select(card0.getAllByText("OR")[1], "AND")
 
     fireEvent.click(card1.getByTestId('insert-0'));
-    await selectEvent.select(card1.getAllByText(/select/i)[0], "webdav")
+
+    await waitFor(async () => {
+      await selectEvent.select(card1.getAllByText(/select/i)[0], "webdav")
+    })
 
     await selectEvent.select(within(screen.getByTestId("card-3")).getAllByText("OR")[1], "AND")
 
@@ -1720,7 +1739,7 @@ describe('Tests for aggregation profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change aggregation profile');
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
 
     await selectEvent.select(screen.getByText('EGI'), 'ARGO')
@@ -1737,7 +1756,10 @@ describe('Tests for aggregation profiles changeview', () => {
     await selectEvent.select(card0.getAllByText("OR")[1], "AND")
 
     fireEvent.click(card1.getByTestId('insert-0'));
-    await selectEvent.select(card1.getAllByText(/select/i)[0], "webdav")
+
+    await waitFor(async () => {
+      await selectEvent.select(card1.getAllByText(/select/i)[0], "webdav")
+    })
 
     await selectEvent.select(within(screen.getByTestId('card-3')).getAllByText("OR")[1], "AND")
 
@@ -1887,7 +1909,7 @@ describe('Tests for aggregation profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change aggregation profile');
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
 
     await selectEvent.select(screen.getByText('EGI'), 'ARGO')
@@ -1904,7 +1926,10 @@ describe('Tests for aggregation profiles changeview', () => {
     await selectEvent.select(card0.getAllByText("OR")[1], "AND")
 
     fireEvent.click(card1.getByTestId('insert-0'));
-    await selectEvent.select(card1.getAllByText(/select/i)[0], "webdav")
+
+    await waitFor(async () => {
+      await selectEvent.select(card1.getAllByText(/select/i)[0], "webdav")
+    })
 
     await selectEvent.select(within(screen.getByTestId('card-3')).getAllByText("OR")[1], "AND")
 
@@ -2053,7 +2078,7 @@ describe('Tests for aggregation profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change aggregation profile');
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
 
     await selectEvent.select(screen.getByText('EGI'), 'ARGO')
@@ -2070,7 +2095,10 @@ describe('Tests for aggregation profiles changeview', () => {
     await selectEvent.select(card0.getAllByText("OR")[1], "AND")
 
     fireEvent.click(card1.getByTestId('insert-0'));
-    await selectEvent.select(card1.getAllByText(/select/i)[0], "webdav")
+
+    await waitFor(async () => {
+      await selectEvent.select(card1.getAllByText(/select/i)[0], "webdav")
+    })
 
     await selectEvent.select(within(screen.getByTestId('card-3')).getAllByText('OR')[1], "AND")
 
@@ -2214,7 +2242,7 @@ describe('Tests for aggregation profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change aggregation profile');
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
 
     fireEvent.click(screen.getByRole('button', { name: /json/i }));
@@ -2253,7 +2281,9 @@ describe('Tests for aggregation profiles changeview', () => {
       useEvent.upload(input, file);
     })
 
-    expect(input.files[ 0 ]).toStrictEqual(file)
+    await waitFor(() => {
+      expect(input.files[ 0 ]).toStrictEqual(file)
+    })
     expect(input.files.item(0)).toStrictEqual(file)
     expect(input.files).toHaveLength(1)
 
@@ -2265,7 +2295,10 @@ describe('Tests for aggregation profiles changeview', () => {
 
     const card0 = within(screen.getByTestId('card-0'));
     fireEvent.click(card0.getByTestId('insert-2'));
-    await selectEvent.select(card0.getAllByText(/select/i)[0], "webdav")
+
+    await waitFor(async () => {
+      await selectEvent.select(card0.getAllByText(/select/i)[0], "webdav")
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /add new group/i }));
 
@@ -2395,7 +2428,7 @@ describe('Tests for aggregation profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change aggregation profile');
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }))
@@ -2427,7 +2460,7 @@ describe('Tests for aggregation profiles changeview', () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /change/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
 
     fireEvent.click(screen.getByRole("button", { name: /delete/i }))
@@ -2465,7 +2498,7 @@ describe('Tests for aggregation profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change aggregation profile');
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }))
@@ -2500,7 +2533,7 @@ describe('Tests for aggregation profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change aggregation profile');
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }))
@@ -2540,7 +2573,7 @@ describe('Tests for aggregation profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change aggregation profile');
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }))
@@ -2580,7 +2613,7 @@ describe('Tests for aggregation profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change aggregation profile');
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }))
@@ -2637,8 +2670,10 @@ describe('Tests for aggregation profile addview', () => {
     renderAddview();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /aggregation profile/i }).textContent).toBe('Add aggregation profile');
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
+
+    expect(screen.getByRole('heading', { name: /aggregation profile/i }).textContent).toBe('Add aggregation profile');
 
     const nameField = screen.getByTestId('name');
     const groupField = screen.getAllByText(/select/i)[0];
@@ -2677,7 +2712,6 @@ describe('Tests for aggregation profile addview', () => {
     expect(screen.getByRole('button', { name: 'Add new group' })).toBeInTheDocument();
     expect(screen.queryAllByTestId(/card-/)).toHaveLength(0);
 
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /json/i })).not.toBeInTheDocument();
@@ -2687,7 +2721,7 @@ describe('Tests for aggregation profile addview', () => {
     renderAddview()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /add/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
 
     expect(screen.getByTestId("aggregation-form")).toHaveFormValues({
@@ -2721,7 +2755,7 @@ describe('Tests for aggregation profile addview', () => {
     renderAddview()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /add/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
 
     expect(screen.queryByText("servicegroups")).not.toBeInTheDocument()
@@ -2749,7 +2783,7 @@ describe('Tests for aggregation profile addview', () => {
     renderAddview()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /add/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
 
     expect(screen.queryAllByTestId(/card-/i)).toHaveLength(0)
@@ -2890,7 +2924,7 @@ describe('Tests for aggregation profile addview', () => {
     renderAddview();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /aggregation profile/i }).textContent).toBe('Add aggregation profile');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
@@ -2910,7 +2944,10 @@ describe('Tests for aggregation profile addview', () => {
     await selectEvent.select(selectFields0[1], "OR")
     await selectEvent.select(selectFields0[2], "OR")
     fireEvent.click(card0.getByTestId('insert-0'));
-    await selectEvent.select(card0.getAllByText(/select/i)[0], "GRAM5")
+
+    await waitFor(async () => {
+      await selectEvent.select(card0.getAllByText(/select/i)[0], "GRAM5")
+    })
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
     const card1 = within(screen.getByTestId('card-1'))
@@ -3024,7 +3061,7 @@ describe('Tests for aggregation profile addview', () => {
     renderAddview();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /aggregation profile/i }).textContent).toBe('Add aggregation profile');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
@@ -3044,7 +3081,10 @@ describe('Tests for aggregation profile addview', () => {
     await selectEvent.select(selectFields0[1], "OR")
     await selectEvent.select(selectFields0[2], "OR")
     fireEvent.click(card0.getByTestId('insert-0'));
-    await selectEvent.select(card0.getAllByText(/select/i)[0], "GRAM5")
+    
+    await waitFor(async () => {
+      await selectEvent.select(card0.getAllByText(/select/i)[0], "GRAM5")
+    })
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
     const card1 = within(screen.getByTestId('card-1'))
@@ -3124,7 +3164,7 @@ describe('Tests for aggregation profile addview', () => {
     renderAddview();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /aggregation profile/i }).textContent).toBe('Add aggregation profile');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
@@ -3144,7 +3184,10 @@ describe('Tests for aggregation profile addview', () => {
     await selectEvent.select(selectFields0[1], "OR")
     await selectEvent.select(selectFields0[2], "OR")
     fireEvent.click(card0.getByTestId('insert-0'));
-    await selectEvent.select(card0.getAllByText(/select/i)[0], "GRAM5")
+
+    await waitFor(async () => {
+      await selectEvent.select(card0.getAllByText(/select/i)[0], "GRAM5")
+    })
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
     const card1 = within(screen.getByTestId('card-1'))
@@ -3240,7 +3283,7 @@ describe('Tests for aggregation profile addview', () => {
     renderAddview();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /aggregation profile/i }).textContent).toBe('Add aggregation profile');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
@@ -3260,7 +3303,10 @@ describe('Tests for aggregation profile addview', () => {
     await selectEvent.select(selectFields0[1], "OR")
     await selectEvent.select(selectFields0[2], "OR")
     fireEvent.click(card0.getByTestId('insert-0'));
-    await selectEvent.select(card0.getAllByText(/select/i)[0], "GRAM5")
+    
+    await waitFor(async () => {
+      await selectEvent.select(card0.getAllByText(/select/i)[0], "GRAM5")
+    })
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
     const card1 = within(screen.getByTestId('card-1'))
@@ -3391,7 +3437,7 @@ describe('Tests for aggregation profile addview', () => {
     renderAddview();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /aggregation profile/i }).textContent).toBe('Add aggregation profile');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
@@ -3411,7 +3457,10 @@ describe('Tests for aggregation profile addview', () => {
     await selectEvent.select(selectFields0[1], "OR")
     await selectEvent.select(selectFields0[2], "OR")
     fireEvent.click(card0.getByTestId('insert-0'));
-    await selectEvent.select(card0.getAllByText(/select/i)[0], "GRAM5")
+
+    await waitFor(async () => {
+      await selectEvent.select(card0.getAllByText(/select/i)[0], "GRAM5")
+    })
 
     fireEvent.click(screen.getByRole('button', { name: 'Add new group' }));
     const card1 = within(screen.getByTestId('card-1'))
@@ -3537,8 +3586,10 @@ describe('Test for aggregation profile version detail page', () => {
     renderVersionDetailsView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /test/i }).textContent).toBe('TEST_PROFILE (2020-12-28 14:53:48)')
+      expect(screen.getByTestId("name")).toBeInTheDocument()
     })
+
+    expect(screen.getByRole('heading', { name: /test/i }).textContent).toBe('TEST_PROFILE (2020-12-28 14:53:48)')
 
     const nameField = screen.getByTestId('name');
     const groupField = screen.getByTestId('groupname');
