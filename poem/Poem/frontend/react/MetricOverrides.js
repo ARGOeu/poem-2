@@ -55,11 +55,11 @@ const validationSchema = Yup.object().shape({
         }
       ).when("value", {
         is: (value) => !!value,
-        then: Yup.string().matches(/^[a-zA-Z][A-Za-z0-9\-_.]*$/, "Attribute can contain alphanumeric characters, dash, underscore and dot, but must always begin with a letter")
+        then: (schema) => schema.matches(/^[a-zA-Z][A-Za-z0-9\-_.]*$/, "Attribute can contain alphanumeric characters, dash, underscore and dot, but must always begin with a letter")
       }),
       value: Yup.string().when("attribute", {
         is: (value) => !!value,
-        then: Yup.string().required("Attribute value is required")
+        then: (schema) => schema.required("Attribute value is required")
       })
     }, [[ "attribute", "value" ]])
   ),
@@ -68,8 +68,8 @@ const validationSchema = Yup.object().shape({
       hostname: Yup.string()
         .when(["attribute", "value"], {
           is: (attribute, value) => !!value || !!attribute,
-          then: Yup.string().matches(hostnameRegex, "Invalid hostname"),
-          otherwise: Yup.string().matches(
+          then: (schema) => schema.matches(hostnameRegex, "Invalid hostname"),
+          otherwise: (schema) => schema.matches(
             hostnameRegex, {
               excludeEmptyString: true,
               message: "Invalid hostname"
@@ -78,11 +78,11 @@ const validationSchema = Yup.object().shape({
         }),
       attribute: Yup.string().when(["hostname", "value"], {
         is: (hostname, value) => !!hostname || !!value,
-        then: Yup.string().matches(/^[a-zA-Z][A-Za-z0-9\-_.]*$/, "Attribute can contain alphanumeric characters, dash, underscore and dot, but must always begin with a letter")
+        then: (schema) => schema.matches(/^[a-zA-Z][A-Za-z0-9\-_.]*$/, "Attribute can contain alphanumeric characters, dash, underscore and dot, but must always begin with a letter")
       }),
       value: Yup.string().when(["hostname", "attribute"], {
         is: (hostname, attribute) => !!hostname || !!attribute,
-        then: Yup.string().required("Attribute value is required")
+        then: (schema) => schema.required("Attribute value is required")
       })
     }, [
       [ "hostname", "attribute" ],
@@ -94,8 +94,8 @@ const validationSchema = Yup.object().shape({
     Yup.object().shape({
       hostname: Yup.string().when(["metric", "parameter", "value"], {
         is: (metric, parameter, value) => !!metric || !!parameter || !!value,
-        then: Yup.string().matches(hostnameRegex, "Invalid hostname"),
-        otherwise: Yup.string().matches(
+        then: (schema) => schema.matches(hostnameRegex, "Invalid hostname"),
+        otherwise: (schema) => schema.matches(
           hostnameRegex, {
             excludeEmptyString: true,
             message: "Invalid hostname"
@@ -104,15 +104,15 @@ const validationSchema = Yup.object().shape({
       }),
       metric: Yup.string().when(["hostname", "parameter", "value"], {
         is: (hostname, parameter, value) => !!hostname || !!parameter || !!value,
-        then: Yup.string().matches(/^[a-zA-Z][A-Za-z0-9\-_.]*$/, "Metric name can contain alphanumeric characters, dash, underscore and dot, but must always begin with a letter")
+        then: (schema) => schema.matches(/^[a-zA-Z][A-Za-z0-9\-_.]*$/, "Metric name can contain alphanumeric characters, dash, underscore and dot, but must always begin with a letter")
       }),
       parameter: Yup.string().when(["hostname", "metric", "value"], {
         is: (hostname, metric, value) => !!hostname || !!metric || !!value,
-        then: Yup.string().matches(/^\S+$/, "Parameter cannot contain white space")
+        then: (schema) => schema.matches(/^\S+$/, "Parameter cannot contain white space")
       }),
       value: Yup.string().when(["hostname", "metric", "parameter"], {
         is: (hostname, metric, parameter) => !!hostname || !!metric || !!parameter,
-        then: Yup.string().required("Parameter value is required")
+        then: (schema) => schema.required("Parameter value is required")
       })
     }, [
       [ "hostname", "metric" ],
