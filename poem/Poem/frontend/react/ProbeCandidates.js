@@ -40,19 +40,19 @@ const validationSchema = yup.object().shape({
   status: yup.string(),
   service_type: yup.string().when("status", {
     is: (val) => val !== "submitted",
-    then: yup.string().required("Service type is required")
+    then: (schema) => schema.required("Service type is required")
   }),
   devel_url: yup.string().url("Invalid URL").when("status", {
     is: (val) => val === "testing",
-    then: yup.string().required("Devel UI URL is required")
+    then: (schema) => schema.required("Devel UI URL is required")
   }),
   production_url: yup.string().url("Invalid URL").when("status", {
     is: (val) => val === "deployed",
-    then: yup.string().required("Production UI URL is required")
+    then: (schema) => schema.required("Production UI URL is required")
   }),
   rejection_reason: yup.string().when("status", {
     is: (val) => val === "rejected",
-    then: yup.string().required("Rejection reason is required")
+    then: (schema) => schema.required("Rejection reason is required")
   })
 })
 
