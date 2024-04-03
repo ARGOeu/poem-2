@@ -71,15 +71,15 @@ const metricValidationSchema = Yup.object().shape({
   type: Yup.string(),
   probeversion: Yup.string().when('type', {
     is: (val) => val === 'Active',
-    then: Yup.string().required('Required')
+    then: (schema) => schema.required('Required')
   }),
   probeexecutable: Yup.string().when('type', {
     is: (val) => val === 'Active',
-    then: Yup.string().required('Required')
+    then: (schema) => schema.required('Required')
   }),
   config: Yup.array().when("type", {
     is: (val) => val === "Active",
-    then: Yup.array().of(
+    then: (schema) => schema.of(
       Yup.object().shape({
         value: Yup.string().required("Required")
       })
