@@ -1,5 +1,5 @@
 import React from 'react';
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { ThresholdsProfilesChange, ThresholdsProfilesList, ThresholdsProfileVersionDetail } from '../ThresholdProfiles';
@@ -719,10 +719,11 @@ describe('Tests for thresholds profiles listview', () => {
     renderListView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Select thresholds profile to change')
+      expect(screen.getAllByRole('columnheader')).toHaveLength(4);
     })
 
-    expect(screen.getAllByRole('columnheader')).toHaveLength(4);
+    expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Select thresholds profile to change')
+
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Name'})).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Description' })).toBeInTheDocument();
@@ -742,10 +743,11 @@ describe('Tests for thresholds profiles listview', () => {
     renderListView(true);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Select thresholds profile for details')
+      expect(screen.getAllByRole('columnheader')).toHaveLength(4);
     })
 
-    expect(screen.getAllByRole('columnheader')).toHaveLength(4);
+    expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Select thresholds profile for details')
+
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Name'})).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Description' })).toBeInTheDocument();
@@ -803,8 +805,10 @@ describe('Tests for threshols profile changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change thresholds profile');
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
+
+    expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change thresholds profile');
 
     const nameField = screen.getByTestId('name');
     const groupField = screen.getByText('TEST');
@@ -938,7 +942,6 @@ describe('Tests for threshols profile changeview', () => {
     expect(screen.getByTestId('rules.2.thresholds.0.add')).toBeInTheDocument();
 
     expect(screen.getByRole('button', { name: 'Add new rule' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /history/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /history/i }).closest('a')).toHaveAttribute('href', '/ui/thresholdsprofiles/TEST_PROFILE/history')
@@ -949,8 +952,10 @@ describe('Tests for threshols profile changeview', () => {
     renderChangeView(true);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Thresholds profile details');
+      expect(screen.getByTestId("name")).toBeInTheDocument()
     })
+    
+    expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Thresholds profile details');
 
     const nameField = screen.getByTestId('name');
     const groupField = screen.getByTestId('groupname');
@@ -1058,7 +1063,7 @@ describe('Tests for threshols profile changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change thresholds profile');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     await selectEvent.select(screen.getByText('TEST'), 'TESTa')
@@ -1282,7 +1287,7 @@ describe('Tests for threshols profile changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change thresholds profile');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     await selectEvent.select(screen.getByText('TEST'), 'TESTa')
@@ -1391,7 +1396,7 @@ describe('Tests for threshols profile changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change thresholds profile');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     await selectEvent.select(screen.getByText('TEST'), 'TESTa')
@@ -1594,7 +1599,7 @@ describe('Tests for threshols profile changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change thresholds profile');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     await selectEvent.select(screen.getByText('TEST'), 'TESTa')
@@ -1804,7 +1809,7 @@ describe('Tests for threshols profile changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change thresholds profile');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     await selectEvent.select(screen.getByText('TEST'), 'TESTa')
@@ -2031,7 +2036,7 @@ describe('Tests for threshols profile changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change thresholds profile');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     await selectEvent.select(screen.getByText('TEST'), 'TESTa')
@@ -2258,7 +2263,7 @@ describe('Tests for threshols profile changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change thresholds profile');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }))
@@ -2300,7 +2305,7 @@ describe('Tests for threshols profile changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change thresholds profile');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }))
@@ -2343,7 +2348,7 @@ describe('Tests for threshols profile changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change thresholds profile');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }))
@@ -2391,7 +2396,7 @@ describe('Tests for threshols profile changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change thresholds profile');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }))
@@ -2439,7 +2444,7 @@ describe('Tests for threshols profile changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change thresholds profile');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }))
@@ -2487,7 +2492,7 @@ describe('Tests for threshols profile changeview', () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole("button", { name: /delete/i }))
@@ -2550,8 +2555,10 @@ describe('Tests for thresholds profiles addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Add thresholds profile');
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
+
+    expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Add thresholds profile');
 
     const nameField = screen.getByTestId('name');
     const groupField = screen.getByText(/select/i);
@@ -2570,7 +2577,6 @@ describe('Tests for thresholds profiles addview', () => {
     expect(screen.queryAllByRole('table')).toHaveLength(0);
 
     expect(screen.getByRole('button', { name: 'Add a rule' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
   })
@@ -2594,7 +2600,7 @@ describe('Tests for thresholds profiles addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Add thresholds profile');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'TEST_PROFILE2' } });
@@ -2848,7 +2854,7 @@ describe('Tests for thresholds profiles addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Add thresholds profile');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'TEST_PROFILE2' } });
@@ -2972,7 +2978,7 @@ describe('Tests for thresholds profiles addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Add thresholds profile');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'TEST_PROFILE2' } });
@@ -3198,7 +3204,7 @@ describe('Tests for thresholds profiles addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Add thresholds profile');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'TEST_PROFILE2' } });
@@ -3438,7 +3444,7 @@ describe('Tests for thresholds profiles addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Add thresholds profile');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'TEST_PROFILE2' } });
@@ -3696,7 +3702,7 @@ describe('Tests for thresholds profiles addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Add thresholds profile');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'TEST_PROFILE2' } });
@@ -3949,8 +3955,10 @@ describe('Tests for thresholds profile version detail page', () => {
     renderVersionDetailsView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('TEST_PROFILE (2020-12-24 03:58:47)');
+      expect(screen.getByTestId("name")).toBeInTheDocument()
     })
+
+    expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('TEST_PROFILE (2020-12-24 03:58:47)');
 
     const nameField = screen.getByTestId('name');
     const groupField = screen.getByTestId('groupname');
