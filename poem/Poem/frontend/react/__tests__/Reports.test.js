@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, waitFor, screen, within, fireEvent } from '@testing-library/react';
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { Backend, WebApi } from '../DataManager';
 import { ReportsList, ReportsChange, ReportsAdd } from '../Reports';
@@ -1699,10 +1699,11 @@ describe('Tests for reports listview', () => {
     renderListView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Select report to change');
+      expect(screen.getAllByRole('columnheader')).toHaveLength(4);
     })
 
-    expect(screen.getAllByRole('columnheader')).toHaveLength(4);
+    expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Select report to change');
+
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Name' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Description' })).toBeInTheDocument();
@@ -1723,10 +1724,11 @@ describe('Tests for reports listview', () => {
     renderListView(true)
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Select report for details')
+      expect(screen.getAllByRole('columnheader')).toHaveLength(4);
     })
 
-    expect(screen.getAllByRole('columnheader')).toHaveLength(4);
+    expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Select report for details')
+
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Name' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Description' })).toBeInTheDocument();
@@ -1890,8 +1892,10 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Change report');
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
+
+    expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Change report');
 
     const nameField = screen.getByTestId('name');
     const disabledField = screen.getByLabelText(/disabled/i);
@@ -2204,7 +2208,6 @@ describe('Tests for reports changeview - sites', () => {
     expect(downtimeThresholdField.value).toBe('0.1');
     expect(downtimeThresholdField).toBeEnabled();
 
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
   })
@@ -2220,7 +2223,7 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'new-report-name' } })
@@ -2268,7 +2271,7 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByLabelText(/disabled/i))
@@ -2308,7 +2311,7 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'OPS_MONITOR_RHEL7')
@@ -2361,7 +2364,7 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     expect(screen.getAllByText(/sites/i)).toHaveLength(3)
@@ -2381,8 +2384,13 @@ describe('Tests for reports changeview - sites', () => {
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
 
-    expect(card_groups.queryAllByText("Value not matching predefined values")).toHaveLength(2)
-    expect(card_endpoints.queryAllByText("Value not matching predefined values")).toHaveLength(2)
+    await waitFor(() => {
+      expect(card_groups.queryAllByText("Value not matching predefined values")).toHaveLength(2)
+    })
+
+    await waitFor(() => {
+      expect(card_endpoints.queryAllByText("Value not matching predefined values")).toHaveLength(2)
+    })
   })
 
   test('Test change groups', async () => {
@@ -2396,7 +2404,7 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
@@ -2405,21 +2413,30 @@ describe('Tests for reports changeview - sites', () => {
 
     await selectEvent.select(card_groups.getByText('Certified'), 'Candidate')
 
-    expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(card_groups.getByTestId('removeTag-1'))
 
-    expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(card_groups.getByRole('button', { name: /add new tag/i }))
 
-    expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
       expect(screen.queryByRole('dialog', { title: /change/i })).not.toBeInTheDocument()
     })
-    expect(card_groups.queryAllByText(/required/i)).toHaveLength(2)
+    
+    await waitFor(() => {
+      expect(card_groups.queryAllByText(/required/i)).toHaveLength(2)
+    })
 
     await selectEvent.select(card_groups.getAllByText("Select...")[0], 'monitored')
     await selectEvent.select(card_groups.getAllByText("Select...")[0], 'yes')
@@ -2505,7 +2522,7 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const endpoint_groups = within(screen.getByTestId('card-group-of-endpoints'));
@@ -2575,7 +2592,7 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '70' } })
@@ -2621,7 +2638,7 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'More elaborate description of the critical report.' } })
@@ -2661,7 +2678,7 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'More elaborate description of the critical report.' } })
@@ -2706,7 +2723,7 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'More elaborate description of the critical report.' } })
@@ -2752,7 +2769,7 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'More elaborate description of the critical report.' } })
@@ -2797,7 +2814,7 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -2830,7 +2847,7 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -2865,7 +2882,7 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -2903,7 +2920,7 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -2941,7 +2958,7 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -3000,7 +3017,7 @@ describe("Tests for reports changeview - servicegroups", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /report/i }).textContent).toBe("Change report")
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId("name")
@@ -3744,7 +3761,7 @@ describe("Tests for reports changeview with wildcard - servicegroups", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /report/i }).textContent).toBe("Change report")
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId("name")
@@ -4471,7 +4488,7 @@ describe("Tests for reports changeview with wildcard - servicegroups", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const card_endpoints = within(screen.getByTestId("card-group-of-endpoints"))
@@ -4495,7 +4512,7 @@ describe("Tests for reports changeview with wildcard - servicegroups", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const card_groups = within(screen.getByTestId("card-group-of-groups"))
@@ -4546,7 +4563,7 @@ describe("Tests for reports changeview with wildcards - sites", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId("name")
@@ -4782,7 +4799,7 @@ describe("Tests for reports changeview with wildcards - sites", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const card_groups = within(screen.getByTestId("card-group-of-groups"))
@@ -4987,7 +5004,7 @@ describe("Tests for reports changeview with wildcards - sites", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const card_groups = within(screen.getByTestId("card-group-of-groups"))
@@ -5038,7 +5055,7 @@ describe("Tests for reports changeview with negation - sites", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId("name")
@@ -5531,7 +5548,7 @@ describe("Tests for reports changeview with negation - sites", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const card_groups = within(screen.getByTestId("card-group-of-groups"))
@@ -5588,7 +5605,7 @@ describe("Tests for reports changeview with negation - servicegroups", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId("name")
@@ -6077,7 +6094,7 @@ describe("Tests for reports changeview with negation - servicegroups", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const card_groups = within(screen.getByTestId("card-group-of-groups"))
@@ -6128,7 +6145,7 @@ describe("Tests for reports changeview with combination of negation and wildcard
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId("name")
@@ -6621,7 +6638,7 @@ describe("Tests for reports changeview with combination of negation and wildcard
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const card_groups = within(screen.getByTestId("card-group-of-groups"))
@@ -6671,8 +6688,10 @@ describe('Tests for public reports changeview', () => {
     renderChangeView(true);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /details/i }).textContent).toBe('Report details');
+      expect(screen.getByTestId("name")).toBeInTheDocument()
     })
+
+    expect(screen.getByRole('heading', { name: /details/i }).textContent).toBe('Report details');
 
     const nameField = screen.getByTestId('name');
     const disabledField = screen.getByLabelText(/disabled/i);
@@ -6782,7 +6801,7 @@ describe('Tests for public reports changeview', () => {
     renderChangeView(true);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /details/i }).textContent).toBe('Report details');
+      expect(screen.getByTestId("name")).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name');
@@ -6985,7 +7004,7 @@ describe('Tests for reports addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name');
@@ -7111,7 +7130,7 @@ describe('Tests for reports addview', () => {
     renderAddView()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'OPS-MONITOR' } });
@@ -7170,14 +7189,16 @@ describe('Tests for reports addview', () => {
     renderAddView()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
 
     fireEvent.click(card_groups.getByText(/add new tag/i))
 
-    expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
+    })
 
     expect(card_groups.queryByText('certification')).not.toBeInTheDocument()
     expect(card_groups.queryByText('infrastructure')).not.toBeInTheDocument()
@@ -7221,10 +7242,17 @@ describe('Tests for reports addview', () => {
     await waitFor(() => {
       expect(screen.queryByRole('dialog', { title: /add/i })).not.toBeInTheDocument()
     })
-    expect(card_groups.queryAllByText(/required/i)).toHaveLength(2)
+
+    await waitFor(() => {
+      expect(card_groups.queryAllByText(/required/i)).toHaveLength(2)
+    })
 
     await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'certification')
-    expect(card_groups.queryAllByText(/required/i)).toHaveLength(1)
+
+    await waitFor(() => {
+      expect(card_groups.queryAllByText(/required/i)).toHaveLength(1)
+    })
+
     selectEvent.openMenu(card_groups.queryByText(/select/i))
     expect(card_groups.queryByText('Candidate')).toBeInTheDocument()
     expect(card_groups.queryByText('Certified')).toBeInTheDocument()
@@ -7361,7 +7389,9 @@ describe('Tests for reports addview', () => {
 
     fireEvent.click(card_groups.getByTestId('removeTag-0'))
 
-    expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
+    })
 
     expect(card_groups.queryByText(/certification/i)).not.toBeInTheDocument()
     expect(card_groups.queryByText(/certified/i)).not.toBeInTheDocument()
@@ -7593,7 +7623,7 @@ describe('Tests for reports addview', () => {
     renderAddView()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
@@ -8022,7 +8052,7 @@ describe('Tests for reports addview', () => {
     renderAddView()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const topologyTypeField = screen.getAllByText(/select/i)[5]
@@ -8197,7 +8227,7 @@ describe('Tests for reports addview', () => {
     renderAddView()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const topologyTypeField = screen.getAllByText(/select/i)[5]
@@ -8381,7 +8411,7 @@ describe('Tests for reports addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'OPS-MONITOR' } });
@@ -8450,7 +8480,7 @@ describe('Tests for reports addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'OPS-MONITOR' } });
@@ -8521,7 +8551,7 @@ describe('Tests for reports addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'OPS-MONITOR' } });
@@ -8608,7 +8638,7 @@ describe('Tests for reports addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'OPS-MONITOR' } });
@@ -8695,7 +8725,7 @@ describe('Tests for reports addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'OPS-MONITOR' } });
