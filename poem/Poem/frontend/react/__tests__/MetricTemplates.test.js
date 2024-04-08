@@ -5022,7 +5022,7 @@ describe('Test metric template version detail view', () => {
     renderVersionDetailsView();
 
     await waitFor(() => {
-      expect(screen.getByTestId("name")).toBeInTheDocument()
+      expect(screen.getByTestId("dependency.0.key")).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name');

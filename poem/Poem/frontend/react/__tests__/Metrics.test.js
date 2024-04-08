@@ -1581,7 +1581,7 @@ describe('Tests for metric history', () => {
     renderVersionDetailsView();
 
     await waitFor(() => {
-      expect(screen.getByTestId("name")).toBeInTheDocument()
+      expect(screen.getByTestId("dependency.0.key")).toBeInTheDocument()
     })
 
     expect(screen.getByRole('heading', { name: /argo/i }).textContent).toBe('argo.AMS-Check (2020-11-30 13:23:48)');

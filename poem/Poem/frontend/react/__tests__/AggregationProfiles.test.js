@@ -1284,6 +1284,10 @@ describe('Tests for aggregation profiles changeview', () => {
       fireEvent.load(screen.getByTestId('file_input'))
     })
 
+    await waitFor(() => {
+      expect(screen.getByText("sites")).toBeInTheDocument()
+    })
+
     const nameField = screen.getByTestId('name');
     const groupField = screen.getByText('EGI');
 

@@ -94,13 +94,12 @@ describe("Test default ports list", () => {
     renderView();
 
     await waitFor(() => {
-      expect(screen.getByText("Port name")).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(4)
     })
 
     expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
 
     const table = within(screen.getByRole("table"))
-    expect(table.getAllByRole("columnheader")).toHaveLength(4)
     expect(table.getByRole("columnheader", { name: "#" })).toBeInTheDocument()
     expect(table.getByRole("columnheader", { name: "Port name" })).toBeInTheDocument()
     expect(table.getByRole("columnheader", { name: "Port value" })).toBeInTheDocument()
@@ -124,7 +123,7 @@ describe("Test default ports list", () => {
     renderView();
 
     await waitFor(() => {
-      expect(screen.getByText("Port name")).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(4)
     })
 
     expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
@@ -149,7 +148,7 @@ describe("Test default ports list", () => {
     renderView();
 
     await waitFor(() => {
-      expect(screen.getByText("Port name")).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(4)
     })
 
     expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
@@ -173,7 +172,7 @@ describe("Test default ports list", () => {
     renderView();
 
     await waitFor(() => {
-      expect(screen.getByText("Port name")).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(4)
     })
 
     expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
@@ -202,7 +201,7 @@ describe("Test default ports list", () => {
     renderView();
 
     await waitFor(() => {
-      expect(screen.getByText("Port name")).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(4)
     })
 
     expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
@@ -227,7 +226,7 @@ describe("Test default ports list", () => {
     renderView()
 
     await waitFor(() => {
-      expect(screen.getByText("Port name")).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(4)
     })
 
     expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
@@ -271,7 +270,7 @@ describe("Test default ports list", () => {
     renderView()
 
     await waitFor(() => {
-      expect(screen.getByText("Port name")).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(4)
     })
 
     expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
@@ -319,7 +318,7 @@ describe("Test default ports list", () => {
     renderView()
 
     await waitFor(() => {
-      expect(screen.getByText("Port name")).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(4)
     })
 
     expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
@@ -371,7 +370,7 @@ describe("Test default ports list", () => {
     renderView();
 
     await waitFor(() => {
-      expect(screen.getByText("Port name")).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(4)
     })
 
     expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
