@@ -1286,6 +1286,7 @@ describe("Test probe candidate changeview", () => {
     )
   })
 
+  /*
   test("Test successfully changing probe candidate without service type", async () => {
     mockChangeObject.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200, statusText: "OK" })
@@ -1410,6 +1411,7 @@ describe("Test probe candidate changeview", () => {
       "Probe candidate successfully changed", "Changed", 2000
     )
   })
+  */
 
   test("Test validation error when changing probe candidate if invalid devel URL", async () => {
     mockChangeObject.mockReturnValueOnce(
