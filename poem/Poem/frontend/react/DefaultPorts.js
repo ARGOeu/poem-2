@@ -45,7 +45,7 @@ const validationSchema = Yup.object().shape({
       .required("This field is required")
       .matches(/^[a-zA-Z][A-Za-z0-9\-_]*$/, "Name can contain alphanumeric characters, dash and underscore, but must always begin with a letter")
       .test("unique", "Duplicate", function (value) {
-        let arr = this.options.context.map(e => e.name)
+        let arr = this.options.context.ports.map(e => e.name)
         if (arr.indexOf(value) === arr.lastIndexOf(value))
           return true
 
@@ -80,7 +80,9 @@ const PortsList = ({ data }) => {
     },
     mode: "all",
     resolver: yupResolver(validationSchema),
-    context: contextData
+    context: {
+      ports: contextData
+    }
   })
 
   const searchPortName = useWatch({ control, name: "searchPortName" })

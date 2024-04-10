@@ -32,7 +32,7 @@ import {
 import * as Yup from 'yup';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faPlus, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
-import ReactDiffViewer from 'react-diff-viewer';
+import ReactDiffViewer from 'react-diff-viewer-continued';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import {
   fetchUserDetails,

@@ -827,8 +827,6 @@ export const PackageComponent = (props) => {
 
     if (probes && pkg && pkg.name) {
       probes.forEach(probe => {
-        console.log("pkg.name: ", pkg.name)
-        console.log("probe.fields.package: ", probe.fields.package)
         if (probe.fields.package === `${pkg.name} (${pkg.version})` )
           listProbes.push(probe.fields.name)
       })

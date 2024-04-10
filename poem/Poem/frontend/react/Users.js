@@ -47,15 +47,13 @@ const UserSchema = Yup.object().shape({
   addview: Yup.boolean(),
   password: Yup.string().when('addview', {
     is: true,
-    then: Yup.string()
-      .required('Required')
+    then: (schema) => schema.required('Required')
       .min(8, 'Your password must contain at least 8 characters.')
       .matches(/^\d*[a-zA-Z][a-zA-Z\d]*$/, 'Your password cannot be entirely numeric.')
   }),
   confirm_password: Yup.string().when('addview', {
     is: true,
-    then: Yup.string()
-      .required('Required')
+    then: (schema) => schema.required('Required')
       .oneOf([Yup.ref('password'), null], 'Passwords do not match!')
   }),
   email: Yup.string()
@@ -98,9 +96,8 @@ const fetchGroupsForUser = async (isTenantSchema, username) => {
 }
 
 
-export const UsersList = (props) => {
+export const UsersList = () => {
     const location = useLocation();
-    const isTenantSchema = props.isTenantSchema;
 
     const { data: listUsers, error: error, isLoading: loading } = useQuery(
       'user', () => fetchUsers()
@@ -176,7 +173,7 @@ export const UsersList = (props) => {
           }
         </div>
     }
-  ], [isTenantSchema]);
+  ], []);
 
   if (loading)
     return (

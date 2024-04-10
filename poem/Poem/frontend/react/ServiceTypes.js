@@ -205,7 +205,7 @@ const validationSchema = yup.object().shape({
       else
         return false
     }),
-  title: yup.string().when("$showtitles", (showtitles, schema) => {
+  title: yup.string().when("$showtitles", ([showtitles], schema) => {
     if (showtitles)
       return schema.required("Title cannot be empty.")
         .test("duplicate", "Service type with this title already exists", function (value) {
@@ -260,7 +260,7 @@ const ServiceTypesListAdded = ({ data, ...props }) => {
 
   useEffect(() => {
     setValue("serviceTypes", data)
-  }, [data])
+  }, [data, setValue])
 
   const resetFields = () => {
     reset({
@@ -421,6 +421,7 @@ const ServiceTypesAddForm = (props) => {
 
   const { control, handleSubmit, reset, formState: {errors} } = useForm({
     resolver: yupResolver(validationSchema),
+    mode: "all",
     context: { 
       showtitles: showtitles, 
       serviceTypes: context.serviceTypes,
@@ -434,7 +435,7 @@ const ServiceTypesAddForm = (props) => {
     }
   })
 
-  const onSubmit = data => {
+  const onSubmit = (data) => {
     let tmpArray = [ ...addedServices ]
     tmpArray.push(data)
     setAddedServices(tmpArray)

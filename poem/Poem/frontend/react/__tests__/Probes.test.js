@@ -1,5 +1,5 @@
 import React from 'react';
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { ProbeComponent, ProbeList, ProbeVersionDetails } from '../Probes';
@@ -26,6 +26,7 @@ setLogger({
   warn: () => {},
   error: () => {}
 })
+
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -67,7 +68,6 @@ const mockListProbes = [
   }
 ];
 
-
 const mockProbe = {
   'id': '1',
   'name': 'ams-probe',
@@ -80,7 +80,6 @@ const mockProbe = {
   'user': 'testuser',
   'datetime': '2020-01-20 14:24:58.3'
 };
-
 
 const mockPackages = [
   {
@@ -114,7 +113,6 @@ const mockPackages = [
     'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
   }
 ];
-
 
 const mockProbeVersions = [
   {
@@ -309,11 +307,11 @@ describe('Test list of probes on SuperAdmin POEM', () => {
     renderListView({});
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe to change');
+      expect(screen.getAllByRole('columnheader')).toHaveLength(10)
     })
+    
+    expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe to change');
 
-    // double column header length because search fields are also th
-    expect(screen.getAllByRole('columnheader')).toHaveLength(10);
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /name/i }).textContent).toBe('Name');
     expect(screen.getByRole('columnheader', { name: /#versions/i }).textContent).toBe('#versions');
@@ -338,11 +336,11 @@ describe('Test list of probes on SuperAdmin POEM', () => {
     renderListView({ publicView: true });
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe for details');
+      expect(screen.getAllByRole('columnheader')).toHaveLength(10);
     })
 
-    // double column header length because search fields are also th
-    expect(screen.getAllByRole('columnheader')).toHaveLength(10);
+    expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe for details');
+
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /name/i }).textContent).toBe('Name');
     expect(screen.getByRole('columnheader', { name: /#versions/i }).textContent).toBe('#versions');
@@ -367,7 +365,7 @@ describe('Test list of probes on SuperAdmin POEM', () => {
     renderListView({});
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe to change')
+      expect(screen.getAllByRole("columnheader")).toHaveLength(10)
     })
 
     fireEvent.change(screen.getAllByPlaceholderText('Search')[0], { target: { value: 'ams' } })
@@ -392,7 +390,7 @@ describe('Test list of probes on SuperAdmin POEM', () => {
     renderListView({ publicView: true });
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe for details')
+      expect(screen.getAllByRole("columnheader")).toHaveLength(10)
     })
 
     fireEvent.change(screen.getAllByPlaceholderText('Search')[0], { target: { value: 'ams' } })
@@ -436,11 +434,11 @@ describe('Test list of probes on tenant POEM', () => {
     renderListView({ isTenantSchema: true });
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe for details');
+      expect(screen.getAllByRole('columnheader')).toHaveLength(10);
     })
 
-    // double column header length because search fields are also th
-    expect(screen.getAllByRole('columnheader')).toHaveLength(10);
+    expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe for details');
+
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /name/i }).textContent).toBe('Name');
     expect(screen.getByRole('columnheader', { name: /#versions/i }).textContent).toBe('#versions');
@@ -465,11 +463,11 @@ describe('Test list of probes on tenant POEM', () => {
     renderListView({ publicView: true, isTenantSchema: true });
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe for details');
+      expect(screen.getAllByRole('columnheader')).toHaveLength(10);
     })
 
-    // double column header length because search fields are also th
-    expect(screen.getAllByRole('columnheader')).toHaveLength(10);
+    expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe for details');
+
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /name/i }).textContent).toBe('Name');
     expect(screen.getByRole('columnheader', { name: /#versions/i }).textContent).toBe('#versions');
@@ -494,7 +492,7 @@ describe('Test list of probes on tenant POEM', () => {
     renderListView({ isTenantSchema: true });
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe for details')
+      expect(screen.getAllByRole("columnheader")).toHaveLength(10)
     })
 
     fireEvent.change(screen.getAllByPlaceholderText('Search')[0], { target: { value: 'ams' } })
@@ -519,7 +517,7 @@ describe('Test list of probes on tenant POEM', () => {
     renderListView({ publicView: true, isTenantSchema: true });
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe for details')
+      expect(screen.getAllByRole("columnheader")).toHaveLength(10)
     })
 
     fireEvent.change(screen.getAllByPlaceholderText('Search')[0], { target: { value: 'ams' } })
@@ -580,8 +578,10 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
     renderChangeView({});
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change probe/i }).textContent).toBe('Change probe');
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
+
+    expect(screen.getByRole('heading', { name: /change probe/i }).textContent).toBe('Change probe');
 
     const nameField = screen.getByTestId('name')
     const versionField = screen.getByTestId('version');
@@ -622,7 +622,6 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
 
     expect(screen.getByRole('button', { name: /clone/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-probe/clone');
     expect(screen.getByRole('button', { name: /history/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-probe/history');
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
   })
 
@@ -630,8 +629,10 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
     renderChangeView({ publicView: true });
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /probe detail/i }).textContent).toBe('Probe details');
+      expect(screen.getByTestId("name")).toBeInTheDocument()
     })
+
+    expect(screen.getByRole('heading', { name: /probe detail/i }).textContent).toBe('Probe details');
 
     const nameField = screen.getByTestId('name')
     const versionField = screen.getByTestId('version');
@@ -671,7 +672,7 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
     renderChangeView({});
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change probe/i }).textContent).toBe('Change probe')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name');
@@ -721,7 +722,7 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
     renderChangeView({});
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change probe/i }).textContent).toBe('Change probe')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: 'new-ams-probe' } });
@@ -765,7 +766,7 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
     renderChangeView({});
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change probe/i }).textContent).toBe('Change probe')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: 'test-ams-probe' } });
@@ -813,7 +814,7 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
     renderChangeView({});
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change probe/i }).textContent).toBe('Change probe')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: 'test-ams-probe' } });
@@ -859,7 +860,7 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
     renderChangeView({});
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change probe/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -887,7 +888,7 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
     renderChangeView({});
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change probe/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -919,7 +920,7 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
     renderChangeView({});
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change probe/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -980,8 +981,10 @@ describe('Test probe changeview on tenant POEM', () => {
     renderChangeView({ isTenantSchema: true });
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /probe details/i }).textContent).toBe('Probe details');
+      expect(screen.getByTestId("name")).toBeInTheDocument()
     })
+
+    expect(screen.getByRole('heading', { name: /probe details/i }).textContent).toBe('Probe details');
 
     const nameField = screen.getByTestId('name')
     const versionField = screen.getByTestId('version');
@@ -1043,8 +1046,10 @@ describe('Test probe addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /add probe/i }).textContent).toBe('Add probe');
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
+
+    expect(screen.getByRole('heading', { name: /add probe/i }).textContent).toBe('Add probe');
 
     const nameField = screen.getByTestId('name')
     const versionField = screen.getByTestId('version');
@@ -1087,14 +1092,13 @@ describe('Test probe addview', () => {
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
   })
 
   test('Test adding a new probe and saving', async () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /add probe/i }).textContent).toBe('Add probe');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name')
@@ -1150,7 +1154,7 @@ describe('Test probe addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /add probe/i }).textContent).toBe('Add probe');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name')
@@ -1210,7 +1214,7 @@ describe('Test probe addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /add probe/i }).textContent).toBe('Add probe');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name')
@@ -1302,8 +1306,10 @@ describe('Test probe cloneview', () => {
     renderCloneView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /clone probe/i }).textContent).toBe('Clone probe');
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
+
+    expect(screen.getByRole('heading', { name: /clone probe/i }).textContent).toBe('Clone probe');
 
     const nameField = screen.getByTestId('name')
     const versionField = screen.getByTestId('version');
@@ -1342,7 +1348,6 @@ describe('Test probe cloneview', () => {
 
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
   })
 
@@ -1350,7 +1355,7 @@ describe('Test probe cloneview', () => {
     renderCloneView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /clone probe/i }).textContent).toBe('Clone probe')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name');
@@ -1399,7 +1404,7 @@ describe('Test probe cloneview', () => {
     renderCloneView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /clone probe/i }).textContent).toBe('Clone probe')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name');
@@ -1452,7 +1457,7 @@ describe('Test probe cloneview', () => {
     renderCloneView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /clone probe/i }).textContent).toBe('Clone probe')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name');
@@ -1522,8 +1527,10 @@ describe('Test probe version details view', () => {
     renderVersionDetailsView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /ams-probe/i }).textContent).toBe('ams-probe (0.1.12)')
+      expect(screen.getByTestId("name")).toBeInTheDocument()
     })
+
+    expect(screen.getByRole('heading', { name: /ams-probe/i }).textContent).toBe('ams-probe (0.1.12)')
 
     const nameField = screen.getByTestId('name')
     const versionField = screen.getByTestId('version');
@@ -1561,8 +1568,10 @@ describe('Test probe version details view', () => {
     renderVersionDetailsView(true);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /ams-probe/i }).textContent).toBe('ams-probe (0.1.12)')
+      expect(screen.getByTestId("name")).toBeInTheDocument()
     })
+
+    expect(screen.getByRole('heading', { name: /ams-probe/i }).textContent).toBe('ams-probe (0.1.12)')
 
     const nameField = screen.getByTestId('name')
     const versionField = screen.getByTestId('version');

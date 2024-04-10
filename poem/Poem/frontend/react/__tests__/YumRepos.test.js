@@ -1,5 +1,5 @@
 import React from 'react';
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { YumRepoComponent, YumRepoList } from '../YumRepos';
@@ -189,10 +189,11 @@ describe('Test list of YUM repos on SuperAdmin POEM', () => {
     renderListView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /repo/i }).textContent).toBe('Select YUM repo to change')
+      expect(screen.getAllByRole('columnheader')).toHaveLength(8);
     })
 
-    expect(screen.getAllByRole('columnheader')).toHaveLength(8);
+    expect(screen.getByRole('heading', { name: /repo/i }).textContent).toBe('Select YUM repo to change')
+
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /name/i })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /description/i })).toBeInTheDocument();
@@ -218,7 +219,7 @@ describe('Test list of YUM repos on SuperAdmin POEM', () => {
     renderListView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /repo/i })).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(8)
     })
 
     fireEvent.change(screen.getByDisplayValue('Show all'), { target: { value: 'CentOS 6' } });
@@ -262,10 +263,11 @@ describe('Test list of YUM repos on tenant POEM', () => {
     renderListView(true);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /repo/i }).textContent).toBe('Select YUM repo for details')
+      expect(screen.getAllByRole('columnheader')).toHaveLength(8);
     })
 
-    expect(screen.getAllByRole('columnheader')).toHaveLength(8);
+    expect(screen.getByRole('heading', { name: /repo/i }).textContent).toBe('Select YUM repo for details')
+
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /name/i })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /description/i })).toBeInTheDocument();
@@ -291,7 +293,7 @@ describe('Test list of YUM repos on tenant POEM', () => {
     renderListView(true);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /repo/i })).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(8)
     })
 
     fireEvent.change(screen.getByDisplayValue('Show all'), { target: { value: 'CentOS 6' } });
@@ -340,8 +342,10 @@ describe('Tests for YUM repos changeview on SuperAdmin POEM', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /yum/i }).textContent).toBe('Change YUM repo')
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
+
+    expect(screen.getByRole('heading', { name: /yum/i }).textContent).toBe('Change YUM repo')
 
     const nameField = screen.getByTestId('name');
     const tagField = screen.getByText('CentOS 6');
@@ -361,7 +365,6 @@ describe('Tests for YUM repos changeview on SuperAdmin POEM', () => {
     expect(descriptionField.value).toBe('ARGO Product Repository - devel CentOS 6')
     expect(descriptionField).toBeEnabled();
 
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /clone/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /clone/i }).closest('a')).toHaveAttribute('href', '/ui/yumrepos/argo-centos6/clone');
@@ -371,7 +374,7 @@ describe('Tests for YUM repos changeview on SuperAdmin POEM', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /yum/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name');
@@ -416,7 +419,7 @@ describe('Tests for YUM repos changeview on SuperAdmin POEM', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /yum/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name');
@@ -467,7 +470,7 @@ describe('Tests for YUM repos changeview on SuperAdmin POEM', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /yum/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name');
@@ -516,7 +519,7 @@ describe('Tests for YUM repos changeview on SuperAdmin POEM', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /yum/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -544,7 +547,7 @@ describe('Tests for YUM repos changeview on SuperAdmin POEM', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /yum/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -578,7 +581,7 @@ describe('Tests for YUM repos changeview on SuperAdmin POEM', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /yum/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -627,8 +630,10 @@ describe('Tests for YUM repos changeview on tenant POEM', () => {
     renderChangeView(true);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /yum/i }).textContent).toBe('YUM repo details')
+      expect(screen.getByTestId("name")).toBeInTheDocument()
     })
+
+    expect(screen.getByRole('heading', { name: /yum/i }).textContent).toBe('YUM repo details')
 
     const nameField = screen.getByTestId('name');
     const tagField = screen.getByTestId('tag');
@@ -669,8 +674,10 @@ describe('Tests for YUM repo addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /yum/i }).textContent).toBe('Add YUM repo')
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
+
+    expect(screen.getByRole('heading', { name: /yum/i }).textContent).toBe('Add YUM repo')
 
     const nameField = screen.getByTestId('name');
     const tagField = screen.getByText(/select/i);
@@ -692,7 +699,6 @@ describe('Tests for YUM repo addview', () => {
     expect(descriptionField.value).toBe('');
     expect(descriptionField).toBeEnabled();
 
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
   })
@@ -701,7 +707,7 @@ describe('Tests for YUM repo addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /yum/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'etf' } });
@@ -740,7 +746,7 @@ describe('Tests for YUM repo addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /yum/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'etf' } });
@@ -785,7 +791,7 @@ describe('Tests for YUM repo addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /yum/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'etf' } });
@@ -852,8 +858,10 @@ describe('Tests for YUM repo cloneview', () => {
     renderCloneView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /yum/i }).textContent).toBe('Clone YUM repo')
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
+
+    expect(screen.getByRole('heading', { name: /yum/i }).textContent).toBe('Clone YUM repo')
 
     const nameField = screen.getByTestId('name');
     const tagField = screen.getByText('CentOS 6');
@@ -873,7 +881,6 @@ describe('Tests for YUM repo cloneview', () => {
     expect(descriptionField.value).toBe('ARGO Product Repository - devel CentOS 6')
     expect(descriptionField).toBeEnabled();
 
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
   })
@@ -882,7 +889,7 @@ describe('Tests for YUM repo cloneview', () => {
     renderCloneView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /yum/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name');
@@ -926,7 +933,7 @@ describe('Tests for YUM repo cloneview', () => {
     renderCloneView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /yum/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name');
@@ -974,7 +981,7 @@ describe('Tests for YUM repo cloneview', () => {
     renderCloneView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /yum/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name');

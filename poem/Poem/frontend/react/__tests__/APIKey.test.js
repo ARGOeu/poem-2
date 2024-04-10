@@ -1,4 +1,4 @@
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from "react";
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
@@ -151,8 +151,9 @@ describe("Tests for API keys listview", () => {
   it('Render properly', async () => {
     renderListView()
 
+    expect(screen.getByRole('heading', {name: /api/i}).textContent).toBe('Select API key to change')
     await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /api/i}).textContent).toBe('Select API key to change')
+      expect(screen.getAllByRole('columnheader')).toHaveLength(5)
     })
     expect(screen.getAllByRole('columnheader')).toHaveLength(5)
     expect(screen.getByRole('columnheader', {name: /name/i}).textContent).toBe('Name')
@@ -186,10 +187,10 @@ describe("Tests for API keys listview", () => {
 
     renderListView()
 
+    expect(screen.getByRole('heading', {name: /api/i}).textContent).toBe('Select API key to change')
     await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /api/i}).textContent).toBe('Select API key to change')
+      expect(screen.getAllByRole('columnheader')).toHaveLength(5)
     })
-    expect(screen.getAllByRole('columnheader')).toHaveLength(5)
     expect(screen.getByRole('columnheader', {name: /name/i}).textContent).toBe('Name')
     expect(screen.getByRole('columnheader', {name: /#/i}).textContent).toBe('#')
     expect(screen.getByRole('columnheader', {name: /created/i}).textContent).toBe('Created')
@@ -245,12 +246,14 @@ describe('Tests for tenant API key change', () => {
     })
   })
 
-  it('Test that page renders properly', async () => {
+  test('Test that page renders properly', async () => {
     renderChangeView(true)
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /api/i}).textContent).toBe('Change API key')
+      expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
     });
+
+    expect(screen.getByRole('heading', {name: /api/i}).textContent).toBe('Change API key')
 
     expect(screen.getByRole('heading', {name: /credent/i}).textContent).toBe('Credentials')
 
@@ -260,7 +263,6 @@ describe('Tests for tenant API key change', () => {
     expect(screen.getByTestId("revoked").checked).toBeFalsy()
     expect(screen.getByDisplayValue(/123/i).value).toBe('123456');
     expect(screen.getByDisplayValue(/123/i)).toBeDisabled();
-    expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
     expect(screen.getByRole('button', {name: /delete/i})).toBeInTheDocument();
     expect(screen.getByRole('button', {name: ''})).toBeInTheDocument();
   })
@@ -269,8 +271,10 @@ describe('Tests for tenant API key change', () => {
     renderChangeView(true, true)
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /api/i}).textContent).toBe('Change API key')
+      expect(screen.getByText("Token")).toBeInTheDocument()
     });
+
+    expect(screen.getByRole('heading', {name: /api/i}).textContent).toBe('Change API key')
 
     expect(screen.getByRole('heading', {name: /credent/i}).textContent).toBe('Credentials')
 
@@ -305,8 +309,10 @@ describe('Tests for tenant API key change', () => {
     renderChangeView(true)
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", {name: /api/i}).textContent).toBe("Change API key")
+      expect(screen.getByRole("button", {name: /save/i})).toBeInTheDocument()
     });
+
+    expect(screen.getByRole("heading", {name: /api/i}).textContent).toBe("Change API key")
 
     expect(screen.getByRole("heading", {name: /credent/i}).textContent).toBe("Credentials")
 
@@ -318,7 +324,6 @@ describe('Tests for tenant API key change', () => {
     expect(screen.getByDisplayValue(/123/i).value).toBe("123456789")
     expect(screen.getByDisplayValue(/123/i)).toBeDisabled()
 
-    expect(screen.getByRole("button", {name: /save/i})).toBeInTheDocument()
     expect(screen.getByRole("button", {name: /delete/i})).toBeInTheDocument()
     expect(screen.getByRole("button", {name: ''})).toBeInTheDocument()
   })
@@ -342,8 +347,10 @@ describe('Tests for tenant API key change', () => {
     renderChangeView(true)
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", {name: /api/i}).textContent).toBe("Change API key")
+      expect(screen.getByText("Token")).toBeInTheDocument()
     });
+  
+    expect(screen.getByRole("heading", {name: /api/i}).textContent).toBe("Change API key")
 
     expect(screen.getByRole("heading", {name: /credent/i}).textContent).toBe("Credentials")
 
@@ -380,6 +387,7 @@ describe('Tests for tenant API key change', () => {
     })
     fireEvent.click(screen.getByTestId("revoked"))
     fireEvent.click(screen.getByRole('button', {name: /save/i}))
+
     await waitFor(() => {
       expect(screen.getByRole('dialog', {title: /change/i})).toBeInTheDocument()
     })
@@ -531,8 +539,10 @@ describe('Tests for super POEM API key change', () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /api/i}).textContent).toBe('Change API key')
+      expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
     });
+
+    expect(screen.getByRole('heading', {name: /api/i}).textContent).toBe('Change API key')
 
     expect(screen.getByRole('heading', {name: /credent/i}).textContent).toBe('Credentials')
 
@@ -542,7 +552,6 @@ describe('Tests for super POEM API key change', () => {
     expect(screen.getByTestId('revoked').checked).toBeFalsy()
     expect(screen.getByDisplayValue(/123/i).value).toBe('123456');
     expect(screen.getByDisplayValue(/123/i)).toBeDisabled();
-    expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
     expect(screen.getByRole('button', {name: /delete/i})).toBeInTheDocument();
     expect(screen.getByRole('button', {name: ''})).toBeInTheDocument();
   })
@@ -551,8 +560,10 @@ describe('Tests for super POEM API key change', () => {
     renderChangeView(false, true)
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /api/i}).textContent).toBe('Change API key')
+      expect(screen.queryByRole('button', {name: /save/i})).toBeInTheDocument();
     });
+
+    expect(screen.getByRole('heading', {name: /api/i}).textContent).toBe('Change API key')
 
     expect(screen.getByRole('heading', {name: /credent/i}).textContent).toBe('Credentials')
 
@@ -564,7 +575,6 @@ describe('Tests for super POEM API key change', () => {
     expect(checkboxField).toBeEnabled()
     expect(screen.getByDisplayValue(/789/i).value).toBe('78910');
     expect(screen.getByDisplayValue(/789/i)).toBeDisabled();
-    expect(screen.queryByRole('button', {name: /save/i})).toBeInTheDocument();
     expect(screen.queryByRole('button', {name: /delete/i})).toBeInTheDocument();
     expect(screen.queryByRole('button', {name: ''})).toBeInTheDocument();
   })
@@ -587,8 +597,10 @@ describe('Tests for super POEM API key change', () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", {name: /api/i}).textContent).toBe("Change API key")
+      expect(screen.getByRole("button", {name: /save/i})).toBeInTheDocument()
     });
+
+    expect(screen.getByRole("heading", {name: /api/i}).textContent).toBe("Change API key")
 
     expect(screen.getByRole("heading", {name: /credent/i}).textContent).toBe("Credentials")
 
@@ -600,7 +612,6 @@ describe('Tests for super POEM API key change', () => {
     expect(screen.getByDisplayValue(/123/i).value).toBe("123456789")
     expect(screen.getByDisplayValue(/123/i)).toBeDisabled()
 
-    expect(screen.getByRole("button", {name: /save/i})).toBeInTheDocument()
     expect(screen.getByRole("button", {name: /delete/i})).toBeInTheDocument()
     expect(screen.getByRole("button", {name: ''})).toBeInTheDocument()
   })
@@ -624,8 +635,10 @@ describe('Tests for super POEM API key change', () => {
     renderChangeView(false, true)
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", {name: /api/i}).textContent).toBe("Change API key")
+      expect(screen.queryByRole("button", {name: /save/i})).toBeInTheDocument()
     });
+
+    expect(screen.getByRole("heading", {name: /api/i}).textContent).toBe("Change API key")
 
     expect(screen.getByRole("heading", {name: /credent/i}).textContent).toBe("Credentials")
 
@@ -639,7 +652,6 @@ describe('Tests for super POEM API key change', () => {
     expect(screen.getByDisplayValue(/123/i).value).toBe("123456789")
     expect(screen.getByDisplayValue(/123/i)).toBeDisabled()
 
-    expect(screen.queryByRole("button", {name: /save/i})).toBeInTheDocument()
     expect(screen.queryByRole("button", {name: /delete/i})).toBeInTheDocument()
     expect(screen.getByRole("button", {name: ''})).toBeInTheDocument()
   })
@@ -650,6 +662,7 @@ describe('Tests for super POEM API key change', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', {name: ''})).toBeInTheDocument();
     })
+
     fireEvent.click(screen.getByRole('button', {name: ''}))
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith('123456')
   })
@@ -912,9 +925,10 @@ describe('Tests for tenant API key addview', () => {
 
     fireEvent.click(screen.getByRole('button', {name: /save/i}))
     await waitFor(() => {
-      expect(screen.queryByRole('dialog', {title: /add/i})).not.toBeInTheDocument()
+      expect(screen.getByText("Name can contain alphanumeric characters, dash and underscore, must always begin with a letter, but not with WEB-API-")).toBeInTheDocument()
     })
-    expect(screen.getByText("Name can contain alphanumeric characters, dash and underscore, must always begin with a letter, but not with WEB-API-")).toBeInTheDocument()
+
+    expect(screen.queryByRole('dialog', {title: /add/i})).not.toBeInTheDocument()
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: "APIKEY" } })
 
@@ -1057,9 +1071,10 @@ describe('Tests for super POEM API key addview', () => {
     fireEvent.change(screen.getByTestId('name'), { target: { value: "WEB-API-TEST" } });
     fireEvent.click(screen.getByRole('button', {name: /save/i}))
     await waitFor(() => {
-      expect(screen.queryByRole('dialog', {title: /add/i})).not.toBeInTheDocument()
+      expect(screen.getByText("Name can contain alphanumeric characters, dash and underscore, must always begin with a letter, but not with WEB-API-")).toBeInTheDocument()
     })
-    expect(screen.getByText("Name can contain alphanumeric characters, dash and underscore, must always begin with a letter, but not with WEB-API-")).toBeInTheDocument()
+
+    expect(screen.queryByRole('dialog', {title: /add/i})).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByTestId("used_by"))
 
@@ -1092,9 +1107,10 @@ describe('Tests for super POEM API key addview', () => {
     fireEvent.click(screen.getByTestId("used_by"))
     fireEvent.click(screen.getByRole('button', {name: /save/i}))
     await waitFor(() => {
-      expect(screen.queryByRole('dialog', {title: /add/i})).not.toBeInTheDocument()
+      expect(screen.queryByText("Name must have form WEB-API-<tenant_name> or WEB-API-<tenant_name>-RO")).toBeInTheDocument()
     })
-    expect(screen.queryByText("Name must have form WEB-API-<tenant_name> or WEB-API-<tenant_name>-RO")).toBeInTheDocument()
+
+    expect(screen.queryByRole('dialog', {title: /add/i})).not.toBeInTheDocument()
 
     fireEvent.change(screen.getByTestId('name'), {target: {value: 'WEB-API-TEST'}});
     await waitFor(() => {
@@ -1124,9 +1140,10 @@ describe('Tests for super POEM API key addview', () => {
 
     fireEvent.click(screen.getByRole('button', {name: /save/i}))
     await waitFor(() => {
-      expect(screen.queryByRole('dialog', {title: /add/i})).not.toBeInTheDocument()
+      expect(screen.getByText("Name can contain alphanumeric characters, dash and underscore, must always begin with a letter, but not with WEB-API-")).toBeInTheDocument()
     })
-    expect(screen.getByText("Name can contain alphanumeric characters, dash and underscore, must always begin with a letter, but not with WEB-API-")).toBeInTheDocument()
+
+    expect(screen.queryByRole('dialog', {title: /add/i})).not.toBeInTheDocument()
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: "APIKEY" } });
 

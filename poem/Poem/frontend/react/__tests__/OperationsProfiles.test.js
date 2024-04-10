@@ -1,5 +1,5 @@
 import React from 'react';
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from 'react-query';
@@ -360,10 +360,11 @@ describe('Test list of operations profiles', () => {
     renderListView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Select operations profile for details')
+      expect(screen.getAllByRole('columnheader')).toHaveLength(3);
     })
 
-    expect(screen.getAllByRole('columnheader')).toHaveLength(3);
+    expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Select operations profile for details')
+
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Name' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Description' })).toBeInTheDocument();
@@ -378,10 +379,11 @@ describe('Test list of operations profiles', () => {
     renderListView(true);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Select operations profile for details')
+      expect(screen.getAllByRole('columnheader')).toHaveLength(3);
     })
 
-    expect(screen.getAllByRole('columnheader')).toHaveLength(3);
+    expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Select operations profile for details')
+
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Name' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Description' })).toBeInTheDocument();
@@ -407,8 +409,10 @@ describe('Tests for operations profiles detail view', () => {
     renderDetailsView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Operations profile details')
+      expect(screen.getByTestId("name")).toBeInTheDocument()
     })
+
+    expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Operations profile details')
 
     expect(screen.getAllByRole('table')).toHaveLength(4);
 
@@ -493,8 +497,10 @@ describe('Tests for operations profiles detail view', () => {
     renderDetailsView(true);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Operations profile details')
+      expect(screen.getByTestId("name")).toBeInTheDocument()
     })
+      
+    expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Operations profile details')
 
     expect(screen.getAllByRole('table')).toHaveLength(4);
 

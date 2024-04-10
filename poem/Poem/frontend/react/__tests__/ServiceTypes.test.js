@@ -1,6 +1,6 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 import { MemoryRouter } from 'react-router-dom';
 import { ServiceTypesList, ServiceTypesBulkAdd } from '../ServiceTypes';
 import { WebApi } from '../DataManager';
@@ -202,10 +202,11 @@ describe('Test service types list - Read Only', () => {
     renderListView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Service types');
+      expect(screen.getAllByRole('columnheader')).toHaveLength(8);
     })
 
-    expect(screen.getAllByRole('columnheader')).toHaveLength(8);
+    expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Service types');
+
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Service name' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Description' })).toBeInTheDocument();
@@ -232,7 +233,7 @@ describe('Test service types list - Read Only', () => {
     renderListView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Service types');
+      expect(screen.getAllByRole("columnheader")).toHaveLength(8)
     })
 
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(7);
@@ -254,10 +255,11 @@ describe('Test service types list - Read Only', () => {
     renderListView(true)
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /service/i })).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(8)
     })
 
-    expect(screen.getAllByRole("columnheader")).toHaveLength(8)
+    expect(screen.getByRole("heading", { name: /service/i })).toBeInTheDocument()
+
     expect(screen.getByRole("columnheader", { name: "#" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: "Service name and title" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: "Description" })).toBeInTheDocument()
@@ -284,7 +286,7 @@ describe('Test service types list - Read Only', () => {
     renderListView(true)
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /service/i })).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(8)
     })
 
     const searchFields = screen.getAllByPlaceholderText(/search/i)
@@ -308,10 +310,11 @@ describe('Test service types list - Read Only', () => {
     renderListViewPublic();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Service types');
+      expect(screen.getAllByRole('columnheader')).toHaveLength(8);
     })
 
-    expect(screen.getAllByRole('columnheader')).toHaveLength(8);
+    expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Service types');
+
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Service name' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Description' })).toBeInTheDocument();
@@ -338,7 +341,7 @@ describe('Test service types list - Read Only', () => {
     renderListViewPublic()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Service types');
+      expect(screen.getAllByRole("columnheader")).toHaveLength(8)
     })
 
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(7);
@@ -360,10 +363,11 @@ describe('Test service types list - Read Only', () => {
     renderListViewPublic(true)
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /service/i })).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(8)
     })
+    
+    expect(screen.getByRole("heading", { name: /service/i })).toBeInTheDocument()
 
-    expect(screen.getAllByRole("columnheader")).toHaveLength(8)
     expect(screen.getByRole("columnheader", { name: "#" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: "Service name and title" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: "Description" })).toBeInTheDocument()
@@ -390,7 +394,7 @@ describe('Test service types list - Read Only', () => {
     renderListViewPublic(true)
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /service/i })).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(8)
     })
 
     const searchFields = screen.getAllByPlaceholderText(/search/i)
@@ -426,10 +430,11 @@ describe("Test service types list if empty", () => {
     renderListView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /service/i }).textContent).toBe("Service types")
+      expect(screen.getAllByRole("columnheader")).toHaveLength(8)
     })
 
-    expect(screen.getAllByRole("columnheader")).toHaveLength(8);
+    expect(screen.getByRole("heading", { name: /service/i }).textContent).toBe("Service types")
+
     expect(screen.getByRole("columnheader", { name: "#" })).toBeInTheDocument();
     expect(screen.getByRole("columnheader", { name: "Service name" })).toBeInTheDocument();
     expect(screen.getByRole("columnheader", { name: "Description" })).toBeInTheDocument();
@@ -445,10 +450,11 @@ describe("Test service types list if empty", () => {
     renderListViewPublic()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /service/i }).textContent).toBe("Service types")
+      expect(screen.getAllByRole("columnheader")).toHaveLength(8);
     })
 
-    expect(screen.getAllByRole("columnheader")).toHaveLength(8);
+    expect(screen.getByRole("heading", { name: /service/i }).textContent).toBe("Service types")
+
     expect(screen.getByRole("columnheader", { name: "#" })).toBeInTheDocument();
     expect(screen.getByRole("columnheader", { name: "Service name" })).toBeInTheDocument();
     expect(screen.getByRole("columnheader", { name: "Description" })).toBeInTheDocument();
@@ -475,11 +481,12 @@ describe('Test service types list - Bulk change and delete', () => {
     renderListView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Service types');
+      expect(screen.getAllByRole("columnheader")).toHaveLength(5)
     })
 
+    expect(screen.getByRole('heading', { name: /service/i }).textContent).toBe('Service types');
+
     const table = within(screen.getByRole("table"))
-    expect(table.getAllByRole("columnheader")).toHaveLength(5)
     expect(table.getByRole("columnheader", { name: "#" })).toBeInTheDocument()
     expect(table.getByRole("columnheader", { name: "Service name" })).toBeInTheDocument()
     expect(table.getByRole("columnheader", { name: "Service description" })).toBeInTheDocument()
@@ -522,11 +529,12 @@ describe('Test service types list - Bulk change and delete', () => {
     renderListView(true)
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /service/i })).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(5)
     })
 
+    expect(screen.getByRole('heading', { name: /service/i })).toBeInTheDocument()
+
     const table = within(screen.getByRole("table"))
-    expect(table.getAllByRole("columnheader")).toHaveLength(5)
     expect(table.getByRole("columnheader", { name: "#" })).toBeInTheDocument()
     expect(table.getByRole("columnheader", { name: "Service name and title" })).toBeInTheDocument()
     expect(table.getByRole("columnheader", { name: "Service description" })).toBeInTheDocument()
@@ -569,7 +577,7 @@ describe('Test service types list - Bulk change and delete', () => {
     renderListView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /service/i })).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(5)
     })
 
     const searchFields = screen.getAllByPlaceholderText(/search/i);
@@ -589,7 +597,7 @@ describe('Test service types list - Bulk change and delete', () => {
     renderListView(true)
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /service/i })).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(5)
     })
 
     const searchFields = screen.getAllByPlaceholderText(/search/i)
@@ -613,7 +621,7 @@ describe('Test service types list - Bulk change and delete', () => {
     renderListView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /service/i })).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(5)
     })
 
     expect(screen.getByTestId("checkbox-0")).toBeDisabled()
@@ -706,7 +714,7 @@ describe('Test service types list - Bulk change and delete', () => {
     renderListView(true);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /service/i })).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(5)
     })
 
     expect(screen.getByTestId("checkbox-0")).toBeDisabled()
@@ -801,7 +809,7 @@ describe('Test service types list - Bulk change and delete', () => {
     renderListView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /service/i })).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(5)
     })
 
     expect(screen.getByTestId("checkbox-0")).toBeDisabled()
@@ -885,7 +893,7 @@ describe('Test service types list - Bulk change and delete', () => {
     renderListView(true);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /service/i })).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(5)
     })
 
     expect(screen.getByTestId("checkbox-0")).toBeDisabled()
@@ -969,7 +977,7 @@ describe('Test service types list - Bulk change and delete', () => {
     renderListView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /service/i })).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(5)
     })
 
     expect(screen.getByTestId("checkbox-0")).toBeDisabled()
@@ -1063,7 +1071,7 @@ describe('Test service types list - Bulk change and delete', () => {
     renderListView(true);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /service/i })).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(5)
     })
 
     expect(screen.getByTestId("checkbox-0")).toBeDisabled()
@@ -1169,7 +1177,7 @@ describe('Test service types list - Bulk change and delete', () => {
     renderListView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /service/i })).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(5)
     })
 
     expect(screen.getByTestId("description-0")).toBeDisabled()
@@ -1265,7 +1273,7 @@ describe('Test service types list - Bulk change and delete', () => {
     renderListView(true);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /service/i })).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(5)
     })
 
     expect(screen.getByTestId("description-0")).toBeDisabled()
@@ -1364,7 +1372,7 @@ describe('Test service types list - Bulk change and delete', () => {
     renderListView()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /service/i })).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(5)
     })
 
     fireEvent.click(screen.getByRole("button", { name: /csv/i }))
@@ -1389,7 +1397,7 @@ describe('Test service types list - Bulk change and delete', () => {
     renderListView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /service/i })).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(5)
     })
 
     const csv = "name,title,description\r\n" + 
@@ -1465,7 +1473,7 @@ describe('Test service types list - Bulk change and delete', () => {
     renderListView(true)
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /service/i })).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(5)
     })
 
     const csv = "name,title,description\r\n" + 
@@ -1553,8 +1561,10 @@ describe('Test service types list - Bulk add', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', {'level': 2})).toHaveTextContent(/Add service types/i)
+      expect(screen.getAllByRole("columnheader")).toHaveLength(4)
     })
+
+    expect(screen.getByRole('heading', {'level': 2})).toHaveTextContent(/Add service types/i)
 
     expect(screen.getByLabelText(/Name:/)).toBeInTheDocument()
     expect(screen.queryByLabelText(/Title:/)).not.toBeInTheDocument()
@@ -1575,8 +1585,10 @@ describe('Test service types list - Bulk add', () => {
     renderAddView(true);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', {'level': 2})).toHaveTextContent(/Add service types/i)
+      expect(screen.getAllByRole("columnheader")).toHaveLength(4)
     })
+
+    expect(screen.getByRole('heading', {'level': 2})).toHaveTextContent(/Add service types/i)
 
     expect(screen.getByLabelText(/Name:/)).toBeInTheDocument()
     expect(screen.queryByLabelText(/Title:/)).toBeInTheDocument()
@@ -1597,7 +1609,7 @@ describe('Test service types list - Bulk add', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { level: 2, name: /service type/i })).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(4)
     })
 
     fireEvent.change(screen.getByLabelText(/name/i), {target: {value: 'service.name.1'}})
@@ -1607,10 +1619,10 @@ describe('Test service types list - Bulk add', () => {
     fireEvent.click(screen.getByRole("button", { name: /add/i }))
 
     await waitFor(() => {
-      expect(screen.getAllByTestId(/addrow-/)).toHaveLength(1)
+      expect(screen.getByTestId("addrow-0").textContent).toBe("1service.name.1service description 1")
     })
 
-    expect(screen.getByTestId("addrow-0").textContent).toBe("1service.name.1service description 1")
+    expect(screen.getAllByTestId(/addrow-/)).toHaveLength(1)
 
     fireEvent.change(screen.getByLabelText(/name/i), {target: {value: 'service.name.2'}})
     fireEvent.change(screen.getByLabelText(/desc/i), {target: {value: 'service description 2'}})
@@ -1721,7 +1733,7 @@ describe('Test service types list - Bulk add', () => {
     renderAddView(true);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { level: 2, name: /service type/i })).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(4)
     })
 
     fireEvent.change(screen.getByLabelText(/name/i), {target: {value: 'service.name.1'}})
@@ -1733,10 +1745,10 @@ describe('Test service types list - Bulk add', () => {
     fireEvent.click(screen.getByRole("button", { name: /add/i }))
 
     await waitFor(() => {
-      expect(screen.getAllByTestId(/addrow-/)).toHaveLength(1)
+      expect(screen.getByTestId("addrow-0").textContent).toBe("1service.name.1Service Title 1service description 1")
     })
 
-    expect(screen.getByTestId("addrow-0").textContent).toBe("1service.name.1Service Title 1service description 1")
+    expect(screen.getAllByTestId(/addrow-/)).toHaveLength(1)
 
     fireEvent.change(screen.getByLabelText(/name/i), {target: {value: 'service.name.2'}})
     fireEvent.change(screen.getByLabelText(/title/i), {target: {value: 'Service Title 2'}})
@@ -1849,7 +1861,7 @@ describe('Test service types list - Bulk add', () => {
     renderAddView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { level: 2, name: /service type/i })).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(4)
     })
 
     fireEvent.change(screen.getByLabelText(/name/i), { target: { value: "service.name.1" } })
@@ -1858,10 +1870,10 @@ describe('Test service types list - Bulk add', () => {
     fireEvent.click(screen.getByRole("button", { name: /add/i }))
 
     await waitFor(() => {
-      expect(screen.getAllByTestId(/addrow-/)).toHaveLength(1)
+      expect(screen.getByTestId("addrow-0").textContent).toBe("1service.name.1service description 1")
     })
 
-    expect(screen.getByTestId("addrow-0").textContent).toBe("1service.name.1service description 1")
+    expect(screen.getAllByTestId(/addrow-/)).toHaveLength(1)
 
     fireEvent.change(screen.getByLabelText(/name/i), { target: { value: "service.name.2" } })
     fireEvent.change(screen.getByLabelText(/desc/i), { target: { value: "service description 2" } })
@@ -1973,7 +1985,7 @@ describe('Test service types list - Bulk add', () => {
     renderAddView(true)
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { level: 2, name: /service type/i })).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(4)
     })
 
     fireEvent.change(screen.getByLabelText(/name/i), { target: { value: "service.name.1" } })
@@ -1983,10 +1995,10 @@ describe('Test service types list - Bulk add', () => {
     fireEvent.click(screen.getByRole("button", { name: /add/i }))
 
     await waitFor(() => {
-      expect(screen.getAllByTestId(/addrow-/)).toHaveLength(1)
+      expect(screen.getByTestId("addrow-0").textContent).toBe("1service.name.1Service title 1service description 1")
     })
 
-    expect(screen.getByTestId("addrow-0").textContent).toBe("1service.name.1Service title 1service description 1")
+    expect(screen.getAllByTestId(/addrow-/)).toHaveLength(1)
 
     fireEvent.change(screen.getByLabelText(/name/i), { target: { value: "service.name.2" } })
     fireEvent.change(screen.getByLabelText(/title/i), { target: { value: "Service title 2" } })
@@ -2100,7 +2112,7 @@ describe('Test service types list - Bulk add', () => {
     renderAddView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { level: 2, name: /service type/i })).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(4)
     })
 
     fireEvent.change(screen.getByLabelText(/name/i), { target: { value: "service.name.1" } })
@@ -2109,10 +2121,10 @@ describe('Test service types list - Bulk add', () => {
     fireEvent.click(screen.getByRole("button", { name: /add/i }))
 
     await waitFor(() => {
-      expect(screen.getAllByTestId(/addrow-/)).toHaveLength(1)
+      expect(screen.getByTestId("addrow-0").textContent).toBe("1service.name.1service description 1")
     })
 
-    expect(screen.getByTestId("addrow-0").textContent).toBe("1service.name.1service description 1")
+    expect(screen.getAllByTestId(/addrow-/)).toHaveLength(1)
 
     fireEvent.change(screen.getByLabelText(/name/i), { target: { value: "service.name.2" } })
     fireEvent.change(screen.getByLabelText(/desc/i), { target: { value: "service description 2" } })
@@ -2224,7 +2236,7 @@ describe('Test service types list - Bulk add', () => {
     renderAddView(true)
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { level: 2, name: /service type/i })).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(4)
     })
 
     fireEvent.change(screen.getByLabelText(/name/i), { target: { value: "service.name.1" } })
@@ -2234,10 +2246,10 @@ describe('Test service types list - Bulk add', () => {
     fireEvent.click(screen.getByRole("button", { name: /add/i }))
 
     await waitFor(() => {
-      expect(screen.getAllByTestId(/addrow-/)).toHaveLength(1)
+      expect(screen.getByTestId("addrow-0").textContent).toBe("1service.name.1Service title 1service description 1")
     })
 
-    expect(screen.getByTestId("addrow-0").textContent).toBe("1service.name.1Service title 1service description 1")
+    expect(screen.getAllByTestId(/addrow-/)).toHaveLength(1)
 
     fireEvent.change(screen.getByLabelText(/name/i), { target: { value: "service.name.2" } })
     fireEvent.change(screen.getByLabelText(/title/i), { target: { value: "Service title 2" } })
@@ -2351,7 +2363,7 @@ describe('Test service types list - Bulk add', () => {
     renderAddView(true)
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { level: 2, name: /service type/i })).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(4)
     })
 
     fireEvent.change(screen.getByLabelText(/name/i), { target: { value: "service.name.1" } })
@@ -2361,10 +2373,10 @@ describe('Test service types list - Bulk add', () => {
     fireEvent.click(screen.getByRole("button", { name: /add/i }))
 
     await waitFor(() => {
-      expect(screen.getAllByTestId(/addrow-/)).toHaveLength(1)
+      expect(screen.getByTestId("addrow-0").textContent).toBe("1service.name.1Service title 1service description 1")
     })
 
-    expect(screen.getByTestId("addrow-0").textContent).toBe("1service.name.1Service title 1service description 1")
+    expect(screen.getAllByTestId(/addrow-/)).toHaveLength(1)
 
     fireEvent.change(screen.getByLabelText(/name/i), { target: { value: "service.name.2" } })
     fireEvent.change(screen.getByLabelText(/title/i), { target: { value: "Service title 2" } })
@@ -2478,7 +2490,7 @@ describe('Test service types list - Bulk add', () => {
     renderAddView(true)
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { level: 2, name: /service type/i })).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(4)
     })
 
     fireEvent.change(screen.getByLabelText(/name/i), { target: { value: "service.name.1" } })
@@ -2488,10 +2500,10 @@ describe('Test service types list - Bulk add', () => {
     fireEvent.click(screen.getByRole("button", { name: /add/i }))
 
     await waitFor(() => {
-      expect(screen.getAllByTestId(/addrow-/)).toHaveLength(1)
+      expect(screen.getByTestId("addrow-0").textContent).toBe("1service.name.1Service title 1service description 1")
     })
 
-    expect(screen.getByTestId("addrow-0").textContent).toBe("1service.name.1Service title 1service description 1")
+    expect(screen.getAllByTestId(/addrow-/)).toHaveLength(1)
 
     fireEvent.change(screen.getByLabelText(/name/i), { target: { value: "service.name.2" } })
     fireEvent.change(screen.getByLabelText(/title/i), { target: { value: "Service title 2" } })
@@ -2605,7 +2617,7 @@ describe('Test service types list - Bulk add', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', {'level': 2})).toHaveTextContent(/Add service types/i)
+      expect(screen.getAllByRole("columnheader")).toHaveLength(4)
     })
 
     fireEvent.change(screen.getByLabelText(/name/i), {target: {value: 'service name 1'}})
@@ -2620,7 +2632,11 @@ describe('Test service types list - Bulk add', () => {
     })
 
     expect(screen.getByText(/Empty data/)).toBeVisible()
-    expect(screen.getByText(/Description cannot be empty/)).toBeVisible()
+
+    await waitFor(() => {
+      expect(screen.getByText(/Description cannot be empty/)).toBeVisible()
+    })
+
     expect(screen.queryByText(/Title cannot be empty/)).not.toBeInTheDocument()
     expect(screen.getByText(/Name can only contain alphanumeric characters, punctuations, underscores and minuses/)).toBeVisible()
   })
@@ -2629,7 +2645,7 @@ describe('Test service types list - Bulk add', () => {
     renderAddView(true)
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { level: 2, name: /service type/i })).toBeInTheDocument()
+      expect(screen.getAllByRole("columnheader")).toHaveLength(4)
     })
 
     fireEvent.change(screen.getByLabelText(/name/i), {target: {value: 'service name 1'}})
@@ -2643,7 +2659,11 @@ describe('Test service types list - Bulk add', () => {
     })
 
     expect(screen.getByText(/Empty data/)).toBeVisible()
-    expect(screen.getByText(/Description cannot be empty/)).toBeVisible()
+
+    await waitFor(() => {
+      expect(screen.getByText(/Description cannot be empty/)).toBeVisible()
+    })
+
     expect(screen.getByText(/Title cannot be empty/)).toBeVisible()
     expect(screen.getByText(/Name can only contain alphanumeric characters, punctuations, underscores and minuses/)).toBeVisible()
   })

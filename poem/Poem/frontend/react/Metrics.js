@@ -38,7 +38,7 @@ import {
 } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
-import ReactDiffViewer from 'react-diff-viewer';
+import ReactDiffViewer from 'react-diff-viewer-continued';
 import CreatableSelect from 'react-select/creatable';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import {
@@ -71,15 +71,15 @@ const metricValidationSchema = Yup.object().shape({
   type: Yup.string(),
   probeversion: Yup.string().when('type', {
     is: (val) => val === 'Active',
-    then: Yup.string().required('Required')
+    then: (schema) => schema.required('Required')
   }),
   probeexecutable: Yup.string().when('type', {
     is: (val) => val === 'Active',
-    then: Yup.string().required('Required')
+    then: (schema) => schema.required('Required')
   }),
   config: Yup.array().when("type", {
     is: (val) => val === "Active",
-    then: Yup.array().of(
+    then: (schema) => schema.of(
       Yup.object().shape({
         value: Yup.string().required("Required")
       })
@@ -701,8 +701,8 @@ export const ListOfMetrics = (props) => {
               <></>
             :
               <div>
-                <Button color="secondary">Add</Button>
-                <Button className="ms-2" color="secondary">Delete</Button>
+                <Button color="secondary" disabled>Add</Button>
+                <Button className="ms-2" color="secondary" disabled>Delete</Button>
               </div>
         }
       />

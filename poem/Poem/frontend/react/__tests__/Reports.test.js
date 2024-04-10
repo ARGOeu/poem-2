@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, waitFor, screen, within, fireEvent } from '@testing-library/react';
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { Backend, WebApi } from '../DataManager';
 import { ReportsList, ReportsChange, ReportsAdd } from '../Reports';
@@ -1699,10 +1699,11 @@ describe('Tests for reports listview', () => {
     renderListView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Select report to change');
+      expect(screen.getAllByRole('columnheader')).toHaveLength(4);
     })
 
-    expect(screen.getAllByRole('columnheader')).toHaveLength(4);
+    expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Select report to change');
+
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Name' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Description' })).toBeInTheDocument();
@@ -1723,10 +1724,11 @@ describe('Tests for reports listview', () => {
     renderListView(true)
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Select report for details')
+      expect(screen.getAllByRole('columnheader')).toHaveLength(4);
     })
 
-    expect(screen.getAllByRole('columnheader')).toHaveLength(4);
+    expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Select report for details')
+
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Name' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Description' })).toBeInTheDocument();
@@ -1890,8 +1892,10 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Change report');
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
+
+    expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Change report');
 
     const nameField = screen.getByTestId('name');
     const disabledField = screen.getByLabelText(/disabled/i);
@@ -2204,7 +2208,6 @@ describe('Tests for reports changeview - sites', () => {
     expect(downtimeThresholdField.value).toBe('0.1');
     expect(downtimeThresholdField).toBeEnabled();
 
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
   })
@@ -2220,7 +2223,7 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'new-report-name' } })
@@ -2268,7 +2271,7 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByLabelText(/disabled/i))
@@ -2308,7 +2311,7 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     await selectEvent.select(screen.getByText('ARGO_MON_CRITICAL'), 'OPS_MONITOR_RHEL7')
@@ -2361,7 +2364,7 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     expect(screen.getAllByText(/sites/i)).toHaveLength(3)
@@ -2381,8 +2384,13 @@ describe('Tests for reports changeview - sites', () => {
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
 
-    expect(card_groups.queryAllByText("Value not matching predefined values")).toHaveLength(2)
-    expect(card_endpoints.queryAllByText("Value not matching predefined values")).toHaveLength(2)
+    await waitFor(() => {
+      expect(card_groups.queryAllByText("Value not matching predefined values")).toHaveLength(2)
+    })
+
+    await waitFor(() => {
+      expect(card_endpoints.queryAllByText("Value not matching predefined values")).toHaveLength(2)
+    })
   })
 
   test('Test change groups', async () => {
@@ -2396,46 +2404,83 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
 
-    expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
+    })
 
-    await selectEvent.select(card_groups.getByText('Certified'), 'Candidate')
+    await waitFor(() => {
+      selectEvent.select(card_groups.getByText('Certified'), 'Candidate')
+    })
 
-    expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(card_groups.getByTestId('removeTag-1'))
 
-    expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(card_groups.getByRole('button', { name: /add new tag/i }))
 
-    expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
       expect(screen.queryByRole('dialog', { title: /change/i })).not.toBeInTheDocument()
     })
-    expect(card_groups.queryAllByText(/required/i)).toHaveLength(2)
+    
+    await waitFor(() => {
+      expect(card_groups.queryAllByText(/required/i)).toHaveLength(2)
+    })
 
-    await selectEvent.select(card_groups.getAllByText("Select...")[0], 'monitored')
-    await selectEvent.select(card_groups.getAllByText("Select...")[0], 'yes')
+    await waitFor(() => {
+      selectEvent.select(card_groups.getAllByText("Select...")[0], 'monitored')
+    })
 
-    expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(card_groups.getAllByText("Select...")).toHaveLength(1)
+    })
+
+    await waitFor(() => {
+      selectEvent.select(card_groups.getByText("Select..."), 'yes')
+    })
+
+    await waitFor(() => {
+      expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
+    })
 
     await selectEvent.select(card_groups.getByText('condor'), 'eddie')
 
     fireEvent.click(card_groups.getByText(/add new extension/i))
 
-    await selectEvent.select(card_groups.getAllByText("Select...")[0], 'GLUE2EndpointImplementationName')
-    await selectEvent.select(card_groups.getAllByText("Select...")[0], 'ARC-CE')
+    await waitFor(() => {
+      selectEvent.select(card_groups.getAllByText("Select...")[0], 'GLUE2EndpointImplementationName')
+    })
 
-    await selectEvent.select(card_groups.getByText("NGI_AEGIS"), "NGI_CH")
+    await waitFor(() => {
+      expect(card_groups.getAllByText("Select...")).toHaveLength(1)
+    })
 
-    await selectEvent.select(card_groups.getByText("AEGIS11-MISANU"), "CSCS-LCG2")
+    await waitFor(() => {
+      selectEvent.select(card_groups.getByText("Select..."), 'ARC-CE')
+    })
+
+    await waitFor(() => {
+      selectEvent.select(card_groups.getByText("NGI_AEGIS"), "NGI_CH")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(card_groups.getByText("AEGIS11-MISANU"), "CSCS-LCG2")
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
@@ -2505,31 +2550,71 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const endpoint_groups = within(screen.getByTestId('card-group-of-endpoints'));
 
-    await selectEvent.select(endpoint_groups.getAllByText('yes')[0], 'no')
+    await waitFor(() => {
+      selectEvent.select(endpoint_groups.getAllByText('yes')[0], 'no')
+    })
 
     fireEvent.click(endpoint_groups.getByTestId('removeTag-1'))
     fireEvent.click(endpoint_groups.getByTestId('removeTag-1'))
 
     fireEvent.click(endpoint_groups.getByRole('button', { name: /add new tag/i }))
 
-    await selectEvent.select(endpoint_groups.getAllByText(/select/i)[2], 'monitored')
-    await selectEvent.select(endpoint_groups.getAllByText(/select/i)[0], 'yes')
+    await waitFor(() => {
+      selectEvent.select(endpoint_groups.getAllByText("Select...")[0], 'monitored')
+    })
+
+    await waitFor(() => {
+      expect(endpoint_groups.getAllByText("Select...")).toHaveLength(1)
+    })
+
+    await waitFor(() => {
+      selectEvent.select(endpoint_groups.getByText("Select..."), 'yes')
+    })
+    
+    await waitFor(() => {
+      expect(endpoint_groups.queryAllByText("Select...")).toHaveLength(0)
+    })
 
     fireEvent.click(endpoint_groups.getByText(/add new extension/i))
 
-    await selectEvent.select(endpoint_groups.getAllByText(/select/i)[2], 'GLUE2EndpointID')
-    await selectEvent.select(endpoint_groups.getAllByText(/select/i)[0], 'ce1.gridpp.ecdf.ed.ac.uk')
-    await selectEvent.select(endpoint_groups.getByText('ce1.gridpp.ecdf.ed.ac.uk'), 'svr009.gla.scotgrid.ac.uk')
+    await waitFor(() => {
+      selectEvent.select(endpoint_groups.getAllByText("Select...")[0], 'GLUE2EndpointID')
+    })
+
+    await waitFor(() => {
+      expect(endpoint_groups.getAllByText("Select...")).toHaveLength(1)
+    })
+
+    await waitFor(() => {
+      selectEvent.select(endpoint_groups.getByText("Select..."), 'ce1.gridpp.ecdf.ed.ac.uk')
+    })
+
+    await waitFor(() => {
+      selectEvent.select(endpoint_groups.getByText('ce1.gridpp.ecdf.ed.ac.uk'), 'svr009.gla.scotgrid.ac.uk')
+    })
 
     fireEvent.click(endpoint_groups.getByText(/add new extension/i))
 
-    await selectEvent.select(endpoint_groups.getAllByText(/select/i)[2], 'GLUE2EndpointImplementationName')
-    await selectEvent.select(endpoint_groups.getAllByText(/select/i)[0], 'ARC-CE')
+    await waitFor(() => {
+      selectEvent.select(endpoint_groups.getAllByText("Select...")[0], 'GLUE2EndpointImplementationName')
+    })
+
+    await waitFor(() => {
+      expect(endpoint_groups.getAllByText("Select...")).toHaveLength(1)
+    })
+
+    await waitFor(() => {
+      selectEvent.select(endpoint_groups.getByText("Select..."), 'ARC-CE')
+    })
+
+    await waitFor(() => {
+      expect(endpoint_groups.queryAllByText("Select...")).toHaveLength(0)
+    })
 
     fireEvent.click(endpoint_groups.getByTestId('removeExtension-0'))
 
@@ -2575,7 +2660,7 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '70' } })
@@ -2621,7 +2706,7 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'More elaborate description of the critical report.' } })
@@ -2661,7 +2746,7 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'More elaborate description of the critical report.' } })
@@ -2706,7 +2791,7 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'More elaborate description of the critical report.' } })
@@ -2752,7 +2837,7 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'More elaborate description of the critical report.' } })
@@ -2797,7 +2882,7 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -2830,7 +2915,7 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -2865,7 +2950,7 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -2903,7 +2988,7 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -2941,7 +3026,7 @@ describe('Tests for reports changeview - sites', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i }).textContent).toBe('Change report');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -3000,7 +3085,7 @@ describe("Tests for reports changeview - servicegroups", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /report/i }).textContent).toBe("Change report")
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId("name")
@@ -3744,7 +3829,7 @@ describe("Tests for reports changeview with wildcard - servicegroups", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /report/i }).textContent).toBe("Change report")
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId("name")
@@ -4471,15 +4556,19 @@ describe("Tests for reports changeview with wildcard - servicegroups", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      selectEvent.select(screen.queryByText("NGI_*"), "EGI_NBISBILS_SLA")
     })
 
     const card_endpoints = within(screen.getByTestId("card-group-of-endpoints"))
 
-    await selectEvent.select(card_endpoints.queryByText("NGI_*"), "EGI_NBISBILS_SLA")
-
     selectEvent.openMenu(card_endpoints.queryByText("Top-*"))
-    expect(card_endpoints.queryByText("WMS")).toBeInTheDocument()
+    await waitFor(() => {
+      expect(card_endpoints.queryByText("WMS")).toBeInTheDocument()
+    })
     expect(card_endpoints.queryByText("Top-BDII")).toBeInTheDocument()
     expect(card_endpoints.queryByText("ngi.SAM")).toBeInTheDocument()
     expect(card_endpoints.queryByText("org.openstack.nova")).toBeInTheDocument()
@@ -4495,13 +4584,15 @@ describe("Tests for reports changeview with wildcard - servicegroups", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const card_groups = within(screen.getByTestId("card-group-of-groups"))
     const card_endpoints = within(screen.getByTestId("card-group-of-endpoints"))
 
-    expect(card_groups.queryByText("Duplicate values")).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(card_groups.queryByText("Duplicate values")).not.toBeInTheDocument()
+    })
 
     await selectEvent.select(card_groups.queryByText("NGI_A*"), "NGI_AEGIS_SERVICES")
 
@@ -4509,7 +4600,9 @@ describe("Tests for reports changeview with wildcard - servicegroups", () => {
       expect(card_groups.queryAllByText("Duplicate values")).toHaveLength(1)
     })
 
-    expect(card_endpoints.queryByText("Duplicate values")).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(card_endpoints.queryByText("Duplicate values")).not.toBeInTheDocument()
+    })
 
     await selectEvent.select(card_endpoints.queryByText("Top-*"), "Top-BDII")
 
@@ -4546,7 +4639,7 @@ describe("Tests for reports changeview with wildcards - sites", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId("name")
@@ -4782,7 +4875,7 @@ describe("Tests for reports changeview with wildcards - sites", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const card_groups = within(screen.getByTestId("card-group-of-groups"))
@@ -4987,7 +5080,7 @@ describe("Tests for reports changeview with wildcards - sites", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const card_groups = within(screen.getByTestId("card-group-of-groups"))
@@ -5038,7 +5131,7 @@ describe("Tests for reports changeview with negation - sites", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId("name")
@@ -5531,7 +5624,7 @@ describe("Tests for reports changeview with negation - sites", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const card_groups = within(screen.getByTestId("card-group-of-groups"))
@@ -5588,7 +5681,7 @@ describe("Tests for reports changeview with negation - servicegroups", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId("name")
@@ -6077,7 +6170,7 @@ describe("Tests for reports changeview with negation - servicegroups", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const card_groups = within(screen.getByTestId("card-group-of-groups"))
@@ -6128,7 +6221,7 @@ describe("Tests for reports changeview with combination of negation and wildcard
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId("name")
@@ -6621,7 +6714,7 @@ describe("Tests for reports changeview with combination of negation and wildcard
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const card_groups = within(screen.getByTestId("card-group-of-groups"))
@@ -6671,8 +6764,10 @@ describe('Tests for public reports changeview', () => {
     renderChangeView(true);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /details/i }).textContent).toBe('Report details');
+      expect(screen.getByTestId("name")).toBeInTheDocument()
     })
+
+    expect(screen.getByRole('heading', { name: /details/i }).textContent).toBe('Report details');
 
     const nameField = screen.getByTestId('name');
     const disabledField = screen.getByLabelText(/disabled/i);
@@ -6782,7 +6877,7 @@ describe('Tests for public reports changeview', () => {
     renderChangeView(true);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /details/i }).textContent).toBe('Report details');
+      expect(screen.getByTestId("name")).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name');
@@ -6985,7 +7080,7 @@ describe('Tests for reports addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name');
@@ -7111,7 +7206,7 @@ describe('Tests for reports addview', () => {
     renderAddView()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'OPS-MONITOR' } });
@@ -7170,14 +7265,16 @@ describe('Tests for reports addview', () => {
     renderAddView()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i }).textContent).toBe('Add report');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
 
     fireEvent.click(card_groups.getByText(/add new tag/i))
 
-    expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
+    })
 
     expect(card_groups.queryByText('certification')).not.toBeInTheDocument()
     expect(card_groups.queryByText('infrastructure')).not.toBeInTheDocument()
@@ -7185,7 +7282,7 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText('scope')).not.toBeInTheDocument()
     expect(card_groups.queryByText("production")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getAllByText(/select/i)[0])
+    selectEvent.openMenu(card_groups.getAllByText("Select...")[0])
     expect(card_groups.queryByText('certification')).toBeInTheDocument()
     expect(card_groups.queryByText('infrastructure')).toBeInTheDocument()
     expect(card_groups.queryByText('monitored')).toBeInTheDocument()
@@ -7221,11 +7318,20 @@ describe('Tests for reports addview', () => {
     await waitFor(() => {
       expect(screen.queryByRole('dialog', { title: /add/i })).not.toBeInTheDocument()
     })
-    expect(card_groups.queryAllByText(/required/i)).toHaveLength(2)
 
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'certification')
-    expect(card_groups.queryAllByText(/required/i)).toHaveLength(1)
-    selectEvent.openMenu(card_groups.queryByText(/select/i))
+    await waitFor(() => {
+      expect(card_groups.queryAllByText(/required/i)).toHaveLength(2)
+    })
+
+    await waitFor(() => {
+      selectEvent.select(card_groups.getAllByText("Select...")[0], 'certification')
+    })
+
+    await waitFor(() => {
+      expect(card_groups.queryAllByText(/required/i)).toHaveLength(1)
+    })
+
+    selectEvent.openMenu(card_groups.queryByText("Select..."))
     expect(card_groups.queryByText('Candidate')).toBeInTheDocument()
     expect(card_groups.queryByText('Certified')).toBeInTheDocument()
     expect(card_groups.queryByText('Closed')).toBeInTheDocument()
@@ -7251,11 +7357,19 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText(/condor/i)).not.toBeInTheDocument()
     expect(card_groups.queryByText("eddie")).not.toBeInTheDocument()
 
-    await selectEvent.select(card_groups.queryByText(/select/i), 'Candidate')
+    await waitFor(() => {
+      selectEvent.select(card_groups.queryByText("Select..."), 'Candidate')
+    })
 
-    await selectEvent.select(card_groups.queryByText('Candidate'), 'Certified')
+    await waitFor(() => {
+      selectEvent.select(card_groups.queryByText('Candidate'), 'Certified')
+    })
 
     fireEvent.click(card_groups.getByText(/add new tag/i))
+
+    await waitFor(() => {
+      expect(card_groups.getAllByText("Select...")).toHaveLength(2)
+    })
 
     expect(card_groups.queryAllByText('certification')).toHaveLength(1)
     expect(card_groups.queryByText('infrastructure')).not.toBeInTheDocument()
@@ -7263,14 +7377,20 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText('scope')).not.toBeInTheDocument()
     expect(card_groups.queryByText("production")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.queryAllByText(/select/i)[0])
+    selectEvent.openMenu(card_groups.queryAllByText("Select...")[0])
     expect(card_groups.queryAllByText('certification')).toHaveLength(1)
     expect(card_groups.queryByText('infrastructure')).toBeInTheDocument()
     expect(card_groups.queryByText('monitored')).toBeInTheDocument()
     expect(card_groups.queryByText('scope')).toBeInTheDocument()
     expect(card_groups.queryByText("production")).not.toBeInTheDocument()
 
-    await selectEvent.select(card_groups.queryAllByText(/select/i)[0], 'infrastructure')
+    await waitFor(() => {
+      selectEvent.select(card_groups.queryAllByText("Select...")[0], 'infrastructure')
+    })
+
+    await waitFor(() => {
+      expect(card_groups.getAllByText("Select...")).toHaveLength(1)
+    })
 
     expect(card_groups.queryByText('PPS')).not.toBeInTheDocument()
     expect(card_groups.queryByText('Production')).not.toBeInTheDocument()
@@ -7292,7 +7412,7 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText(/condor/i)).not.toBeInTheDocument()
     expect(card_groups.queryByText("eddie")).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getByText(/select/i))
+    selectEvent.openMenu(card_groups.getByText("Select..."))
     expect(card_groups.queryByText('PPS')).toBeInTheDocument()
     expect(card_groups.queryByText('Production')).toBeInTheDocument()
     expect(card_groups.queryByText('Test')).toBeInTheDocument()
@@ -7313,8 +7433,15 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText(/condor/i)).not.toBeInTheDocument()
     expect(card_groups.queryByText("eddie")).not.toBeInTheDocument()
 
-    await selectEvent.select(card_groups.getByText('infrastructure'), 'monitored')
-    selectEvent.openMenu(card_groups.getByText(/select/i))
+    await waitFor(() => {
+      selectEvent.select(card_groups.getByText('infrastructure'), 'monitored')
+    })
+
+    await waitFor(() => {
+      expect(card_groups.getByText("monitored")).toBeInTheDocument()
+    })
+
+    selectEvent.openMenu(card_groups.getByText("Select..."))
     expect(card_groups.queryByText('PPS')).not.toBeInTheDocument()
     expect(card_groups.queryByText('Production')).not.toBeInTheDocument()
     expect(card_groups.queryByText('Test')).not.toBeInTheDocument()
@@ -7335,8 +7462,15 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText(/condor/i)).not.toBeInTheDocument()
     expect(card_groups.queryByText("eddie")).not.toBeInTheDocument()
 
-    await selectEvent.select(card_groups.getByText('monitored'), 'scope')
-    selectEvent.openMenu(card_groups.getByText(/select/i))
+    await waitFor(() => {
+      selectEvent.select(card_groups.getByText('monitored'), 'scope')
+    })
+
+    await waitFor(() => {
+      expect(card_groups.getByText("scope")).toBeInTheDocument()
+    })
+
+    selectEvent.openMenu(card_groups.getByText("Select..."))
     expect(card_groups.queryByText('PPS')).not.toBeInTheDocument()
     expect(card_groups.queryByText('Production')).not.toBeInTheDocument()
     expect(card_groups.queryByText('Test')).not.toBeInTheDocument()
@@ -7357,16 +7491,33 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText(/condor/i)).not.toBeInTheDocument()
     expect(card_groups.queryByText("eddie")).not.toBeInTheDocument()
 
-    await selectEvent.select(card_groups.getByText(/select/i), 'EGI')
+    await waitFor(() => {
+      selectEvent.select(card_groups.getByText("Select..."), 'EGI')
+    })
+
+    await waitFor(() => {
+      expect(card_groups.queryAllByText("Select...")).toHaveLength(0)
+    })
 
     fireEvent.click(card_groups.getByTestId('removeTag-0'))
 
-    expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(card_groups.queryByText(/required/i)).not.toBeInTheDocument()
+    })
 
-    expect(card_groups.queryByText(/certification/i)).not.toBeInTheDocument()
-    expect(card_groups.queryByText(/certified/i)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(card_groups.queryByText(/certification/i)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(card_groups.queryByText(/certified/i)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(card_groups.getByText(/add new extension/i))
+
+    await waitFor(() => {
+      expect(card_groups.getAllByText("Select...")).toHaveLength(2)
+    })
 
     expect(card_groups.queryByText('certification')).not.toBeInTheDocument()
     expect(card_groups.queryByText('infrastructure')).not.toBeInTheDocument()
@@ -7380,7 +7531,7 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText(/GLUE2EndpointID/i)).not.toBeInTheDocument()
     expect(card_groups.queryByText(/vo_/i)).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getAllByText(/select/i)[0])
+    selectEvent.openMenu(card_groups.getAllByText("Select...")[0])
     expect(card_groups.queryByText('certification')).not.toBeInTheDocument()
     expect(card_groups.queryByText('infrastructure')).not.toBeInTheDocument()
     expect(card_groups.queryByText('monitored')).not.toBeInTheDocument()
@@ -7434,8 +7585,15 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText('/dpm/farm.particle.cz/home/aaa')).not.toBeInTheDocument()
     expect(card_groups.queryByText('/dpm/fis.puc.cl/home/afigrid')).not.toBeInTheDocument()
 
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'GLUE2ComputingShareMappingQueue')
-    selectEvent.openMenu(card_groups.getByText(/select/i))
+    await waitFor(() => {
+      selectEvent.select(card_groups.getAllByText("Select...")[0], 'GLUE2ComputingShareMappingQueue')
+    })
+
+    await waitFor(() => {
+      expect(card_groups.getAllByText("Select...")).toHaveLength(1)
+    })
+
+    selectEvent.openMenu(card_groups.getByText("Select..."))
     expect(card_groups.queryByText('Candidate')).not.toBeInTheDocument()
     expect(card_groups.queryByText('Certified')).not.toBeInTheDocument()
     expect(card_groups.queryByText('Closed')).not.toBeInTheDocument()
@@ -7475,9 +7633,13 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText('/dpm/farm.particle.cz/home/aaa')).not.toBeInTheDocument()
     expect(card_groups.queryByText('/dpm/fis.puc.cl/home/afigrid')).not.toBeInTheDocument()
 
-    await selectEvent.select(card_groups.getByText(/select/i), 'condor')
+    await waitFor(() => {
+      selectEvent.select(card_groups.getByText("Select..."), 'condor')
+    })
 
-    await selectEvent.select(card_groups.getByText('condor'), 'eddie')
+    await waitFor(() => {
+      selectEvent.select(card_groups.getByText('condor'), 'eddie')
+    })
 
     fireEvent.click(card_groups.getByText(/add new extension/i))
 
@@ -7493,7 +7655,7 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText(/GLUE2EndpointID/i)).not.toBeInTheDocument()
     expect(card_groups.queryByText(/vo_/i)).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getAllByText(/select/i)[0])
+    selectEvent.openMenu(card_groups.getAllByText("Select...")[0])
     expect(card_groups.queryByText('certification')).not.toBeInTheDocument()
     expect(card_groups.queryByText('infrastructure')).not.toBeInTheDocument()
     expect(card_groups.queryByText('monitored')).not.toBeInTheDocument()
@@ -7506,7 +7668,13 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText(/GLUE2EndpointID/i)).not.toBeInTheDocument()
     expect(card_groups.queryByText(/vo_/i)).not.toBeInTheDocument()
 
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'GLUE2EndpointImplementationName')
+    await waitFor(() => {
+      selectEvent.select(card_groups.getAllByText("Select...")[0], 'GLUE2EndpointImplementationName')
+    })
+
+    await waitFor(() => {
+      expect(card_groups.getAllByText("Select...")).toHaveLength(1)
+    })
 
     expect(card_groups.queryByText('Candidate')).not.toBeInTheDocument()
     expect(card_groups.queryByText('Certified')).not.toBeInTheDocument()
@@ -7544,7 +7712,7 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText('/dpm/farm.particle.cz/home/aaa')).not.toBeInTheDocument()
     expect(card_groups.queryByText('/dpm/fis.puc.cl/home/afigrid')).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_groups.getByText(/select/i))
+    selectEvent.openMenu(card_groups.getByText("Select..."))
     expect(card_groups.queryByText('Candidate')).not.toBeInTheDocument()
     expect(card_groups.queryByText('Certified')).not.toBeInTheDocument()
     expect(card_groups.queryByText('Closed')).not.toBeInTheDocument()
@@ -7581,7 +7749,9 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText('/dpm/farm.particle.cz/home/aaa')).not.toBeInTheDocument()
     expect(card_groups.queryByText('/dpm/fis.puc.cl/home/afigrid')).not.toBeInTheDocument()
 
-    await selectEvent.select(card_groups.getByText(/select/i), 'ARC-CE')
+    await waitFor(() => {
+      selectEvent.select(card_groups.getByText("Select..."), 'ARC-CE')
+    })
 
     fireEvent.click(card_groups.getByTestId('removeExtension-1'))
 
@@ -7593,7 +7763,7 @@ describe('Tests for reports addview', () => {
     renderAddView()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
@@ -7614,7 +7784,7 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('GLUE2ComputingShareMappingQueue')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText(/vo_/i)).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.getAllByText(/select/i)[0])
+    selectEvent.openMenu(card_endpoints.getAllByText("Select...")[0])
     expect(card_endpoints.queryByText('certification')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('infrastructure')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('monitored')).toBeInTheDocument()
@@ -7665,8 +7835,15 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('1')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('0')).not.toBeInTheDocument()
 
-    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'scope')
-    selectEvent.openMenu(card_endpoints.queryByText(/select/i))
+    await waitFor(() => {
+      selectEvent.select(card_endpoints.getAllByText("Select...")[0], 'scope')
+    })
+
+    await waitFor(() => {
+      expect(card_endpoints.getAllByText("Select...")).toHaveLength(1)
+    })
+
+    selectEvent.openMenu(card_endpoints.getByText("Select..."))
     expect(card_endpoints.queryByText('yes')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('no')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("alice")).toBeInTheDocument()
@@ -7703,9 +7880,13 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('1')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('0')).not.toBeInTheDocument()
 
-    await selectEvent.select(card_endpoints.queryByText(/select/i), 'FedCloud')
+    await waitFor(() => {
+      selectEvent.select(card_endpoints.queryByText("Select..."), 'FedCloud')
+    })
 
-    await selectEvent.select(card_endpoints.queryByText('FedCloud'), 'EGI')
+    await waitFor(() => {
+      selectEvent.select(card_endpoints.queryByText('FedCloud'), 'EGI')
+    }) 
 
     fireEvent.click(card_endpoints.getByText(/add new tag/i))
 
@@ -7738,7 +7919,13 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('GLUE2ComputingShareMappingQueue')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText(/vo_/i)).not.toBeInTheDocument()
 
-    await selectEvent.select(card_endpoints.queryAllByText(/select/i)[0], 'monitored')
+    await waitFor(() => {
+      selectEvent.select(card_endpoints.queryAllByText("Select...")[0], 'monitored')
+    })
+
+    await waitFor(() => {
+      expect(card_endpoints.getAllByText("Select...")).toHaveLength(1)
+    })
 
     expect(card_endpoints.queryByText('yes')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('no')).not.toBeInTheDocument()
@@ -7767,7 +7954,7 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('1')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('0')).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.getByText(/select/i))
+    selectEvent.openMenu(card_endpoints.getByText("Select..."))
     expect(card_endpoints.queryByText('yes')).toBeInTheDocument()
     expect(card_endpoints.queryByText('no')).toBeInTheDocument()
     expect(card_endpoints.queryByText('1111G0')).not.toBeInTheDocument()
@@ -7795,7 +7982,9 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('1')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('0')).not.toBeInTheDocument()
 
-    await selectEvent.select(card_endpoints.getByText(/select/i), 'yes')
+    await waitFor(() => {
+      selectEvent.select(card_endpoints.getByText("Select..."), 'yes')
+    })
 
     fireEvent.click(card_endpoints.getByTestId('removeTag-1'))
 
@@ -7818,7 +8007,7 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('GLUE2ComputingShareMappingQueue')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText(/vo_/i)).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.getAllByText(/select/i)[0])
+    selectEvent.openMenu(card_endpoints.getAllByText("Select...")[0])
     expect(card_endpoints.queryByText('certification')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('infrastructure')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('monitored')).not.toBeInTheDocument()
@@ -7869,8 +8058,15 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('1')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('0')).not.toBeInTheDocument()
 
-    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'GLUE2EndpointID')
-    selectEvent.openMenu(card_endpoints.queryByText(/select/i))
+    await waitFor(() => {
+      selectEvent.select(card_endpoints.getAllByText("Select...")[0], 'GLUE2EndpointID')
+    })
+
+    await waitFor(() => {
+      expect(card_endpoints.getAllByText("Select...")).toHaveLength(1)
+    })
+
+    selectEvent.openMenu(card_endpoints.queryByText("Select..."))
     expect(card_endpoints.queryByText('yes')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('no')).not.toBeInTheDocument()
     expect(card_endpoints.queryAllByText("alice")).toHaveLength(1)
@@ -7907,9 +8103,13 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('1')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('0')).not.toBeInTheDocument()
 
-    await selectEvent.select(card_endpoints.queryByText(/select/i), 'ce1.gridpp.ecdf.ed.ac.uk')
+    await waitFor(() => {
+      selectEvent.select(card_endpoints.queryByText("Select..."), 'ce1.gridpp.ecdf.ed.ac.uk')
+    })
 
-    await selectEvent.select(card_endpoints.queryByText('GLUE2EndpointID'), 'svr009.gla.scotgrid.ac.uk')
+    await waitFor(() => {
+      selectEvent.select(card_endpoints.queryByText('GLUE2EndpointID'), 'svr009.gla.scotgrid.ac.uk')
+    })
 
     fireEvent.click(card_endpoints.getByText(/add new extension/i))
 
@@ -7927,7 +8127,7 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('GLUE2ComputingShareMappingQueue')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText(/vo_/i)).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.queryAllByText(/select/i)[0])
+    selectEvent.openMenu(card_endpoints.queryAllByText("Select...")[0])
     expect(card_endpoints.queryByText('certification')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('infrastructure')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('monitored')).not.toBeInTheDocument()
@@ -7942,7 +8142,13 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('GLUE2ComputingShareMappingQueue')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText(/vo_/i)).not.toBeInTheDocument()
 
-    await selectEvent.select(card_endpoints.queryAllByText(/select/i)[0], 'GLUE2EndpointImplementationName')
+    await waitFor(() => {
+      selectEvent.select(card_endpoints.queryAllByText("Select...")[0], 'GLUE2EndpointImplementationName')
+    })
+
+    await waitFor(() => {
+      expect(card_endpoints.getAllByText("Select...")).toHaveLength(1)
+    })
 
     expect(card_endpoints.queryByText('yes')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('no')).not.toBeInTheDocument()
@@ -7977,7 +8183,7 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('1')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('0')).not.toBeInTheDocument()
 
-    selectEvent.openMenu(card_endpoints.getByText(/select/i))
+    selectEvent.openMenu(card_endpoints.getByText("Select..."))
     expect(card_endpoints.queryByText('yes')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('no')).not.toBeInTheDocument()
     expect(card_endpoints.queryAllByText("alice")).toHaveLength(1)
@@ -8011,7 +8217,9 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('1')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('0')).not.toBeInTheDocument()
 
-    await selectEvent.select(card_endpoints.getByText(/select/i), 'ARC-CE')
+    await waitFor(() => {
+      selectEvent.select(card_endpoints.getByText("Select..."), 'ARC-CE')
+    })
 
     fireEvent.click(card_endpoints.getByTestId('removeExtension-1'))
 
@@ -8022,7 +8230,7 @@ describe('Tests for reports addview', () => {
     renderAddView()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const topologyTypeField = screen.getAllByText(/select/i)[5]
@@ -8074,7 +8282,9 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText("Site-BDII")).not.toBeInTheDocument()
     expect(card_groups.queryByText("SRM")).not.toBeInTheDocument()
 
-    await selectEvent.select(topologyTypeField, "Sites")
+    await waitFor(() => {
+      selectEvent.select(topologyTypeField, "Sites")
+    })
 
     selectEvent.openMenu(card_groups.queryAllByText(/search/i)[0])
     expect(card_groups.queryByText("EGI")).not.toBeInTheDocument()
@@ -8115,12 +8325,16 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText("Site-BDII")).not.toBeInTheDocument()
     expect(card_groups.queryByText("SRM")).not.toBeInTheDocument()
 
-    await selectEvent.select(card_groups.getByText("NGI_AEGIS"), "NGI_CH")
+    await waitFor(() => {
+      selectEvent.select(card_groups.getByText("NGI_AEGIS"), "NGI_CH")
+    })
 
     selectEvent.openMenu(card_groups.getByText(/search/i))
     expect(card_groups.queryByText("AEGIS11-MISANU")).toBeInTheDocument()
     expect(card_groups.queryByText("AEGIS03-ELEF-LEDA")).toBeInTheDocument()
-    expect(card_groups.queryByText("CSCS-LCG2")).toBeInTheDocument()
+    await waitFor(() => {
+      expect(card_groups.queryByText("CSCS-LCG2")).toBeInTheDocument()
+    })
     expect(card_groups.queryByText("SWITCH")).toBeInTheDocument()
 
     expect(card_groups.queryByText("WMS")).not.toBeInTheDocument()
@@ -8131,7 +8345,9 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText("Site-BDII")).not.toBeInTheDocument()
     expect(card_groups.queryByText("SRM")).not.toBeInTheDocument()
 
-    await selectEvent.select(card_groups.getByText(/search/i), "AEGIS11-MISANU")
+    await waitFor(() => {
+      selectEvent.select(card_groups.getByText(/search/i), "AEGIS11-MISANU")
+    })
 
     expect(card_endpoints.queryAllByText(/search/i)).toHaveLength(2)
 
@@ -8168,7 +8384,13 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText("Site-BDII")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("SRM")).not.toBeInTheDocument()
 
-    await selectEvent.select(card_endpoints.queryAllByText(/search/i)[0], "CSCS-LCG2")
+    await waitFor(() => {
+      selectEvent.select(card_endpoints.queryAllByText(/search/i)[0], "CSCS-LCG2")
+    })
+    
+    await waitFor(() => {
+      expect(card_endpoints.getAllByText(/search/i)).toHaveLength(1)
+    })
 
     selectEvent.openMenu(card_endpoints.getByText(/search/i))
     expect(card_endpoints.queryByText("WMS")).not.toBeInTheDocument()
@@ -8180,7 +8402,9 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText("Site-BDII")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("SRM")).toBeInTheDocument()
 
-    await selectEvent.select(card_endpoints.getByText("CSCS-LCG2"), "AEGIS11-MISANU")
+    await waitFor(() => {
+      selectEvent.select(card_endpoints.getByText("CSCS-LCG2"), "AEGIS11-MISANU")
+    })
 
     selectEvent.openMenu(card_endpoints.getByText(/search/i))
     expect(card_endpoints.queryByText("WMS")).not.toBeInTheDocument()
@@ -8188,7 +8412,9 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText("ngi.SAM")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("org.openstack.nova")).not.toBeInTheDocument()
 
-    expect(card_endpoints.queryByText("APEL")).toBeInTheDocument()
+    await waitFor(() => {
+      expect(card_endpoints.queryByText("APEL")).toBeInTheDocument()
+    })
     expect(card_endpoints.queryByText("Site-BDII")).toBeInTheDocument()
     expect(card_endpoints.queryByText("SRM")).toBeInTheDocument()
   })
@@ -8197,7 +8423,7 @@ describe('Tests for reports addview', () => {
     renderAddView()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const topologyTypeField = screen.getAllByText(/select/i)[5]
@@ -8249,10 +8475,14 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText("Site-BDII")).not.toBeInTheDocument()
     expect(card_groups.queryByText("SRM")).not.toBeInTheDocument()
 
-    await selectEvent.select(topologyTypeField, "ServiceGroups")
+    await waitFor(() => {
+      selectEvent.select(topologyTypeField, "ServiceGroups")
+    })
 
     selectEvent.openMenu(card_groups.queryAllByText(/search/i)[0])
-    expect(card_groups.queryByText("EGI")).toBeInTheDocument()
+    await waitFor(() => {
+      expect(card_groups.queryByText("EGI")).toBeInTheDocument()
+    })
     expect(card_groups.queryByText("NGI_AEGIS_SERVICES")).not.toBeInTheDocument()
     expect(card_groups.queryByText("NGI_ARMGRID_SERVICES")).not.toBeInTheDocument()
     expect(card_groups.queryByText("NGI_BG_SERVICES")).not.toBeInTheDocument()
@@ -8274,7 +8504,13 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText("Site-BDII")).not.toBeInTheDocument()
     expect(card_groups.queryByText("SRM")).not.toBeInTheDocument()
 
-    await selectEvent.select(card_groups.queryAllByText(/search/i)[0], "EGI")
+    await waitFor(() => {
+      selectEvent.select(card_groups.queryAllByText(/search/i)[0], "EGI")
+    })
+
+    await waitFor(() => {
+      expect(card_groups.getAllByText(/search/i)).toHaveLength(1)
+    })
 
     selectEvent.openMenu(card_groups.getByText(/search/i))
     expect(card_groups.queryByText("NGI_AEGIS_SERVICES")).toBeInTheDocument()
@@ -8298,9 +8534,13 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText("Site-BDII")).not.toBeInTheDocument()
     expect(card_groups.queryByText("SRM")).not.toBeInTheDocument()
 
-    await selectEvent.select(card_groups.getByText(/search/i), "NGI_BG_SERVICES")
+    await waitFor(() => {
+      selectEvent.select(card_groups.getByText(/search/i), "NGI_BG_SERVICES")
+    })
 
-    await selectEvent.select(card_groups.getByText("NGI_BG_SERVICES"), "EGI_NBISBILS_SLA")
+    await waitFor(() => {
+      selectEvent.select(card_groups.getByText("NGI_BG_SERVICES"), "EGI_NBISBILS_SLA")
+    })
 
     expect(card_endpoints.queryAllByText(/search/i)).toHaveLength(2)
 
@@ -8337,7 +8577,13 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText("Site-BDII")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("SRM")).not.toBeInTheDocument()
 
-    await selectEvent.select(card_endpoints.queryAllByText(/search/i)[0], "EGI_NBISBILS_SLA")
+    await waitFor(() => {
+      selectEvent.select(card_endpoints.queryAllByText(/search/i)[0], "EGI_NBISBILS_SLA")
+    })
+
+    await waitFor(() => {
+      expect(card_endpoints.getAllByText(/search/i)).toHaveLength(1)
+    })
 
     selectEvent.openMenu(card_endpoints.getByText(/search/i))
     expect(card_endpoints.queryByText("WMS")).not.toBeInTheDocument()
@@ -8349,11 +8595,15 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText("Site-BDII")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("SRM")).not.toBeInTheDocument()
 
-    await selectEvent.select(card_endpoints.getByText("EGI_NBISBILS_SLA"), "NGI_BG_SERVICES")
+    await waitFor(() => {
+      selectEvent.select(card_endpoints.getByText("EGI_NBISBILS_SLA"), "NGI_BG_SERVICES")
+    })
 
     selectEvent.openMenu(card_endpoints.getByText(/search/i))
     expect(card_endpoints.queryByText("WMS")).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText("Top-BDII")).toBeInTheDocument()
+    await waitFor(() => {
+      expect(card_endpoints.queryByText("Top-BDII")).toBeInTheDocument()
+    })
     expect(card_endpoints.queryByText("ngi.SAM")).toBeInTheDocument()
     expect(card_endpoints.queryByText("org.openstack.nova")).toBeInTheDocument()
 
@@ -8381,7 +8631,7 @@ describe('Tests for reports addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'OPS-MONITOR' } });
@@ -8394,25 +8644,70 @@ describe('Tests for reports addview', () => {
     await selectEvent.select(screen.getAllByText(/select/i)[0], 'egi_ops')
     await selectEvent.select(screen.getAllByText(/select/i)[0], 'TEST_PROFILE')
 
-    await selectEvent.select(screen.getAllByText(/select/i)[0], 'Sites')
+    await waitFor(() => {
+      selectEvent.select(screen.getAllByText(/select/i)[0], 'Sites')
+    })
 
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
 
     fireEvent.click(card_groups.getByRole('button', { name: /add new tag/i }))
 
-    await selectEvent.select(card_groups.getAllByText(/select/i)[2], 'monitored')
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'yes')
+    await waitFor(() => {
+      expect(card_groups.getAllByText("Select...")).toHaveLength(2)
+    })
+
+    await waitFor(() => {
+      selectEvent.select(card_groups.getAllByText("Select...")[0], 'monitored')
+    })
+
+    await waitFor(() => {
+      expect(card_groups.getAllByText("Select...")).toHaveLength(1)
+    })
+
+    await waitFor(() => {
+      selectEvent.select(card_groups.getByText("Select..."), 'yes')
+    })
 
     fireEvent.click(card_groups.getByRole('button', { name: /add new extension/i }))
 
-    await selectEvent.select(card_groups.getAllByText(/select/i)[2], 'GLUE2EndpointImplementationName')
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'ARC-CE')
+    await waitFor(() => {
+      expect(card_groups.getAllByText("Select...")).toHaveLength(2)
+    })
+
+    await waitFor(() => {
+      selectEvent.select(card_groups.getAllByText("Select...")[0], 'GLUE2EndpointImplementationName')
+    })
+
+    await waitFor(() => {
+      expect(card_groups.getAllByText("Select...")).toHaveLength(1)
+    })
+    
+    await waitFor(() => {
+      selectEvent.select(card_groups.getAllByText("Select...")[0], 'ARC-CE')
+    })
 
     fireEvent.click(card_endpoints.getByText(/add new extension/i))
 
-    await selectEvent.select(card_endpoints.getAllByText(/select/i)[2], 'GLUE2EndpointID')
-    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'ce1.gridpp.ecdf.ed.ac.uk')
+    await waitFor(() => {
+      expect(card_endpoints.getAllByText("Select...")).toHaveLength(2)
+    })
+
+    await waitFor(() => {
+      selectEvent.select(card_endpoints.getAllByText("Select...")[0], 'GLUE2EndpointID')
+    })
+
+    await waitFor(() => {
+      expect(card_endpoints.getAllByText("Select...")).toHaveLength(1)
+    })
+
+    await waitFor(() => {
+      selectEvent.select(card_endpoints.getAllByText("Select...")[0], 'ce1.gridpp.ecdf.ed.ac.uk')
+    })
+
+    await waitFor(() => {
+      expect(card_endpoints.queryAllByText("Select...")).toHaveLength(0)
+    })
 
     fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '70' } });
     fireEvent.change(screen.getByLabelText(/reliability/i), { target: { value: '80' } });
@@ -8450,7 +8745,7 @@ describe('Tests for reports addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'OPS-MONITOR' } });
@@ -8463,25 +8758,70 @@ describe('Tests for reports addview', () => {
     await selectEvent.select(screen.getAllByText(/select/i)[0], 'egi_ops')
     await selectEvent.select(screen.getAllByText(/select/i)[0], 'TEST_PROFILE')
 
-    await selectEvent.select(screen.getAllByText(/select/i)[0], 'Sites')
+    await waitFor(() => {
+      selectEvent.select(screen.getAllByText(/select/i)[0], 'Sites')
+    })
 
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
 
     fireEvent.click(card_groups.getByRole('button', { name: /add new tag/i }))
 
-    await selectEvent.select(card_groups.getAllByText(/select/i)[2], 'monitored')
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'yes')
+    await waitFor(() => {
+      expect(card_groups.getAllByText("Select...")).toHaveLength(2)
+    })
+
+    await waitFor(() => {
+      selectEvent.select(card_groups.getAllByText("Select...")[0], 'monitored')
+    })
+
+    await waitFor(() => {
+      expect(card_groups.getAllByText("Select...")).toHaveLength(1)
+    })
+
+    await waitFor(() => {
+      selectEvent.select(card_groups.getByText("Select..."), 'yes')
+    })
 
     fireEvent.click(card_groups.getByRole('button', { name: /add new extension/i }))
 
-    await selectEvent.select(card_groups.getAllByText(/select/i)[2], 'GLUE2EndpointImplementationName')
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'ARC-CE')
+    await waitFor(() => {
+      expect(card_groups.getAllByText("Select...")).toHaveLength(2)
+    })
+
+    await waitFor(() => {
+      selectEvent.select(card_groups.getAllByText("Select...")[0], 'GLUE2EndpointImplementationName')
+    })
+
+    await waitFor(() => {
+      expect(card_groups.getAllByText("Select...")).toHaveLength(1)
+    })
+    
+    await waitFor(() => {
+      selectEvent.select(card_groups.getAllByText("Select...")[0], 'ARC-CE')
+    })
 
     fireEvent.click(card_endpoints.getByText(/add new extension/i))
 
-    await selectEvent.select(card_endpoints.getAllByText(/select/i)[2], 'GLUE2EndpointID')
-    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'ce1.gridpp.ecdf.ed.ac.uk')
+    await waitFor(() => {
+      expect(card_endpoints.getAllByText("Select...")).toHaveLength(2)
+    })
+
+    await waitFor(() => {
+      selectEvent.select(card_endpoints.getAllByText("Select...")[0], 'GLUE2EndpointID')
+    })
+
+    await waitFor(() => {
+      expect(card_endpoints.getAllByText("Select...")).toHaveLength(1)
+    })
+
+    await waitFor(() => {
+      selectEvent.select(card_endpoints.getAllByText("Select...")[0], 'ce1.gridpp.ecdf.ed.ac.uk')
+    })
+
+    await waitFor(() => {
+      expect(card_endpoints.queryAllByText("Select...")).toHaveLength(0)
+    })
 
     fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '70' } });
     fireEvent.change(screen.getByLabelText(/reliability/i), { target: { value: '80' } });
@@ -8521,7 +8861,7 @@ describe('Tests for reports addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'OPS-MONITOR' } });
@@ -8534,25 +8874,70 @@ describe('Tests for reports addview', () => {
     await selectEvent.select(screen.getAllByText(/select/i)[0], 'egi_ops')
     await selectEvent.select(screen.getAllByText(/select/i)[0], 'TEST_PROFILE')
 
-    await selectEvent.select(screen.getAllByText(/select/i)[0], 'Sites')
+    await waitFor(() => {
+      selectEvent.select(screen.getAllByText(/select/i)[0], 'Sites')
+    })
 
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
 
     fireEvent.click(card_groups.getByRole('button', { name: /add new tag/i }))
 
-    await selectEvent.select(card_groups.getAllByText(/select/i)[2], 'monitored')
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'yes')
+    await waitFor(() => {
+      expect(card_groups.getAllByText("Select...")).toHaveLength(2)
+    })
+
+    await waitFor(() => {
+      selectEvent.select(card_groups.getAllByText("Select...")[0], 'monitored')
+    })
+
+    await waitFor(() => {
+      expect(card_groups.getAllByText("Select...")).toHaveLength(1)
+    })
+
+    await waitFor(() => {
+      selectEvent.select(card_groups.getByText("Select..."), 'yes')
+    })
 
     fireEvent.click(card_groups.getByRole('button', { name: /add new extension/i }))
 
-    await selectEvent.select(card_groups.getAllByText(/select/i)[2], 'GLUE2EndpointImplementationName')
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'ARC-CE')
+    await waitFor(() => {
+      expect(card_groups.getAllByText("Select...")).toHaveLength(2)
+    })
+
+    await waitFor(() => {
+      selectEvent.select(card_groups.getAllByText("Select...")[0], 'GLUE2EndpointImplementationName')
+    })
+
+    await waitFor(() => {
+      expect(card_groups.getAllByText("Select...")).toHaveLength(1)
+    })
+    
+    await waitFor(() => {
+      selectEvent.select(card_groups.getAllByText("Select...")[0], 'ARC-CE')
+    })
 
     fireEvent.click(card_endpoints.getByText(/add new extension/i))
 
-    await selectEvent.select(card_endpoints.getAllByText(/select/i)[2], 'GLUE2EndpointID')
-    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'ce1.gridpp.ecdf.ed.ac.uk')
+    await waitFor(() => {
+      expect(card_endpoints.getAllByText("Select...")).toHaveLength(2)
+    })
+
+    await waitFor(() => {
+      selectEvent.select(card_endpoints.getAllByText("Select...")[0], 'GLUE2EndpointID')
+    })
+
+    await waitFor(() => {
+      expect(card_endpoints.getAllByText("Select...")).toHaveLength(1)
+    })
+
+    await waitFor(() => {
+      selectEvent.select(card_endpoints.getAllByText("Select...")[0], 'ce1.gridpp.ecdf.ed.ac.uk')
+    })
+
+    await waitFor(() => {
+      expect(card_endpoints.queryAllByText("Select...")).toHaveLength(0)
+    })
 
     fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '70' } });
     fireEvent.change(screen.getByLabelText(/reliability/i), { target: { value: '80' } });
@@ -8608,7 +8993,7 @@ describe('Tests for reports addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'OPS-MONITOR' } });
@@ -8621,25 +9006,70 @@ describe('Tests for reports addview', () => {
     await selectEvent.select(screen.getAllByText(/select/i)[0], 'egi_ops')
     await selectEvent.select(screen.getAllByText(/select/i)[0], 'TEST_PROFILE')
 
-    await selectEvent.select(screen.getAllByText(/select/i)[0], 'Sites')
+    await waitFor(() => {
+      selectEvent.select(screen.getAllByText(/select/i)[0], 'Sites')
+    })
 
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
 
     fireEvent.click(card_groups.getByRole('button', { name: /add new tag/i }))
 
-    await selectEvent.select(card_groups.getAllByText(/select/i)[2], 'monitored')
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'yes')
+    await waitFor(() => {
+      expect(card_groups.getAllByText("Select...")).toHaveLength(2)
+    })
+
+    await waitFor(() => {
+      selectEvent.select(card_groups.getAllByText("Select...")[0], 'monitored')
+    })
+
+    await waitFor(() => {
+      expect(card_groups.getAllByText("Select...")).toHaveLength(1)
+    })
+
+    await waitFor(() => {
+      selectEvent.select(card_groups.getByText("Select..."), 'yes')
+    })
 
     fireEvent.click(card_groups.getByRole('button', { name: /add new extension/i }))
 
-    await selectEvent.select(card_groups.getAllByText(/select/i)[2], 'GLUE2EndpointImplementationName')
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'ARC-CE')
+    await waitFor(() => {
+      expect(card_groups.getAllByText("Select...")).toHaveLength(2)
+    })
+
+    await waitFor(() => {
+      selectEvent.select(card_groups.getAllByText("Select...")[0], 'GLUE2EndpointImplementationName')
+    })
+
+    await waitFor(() => {
+      expect(card_groups.getAllByText("Select...")).toHaveLength(1)
+    })
+    
+    await waitFor(() => {
+      selectEvent.select(card_groups.getAllByText("Select...")[0], 'ARC-CE')
+    })
 
     fireEvent.click(card_endpoints.getByText(/add new extension/i))
 
-    await selectEvent.select(card_endpoints.getAllByText(/select/i)[2], 'GLUE2EndpointID')
-    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'ce1.gridpp.ecdf.ed.ac.uk')
+    await waitFor(() => {
+      expect(card_endpoints.getAllByText("Select...")).toHaveLength(2)
+    })
+
+    await waitFor(() => {
+      selectEvent.select(card_endpoints.getAllByText("Select...")[0], 'GLUE2EndpointID')
+    })
+
+    await waitFor(() => {
+      expect(card_endpoints.getAllByText("Select...")).toHaveLength(1)
+    })
+
+    await waitFor(() => {
+      selectEvent.select(card_endpoints.getAllByText("Select...")[0], 'ce1.gridpp.ecdf.ed.ac.uk')
+    })
+
+    await waitFor(() => {
+      expect(card_endpoints.queryAllByText("Select...")).toHaveLength(0)
+    })
 
     fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '70' } });
     fireEvent.change(screen.getByLabelText(/reliability/i), { target: { value: '80' } });
@@ -8695,7 +9125,7 @@ describe('Tests for reports addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /report/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'OPS-MONITOR' } });
@@ -8708,25 +9138,70 @@ describe('Tests for reports addview', () => {
     await selectEvent.select(screen.getAllByText(/select/i)[0], 'egi_ops')
     await selectEvent.select(screen.getAllByText(/select/i)[0], 'TEST_PROFILE')
 
-    await selectEvent.select(screen.getAllByText(/select/i)[0], 'Sites')
+    await waitFor(() => {
+      selectEvent.select(screen.getAllByText(/select/i)[0], 'Sites')
+    })
 
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
     const card_endpoints = within(screen.getByTestId('card-group-of-endpoints'));
 
     fireEvent.click(card_groups.getByRole('button', { name: /add new tag/i }))
 
-    await selectEvent.select(card_groups.getAllByText(/select/i)[2], 'monitored')
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'yes')
+    await waitFor(() => {
+      expect(card_groups.getAllByText("Select...")).toHaveLength(2)
+    })
+
+    await waitFor(() => {
+      selectEvent.select(card_groups.getAllByText("Select...")[0], 'monitored')
+    })
+
+    await waitFor(() => {
+      expect(card_groups.getAllByText("Select...")).toHaveLength(1)
+    })
+
+    await waitFor(() => {
+      selectEvent.select(card_groups.getByText("Select..."), 'yes')
+    })
 
     fireEvent.click(card_groups.getByRole('button', { name: /add new extension/i }))
 
-    await selectEvent.select(card_groups.getAllByText(/select/i)[2], 'GLUE2EndpointImplementationName')
-    await selectEvent.select(card_groups.getAllByText(/select/i)[0], 'ARC-CE')
+    await waitFor(() => {
+      expect(card_groups.getAllByText("Select...")).toHaveLength(2)
+    })
+
+    await waitFor(() => {
+      selectEvent.select(card_groups.getAllByText("Select...")[0], 'GLUE2EndpointImplementationName')
+    })
+
+    await waitFor(() => {
+      expect(card_groups.getAllByText("Select...")).toHaveLength(1)
+    })
+    
+    await waitFor(() => {
+      selectEvent.select(card_groups.getAllByText("Select...")[0], 'ARC-CE')
+    })
 
     fireEvent.click(card_endpoints.getByText(/add new extension/i))
 
-    await selectEvent.select(card_endpoints.getAllByText(/select/i)[2], 'GLUE2EndpointID')
-    await selectEvent.select(card_endpoints.getAllByText(/select/i)[0], 'ce1.gridpp.ecdf.ed.ac.uk')
+    await waitFor(() => {
+      expect(card_endpoints.getAllByText("Select...")).toHaveLength(2)
+    })
+
+    await waitFor(() => {
+      selectEvent.select(card_endpoints.getAllByText("Select...")[0], 'GLUE2EndpointID')
+    })
+
+    await waitFor(() => {
+      expect(card_endpoints.getAllByText("Select...")).toHaveLength(1)
+    })
+
+    await waitFor(() => {
+      selectEvent.select(card_endpoints.getAllByText("Select...")[0], 'ce1.gridpp.ecdf.ed.ac.uk')
+    })
+
+    await waitFor(() => {
+      expect(card_endpoints.queryAllByText("Select...")).toHaveLength(0)
+    })
 
     fireEvent.change(screen.getByLabelText(/availability/i), { target: { value: '70' } });
     fireEvent.change(screen.getByLabelText(/reliability/i), { target: { value: '80' } });
