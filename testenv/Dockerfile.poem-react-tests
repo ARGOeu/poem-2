@@ -2,7 +2,7 @@ FROM centos:7
 MAINTAINER dvrcic@srce.hr
 RUN groupadd jenkins -g 1000 && useradd -u 1000 -g 1000 jenkins -m -d /home/jenkins
 RUN passwd -d root
-RUN curl -sL https://rpm.nodesource.com/setup_16.x | bash -
+RUN curl -sL https://rpm.nodesource.com/setup_18.x | bash -
 RUN yum -y makecache; yum -y update; yum clean all
 RUN yum -y install epel-release && \
     yum -y install \
