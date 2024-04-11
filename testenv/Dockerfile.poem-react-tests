@@ -8,14 +8,15 @@ RUN yum -y install epel-release && \
     yum -y install \
       ack \
       coreutils \
+      dnf \
       git \
       htop \
       make \
-      nodejs \
       psmisc \
       sudo \
       which \
       wget
+RUN dnf -y install nodejs
 RUN yum -y install \
       centos-release-scl \
       scl-utils \
