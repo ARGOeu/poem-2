@@ -58,8 +58,9 @@ export class Backend {
     let error_msg = '';
     try {
       let response = await fetch(url);
-      if (response.ok)
+      if (response.ok) {
         return response.json();
+      }
 
       else {
         try {
@@ -269,7 +270,7 @@ export class Backend {
           error_msg = `${response.status} ${response.statusText} in DELETE ${url}`;
         }
       } else {
-        return await response.json()
+        return response
       }
     } catch (err1) {
       error_msg = `${err1} in DELETE ${url}`
@@ -406,14 +407,23 @@ export class WebApi {
   }
 
   async fetchServiceTypes() {
-    let data = await this.fetchProfiles(this.servicetypes);
+    let data = []
 
-    data = data.map(item => {
-      if (!("tags" in item))
-        item["tags"] = ["topology"]
+    try {
+      data = await this.fetchProfiles(this.servicetypes);
 
-      return item
-    })
+      data = data.map(item => {
+        if (!("tags" in item))
+          item["tags"] = ["topology"]
+
+        return item
+      })
+    } catch(error) {
+      if (error.message.includes('404')) {
+        return data
+      } else
+        throw(error)
+    }
 
     return data
   }

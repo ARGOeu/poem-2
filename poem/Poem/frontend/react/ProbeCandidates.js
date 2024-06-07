@@ -9,7 +9,6 @@ import {
   DefaultColumnFilter, 
   DropdownWithFormText, 
   ErrorComponent, 
-  LoadingAnim, 
   NotifyError, 
   NotifyOk, 
   NotifyWarn, 
@@ -30,7 +29,7 @@ import {
   Label, 
   Row 
 } from "reactstrap";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Controller, useForm } from "react-hook-form";
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -41,21 +40,28 @@ const validationSchema = yup.object().shape({
   status: yup.string(),
   service_type: yup.string().when("status", {
     is: (val) => val !== "submitted",
-    then: yup.string().required("Service type is required")
+    then: (schema) => schema.required("Service type is required")
   }),
   devel_url: yup.string().url("Invalid URL").when("status", {
     is: (val) => val === "testing",
-    then: yup.string().required("Devel UI URL is required")
+    then: (schema) => schema.required("Devel UI URL is required")
   }),
   production_url: yup.string().url("Invalid URL").when("status", {
     is: (val) => val === "deployed",
-    then: yup.string().required("Production UI URL is required")
+    then: (schema) => schema.required("Production UI URL is required")
   }),
   rejection_reason: yup.string().when("status", {
     is: (val) => val === "rejected",
-    then: yup.string().required("Rejection reason is required")
+    then: (schema) => schema.required("Rejection reason is required")
   })
 })
+
+import { 
+  ChangeViewPlaceholder, 
+  InputPlaceholder, 
+  ListViewPlaceholder, 
+  TextAreaPlaceholder 
+} from "./Placeholders";
 
 
 const fetchCandidates = async () => {
@@ -72,8 +78,8 @@ const fetchStatuses = async () => {
 }
 
 
-export const ProbeCandidateList = (props) => {
-  const location = props.location
+export const ProbeCandidateList = () => {
+  const location = useLocation();
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
     "userDetails", () => fetchUserDetails(true)
@@ -146,7 +152,12 @@ export const ProbeCandidateList = (props) => {
   ])
 
   if (loadingUserDetails || loadingProbeCandidates || loadingStatuses )
-    return (<LoadingAnim />)
+    return (
+      <ListViewPlaceholder 
+        title="Select probe candidate to change"
+        infoview={ true }
+      />
+    )
 
   else if (errorUserDetails)
     return (<ErrorComponent error={ errorUserDetails } />)
@@ -627,8 +638,8 @@ const ProbeCandidateForm = ({
 
 
 export const ProbeCandidateChange = (props) => {
-  const pcid = props.match.params.id
-  const history = props.history
+  const { id: pcid } = useParams()
+  const navigate = useNavigate()
   const showtitles = props.showtitles
 
   const backend = new Backend()
@@ -696,7 +707,7 @@ export const ProbeCandidateChange = (props) => {
           NotifyOk({
             msg: "Probe candidate successfully changed",
             title: "Changed",
-            callback: () => history.push("/ui/administration/probecandidates")
+            callback: () => navigate("/ui/administration/probecandidates")
           })
       },
       onError: (error) => {
@@ -715,7 +726,7 @@ export const ProbeCandidateChange = (props) => {
         NotifyOk({
           msg: "Probe candidate successfully deleted",
           title: "Deleted",
-          callback: () => history.push("/ui/administration/probecandidates")
+          callback: () => navigate("/ui/administration/probecandidates")
         })
       },
       onError: (error) => {
@@ -728,7 +739,138 @@ export const ProbeCandidateChange = (props) => {
   }
 
   if (userDetailsLoading || candidateLoading || statusesLoading || serviceTypesLoading)
-    return (<LoadingAnim />)
+    return (
+      <ChangeViewPlaceholder
+        resourcename="probe candidate"
+      >
+        <FormGroup>
+          <Row className="mb-2">
+            <Col md={ 6 }>
+              <InputPlaceholder />
+              <FormText color="muted">
+                Probe name
+              </FormText>
+            </Col>
+            <Col md={ 2 } className="mt-1">
+              <InputPlaceholder />
+            </Col>
+          </Row>
+          <Row>
+            <Col md={ 8 }>
+              <Label>Description</Label>
+              <TextAreaPlaceholder />
+            </Col>
+            <FormText color="muted">
+              Free text description outlining the purpose of this probe.
+            </FormText>
+          </Row>
+        </FormGroup>
+        <ParagraphTitle title="Admin info" />
+        <FormGroup>
+          <Row className="mb-2">
+            <Col md={ 6 }>
+              <InputPlaceholder />
+              <FormText color="muted">
+                Suggested service type for testing
+              </FormText>
+            </Col>
+          </Row>
+          <Row className="mb-2">
+            <Col md={ 6 }>
+              <InputPlaceholder />
+              <FormText color="muted">
+                URL showing the results of probe testing
+              </FormText>
+            </Col>
+          </Row>
+          <Row className="mb-2">
+            <Col md={ 6 }>
+              <InputPlaceholder />
+              <FormText color="muted">
+                URL showing the results of deployed probe
+              </FormText>
+            </Col>
+          </Row>
+        </FormGroup>
+        <ParagraphTitle title="Creation info"/>
+        <FormGroup>
+          <Row className="pb-2">
+            <Col md={ 8 }>
+              <InputPlaceholder />
+              <FormText color="muted">
+                Date and time of creation
+              </FormText>
+            </Col>
+          </Row>
+          <Row>
+            <Col md={ 8 }>
+              <InputPlaceholder />
+              <FormText color="muted">
+                Date and time of last update
+              </FormText>
+            </Col>
+          </Row>
+        </FormGroup>
+        <ParagraphTitle title="Probe metadata" />
+        <FormGroup>
+          <Row className="pb-2">
+            <Col md={ 8 }>
+              <InputPlaceholder />
+              <FormText color="muted">
+                Probe documentation URL
+              </FormText>
+            </Col>
+          </Row>
+          <Row className="pb-2">
+            <Col md={ 8 }>
+              <InputPlaceholder />
+              <FormText color="muted">
+                Name of RPM containing the probe
+              </FormText>
+            </Col>
+          </Row>
+          <Row className="pb-2">
+            <Col md={ 8 }>
+              <InputPlaceholder />
+              <FormText color="muted">
+                Base URL of YUM repo containing the probe RPM
+              </FormText>
+            </Col>
+          </Row>
+          <Row>
+            <Col md={ 8 }>
+              <InputPlaceholder />
+              <FormText color="muted">
+                URL of script with probe code
+              </FormText>
+            </Col>
+          </Row>
+        </FormGroup>
+        <ParagraphTitle title="Metric info"/>
+        <FormGroup>
+          <Row>
+            <Col md={ 8 }>
+              <Label>Command</Label>
+              <InputPlaceholder />
+              <FormText color="muted">
+                Command to execute
+              </FormText>
+            </Col>
+          </Row>
+        </FormGroup>
+        <ParagraphTitle title="Contact info"/>
+        <FormGroup>
+          <Row>
+            <Col md={ 8 }>
+              <InputPlaceholder />
+              <FormText color="muted">
+                Contact email
+              </FormText>
+            </Col>
+          </Row>
+        </FormGroup>
+      </ChangeViewPlaceholder>
+    )
 
   else if (userDetailsError)
     return (<ErrorComponent error={ userDetailsError } />)

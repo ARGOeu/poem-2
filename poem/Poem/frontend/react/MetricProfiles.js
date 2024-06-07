@@ -1,12 +1,11 @@
 import React, { useState, useMemo, useContext, useEffect } from 'react';
-import {Link} from 'react-router-dom';
+import {Link, useLocation, useParams, useNavigate} from 'react-router-dom';
 import {
   Backend, 
   WebApi,
   fetchTenantsMetricProfiles
 } from './DataManager';
 import {
-  LoadingAnim,
   BaseArgoView,
   SearchField,
   NotifyOk,
@@ -24,17 +23,18 @@ import {
 import {
   Button,
   ButtonDropdown,
+  Col,
   DropdownToggle,
   DropdownMenu,
   DropdownItem,
   Form,
   Label,
   Row,
-  Col
+  Table
 } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
-import ReactDiffViewer from 'react-diff-viewer';
+import ReactDiffViewer from 'react-diff-viewer-continued';
 import { useQuery, useQueryClient, useMutation } from 'react-query';
 import PapaParse from 'papaparse';
 import { downloadCSV } from './FileDownload';
@@ -47,10 +47,20 @@ import './MetricProfiles.css';
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext, useWatch } from 'react-hook-form';
 import * as yup from "yup"
 import { yupResolver } from '@hookform/resolvers/yup';
+import { 
+  ChangeViewPlaceholder,
+  ListViewPlaceholder, 
+  ProfileMainPlaceholder, 
+  VersionComparePlaceholder
+} from './Placeholders';
 
+export const MetricProfilesClone = (props) => {
+  return <MetricProfilesComponent cloneview={true} {...props} />
+};
 
-export const MetricProfilesClone = (props) => <MetricProfilesComponent cloneview={true} {...props}/>;
-export const MetricProfilesChange = (props) => <MetricProfilesComponent {...props}/>;
+export const MetricProfilesChange = (props) => { 
+  return <MetricProfilesComponent {...props} />
+};
 
 
 const MetricProfilesComponentContext = React.createContext();
@@ -324,9 +334,9 @@ const MetricProfilesForm = ({
   historyview=false,
   ...props
 }) => {
-  const profile_name = props.match.params.name;
+  const profile_name = props.profile_name
   const addview = props.addview
-  const location = props.location;
+  const location = useLocation();
   const cloneview = props.cloneview;
   const publicView = props.publicView;
   const combined = props.combined
@@ -630,15 +640,47 @@ const MetricProfilesForm = ({
 }
 
 
-export const MetricProfilesComponent = (props) => {
-  const profile_name = props.match.params.name;
+const MetricProfilesFormPlaceholder = ( props ) => {
   const addview = props.addview
-  const history = props.history;
+  const publicview = props.publicView
+  const historyview = props.historyview
+  const cloneview = props.cloneview
+  const title = props.title
+
+  return (
+    <ChangeViewPlaceholder
+      resourcename={ `${publicview ? "Metric profile details" : historyview ? title : "metric profile"}` }
+      addview={ addview }
+      cloneview={ cloneview }
+      infoview={ publicview || historyview }
+      buttons={
+        !addview && !publicview && !cloneview && !historyview &&
+          <div>
+            <Button color="secondary" disabled>CSV</Button>
+            <Button className="ms-3" color="secondary" disabled>Clone</Button>
+            <Button className="ms-3" color="secondary" disabled>History</Button>
+          </div>
+      }
+    >
+      <ProfileMainPlaceholder
+        profiletype="metric"
+        description={ true }
+      />
+      <ParagraphTitle title='Metric instances'/>
+      <Table className="placeholder rounded" style={{ height: "600px" }} />
+    </ChangeViewPlaceholder>
+  )
+}
+   
+
+export const MetricProfilesComponent = (props) => {
+  const { name: profile_name } = useParams()
+  const navigate = useNavigate()
+  const addview = props.addview
   const cloneview = props.cloneview;
   const publicView = props.publicView;
-  const tenantDetails = props.tenantDetails
-  const combined = props.tenantDetails.combined
-
+  const tenantDetails = props.tenantDetails !== undefined ? props.tenantDetails : "";
+  const combined = props.tenantDetails && props.tenantDetails.combined !== undefined ? props.tenantDetails.combined : false;  
   const backend = new Backend();
   const webapi = new WebApi({
     token: props.webapitoken,
@@ -756,7 +798,7 @@ export const MetricProfilesComponent = (props) => {
               NotifyOk({
                 msg: msg,
                 title: 'Deleted',
-                callback: () => history.push('/ui/metricprofiles')
+                callback: () => navigate('/ui/metricprofiles')
               });
             },
             onError: (error) => {
@@ -851,7 +893,7 @@ export const MetricProfilesComponent = (props) => {
               NotifyOk({
                 msg: msg,
                 title: 'Changed',
-                callback: () => history.push('/ui/metricprofiles')
+                callback: () => navigate('/ui/metricprofiles')
               });
 
               if (warn_msg)
@@ -913,7 +955,7 @@ export const MetricProfilesComponent = (props) => {
               NotifyOk({
                 msg: msg,
                 title: 'Added',
-                callback: () => history.push('/ui/metricprofiles')
+                callback: () => navigate('/ui/metricprofiles')
               })
 
               if (warn_msg)
@@ -937,8 +979,9 @@ export const MetricProfilesComponent = (props) => {
     }
   }
 
-  if (loadingUserDetails || loadingBackendMP || loadingWebApiMP || loadingMetricsAll || loadingWebApiST || loadingAggrProfiles || loadingReports || loadingTenantsProfiles)
-    return (<LoadingAnim />)
+  if (loadingUserDetails || loadingBackendMP || loadingWebApiMP || loadingMetricsAll || loadingWebApiST || loadingAggrProfiles || loadingReports || loadingTenantsProfiles) {
+    return <MetricProfilesFormPlaceholder { ...props } />
+  }
 
   else if (errorUserDetails)
     return (<ErrorComponent error={errorUserDetails}/>);
@@ -985,6 +1028,7 @@ export const MetricProfilesComponent = (props) => {
     return (
       <MetricProfilesForm
         { ...props }
+        profile_name={ profile_name }
         metricProfile={ metricProfile }
         userDetails={ userDetails }
         metricsAll={ metricsAll ? metricsAll : [] }
@@ -1003,7 +1047,7 @@ export const MetricProfilesComponent = (props) => {
 
 
 export const MetricProfilesList = (props) => {
-  const location = props.location;
+  const location = useLocation();
   const publicView = props.publicView
 
   const { data: userDetails, error: errorUserDetails, status: statusUserDetails } = useQuery(
@@ -1051,7 +1095,12 @@ export const MetricProfilesList = (props) => {
   ], [])
 
   if (statusUserDetails === 'loading' || statusMetricProfiles === 'loading')
-    return (<LoadingAnim />)
+    return (
+      <ListViewPlaceholder
+        resourcename="metric profile"
+        infoview={ publicView }
+      />
+    )
 
   else if (statusMetricProfiles === 'error')
     return (<ErrorComponent error={errorMetricProfiles}/>);
@@ -1114,17 +1163,17 @@ const fetchMetricProfileVersions = async (name) => {
 }
 
 
-export const MetricProfileVersionCompare = (props) => {
-  const version1 = props.match.params.id1;
-  const version2 = props.match.params.id2;
-  const name = props.match.params.name;
+export const MetricProfileVersionCompare = () => {
+  const { name, id1: version1, id2: version2 } = useParams();
 
   const { data: metricProfileVersions, error, status } = useQuery(
     ['metricprofile', 'versions', name], () => fetchMetricProfileVersions(name)
   )
 
   if (status === 'loading')
-    return (<LoadingAnim/>);
+    return (
+      <VersionComparePlaceholder />
+    )
 
   if (status === 'error')
     return (<ErrorComponent error={error}/>);
@@ -1168,8 +1217,7 @@ export const MetricProfileVersionCompare = (props) => {
 
 
 export const MetricProfileVersionDetails = (props) => {
-  const name = props.match.params.name;
-  const version = props.match.params.version;
+  const { name, version } = useParams();
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
     'userdetails', () => fetchUserDetails(true)
@@ -1181,7 +1229,9 @@ export const MetricProfileVersionDetails = (props) => {
   )
 
   if (loadingUserDetails || loading)
-    return (<LoadingAnim/>);
+    return (
+      <MetricProfilesFormPlaceholder historyview={ true } title={ `${name} (${version})` } />
+    )
 
   else if (error)
     return (<ErrorComponent error={error}/>);
@@ -1205,6 +1255,7 @@ export const MetricProfileVersionDetails = (props) => {
     return (
       <MetricProfilesForm
         { ...props }
+        profile_name={ name }
         historyview={ true }
         metricProfile={ metricProfile }
         userDetails={ userDetails }

@@ -1,7 +1,6 @@
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 import React from 'react';
-import { createMemoryHistory } from 'history';
-import { Route, Router } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { GroupList, GroupChange } from '../GroupElements';
 import { render, waitFor, screen, fireEvent, within } from '@testing-library/react';
 import { Backend } from '../DataManager';
@@ -23,14 +22,18 @@ function renderListView(
   id = 'groupofmetrics',
   name = 'group of metrics'
 ) {
-  const history = createMemoryHistory();
+  const route = `/ui/administration/groupof${group}`
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route render={props => <GroupList {...props} group={group} id={id} name={name} />} />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <GroupList 
+            group={ group }
+            id={ id }
+            name={ name }
+          />
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -38,21 +41,24 @@ function renderListView(
 
 function renderChangeView() {
   const route = '/ui/administration/group/TestGroup';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route path='/ui/administration/group/:name' render={
-            props => <GroupChange
-              {...props}
-              group='metrics'
-              id='groupofmetrics'
-              title='metrics'
-            />}
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path='/ui/administration/group/:name'
+              element={
+                <GroupChange
+                  group='metrics'
+                  id='groupofmetrics'
+                  title='metrics'
+                />
+              }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -60,22 +66,18 @@ function renderChangeView() {
 
 function renderAddView() {
   const route = '/ui/administration/group/add';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route render={
-            props => <GroupChange
-              {...props}
-              group='metrics'
-              id='groupofmetrics'
-              title='metrics'
-              addview={true}
-            />}
+        <MemoryRouter initialEntries={ [ route ] }>
+          <GroupChange
+            group='metrics'
+            id='groupofmetrics'
+            title='metrics'
+            addview={true}
           />
-        </Router>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -113,12 +115,12 @@ describe('Tests for groups listviews', () => {
   test('Render group of metrics listview', async () => {
     renderListView()
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /group/i}).textContent).toBe('Select group of metrics to change')
+      expect(screen.getAllByRole('columnheader')).toHaveLength(2);
     })
-    expect(screen.getAllByRole('columnheader')).toHaveLength(2);
+
+    expect(screen.getByRole('heading', {name: /group/i}).textContent).toBe('Select group of metrics to change')
+
     expect(screen.getByRole('columnheader', {name: /group/i}).textContent).toBe('Group of metrics');
     expect(screen.getByRole('columnheader', {name: '#'})).toBeInTheDocument();
     expect(screen.getAllByRole('row')).toHaveLength(11);
@@ -134,12 +136,12 @@ describe('Tests for groups listviews', () => {
   test('Render group of aggregations listview', async () => {
     renderListView('aggregations', 'groupofaggregations', 'group of aggregations')
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /group/i}).textContent).toBe('Select group of aggregations to change')
+      expect(screen.getAllByRole('columnheader')).toHaveLength(2);
     })
-    expect(screen.getAllByRole('columnheader')).toHaveLength(2);
+
+    expect(screen.getByRole('heading', {name: /group/i}).textContent).toBe('Select group of aggregations to change')
+
     expect(screen.getByRole('columnheader', {name: /group/i}).textContent).toBe('Group of aggregations');
     expect(screen.getByRole('columnheader', {name: '#'})).toBeInTheDocument();
     expect(screen.getAllByRole('row')).toHaveLength(11);
@@ -155,12 +157,12 @@ describe('Tests for groups listviews', () => {
   test('Render group of metric profiles listview', async () => {
     renderListView('metricprofiles', 'groupofmetricprofiles', 'group of metric profiles')
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /group/i}).textContent).toBe('Select group of metric profiles to change')
+      expect(screen.getAllByRole('columnheader')).toHaveLength(2);
     })
-    expect(screen.getAllByRole('columnheader')).toHaveLength(2);
+
+    expect(screen.getByRole('heading', {name: /group/i}).textContent).toBe('Select group of metric profiles to change')
+
     expect(screen.getByRole('columnheader', {name: /group/i}).textContent).toBe('Group of metric profiles');
     expect(screen.getByRole('columnheader', {name: '#'})).toBeInTheDocument();
     expect(screen.getAllByRole('row')).toHaveLength(11);
@@ -176,12 +178,12 @@ describe('Tests for groups listviews', () => {
   test('Render group of thresholds profiles listview', async () => {
     renderListView('thresholdsprofiles', 'groupofthresholdsprofiles', 'group of thresholds profiles')
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /group/i}).textContent).toBe('Select group of thresholds profiles to change')
+      expect(screen.getAllByRole('columnheader')).toHaveLength(2);
     })
-    expect(screen.getAllByRole('columnheader')).toHaveLength(2);
+
+    expect(screen.getByRole('heading', {name: /group/i}).textContent).toBe('Select group of thresholds profiles to change')
+
     expect(screen.getByRole('columnheader', {name: /group/i}).textContent).toBe('Group of thresholds profiles');
     expect(screen.getByRole('columnheader', {name: '#'})).toBeInTheDocument();
     expect(screen.getAllByRole('row')).toHaveLength(11);
@@ -208,12 +210,12 @@ describe('Tests for groups listviews', () => {
 
     renderListView()
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /group/i}).textContent).toBe('Select group of metrics to change')
+      expect(screen.getAllByRole('columnheader')).toHaveLength(2)
     })
-    expect(screen.getAllByRole('columnheader')).toHaveLength(2)
+
+    expect(screen.getByRole('heading', {name: /group/i}).textContent).toBe('Select group of metrics to change')
+
     expect(screen.getByRole('columnheader', {name: /group/i}).textContent).toBe('Group of metrics')
     expect(screen.getByRole('columnheader', {name: /#/i}).textContent).toBe('#')
     expect(screen.getAllByRole('row')).toHaveLength(11)
@@ -261,11 +263,10 @@ describe('Tests for group elements changeview', () => {
   test('Test changeview renders properly', async () => {
     renderChangeView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /group/i}).textContent).toBe('Change group of metrics')
+      expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
     });
+    expect(screen.getByRole('heading', {name: /group/i}).textContent).toBe('Change group of metrics')
     expect(screen.getByRole('heading', {name: 'metrics'})).toBeInTheDocument();
     expect(screen.getByTestId('name').value).toBe('TestGroup');
     expect(screen.getByTestId('name')).toBeDisabled();
@@ -282,7 +283,6 @@ describe('Tests for group elements changeview', () => {
     expect(screen.getByRole('row', {name: /2/i}).textContent).toBe('2argo.AMSPublisher-Check')
     expect(screen.getByRole('row', {name: /3/i}).textContent).toBe('3org.nagios.AmsDirSize')
     expect(screen.getByRole('row', {name: /4/i}).textContent).toBe('4org.nagios.CertLifetime')
-    expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
     expect(screen.getByRole('button', {name: /delete/i})).toBeInTheDocument();
   })
 
@@ -295,11 +295,10 @@ describe('Tests for group elements changeview', () => {
 
     renderChangeView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /group/i}).textContent).toBe('Change group of metrics')
+      expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
     });
+    expect(screen.getByRole('heading', {name: /group/i}).textContent).toBe('Change group of metrics')
     expect(screen.getByRole('heading', {name: 'metrics'})).toBeInTheDocument();
     expect(screen.getByTestId('name').value).toBe('TestGroup');
     expect(screen.getByTestId('name')).toBeDisabled();
@@ -312,7 +311,6 @@ describe('Tests for group elements changeview', () => {
     expect(screen.getByRole('columnheader', {name: 'Remove'})).toBeInTheDocument();
     expect(screen.getAllByRole('row')).toHaveLength(2);
     expect(screen.getByPlaceholderText(/search/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
     expect(screen.getByRole('button', {name: /delete/i})).toBeInTheDocument();
   })
 
@@ -370,8 +368,10 @@ describe('Tests for group elements changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /group/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
     })
+
+    expect(screen.getByRole('heading', { name: /group/i })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
 
@@ -409,7 +409,7 @@ describe('Tests for group elements changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /group/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
     })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
@@ -444,7 +444,7 @@ describe('Tests for group elements changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /group/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', {name: /save/i})).toBeInTheDocument();
     })
 
     expect(screen.getAllByRole('row')).toHaveLength(6);
@@ -603,11 +603,11 @@ describe('Tests for groups addviews', () => {
   test('Test that addview renders properly', async () => {
     renderAddView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /group/i}).textContent).toBe('Add group of metrics')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     });
+
+    expect(screen.getByRole('heading', {name: /group/i}).textContent).toBe('Add group of metrics')
 
     expect(screen.getByRole('heading', { name: 'metrics' })).toBeInTheDocument();
     expect(screen.getByTestId('name').value).toBe('');
@@ -621,7 +621,6 @@ describe('Tests for groups addviews', () => {
     expect(screen.getByRole('columnheader', { name: 'Remove' })).toBeInTheDocument();
     expect(screen.getAllByRole('row')).toHaveLength(2);
     expect(screen.getByPlaceholderText(/search/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.queryByText(/delete/i)).not.toBeInTheDocument();
   })
 
@@ -629,8 +628,10 @@ describe('Tests for groups addviews', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /group/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
+
+    expect(screen.getByRole('heading', { name: /group/i })).toBeInTheDocument();
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NewGroup' } });
 
@@ -665,8 +666,11 @@ describe('Tests for groups addviews', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /group/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
+
+    expect(screen.getByRole('heading', { name: /group/i })).toBeInTheDocument();
+
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NewGroup' } });
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
@@ -698,7 +702,7 @@ describe('Tests for groups addviews', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /group/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NewGroup' } });
 
@@ -738,7 +742,7 @@ describe('Tests for groups addviews', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /group/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NewGroup' } });
 

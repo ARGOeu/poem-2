@@ -369,6 +369,7 @@ def mock_db_for_metrics_tests():
 def mock_db_for_repos_tests():
     tag1 = admin_models.OSTag.objects.create(name='CentOS 6')
     tag2 = admin_models.OSTag.objects.create(name='CentOS 7')
+    tag3 = admin_models.OSTag.objects.create(name="Rocky 9")
 
     repo1 = admin_models.YumRepo.objects.create(
         name='repo-1',
@@ -412,18 +413,32 @@ def mock_db_for_repos_tests():
         description='promoo for CentOS 7'
     )
 
+    repo7 = admin_models.YumRepo.objects.create(
+        name="repo-1",
+        tag=tag3,
+        content="content13\ncontent14",
+        description="Rocky 9"
+    )
+
+    repo8 = admin_models.YumRepo.objects.create(
+        name="repo-2",
+        tag=tag3,
+        content="content15\ncontent16",
+        description="Repo 2 for Rocky 9"
+    )
+
     package1 = admin_models.Package.objects.create(
         name='nagios-plugins-argo',
         version='0.1.11'
     )
-    package1.repos.add(repo1, repo2)
+    package1.repos.add(repo1, repo2, repo7)
 
     package2 = admin_models.Package.objects.create(
         name='nagios-plugins-http',
         version='2.2.2',
         use_present_version=True
     )
-    package2.repos.add(repo3, repo4)
+    package2.repos.add(repo3, repo4, repo8)
 
     package3 = admin_models.Package.objects.create(
         name='nagios-plugins-seadatacloud-nvs2',
@@ -447,7 +462,7 @@ def mock_db_for_repos_tests():
         name='nagios-plugins-nagiosexchange',
         version='1.0.0'
     )
-    package6.repos.add(repo2)
+    package6.repos.add(repo2, repo8)
 
     probe1 = admin_models.Probe.objects.create(
         name='ams-probe',
@@ -1005,6 +1020,47 @@ class ListReposAPIViewTests(TenantTestCase):
                     }
                 },
                 'missing_packages': []
+            }
+        )
+
+    @patch('Poem.api.views.get_metrics_from_profile')
+    def test_list_repos_new_tag(self, mock_get_metrics):
+        mock_get_metrics.side_effect = mock_function
+        request = self.factory.get(
+            self.url + '/rocky9',
+            **{'HTTP_X_API_KEY': self.token,
+               'HTTP_PROFILES': '[ARGO-MON, MON-TEST]'}
+        )
+        request.tenant = self.tenant
+        response = self.view(request, 'rocky9')
+        self.assertEqual(mock_get_metrics.call_count, 2)
+        mock_get_metrics.assert_has_calls([
+            call('ARGO-MON', "TENANT"), call('MON-TEST', "TENANT")
+        ])
+        self.assertEqual(
+            response.data,
+            {
+                'data': {
+                    'repo-1': {
+                        'content': 'content13\ncontent14',
+                        'packages': [
+                            {
+                                'name': 'nagios-plugins-argo',
+                                'version': '0.1.11'
+                            }
+                        ]
+                    },
+                    'repo-2': {
+                        'content': 'content15\ncontent16',
+                        'packages': [
+                            {
+                                "name": "nagios-plugins-http",
+                                "version": "present"
+                            }
+                        ]
+                    }
+                },
+                'missing_packages': ["nagios-plugins-seadatacloud-nvs2 (1.0.1)"]
             }
         )
 

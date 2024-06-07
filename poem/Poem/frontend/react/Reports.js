@@ -5,7 +5,6 @@ import {
   BaseArgoTable,
   BaseArgoView,
   ErrorComponent,
-  LoadingAnim,
   NotifyError,
   NotifyOk,
   ParagraphTitle,
@@ -13,7 +12,7 @@ import {
   CustomReactCreatable,
   CustomError
  } from './UIElements';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import {
@@ -48,7 +47,12 @@ import {
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext, useWatch } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { ErrorMessage } from '@hookform/error-message';
-
+import { 
+  ChangeViewPlaceholder,
+  InputPlaceholder, 
+  ListViewPlaceholder, 
+  TextAreaPlaceholder
+} from './Placeholders';
 
 const ReportsChangeContext = React.createContext()
 
@@ -327,8 +331,17 @@ const ReportsSchema = Yup.object().shape({
   )
 })
 
-export const ReportsAdd = (props) => <ReportsComponent addview={true} {...props}/>;
-export const ReportsChange = (props) => <ReportsComponent {...props}/>;
+
+export const ReportsAdd = (props) => {
+  const { name } = useParams();
+  return <ReportsComponent addview={true} {...props} name={name}/>;
+}
+
+
+export const ReportsChange = (props) => {
+  const { name } = useParams();
+  return <ReportsComponent {...props} name={name}/>;
+}  
 
 
 const getInvalidValues = (values, tagValues) => {
@@ -372,6 +385,7 @@ const getWildcardDuplicates = (values) => {
   return duplicates
 }
 
+
 const getNegationDuplicates = (values) => {
   let duplicates = []
 
@@ -402,7 +416,7 @@ const fetchReport = async (webapi, name) => {
 
 
 export const ReportsList = (props) => {
-  const location = props.location;
+  const location = useLocation();
   const publicView = props.publicView;
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
@@ -447,11 +461,16 @@ export const ReportsList = (props) => {
           </div>,
         column_width: '8%'
       }
-    ], []
+    ], [publicView]
   );
 
   if (loadingReports || loadingUserDetails)
-    return (<LoadingAnim/>);
+    return (
+      <ListViewPlaceholder
+        resourcename="report"
+        infoview={ publicView }
+      />
+    )
 
   else if (errorReports)
     return (<ErrorComponent error={errorReports}/>);
@@ -2099,10 +2118,10 @@ const ReportsForm = ({
 
 
 export const ReportsComponent = (props) => {
-  const report_name = props.match.params.name;
+  const { name: report_name } = props;
   const addview = props.addview
   const publicView = props.publicView
-  const history = props.history;
+  const navigate = useNavigate();
 
   const backend = new Backend();
   const webapi = new WebApi({
@@ -2427,7 +2446,7 @@ export const ReportsComponent = (props) => {
             NotifyOk({
               msg: 'Report successfully deleted',
               title: 'Deleted',
-              callback: () => history.push('/ui/reports')
+              callback: () => navigate('/ui/reports')
             });
           },
           onError: (error) => {
@@ -2499,7 +2518,7 @@ export const ReportsComponent = (props) => {
               NotifyOk({
                 msg: 'Report successfully added',
                 title: 'Added',
-                callback: () => history.push('/ui/reports')
+                callback: () => navigate('/ui/reports')
               });
             },
             onError: (error) => {
@@ -2533,7 +2552,7 @@ export const ReportsComponent = (props) => {
               NotifyOk({
                 msg: 'Report successfully changed',
                 title: 'Changed',
-                callback: () => history.push('/ui/reports')
+                callback: () => navigate('/ui/reports')
               });
             },
             onError: (error) => NotifyError({
@@ -2575,8 +2594,140 @@ export const ReportsComponent = (props) => {
   :
     loadingUserDetails || loadingBackendReport || loadingWebApiReport || listMetricProfilesLoading || listAggregationProfilesLoading || listOperationsProfilesLoading || listThresholdsProfilesLoading || loadingTopologyTags || loadingTopologyGroups || loadingTopologyEndpoints
 
-  if (loading)
-    return (<LoadingAnim/>);
+    if (loading)
+    return (
+      <ChangeViewPlaceholder
+        resourcename={ publicView ? "Report details" : "report" }
+        infoview={ publicView }
+      >
+        <FormGroup>
+          <Row className='align-items-center'>
+            <Col md={6}>
+              <InputPlaceholder />
+              <FormText color='muted'>
+                Report name
+              </FormText>
+            </Col>
+            <Col md={2}>
+              <Row>
+                <InputPlaceholder />
+              </Row>
+              <Row>
+                <FormText color='muted'>
+                  Mark report as disabled.
+                </FormText>
+              </Row>
+            </Col>
+          </Row>
+          <Row className='mt-3'>
+            <Col md={10}>
+              <Label>Description:</Label>
+              <TextAreaPlaceholder />
+              <FormText color='muted'>
+                Free text report description.
+              </FormText>
+            </Col>
+          </Row>
+          <Row className='mt-4'>
+            <Col md={3}>
+              <InputPlaceholder />
+              <FormText color='muted'>
+                Report is member of given group
+              </FormText>
+            </Col>
+          </Row>
+        </FormGroup>
+        <FormGroup className='mt-4'>
+          <ParagraphTitle title='Profiles'/>
+          <Row className='mt-2'>
+            <Col md={4}>
+              {
+                publicView && <Label>Metric profile:</Label>
+              }
+              <InputPlaceholder />
+            </Col>
+            <Col md={4}>
+              {
+                publicView && <Label>Aggregation profile:</Label>
+              }
+              <InputPlaceholder />
+            </Col>
+            <Col md={4}>
+              {
+                publicView && <Label>Operations profile:</Label>
+              }
+              <InputPlaceholder />
+            </Col>
+          </Row>
+          <Row className='mt-4'>
+            <Col md={4}>
+              {
+                publicView && <Label>Thresholds profile:</Label>
+              }
+              <InputPlaceholder />
+            </Col>
+          </Row>
+        </FormGroup>
+        <FormGroup className='mt-4'>
+          <ParagraphTitle title='Topology configuration'/>
+          <Row>
+            <Col md={2}>
+              {
+                publicView && <Label>Topology type:</Label>
+              }
+              <InputPlaceholder />
+            </Col>
+          </Row>
+          <Row>
+            <Col md={6}>
+              <Card className="mt-3" data-testid="card-group-of-groups">
+                <CardHeader>
+                  <strong>Group of groups</strong>
+                </CardHeader>
+                <CardBody>
+                  <span className="placeholder rounded" style={{ height: "152px", width: "100%" }} />
+                </CardBody>
+              </Card>
+            </Col>
+            <Col md={6}>
+              <Card className="mt-3" data-testid='card-group-of-endpoints'>
+                <CardHeader>
+                  <strong>Group of endpoints</strong>
+                </CardHeader>
+                <CardBody>
+                  <span className="placeholder rounded" style={{ height: "152px", width: "100%" }} />
+                </CardBody>
+              </Card>
+            </Col>
+          </Row>
+        </FormGroup>
+        <FormGroup className='mt-4'>
+          <ParagraphTitle title='Thresholds'/>
+          <Row>
+            <Col md={2} className='me-4'>
+              <Label>Availability:</Label>
+              <InputPlaceholder />
+            </Col>
+            <Col md={2} className='me-4'>
+              <Label>Reliability:</Label>
+              <InputPlaceholder />
+            </Col>
+            <Col md={2} className='me-4'>
+              <Label>Uptime:</Label>
+              <InputPlaceholder />
+            </Col>
+            <Col md={2} className='me-4'>
+              <Label>Unknown:</Label>
+              <InputPlaceholder />
+            </Col>
+            <Col md={2} className='me-4'>
+              <Label>Downtime:</Label>
+              <InputPlaceholder />
+            </Col>
+          </Row>
+        </FormGroup>
+      </ChangeViewPlaceholder>
+    )
 
   else if (errorUserDetails)
     return (<ErrorComponent error={errorUserDetails}/>);

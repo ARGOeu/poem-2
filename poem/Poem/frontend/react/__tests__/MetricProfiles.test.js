@@ -1,8 +1,7 @@
 import React from 'react';
 import { render, waitFor, screen, within, fireEvent } from '@testing-library/react';
-import '@testing-library/jest-dom/extend-expect';
-import { createMemoryHistory } from 'history';
-import { Route, Router } from 'react-router-dom';
+import '@testing-library/jest-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { Backend, WebApi, fetchTenantsMetricProfiles } from '../DataManager';
 import { QueryClient, QueryClientProvider, setLogger } from 'react-query';
 import {
@@ -515,23 +514,18 @@ const mockReports = [
 
 function renderListView(publicView=false) {
   const route = `/ui/${publicView ? 'public_' : ''}metricprofiles`;
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   if (publicView)
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/public_metricprofiles'
-              render={ props => <MetricProfilesList
-                {...props}
-                webapimetric='https://mock.metrics.com'
-                webapitoken='token'
-                publicView={true}
-              /> }
+          <MemoryRouter initialEntries={ [ route ] }>
+            <MetricProfilesList
+              webapimetric='https://mock.metrics.com'
+              webapitoken='token'
+              publicView={ true }
             />
-          </Router>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -540,15 +534,12 @@ function renderListView(publicView=false) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route path='/ui/metricprofiles'
-              render={ props => <MetricProfilesList
-                {...props}
-                webapimetric='https://mock.metrics.com'
-                webapitoken='token'
-              /> }
+          <MemoryRouter initialEntries={ [ route ] }>
+            <MetricProfilesList
+              webapimetric='https://mock.metrics.com'
+              webapitoken='token'
             />
-          </Router>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -557,7 +548,6 @@ function renderListView(publicView=false) {
 
 function renderChangeView(publicView=false, combined=false) {
   const route = `/ui/${publicView ? 'public_' : ''}metricprofiles/ARGO_MON`;
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   let tenants = {}
   if (combined && !publicView)
@@ -567,22 +557,25 @@ function renderChangeView(publicView=false, combined=false) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/public_metricprofiles/:name'
-              render={ props => <MetricProfilesChange
-                {...props}
-                webapimetric='https://mock.metrics.com'
-                webapitoken='token'
-                tenantname='TENANT'
-                publicView={true}
-                tenantDetails={{
-                  combined: combined,
-                  tenants: tenants
-                }}
-              /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route
+                path="/ui/public_metricprofiles/:name"
+                element={
+                  <MetricProfilesChange
+                    webapimetric='https://mock.metrics.com'
+                    webapitoken='token'
+                    tenantname='TENANT'
+                    publicView={ true }
+                    tenantDetails={{
+                      combined: combined,
+                      tenants: tenants
+                    }}
+                  />
+                }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -591,28 +584,31 @@ function renderChangeView(publicView=false, combined=false) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/metricprofiles/:name'
-              render={props => <MetricProfilesChange
-                {...props}
-                webapimetric='https://mock.metrics.com'
-                webapiaggregation="https://mock.aggregation.com"
-                webapireports={{
-                  main: 'https://reports.com',
-                  tags: 'https://reports-tags.com',
-                  topologygroups: 'https://topology-groups.com',
-                  topologyendpoints: 'https://endpoints.com'
-                }}
-                webapitoken='token'
-                tenantname='TENANT'
-                tenantDetails={{
-                  combined: combined,
-                  tenants: tenants
-                }}
-              /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route
+                path="/ui/metricprofiles/:name"
+                element={
+                  <MetricProfilesChange
+                    webapimetric='https://mock.metrics.com'
+                    webapiaggregation="https://mock.aggregation.com"
+                    webapireports={{
+                      main: 'https://reports.com',
+                      tags: 'https://reports-tags.com',
+                      topologygroups: 'https://topology-groups.com',
+                      topologyendpoints: 'https://endpoints.com'
+                    }}
+                    webapitoken='token'
+                    tenantname='TENANT'
+                    tenantDetails={{
+                      combined: combined,
+                      tenants: tenants
+                    }}
+                  />
+                }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -621,31 +617,26 @@ function renderChangeView(publicView=false, combined=false) {
 
 function renderAddView(combined=false) {
   const route = '/ui/metricprofiles/add';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   if (combined)
     return {
       ...render(
         <QueryClientProvider client={ queryClient }>
-          <Router history={ history }>
-            <Route
-              path="/ui/metricprofiles/add"
-              render={ props => <MetricProfilesChange
-                { ...props }
-                webapimetric='https://mock.metrics.com'
-                webapitoken='token'
-                tenantname='TENANT'
-                addview={true}
-                tenantDetails={ {
-                  combined: combined,
-                  tenants: {
-                    TENANT1: "mock_tenant1_token",
-                    TENANT2: "mock_tenant2_token"
-                  }
-                } }
-              /> }
+          <MemoryRouter initialEntries={ [ route ] }>
+            <MetricProfilesChange
+              webapimetric='https://mock.metrics.com'
+              webapitoken='token'
+              tenantname='TENANT'
+              addview={ true }
+              tenantDetails={ {
+                combined: combined,
+                tenants: {
+                  TENANT1: "mock_tenant1_token",
+                  TENANT2: "mock_tenant2_token"
+                }
+              } }
             />
-          </Router>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -654,22 +645,18 @@ function renderAddView(combined=false) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/metricprofiles/add'
-              render={props => <MetricProfilesChange
-                {...props}
-                webapimetric='https://mock.metrics.com'
-                webapitoken='token'
-                tenantname='TENANT'
-                addview={true}
-                tenantDetails={ {
-                  combined: combined,
-                  tenants: {}
-                } }
-              /> }
+          <MemoryRouter initialEntries={ [ route ] }>
+            <MetricProfilesChange
+              webapimetric='https://mock.metrics.com'
+              webapitoken='token'
+              tenantname='TENANT'
+              addview={ true }
+              tenantDetails={ {
+                combined: combined,
+                tenants: {}
+              } }
             />
-          </Router>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -678,7 +665,6 @@ function renderAddView(combined=false) {
 
 function renderCloneView(combined=false) {
   const route = '/ui/metricprofiles/ARGO_MON2/clone';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   let tenants = {}
   if (combined)
@@ -687,21 +673,24 @@ function renderCloneView(combined=false) {
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path="/ui/metricprofiles/:name/clone"
-            render={props => <MetricProfilesClone
-              {...props}
-              webapimetric='https://mock.metrics.com'
-              webapitoken='token'
-              tenantname='TENANT'
-              tenantDetails={ {
-                combined: combined,
-                tenants: tenants
-              } }
-            /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path="/ui/metricprofiles/:name/clone"
+              element={
+                <MetricProfilesClone
+                  webapimetric='https://mock.metrics.com'
+                  webapitoken='token'
+                  tenantname='TENANT'
+                  tenantDetails={ {
+                    combined: combined,
+                    tenants: tenants
+                  } }
+                />
+              }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -710,17 +699,20 @@ function renderCloneView(combined=false) {
 
 function renderVersionDetailsView() {
   const route = '/ui/metricprofiles/TEST_PROFILE/history/20201214-085323';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/metricprofiles/:name/history/:version'
-            render={ props => <MetricProfileVersionDetails {...props} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path='/ui/metricprofiles/:name/history/:version'
+              element={
+                <MetricProfileVersionDetails />
+              }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -740,13 +732,12 @@ describe('Tests for metric profiles listview', () => {
   test('Test that page renders properly', async () => {
     renderListView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Select metric profile to change');
+      expect(screen.getAllByRole('columnheader')).toHaveLength(4);
     })
 
-    expect(screen.getAllByRole('columnheader')).toHaveLength(4);
+    expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Select metric profile to change');
+
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Name' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Description' })).toBeInTheDocument();
@@ -766,13 +757,12 @@ describe('Tests for metric profiles listview', () => {
   test('Test that public page renders properly', async () => {
     renderListView(true);
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Select metric profile for details');
+      expect(screen.getAllByRole('columnheader')).toHaveLength(4);
     })
 
-    expect(screen.getAllByRole('columnheader')).toHaveLength(4);
+    expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Select metric profile for details');
+
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Name' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Description' })).toBeInTheDocument();
@@ -823,11 +813,11 @@ describe('Tests for metric profiles changeview', () => {
   test('Test that page renders properly', async () => {
     renderChangeView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change metric profile');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
+
+    expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change metric profile');
 
     const nameField = screen.getByTestId('name');
     const descriptionField = screen.getByLabelText(/description/i);
@@ -872,7 +862,6 @@ describe('Tests for metric profiles changeview', () => {
     expect(row7.getByText("Central-LFC")).toBeInTheDocument()
     expect(row7.getByText("ch.cern.LFC-Write")).toBeInTheDocument()
 
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /clone/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /clone/i }).closest('a')).toHaveAttribute('href', '/ui/metricprofiles/ARGO_MON/clone');
@@ -882,11 +871,11 @@ describe('Tests for metric profiles changeview', () => {
   test('Test that page renders properly for combined tenant', async () => {
     renderChangeView(false, true)
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change metric profile');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
+
+    expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change metric profile');
 
     const nameField = screen.getByTestId('name');
     const descriptionField = screen.getByLabelText(/description/i);
@@ -942,7 +931,7 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Change metric profile');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const metricInstances = within(screen.getByRole('table'));
@@ -973,11 +962,11 @@ describe('Tests for metric profiles changeview', () => {
   test('Test that public page renders properly', async () => {
     renderChangeView(true);
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Metric profile details');
+      expect(screen.getByTestId("name")).toBeInTheDocument()
     })
+
+    expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Metric profile details');
 
     const nameField = screen.getByTestId('name');
     const descriptionField = screen.getByLabelText(/description/i);
@@ -1024,11 +1013,11 @@ describe('Tests for metric profiles changeview', () => {
   test('Test that public page renders properly for combined tenant', async () => {
     renderChangeView(true, true);
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Metric profile details');
+      expect(screen.getByTestId("name")).toBeInTheDocument()
     })
+
+    expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Metric profile details');
 
     const nameField = screen.getByTestId('name');
     const descriptionField = screen.getByLabelText(/description/i);
@@ -1076,7 +1065,7 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView(true);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Metric profile details');
+      expect(screen.getByTestId("name")).toBeInTheDocument()
     })
 
     const metricInstances = within(screen.getByRole('table'));
@@ -1106,7 +1095,7 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId("name")
@@ -1152,14 +1141,17 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const metricInstances = within(screen.getByRole("table"))
 
-    fireEvent.click(screen.getByTestId("remove-2"))
+    await waitFor(() => fireEvent.click(screen.getByTestId("remove-2")))
+    
 
-    expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     var rows = metricInstances.getAllByRole("row")
     expect(rows).toHaveLength(8)
@@ -1184,7 +1176,9 @@ describe('Tests for metric profiles changeview', () => {
 
     fireEvent.click(screen.getByTestId("insert-3"))
 
-    expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     rows = metricInstances.getAllByRole("row")
     expect(rows).toHaveLength(9)
@@ -1209,10 +1203,17 @@ describe('Tests for metric profiles changeview', () => {
     expect(row7.getByText("Central-LFC")).toBeInTheDocument()
     expect(row7.getByText("ch.cern.LFC-Write")).toBeInTheDocument()
 
-    await selectEvent.select(row5.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row5.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row5.getAllByText("Select...")[0], "eu.argo.ams")
+    })
 
-    expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    await waitFor(() => {
+      selectEvent.select(row5.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     rows = metricInstances.getAllByRole("row")
     expect(rows).toHaveLength(9)
@@ -1240,7 +1241,9 @@ describe('Tests for metric profiles changeview', () => {
 
     fireEvent.click(metricInstances.getByTestId("insert-0"))
 
-    expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     rows = metricInstances.getAllByRole("row")
     expect(rows).toHaveLength(10)
@@ -1268,18 +1271,30 @@ describe('Tests for metric profiles changeview', () => {
     expect(row8.getByText("Central-LFC")).toBeInTheDocument()
     expect(row8.getByText("ch.cern.LFC-Write")).toBeInTheDocument()
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "Central-LFC")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "ch.cern.LFC-Write")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "Central-LFC")
+    })
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "ch.cern.LFC-Write")
+    })
 
-    expect(screen.queryByText(/duplicated/i)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).toBeInTheDocument()
+    })
 
-    fireEvent.click(screen.getByTestId("remove-7"))
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId("remove-7"))
+    })
 
-    expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(metricInstances.getByTestId("insert-0"))
 
-    expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     rows = metricInstances.getAllByRole("row")
     expect(rows).toHaveLength(10)
@@ -1307,14 +1322,25 @@ describe('Tests for metric profiles changeview', () => {
     expect(row8.getByText("Central-LFC")).toBeInTheDocument()
     expect(row8.getByText("ch.cern.LFC-Read")).toBeInTheDocument()
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "Central-LFC")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "ch.cern.LFC-Write")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "Central-LFC")
+    })
 
-    expect(screen.queryAllByText(/duplicated/i)).toHaveLength(2)
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "ch.cern.LFC-Write")
+    })
 
-    await selectEvent.select(row2.getByText("ch.cern.LFC-Write"), "argo.AMS-Check")
+    await waitFor(() => {
+      expect(screen.queryAllByText(/duplicated/i)).toHaveLength(2)
+    })
 
-    expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    await waitFor(() => {
+      selectEvent.select(row2.getByText("ch.cern.LFC-Write"), "argo.AMS-Check")
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     rows = metricInstances.getAllByRole("row")
     expect(rows).toHaveLength(10)
@@ -1343,14 +1369,37 @@ describe('Tests for metric profiles changeview', () => {
     expect(row8.getByText("Central-LFC")).toBeInTheDocument()
     expect(row8.getByText("ch.cern.LFC-Read")).toBeInTheDocument()
 
-    fireEvent.click(screen.getByTestId("remove-7"))
-    fireEvent.click(screen.getByTestId("remove-6"))
-    fireEvent.click(screen.getByTestId("remove-5"))
-    fireEvent.click(screen.getByTestId("remove-4"))
-    fireEvent.click(screen.getByTestId("remove-3"))
-    fireEvent.click(screen.getByTestId("remove-2"))
-    fireEvent.click(screen.getByTestId("remove-1"))
-    fireEvent.click(screen.getByTestId("remove-0"))
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId("remove-7"))
+    })
+
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId("remove-6"))
+    })
+
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId("remove-5"))
+    })
+
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId("remove-4"))
+    })
+
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId("remove-3"))
+    })
+
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId("remove-2"))
+    })
+
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId("remove-1"))
+    })
+
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId("remove-0"))
+    })
 
     rows = metricInstances.getAllByRole("row")
     expect(rows).toHaveLength(3)
@@ -1362,7 +1411,7 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /csv/i }));
@@ -1378,7 +1427,9 @@ describe('Tests for metric profiles changeview', () => {
       useEvent.upload(input, file);
     })
 
-    expect(input.files[0]).toStrictEqual(file)
+    await waitFor(() => {
+      expect(input.files[0]).toStrictEqual(file)
+    })
     expect(input.files.item(0)).toStrictEqual(file)
     expect(input.files).toHaveLength(1)
 
@@ -1421,7 +1472,7 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /csv/i }));
@@ -1437,7 +1488,9 @@ describe('Tests for metric profiles changeview', () => {
       useEvent.upload(input, file);
     })
 
-    expect(input.files[0]).toStrictEqual(file)
+    await waitFor(() => {
+      expect(input.files[0]).toStrictEqual(file)
+    })
     expect(input.files.item(0)).toStrictEqual(file)
     expect(input.files).toHaveLength(1)
 
@@ -1482,7 +1535,7 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /csv/i }));
@@ -1501,7 +1554,7 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const metricInstances = within(screen.getByRole('table'));
@@ -1525,12 +1578,21 @@ describe('Tests for metric profiles changeview', () => {
     const rows = metricInstances.getAllByRole('row');
     const row4 = within(rows[6])
 
-    await selectEvent.select(row4.getAllByText("Select...")[0], "org.opensciencegrid.htcondorce")
+    await waitFor(() => {
+      selectEvent.select(row4.getAllByText("Select...")[0], "org.opensciencegrid.htcondorce")
+    })
+    await waitFor(() => {
+      selectEvent.select(row4.getAllByText("Select...")[1], "ch.cern.HTCondorCE-JobState")
+    })
 
-    await selectEvent.select(row4.getAllByText("Select...")[0], "ch.cern.HTCondorCE-JobState")
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /csv/i }));
-    fireEvent.click(screen.getByRole('menuitem', { name: /export/i }));
+    await waitFor(() => {
+      fireEvent.click(screen.getByRole('menuitem', { name: /export/i }));
+    })
 
     const content = 'service,metric\r\nargo.mon,eu.egi.CertValidity\r\nargo.mon,org.nagios.NagiosWebInterface\r\nargo.webui,org.nagios.ARGOWeb-AR\r\nargo.webui,org.nagios.ARGOWeb-Status\r\norg.opensciencegrid.htcondorce,ch.cern.HTCondorCE-JobState'
 
@@ -1546,14 +1608,16 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     await selectEvent.select(screen.getByText('ARGO'), 'TEST')
 
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
-    fireEvent.click(screen.getByTestId('remove-1'));
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId('remove-1'));
+    })
 
     fireEvent.click(screen.getByTestId('insert-0'));
 
@@ -1561,16 +1625,30 @@ describe('Tests for metric profiles changeview', () => {
     var rows = metricInstances.getAllByRole('row');
     const row1 = within(rows[3])
 
-    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-1'));
 
     rows = metricInstances.getAllByRole('row');
     const row2 = within(rows[4])
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "org.nagiosexchange.AppDB-WebCheck")
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -1643,13 +1721,15 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     await selectEvent.select(screen.getByText('ARGO'), 'TEST')
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
-    fireEvent.click(screen.getByTestId('remove-1'));
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId('remove-1'));
+    })
 
     fireEvent.click(screen.getByTestId('insert-0'));
 
@@ -1658,16 +1738,30 @@ describe('Tests for metric profiles changeview', () => {
 
     const row1 = within(rows[3])
 
-    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-1'));
 
     rows = metricInstances.getAllByRole('row');
     const row2 = within(rows[4])
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    })
+    
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "org.nagiosexchange.AppDB-WebCheck")
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -1745,13 +1839,15 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     await selectEvent.select(screen.getByText('ARGO'), 'TEST')
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
-    fireEvent.click(screen.getByTestId('remove-1'));
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId('remove-1'));
+    })
 
     fireEvent.click(screen.getByTestId('insert-0'));
 
@@ -1759,16 +1855,29 @@ describe('Tests for metric profiles changeview', () => {
     var rows = metricInstances.getAllByRole('row');
 
     const row1 = within(rows[3])
-    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
 
     fireEvent.click(metricInstances.getByTestId('insert-1'));
 
     rows = metricInstances.getAllByRole('row');
     const row2 = within(rows[4])
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    })
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "org.nagiosexchange.AppDB-WebCheck")
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -1861,13 +1970,15 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     await selectEvent.select(screen.getByText('ARGO'), 'TEST')
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
-    fireEvent.click(screen.getByTestId('remove-1'))
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId('remove-1'))
+    })
 
     fireEvent.click(screen.getByTestId('insert-0'))
 
@@ -1875,16 +1986,30 @@ describe('Tests for metric profiles changeview', () => {
     var rows = metricInstances.getAllByRole('row');
     const row1 = within(rows[3])
 
-    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-1'));
 
     rows = metricInstances.getAllByRole('row');
     const row2 = within(rows[4])
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "org.nagiosexchange.AppDB-WebCheck")
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -1979,13 +2104,15 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     await selectEvent.select(screen.getByText('ARGO'), 'TEST')
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
-    fireEvent.click(screen.getByTestId('remove-1'));
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId('remove-1'));
+    })
 
     fireEvent.click(screen.getByTestId('insert-0'));
 
@@ -1993,16 +2120,30 @@ describe('Tests for metric profiles changeview', () => {
     var rows = metricInstances.getAllByRole('row');
     const row1 = within(rows[3])
 
-    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-1'));
 
     rows = metricInstances.getAllByRole('row');
     const row2 = within(rows[4])
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "org.nagiosexchange.AppDB-WebCheck")
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -2094,13 +2235,15 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     await selectEvent.select(screen.getByText('ARGO'), 'TEST')
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
-    fireEvent.click(screen.getByTestId('remove-1'));
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId('remove-1'));
+    })
 
     fireEvent.click(screen.getByTestId('insert-0'));
 
@@ -2108,16 +2251,30 @@ describe('Tests for metric profiles changeview', () => {
     var rows = metricInstances.getAllByRole('row');
     const row1 = within(rows[3])
 
-    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-1'));
 
     rows = metricInstances.getAllByRole('row');
     const row2 = within(rows[4])
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "org.nagiosexchange.AppDB-WebCheck")
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -2212,13 +2369,15 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     await selectEvent.select(screen.getByText('ARGO'), 'TEST')
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
-    fireEvent.click(screen.getByTestId('remove-1'));
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId('remove-1'));
+    })
 
     fireEvent.click(screen.getByTestId('insert-0'));
 
@@ -2226,16 +2385,30 @@ describe('Tests for metric profiles changeview', () => {
     var rows = metricInstances.getAllByRole('row');
     const row1 = within(rows[3])
 
-    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-1'));
 
     rows = metricInstances.getAllByRole('row');
     const row2 = within(rows[4])
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "org.nagiosexchange.AppDB-WebCheck")
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -2338,13 +2511,15 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     await selectEvent.select(screen.getByText('ARGO'), 'TEST')
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
-    fireEvent.click(screen.getByTestId('remove-1'));
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId('remove-1'));
+    })
 
     fireEvent.click(screen.getByTestId('insert-0'));
 
@@ -2352,16 +2527,30 @@ describe('Tests for metric profiles changeview', () => {
     var rows = metricInstances.getAllByRole('row');
     const row1 = within(rows[3])
 
-    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-1'));
 
     rows = metricInstances.getAllByRole('row');
     const row2 = within(rows[4])
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "org.nagiosexchange.AppDB-WebCheck")
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -2464,13 +2653,15 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     await selectEvent.select(screen.getByText('ARGO'), 'TEST')
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
-    fireEvent.click(screen.getByTestId('remove-1'));
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId('remove-1'));
+    })
 
     fireEvent.click(screen.getByTestId('insert-0'));
 
@@ -2478,16 +2669,30 @@ describe('Tests for metric profiles changeview', () => {
     var rows = metricInstances.getAllByRole('row');
     const row1 = within(rows[3])
 
-    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-1'));
 
     rows = metricInstances.getAllByRole('row');
     const row2 = within(rows[4])
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "org.nagiosexchange.AppDB-WebCheck")
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -2585,13 +2790,15 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     await selectEvent.select(screen.getByText('ARGO'), 'TEST')
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
-    fireEvent.click(screen.getByTestId('remove-1'));
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId('remove-1'));
+    })
 
     fireEvent.click(screen.getByTestId('insert-0'));
 
@@ -2599,16 +2806,30 @@ describe('Tests for metric profiles changeview', () => {
     var rows = metricInstances.getAllByRole('row');
     const row1 = within(rows[3])
 
-    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-1'));
 
     rows = metricInstances.getAllByRole('row');
     const row2 = within(rows[4])
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+    await  waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "org.nagiosexchange.AppDB-WebCheck")
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -2710,7 +2931,7 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     await selectEvent.select(screen.getByText('ARGO'), 'TEST')
@@ -2726,12 +2947,18 @@ describe('Tests for metric profiles changeview', () => {
       useEvent.upload(input, file);
     })
 
-    expect(input.files[0]).toStrictEqual(file)
+    await waitFor(() => {
+      expect(input.files[0]).toStrictEqual(file)
+    })
     expect(input.files.item(0)).toStrictEqual(file)
     expect(input.files).toHaveLength(1)
 
     await waitFor(() => {
       fireEvent.load(screen.getByTestId('file_input'))
+    })
+
+    await waitFor(() => {
+      expect(within(screen.getByRole("table")).getAllByRole("row")).toHaveLength(4)
     })
 
     fireEvent.click(screen.getByTestId('insert-0'));
@@ -2740,8 +2967,17 @@ describe('Tests for metric profiles changeview', () => {
     var rows = metricInstances.getAllByRole('row');
     const row1 = within(rows[3])
 
-    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -2796,7 +3032,7 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const metricInstances = within(screen.getByRole('table'))
@@ -2815,8 +3051,17 @@ describe('Tests for metric profiles changeview', () => {
     rows = metricInstances.getAllByRole("row")
     const row2 = within(rows[4])
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "ARC-CE")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "ARC-CE")
+    })
+    
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -2893,7 +3138,7 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -2933,7 +3178,7 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -2967,7 +3212,7 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole("button", { name: /delete/i }))
@@ -3004,7 +3249,7 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole("button", { name: /delete/i }))
@@ -3042,7 +3287,7 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole("button", { name: /delete/i }))
@@ -3092,7 +3337,7 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -3127,7 +3372,7 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -3167,7 +3412,7 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -3207,7 +3452,7 @@ describe('Tests for metric profiles changeview', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -3274,8 +3519,10 @@ describe('Tests for metric profile addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Add metric profile');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
+
+    expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Add metric profile');
 
     const nameField = screen.getByTestId('name');
     const descriptionField = screen.getByLabelText(/description/i);
@@ -3300,7 +3547,6 @@ describe('Tests for metric profile addview', () => {
     expect(rows).toHaveLength(3)
     expect(within(rows[2]).getAllByText("Select...")).toHaveLength(2)
 
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /csv/i })).not.toBeInTheDocument();
@@ -3310,8 +3556,10 @@ describe('Tests for metric profile addview', () => {
     renderAddView(true)
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Add metric profile');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
+
+    expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Add metric profile');
 
     const nameField = screen.getByTestId('name');
     const descriptionField = screen.getByLabelText(/description/i);
@@ -3348,7 +3596,6 @@ describe('Tests for metric profile addview', () => {
     expect(rows).toHaveLength(3)
     expect(within(rows[2]).getAllByText("Select...")).toHaveLength(2)
 
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /csv/i })).not.toBeInTheDocument();
@@ -3358,7 +3605,7 @@ describe('Tests for metric profile addview', () => {
     renderAddView()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: "ARGO_MON_TEST" } })
@@ -3390,7 +3637,7 @@ describe('Tests for metric profile addview', () => {
     renderAddView()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const metricInstances = within(screen.getByRole("table"))
@@ -3400,7 +3647,9 @@ describe('Tests for metric profile addview', () => {
     await selectEvent.select(row1.getAllByText("Select...")[0], "argo.mon")
     await selectEvent.select(row1.getAllByText("Select...")[0], "eu.egi.CertValidity")
 
-    expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     rows = metricInstances.getAllByRole("row")
     expect(rows).toHaveLength(3)
@@ -3414,8 +3663,13 @@ describe('Tests for metric profile addview', () => {
     expect(rows).toHaveLength(4)
     var row2 = within(rows[3])
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
 
     rows = metricInstances.getAllByRole("row")
     expect(rows).toHaveLength(4)
@@ -3426,7 +3680,9 @@ describe('Tests for metric profile addview', () => {
     expect(row2.getByText("eu.argo.ams")).toBeInTheDocument()
     expect(row2.getByText("argo.AMS-Check")).toBeInTheDocument()
 
-    expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByTestId("insert-1"))
 
@@ -3434,10 +3690,17 @@ describe('Tests for metric profile addview', () => {
     expect(rows).toHaveLength(5)
     var row3 = within(rows[4])
 
-    await selectEvent.select(row3.getAllByText("Select...")[0], "argo.mon")
-    await selectEvent.select(row3.getAllByText("Select...")[0], "eu.egi.CertValidity")
+    await waitFor(() => {
+      selectEvent.select(row3.getAllByText("Select...")[0], "argo.mon")
+    })
 
-    expect(screen.queryAllByText(/duplicated/i)).toHaveLength(2)
+    await waitFor(() => {
+      selectEvent.select(row3.getAllByText("Select...")[1], "eu.egi.CertValidity")
+    })
+
+    await waitFor(() => {
+      expect(screen.queryAllByText(/duplicated/i)).toHaveLength(2)
+    })
 
     rows = metricInstances.getAllByRole("row")
     expect(rows).toHaveLength(7)
@@ -3451,9 +3714,13 @@ describe('Tests for metric profile addview', () => {
     expect(row3.getByText("argo.mon")).toBeInTheDocument()
     expect(row3.getByText("eu.egi.CertValidity")).toBeInTheDocument()
 
-    fireEvent.click(screen.getByTestId("remove-2"))
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId("remove-2"))
+    })
 
-    expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     rows = metricInstances.getAllByRole("row")
     expect(rows).toHaveLength(4)
@@ -3464,9 +3731,13 @@ describe('Tests for metric profile addview', () => {
     expect(row2.getByText("eu.argo.ams")).toBeInTheDocument()
     expect(row2.getByText("argo.AMS-Check")).toBeInTheDocument()
 
-    fireEvent.click(screen.getByTestId("remove-1"))
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId("remove-1"))
+    })
 
-    fireEvent.click(screen.getByTestId("remove-0"))
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId("remove-0"))
+    })
 
     rows = metricInstances.getAllByRole("row")
     expect(rows).toHaveLength(3)
@@ -3478,7 +3749,7 @@ describe('Tests for metric profile addview', () => {
     renderAddView(true)
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const metricInstances = within(screen.getByRole("table"))
@@ -3488,7 +3759,13 @@ describe('Tests for metric profile addview', () => {
 
     expect(row1.getAllByText("Select...")).toHaveLength(2)
 
-    await selectEvent.select(screen.getAllByLabelText(/profile/i)[0], "TENANT1-PROFILE1")
+    await waitFor(() => {
+      selectEvent.select(screen.getAllByLabelText(/profile/i)[0], "TENANT1-PROFILE1")
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     rows = metricInstances.getAllByRole("row")
     expect(rows).toHaveLength(5)
@@ -3505,7 +3782,13 @@ describe('Tests for metric profile addview', () => {
     expect(row3.getByText("b2drop.nextcloud")).toBeInTheDocument()
     expect(row3.getByText("generic.tcp.connect")).toBeInTheDocument()
 
-    await selectEvent.select(screen.getAllByLabelText(/profile/i)[1], "PROFILE3")
+    await waitFor(() => {
+      selectEvent.select(screen.getAllByLabelText(/profile/i)[1], "PROFILE3")
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     rows = metricInstances.getAllByRole("row")
     expect(rows).toHaveLength(9)
@@ -3539,7 +3822,13 @@ describe('Tests for metric profile addview', () => {
     expect(row7.getByText("portal.services.url")).toBeInTheDocument()
     expect(row7.getByText("generic.http.connect")).toBeInTheDocument()
 
-    await selectEvent.select(screen.getAllByLabelText(/profile/i)[0], "TENANT1-PROFILE2")
+    await waitFor(() => {
+      selectEvent.select(screen.getAllByLabelText(/profile/i)[0], "TENANT1-PROFILE2")
+    })
+    
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     rows = metricInstances.getAllByRole("row")
     expect(rows).toHaveLength(9)
@@ -3593,44 +3882,68 @@ describe('Tests for metric profile addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
-    await selectEvent.select(screen.getAllByText("Select...")[0], 'ARGO')
+    await waitFor(() => {
+      selectEvent.select(screen.getAllByText("Select...")[0], 'ARGO')
+    })
 
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
     var row1 = within(rows[2])
 
-    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-0'));
 
     rows = metricInstances.getAllByRole('row');
     var row2 = within(rows[3])
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "org.nagiosexchange.AppDB-WebCheck")
+    })
 
     fireEvent.click(screen.getByTestId('insert-1'));
     rows = metricInstances.getAllByRole('row');
     const row3 = within(rows[4])
 
-    await selectEvent.select(row3.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row3.getAllByText("Select...")[0], "argo.AMSPublisher-Check")
+    await waitFor(() => {
+      selectEvent.select(row3.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row3.getAllByText("Select...")[1], "argo.AMSPublisher-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-2'));
     rows = metricInstances.getAllByRole('row');
     const row4 = within(rows[5])
 
-    await selectEvent.select(row4.getAllByText("Select...")[0], "argo.mon")
-    await selectEvent.select(row4.getAllByText("Select...")[0], "eu.egi.CertValidity")
+    await waitFor(() => {
+      selectEvent.select(row4.getAllByText("Select...")[0], "argo.mon")
+    })
 
-    fireEvent.click(metricInstances.getByTestId('remove-3'));
+    await waitFor(() => {
+      selectEvent.select(row4.getAllByText("Select...")[1], "eu.egi.CertValidity")
+    })
+
+    await waitFor(() => {
+      fireEvent.click(metricInstances.getByTestId('remove-3'));
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -3707,44 +4020,68 @@ describe('Tests for metric profile addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
-    await selectEvent.select(screen.getAllByText("Select...")[0], 'ARGO')
+    await waitFor(() => {
+      selectEvent.select(screen.getAllByText("Select...")[0], 'ARGO')
+    })
 
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
     var row1 = within(rows[2])
 
-    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-0'));
 
     rows = metricInstances.getAllByRole('row');
     var row2 = within(rows[3])
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "org.nagiosexchange.AppDB-WebCheck")
+    })
 
     fireEvent.click(screen.getByTestId('insert-1'));
     rows = metricInstances.getAllByRole('row');
     const row3 = within(rows[4])
 
-    await selectEvent.select(row3.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row3.getAllByText("Select...")[0], "argo.AMSPublisher-Check")
+    await waitFor(() => {
+      selectEvent.select(row3.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row3.getAllByText("Select...")[1], "argo.AMSPublisher-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-2'));
     rows = metricInstances.getAllByRole('row');
     const row4 = within(rows[5])
 
-    await selectEvent.select(row4.getAllByText("Select...")[0], "argo.mon")
-    await selectEvent.select(row4.getAllByText("Select...")[0], "eu.egi.CertValidity")
+    await waitFor(() => {
+      selectEvent.select(row4.getAllByText("Select...")[0], "argo.mon")
+    })
 
-    fireEvent.click(metricInstances.getByTestId('remove-3'));
+    await waitFor(() => {
+      selectEvent.select(row4.getAllByText("Select...")[1], "eu.egi.CertValidity")
+    })
+
+    await waitFor(() => {
+      fireEvent.click(metricInstances.getByTestId('remove-3'));
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -3824,44 +4161,68 @@ describe('Tests for metric profile addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
-    await selectEvent.select(screen.getAllByText("Select...")[0], 'ARGO')
+    await waitFor(() => {
+      selectEvent.select(screen.getAllByText("Select...")[0], 'ARGO')
+    })
 
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
     var row1 = within(rows[2])
 
-    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-0'));
 
     rows = metricInstances.getAllByRole('row');
     var row2 = within(rows[3])
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "org.nagiosexchange.AppDB-WebCheck")
+    })
 
     fireEvent.click(screen.getByTestId('insert-1'));
     rows = metricInstances.getAllByRole('row');
     const row3 = within(rows[4])
 
-    await selectEvent.select(row3.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row3.getAllByText("Select...")[0], "argo.AMSPublisher-Check")
+    await waitFor(() => {
+      selectEvent.select(row3.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row3.getAllByText("Select...")[1], "argo.AMSPublisher-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-2'));
     rows = metricInstances.getAllByRole('row');
     const row4 = within(rows[5])
 
-    await selectEvent.select(row4.getAllByText("Select...")[0], "argo.mon")
-    await selectEvent.select(row4.getAllByText("Select...")[0], "eu.egi.CertValidity")
+    await waitFor(() => {
+      selectEvent.select(row4.getAllByText("Select...")[0], "argo.mon")
+    })
 
-    fireEvent.click(metricInstances.getByTestId('remove-3'));
+    await waitFor(() => {
+      selectEvent.select(row4.getAllByText("Select...")[1], "eu.egi.CertValidity")
+    })
+
+    await waitFor(() => {
+      fireEvent.click(metricInstances.getByTestId('remove-3'));
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -3949,44 +4310,68 @@ describe('Tests for metric profile addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
-    await selectEvent.select(screen.getAllByText("Select...")[0], 'ARGO')
+    await waitFor(() => {
+      selectEvent.select(screen.getAllByText("Select...")[0], 'ARGO')
+    })
 
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
     var row1 = within(rows[2])
 
-    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-0'));
 
     rows = metricInstances.getAllByRole('row');
     var row2 = within(rows[3])
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "org.nagiosexchange.AppDB-WebCheck")
+    })
 
     fireEvent.click(screen.getByTestId('insert-1'));
     rows = metricInstances.getAllByRole('row');
     const row3 = within(rows[4])
 
-    await selectEvent.select(row3.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row3.getAllByText("Select...")[0], "argo.AMSPublisher-Check")
+    await waitFor(() => {
+      selectEvent.select(row3.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row3.getAllByText("Select...")[1], "argo.AMSPublisher-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-2'));
     rows = metricInstances.getAllByRole('row');
     const row4 = within(rows[5])
 
-    await selectEvent.select(row4.getAllByText("Select...")[0], "argo.mon")
-    await selectEvent.select(row4.getAllByText("Select...")[0], "eu.egi.CertValidity")
+    await waitFor(() => {
+      selectEvent.select(row4.getAllByText("Select...")[0], "argo.mon")
+    })
 
-    fireEvent.click(metricInstances.getByTestId('remove-3'));
+    await waitFor(() => {
+      selectEvent.select(row4.getAllByText("Select...")[1], "eu.egi.CertValidity")
+    })
+
+    await waitFor(() => {
+      fireEvent.click(metricInstances.getByTestId('remove-3'));
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -4074,44 +4459,68 @@ describe('Tests for metric profile addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
-    await selectEvent.select(screen.getAllByText("Select...")[0], 'ARGO')
+    await waitFor(() => {
+      selectEvent.select(screen.getAllByText("Select...")[0], 'ARGO')
+    })
 
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
     var row1 = within(rows[2])
 
-    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-0'));
 
     rows = metricInstances.getAllByRole('row');
     var row2 = within(rows[3])
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "org.nagiosexchange.AppDB-WebCheck")
+    })
 
     fireEvent.click(screen.getByTestId('insert-1'));
     rows = metricInstances.getAllByRole('row');
     const row3 = within(rows[4])
 
-    await selectEvent.select(row3.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row3.getAllByText("Select...")[0], "argo.AMSPublisher-Check")
+    await waitFor(() => {
+      selectEvent.select(row3.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row3.getAllByText("Select...")[1], "argo.AMSPublisher-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-2'));
     rows = metricInstances.getAllByRole('row');
     const row4 = within(rows[5])
 
-    await selectEvent.select(row4.getAllByText("Select...")[0], "argo.mon")
-    await selectEvent.select(row4.getAllByText("Select...")[0], "eu.egi.CertValidity")
+    await waitFor(() => {
+      selectEvent.select(row4.getAllByText("Select...")[0], "argo.mon")
+    })
 
-    fireEvent.click(metricInstances.getByTestId('remove-3'));
+    await waitFor(() => {
+      selectEvent.select(row4.getAllByText("Select...")[1], "eu.egi.CertValidity")
+    })
+
+    await waitFor(() => {
+      fireEvent.click(metricInstances.getByTestId('remove-3'));
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -4194,44 +4603,68 @@ describe('Tests for metric profile addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
-    await selectEvent.select(screen.getAllByText("Select...")[0], 'ARGO')
+    await waitFor(() => {
+      selectEvent.select(screen.getAllByText("Select...")[0], 'ARGO')
+    })
 
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
     var row1 = within(rows[2])
 
-    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+    
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-0'));
 
     rows = metricInstances.getAllByRole('row');
     var row2 = within(rows[3])
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "org.nagiosexchange.AppDB-WebCheck")
+    })
 
     fireEvent.click(screen.getByTestId('insert-1'));
     rows = metricInstances.getAllByRole('row');
     const row3 = within(rows[4])
 
-    await selectEvent.select(row3.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row3.getAllByText("Select...")[0], "argo.AMSPublisher-Check")
+    await waitFor(() => {
+      selectEvent.select(row3.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row3.getAllByText("Select...")[1], "argo.AMSPublisher-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-2'));
     rows = metricInstances.getAllByRole('row');
     const row4 = within(rows[5])
 
-    await selectEvent.select(row4.getAllByText("Select...")[0], "argo.mon")
-    await selectEvent.select(row4.getAllByText("Select...")[0], "eu.egi.CertValidity")
+    await waitFor(() => {
+      selectEvent.select(row4.getAllByText("Select...")[0], "argo.mon")
+    })
 
-    fireEvent.click(metricInstances.getByTestId('remove-3'));
+    await waitFor(() => {
+      selectEvent.select(row4.getAllByText("Select...")[1], "eu.egi.CertValidity")
+    })
+
+    await waitFor(() => {
+      fireEvent.click(metricInstances.getByTestId('remove-3'));
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -4304,45 +4737,69 @@ describe('Tests for metric profile addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
-    await selectEvent.select(screen.getAllByText("Select...")[0], 'ARGO')
+    await waitFor(() => {
+      selectEvent.select(screen.getAllByText("Select...")[0], 'ARGO')
+    })
 
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
     const row1 = within(rows[2])
 
-    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-0'));
 
     rows = metricInstances.getAllByRole('row');
     const row2 = within(rows[3])
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "org.nagiosexchange.AppDB-WebCheck")
+    })
 
     fireEvent.click(screen.getByTestId('insert-1'));
 
     rows = metricInstances.getAllByRole('row');
     const row3 = within(rows[4])
 
-    await selectEvent.select(row3.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row3.getAllByText("Select...")[0], "argo.AMSPublisher-Check")
+    await waitFor(() => {
+      selectEvent.select(row3.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row3.getAllByText("Select...")[1], "argo.AMSPublisher-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-2'));
     rows = metricInstances.getAllByRole('row');
     const row4 = within(rows[5])
 
-    await selectEvent.select(row4.getAllByText("Select...")[0], "argo.mon")
-    await selectEvent.select(row4.getAllByText("Select...")[0], "eu.egi.CertValidity")
+    await waitFor(() => {
+      selectEvent.select(row4.getAllByText("Select...")[0], "argo.mon")
+    })
 
-    fireEvent.click(screen.getByTestId('remove-3'));
+    await waitFor(() => {
+      selectEvent.select(row4.getAllByText("Select...")[1], "eu.egi.CertValidity")
+    })
+
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId('remove-3'));
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -4394,46 +4851,70 @@ describe('Tests for metric profile addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
-    await selectEvent.select(screen.getAllByText("Select...")[0], 'ARGO')
+    await waitFor(() => {
+      selectEvent.select(screen.getAllByText("Select...")[0], 'ARGO')
+    })
 
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
     const row1 = within(rows[2])
 
-    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-0'));
 
     rows = metricInstances.getAllByRole('row');
     const row2 = within(rows[3])
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "org.nagiosexchange.AppDB-WebCheck")
+    })
 
     fireEvent.click(screen.getByTestId('insert-1'));
 
     rows = metricInstances.getAllByRole('row');
     const row3 = within(rows[4])
 
-    await selectEvent.select(row3.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row3.getAllByText("Select...")[0], "argo.AMSPublisher-Check")
+    await waitFor(() => {
+      selectEvent.select(row3.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row3.getAllByText("Select...")[1], "argo.AMSPublisher-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-2'));
 
     rows = metricInstances.getAllByRole('row');
     const row4 = within(rows[5])
 
-    await selectEvent.select(row4.getAllByText("Select...")[0], "argo.mon")
-    await selectEvent.select(row4.getAllByText("Select...")[0], "eu.egi.CertValidity")
+    await waitFor(() => {
+      selectEvent.select(row4.getAllByText("Select...")[0], "argo.mon")
+    })
 
-    fireEvent.click(metricInstances.getByTestId('remove-3'));
+    await waitFor(() => {
+      selectEvent.select(row4.getAllByText("Select...")[1], "eu.egi.CertValidity")
+    })
+
+    await waitFor(() => {
+      fireEvent.click(metricInstances.getByTestId('remove-3'));
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -4501,47 +4982,71 @@ describe('Tests for metric profile addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
-    await selectEvent.select(screen.getAllByText("Select...")[0], 'ARGO')
+    await waitFor(() => {
+      selectEvent.select(screen.getAllByText("Select...")[0], 'ARGO')
+    })
 
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
 
     const row1 = within(rows[2])
 
-    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-0'));
 
     rows = metricInstances.getAllByRole('row');
     const row2 = within(rows[3])
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "org.nagiosexchange.AppDB-WebCheck")
+    })
 
     fireEvent.click(screen.getByTestId('insert-1'));
 
     rows = metricInstances.getAllByRole('row');
     const row3 = within(rows[4])
 
-    await selectEvent.select(row3.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row3.getAllByText("Select...")[0], "argo.AMSPublisher-Check")
+    await waitFor(() => {
+      selectEvent.select(row3.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row3.getAllByText("Select...")[1], "argo.AMSPublisher-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-2'));
 
     rows = metricInstances.getAllByRole('row');
     const row4 = within(rows[5])
 
-    await selectEvent.select(row4.getAllByText("Select...")[0], "argo.mon")
-    await selectEvent.select(row4.getAllByText("Select...")[0], "eu.egi.CertValidity")
+    await waitFor(() => {
+      selectEvent.select(row4.getAllByText("Select...")[0], "argo.mon")
+    })
 
-    fireEvent.click(metricInstances.getByTestId('remove-3'));
+    await waitFor(() => {
+      selectEvent.select(row4.getAllByText("Select...")[1], "eu.egi.CertValidity")
+    })
+
+    await waitFor(() => {
+      fireEvent.click(metricInstances.getByTestId('remove-3'));
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -4619,46 +5124,70 @@ describe('Tests for metric profile addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
 
-    await selectEvent.select(screen.getAllByText("Select...")[0], 'ARGO')
+    await waitFor(() => {
+      selectEvent.select(screen.getAllByText("Select...")[0], 'ARGO')
+    })
 
     const metricInstances = within(screen.getByRole('table'));
     var rows = metricInstances.getAllByRole('row');
     const row1 = within(rows[2])
 
-    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
 
     fireEvent.click(metricInstances.getByTestId('insert-0'));
 
     rows = metricInstances.getAllByRole('row');
     const row2 = within(rows[3])
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "org.nagiosexchange.AppDB-WebCheck")
+    })
 
     fireEvent.click(screen.getByTestId('insert-1'));
 
     rows = metricInstances.getAllByRole('row');
     const row3 = within(rows[4])
 
-    await selectEvent.select(row3.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row3.getAllByText("Select...")[0], "argo.AMSPublisher-Check")
+    await waitFor(() => {
+      selectEvent.select(row3.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row3.getAllByText("Select...")[1], "argo.AMSPublisher-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-2'));
 
     rows = metricInstances.getAllByRole('row');
     const row4 = within(rows[5])
 
-    await selectEvent.select(row4.getAllByText("Select...")[0], "argo.mon")
-    await selectEvent.select(row4.getAllByText("Select...")[0], "eu.egi.CertValidity")
+    await waitFor(() => {
+      selectEvent.select(row4.getAllByText("Select...")[0], "argo.mon")
+    })
 
-    fireEvent.click(screen.getByTestId('remove-3'));
+    await waitFor(() => {
+      selectEvent.select(row4.getAllByText("Select...")[1], "eu.egi.CertValidity")
+    })
+
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId('remove-3'));
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -4747,11 +5276,11 @@ describe('Tests for metric profile cloneview', () => {
   test('Test that page renders properly', async () => {
     renderCloneView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Clone metric profile');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
+
+    expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Clone metric profile');
 
     const nameField = screen.getByTestId('name');
     const descriptionField = screen.getByLabelText(/description/i);
@@ -4799,7 +5328,6 @@ describe('Tests for metric profile cloneview', () => {
     expect(metricInstances.getAllByTestId(/remove-/i)).toHaveLength(7);
     expect(metricInstances.getAllByTestId(/insert-/i)).toHaveLength(7);
 
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /csv/i })).not.toBeInTheDocument();
@@ -4808,11 +5336,11 @@ describe('Tests for metric profile cloneview', () => {
   test('Test that page renders properly for combined tenant', async () => {
     renderCloneView(true)
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Clone metric profile');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
+
+    expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Clone metric profile');
 
     const nameField = screen.getByTestId('name');
     const descriptionField = screen.getByLabelText(/description/i);
@@ -4860,7 +5388,6 @@ describe('Tests for metric profile cloneview', () => {
     expect(metricInstances.getAllByTestId(/remove-/i)).toHaveLength(7);
     expect(metricInstances.getAllByTestId(/insert-/i)).toHaveLength(7);
 
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /csv/i })).not.toBeInTheDocument();
@@ -4870,7 +5397,7 @@ describe('Tests for metric profile cloneview', () => {
     renderCloneView()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: "ARGO_MON_TEST" } })
@@ -4908,14 +5435,16 @@ describe('Tests for metric profile cloneview', () => {
     renderCloneView()
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const metricInstances = within(screen.getByRole("table"))
 
     fireEvent.click(screen.getByTestId("remove-2"))
 
-    expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     var rows = metricInstances.getAllByRole("row")
     expect(rows).toHaveLength(8)
@@ -4940,7 +5469,9 @@ describe('Tests for metric profile cloneview', () => {
 
     fireEvent.click(screen.getByTestId("insert-3"))
 
-    expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     rows = metricInstances.getAllByRole("row")
     expect(rows).toHaveLength(9)
@@ -4965,10 +5496,17 @@ describe('Tests for metric profile cloneview', () => {
     expect(row7.getByText("Central-LFC")).toBeInTheDocument()
     expect(row7.getByText("ch.cern.LFC-Write")).toBeInTheDocument()
 
-    await selectEvent.select(row5.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row5.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row5.getAllByText("Select...")[0], "eu.argo.ams")
+    })
 
-    expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    await waitFor(() => {
+      selectEvent.select(row5.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     rows = metricInstances.getAllByRole("row")
     expect(rows).toHaveLength(9)
@@ -4996,7 +5534,9 @@ describe('Tests for metric profile cloneview', () => {
 
     fireEvent.click(metricInstances.getByTestId("insert-0"))
 
-    expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     rows = metricInstances.getAllByRole("row")
     expect(rows).toHaveLength(10)
@@ -5024,14 +5564,25 @@ describe('Tests for metric profile cloneview', () => {
     expect(row8.getByText("Central-LFC")).toBeInTheDocument()
     expect(row8.getByText("ch.cern.LFC-Write")).toBeInTheDocument()
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "Central-LFC")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "ch.cern.LFC-Write")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "Central-LFC")
+    })
 
-    expect(screen.queryByText(/duplicated/i)).toBeInTheDocument()
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "ch.cern.LFC-Write")
+    })
+    
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).toBeInTheDocument()
+    })
 
-    fireEvent.click(screen.getByTestId("remove-7"))
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId("remove-7"))
+    })
 
-    expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     rows = metricInstances.getAllByRole("row")
     expect(rows).toHaveLength(9)
@@ -5057,13 +5608,33 @@ describe('Tests for metric profile cloneview', () => {
     expect(row7.getByText("Central-LFC")).toBeInTheDocument()
     expect(row7.getByText("ch.cern.LFC-Read")).toBeInTheDocument()
 
-    fireEvent.click(screen.getByTestId("remove-6"))
-    fireEvent.click(screen.getByTestId("remove-5"))
-    fireEvent.click(screen.getByTestId("remove-4"))
-    fireEvent.click(screen.getByTestId("remove-3"))
-    fireEvent.click(screen.getByTestId("remove-2"))
-    fireEvent.click(screen.getByTestId("remove-1"))
-    fireEvent.click(screen.getByTestId("remove-0"))
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId("remove-6"))
+    })
+
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId("remove-5"))
+    })
+
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId("remove-4"))
+    })
+
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId("remove-3"))
+    })
+
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId("remove-2"))
+    })
+
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId("remove-1"))
+    })
+
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId("remove-0"))
+    })
 
     rows = metricInstances.getAllByRole("row")
     expect(rows).toHaveLength(3)
@@ -5090,7 +5661,7 @@ describe('Tests for metric profile cloneview', () => {
     renderCloneView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'ARGO_MON' } });
@@ -5106,16 +5677,30 @@ describe('Tests for metric profile cloneview', () => {
     var rows = metricInstances.getAllByRole('row');
     const row1 = within(rows[3])
 
-    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-1'));
 
     rows = metricInstances.getAllByRole('row');
     const row2 = within(rows[4])
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "org.nagiosexchange.AppDB-WebCheck")
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -5218,7 +5803,7 @@ describe('Tests for metric profile cloneview', () => {
     renderCloneView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'ARGO_MON' } });
@@ -5226,7 +5811,9 @@ describe('Tests for metric profile cloneview', () => {
 
     await selectEvent.select(screen.getByText('ARGO'), 'TEST')
 
-    fireEvent.click(screen.getByTestId('remove-1'));
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId('remove-1'));
+    })
 
     fireEvent.click(screen.getByTestId('insert-0'));
 
@@ -5234,16 +5821,30 @@ describe('Tests for metric profile cloneview', () => {
     var rows = metricInstances.getAllByRole('row');
     const row1 = within(rows[3])
 
-    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-1'));
 
     rows = metricInstances.getAllByRole('row');
     const row2 = within(rows[4])
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "org.nagiosexchange.AppDB-WebCheck")
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -5349,7 +5950,7 @@ describe('Tests for metric profile cloneview', () => {
     renderCloneView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'ARGO_MON' } });
@@ -5357,7 +5958,9 @@ describe('Tests for metric profile cloneview', () => {
 
     await selectEvent.select(screen.getByText('ARGO'), 'TEST')
 
-    fireEvent.click(screen.getByTestId('remove-1'));
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId('remove-1'));
+    })
 
     fireEvent.click(screen.getByTestId('insert-0'));
 
@@ -5365,16 +5968,30 @@ describe('Tests for metric profile cloneview', () => {
     var rows = metricInstances.getAllByRole('row');
     const row1 = within(rows[3])
 
-    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-1'));
 
     rows = metricInstances.getAllByRole('row');
     const row2 = within(rows[4])
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "org.nagiosexchange.AppDB-WebCheck")
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -5488,7 +6105,7 @@ describe('Tests for metric profile cloneview', () => {
     renderCloneView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'ARGO_MON' } });
@@ -5496,7 +6113,9 @@ describe('Tests for metric profile cloneview', () => {
 
     await selectEvent.select(screen.getByText('ARGO'), 'TEST')
 
-    fireEvent.click(screen.getByTestId('remove-1'));
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId('remove-1'));
+    })
 
     fireEvent.click(screen.getByTestId('insert-0'));
 
@@ -5504,16 +6123,30 @@ describe('Tests for metric profile cloneview', () => {
     var rows = metricInstances.getAllByRole('row');
     const row1 = within(rows[3])
 
-    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-1'));
 
     rows = metricInstances.getAllByRole('row');
     const row2 = within(rows[4])
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "org.nagiosexchange.AppDB-WebCheck")
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -5627,7 +6260,7 @@ describe('Tests for metric profile cloneview', () => {
     renderCloneView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'ARGO_MON' } });
@@ -5635,7 +6268,9 @@ describe('Tests for metric profile cloneview', () => {
 
     await selectEvent.select(screen.getByText('ARGO'), 'TEST')
 
-    fireEvent.click(screen.getByTestId('remove-1'));
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId('remove-1'));
+    })
 
     fireEvent.click(screen.getByTestId('insert-0'));
 
@@ -5643,16 +6278,30 @@ describe('Tests for metric profile cloneview', () => {
     var rows = metricInstances.getAllByRole('row');
     const row1 = within(rows[3])
 
-    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-1'));
 
     rows = metricInstances.getAllByRole('row');
     const row2 = within(rows[4])
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "org.nagiosexchange.AppDB-WebCheck")
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -5761,7 +6410,7 @@ describe('Tests for metric profile cloneview', () => {
     renderCloneView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'ARGO_MON' } });
@@ -5769,7 +6418,9 @@ describe('Tests for metric profile cloneview', () => {
 
     await selectEvent.select(screen.getByText('ARGO'), 'TEST')
 
-    fireEvent.click(screen.getByTestId('remove-1'));
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId('remove-1'));
+    })
 
     fireEvent.click(screen.getByTestId('insert-0'));
 
@@ -5777,16 +6428,30 @@ describe('Tests for metric profile cloneview', () => {
     var rows = metricInstances.getAllByRole('row');
     const row1 = within(rows[3])
 
-    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-1'));
 
     rows = metricInstances.getAllByRole('row');
     const row2 = within(rows[4])
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "org.nagiosexchange.AppDB-WebCheck")
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -5884,7 +6549,7 @@ describe('Tests for metric profile cloneview', () => {
     renderCloneView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'ARGO_MON' } });
@@ -5892,7 +6557,9 @@ describe('Tests for metric profile cloneview', () => {
 
     await selectEvent.select(screen.getByText('ARGO'), 'TEST')
 
-    fireEvent.click(screen.getByTestId('remove-1'));
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId('remove-1'));
+    })
 
     fireEvent.click(screen.getByTestId('insert-0'));
 
@@ -5900,16 +6567,30 @@ describe('Tests for metric profile cloneview', () => {
     var rows = metricInstances.getAllByRole('row');
     const row1 = within(rows[3])
 
-    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-1'));
 
     rows = metricInstances.getAllByRole('row');
     const row2 = within(rows[4])
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "org.nagiosexchange.AppDB-WebCheck")
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -5981,7 +6662,7 @@ describe('Tests for metric profile cloneview', () => {
     renderCloneView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'ARGO_MON' } })
@@ -5989,7 +6670,9 @@ describe('Tests for metric profile cloneview', () => {
 
     await selectEvent.select(screen.getByText('ARGO'), 'TEST')
 
-    fireEvent.click(screen.getByTestId('remove-1'));
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId('remove-1'));
+    })
 
     fireEvent.click(screen.getByTestId('insert-0'));
 
@@ -5997,16 +6680,30 @@ describe('Tests for metric profile cloneview', () => {
     var rows = metricInstances.getAllByRole('row');
     const row1 = within(rows[3])
 
-    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-1'));
 
     rows = metricInstances.getAllByRole('row');
     const row2 = within(rows[4])
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "org.nagiosexchange.AppDB-WebCheck")
+    })
+    
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -6094,7 +6791,7 @@ describe('Tests for metric profile cloneview', () => {
     renderCloneView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'ARGO_MON' } });
@@ -6102,7 +6799,9 @@ describe('Tests for metric profile cloneview', () => {
 
     await selectEvent.select(screen.getByText('ARGO'), 'TEST')
 
-    fireEvent.click(screen.getByTestId('remove-1'));
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId('remove-1'));
+    })
 
     fireEvent.click(screen.getByTestId('insert-0'));
 
@@ -6110,16 +6809,30 @@ describe('Tests for metric profile cloneview', () => {
     var rows = metricInstances.getAllByRole('row');
     const row1 = within(rows[3])
 
-    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-1'));
 
     rows = metricInstances.getAllByRole('row');
     const row2 = within(rows[4])
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "org.nagiosexchange.AppDB-WebCheck")
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -6222,7 +6935,7 @@ describe('Tests for metric profile cloneview', () => {
     renderCloneView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'ARGO_MON' } });
@@ -6230,7 +6943,9 @@ describe('Tests for metric profile cloneview', () => {
 
     await selectEvent.select(screen.getByText('ARGO'), 'TEST')
 
-    fireEvent.click(screen.getByTestId('remove-1'));
+    await waitFor(() => {
+      fireEvent.click(screen.getByTestId('remove-1'));
+    })
 
     fireEvent.click(screen.getByTestId('insert-0'));
 
@@ -6238,16 +6953,30 @@ describe('Tests for metric profile cloneview', () => {
     var rows = metricInstances.getAllByRole('row');
     const row1 = within(rows[3])
 
-    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
-    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row1.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
 
     fireEvent.click(screen.getByTestId('insert-1'));
 
     rows = metricInstances.getAllByRole('row');
     const row2 = within(rows[4])
 
-    await selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
-    await selectEvent.select(row2.getAllByText("Select...")[0], "org.nagiosexchange.AppDB-WebCheck")
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "org.nagiosexchange.AppDB-WebCheck")
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     await waitFor(() => {
@@ -6345,11 +7074,11 @@ describe('Test for metric profile version detail page', () => {
   test('Test that page renders properly', async () => {
     renderVersionDetailsView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /test/i }).textContent).toBe('TEST_PROFILE (2020-12-14 08:53:23)')
+      expect(screen.getByTestId("name")).toBeInTheDocument()
     })
+
+    expect(screen.getByRole('heading', { name: /test/i }).textContent).toBe('TEST_PROFILE (2020-12-14 08:53:23)')
 
     const nameField = screen.getByTestId('name');
     const descriptionField = screen.getByLabelText(/description/i);

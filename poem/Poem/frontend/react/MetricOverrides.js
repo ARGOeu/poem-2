@@ -1,26 +1,26 @@
 import React, { useEffect, useMemo, useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "react-query"
-import { Link } from "react-router-dom"
+import { Link, useLocation, useParams, useNavigate } from "react-router-dom"
 import { Backend } from "./DataManager"
 import { fetchUserDetails } from "./QueryFunctions"
 import {
   BaseArgoTable,
   BaseArgoView,
   ErrorComponent,
-  LoadingAnim,
   NotifyError,
   NotifyOk
 } from "./UIElements"
 import {
+  Button,
+  Col,
+  Form,
   FormGroup,
+  FormFeedback,
+  Input,
   InputGroup,
   InputGroupText,
   Row,
-  Col,
-  Button,
-  Form,
-  Input,
-  FormFeedback
+  Table
 } from "reactstrap"
 import { ParagraphTitle } from "./UIElements"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
@@ -34,7 +34,11 @@ import {
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from "yup";
 import { ErrorMessage } from "@hookform/error-message"
-
+import { 
+  ChangeViewPlaceholder, 
+  InputPlaceholder, 
+  ListViewPlaceholder 
+} from "./Placeholders"
 
 const hostnameRegex = /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9-]*[A-Za-z0-9])([_][A-Za-z0-9.\-_]*)*$/
 
@@ -51,11 +55,11 @@ const validationSchema = Yup.object().shape({
         }
       ).when("value", {
         is: (value) => !!value,
-        then: Yup.string().matches(/^[a-zA-Z][A-Za-z0-9\-_.]*$/, "Attribute can contain alphanumeric characters, dash, underscore and dot, but must always begin with a letter")
+        then: (schema) => schema.matches(/^[a-zA-Z][A-Za-z0-9\-_.]*$/, "Attribute can contain alphanumeric characters, dash, underscore and dot, but must always begin with a letter")
       }),
       value: Yup.string().when("attribute", {
         is: (value) => !!value,
-        then: Yup.string().required("Attribute value is required")
+        then: (schema) => schema.required("Attribute value is required")
       })
     }, [[ "attribute", "value" ]])
   ),
@@ -64,8 +68,8 @@ const validationSchema = Yup.object().shape({
       hostname: Yup.string()
         .when(["attribute", "value"], {
           is: (attribute, value) => !!value || !!attribute,
-          then: Yup.string().matches(hostnameRegex, "Invalid hostname"),
-          otherwise: Yup.string().matches(
+          then: (schema) => schema.matches(hostnameRegex, "Invalid hostname"),
+          otherwise: (schema) => schema.matches(
             hostnameRegex, {
               excludeEmptyString: true,
               message: "Invalid hostname"
@@ -74,11 +78,11 @@ const validationSchema = Yup.object().shape({
         }),
       attribute: Yup.string().when(["hostname", "value"], {
         is: (hostname, value) => !!hostname || !!value,
-        then: Yup.string().matches(/^[a-zA-Z][A-Za-z0-9\-_.]*$/, "Attribute can contain alphanumeric characters, dash, underscore and dot, but must always begin with a letter")
+        then: (schema) => schema.matches(/^[a-zA-Z][A-Za-z0-9\-_.]*$/, "Attribute can contain alphanumeric characters, dash, underscore and dot, but must always begin with a letter")
       }),
       value: Yup.string().when(["hostname", "attribute"], {
         is: (hostname, attribute) => !!hostname || !!attribute,
-        then: Yup.string().required("Attribute value is required")
+        then: (schema) => schema.required("Attribute value is required")
       })
     }, [
       [ "hostname", "attribute" ],
@@ -90,8 +94,8 @@ const validationSchema = Yup.object().shape({
     Yup.object().shape({
       hostname: Yup.string().when(["metric", "parameter", "value"], {
         is: (metric, parameter, value) => !!metric || !!parameter || !!value,
-        then: Yup.string().matches(hostnameRegex, "Invalid hostname"),
-        otherwise: Yup.string().matches(
+        then: (schema) => schema.matches(hostnameRegex, "Invalid hostname"),
+        otherwise: (schema) => schema.matches(
           hostnameRegex, {
             excludeEmptyString: true,
             message: "Invalid hostname"
@@ -100,15 +104,15 @@ const validationSchema = Yup.object().shape({
       }),
       metric: Yup.string().when(["hostname", "parameter", "value"], {
         is: (hostname, parameter, value) => !!hostname || !!parameter || !!value,
-        then: Yup.string().matches(/^[a-zA-Z][A-Za-z0-9\-_.]*$/, "Metric name can contain alphanumeric characters, dash, underscore and dot, but must always begin with a letter")
+        then: (schema) => schema.matches(/^[a-zA-Z][A-Za-z0-9\-_.]*$/, "Metric name can contain alphanumeric characters, dash, underscore and dot, but must always begin with a letter")
       }),
       parameter: Yup.string().when(["hostname", "metric", "value"], {
         is: (hostname, metric, value) => !!hostname || !!metric || !!value,
-        then: Yup.string().matches(/^\S+$/, "Parameter cannot contain white space")
+        then: (schema) => schema.matches(/^\S+$/, "Parameter cannot contain white space")
       }),
       value: Yup.string().when(["hostname", "metric", "parameter"], {
         is: (hostname, metric, parameter) => !!hostname || !!metric || !!parameter,
-        then: Yup.string().required("Parameter value is required")
+        then: (schema) => schema.required("Parameter value is required")
       })
     }, [
       [ "hostname", "metric" ],
@@ -129,8 +133,8 @@ const fetchOverrides = async () => {
 }
 
 
-export const MetricOverrideList = (props) => {
-  const location = props.location
+export const MetricOverrideList = () => {
+  const location = useLocation()
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
     "userdetails", () => fetchUserDetails(true)
@@ -160,7 +164,11 @@ export const MetricOverrideList = (props) => {
   ])
 
   if (loadingUserDetails || loadingConfs)
-    return (<LoadingAnim />)
+    return (
+      <ListViewPlaceholder
+        resourcename="metric configuration override"
+      />
+    )
 
   else if (errorUserDetails)
     return (<ErrorComponent error={errorUserDetails} />)
@@ -195,10 +203,10 @@ const MetricOverrideForm = ({
   isSuperuser=false,
   addview=false,
   location=undefined,
-  history=undefined
 }) => {
   const backend = new Backend()
   const queryClient = useQueryClient()
+  const navigate = useNavigate() /////
 
   const addMutation = useMutation(async (values) => await backend.addObject("/api/v2/internal/metricconfiguration/", values))
   const changeMutation = useMutation(async (values) => await backend.changeObject("/api/v2/internal/metricconfiguration/", values))
@@ -292,7 +300,7 @@ const MetricOverrideForm = ({
             NotifyOk({
               msg: "Metric configuration override successfully added",
               title: "Added",
-              callback: () => history.push("/ui/administration/metricoverrides")
+              callback: () => navigate("/ui/administration/metricoverrides")
             })
           },
           onError: (error) => {
@@ -311,7 +319,7 @@ const MetricOverrideForm = ({
             NotifyOk({
               msg: "Metric configuration override successfully changed",
               title: "Changed",
-              callback: () => history.push("/ui/administration/metricoverrides")
+              callback: () => navigate("/ui/administration/metricoverrides")
             })
           },
           onError: (error) => {
@@ -332,7 +340,7 @@ const MetricOverrideForm = ({
         NotifyOk({
           msg: "Metric configuration override successfully deleted",
           title: "Deleted",
-          callback: () => history.push("/ui/administration/metricoverrides")
+          callback: () => navigate("/ui/administration/metricoverrides")
         })
       },
       onError: (error) => {
@@ -774,10 +782,9 @@ const MetricOverrideForm = ({
 
 
 export const MetricOverrideChange = (props) => {
-  const name = props.match.params.name
+  const { name } = useParams()
   const addview = props.addview
-  const location = props.location
-  const history = props.history
+  const location = useLocation()
 
   const backend = new Backend()
 
@@ -791,7 +798,30 @@ export const MetricOverrideChange = (props) => {
   )
 
   if (loading || loadingOverride)
-    return (<LoadingAnim />)
+    return (
+      <ChangeViewPlaceholder
+        resourcename="metric configuration override"
+        addview={ addview }
+      >
+        <FormGroup>
+          <Row>
+            <Col md={6}>
+              <InputPlaceholder width="100%" />
+            </Col>
+          </Row>
+        </FormGroup>
+        <FormGroup>
+          <ParagraphTitle title="Global attributes" />
+          <Table className="placeholder rounded" style={{ height: "200px" }} />
+          <ParagraphTitle title="Host attributes" />
+          <Table className="placeholder rounded" style={{ height: "200px" }} />
+        </FormGroup>
+        <FormGroup>
+          <ParagraphTitle title="Metrics' parameters" />
+          <Table className="placeholder rounded" style={{ height: "200px" }} />
+        </FormGroup>
+      </ChangeViewPlaceholder>
+    )
 
   else if (errorOverride)
     return (<ErrorComponent error={errorOverride} />)
@@ -804,7 +834,6 @@ export const MetricOverrideChange = (props) => {
         isSuperuser={ userDetails.is_superuser }
         addview={ addview }
         location={ location }
-        history={ history }
       />
     )
   else

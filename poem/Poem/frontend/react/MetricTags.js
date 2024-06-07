@@ -1,6 +1,6 @@
 import React, { useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "react-query"
-import { Link } from "react-router-dom"
+import { Link, useLocation, useParams, useNavigate } from "react-router-dom"
 import { fetchMetricTags, fetchMetricTemplates, fetchUserDetails } from "./QueryFunctions"
 import {
   BaseArgoTable,
@@ -9,7 +9,6 @@ import {
   DefaultColumnFilter,
   ErrorComponent,
   Icon,
-  LoadingAnim,
   NotifyError,
   NotifyOk,
   NotifyWarn,
@@ -18,16 +17,17 @@ import {
 } from "./UIElements"
 import { Backend } from "./DataManager"
 import {
+  Badge,
+  Button,
+  Col,
   Form,
   FormGroup,
+  FormFeedback,
+  Input,
   InputGroup,
   InputGroupText,
   Row,
-  Col,
-  Button,
-  Badge,
-  Input,
-  FormFeedback
+  Table
  } from "reactstrap"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faSearch,faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -35,7 +35,11 @@ import { Controller, useForm, useWatch } from "react-hook-form"
 import { ErrorMessage } from '@hookform/error-message'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as Yup from "yup"
-
+import { 
+  ChangeViewPlaceholder,
+  InputPlaceholder, 
+  ListViewPlaceholder
+} from "./Placeholders"
 
 const validationSchema = Yup.object().shape({
   name: Yup.string().required("This field is required")
@@ -43,7 +47,7 @@ const validationSchema = Yup.object().shape({
 
 
 export const MetricTagsList = (props) => {
-  const location = props.location
+  const location = useLocation();
   const publicView = props.publicView
 
   const { data: tags, error, status } = useQuery(
@@ -87,7 +91,11 @@ export const MetricTagsList = (props) => {
   ], [])
 
   if (status === "loading")
-    return (<LoadingAnim />)
+    return (
+      <ListViewPlaceholder 
+        resourcename="metric tag" 
+      />
+    )
 
   else if (status === "error")
     return (<ErrorComponent error={error} />)
@@ -118,12 +126,12 @@ const MetricTagsForm = ({
   allMetrics=undefined,
   publicView=false,
   addview=false,
-  location=undefined,
-  history=undefined
+  location=undefined
 }) => {
 
   const backend = new Backend()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
 
   const [areYouSureModal, setAreYouSureModal] = useState(false);
   const [modalFlag, setModalFlag] = useState(undefined);
@@ -182,9 +190,9 @@ const MetricTagsForm = ({
           NotifyOk({
             msg: "Metric tag successfully added",
             title: "Added",
-            callback: () => history.push("/ui/metrictags")
+            callback: () => navigate("/ui/metrictags")
           })
-          if ("detail" in response) {
+          if (response && "detail" in response) {
             let msgs = response.detail.split("\n")
             msgs.forEach(msg => NotifyWarn({ title: "Warning", msg: msg }))
           }
@@ -209,7 +217,7 @@ const MetricTagsForm = ({
           NotifyOk({
             msg: "Metric tag successfully changed",
             title: "Changed",
-            callback: () => history.push("/ui/metrictags")
+            callback: () => navigate("/ui/metrictags")
           })
           if ("detail" in response) {
             let msgs = response.detail.split("\n")
@@ -237,7 +245,7 @@ const MetricTagsForm = ({
         NotifyOk({
           msg: "Metric tag successfully deleted",
           title: "Deleted",
-          callback: () => history.push("/ui/metrictags")
+          callback: () => navigate("/ui/metrictags")
         })
       },
       onError: (error) => {
@@ -449,11 +457,10 @@ const MetricTagsForm = ({
 
 
 export const MetricTagsComponent = (props) => {
-  const name = props.match.params.name
+  const { name } = useParams()
   const publicView = props.publicView
   const addview = props.addview
-  const location = props.location
-  const history = props.history
+  const location = useLocation()
 
   const backend = new Backend()
 
@@ -475,7 +482,24 @@ export const MetricTagsComponent = (props) => {
   )
 
   if (loadingUserDetails || loadingTag || loadingAllMetrics)
-    return (<LoadingAnim/>)
+    return (
+      <ChangeViewPlaceholder
+        resourcename={ publicView ? "Metric tag details" : "metric tag" }
+        infoview={ publicView }
+      >
+        <FormGroup>
+          <Row>
+            <Col md={6}>
+              <InputPlaceholder />
+            </Col>
+          </Row>
+        </FormGroup>
+        <FormGroup>
+          <ParagraphTitle title="Metric templates" />
+          <Table className="placeholder rounded" style={{ height: "500px" }} />
+        </FormGroup>
+      </ChangeViewPlaceholder>
+    )
 
   else if (errorUserDetails)
     return (<ErrorComponent error={errorUserDetails} />)

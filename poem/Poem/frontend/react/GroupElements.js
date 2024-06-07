@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Backend } from './DataManager';
 import {
-  LoadingAnim,
   BaseArgoView,
   NotifyOk,
   NotifyError,
@@ -11,7 +10,7 @@ import {
   SearchField,
   BaseArgoTable
 } from './UIElements';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import {
   FormGroup,
   Row,
@@ -21,7 +20,8 @@ import {
   InputGroupText,
   Input,
   Form,
-  FormFeedback
+  FormFeedback,
+  Table
 } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
@@ -32,6 +32,11 @@ import { Controller, useForm, useWatch } from 'react-hook-form';
 import { ErrorMessage } from '@hookform/error-message';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from "yup";
+import { 
+  ChangeViewPlaceholder,
+  InputPlaceholder,
+  ListViewPlaceholder 
+} from './Placeholders';
 
 
 const validationSchema = Yup.object().shape({
@@ -42,8 +47,8 @@ const validationSchema = Yup.object().shape({
 
 
 export const GroupList = (props) => {
-  const location = props.location;
   const name = props.name;
+  const location = useLocation();
   const id = props.id;
   const group = props.group;
 
@@ -70,7 +75,7 @@ export const GroupList = (props) => {
   );
 
   if (status === 'loading')
-    return (<LoadingAnim/>);
+    return (<ListViewPlaceholder resourcename={ name } />);
 
   else if (status === 'error')
     return (<ErrorComponent error={error}/>);
@@ -95,8 +100,9 @@ export const GroupList = (props) => {
 };
 
 
-const GroupChangeForm = ({ id, items, freeItems, group, groupname, title, addview, location, history }) => {
+const GroupChangeForm = ({ id, items, freeItems, group, groupname, title, addview, location }) => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const backend = new Backend();
 
@@ -157,7 +163,7 @@ const GroupChangeForm = ({ id, items, freeItems, group, groupname, title, addvie
           NotifyOk({
             msg: `Group of ${title} successfully changed`,
             title: 'Changed',
-            callback: () => history.push(`/ui/administration/${id}`)
+            callback: () => navigate(`/ui/administration/${id}`)
           });
         },
         onError: (error) => {
@@ -176,7 +182,7 @@ const GroupChangeForm = ({ id, items, freeItems, group, groupname, title, addvie
           NotifyOk({
             msg: `Group of ${title} successfully added`,
             title: 'Added',
-            callback: () => history.push(`/ui/administration/${id}`)
+            callback: () => navigate(`/ui/administration/${id}`)
           });
         },
         onError: (error) => {
@@ -198,7 +204,7 @@ const GroupChangeForm = ({ id, items, freeItems, group, groupname, title, addvie
         NotifyOk({
           msg: `Group of ${title} successfully deleted`,
           title: 'Deleted',
-          callback: () => history.push(`/ui/administration/${id}`)
+          callback: () => navigate(`/ui/administration/${id}`)
         });
       },
       onError: (error) => {
@@ -400,14 +406,13 @@ const GroupChangeForm = ({ id, items, freeItems, group, groupname, title, addvie
 
 
 export const GroupChange = (props) => {
-  const groupname = props.match.params.name;
+  const { name: groupname } = useParams();
   const group = props.group;
   const id = props.id;
   const title = props.title;
   const addview = props.addview;
 
-  const location = props.location;
-  const history = props.history;
+  const location = useLocation();
 
   const backend = new Backend()
 
@@ -429,7 +434,36 @@ export const GroupChange = (props) => {
   )
 
   if (loadingItems || loadingFreeItems)
-    return (<LoadingAnim/>);
+    return (
+      <ChangeViewPlaceholder
+        resourcename={ `group of ${title}` }
+        addview={ addview }
+      >
+        <FormGroup>
+          <Row>
+            <Col md={6}>
+              <InputPlaceholder width="100%" />
+            </Col>
+          </Row>
+        </FormGroup>
+        <FormGroup>
+          <ParagraphTitle title={title}/>
+          <Row className='mb-2'>
+            <Col md={8} data-testid='available_metrics' >
+              <InputPlaceholder width="100%" />
+            </Col>
+            <Col md={2}>
+              <Button
+                color="success"
+              >
+                { `Add new ${ title } to group` }
+              </Button>
+            </Col>
+          </Row>
+          <Table className="placeholder rounded" style={{ height: "400px" }} />
+        </FormGroup>
+      </ChangeViewPlaceholder>
+    )
 
   else if (errorItems)
     return (<ErrorComponent error={errorItems} />);
@@ -439,7 +473,7 @@ export const GroupChange = (props) => {
 
   else if ((items || addview) && freeItems) {
     return (
-      <GroupChangeForm id={id} items={items} freeItems={freeItems} group={group} groupname={groupname} title={title} addview={addview} location={location} history={history} />
+      <GroupChangeForm id={id} items={items} freeItems={freeItems} group={group} groupname={groupname} title={title} addview={addview} location={location} />
     )
   }
   else

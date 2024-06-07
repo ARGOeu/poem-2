@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Backend, WebApi } from './DataManager';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import {
-  LoadingAnim,
   BaseArgoView,
   NotifyOk,
   DiffElement,
@@ -19,26 +18,27 @@ import {
   CustomReactSelect
  } from './UIElements';
 import {
+  Badge,
+  Button,
+  ButtonToolbar,
+  Col,
   Form,
   FormGroup,
-  Row,
-  Col,
-  Label,
+  FormFeedback,
   FormText,
-  Button,
+  Input,
+  InputGroup,
+  InputGroupText,
+  Label,
   Popover,
   PopoverBody,
   PopoverHeader,
-  InputGroup,
-  InputGroupText,
-  ButtonToolbar,
-  Badge,
-  Input,
-  FormFeedback
+  Row,
+  Table
 } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
-import ReactDiffViewer from 'react-diff-viewer';
+import ReactDiffViewer from 'react-diff-viewer-continued';
 import CreatableSelect from 'react-select/creatable';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import {
@@ -51,12 +51,17 @@ import {
   fetchUserDetails,
   fetchUserGroups,
   fetchMetrics,
-  fetchMetricProfiles
+  fetchMetricProfiles,
+  fetchTenants
 } from './QueryFunctions';
 import * as Yup from 'yup';
 import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { ErrorMessage } from '@hookform/error-message';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { 
+  ListViewPlaceholder,
+  MetricFormPlaceholder
+} from './Placeholders';
 
 
 const metricValidationSchema = Yup.object().shape({
@@ -66,15 +71,15 @@ const metricValidationSchema = Yup.object().shape({
   type: Yup.string(),
   probeversion: Yup.string().when('type', {
     is: (val) => val === 'Active',
-    then: Yup.string().required('Required')
+    then: (schema) => schema.required('Required')
   }),
   probeexecutable: Yup.string().when('type', {
     is: (val) => val === 'Active',
-    then: Yup.string().required('Required')
+    then: (schema) => schema.required('Required')
   }),
   config: Yup.array().when("type", {
     is: (val) => val === "Active",
-    then: Yup.array().of(
+    then: (schema) => schema.of(
       Yup.object().shape({
         value: Yup.string().required("Required")
       })
@@ -297,7 +302,7 @@ const sortMP = (a, b) => {
 
 
 export const ListOfMetrics = (props) => {
-  const location = props.location;
+  const location = useLocation();
   const type = props.type;
   const publicView = props.publicView;
   const isTenantSchema = props.isTenantSchema;
@@ -356,6 +361,11 @@ export const ListOfMetrics = (props) => {
     [`${publicView ? "public_" : ""}metricprofile`, "webapi"],
     () => fetchMetricProfiles(webapi),
     { enabled: type === "metrics" && (publicView || !!userDetails) }
+  )
+
+  const { data: tenants, error: errorTenants, isLoading: loadingTenants } = useQuery(
+    `${publicView ? "public_" : ""}tenant`, () => fetchTenants(publicView),
+    { enabled: type === "metrictemplates" && !isTenantSchema }
   )
 
   function toggleAreYouSure() {
@@ -489,7 +499,7 @@ export const ListOfMetrics = (props) => {
       },
       {
         Header: 'Type',
-        column_width: `${isTenantSchema ? type === "metrics" ? "10%" : "12%" : "18%"}`,
+        column_width: `${ type === "metrics" ? "10%" : "12%" }`,
         accessor: 'mtype',
         Cell: row =>
           <div style={{textAlign: 'center'}}>
@@ -500,7 +510,7 @@ export const ListOfMetrics = (props) => {
       },
       {
         Header: 'Tag',
-        column_width: `${isTenantSchema ?  type === "metrics" ? "10%" : "12%" : "18%"}`,
+        column_width: `${ type === "metrics" ? "10%" : "12%" }`,
         accessor: 'tags',
         Cell: row =>
           <div style={{textAlign: 'center'}}>
@@ -644,13 +654,59 @@ export const ListOfMetrics = (props) => {
           }
         );
       }
+
+      if (!isTenantSchema && tenants) {
+        var tenants_list = tenants.map(tenant => tenant.name)
+        tenants_list.splice(tenants_list.indexOf("SuperPOEM Tenant"), 1)
+        columns.splice(
+          5,
+          0,
+          {
+            Header: "Tenants",
+            column_width: "10%",
+            accessor: "tenants",
+            Cell: row =>
+              <div style={{ textAlign: "center" }}>
+                {
+                  row.value.length === 0 ?
+                    <Badge color="dark">none</Badge>
+                  :
+                    row.value.map((tenant, i) =>
+                      <Badge className={"me-1"} key={i} color="secondary">
+                        { tenant }
+                      </Badge>
+                    )
+                }
+              </div>,
+            filterList: tenants ? tenants_list : [],
+            Filter: SelectColumnFilter
+          }
+        )
+      }
     }
 
     return columns;
   })
 
-  if (metricsLoading || typesLoading || tagsLoading || OSGroupsLoading || userDetailsLoading || loadingMP)
-    return (<LoadingAnim />);
+  if (metricsLoading || typesLoading || tagsLoading || OSGroupsLoading || userDetailsLoading || loadingMP || loadingTenants)
+    return (
+      <ListViewPlaceholder
+        resourcename={ type === "metrics" ? "metric" : "metric template" }
+        infoview={ isTenantSchema && publicView && type === "metrics" }
+        buttons={
+          type === "metrics" ? 
+            <></>
+          :
+            (isTenantSchema || publicView) ? 
+              <></>
+            :
+              <div>
+                <Button color="secondary" disabled>Add</Button>
+                <Button className="ms-2" color="secondary" disabled>Delete</Button>
+              </div>
+        }
+      />
+    )
 
   else if (metricsError)
     return (<ErrorComponent error={metricsError.message}/>);
@@ -670,6 +726,9 @@ export const ListOfMetrics = (props) => {
   else if (userDetailsError)
     return (<ErrorComponent error={userDetailsError.message}/>);
 
+  else if (errorTenants)
+    return (<ErrorComponent error={ errorTenants.message } />)
+
   else if (metrics && types && tags && OSGroups && (type === "metrictemplates" || metricProfiles)) {
     if (type === 'metrics') {
       return (
@@ -678,6 +737,7 @@ export const ListOfMetrics = (props) => {
           location={location}
           listview={true}
           addnew={false}
+          title={ !publicView ? "Select metric to change" : undefined }
         >
           <BaseArgoTable
             data={metrics}
@@ -783,7 +843,7 @@ export const MetricForm =
     const tenantview = props.tenantview
     const publicView = props.publicView
     const probeview = props.probeview
-    const location = props.location
+    const location = useLocation()
 
     const resourcename_beautify = resourcename === "metric" ? "metric" : "metric template"
 
@@ -1390,13 +1450,11 @@ export const MetricForm =
         </Form>
       </BaseArgoView>
     )
-  }
+}
 
 
 export const CompareMetrics = (props) => {
-  const version1 = props.match.params.id1;
-  const version2 = props.match.params.id2;
-  const name = props.match.params.name;
+  const { name, id1: version1, id2: version2 } = useParams();
   const publicView = props.publicView;
   const type = props.type;
 
@@ -1409,7 +1467,14 @@ export const CompareMetrics = (props) => {
   )
 
   if (loading)
-    return (<LoadingAnim/>);
+    return (
+      <>
+        <h2 className='ms-3 mt-1 mb-4'>{`Compare ${name}`}</h2>
+        <div className='ms-3 mt-4 placeholder-glow rounded'>
+          <Table className="placeholder rounded" style={{ height: "250px" }} />
+        </div>
+      </>
+    );
 
   else if (error)
     return (<ErrorComponent error={error}/>);
@@ -1487,8 +1552,8 @@ export const CompareMetrics = (props) => {
 
 
 export const MetricChange = (props) => {
-  const name = props.match.params.name;
-  const history = props.history;
+  const { name } = useParams();
+  const navigate = useNavigate()
   const publicView = props.publicView;
 
   const backend = new Backend();
@@ -1557,7 +1622,7 @@ export const MetricChange = (props) => {
         NotifyOk({
           msg: 'Metric successfully changed',
           title: 'Changed',
-          callback: () => history.push('/ui/metrics')
+          callback: () => navigate('/ui/metrics')
         })
       },
       onError: (error) => {
@@ -1577,7 +1642,7 @@ export const MetricChange = (props) => {
         NotifyOk({
           msg: 'Metric successfully deleted',
           title: 'Deleted',
-          callback: () => history.push('/ui/metrics')
+          callback: () => navigate('/ui/metrics')
         })
       },
       onError: (error) => {
@@ -1590,7 +1655,7 @@ export const MetricChange = (props) => {
   }
 
   if (metricLoading || userDetailsLoading || probesLoading)
-    return (<LoadingAnim/>);
+    return (<MetricFormPlaceholder obj_label="metric" { ...props } />)
 
   else if (metricError)
     return (<ErrorComponent error={metricError}/>);
@@ -1664,8 +1729,7 @@ const fetchMetricVersions = async (publicView, name) => {
 
 
 export const MetricVersionDetails = (props) => {
-  const name = props.match.params.name;
-  const version = props.match.params.version;
+  const { name, version } = useParams();
 
   const { data: metrics, error: errorMetric, isLoading: loadingMetric } = useQuery(
     ['metric', 'tenantversion', name], () => fetchMetricVersions(false, name)
@@ -1679,7 +1743,13 @@ export const MetricVersionDetails = (props) => {
   )
 
   if (loadingMetric || loadingProbes)
-    return (<LoadingAnim/>);
+    return (
+      <MetricFormPlaceholder 
+        obj_label="metric" 
+        historyview={ true } 
+        title={ `${name} (${version})` }
+      />
+    )
 
   else if (errorMetric)
     return (<ErrorComponent error={errorMetric}/>);

@@ -1,8 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import '@testing-library/jest-dom/extend-expect';
-import { createMemoryHistory } from 'history';
-import { Route, Router } from 'react-router-dom';
+import '@testing-library/jest-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { TenantChange, TenantList } from '../Tenants';
 import { Backend } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
@@ -65,14 +64,13 @@ const mockTenants = [
 
 function renderTenantList() {
   const route = '/ui/tenants';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route path='/ui/tenants' component={TenantList} />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <TenantList />
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -81,17 +79,18 @@ function renderTenantList() {
 
 function renderTenantChangeView() {
   const route = '/ui/tenants/TENANT1';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/tenants/:name'
-            render={ props => <TenantChange {...props} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path="/ui/tenants/:name"
+              element={ <TenantChange /> }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -110,11 +109,11 @@ describe('Test list of tenants', () => {
   test('Test that page renders properly', async () => {
     renderTenantList();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /select tenant/i }).textContent).toBe('Select tenant for details');
+      expect(screen.getByTestId("TENANT1-card"))
     })
+
+    expect(screen.getByRole('heading', { name: /select tenant/i }).textContent).toBe('Select tenant for details');
 
     const tenant1 = within(screen.getByTestId('TENANT1-card'));
     expect(tenant1.getByTestId('TENANT1-schema').textContent).toBe('Schema name: tenant1');
@@ -175,11 +174,11 @@ describe('Test tenants changeview', () => {
   test('Test that page renders properly', async () => {
     renderTenantChangeView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /tenant/i }).textContent).toBe('Tenant details');
+      expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
     })
+
+    expect(screen.getByRole('heading', { name: /tenant/i }).textContent).toBe('Tenant details');
 
     const nameField = screen.getByTestId('name');
     const schemaField = screen.getByTestId('schema');
@@ -196,7 +195,6 @@ describe('Test tenants changeview', () => {
     expect(createdField).toBeDisabled()
 
     expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
   })
 
@@ -204,7 +202,7 @@ describe('Test tenants changeview', () => {
     renderTenantChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /tenant/i }).textContent).toBe('Tenant details');
+      expect(screen.getByRole("button", { name: /delete/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -232,7 +230,7 @@ describe('Test tenants changeview', () => {
     renderTenantChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /tenant/i }).textContent).toBe('Tenant details');
+      expect(screen.getByRole("button", { name: /delete/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -264,7 +262,7 @@ describe('Test tenants changeview', () => {
     renderTenantChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /tenant/i }).textContent).toBe('Tenant details');
+      expect(screen.getByRole("button", { name: /delete/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));

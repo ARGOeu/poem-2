@@ -1,10 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { Backend } from './DataManager';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import {
-  LoadingAnim,
   BaseArgoView,
   NotifyOk,
   NotifyError,
@@ -34,19 +33,23 @@ import { Controller, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from "yup";
 import { ErrorMessage } from "@hookform/error-message"
-
+import { 
+  ChangeViewPlaceholder,
+  InputPlaceholder, 
+  ListViewPlaceholder 
+} from './Placeholders';
 
 const validationSchema = yup.object().shape({
   name: yup.string().required("Name field is required")
     .when("used_by", {
       is: (value) => value === "poem",
-      then: yup.string().test("must_not_start", "Name can contain alphanumeric characters, dash and underscore, must always begin with a letter, but not with WEB-API-", function (value) {
+      then: (schema) => schema.test("must_not_start", "Name can contain alphanumeric characters, dash and underscore, must always begin with a letter, but not with WEB-API-", (value) => {
         if (!value.startsWith("WEB-API-") && value.match(/^[a-zA-Z][A-Za-z0-9\-_]*$/))
           return true
         else
           return false
       }),
-      otherwise: yup.string().matches(/^WEB-API-\S*(-RO)?$/, "Name must have form WEB-API-<tenant_name> or WEB-API-<tenant_name>-RO")
+      otherwise: (schema) => schema.matches(/^WEB-API-\S*(-RO)?$/, "Name must have form WEB-API-<tenant_name> or WEB-API-<tenant_name>-RO")
     })
 })
 
@@ -58,8 +61,8 @@ const fetchAPIKey = async(name) => {
 }
 
 
-export const APIKeyList = (props) => {
-  const location = props.location;
+export const APIKeyList = () => {
+  const location = useLocation();
 
   const queryClient = useQueryClient();
 
@@ -129,7 +132,7 @@ export const APIKeyList = (props) => {
   );
 
   if (loading)
-    return (<LoadingAnim/>)
+    return (<ListViewPlaceholder resourcename="API key" />)
 
   else if (error)
     return (<ErrorComponent error={ error } />)
@@ -161,9 +164,9 @@ const APIKeyForm = ({
   doDelete,
   ...props
 }) => {
-  const name = props.match.params.name;
+  const { name } = useParams();
   const isTenantSchema = props.isTenantSchema
-  const location = props.location;
+  const location = useLocation();
   const addview = props.addview;
 
   const [areYouSureModal, setAreYouSureModal] = useState(false)
@@ -383,10 +386,78 @@ const APIKeyForm = ({
 }
 
 
+const APIKeyPlaceholderForm = ( props ) => {
+  const addview = props.addview
+  const isTenantSchema = props.isTenantSchema
+
+  return (
+    <ChangeViewPlaceholder
+      resourcename="API key"
+    >
+      <FormGroup>
+        <Row>
+          <Col md={6}>
+            <Label for='name'>Name</Label>
+            <InputPlaceholder width="100%" />
+            <FormText color='muted'>
+              A free-form unique identifier of the client. 50 characters max.
+            </FormText>
+          </Col>
+        </Row>
+        {
+          (addview && !isTenantSchema) &&
+            <Row className='mt-2'>
+              <Col md={6}>
+                <Row>
+                  <InputPlaceholder width="30%" />
+                </Row>
+                <Row>
+                  <FormText color="muted">
+                    Mark this checkbox if the key being saved is going to be used for web API authentication.
+                  </FormText>
+                </Row>
+              </Col>
+            </Row>
+        }
+        <Row className='mt-2'>
+          <Col md={6}>
+            <Row>
+              <InputPlaceholder width="30%" />
+            </Row>
+            <Row>
+              <FormText color='muted'>
+                If the API key is revoked, clients cannot use it any more. (This cannot be undone.)
+              </FormText>
+            </Row>
+          </Col>
+        </Row>
+      </FormGroup>
+      <FormGroup>
+        <ParagraphTitle title='Credentials'/>
+        {
+          addview &&
+            <Alert color="info" className="text-center">
+              If token field is <b>left empty</b>, value will be automatically generated on save.
+            </Alert>
+        }
+        <Row className="g-0">
+          <Col sm={6}>
+            <InputPlaceholder width="100%" />
+            <FormText color='muted'>
+              A public, unique identifier for this API key.
+            </FormText>
+          </Col>
+        </Row>
+      </FormGroup>
+    </ChangeViewPlaceholder>
+  )
+}
+
+
 export const APIKeyChange = (props) => {
-  const name = props.match.params.name;
+  const { name } = useParams();
   const addview = props.addview;
-  const history = props.history;
+  const navigate = useNavigate()
 
   const queryClient = useQueryClient()
 
@@ -399,7 +470,7 @@ export const APIKeyChange = (props) => {
   const { data: key, error: error, status: status } = useQuery(
     ['apikey', name], () => fetchAPIKey(name),
     { enabled: !addview }
-  )
+  ) 
 
   const doChange = (values) => {
     if (!addview) {
@@ -410,7 +481,7 @@ export const APIKeyChange = (props) => {
             NotifyOk({
               msg: 'API key successfully changed',
               title: 'Changed',
-              callback: () => history.push('/ui/administration/apikey')
+              callback: () => navigate('/ui/administration/apikey')
             });
           },
           onError: (error) => {
@@ -428,7 +499,7 @@ export const APIKeyChange = (props) => {
           NotifyOk({
             msg: 'API key successfully added',
             title: 'Added',
-            callback: () => history.push('/ui/administration/apikey')
+            callback: () => navigate('/ui/administration/apikey')
           })
         },
         onError: (error) => {
@@ -448,7 +519,7 @@ export const APIKeyChange = (props) => {
         NotifyOk({
           msg: 'API key successfully deleted',
           title: 'Deleted',
-          callback: () => history.push('/ui/administration/apikey')
+          callback: () => navigate('/ui/administration/apikey')
         })
       },
       onError: (error) => {
@@ -461,7 +532,9 @@ export const APIKeyChange = (props) => {
   }
 
   if (status === 'loading')
-    return (<LoadingAnim/>);
+    return (
+      <APIKeyPlaceholderForm { ...props } />
+    )
 
   else if (status === 'error')
     return (<ErrorComponent error={error}/>);

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Backend } from './DataManager';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import {
-  LoadingAnim,
   BaseArgoView,
   NotifyOk,
   DiffElement,
@@ -14,17 +13,18 @@ import {
   DropdownWithFormText
 } from './UIElements';
 import {
-  FormGroup,
-  Label,
-  FormText,
-  Row,
-  Col,
   Button,
+  Col,
+  Form,
+  FormFeedback,
+  FormGroup,
+  FormText,
+  Input,
   InputGroup,
   InputGroupText,
-  Input,
-  Form,
-  FormFeedback
+  Label,
+  Row,
+  Table
 } from 'reactstrap';
 import * as Yup from 'yup';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
@@ -32,6 +32,12 @@ import { fetchPackages, fetchProbes, fetchProbeVersion } from './QueryFunctions'
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { ErrorMessage } from '@hookform/error-message';
+import { 
+  ChangeViewPlaceholder,
+  InputPlaceholder, 
+  ListViewPlaceholder,
+  TextAreaPlaceholder
+} from './Placeholders';
 
 
 const ProbeSchema = Yup.object().shape({
@@ -65,10 +71,10 @@ const ProbeForm = ({
   list_packages=[],
   metrictemplatelist=[],
   location=undefined,
-  history=undefined
 }) => {
   const backend = new Backend()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
 
   const addMutation = useMutation(async (values) => await backend.addObject('/api/v2/internal/probes/', values))
   const changeMutation = useMutation(async (values) => await backend.changeObject('/api/v2/internal/probes/', values))
@@ -148,7 +154,7 @@ const ProbeForm = ({
           NotifyOk({
             msg: 'Probe successfully added',
             title: 'Added',
-            callback: () => history.push('/ui/probes')
+            callback: () => navigate('/ui/probes')
           })
         },
         onError: (error) => {
@@ -167,7 +173,7 @@ const ProbeForm = ({
             NotifyOk({
               msg: 'Probe successfully changed',
               title: 'Changed',
-              callback: () => history.push('/ui/probes')
+              callback: () => navigate('/ui/probes')
             })
           },
           onError: (error) => {
@@ -189,7 +195,7 @@ const ProbeForm = ({
         NotifyOk({
           msg: 'Probe successfully deleted',
           title: 'Deleted',
-          callback: () => history.push('/ui/probes')
+          callback: () => navigate('/ui/probes')
         })
       },
       onError: (error) => {
@@ -540,6 +546,122 @@ const ProbeForm = ({
 }
 
 
+const ProbeFormPlaceholder = ( props ) => {
+  const addview = props.addview
+  const cloneview = props.cloneview
+  const isTenantSchema = props.isTenantSchema
+  const historyview = props.isHistory
+  const publicview = props.publicView
+  const title = props.title
+
+  return (
+    <ChangeViewPlaceholder
+      resourcename={ `${ historyview ? title : (publicview || isTenantSchema) ? "Probe details" : "probe" }` }
+      addview={ addview }
+      cloneview={ cloneview }
+      infoview={ historyview || isTenantSchema || publicview }
+      buttons={
+        (isTenantSchema || (publicview && !historyview)) ?
+          <Button color="secondary" disabled>History</Button>
+        :
+          (!publicview && !historyview && !cloneview && !addview) &&
+            <div>
+              <Button color="secondary" disabled>Clone</Button>
+              <Button className="ms-2" color="secondary" disabled>History</Button>
+            </div>
+      }
+    >
+      <FormGroup>
+        <Row>
+          <Col md={6}>
+            <InputPlaceholder />
+            <FormText color="muted">
+              Name of this probe.
+            </FormText>
+          </Col>
+          <Col md={2}>
+            <InputPlaceholder />
+            <FormText color="muted">
+              Version of the probe.
+            </FormText>
+          </Col>
+          {
+            (!addview && !cloneview && !isTenantSchema && !historyview && !publicview) &&
+              <Col md={2}>
+                <Row>
+                  <FormGroup check inline className='ms-3'>
+                    <InputPlaceholder />
+                  </FormGroup>
+                </Row>
+                <Row>
+                  <FormText color='muted'>
+                    Update all associated metric templates.
+                  </FormText>
+                </Row>
+              </Col>
+          }
+        </Row>
+        <Row className='mt-3'>
+          <Col md={8}>
+            <InputPlaceholder />
+            <FormText color='muted'>
+              Probe is part of selected package.
+            </FormText>
+          </Col>
+        </Row>
+      </FormGroup>
+      <FormGroup>
+        <ParagraphTitle title='Probe metadata'/>
+        <Row className='mt-4 mb-3 align-items-top'>
+          <Col md={8}>
+            <InputPlaceholder />
+            <FormText color='muted'>
+              Probe repository URL.
+            </FormText>
+          </Col>
+        </Row>
+        <Row className='mb-3 align-items-top'>
+          <Col md={8}>
+            <InputPlaceholder />
+            <FormText color='muted'>
+              Documentation URL.
+            </FormText>
+          </Col>
+        </Row>
+        <Row className='mb-3 align-items-top'>
+          <Col md={8}>
+            <Label>Description</Label>
+            <TextAreaPlaceholder height="374px" />
+            <FormText color='muted'>
+              Free text description outlining the purpose of this probe.
+            </FormText>
+          </Col>
+        </Row>
+        <Row className='mb-3 align-items-top'>
+          <Col md={8}>
+            <Label>Comment</Label>
+            <TextAreaPlaceholder />
+            <FormText color='muted'>
+              Short comment about this version.
+            </FormText>
+          </Col>
+        </Row>
+      </FormGroup>
+      {
+        (!historyview && !addview && !cloneview) &&
+          <Row>
+            <Col md={8}>
+              <div>
+                Metric templates:
+              </div>
+            </Col>
+          </Row>
+      }
+    </ChangeViewPlaceholder>
+  )
+}
+
+
 const fetchProbe = async (publicView, name) => {
   const backend = new Backend();
 
@@ -555,11 +677,9 @@ const fetchMetrics = async (publicView, name, version) => {
 
 
 export const ProbeList = (props) => {
-  const location = props.location;
+  const location = useLocation();
   const publicView = props.publicView;
   const isTenantSchema = props.isTenantSchema;
-
-  const queryClient = useQueryClient();
 
   const { data: probes, error, isLoading: loading } = useQuery(
     `${publicView ? 'public_' : ''}probe`, () => fetchProbes(publicView)
@@ -607,10 +727,16 @@ export const ProbeList = (props) => {
       accessor: 'description',
       Filter: DefaultColumnFilter
     }
-  ], [publicView, queryClient]);
+  ], [publicView]);
 
   if (loading)
-    return (<LoadingAnim/>);
+    return (
+      <ListViewPlaceholder
+        resourcename="probe"
+        infoview={ isTenantSchema || publicView }
+        publicview={ publicView }
+      />
+    )
 
   else if (error)
     return (<ErrorComponent error={error.message}/>);
@@ -638,11 +764,10 @@ export const ProbeList = (props) => {
 
 
 export const ProbeComponent = (props) => {
-  const name = props.match.params.name;
+  let { name } = useParams();   
+  const location = useLocation();
   const addview = props.addview;
   const cloneview = props.cloneview;
-  const location = props.location;
-  const history = props.history;
   const publicView = props.publicView;
   const isTenantSchema = props.isTenantSchema;
 
@@ -670,7 +795,7 @@ export const ProbeComponent = (props) => {
   const loading = probeLoading || metricTemplatesLoading || packagesLoading;
 
   if (loading)
-    return(<LoadingAnim/>)
+    return(<ProbeFormPlaceholder { ...props } />)
 
   else if (probeError)
     return (<ErrorComponent error={probeError.message}/>);
@@ -693,7 +818,6 @@ export const ProbeComponent = (props) => {
         list_packages={ packages.map(pkg => `${pkg.name} (${pkg.version})`) }
         metrictemplatelist={ metricTemplates ? metricTemplates : [] }
         location={ location }
-        history={ history }
       />
     )
   } else
@@ -702,9 +826,7 @@ export const ProbeComponent = (props) => {
 
 
 export const ProbeVersionCompare = (props) => {
-  const version1 = props.match.params.id1;
-  const version2 = props.match.params.id2;
-  const name = props.match.params.name;
+  let { name, id1: version1, id2: version2 } = useParams();
   const publicView = props.publicView;
 
   const { data: versions, error, isLoading: loading } = useQuery(
@@ -712,7 +834,12 @@ export const ProbeVersionCompare = (props) => {
   )
 
   if (loading)
-    return (<LoadingAnim/>);
+    return (
+      <>
+        <h2 className='ms-3 mt-1 mb-4'>{`Compare ${name}`}</h2>
+        <Table className="placeholder rounded" style={{ height: "600px" }} />
+      </>
+    );
 
   else if (error)
     return (<ErrorComponent error={error}/>);
@@ -776,8 +903,7 @@ export const ProbeVersionCompare = (props) => {
 
 
 export const ProbeVersionDetails = (props) => {
-  const name = props.match.params.name;
-  const version = props.match.params.version;
+  let { name, version } = useParams();
   const publicView = props.publicView;
 
   const { data: versions, error, isLoading: loading } = useQuery(
@@ -785,7 +911,13 @@ export const ProbeVersionDetails = (props) => {
   )
 
   if (loading)
-    return (<LoadingAnim/>);
+    return(
+      <ProbeFormPlaceholder
+        { ...props }
+        title={ `${name} (${version})` }
+        isHistory={ true }
+      />
+    )
 
   else if (error)
     return (<ErrorComponent error={error}/>);

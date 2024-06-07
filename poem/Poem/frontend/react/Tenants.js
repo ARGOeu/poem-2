@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Backend } from './DataManager';
 import { 
-  LoadingAnim, 
   ErrorComponent, 
   BaseArgoView, 
   ParagraphTitle, 
@@ -9,39 +8,65 @@ import {
   NotifyOk 
 } from './UIElements';
 import {
-  FormGroup,
-  Row,
-  Col,
-  InputGroup,
-  InputGroupText,
-  Card,
-  CardText,
-  CardGroup,
-  CardFooter,
   Badge,
+  Button,
+  Col,
+  Card,
+  CardBody,
+  CardFooter,
+  CardGroup,
+  CardText,
   CardTitle,
   CardSubtitle,
-  Button,
   Form,
-  Input
+  FormGroup,
+  Input,
+  InputGroup,
+  InputGroupText,
+  Row
 } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faIdBadge } from '@fortawesome/free-solid-svg-icons';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { fetchTenants } from './QueryFunctions';
 import { Controller, useForm } from 'react-hook-form';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { ChangeViewPlaceholder, InputPlaceholder } from './Placeholders';
 
-
-export const TenantList = (props) => {
-  const location = props.location;
-  const history = props.history;
+export const TenantList = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const { data: tenants, error, status } = useQuery(
     'tenant', () => fetchTenants()
   );
 
   if (status === 'loading')
-    return (<LoadingAnim/>);
+    return (
+      <ChangeViewPlaceholder
+        resourcename="Select tenant for details"
+        infoview={ true }
+      >
+        <CardGroup className='mb-3' style={{width: "66.6666%"}}>
+          <Card className="me-3">
+            <CardSubtitle className='mb-4 mt-3 text-center'>
+              <FontAwesomeIcon icon={faIdBadge} size='5x'/>
+            </CardSubtitle>
+            <CardBody>
+              <span className="placeholder rounded" style={{ height: "152px", width: "100%" }} />
+            </CardBody>
+          </Card>
+          <Card className="me-3">
+            <CardSubtitle className='mb-4 mt-3 text-center'>
+              <FontAwesomeIcon icon={faIdBadge} size='5x'/>
+            </CardSubtitle>
+            <CardBody>
+              <span className="placeholder rounded" style={{ height: "152px", width: "100%" }} />
+            </CardBody>
+          </Card>
+        </CardGroup>
+      </ChangeViewPlaceholder>
+    );
 
   else if (status === 'error')
     return (<ErrorComponent error={error}/>);
@@ -54,7 +79,7 @@ export const TenantList = (props) => {
         if ((i + j) < tenants.length)
           cards.push(
             <Card data-testid={`${tenants[i + j].name}-card`} className='me-3' key={ j + 1 }>
-              <CardTitle className='text-center' onClick={() => history.push(`/ui/tenants/${tenants[i + j].name}`)} style={{cursor: 'pointer', color: 'black'}}>
+              <CardTitle className='text-center' onClick={() => navigate(`/ui/tenants/${tenants[i + j].name}`)} style={{cursor: 'pointer', color: 'black'}}>
                 <h3>{tenants[i + j].name}</h3>
               </CardTitle>
               <CardSubtitle className='mb-4 mt-3 text-center'>
@@ -274,8 +299,8 @@ const TenantForm = ({
 
 
 export const TenantChange = (props) => {
-  const name = props.match.params.name;
-  const history = props.history;
+  const { name } = useParams();
+  const navigate = useNavigate();
 
   const backend = new Backend();
 
@@ -303,7 +328,7 @@ export const TenantChange = (props) => {
           NotifyOk({
             msg: 'Tenant successfully deleted',
             title: 'Deleted',
-            callback: () => history.push('/ui/tenants')
+            callback: () => navigate('/ui/tenants')
           })
         }
       })
@@ -315,7 +340,38 @@ export const TenantChange = (props) => {
   }
 
   if (status === 'loading')
-    return (<LoadingAnim/>);
+    return (
+      <ChangeViewPlaceholder
+        resourcename="Tenant details"
+        infoview={ true }
+      >
+        <FormGroup>
+          <Row>
+            <Col md={6}>
+              <InputPlaceholder />
+            </Col>
+          </Row>
+        </FormGroup>
+        <FormGroup>
+          <ParagraphTitle title='basic info'/>
+          <Row>
+            <Col md={6}>
+              <InputPlaceholder />
+            </Col>
+          </Row>
+          <Row>
+            <Col md={6}>
+              <InputPlaceholder />
+            </Col>
+          </Row>
+          <Row>
+            <Col md={6}>
+              <InputPlaceholder />
+            </Col>
+          </Row>
+        </FormGroup>
+      </ChangeViewPlaceholder>
+    )
 
   else if (status === 'error')
     return (<ErrorComponent error={error}/>);

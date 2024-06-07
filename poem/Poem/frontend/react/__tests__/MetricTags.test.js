@@ -1,7 +1,6 @@
-import "@testing-library/jest-dom/extend-expect"
+import "@testing-library/jest-dom"
 import React from "react"
-import { createMemoryHistory } from "history"
-import { Route, Router } from "react-router-dom"
+import { MemoryRouter, Routes, Route } from "react-router-dom"
 import { QueryClient, QueryClientProvider, setLogger } from "react-query"
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import { MetricTagsComponent, MetricTagsList } from "../MetricTags"
@@ -231,17 +230,14 @@ const mockMetricTemplates = [
 
 function renderListView(publicView) {
   const route = `/ui/${publicView ? "public_" : ""}metrictags`
-  const history = createMemoryHistory({ initialEntries: [route] })
 
   if (publicView)
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              render={ props => <MetricTagsList {...props} publicView={true} /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <MetricTagsList publicView={ true } />
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -250,11 +246,9 @@ function renderListView(publicView) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              render={ props => <MetricTagsList {...props} /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <MetricTagsList />
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -263,18 +257,19 @@ function renderListView(publicView) {
 
 function renderChangeView(publicView) {
   const route = `/ui/${publicView ? "public_" : ""}metrictags/harmonized`
-  const history = createMemoryHistory({ initialEntries: [route] })
 
   if (publicView)
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path="/ui/public_metrictags/:name"
-              render={ props => <MetricTagsComponent {...props} publicView={true} /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route
+                path="/ui/public_metrictags/:name"
+                element={ <MetricTagsComponent publicView={ true } /> }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -283,12 +278,14 @@ function renderChangeView(publicView) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path="/ui/metrictags/:name"
-              render={ props => <MetricTagsComponent {...props} /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route
+                path="/ui/metrictags/:name"
+                element={ <MetricTagsComponent /> }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -297,17 +294,13 @@ function renderChangeView(publicView) {
 
 function renderAddView() {
   const route = "/ui/metrictags/add"
-  const history = createMemoryHistory({ initialEntries: [route] })
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path="/ui/metrictags/add"
-            render={ props => <MetricTagsComponent {...props} addview={true} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <MetricTagsComponent addview={ true } />
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -326,13 +319,12 @@ describe("Test list of metric tags", () => {
   test("Test that page renders properly", async () => {
     renderListView()
 
-    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
-
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /metric tag/i }).textContent).toBe("Select metric tag to change")
+      expect(screen.getAllByRole("columnheader")).toHaveLength(6)
     })
 
-    expect(screen.getAllByRole("columnheader")).toHaveLength(6)
+    expect(screen.getByRole("heading", { name: /metric tag/i }).textContent).toBe("Select metric tag to change")
+
     expect(screen.getByRole("columnheader", { name: "#" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: /name/i })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: /metrics/i })).toBeInTheDocument()
@@ -355,13 +347,12 @@ describe("Test list of metric tags", () => {
   test("Test that public page renders properly", async () => {
     renderListView(true)
 
-    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
-
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /metric tag/i }).textContent).toBe("Select metric tag for details")
+      expect(screen.getAllByRole("columnheader")).toHaveLength(6)
     })
 
-    expect(screen.getAllByRole("columnheader")).toHaveLength(6)
+    expect(screen.getByRole("heading", { name: /metric tag/i }).textContent).toBe("Select metric tag for details")
+
     expect(screen.getByRole("columnheader", { name: "#" })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: /name/i })).toBeInTheDocument()
     expect(screen.getByRole("columnheader", { name: /metrics/i })).toBeInTheDocument()
@@ -414,11 +405,11 @@ describe("Test metric tags changeview", () => {
   test("Test that page renders properly", async () => {
     renderChangeView()
 
-    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
-
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /metric tag/i }).textContent).toBe("Change metric tag")
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
+
+    expect(screen.getByRole("heading", { name: /metric tag/i }).textContent).toBe("Change metric tag")
 
     expect(screen.getByTestId("form")).toHaveFormValues({
       "name": "harmonized"
@@ -452,7 +443,6 @@ describe("Test metric tags changeview", () => {
     expect(table.getByText("argo.AMS-Check")).toBeInTheDocument()
     expect(table.getByText("argo.AMSPublisher-Check")).toBeInTheDocument()
 
-    expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /delete/i })).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /clone/i })).not.toBeInTheDocument()
   })
@@ -461,7 +451,7 @@ describe("Test metric tags changeview", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByPlaceholderText(/search/i), { target: { value: "certificate" } })
@@ -474,7 +464,6 @@ describe("Test metric tags changeview", () => {
     expect(table.getAllByTestId(/remove-/i)).toHaveLength(1)
     expect(table.getAllByTestId(/insert-/i)).toHaveLength(1)
 
-    expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /delete/i })).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /clone/i })).not.toBeInTheDocument()
   })
@@ -482,11 +471,11 @@ describe("Test metric tags changeview", () => {
   test("Test that public page renders properly", async () => {
     renderChangeView(true)
 
-    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
-
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /metric tag/i }).textContent).toBe("Metric tag details")
+      expect(screen.getByTestId("name")).toBeInTheDocument()
     })
+
+    expect(screen.getByRole("heading", { name: /metric tag/i }).textContent).toBe("Metric tag details")
 
     const nameField = screen.getByTestId("name")
 
@@ -517,7 +506,7 @@ describe("Test metric tags changeview", () => {
     renderChangeView(true)
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
+      expect(screen.getByTestId("name")).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByPlaceholderText(/search/i), { target: { value: "certificate" } })
@@ -539,7 +528,7 @@ describe("Test metric tags changeview", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: "test_tag" } })
@@ -580,7 +569,7 @@ describe("Test metric tags changeview", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: "test_tag" } })
@@ -620,7 +609,7 @@ describe("Test metric tags changeview", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: "test_tag" } })
@@ -662,7 +651,7 @@ describe("Test metric tags changeview", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     await selectEvent.select(screen.getByText("generic.certificate.validity"), "argo.AMS-Check")
@@ -714,7 +703,7 @@ describe("Test metric tags changeview", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     await selectEvent.select(screen.getByText("generic.certificate.validity"), "argo.AMS-Check")
@@ -775,7 +764,7 @@ describe("Test metric tags changeview", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     await selectEvent.select(screen.getByText("generic.certificate.validity"), "argo.AMS-Check")
@@ -841,7 +830,7 @@ describe("Test metric tags changeview", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole("button", { name: /delete/i }))
@@ -875,7 +864,7 @@ describe("Test metric tags changeview", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: "test_tag" } })
@@ -911,7 +900,7 @@ describe("Test metric tags changeview", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole("button", { name: /delete/i }))
@@ -944,7 +933,7 @@ describe("Test metric tags changeview", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole("button", { name: /delete/i }))
@@ -997,11 +986,11 @@ describe("Test metric tags addview", () => {
   test("Test that page renders properly", async () => {
     renderAddView()
 
-    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
-
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /metric tag/i }).textContent).toBe("Add metric tag")
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
+
+    expect(screen.getByRole("heading", { name: /metric tag/i }).textContent).toBe("Add metric tag")
 
     expect(screen.getByTestId("form")).toHaveFormValues({
       "name": ""
@@ -1036,7 +1025,6 @@ describe("Test metric tags addview", () => {
     expect(table.getByText("argo.AMS-Check")).toBeInTheDocument()
     expect(table.getByText("argo.AMSPublisher-Check")).toBeInTheDocument()
 
-    expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /delete/i })).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /clone/i })).not.toBeInTheDocument()
   })
@@ -1049,7 +1037,7 @@ describe("Test metric tags addview", () => {
     renderAddView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: "test_tag" } })
@@ -1090,7 +1078,7 @@ describe("Test metric tags addview", () => {
     renderAddView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: "test_tag" } })
@@ -1163,7 +1151,7 @@ describe("Test metric tags addview", () => {
     renderAddView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: "test_tag" } })
@@ -1227,7 +1215,7 @@ describe("Test metric tags addview", () => {
     renderAddView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: "test_tag" } })
@@ -1295,7 +1283,7 @@ describe("Test metric tags addview", () => {
     renderAddView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: "test_tag" } })
@@ -1331,7 +1319,7 @@ describe("Test metric tags addview", () => {
     renderAddView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /metric tag/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: "test_tag" } })

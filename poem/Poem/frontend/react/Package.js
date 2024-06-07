@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Backend } from './DataManager';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import{
-  LoadingAnim,
   BaseArgoView,
   NotifyOk,
   NotifyError,
@@ -34,7 +33,11 @@ import { Controller, useForm, useWatch } from 'react-hook-form';
 import { ErrorMessage } from '@hookform/error-message';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from "yup";
-
+import { 
+  ChangeViewPlaceholder,
+  InputPlaceholder, 
+  ListViewPlaceholder 
+} from './Placeholders';
 
 const validationSchema = Yup.object().shape({
   name: Yup.string()
@@ -45,16 +48,19 @@ const validationSchema = Yup.object().shape({
     .required("This field is required")
     .matches(/^\S+$/, "Version cannot contain white spaces"),
   repo_6: Yup.string().test("repo", "You must provide at least one repo", function () {
-    return this.parent.repo_6 === "" && this.parent.repo_7 === "" ? false : true
+    return this.parent.repo_6 === "" && this.parent.repo_7 === "" && this.parent.repo_9 ? false : true
   }),
   repo_7: Yup.string().test("repo", "You must provide at least one repo", function () {
-    return this.parent.repo_6 === "" && this.parent.repo_7 === "" ? false : true
+    return this.parent.repo_6 === "" && this.parent.repo_7 === "" && this.parent.repo_9 === "" ? false : true
+  }),
+  repo_9: Yup.string().test("repo", "You must provide at least one repo", function () {
+    return this.parent.repo_6 === "" && this.parent.repo_7 === "" && this.parent.repo_9 === "" ? false : true
   })
 })
 
 
 export const PackageList = (props) => {
-  const location = props.location;
+  const location = useLocation();
   const isTenantSchema = props.isTenantSchema;
 
   const { data: packages, error: errorPackages, status: statusPackages } = useQuery(
@@ -105,7 +111,12 @@ export const PackageList = (props) => {
   ], [isTenantSchema, listRepos]);
 
   if (statusPackages === 'loading' || statusRepos === 'loading')
-    return (<LoadingAnim/>);
+    return (
+      <ListViewPlaceholder
+        resourcename="package"
+        infoview={ isTenantSchema }
+      />
+    )
 
   else if (statusPackages === 'error')
     return (<ErrorComponent error={errorPackages}/>);
@@ -138,21 +149,26 @@ export const PackageList = (props) => {
 function splitRepos(repos) {
   let repo6 = '';
   let repo7 = '';
+  let repo9 = ""
   for (let i = 0; i < repos.length; i++) {
     if (repos[i].split('(')[1].slice(0, -1) === 'CentOS 6')
       repo6 = repos[i];
 
     if (repos[i].split('(')[1].slice(0, -1) === 'CentOS 7')
       repo7 = repos[i];
+
+    if (repos[i].split("(")[1].slice(0, -1) === "Rocky 9")
+      repo9 = repos[i]
   }
 
-  return [repo6, repo7];
+  return [repo6, repo7, repo9];
 }
 
 
 const PackageForm = ({
-  nameversion, addview, cloneview, disabled, location, history, pkg={}, probes=[], repos6=[], repos7=[], packageVersions=[]
+  nameversion, addview, cloneview, disabled, location, pkg={}, probes=[], repos6=[], repos7=[], repos9=[], packageVersions=[]
 }) => {
+  const navigate = useNavigate()
   const backend = new Backend()
   const queryClient = useQueryClient()
 
@@ -167,6 +183,7 @@ const PackageForm = ({
       initialVersion: `${pkg?.version ? pkg.version : ""}`,
       repo_6: `${pkg?.repos ? splitRepos(pkg.repos)[0] : ''}`,
       repo_7: `${pkg?.repos ? splitRepos(pkg.repos)[1] : ''}`,
+      repo_9: `${pkg?.repos ? splitRepos(pkg.repos)[2] : ""}`,
       present_version: pkg?.version === "present"
     },
     resolver: yupResolver(validationSchema),
@@ -204,11 +221,12 @@ const PackageForm = ({
     let initial_version = getValues("initialVersion")
     packageVersions.forEach(pkgv => {
       if (pkgv.version === value) {
-        let [repo6, repo7] = splitRepos(pkgv.repos)
+        let [repo6, repo7, repo9] = splitRepos(pkgv.repos)
         setValue('name', pkgv.name)
         setValue('version', pkgv.version)
         setValue('repo_6', repo6)
         setValue('repo_7', repo7)
+        setValue("repo_9", repo9)
         setValue('present_version', pkgv.use_present_version)
 
         setDisabledButton(value === initial_version)
@@ -272,7 +290,7 @@ const PackageForm = ({
           NotifyOk({
             msg: json.updated,
             title: 'Updated',
-            callback: () => history.push('/ui/administration/packages')
+            callback: () => navigate('/ui/administration/packages')
           });
         if ('warning' in json)
           NotifyWarn({msg: json.warning, title: 'Warning'})
@@ -294,6 +312,9 @@ const PackageForm = ({
     if (formValues.repo_7)
       repos.push(formValues.repo_7);
 
+    if (formValues.repo_9)
+      repos.push(formValues.repo_9)
+
     const sendValues = new Object({
       name: formValues.name,
       version: formValues.version,
@@ -308,7 +329,7 @@ const PackageForm = ({
           NotifyOk({
             msg: 'Package successfully added',
             title: 'Added',
-            callback: () => history.push('/ui/packages')
+            callback: () => navigate('/ui/packages')
           })
         },
         onError: (error) => {
@@ -324,7 +345,7 @@ const PackageForm = ({
           NotifyOk({
             msg: 'Package successfully changed',
             title: 'Changed',
-            callback: () => history.push('/ui/packages')
+            callback: () => navigate('/ui/packages')
           })
         },
         onError: (error) => {
@@ -344,7 +365,7 @@ const PackageForm = ({
         NotifyOk({
           msg: 'Package successfully deleted',
           title: 'Deleted',
-          callback: () => history.push('/ui/packages')
+          callback: () => navigate('/ui/packages')
         })
       },
       onError: (error) => {
@@ -484,7 +505,7 @@ const PackageForm = ({
         <FormGroup>
           <ParagraphTitle title='YUM repo'/>
           {
-            (!disabled && (errors.repo_6 || errors.repo_7)) &&
+            (!disabled && (errors.repo_6 || errors.repo_7 || errors.repo_9)) &&
               <Alert color='danger'>
                 <center>
                   You must provide at least one repo
@@ -561,6 +582,41 @@ const PackageForm = ({
               </FormText>
             </Col>
           </Row>
+          <Row className='mt-4'>
+            <Col md={8}>
+              <InputGroup>
+                <InputGroupText>Rocky 9 repo</InputGroupText>
+                <Controller
+                  name="repo_9"
+                  control={ control }
+                  render={ ({ field }) =>
+                    disabled ?
+                      <Input
+                        { ...field }
+                        className="form-control"
+                        data-testid="repo_9"
+                        disabled={ true }
+                      />
+                    :
+                      <DropdownWithFormText
+                        forwardedRef={ field.ref }
+                        error={ errors.repo_9 }
+                        isClearable={ true }
+                        onChange={ e => {
+                          setValue("repo_9", e ? e.value : '')
+                          trigger()
+                        }}
+                        options={ repos9 }
+                        value={ field.value }
+                      />
+                    }
+                />
+              </InputGroup>
+              <FormText color='muted'>
+                Package is part of selected CentOS 7 repo.
+              </FormText>
+            </Col>
+          </Row>
           {
             (!addview && !cloneview && probes.length > 0) &&
               <Row className='mt-3'>
@@ -623,12 +679,11 @@ const PackageForm = ({
 
 
 export const PackageComponent = (props) => {
-  const nameversion = props.match.params.nameversion;
+  const { nameversion } = useParams();
   const addview = props.addview;
   const cloneview = props.cloneview;
   const disabled = props.disabled;
-  const location = props.location;
-  const history = props.history;
+  const location = useLocation();
 
   const backend = new Backend();
   const queryClient = useQueryClient();
@@ -667,7 +722,79 @@ export const PackageComponent = (props) => {
   )
 
   if (statusPkg === 'loading' || statusRepos === 'loading' || statusProbes === 'loading' || statusPackageVersions === 'loading')
-    return (<LoadingAnim/>);
+    return (
+      <ChangeViewPlaceholder
+        resourcename={ disabled ? 'Package details' : 'package' }
+        infoview={ disabled }
+        addview={ addview }
+        cloneview={ cloneview }
+        buttons={
+          (!disabled && !addview && !cloneview) && <Button color="secondary" disabled>Clone</Button>
+        }
+      >
+        <FormGroup>
+          <Row className='align-items-center'>
+            <Col md={6}>
+              <InputPlaceholder />
+              <FormText color='muted'>
+                Package name.
+              </FormText>
+            </Col>
+            <Col md={2}>
+              <Row>
+                <Col md={12}>
+                  <InputPlaceholder />
+                  <FormText color='muted'>
+                    Package version.
+                  </FormText>
+                </Col>
+              </Row>
+            </Col>
+            {
+              !disabled &&
+                <Col md={3}>
+                  <InputPlaceholder />
+                </Col>
+            }
+          </Row>
+        </FormGroup>
+        <FormGroup>
+          <ParagraphTitle title='YUM repo'/>
+          <Row>
+            <Col md={8}>
+              <InputPlaceholder />
+              <FormText color='muted'>
+                Package is part of selected CentOS 6 repo.
+              </FormText>
+            </Col>
+          </Row>
+          <Row className='mt-4'>
+            <Col md={8}>
+              <InputPlaceholder />
+              <FormText color='muted'>
+                Package is part of selected CentOS 7 repo.
+              </FormText>
+            </Col>
+          </Row>
+          <Row className='mt-4'>
+            <Col md={8}>
+              <InputPlaceholder />
+              <FormText color='muted'>
+                Package is part of selected CentOS 7 repo.
+              </FormText>
+            </Col>
+          </Row>
+        </FormGroup>
+        {
+          (!addview && !cloneview) &&
+            <Row className='mt-3'>
+              <Col md={8}>
+                Probes:
+              </Col>
+            </Row>
+        }
+      </ChangeViewPlaceholder>
+    )
 
   else if (statusPkg === 'error')
     return (<ErrorComponent error={errorPkg}/>);
@@ -684,6 +811,7 @@ export const PackageComponent = (props) => {
   else if (repos && (addview || (pkg && probes && packageVersions))) {
     let repos6 = new Array()
     let repos7 = new Array()
+    let repos9 = new Array()
     let listProbes = new Array()
 
     repos.forEach(repo => {
@@ -692,11 +820,14 @@ export const PackageComponent = (props) => {
 
       else if (repo.tag === 'CentOS 7')
         repos7.push(`${repo.name} (${repo.tag})`)
+
+      else if (repo.tag === "Rocky 9")
+        repos9.push(`${repo.name} (${repo.tag})`)
     })
 
-    if (probes) {
+    if (probes && pkg && pkg.name) {
       probes.forEach(probe => {
-        if (probe.fields.package === `${pkg.name} (${pkg.version})`)
+        if (probe.fields.package === `${pkg.name} (${pkg.version})` )
           listProbes.push(probe.fields.name)
       })
     }
@@ -708,12 +839,12 @@ export const PackageComponent = (props) => {
         probes={listProbes}
         repos6={repos6}
         repos7={repos7}
+        repos9={ repos9 }
         packageVersions={packageVersions}
         addview={addview}
         cloneview={cloneview}
         disabled={disabled}
         location={location}
-        history={history}
       />
     )
 

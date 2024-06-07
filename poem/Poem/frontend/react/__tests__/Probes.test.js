@@ -1,8 +1,7 @@
 import React from 'react';
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { createMemoryHistory } from 'history';
-import { Route, Router } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { ProbeComponent, ProbeList, ProbeVersionDetails } from '../Probes';
 import { Backend } from '../DataManager';
 import { QueryClientProvider, QueryClient, setLogger } from 'react-query';
@@ -27,6 +26,7 @@ setLogger({
   warn: () => {},
   error: () => {}
 })
+
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -68,7 +68,6 @@ const mockListProbes = [
   }
 ];
 
-
 const mockProbe = {
   'id': '1',
   'name': 'ams-probe',
@@ -81,7 +80,6 @@ const mockProbe = {
   'user': 'testuser',
   'datetime': '2020-01-20 14:24:58.3'
 };
-
 
 const mockPackages = [
   {
@@ -115,7 +113,6 @@ const mockPackages = [
     'repos': ['repo-1 (CentOS 6)', 'repo-2 (CentOS 7)']
   }
 ];
-
 
 const mockProbeVersions = [
   {
@@ -157,17 +154,14 @@ const mockProbeVersions = [
 
 function renderListView({ publicView=false, isTenantSchema=false }) {
   const route = `/ui/${publicView ? 'public_' : ''}probes`;
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   if (publicView)
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              render={ props => <ProbeList {...props} publicView={true} isTenantSchema={isTenantSchema} /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <ProbeList publicView={ true } isTenantSchema={ isTenantSchema } />
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -176,11 +170,9 @@ function renderListView({ publicView=false, isTenantSchema=false }) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              render={ props => <ProbeList {...props} isTenantSchema={isTenantSchema} /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <ProbeList isTenantSchema={isTenantSchema} /> 
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -189,18 +181,19 @@ function renderListView({ publicView=false, isTenantSchema=false }) {
 
 function renderChangeView({ publicView=false, isTenantSchema=false }) {
   const route = `/ui/${publicView ? 'public_' : ''}probes/ams-probe`;
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   if (publicView)
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/public_probes/:name'
-              render={ props => <ProbeComponent {...props} publicView={true} isTenantSchema={isTenantSchema} /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route
+                path="/ui/public_probes/:name"
+                element={ <ProbeComponent publicView={ true } isTenantSchema={ isTenantSchema } /> }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -208,12 +201,14 @@ function renderChangeView({ publicView=false, isTenantSchema=false }) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/probes/:name'
-              render = { props => <ProbeComponent {...props} isTenantSchema={isTenantSchema} /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route
+                path="/ui/probes/:name"
+                element={ <ProbeComponent isTenantSchema={ isTenantSchema } /> }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -222,17 +217,13 @@ function renderChangeView({ publicView=false, isTenantSchema=false }) {
 
 function renderAddView() {
   const route = '/ui/probes/add';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/probes/add'
-            render = { props => <ProbeComponent {...props} addview={true} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <ProbeComponent addview={ true } />
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -241,17 +232,18 @@ function renderAddView() {
 
 function renderCloneView() {
   const route = '/ui/probes/ams-probe/clone';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/probes/:name/clone'
-            render = { props => <ProbeComponent {...props} cloneview={true} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path="/ui/probes/:name/clone"
+              element = { <ProbeComponent cloneview={true} /> }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -260,18 +252,19 @@ function renderCloneView() {
 
 function renderVersionDetailsView(publicView=false) {
   const route = `/ui/${publicView ? 'public_' : ''}probes/ams-probe/history/0.1.12`;
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   if (publicView)
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/public_probes/:name/history/:version'
-              render={ props => <ProbeVersionDetails {...props} publicView={true} /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route
+                path="/ui/public_probes/:name/history/:version"
+                element={ <ProbeVersionDetails publicView={true} /> }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -279,12 +272,14 @@ function renderVersionDetailsView(publicView=false) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/probes/:name/history/:version'
-              render = { props => <ProbeVersionDetails {...props} /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route
+                path="/ui/probes/:name/history/:version"
+                element={ <ProbeVersionDetails /> }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -311,14 +306,12 @@ describe('Test list of probes on SuperAdmin POEM', () => {
   test('Test that listview renders properly', async () => {
     renderListView({});
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe to change');
+      expect(screen.getAllByRole('columnheader')).toHaveLength(10)
     })
+    
+    expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe to change');
 
-    // double column header length because search fields are also th
-    expect(screen.getAllByRole('columnheader')).toHaveLength(10);
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /name/i }).textContent).toBe('Name');
     expect(screen.getByRole('columnheader', { name: /#versions/i }).textContent).toBe('#versions');
@@ -342,14 +335,12 @@ describe('Test list of probes on SuperAdmin POEM', () => {
   test('Test that public listview renders properly', async () => {
     renderListView({ publicView: true });
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe for details');
+      expect(screen.getAllByRole('columnheader')).toHaveLength(10);
     })
 
-    // double column header length because search fields are also th
-    expect(screen.getAllByRole('columnheader')).toHaveLength(10);
+    expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe for details');
+
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /name/i }).textContent).toBe('Name');
     expect(screen.getByRole('columnheader', { name: /#versions/i }).textContent).toBe('#versions');
@@ -374,7 +365,7 @@ describe('Test list of probes on SuperAdmin POEM', () => {
     renderListView({});
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe to change')
+      expect(screen.getAllByRole("columnheader")).toHaveLength(10)
     })
 
     fireEvent.change(screen.getAllByPlaceholderText('Search')[0], { target: { value: 'ams' } })
@@ -399,7 +390,7 @@ describe('Test list of probes on SuperAdmin POEM', () => {
     renderListView({ publicView: true });
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe for details')
+      expect(screen.getAllByRole("columnheader")).toHaveLength(10)
     })
 
     fireEvent.change(screen.getAllByPlaceholderText('Search')[0], { target: { value: 'ams' } })
@@ -442,14 +433,12 @@ describe('Test list of probes on tenant POEM', () => {
   test('Test that listview renders properly', async () => {
     renderListView({ isTenantSchema: true });
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe for details');
+      expect(screen.getAllByRole('columnheader')).toHaveLength(10);
     })
 
-    // double column header length because search fields are also th
-    expect(screen.getAllByRole('columnheader')).toHaveLength(10);
+    expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe for details');
+
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /name/i }).textContent).toBe('Name');
     expect(screen.getByRole('columnheader', { name: /#versions/i }).textContent).toBe('#versions');
@@ -473,14 +462,12 @@ describe('Test list of probes on tenant POEM', () => {
   test('Test that public listview renders properly', async () => {
     renderListView({ publicView: true, isTenantSchema: true });
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe for details');
+      expect(screen.getAllByRole('columnheader')).toHaveLength(10);
     })
 
-    // double column header length because search fields are also th
-    expect(screen.getAllByRole('columnheader')).toHaveLength(10);
+    expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe for details');
+
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /name/i }).textContent).toBe('Name');
     expect(screen.getByRole('columnheader', { name: /#versions/i }).textContent).toBe('#versions');
@@ -505,7 +492,7 @@ describe('Test list of probes on tenant POEM', () => {
     renderListView({ isTenantSchema: true });
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe for details')
+      expect(screen.getAllByRole("columnheader")).toHaveLength(10)
     })
 
     fireEvent.change(screen.getAllByPlaceholderText('Search')[0], { target: { value: 'ams' } })
@@ -530,7 +517,7 @@ describe('Test list of probes on tenant POEM', () => {
     renderListView({ publicView: true, isTenantSchema: true });
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /probe/i }).textContent).toBe('Select probe for details')
+      expect(screen.getAllByRole("columnheader")).toHaveLength(10)
     })
 
     fireEvent.change(screen.getAllByPlaceholderText('Search')[0], { target: { value: 'ams' } })
@@ -590,11 +577,11 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
   test('Test that page renders properly', async () => {
     renderChangeView({});
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change probe/i }).textContent).toBe('Change probe');
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
+
+    expect(screen.getByRole('heading', { name: /change probe/i }).textContent).toBe('Change probe');
 
     const nameField = screen.getByTestId('name')
     const versionField = screen.getByTestId('version');
@@ -635,18 +622,17 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
 
     expect(screen.getByRole('button', { name: /clone/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-probe/clone');
     expect(screen.getByRole('button', { name: /history/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-probe/history');
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
   })
 
   test('Test that public page renders properly', async () => {
     renderChangeView({ publicView: true });
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /probe detail/i }).textContent).toBe('Probe details');
+      expect(screen.getByTestId("name")).toBeInTheDocument()
     })
+
+    expect(screen.getByRole('heading', { name: /probe detail/i }).textContent).toBe('Probe details');
 
     const nameField = screen.getByTestId('name')
     const versionField = screen.getByTestId('version');
@@ -686,7 +672,7 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
     renderChangeView({});
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change probe/i }).textContent).toBe('Change probe')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name');
@@ -736,7 +722,7 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
     renderChangeView({});
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change probe/i }).textContent).toBe('Change probe')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: 'new-ams-probe' } });
@@ -780,7 +766,7 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
     renderChangeView({});
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change probe/i }).textContent).toBe('Change probe')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: 'test-ams-probe' } });
@@ -828,7 +814,7 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
     renderChangeView({});
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change probe/i }).textContent).toBe('Change probe')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: 'test-ams-probe' } });
@@ -874,7 +860,7 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
     renderChangeView({});
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change probe/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -902,7 +888,7 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
     renderChangeView({});
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change probe/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -934,7 +920,7 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
     renderChangeView({});
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change probe/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -994,11 +980,11 @@ describe('Test probe changeview on tenant POEM', () => {
   test('Test that page renders properly', async () => {
     renderChangeView({ isTenantSchema: true });
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /probe details/i }).textContent).toBe('Probe details');
+      expect(screen.getByTestId("name")).toBeInTheDocument()
     })
+
+    expect(screen.getByRole('heading', { name: /probe details/i }).textContent).toBe('Probe details');
 
     const nameField = screen.getByTestId('name')
     const versionField = screen.getByTestId('version');
@@ -1059,11 +1045,11 @@ describe('Test probe addview', () => {
   test('Test that page renders properly', async () => {
     renderAddView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /add probe/i }).textContent).toBe('Add probe');
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
+
+    expect(screen.getByRole('heading', { name: /add probe/i }).textContent).toBe('Add probe');
 
     const nameField = screen.getByTestId('name')
     const versionField = screen.getByTestId('version');
@@ -1106,14 +1092,13 @@ describe('Test probe addview', () => {
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
   })
 
   test('Test adding a new probe and saving', async () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /add probe/i }).textContent).toBe('Add probe');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name')
@@ -1169,7 +1154,7 @@ describe('Test probe addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /add probe/i }).textContent).toBe('Add probe');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name')
@@ -1229,7 +1214,7 @@ describe('Test probe addview', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /add probe/i }).textContent).toBe('Add probe');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name')
@@ -1320,11 +1305,11 @@ describe('Test probe cloneview', () => {
   test('Test that page renders properly', async () => {
     renderCloneView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /clone probe/i }).textContent).toBe('Clone probe');
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
+
+    expect(screen.getByRole('heading', { name: /clone probe/i }).textContent).toBe('Clone probe');
 
     const nameField = screen.getByTestId('name')
     const versionField = screen.getByTestId('version');
@@ -1363,7 +1348,6 @@ describe('Test probe cloneview', () => {
 
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
   })
 
@@ -1371,7 +1355,7 @@ describe('Test probe cloneview', () => {
     renderCloneView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /clone probe/i }).textContent).toBe('Clone probe')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name');
@@ -1420,7 +1404,7 @@ describe('Test probe cloneview', () => {
     renderCloneView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /clone probe/i }).textContent).toBe('Clone probe')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name');
@@ -1473,7 +1457,7 @@ describe('Test probe cloneview', () => {
     renderCloneView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /clone probe/i }).textContent).toBe('Clone probe')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name');
@@ -1542,11 +1526,11 @@ describe('Test probe version details view', () => {
   test('Test page renders properly', async () => {
     renderVersionDetailsView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /ams-probe/i }).textContent).toBe('ams-probe (0.1.12)')
+      expect(screen.getByTestId("name")).toBeInTheDocument()
     })
+
+    expect(screen.getByRole('heading', { name: /ams-probe/i }).textContent).toBe('ams-probe (0.1.12)')
 
     const nameField = screen.getByTestId('name')
     const versionField = screen.getByTestId('version');
@@ -1583,11 +1567,11 @@ describe('Test probe version details view', () => {
   test('Test public page renders properly', async () => {
     renderVersionDetailsView(true);
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /ams-probe/i }).textContent).toBe('ams-probe (0.1.12)')
+      expect(screen.getByTestId("name")).toBeInTheDocument()
     })
+
+    expect(screen.getByRole('heading', { name: /ams-probe/i }).textContent).toBe('ams-probe (0.1.12)')
 
     const nameField = screen.getByTestId('name')
     const versionField = screen.getByTestId('version');

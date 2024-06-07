@@ -24,30 +24,54 @@ from .utils import error_response
 class ListMetricTemplates(APIView):
     authentication_classes = (SessionAuthentication,)
 
+    def _get_metrics_per_tenant(self, schema_name):
+        with schema_context(schema_name):
+            metrics = [m.name for m in Metric.objects.all()]
+
+        return metrics
+
     def get(self, request, name=None):
         public_tenant = None
-        importable = None
+        tenants = dict()
         if name:
             metrictemplates = admin_models.MetricTemplate.objects.filter(
                 name=name
             )
             if metrictemplates.count() == 0:
                 raise NotFound(status=404, detail='Metric template not found')
+
         else:
             public_tenant = Tenant.objects.get(
                 schema_name=get_public_schema_name()
             )
             metrictemplates = admin_models.MetricTemplate.objects.all()
-            if request.tenant != public_tenant:
-                avail_metrics = Metric.objects.all().values_list(
-                    'name', flat=True
-                )
-                importable = dict()
+
+            if request.tenant == public_tenant:
+                tenants_metrics = dict()
+                for tenant in Tenant.objects.all():
+                    if tenant != public_tenant:
+                        tenants_metrics.update({
+                            tenant.name: self._get_metrics_per_tenant(
+                                tenant.schema_name
+                            )
+                        })
                 for metrictemplate in metrictemplates:
-                    if metrictemplate.name in avail_metrics:
-                        importable[metrictemplate.name] = False
-                    else:
-                        importable[metrictemplate.name] = True
+                    if request.tenant == public_tenant:
+                        mt_versions = [
+                            m.name for m in
+                            admin_models.MetricTemplateHistory.objects.filter(
+                                object_id=metrictemplate
+                            )
+                        ]
+
+                        tenants.update({
+                            metrictemplate.name: sorted([
+                                t for t, m in tenants_metrics.items() if
+                                len(
+                                    set(mt_versions).intersection(set(m))
+                                ) > 0
+                            ])
+                        })
 
         results = []
         for metrictemplate in metrictemplates:
@@ -75,45 +99,34 @@ class ListMetricTemplates(APIView):
             else:
                 probeversion = ''
 
-            if not name and request.tenant != public_tenant:
-                results.append(dict(
-                    id=metrictemplate.id,
-                    name=metrictemplate.name,
-                    importable=importable[metrictemplate.name],
-                    mtype=metrictemplate.mtype.name,
-                    ostag=ostag,
-                    tags=sorted(tags),
-                    probeversion=probeversion,
-                    description=metrictemplate.description,
-                    parent=parent,
-                    probeexecutable=probeexecutable,
-                    config=config,
-                    attribute=attribute,
-                    dependency=dependency,
-                    flags=flags,
-                    files=files,
-                    parameter=parameter,
-                    fileparameter=fileparameter
-                ))
-            else:
-                results.append(dict(
-                    id=metrictemplate.id,
-                    name=metrictemplate.name,
-                    mtype=metrictemplate.mtype.name,
-                    ostag=ostag,
-                    tags=sorted(tags),
-                    probeversion=probeversion,
-                    description=metrictemplate.description,
-                    parent=parent,
-                    probeexecutable=probeexecutable,
-                    config=config,
-                    attribute=attribute,
-                    dependency=dependency,
-                    flags=flags,
-                    files=files,
-                    parameter=parameter,
-                    fileparameter=fileparameter
-                ))
+            result_dict = {
+                "id": metrictemplate.id,
+                "name": metrictemplate.name,
+                "mtype": metrictemplate.mtype.name,
+                "ostag": ostag,
+                "tags": sorted(tags),
+                "probeversion": probeversion,
+                "description": metrictemplate.description,
+                "parent": parent,
+                "probeexecutable": probeexecutable,
+                "config": config,
+                "attribute": attribute,
+                "dependency": dependency,
+                "flags": flags,
+                "files": files,
+                "parameter": parameter,
+                "fileparameter": fileparameter
+            }
+
+            if not name and request.tenant == public_tenant:
+                if metrictemplate.name in tenants:
+                    tl = tenants[metrictemplate.name]
+                else:
+                    tl = list()
+
+                result_dict.update({"tenants": tl})
+
+            results.append(result_dict)
 
         results = sorted(results, key=lambda k: k['name'])
 

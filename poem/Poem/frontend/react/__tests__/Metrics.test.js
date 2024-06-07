@@ -1,8 +1,7 @@
 import React from 'react';
-import '@testing-library/jest-dom/extend-expect';
-import { createMemoryHistory } from 'history';
+import '@testing-library/jest-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { Route, Router } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { CompareMetrics, ListOfMetrics, MetricChange, MetricVersionDetails } from '../Metrics';
 import { Backend, WebApi } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
@@ -334,25 +333,21 @@ beforeEach(() => {
 
 
 function renderListView(publicView=false) {
-  const history = createMemoryHistory();
+  const route = `/ui/${publicView ? "public_" : ""}metrics`
 
   if (publicView)
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              render={
-                props => <ListOfMetrics
-                  {...props}
-                  type='metrics'
-                  isTenantSchema={true}
-                  publicView={true}
-                  webapimetric='https://mock.metrics.com'
-                  webapitoken='token'
-                />}
+          <MemoryRouter initialEntries={ [ route ] }>
+            <ListOfMetrics
+              type='metrics'
+              isTenantSchema={ true }
+              publicView={ true }
+              webapimetric='https://mock.metrics.com'
+              webapitoken='token'
             />
-          </Router>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -360,19 +355,14 @@ function renderListView(publicView=false) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              render={
-                props => <ListOfMetrics
-                  {...props}
-                  type='metrics'
-                  isTenantSchema={true}
-                  webapimetric='https://mock.metrics.com'
-                  webapitoken='token'
-                />
-              }
+          <MemoryRouter initialEntries={ [ route ] }>
+            <ListOfMetrics
+              type='metrics'
+              isTenantSchema={ true }
+              webapimetric='https://mock.metrics.com'
+              webapitoken='token'
             />
-          </Router>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -385,18 +375,23 @@ function renderChangeView(options = {}) {
     options.route
   :
     `/ui/${publicView ? 'public_' : ''}metrics/argo.AMS-Check`;
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   if (publicView)
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/public_metrics/:name'
-              render={props => <MetricChange {...props} publicView={true} />}
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route
+                path="/ui/public_metrics/:name"
+                element={
+                  <MetricChange
+                    publicView={ true }
+                  />
+                }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -404,12 +399,14 @@ function renderChangeView(options = {}) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/metrics/:name'
-              render={ props => <MetricChange {...props} /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route
+                path="/ui/metrics/:name"
+                element={ <MetricChange /> }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -418,17 +415,18 @@ function renderChangeView(options = {}) {
 
 function renderVersionDetailsView() {
   const route = '/ui/metrics/argo.AMS-Check/history/20201130-132348';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/metrics/:name/history/:version'
-            render={ props => <MetricVersionDetails {...props} />}
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path="/ui/metrics/:name/history/:version"
+              element={ <MetricVersionDetails /> }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -437,17 +435,18 @@ function renderVersionDetailsView() {
 
 function renderCompareView() {
   const route = '/ui/metrics/argo.AMS-Check/history/compare/20201130-132348/20201207-131823';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/metrics/:name/history/compare/:id1/:id2'
-            render={ props => <CompareMetrics {...props} type='metric' /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path="/ui/metrics/:name/history/compare/:id1/:id2"
+              element={ <CompareMetrics type="metric" /> }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -493,13 +492,13 @@ describe('Tests for metrics listview', () => {
   test('Test that metrics listview renders properly', async () => {
     renderListView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric for details')
+      // double column header length because search fields are also th
+      expect(screen.getAllByRole('columnheader')).toHaveLength(14);
     })
-    // double column header length because search fields are also th
-    expect(screen.getAllByRole('columnheader')).toHaveLength(14);
+
+    expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric to change')
+
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /name/i }).textContent).toBe('Name');
     expect(screen.getByRole('columnheader', { name: /probe/i }).textContent).toBe('Probe version');
@@ -536,7 +535,7 @@ describe('Tests for metrics listview', () => {
     renderListView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric for details')
+      expect(screen.getAllByRole("columnheader")).toHaveLength(14)
     })
 
     fireEvent.change(screen.getAllByPlaceholderText('Search')[0], { target: { value: 'argo' } });
@@ -561,10 +560,11 @@ describe('Tests for metrics listview', () => {
     renderListView(true);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric for details')
+      expect(screen.getAllByRole("columnheader")).toHaveLength(14)
     })
-    // double column header length because search fields are also th
-    expect(screen.getAllByRole('columnheader')).toHaveLength(14);
+
+    expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric for details')
+      
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /name/i }).textContent).toBe('Name');
     expect(screen.getByRole('columnheader', { name: /probe/i }).textContent).toBe('Probe version');
@@ -601,7 +601,7 @@ describe('Tests for metrics listview', () => {
     renderListView(true);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric for details')
+      expect(screen.getAllByRole("columnheader")).toHaveLength(14)
     })
 
     fireEvent.change(screen.getAllByPlaceholderText('Search')[0], { target: { value: 'argo' } });
@@ -652,9 +652,11 @@ describe('Tests for metrics listview', () => {
     renderListView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric for details')
+      expect(screen.getAllByRole('columnheader')).toHaveLength(14);
     })
-    expect(screen.getAllByRole('columnheader')).toHaveLength(14);
+
+    expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric to change')
+
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /name/i }).textContent).toBe('Name');
     expect(screen.getByRole('columnheader', { name: /probe/i }).textContent).toBe('Probe version');
@@ -720,11 +722,11 @@ describe('Tests for metric change', () => {
   test('Test that page renders properly', async () => {
     renderChangeView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric');
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
+
+    expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric');
 
     const nameField = screen.getByTestId('name');
     expect(nameField.value).toBe('argo.AMS-Check');
@@ -840,7 +842,6 @@ describe('Tests for metric change', () => {
 
     expect(screen.getByRole('button', { name: /history/i }).closest('a')).toHaveAttribute('href', '/ui/metrics/argo.AMS-Check/history')
     expect(screen.queryByRole("button", { name: /clone/i })).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
   })
 
@@ -867,8 +868,10 @@ describe('Tests for metric change', () => {
     renderChangeView({ publicView: true });
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /details/i }).textContent).toBe('Metric details');
+      expect(screen.getByTestId("dependency.0.key")).toBeInTheDocument()
     })
+
+    expect(screen.getByRole('heading', { name: /details/i }).textContent).toBe('Metric details');
 
     const nameField = screen.getByTestId('name');
     expect(nameField.value).toBe('argo.AMS-Check');
@@ -990,11 +993,11 @@ describe('Tests for metric change', () => {
   test('Test that passive metric changeview renders properly', async () => {
     renderChangeView({ route: '/ui/metrics/org.apel.APEL-Pub' });
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric');
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
+
+    expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric');
 
     const nameField = screen.getByTestId('name');
     expect(nameField.value).toBe('org.apel.APEL-Pub');
@@ -1074,18 +1077,17 @@ describe('Tests for metric change', () => {
     expect(parentField).toBeDisabled()
 
     expect(screen.getByRole('button', { name: /history/i }).closest('a')).toHaveAttribute('href', '/ui/metrics/org.apel.APEL-Pub/history')
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
   })
 
   test('Test that passive metric public changeview renders properly', async () => {
     renderChangeView({ publicView: true, route: '/ui/public_metrics/org.apel.APEL-Pub' });
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /detail/i }).textContent).toBe('Metric details');
+      expect(screen.getByTestId("name")).toBeInTheDocument()
     })
+
+    expect(screen.getByRole('heading', { name: /detail/i }).textContent).toBe('Metric details');
 
     const nameField = screen.getByTestId('name');
     expect(nameField.value).toBe('org.apel.APEL-Pub');
@@ -1166,7 +1168,7 @@ describe('Tests for metric change', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change metric/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId("config.0.value"), { target: { value: '4' } });
@@ -1221,7 +1223,7 @@ describe('Tests for metric change', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const configVal1 = screen.getByTestId('config.0.value');
@@ -1286,7 +1288,7 @@ describe('Tests for metric change', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const configVal1 = screen.getByTestId('config.0.value');
@@ -1350,7 +1352,7 @@ describe('Tests for metric change', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }))
@@ -1378,7 +1380,7 @@ describe('Tests for metric change', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }))
@@ -1410,7 +1412,7 @@ describe('Tests for metric change', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }))
@@ -1459,7 +1461,7 @@ describe('Tests for metric change', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric');
+      expect(screen.getByTestId("dependency.0.key")).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name');
@@ -1578,11 +1580,11 @@ describe('Tests for metric history', () => {
   test('Test that version details page renders properly', async () => {
     renderVersionDetailsView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /argo/i }).textContent).toBe('argo.AMS-Check (2020-11-30 13:23:48)');
+      expect(screen.getByTestId("dependency.0.key")).toBeInTheDocument()
     })
+
+    expect(screen.getByRole('heading', { name: /argo/i }).textContent).toBe('argo.AMS-Check (2020-11-30 13:23:48)');
 
     const nameField = screen.getByTestId('name');
     const typeField = screen.getByTestId('mtype');
@@ -1674,11 +1676,12 @@ describe('Tests for metric history', () => {
   test('Test for metric compare versions view', async () => {
     renderCompareView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /compare/i }).textContent).toBe('Compare argo.AMS-Check');
+      expect(screen.getByRole("heading", { name: "name" })).toBeInTheDocument()
     })
+
+    expect(screen.getByRole('heading', { name: /compare/i }).textContent).toBe('Compare argo.AMS-Check');
+
     expect(screen.getByRole('heading', { name: 'name' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'probe version' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'type' })).not.toBeInTheDocument();

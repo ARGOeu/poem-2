@@ -10,7 +10,7 @@ devel-watch:
 	node_modules/.bin/webpack --config webpack.config.js --progress --mode development --watch
 
 devel-django-server:
-	docker exec -ti $(container_name) ./run-django-server.sh
+	docker exec -ti $(container_name) /home/user/run-django-server.sh
 
 devel-webpack-server:
 	node_modules/.bin/webpack-dev-server --config webpack.devserver.config.js --progress

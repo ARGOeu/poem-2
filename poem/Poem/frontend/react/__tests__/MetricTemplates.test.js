@@ -1,8 +1,7 @@
 import React from 'react';
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import { createMemoryHistory } from 'history';
-import { Route, Router } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { ListOfMetrics } from '../Metrics';
 import { Backend } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
@@ -46,6 +45,7 @@ const mockListOfMetricTemplates = [
     description: 'Some description of argo.AMS-Check metric template.',
     ostag: ['CentOS 6', 'CentOS 7'],
     tags: ['test_tag1', 'test_tag2'],
+    tenants: ["tenant1", "tenant2"],
     probeversion: 'ams-probe (0.1.12)',
     parent: '',
     probeexecutable: 'ams-probe',
@@ -76,6 +76,7 @@ const mockListOfMetricTemplates = [
     tags: ['internal'],
     probeversion: 'ams-publisher-probe (0.1.12)',
     ostag: ['CentOS 7'],
+    tenants: ["tenant1"],
     description: '',
     parent: '',
     probeexecutable: 'ams-publisher-probe',
@@ -106,6 +107,7 @@ const mockListOfMetricTemplates = [
     description: '',
     ostag: [],
     tags: [],
+    tenants: [],
     probeversion: '',
     parent: '',
     probeexecutable: '',
@@ -126,7 +128,6 @@ const mockTenantListOfMetricTemplates = [
   {
     id: '1',
     name: 'argo.AMS-Check',
-    importable: true,
     mtype: 'Active',
     description: 'Some description of argo.AMS-Check metric template.',
     ostag: ['CentOS 6', 'CentOS 7'],
@@ -157,7 +158,6 @@ const mockTenantListOfMetricTemplates = [
   {
     id: 3,
     name: 'argo.AMS-Publisher',
-    importable: false,
     mtype: 'Active',
     tags: ['internal'],
     probeversion: 'ams-publisher-probe (0.1.12)',
@@ -188,7 +188,6 @@ const mockTenantListOfMetricTemplates = [
   {
     id: 15,
     name: 'argo.POEM-API-MON',
-    importable: true,
     mtype: 'Active',
     tags: [],
     probeversion: 'poem-probe (0.1.12)',
@@ -213,7 +212,6 @@ const mockTenantListOfMetricTemplates = [
   {
     id: 2,
     name: 'org.apel.APEL-Pub',
-    importable: true,
     mtype: 'Passive',
     description: '',
     ostag: [],
@@ -574,20 +572,47 @@ const mockMetricTags = [
   }
 ]
 
+const mockTenants = [
+  {
+    name: "tenant1",
+    schema_name: "tenant1_schema",
+    domain_url: "tenant1.test.com",
+    created_on: "2023-08-23",
+    nr_metrics: 48,
+    nr_probes: 24,
+    combined: false
+  },
+  {
+    name: "tenant2",
+    schema_name: "tenant2_schema",
+    domain_url: "tenant2.test.com",
+    created_on: "2023-08-23",
+    nr_metrics: 12,
+    nr_probes: 7,
+    combined: true
+  },
+  {
+    name: "SuperPOEM Tenant",
+    schema_name: "public",
+    domain_url: "test.com",
+    created_on: "2023-08-23",
+    nr_metrics: 354, 
+    nr_probes: 111,
+    combined: false
+  }
+]
+
 
 function renderListView(publicView=undefined) {
   const route = `/ui/${publicView ? 'public_' : ''}metrictemplates`;
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   if (publicView)
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              render={props => <ListOfMetrics {...props} type='metrictemplates' publicView={true} />}
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <ListOfMetrics type='metrictemplates' publicView={ true } />
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -595,11 +620,9 @@ function renderListView(publicView=undefined) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              render = { props => <ListOfMetrics {...props} type='metrictemplates' /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <ListOfMetrics type="metrictemplates" />
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -608,16 +631,13 @@ function renderListView(publicView=undefined) {
 
 function renderTenantListView() {
   const route = '/ui/administration/metrictemplates';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history} >
-          <Route
-            render={props => <ListOfMetrics {...props} type='metrictemplates' isTenantSchema={true} />}
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <ListOfMetrics type='metrictemplates' isTenantSchema={true} />
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -629,18 +649,19 @@ function renderChangeView(options = {}) {
   const publicView = options.publicView ? options.publicView : false;
 
   const route = `/ui/${publicView ? 'public_' : ''}metrictemplates/${passive ? 'org.apel.APEL-Pub' : 'argo.AMS-Check'}`;
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   if (publicView)
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/public_metrictemplates/:name'
-              render={ props => <MetricTemplateComponent {...props} publicView={true} /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route
+                path="/ui/public_metrictemplates/:name"
+                element={ <MetricTemplateComponent publicView={true} /> }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -649,12 +670,14 @@ function renderChangeView(options = {}) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/metrictemplates/:name'
-              render={ props => <MetricTemplateComponent {...props} /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route
+                path='/ui/metrictemplates/:name'
+                element={ <MetricTemplateComponent /> }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -663,17 +686,13 @@ function renderChangeView(options = {}) {
 
 function renderAddView() {
   const route = '/ui/metrictemplates/add';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/metrictemplates/add'
-            render = { props => <MetricTemplateComponent {...props} addview={true} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <MetricTemplateComponent addview={ true } />
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -682,17 +701,18 @@ function renderAddView() {
 
 function renderCloneView(options = {passive: false}) {
   const route = `/ui/metrictemplates/${options.passive ? 'org.apel.APEL-Pub' : 'argo.AMS-Check'}/clone`
-  const history = createMemoryHistory({ initialEntries: [route] })
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/metrictemplates/:name/clone'
-            render={ props => <MetricTemplateComponent {...props} cloneview={true} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path="/ui/metrictemplates/:name/clone"
+              element={ <MetricTemplateComponent cloneview={true} /> }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -701,17 +721,18 @@ function renderCloneView(options = {passive: false}) {
 
 function renderTenantChangeView(options = { passive: false }) {
   const route = `/ui/administration/metrictemplates/${options.passive ? 'org.apel.APEL-Pub' : 'argo.AMS-Check'}`;
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/administration/metrictemplates/:name'
-            render={ props => <MetricTemplateComponent {...props} tenantview={true} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [route] }>
+          <Routes>
+            <Route
+              path="/ui/administration/metrictemplates/:name"
+              element={ <MetricTemplateComponent tenantview={true} /> }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -720,17 +741,18 @@ function renderTenantChangeView(options = { passive: false }) {
 
 function renderVersionDetailsView(options = { passive: false }) {
   const route = `/ui/metrictemplates/${options.passive ? 'org.apel.APEL-Pub' : 'argo.AMS-Check'}/history/${options.passive ? '20191209-092420' : '0.1.12'}`
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/metrictemplates/:name/history/:version'
-            render={ props => <MetricTemplateVersionDetails {...props} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path="/ui/metrictemplates/:name/history/:version"
+              element={ <MetricTemplateVersionDetails /> }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -752,6 +774,12 @@ describe('Test list of metric templates on SuperPOEM', () => {
 
             case '/api/v2/internal/public_metrictemplates':
               return Promise.resolve(mockListOfMetricTemplates)
+
+            case "/api/v2/internal/tenants":
+              return Promise.resolve(mockTenants)
+
+            case "/api/v2/internal/public_tenants":
+              return Promise.resolve(mockTenants)
 
             case '/api/v2/internal/mttypes':
               return Promise.resolve(['Active', 'Passive'])
@@ -782,36 +810,39 @@ describe('Test list of metric templates on SuperPOEM', () => {
   test('Test that listview renders properly', async () => {
     renderListView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /metric/i }).textContent).toBe('Select metric template to change')
+      // double column header length because search fields are also th
+      expect(screen.getAllByRole('columnheader')).toHaveLength(12)
     })
 
-    // double column header length because search fields are also th
-    expect(screen.getAllByRole('columnheader')).toHaveLength(10);
+    expect(screen.getByRole('heading', { name: /metric/i }).textContent).toBe('Select metric template to change')
+
     expect(screen.getByRole('columnheader', { name: 'Delete' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /name/i }).textContent).toBe('Name');
     expect(screen.getByRole('columnheader', { name: /probe/i }).textContent).toBe('Probe version');
     expect(screen.getByRole('columnheader', { name: /type/i }).textContent).toBe('Type');
     expect(screen.getByRole('columnheader', { name: /tag/i }).textContent).toBe('Tag');
+    expect(screen.getByRole("columnheader", { name: /tenants/i }).textContent).toBe("Tenants")
     expect(screen.getAllByPlaceholderText('Search')).toHaveLength(2);
-    expect(screen.getAllByRole('columnheader', { name: 'Show all' })).toHaveLength(2);
-    expect(screen.getAllByRole('option', { name: 'Show all' })).toHaveLength(2);
+    expect(screen.getAllByRole('columnheader', { name: 'Show all' })).toHaveLength(3);
+    expect(screen.getAllByRole('option', { name: 'Show all' })).toHaveLength(3);
     expect(screen.getByRole('option', { name: 'Active' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Passive' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'test_tag1' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'test_tag2' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'internal' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'deprecated' })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "tenant1" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "tenant2" })).toBeInTheDocument()
+    expect(screen.queryByRole("option", { name: "SuperPOEM Tenant" })).not.toBeInTheDocument()
     expect(screen.getAllByRole('row')).toHaveLength(52);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(47);
-    expect(screen.getByRole('row', { name: /ams-check/i }).textContent).toBe('argo.AMS-Checkams-probe (0.1.12)Activetest_tag1test_tag2')
-    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('argo.AMS-Publisherams-publisher-probe (0.1.12)Activeinternal')
+    expect(screen.getByRole('row', { name: /ams-check/i }).textContent).toBe('argo.AMS-Checkams-probe (0.1.12)Activetest_tag1test_tag2tenant1tenant2')
+    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('argo.AMS-Publisherams-publisher-probe (0.1.12)Activeinternaltenant1')
     expect(screen.getByTestId('checkbox-argo.AMS-Check')).toBeEnabled();
     expect(screen.getByTestId('checkbox-argo.AMS-Publisher')).toBeEnabled();
     expect(screen.getByTestId('checkbox-org.apel.APEL-Pub')).toBeEnabled();
-    expect(screen.getByRole('row', { name: /apel/i }).textContent).toBe('org.apel.APEL-PubPassivenone')
+    expect(screen.getByRole('row', { name: /apel/i }).textContent).toBe('org.apel.APEL-PubPassivenonenone')
     expect(screen.getByRole('link', { name: /argo.ams-check/i }).closest('a')).toHaveAttribute('href', '/ui/metrictemplates/argo.AMS-Check');
     expect(screen.getByRole('link', { name: /ams-probe/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-probe/history/0.1.12')
     expect(screen.getByRole('link', { name: /argo.ams-publisher/i }).closest('a')).toHaveAttribute('href', '/ui/metrictemplates/argo.AMS-Publisher');
@@ -824,33 +855,36 @@ describe('Test list of metric templates on SuperPOEM', () => {
   test('Test that public listview renders properly', async () => {
     renderListView(true);
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /metric/i }).textContent).toBe('Select metric template for details')
+      // double column header length because search fields are also th
+      expect(screen.getAllByRole('columnheader')).toHaveLength(12);
     })
 
-    // double column header length because search fields are also th
-    expect(screen.getAllByRole('columnheader')).toHaveLength(10);
+    expect(screen.getByRole('heading', { name: /metric/i }).textContent).toBe('Select metric template for details')
+
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /name/i }).textContent).toBe('Name');
     expect(screen.getByRole('columnheader', { name: /probe/i }).textContent).toBe('Probe version');
     expect(screen.getByRole('columnheader', { name: /type/i }).textContent).toBe('Type');
     expect(screen.getByRole('columnheader', { name: /tag/i }).textContent).toBe('Tag');
+    expect(screen.getByRole("columnheader", { name: /tenants/i }).textContent).toBe("Tenants")
     expect(screen.getAllByPlaceholderText('Search')).toHaveLength(2);
-    expect(screen.getAllByRole('columnheader', { name: 'Show all' })).toHaveLength(2);
-    expect(screen.getAllByRole('option', { name: 'Show all' })).toHaveLength(2);
+    expect(screen.getAllByRole('columnheader', { name: 'Show all' })).toHaveLength(3);
+    expect(screen.getAllByRole('option', { name: 'Show all' })).toHaveLength(3);
     expect(screen.getByRole('option', { name: 'Active' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Passive' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'test_tag1' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'test_tag2' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'internal' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'deprecated' })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "tenant1" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "tenant2" })).toBeInTheDocument()
+    expect(screen.queryByRole("option", { name: "SuperPOEM Tenant" })).not.toBeInTheDocument()
     expect(screen.getAllByRole('row')).toHaveLength(52);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(47);
-    expect(screen.getByRole('row', { name: /ams-check/i }).textContent).toBe('1argo.AMS-Checkams-probe (0.1.12)Activetest_tag1test_tag2')
-    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('2argo.AMS-Publisherams-publisher-probe (0.1.12)Activeinternal')
-    expect(screen.getByRole('row', { name: /apel/i }).textContent).toBe('3org.apel.APEL-PubPassivenone')
+    expect(screen.getByRole('row', { name: /ams-check/i }).textContent).toBe('1argo.AMS-Checkams-probe (0.1.12)Activetest_tag1test_tag2tenant1tenant2')
+    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('2argo.AMS-Publisherams-publisher-probe (0.1.12)Activeinternaltenant1')
+    expect(screen.getByRole('row', { name: /apel/i }).textContent).toBe('3org.apel.APEL-PubPassivenonenone')
     expect(screen.getByRole('link', { name: /argo.ams-check/i }).closest('a')).toHaveAttribute('href', '/ui/public_metrictemplates/argo.AMS-Check');
     expect(screen.getByRole('link', { name: /ams-probe/i }).closest('a')).toHaveAttribute('href', '/ui/public_probes/ams-probe/history/0.1.12')
     expect(screen.getByRole('link', { name: /argo.ams-publisher/i }).closest('a')).toHaveAttribute('href', '/ui/public_metrictemplates/argo.AMS-Publisher');
@@ -864,14 +898,14 @@ describe('Test list of metric templates on SuperPOEM', () => {
     renderListView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric template to change')
+      expect(screen.getAllByRole("columnheader")).toHaveLength(12)
     })
 
     fireEvent.change(screen.getAllByPlaceholderText('Search')[0], { target: { value: 'argo' } });
     expect(screen.getAllByRole('row')).toHaveLength(52);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(48);
-    expect(screen.getByRole('row', { name: /ams-check/i }).textContent).toBe('argo.AMS-Checkams-probe (0.1.12)Activetest_tag1test_tag2')
-    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('argo.AMS-Publisherams-publisher-probe (0.1.12)Activeinternal')
+    expect(screen.getByRole('row', { name: /ams-check/i }).textContent).toBe('argo.AMS-Checkams-probe (0.1.12)Activetest_tag1test_tag2tenant1tenant2')
+    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('argo.AMS-Publisherams-publisher-probe (0.1.12)Activeinternaltenant1')
     expect(screen.getByRole('link', { name: /argo.ams-check/i }).closest('a')).toHaveAttribute('href', '/ui/metrictemplates/argo.AMS-Check');
     expect(screen.getByRole('link', { name: /ams-probe/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-probe/history/0.1.12')
     expect(screen.getByRole('link', { name: /argo.ams-publisher/i }).closest('a')).toHaveAttribute('href', '/ui/metrictemplates/argo.AMS-Publisher');
@@ -880,7 +914,7 @@ describe('Test list of metric templates on SuperPOEM', () => {
     fireEvent.change(screen.getAllByDisplayValue('Show all')[1], { target: { value: 'internal' } })
     expect(screen.getAllByRole('row')).toHaveLength(52);
     expect(screen.getAllByRole('row', { name: '' })).toHaveLength(49);
-    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('argo.AMS-Publisherams-publisher-probe (0.1.12)Activeinternal')
+    expect(screen.getByRole('row', { name: /ams-publisher/i }).textContent).toBe('argo.AMS-Publisherams-publisher-probe (0.1.12)Activeinternaltenant1')
     expect(screen.getByRole('link', { name: /argo.ams-publisher/i }).closest('a')).toHaveAttribute('href', '/ui/metrictemplates/argo.AMS-Publisher');
     expect(screen.getByRole('link', { name: /ams-publisher-probe/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-publisher-probe/history/0.1.12')
   })
@@ -895,7 +929,7 @@ describe('Test list of metric templates on SuperPOEM', () => {
     renderListView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric template to change')
+      expect(screen.getAllByRole("columnheader")).toHaveLength(12)
     })
 
     fireEvent.click(screen.getByTestId('checkbox-argo.AMS-Check'));
@@ -930,7 +964,7 @@ describe('Test list of metric templates on SuperPOEM', () => {
     renderListView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /metric/i }).textContent).toBe('Select metric template to change')
+      expect(screen.getAllByRole("columnheader")).toHaveLength(12)
     })
 
     fireEvent.change(screen.getAllByPlaceholderText('Search')[0], { target: { value: 'argo' } });
@@ -959,7 +993,7 @@ describe('Test list of metric templates on SuperPOEM', () => {
     renderListView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /metric/i }).textContent).toBe('Select metric template to change')
+      expect(screen.getAllByRole("columnheader")).toHaveLength(12)
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -983,7 +1017,7 @@ describe('Test list of metric templates on SuperPOEM', () => {
     renderListView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric template to change')
+      expect(screen.getAllByRole("columnheader")).toHaveLength(12)
     })
 
     fireEvent.click(screen.getByTestId('checkbox-argo.AMS-Check'));
@@ -1025,7 +1059,7 @@ describe('Test list of metric templates on SuperPOEM', () => {
     renderListView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric template to change')
+      expect(screen.getAllByRole("columnheader")).toHaveLength(12)
     })
 
     fireEvent.click(screen.getByTestId('checkbox-argo.AMS-Check'));
@@ -1061,7 +1095,7 @@ describe('Test list of metric templates on SuperPOEM', () => {
     renderListView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric template to change')
+      expect(screen.getAllByRole("columnheader")).toHaveLength(12)
     })
 
     fireEvent.click(screen.getByTestId('checkbox-argo.AMS-Check'));
@@ -1140,9 +1174,11 @@ describe('Test list of metric templates on SuperPOEM if empty list', () => {
     renderListView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric template to change')
+      expect(screen.getAllByRole("columnheader")).toHaveLength(10)
     })
-    expect(screen.getAllByRole('columnheader')).toHaveLength(10);
+
+    expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric template to change')
+
     expect(screen.getByRole('columnheader', { name: 'Delete' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /name/i }).textContent).toBe('Name');
     expect(screen.getByRole('columnheader', { name: /probe/i }).textContent).toBe('Probe version');
@@ -1167,9 +1203,11 @@ describe('Test list of metric templates on SuperPOEM if empty list', () => {
     renderListView(true);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric template for details')
+      expect(screen.getAllByRole('columnheader')).toHaveLength(10);
     })
-    expect(screen.getAllByRole('columnheader')).toHaveLength(10);
+
+    expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric template for details')
+
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /name/i }).textContent).toBe('Name');
     expect(screen.getByRole('columnheader', { name: /probe/i }).textContent).toBe('Probe version');
@@ -1226,14 +1264,12 @@ describe('Test list of metric templates on tenant POEM', () => {
   test('Test that listview renders properly', async () => {
     renderTenantListView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /metric/i }).textContent).toBe('Select metric template for details')
+      expect(screen.getAllByRole('columnheader')).toHaveLength(12);
     })
 
-    // double column header length because search fields are also th
-    expect(screen.getAllByRole('columnheader')).toHaveLength(12);
+    expect(screen.getByRole('heading', { name: /metric/i }).textContent).toBe('Select metric template for details')
+
     expect(screen.getByRole('columnheader', { name: "#" })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /name/i }).textContent).toBe('Name');
     expect(screen.getByRole('columnheader', { name: /probe/i }).textContent).toBe('Probe version');
@@ -1278,7 +1314,7 @@ describe('Test list of metric templates on tenant POEM', () => {
     renderTenantListView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /metric/i}).textContent).toBe('Select metric template for details')
+      expect(screen.getAllByRole("columnheader")).toHaveLength(12)
     })
 
     fireEvent.change(screen.getAllByPlaceholderText('Search')[0], { target: { value: 'argo' } });
@@ -1371,11 +1407,11 @@ describe('Test metric template changeview on SuperPOEM', () => {
   test('Test that page renders properly', async () => {
     renderChangeView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template');
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
+
+    expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template');
 
     const nameField = screen.getByTestId('name');
     const typeField = screen.getByText('Active')
@@ -1500,18 +1536,17 @@ describe('Test metric template changeview on SuperPOEM', () => {
 
     expect(screen.getByRole('button', { name: /history/i }).closest('a')).toHaveAttribute('href', '/ui/metrictemplates/argo.AMS-Check/history');
     expect(screen.getByRole('button', { name: /clone/i }).closest('a')).toHaveAttribute('href', '/ui/metrictemplates/argo.AMS-Check/clone');
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
   })
 
   test('Test that public changeview for active metric template renders properly', async () => {
     renderChangeView({ publicView: true });
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /metric template/i }).textContent).toBe('Metric template details');
+      expect(screen.getByTestId("name")).toBeInTheDocument()
     })
+
+    expect(screen.getByRole('heading', { name: /metric template/i }).textContent).toBe('Metric template details');
 
     const nameField = screen.getByTestId('name');
     const typeField = screen.getByTestId('mtype');
@@ -1659,7 +1694,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name');
@@ -1734,7 +1769,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId("config.0.value"), { target: { value: '5' } });
@@ -1798,7 +1833,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByTestId('attributes.addnew'));
@@ -1868,7 +1903,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('dependency.0.key'), { target: { value: 'test.AMS-Check' } });
@@ -1937,7 +1972,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('parameter.0.value'), { target: { value: 'TEST' } });
@@ -2003,7 +2038,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByTestId("flags.addnew"))
@@ -2073,7 +2108,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: 'argo.AMS-Check-new' } })
@@ -2162,7 +2197,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change metric/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: 'argo.AMS-Check-new' } })
@@ -2255,7 +2290,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     await selectEvent.select(screen.getByText("ams-probe (0.1.12)"), 'ams-probe-new (0.1.13)')
@@ -2320,7 +2355,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     await selectEvent.select(screen.getByText("ams-probe (0.1.12)"), 'ams-probe-new (0.1.13)')
@@ -2383,7 +2418,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     await selectEvent.select(screen.getByText("ams-probe (0.1.12)"), 'ams-probe-new (0.1.13)')
@@ -2443,10 +2478,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
   test('Test that passive metric template page renders properly', async () => {
     renderChangeView({ passive: true });
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name');
@@ -2538,10 +2571,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
   test('Test that public page for passive metric template renders properly', async () => {
     renderChangeView({ passive: true, publicView: true });
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /metric template/i }).textContent).toBe('Metric template details');
+      expect(screen.getByTestId("name")).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name');
@@ -2643,10 +2674,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
   test('Test changing passive/active metric template', async () => {
     renderChangeView({ passive: true });
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name');
@@ -2757,10 +2786,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
   test('Test changing active/passive metric template', async () => {
     renderChangeView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name');
@@ -2934,10 +2961,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
 
     renderChangeView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric template');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     await selectEvent.select(screen.getByText("Active"), 'Passive')
@@ -3018,11 +3043,11 @@ describe('Test metric template addview on SuperPOEM', () => {
   test('Test that page renders properly', async () => {
     renderAddView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /add metric/i }).textContent).toBe('Add metric template');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
+
+    expect(screen.getByRole('heading', { name: /add metric/i }).textContent).toBe('Add metric template');
 
     const nameField = screen.getByTestId('name');
     const typeField = screen.getByText('Active');
@@ -3124,7 +3149,6 @@ describe('Test metric template addview on SuperPOEM', () => {
 
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
   })
 
@@ -3132,7 +3156,7 @@ describe('Test metric template addview on SuperPOEM', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /add metric/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
@@ -3195,7 +3219,7 @@ describe('Test metric template addview on SuperPOEM', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /add metric/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
@@ -3257,7 +3281,7 @@ describe('Test metric template addview on SuperPOEM', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /add metric/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
@@ -3425,7 +3449,7 @@ describe('Test metric template addview on SuperPOEM', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /add metric/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
@@ -3592,7 +3616,7 @@ describe('Test metric template addview on SuperPOEM', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /add metric/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
@@ -3759,7 +3783,7 @@ describe('Test metric template addview on SuperPOEM', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /add metric/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     expect(screen.getByTestId("metric-form")).toHaveFormValues({
@@ -3930,7 +3954,7 @@ describe('Test metric template addview on SuperPOEM', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /add metric/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: 'argo.AMSPublisher-Check' } })
@@ -4020,7 +4044,7 @@ describe('Test metric template addview on SuperPOEM', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /add metric/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     await selectEvent.select(screen.getByLabelText("Tags:"), 'test_tag1');
@@ -4135,7 +4159,7 @@ describe('Test metric template addview on SuperPOEM', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /add metric/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: 'argo.AMSPublisher-Check' } })
@@ -4232,7 +4256,7 @@ describe('Test metric template addview on SuperPOEM', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /add metric/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: 'argo.AMS-Publisher' } })
@@ -4322,7 +4346,7 @@ describe('Test metric template addview on SuperPOEM', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /add metric/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: 'argo.AMS-Publisher' } })
@@ -4465,10 +4489,8 @@ describe('Test metric template cloneview on SuperPOEM', () => {
   test('Test that page renders properly', async () => {
     renderCloneView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /clone metric/i }).textContent).toBe('Clone metric template');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name');
@@ -4582,7 +4604,7 @@ describe('Test metric template cloneview on SuperPOEM', () => {
     renderCloneView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /clone metric/i }).textContent).toBe('Clone metric template');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name');
@@ -4648,7 +4670,7 @@ describe('Test metric template cloneview on SuperPOEM', () => {
     renderCloneView({ passive: true });
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /clone metric/i }).textContent).toBe('Clone metric template');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name');
@@ -4706,7 +4728,7 @@ describe('Test metric template cloneview on SuperPOEM', () => {
     renderCloneView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /clone metric/i }).textContent).toBe('Clone metric template')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('config.1.value'), { target: { value: '80' } });
@@ -4772,7 +4794,7 @@ describe('Test metric template cloneview on SuperPOEM', () => {
     renderCloneView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /clone metric/i }).textContent).toBe('Clone metric template')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('config.1.value'), { target: { value: '80' } });
@@ -4866,10 +4888,8 @@ describe('Test metric template detail view on tenant POEM', () => {
   test('Test that page renders properly', async () => {
     renderTenantChangeView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /metric template/i }).textContent).toBe('Metric template details');
+      expect(screen.getByTestId("name")).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name');
@@ -5002,7 +5022,7 @@ describe('Test metric template version detail view', () => {
     renderVersionDetailsView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /ams-check/i }).textContent).toBe('argo.AMS-Check [ams-probe (0.1.12)]');
+      expect(screen.getByTestId("dependency.0.key")).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name');

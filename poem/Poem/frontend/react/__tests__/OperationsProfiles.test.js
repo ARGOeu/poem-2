@@ -1,8 +1,7 @@
 import React from 'react';
-import '@testing-library/jest-dom/extend-expect';
+import '@testing-library/jest-dom';
 import { render, screen, waitFor, within } from '@testing-library/react';
-import { createMemoryHistory } from 'history';
-import { Route, Router } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { OperationsProfileDetails, OperationsProfilesList } from '../OperationsProfiles';
 import { WebApi } from '../DataManager';
@@ -269,22 +268,18 @@ const mockOperationsProfiles = [
 
 function renderListView(publicView=undefined) {
   const route = `/ui/${publicView ? 'public_' : ''}operationsprofiles`;
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   if (publicView)
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              render={ props => <OperationsProfilesList
-                {...props}
-                publicView={true}
-                webapioperations={'https://mock.operations.com'}
-                webapitoken={'token'}
-              /> }
+          <MemoryRouter initialEntries={ [ route ] }>
+            <OperationsProfilesList
+              publicView={ true }
+              webapioperations="https://mock.operations.com"
+              webapitoken="token"
             />
-          </Router>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -293,16 +288,12 @@ function renderListView(publicView=undefined) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              render={ props => <OperationsProfilesList
-                {...props}
-                webapioperations={'https://mock.operations.com'}
-                webapitoken={'token'}
-                />
-              }
+          <MemoryRouter initialEntries={ [ route ] }>
+            <OperationsProfilesList
+              webapioperations="https://mock.operations.com"
+              webapitoken="token"
             />
-          </Router>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -311,23 +302,24 @@ function renderListView(publicView=undefined) {
 
 function renderDetailsView(publicView=undefined) {
   const route = `/ui/${publicView ? 'public_' : ''}operationsprofiles/egi_ops`;
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   if (publicView)
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/public_operationsprofiles/:name'
-              render={ props => <OperationsProfileDetails
-                {...props}
-                publicView={true}
-                webapioperations={'https://mock.operations.com'}
-                webapitoken={'token'}
-              /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route
+                path="/ui/public_operationsprofiles/:name"
+                element={ <OperationsProfileDetails
+                  publicView={ true }
+                  webapioperations="https://mock.operations.com"
+                  webapitoken="token"
+                  />
+                }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -336,16 +328,19 @@ function renderDetailsView(publicView=undefined) {
     return {
       ...render(
         <QueryClientProvider client={queryClient}>
-          <Router history={history}>
-            <Route
-              path='/ui/operationsprofiles/:name'
-              render={ props => <OperationsProfileDetails
-                {...props}
-                webapioperations={'https://mock.operations.com'}
-                webapitoken={'token'}
-              /> }
-            />
-          </Router>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <Routes>
+              <Route
+                path="/ui/operationsprofiles/:name"
+                element={ 
+                  <OperationsProfileDetails
+                    webapioperations="https://mock.operations.com"
+                    webapitoken="token"
+                  /> 
+                }
+              />
+            </Routes>
+          </MemoryRouter>
         </QueryClientProvider>
       )
     }
@@ -364,13 +359,12 @@ describe('Test list of operations profiles', () => {
   test('Test that page renders properly', async () => {
     renderListView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Select operations profile for details')
+      expect(screen.getAllByRole('columnheader')).toHaveLength(3);
     })
 
-    expect(screen.getAllByRole('columnheader')).toHaveLength(3);
+    expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Select operations profile for details')
+
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Name' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Description' })).toBeInTheDocument();
@@ -384,13 +378,12 @@ describe('Test list of operations profiles', () => {
   test('Test that public page renders properly', async () => {
     renderListView(true);
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Select operations profile for details')
+      expect(screen.getAllByRole('columnheader')).toHaveLength(3);
     })
 
-    expect(screen.getAllByRole('columnheader')).toHaveLength(3);
+    expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Select operations profile for details')
+
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Name' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Description' })).toBeInTheDocument();
@@ -415,11 +408,11 @@ describe('Tests for operations profiles detail view', () => {
   test('Test that page renders properly', async () => {
     renderDetailsView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Operations profile details')
+      expect(screen.getByTestId("name")).toBeInTheDocument()
     })
+
+    expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Operations profile details')
 
     expect(screen.getAllByRole('table')).toHaveLength(4);
 
@@ -503,11 +496,11 @@ describe('Tests for operations profiles detail view', () => {
   test('Test that public page renders properly', async () => {
     renderDetailsView(true);
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Operations profile details')
+      expect(screen.getByTestId("name")).toBeInTheDocument()
     })
+      
+    expect(screen.getByRole('heading', { name: /profile/i }).textContent).toBe('Operations profile details')
 
     expect(screen.getAllByRole('table')).toHaveLength(4);
 

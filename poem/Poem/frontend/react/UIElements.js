@@ -7,9 +7,6 @@ import {
   BreadcrumbItem,
   Button,
   ButtonToolbar,
-  Card,
-  CardBody,
-  CardHeader,
   Col,
   Collapse,
   Container,
@@ -38,9 +35,8 @@ import {
   Input,
   FormFeedback
 } from 'reactstrap';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import ArgoLogo from './argologo_color.svg';
-import ArgoLogoAnim from './argologo_anim.svg';
 import EULogo from './eu.png';
 import EOSCLogo from './eosc.png';
 import './UIElements.css';
@@ -74,7 +70,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { NotificationManager } from 'react-notifications';
 import { Backend } from './DataManager';
-import ReactDiffViewer from 'react-diff-viewer';
+import ReactDiffViewer from 'react-diff-viewer-continued';
 import { CookiePolicy } from './CookiePolicy';
 import { useTable, usePagination, useFilters } from 'react-table';
 import { Helmet } from 'react-helmet';
@@ -82,7 +78,7 @@ import Select, { components } from 'react-select';
 import CreatableSelect from 'react-select/creatable';
 import { Controller, useFormContext } from 'react-hook-form';
 import { ErrorMessage } from '@hookform/error-message';
-
+import { HistoryPlaceholder } from './Placeholders';
 
 var list_pages = ['administration', 'probes',
                   'metrics', 'reports', 'servicetypes', 'metricprofiles', 'aggregationprofiles',
@@ -365,8 +361,7 @@ export const SearchField = ({field, forwardedRef=undefined, ...rest}) =>
   </div>
 
 
-const doLogout = async (history, onLogout) =>
-{
+const doLogout = async (navigate, onLogout) => {
   let cookies = new Cookies();
 
   onLogout();
@@ -383,7 +378,7 @@ const doLogout = async (history, onLogout) =>
       'Referer': 'same-origin'
     }});
     if (response.ok)
-      history.push('/ui/login');
+      navigate('/ui/login');
 }
 
 
@@ -405,8 +400,9 @@ export const ModalAreYouSure = ({isOpen, toggle, title, msg, onYes, callbackOnYe
 )
 
 
-export const CustomBreadcrumb = ({location, publicView=false}) =>
+export const CustomBreadcrumb = ({publicView=false}) =>
 {
+  const location = useLocation();
   let spliturl = new Array()
   let breadcrumb_elements = new Array()
   let two_level = new Object()
@@ -635,10 +631,11 @@ const UserDetailsToolTip = ({userDetails, isTenantSchema, publicView}) =>
 }
 
 
-export const NavigationBar = ({history, onLogout, isOpenModal, toggle,
+export const NavigationBar = ({onLogout, isOpenModal, toggle,
   titleModal, msgModal, userDetails, isTenantSchema, publicView}) =>
 {
   const [tooltipOpen, setTooltipOpen] = useState(false);
+  let navigate = useNavigate();
 
   return (
     <React.Fragment>
@@ -647,7 +644,7 @@ export const NavigationBar = ({history, onLogout, isOpenModal, toggle,
         toggle={toggle}
         title={titleModal}
         msg={msgModal}
-        onYes={() => doLogout(history, onLogout)} />
+        onYes={() => doLogout(navigate, onLogout)} />
       <Navbar expand="md" id="argo-nav" className="border rounded">
         <NavbarBrand className="text-light">
           <img src={ArgoLogo} alt="ARGO logo" className="img-responsive"/>
@@ -689,8 +686,9 @@ export const NavigationBar = ({history, onLogout, isOpenModal, toggle,
 }
 
 
-export const NavigationLinks = ({location, isTenantSchema, userDetails}) => {
+export const NavigationLinks = ({isTenantSchema, userDetails}) => {
   var data = undefined;
+  const location = useLocation();
 
   !isTenantSchema ? data = admin_list_pages : data = list_pages
   if (!userDetails.is_superuser)
@@ -714,7 +712,9 @@ export const NavigationLinks = ({location, isTenantSchema, userDetails}) => {
 }
 
 
-export const NavigationAbout = ({ location, poemVersion, termsLink, privacyLink }) => {
+export const NavigationAbout = ({ poemVersion, termsLink, privacyLink }) => {
+  const location = useLocation();
+
   return (
     <React.Fragment>
       <div className="bg-white border-left border-right ps-3 mt-0 pt-5 text-uppercase">
@@ -843,23 +843,6 @@ export const Footer = ({ termsLink, privacyLink, loginPage=false, publicPage=fal
 }
 
 
-export const LoadingAnim = () =>
-(
-  <Row className="ms-2 me-1 border rounded" style={{height: '90%', backgroundColor: 'white'}}>
-    <Col className="d-flex flex-column align-items-center align-self-center" md={{size: 8, offset: 2}}>
-      <Card className="text-center border-0">
-        <CardHeader className="bg-light">
-          <h4 className="text-dark">Loading data...</h4>
-        </CardHeader>
-        <CardBody>
-          <img src={ArgoLogoAnim} alt="ARGO logo anim" className="img-responsive" height="400px"/>
-        </CardBody>
-      </Card>
-    </Col>
-  </Row>
-)
-
-
 export const NotifyOk = ({msg='', title='', callback=undefined}) => {
   NotificationManager.success(msg,
     title,
@@ -979,7 +962,7 @@ export const BaseArgoView = ({resourcename='', location=undefined,
                   addnew ?
                     <h2 className="ms-3 mt-1 mb-4">{ title ? title : `Select ${resourcename} to change`}</h2>
                   :
-                    <h2 className='ms-3 mt-1 mb-4'>{`Select ${resourcename} for details`}</h2>
+                    <h2 className='ms-3 mt-1 mb-4'>{title ? title : `Select ${resourcename} for details`}</h2>
                 }
                 {
                   (addnew && addperm) &&
@@ -1076,8 +1059,8 @@ export const DropdownFilterComponent = ({value, onChange, data}) => (
 
 
 export const HistoryComponent = (props) => {
-  const name = props.match.params.name;
-  const history = props.history;
+  let { name } = useParams();  
+  const navigate = useNavigate();
   const publicView = props.publicView
   const tenantView = props.tenantView;
   const obj = props.object;
@@ -1118,8 +1101,11 @@ export const HistoryComponent = (props) => {
     fetchData();
   }, [obj, name, apiUrl]);
 
-  if (loading)
-    return (<LoadingAnim />);
+  if (loading) {
+    return (
+      <HistoryPlaceholder />
+    )
+  }
 
   else if (error)
     return (<ErrorComponent error={error}/>);
@@ -1139,7 +1125,7 @@ export const HistoryComponent = (props) => {
                   <Button
                       color='info'
                       onClick={() =>
-                        history.push(
+                        navigate(
                           `${compareUrl}/compare/${compare1}/${compare2}`,
                       )
                       }
@@ -1627,8 +1613,9 @@ export const ProfilesListTable = ({ columns, data, type }) => {
 };
 
 
-export const DocumentTitle = ({ location, publicView=false }) => {
+export const DocumentTitle = ({ publicView=false }) => {
   let url = new Array();
+  const location = useLocation();
 
   if (!publicView)
     url = location.pathname.split('/');

@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Backend } from './DataManager';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import {
-  LoadingAnim,
   BaseArgoView,
   NotifyOk,
   NotifyError,
@@ -31,7 +30,12 @@ import { fetchYumRepos, fetchOStags } from './QueryFunctions';
 import { Controller, useForm } from 'react-hook-form';
 import { ErrorMessage } from '@hookform/error-message';
 import { yupResolver } from '@hookform/resolvers/yup';
-
+import { 
+  ChangeViewPlaceholder,
+  InputPlaceholder,
+  ListViewPlaceholder,
+  TextAreaPlaceholder
+} from './Placeholders';
 
 const RepoSchema = Yup.object().shape({
   name: Yup.string()
@@ -44,7 +48,7 @@ const RepoSchema = Yup.object().shape({
 
 
 export const YumRepoList = (props) => {
-  const location = props.location;
+  const location = useLocation();
   const isTenantSchema = props.isTenantSchema;
 
   const { data: repos, error: errorRepos, status: statusRepos } = useQuery(
@@ -88,7 +92,12 @@ export const YumRepoList = (props) => {
   ], [isTenantSchema, tags]);
 
   if (statusRepos === 'loading' || statusTags === 'loading')
-    return (<LoadingAnim/>);
+    return (
+      <ListViewPlaceholder 
+        resourcename="YUM repo"
+        infoview={ isTenantSchema }
+      />
+      )
 
   else if (statusRepos === 'error')
     return (<ErrorComponent error={errorRepos}/>);
@@ -120,9 +129,10 @@ export const YumRepoList = (props) => {
 };
 
 
-const YumRepoForm = ({ repo, tags, name, tag, addview, cloneview, disabled, location, history }) => {
+const YumRepoForm = ({ repo, tags, name, tag, addview, cloneview, disabled, location }) => {
   const backend = new Backend()
   const queryClient = useQueryClient()
+  const navigate = useNavigate();
 
   const { control, getValues, setValue, handleSubmit, trigger, formState: { errors } } = useForm({
     defaultValues: {
@@ -176,7 +186,7 @@ const YumRepoForm = ({ repo, tags, name, tag, addview, cloneview, disabled, loca
           NotifyOk({
             msg: 'YUM repo successfully added',
             title: 'Added',
-            callback: () => history.push('/ui/yumrepos')
+            callback: () => navigate('/ui/yumrepos')
           })
         },
         onError: (error) => {
@@ -197,7 +207,7 @@ const YumRepoForm = ({ repo, tags, name, tag, addview, cloneview, disabled, loca
           NotifyOk({
             msg: 'YUM repo successfully changed',
             title: 'Changed',
-            callback: () => history.push('/ui/yumrepos')
+            callback: () => navigate('/ui/yumrepos')
           })
         },
         onError: (error) => {
@@ -217,7 +227,7 @@ const YumRepoForm = ({ repo, tags, name, tag, addview, cloneview, disabled, loca
         NotifyOk({
           msg: 'YUM repo successfully deleted',
           title: 'Deleted',
-          callback: () => history.push('/ui/yumrepos')
+          callback: () => navigate('/ui/yumrepos')
         })
       },
       onError: (error) => {
@@ -420,18 +430,18 @@ const YumRepoForm = ({ repo, tags, name, tag, addview, cloneview, disabled, loca
 
 
 export const YumRepoComponent = (props) => {
-  var name = undefined;
+  let { name } = useParams()
   var tag = undefined;
-  if (props.match.params.name) {
-    tag = props.match.params.name.split('-')[props.match.params.name.split('-').length - 1];
-    name = props.match.params.name.replace('-' + tag, '');
+
+  if (name) {
+    tag = name.split('-')[name.split('-').length - 1];
+    name = name.replace('-' + tag, '');
   }
 
   const addview = props.addview;
   const cloneview = props.cloneview;
   const disabled = props.disabled;
-  const location = props.location;
-  const history = props.history;
+  const location = useLocation();
 
   const backend = new Backend();
 
@@ -456,7 +466,54 @@ export const YumRepoComponent = (props) => {
   )
 
   if (statusRepo === 'loading' || statusTags === 'loading')
-    return (<LoadingAnim/>)
+    return (
+      <ChangeViewPlaceholder
+        resourcename={ `${ disabled ? 'YUM repo details' : 'YUM repo' }` }
+        addview={ addview }
+        cloneview={ cloneview }
+        infoview={ disabled }
+        buttons={ !addview && !cloneview && !disabled && <Button color="secondary" disabled>Clone</Button> }
+      >
+        <FormGroup>
+          <Row>
+            <Col md={6}>
+              <InputPlaceholder />
+              <FormText color='muted'>
+                Name of YUM repo file.
+              </FormText>
+            </Col>
+            <Col md={2}>
+              <InputPlaceholder />
+              <FormText color='muted'>
+                OS tag.
+              </FormText>
+            </Col>
+          </Row>
+        </FormGroup>
+        <FormGroup>
+          <Row>
+            <Col md={8}>
+              <Label>File content</Label>
+              <TextAreaPlaceholder height="494px" />
+              <FormText color='muted'>
+                Content of the repo file.
+              </FormText>
+            </Col>
+          </Row>
+        </FormGroup>
+        <FormGroup>
+          <Row>
+            <Col md={8}>
+              <Label>Description</Label>
+              <TextAreaPlaceholder />
+              <FormText color='muted'>
+                Short free text description.
+              </FormText>
+            </Col>
+          </Row>
+        </FormGroup>
+      </ChangeViewPlaceholder>
+    )
 
   else if (statusRepo === 'error')
     return (<ErrorComponent error={errorRepo}/>)
@@ -474,7 +531,6 @@ export const YumRepoComponent = (props) => {
         addview={addview}
         cloneview={cloneview}
         disabled={disabled}
-        history={history}
         location={location}
       />
     )

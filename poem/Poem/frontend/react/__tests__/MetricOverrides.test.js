@@ -1,9 +1,8 @@
 import React from "react"
-import "@testing-library/jest-dom/extend-expect"
+import "@testing-library/jest-dom"
 import { QueryClient, QueryClientProvider, setLogger } from "react-query"
-import { createMemoryHistory } from "history"
 import { fireEvent, render, screen, waitFor } from "@testing-library/react"
-import { Route, Router } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { Backend } from "../DataManager"
 import { MetricOverrideChange, MetricOverrideList } from "../MetricOverrides"
 import { NotificationManager } from "react-notifications"
@@ -110,17 +109,13 @@ const mockActiveSession = {
 
 function renderListView() {
   const route = "/ui/administration/metricoverrides"
-  const history = createMemoryHistory({ initialEntries: [route] })
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path="/ui/administration/metricoverrides"
-            render={ props => <MetricOverrideList {...props} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <MetricOverrideList />
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -129,20 +124,13 @@ function renderListView() {
 
 function renderAddView() {
   const route = "/ui/administration/metricoverrides/add"
-  const history = createMemoryHistory({ initialEntries: [route] })
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/administration/metricoverrides/add'
-            render={ props => <MetricOverrideChange
-              {...props}
-              addview={true}
-            /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <MetricOverrideChange addview={ true } />
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -151,17 +139,18 @@ function renderAddView() {
 
 function renderChangeView() {
   const route = "/ui/administration/metricoverrides/local"
-  const history = createMemoryHistory({ initialEntries: [route] })
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path="/ui/administration/metricoverrides/:name"
-            render={ props => <MetricOverrideChange {...props} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path="/ui/administration/metricoverrides/:name"
+              element={ <MetricOverrideChange /> }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -181,13 +170,12 @@ describe("Tests for metric overrides listview", () => {
   test("Test that page renders properly", async () => {
     renderListView()
 
-    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
-
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /override/i }).textContent).toBe("Select metric configuration override to change")
+      expect(screen.getAllByRole("columnheader")).toHaveLength(2)
     })
 
-    expect(screen.getAllByRole("columnheader")).toHaveLength(2)
+    expect(screen.getByRole("heading", { name: /override/i }).textContent).toBe("Select metric configuration override to change")
+
     expect(screen.getByRole('columnheader', { name: '#' })).toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: 'Name' })).toBeInTheDocument()
 
@@ -220,11 +208,12 @@ describe("Tests for metric configuration overrides addview", () => {
 
   test("Test that page renders properly", async () => {
     renderAddView()
-    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /override/i }).textContent).toBe("Add metric configuration override")
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
+
+    expect(screen.getByRole("heading", { name: /override/i }).textContent).toBe("Add metric configuration override")
 
     const nameField = screen.getByTestId("name")
 
@@ -272,7 +261,6 @@ describe("Tests for metric configuration overrides addview", () => {
 
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
   })
 
@@ -280,7 +268,7 @@ describe("Tests for metric configuration overrides addview", () => {
     renderAddView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /override/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
 
     const nameField = screen.getByTestId("name")
@@ -298,29 +286,44 @@ describe("Tests for metric configuration overrides addview", () => {
       fireEvent.change(nameField, { target: { value: "" } })
     })
 
-    expect(screen.queryByText(requiredMsg)).toBeInTheDocument()
-    expect(screen.queryByText(alphanumericMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(requiredMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(alphanumericMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => {
       fireEvent.change(nameField, { target: { value: "1consumer" } })
     })
 
-    expect(screen.queryByText(requiredMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(alphanumericMsg)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(requiredMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(alphanumericMsg)).toBeInTheDocument()
+    })
 
     await waitFor(() => {
       fireEvent.change(nameField, { target: { value: "ItSR3tard3d" } })
     })
 
-    expect(screen.queryByText(requiredMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(alphanumericMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(requiredMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(alphanumericMsg)).not.toBeInTheDocument()
+    })
   })
 
   test("Test add global attributes", async () => {
     renderAddView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /override/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
 
     const attrMsg = "Attribute can contain alphanumeric characters, dash, underscore and dot, but must always begin with a letter"
@@ -354,18 +357,33 @@ describe("Tests for metric configuration overrides addview", () => {
       "metricParameters.0.value": "",
     })
 
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("globalAttributes.0.attribute"), { target: { value: "NAGIOS_ACTUAL_HOST_CERT" } }))
 
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("globalAttributes.0.value"), { target: { value: "/etc/nagios/globus/cert.pem" } }))
 
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
       name: "local",
@@ -397,18 +415,33 @@ describe("Tests for metric configuration overrides addview", () => {
       "metricParameters.0.value": "",
     })
 
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("globalAttributes.1.value"), { target: { value: "/etc/nagios/globus/cert.key" } }))
 
-    expect(screen.queryByText(attrMsg)).toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("globalAttributes.1.attribute"), { target: { value: "NAGIOS_ACTUAL_HOST_KEY" } }))
 
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
       name: "local",
@@ -425,18 +458,33 @@ describe("Tests for metric configuration overrides addview", () => {
       "metricParameters.0.value": "",
     })
 
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("globalAttributes.1.value"), { target: { value: "" } } ))
 
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("globalAttributes.1.value"), { target: { value: "/etc/nagios/globus/cert.key" } }))
 
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
       name: "local",
@@ -455,13 +503,23 @@ describe("Tests for metric configuration overrides addview", () => {
 
     await waitFor(() => fireEvent.click(screen.getByTestId("globalAttributes.1.remove")))
 
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.click(screen.getByTestId("globalAttributes.0.remove")))
 
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
       name: "local",
@@ -480,7 +538,7 @@ describe("Tests for metric configuration overrides addview", () => {
     renderAddView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /override/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
 
     const hostnameMsg = "Invalid hostname"
@@ -504,15 +562,31 @@ describe("Tests for metric configuration overrides addview", () => {
 
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.0.hostname"), { target: { value: "foo.bar.hr" } }))
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrMsg)).toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.0.attribute"), { target: { value: "FOOBAR" } }))
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.0.value"), { target: { value: "foo-bar" } }))
 
@@ -529,9 +603,17 @@ describe("Tests for metric configuration overrides addview", () => {
       "metricParameters.0.value": "",
     })
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.click(screen.getByTestId("hostAttributes.0.add")))
 
@@ -551,39 +633,87 @@ describe("Tests for metric configuration overrides addview", () => {
       "metricParameters.0.value": "",
     })
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+    
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.1.attribute"), { target: { value: "ATTRIBUTE" } }))
 
-    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.1.hostname"), { target: { value: "-hostnamecom" } }))
 
-    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+    
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.1.value"), { target: { value: "some-value" } }))
 
-    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+    
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.1.attribute"), { target: { value: "" } }))
 
-    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
-    expect(screen.queryByText(attrMsg)).toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    })
+    
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.1.hostname"), { target: { value: "host.name.com" } }))
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrMsg)).toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).toBeInTheDocument()
+    })
+    
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.1.attribute"), { target: { value: "mock.ATTRIBUTE" } }))
 
@@ -603,9 +733,17 @@ describe("Tests for metric configuration overrides addview", () => {
       "metricParameters.0.value": "",
     })
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+    
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.click(screen.getByTestId("hostAttributes.0.remove")))
 
@@ -622,9 +760,17 @@ describe("Tests for metric configuration overrides addview", () => {
       "metricParameters.0.value": "",
     })
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.click(screen.getByTestId("hostAttributes.0.remove")))
 
@@ -641,16 +787,24 @@ describe("Tests for metric configuration overrides addview", () => {
       "metricParameters.0.value": "",
     })
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+    
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
   })
 
   test("Test add metric parameters", async () => {
     renderAddView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /override/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
 
     const hostnameMsg = "Invalid hostname"
@@ -671,38 +825,93 @@ describe("Tests for metric configuration overrides addview", () => {
       "metricParameters.0.value": "",
     })
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    })
+    
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    })
+    
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.hostname"), { target: { value: "epic5.storage.surfsara.nl" } }))
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.metric"), { target: { value: "generic.tcp.connect" } }))
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.parameter"), { target: { value: "-p" } }))
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() =>{ 
+      expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.value"), { target: { value: "8004" } }))
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    })
+    
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    })
 
     expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
       name: "",
@@ -736,10 +945,21 @@ describe("Tests for metric configuration overrides addview", () => {
       "metricParameters.1.value": ""
     })
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.metric"), { target: { value: "eudat.b2share.invenio.healthcheck" } }))
 
@@ -760,24 +980,57 @@ describe("Tests for metric configuration overrides addview", () => {
       "metricParameters.1.value": ""
     })
 
-    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.metric"), { target: { value: "" } }))
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    })
+    
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.parameter"), { target: { value: "--url" } }))
 
-    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    })
+    
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+    })
 
     expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
       name: "",
@@ -798,10 +1051,21 @@ describe("Tests for metric configuration overrides addview", () => {
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.parameter"), { target: { value: "" } }))
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+    
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.value"), { target: { value: "https://b2share.eudat.eu" } }))
 
@@ -822,10 +1086,21 @@ describe("Tests for metric configuration overrides addview", () => {
       "metricParameters.1.value": "https://b2share.eudat.eu"
     })
 
-    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByTestId("metricParameters.1.remove"))
 
@@ -842,52 +1117,129 @@ describe("Tests for metric configuration overrides addview", () => {
       "metricParameters.0.value": "8004"
     })
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.hostname"), { target: { value: "-b2shareeudat" } }))
 
-    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.metric"), { target: { value: "" } }))
 
-    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.metric"), { target: { value: "generic@tcp.connect" } }))
 
-    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.parameter"), { target: { value: "" } }))
 
-    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    })
+    
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).toBeInTheDocument()
+    })
+    
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.parameter"), { target: { value: "--url" } }))
 
-    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.value"), { target: { value: "" } }))
 
-    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    })
+    
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.hostname"), { target: { value: "b2share.eudat.eu" } }))
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.metric"), { target: { value: "eudat.b2share.invenio.healthcheck" } }))
@@ -907,10 +1259,21 @@ describe("Tests for metric configuration overrides addview", () => {
       "metricParameters.0.value": "https://b2share.eudat.eu"
     })
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    })
+    
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.click(screen.getByTestId("metricParameters.0.remove")))
 
@@ -927,17 +1290,28 @@ describe("Tests for metric configuration overrides addview", () => {
       "metricParameters.0.value": ""
     })
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+     
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    })
   })
 
   test("Test save metric override with just name", async () => {
     renderAddView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /override/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: "local" } })
@@ -988,7 +1362,7 @@ describe("Tests for metric configuration overrides addview", () => {
     renderAddView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /override/i }).textContent).toBe("Add metric configuration override")
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: "local" } })
@@ -1075,7 +1449,7 @@ describe("Tests for metric configuration overrides addview", () => {
     renderAddView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /override/i }).textContent).toBe("Add metric configuration override")
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: "local" } })
@@ -1168,7 +1542,7 @@ describe("Tests for metric configuration overrides addview", () => {
     renderAddView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /override/i }).textContent).toBe("Add metric configuration override")
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: "local" } })
@@ -1276,11 +1650,11 @@ describe("Tests for metric configuration overrides changeview", () => {
   test("Test that page renders properly", async () => {
     renderChangeView()
 
-    expect(screen.getByText(/loading/i).textContent).toBe("Loading data...")
-
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /override/i }).textContent).toBe("Change metric configuration override")
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
+
+    expect(screen.getByRole("heading", { name: /override/i }).textContent).toBe("Change metric configuration override")
 
     const nameField = screen.getByTestId("name")
 
@@ -1364,7 +1738,7 @@ describe("Tests for metric configuration overrides changeview", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /override/i }).textContent).toBe("Change metric configuration override")
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
 
     const attrMsg = "Attribute can contain alphanumeric characters, dash, underscore and dot, but must always begin with a letter"
@@ -1389,8 +1763,13 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("globalAttributes.0.attribute"), { target: { value: "NAGIOS_REAL_HOST_CERT" } }))
     await waitFor(() => fireEvent.change(screen.getByTestId("globalAttributes.0.value"), { target: { value: "/etc/nagios/globus/cert.pem" } }))
@@ -1414,8 +1793,13 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("globalAttributes.1.attribute"), { target: { value: "1NAGIOS_REAL_HOST_KEY" } }))
     await waitFor(() => fireEvent.change(screen.getByTestId("globalAttributes.1.value"), { target: { value: "/etc/nagios/globus/cert.key" } }))
@@ -1439,8 +1823,13 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
-    expect(screen.queryByText(attrMsg)).toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).toBeInTheDocument()
+    })
+    
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("globalAttributes.1.attribute"), { target: { value: "NAGIOS_REAL_HOST_KEY" } }))
     await waitFor(() => fireEvent.change(screen.getByTestId("globalAttributes.1.value"), { target: { value: "" } }))
@@ -1464,8 +1853,13 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("globalAttributes.1.value"), { target: { value: "/etc/nagios/globus/cert.key" } }))
 
@@ -1511,8 +1905,13 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("globalAttributes.2.attribute"), { target: { value: "MOCK_ATTRIBUTE" } }))
     await waitFor(() => fireEvent.change(screen.getByTestId("globalAttributes.2.value"), { target: { value: "some-value" } }))
@@ -1538,14 +1937,24 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => { 
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.click(screen.getByTestId("globalAttributes.1.remove")))
     fireEvent.click(screen.getByTestId("globalAttributes.0.remove"))
 
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
       name: "local",
@@ -1566,8 +1975,13 @@ describe("Tests for metric configuration overrides changeview", () => {
 
     await waitFor(() => fireEvent.click(screen.getByTestId("globalAttributes.0.remove")))
 
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
       name: "local",
@@ -1586,20 +2000,30 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    }) 
 
     await waitFor(() => fireEvent.change(screen.getByTestId("globalAttributes.0.value"), { target: { value: "test_value" } }))
 
-    expect(screen.queryByText(attrMsg)).toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
   })
 
   test("Test change host attributes", async () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /override/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
 
     const hostnameMsg = "Invalid hostname"
@@ -1625,9 +2049,17 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.0.hostname"), { target: { value: "-foo" } }))
 
@@ -1650,9 +2082,17 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
-    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.0.attribute"), { target: { value: "@test" } }))
 
@@ -1675,9 +2115,17 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
-    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
-    expect(screen.queryByText(attrMsg)).toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.0.value"), { target: { value: "" } }))
 
@@ -1700,9 +2148,17 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
-    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
-    expect(screen.queryByText(attrMsg)).toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.0.hostname"), { target: { value: "foo.bar.hr" } }))
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.0.attribute"), { target: { value: "baz.FOOBAR" } }))
@@ -1727,9 +2183,17 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.click(screen.getByTestId("hostAttributes.0.add")))
 
@@ -1755,21 +2219,45 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.1.hostname"), { target: { value: "host.name.com" } }))
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrMsg)).toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).toBeInTheDocument()
+    })
+    
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.1.attribute"), { target: { value: "ATTRIBUTE" } }))
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+    
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+    
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.1.value"), { target: { value: "some-value" } }))
 
@@ -1795,9 +2283,17 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.click(screen.getByTestId("hostAttributes.0.remove")))
 
@@ -1820,9 +2316,17 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+    
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.click(screen.getByTestId("hostAttributes.0.remove")))
 
@@ -1845,9 +2349,17 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+    
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.0.attribute"), { target: { value: "SOME_ATTRIBUTE" } }))
 
@@ -1870,9 +2382,17 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
-    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.0.value"), { target: { value: "some_value" } }))
 
@@ -1895,9 +2415,17 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
-    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.0.hostname"), { target: { value: "host.name.net" } }))
 
@@ -1920,9 +2448,17 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByTestId("hostAttributes.0.add"))
 
@@ -1948,9 +2484,17 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("hostAttributes.1.value"), { target: { value: "another_value" } }))
 
@@ -1976,16 +2520,24 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
-    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
-    expect(screen.queryByText(attrMsg)).toBeInTheDocument()
-    expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(attrValMsg)).not.toBeInTheDocument()
+    })
   })
 
   test("Test change metric parameters", async () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /override/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
 
     const hostnameMsg = "Invalid hostname"
@@ -2012,10 +2564,21 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.hostname"), { target: { value: "-storagenl" } }))
 
@@ -2038,10 +2601,21 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
-    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.metric"), { target: { value: "generic.tcp@connect" } }))
 
@@ -2064,10 +2638,21 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
-    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.parameter"), { target: { value: " p" } }))
 
@@ -2090,10 +2675,21 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
-    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.value"), { target: { value: "" } }))
 
@@ -2116,10 +2712,21 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
-    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.hostname"), { target: { value: "epic5.storage.surfsara.nl" } }))
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.metric"), { target: { value: "generic.tcp.connect" } }))
@@ -2145,10 +2752,21 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    })
+    
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.click(screen.getByTestId("metricParameters.0.add")))
 
@@ -2175,31 +2793,75 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.2.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.hostname"), { target: { value: "sensu.cro-ngi" } }))
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.metric"), { target: { value: "argo.AMSPublisher-Check" } }))
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.parameter"), { target: { value: "-q" } }))
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.1.value"), { target: { value: "w:metrics+g:published180 -c 10" } }))
 
@@ -2226,10 +2888,21 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.2.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => { 
+      expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.click(screen.getByTestId("metricParameters.0.remove")))
 
@@ -2252,10 +2925,21 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.1.value": "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
     })
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.click(screen.getByTestId("metricParameters.0.remove")))
     await waitFor(() => fireEvent.click(screen.getByTestId("metricParameters.0.remove")))
@@ -2275,10 +2959,21 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.0.value": ""
     })
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.parameter"), { target: { value: "-p" } }))
 
@@ -2297,10 +2992,21 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.0.value": ""
     })
 
-    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.parameter"), { target: { value: "" } }))
 
@@ -2319,10 +3025,21 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.0.value": ""
     })
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.value"), { target: { value: "some-value" } }))
 
@@ -2341,10 +3058,21 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.0.value": "some-value"
     })
 
-    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.value"), { target: { value: "" } }))
 
@@ -2363,10 +3091,21 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.0.value": ""
     })
 
-    expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).not.toBeInTheDocument()
+    })
+    
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).not.toBeInTheDocument()
+    })
 
     await waitFor(() => fireEvent.change(screen.getByTestId("metricParameters.0.metric"), { target: { value: "argo.ams-check" } }))
 
@@ -2385,10 +3124,21 @@ describe("Tests for metric configuration overrides changeview", () => {
       "metricParameters.0.value": ""
     })
 
-    expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
-    expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
-    expect(screen.queryByText(paramMsg)).toBeInTheDocument()
-    expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByText(hostnameMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(metricMsg)).not.toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramMsg)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
+    })
   })
 
   test("Test save metric override with only name", async () => {
@@ -2400,7 +3150,7 @@ describe("Tests for metric configuration overrides changeview", () => {
     const paramValMsg = "Parameter value is required"
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /override/i }).textContent).toBe("Change metric configuration override")
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: "local_new" } })
@@ -2463,7 +3213,7 @@ describe("Tests for metric configuration overrides changeview", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /override/i }).textContent).toBe("Change metric configuration override")
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: "local_new" } })
@@ -2564,7 +3314,7 @@ describe("Tests for metric configuration overrides changeview", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /override/i }).textContent).toBe("Change metric configuration override")
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: "local_new" } })
@@ -2671,7 +3421,7 @@ describe("Tests for metric configuration overrides changeview", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /override/i }).textContent).toBe("Change metric configuration override")
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: "local_new" } })
@@ -2776,7 +3526,7 @@ describe("Tests for metric configuration overrides changeview", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /override/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
 
     fireEvent.change(screen.getByTestId("name"), { target: { value: "new_name" } })
@@ -2805,7 +3555,7 @@ describe("Tests for metric configuration overrides changeview", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /override/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }))
@@ -2838,7 +3588,7 @@ describe("Tests for metric configuration overrides changeview", () => {
     renderChangeView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /override/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }))

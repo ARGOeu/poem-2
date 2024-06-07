@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useContext, useEffect } from 'react';
-import {Link} from 'react-router-dom';
+import {Link, useLocation, useParams, useNavigate} from 'react-router-dom';
 import {
-  LoadingAnim,
   BaseArgoView,
   NotifyOk,
   DiffElement,
@@ -40,7 +39,7 @@ import { useQuery, useMutation, useQueryClient } from 'react-query';
 import * as Yup from 'yup';
 import { downloadJSON } from './FileDownload';
 
-import ReactDiffViewer from 'react-diff-viewer';
+import ReactDiffViewer from 'react-diff-viewer-continued';
 
 import "react-notifications/lib/notifications.css";
 import './AggregationProfiles.css';
@@ -52,7 +51,13 @@ import {
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext, useWatch } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { ErrorMessage } from '@hookform/error-message';
-
+import { 
+  ChangeViewPlaceholder,
+  InputPlaceholder,
+  ListViewPlaceholder, 
+  ProfileMainPlaceholder,
+  VersionComparePlaceholder
+} from './Placeholders';
 
 const AggregationProfilesChangeContext = React.createContext()
 
@@ -401,6 +406,135 @@ const Service = ({
         </Col>
       </Row>
     </React.Fragment>
+  )
+}
+
+
+const AggregationProfilesPlaceholder = ( props ) => {
+  const addview = props.addview
+  const publicview = props.publicView
+  const historyview = props.historyview
+  const title = props.title
+
+  return (
+    <ChangeViewPlaceholder
+      resourcename={ `${ publicview ? "Aggregation profile details" : historyview ? title : "aggregation profile" }` }
+      infoview={ publicview || historyview }
+      addview={ addview }
+      buttons={
+        !addview && !publicview && !historyview && 
+          <div>
+            <Button color="secondary" disabled>JSON</Button>
+            <Button className="ms-2" color="secondary" disabled>History</Button>
+          </div>
+      }
+    >
+      <ProfileMainPlaceholder profiletype="aggregation" />
+      <ParagraphTitle title="Operations, endpoint group and metric profile"/>
+      <Row>
+        <Col md={ 4 }>
+          <FormGroup>
+            <Row>
+              <Col md={12}>
+                <Label>Metric operation:</Label>
+              </Col>
+              <Col md={5}>
+                <InputPlaceholder width="100%" />
+              </Col>
+            </Row>
+            <Row>
+              <Col md={12}>
+                <FormText>
+                  Logical operation that will be applied between metrics of each service flavour
+                </FormText>
+              </Col>
+            </Row>
+          </FormGroup>
+        </Col>
+        <Col md={4}>
+          <FormGroup>
+            <Row>
+              <Col md={12}>
+                <Label>Aggregation operation:</Label>
+              </Col>
+              <Col md={5}>
+                <InputPlaceholder width="100%" />
+              </Col>
+            </Row>
+            <Row>
+              <Col md={12}>
+                <FormText>
+                  Logical operation that will be applied between defined service flavour groups
+                </FormText>
+              </Col>
+            </Row>
+          </FormGroup>
+        </Col>
+        <Col md={4}>
+          <FormGroup>
+            <Row>
+              <Col md={12}>
+                <Label>Endpoint group:</Label>
+              </Col>
+              <Col md={5}>
+                <InputPlaceholder width="100%" />
+              </Col>
+            </Row>
+          </FormGroup>
+        </Col>
+      </Row>
+      <Row className='mt-4'>
+        <Col md={5}>
+          <FormGroup>
+            <Label>Metric profile:</Label>
+            <InputPlaceholder width="100%" />
+            <FormText>
+              Metric profile associated to Aggregation profile. Service flavours defined in service flavour groups originate from selected metric profile.
+            </FormText>
+          </FormGroup>
+        </Col>
+      </Row>
+      <ParagraphTitle title='Service flavour groups'/>
+      {
+        !addview &&
+          <Row>
+            <Col sm={{size: 8}} md={{size: 5}} className="mt-4 mb-2">
+              <Card>
+                <CardHeader>
+                  <Row className="d-flex align-items-center g-0">
+                    <Col sm={{size: 10}} md={{size: 11}}>
+                      <InputPlaceholder />
+                    </Col>
+                  </Row>
+                </CardHeader>
+                <CardBody className="p-1">
+                  <span className="placeholder rounded" style={{ height: "192px", width: "100%" }} />
+                </CardBody>
+              </Card>
+            </Col>
+            <Col sm={{size: 4}} md={{size: 1}} className="mt-5">
+              <InputPlaceholder />
+            </Col>
+            <Col sm={{size: 8}} md={{size: 5}} className="mt-4 mb-2">
+              <Card>
+                <CardHeader>
+                  <Row className="d-flex align-items-center g-0">
+                    <Col sm={{size: 10}} md={{size: 11}}>
+                      <InputPlaceholder />
+                    </Col>
+                  </Row>
+                </CardHeader>
+                <CardBody className="p-1">
+                  <span className="placeholder rounded" style={{ height: "192px", width: "100%" }} />
+                </CardBody>
+              </Card>
+            </Col>
+            <Col sm={{size: 4}} md={{size: 1}} className="mt-5">
+              <InputPlaceholder />
+            </Col>
+          </Row>
+      }
+    </ChangeViewPlaceholder>
   )
 }
 
@@ -969,11 +1103,11 @@ const removeIsNewFlag = (values) => {
 
 
 export const AggregationProfilesChange = (props) => {
+  const { name: profile_name } = useParams();
   const tenant_name = props.tenantname;
-  const profile_name = props.match.params.name;
   const addview = props.addview
-  const history = props.history;
-  const location = props.location;
+  const navigate = useNavigate();
+  const location = useLocation();
   const publicView = props.publicView;
 
   const backend = new Backend();
@@ -1119,7 +1253,7 @@ export const AggregationProfilesChange = (props) => {
               NotifyOk({
                 msg: 'Aggregation profile successfully changed',
                 title: 'Changed',
-                callback: () => history.push('/ui/aggregationprofiles')
+                callback: () => navigate('/ui/aggregationprofiles')
               });
             },
             onError: (error) => {
@@ -1156,7 +1290,7 @@ export const AggregationProfilesChange = (props) => {
               NotifyOk({
                 msg: 'Aggregation profile successfully added',
                 title: 'Added',
-                callback: () => history.push('/ui/aggregationprofiles')
+                callback: () => navigate('/ui/aggregationprofiles')
               })
             },
             onError: (error) => {
@@ -1190,7 +1324,7 @@ export const AggregationProfilesChange = (props) => {
               NotifyOk({
                 msg: 'Aggregation profile successfully deleted',
                 title: 'Deleted',
-                callback: () => history.push('/ui/aggregationprofiles')
+                callback: () => navigate('/ui/aggregationprofiles')
               });
             },
             onError: (error) => {
@@ -1216,8 +1350,11 @@ export const AggregationProfilesChange = (props) => {
       })
   }
 
-  if (loadingUserDetails || loadingBackendAP || loadingWebApiAP || loadingMetricProfiles || loadingReports)
-    return (<LoadingAnim />)
+  if (loadingUserDetails || loadingBackendAP || loadingWebApiAP || loadingMetricProfiles || loadingReports) {
+    return (
+      <AggregationProfilesPlaceholder { ...props } />
+    )
+  }
 
   else if (errorBackendAP)
     return (<ErrorComponent error={errorBackendAP}/>)
@@ -1288,7 +1425,7 @@ export const AggregationProfilesChange = (props) => {
 
 
 export const AggregationProfilesList = (props) => {
-  const location = props.location;
+  const location = useLocation();
   const publicView = props.publicView
 
   const { data: userDetails, error: errorUserDetails, isLoading: loadingUserDetails } = useQuery(
@@ -1335,7 +1472,12 @@ export const AggregationProfilesList = (props) => {
   ], [])
 
   if (loadingUserDetails || loadingAggregations)
-    return (<LoadingAnim />)
+    return (
+      <ListViewPlaceholder 
+        resourcename="aggregation profile" 
+        infoview={ publicView }
+      />
+    )
 
   else if (errorAggregations)
     return (<ErrorComponent error={errorAggregations}/>);
@@ -1412,17 +1554,18 @@ const fetchAggregationProfileVersions = async (name) => {
 }
 
 
-export const AggregationProfileVersionCompare = (props) => {
-  const version1 = props.match.params.id1;
-  const version2 = props.match.params.id2;
-  const name = props.match.params.name;
+export const AggregationProfileVersionCompare = () => {
+  const { name, id1: version1, id2: version2 } = useParams();
 
   const { data: versions, error, isLoading: loading } = useQuery(
     ['aggregationprofile', 'tenantversion', name], () => fetchAggregationProfileVersions(name)
   )
 
-  if (loading)
-    return (<LoadingAnim/>);
+  if (loading) {
+    return (
+      <VersionComparePlaceholder />
+    )
+  }
 
   else if (error)
     return (
@@ -1485,16 +1628,18 @@ export const AggregationProfileVersionCompare = (props) => {
 }
 
 
-export const AggregationProfileVersionDetails = (props) => {
-  const name = props.match.params.name;
-  const version = props.match.params.version;
+export const AggregationProfileVersionDetails = () => {
+  const { name, version } = useParams();
 
   const { data: versions, error, isLoading: loading } = useQuery(
     ['aggregationprofile', 'tenantversion', name], () => fetchAggregationProfileVersions(name)
   )
 
-  if (loading)
-    return (<LoadingAnim/>);
+  if (loading) {
+    return (
+      <AggregationProfilesPlaceholder historyview={ true } title={ `${name} (${version})` } />
+    )
+  }
 
   else if (error)
     return (<ErrorComponent error={error}/>)

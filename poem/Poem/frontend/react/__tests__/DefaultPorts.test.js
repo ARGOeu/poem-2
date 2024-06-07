@@ -6,9 +6,8 @@ import {
   waitFor,
   within
 } from '@testing-library/react';
-import '@testing-library/jest-dom/extend-expect';
-import { createMemoryHistory } from 'history';
-import { Route, Router } from 'react-router-dom';
+import '@testing-library/jest-dom';
+import { MemoryRouter } from 'react-router-dom';
 import { DefaultPortsList } from '../DefaultPorts';
 import { Backend } from '../DataManager';
 import { QueryClient, QueryClientProvider, setLogger } from 'react-query';
@@ -64,17 +63,13 @@ const mockDefaultPorts = [
 
 function renderView() {
   const route = "/ui/administration/default_ports"
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path="/ui/administration/default_ports"
-            component={DefaultPortsList}
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <DefaultPortsList />
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -98,14 +93,13 @@ describe("Test default ports list", () => {
   test("Test that page renders properly", async () => {
     renderView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
+      expect(screen.getAllByRole("columnheader")).toHaveLength(4)
     })
 
+    expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
+
     const table = within(screen.getByRole("table"))
-    expect(table.getAllByRole("columnheader")).toHaveLength(4)
     expect(table.getByRole("columnheader", { name: "#" })).toBeInTheDocument()
     expect(table.getByRole("columnheader", { name: "Port name" })).toBeInTheDocument()
     expect(table.getByRole("columnheader", { name: "Port value" })).toBeInTheDocument()
@@ -129,8 +123,10 @@ describe("Test default ports list", () => {
     renderView();
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
+      expect(screen.getAllByRole("columnheader")).toHaveLength(4)
     })
+
+    expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
 
     fireEvent.change(screen.getAllByPlaceholderText(/search/i)[0], { target: { value: "BDII" } })
 
@@ -152,8 +148,10 @@ describe("Test default ports list", () => {
     renderView();
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
+      expect(screen.getAllByRole("columnheader")).toHaveLength(4)
     })
+
+    expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
 
     fireEvent.change(screen.getAllByPlaceholderText(/search/i)[1], { target: { value: "75" } })
 
@@ -174,8 +172,10 @@ describe("Test default ports list", () => {
     renderView();
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
+      expect(screen.getAllByRole("columnheader")).toHaveLength(4)
     })
+
+    expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
 
     fireEvent.click(screen.getByTestId("insert-1"))
 
@@ -201,8 +201,10 @@ describe("Test default ports list", () => {
     renderView();
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
+      expect(screen.getAllByRole("columnheader")).toHaveLength(4)
     })
+
+    expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
 
     fireEvent.click(screen.getByTestId("remove-1"))
 
@@ -224,8 +226,10 @@ describe("Test default ports list", () => {
     renderView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
+      expect(screen.getAllByRole("columnheader")).toHaveLength(4)
     })
+
+    expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
 
     fireEvent.click(screen.getByTestId("insert-1"))
 
@@ -266,8 +270,10 @@ describe("Test default ports list", () => {
     renderView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
+      expect(screen.getAllByRole("columnheader")).toHaveLength(4)
     })
+
+    expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
 
     fireEvent.click(screen.getByTestId("insert-1"))
 
@@ -312,8 +318,10 @@ describe("Test default ports list", () => {
     renderView()
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
+      expect(screen.getAllByRole("columnheader")).toHaveLength(4)
     })
+
+    expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
 
     fireEvent.click(screen.getByTestId("insert-1"))
 
@@ -361,11 +369,11 @@ describe("Test default ports list", () => {
 
     renderView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
+      expect(screen.getAllByRole("columnheader")).toHaveLength(4)
     })
+
+    expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
 
     const table = within(screen.getByRole("table"))
     expect(table.getAllByRole("columnheader")).toHaveLength(4)

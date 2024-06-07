@@ -1,8 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import '@testing-library/jest-dom/extend-expect';
-import { createMemoryHistory } from 'history';
-import { Route, Router } from 'react-router-dom';
+import '@testing-library/jest-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider, setLogger } from 'react-query';
 import { ChangePassword, UserChange, UsersList } from '../Users';
 import { Backend } from '../DataManager';
@@ -64,7 +63,6 @@ const mockUsers = [
   }
 ]
 
-
 const mockUser = {
     first_name: 'Alan',
     last_name: 'Ford',
@@ -117,17 +115,13 @@ const mockAllUserGroups = {
 
 function renderListView() {
   const route = '/ui/administration/users';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route path='/ui/administration/users'
-            render={ props =>
-              <UsersList {...props} isTenantSchema={true} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <UsersList isTenantSchema={ true } />
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -136,17 +130,18 @@ function renderListView() {
 
 function renderChangeView(username='Alan_Ford') {
   const route = `/ui/administration/users/${username}`;
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/administration/users/:user_name'
-            render={ props => <UserChange {...props} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path="/ui/administration/users/:user_name"
+              element={ <UserChange /> }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -155,17 +150,13 @@ function renderChangeView(username='Alan_Ford') {
 
 function renderAddView() {
   const route = '/ui/administration/users/add';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/administration/users/add'
-            render={ props => <UserChange {...props} addview={true} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <UserChange addview={ true } />
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -174,17 +165,18 @@ function renderAddView() {
 
 function renderTenantChangeView(username='Alan_Ford') {
   const route = `/ui/administration/users/${username}`;
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/administration/users/:user_name'
-            render={ props => <UserChange {...props} isTenantSchema={true} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path="/ui/administration/users/:user_name"
+              element={ <UserChange isTenantSchema={ true } /> }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -193,17 +185,13 @@ function renderTenantChangeView(username='Alan_Ford') {
 
 function renderTenantAddview() {
   const route = '/ui/administration/users/add';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/administration/users/add'
-            render={ props => <UserChange {...props} addview={true} isTenantSchema={true} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <UserChange addview={ true } isTenantSchema={ true } />
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -212,17 +200,18 @@ function renderTenantAddview() {
 
 function renderChangePassword() {
   const route = '/ui/administration/users/poem/change_password';
-  const history = createMemoryHistory({ initialEntries: [route] });
 
   return {
     ...render(
       <QueryClientProvider client={queryClient}>
-        <Router history={history}>
-          <Route
-            path='/ui/administration/users/:user_name/change_password'
-            render={ props => <ChangePassword {...props} /> }
-          />
-        </Router>
+        <MemoryRouter initialEntries={ [ route ] }>
+          <Routes>
+            <Route
+              path="/ui/administration/users/:user_name/change_password"
+              element={ <ChangePassword /> }
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>
     )
   }
@@ -241,14 +230,13 @@ describe('Test users listview', () => {
   test('Test that page renders properly', async () => {
     renderListView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Select user to change');
+      expect(screen.getAllByRole("columnheader")).toHaveLength(7)
     })
 
+    expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Select user to change');
+
     const columns = screen.getAllByRole('columnheader');
-    expect(columns).toHaveLength(7);
     expect(columns[0].textContent).toBe('#');
     expect(columns[1].textContent).toBe('Username');
     expect(columns[2].textContent).toBe('First name');
@@ -294,11 +282,11 @@ describe('Test user changeview on SuperAdmin POEM', () => {
     mockFetchData.mockReturnValue(Promise.resolve(mockUser))
     renderChangeView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Change user');
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
+
+    expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Change user');
 
     const usernameField = screen.getByTestId('username');
     const passwordField = screen.queryByTestId('password');
@@ -328,7 +316,6 @@ describe('Test user changeview on SuperAdmin POEM', () => {
     expect(superUserCheckbox.checked).toBeFalsy();
     expect(activeCheckbox.checked).toBeTruthy();
 
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /password/i })).not.toBeInTheDocument();
@@ -341,11 +328,11 @@ describe('Test user changeview on SuperAdmin POEM', () => {
 
     renderChangeView('poem');
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Change user');
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
+
+    expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Change user');
 
     const usernameField = screen.getByTestId('username');
     const passwordField = screen.queryByTestId('password');
@@ -375,7 +362,6 @@ describe('Test user changeview on SuperAdmin POEM', () => {
     expect(superUserCheckbox.checked).toBeTruthy();
     expect(activeCheckbox.checked).toBeTruthy();
 
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /password/i })).toBeInTheDocument();
@@ -385,7 +371,7 @@ describe('Test user changeview on SuperAdmin POEM', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Change user');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('username'), { target: { value: 'Alan.Ford' } });
@@ -426,7 +412,7 @@ describe('Test user changeview on SuperAdmin POEM', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Change user')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('username'), { target: { value: '' } })
@@ -449,7 +435,7 @@ describe('Test user changeview on SuperAdmin POEM', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Change user');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('username'), { target: { value: 'Alan.Ford' } });
@@ -498,7 +484,7 @@ describe('Test user changeview on SuperAdmin POEM', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Change user');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('username'), { target: { value: 'Alan.Ford' } });
@@ -545,7 +531,7 @@ describe('Test user changeview on SuperAdmin POEM', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Change user')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -575,7 +561,7 @@ describe('Test user changeview on SuperAdmin POEM', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Change user')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -609,7 +595,7 @@ describe('Test user changeview on SuperAdmin POEM', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Change user')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -655,11 +641,11 @@ describe('Tests for user addview on SuperAdmin POEM', () => {
   test('Test page renders properly', async () => {
     renderAddView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Add user');
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
+
+    expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Add user');
 
     const usernameField = screen.getByTestId('username');
     const passwordField = screen.getByTestId('password');
@@ -689,7 +675,6 @@ describe('Tests for user addview on SuperAdmin POEM', () => {
     expect(superUserCheckbox.checked).toBeFalsy();
     expect(activeCheckbox.checked).toBeTruthy();
 
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
   })
 
@@ -697,7 +682,7 @@ describe('Tests for user addview on SuperAdmin POEM', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Add user');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('username'), { target: { value: 'Bob_Rock' } });
@@ -739,7 +724,7 @@ describe('Tests for user addview on SuperAdmin POEM', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Add user');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('password'), { target: { value: 'foobar28' } })
@@ -760,7 +745,7 @@ describe('Tests for user addview on SuperAdmin POEM', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Add user');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('username'), { target: { value: 'Bob_Rock' } });
@@ -810,7 +795,7 @@ describe('Tests for user addview on SuperAdmin POEM', () => {
     renderAddView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /user/i }).textContent).toBe('Add user');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('username'), { target: { value: 'Bob_Rock' } });
@@ -891,11 +876,11 @@ describe('Tests for user changeview on tenant POEM', () => {
   test('Test that page renders properly', async () => {
     renderTenantChangeView();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change user/i }).textContent).toBe('Change user')
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
+
+    expect(screen.getByRole('heading', { name: /change user/i }).textContent).toBe('Change user')
 
     const usernameField = screen.getByTestId('username');
     const passwordField = screen.queryByTestId('password');
@@ -975,7 +960,6 @@ describe('Tests for user changeview on tenant POEM', () => {
     expect(displayNameField.value).toBe('Alan_Ford');
     expect(displayNameField).toBeEnabled();
 
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /password/i })).not.toBeInTheDocument();
@@ -985,7 +969,7 @@ describe('Tests for user changeview on tenant POEM', () => {
     renderTenantChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change user/i }).textContent).toBe('Change user')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('username'), { target: { value: 'Alan.Ford' } });
@@ -1050,7 +1034,7 @@ describe('Tests for user changeview on tenant POEM', () => {
     renderTenantChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change user/i }).textContent).toBe('Change user')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('username'), { target: { value: '' } })
@@ -1073,7 +1057,7 @@ describe('Tests for user changeview on tenant POEM', () => {
     renderTenantChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change user/i }).textContent).toBe('Change user')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('username'), { target: { value: 'Alan.Ford' } });
@@ -1135,7 +1119,7 @@ describe('Tests for user changeview on tenant POEM', () => {
     renderTenantChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change user/i }).textContent).toBe('Change user')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('username'), { target: { value: 'Alan.Ford' } });
@@ -1209,7 +1193,7 @@ describe('Tests for user changeview on tenant POEM', () => {
     renderTenantChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change user/i }).textContent).toBe('Change user')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('username'), { target: { value: 'Alan.Ford' } });
@@ -1269,7 +1253,7 @@ describe('Tests for user changeview on tenant POEM', () => {
     renderTenantChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change user/i }).textContent).toBe('Change user')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('username'), { target: { value: 'Alan.Ford' } });
@@ -1341,7 +1325,7 @@ describe('Tests for user changeview on tenant POEM', () => {
     renderTenantChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change user/i }).textContent).toBe('Change user')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -1371,7 +1355,7 @@ describe('Tests for user changeview on tenant POEM', () => {
     renderTenantChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change user/i }).textContent).toBe('Change user')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -1405,7 +1389,7 @@ describe('Tests for user changeview on tenant POEM', () => {
     renderTenantChangeView();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /change user/i }).textContent).toBe('Change user')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -1457,11 +1441,11 @@ describe('Tests for user addview on tenant POEM', () => {
   test('Test page renders properly', async () => {
     renderTenantAddview();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...')
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /add user/i }).textContent).toBe('Add user');
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
+
+    expect(screen.getByRole('heading', { name: /add user/i }).textContent).toBe('Add user');
 
     const usernameField = screen.getByTestId('username');
     const passwordField = screen.getByTestId('password');
@@ -1539,7 +1523,6 @@ describe('Tests for user addview on tenant POEM', () => {
     expect(screen.getByText('threshold-group2')).toBeInTheDocument()
     expect(screen.getByText('threshold-group3')).toBeInTheDocument()
 
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /password/i })).not.toBeInTheDocument();
@@ -1549,7 +1532,7 @@ describe('Tests for user addview on tenant POEM', () => {
     renderTenantAddview();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /add user/i }).textContent).toBe('Add user')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('username'), { target: { value: 'Bob_Rock' } });
@@ -1615,7 +1598,7 @@ describe('Tests for user addview on tenant POEM', () => {
     renderTenantAddview();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /add user/i }).textContent).toBe('Add user')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
@@ -1632,7 +1615,7 @@ describe('Tests for user addview on tenant POEM', () => {
     renderTenantAddview();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /add user/i }).textContent).toBe('Add user')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('username'), { target: { value: 'Bob_Rock' } });
@@ -1691,7 +1674,7 @@ describe('Tests for user addview on tenant POEM', () => {
     renderTenantAddview();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /add user/i }).textContent).toBe('Add user')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('username'), { target: { value: 'Bob_Rock' } });
@@ -1754,7 +1737,7 @@ describe('Tests for user addview on tenant POEM', () => {
     renderTenantAddview();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /add user/i }).textContent).toBe('Add user')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('username'), { target: { value: 'Bob_Rock' } });
@@ -1832,7 +1815,7 @@ describe('Tests for user addview on tenant POEM', () => {
     renderTenantAddview();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /add user/i }).textContent).toBe('Add user')
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('username'), { target: { value: 'Bob_Rock' } });
@@ -1920,11 +1903,11 @@ describe('Tests for changing password', () => {
   test('Test that page renders properly', async () => {
     renderChangePassword();
 
-    expect(screen.getByText(/loading/i).textContent).toBe('Loading data...');
-
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /password/i }).textContent).toBe('Change password')
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     })
+
+    expect(screen.getByRole('heading', { name: /password/i }).textContent).toBe('Change password')
 
     const passwordField = screen.getByTestId('password');
     const confirmPasswordField = screen.getByTestId('confirm_password');
@@ -1934,7 +1917,6 @@ describe('Tests for changing password', () => {
     expect(confirmPasswordField.value).toBe('');
     expect(confirmPasswordField).toBeEnabled();
 
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /password/i })).not.toBeInTheDocument();
@@ -1944,13 +1926,15 @@ describe('Tests for changing password', () => {
     renderChangePassword();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /password/i }).textContent).toBe('Change password');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('password'), { target: { value: 'foobar28' } });
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    expect(await screen.findByText('Required')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText("Passwords do not match!")).toBeInTheDocument()
+    })
     expect(mockChangeObject).not.toHaveBeenCalled();
   })
 
@@ -1958,14 +1942,16 @@ describe('Tests for changing password', () => {
     renderChangePassword();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /password/i }).textContent).toBe('Change password');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('password'), { target: { value: 'foobar28' } });
     fireEvent.change(screen.getByTestId('confirm_password'), { target: { value: 'foobar38' } })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    expect(await screen.findByText("Passwords do not match!")).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText("Passwords do not match!")).toBeInTheDocument()
+    })
     expect(mockChangeObject).not.toHaveBeenCalled();
   })
 
@@ -1973,14 +1959,18 @@ describe('Tests for changing password', () => {
     renderChangePassword();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /password/i }).textContent).toBe('Change password');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('password'), { target: { value: 'foobar' } });
     fireEvent.change(screen.getByTestId('confirm_password'), { target: { value: 'foobar' } })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    expect(await screen.findByText("Your password must contain at least 8 characters.")).toBeInTheDocument()
+
+    await waitFor(() => {
+      expect(screen.getByText("Your password must contain at least 8 characters.")).toBeInTheDocument()
+    })
+
     expect(mockChangeObject).not.toHaveBeenCalled();
   })
 
@@ -1988,11 +1978,15 @@ describe('Tests for changing password', () => {
     renderChangePassword();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /password/i }).textContent).toBe('Change password');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
-    expect(await screen.findAllByText("Required")).toHaveLength(2);
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Required")).toHaveLength(2)
+    })
+
     expect(mockChangeObject).not.toHaveBeenCalled();
   })
 
@@ -2004,7 +1998,7 @@ describe('Tests for changing password', () => {
     renderChangePassword();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /password/i }).textContent).toBe('Change password');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('password'), { target: { value: 'foobar28' } });
@@ -2045,7 +2039,7 @@ describe('Tests for changing password', () => {
     renderChangePassword();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /password/i }).textContent).toBe('Change password');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('password'), { target: { value: 'foobar28' } });
@@ -2088,7 +2082,7 @@ describe('Tests for changing password', () => {
     renderChangePassword();
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /password/i }).textContent).toBe('Change password');
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
     fireEvent.change(screen.getByTestId('password'), { target: { value: 'foobar28' } });
