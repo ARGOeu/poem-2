@@ -1,5 +1,22 @@
 # Changelog
 
+## [3.4.11] - 2024-06-07
+
+### Added
+
+* ARGO-4382 Placeholders instead of loading icon
+
+### Fixed
+
+* ARGO-4530 Minor code fixes and major tests fixes wrt react-router-dom bump
+
+### Changed
+
+* ARGO-4383 Bump react-router-dom-v6
+* ARGO-4384 Upgrade React to version 18
+* ARGO-4385 Upgrade Bootstrap to version 5.3.2
+* ARGO-4543 Bump outdated python packages
+
 ## [3.4.10] - 2023-09-11
 
 ### Added
