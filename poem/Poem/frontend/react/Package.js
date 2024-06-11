@@ -48,7 +48,7 @@ const validationSchema = Yup.object().shape({
     .required("This field is required")
     .matches(/^\S+$/, "Version cannot contain white spaces"),
   repo_6: Yup.string().test("repo", "You must provide at least one repo", function () {
-    return this.parent.repo_6 === "" && this.parent.repo_7 === "" && this.parent.repo_9 ? false : true
+    return this.parent.repo_6 === "" && this.parent.repo_7 === "" && this.parent.repo_9 === "" ? false : true
   }),
   repo_7: Yup.string().test("repo", "You must provide at least one repo", function () {
     return this.parent.repo_6 === "" && this.parent.repo_7 === "" && this.parent.repo_9 === "" ? false : true
@@ -613,7 +613,7 @@ const PackageForm = ({
                 />
               </InputGroup>
               <FormText color='muted'>
-                Package is part of selected CentOS 7 repo.
+                Package is part of selected Rocky 9 repo.
               </FormText>
             </Col>
           </Row>
@@ -780,7 +780,7 @@ export const PackageComponent = (props) => {
             <Col md={8}>
               <InputPlaceholder />
               <FormText color='muted'>
-                Package is part of selected CentOS 7 repo.
+                Package is part of selected Rocky 9 repo.
               </FormText>
             </Col>
           </Row>
