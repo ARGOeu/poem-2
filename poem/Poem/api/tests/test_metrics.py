@@ -313,6 +313,11 @@ def mock_db():
         content_type=ct
     )
 
+profiles4metrics = {
+    "argo.AMS-Check": ["ARGO_MON", "ARGO_MON_CRITICAL"],
+    "argo.AMSPublisher-Check": ["ARGO_MON_INTERNAL"]
+}
+
 
 class ListAllMetricsAPIViewTests(TenantTestCase):
     @factory.django.mute_signals(pre_save)
@@ -424,8 +429,11 @@ class ListMetricAPIViewTests(TenantTestCase):
             name="org.apel.APEL-Pub"
         )
 
-    def test_get_metric_list(self):
+    @patch("Poem.api.internal_views.metrics.get_metrics_in_profiles")
+    def test_get_metric_list(self, mock_profiles4metrics):
+        mock_profiles4metrics.return_value = profiles4metrics
         request = self.factory.get(self.url)
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(
@@ -436,6 +444,7 @@ class ListMetricAPIViewTests(TenantTestCase):
                     'name': 'argo.AMS-Check',
                     'mtype': 'Active',
                     'tags': ['test_tag1', 'test_tag2'],
+                    "profiles": ["ARGO_MON", "ARGO_MON_CRITICAL"],
                     'probeversion': 'ams-probe (0.1.7)',
                     'group': 'EGI',
                     'description': 'Description of argo.AMS-Check',
@@ -490,6 +499,7 @@ class ListMetricAPIViewTests(TenantTestCase):
                     'name': 'argo.AMSPublisher-Check',
                     'mtype': 'Active',
                     'tags': ['test_tag1'],
+                    "profiles": ["ARGO_MON_INTERNAL"],
                     'probeversion': 'ams-publisher-probe (0.1.7)',
                     'group': 'EUDAT',
                     'description': '',
@@ -538,6 +548,7 @@ class ListMetricAPIViewTests(TenantTestCase):
                     'name': 'org.apel.APEL-Pub',
                     'mtype': 'Passive',
                     'tags': [],
+                    "profiles": [],
                     'probeversion': '',
                     'group': 'EGI',
                     'description': '',
@@ -563,8 +574,11 @@ class ListMetricAPIViewTests(TenantTestCase):
             ]
         )
 
-    def test_get_metric_by_name(self):
+    @patch("Poem.api.internal_views.metrics.get_metrics_in_profiles")
+    def test_get_metric_by_name(self, mock_profiles4metrics):
+        mock_profiles4metrics.return_value = profiles4metrics
         request = self.factory.get(self.url + 'argo.AMS-Check')
+        request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request, 'argo.AMS-Check')
         self.assertEqual(
@@ -574,6 +588,7 @@ class ListMetricAPIViewTests(TenantTestCase):
                 'name': 'argo.AMS-Check',
                 'mtype': 'Active',
                 'tags': ['test_tag1', 'test_tag2'],
+                "profiles": ["ARGO_MON", "ARGO_MON_CRITICAL"],
                 'probeversion': 'ams-probe (0.1.7)',
                 'group': 'EGI',
                 'description': 'Description of argo.AMS-Check',
