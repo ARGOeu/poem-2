@@ -561,6 +561,49 @@ describe("Test metric tags changeview", () => {
     )
   })
 
+  test("Test change metric tags name in filtered view", async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 201, statusText: "CREATED" })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByPlaceholderText(/search/i), { target: { value: "connect" } })
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "test_tag" } })
+
+    await waitFor(() => {
+      expect(screen.getByTestId("form")).toHaveFormValues({name: "test_tag"})
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metrictags/",
+        { id: "4", name: "test_tag", metrics: ["generic.certificate.validity", "generic.http.connect", "generic.tcp.connect"] }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictemplate")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictemplate")
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Metric tag successfully changed", "Changed", 2000
+    )
+  })
+
   test("Test error changing metric tag with error message", async () => {
     mockChangeObject.mockImplementationOnce(() => {
       throw Error("400 BAD REQUEST: Metric tag with this name already exists.")
@@ -676,6 +719,45 @@ describe("Test metric tags changeview", () => {
       expect(mockChangeObject).toHaveBeenCalledWith(
         "/api/v2/internal/metrictags/",
         { id: "4", name: "harmonized", metrics: ["argo.AMS-Check", "argo.AMSPublisher-Check", "generic.tcp.connect"] }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictemplate")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictemplate")
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Metric tag successfully changed", "Changed", 2000
+    )
+  })
+
+  test("Test change metrics for metric tag in filtered view", async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 201, statusText: "CREATED" })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByPlaceholderText(/search/i), { target: { value: "connect" } })
+
+    await selectEvent.select(screen.getByText("generic.http.connect"), "argo.AMS-Check")
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metrictags/",
+        { id: "4", name: "harmonized", metrics: ["generic.certificate.validity", "argo.AMS-Check", "generic.tcp.connect"] }
       )
     })
 

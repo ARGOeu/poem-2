@@ -184,7 +184,8 @@ const MetricsList = () => {
                             isClearable={ false }
                             onChange={ (e) => {
                               let tmpMetrics = getValues("metrics4tag")
-                              tmpMetrics[index] = e.value
+                              let origIndex = tmpMetrics.findIndex(e => e == item)
+                              tmpMetrics[origIndex] = e.value
                               setValue("metrics4tag", tmpMetrics)
                             } }
                             options={
