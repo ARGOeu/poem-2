@@ -699,8 +699,6 @@ describe("Test metric tags changeview", () => {
 
     await selectEvent.select(screen.getByText("generic.certificate.validity"), "argo.AMS-Check")
 
-    fireEvent.click(screen.getByTestId("remove-1"))
-
     fireEvent.click(screen.getByTestId("insert-0"))
 
     const table = within(screen.getByRole("table"))
@@ -718,7 +716,7 @@ describe("Test metric tags changeview", () => {
     await waitFor(() => {
       expect(mockChangeObject).toHaveBeenCalledWith(
         "/api/v2/internal/metrictags/",
-        { id: "4", name: "harmonized", metrics: ["argo.AMS-Check", "argo.AMSPublisher-Check", "generic.tcp.connect"] }
+        { id: "4", name: "harmonized", metrics: ["argo.AMS-Check", "argo.AMSPublisher-Check", "generic.http.connect", "generic.tcp.connect"] }
       )
     })
 
@@ -758,6 +756,82 @@ describe("Test metric tags changeview", () => {
       expect(mockChangeObject).toHaveBeenCalledWith(
         "/api/v2/internal/metrictags/",
         { id: "4", name: "harmonized", metrics: ["generic.certificate.validity", "argo.AMS-Check", "generic.tcp.connect"] }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictemplate")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictemplate")
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Metric tag successfully changed", "Changed", 2000
+    )
+  })
+
+  test("Test delete metrics from metric tag", async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 201, statusText: "CREATED" })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByTestId("remove-1"))
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metrictags/",
+        { id: "4", name: "harmonized", metrics: ["generic.certificate.validity", "generic.tcp.connect"] }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictemplate")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictemplate")
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Metric tag successfully changed", "Changed", 2000
+    )
+  })
+
+  test("Test delete metrics from metric tag if filtered view", async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 201, statusText: "CREATED" })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByPlaceholderText(/search/i), { target: { value: "connect" } })
+
+    fireEvent.click(screen.getByTestId("remove-0"))
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metrictags/",
+        { id: "4", name: "harmonized", metrics: ["generic.certificate.validity", "generic.tcp.connect"] }
       )
     })
 

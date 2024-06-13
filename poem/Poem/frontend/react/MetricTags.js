@@ -211,7 +211,8 @@ const MetricsList = () => {
                         data-testid={`remove-${index}`}
                         onClick={() => {
                           let tmpMetrics = context.metrics4tag
-                          tmpMetrics.splice(index, 1)
+                          let origIndex = tmpMetrics.findIndex(e => e == item)
+                          tmpMetrics.splice(origIndex, 1)
                           if (tmpMetrics.length === 0)
                             tmpMetrics = [""]
                           setValue("metrics4tag", tmpMetrics)
