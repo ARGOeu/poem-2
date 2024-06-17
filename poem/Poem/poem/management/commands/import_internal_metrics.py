@@ -15,7 +15,8 @@ class Command(BaseCommand):
         tenant = connection.tenant
         internal_metrics = [
             mt.name for mt in admin_models.MetricTemplate.objects.all()
-            if 'internal' in [tag.name for tag in mt.tags.all()]
+            if 'internal' in [tag.name for tag in mt.tags.all()] and
+               "eol" not in [tag.name for tag in mt.tags.all()]
         ]
         if len(internal_metrics) > 0:
             try:
@@ -32,8 +33,8 @@ class Command(BaseCommand):
                 get_user_model().DoesNotExist, NoSectionError, NoOptionError
             ):
                 self.stderr.write(
-                    'Super user for tenant {} is not defined.\n'
-                    'Internal metrics not imported.'.format(tenant.name)
+                    f'Super user for tenant {tenant.name} is not defined.\n'
+                    f'Internal metrics not imported.'
                 )
 
         else:
