@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react"
+import React, { useContext, useEffect, useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "react-query"
 import { Link, useLocation, useParams, useNavigate } from "react-router-dom"
 import { fetchMetricTags, fetchMetricTemplates, fetchUserDetails } from "./QueryFunctions"
@@ -31,7 +31,7 @@ import {
  } from "reactstrap"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faSearch,faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { Controller, FormProvider, useForm, useFormContext, useWatch } from "react-hook-form"
+import { Controller, FormProvider, useFieldArray, useForm, useFormContext, useWatch } from "react-hook-form"
 import { ErrorMessage } from '@hookform/error-message'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as Yup from "yup"
@@ -83,7 +83,7 @@ export const MetricTagsList = (props) => {
             :
               row.value.map((metric, i) =>
                 <Badge pill className="me-1" key={ i } color="info">
-                  { metric }
+                  { metric.name }
                 </Badge>
               )
           }
@@ -126,7 +126,28 @@ export const MetricTagsList = (props) => {
 const MetricsList = () => {
   const context = useContext(MetricTagsContext)
 
-  const { control, getValues, setValue } = useFormContext()
+  const { control, getValues, setValue, resetField } = useFormContext()
+
+  const { fields, insert, remove } = useFieldArray({ control, name: "view_metrics4tag" })
+
+  const onRemove = (index) => {
+    let tmp_metrics4tag = [ ...context.metrics4tag ]
+    let origIndex = tmp_metrics4tag.findIndex(e => e.name == getValues(`view_metrics4tag.${index}.name`))
+    tmp_metrics4tag.splice(origIndex, 1)
+    resetField("metrics4tag")
+    setValue("metrics4tag", tmp_metrics4tag)
+    remove(index)
+  }
+
+  const onInsert = (index) => {
+    let tmp_metrics4tag = [ ...context.metrics4tag ]
+    let origIndex = tmp_metrics4tag.findIndex(e => e.name == getValues(`view_metrics4tag.${index}.name`))
+    let new_element = { name: "" }
+    tmp_metrics4tag.splice(origIndex + 1, 0, new_element)
+    resetField("metrics4tag")
+    setValue("metrics4tag", tmp_metrics4tag)
+    insert(index + 1, new_element)
+  }
 
   return (
     <table className="table table-bordered table-sm table-hover" style={{width: "95%"}}>
@@ -160,9 +181,7 @@ const MetricsList = () => {
           </td>
         </tr>
         {
-          context.metrics4tag.filter(
-            filteredRow => filteredRow.toLowerCase().includes(context.searchItem.toLowerCase())
-          ).map((item, index) =>
+          fields.map((item, index) =>
             <React.Fragment key={index}>
               <tr key={index}>
                 <td className="align-middle text-center">
@@ -171,32 +190,31 @@ const MetricsList = () => {
                 <td>
                   {
                     context.publicView ?
-                      item
+                      item.name
                     :
                       <Controller
-                        name={ item }
+                        name={ `view_metrics4tag.${index}.name` }
                         control={ control }
+                        key={ item.id }
                         render={ ({ field }) =>
                           <CustomReactSelect
-                            name={ item }
                             forwardedRef={ field.ref }
                             id={ `metric-${index}` }
                             isClearable={ false }
                             onChange={ (e) => {
-                              let tmpMetrics = getValues("metrics4tag")
-                              let origIndex = tmpMetrics.findIndex(e => e == item)
-                              tmpMetrics[origIndex] = e.value
-                              setValue("metrics4tag", tmpMetrics)
+                              let origIndex = getValues("metrics4tag").findIndex(met => met.name == getValues(`view_metrics4tag.${index}.name`) )
+                              setValue(`metrics4tag.${origIndex}.name`, e.value)
+                              setValue(`view_metrics4tag.${index}.name`, e.value)
                             } }
                             options={
                               context.allMetrics.map(
                                 met => met.name
                               ).filter(
-                                met => !context.metrics4tag.includes(met)
+                                met => !context.metrics4tag.map(met => met.name).includes(met)
                               ).map(
                                 option => new Object({ label: option, value: option })
                             )}
-                            value={ { label: item, value: item } }
+                            value={ { label: field.value, value: field.value } }
                           />
                         }
                       />
@@ -209,14 +227,7 @@ const MetricsList = () => {
                         size="sm"
                         color="light"
                         data-testid={`remove-${index}`}
-                        onClick={() => {
-                          let tmpMetrics = context.metrics4tag
-                          let origIndex = tmpMetrics.findIndex(e => e == item)
-                          tmpMetrics.splice(origIndex, 1)
-                          if (tmpMetrics.length === 0)
-                            tmpMetrics = [""]
-                          setValue("metrics4tag", tmpMetrics)
-                        }}
+                        onClick={() => onRemove(index)}
                       >
                         <FontAwesomeIcon icon={faTimes} />
                       </Button>
@@ -224,11 +235,7 @@ const MetricsList = () => {
                         size="sm"
                         color="light"
                         data-testid={`insert-${index}`}
-                        onClick={() => {
-                          let tmpMetrics = context.metrics4tag
-                          tmpMetrics.splice(index + 1, 0, "")
-                          setValue("metrics4tag", tmpMetrics)
-                        }}
+                        onClick={() => onInsert(index)}
                       >
                         <FontAwesomeIcon icon={faPlus} />
                       </Button>
@@ -266,11 +273,14 @@ const MetricTagsForm = ({
   const addMutation = useMutation(async (values) => await backend.addObject('/api/v2/internal/metrictags/', values));
   const deleteMutation = useMutation(async () => await backend.deleteObject(`/api/v2/internal/metrictags/${name}`))
 
+  const default_metrics4tag = tag?.metrics.length > 0 ? tag.metrics : [{ name: "" }]
+
   const methods = useForm({
     defaultValues: {
       id: `${tag ? tag.id : ""}`,
       name: `${tag ? tag.name : ""}`,
-      metrics4tag: tag?.metrics.length > 0 ? tag.metrics : [""],
+      metrics4tag: default_metrics4tag,
+      view_metrics4tag: default_metrics4tag,
       searchItem: ""
     },
     mode: "all",
@@ -281,6 +291,23 @@ const MetricTagsForm = ({
 
   const searchItem = useWatch({ control, name: "searchItem" })
   const metrics4tag = useWatch({ control, name: "metrics4tag" })
+  const view_metrics4tag = useWatch({ control, name: "view_metrics4tag" })
+
+  useEffect(() => {
+    if (view_metrics4tag.length === 0) {
+      methods.setValue("view_metrics4tag", [{ name: "" }])
+    }
+  }, [view_metrics4tag])
+
+  useEffect(() => {
+    if (metrics4tag.length === 0) {
+      methods.setValue("metrics4tag", [{ name: "" }])
+    }
+  }, [metrics4tag])
+
+  useEffect(() => {
+    methods.setValue("view_metrics4tag", metrics4tag.filter(e => e.name.toLowerCase().includes(searchItem.toLowerCase())))
+  }, [searchItem])
 
   const toggleAreYouSure = () => {
     setAreYouSureModal(!areYouSureModal)
@@ -301,7 +328,7 @@ const MetricTagsForm = ({
 
     const sendValues = new Object({
       name: formValues.name,
-      metrics: formValues.metrics4tag.filter(met => met !== "")
+      metrics: formValues.metrics4tag.map(met => met.name).filter(met => met !== "")
     })
 
     if (addview)
