@@ -1466,6 +1466,7 @@ describe('Tests for metric profiles changeview', () => {
     expect(metricInstances.getAllByTestId(/insert-/i)).toHaveLength(2);
 
     expect(screen.queryByText('Must be one of predefined metrics')).not.toBeInTheDocument()
+
   })
 
   test('Test import csv with nonexisting metrics', async () => {
@@ -3549,7 +3550,7 @@ describe('Tests for metric profile addview', () => {
 
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /csv/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /csv/i })).toBeInTheDocument();
   })
 
   test('Test that page renders properly for combined tenant', async () => {
@@ -3598,7 +3599,7 @@ describe('Tests for metric profile addview', () => {
 
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /csv/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /csv/i })).toBeInTheDocument();
   })
 
   test("Test add main profile info", async () => {
@@ -3743,6 +3744,249 @@ describe('Tests for metric profile addview', () => {
     expect(rows).toHaveLength(3)
     row1 = within(rows[2])
     expect(row1.getAllByText("Select...")).toHaveLength(2)
+  })
+
+  test("Test import csv successfully", async () => {
+    mockAddMetricProfile.mockReturnValueOnce(
+      Promise.resolve({
+        status: {
+          message: 'Metric profile Created',
+          code: '200'
+        },
+        data: {
+          id: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
+          links: {
+            self: 'string'
+          }
+        }
+      })
+    )
+
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
+
+    await waitFor(() => {
+      selectEvent.select(screen.getAllByText("Select...")[0], 'ARGO')
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /csv/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /import/i }));
+
+    const csv = 'service,metric\r\norg.opensciencegrid.htcondorce,ch.cern.HTCondorCE-JobState\r\norg.opensciencegrid.htcondorce,ch.cern.HTCondorCE-JobSubmit\r\n';
+
+    const content = new Blob([csv], { type: 'text/csv;charset=UTF-8' });
+    const file = new File([content], 'profile.csv', { type: 'text/csv;charset=UTF-8' });
+    const input = screen.getByTestId('file_input');
+
+    await waitFor(() => {
+      useEvent.upload(input, file);
+    })
+
+    await waitFor(() => {
+      expect(input.files[0]).toStrictEqual(file)
+    })
+    expect(input.files.item(0)).toStrictEqual(file)
+    expect(input.files).toHaveLength(1)
+
+    await waitFor(() => {
+      fireEvent.load(screen.getByTestId('file_input'))
+    })
+
+    const metricInstances = within(screen.getByRole('table'));
+    const rows = metricInstances.getAllByRole('row');
+    expect(rows).toHaveLength(4);
+    const row1 = within(rows[2])
+    const row2 = within(rows[3])
+
+    expect(row1.getByText("org.opensciencegrid.htcondorce")).toBeInTheDocument()
+    expect(row1.getByText("ch.cern.HTCondorCE-JobState")).toBeInTheDocument()
+    expect(row2.getByText("org.opensciencegrid.htcondorce")).toBeInTheDocument()
+    expect(row2.getByText("ch.cern.HTCondorCE-JobSubmit")).toBeInTheDocument()
+
+    expect(metricInstances.getAllByTestId(/remove-/i)).toHaveLength(2);
+    expect(metricInstances.getAllByTestId(/insert-/i)).toHaveLength(2);
+
+    expect(screen.queryByText('Must be one of predefined metrics')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddMetricProfile).toHaveBeenCalledWith({
+        description: 'New central ARGO_MON profile.',
+        name: 'NEW_PROFILE',
+        services: [
+          {
+            service: "org.opensciencegrid.htcondorce",
+            metrics: [
+              "ch.cern.HTCondorCE-JobState",
+              "ch.cern.HTCondorCE-JobSubmit"
+            ]
+          }
+        ]
+      })
+    })
+  })
+
+  test("Test import csv with nonexisting metrics", async () => {
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /csv/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /import/i }));
+
+    const csv = 'service,metric\r\norg.opensciencegrid.htcondorce,ch.cern.HTCondorCE-CertValidity\r\norg.opensciencegrid.htcondorce,ch.cern.HTCondorCE-JobSubmit\r\n';
+
+    const content = new Blob([csv], { type: 'text/csv;charset=UTF-8' });
+    const file = new File([content], 'profile.csv', { type: 'text/csv;charset=UTF-8' });
+    const input = screen.getByTestId('file_input');
+
+    await waitFor(() => {
+      useEvent.upload(input, file);
+    })
+
+    await waitFor(() => {
+      expect(input.files[0]).toStrictEqual(file)
+    })
+    expect(input.files.item(0)).toStrictEqual(file)
+    expect(input.files).toHaveLength(1)
+
+    await waitFor(() => {
+      fireEvent.load(screen.getByTestId('file_input'))
+    })
+
+    const metricInstances = within(screen.getByRole('table'));
+    const rows = metricInstances.getAllByRole('row');
+    expect(rows).toHaveLength(4);
+    const row1 = within(rows[2])
+    const row2 = within(rows[3])
+
+    expect(row1.getByText("org.opensciencegrid.htcondorce")).toBeInTheDocument()
+    expect(row1.getByText("ch.cern.HTCondorCE-CertValidity")).toBeInTheDocument()
+    expect(row2.getByText("org.opensciencegrid.htcondorce")).toBeInTheDocument()
+    expect(row2.getByText("ch.cern.HTCondorCE-JobSubmit")).toBeInTheDocument()
+
+    expect(metricInstances.getAllByTestId(/remove-/i)).toHaveLength(2);
+    expect(metricInstances.getAllByTestId(/insert-/i)).toHaveLength(2);
+
+    expect(screen.queryByText('Must be one of predefined metrics')).toBeInTheDocument()
+  })
+
+  test("Test import csv, make some changes and save profile successfully", async () => {
+    mockAddMetricProfile.mockReturnValueOnce(
+      Promise.resolve({
+        status: {
+          message: 'Metric profile Created',
+          code: '200'
+        },
+        data: {
+          id: 'va0ahsh6-6rs0-14ho-xlh9-wahso4hie7iv',
+          links: {
+            self: 'string'
+          }
+        }
+      })
+    )
+
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'NEW_PROFILE' } });
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'New central ARGO_MON profile.' } });
+
+    await waitFor(() => {
+      selectEvent.select(screen.getAllByText("Select...")[0], 'ARGO')
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /csv/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /import/i }));
+
+    const csv = 'service,metric\r\norg.opensciencegrid.htcondorce,ch.cern.HTCondorCE-JobState\r\norg.opensciencegrid.htcondorce,ch.cern.HTCondorCE-JobSubmit\r\n';
+
+    const content = new Blob([csv], { type: 'text/csv;charset=UTF-8' });
+    const file = new File([content], 'profile.csv', { type: 'text/csv;charset=UTF-8' });
+    const input = screen.getByTestId('file_input');
+
+    await waitFor(() => {
+      useEvent.upload(input, file);
+    })
+
+    await waitFor(() => {
+      expect(input.files[0]).toStrictEqual(file)
+    })
+    expect(input.files.item(0)).toStrictEqual(file)
+    expect(input.files).toHaveLength(1)
+
+    await waitFor(() => {
+      fireEvent.load(screen.getByTestId('file_input'))
+    })
+
+    await waitFor(() => {
+      expect(within(screen.getByRole("table")).getAllByRole("row")).toHaveLength(4)
+    })
+
+    fireEvent.click(screen.getByTestId("insert-0"))
+
+    const metricInstances = within(screen.getByRole('table'));
+    var rows = metricInstances.getAllByRole('row');
+    const row2 = within(rows[3])
+
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[0], "eu.argo.ams")
+    })
+
+    await waitFor(() => {
+      selectEvent.select(row2.getAllByText("Select...")[1], "argo.AMS-Check")
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
+    })
+
+    expect(screen.queryByText('Must be one of predefined metrics')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddMetricProfile).toHaveBeenCalledWith({
+        description: 'New central ARGO_MON profile.',
+        name: 'NEW_PROFILE',
+        services: [
+          {
+            service: "eu.argo.ams",
+            metrics: [
+              "argo.AMS-Check"
+            ]
+          },
+          {
+            service: "org.opensciencegrid.htcondorce",
+            metrics: [
+              "ch.cern.HTCondorCE-JobState",
+              "ch.cern.HTCondorCE-JobSubmit"
+            ]
+          }
+        ]
+      })
+    })
   })
 
   test("Test importing tuples from constituting tenants for combined tenant", async () => {
