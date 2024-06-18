@@ -1111,3 +1111,14 @@ class ListDefaultPorts(APIView):
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="You do not have permission to add ports"
             )
+
+
+class ListPublicDefaultPorts(ListDefaultPorts):
+    authentication_classes = ()
+    permission_classes = ()
+
+    def _denied(self):
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
+    def post(self, request):
+        return self._denied()
