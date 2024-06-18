@@ -481,7 +481,7 @@ const MetricProfilesForm = ({
       infoview={historyview}
       submitperm={write_perm}
       extra_button={
-        !addview &&
+        !publicView &&
           <ButtonDropdown isOpen={dropdownOpen} toggle={() => setDropdownOpen(!dropdownOpen)}>
             <DropdownToggle caret color='secondary'>CSV</DropdownToggle>
             <DropdownMenu>
