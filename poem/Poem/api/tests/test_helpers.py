@@ -3587,10 +3587,13 @@ class SyncMetricsTests(TenantTestCase):
         self.assertEqual(err, [])
         self.assertEqual(unavailable, [])
         self.assertEqual(
-            sorted(deleted),
-            ["eu.egi.cloud.OpenStack-Swift", "test.Metric-Template"]
+            sorted(deleted), [
+                "argo.poem-tools.check",
+                "eu.egi.cloud.OpenStack-Swift",
+                "test.Metric-Template"
+            ]
         )
-        self.assertEqual(len(poem_models.Metric.objects.all()), 5)
+        self.assertEqual(len(poem_models.Metric.objects.all()), 4)
         self.assertRaises(
             poem_models.Metric.DoesNotExist,
             poem_models.Metric.objects.get,
@@ -3635,10 +3638,13 @@ class SyncMetricsTests(TenantTestCase):
         self.assertEqual(err, [])
         self.assertEqual(unavailable, [])
         self.assertEqual(
-            sorted(deleted),
-            ["eu.egi.cloud.OpenStack-Swift", "test.Metric-Template"]
+            sorted(deleted), [
+                "argo.poem-tools.check",
+                "eu.egi.cloud.OpenStack-Swift",
+                "test.Metric-Template"
+            ]
         )
-        self.assertEqual(len(poem_models.Metric.objects.all()), 5)
+        self.assertEqual(len(poem_models.Metric.objects.all()), 4)
         self.assertRaises(
             poem_models.Metric.DoesNotExist,
             poem_models.Metric.objects.get,
@@ -3683,10 +3689,13 @@ class SyncMetricsTests(TenantTestCase):
         self.assertEqual(err, [])
         self.assertEqual(unavailable, [])
         self.assertEqual(
-            sorted(deleted),
-            ["eu.egi.cloud.OpenStack-Swift", "test.Metric-Template"]
+            sorted(deleted), [
+                "argo.poem-tools.check",
+                "eu.egi.cloud.OpenStack-Swift",
+                "test.Metric-Template"
+            ]
         )
-        self.assertEqual(len(poem_models.Metric.objects.all()), 5)
+        self.assertEqual(len(poem_models.Metric.objects.all()), 4)
         self.assertRaises(
             poem_models.Metric.DoesNotExist,
             poem_models.Metric.objects.get,
@@ -3731,10 +3740,13 @@ class SyncMetricsTests(TenantTestCase):
         self.assertEqual(err, [])
         self.assertEqual(unavailable, ["test.MetricTemplate"])
         self.assertEqual(
-            sorted(deleted),
-            ["eu.egi.cloud.OpenStack-Swift", "test.Metric-Template"]
+            sorted(deleted), [
+                "argo.poem-tools.check",
+                "eu.egi.cloud.OpenStack-Swift",
+                "test.Metric-Template"
+            ]
         )
-        self.assertEqual(len(poem_models.Metric.objects.all()), 4)
+        self.assertEqual(len(poem_models.Metric.objects.all()), 3)
         self.assertRaises(
             poem_models.Metric.DoesNotExist,
             poem_models.Metric.objects.get,

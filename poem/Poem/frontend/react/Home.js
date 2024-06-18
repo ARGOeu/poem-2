@@ -51,6 +51,9 @@ export const PublicHome = (props) => {
               <div className='p-1 align-items-center'>
                 <Icon i='metrictemplates'/> <Link to={'/ui/public_metrictemplates'}>Metric templates</Link>
               </div>
+              <div className="p-1 align-items-center">
+                <Icon i="default_ports" /> <Link to={ "/ui/public_default_ports" }>Default ports</Link>
+              </div>
             </CardBody>
           </Card>
           <ParagraphTitle title='Tenants'/>
@@ -145,6 +148,9 @@ export const PublicHome = (props) => {
               <div className='p-1 align-items-center'>
                 <Icon i='metrictemplates'/> <Link to={'/ui/public_metrictemplates'}>Metric templates</Link>
               </div>
+              <div className="p-1 align-items-center">
+                <Icon i="default_ports" /> <Link to={ "/ui/public_default_ports" }>Default ports</Link>
+              </div>
             </CardBody>
           </Card>
           <ParagraphTitle title='Tenants'/>
@@ -167,6 +173,9 @@ export const PublicHome = (props) => {
             </div>
             <div className='p-1 align-items-center'>
               <Icon i='metrictemplates'/> <Link to={'/ui/public_metrictemplates'}>Metric templates</Link>
+            </div>
+            <div className="p-1 align-items-center">
+              <Icon i="default_ports" /> <Link to={ "/ui/public_default_ports" }>Default ports</Link>
             </div>
           </CardBody>
         </Card>
