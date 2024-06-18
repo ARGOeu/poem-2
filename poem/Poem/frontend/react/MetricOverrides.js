@@ -408,6 +408,7 @@ const MetricOverrideForm = ({
                 let filename = `${name}.json`
                 downloadJSON(jsonContent, filename)
               }}
+              disabled={ addview }
             >
               Export
             </DropdownItem>
