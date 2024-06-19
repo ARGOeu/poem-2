@@ -7,6 +7,7 @@ import { MetricTagsComponent, MetricTagsList } from "../MetricTags"
 import { Backend } from "../DataManager"
 import selectEvent from "react-select-event"
 import { NotificationManager } from "react-notifications"
+import useEvent from '@testing-library/user-event';
 
 
 jest.mock("../DataManager", () => {
@@ -450,6 +451,7 @@ describe("Test metric tags changeview", () => {
 
     expect(screen.getByRole("button", { name: /delete/i })).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /clone/i })).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /csv/i })).toBeInTheDocument()
   })
 
   test("Test filter metrics", async () => {
@@ -862,7 +864,13 @@ describe("Test metric tags changeview", () => {
 
     const row2 = table.getAllByRole("row")[3]
 
-    await selectEvent.select(within(row2).getByRole("combobox"), "argo.AMSPublisher-Check")
+    await waitFor(() => {
+      selectEvent.select(within(row2).getByRole("combobox"), "argo.AMSPublisher-Check")
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText("Must be one of predefined metrics")).not.toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
@@ -911,6 +919,10 @@ describe("Test metric tags changeview", () => {
       selectEvent.select(within(row2).getByRole("combobox"), "argo.AMSPublisher-Check")
     })
 
+    await waitFor(() => {
+      expect(screen.queryByText("Must be one of predefined metrics")).not.toBeInTheDocument()
+    })
+
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
       expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
@@ -935,6 +947,145 @@ describe("Test metric tags changeview", () => {
     )
   })
 
+  test("Test import csv successfully", async () => {
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: /csv/i }))
+    fireEvent.click(screen.getByRole("menuitem", { name: /import/i }))
+
+    const csv = 'name\r\nargo.AMS-Check\r\nargo.AMSPublisher-Check\r\n';
+
+    const content = new Blob([csv], { type: "text/csv;charset=UTF-8" })
+    const file = new File([content], "harmonized.csv", { type: "text/csv;charset=UTF-8" })
+    const input = screen.getByTestId("file_input")
+
+    await waitFor(() => { 
+      useEvent.upload(input, file) 
+    })
+
+    await waitFor(() => {
+      expect(input.files[0]).toStrictEqual(file)
+    })
+    expect(input.files.item(0)).toStrictEqual(file)
+    expect(input.files).toHaveLength(1)
+
+    await waitFor(() => {
+      fireEvent.load(screen.getByTestId("file_input"))
+    })
+
+    const nameField = screen.getByTestId("name")
+
+    expect(nameField.value).toBe("harmonized")
+    expect(nameField).toBeEnabled()
+
+    expect(screen.getByPlaceholderText(/search/i)).toBeInTheDocument()
+    const table = within(screen.getByRole("table"))
+
+    expect(table.getAllByRole("columnheader")).toHaveLength(3)
+    expect(table.getByRole("columnheader", { name: "#" })).toBeInTheDocument()
+    expect(table.getByRole("columnheader", { name: /metric/i }).textContent).toBe("Metric template")
+    expect(table.getByRole("columnheader", { name: /action/i }).textContent).toBe("Actions")
+
+    await waitFor(() => {
+      expect(table.getAllByRole("row")).toHaveLength(4)
+    })
+    expect(table.getAllByTestId(/remove-/i)).toHaveLength(2)
+    expect(table.getAllByTestId(/insert-/i)).toHaveLength(2)
+
+    expect(table.queryByText("generic.certificate.validity")).not.toBeInTheDocument()
+    expect(table.queryByText("generic.http.connect")).not.toBeInTheDocument()
+    expect(table.queryByText("generic.tcp.connect")).not.toBeInTheDocument()
+
+    expect(table.getByText("argo.AMS-Check")).toBeInTheDocument()
+    expect(table.getByText("argo.AMSPublisher-Check")).toBeInTheDocument()
+
+    selectEvent.openMenu(table.getByText("argo.AMS-Check"))
+    expect(table.getAllByText("generic.certificate.validity")).toHaveLength(1)
+    expect(table.getAllByText("generic.http.connect")).toHaveLength(1)
+    expect(table.getAllByText("generic.tcp.connect")).toHaveLength(1)
+    expect(table.getAllByText("argo.AMS-Check")).toHaveLength(1)
+    expect(table.getAllByText("argo.AMSPublisher-Check")).toHaveLength(1)
+
+    expect(screen.getByRole("button", { name: /delete/i })).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /clone/i })).not.toBeInTheDocument()
+  })
+
+  test("Test import csv with nonexisting metrics", async () => {
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: /csv/i }))
+    fireEvent.click(screen.getByRole("menuitem", { name: /import/i }))
+
+    const csv = 'name\r\nargo.AMS-Check\r\nargo.AMSPublisher-Check\r\nmock.metric.name\r\n';
+
+    const content = new Blob([csv], { type: "text/csv;charset=UTF-8" })
+    const file = new File([content], "harmonized.csv", { type: "text/csv;charset=UTF-8" })
+    const input = screen.getByTestId("file_input")
+
+    await waitFor(() => { 
+      useEvent.upload(input, file) 
+    })
+
+    await waitFor(() => {
+      expect(input.files[0]).toStrictEqual(file)
+    })
+    expect(input.files.item(0)).toStrictEqual(file)
+    expect(input.files).toHaveLength(1)
+
+    await waitFor(() => {
+      fireEvent.load(screen.getByTestId("file_input"))
+    })
+
+    const nameField = screen.getByTestId("name")
+
+    expect(nameField.value).toBe("harmonized")
+    expect(nameField).toBeEnabled()
+
+    expect(screen.getByPlaceholderText(/search/i)).toBeInTheDocument()
+    const table = within(screen.getByRole("table"))
+
+    expect(table.getAllByRole("columnheader")).toHaveLength(3)
+    expect(table.getByRole("columnheader", { name: "#" })).toBeInTheDocument()
+    expect(table.getByRole("columnheader", { name: /metric/i }).textContent).toBe("Metric template")
+    expect(table.getByRole("columnheader", { name: /action/i }).textContent).toBe("Actions")
+
+    await waitFor(() => {
+      expect(table.getAllByRole("row")).toHaveLength(5)
+    })
+    expect(table.getAllByTestId(/remove-/i)).toHaveLength(3)
+    expect(table.getAllByTestId(/insert-/i)).toHaveLength(3)
+
+    expect(table.queryByText("generic.certificate.validity")).not.toBeInTheDocument()
+    expect(table.queryByText("generic.http.connect")).not.toBeInTheDocument()
+    expect(table.queryByText("generic.tcp.connect")).not.toBeInTheDocument()
+
+    expect(table.getByText("argo.AMS-Check")).toBeInTheDocument()
+    expect(table.getByText("argo.AMSPublisher-Check")).toBeInTheDocument()
+    expect(table.getByText("mock.metric.name")).toBeInTheDocument()
+
+    selectEvent.openMenu(table.getByText("argo.AMS-Check"))
+    expect(table.getAllByText("generic.certificate.validity")).toHaveLength(1)
+    expect(table.getAllByText("generic.http.connect")).toHaveLength(1)
+    expect(table.getAllByText("generic.tcp.connect")).toHaveLength(1)
+    expect(table.getAllByText("argo.AMS-Check")).toHaveLength(1)
+    expect(table.getAllByText("argo.AMSPublisher-Check")).toHaveLength(1)
+
+    await waitFor(() => {
+      expect(screen.queryByText('Must be one of predefined metrics')).toBeInTheDocument()
+    })
+
+    expect(screen.getByRole("button", { name: /delete/i })).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /clone/i })).not.toBeInTheDocument()
+  })
+
   test("Test display warning messages", async () => {
     mockChangeObject.mockReturnValueOnce(
       Promise.resolve({
@@ -951,7 +1102,13 @@ describe("Test metric tags changeview", () => {
       expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
-    await selectEvent.select(screen.getByText("generic.certificate.validity"), "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(screen.getByText("generic.certificate.validity"), "argo.AMS-Check")
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText("argo.AMS-Check")).toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByTestId("remove-1"))
 
@@ -963,6 +1120,10 @@ describe("Test metric tags changeview", () => {
 
     await waitFor(() => {
       selectEvent.select(within(row2).getByRole("combobox"), "argo.AMSPublisher-Check")
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText("argo.AMSPublisher-Check")).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
@@ -1016,6 +1177,10 @@ describe("Test metric tags changeview", () => {
 
     await selectEvent.select(screen.getByText("generic.certificate.validity"), "argo.AMS-Check")
 
+    await waitFor(() => {
+      expect(screen.getByText("argo.AMS-Check")).toBeInTheDocument()
+    })
+
     fireEvent.click(screen.getByTestId("remove-1"))
 
     fireEvent.click(screen.getByTestId("insert-0"))
@@ -1026,6 +1191,14 @@ describe("Test metric tags changeview", () => {
 
     await waitFor(() => {
       selectEvent.select(within(row2).getByRole("combobox"), "argo.AMSPublisher-Check")
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText("argo.AMSPublisher-Check")).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText("Must be one of predefined metrics")).not.toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
