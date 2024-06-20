@@ -46,6 +46,7 @@ import {
   ListViewPlaceholder
 } from "./Placeholders"
 import PapaParse from 'papaparse';
+import { downloadCSV } from './FileDownload';
 
 
 const validationSchema = yup.object().shape({
@@ -463,7 +464,18 @@ const MetricTagsForm = ({
         <ButtonDropdown isOpen={ dropdownOpen } toggle={ () => setDropdownOpen(!dropdownOpen) }>
           <DropdownToggle caret color="secondary">CSV</DropdownToggle>
           <DropdownMenu>
-            <DropdownItem disabled={ addview }>
+            <DropdownItem 
+              onClick={ () => {
+                let csvContent = []
+                  metrics4tag.sort().forEach((metric) => {
+                    csvContent.push({ name: metric.name })
+                  })
+                const content = PapaParse.unparse(csvContent)
+                let filename = `${name}.csv`
+                downloadCSV(content, filename)
+              }}
+              disabled={ addview }
+            >
               Export
             </DropdownItem>
             <DropdownItem

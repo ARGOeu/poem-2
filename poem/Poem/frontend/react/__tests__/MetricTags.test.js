@@ -1086,6 +1086,68 @@ describe("Test metric tags changeview", () => {
     expect(screen.queryByRole("button", { name: /clone/i })).not.toBeInTheDocument()
   })
 
+  test("Test export csv successfully", async () => {
+    const helpers = require("../FileDownload")
+    jest.spyOn(helpers, "downloadCSV").mockReturnValueOnce(null)
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: /csv/i }))
+    fireEvent.click(screen.getByRole("menuitem", { name: /export/i }))
+
+    const content = "name\r\ngeneric.certificate.validity\r\ngeneric.http.connect\r\ngeneric.tcp.connect"
+
+    expect(helpers.downloadCSV).toHaveBeenCalledTimes(1)
+    expect(helpers.downloadCSV).toHaveBeenCalledWith(content, "harmonized.csv")
+  })
+
+  test("Export csv when form has been changed", async () => {
+    const helpers = require("../FileDownload")
+    jest.spyOn(helpers, "downloadCSV").mockReturnValueOnce(null)
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      selectEvent.select(screen.getByText("generic.certificate.validity"), "argo.AMS-Check")
+    }) 
+
+    await waitFor(() => {
+      expect(screen.getByText("argo.AMS-Check")).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByTestId("remove-1"))
+
+    fireEvent.click(screen.getByTestId("insert-0"))
+
+    const table = within(screen.getByRole("table"))
+
+    const row2 = table.getAllByRole("row")[3]
+
+    await waitFor(() => {
+      selectEvent.select(within(row2).getByRole("combobox"), "argo.AMSPublisher-Check")
+    })
+
+    await waitFor(() => {
+      expect(screen.queryByText("Must be one of predefined metrics")).not.toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: /csv/i }))
+    fireEvent.click(screen.getByRole("menuitem", { name: /export/i }))
+
+    const content = "name\r\nargo.AMS-Check\r\nargo.AMSPublisher-Check\r\ngeneric.tcp.connect"
+
+    expect(helpers.downloadCSV).toHaveBeenCalledTimes(1)
+    expect(helpers.downloadCSV).toHaveBeenCalledWith(content, "harmonized.csv")
+  })
+
   test("Test display warning messages", async () => {
     mockChangeObject.mockReturnValueOnce(
       Promise.resolve({
