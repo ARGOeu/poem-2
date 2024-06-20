@@ -1516,6 +1516,7 @@ describe("Test metric tags addview", () => {
 
     expect(screen.queryByRole("button", { name: /delete/i })).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /clone/i })).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /csv/i })).toBeInTheDocument()
   })
 
   test("Test change metric tags name", async () => {
@@ -1635,6 +1636,141 @@ describe("Test metric tags addview", () => {
       expect(mockAddObject).toHaveBeenCalledWith(
         "/api/v2/internal/metrictags/",
         { name: "test_tag", metrics: ["generic.certificate.validity", "argo.AMS-Check"] }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictemplate")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictemplate")
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Metric tag successfully added", "Added", 2000
+    )
+  })
+
+  test("Test import csv successfully", async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 201, statusText: "CREATED" })
+    )
+
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
+    })
+
+    const csv = 'name\r\nargo.AMS-Check\r\nargo.AMSPublisher-Check\r\n';
+
+    const content = new Blob([csv], { type: "text/csv;charset=UTF-8" })
+    const file = new File([content], "harmonized.csv", { type: "text/csv;charset=UTF-8" })
+    const input = screen.getByTestId("file_input")
+
+    await waitFor(() => { 
+      useEvent.upload(input, file) 
+    })
+
+    await waitFor(() => {
+      expect(input.files[0]).toStrictEqual(file)
+    })
+    expect(input.files.item(0)).toStrictEqual(file)
+    expect(input.files).toHaveLength(1)
+
+    await waitFor(() => {
+      fireEvent.load(screen.getByTestId("file_input"))
+    })
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "test_tag" } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metrictags/",
+        { name: "test_tag", metrics: ["argo.AMS-Check", "argo.AMSPublisher-Check"] }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictemplate")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictemplate")
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Metric tag successfully added", "Added", 2000
+    )
+  })
+
+  test("Test import csv, make some changes, and save", async () => {
+    mockAddObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 201, statusText: "CREATED" })
+    )
+
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
+    })
+
+    const csv = 'name\r\nargo.AMS-Check\r\nargo.AMSPublisher-Check\r\n';
+
+    const content = new Blob([csv], { type: "text/csv;charset=UTF-8" })
+    const file = new File([content], "harmonized.csv", { type: "text/csv;charset=UTF-8" })
+    const input = screen.getByTestId("file_input")
+
+    await waitFor(() => { 
+      useEvent.upload(input, file) 
+    })
+
+    await waitFor(() => {
+      expect(input.files[0]).toStrictEqual(file)
+    })
+    expect(input.files.item(0)).toStrictEqual(file)
+    expect(input.files).toHaveLength(1)
+
+    await waitFor(() => {
+      fireEvent.load(screen.getByTestId("file_input"))
+    })
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "test_tag" } })
+
+    const table = within(screen.getByRole("table"))
+
+    fireEvent.click(table.getByTestId("insert-1"))
+
+    const row3 = table.getAllByRole("row")[4]
+    const input3 = within(row3).getByRole("combobox")
+
+    await waitFor(() => {
+      selectEvent.select(input3, "generic.tcp.connect")
+    })
+
+    await waitFor(() => {
+      expect(table.getByText("generic.tcp.connect")).toBeInTheDocument()
+    })
+
+    fireEvent.click(table.getByTestId("remove-1"))
+
+    await waitFor(() => {
+      expect(table.queryByText("argo.AMSPublisher-Check")).not.toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockAddObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metrictags/",
+        { name: "test_tag", metrics: ["argo.AMS-Check", "generic.tcp.connect"] }
       )
     })
 
