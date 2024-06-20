@@ -10022,17 +10022,25 @@ class MetricTagsTests(TenantTestCase):
                 {
                     "id": self.tag1.id,
                     "name": "internal",
-                    "metrics": ["argo.AMS-Check"]
+                    "metrics": [{
+                        "name": "argo.AMS-Check"
+                    }]
                 },
                 {
                     "id": self.tag3.id,
                     "name": "test_tag1",
-                    "metrics": ["argo.AMS-Check", "argo.EGI-Connectors-Check"]
+                    "metrics": [
+                        {"name": "argo.AMS-Check"},
+                        {"name": "argo.EGI-Connectors-Check"}
+                    ]
                 },
                 {
                     "id": self.tag4.id,
                     "name": "test_tag2",
-                    "metrics": ["argo.AMS-Check", "org.apel.APEL-Pub"]
+                    "metrics": [
+                        {"name": "argo.AMS-Check"},
+                        {"name": "org.apel.APEL-Pub"}
+                    ]
                 }
             ]
         )
@@ -10052,17 +10060,25 @@ class MetricTagsTests(TenantTestCase):
                 {
                     "id": self.tag1.id,
                     "name": "internal",
-                    "metrics": ["argo.AMS-Check"]
+                    "metrics": [
+                        {"name": "argo.AMS-Check"}
+                    ]
                 },
                 {
                     "id": self.tag3.id,
                     "name": "test_tag1",
-                    "metrics": ["argo.AMS-Check", "argo.EGI-Connectors-Check"]
+                    "metrics": [
+                        {"name": "argo.AMS-Check"},
+                        {"name": "argo.EGI-Connectors-Check"}
+                    ]
                 },
                 {
                     "id": self.tag4.id,
                     "name": "test_tag2",
-                    "metrics": ["argo.AMS-Check", "org.apel.APEL-Pub"]
+                    "metrics": [
+                        {"name": "argo.AMS-Check"},
+                        {"name": "org.apel.APEL-Pub"}
+                    ]
                 }
             ]
         )
@@ -10082,17 +10098,25 @@ class MetricTagsTests(TenantTestCase):
                 {
                     "id": self.tag1.id,
                     "name": "internal",
-                    "metrics": ["argo.AMS-Check"]
+                    "metrics": [
+                        {"name": "argo.AMS-Check"}
+                    ]
                 },
                 {
                     "id": self.tag3.id,
                     "name": "test_tag1",
-                    "metrics": ["argo.AMS-Check", "argo.EGI-Connectors-Check"]
+                    "metrics": [
+                        {"name": "argo.AMS-Check"},
+                        {"name": "argo.EGI-Connectors-Check"}
+                    ]
                 },
                 {
                     "id": self.tag4.id,
                     "name": "test_tag2",
-                    "metrics": ["argo.AMS-Check", "org.apel.APEL-Pub"]
+                    "metrics": [
+                        {"name": "argo.AMS-Check"},
+                        {"name": "org.apel.APEL-Pub"}
+                    ]
                 }
             ]
         )
@@ -10112,17 +10136,25 @@ class MetricTagsTests(TenantTestCase):
                 {
                     "id": self.tag1.id,
                     "name": "internal",
-                    "metrics": ["argo.AMS-Check"]
+                    "metrics": [
+                        {"name": "argo.AMS-Check"}
+                    ]
                 },
                 {
                     "id": self.tag3.id,
                     "name": "test_tag1",
-                    "metrics": ["argo.AMS-Check", "argo.EGI-Connectors-Check"]
+                    "metrics": [
+                        {"name": "argo.AMS-Check"},
+                        {"name": "argo.EGI-Connectors-Check"}
+                    ]
                 },
                 {
                     "id": self.tag4.id,
                     "name": "test_tag2",
-                    "metrics": ["argo.AMS-Check", "org.apel.APEL-Pub"]
+                    "metrics": [
+                        {"name": "argo.AMS-Check"},
+                        {"name": "org.apel.APEL-Pub"}
+                    ]
                 }
             ]
         )
@@ -10141,7 +10173,9 @@ class MetricTagsTests(TenantTestCase):
             {
                 "id": self.tag1.id,
                 "name": "internal",
-                "metrics": ["argo.AMS-Check"]
+                "metrics": [
+                    {"name": "argo.AMS-Check"}
+                ]
             }
         )
 
@@ -10154,7 +10188,9 @@ class MetricTagsTests(TenantTestCase):
             {
                 "id": self.tag1.id,
                 "name": "internal",
-                "metrics": ["argo.AMS-Check"]
+                "metrics": [
+                    {"name": "argo.AMS-Check"}
+                ]
             }
         )
 
@@ -10167,7 +10203,9 @@ class MetricTagsTests(TenantTestCase):
             {
                 "id": self.tag1.id,
                 "name": "internal",
-                "metrics": ["argo.AMS-Check"]
+                "metrics": [
+                    {"name": "argo.AMS-Check"}
+                ]
             }
         )
 
@@ -10180,7 +10218,9 @@ class MetricTagsTests(TenantTestCase):
             {
                 "id": self.tag1.id,
                 "name": "internal",
-                "metrics": ["argo.AMS-Check"]
+                "metrics": [
+                    {"name": "argo.AMS-Check"}
+                ]
             }
         )
 

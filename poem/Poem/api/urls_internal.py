@@ -93,6 +93,7 @@ urlpatterns = [
     path("metricconfiguration/", views_internal.ListMetricConfiguration.as_view(), name="metricconfiguration"),
     path("metricconfiguration/<str:name>", views_internal.ListMetricConfiguration.as_view(), name="metricconfiguration"),
     path("default_ports/", views_internal.ListDefaultPorts.as_view(), name="default_ports"),
+    path("public_default_ports/", views_internal.ListPublicDefaultPorts.as_view(), name="default_ports"),
     path("probecandidates/", views_internal.ListProbeCandidates.as_view(), name="probecandidates"),
     path("probecandidates/<str:cid>", views_internal.ListProbeCandidates.as_view(), name="probecandidates"),
     path("probecandidatestatuses/", views_internal.ListProbeCandidateStatuses.as_view(), name="probecandidatestatus")
