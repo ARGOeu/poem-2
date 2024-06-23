@@ -54,20 +54,12 @@ RUN dnf -y install \
       xmlsec1 \
       xmlsec1-openssl
 RUN passwd -d apache; usermod --shell /bin/bash apache
-#ADD https://github.com/ARGOeu/poem-2/archive/devel.zip poem-devel.zip
-#RUN unzip poem-devel.zip
-#WORKDIR poem-2-devel
-#RUN source /etc/profile.d/venv_poem.sh; \
-    #workon poem; \
-    #make wheel-devel; \
-    #pip3 install dist/*;
-#ADD https://cacerts.digicert.com/TERENAeScienceSSLCA3.crt.pem /etc/pki/tls/certs/
-#RUN yum -y install ca-policy-egi-core; \
-    #rm -rf /etc/pki/ca-trust/source/anchors/*; \
-    #cp /etc/pki/tls/certs/TERENAeScienceSSLCA3.crt.pem /etc/pki/ca-trust/source/anchors; \
-    #cp /etc/grid-security/certificates/*.pem /etc/pki/ca-trust/source/anchors; \
-    #update-ca-trust
-#ADD hostcert.pem hostkey.pem /etc/grid-security/
+ADD https://cacerts.digicert.com/TERENAeScienceSSLCA3.crt.pem /etc/pki/tls/certs/
+RUN rm -rf /etc/pki/ca-trust/source/anchors/*; \
+    cp /etc/pki/tls/certs/TERENAeScienceSSLCA3.crt.pem /etc/pki/ca-trust/source/anchors; \
+    cp /etc/grid-security/certificates/*.pem /etc/pki/ca-trust/source/anchors; \
+    update-ca-trust
+ADD hostcert.pem hostkey.pem /etc/grid-security/
 RUN python3.9 -m venv /opt/poetry-tool/
 RUN sh -c '\
   . /opt/poetry-tool/bin/activate \
