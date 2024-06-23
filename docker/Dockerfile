@@ -58,15 +58,9 @@ RUN dnf -y install \
     #cp /etc/grid-security/certificates/*.pem /etc/pki/ca-trust/source/anchors; \
     #update-ca-trust
 #ADD hostcert.pem hostkey.pem /etc/grid-security/
-#WORKDIR /home/user
-#COPY \
-	#poem.conf \
-	#collectstatic.sh \
-	#setup.sh \
-	#restarthttpd.sh \
-	#safety.sh \
-	#entrypoint.sh \
-	#/home/user/
+COPY \
+	entrypoint.sh \
+	/home/user/
 #COPY apache/poem-apache.ini /etc/supervisord.d/
 #COPY apache/poem.conf /opt/rh/httpd24/root/etc/httpd/conf.d/
 #RUN sed -r -i 's/(^SSLCertificate.*)/# \1/' /opt/rh/httpd24/root/etc/httpd/conf.d/ssl.conf; \
@@ -76,4 +70,7 @@ RUN dnf -y install \
 # RUN yum localinstall -y tmux-2.9a-3.el7.x86_64.rpm
 RUN echo "user ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers
 USER user
+WORKDIR /home/user
+RUN curl -sfL https://git.io/chezmoi | sh
+COPY chezmoi-config-apply.sh /home/user
 ENTRYPOINT ["/home/user/entrypoint.sh"]
