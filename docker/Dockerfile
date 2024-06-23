@@ -13,12 +13,14 @@ RUN dnf -y install epel-release rocky-repos && \
       ctags \
       git \
       glibc-all-langpacks \
+      httpd httpd-devel \
       htop \
       iproute \
       libpq \
       make \
       mc \
       memcached \
+      mod_ssl \
       ncurses-compat-libs \
       net-tools \
       nmap \
@@ -28,6 +30,7 @@ RUN dnf -y install epel-release rocky-repos && \
       python3-devel \
       python3-pip \
       python3-setuptools \
+      python3-mod_wsgi \
       rpmdevtools \
       rsync \
       sudo \
@@ -78,8 +81,8 @@ RUN dnf -y install \
     #update-ca-trust
 #ADD hostcert.pem hostkey.pem /etc/grid-security/
 COPY \
-	entrypoint.sh \
-	/home/user/
+  entrypoint.sh \
+  /home/user/
 #COPY apache/poem-apache.ini /etc/supervisord.d/
 #COPY apache/poem.conf /opt/rh/httpd24/root/etc/httpd/conf.d/
 #RUN sed -r -i 's/(^SSLCertificate.*)/# \1/' /opt/rh/httpd24/root/etc/httpd/conf.d/ssl.conf; \
