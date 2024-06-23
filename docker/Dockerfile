@@ -8,22 +8,40 @@ RUN dnf -y makecache; dnf -y update; dnf clean all
 RUN dnf -y install epel-release rocky-repos && \
     dnf -y install \
       ack \
+      ca-certificates \
       ca-policy-egi-core \
       ctags \
-      ca-certificates \
       git \
+      glibc-all-langpacks \
       htop \
+      iproute \
+      libpq \
       make \
+      mc \
+      memcached \
+      ncurses-compat-libs \
       net-tools \
       nmap \
+      passwd \
+      procps-ng \
       psmisc \
+      python3-devel \
+      python3-pip \
+      python3-setuptools \
+      rpmdevtools \
+      rsync \
       sudo \
+      supervisor \
       telnet \
+      the_silver_searcher \
       tmux \
+      tree \
       unzip \
       vim \
       wget \
       which \
+      xmlsec1-openssl \
+      yum-utils \
       zsh
 RUN dnf -y makecache
 RUN dnf -y install \
