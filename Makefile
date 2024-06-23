@@ -10,7 +10,10 @@ sdist:
 	python setup.py sdist
 
 clean:
-	python setup.py clean --all
-	rm -rf build/
-	rm -rf dist
-	rm -rf poem.egg-info/
+	rm -f MANIFEST
+	rm -rf dist build
+	rm -rf **/*.pyc
+	rm -rf **/*.pyo
+	rm -rf **/*.pyo
+	rm -rf *.egg-info/
+	rm -rf **/*__pycache__*

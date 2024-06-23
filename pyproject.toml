@@ -48,17 +48,37 @@ classifiers = [
 
 [tool.setuptools]
 packages = [
-	'poem',
+    'Poem.api',
+    'Poem.api.internal_views',
+    'Poem.api.migrations',
+    'Poem.api.tests',
+    'Poem.auth_backend.cust',
+    'Poem.auth_backend.saml2',
+    'Poem.helpers',
+    'Poem.poem',
+    'Poem.poem.dbmodels',
+    'Poem.poem.fixtures',
+    'Poem.poem.management',
+    'Poem.poem.migrations',
+    'Poem.poem.saml2',
+    'Poem.poem_super_admin',
+    'Poem.poem_super_admin.dbmodels',
+    'Poem.poem_super_admin.migrations',
+    'Poem.templates',
+    'Poem.tenants',
+    'Poem.tenants.migrations',
+    'Poem.users',
+    'Poem.users.migrations',
 ]
 include-package-data = true
 
 [tool.setuptools.package-dir]
-poem = "poem/Poem"
+Poem = "poem/Poem"
 
 [tool.setuptools.data-files]
 "" = ["pyproject.toml", "poetry.lock"]
 "bin" = [
-	"bin/poem-backup", "bin/poem-clearsessions", "bin/poem-db",
+  "bin/poem-backup", "bin/poem-clearsessions", "bin/poem-db",
   "bin/poem-genseckey", "bin/poem-manage", "bin/poem-tenant",
   "bin/poem-token"
 ]
