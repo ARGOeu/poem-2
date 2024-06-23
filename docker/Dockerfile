@@ -53,19 +53,7 @@ RUN dnf -y install \
       supervisor \
       xmlsec1 \
       xmlsec1-openssl
-#RUN yum -y makecache && yum -y install \
-      #httpd24-mod_ssl \
-      #rh-python36-mod_wsgi \
-      #rh-python36-python-pip
-#RUN passwd -d apache; usermod --shell /bin/bash apache
-#RUN scl enable rh-python36 'pip install -U pip' && \
-    #scl enable rh-python36 'pip3 install virtualenv virtualenvwrapper'
-#COPY venv_poem.sh /etc/profile.d/
-#COPY scl-psql.sh /etc/profile.d/
-#RUN scl enable rh-python36 'source /etc/profile.d/venv_poem.sh; \
-    #mkdir -p $WORKON_HOME; \
-    #mkvirtualenv poem'
-#WORKDIR /home/user
+RUN passwd -d apache; usermod --shell /bin/bash apache
 #ADD https://github.com/ARGOeu/poem-2/archive/devel.zip poem-devel.zip
 #RUN unzip poem-devel.zip
 #WORKDIR poem-2-devel
@@ -80,6 +68,17 @@ RUN dnf -y install \
     #cp /etc/grid-security/certificates/*.pem /etc/pki/ca-trust/source/anchors; \
     #update-ca-trust
 #ADD hostcert.pem hostkey.pem /etc/grid-security/
+RUN python3.9 -m venv /opt/poetry-tool/
+RUN sh -c '\
+  . /opt/poetry-tool/bin/activate \
+  && pip install -U pip \
+  && pip install -U poetry'
+RUN ln -s /opt/poetry-tool/bin/poetry /usr/local/bin/
+RUN dnf module install -y nodejs:20
+RUN python3.9 -m venv /opt/poem
+RUN sh -c '\
+  . /opt/poem/bin/activate \
+  && pip install -U pip'
 COPY \
   entrypoint.sh \
   /home/user/
@@ -88,10 +87,10 @@ COPY \
 #RUN sed -r -i 's/(^SSLCertificate.*)/# \1/' /opt/rh/httpd24/root/etc/httpd/conf.d/ssl.conf; \
     #sed -r -i 's/(^SSLCACertificate.*)/# \1/' /opt/rh/httpd24/root/etc/httpd/conf.d/ssl.conf
 #RUN ./setup.sh
-RUN echo "user ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers
+RUN sed -r -i 's/(^Defaults.*always_set_home)/# \1/' /etc/sudoers
+RUN echo -e "user ALL=(ALL) NOPASSWD: ALL\nDefaults env_keep += \"HOME\"" >> /etc/sudoers
 USER user
 WORKDIR /home/user
-RUN sudo python3.9 -m venv /opt/poem
 RUN curl -sfL https://git.io/chezmoi | sh
 COPY chezmoi-config-apply.sh /home/user
 ENTRYPOINT ["/home/user/entrypoint.sh"]
