@@ -5,8 +5,8 @@ RUN groupadd user -g 1000 && useradd -u 1000 -g 1000 user -m -d /home/user
 RUN passwd -d root
 RUN sed -i -r 's/bash/zsh/' /etc/passwd; sed -i -r 's/^tsflags/# tsflags/' /etc/yum.conf
 RUN dnf -y makecache; dnf -y update; dnf clean all
-RUN yum -y install epel-release rocky-repos && \
-    yum -y install \
+RUN dnf -y install epel-release rocky-repos && \
+    dnf -y install \
       ack \
       ca-policy-egi-core \
       ctags \
@@ -19,6 +19,7 @@ RUN yum -y install epel-release rocky-repos && \
       psmisc \
       sudo \
       telnet \
+      tmux \
       unzip \
       vim \
       wget \
@@ -66,11 +67,10 @@ COPY \
 #RUN sed -r -i 's/(^SSLCertificate.*)/# \1/' /opt/rh/httpd24/root/etc/httpd/conf.d/ssl.conf; \
     #sed -r -i 's/(^SSLCACertificate.*)/# \1/' /opt/rh/httpd24/root/etc/httpd/conf.d/ssl.conf
 #RUN ./setup.sh
-# COPY tmux-2.9a-3.el7.x86_64.rpm ./
-# RUN yum localinstall -y tmux-2.9a-3.el7.x86_64.rpm
 RUN echo "user ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers
 USER user
 WORKDIR /home/user
+RUN sudo python3.9 -m venv /opt/poem
 RUN curl -sfL https://git.io/chezmoi | sh
 COPY chezmoi-config-apply.sh /home/user
 ENTRYPOINT ["/home/user/entrypoint.sh"]
