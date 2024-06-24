@@ -22,6 +22,12 @@ devel-webpack-server:
 devel-webpack-server-hmr:
 	docker exec -u user -t $(container_name) bash -c '/home/user/run-frontdev-server.sh --hot'
 
+devel-wheel:
+	docker exec -u user -t $(container_name) bash -c 'source /opt/poem/bin/activate && cd /home/user/poem-source && make clean && make wheel-devel'
+
+prod-wheel:
+	docker exec -u user -t $(container_name) bash -c 'source /opt/poem/bin/activate && cd /home/user/poem-source && make clean && make wheel-prod'
+
 npm:
 	docker exec -t $(container_name) bash -c 'cd /home/user/frontend && npm $(ARGS)'
 
