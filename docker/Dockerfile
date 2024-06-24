@@ -68,6 +68,7 @@ RUN sh -c '\
 RUN ln -s /opt/poetry-tool/bin/poetry /usr/local/bin/
 RUN dnf module install -y nodejs:20
 RUN python3.9 -m venv /opt/poem
+RUN chown -R user:user /opt/poem
 RUN sh -c '\
   . /opt/poem/bin/activate \
   && pip install -U pip'
