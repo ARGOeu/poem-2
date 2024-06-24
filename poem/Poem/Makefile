@@ -1,4 +1,4 @@
-container_name = poem-react-c7
+container_name = poem-react-r9
 
 place-new-bundle:
 	./keep-latest-bundle.sh
