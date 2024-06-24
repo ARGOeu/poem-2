@@ -1,5 +1,5 @@
 [DEFAULT]
-VENV = /home/pyvenv/poem/
+VENV = /opt/poem
 
 [GENERAL]
 Debug = False
