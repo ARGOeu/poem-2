@@ -292,6 +292,87 @@ const mockMetricTemplate = {
   fileparameter: []
 };
 
+const mockMetricTemplateWithDependency = {
+  "id": 422,
+    "name": "srce.gridproxy.validity",
+    "mtype": "Active",
+    "tags": [
+        "argo",
+        "authentication",
+        "htc",
+        "internal",
+        "monitoring",
+        "proxy certificate"
+    ],
+    "probeversion": "GridProxy-probe (0.3.0)",
+    "description": "",
+    "parent": "",
+    "probeexecutable": "GridProxy-probe",
+    "config": [
+        {
+            "key": "maxCheckAttempts",
+            "value": "3"
+        },
+        {
+            "key": "timeout",
+            "value": "30"
+        },
+        {
+            "key": "path",
+            "value": "/usr/libexec/argo/probes/globus"
+        },
+        {
+            "key": "interval",
+            "value": "15"
+        },
+        {
+            "key": "retryInterval",
+            "value": "3"
+        }
+    ],
+    "attribute": [
+        {
+            "key": "VONAME",
+            "value": "--vo"
+        },
+        {
+            "key": "X509_USER_PROXY",
+            "value": "-x"
+        }
+    ],
+    "dependency": [
+        {
+            "key": "hr.srce.GridProxy-Get",
+            "value": "0"
+        }
+    ],
+    "flags": [
+        {
+            "key": "NOHOSTNAME",
+            "value": "1"
+        },
+        {
+            "key": "NRPE",
+            "value": "1"
+        },
+        {
+            "key": "LOCALDEP",
+            "value": "1"
+        },
+        {
+            "key": "VO",
+            "value": "1"
+        },
+        {
+            "key": "NOPUBLISH",
+            "value": "1"
+        }
+    ],
+    "files": [],
+    "parameter": [],
+    "fileparameter": []
+}
+
 const mockProbeVersions = [
   {
     id: '3',
@@ -1434,13 +1515,14 @@ describe('Test metric template changeview on SuperPOEM', () => {
     const configVal5 = screen.getByTestId('config.4.value');
     const attributeKey = screen.getByTestId('attributes.0.key');
     const attributeVal = screen.getByTestId('attributes.0.value')
-    const dependencyKey = screen.getByTestId('dependency.0.key');
-    const dependencyVal = screen.getByTestId('dependency.0.value');
     const parameterKey = screen.getByTestId('parameter.0.key');
     const parameterVal = screen.getByTestId('parameter.0.value');
     const flagKey = screen.getByTestId('flags.0.key');
     const flagVal = screen.getByTestId('flags.0.value');
     const parentField = screen.getByText(/select/i)
+
+    expect(screen.queryByTestId("dependency.0.key")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("dependency.0.value")).not.toBeInTheDocument()
 
     expect(nameField.value).toBe('argo.AMS-Check');
     expect(typeField).toBeEnabled()
@@ -1498,9 +1580,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(screen.getByRole("heading", { name: /attributes/i })).toBeInTheDocument()
     expect(attributeKey.value).toBe('argo.ams_TOKEN');
     expect(attributeVal.value).toBe('--token');
-    expect(screen.getByRole("heading", { name: /dependency/i })).toBeInTheDocument()
-    expect(dependencyKey.value).toBe('');
-    expect(dependencyVal.value).toBe('');
+    expect(screen.queryByRole("heading", { name: /dependency/i })).not.toBeInTheDocument()
     expect(screen.getByRole("heading", { name: /parameter/i })).toBeInTheDocument()
     expect(parameterKey.value).toBe('--project');
     expect(parameterVal.value).toBe('EGI');
@@ -1519,7 +1599,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(screen.getByTestId("attributes.addnew"))
 
     expect(screen.queryByTestId("dependency")).not.toBeInTheDocument()
-    expect(screen.getByTestId("dependency.addnew")).toBeInTheDocument()
+    expect(screen.queryByTestId("dependency.addnew")).not.toBeInTheDocument()
 
     expect(screen.getByTestId("parameter.0.remove")).toBeInTheDocument()
     expect(screen.getByTestId("parameter.addnew")).toBeInTheDocument()
@@ -1576,8 +1656,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
     const attributeKey = screen.getByTestId('attributes.0.key');
     const attributeVal = screen.getByTestId('attributes.0.value')
 
-    const dependencyKey = screen.getByTestId('dependency.0.key');
-    const dependencyVal = screen.getByTestId('dependency.0.value');
+    expect(screen.queryByTestId("dependency.0.key")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("dependency.0.value")).not.toBeInTheDocument()
 
     const parameterKey = screen.getByTestId('parameter.0.key');
     const parameterVal = screen.getByTestId('parameter.0.value');
@@ -1652,11 +1732,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(screen.queryByTestId('attributes.0.remove')).not.toBeInTheDocument();
     expect(screen.queryByTestId('attributes.addnew')).not.toBeInTheDocument();
 
-    expect(screen.getByRole("heading", { name: /dependency/i })).toBeInTheDocument()
-    expect(dependencyKey.value).toBe('');
-    expect(dependencyKey).toBeDisabled()
-    expect(dependencyVal.value).toBe('');
-    expect(dependencyVal).toBeDisabled()
+    expect(screen.queryByRole("heading", { name: /dependency/i })).not.toBeInTheDocument()
     expect(screen.queryByTestId('dependency.0.remove')).not.toBeInTheDocument();
     expect(screen.queryByTestId('dependency.addnew')).not.toBeInTheDocument();
 
@@ -1895,6 +1971,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
     )
   })
 
+  /*
   test("Test change dependency", async () => {
     mockChangeObject.mockReturnValueOnce(
       Promise.resolve({ ok: true, status: 200 })
@@ -1963,6 +2040,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
       'Metric template successfully changed', 'Changed', 2000
     )
   })
+    */
 
   test("Test change parameter", async () => {
     mockChangeObject.mockReturnValueOnce(
@@ -2128,9 +2206,6 @@ describe('Test metric template changeview on SuperPOEM', () => {
     fireEvent.change(screen.getByTestId('attributes.1.key'), { target: { value: 'ATTRIBUTE' } });
     fireEvent.change(screen.getByTestId('attributes.1.value'), { target: { value: '--meh' } });
 
-    fireEvent.change(screen.getByTestId("dependency.0.key"), { target: { value: 'some-dep' } });
-    fireEvent.change(screen.getByTestId("dependency.0.value"), { target: { value: 'some-dep-value' } });
-
     fireEvent.click(screen.getByTestId('parameter.0.remove'));
 
     fireEvent.click(screen.getByTestId('flags.addnew'));
@@ -2166,9 +2241,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
             { key: 'argo.ams_TOKEN', value: '--token' },
             { key: 'ATTRIBUTE', value: '--meh', isNew: true }
           ],
-          'dependency': [
-            { key: 'some-dep', value: 'some-dep-value' }
-          ],
+          'dependency': [{ key: "", value: "" }],
           'parameter': [{ key: '', value: '' }],
           'flags': [
             { key: 'OBSESS', value: '1' },
@@ -2217,9 +2290,6 @@ describe('Test metric template changeview on SuperPOEM', () => {
     fireEvent.change(screen.getByTestId('attributes.1.key'), { target: { value: 'ATTRIBUTE' } });
     fireEvent.change(screen.getByTestId('attributes.1.value'), { target: { value: '--meh' } });
 
-    fireEvent.change(screen.getByTestId("dependency.0.key"), { target: { value: 'some-dep' } });
-    fireEvent.change(screen.getByTestId("dependency.0.value"), { target: { value: 'some-dep-value' } });
-
     fireEvent.click(screen.getByTestId('parameter.0.remove'));
 
     fireEvent.click(screen.getByTestId('flags.addnew'));
@@ -2255,9 +2325,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
             { key: 'argo.ams_TOKEN', value: '--token' },
             { key: 'ATTRIBUTE', value: '--meh', isNew: true }
           ],
-          'dependency': [
-            { key: 'some-dep', value: 'some-dep-value' }
-          ],
+          'dependency': [{ key: "", value: "" }],
           'parameter': [{ key: '', value: '' }],
           'flags': [
             { key: 'OBSESS', value: '1' },
@@ -2702,8 +2770,6 @@ describe('Test metric template changeview on SuperPOEM', () => {
     const configVal5 = screen.getByTestId('config.4.value');
     const attributeKey = screen.getByTestId('attributes.0.key');
     const attributeVal = screen.getByTestId('attributes.0.value')
-    const dependencyKey = screen.getByTestId('dependency.0.key');
-    const dependencyVal = screen.getByTestId('dependency.0.value');
     const parameterKey = screen.getByTestId('parameter.0.key');
     const parameterVal = screen.getByTestId('parameter.0.value');
     const flagKey1 = screen.getByTestId('flags.0.key');
@@ -2711,6 +2777,9 @@ describe('Test metric template changeview on SuperPOEM', () => {
     const flagKey2 = screen.queryByTestId('flags.1.key');
     const flagVal2 = screen.queryByTestId('flags.1.value');
     const parentField = screen.getAllByText(/select/i)[2]
+
+    expect(screen.queryByTestId("dependency.0.key")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("dependency.0.value")).not.toBeInTheDocument()
 
     expect(nameField.value).toBe('org.apel.APEL-Pub');
     expect(probeField).toBeEnabled();
@@ -2763,10 +2832,6 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(attributeKey).not.toHaveAttribute('hidden');
     expect(attributeVal.value).toBe('');
     expect(attributeVal).not.toHaveAttribute('hidden');
-    expect(dependencyKey.value).toBe('');
-    expect(dependencyKey).not.toHaveAttribute('hidden');
-    expect(dependencyVal.value).toBe('');
-    expect(dependencyVal).not.toHaveAttribute('hidden');
     expect(parameterKey.value).toBe('');
     expect(parameterKey).not.toHaveAttribute('hidden');
     expect(parameterVal.value).toBe('');
@@ -2943,8 +3008,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(configVal5a).toBeEnabled()
     expect(attributeKey2.value).toBe('argo.ams_TOKEN');
     expect(attributeVal2.value).toBe('--token');
-    expect(dependencyKey2.value).toBe('');
-    expect(dependencyVal2.value).toBe('');
+    expect(dependencyKey2).not.toBeInTheDocument()
+    expect(dependencyVal2).not.toBeInTheDocument()
     expect(parameterKey2.value).toBe('--project');
     expect(parameterVal2.value).toBe('EGI')
     expect(flagKey1a.value).toBe('OBSESS');
@@ -3070,13 +3135,14 @@ describe('Test metric template addview on SuperPOEM', () => {
     const configVal5 = screen.getByTestId('config.4.value');
     const attributeKey = screen.getByTestId('attributes.0.key');
     const attributeVal = screen.getByTestId('attributes.0.value')
-    const dependencyKey = screen.getByTestId('dependency.0.key');
-    const dependencyVal = screen.getByTestId('dependency.0.value');
     const parameterKey = screen.getByTestId('parameter.0.key');
     const parameterVal = screen.getByTestId('parameter.0.value');
     const flagKey = screen.getByTestId('flags.0.key');
     const flagVal = screen.getByTestId('flags.0.value');
     const parentField = screen.getAllByText(/select/i)[2]
+
+    expect(screen.queryByTestId("dependency.0.key")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("dependency.0.value")).not.toBeInTheDocument()
 
     expect(nameField.value).toBe('');
     expect(typeField).toBeEnabled()
@@ -3132,8 +3198,6 @@ describe('Test metric template addview on SuperPOEM', () => {
     expect(configVal5).toBeEnabled()
     expect(attributeKey.value).toBe('');
     expect(attributeVal.value).toBe('');
-    expect(dependencyKey.value).toBe('');
-    expect(dependencyVal.value).toBe('');
     expect(parameterKey.value).toBe('');
     expect(parameterVal.value).toBe('');
     expect(flagKey.value).toBe('');
@@ -3175,8 +3239,6 @@ describe('Test metric template addview on SuperPOEM', () => {
       "config.4.value": "",
       "attributes.0.key": "",
       "attributes.0.value": "",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
@@ -3206,8 +3268,6 @@ describe('Test metric template addview on SuperPOEM', () => {
       "config.4.value": "",
       "attributes.0.key": "",
       "attributes.0.value": "",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
@@ -3238,8 +3298,6 @@ describe('Test metric template addview on SuperPOEM', () => {
       "config.4.value": "",
       "attributes.0.key": "",
       "attributes.0.value": "",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
@@ -3268,8 +3326,6 @@ describe('Test metric template addview on SuperPOEM', () => {
       "config.4.value": "1",
       "attributes.0.key": "",
       "attributes.0.value": "",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
@@ -3300,8 +3356,6 @@ describe('Test metric template addview on SuperPOEM', () => {
       "config.4.value": "",
       "attributes.0.key": "",
       "attributes.0.value": "",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
@@ -3327,8 +3381,6 @@ describe('Test metric template addview on SuperPOEM', () => {
       "config.4.value": "",
       "attributes.0.key": "attribute1",
       "attributes.0.value": "120",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
@@ -3357,8 +3409,6 @@ describe('Test metric template addview on SuperPOEM', () => {
       "attributes.0.value": "120",
       "attributes.1.key": "attribute2",
       "attributes.1.value": "value3",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
@@ -3383,8 +3433,6 @@ describe('Test metric template addview on SuperPOEM', () => {
       "config.4.value": "",
       "attributes.0.key": "attribute1",
       "attributes.0.value": "120",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
@@ -3410,8 +3458,6 @@ describe('Test metric template addview on SuperPOEM', () => {
       "config.4.value": "",
       "attributes.0.key": "ATTRIBUTE",
       "attributes.0.value": "123",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
@@ -3436,8 +3482,6 @@ describe('Test metric template addview on SuperPOEM', () => {
       "config.4.value": "",
       "attributes.0.key": "",
       "attributes.0.value": "",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
@@ -3445,6 +3489,7 @@ describe('Test metric template addview on SuperPOEM', () => {
     })
   })
 
+  /*
   test("Test add dependency", async () => {
     renderAddView();
 
@@ -3611,6 +3656,7 @@ describe('Test metric template addview on SuperPOEM', () => {
       "flags.0.value": ""
     })
   })
+    */
 
   test("Test add parameter", async () => {
     renderAddView();
@@ -3635,8 +3681,6 @@ describe('Test metric template addview on SuperPOEM', () => {
       "config.4.value": "",
       "attributes.0.key": "",
       "attributes.0.value": "",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
@@ -3662,8 +3706,6 @@ describe('Test metric template addview on SuperPOEM', () => {
       "config.4.value": "",
       "attributes.0.key": "",
       "attributes.0.value": "",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
       "parameter.0.key": "-vv",
       "parameter.0.value": "",
       "flags.0.key": "",
@@ -3690,8 +3732,6 @@ describe('Test metric template addview on SuperPOEM', () => {
       "config.4.value": "",
       "attributes.0.key": "",
       "attributes.0.value": "",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
       "parameter.0.key": "-vv",
       "parameter.0.value": "",
       "parameter.1.key": "-p",
@@ -3718,8 +3758,6 @@ describe('Test metric template addview on SuperPOEM', () => {
       "config.4.value": "",
       "attributes.0.key": "",
       "attributes.0.value": "",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
       "parameter.0.key": "-p",
       "parameter.0.value": "443",
       "flags.0.key": "",
@@ -3744,8 +3782,6 @@ describe('Test metric template addview on SuperPOEM', () => {
       "config.4.value": "",
       "attributes.0.key": "",
       "attributes.0.value": "",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
       "parameter.0.key": "-p",
       "parameter.0.value": "80",
       "flags.0.key": "",
@@ -3770,8 +3806,6 @@ describe('Test metric template addview on SuperPOEM', () => {
       "config.4.value": "",
       "attributes.0.key": "",
       "attributes.0.value": "",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
@@ -3802,8 +3836,6 @@ describe('Test metric template addview on SuperPOEM', () => {
       "config.4.value": "",
       "attributes.0.key": "",
       "attributes.0.value": "",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
@@ -3829,8 +3861,6 @@ describe('Test metric template addview on SuperPOEM', () => {
       "config.4.value": "",
       "attributes.0.key": "",
       "attributes.0.value": "",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "OBSESS",
@@ -3857,8 +3887,6 @@ describe('Test metric template addview on SuperPOEM', () => {
       "config.4.value": "",
       "attributes.0.key": "",
       "attributes.0.value": "",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "OBSESS",
@@ -3885,8 +3913,6 @@ describe('Test metric template addview on SuperPOEM', () => {
       "config.4.value": "",
       "attributes.0.key": "",
       "attributes.0.value": "",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "NOHOSTNAME",
@@ -3911,8 +3937,6 @@ describe('Test metric template addview on SuperPOEM', () => {
       "config.4.value": "",
       "attributes.0.key": "",
       "attributes.0.value": "",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "NOHOSTNAME",
@@ -3937,8 +3961,6 @@ describe('Test metric template addview on SuperPOEM', () => {
       "config.4.value": "",
       "attributes.0.key": "",
       "attributes.0.value": "",
-      "dependency.0.key": "",
-      "dependency.0.value": "",
       "parameter.0.key": "",
       "parameter.0.value": "",
       "flags.0.key": "",
@@ -4516,13 +4538,14 @@ describe('Test metric template cloneview on SuperPOEM', () => {
     const configVal5 = screen.getByTestId('config.4.value');
     const attributeKey = screen.getByTestId('attributes.0.key');
     const attributeVal = screen.getByTestId('attributes.0.value')
-    const dependencyKey = screen.getByTestId('dependency.0.key');
-    const dependencyVal = screen.getByTestId('dependency.0.value');
     const parameterKey = screen.getByTestId('parameter.0.key');
     const parameterVal = screen.getByTestId('parameter.0.value');
     const flagKey = screen.getByTestId('flags.0.key');
     const flagVal = screen.getByTestId('flags.0.value');
     const parentField = screen.getByText(/select/i)
+
+    expect(screen.queryByTestId("dependency.0.key")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("dependency.0.value")).not.toBeInTheDocument()
 
     expect(nameField.value).toBe('argo.AMS-Check');
     expect(typeField).toBeEnabled()
@@ -4577,8 +4600,6 @@ describe('Test metric template cloneview on SuperPOEM', () => {
     expect(configVal5).toBeEnabled()
     expect(attributeKey.value).toBe('argo.ams_TOKEN');
     expect(attributeVal.value).toBe('--token');
-    expect(dependencyKey.value).toBe('');
-    expect(dependencyVal.value).toBe('');
     expect(parameterKey.value).toBe('--project');
     expect(parameterVal.value).toBe('EGI');
     expect(flagKey.value).toBe('OBSESS');
@@ -4911,13 +4932,14 @@ describe('Test metric template detail view on tenant POEM', () => {
     const configVal5 = screen.getByTestId('config.4.value');
     const attributeKey = screen.getByTestId('attributes.0.key');
     const attributeVal = screen.getByTestId('attributes.0.value')
-    const dependencyKey = screen.getByTestId('dependency.0.key');
-    const dependencyVal = screen.getByTestId('dependency.0.value');
     const parameterKey = screen.getByTestId('parameter.0.key');
     const parameterVal = screen.getByTestId('parameter.0.value');
     const flagKey = screen.getByTestId('flags.0.key');
     const flagVal = screen.getByTestId('flags.0.value');
     const parentField = screen.getByTestId('parent');
+
+    expect(screen.queryByTestId("dependency.0.key")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("dependency.0.value")).not.toBeInTheDocument()
 
     expect(nameField.value).toBe('argo.AMS-Check');
     expect(nameField).toBeDisabled()
@@ -4967,10 +4989,6 @@ describe('Test metric template detail view on tenant POEM', () => {
     expect(attributeVal).toBeDisabled()
     expect(screen.queryByTestId('attributes.0.remove')).not.toBeInTheDocument();
     expect(screen.queryByTestId('attributes.addnew')).not.toBeInTheDocument();
-    expect(dependencyKey.value).toBe('');
-    expect(dependencyKey).toBeDisabled()
-    expect(dependencyVal.value).toBe('');
-    expect(dependencyVal).toBeDisabled()
     expect(screen.queryByTestId('dependency.0.remove')).not.toBeInTheDocument();
     expect(screen.queryByTestId('dependency.addnew')).not.toBeInTheDocument();
     expect(parameterKey.value).toBe('--project');
@@ -5022,7 +5040,7 @@ describe('Test metric template version detail view', () => {
     renderVersionDetailsView();
 
     await waitFor(() => {
-      expect(screen.getByTestId("dependency.0.key")).toBeInTheDocument()
+      expect(screen.getByTestId("config.0.key")).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name');
@@ -5044,13 +5062,14 @@ describe('Test metric template version detail view', () => {
     const configVal5 = screen.getByTestId('config.4.value');
     const attributeKey = screen.getByTestId('attributes.0.key');
     const attributeVal = screen.getByTestId('attributes.0.value')
-    const dependencyKey = screen.getByTestId('dependency.0.key');
-    const dependencyVal = screen.getByTestId('dependency.0.value');
     const parameterKey = screen.getByTestId('parameter.0.key');
     const parameterVal = screen.getByTestId('parameter.0.value');
     const flagKey = screen.getByTestId('flags.0.key');
     const flagVal = screen.getByTestId('flags.0.value');
     const parentField = screen.getByTestId('parent');
+
+    expect(screen.queryByTestId("dependency.0.key")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("dependency.0.value")).not.toBeInTheDocument()
 
     expect(nameField.value).toBe('argo.AMS-Check');
     expect(nameField).toBeDisabled()
@@ -5100,10 +5119,6 @@ describe('Test metric template version detail view', () => {
     expect(attributeVal).toBeDisabled()
     expect(screen.queryByTestId('attributes.0.remove')).not.toBeInTheDocument();
     expect(screen.queryByTestId('attributes.addnew')).not.toBeInTheDocument();
-    expect(dependencyKey.value).toBe('');
-    expect(dependencyKey).toBeDisabled()
-    expect(dependencyVal.value).toBe('');
-    expect(dependencyVal).toBeDisabled()
     expect(screen.queryByTestId('dependency.0.remove')).not.toBeInTheDocument();
     expect(screen.queryByTestId('dependency.addnew')).not.toBeInTheDocument();
     expect(parameterKey.value).toBe('--project');

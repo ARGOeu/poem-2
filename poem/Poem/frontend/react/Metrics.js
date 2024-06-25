@@ -1376,17 +1376,20 @@ export const MetricForm =
                     addview={ addview }
                     isPassive={ type === "Passive" }
                   />
-                  <InlineFields
-                    fieldname="dependency"
-                    fields={ dependency }
-                    insert={ dependencyInsert }
-                    remove={ dependencyRemove }
-                    control={ control }
-                    readOnly={ publicView || isHistory || isTenantSchema }
-                    addnew={ true }
-                    addview={ addview }
-                    isPassive={ type === "Passive" }
-                  />
+                  {
+                    (watchDependency.length > 1 && watchDependency[0].key != "") &&
+                      <InlineFields
+                        fieldname="dependency"
+                        fields={ dependency }
+                        insert={ dependencyInsert }
+                        remove={ dependencyRemove }
+                        control={ control }
+                        readOnly={ publicView || isHistory || isTenantSchema }
+                        addnew={ true }
+                        addview={ addview }
+                        isPassive={ type === "Passive" }
+                      />
+                  }
                   <InlineFields
                     fieldname="parameter"
                     fields={ parameter }

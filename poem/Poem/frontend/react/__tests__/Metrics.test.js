@@ -817,13 +817,8 @@ describe('Tests for metric change', () => {
     expect(attributeVal.value).toBe('--token');
     expect(attributeVal).toBeDisabled()
 
-    const dependencyKey = screen.getByTestId('dependency.0.key');
-    expect(dependencyKey.value).toBe('');
-    expect(dependencyKey).toBeDisabled()
-
-    const dependencyVal = screen.getByTestId('dependency.0.value');
-    expect(dependencyVal.value).toBe('');
-    expect(dependencyVal).toBeDisabled()
+    expect(screen.queryByTestId("dependency.0.key")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("dependency.0.value")).not.toBeInTheDocument()
 
     const parameterKey = screen.getByTestId('parameter.0.key');
     expect(parameterKey.value).toBe('--project');
@@ -873,7 +868,7 @@ describe('Tests for metric change', () => {
     renderChangeView({ publicView: true });
 
     await waitFor(() => {
-      expect(screen.getByTestId("dependency.0.key")).toBeInTheDocument()
+      expect(screen.getByTestId("config.0.key")).toBeInTheDocument()
     })
 
     expect(screen.getByRole('heading', { name: /details/i }).textContent).toBe('Metric details');
@@ -961,13 +956,8 @@ describe('Tests for metric change', () => {
     expect(attributeVal.value).toBe('--token');
     expect(attributeVal).toBeDisabled()
 
-    const dependencyKey = screen.getByTestId('dependency.0.key');
-    expect(dependencyKey.value).toBe('');
-    expect(dependencyKey).toBeDisabled()
-
-    const dependencyVal = screen.getByTestId('dependency.0.value');
-    expect(dependencyVal.value).toBe('');
-    expect(dependencyVal).toBeDisabled()
+    expect(screen.queryByTestId("dependency.0.key")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("dependency.0.value")).not.toBeInTheDocument()
 
     const parameterKey = screen.getByTestId('parameter.0.key');
     expect(parameterKey.value).toBe('--project');
@@ -1466,7 +1456,7 @@ describe('Tests for metric change', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByTestId("dependency.0.key")).toBeInTheDocument()
+      expect(screen.getByTestId("config.0.key")).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name');
@@ -1488,13 +1478,14 @@ describe('Tests for metric change', () => {
     const configVal5 = screen.getByTestId('config.4.value');
     const attributeKey = screen.getByTestId('attributes.0.key');
     const attributeVal = screen.getByTestId('attributes.0.value')
-    const dependencyKey = screen.getByTestId('dependency.0.key');
-    const dependencyVal = screen.getByTestId('dependency.0.value');
     const parameterKey = screen.getByTestId('parameter.0.key');
     const parameterVal = screen.getByTestId('parameter.0.value');
     const flagKey = screen.getByTestId('flags.0.key');
     const flagVal = screen.getByTestId('flags.0.value');
     const parentField = screen.getByTestId('parent');
+    
+    expect(screen.queryByTestId("dependency.0.key")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("dependency.0.value")).not.toBeInTheDocument()
 
     expect(screen.getByRole('alert').textContent).toBe(
       'This is a read-only instance, please request the corresponding permissions to perform any changes in this form.'
@@ -1544,10 +1535,6 @@ describe('Tests for metric change', () => {
     expect(attributeKey).toBeDisabled()
     expect(attributeVal.value).toBe('--token');
     expect(attributeVal).toBeDisabled()
-    expect(dependencyKey.value).toBe('');
-    expect(dependencyKey).toBeDisabled()
-    expect(dependencyVal.value).toBe('');
-    expect(dependencyVal).toBeDisabled()
     expect(parameterKey.value).toBe('--project');
     expect(parameterKey).toBeDisabled()
     expect(parameterVal.value).toBe('EGI');
@@ -1586,7 +1573,7 @@ describe('Tests for metric history', () => {
     renderVersionDetailsView();
 
     await waitFor(() => {
-      expect(screen.getByTestId("dependency.0.key")).toBeInTheDocument()
+      expect(screen.getByTestId("config.0.key")).toBeInTheDocument()
     })
 
     expect(screen.getByRole('heading', { name: /argo/i }).textContent).toBe('argo.AMS-Check (2020-11-30 13:23:48)');
@@ -1610,13 +1597,14 @@ describe('Tests for metric history', () => {
     const configVal5 = screen.getByTestId('config.4.value');
     const attributeKey = screen.getByTestId('attributes.0.key');
     const attributeVal = screen.getByTestId('attributes.0.value')
-    const dependencyKey = screen.getByTestId('dependency.0.key');
-    const dependencyVal = screen.getByTestId('dependency.0.value');
     const parameterKey = screen.getByTestId('parameter.0.key');
     const parameterVal = screen.getByTestId('parameter.0.value');
     const flagKey = screen.getByTestId('flags.0.key');
     const flagVal = screen.getByTestId('flags.0.value');
     const parentField = screen.getByTestId('parent');
+
+    expect(screen.queryByTestId("dependency.0.key")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("dependency.0.value")).not.toBeInTheDocument()
 
     expect(nameField.value).toBe('argo.AMS-Check');
     expect(nameField).toBeDisabled()
@@ -1659,10 +1647,6 @@ describe('Tests for metric history', () => {
     expect(attributeKey).toBeDisabled()
     expect(attributeVal.value).toBe('--token');
     expect(attributeVal).toBeDisabled()
-    expect(dependencyKey.value).toBe('');
-    expect(dependencyKey).toBeDisabled()
-    expect(dependencyVal.value).toBe('');
-    expect(dependencyVal).toBeDisabled()
     expect(parameterKey.value).toBe('--project');
     expect(parameterKey).toBeDisabled()
     expect(parameterVal.value).toBe('EGI');
