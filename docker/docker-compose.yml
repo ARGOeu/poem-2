@@ -10,6 +10,8 @@ services:
     stdin_open: true
     user: user
     ports:
+      - "80:80"
+      - "443:443"
       - "8000:8000"
       - "3000:3000"
     depends_on:
@@ -40,6 +42,8 @@ services:
       - ../bin/poem-token:$VENV/bin/poem-token
       - ../bin/poem-backup:$VENV/bin/poem-backup
       - ../poem/Poem/:/home/user/frontend
+      - ../poetry.lock:/opt/poem/poetry.lock
+      - ../pyproject.toml:/opt/poem/pyproject.toml
     networks:
       app_net:
         ipv4_address: 172.19.0.2
