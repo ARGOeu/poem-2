@@ -13,10 +13,10 @@ wheel-devel: clean
 		[ -z "$$BUILD_CANDIDATE" ] && \
 		export BUILD_VER=$$BUILD_VER"01" || \
 		export BUILD_VER=$$BUILD_VER$$BUILD_CANDIDATE; \
-    fi; \
+  fi; \
 	echo "Version $$BUILD_VER"; \
 	poetry install --no-root --with devel; \
-    poetry run python3 -m build -w
+  poetry run python3 -m build -w
 	mv -f dist/*.whl .
 
 
