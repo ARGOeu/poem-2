@@ -68,16 +68,17 @@ RUN sh -c '\
 RUN ln -s /opt/poetry-tool/bin/poetry /usr/local/bin/
 RUN dnf module install -y nodejs:20
 RUN python3.9 -m venv /opt/poem
-RUN chown -R user:user /opt/poem
 RUN sh -c '\
   . /opt/poem/bin/activate \
   && pip install -U pip'
+RUN mkdir -p /opt/poem/var/log && chmod a+rw /opt/poem/var/log
+RUN chown -R user:user /opt/poem
 COPY \
   entrypoint.sh \
   /home/user/
 COPY apache/poem-apache.ini /etc/supervisord.d/
-#RUN sed -r -i 's/(^SSLCertificate.*)/# \1/' /opt/rh/httpd24/root/etc/httpd/conf.d/ssl.conf; \
-    #sed -r -i 's/(^SSLCACertificate.*)/# \1/' /opt/rh/httpd24/root/etc/httpd/conf.d/ssl.conf
+RUN sed -r -i 's/(^SSLCertificate.*)/# \1/' /etc/httpd/conf.d/ssl.conf; \
+    sed -r -i 's/(^SSLCACertificate.*)/# \1/' /etc/httpd/conf.d/ssl.conf
 #RUN ./setup.sh
 RUN sed -r -i 's/(^Defaults.*always_set_home)/# \1/' /etc/sudoers
 RUN echo -e "user ALL=(ALL) NOPASSWD: ALL\nDefaults env_keep += \"HOME\"" >> /etc/sudoers

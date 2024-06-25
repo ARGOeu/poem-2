@@ -95,8 +95,8 @@ Poem = "poem/Poem"
 "usr/share/poem/static/rest_framework/docs/css" = ["poem/static/rest_framework/docs/css/*"]
 "usr/share/poem/static/rest_framework/docs/img" = ["poem/static/rest_framework/docs/img/*"]
 "usr/share/poem/static/rest_framework/docs/js" = ["poem/static/rest_framework/docs/js/*"]
-"var/log/poem" = ["helpers/empty"]
-"var/lib/poem" = ["helpers/empty"]
+"var/log/" = ["helpers/empty"]
+"var/lib/" = ["helpers/empty"]
 "var/db_backups" = ["helpers/empty"]
 
 [tool.setuptools.dynamic]
