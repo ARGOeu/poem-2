@@ -75,8 +75,7 @@ RUN sh -c '\
 COPY \
   entrypoint.sh \
   /home/user/
-#COPY apache/poem-apache.ini /etc/supervisord.d/
-#COPY apache/poem.conf /opt/rh/httpd24/root/etc/httpd/conf.d/
+COPY apache/poem-apache.ini /etc/supervisord.d/
 #RUN sed -r -i 's/(^SSLCertificate.*)/# \1/' /opt/rh/httpd24/root/etc/httpd/conf.d/ssl.conf; \
     #sed -r -i 's/(^SSLCACertificate.*)/# \1/' /opt/rh/httpd24/root/etc/httpd/conf.d/ssl.conf
 #RUN ./setup.sh
