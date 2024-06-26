@@ -186,7 +186,7 @@ const InlineFields = ({
                       id={ `${fieldname}.${index}.key` }
                       data-testid={ `${fieldname}.${index}.key` }
                       className={ `form-control ${entry.isNew && "border-success"}` }
-                      disabled={ readOnly || fieldname === "config" || (isPassive && entry.key === "PASSIVE") }
+                      disabled={ readOnly || fieldname === "config" || fieldname === "dependency" || (isPassive && entry.key === "PASSIVE") }
                     />
                   }
                 />
@@ -201,7 +201,7 @@ const InlineFields = ({
                       id={ `${fieldname}.${index}.value` }
                       data-testid={ `${fieldname}.${index}.value` }
                       className={ `form-control ${entry.isNew && "border-success"} ${ errors?.config?.[index]?.value && "is-invalid" }` }
-                      disabled={ readOnly || (isPassive && entry.key === "PASSIVE") || (fieldname === "config" && entry.key === "path" && isMetric) }
+                      disabled={ readOnly || (isPassive && entry.key === "PASSIVE") || (fieldname === "config" && entry.key === "path" && isMetric) || fieldname === "dependency" }
                     />
                   }
                 />
@@ -1377,7 +1377,7 @@ export const MetricForm =
                     isPassive={ type === "Passive" }
                   />
                   {
-                    (watchDependency.length > 1 && watchDependency[0].key != "") &&
+                    (watchDependency.length >= 1 && watchDependency[0].key != "") &&
                       <InlineFields
                         fieldname="dependency"
                         fields={ dependency }
@@ -1385,7 +1385,7 @@ export const MetricForm =
                         remove={ dependencyRemove }
                         control={ control }
                         readOnly={ publicView || isHistory || isTenantSchema }
-                        addnew={ true }
+                        addnew={ false }
                         addview={ addview }
                         isPassive={ type === "Passive" }
                       />
@@ -1704,6 +1704,8 @@ export const MetricChange = (props) => {
 
     const probe = probes ? probes.find(prb => prb.object_repr === metric.probeversion).fields : { package: "" };
 
+    const emptyEntry = [ { key: "", value: "" } ]
+
     return (
       <MetricForm
         {...props}
@@ -1718,13 +1720,12 @@ export const MetricChange = (props) => {
           probeexecutable: metric.probeexecutable,
           parent: metric.parent,
           config: metric.config,
-          attributes: metric.attribute,
-          dependency: metric.dependancy,
-          parameter: metric.parameter,
-          flags: metric.flags,
-          files: metric.files,
-          file_attributes: metric.files,
-          file_parameters: metric.fileparameter,
+          attributes: metric.attribute.length > 0 ? metric.attribute : emptyEntry,
+          dependency: metric.dependancy.length > 0 ? metric.dependancy : emptyEntry,
+          parameter: metric.parameter.length > 0 ? metric.parameter : emptyEntry,
+          flags: metric.flags.length > 0 ? metric.flags : emptyEntry,
+          file_attributes: metric.files.length > 0 ? metric.files : emptyEntry,
+          file_parameters: metric.fileparameter.length > 0 ? metric.fileparameter : emptyEntry,
           probe: probe,
           tags: metric.tags,
           profiles: metric.profiles
