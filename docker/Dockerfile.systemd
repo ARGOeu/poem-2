@@ -1,0 +1,90 @@
+FROM rockylinux:9
+MAINTAINER dvrcic@srce.hr
+ADD https://repository.egi.eu/sw/production/cas/1/current/repo-files/egi-trustanchors.repo /etc/yum.repos.d/
+RUN groupadd user -g 1000 && useradd -u 1000 -g 1000 user -m -d /home/user
+RUN passwd -d root
+RUN sed -i -r 's/bash/zsh/' /etc/passwd; sed -i -r 's/^tsflags/# tsflags/' /etc/yum.conf
+RUN dnf -y makecache; dnf -y update; dnf clean all
+RUN dnf -y install epel-release rocky-repos && \
+    dnf -y install \
+      ack \
+      ca-certificates \
+      ca-policy-egi-core \
+      ctags \
+      git \
+      glibc-all-langpacks \
+      httpd httpd-devel \
+      htop \
+      iproute \
+      libpq \
+      make \
+      mc \
+      memcached \
+      mod_ssl \
+      ncurses-compat-libs \
+      net-tools \
+      nmap \
+      passwd \
+      procps-ng \
+      psmisc \
+      python3-devel \
+      python3-pip \
+      python3-setuptools \
+      python3-mod_wsgi \
+      rpmdevtools \
+      rsync \
+      sudo \
+      supervisor \
+      telnet \
+      the_silver_searcher \
+      tmux \
+      tree \
+      unzip \
+      vim \
+      wget \
+      which \
+      xmlsec1-openssl \
+      yum-utils \
+      zsh
+RUN dnf -y makecache
+RUN dnf -y install \
+      cronie \
+      crontabs \
+      supervisor \
+      xmlsec1 \
+      xmlsec1-openssl
+RUN passwd -d apache; usermod --shell /bin/bash apache
+ADD https://cacerts.digicert.com/TERENAeScienceSSLCA3.crt.pem /etc/pki/tls/certs/
+RUN rm -rf /etc/pki/ca-trust/source/anchors/*; \
+    cp /etc/pki/tls/certs/TERENAeScienceSSLCA3.crt.pem /etc/pki/ca-trust/source/anchors; \
+    cp /etc/grid-security/certificates/*.pem /etc/pki/ca-trust/source/anchors; \
+    update-ca-trust
+ADD hostcert.pem hostkey.pem /etc/grid-security/
+RUN python3.9 -m venv /opt/poetry-tool/
+RUN sh -c '\
+  . /opt/poetry-tool/bin/activate \
+  && pip install -U pip \
+  && pip install -U poetry'
+RUN ln -s /opt/poetry-tool/bin/poetry /usr/local/bin/
+RUN dnf module install -y nodejs:20
+RUN dnf module install -y postgresql:16
+RUN python3.9 -m venv /opt/poem
+RUN sh -c '\
+  . /opt/poem/bin/activate \
+  && pip install -U pip'
+RUN mkdir -p /opt/poem/var/log && chmod a+rw /opt/poem/var/log
+RUN chown -R user:user /opt/poem
+COPY \
+  entrypoint.sh \
+  /home/user/
+COPY apache/poem-apache.ini /etc/supervisord.d/
+RUN sed -r -i 's/(^SSLCertificate.*)/# \1/' /etc/httpd/conf.d/ssl.conf; \
+    sed -r -i 's/(^SSLCACertificate.*)/# \1/' /etc/httpd/conf.d/ssl.conf
+#RUN ./setup.sh
+RUN sed -r -i 's/(^Defaults.*always_set_home)/# \1/' /etc/sudoers
+RUN echo -e "user ALL=(ALL) NOPASSWD: ALL\nDefaults env_keep += \"HOME\"" >> /etc/sudoers
+USER user
+WORKDIR /home/user
+RUN curl -sfL https://git.io/chezmoi | sh
+COPY chezmoi-config-apply.sh /home/user
+CMD ["/sbin/init"]
