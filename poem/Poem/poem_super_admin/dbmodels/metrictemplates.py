@@ -54,9 +54,7 @@ class MetricTemplate(models.Model):
     attribute = models.CharField(max_length=1024)
     dependency = models.CharField(max_length=1024)
     flags = models.CharField(max_length=1024)
-    files = models.CharField(max_length=1024)
     parameter = models.CharField(max_length=1024)
-    fileparameter = models.CharField(max_length=1024)
 
     objects = MetricTemplateManager()
 
