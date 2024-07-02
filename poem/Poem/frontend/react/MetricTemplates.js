@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MetricForm} from './Metrics';
+import { MetricForm } from './Metrics';
 import { Backend } from './DataManager';
 import {
   NotifyOk,

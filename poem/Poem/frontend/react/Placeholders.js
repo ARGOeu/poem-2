@@ -288,7 +288,6 @@ export const MetricFormPlaceholder = ( props ) => {
         </Row>
         <InlineFieldsPlaceholder fieldname="config" />
         <InlineFieldsPlaceholder fieldname="attributes" />
-        <InlineFieldsPlaceholder fieldname="dependency" />
         <InlineFieldsPlaceholder fieldname="parameter" />
         <InlineFieldsPlaceholder fieldname="flags" />
         <h6 className='mt-4 font-weight-bold text-uppercase'>parent</h6>

@@ -1275,6 +1275,15 @@ const App = () => {
               />
 
               <Route
+                path="/ui/public_default_ports"
+                element={
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
+                    <DefaultPortsList publicView={true} />
+                  </PublicPage>
+                }
+              />
+
+              <Route
                 path="/ui/public_metrics"
                 element={
                   <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
@@ -1568,6 +1577,15 @@ const App = () => {
                 element={
                   <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
                     <MetricTemplateVersionDetails publicView={true} />
+                  </PublicPage>
+                }
+              />
+
+              <Route
+                path="/ui/public_default_ports"
+                element={
+                  <PublicPage privacyLink={privacyLink} termsLink={termsLink}>
+                    <DefaultPortsList publicView={true} />
                   </PublicPage>
                 }
               />
