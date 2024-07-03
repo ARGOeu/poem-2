@@ -60,6 +60,7 @@ packages = [
     'Poem.poem.dbmodels',
     'Poem.poem.fixtures',
     'Poem.poem.management',
+    'Poem.poem.management.commands',
     'Poem.poem.migrations',
     'Poem.poem.saml2',
     'Poem.poem_super_admin',
