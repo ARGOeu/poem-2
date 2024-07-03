@@ -48,6 +48,7 @@ classifiers = [
 
 [tool.setuptools]
 packages = [
+    'Poem',
     'Poem.api',
     'Poem.api.internal_views',
     'Poem.api.migrations',
