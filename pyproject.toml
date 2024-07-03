@@ -89,6 +89,7 @@ Poem = "poem/Poem"
 "etc/logrotate.d" = ["logrotate.d/poem-db_backup"]
 "etc/httpd/conf.d" = ["poem/apache/poem.conf"]
 "usr/share/poem/apache" = ["poem/apache/poem.wsgi"]
+"usr/share/poem/static/" = ["poem/static/argo-poem.ico"]
 "usr/share/poem/static/reactbundle" = ["poem/static/reactbundle/*"]
 "usr/share/poem/static/rest_framework/css" = ["poem/static/rest_framework/css/*"]
 "usr/share/poem/static/rest_framework/fonts" = ["poem/static/rest_framework/fonts/*"]
