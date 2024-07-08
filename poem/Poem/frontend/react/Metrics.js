@@ -1724,8 +1724,6 @@ export const MetricChange = (props) => {
           dependency: metric.dependancy.length > 0 ? metric.dependancy : emptyEntry,
           parameter: metric.parameter.length > 0 ? metric.parameter : emptyEntry,
           flags: metric.flags.length > 0 ? metric.flags : emptyEntry,
-          file_attributes: metric.files.length > 0 ? metric.files : emptyEntry,
-          file_parameters: metric.fileparameter.length > 0 ? metric.fileparameter : emptyEntry,
           probe: probe,
           tags: metric.tags,
           profiles: metric.profiles
@@ -1805,8 +1803,6 @@ export const MetricVersionDetails = (props) => {
           dependency: metric.dependancy,
           parameter: metric.parameter,
           flags: metric.flags,
-          file_attributes: metric.files,
-          file_parameters: metric.fileparameter,
           probe: probe,
           tags: metric.tags
         }}

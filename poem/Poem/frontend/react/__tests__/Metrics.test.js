@@ -37,8 +37,7 @@ const mockListOfMetrics = [
     ],
     parameter: [
       { key: '--project', value: 'EGI' }
-    ],
-    fileparameter: []
+    ]
   },
   {
     id: 3,
@@ -65,11 +64,9 @@ const mockListOfMetrics = [
       { key: 'NOTIMEOUT', value: '1'},
       { key: 'NOPUBLISH', value: '1' }
     ],
-    files: [],
     parameter: [
       { key: '-s', value: '/var/run/argo-nagios-ams-publisher/sock'}
-    ],
-    fileparameter: []
+    ]
   },
   {
     id: 2,
@@ -89,9 +86,7 @@ const mockListOfMetrics = [
       { key: 'OBSESS', value: '1' },
       { key: 'PASSIVE', value: '1' }
     ],
-    files: [],
-    parameter: [],
-    fileparameter: []
+    parameter: []
   }
 ];
 
@@ -122,9 +117,7 @@ const mockMetric = {
   ],
   parameter: [
     { key: '--project', value: 'EGI' }
-  ],
-  files: [],
-  fileparameter: []
+  ]
 };
 
 const mockMetricWithDependency = {
@@ -193,9 +186,7 @@ const mockMetricWithDependency = {
       value: "1"
     }
   ],
-  files: [],
-  parameter: [],
-  fileparameter: []
+  parameter: []
 }
 
 const mockPassiveMetric = {
@@ -216,9 +207,7 @@ const mockPassiveMetric = {
       { key: 'OBSESS', value: '1' },
       { key: 'PASSIVE', value: '1' }
     ],
-    files: [],
-    parameter: [],
-    fileparameter: []
+    parameter: []
 }
 
 const mockProbe = [{
@@ -306,11 +295,7 @@ const mockMetricVersion = [
         { key: 'new-key', value: 'new-value' }
       ],
       flags: [],
-      files: [],
-      parameter: [],
-      fileparameter: [
-        { key: 'new-key', value: 'new-value' }
-      ]
+      parameter: []
     },
     user: 'testuser',
     date_created: '2020-12-07 13:18:23',
@@ -343,11 +328,9 @@ const mockMetricVersion = [
       flags: [
         { key: 'OBSESS', value: '1' }
       ],
-      files: [],
       parameter: [
         { key: '--project', value: 'EGI' }
-      ],
-      fileparameter: []
+      ]
     },
     user: 'testuser',
     date_created: '2020-11-30 13:23:48',
