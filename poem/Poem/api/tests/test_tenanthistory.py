@@ -135,9 +135,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
             attribute=mt1.attribute,
             dependency=mt1.dependency,
             flags=mt1.flags,
-            files=mt1.files,
             parameter=mt1.parameter,
-            fileparameter=mt1.fileparameter,
             date_created=datetime.datetime.now(),
             version_user="poem",
             version_comment="Initial version."
@@ -153,7 +151,6 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
         mt1.dependency = '["new-key new-value"]'
         mt1.flags = ''
         mt1.parameter = ''
-        mt1.fileparameter = '["new-key new-value"]'
         mt1.save()
 
         mt1_version2 = admin_models.MetricTemplateHistory.objects.create(
@@ -168,9 +165,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
             attribute=mt1.attribute,
             dependency=mt1.dependency,
             flags=mt1.flags,
-            files=mt1.files,
             parameter=mt1.parameter,
-            fileparameter=mt1.fileparameter,
             date_created=datetime.datetime.now(),
             version_user="poem",
             version_comment=create_comment(mt1)
@@ -203,9 +198,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
             attribute=mt2.attribute,
             dependency=mt2.dependency,
             flags=mt2.flags,
-            files=mt2.files,
             parameter=mt2.parameter,
-            fileparameter=mt2.fileparameter,
             date_created=datetime.datetime.now(),
             version_user="poem",
             version_comment="Initial version."
@@ -230,9 +223,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
             attribute=mt3.attribute,
             dependency=mt3.dependency,
             flags=mt3.flags,
-            files=mt3.files,
             parameter=mt3.parameter,
-            fileparameter=mt3.fileparameter,
             date_created=datetime.datetime.now(),
             version_user="poem",
             version_comment="Initial version."
@@ -589,11 +580,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
                             {'key': 'new-key', 'value': 'new-value'}
                         ],
                         'flags': [],
-                        'files': [],
-                        'parameter': [],
-                        'fileparameter': [
-                            {'key': 'new-key', 'value': 'new-value'}
-                        ]
+                        'parameter': []
                     },
                     'user': 'testuser',
                     'date_created': datetime.datetime.strftime(
@@ -635,11 +622,9 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
                         'flags': [
                             {'key': 'OBSESS', 'value': '1'}
                         ],
-                        'files': [],
                         'parameter': [
                             {'key': '--project', 'value': 'EGI'}
-                        ],
-                        'fileparameter': []
+                        ]
                     },
                     'user': 'testuser',
                     'date_created': datetime.datetime.strftime(
@@ -679,9 +664,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
                             {'key': 'OBSESS', 'value': '1'},
                             {'key': 'PASSIVE', 'value': '1'}
                         ],
-                        'files': [],
-                        'parameter': [],
-                        'fileparameter': []
+                        'parameter': []
                     },
                     'user': 'testuser',
                     'date_created': datetime.datetime.strftime(
