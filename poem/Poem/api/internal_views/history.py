@@ -71,9 +71,7 @@ class ListVersions(APIView):
                     'attribute': two_value_inline(ver.attribute),
                     'dependency': two_value_inline(ver.dependency),
                     'flags': two_value_inline(ver.flags),
-                    'files': two_value_inline(ver.files),
-                    'parameter': two_value_inline(ver.parameter),
-                    'fileparameter': two_value_inline(ver.fileparameter)
+                    'parameter': two_value_inline(ver.parameter)
                 }
 
             results.append(dict(
