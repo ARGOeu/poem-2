@@ -131,9 +131,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
             attribute=mt.attribute,
             dependency=mt.dependency,
             flags=mt.flags,
-            files=mt.files,
             parameter=mt.parameter,
-            fileparameter=mt.fileparameter,
             date_created=datetime.datetime.now(),
             version_comment='Initial version.',
             version_user=self.user.username
