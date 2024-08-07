@@ -1,1 +1,1 @@
-30 3 * * * root /home/pyvenv/poem/bin/poem-backup
+30 3 * * * root /opt/poem/bin/poem-backup
