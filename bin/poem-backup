@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. /opt/poem/bin/activate
+source /opt/poem/bin/activate
 
 export PYTHONIOENCODING=utf-8
 
