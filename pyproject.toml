@@ -16,6 +16,7 @@ psycopg2-binary = "*"
 safety = "*"
 Unidecode = "*"
 typing_extensions = { git = "https://github.com/vrdel/typing_extensions", rev = "239445a35dc95ca30d54b2e227291ea7dad9cae4" }
+ipdb = "*"
 
 [tool.poetry.group.devel]
 optional = true
@@ -23,7 +24,6 @@ optional = true
 [tool.poetry.group.devel.dependencies]
 build = "*"
 mock = "*"
-ipdb = "*"
 coverage = "*"
 unittest-xml-reporting = "*"
 
