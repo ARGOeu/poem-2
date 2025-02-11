@@ -1,37 +1,46 @@
-import datetime
-
 from django.core.management.base import BaseCommand
+from django_tenants.management.commands import InteractiveTenantOption
+from django.db import connection
 
 from Poem.api.models import MyAPIKey
+from Poem.poem_super_admin.models import WebAPIKey
 
 
-class Command(BaseCommand):
-    help = """Create a token for tenant. If token is not specified, it will be
-              automatically generated. If tenant already exist, his token will 
-              be updated."""
+class Command(InteractiveTenantOption, BaseCommand):
+    help = "Wrapper around django commands for use with an individual tenant"
 
     def add_arguments(self, parser):
-        parser.add_argument('--tenant', required=True, type=str)
-        parser.add_argument('--token', nargs='?', type=str)
+        super().add_arguments(parser)
+        parser.add_argument(
+            "-w",
+            action='store_true',
+            default=False,
+            dest="webapitoken",
+            help="WEB-API tokens",
+        )
+        parser.add_argument(
+            "-r",
+            action='store_true',
+            default=False,
+            dest="restapitoken",
+            help="POEM REST-API token",
+        )
+        parser.add_argument(
+            "-t",
+            dest="tenantname",
+            help="Tenant name",
+            required=True
+        )
 
-    def handle(self, *args, **kwargs):
-        token = None
+    def handle(self, *args, **options):
+        import ipdb; ipdb.set_trace()
 
-        if kwargs['token'] is None:
-            entry = dict(
-                name=kwargs['tenant']
-            )
-        else:
-            entry = dict(
-                name=kwargs['tenant'],
-                token=kwargs['token']
-            )
+        tenant = ''
 
-        try:
-            obj = MyAPIKey.objects.get(name=kwargs['tenant'])
-            obj.token = token
-            obj.created = datetime.datetime.now()
-            obj.save()
-
-        except MyAPIKey.DoesNotExist as e:
-            key = MyAPIKey.objects.create_key(**entry)
+        if options['webapitoken']:
+            tenant = self.get_tenant_from_options_or_interactive(schema_name='public')
+        elif options['restapitoken']:
+            schema_name = options['tenantname'].lower()
+            tenant = self.get_tenant_from_options_or_interactive(schema_name=schema_name)
+        if tenant:
+            connection.set_tenant(tenant)
