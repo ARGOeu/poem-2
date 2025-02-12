@@ -45,66 +45,42 @@ class Command(InteractiveTenantOption, BaseCommand):
             help="Read-write token value",
         )
 
-    def _set_restapi_token(self, options):
-        token = None
-
+    def _token_crud(self, model, tokenname, token):
         try:
-            obj = MyAPIKey.objects.get(name=options['tenantname'].upper())
-            if obj and options['token']:
+            obj = model.objects.get(name=tokenname)
+            if obj and token:
                 obj.delete()
-                api_token, token = MyAPIKey.objects.create_key(**{
-                    'name': options['tenantname'].upper(),
-                    'token': options['token'],
+                api_token, token = model.objects.create_key(**{
+                    'name': tokenname,
+                    'token': token,
                     'created': datetime.datetime.now()
                 })
                 self.stdout.write(self.style.WARNING(f"Token {api_token.name} recreated with value {api_token.token}"))
             elif obj:
                 self.stdout.write(self.style.ERROR_OUTPUT(f"Token {obj.name} already created"))
 
-        except MyAPIKey.DoesNotExist:
-            if options['token']:
-                api_token, token = MyAPIKey.objects.create_key(**{
-                    'name': options['tenantname'].upper(),
-                    'token': options['token']
+        except model.DoesNotExist:
+            if token:
+                api_token, token = model.objects.create_key(**{
+                    'name': tokenname,
+                    'token': token
                 })
                 self.stdout.write(self.style.NOTICE(f"Token {api_token.name} created with value {api_token.token}"))
             else:
-                api_token, token = MyAPIKey.objects.create_key(**{
-                    'name': options['tenantname'].upper(),
+                api_token, token = model.objects.create_key(**{
+                    'name': tokenname,
                 })
                 self.stdout.write(self.style.NOTICE(f"Token {api_token.name} created with value {api_token.token}"))
+
+    def _set_restapi_token(self, options):
+        self._token_crud(MyAPIKey, options['tenantname'].upper(), options['token'])
 
     def _set_webapi_token(self, options):
-        try:
-            obj = WebAPIKey.objects.get(name=f"WEB-API-{options['tenantname'].upper()}")
-            if obj and options['tokenreadwrite']:
-                obj.delete()
-                api_token, token = WebAPIKey.objects.create_key(**{
-                    'name': f"WEB-API-{options['tenantname'].upper()}",
-                    'token': options['tokenreadonly'],
-                    'created': datetime.datetime.now()
-                })
-                self.stdout.write(self.style.WARNING(f"Token {api_token.name} recreated with value {api_token.token}"))
-            elif obj:
-                self.stdout.write(self.style.ERROR_OUTPUT(f"Token {obj.name} already created"))
-
-        except WebAPIKey.DoesNotExist:
-            if options['tokenreadwrite']:
-                api_token, token = WebAPIKey.objects.create_key(**{
-                    'name': f"WEB-API-{options['tenantname'].upper()}",
-                    'token': options['tokenreadonly']
-                })
-                self.stdout.write(self.style.NOTICE(f"Token {api_token.name} created with value {api_token.token}"))
-            else:
-                api_token, token = WebAPIKey.objects.create_key(**{
-                    'name': f"WEB-API-{options['tenantname'].upper()}",
-                })
-                self.stdout.write(self.style.NOTICE(f"Token {api_token.name} created with value {api_token.token}"))
+        self._token_crud(WebAPIKey, f"WEB-API-{options['tenantname'].upper()}", options['tokenreadwrite'])
+        self._token_crud(WebAPIKey, f"WEB-API-{options['tenantname'].upper()}-RO", options['tokenreadonly'])
 
     def handle(self, *args, **options):
         tenant = ''
-        import ipdb; ipdb.set_trace()
-
 
         if options['command'] == 'webapi':
             tenant = self.get_tenant_from_options_or_interactive(schema_name='public')
