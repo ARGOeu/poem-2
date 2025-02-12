@@ -12,28 +12,17 @@ class Command(InteractiveTenantOption, BaseCommand):
     help = "Create or set tokens for REST API and store WEB-API tokens for specified tenant"
 
     def add_arguments(self, parser):
-        super().add_arguments(parser)
-        parser.add_argument(
-            "-w",
-            action='store_true',
-            default=False,
-            dest="webapitoken",
-            help="WEB-API tokens",
-        )
-        parser.add_argument(
-            "-r",
-            action='store_true',
-            default=False,
-            dest="restapitoken",
-            help="POEM REST-API token",
-        )
-        parser.add_argument(
+        subparsers = parser.add_subparsers(help="Token management subcommands", dest="command")
+        parser_restapi = subparsers.add_parser("restapi", help="REST-API token management")
+        parser_webapi = subparsers.add_parser("webapi", help="WEB-API token management")
+
+        parser_restapi.add_argument(
             "-t",
             dest="tenantname",
             help="Tenant name",
             required=True
         )
-        parser.add_argument(
+        parser_restapi.add_argument(
             "-k",
             dest="token",
             help="Token value",
@@ -74,12 +63,12 @@ class Command(InteractiveTenantOption, BaseCommand):
     def handle(self, *args, **options):
         tenant = ''
 
-        if options['webapitoken']:
+        if options['command'] == 'webapi':
             tenant = self.get_tenant_from_options_or_interactive(schema_name='public')
             connection.set_tenant(tenant)
             self._set_webapi_token(options)
 
-        elif options['restapitoken']:
+        elif options['command'] == 'restapi':
             schema_name = options['tenantname'].lower()
             tenant = self.get_tenant_from_options_or_interactive(schema_name=schema_name)
             connection.set_tenant(tenant)
