@@ -9,7 +9,7 @@ import datetime
 
 
 class Command(InteractiveTenantOption, BaseCommand):
-    help = "Create or set tokens for REST API and store WEB-API tokens for specified tenant"
+    help = "Create or set tokens for POEM REST API and store WEB-API tokens for specified tenant"
 
     def add_arguments(self, parser):
         subparsers = parser.add_subparsers(help="Token management subcommands", dest="command")

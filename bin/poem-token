@@ -1,48 +1,25 @@
-#!/bin/sh
+#!/usr/bin/env python
 
-RUNASUSER="apache"
-SITEPACK=$(python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
+import os
+import sys
+import django
+from django.core.management import call_command, CommandError
 
-usage()
-{
-	printf "Usage: %s -t <token name> -s <schema name> [-o token]\n" $(basename $0) >&2
-	printf "       [-t] - token name\n" >&2
-	printf "       [-s] - schema\n" >&2
-	printf "       [-o] - token\n" >&2
-    exit 2
-}
 
-if [[ $# == 0 ]]
-then
-    usage
-fi
+os.environ['DJANGO_SETTINGS_MODULE'] = 'Poem.settings'
+django.setup()
 
-while getopts 'ht:o:s:' OPTION
-do
-    case $OPTION in
-        t)
-            tenant=$OPTARG
-            ;;
-        o)
-            token=$OPTARG
-            ;;
-        s)
-            schema=$OPTARG
-            ;;
-        h)
-            usage
-            ;;
-        ?)
-            usage
-            ;;
-    esac
-done
 
-if [ -z "$token" ]
-then
-    su -m -s /bin/sh $RUNASUSER -c \
-    "poem-manage tenant_command api_token --tenant $tenant --schema=$schema"
-else
-    su -m -s /bin/sh $RUNASUSER -c \
-    "poem-manage tenant_command api_token --tenant $tenant --token $token --schema=$schema"
-fi
+def main():
+    args = sys.argv[1:]
+
+    try:
+        call_command('api_token', *args)
+
+    except CommandError as exc:
+        print(repr(exc.args))
+        raise SystemExit(1)
+
+
+if __name__ == '__main__':
+    main()
