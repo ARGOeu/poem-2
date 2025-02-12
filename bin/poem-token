@@ -13,12 +13,15 @@ django.setup()
 def main():
     args = sys.argv[1:]
 
-    try:
-        call_command('api_token', *args)
+    if not args:
+        call_command('api_token', '-h')
+    else:
+        try:
+            call_command('api_token', *args)
 
-    except CommandError as exc:
-        print(repr(exc.args))
-        raise SystemExit(1)
+        except CommandError as exc:
+            print(repr(exc.args))
+            raise SystemExit(1)
 
 
 if __name__ == '__main__':

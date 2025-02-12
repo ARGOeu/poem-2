@@ -80,8 +80,6 @@ class Command(InteractiveTenantOption, BaseCommand):
         self._token_crud(WebAPIKey, f"WEB-API-{options['tenantname'].upper()}-RO", options['tokenreadonly'])
 
     def handle(self, *args, **options):
-        tenant = ''
-
         if options['command'] == 'webapi':
             tenant = self.get_tenant_from_options_or_interactive(schema_name='public')
             connection.set_tenant(tenant)
