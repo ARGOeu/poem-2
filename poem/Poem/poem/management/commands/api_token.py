@@ -28,6 +28,23 @@ class Command(InteractiveTenantOption, BaseCommand):
             help="Token value",
         )
 
+        parser_webapi.add_argument(
+            "-t",
+            dest="tenantname",
+            help="Tenant name",
+            required=True
+        )
+        parser_webapi.add_argument(
+            "-ko",
+            dest="tokenreadonly",
+            help="Read-only token value",
+        )
+        parser_webapi.add_argument(
+            "-kw",
+            dest="tokenreadwrite",
+            help="Read-write token value",
+        )
+
     def _set_restapi_token(self, options):
         token = None
 
@@ -58,10 +75,36 @@ class Command(InteractiveTenantOption, BaseCommand):
                 self.stdout.write(self.style.NOTICE(f"Token {api_token.name} created with value {api_token.token}"))
 
     def _set_webapi_token(self, options):
-        pass
+        try:
+            obj = WebAPIKey.objects.get(name=f"WEB-API-{options['tenantname'].upper()}")
+            if obj and options['tokenreadwrite']:
+                obj.delete()
+                api_token, token = WebAPIKey.objects.create_key(**{
+                    'name': f"WEB-API-{options['tenantname'].upper()}",
+                    'token': options['tokenreadonly'],
+                    'created': datetime.datetime.now()
+                })
+                self.stdout.write(self.style.WARNING(f"Token {api_token.name} recreated with value {api_token.token}"))
+            elif obj:
+                self.stdout.write(self.style.ERROR_OUTPUT(f"Token {obj.name} already created"))
+
+        except WebAPIKey.DoesNotExist:
+            if options['tokenreadwrite']:
+                api_token, token = WebAPIKey.objects.create_key(**{
+                    'name': f"WEB-API-{options['tenantname'].upper()}",
+                    'token': options['tokenreadonly']
+                })
+                self.stdout.write(self.style.NOTICE(f"Token {api_token.name} created with value {api_token.token}"))
+            else:
+                api_token, token = WebAPIKey.objects.create_key(**{
+                    'name': f"WEB-API-{options['tenantname'].upper()}",
+                })
+                self.stdout.write(self.style.NOTICE(f"Token {api_token.name} created with value {api_token.token}"))
 
     def handle(self, *args, **options):
         tenant = ''
+        import ipdb; ipdb.set_trace()
+
 
         if options['command'] == 'webapi':
             tenant = self.get_tenant_from_options_or_interactive(schema_name='public')
