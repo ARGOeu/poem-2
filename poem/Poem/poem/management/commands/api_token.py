@@ -25,6 +25,11 @@ class Command(InteractiveTenantOption, BaseCommand):
             help="Tenant name",
         )
         parser_restapi.add_argument(
+            "-n",
+            dest="tokenname",
+            help="Token name",
+        )
+        parser_restapi.add_argument(
             "-k",
             dest="token",
             help="Token value",
@@ -34,6 +39,11 @@ class Command(InteractiveTenantOption, BaseCommand):
             "-t",
             dest="tenantname",
             help="Tenant name",
+        )
+        parser_webapi.add_argument(
+            "-n",
+            dest="tokenname",
+            help="Token name",
         )
         parser_webapi.add_argument(
             "-ko",
@@ -74,11 +84,16 @@ class Command(InteractiveTenantOption, BaseCommand):
                 self.stdout.write(self.style.NOTICE(f"Token {api_token.name} created with value {api_token.token}"))
 
     def _set_restapi_token(self, options):
-        self._token_crud(MyAPIKey, options['tenantname'].upper(), options['token'])
+        tokenname = options.get('tokenname', None) or options['tenantname']
+        self._token_crud(MyAPIKey, tokenname.upper(), options['token'])
 
     def _set_webapi_token(self, options):
-        self._token_crud(WebAPIKey, f"WEB-API-{options['tenantname'].upper()}", options['tokenreadwrite'])
-        self._token_crud(WebAPIKey, f"WEB-API-{options['tenantname'].upper()}-RO", options['tokenreadonly'])
+        if options.get('tokenname', None):
+            tokenname = options.get('tokenname', None)
+            self._token_crud(WebAPIKey, tokenname.upper(), options['tokenreadwrite'])
+        else:
+            self._token_crud(WebAPIKey, f"WEB-API-{options['tenantname'].upper()}", options['tokenreadwrite'])
+            self._token_crud(WebAPIKey, f"WEB-API-{options['tenantname'].upper()}-RO", options['tokenreadonly'])
 
     def handle(self, *args, **options):
         if options.get('schemaname', None):
