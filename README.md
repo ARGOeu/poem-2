@@ -399,22 +399,37 @@ Tenant POEM web application should be now served at `https://<tenant_domain_url>
 
 #### Tokens
 
-For seamless interaction with ARGO WEB-API, tokens with predefined names and values should be set. Therefore, `poem-token` tool is introduced. Naming of tokens should follow exactly this schema:
-* `WEB-API-RO` - read-only ARGO-WEB-API token
-* `WEB-API` - CRUD ARGO-WEB-API token
-* `TENANT-NAME` - REST API consumed by monitoring boxes
+For seamless interaction with ARGO WEB-API, tokens with predefined names and values should be set. Therefore, `poem-token` tool is introduced. Naming of tokens follow this schema:
+* `WEB-API-<TENANT_NAME>-RO` - read-only ARGO-WEB-API token
+* `WEB-API-<TENANT_NAME>` - CRUD ARGO-WEB-API token
+* `<TENANT-NAME>` - REST API queried by monitoring boxes
+
+Usage arguments:
+```
+Create or set tokens for POEM REST API and store WEB-API tokens for specified tenant
+
+positional arguments:
+  {restapi,webapi}      Token management subcommands
+    restapi             REST-API token management
+    webapi              WEB-API token management
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -s SCHEMANAME         PostgreSQL schema name
+
+```
+Tokens either for WEB-API or POEM's own REST API can be created. If explicit schema name (`-s`) is not provided, WEB-API tokens always end in `public` schema while REST API tokens are stored in corresponding tenant's DB schema.
 
 Example:
 ```
-poem-token -t WEB-API-RO -s egi -o xxxx
-poem-token -t WEB-API -s egi -o xxxx
+poem-token webapi -t egi -kw RWTOKVAL -ko ROTOKVAL
+poem-token restapi -t egi -k TOKVAL
 ```
+This will set REST API and WEB-API token for tenant `egi` to their respective values. REST API token will be named `EGI` and will be created in `egi` schema. WEB-API token will be named `WEB-API-EGI` and `WEB-API-EGI-RO` and will be created in `public` schema.
 
-`poem-token` tools takes two or three arguments. In three-arguments-mode, it's setting token name provided after `-t` within schema provided after `-s` to a predefined value provided after `-o`. If `-o` is omitted, than value will be automatically created.
-
-In two-argument-mode it is used to generate a token for its REST API that will be consumed by monitoring boxes:
+Additionally, token with arbitrary name in specified schema can be created as follows:
 ```
-poem-token -t EGI -s egi
+poem-token -s public restapi -n SUPER -k SUPERVALUE
 ```
 
 ## Development
