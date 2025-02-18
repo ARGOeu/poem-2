@@ -13,6 +13,9 @@ class Command(InteractiveTenantOption, BaseCommand):
 
     def add_arguments(self, parser):
         subparsers = parser.add_subparsers(help="Token management subcommands", dest="command")
+
+        parser.add_argument("-s", dest="schemaname", help="PostgreSQL schema name", required=False)
+
         parser_restapi = subparsers.add_parser("restapi", help="REST-API token management")
         parser_webapi = subparsers.add_parser("webapi", help="WEB-API token management")
 
@@ -20,7 +23,11 @@ class Command(InteractiveTenantOption, BaseCommand):
             "-t",
             dest="tenantname",
             help="Tenant name",
-            required=True
+        )
+        parser_restapi.add_argument(
+            "-n",
+            dest="tokenname",
+            help="Token name",
         )
         parser_restapi.add_argument(
             "-k",
@@ -32,7 +39,11 @@ class Command(InteractiveTenantOption, BaseCommand):
             "-t",
             dest="tenantname",
             help="Tenant name",
-            required=True
+        )
+        parser_webapi.add_argument(
+            "-n",
+            dest="tokenname",
+            help="Token name",
         )
         parser_webapi.add_argument(
             "-ko",
@@ -73,20 +84,36 @@ class Command(InteractiveTenantOption, BaseCommand):
                 self.stdout.write(self.style.NOTICE(f"Token {api_token.name} created with value {api_token.token}"))
 
     def _set_restapi_token(self, options):
-        self._token_crud(MyAPIKey, options['tenantname'].upper(), options['token'])
+        tokenname = options.get('tokenname', None) or options['tenantname']
+        self._token_crud(MyAPIKey, tokenname.upper(), options['token'])
 
     def _set_webapi_token(self, options):
-        self._token_crud(WebAPIKey, f"WEB-API-{options['tenantname'].upper()}", options['tokenreadwrite'])
-        self._token_crud(WebAPIKey, f"WEB-API-{options['tenantname'].upper()}-RO", options['tokenreadonly'])
+        if options.get('tokenname', None):
+            tokenname = options.get('tokenname', None)
+            self._token_crud(WebAPIKey, tokenname.upper(), options['tokenreadwrite'])
+        else:
+            self._token_crud(WebAPIKey, f"WEB-API-{options['tenantname'].upper()}", options['tokenreadwrite'])
+            self._token_crud(WebAPIKey, f"WEB-API-{options['tenantname'].upper()}-RO", options['tokenreadonly'])
 
     def handle(self, *args, **options):
-        if options['command'] == 'webapi':
-            tenant = self.get_tenant_from_options_or_interactive(schema_name='public')
+        if options.get('schemaname', None):
+            tenant = self.get_tenant_from_options_or_interactive(schema_name=options.get('schemaname'))
             connection.set_tenant(tenant)
-            self._set_webapi_token(options)
 
-        elif options['command'] == 'restapi':
-            schema_name = options['tenantname'].lower()
-            tenant = self.get_tenant_from_options_or_interactive(schema_name=schema_name)
-            connection.set_tenant(tenant)
-            self._set_restapi_token(options)
+            if options['command'] == 'webapi':
+                self._set_webapi_token(options)
+
+            elif options['command'] == 'restapi':
+                self._set_restapi_token(options)
+
+        else:
+            if options['command'] == 'webapi':
+                tenant = self.get_tenant_from_options_or_interactive(schema_name='public')
+                connection.set_tenant(tenant)
+                self._set_webapi_token(options)
+
+            elif options['command'] == 'restapi':
+                schema_name = options['tenantname'].lower()
+                tenant = self.get_tenant_from_options_or_interactive(schema_name=schema_name)
+                connection.set_tenant(tenant)
+                self._set_restapi_token(options)
