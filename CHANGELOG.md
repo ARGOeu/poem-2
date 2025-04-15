@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.5.0] - 2025-04-15
+
+### Added
+
+* ARGO-4542 Prepare POEM devel containers for Rocky 9 and Poetry dependency and virtenv handling
+* ARGO-4918 poem-token CLI tool support for arbitrary schema and token name
+
+### Fixed
+
+* ARGO-4504 Form evaluation error if package is listed only in Rocky 9 repo
+* ARGO-4816 Fix DB backup scripts to reflect virtenv changes
+
 ## [3.4.11] - 2024-06-07
 
 ### Added
