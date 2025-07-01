@@ -28,6 +28,7 @@ RUN sh -c '\
   && pip install -U poetry'
 RUN ln -s /opt/poetry-tool/bin/poetry /usr/local/bin/
 RUN dnf module install -y nodejs:20
+COPY venv_poem.sh /etc/profile.d/
 RUN python3.9 -m venv /opt/poem
 RUN sh -c '\
   . /opt/poem/bin/activate \

@@ -2,7 +2,6 @@
 
 # load virtual environment
 source /etc/profile.d/venv_poem.sh
-workon poem
 
 # remove previous installation if there's one
 pip3 show poem
@@ -16,12 +15,12 @@ fi
 cd /mnt/poem-source
 sudo make clean
 sudo make wheel-devel
-sudo pip3 install dist/*.whl
-sudo pip3 install -r requirements_tests.txt
+sudo pip3 install *.whl
+sudo sh -c '. /opt/poem/bin/activate; poetry sync --with devel'
 
 # prerequisites
-sudo cp -f /home/jenkins/fake-secret /home/pyvenv/poem/etc/poem/fake-secret
-sudo cp -f /home/jenkins/poem.conf /home/pyvenv/poem/etc/poem/poem.conf
+sudo cp -f /home/jenkins/fake-secret /opt/poem/etc/poem/fake-secret
+sudo cp -f /home/jenkins/poem.conf /opt/poem/etc/poem/poem.conf
 
 # install frontend packages
 cd /mnt/poem-source/poem/Poem
