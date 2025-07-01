@@ -1,37 +1,38 @@
-FROM centos:7
+FROM rockylinux:9
 MAINTAINER dvrcic@srce.hr
 RUN groupadd jenkins -g 1000 && useradd -u 1000 -g 1000 jenkins -m -d /home/jenkins
 RUN passwd -d root
-RUN curl -sL https://rpm.nodesource.com/setup_16.x | bash -
-RUN yum -y makecache; yum -y update; yum clean all
-RUN yum -y install epel-release && \
-    yum -y install \
+RUN dnf -y makecache; dnf -y update; dnf clean all
+RUN dnf -y install epel-release rocky-repos && \
+    dnf -y install \
       ack \
-      coreutils \
       git \
       htop \
       make \
-      nodejs \
+      httpd httpd-devel \
+      mod_ssl \
       psmisc \
-      sudo \
-      which \
-      wget
-RUN yum -y install \
-      centos-release-scl \
-      scl-utils \
+      python3-devel \
+      python3-mod_wsgi \
+      python3-pip \
+      python3-setuptools \
+      sudo
+RUN dnf -y makecache
+RUN dnf -y install \
       supervisor
-RUN yum -y makecache && yum -y install \
-      httpd24-mod_ssl \
-      rh-python36-mod_wsgi \
-      rh-python36-python-pip
 RUN passwd -d apache; usermod --shell /bin/bash apache
-RUN scl enable rh-python36 'pip install -U pip' && \
-    scl enable rh-python36 'pip3 install virtualenv virtualenvwrapper'
-COPY venv_poem.sh /etc/profile.d/
-COPY scl-psql.sh /etc/profile.d/
-RUN scl enable rh-python36 'source /etc/profile.d/venv_poem.sh; \
-    mkdir -p $WORKON_HOME; \
-    mkvirtualenv poem'
+RUN python3.9 -m venv /opt/poetry-tool/
+RUN sh -c '\
+  . /opt/poetry-tool/bin/activate \
+  && pip install -U pip \
+  && pip install -U poetry'
+RUN ln -s /opt/poetry-tool/bin/poetry /usr/local/bin/
+RUN dnf module install -y nodejs:20
+RUN python3.9 -m venv /opt/poem
+RUN sh -c '\
+  . /opt/poem/bin/activate \
+  && pip install -U pip'
+RUN mkdir -p /opt/poem/var/log && chmod a+rw /opt/poem/var/log
 WORKDIR /home/jenkins
 COPY \
     fake-secret \
@@ -39,7 +40,7 @@ COPY \
     entrypoint.sh \
     /home/jenkins/
 COPY apache/poem-apache.ini /etc/supervisord.d/
-COPY apache/poem.conf /opt/rh/httpd24/root/etc/httpd/conf.d/
+COPY apache/poem.conf /etc/httpd/conf.d/
 RUN echo "jenkins ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers
 USER jenkins
 ENTRYPOINT ["/home/jenkins/entrypoint.sh"]
