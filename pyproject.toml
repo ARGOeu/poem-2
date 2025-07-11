@@ -27,6 +27,8 @@ mock = "*"
 coverage = "*"
 unittest-xml-reporting = "*"
 tblib = "*"
+discover = "*"
+factory-boy = "*"
 
 [build-system]
 requires = ["setuptools"]
