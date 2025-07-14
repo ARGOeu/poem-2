@@ -123,8 +123,80 @@ const mockMetric = {
   parameter: [
     { key: '--project', value: 'EGI' }
   ],
+  files: [],
   fileparameter: []
 };
+
+const mockMetricWithDependency = {
+  id: 422,
+  name: "srce.gridproxy.validity",
+  mtype: "Active",
+  tags: [
+    "test_tag1",
+    "test_tag2",
+    "internal"
+  ],
+  probeversion: "GridProxy-probe (0.2.0)",
+  group: "EGI",
+  description: "",
+  parent: "",
+  probeexecutable: "GridProxy-probe",
+  config: [
+    {
+      key: "maxCheckAttempts",
+      value: "3"
+    },
+    {
+      key: "timeout",
+      value: "30"
+    },
+    {
+      key: "path",
+      value: "/usr/libexec/argo/probes/globus"
+    },
+    {
+      key: "interval",
+      value: "15"
+    },
+    {
+      key: "retryInterval",
+      value: "3"
+    }
+  ],
+  attribute: [
+    {
+      key: "VONAME",
+      value: "--vo"
+    },
+    {
+      key: "X509_USER_PROXY",
+      value: "-x"
+    }
+  ],
+  dependancy: [
+    {
+      key: "hr.srce.GridProxy-Get",
+      value: "0"
+    }
+  ],
+  flags: [
+    {
+      key: "NOHOSTNAME",
+      value: "1"
+    },
+    {
+      key: "VO",
+      value: "1"
+    },
+    {
+      key: "NOPUBLISH",
+      value: "1"
+    }
+  ],
+  files: [],
+  parameter: [],
+  fileparameter: []
+}
 
 const mockPassiveMetric = {
     id: 2,
@@ -166,6 +238,24 @@ const mockProbe = [{
   comment: 'Initial version.',
   version: '0.1.12'
 }];
+
+const mockProbe2 = [{
+    id: '64',
+    object_repr: "GridProxy-probe (0.2.0)",
+    fields: {
+        name: "GridProxy-probe",
+        version: "0.2.0",
+        package: "argo-probe-globus (0.2.0)",
+        description: "Probe for functional checking of MyProxy service.",
+        comment: "Harmonized version.",
+        repository: "https://github.com/ARGOeu-Metrics/argo-probe-globus",
+        docurl: "https://github.com/ARGOeu-Metrics/argo-probe-globus/blob/master/README.md"
+    },
+    user: "poem",
+    date_created: "2019-12-09 09:24:20",
+    comment: "Initial version.",
+    version: "0.2.0"
+}]
 
 const mockUserGroups = {
   'aggregations': ['EGI'],
@@ -704,17 +794,29 @@ describe('Tests for metric change', () => {
             case '/api/v2/internal/metric/org.apel.APEL-Pub':
               return Promise.resolve(mockPassiveMetric)
 
+            case "/api/v2/internal/metric/srce.gridproxy.validity":
+              return Promise.resolve(mockMetricWithDependency)
+
             case '/api/v2/internal/public_metric/argo.AMS-Check':
               return Promise.resolve(mockMetric)
 
             case '/api/v2/internal/public_metric/org.apel.APEL-Pub':
               return Promise.resolve(mockPassiveMetric)
 
+            case "/api/v2/internal/public_metric/srce.gridproxy.validity":
+              return Promise.resolve(mockMetricWithDependency)
+
             case '/api/v2/internal/version/probe/ams-probe':
               return Promise.resolve(mockProbe)
+            
+            case "/api/v2/internal/version/probe/GridProxy-probe":
+              return Promise.resolve(mockProbe2)
 
             case '/api/v2/internal/public_version/probe/ams-probe':
               return Promise.resolve(mockProbe)
+            
+            case "/api/v2/internal/public_version/probe/GridProxy-probe":
+              return Promise.resolve(mockProbe2)
           }
         },
         isActiveSession: () => Promise.resolve(mockActiveSession),
@@ -817,13 +919,8 @@ describe('Tests for metric change', () => {
     expect(attributeVal.value).toBe('--token');
     expect(attributeVal).toBeDisabled()
 
-    const dependencyKey = screen.getByTestId('dependency.0.key');
-    expect(dependencyKey.value).toBe('');
-    expect(dependencyKey).toBeDisabled()
-
-    const dependencyVal = screen.getByTestId('dependency.0.value');
-    expect(dependencyVal.value).toBe('');
-    expect(dependencyVal).toBeDisabled()
+    expect(screen.queryByTestId("dependency.0.key")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("dependency.0.value")).not.toBeInTheDocument()
 
     const parameterKey = screen.getByTestId('parameter.0.key');
     expect(parameterKey.value).toBe('--project');
@@ -846,6 +943,159 @@ describe('Tests for metric change', () => {
     expect(parentField).toBeDisabled()
 
     expect(screen.getByRole('button', { name: /history/i }).closest('a')).toHaveAttribute('href', '/ui/metrics/argo.AMS-Check/history')
+    expect(screen.queryByRole("button", { name: /clone/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+  })
+
+  test('Test that page renders properly if metric with dependency', async () => {
+    renderChangeView({ route: "/ui/metrics/srce.gridproxy.validity" })
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+    })
+
+    expect(screen.getByRole('heading', { name: /change metric/i }).textContent).toBe('Change metric');
+
+    const nameField = screen.getByTestId('name');
+    expect(nameField.value).toBe("srce.gridproxy.validity")
+    expect(nameField).toBeDisabled()
+
+    const typeField = screen.getByTestId('mtype');
+    expect(typeField.value).toBe('Active');
+    expect(typeField).toBeDisabled()
+
+    const probeField = screen.getByTestId('probeversion');
+    expect(probeField.value).toBe('GridProxy-probe (0.2.0)');
+    expect(probeField).toBeDisabled();
+
+    const packageField = screen.getByTestId('package');
+    expect(packageField.value).toBe('argo-probe-globus (0.2.0)');
+    expect(packageField).toBeDisabled();
+
+    expect(screen.queryAllByText(/test_tag/i)).toHaveLength(2);
+    expect(screen.getByText("internal")).toBeInTheDocument()
+
+    const descriptionField = screen.getByTestId('description');
+    expect(descriptionField.value).toBe("")
+    expect(descriptionField).toBeDisabled();
+
+    const groupField = screen.getByText('EGI');
+    expect(groupField).toBeEnabled()
+
+    expect(screen.queryByText('ARGOTEST')).not.toBeInTheDocument()
+    selectEvent.openMenu(groupField)
+    expect(screen.getByText('ARGOTEST')).toBeInTheDocument()
+
+    expect(screen.getByRole('heading', { name: /metric configuration/i })).toBeInTheDocument()
+
+    expect(screen.getByRole('heading', { name: /executable/i }).textContent).toBe('probe executable');
+    const executableField = screen.getByTestId('probeexecutable');
+    expect(executableField.value).toBe('GridProxy-probe');
+    expect(executableField).toBeDisabled()
+
+    const configKey1 = screen.getByTestId('config.0.key');
+    expect(configKey1.value).toBe('maxCheckAttempts');
+    expect(configKey1).toBeDisabled()
+
+    const configKey2 = screen.getByTestId('config.1.key');
+    expect(configKey2.value).toBe('timeout');
+    expect(configKey2).toBeDisabled()
+
+    const configKey3 = screen.getByTestId('config.2.key');
+    expect(configKey3.value).toBe('path');
+    expect(configKey3).toBeDisabled()
+
+    const configKey4 = screen.getByTestId('config.3.key');
+    expect(configKey4.value).toBe('interval');
+    expect(configKey4).toBeDisabled()
+
+    const configKey5 = screen.getByTestId('config.4.key');
+    expect(configKey5.value).toBe('retryInterval');
+    expect(configKey5).toBeDisabled()
+
+    const configVal1 = screen.getByTestId('config.0.value');
+    expect(configVal1.value).toBe('3');
+    expect(configVal1).not.toBeDisabled()
+
+    const configVal2 = screen.getByTestId('config.1.value');
+    expect(configVal2.value).toBe('30');
+    expect(configVal2).not.toBeDisabled()
+
+    const configVal3 = screen.getByTestId('config.2.value');
+    expect(configVal3.value).toBe("/usr/libexec/argo/probes/globus")
+    expect(configVal3).toBeDisabled()
+
+    const configVal4 = screen.getByTestId('config.3.value');
+    expect(configVal4.value).toBe('15')
+    expect(configVal4).not.toBeDisabled()
+
+    const configVal5 = screen.getByTestId('config.4.value');
+    expect(configVal5.value).toBe("3")
+    expect(configVal5).not.toBeDisabled()
+
+    const attributeKey1 = screen.getByTestId('attributes.0.key');
+    expect(attributeKey1.value).toBe("VONAME");
+    expect(attributeKey1).toBeDisabled()
+
+    const attributeVal1 = screen.getByTestId('attributes.0.value')
+    expect(attributeVal1.value).toBe('--vo');
+    expect(attributeVal1).toBeDisabled()
+
+    const attributeKey2 = screen.getByTestId("attributes.1.key")
+    expect(attributeKey2.value).toBe("X509_USER_PROXY")
+    expect(attributeKey2).toBeDisabled()
+
+    const attributeVal2 = screen.getByTestId("attributes.1.value")
+    expect(attributeVal2.value).toBe("-x")
+    expect(attributeVal2).toBeDisabled()
+
+    expect(screen.queryByTestId("attributes.2.key")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("attributes.2.value")).not.toBeInTheDocument()
+
+    const dependencyKey = screen.getByTestId("dependency.0.key")
+    expect(dependencyKey.value).toBe("hr.srce.GridProxy-Get")
+    expect(dependencyKey).toBeDisabled()
+
+    const dependencyVal= screen.getByTestId("dependency.0.value")
+    expect(dependencyVal.value).toBe("0")
+    expect(dependencyVal).toBeDisabled()
+
+    const parameterKey = screen.getByTestId("parameter.0.key")
+    expect(parameterKey.value).toBe("")
+    expect(parameterKey).toBeDisabled()
+
+    const parameterVal = screen.getByTestId("parameter.0.value")
+    expect(parameterVal.value).toBe("")
+    expect(parameterVal).toBeDisabled()
+
+    const flagKey1 = screen.getByTestId('flags.0.key');
+    expect(flagKey1.value).toBe('NOHOSTNAME');
+    expect(flagKey1).toBeDisabled()
+
+    const flagVal1 = screen.getByTestId('flags.0.value');
+    expect(flagVal1.value).toBe('1');
+    expect(flagVal1).toBeDisabled()
+
+    const flagKey2 = screen.getByTestId("flags.1.key")
+    expect(flagKey2.value).toBe("VO")
+    expect(flagKey2).toBeDisabled()
+
+    const flagVal2 = screen.getByTestId("flags.1.value")
+    expect(flagVal2.value).toBe("1")
+
+    const flagKey3 = screen.getByTestId("flags.2.key")
+    expect(flagKey3.value).toBe("NOPUBLISH")
+    expect(flagKey3).toBeDisabled()
+
+    const flagVal3 = screen.getByTestId("flags.2.value")
+    expect(flagVal3.value).toBe("1")
+    expect(flagVal3).toBeDisabled()
+
+    const parentField = screen.getByTestId('parent');
+    expect(parentField.value).toBe('');
+    expect(parentField).toBeDisabled()
+
+    expect(screen.getByRole('button', { name: /history/i }).closest('a')).toHaveAttribute('href', '/ui/metrics/srce.gridproxy.validity/history')
     expect(screen.queryByRole("button", { name: /clone/i })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
   })
@@ -873,7 +1123,7 @@ describe('Tests for metric change', () => {
     renderChangeView({ publicView: true });
 
     await waitFor(() => {
-      expect(screen.getByTestId("dependency.0.key")).toBeInTheDocument()
+      expect(screen.getByTestId("config.0.key")).toBeInTheDocument()
     })
 
     expect(screen.getByRole('heading', { name: /details/i }).textContent).toBe('Metric details');
@@ -961,13 +1211,8 @@ describe('Tests for metric change', () => {
     expect(attributeVal.value).toBe('--token');
     expect(attributeVal).toBeDisabled()
 
-    const dependencyKey = screen.getByTestId('dependency.0.key');
-    expect(dependencyKey.value).toBe('');
-    expect(dependencyKey).toBeDisabled()
-
-    const dependencyVal = screen.getByTestId('dependency.0.value');
-    expect(dependencyVal.value).toBe('');
-    expect(dependencyVal).toBeDisabled()
+    expect(screen.queryByTestId("dependency.0.key")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("dependency.0.value")).not.toBeInTheDocument()
 
     const parameterKey = screen.getByTestId('parameter.0.key');
     expect(parameterKey.value).toBe('--project');
@@ -993,6 +1238,174 @@ describe('Tests for metric change', () => {
     expect(screen.queryByRole('button', { name: /save/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /clone/i })).not.toBeInTheDocument()
+  })
+
+  test('Test that public page renders properly if metric with dependency', async () => {
+    Backend.mockImplementationOnce(() => {
+      return {
+        fetchData: (path) => {
+          switch (path) {
+            case '/api/v2/internal/public_metric/srce.gridproxy.validity':
+              return Promise.resolve(mockMetricWithDependency)
+
+            case '/api/v2/internal/public_version/probe/GridProxy-probe':
+              return Promise.resolve(mockProbe2)
+          }
+        },
+        isActiveSession: () => Promise.resolve({
+          json: () => Promise.resolve({ detail: 'Authentication credentials were not provided.'}),
+          status: 403,
+          statusText: 'FORBIDDEN'
+        })
+      }
+    })
+    renderChangeView({ publicView: true, route: "/ui/public_metrics/srce.gridproxy.validity" })
+
+    await waitFor(() => {
+      expect(screen.getByTestId("config.0.key")).toBeInTheDocument()
+    })
+
+    expect(screen.getByRole('heading', { name: /details/i }).textContent).toBe('Metric details');
+
+    const nameField = screen.getByTestId('name');
+    expect(nameField.value).toBe("srce.gridproxy.validity")
+    expect(nameField).toBeDisabled()
+
+    const typeField = screen.getByTestId('mtype');
+    expect(typeField.value).toBe('Active');
+    expect(typeField).toBeDisabled()
+
+    const probeField = screen.getByTestId('probeversion');
+    expect(probeField.value).toBe('GridProxy-probe (0.2.0)');
+    expect(probeField).toBeDisabled();
+
+    const packageField = screen.getByTestId('package');
+    expect(packageField.value).toBe('argo-probe-globus (0.2.0)');
+    expect(packageField).toBeDisabled();
+
+    expect(screen.queryAllByText(/test_tag/i)).toHaveLength(2);
+    expect(screen.getByText("internal")).toBeInTheDocument()
+
+    const descriptionField = screen.getByTestId('description');
+    expect(descriptionField.value).toBe("")
+    expect(descriptionField).toBeDisabled();
+
+    const groupField = screen.getByTestId("group")
+    expect(groupField.value).toBe("EGI")
+    expect(groupField).toBeDisabled()
+
+    expect(screen.getByRole('heading', { name: /metric configuration/i })).toBeInTheDocument()
+
+    expect(screen.getByRole('heading', { name: /executable/i }).textContent).toBe('probe executable');
+    const executableField = screen.getByTestId('probeexecutable');
+    expect(executableField.value).toBe('GridProxy-probe');
+    expect(executableField).toBeDisabled()
+
+    const configKey1 = screen.getByTestId('config.0.key');
+    expect(configKey1.value).toBe('maxCheckAttempts');
+    expect(configKey1).toBeDisabled()
+
+    const configKey2 = screen.getByTestId('config.1.key');
+    expect(configKey2.value).toBe('timeout');
+    expect(configKey2).toBeDisabled()
+
+    const configKey3 = screen.getByTestId('config.2.key');
+    expect(configKey3.value).toBe('path');
+    expect(configKey3).toBeDisabled()
+
+    const configKey4 = screen.getByTestId('config.3.key');
+    expect(configKey4.value).toBe('interval');
+    expect(configKey4).toBeDisabled()
+
+    const configKey5 = screen.getByTestId('config.4.key');
+    expect(configKey5.value).toBe('retryInterval');
+    expect(configKey5).toBeDisabled()
+
+    const configVal1 = screen.getByTestId('config.0.value');
+    expect(configVal1.value).toBe('3');
+    expect(configVal1).toBeDisabled()
+
+    const configVal2 = screen.getByTestId('config.1.value');
+    expect(configVal2.value).toBe('30');
+    expect(configVal2).toBeDisabled()
+
+    const configVal3 = screen.getByTestId('config.2.value');
+    expect(configVal3.value).toBe("/usr/libexec/argo/probes/globus")
+    expect(configVal3).toBeDisabled()
+
+    const configVal4 = screen.getByTestId('config.3.value');
+    expect(configVal4.value).toBe('15')
+    expect(configVal4).toBeDisabled()
+
+    const configVal5 = screen.getByTestId('config.4.value');
+    expect(configVal5.value).toBe("3")
+    expect(configVal5).toBeDisabled()
+
+    const attributeKey1 = screen.getByTestId('attributes.0.key');
+    expect(attributeKey1.value).toBe("VONAME");
+    expect(attributeKey1).toBeDisabled()
+
+    const attributeVal1 = screen.getByTestId('attributes.0.value')
+    expect(attributeVal1.value).toBe('--vo');
+    expect(attributeVal1).toBeDisabled()
+
+    const attributeKey2 = screen.getByTestId("attributes.1.key")
+    expect(attributeKey2.value).toBe("X509_USER_PROXY")
+    expect(attributeKey2).toBeDisabled()
+
+    const attributeVal2 = screen.getByTestId("attributes.1.value")
+    expect(attributeVal2.value).toBe("-x")
+    expect(attributeVal2).toBeDisabled()
+
+    expect(screen.queryByTestId("attributes.2.key")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("attributes.2.value")).not.toBeInTheDocument()
+
+    const dependencyKey = screen.getByTestId("dependency.0.key")
+    expect(dependencyKey.value).toBe("hr.srce.GridProxy-Get")
+    expect(dependencyKey).toBeDisabled()
+
+    const dependencyVal= screen.getByTestId("dependency.0.value")
+    expect(dependencyVal.value).toBe("0")
+    expect(dependencyVal).toBeDisabled()
+
+    const parameterKey = screen.getByTestId("parameter.0.key")
+    expect(parameterKey.value).toBe("")
+    expect(parameterKey).toBeDisabled()
+
+    const parameterVal = screen.getByTestId("parameter.0.value")
+    expect(parameterVal.value).toBe("")
+    expect(parameterVal).toBeDisabled()
+
+    const flagKey1 = screen.getByTestId('flags.0.key');
+    expect(flagKey1.value).toBe('NOHOSTNAME');
+    expect(flagKey1).toBeDisabled()
+
+    const flagVal1 = screen.getByTestId('flags.0.value');
+    expect(flagVal1.value).toBe('1');
+    expect(flagVal1).toBeDisabled()
+
+    const flagKey2 = screen.getByTestId("flags.1.key")
+    expect(flagKey2.value).toBe("VO")
+    expect(flagKey2).toBeDisabled()
+
+    const flagVal2 = screen.getByTestId("flags.1.value")
+    expect(flagVal2.value).toBe("1")
+
+    const flagKey3 = screen.getByTestId("flags.2.key")
+    expect(flagKey3.value).toBe("NOPUBLISH")
+    expect(flagKey3).toBeDisabled()
+
+    const flagVal3 = screen.getByTestId("flags.2.value")
+    expect(flagVal3.value).toBe("1")
+    expect(flagVal3).toBeDisabled()
+
+    const parentField = screen.getByTestId('parent');
+    expect(parentField.value).toBe('');
+    expect(parentField).toBeDisabled()
+
+    expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /clone/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument()
   })
 
   test('Test that passive metric changeview renders properly', async () => {
@@ -1337,7 +1750,6 @@ describe('Tests for metric change', () => {
           attribute: mockMetric.attribute,
           dependancy: mockMetric.dependancy,
           flags: mockMetric.flags,
-          files: mockMetric.files,
           parameter: mockMetric.parameter
         }
       )
@@ -1466,7 +1878,7 @@ describe('Tests for metric change', () => {
     renderChangeView();
 
     await waitFor(() => {
-      expect(screen.getByTestId("dependency.0.key")).toBeInTheDocument()
+      expect(screen.getByTestId("config.0.key")).toBeInTheDocument()
     })
 
     const nameField = screen.getByTestId('name');
@@ -1488,13 +1900,14 @@ describe('Tests for metric change', () => {
     const configVal5 = screen.getByTestId('config.4.value');
     const attributeKey = screen.getByTestId('attributes.0.key');
     const attributeVal = screen.getByTestId('attributes.0.value')
-    const dependencyKey = screen.getByTestId('dependency.0.key');
-    const dependencyVal = screen.getByTestId('dependency.0.value');
     const parameterKey = screen.getByTestId('parameter.0.key');
     const parameterVal = screen.getByTestId('parameter.0.value');
     const flagKey = screen.getByTestId('flags.0.key');
     const flagVal = screen.getByTestId('flags.0.value');
     const parentField = screen.getByTestId('parent');
+    
+    expect(screen.queryByTestId("dependency.0.key")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("dependency.0.value")).not.toBeInTheDocument()
 
     expect(screen.getByRole('alert').textContent).toBe(
       'This is a read-only instance, please request the corresponding permissions to perform any changes in this form.'
@@ -1544,10 +1957,6 @@ describe('Tests for metric change', () => {
     expect(attributeKey).toBeDisabled()
     expect(attributeVal.value).toBe('--token');
     expect(attributeVal).toBeDisabled()
-    expect(dependencyKey.value).toBe('');
-    expect(dependencyKey).toBeDisabled()
-    expect(dependencyVal.value).toBe('');
-    expect(dependencyVal).toBeDisabled()
     expect(parameterKey.value).toBe('--project');
     expect(parameterKey).toBeDisabled()
     expect(parameterVal.value).toBe('EGI');
@@ -1586,7 +1995,7 @@ describe('Tests for metric history', () => {
     renderVersionDetailsView();
 
     await waitFor(() => {
-      expect(screen.getByTestId("dependency.0.key")).toBeInTheDocument()
+      expect(screen.getByTestId("config.0.key")).toBeInTheDocument()
     })
 
     expect(screen.getByRole('heading', { name: /argo/i }).textContent).toBe('argo.AMS-Check (2020-11-30 13:23:48)');
@@ -1610,13 +2019,14 @@ describe('Tests for metric history', () => {
     const configVal5 = screen.getByTestId('config.4.value');
     const attributeKey = screen.getByTestId('attributes.0.key');
     const attributeVal = screen.getByTestId('attributes.0.value')
-    const dependencyKey = screen.getByTestId('dependency.0.key');
-    const dependencyVal = screen.getByTestId('dependency.0.value');
     const parameterKey = screen.getByTestId('parameter.0.key');
     const parameterVal = screen.getByTestId('parameter.0.value');
     const flagKey = screen.getByTestId('flags.0.key');
     const flagVal = screen.getByTestId('flags.0.value');
     const parentField = screen.getByTestId('parent');
+
+    expect(screen.queryByTestId("dependency.0.key")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("dependency.0.value")).not.toBeInTheDocument()
 
     expect(nameField.value).toBe('argo.AMS-Check');
     expect(nameField).toBeDisabled()
@@ -1659,10 +2069,6 @@ describe('Tests for metric history', () => {
     expect(attributeKey).toBeDisabled()
     expect(attributeVal.value).toBe('--token');
     expect(attributeVal).toBeDisabled()
-    expect(dependencyKey.value).toBe('');
-    expect(dependencyKey).toBeDisabled()
-    expect(dependencyVal.value).toBe('');
-    expect(dependencyVal).toBeDisabled()
     expect(parameterKey.value).toBe('--project');
     expect(parameterKey).toBeDisabled()
     expect(parameterVal.value).toBe('EGI');
