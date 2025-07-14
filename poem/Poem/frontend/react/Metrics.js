@@ -398,6 +398,7 @@ export const ListOfMetrics = (props) => {
           NotifyWarn({ msg: data.warning, title: 'Deleted' })
 
         setSelectAll(0);
+        setSelected({});
         queryClient.invalidateQueries('metrictemplate');
         queryClient.invalidateQueries('public_metrictemplate');
       },
