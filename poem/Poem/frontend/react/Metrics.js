@@ -860,6 +860,7 @@ export const MetricForm =
       defaultValues: {
         id: initValues.id ? initValues.id : "",
         name: initValues.name,
+        profiles: initValues.profiles,
         probeversion: initValues.probeversion,
         type: initValues.type,
         group: initValues.group ? initValues.group: "",
@@ -965,6 +966,25 @@ export const MetricForm =
       setModalTitle(`${addview || cloneview ? 'Add' : 'Change'} ${resourcename_beautify}`)
       setModalFlag('submit')
       saveFormValues(values)
+      toggleAreYouSure()
+    }
+
+    function onDeleteHandle() {
+      let profiles = getValues("profiles")
+      let name = getValues("name")
+      let msg = ""
+
+      if (resourcename === "metric" && !isHistory && profiles.length > 0) {
+        msg = <div>
+          <p>Metric { name } is part of profile(s): { profiles.join(", ") }</p>
+          <p>ARE YOU SURE you want to delete it?</p>
+        </div>
+      } else
+        msg = `Are you sure you want to delete ${resourcename_beautify}?`
+
+      setModalMsg(msg)
+      setModalTitle(`Delete ${resourcename_beautify}`)
+      setModalFlag('delete')
       toggleAreYouSure()
     }
 
@@ -1432,12 +1452,7 @@ export const MetricForm =
                   (!addview && !cloneview) ?
                     <Button
                       color="danger"
-                      onClick={() => {
-                        setModalMsg(`Are you sure you want to delete ${resourcename_beautify}?`)
-                        setModalTitle(`Delete ${resourcename_beautify}`)
-                        setModalFlag('delete')
-                        toggleAreYouSure()
-                      }}
+                      onClick={() => onDeleteHandle()}
                     >
                       Delete
                     </Button>
@@ -1707,7 +1722,8 @@ export const MetricChange = (props) => {
           file_attributes: metric.files,
           file_parameters: metric.fileparameter,
           probe: probe,
-          tags: metric.tags
+          tags: metric.tags,
+          profiles: metric.profiles
         }}
         isTenantSchema={ true }
         groups={ groups }
