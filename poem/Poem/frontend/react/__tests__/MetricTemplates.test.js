@@ -63,11 +63,9 @@ const mockListOfMetricTemplates = [
     flags: [
       { key: 'OBSESS', value: '1' }
     ],
-    files: [],
     parameter: [
       { key: '--project', value: 'EGI' }
-    ],
-    fileparameter: []
+    ]
   },
   {
     id: 3,
@@ -94,11 +92,9 @@ const mockListOfMetricTemplates = [
       { key: 'NOTIMEOUT', value: '1'},
       { key: 'NOPUBLISH', value: '1' }
     ],
-    files: [],
     parameter: [
       { key: '-s', value: '/var/run/argo-nagios-ams-publisher/sock'}
-    ],
-    fileparameter: []
+    ]
   },
   {
     id: 2,
@@ -118,9 +114,7 @@ const mockListOfMetricTemplates = [
       { key: 'OBSESS', value: '1' },
       { key: 'PASSIVE', value: '1' }
     ],
-    files: [],
-    parameter: [],
-    fileparameter: []
+    parameter: []
   }
 ];
 
@@ -149,11 +143,9 @@ const mockTenantListOfMetricTemplates = [
     flags: [
       { key: 'OBSESS', value: '1' }
     ],
-    files: [],
     parameter: [
       { key: '--project', value: 'EGI' }
-    ],
-    fileparameter: []
+    ]
   },
   {
     id: 3,
@@ -179,11 +171,9 @@ const mockTenantListOfMetricTemplates = [
       { key: 'NOTIMEOUT', value: '1'},
       { key: 'NOPUBLISH', value: '1' }
     ],
-    files: [],
     parameter: [
       { key: '-s', value: '/var/run/argo-nagios-ams-publisher/sock'}
-    ],
-    fileparameter: []
+    ]
   },
   {
     id: 15,
@@ -226,9 +216,7 @@ const mockTenantListOfMetricTemplates = [
       { key: 'OBSESS', value: '1' },
       { key: 'PASSIVE', value: '1' }
     ],
-    files: [],
-    parameter: [],
-    fileparameter: []
+    parameter: []
   }
 ];
 
@@ -285,11 +273,9 @@ const mockMetricTemplate = {
   flags: [
     { key: 'OBSESS', value: '1' }
   ],
-  files: [],
   parameter: [
     { key: '--project', value: 'EGI' }
-  ],
-  fileparameter: []
+  ]
 };
 
 const mockMetricTemplateWithDependency = {
@@ -357,9 +343,7 @@ const mockMetricTemplateWithDependency = {
       value: "1"
     }
   ],
-  files: [],
-  parameter: [],
-  fileparameter: []
+  parameter: []
 }
 
 const mockProbeVersions = [
@@ -484,9 +468,7 @@ const mockPassiveMetricTemplate = {
     { key: 'OBSESS', value: '1' },
     { key: 'PASSIVE', value: '1' }
   ],
-  files: [],
-  parameter: [],
-  fileparameter: []
+  parameter: []
 };
 
 const mockMetricTemplateVersions = [
@@ -513,9 +495,7 @@ const mockMetricTemplateVersions = [
       ],
       dependency: [],
       flags: [{ key: 'OBSESS', value: '1' }],
-      files: [],
-      parameter: [{ key: '--project', value: 'EGI' }],
-      fileparameter: []
+      parameter: [{ key: '--project', value: 'EGI' }]
     },
     user: 'testuser',
     date_created: '2020-01-01 00:00:00',
@@ -545,9 +525,7 @@ const mockMetricTemplateVersions = [
       ],
       dependency: [],
       flags: [{ key: 'OBSESS', value: '1' }],
-      files: [],
-      parameter: [{ key: '--project', value: 'EGI' }],
-      fileparameter: []
+      parameter: [{ key: '--project', value: 'EGI' }]
     },
     user: 'testuser',
     date_created: '2019-10-01 00:00:00',
@@ -629,9 +607,7 @@ const passiveMetricTemplateVersions = [
         { key: "OBSESS", value: "1" },
         { key: "PASSIVE", value: "1" }
       ],
-      files: [],
-      parameter: [],
-      fileparameter: []
+      parameter: []
     },
     user: "poem",
     date_created: "2019-12-09 09:24:20",
@@ -2158,9 +2134,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
           ],
           'flags': [
             { key: 'OBSESS', value: '1' }
-          ],
-          'files': [{ key: '', value: '' }],
-          'fileparameter': [{ key: '', value: '' }]
+          ]
         }
       )
     })
@@ -2221,9 +2195,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
           ],
           flags: [
             { key: "OBSESS", value: "1" }
-          ],
-          files: [{ key: "", value: "" }],
-          fileparameter: [{ key: "", value: "" }]
+          ]
         }
       )
     })
@@ -2291,9 +2263,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
           ],
           flags: [
             { key: "OBSESS", value: "1" }
-          ],
-          files: [{ key: "", value: "" }],
-          fileparameter: [{ key: "", value: "" }]
+          ]
         }
       )
     })
@@ -2357,9 +2327,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
           ],
           flags: [
             { key: "OBSESS", value: "1" }
-          ],
-          files: [{ key: "", value: "" }],
-          fileparameter: [{ key: "", value: "" }]
+          ]
         }
       )
     })
@@ -2427,9 +2395,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
           flags: [
             { key: "NOHOSTNAME", value: "1", isNew: true },
             { key: "NOARGS", value: "0", isNew: true }
-          ],
-          files: [{ key: "", value: "" }],
-          fileparameter: [{ key: "", value: "" }]
+          ]
         }
       )
     })
@@ -2509,9 +2475,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
           'flags': [
             { key: 'OBSESS', value: '1' },
             { key: 'NOHOSTNAME', value: '1', isNew: true }
-          ],
-          'files': [{ key: '', value: '' }],
-          'fileparameter': [{ key: '', value: '' }]
+          ]
         }
       )
     })
@@ -2593,9 +2557,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
           'flags': [
             { key: 'OBSESS', value: '1' },
             { key: 'NOHOSTNAME', value: '1', isNew: true }
-          ],
-          'files': [{ key: '', value: '' }],
-          'fileparameter': [{ key: '', value: '' }]
+          ]
         }
       )
     })
@@ -2658,9 +2620,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
           'parameter': [{ key: '--project', value: 'EGI' }],
           'flags': [
             { key: 'OBSESS', value: '1' }
-          ],
-          'files': [{ key: '', value: '' }],
-          'fileparameter': [{ key: '', value: '' }]
+          ]
         }
       )
     })
@@ -2723,9 +2683,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
           'parameter': [{ key: '--project', value: 'EGI' }],
           'flags': [
             { key: 'OBSESS', value: '1' }
-          ],
-          'files': [{ key: '', value: '' }],
-          'fileparameter': [{ key: '', value: '' }]
+          ]
         }
       )
     })
@@ -2786,9 +2744,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
           'parameter': [{ key: '--project', value: 'EGI' }],
           'flags': [
             { key: 'OBSESS', value: '1' }
-          ],
-          'files': [{ key: '', value: '' }],
-          'fileparameter': [{ key: '', value: '' }]
+          ]
         }
       )
     })
@@ -3324,9 +3280,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
           'flags': [
             { key: 'OBSESS', value: '1' },
             { key: 'PASSIVE', value: '1' }
-          ],
-          'files': [{ key: '', value: '' }],
-          'fileparameter': [{ key: '', value: '' }]
+          ]
         }
       )
     })
@@ -4138,9 +4092,7 @@ describe('Test metric template addview on SuperPOEM', () => {
             { key: 'NOHOSTNAME', value: '1' },
             { key: 'NOTIMEOUT', value: '1' },
             { key: 'NOPUBLISH', value: '1' }
-          ],
-          'files': [{ key: '', value: '' }],
-          'fileparameter': [{ key: '', value: '' }]
+          ]
         }
       )
     })
@@ -4251,9 +4203,7 @@ describe('Test metric template addview on SuperPOEM', () => {
           'flags': [
             { key: 'PASSIVE', value: '1' },
             { key: 'OBSESS', value: '1' }
-          ],
-          'files': [{ key: '', value: '' }],
-          'fileparameter': [{ key: '', value: '' }]
+          ]
         }
       )
     })
@@ -4343,9 +4293,7 @@ describe('Test metric template addview on SuperPOEM', () => {
             { key: 'NOHOSTNAME', value: '1' },
             { key: 'NOTIMEOUT', value: '1' },
             { key: 'NOPUBLISH', value: '1' }
-          ],
-          'files': [{ key: '', value: '' }],
-          'fileparameter': [{ key: '', value: '' }]
+          ]
         }
       )
     })
@@ -4436,9 +4384,7 @@ describe('Test metric template addview on SuperPOEM', () => {
             { key: 'NOHOSTNAME', value: '1' },
             { key: 'NOTIMEOUT', value: '1' },
             { key: 'NOPUBLISH', value: '1' }
-          ],
-          'files': [{ key: '', value: '' }],
-          'fileparameter': [{ key: '', value: '' }]
+          ]
         }
       )
     })
@@ -4526,9 +4472,7 @@ describe('Test metric template addview on SuperPOEM', () => {
             { key: 'NOHOSTNAME', value: '1' },
             { key: 'NOTIMEOUT', value: '1' },
             { key: 'NOPUBLISH', value: '1' }
-          ],
-          'files': [{ key: '', value: '' }],
-          'fileparameter': [{ key: '', value: '' }]
+          ]
         }
       )
     })
@@ -4582,9 +4526,7 @@ describe('Test metric template cloneview on SuperPOEM', () => {
                   { key: 'OBSESS', value: '1' },
                   { key: 'PASSIVE', value: '1' }
                 ],
-                files: [],
-                parameter: [],
-                fileparameter: []
+                parameter: []
               })
 
             case '/api/v2/internal/mttypes':
@@ -4763,9 +4705,7 @@ describe('Test metric template cloneview on SuperPOEM', () => {
           'flags': [
             { key: 'OBSESS', value: '1' },
             { key: 'NOHOSTNAME', value: '1', isNew: true }
-          ],
-          'files': [{ key: '', value: '' }],
-          'fileparameter': [{ key: '', value: '' }]
+          ]
         }
       )
     })
@@ -4821,9 +4761,7 @@ describe('Test metric template cloneview on SuperPOEM', () => {
             { key: 'OBSESS', value: '1' },
             { key: 'PASSIVE', value: '1' },
             { key: 'NOHOSTNAME', value: '1', isNew: true }
-          ],
-          'files': [{ key: '', value: '' }],
-          'fileparameter': [{ key: '', value: '' }]
+          ]
         }
       )
     })
@@ -4883,9 +4821,7 @@ describe('Test metric template cloneview on SuperPOEM', () => {
           'flags': [
             { key: 'OBSESS', value: '1' },
             { key: 'NOHOSTNAME', value: '1', isNew: true }
-          ],
-          'files': [{ key: '', value: '' }],
-          'fileparameter': [{ key: '', value: '' }]
+          ]
         }
       )
     })
@@ -4949,9 +4885,7 @@ describe('Test metric template cloneview on SuperPOEM', () => {
           'flags': [
             { key: 'OBSESS', value: '1' },
             { key: 'NOHOSTNAME', value: '1', isNew: true }
-          ],
-          'files': [{ key: '', value: '' }],
-          'fileparameter': [{ key: '', value: '' }]
+          ]
         }
       )
     })

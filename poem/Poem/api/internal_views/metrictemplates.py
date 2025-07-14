@@ -81,9 +81,7 @@ class ListMetricTemplates(APIView):
             attribute = two_value_inline(metrictemplate.attribute)
             dependency = two_value_inline(metrictemplate.dependency)
             flags = two_value_inline(metrictemplate.flags)
-            files = two_value_inline(metrictemplate.files)
             parameter = two_value_inline(metrictemplate.parameter)
-            fileparameter = two_value_inline(metrictemplate.fileparameter)
 
             ostag = []
             if metrictemplate.probekey:
@@ -113,9 +111,7 @@ class ListMetricTemplates(APIView):
                 "attribute": attribute,
                 "dependency": dependency,
                 "flags": flags,
-                "files": files,
-                "parameter": parameter,
-                "fileparameter": fileparameter
+                "parameter": parameter
             }
 
             if not name and request.tenant == public_tenant:
@@ -176,12 +172,8 @@ class ListMetricTemplates(APIView):
                             request.data['dependency']
                         ),
                         flags=inline_metric_for_db(request.data['flags']),
-                        files=inline_metric_for_db(request.data['files']),
                         parameter=inline_metric_for_db(
                             request.data['parameter']
-                        ),
-                        fileparameter=inline_metric_for_db(
-                            request.data['fileparameter']
                         )
                     )
                     if 'tags' in dict(request.data):
@@ -315,14 +307,8 @@ class ListMetricTemplates(APIView):
                     metrictemplate.flags = inline_metric_for_db(
                         request.data['flags']
                     )
-                    metrictemplate.files = inline_metric_for_db(
-                        request.data['files']
-                    )
                     metrictemplate.parameter = inline_metric_for_db(
                         request.data['parameter']
-                    )
-                    metrictemplate.fileparameter = inline_metric_for_db(
-                        request.data['fileparameter']
                     )
                     metrictemplate.save()
 
@@ -365,12 +351,8 @@ class ListMetricTemplates(APIView):
                             request.data['dependency']
                         ),
                         'flags': inline_metric_for_db(request.data['flags']),
-                        'files': inline_metric_for_db(request.data['files']),
                         'parameter': inline_metric_for_db(
                             request.data['parameter']
-                        ),
-                        'fileparameter': inline_metric_for_db(
-                            request.data['fileparameter']
                         )
                     }
                     admin_models.MetricTemplate.objects.filter(

@@ -152,9 +152,7 @@ def mock_db_for_metrics_tests():
         attribute='["argo.ams_TOKEN --token"]',
         dependency='["argo.AMS-Check 1"]',
         flags='["OBSESS 1"]',
-        files='["UCC_CONFIG UCC_CONFIG"]',
-        parameter='["--project EGI"]',
-        fileparameter='["FILE_SIZE_KBS 1000"]'
+        parameter='["--project EGI"]'
     )
     mt1.tags.add(mtag1, mtag2)
 
@@ -170,9 +168,7 @@ def mock_db_for_metrics_tests():
         attribute=mt1.attribute,
         dependency=mt1.dependency,
         flags=mt1.flags,
-        files=mt1.files,
         parameter=mt1.parameter,
-        fileparameter=mt1.fileparameter,
         date_created=datetime.datetime.now(),
         version_user="poem",
         version_comment="Initial version."
@@ -214,9 +210,7 @@ def mock_db_for_metrics_tests():
         attribute=mt2.attribute,
         dependency=mt2.dependency,
         flags=mt2.flags,
-        files=mt2.files,
         parameter=mt2.parameter,
-        fileparameter=mt2.fileparameter,
         date_created=datetime.datetime.now(),
         version_user="poem",
         version_comment="Initial version."
@@ -257,9 +251,7 @@ def mock_db_for_metrics_tests():
         attribute=mt3.attribute,
         dependency=mt3.dependency,
         flags=mt3.flags,
-        files=mt3.files,
         parameter=mt3.parameter,
-        fileparameter=mt3.fileparameter,
         date_created=datetime.datetime.now(),
         version_user="poem",
         version_comment="Initial version."
@@ -293,9 +285,7 @@ def mock_db_for_metrics_tests():
         attribute=mt4.attribute,
         dependency=mt4.dependency,
         flags=mt4.flags,
-        files=mt4.files,
         parameter=mt4.parameter,
-        fileparameter=mt4.fileparameter,
         date_created=datetime.datetime.now(),
         version_user="poem",
         version_comment="Initial version."
@@ -323,9 +313,7 @@ def mock_db_for_metrics_tests():
         attribute=mt5.attribute,
         dependency=mt5.dependency,
         flags=mt5.flags,
-        files=mt5.files,
         parameter=mt5.parameter,
-        fileparameter=mt5.fileparameter,
         date_created=datetime.datetime.now(),
         version_user="poem",
         version_comment="Initial version."
@@ -820,8 +808,6 @@ class ListMetricsAPIViewTests(TenantTestCase):
                             '-s': '/var/run/argo-nagios-ams-publisher/sock',
                             '-q': 'w:metrics+g:published180'
                         },
-                        'file_parameter': {},
-                        'file_attribute': {},
                         'parent': '',
                         'docurl':
                             'https://github.com/ARGOeu/nagios-plugins-argo'
@@ -848,8 +834,6 @@ class ListMetricsAPIViewTests(TenantTestCase):
                             'NAGIOS_HOST_CERT': '-f'
                         },
                         'parameter': {},
-                        'file_parameter': {},
-                        'file_attribute': {},
                         'parent': '',
                         'docurl':
                             'https://wiki.egi.eu/wiki/ROC_SAM_Tests#hr.srce.'
@@ -868,8 +852,6 @@ class ListMetricsAPIViewTests(TenantTestCase):
                         'dependency': {},
                         'attribute': {},
                         'parameter': {},
-                        'file_parameter': {},
-                        'file_attribute': {},
                         'parent': '',
                         'docurl': ''
                     }
@@ -897,12 +879,6 @@ class ListMetricsAPIViewTests(TenantTestCase):
                         'parameter': {
                             '--project': 'EGI'
                         },
-                        'file_parameter': {
-                            'FILE_SIZE_KBS': '1000'
-                        },
-                        'file_attribute': {
-                            'UCC_CONFIG': 'UCC_CONFIG'
-                        },
                         'parent': 'org.nagios.CDMI-TCP',
                         'docurl':
                             'https://github.com/ARGOeu/nagios-plugins-argo'
@@ -918,8 +894,6 @@ class ListMetricsAPIViewTests(TenantTestCase):
                         'dependency': {},
                         'attribute': {},
                         'parameter': {},
-                        'file_parameter': {},
-                        'file_attribute': {},
                         'parent': '',
                         'docurl': ''
                     }
@@ -1391,8 +1365,6 @@ class ListMetricTemplateAPIViewTests(TenantTestCase):
                             '-s': '/var/run/argo-nagios-ams-publisher/sock',
                             '-q': 'w:metrics+g:published180'
                         },
-                        'file_parameter': {},
-                        'file_attribute': {},
                         'parent': '',
                         'docurl':
                             'https://github.com/ARGOeu/nagios-plugins-argo'
@@ -1419,8 +1391,6 @@ class ListMetricTemplateAPIViewTests(TenantTestCase):
                             'NAGIOS_HOST_CERT': '-f'
                         },
                         'parameter': {},
-                        'file_parameter': {},
-                        'file_attribute': {},
                         'parent': '',
                         'docurl':
                             'https://wiki.egi.eu/wiki/ROC_SAM_Tests#hr.srce.'
@@ -1439,8 +1409,6 @@ class ListMetricTemplateAPIViewTests(TenantTestCase):
                         'dependency': {},
                         'attribute': {},
                         'parameter': {},
-                        'file_parameter': {},
-                        'file_attribute': {},
                         'parent': '',
                         'docurl': ''
                     }
@@ -1468,12 +1436,6 @@ class ListMetricTemplateAPIViewTests(TenantTestCase):
                         'parameter': {
                             '--project': 'EGI'
                         },
-                        'file_parameter': {
-                            'FILE_SIZE_KBS': '1000'
-                        },
-                        'file_attribute': {
-                            'UCC_CONFIG': 'UCC_CONFIG'
-                        },
                         'parent': 'org.nagios.CDMI-TCP',
                         'docurl':
                             'https://github.com/ARGOeu/nagios-plugins-argo'
@@ -1489,8 +1451,6 @@ class ListMetricTemplateAPIViewTests(TenantTestCase):
                         'dependency': {},
                         'attribute': {},
                         'parameter': {},
-                        'file_parameter': {},
-                        'file_attribute': {},
                         'parent': '',
                         'docurl': ''
                     }

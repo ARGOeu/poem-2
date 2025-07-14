@@ -89,9 +89,7 @@ def serialize_metric(metric_instance, tags=None):
         "attribute": mt_instance.attribute,
         "dependancy": mt_instance.dependency,
         "flags": mt_instance.flags,
-        "files": mt_instance.files,
-        "parameter": mt_instance.parameter,
-        "fileparameter": mt_instance.fileparameter
+        "parameter": mt_instance.parameter
     })
 
     return json.dumps([unserialized])
@@ -134,9 +132,7 @@ def create_history_entry(instance, user, comment, tags=None):
             attribute=instance.attribute,
             dependency=instance.dependency,
             flags=instance.flags,
-            files=instance.files,
             parameter=instance.parameter,
-            fileparameter=instance.fileparameter,
             version_comment=comment,
             version_user=user
         )
@@ -162,8 +158,9 @@ def create_history(instance, user, comment=None, tags=None):
 
 
 def analyze_differences(old_data, new_data):
-    inlines = ['config', 'attribute', 'dependency', 'flags', 'files',
-               'parameter', 'fileparameter', 'dependancy']
+    inlines = [
+        'config', 'attribute', 'dependency', 'flags', 'parameter', 'dependancy'
+    ]
 
     foreignkeys = ['probekey', 'package', 'group']
 
@@ -174,7 +171,7 @@ def analyze_differences(old_data, new_data):
     if old_data:
         res = DeepDiff(old_data, new_data, ignore_order=True)
 
-        # I'm numbering how many times the for loop has passed because foreign
+        # I'm counting how many times the for loop has passed because foreign
         # keys are serialized in lists
         passed = 0
         added_groups = list()

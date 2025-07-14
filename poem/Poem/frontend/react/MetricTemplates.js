@@ -109,9 +109,7 @@ export const MetricTemplateComponent = (props) => {
       attribute: formValues.type === 'Active' ? formValues.attributes : empty_field,
       dependency: formValues.type === 'Active' ? formValues.dependency : empty_field,
       parameter: formValues.type === 'Active' ? formValues.parameter : empty_field,
-      flags: formValues.flags,
-      files: formValues.type === 'Active' ? formValues.file_attributes : empty_field,
-      fileparameter: formValues.type === 'Active' ? formValues.file_parameters : empty_field
+      flags: formValues.flags
     })
 
     if (addview || cloneview) {
@@ -232,8 +230,6 @@ export const MetricTemplateComponent = (props) => {
           dependency: metricTemplate && metricTemplate.dependency.length > 0 ? metricTemplate.dependency : emptyEntry,
           parameter: metricTemplate && metricTemplate.parameter.length > 0 ? metricTemplate.parameter : emptyEntry,
           flags: metricTemplate && metricTemplate.flags.length > 0 ? metricTemplate.flags : emptyEntry,
-          file_attributes: metricTemplate && metricTemplate.files.length > 0 ? metricTemplate.files : emptyEntry,
-          file_parameters: metricTemplate && metricTemplate.fileparameter.length > 0 ? metricTemplate.fileparameter : emptyEntry,
           tags: metricTemplate ? metricTemplate.tags.map(item => new Object({ value: item, label: item })) : [],
           probe: metricTemplate && metricTemplate.probeversion ? probeVersions.find(prv => prv.object_repr === metricTemplate.probeversion).fields : {'package': ''}
         }}
@@ -310,8 +306,6 @@ export const MetricTemplateVersionDetails = (props) => {
           dependency: metricTemplate.dependency,
           parameter: metricTemplate.parameter,
           flags: metricTemplate.flags,
-          file_attributes: metricTemplate.files,
-          file_parameters: metricTemplate.fileparameter,
           probe: probe,
           tags: metricTemplate.tags
         }}

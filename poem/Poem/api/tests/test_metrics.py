@@ -171,9 +171,7 @@ def mock_db():
         attribute=mt1.attribute,
         dependency=mt1.dependency,
         flags=mt1.flags,
-        files=mt1.files,
         parameter=mt1.parameter,
-        fileparameter=mt1.fileparameter,
         date_created=datetime.datetime.now(),
         version_user=superuser.username,
         version_comment='Initial version.'
@@ -194,9 +192,7 @@ def mock_db():
         attribute=mt1.attribute,
         dependency=mt1.dependency,
         flags=mt1.flags,
-        files=mt1.files,
         parameter=mt1.parameter,
-        fileparameter=mt1.fileparameter,
         date_created=datetime.datetime.now(),
         version_user=superuser.username,
         version_comment='Updated version.'
@@ -220,9 +216,7 @@ def mock_db():
         attribute=mt2.attribute,
         dependency=mt2.dependency,
         flags=mt2.flags,
-        files=mt2.files,
         parameter=mt2.parameter,
-        fileparameter=mt2.fileparameter,
         date_created=datetime.datetime.now(),
         version_user=superuser.username,
         version_comment='Initial version.'
@@ -253,9 +247,7 @@ def mock_db():
         attribute=mt3.attribute,
         dependency=mt3.dependency,
         flags=mt3.flags,
-        files=mt3.files,
         parameter=mt3.parameter,
-        fileparameter=mt3.fileparameter,
         date_created=datetime.datetime.now(),
         version_user=superuser.username,
         version_comment='Initial version.'
@@ -312,6 +304,7 @@ def mock_db():
         comment='Initial version.',
         content_type=ct
     )
+
 
 profiles4metrics = {
     "argo.AMS-Check": ["ARGO_MON", "ARGO_MON_CRITICAL"],
@@ -485,14 +478,12 @@ class ListMetricAPIViewTests(TenantTestCase):
                             'value': '1'
                         }
                     ],
-                    'files': [],
                     'parameter': [
                         {
                             'key': '--project',
                             'value': 'EGI'
                         }
-                    ],
-                    'fileparameter': []
+                    ]
                 },
                 {
                     'id': self.metric3.id,
@@ -534,14 +525,12 @@ class ListMetricAPIViewTests(TenantTestCase):
                         {'key': 'NOTIMEOUT', 'value': '1'},
                         {'key': 'NOPUBLISH', 'value': '1'}
                     ],
-                    'files': [],
                     'parameter': [
                         {
                             'key': '-s',
                             'value': '/var/run/argo-nagios-ams-publisher/sock'
                         }
-                    ],
-                    'fileparameter': []
+                    ]
                 },
                 {
                     'id': self.metric2.id,
@@ -567,9 +556,7 @@ class ListMetricAPIViewTests(TenantTestCase):
                             'value': '1'
                         }
                     ],
-                    'files': [],
-                    'parameter': [],
-                    'fileparameter': []
+                    'parameter': []
                 }
             ]
         )
@@ -629,14 +616,12 @@ class ListMetricAPIViewTests(TenantTestCase):
                         'value': '1'
                     }
                 ],
-                'files': [],
                 'parameter': [
                     {
                         'key': '--project',
                         'value': 'EGI'
                     }
-                ],
-                'fileparameter': []
+                ]
             }
         )
 
@@ -692,9 +677,7 @@ class ListMetricAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attribute),
             'dependancy': '[{"key": "", "value": ""}]',
             'flags': '[{"key": "OBSESS", "value": "1"}]',
-            'files': '[{"key": "", "value": ""}]',
-            'parameter': '[{"key": "", "value": ""}]',
-            'fileparameter': '[{"key": "", "value": ""}]'
+            'parameter': '[{"key": "", "value": ""}]'
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -747,12 +730,8 @@ class ListMetricAPIViewTests(TenantTestCase):
             self.mt1_version2.dependency
         )
         self.assertEqual(serialized_data['flags'], self.mt1_version2.flags)
-        self.assertEqual(serialized_data['files'], self.mt1_version2.files)
         self.assertEqual(
             serialized_data['parameter'], self.mt1_version2.parameter
-        )
-        self.assertEqual(
-            serialized_data['fileparameter'], self.mt1_version2.fileparameter
         )
 
     @patch('Poem.api.internal_views.metrics.inline_metric_for_db')
@@ -783,9 +762,7 @@ class ListMetricAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attribute),
             'dependancy': '[{"key": "", "value": ""}]',
             'flags': '[{"key": "OBSESS", "value": "1"}]',
-            'files': '[{"key": "", "value": ""}]',
-            'parameter': '[{"key": "", "value": ""}]',
-            'fileparameter': '[{"key": "", "value": ""}]'
+            'parameter': '[{"key": "", "value": ""}]'
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -837,12 +814,8 @@ class ListMetricAPIViewTests(TenantTestCase):
             serialized_data['dependancy'], self.mt1_version2.dependency
         )
         self.assertEqual(serialized_data['flags'], self.mt1_version2.flags)
-        self.assertEqual(serialized_data['files'], self.mt1_version2.files)
         self.assertEqual(
             serialized_data['parameter'], self.mt1_version2.parameter
-        )
-        self.assertEqual(
-            serialized_data['fileparameter'], self.mt1_version2.fileparameter
         )
 
     @patch('Poem.api.internal_views.metrics.inline_metric_for_db')
@@ -873,9 +846,7 @@ class ListMetricAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attribute),
             'dependancy': '[{"key": "", "value": ""}]',
             'flags': '[{"key": "OBSESS", "value": "1"}]',
-            'files': '[{"key": "", "value": ""}]',
-            'parameter': '[{"key": "", "value": ""}]',
-            'fileparameter': '[{"key": "", "value": ""}]'
+            'parameter': '[{"key": "", "value": ""}]'
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -931,12 +902,8 @@ class ListMetricAPIViewTests(TenantTestCase):
             serialized_data['dependancy'], self.mt1_version1.dependency
         )
         self.assertEqual(serialized_data['flags'], self.mt1_version1.flags)
-        self.assertEqual(serialized_data['files'], self.mt1_version1.files)
         self.assertEqual(
             serialized_data['parameter'], self.mt1_version1.parameter
-        )
-        self.assertEqual(
-            serialized_data['fileparameter'], self.mt1_version1.fileparameter
         )
 
     @patch('Poem.api.internal_views.metrics.inline_metric_for_db')
@@ -963,9 +930,7 @@ class ListMetricAPIViewTests(TenantTestCase):
             'attribute': '[{"key": "", "value": ""}]',
             'dependancy': '[{"key": "", "value": ""}]',
             'flags': '[{"key": "OBSESS", "value": "1"}]',
-            'files': '[{"key": "", "value": ""}]',
-            'parameter': '[{"key": "", "value": ""}]',
-            'fileparameter': '[{"key": "", "value": ""}]'
+            'parameter': '[{"key": "", "value": ""}]'
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -1020,12 +985,8 @@ class ListMetricAPIViewTests(TenantTestCase):
             serialized_data['dependancy'], self.mt2_version1.dependency
         )
         self.assertEqual(serialized_data['flags'], self.mt2_version1.flags)
-        self.assertEqual(serialized_data['files'], self.mt2_version1.files)
         self.assertEqual(
             serialized_data['parameter'], self.mt2_version1.parameter
-        )
-        self.assertEqual(
-            serialized_data['fileparameter'], self.mt2_version1.fileparameter
         )
 
     @patch('Poem.api.internal_views.metrics.inline_metric_for_db')
@@ -1056,9 +1017,7 @@ class ListMetricAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attribute),
             'dependancy': '[{"key": "", "value": ""}]',
             'flags': '[{"key": "OBSESS", "value": "1"}]',
-            'files': '[{"key": "", "value": ""}]',
-            'parameter': '[{"key": "", "value": ""}]',
-            'fileparameter': '[{"key": "", "value": ""}]'
+            'parameter': '[{"key": "", "value": ""}]'
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -1114,12 +1073,8 @@ class ListMetricAPIViewTests(TenantTestCase):
             serialized_data['dependancy'], self.mt1_version1.dependency
         )
         self.assertEqual(serialized_data['flags'], self.mt1_version1.flags)
-        self.assertEqual(serialized_data['files'], self.mt1_version1.files)
         self.assertEqual(
             serialized_data['parameter'], self.mt1_version1.parameter
-        )
-        self.assertEqual(
-            serialized_data['fileparameter'], self.mt1_version1.fileparameter
         )
 
     @patch('Poem.api.internal_views.metrics.inline_metric_for_db')
@@ -1150,9 +1105,7 @@ class ListMetricAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attribute),
             'dependancy': '[{"key": "", "value": ""}]',
             'flags': '[{"key": "OBSESS", "value": "1"}]',
-            'files': '[{"key": "", "value": ""}]',
-            'parameter': '[{"key": "", "value": ""}]',
-            'fileparameter': '[{"key": "", "value": ""}]'
+            'parameter': '[{"key": "", "value": ""}]'
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -1190,9 +1143,7 @@ class ListMetricAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attribute),
             'dependancy': '[{"key": "", "value": ""}]',
             'flags': '[{"key": "OBSESS", "value": "1"}]',
-            'files': '[{"key": "", "value": ""}]',
-            'parameter': '[{"key": "", "value": ""}]',
-            'fileparameter': '[{"key": "", "value": ""}]'
+            'parameter': '[{"key": "", "value": ""}]'
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -1230,9 +1181,7 @@ class ListMetricAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attribute),
             'dependancy': '[{"key": "", "value": ""}]',
             'flags': '[{"key": "OBSESS", "value": "1"}]',
-            'files': '[{"key": "", "value": ""}]',
-            'parameter': '[{"key": "", "value": ""}]',
-            'fileparameter': '[{"key": "", "value": ""}]'
+            'parameter': '[{"key": "", "value": ""}]'
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -1270,9 +1219,7 @@ class ListMetricAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attribute),
             'dependancy': '[{"key": "", "value": ""}]',
             'flags': '[{"key": "OBSESS", "value": "1"}]',
-            'files': '[{"key": "", "value": ""}]',
-            'parameter': '[{"key": "", "value": ""}]',
-            'fileparameter': '[{"key": "", "value": ""}]'
+            'parameter': '[{"key": "", "value": ""}]'
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -1312,9 +1259,7 @@ class ListMetricAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attribute),
             'dependancy': '[{"key": "", "value": ""}]',
             'flags': '[{"key": "OBSESS", "value": "1"}]',
-            'files': '[{"key": "", "value": ""}]',
-            'parameter': '[{"key": "", "value": ""}]',
-            'fileparameter': '[{"key": "", "value": ""}]'
+            'parameter': '[{"key": "", "value": ""}]'
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -1354,9 +1299,7 @@ class ListMetricAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attribute),
             'dependancy': '[{"key": "", "value": ""}]',
             'flags': '[{"key": "OBSESS", "value": "1"}]',
-            'files': '[{"key": "", "value": ""}]',
-            'parameter': '[{"key": "", "value": ""}]',
-            'fileparameter': '[{"key": "", "value": ""}]'
+            'parameter': '[{"key": "", "value": ""}]'
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -1395,9 +1338,7 @@ class ListMetricAPIViewTests(TenantTestCase):
             'config': json.dumps(conf),
             'attribute': json.dumps(attribute),
             'dependancy': '[{"key": "", "value": ""}]',
-            'files': '[{"key": "", "value": ""}]',
-            'parameter': '[{"key": "", "value": ""}]',
-            'fileparameter': '[{"key": "", "value": ""}]'
+            'parameter': '[{"key": "", "value": ""}]'
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -1433,9 +1374,7 @@ class ListMetricAPIViewTests(TenantTestCase):
             'config': json.dumps(conf),
             'attribute': json.dumps(attribute),
             'dependancy': '[{"key": "", "value": ""}]',
-            'files': '[{"key": "", "value": ""}]',
-            'parameter': '[{"key": "", "value": ""}]',
-            'fileparameter': '[{"key": "", "value": ""}]'
+            'parameter': '[{"key": "", "value": ""}]'
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -1472,9 +1411,7 @@ class ListMetricAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attribute),
             'dependancy': '[{"key": "", "value": ""}]',
             'flags': '[{"key": "OBSESS", "value": "1"}]',
-            'files': '[{"key": "", "value": ""}]',
-            'parameter': '[{"key": "", "value": ""}]',
-            'fileparameter': '[{"key": "", "value": ""}]'
+            'parameter': '[{"key": "", "value": ""}]'
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -1503,9 +1440,7 @@ class ListMetricAPIViewTests(TenantTestCase):
             'attribute': '[{"key": "", "value": ""}]',
             'dependancy': '[{"key": "", "value": ""}]',
             'flags': '[{"key": "PASSIVE", "value": "1"}]',
-            'files': '[{"key": "", "value": ""}]',
-            'parameter': '[{"key": "", "value": ""}]',
-            'fileparameter': '[{"key": "", "value": ""}]'
+            'parameter': '[{"key": "", "value": ""}]'
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -1538,11 +1473,7 @@ class ListMetricAPIViewTests(TenantTestCase):
         self.assertEqual(serialized_data['attribute'], self.mt3.attribute)
         self.assertEqual(serialized_data['dependancy'], self.mt3.dependency)
         self.assertEqual(serialized_data['flags'], self.mt3.flags)
-        self.assertEqual(serialized_data['files'], self.mt3.files)
         self.assertEqual(serialized_data['parameter'], self.mt3.parameter)
-        self.assertEqual(
-            serialized_data['fileparameter'], self.mt3.fileparameter
-        )
 
     @patch('Poem.api.internal_views.metrics.inline_metric_for_db')
     def test_put_passive_metric_regular_user(self, func):
@@ -1560,9 +1491,7 @@ class ListMetricAPIViewTests(TenantTestCase):
             'attribute': '[{"key": "", "value": ""}]',
             'dependancy': '[{"key": "", "value": ""}]',
             'flags': '[{"key": "PASSIVE", "value": "1"}]',
-            'files': '[{"key": "", "value": ""}]',
-            'parameter': '[{"key": "", "value": ""}]',
-            'fileparameter': '[{"key": "", "value": ""}]'
+            'parameter': '[{"key": "", "value": ""}]'
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -1595,11 +1524,7 @@ class ListMetricAPIViewTests(TenantTestCase):
         self.assertEqual(serialized_data['attribute'], self.mt3.attribute)
         self.assertEqual(serialized_data['dependancy'], self.mt3.dependency)
         self.assertEqual(serialized_data['flags'], self.mt3.flags)
-        self.assertEqual(serialized_data['files'], self.mt3.files)
         self.assertEqual(serialized_data['parameter'], self.mt3.parameter)
-        self.assertEqual(
-            serialized_data['fileparameter'], self.mt3.fileparameter
-        )
 
     @patch('Poem.api.internal_views.metrics.inline_metric_for_db')
     def test_put_passive_metric_regular_user_wrong_group(self, func):
@@ -1617,9 +1542,7 @@ class ListMetricAPIViewTests(TenantTestCase):
             'attribute': '[{"key": "", "value": ""}]',
             'dependancy': '[{"key": "", "value": ""}]',
             'flags': '[{"key": "PASSIVE", "value": "1"}]',
-            'files': '[{"key": "", "value": ""}]',
-            'parameter': '[{"key": "", "value": ""}]',
-            'fileparameter': '[{"key": "", "value": ""}]'
+            'parameter': '[{"key": "", "value": ""}]'
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -1654,11 +1577,7 @@ class ListMetricAPIViewTests(TenantTestCase):
         self.assertEqual(serialized_data['attribute'], self.mt3.attribute)
         self.assertEqual(serialized_data['dependancy'], self.mt3.dependency)
         self.assertEqual(serialized_data['flags'], self.mt3.flags)
-        self.assertEqual(serialized_data['files'], self.mt3.files)
         self.assertEqual(serialized_data['parameter'], self.mt3.parameter)
-        self.assertEqual(
-            serialized_data['fileparameter'], self.mt3.fileparameter
-        )
 
     @patch('Poem.api.internal_views.metrics.inline_metric_for_db')
     def test_put_passive_metric_limited_user(self, func):
@@ -1676,9 +1595,7 @@ class ListMetricAPIViewTests(TenantTestCase):
             'attribute': '[{"key": "", "value": ""}]',
             'dependancy': '[{"key": "", "value": ""}]',
             'flags': '[{"key": "PASSIVE", "value": "1"}]',
-            'files': '[{"key": "", "value": ""}]',
-            'parameter': '[{"key": "", "value": ""}]',
-            'fileparameter': '[{"key": "", "value": ""}]'
+            'parameter': '[{"key": "", "value": ""}]'
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -1713,11 +1630,7 @@ class ListMetricAPIViewTests(TenantTestCase):
         self.assertEqual(serialized_data['attribute'], self.mt3.attribute)
         self.assertEqual(serialized_data['dependancy'], self.mt3.dependency)
         self.assertEqual(serialized_data['flags'], self.mt3.flags)
-        self.assertEqual(serialized_data['files'], self.mt3.files)
         self.assertEqual(serialized_data['parameter'], self.mt3.parameter)
-        self.assertEqual(
-            serialized_data['fileparameter'], self.mt3.fileparameter
-        )
 
     def test_delete_metric_superuser(self):
         self.assertEqual(poem_models.Metric.objects.all().count(), 3)
@@ -2243,9 +2156,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             attribute=self.mt1.attribute,
             dependency=self.mt1.dependency,
             flags=self.mt1.flags,
-            files=self.mt1.files,
             parameter=self.mt1.parameter,
-            fileparameter=self.mt1.fileparameter,
             date_created=datetime.datetime.now(),
             version_user=self.user.username,
             version_comment='Initial version.'
@@ -2267,9 +2178,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             attribute=self.mt1.attribute,
             dependency=self.mt1.dependency,
             flags=self.mt1.flags,
-            files=self.mt1.files,
             parameter=self.mt1.parameter,
-            fileparameter=self.mt1.fileparameter,
             date_created=datetime.datetime.now(),
             version_user=self.user.username,
             version_comment='Newer version.'
@@ -2300,9 +2209,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             attribute=mt2.attribute,
             dependency=mt2.dependency,
             flags=mt2.flags,
-            files=mt2.files,
             parameter=mt2.parameter,
-            fileparameter=mt2.fileparameter,
             date_created=datetime.datetime.now(),
             version_user=self.user.username,
             version_comment='Initial version.'
@@ -2324,9 +2231,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             attribute=mt2.attribute,
             dependency=mt2.dependency,
             flags=mt2.flags,
-            files=mt2.files,
             parameter=mt2.parameter,
-            fileparameter=mt2.fileparameter,
             date_created=datetime.datetime.now(),
             version_user=self.user.username,
             version_comment='Newer version.'
@@ -2349,9 +2254,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             attribute=mt3.attribute,
             dependency=mt3.dependency,
             flags=mt3.flags,
-            files=mt3.files,
             parameter=mt3.parameter,
-            fileparameter=mt3.fileparameter,
             date_created=datetime.datetime.now(),
             version_user=self.user.username,
             version_comment='Initial version.'
@@ -2427,9 +2330,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             "attribute": '["METRIC_CONFIG_FILE -f"]',
             "dependancy": "",
             "flags": '["OBSESS 1", "NOHOSTNAME 1", "NOLBNODE 1"]',
-            "files": "",
-            "parameter": "",
-            "fileparameter": ""
+            "parameter": ""
         })
 
         poem_models.TenantHistory.objects.create(
@@ -2567,9 +2468,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             attribute=self.mt1.attribute,
             dependency=self.mt1.dependency,
             flags=self.mt1.flags,
-            files=self.mt1.files,
             parameter=self.mt1.parameter,
-            fileparameter=self.mt1.fileparameter,
             date_created=datetime.datetime.now(),
             version_user=self.user.username,
             version_comment='Newest version.'
@@ -2643,9 +2542,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             attribute=self.mt1.attribute,
             dependency=self.mt1.dependency,
             flags=self.mt1.flags,
-            files=self.mt1.files,
             parameter=self.mt1.parameter,
-            fileparameter=self.mt1.fileparameter,
             date_created=datetime.datetime.now(),
             version_user=self.user.username,
             version_comment='Newest version.'
@@ -2746,9 +2643,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             attribute=self.mt1.attribute,
             dependency=self.mt1.dependency,
             flags=self.mt1.flags,
-            files=self.mt1.files,
             parameter=self.mt1.parameter,
-            fileparameter=self.mt1.fileparameter,
             date_created=datetime.datetime.now(),
             version_user=self.user.username,
             version_comment='Newest version.'
@@ -2839,9 +2734,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             attribute=self.mt1.attribute,
             dependency=self.mt1.dependency,
             flags=self.mt1.flags,
-            files=self.mt1.files,
             parameter=self.mt1.parameter,
-            fileparameter=self.mt1.fileparameter,
             date_created=datetime.datetime.now(),
             version_user=self.user.username,
             version_comment='Newest version.'
@@ -2935,9 +2828,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             attribute=self.mt1.attribute,
             dependency=self.mt1.dependency,
             flags=self.mt1.flags,
-            files=self.mt1.files,
             parameter=self.mt1.parameter,
-            fileparameter=self.mt1.fileparameter,
             date_created=datetime.datetime.now(),
             version_user=self.user.username,
             version_comment='Newest version.'
@@ -3079,9 +2970,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             attribute=self.mt1.attribute,
             dependency=self.mt1.dependency,
             flags=self.mt1.flags,
-            files=self.mt1.files,
             parameter=self.mt1.parameter,
-            fileparameter=self.mt1.fileparameter,
             date_created=datetime.datetime.now(),
             version_user=self.user.username,
             version_comment='Newest version.'
@@ -3144,9 +3033,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             attribute=self.mt1.attribute,
             dependency=self.mt1.dependency,
             flags=self.mt1.flags,
-            files=self.mt1.files,
             parameter=self.mt1.parameter,
-            fileparameter=self.mt1.fileparameter,
             date_created=datetime.datetime.now(),
             version_user=self.user.username,
             version_comment='Newest version.'
@@ -3233,9 +3120,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             attribute=self.mt1.attribute,
             dependency=self.mt1.dependency,
             flags=self.mt1.flags,
-            files=self.mt1.files,
             parameter=self.mt1.parameter,
-            fileparameter=self.mt1.fileparameter,
             date_created=datetime.datetime.now(),
             version_user=self.user.username,
             version_comment='Newest version.'

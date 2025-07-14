@@ -75,9 +75,7 @@ class ListMetric(APIView):
             attribute = two_value_inline(mt.attribute)
             dependency = two_value_inline(mt.dependency)
             flags = two_value_inline(mt.flags)
-            files = two_value_inline(mt.files)
             parameter = two_value_inline(mt.parameter)
-            fileparameter = two_value_inline(mt.fileparameter)
 
             if metric.group:
                 group = metric.group.name
@@ -100,9 +98,7 @@ class ListMetric(APIView):
                 attribute=attribute,
                 dependancy=dependency,
                 flags=flags,
-                files=files,
-                parameter=parameter,
-                fileparameter=fileparameter
+                parameter=parameter
             ))
 
         results = sorted(results, key=lambda k: k['name'])
