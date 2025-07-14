@@ -45,22 +45,27 @@ const mockListTags = [
   {
     id: "3",
     name: "internal",
-    metrics: ["argo.AMSPublisher-Check"]
+    metrics: [
+      { "name": "argo.AMSPublisher-Check" }
+    ]
   },
   {
     id: "4",
     name: "harmonized",
     metrics: [
-      "generic.certificate.validity",
-      "generic.http.connect",
-      "generic.tcp.connect",
+      { "name": "generic.certificate.validity" },
+      { "name": "generic.http.connect" },
+      { "name": "generic.tcp.connect" }
     ]
   },
   {
     id: "2",
     name: "messaging",
-    metrics: ["argo.AMS-Check", "argo.AMSPublisher-Check"]
-  },
+    metrics: [
+      { "name": "argo.AMS-Check" },  
+      { "name": "argo.AMSPublisher-Check" }
+    ]
+  }
 ]
 
 const mockActiveSession = {
@@ -561,6 +566,49 @@ describe("Test metric tags changeview", () => {
     )
   })
 
+  test("Test change metric tags name in filtered view", async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 201, statusText: "CREATED" })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByPlaceholderText(/search/i), { target: { value: "connect" } })
+
+    fireEvent.change(screen.getByTestId("name"), { target: { value: "test_tag" } })
+
+    await waitFor(() => {
+      expect(screen.getByTestId("form")).toHaveFormValues({name: "test_tag"})
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metrictags/",
+        { id: "4", name: "test_tag", metrics: ["generic.certificate.validity", "generic.http.connect", "generic.tcp.connect"] }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictemplate")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictemplate")
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Metric tag successfully changed", "Changed", 2000
+    )
+  })
+
   test("Test error changing metric tag with error message", async () => {
     mockChangeObject.mockImplementationOnce(() => {
       throw Error("400 BAD REQUEST: Metric tag with this name already exists.")
@@ -654,9 +702,159 @@ describe("Test metric tags changeview", () => {
       expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
     })
 
-    await selectEvent.select(screen.getByText("generic.certificate.validity"), "argo.AMS-Check")
+    await waitFor(() => {
+      selectEvent.select(screen.getByText("generic.certificate.validity"), "argo.AMS-Check")
+    }) 
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metrictags/",
+        { id: "4", name: "harmonized", metrics: ["argo.AMS-Check", "generic.http.connect", "generic.tcp.connect"] }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictemplate")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictemplate")
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Metric tag successfully changed", "Changed", 2000
+    )
+  })
+
+  test("Test change metrics for metric tag in filtered view", async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 201, statusText: "CREATED" })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByPlaceholderText(/search/i), { target: { value: "connect" } })
+
+    await selectEvent.select(screen.getByText("generic.http.connect"), "argo.AMS-Check")
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metrictags/",
+        { id: "4", name: "harmonized", metrics: ["generic.certificate.validity", "argo.AMS-Check", "generic.tcp.connect"] }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictemplate")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictemplate")
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Metric tag successfully changed", "Changed", 2000
+    )
+  })
+
+  test("Test delete metrics from metric tag", async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 201, statusText: "CREATED" })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByTestId("remove-1"))
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metrictags/",
+        { id: "4", name: "harmonized", metrics: ["generic.certificate.validity", "generic.tcp.connect"] }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictemplate")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictemplate")
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Metric tag successfully changed", "Changed", 2000
+    )
+  })
+
+  test("Test delete metrics from metric tag if filtered view", async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 201, statusText: "CREATED" })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByPlaceholderText(/search/i), { target: { value: "connect" } })
+
+    fireEvent.click(screen.getByTestId("remove-0"))
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metrictags/",
+        { id: "4", name: "harmonized", metrics: ["generic.certificate.validity", "generic.tcp.connect"] }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictemplate")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictemplate")
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Metric tag successfully changed", "Changed", 2000
+    )
+  })
+
+  test("Test insert new metrics for metric tag", async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 201, statusText: "CREATED" })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByTestId("insert-0"))
 
@@ -675,7 +873,54 @@ describe("Test metric tags changeview", () => {
     await waitFor(() => {
       expect(mockChangeObject).toHaveBeenCalledWith(
         "/api/v2/internal/metrictags/",
-        { id: "4", name: "harmonized", metrics: ["argo.AMS-Check", "argo.AMSPublisher-Check", "generic.tcp.connect"] }
+        { id: "4", name: "harmonized", metrics: ["generic.certificate.validity", "argo.AMSPublisher-Check", "generic.http.connect", "generic.tcp.connect"] }
+      )
+    })
+
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("metrictemplate")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictags")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metric")
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith("public_metrictemplate")
+    expect(NotificationManager.success).toHaveBeenCalledWith(
+      "Metric tag successfully changed", "Changed", 2000
+    )
+  })
+
+  test("Test insert new metrics for metric tag in filtered view", async () => {
+    mockChangeObject.mockReturnValueOnce(
+      Promise.resolve({ ok: true, status: 201, statusText: "CREATED" })
+    )
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
+    })
+
+    fireEvent.change(screen.getByPlaceholderText(/search/i), { target: { value: "connect" } })
+
+    fireEvent.click(screen.getByTestId("insert-0"))
+
+    const table = within(screen.getByRole("table"))
+
+    const row2 = table.getAllByRole("row")[3]
+
+    await waitFor(() => {
+      selectEvent.select(within(row2).getByRole("combobox"), "argo.AMSPublisher-Check")
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /change/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metrictags/",
+        { id: "4", name: "harmonized", metrics: ["generic.certificate.validity", "generic.http.connect", "argo.AMSPublisher-Check", "generic.tcp.connect"] }
       )
     })
 
@@ -716,7 +961,9 @@ describe("Test metric tags changeview", () => {
 
     const row2 = table.getAllByRole("row")[3]
 
-    await selectEvent.select(within(row2).getByRole("combobox"), "argo.AMSPublisher-Check")
+    await waitFor(() => {
+      selectEvent.select(within(row2).getByRole("combobox"), "argo.AMSPublisher-Check")
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
@@ -777,7 +1024,9 @@ describe("Test metric tags changeview", () => {
 
     const row2 = table.getAllByRole("row")[3]
 
-    await selectEvent.select(within(row2).getByRole("combobox"), "argo.AMSPublisher-Check")
+    await waitFor(() => {
+      selectEvent.select(within(row2).getByRole("combobox"), "argo.AMSPublisher-Check")
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
@@ -1018,6 +1267,11 @@ describe("Test metric tags addview", () => {
 
     expect(table.queryByText(/generic/i)).not.toBeInTheDocument()
     expect(table.queryByText(/argo/i)).not.toBeInTheDocument()
+    expect(table.queryByText("generic.certificate.validity")).not.toBeInTheDocument()
+    expect(table.queryByText("generic.http.connect")).not.toBeInTheDocument()
+    expect(table.queryByText("generic.tcp.connect")).not.toBeInTheDocument()
+    expect(table.queryByText("argo.AMS-Check")).not.toBeInTheDocument()
+    expect(table.queryByText("argo.AMSPublisher-Check")).not.toBeInTheDocument()
     selectEvent.openMenu(input)
     expect(table.getByText("generic.certificate.validity")).toBeInTheDocument()
     expect(table.getByText("generic.http.connect")).toBeInTheDocument()
@@ -1094,23 +1348,45 @@ describe("Test metric tags addview", () => {
     const row1 = table.getAllByRole("row")[2]
     const input1 = within(row1).getByRole("combobox")
 
-    await selectEvent.select(input1, "generic.certificate.validity")
+    await waitFor(() => {
+      selectEvent.select(input1, "generic.certificate.validity")
+    })
+
+    await waitFor(() => {
+      expect(table.queryByText("generic.http.connect")).not.toBeInTheDocument()
+    })
 
     fireEvent.click(table.getByTestId("insert-0"))
 
     const row2 = table.getAllByRole("row")[3]
     const input2 = within(row2).getByRole("combobox")
 
-    await selectEvent.select(input2, "generic.http.connect")
+    await waitFor(() => {
+      selectEvent.select(input2, "generic.http.connect")
+    })
+    
+    await waitFor(() => {
+      expect(table.queryByText("generic.tcp.connect")).not.toBeInTheDocument()
+    })
 
     fireEvent.click(table.getByTestId("insert-1"))
 
     const row3 = table.getAllByRole("row")[4]
     const input3 = within(row3).getByRole("combobox")
 
-    await selectEvent.select(input3, "generic.tcp.connect")
+    await waitFor(() => {
+      selectEvent.select(input3, "generic.tcp.connect")
+    })
+
+    await waitFor(() => {
+      expect(table.getByText("generic.tcp.connect")).toBeInTheDocument()
+    })
 
     fireEvent.click(table.getByTestId("remove-1"))
+
+    await waitFor(() => {
+      expect(table.queryByText("generic.http.connect")).not.toBeInTheDocument()
+    })
 
     await selectEvent.select(table.getByText("generic.tcp.connect"), "argo.AMS-Check")
 
@@ -1161,13 +1437,25 @@ describe("Test metric tags addview", () => {
     const row1 = table.getAllByRole("row")[2]
     const input1 = within(row1).getByRole("combobox")
 
-    await selectEvent.select(input1, "generic.tcp.connect")
+    await waitFor(() => {
+      selectEvent.select(input1, "generic.tcp.connect")
+    })
+
+    await waitFor(() => {
+      expect(table.getByText("generic.tcp.connect")).toBeInTheDocument()
+    })
 
     fireEvent.click(table.getByTestId("insert-0"))
 
     const row2 = table.getAllByRole("row")[3]
 
-    await selectEvent.select(within(row2).getByRole("combobox"), "generic.http.connect")
+    await waitFor(() => {
+      selectEvent.select(within(row2).getByRole("combobox"), "generic.http.connect")
+    })
+
+    await waitFor(() => {
+      expect(table.getByText("generic.http.connect")).toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {
@@ -1225,13 +1513,25 @@ describe("Test metric tags addview", () => {
     const row1 = table.getAllByRole("row")[2]
     const input1 = within(row1).getByRole("combobox")
 
-    await selectEvent.select(input1, "generic.tcp.connect")
+    await waitFor(() => {
+      selectEvent.select(input1, "generic.tcp.connect")
+    })
+
+    await waitFor(() => {
+      expect(table.getByText("generic.tcp.connect")).toBeInTheDocument()
+    })
 
     fireEvent.click(table.getByTestId("insert-0"))
 
     const row2 = table.getAllByRole("row")[3]
 
-    await selectEvent.select(within(row2).getByRole("combobox"), "generic.http.connect")
+    await waitFor(() => {
+      selectEvent.select(within(row2).getByRole("combobox"), "generic.http.connect")
+    })
+
+    await waitFor(() => {
+      expect(table.getByText("generic.http.connect")).toBeInTheDocument()
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }));
     await waitFor(() => {

@@ -758,7 +758,10 @@ class ListMetricTags(APIView):
                 return Response({
                     "id": tag.id,
                     "name": tag.name,
-                    "metrics": sorted([metric.name for metric in metrics])
+                    "metrics": sorted(
+                        [{"name": metric.name} for metric in metrics],
+                        key=lambda m: m["name"]
+                    )
                 })
 
             except admin_models.MetricTags.DoesNotExist:
@@ -777,7 +780,10 @@ class ListMetricTags(APIView):
                 data.append({
                     "id": tag.id,
                     "name": tag.name,
-                    "metrics": sorted([metric.name for metric in metrics])
+                    "metrics": sorted(
+                        [{"name": metric.name} for metric in metrics],
+                        key=lambda m: m["name"]
+                    )
                 })
 
             return Response(data)
@@ -831,14 +837,16 @@ class ListMetricTags(APIView):
 
                     if len(missing_metrics) > 0:
                         if len(missing_metrics) == 1:
-                            warn_msg = \
-                                f"{warn_msg}Metric {list(missing_metrics)[0]} " \
+                            warn_msg = (
+                                f"{warn_msg}Metric {list(missing_metrics)[0]} "
                                 f"does not exist."
+                            )
 
                         else:
-                            warn_msg = "{}Metrics {} do not exist.".format(
-                                warn_msg,
-                                ", ".join(sorted(list(missing_metrics)))
+                            warn_msg = (
+                                f"{warn_msg}Metrics "
+                                f"{', '.join(sorted(list(missing_metrics)))} "
+                                f"do not exist."
                             )
 
                     if warn_msg:
