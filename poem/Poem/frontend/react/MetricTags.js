@@ -5,6 +5,7 @@ import { fetchMetricTags, fetchMetricTemplates, fetchUserDetails } from "./Query
 import {
   BaseArgoTable,
   BaseArgoView,
+  CustomError,
   CustomReactSelect,
   DefaultColumnFilter,
   ErrorComponent,
@@ -27,22 +28,40 @@ import {
   InputGroup,
   InputGroupText,
   Row,
-  Table
+  Table,
+  ButtonDropdown,
+  DropdownToggle,
+  DropdownMenu,
+  DropdownItem
  } from "reactstrap"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faSearch,faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext, useWatch } from "react-hook-form"
 import { ErrorMessage } from '@hookform/error-message'
 import { yupResolver } from '@hookform/resolvers/yup'
-import * as Yup from "yup"
+import * as yup from "yup"
 import { 
   ChangeViewPlaceholder,
   InputPlaceholder, 
   ListViewPlaceholder
 } from "./Placeholders"
+import PapaParse from 'papaparse';
+import { downloadCSV } from './FileDownload';
 
-const validationSchema = Yup.object().shape({
-  name: Yup.string().required("This field is required")
+
+const validationSchema = yup.object().shape({
+  name: yup.string().required("This field is required"),
+  view_metrics4tag: yup.array()
+    .of(yup.object().shape({
+      name: yup.string()
+        .test("predefined_metrics", "Must be one of predefined metrics", function (value) {
+          if (value && this.options.context.metrictemplates.indexOf(value) == -1)
+            return false
+
+          else
+            return true
+        })
+    }))
 })
 
 
@@ -126,7 +145,7 @@ export const MetricTagsList = (props) => {
 const MetricsList = () => {
   const context = useContext(MetricTagsContext)
 
-  const { control, getValues, setValue, resetField } = useFormContext()
+  const { control, getValues, setValue, resetField, trigger, formState: { errors } } = useFormContext()
 
   const { fields, insert, remove } = useFieldArray({ control, name: "view_metrics4tag" })
 
@@ -137,6 +156,7 @@ const MetricsList = () => {
     resetField("metrics4tag")
     setValue("metrics4tag", tmp_metrics4tag)
     remove(index)
+    trigger("view_metrics4tag")
   }
 
   const onInsert = (index) => {
@@ -201,10 +221,12 @@ const MetricsList = () => {
                             forwardedRef={ field.ref }
                             id={ `metric-${index}` }
                             isClearable={ false }
+                            error={ errors?.view_metrics4tag?.[index]?.name }
                             onChange={ (e) => {
                               let origIndex = getValues("metrics4tag").findIndex(met => met.name == getValues(`view_metrics4tag.${index}.name`) )
                               setValue(`metrics4tag.${origIndex}.name`, e.value)
                               setValue(`view_metrics4tag.${index}.name`, e.value)
+                              trigger(`view_metrics4tag.${index}.name`)
                             } }
                             options={
                               context.allMetrics.map(
@@ -218,6 +240,10 @@ const MetricsList = () => {
                           />
                         }
                       />
+                  }
+                  {
+                    errors?.view_metrics4tag?.[index]?.name &&
+                      <CustomError error={ errors?.view_metrics4tag?.[index]?.name?.message } />
                   }
                 </td>
                 {
@@ -268,6 +294,8 @@ const MetricTagsForm = ({
   const [modalFlag, setModalFlag] = useState(undefined);
   const [modalTitle, setModalTitle] = useState(undefined);
   const [modalMsg, setModalMsg] = useState(undefined);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const hiddenFileInput = React.useRef(null);
 
   const changeMutation = useMutation(async (values) => await backend.changeObject('/api/v2/internal/metrictags/', values));
   const addMutation = useMutation(async (values) => await backend.addObject('/api/v2/internal/metrictags/', values));
@@ -284,7 +312,8 @@ const MetricTagsForm = ({
       searchItem: ""
     },
     mode: "all",
-    resolver: yupResolver(validationSchema)
+    resolver: yupResolver(validationSchema),
+    context: { metrictemplates: publicView ? new Array() : allMetrics.map(metric => metric.name) }
   })
 
   const { control } = methods
@@ -430,7 +459,57 @@ const MetricTagsForm = ({
           :
             undefined
       }}
-      toggle={toggleAreYouSure}
+      toggle={ toggleAreYouSure }
+      extra_button={
+        <ButtonDropdown isOpen={ dropdownOpen } toggle={ () => setDropdownOpen(!dropdownOpen) }>
+          <DropdownToggle caret color="secondary">CSV</DropdownToggle>
+          <DropdownMenu>
+            <DropdownItem 
+              onClick={ () => {
+                let csvContent = []
+                  metrics4tag.sort().forEach((metric) => {
+                    csvContent.push({ name: metric.name })
+                  })
+                const content = PapaParse.unparse(csvContent)
+                let filename = `${name}.csv`
+                downloadCSV(content, filename)
+              }}
+              disabled={ addview }
+            >
+              Export
+            </DropdownItem>
+            <DropdownItem
+              onClick={() => { hiddenFileInput.current.click() }}
+            >
+              Import
+            </DropdownItem>
+          </DropdownMenu>
+          <input
+            type='file'
+            data-testid='file_input'
+            ref={hiddenFileInput}
+            onChange={(e) => {
+              PapaParse.parse(e.target.files[0], {
+                header: true,
+                complete: (results) => {
+                  var imported = results.data;
+                  // remove entries without keys if there is any
+                  imported = imported.filter(
+                    obj => "name" in obj && obj["name"]
+                  )
+                  methods.resetField("view_metrics4tag")
+                  methods.setValue("view_metrics4tag", imported.sort())
+                  methods.trigger("view_metrics4tag")
+                  methods.resetField("searchItem")
+                  methods.resetField("metrics4tag")
+                  methods.setValue("metrics4tag", imported.sort()) 
+                }
+              })
+            }}
+            style={{display: 'none'}}
+          />
+        </ButtonDropdown>
+      }
     >
       <FormProvider { ...methods }>
         <Form onSubmit={ methods.handleSubmit(onSubmitHandle) } data-testid="form">
