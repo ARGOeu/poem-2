@@ -1,6 +1,0 @@
-coverage
-mock
-discover
-factory-boy
-unittest-xml-reporting
-tblib

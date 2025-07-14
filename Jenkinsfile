@@ -23,7 +23,7 @@ pipeline {
                             do
                                 sleep 5
                                 container_web_running=$(docker ps -f name=poem-react-tests-webapp -f status=running -q)
-                                container_db_running=$(docker ps -f name=poem-react-tests-postgres10 -f status=running -q)
+                                container_db_running=$(docker ps -f name=poem-react-tests-postgres16 -f status=running -q)
                                 if [[ ! -z "$container_web_running" && ! -z "$container_db_running" ]]
                                 then
                                     docker exec -i poem-react-tests-webapp /home/jenkins/poem-install.sh

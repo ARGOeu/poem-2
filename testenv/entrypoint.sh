@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VENV=/home/pyvenv/poem/
+VENV=/opt/poem/
 RUNASROOT="su -m -s /bin/bash root -c"
 
 $RUNASROOT "supervisord"
