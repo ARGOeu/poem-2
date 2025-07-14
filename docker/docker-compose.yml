@@ -44,6 +44,7 @@ services:
       - ../poem/Poem/:/home/user/frontend
       - ../poetry.lock:/opt/poem/poetry.lock
       - ../pyproject.toml:/opt/poem/pyproject.toml
+      - $HOME/.docker_zsh_history:/home/user/.zsh_history
     networks:
       app_net:
         ipv4_address: 172.19.0.2

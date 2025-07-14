@@ -1,6 +1,6 @@
 import os
 
-VERSION = "3.4.11"
+VERSION = "3.5.0"
 
 build_ver = os.environ.get('BUILD_VER')
 
