@@ -6,6 +6,7 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { Backend } from "../DataManager"
 import { MetricOverrideChange, MetricOverrideList } from "../MetricOverrides"
 import { NotificationManager } from "react-notifications"
+import useEvent from '@testing-library/user-event';
 
 
 jest.mock("../DataManager", () => {
@@ -262,6 +263,7 @@ describe("Tests for metric configuration overrides addview", () => {
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /json/i })).toBeInTheDocument()
   })
 
   test("Test add name", async () => {
@@ -1307,6 +1309,78 @@ describe("Tests for metric configuration overrides addview", () => {
     })
   })
 
+  test("Test import json successfully", async () => {
+    renderAddView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: /json/i }))
+    fireEvent.click(screen.getByRole("menuitem", { name: /import/i }))
+
+    const content = new Blob([JSON.stringify({
+      global_attributes: [
+        {
+          attribute: "ROBOT_CERT",
+          value: "/etc/sensu/certs/robotcert.pem"
+        },
+        {
+          attribute: "ROBOT_KEY",
+          value: "/etc/sensu/certs/robotkey.pem"
+        }
+      ],
+      host_attributes: [
+        {
+          hostname: "poem.devel.argo.grnet.gr",
+          attribute: "ARGO_TENANTS_TOKEN",
+          value: "$DEVEL_ARGO_TENANTS_TOKEN"
+        }
+      ],
+      metric_parameters: [
+        {
+          hostname: "",
+          metric: "",
+          parameter: "",
+          value: ""
+        }
+      ]
+    })])
+
+    const file = new File([content], "test.json", { type: "application/json" })
+    const input = screen.getByTestId("file_input")
+
+    await waitFor(() => {
+      useEvent.upload(input, file)
+    })
+
+    await waitFor(() => {
+      expect(input.files[0]).toBe(file)
+    })
+
+    expect(input.files.item(0)).toBe(file)
+    expect(input.files).toHaveLength(1)
+
+    await waitFor(() => {
+      fireEvent.load(screen.getByTestId("file_input"))
+    })
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "",
+      "globalAttributes.0.attribute": "ROBOT_CERT",
+      "globalAttributes.0.value": "/etc/sensu/certs/robotcert.pem",
+      "globalAttributes.1.attribute": "ROBOT_KEY",
+      "globalAttributes.1.value": "/etc/sensu/certs/robotkey.pem",
+      "hostAttributes.0.hostname": "poem.devel.argo.grnet.gr",
+      "hostAttributes.0.attribute": "ARGO_TENANTS_TOKEN",
+      "hostAttributes.0.value": "$DEVEL_ARGO_TENANTS_TOKEN",
+      "metricParameters.0.hostname": "",
+      "metricParameters.0.metric": "",
+      "metricParameters.0.parameter": "",
+      "metricParameters.0.value": ""
+    })
+  })
+
   test("Test save metric override with just name", async () => {
     renderAddView()
 
@@ -1732,6 +1806,7 @@ describe("Tests for metric configuration overrides changeview", () => {
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /json/i })).toBeInTheDocument();
   })
 
   test("Test change global attributes", async () => {
@@ -3139,6 +3214,307 @@ describe("Tests for metric configuration overrides changeview", () => {
     await waitFor(() => {
       expect(screen.queryByText(paramValMsg)).toBeInTheDocument()
     })
+  })
+
+  test("Test import json successfully", async () => {
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: /json/i }))
+    fireEvent.click(screen.getByRole("menuitem", { name: /import/i }))
+
+    const content = new Blob([JSON.stringify({
+      global_attributes: [
+        {
+          attribute: "ROBOT_CERT",
+          value: "/etc/sensu/certs/robotcert.pem"
+        },
+        {
+          attribute: "ROBOT_KEY",
+          value: "/etc/sensu/certs/robotkey.pem"
+        }
+      ],
+      host_attributes: [
+        {
+          hostname: "poem.devel.argo.grnet.gr",
+          attribute: "ARGO_TENANTS_TOKEN",
+          value: "$DEVEL_ARGO_TENANTS_TOKEN"
+        }
+      ],
+      metric_parameters: [
+        {
+          hostname: "",
+          metric: "",
+          parameter: "",
+          value: ""
+        }
+      ]
+    })])
+
+    const file = new File([content], "test.json", { type: "application/json" })
+    const input = screen.getByTestId("file_input")
+
+    await waitFor(() => {
+      useEvent.upload(input, file)
+    })
+
+    await waitFor(() => {
+      expect(input.files[0]).toBe(file)
+    })
+
+    expect(input.files.item(0)).toBe(file)
+    expect(input.files).toHaveLength(1)
+
+    await waitFor(() => {
+      fireEvent.load(screen.getByTestId("file_input"))
+    })
+
+    expect(screen.getByTestId("metric-override-form")).toHaveFormValues({
+      name: "local",
+      "globalAttributes.0.attribute": "ROBOT_CERT",
+      "globalAttributes.0.value": "/etc/sensu/certs/robotcert.pem",
+      "globalAttributes.1.attribute": "ROBOT_KEY",
+      "globalAttributes.1.value": "/etc/sensu/certs/robotkey.pem",
+      "hostAttributes.0.hostname": "poem.devel.argo.grnet.gr",
+      "hostAttributes.0.attribute": "ARGO_TENANTS_TOKEN",
+      "hostAttributes.0.value": "$DEVEL_ARGO_TENANTS_TOKEN",
+      "metricParameters.0.hostname": "",
+      "metricParameters.0.metric": "",
+      "metricParameters.0.parameter": "",
+      "metricParameters.0.value": ""
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: /save/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { title: /add/i })).toBeInTheDocument();
+    })
+    fireEvent.click(screen.getByRole('button', { name: /yes/i }));
+
+    await waitFor(() => {
+      expect(mockChangeObject).toHaveBeenCalledWith(
+        "/api/v2/internal/metricconfiguration/",
+        {
+          id: "1",
+          name: "local",
+          global_attributes: [
+            {
+              attribute: "ROBOT_CERT",
+              value: "/etc/sensu/certs/robotcert.pem"
+            },
+            {
+              attribute: "ROBOT_KEY",
+              value: "/etc/sensu/certs/robotkey.pem"
+            }
+          ],
+          host_attributes: [
+            {
+              hostname: "poem.devel.argo.grnet.gr",
+              attribute: "ARGO_TENANTS_TOKEN",
+              value: "$DEVEL_ARGO_TENANTS_TOKEN"
+            }
+          ],
+          metric_parameters: [
+            {
+              hostname: "",
+              metric: "",
+              parameter: "",
+              value: ""
+            }
+          ]
+        }
+      )
+    })
+  })
+
+  test("Test export json successfully", async () => {
+    const helpers = require("../FileDownload")
+    jest.spyOn(helpers, "downloadJSON").mockReturnValueOnce(null)
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: /json/i }))
+    fireEvent.click(screen.getByRole("menuitem", { name: /export/i }))
+
+    const content = {
+      global_attributes: [
+        {
+          attribute: "NAGIOS_ACTUAL_HOST_CERT",
+          value: "/etc/nagios/globus/hostcert.pem"
+        },
+        {
+          attribute: "NAGIOS_ACTUAL_HOST_KEY",
+          value: "/etc/nagios/globus/hostkey.pem"
+        }
+      ],
+      host_attributes: [
+        {
+          hostname: "mock.host.name",
+          attribute: "attr1",
+          value: "some-new-value"
+        }
+      ],
+      metric_parameters: [
+        {
+          hostname: "eosccore.ui.argo.grnet.gr",
+          metric: "org.nagios.ARGOWeb-AR",
+          parameter: "-r",
+          value: "EOSC_Monitoring"
+        },
+        {
+          hostname: "argo.eosc-portal.eu",
+          metric: "org.nagios.ARGOWeb-Status",
+          parameter: "-u",
+          value: "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
+        }
+      ]
+    }
+
+    expect(helpers.downloadJSON).toHaveBeenCalledTimes(1)
+    expect(helpers.downloadJSON).toHaveBeenCalledWith(content, "local.json")
+  })
+
+  test("Test export json when form has been changed", async () => {
+    const helpers = require("../FileDownload")
+    jest.spyOn(helpers, "downloadJSON").mockReturnValueOnce(null)
+
+    renderChangeView()
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      fireEvent.change(screen.getByTestId("name"), { target: { value: "local_new" } })
+    })
+
+    await waitFor(() => {
+      fireEvent.change(screen.getByTestId("globalAttributes.0.attribute"), { target: { value: "NAGIOS_REAL_HOST_CERT" } })
+    })
+
+    await waitFor(() => {
+      fireEvent.change(screen.getByTestId("globalAttributes.0.value"), { target: { value: "/etc/nagios/globus/cert.pem" } })
+    })
+
+    await waitFor(() => fireEvent.click(screen.getByTestId("globalAttributes.0.add")))
+
+    await waitFor(() => {
+      fireEvent.change(screen.getByTestId("globalAttributes.1.attribute"), { target: { value: "MOCK_ATTRIBUTE" } })
+    })
+
+    await waitFor(() => {
+      fireEvent.change(screen.getByTestId("globalAttributes.1.value"), { target: { value: "mock-attribute-value" } })
+    })
+
+    await waitFor(() => {
+      fireEvent.change(screen.getByTestId("globalAttributes.2.attribute"), { target: { value: "NAGIOS_REAL_HOST_KEY" } })
+    })
+
+    await waitFor(() => {
+      fireEvent.change(screen.getByTestId("globalAttributes.2.value"), { target: { value: "/etc/nagios/globus/cert.key" } })
+    })
+
+    await waitFor(() => {
+      fireEvent.change(screen.getByTestId("hostAttributes.0.hostname"), { target: { value: "host.foo.bar" } })
+    })
+
+    await waitFor(() => {
+      fireEvent.change(screen.getByTestId("hostAttributes.0.attribute"), { target: { value: "FOOBAR" } })
+    })
+
+    await waitFor(() => {
+      fireEvent.change(screen.getByTestId("hostAttributes.0.value"), { target: { value: "foo-bar" } })
+    })
+
+    await waitFor(() => {
+      fireEvent.change(screen.getByTestId("metricParameters.0.hostname"), { target: { value: "sensu.cro-ngi" } })
+    })
+
+    await waitFor(() => {
+      fireEvent.change(screen.getByTestId("metricParameters.0.metric"), { target: { value: "argo.AMSPublisher-Check" } })
+    })
+
+    await waitFor(() => {
+      fireEvent.change(screen.getByTestId("metricParameters.0.parameter"), { target: { value: "-q" } })
+    })
+    
+    await waitFor(() => {
+      fireEvent.change(screen.getByTestId("metricParameters.0.value"), { target: { value: "w:metrics+g:published180 -c 10" } })
+    })
+
+    await waitFor(() => fireEvent.click(screen.getByTestId("metricParameters.0.add")))
+
+    await waitFor(() => {
+      fireEvent.change(screen.getByTestId("metricParameters.1.hostname"), { target: { value: "epic5.storage.surfsara.nl" } })
+    })
+
+    await waitFor(() => {
+      fireEvent.change(screen.getByTestId("metricParameters.1.metric"), { target: { value: "generic.tcp.connect" } })
+    })
+
+    await waitFor(() => {
+      fireEvent.change(screen.getByTestId("metricParameters.1.parameter"), { target: { value: "-p" } })
+    })
+
+    await waitFor(() => {
+      fireEvent.change(screen.getByTestId("metricParameters.1.value"), { target: { value: "8004" } })
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: /json/i }))
+    fireEvent.click(screen.getByRole("menuitem", { name: /export/i }))
+
+    const content = {
+      global_attributes: [
+        {
+          attribute: "NAGIOS_REAL_HOST_CERT",
+          value: "/etc/nagios/globus/cert.pem"
+        },
+        {
+          attribute: "MOCK_ATTRIBUTE",
+          value: "mock-attribute-value"
+        },
+        {
+          attribute: "NAGIOS_REAL_HOST_KEY",
+          value: "/etc/nagios/globus/cert.key"
+        }
+      ],
+      host_attributes: [
+        {
+          hostname: "host.foo.bar",
+          attribute: "FOOBAR",
+          value: "foo-bar"
+        }
+      ],
+      metric_parameters: [
+        {
+          hostname: "sensu.cro-ngi",
+          metric: "argo.AMSPublisher-Check",
+          parameter: "-q",
+          value: "w:metrics+g:published180 -c 10"
+        },
+        {
+          hostname: "epic5.storage.surfsara.nl",
+          metric: "generic.tcp.connect",
+          parameter: "-p",
+          value: "8004"
+        },
+        {
+          hostname: "argo.eosc-portal.eu",
+          metric: "org.nagios.ARGOWeb-Status",
+          parameter: "-u",
+          value: "/eosc/report-status/Default/SERVICEGROUPS?accept=csv"
+        }
+      ]
+    }
+
+    expect(helpers.downloadJSON).toHaveBeenCalledTimes(1)
+    expect(helpers.downloadJSON).toHaveBeenCalledWith(content, "local.json")
   })
 
   test("Test save metric override with only name", async () => {

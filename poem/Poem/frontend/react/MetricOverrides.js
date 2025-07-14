@@ -12,7 +12,11 @@ import {
 } from "./UIElements"
 import {
   Button,
+  ButtonDropdown,
   Col,
+  DropdownItem,
+  DropdownMenu,
+  DropdownToggle,
   Form,
   FormGroup,
   FormFeedback,
@@ -39,6 +43,7 @@ import {
   InputPlaceholder, 
   ListViewPlaceholder 
 } from "./Placeholders"
+import { downloadJSON } from './FileDownload';
 
 const hostnameRegex = /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9-]*[A-Za-z0-9])([_][A-Za-z0-9.\-_]*)*$/
 
@@ -206,7 +211,7 @@ const MetricOverrideForm = ({
 }) => {
   const backend = new Backend()
   const queryClient = useQueryClient()
-  const navigate = useNavigate() /////
+  const navigate = useNavigate()
 
   const addMutation = useMutation(async (values) => await backend.addObject("/api/v2/internal/metricconfiguration/", values))
   const changeMutation = useMutation(async (values) => await backend.changeObject("/api/v2/internal/metricconfiguration/", values))
@@ -216,6 +221,8 @@ const MetricOverrideForm = ({
   const [modalMsg, setModalMsg] = useState(undefined);
   const [modalTitle, setModalTitle] = useState(undefined);
   const [modalFlag, setModalFlag] = useState(undefined);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const hiddenFileInput = React.useRef(null);
 
   const { control, handleSubmit, setValue, getValues, trigger, formState: { errors } } = useForm({
     defaultValues: {
@@ -352,6 +359,19 @@ const MetricOverrideForm = ({
     })
   }
 
+  const handleFileRead = (e) => {
+    let jsonData = JSON.parse(e.target.result);
+    setValue('globalAttributes', jsonData.global_attributes);
+    setValue('hostAttributes', jsonData.host_attributes);
+    setValue('metricParameters', jsonData.metric_parameters);
+  }
+
+  const handleFileChosen = (file) => {
+    var reader = new FileReader();
+    reader.onload = handleFileRead;
+    reader.readAsText(file);
+  }
+
   return (
     <BaseArgoView
       resourcename="metric configuration override"
@@ -373,6 +393,40 @@ const MetricOverrideForm = ({
             undefined
       }}
       toggle={ toggleAreYouSure }
+      extra_button={
+        <ButtonDropdown isOpen={dropdownOpen} toggle={ () => setDropdownOpen(!dropdownOpen) }>
+          <DropdownToggle caret color='secondary'>JSON</DropdownToggle>
+          <DropdownMenu>
+            <DropdownItem
+              onClick={() => {
+                let valueSave = JSON.parse(JSON.stringify(getValues()));
+                const jsonContent = {
+                  global_attributes: valueSave.globalAttributes,
+                  host_attributes: valueSave.hostAttributes,
+                  metric_parameters: valueSave.metricParameters
+                }
+                let filename = `${name}.json`
+                downloadJSON(jsonContent, filename)
+              }}
+              disabled={ addview }
+            >
+              Export
+            </DropdownItem>
+            <DropdownItem
+              onClick={ () => { hiddenFileInput.current.click() } }
+            >
+              Import
+            </DropdownItem>
+          </DropdownMenu>
+          <input
+            type='file'
+            data-testid='file_input'
+            ref={ hiddenFileInput }
+            onChange={(e) => { handleFileChosen(e.target.files[0]) }}
+            style={{ display: 'none' }}
+          />
+        </ButtonDropdown>
+      }
     >
       <Form onSubmit={ handleSubmit(onSubmitHandle) } data-testid="metric-override-form">
         <FormGroup>
