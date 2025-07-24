@@ -5152,7 +5152,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         versions = admin_models.MetricTemplateHistory.objects.filter(
             object_id=mt
-        )
+        ).order_by("-date_created")
         self.assertEqual(versions.count(), 3)
         comment_set = set()
         for item in json.loads(versions[0].version_comment):
@@ -5259,7 +5259,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         versions = admin_models.MetricTemplateHistory.objects.filter(
             object_id=mt
-        )
+        ).order_by("-date_created")
         self.assertEqual(versions.count(), 2)
         comment_set = set()
         for item in json.loads(versions[0].version_comment):
@@ -5355,7 +5355,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         versions = admin_models.MetricTemplateHistory.objects.filter(
             object_id=mt
-        )
+        ).order_by("-date_created")
         self.assertEqual(versions.count(), 2)
         comment_set = set()
         for item in json.loads(versions[0].version_comment):
@@ -5451,7 +5451,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         versions = admin_models.MetricTemplateHistory.objects.filter(
             object_id=mt
-        )
+        ).order_by("-date_created")
         self.assertEqual(versions.count(), 2)
         comment_set = set()
         for item in json.loads(versions[0].version_comment):
@@ -5549,7 +5549,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         new_tag = admin_models.MetricTags.objects.get(name='new_tag')
         versions = admin_models.MetricTemplateHistory.objects.filter(
             object_id=mt
-        )
+        ).order_by("-date_created")
         self.assertEqual(versions.count(), 3)
         comment_set = set()
         for item in json.loads(versions[0].version_comment):
@@ -5668,7 +5668,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         )
         versions = admin_models.MetricTemplateHistory.objects.filter(
             object_id=mt
-        )
+        ).order_by("-date_created")
         self.assertEqual(versions.count(), 2)
         comment_set = set()
         for item in json.loads(versions[0].version_comment):
@@ -5774,7 +5774,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         )
         versions = admin_models.MetricTemplateHistory.objects.filter(
             object_id=mt
-        )
+        ).order_by("-date_created")
         self.assertEqual(versions.count(), 2)
         comment_set = set()
         for item in json.loads(versions[0].version_comment):
@@ -5880,7 +5880,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         )
         versions = admin_models.MetricTemplateHistory.objects.filter(
             object_id=mt
-        )
+        ).order_by("-date_created")
         self.assertEqual(versions.count(), 2)
         comment_set = set()
         for item in json.loads(versions[0].version_comment):
@@ -5972,7 +5972,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         versions = admin_models.MetricTemplateHistory.objects.filter(
             object_id=mt
-        )
+        ).order_by("-date_created")
         self.assertEqual(versions.count(), 3)
         comment_set = set()
         for item in json.loads(versions[0].version_comment):
@@ -6079,7 +6079,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         versions = admin_models.MetricTemplateHistory.objects.filter(
             object_id=mt
-        )
+        ).order_by("-date_created")
         self.assertEqual(versions.count(), 2)
         comment_set = set()
         for item in json.loads(versions[0].version_comment):
@@ -6272,7 +6272,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         versions = admin_models.MetricTemplateHistory.objects.filter(
             object_id=mt
-        )
+        ).order_by("-date_created")
         self.assertEqual(versions.count(), 2)
         comment_set = set()
         for item in json.loads(versions[0].version_comment):
@@ -6368,7 +6368,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         mt = admin_models.MetricTemplate.objects.get(id=self.metrictemplate1.id)
         versions = admin_models.MetricTemplateHistory.objects.filter(
             object_id=mt
-        )
+        ).order_by("-date_created")
         self.assertEqual(versions.count(), 2)
         comment_set = set()
         for item in json.loads(versions[0].version_comment):
