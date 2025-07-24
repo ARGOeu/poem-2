@@ -1,5 +1,27 @@
 # Changelog
 
+## [3.5.1] - 2025-07-17
+
+### Changed
+
+* ARGO-4693 Prepare POEM testing environment for Rocky 9
+
+### Added
+
+* ARGO-2431 Remove file parameters & attributes fields from backend
+* ARGO-3664 Rewrite metric / metric template page
+* ARGO-4093 Notify user when they try to delete metric which is in metric profile
+* ARGO-4192 Add import .csv button in metric profile addview
+* ARGO-4266 Create default ports public page
+* ARGO-4331 Import/export feature for metric overrides
+* ARGO-4408 Improve the list of metrics to be imported to newly created tenant
+* ARGO-4409 Import/export feature for metric tags
+
+### Fixed
+
+* ARGO-4407 Deletion of metrics in metric tags not working
+* ARGO-4416 During bulk delete of metric templates data is not invalidated properly
+
 ## [3.5.0] - 2025-04-15
 
 ### Added
