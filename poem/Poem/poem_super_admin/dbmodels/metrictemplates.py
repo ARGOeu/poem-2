@@ -54,9 +54,7 @@ class MetricTemplate(models.Model):
     attribute = models.CharField(max_length=1024)
     dependency = models.CharField(max_length=1024)
     flags = models.CharField(max_length=1024)
-    files = models.CharField(max_length=1024)
     parameter = models.CharField(max_length=1024)
-    fileparameter = models.CharField(max_length=1024)
 
     objects = MetricTemplateManager()
 
@@ -85,9 +83,7 @@ class MetricTemplateHistory(models.Model):
     attribute = models.CharField(max_length=1024)
     dependency = models.CharField(max_length=1024)
     flags = models.CharField(max_length=1024)
-    files = models.CharField(max_length=1024)
     parameter = models.CharField(max_length=1024)
-    fileparameter = models.CharField(max_length=1024)
     date_created = models.DateTimeField(auto_now_add=True)
     version_comment = models.TextField(blank=True)
     version_user = models.CharField(max_length=32)

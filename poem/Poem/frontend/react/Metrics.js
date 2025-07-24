@@ -186,7 +186,7 @@ const InlineFields = ({
                       id={ `${fieldname}.${index}.key` }
                       data-testid={ `${fieldname}.${index}.key` }
                       className={ `form-control ${entry.isNew && "border-success"}` }
-                      disabled={ readOnly || fieldname === "config" || (isPassive && entry.key === "PASSIVE") }
+                      disabled={ readOnly || fieldname === "config" || fieldname === "dependency" || (isPassive && entry.key === "PASSIVE") }
                     />
                   }
                 />
@@ -201,7 +201,7 @@ const InlineFields = ({
                       id={ `${fieldname}.${index}.value` }
                       data-testid={ `${fieldname}.${index}.value` }
                       className={ `form-control ${entry.isNew && "border-success"} ${ errors?.config?.[index]?.value && "is-invalid" }` }
-                      disabled={ readOnly || (isPassive && entry.key === "PASSIVE") || (fieldname === "config" && entry.key === "path" && isMetric) }
+                      disabled={ readOnly || (isPassive && entry.key === "PASSIVE") || (fieldname === "config" && entry.key === "path" && isMetric) || fieldname === "dependency" }
                     />
                   }
                 />
@@ -398,6 +398,7 @@ export const ListOfMetrics = (props) => {
           NotifyWarn({ msg: data.warning, title: 'Deleted' })
 
         setSelectAll(0);
+        setSelected({});
         queryClient.invalidateQueries('metrictemplate');
         queryClient.invalidateQueries('public_metrictemplate');
       },
@@ -860,6 +861,7 @@ export const MetricForm =
       defaultValues: {
         id: initValues.id ? initValues.id : "",
         name: initValues.name,
+        profiles: initValues.profiles,
         probeversion: initValues.probeversion,
         type: initValues.type,
         group: initValues.group ? initValues.group: "",
@@ -965,6 +967,25 @@ export const MetricForm =
       setModalTitle(`${addview || cloneview ? 'Add' : 'Change'} ${resourcename_beautify}`)
       setModalFlag('submit')
       saveFormValues(values)
+      toggleAreYouSure()
+    }
+
+    function onDeleteHandle() {
+      let profiles = getValues("profiles")
+      let name = getValues("name")
+      let msg = ""
+
+      if (resourcename === "metric" && !isHistory && profiles.length > 0) {
+        msg = <div>
+          <p>Metric { name } is part of profile(s): { profiles.join(", ") }</p>
+          <p>ARE YOU SURE you want to delete it?</p>
+        </div>
+      } else
+        msg = `Are you sure you want to delete ${resourcename_beautify}?`
+
+      setModalMsg(msg)
+      setModalTitle(`Delete ${resourcename_beautify}`)
+      setModalFlag('delete')
       toggleAreYouSure()
     }
 
@@ -1355,17 +1376,20 @@ export const MetricForm =
                     addview={ addview }
                     isPassive={ type === "Passive" }
                   />
-                  <InlineFields
-                    fieldname="dependency"
-                    fields={ dependency }
-                    insert={ dependencyInsert }
-                    remove={ dependencyRemove }
-                    control={ control }
-                    readOnly={ publicView || isHistory || isTenantSchema }
-                    addnew={ true }
-                    addview={ addview }
-                    isPassive={ type === "Passive" }
-                  />
+                  {
+                    (watchDependency.length >= 1 && watchDependency[0].key != "") &&
+                      <InlineFields
+                        fieldname="dependency"
+                        fields={ dependency }
+                        insert={ dependencyInsert }
+                        remove={ dependencyRemove }
+                        control={ control }
+                        readOnly={ publicView || isHistory || isTenantSchema }
+                        addnew={ false }
+                        addview={ addview }
+                        isPassive={ type === "Passive" }
+                      />
+                  }
                   <InlineFields
                     fieldname="parameter"
                     fields={ parameter }
@@ -1432,12 +1456,7 @@ export const MetricForm =
                   (!addview && !cloneview) ?
                     <Button
                       color="danger"
-                      onClick={() => {
-                        setModalMsg(`Are you sure you want to delete ${resourcename_beautify}?`)
-                        setModalTitle(`Delete ${resourcename_beautify}`)
-                        setModalFlag('delete')
-                        toggleAreYouSure()
-                      }}
+                      onClick={() => onDeleteHandle()}
                     >
                       Delete
                     </Button>
@@ -1685,6 +1704,8 @@ export const MetricChange = (props) => {
 
     const probe = probes ? probes.find(prb => prb.object_repr === metric.probeversion).fields : { package: "" };
 
+    const emptyEntry = [ { key: "", value: "" } ]
+
     return (
       <MetricForm
         {...props}
@@ -1699,15 +1720,13 @@ export const MetricChange = (props) => {
           probeexecutable: metric.probeexecutable,
           parent: metric.parent,
           config: metric.config,
-          attributes: metric.attribute,
-          dependency: metric.dependancy,
-          parameter: metric.parameter,
-          flags: metric.flags,
-          files: metric.files,
-          file_attributes: metric.files,
-          file_parameters: metric.fileparameter,
+          attributes: metric.attribute.length > 0 ? metric.attribute : emptyEntry,
+          dependency: metric.dependancy.length > 0 ? metric.dependancy : emptyEntry,
+          parameter: metric.parameter.length > 0 ? metric.parameter : emptyEntry,
+          flags: metric.flags.length > 0 ? metric.flags : emptyEntry,
           probe: probe,
-          tags: metric.tags
+          tags: metric.tags,
+          profiles: metric.profiles
         }}
         isTenantSchema={ true }
         groups={ groups }
@@ -1784,8 +1803,6 @@ export const MetricVersionDetails = (props) => {
           dependency: metric.dependancy,
           parameter: metric.parameter,
           flags: metric.flags,
-          file_attributes: metric.files,
-          file_parameters: metric.fileparameter,
           probe: probe,
           tags: metric.tags
         }}

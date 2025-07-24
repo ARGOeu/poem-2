@@ -100,12 +100,8 @@ class ListTenantVersions(APIView):
                                 fields0['dependancy']
                             ),
                             'flags': two_value_inline(fields0['flags']),
-                            'files': two_value_inline(fields0['files']),
                             'parameter': two_value_inline(
                                 fields0['parameter']
-                            ),
-                            'fileparameter': two_value_inline(
-                                fields0['fileparameter']
                             )
                         }
 
@@ -132,8 +128,7 @@ class ListTenantVersions(APIView):
                         comment = []
                         untracked_fields = [
                             'mtype', 'parent', 'probeexecutable',
-                            'attribute', 'dependancy', 'flags', 'files',
-                            'parameter', 'fileparameter'
+                            'attribute', 'dependancy', 'flags', 'parameter'
                         ]
                         if isinstance(obj, poem_models.Metric):
                             untracked_fields.append('name')

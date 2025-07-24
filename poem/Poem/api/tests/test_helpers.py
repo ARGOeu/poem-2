@@ -436,9 +436,7 @@ def mock_db(tenant, tenant2=False):
         attribute=metrictemplate1.attribute,
         dependency=metrictemplate1.dependency,
         flags=metrictemplate1.flags,
-        files=metrictemplate1.files,
         parameter=metrictemplate1.parameter,
-        fileparameter=metrictemplate1.fileparameter,
         date_created=datetime.datetime.now(),
         version_user=user.username,
         version_comment='Initial version.',
@@ -463,9 +461,7 @@ def mock_db(tenant, tenant2=False):
         attribute=metrictemplate1.attribute,
         dependency=metrictemplate1.dependency,
         flags=metrictemplate1.flags,
-        files=metrictemplate1.files,
         parameter=metrictemplate1.parameter,
-        fileparameter=metrictemplate1.fileparameter,
         date_created=datetime.datetime.now(),
         version_user=user.username,
         version_comment=create_comment(metrictemplate1)
@@ -486,9 +482,7 @@ def mock_db(tenant, tenant2=False):
         attribute=metrictemplate1.attribute,
         dependency=metrictemplate1.dependency,
         flags=metrictemplate1.flags,
-        files=metrictemplate1.files,
         parameter=metrictemplate1.parameter,
-        fileparameter=metrictemplate1.fileparameter,
         date_created=datetime.datetime.now(),
         version_user=user.username,
         version_comment=create_comment(metrictemplate1)
@@ -519,9 +513,7 @@ def mock_db(tenant, tenant2=False):
         attribute=metrictemplate2.attribute,
         dependency=metrictemplate2.dependency,
         flags=metrictemplate2.flags,
-        files=metrictemplate2.files,
         parameter=metrictemplate2.parameter,
-        fileparameter=metrictemplate2.fileparameter,
         date_created=datetime.datetime.now(),
         version_user=user.username,
         version_comment='Initial version.',
@@ -557,9 +549,7 @@ def mock_db(tenant, tenant2=False):
         attribute=metrictemplate3.attribute,
         dependency=metrictemplate3.dependency,
         flags=metrictemplate3.flags,
-        files=metrictemplate3.files,
         parameter=metrictemplate3.parameter,
-        fileparameter=metrictemplate3.fileparameter,
         date_created=datetime.datetime.now(),
         version_comment='Initial version.',
         version_user='testuser'
@@ -593,9 +583,7 @@ def mock_db(tenant, tenant2=False):
         attribute=metrictemplate4.attribute,
         dependency=metrictemplate4.dependency,
         flags=metrictemplate4.flags,
-        files=metrictemplate4.files,
         parameter=metrictemplate4.parameter,
-        fileparameter=metrictemplate4.fileparameter,
         date_created=datetime.datetime.now(),
         version_comment='Initial version.',
         version_user='testuser'
@@ -619,9 +607,7 @@ def mock_db(tenant, tenant2=False):
         attribute=metrictemplate5.attribute,
         dependency=metrictemplate5.dependency,
         flags=metrictemplate5.flags,
-        files=metrictemplate5.files,
         parameter=metrictemplate5.parameter,
-        fileparameter=metrictemplate5.fileparameter,
         date_created=datetime.datetime.now(),
         version_user=user.username,
         version_comment='Initial version.',
@@ -651,9 +637,7 @@ def mock_db(tenant, tenant2=False):
         attribute=metrictemplate6.attribute,
         dependency=metrictemplate6.dependency,
         flags=metrictemplate6.flags,
-        files=metrictemplate6.files,
         parameter=metrictemplate6.parameter,
-        fileparameter=metrictemplate6.fileparameter,
         date_created=datetime.datetime.now(),
         version_user=user.username,
         version_comment='Initial version.',
@@ -678,9 +662,7 @@ def mock_db(tenant, tenant2=False):
         attribute=metrictemplate7.attribute,
         dependency=metrictemplate7.dependency,
         flags=metrictemplate7.flags,
-        files=metrictemplate7.files,
         parameter=metrictemplate7.parameter,
-        fileparameter=metrictemplate7.fileparameter,
         date_created=datetime.datetime.now(),
         version_user=user.username,
         version_comment='Initial version.',
@@ -711,9 +693,7 @@ def mock_db(tenant, tenant2=False):
         attribute=metrictemplate8.attribute,
         dependency=metrictemplate8.dependency,
         flags=metrictemplate8.flags,
-        files=metrictemplate8.files,
         parameter=metrictemplate8.parameter,
-        fileparameter=metrictemplate8.fileparameter,
         date_created=datetime.datetime.now(),
         version_user=user.username,
         version_comment='Initial version.',
@@ -734,9 +714,7 @@ def mock_db(tenant, tenant2=False):
         attribute=metrictemplate8.attribute,
         dependency=metrictemplate8.dependency,
         flags=metrictemplate8.flags,
-        files=metrictemplate8.files,
         parameter=metrictemplate8.parameter,
-        fileparameter=metrictemplate8.fileparameter,
         date_created=datetime.datetime.now(),
         version_user=user.username,
         version_comment='Newer version.'
@@ -760,9 +738,7 @@ def mock_db(tenant, tenant2=False):
         attribute=metrictemplate8.attribute,
         dependency=metrictemplate8.dependency,
         flags=metrictemplate8.flags,
-        files=metrictemplate8.files,
         parameter=metrictemplate8.parameter,
-        fileparameter=metrictemplate8.fileparameter,
         date_created=datetime.datetime.now(),
         version_user=user.username,
         version_comment='Newest version.',
@@ -794,9 +770,7 @@ def mock_db(tenant, tenant2=False):
         attribute=metrictemplate9.attribute,
         dependency=metrictemplate9.dependency,
         flags=metrictemplate9.flags,
-        files=metrictemplate9.files,
         parameter=metrictemplate9.parameter,
-        fileparameter=metrictemplate9.fileparameter,
         date_created=datetime.datetime.now(),
         version_user=user.username,
         version_comment='Initial version.',
@@ -824,9 +798,7 @@ def mock_db(tenant, tenant2=False):
         attribute=metrictemplate10.attribute,
         dependency=metrictemplate10.dependency,
         flags=metrictemplate10.flags,
-        files=metrictemplate10.files,
         parameter=metrictemplate10.parameter,
-        fileparameter=metrictemplate10.fileparameter,
         date_created=datetime.datetime.now(),
         version_user=user.username,
         version_comment='Initial version.'
@@ -847,9 +819,7 @@ def mock_db(tenant, tenant2=False):
         attribute=metrictemplate10.attribute,
         dependency=metrictemplate10.dependency,
         flags=metrictemplate10.flags,
-        files=metrictemplate10.files,
         parameter=metrictemplate10.parameter,
-        fileparameter=metrictemplate10.fileparameter,
         date_created=datetime.datetime.now(),
         version_user=user.username,
         version_comment='Newer version.'
@@ -883,9 +853,7 @@ def mock_db(tenant, tenant2=False):
         attribute=metrictemplate11.attribute,
         dependency=metrictemplate11.dependency,
         flags=metrictemplate11.flags,
-        files=metrictemplate11.files,
         parameter=metrictemplate11.parameter,
-        fileparameter=metrictemplate11.fileparameter,
         date_created=datetime.datetime.now(),
         version_user=user.username,
         version_comment='Initial version.'
@@ -918,9 +886,7 @@ def mock_db(tenant, tenant2=False):
         attribute=metrictemplate12.attribute,
         dependency=metrictemplate12.dependency,
         flags=metrictemplate12.flags,
-        files=metrictemplate12.files,
         parameter=metrictemplate12.parameter,
-        fileparameter=metrictemplate12.fileparameter,
         date_created=datetime.datetime.now(),
         version_user=user.username,
         version_comment='Initial version.'
@@ -1245,9 +1211,7 @@ class HistoryHelpersTests(TenantTestCase):
             dependency='["dependency-key1 dependency-value1", '
                        '"dependency-key2 dependency-value2"]',
             flags='["flags-key flags-value"]',
-            files='["files-key files-value"]',
             parameter='["parameter-key parameter-value"]',
-            fileparameter='["fileparameter-key fileparameter-value"]',
             mtype=self.active,
             probekey=probe_history1
         )
@@ -1265,9 +1229,7 @@ class HistoryHelpersTests(TenantTestCase):
             attribute=self.mt1.attribute,
             dependency=self.mt1.dependency,
             flags=self.mt1.flags,
-            files=self.mt1.files,
             parameter=self.mt1.parameter,
-            fileparameter=self.mt1.fileparameter,
             date_created=datetime.datetime.now(),
             version_comment='Initial version.',
             version_user='testuser'
@@ -1291,9 +1253,7 @@ class HistoryHelpersTests(TenantTestCase):
             attribute=self.mt1.attribute,
             dependency=self.mt1.dependency,
             flags=self.mt1.flags,
-            files=self.mt1.files,
             parameter=self.mt1.parameter,
-            fileparameter=self.mt1.fileparameter,
             date_created=datetime.datetime.now(),
             version_comment='[{"changed": {"fields": ["config"], '
                             '"object": ["timeout"]}}, {"changed": {"fields": '
@@ -1312,9 +1272,7 @@ class HistoryHelpersTests(TenantTestCase):
             dependency='["dependency-key1 dependency-value1", '
                        '"dependency-key2 dependency-value2"]',
             flags='["flags-key flags-value"]',
-            files='["files-key files-value"]',
             parameter='["parameter-key parameter-value"]',
-            fileparameter='["fileparameter-key fileparameter-value"]',
             mtype=self.active,
             probekey=probe_history1
         )
@@ -1332,9 +1290,7 @@ class HistoryHelpersTests(TenantTestCase):
             attribute=self.mt2.attribute,
             dependency=self.mt2.dependency,
             flags=self.mt2.flags,
-            files=self.mt2.files,
             parameter=self.mt2.parameter,
-            fileparameter=self.mt2.fileparameter,
             date_created=datetime.datetime.now(),
             version_comment='Initial version.',
             version_user='testuser'
@@ -1351,9 +1307,7 @@ class HistoryHelpersTests(TenantTestCase):
             dependency='["dependency-key1 dependency-value1", '
                        '"dependency-key2 dependency-value2"]',
             flags='["flags-key flags-value"]',
-            files='["files-key files-value"]',
             parameter='["parameter-key parameter-value"]',
-            fileparameter='["fileparameter-key fileparameter-value"]',
             mtype=self.active,
             probekey=probe_history1
         )
@@ -1371,9 +1325,7 @@ class HistoryHelpersTests(TenantTestCase):
             attribute=self.mt4.attribute,
             dependency=self.mt4.dependency,
             flags=self.mt4.flags,
-            files=self.mt4.files,
             parameter=self.mt4.parameter,
-            fileparameter=self.mt4.fileparameter,
             date_created=datetime.datetime.now(),
             version_comment='Initial version.',
             version_user='testuser'
@@ -1396,9 +1348,7 @@ class HistoryHelpersTests(TenantTestCase):
             attribute='["attribute-key attribute-value"]',
             dependency='["dependency-key1 dependency-value1"]',
             flags='["flags-key flags-value", "flags-key1 flags-value1"]',
-            files='["files-key files-value"]',
             parameter='["parameter-key parameter-value"]',
-            fileparameter='["fileparameter-key fileparameter-value"]',
             mtype=self.active,
             probekey=self.probe_history2
         )
@@ -1416,9 +1366,7 @@ class HistoryHelpersTests(TenantTestCase):
             attribute=mt5.attribute,
             dependency=mt5.dependency,
             flags=mt5.flags,
-            files=mt5.files,
             parameter=mt5.parameter,
-            fileparameter=mt5.fileparameter,
             date_created=datetime.datetime.now(),
             version_comment='Newer version.',
             version_user='testuser'
@@ -1601,9 +1549,7 @@ class HistoryHelpersTests(TenantTestCase):
             attribute='["attribute-key attribute-value"]',
             dependency='["dependency-key1 dependency-value1"]',
             flags='["flags-key flags-value", "flags-key1 flags-value2"]',
-            files='["files-key files-value"]',
             parameter='["parameter-key parameter-value"]',
-            fileparameter='["fileparameter-key fileparameter-value"]',
             mtype=self.active
         )
         mt.tags.add(self.metrictag1)
@@ -1774,7 +1720,6 @@ class HistoryHelpersTests(TenantTestCase):
         mt.attribute = '["attribute-key attribute-value"]'
         mt.dependancy = '["dependency-key1 dependency-value1"]'
         mt.flags = '["flags-key flags-value", "flags-key1 flags-value2"]'
-        mt.files = '["files-key files-value"]'
         mt.parameter = '["parameter-key parameter-value"]'
         mt.parent = ''
         mt.save()
@@ -2270,13 +2215,8 @@ class ImportMetricsTests(TransactionTestCase):
             serialized_data1['dependancy'], self.metrictemplate3.dependency
         )
         self.assertEqual(serialized_data1['flags'], self.metrictemplate3.flags)
-        self.assertEqual(serialized_data1['files'], self.metrictemplate3.files)
         self.assertEqual(
             serialized_data1['parameter'], self.metrictemplate3.parameter
-        )
-        self.assertEqual(
-            serialized_data1['fileparameter'],
-            self.metrictemplate3.fileparameter
         )
         self.assertEqual(history2.count(), 1)
         self.assertEqual(metric2.name, self.metrictemplate6.name)
@@ -2315,13 +2255,8 @@ class ImportMetricsTests(TransactionTestCase):
             serialized_data2['dependancy'], self.metrictemplate6.dependency
         )
         self.assertEqual(serialized_data2['flags'], self.metrictemplate6.flags)
-        self.assertEqual(serialized_data2['files'], self.metrictemplate6.files)
         self.assertEqual(
             serialized_data2['parameter'], self.metrictemplate6.parameter
-        )
-        self.assertEqual(
-            serialized_data2['fileparameter'],
-            self.metrictemplate6.fileparameter
         )
 
     def test_import_passive_metric_successfully(self):
@@ -2368,13 +2303,8 @@ class ImportMetricsTests(TransactionTestCase):
             serialized_data1['dependancy'], self.metrictemplate7.dependency
         )
         self.assertEqual(serialized_data1['flags'], self.metrictemplate7.flags)
-        self.assertEqual(serialized_data1['files'], self.metrictemplate7.files)
         self.assertEqual(
             serialized_data1['parameter'], self.metrictemplate7.parameter
-        )
-        self.assertEqual(
-            serialized_data1['fileparameter'],
-            self.metrictemplate7.fileparameter
         )
 
     def test_import_active_metric_with_warning(self):
@@ -2429,12 +2359,8 @@ class ImportMetricsTests(TransactionTestCase):
             serialized_data1['dependancy'], self.mt8_history2.dependency
         )
         self.assertEqual(serialized_data1['flags'], self.mt8_history2.flags)
-        self.assertEqual(serialized_data1['files'], self.mt8_history2.files)
         self.assertEqual(
             serialized_data1['parameter'], self.mt8_history2.parameter
-        )
-        self.assertEqual(
-            serialized_data1['fileparameter'], self.mt8_history2.fileparameter
         )
 
     def test_import_active_metric_if_package_already_exists_with_diff_version(
@@ -2490,13 +2416,8 @@ class ImportMetricsTests(TransactionTestCase):
             serialized_data1['dependancy'], self.metrictemplate10.dependency
         )
         self.assertEqual(serialized_data1['flags'], self.metrictemplate10.flags)
-        self.assertEqual(serialized_data1['files'], self.metrictemplate10.files)
         self.assertEqual(
             serialized_data1['parameter'], self.metrictemplate10.parameter
-        )
-        self.assertEqual(
-            serialized_data1['fileparameter'],
-            self.metrictemplate10.fileparameter
         )
         poem_models.Metric.objects.get(name='argo.AMS-Check')
         poem_models.Metric.objects.get(name='org.nagios.CertLifetime')
@@ -2560,12 +2481,8 @@ class ImportMetricsTests(TransactionTestCase):
             serialized_data1['dependancy'], self.mt1_history2.dependency
         )
         self.assertEqual(serialized_data1['flags'], self.mt1_history2.flags)
-        self.assertEqual(serialized_data1['files'], self.mt1_history2.files)
         self.assertEqual(
             serialized_data1['parameter'], self.mt1_history2.parameter
-        )
-        self.assertEqual(
-            serialized_data1['fileparameter'], self.mt1_history2.fileparameter
         )
         metric2 = poem_models.Metric.objects.get(name='org.nagios.CertLifetime')
         history2 = poem_models.TenantHistory.objects.filter(
@@ -2605,13 +2522,8 @@ class ImportMetricsTests(TransactionTestCase):
             serialized_data2['dependancy'], self.metrictemplate2.dependency
         )
         self.assertEqual(serialized_data2['flags'], self.metrictemplate2.flags)
-        self.assertEqual(serialized_data2['files'], self.metrictemplate2.files)
         self.assertEqual(
             serialized_data2['parameter'], self.metrictemplate2.parameter
-        )
-        self.assertEqual(
-            serialized_data2['fileparameter'],
-            self.metrictemplate2.fileparameter
         )
 
     def test_import_metric_older_version_than_tenants_package(self):
@@ -2690,9 +2602,7 @@ class UpdateMetricsTests(TenantTestCase):
             attribute=metrictemplate.attribute,
             dependency=metrictemplate.dependency,
             flags=metrictemplate.flags,
-            files=metrictemplate.files,
             parameter=metrictemplate.parameter,
-            fileparameter=metrictemplate.fileparameter,
             parent=metrictemplate.parent,
             date_created=datetime.datetime.now(),
             version_user="poem",
@@ -2723,8 +2633,6 @@ class UpdateMetricsTests(TenantTestCase):
         metrictemplate.dependency = '["dep-key dep-val"]'
         metrictemplate.parameter = '["par-key par-val"]'
         metrictemplate.flags = '["flag-key flag-val"]'
-        metrictemplate.files = '["file-key file-val"]'
-        metrictemplate.fileparameter = '["fp-key fp-val"]'
         metrictemplate.save()
         metrictemplate.tags.remove(self.mtag2)
         self._create_metric_template_history(metrictemplate, tags=[self.mtag1])
@@ -2779,11 +2687,7 @@ class UpdateMetricsTests(TenantTestCase):
             serialized_data['dependancy'], metrictemplate.dependency
         )
         self.assertEqual(serialized_data['flags'], metrictemplate.flags)
-        self.assertEqual(serialized_data['files'], metrictemplate.files)
         self.assertEqual(serialized_data['parameter'], metrictemplate.parameter)
-        self.assertEqual(
-            serialized_data['fileparameter'], metrictemplate.fileparameter
-        )
         with schema_context('test2'):
             metric1 = poem_models.Metric.objects.get(name='argo.AMS-Check')
             metric_versions1 = poem_models.TenantHistory.objects.filter(
@@ -2831,9 +2735,7 @@ class UpdateMetricsTests(TenantTestCase):
             )
             self.assertEqual(serialized_data1['dependancy'], "")
             self.assertEqual(serialized_data1['flags'], '["OBSESS 1"]')
-            self.assertEqual(serialized_data1['files'], "")
             self.assertEqual(serialized_data1['parameter'], '["--project EGI"]')
-            self.assertEqual(serialized_data1['fileparameter'], "")
 
     @patch('Poem.helpers.metrics_helpers.update_metrics_in_profiles')
     def test_update_passive_metrics_from_metrictemplate_instance(
@@ -2858,8 +2760,6 @@ class UpdateMetricsTests(TenantTestCase):
         metrictemplate.dependency = ''
         metrictemplate.parameter = ''
         metrictemplate.flags = '["PASSIVE 1"]'
-        metrictemplate.files = ''
-        metrictemplate.fileparameter = ''
         metrictemplate.save()
         metrictemplate.tags.add(self.mtag1)
         mth.name = metrictemplate.name
@@ -2873,8 +2773,6 @@ class UpdateMetricsTests(TenantTestCase):
         mth.dependency = metrictemplate.dependency
         mth.parameter = metrictemplate.parameter
         mth.flags = metrictemplate.flags
-        mth.files = metrictemplate.files
-        mth.fileparameter = metrictemplate.fileparameter
         mth.save()
         update_metric_in_schema(
             mt_id=metrictemplate.id, name='org.apel.APEL-Pub',
@@ -2914,11 +2812,7 @@ class UpdateMetricsTests(TenantTestCase):
             serialized_data['dependancy'], metrictemplate.dependency
         )
         self.assertEqual(serialized_data['flags'], metrictemplate.flags)
-        self.assertEqual(serialized_data['files'], metrictemplate.files)
         self.assertEqual(serialized_data['parameter'], metrictemplate.parameter)
-        self.assertEqual(
-            serialized_data['fileparameter'], metrictemplate.fileparameter
-        )
         with schema_context('test2'):
             metric1 = poem_models.Metric.objects.get(
                 name='org.apel.APEL-Pub')
@@ -2945,9 +2839,7 @@ class UpdateMetricsTests(TenantTestCase):
             self.assertEqual(
                 serialized_data1['flags'], '["OBSESS 1", "PASSIVE 1"]'
             )
-            self.assertEqual(serialized_data1['files'], "")
             self.assertEqual(serialized_data1['parameter'], "")
-            self.assertEqual(serialized_data1['fileparameter'], "")
 
     @patch('Poem.helpers.metrics_helpers.update_metrics_in_profiles')
     def test_update_active_metrics_from_metrictemplatehistory_instance(
@@ -2972,8 +2864,6 @@ class UpdateMetricsTests(TenantTestCase):
             dependency='["dep-key dep-val"]',
             parameter='["par-key par-val"]',
             flags='["flag-key flag-val"]',
-            files='["file-key file-val"]',
-            fileparameter='["fp-key fp-val"]',
             date_created=datetime.datetime.now(),
             version_user='testuser',
             version_comment=create_comment(metrictemplate1)
@@ -3026,11 +2916,7 @@ class UpdateMetricsTests(TenantTestCase):
             serialized_data['dependancy'], metrictemplate.dependency
         )
         self.assertEqual(serialized_data['flags'], metrictemplate.flags)
-        self.assertEqual(serialized_data['files'], metrictemplate.files)
         self.assertEqual(serialized_data['parameter'], metrictemplate.parameter)
-        self.assertEqual(
-            serialized_data['fileparameter'], metrictemplate.fileparameter
-        )
         with schema_context('test2'):
             metric1 = poem_models.Metric.objects.get(name='argo.AMS-Check')
             metric_versions1 = poem_models.TenantHistory.objects.filter(
@@ -3073,9 +2959,7 @@ class UpdateMetricsTests(TenantTestCase):
             )
             self.assertEqual(serialized_data1['dependancy'], "")
             self.assertEqual(serialized_data1['flags'], '["OBSESS 1"]')
-            self.assertEqual(serialized_data1['files'], "")
             self.assertEqual(serialized_data1['parameter'], '["--project EGI"]')
-            self.assertEqual(serialized_data1['fileparameter'], "")
 
     @patch('Poem.helpers.metrics_helpers.update_metrics_in_profiles')
     def test_update_metrics_if_different_metrictemplate_version_from_mt_inst(
@@ -3101,8 +2985,6 @@ class UpdateMetricsTests(TenantTestCase):
         metrictemplate.dependency = '["dep-key dep-val"]'
         metrictemplate.parameter = '["par-key par-val"]'
         metrictemplate.flags = '["flag-key flag-val"]'
-        metrictemplate.files = '["file-key file-val"]'
-        metrictemplate.fileparameter = '["fp-key fp-val"]'
         metrictemplate.save()
         metrictemplate.tags.remove(self.mtag2)
         mth.name = metrictemplate.name
@@ -3116,8 +2998,6 @@ class UpdateMetricsTests(TenantTestCase):
         mth.dependency = metrictemplate.dependency
         mth.parameter = metrictemplate.parameter
         mth.flags = metrictemplate.flags
-        mth.files = metrictemplate.files
-        mth.fileparameter = metrictemplate.fileparameter
         mth.save()
         mth.tags.remove(self.mtag2)
         update_metric_in_schema(
@@ -3169,11 +3049,7 @@ class UpdateMetricsTests(TenantTestCase):
             serialized_data['dependancy'], metrictemplate.dependency
         )
         self.assertEqual(serialized_data['flags'], metrictemplate.flags)
-        self.assertEqual(serialized_data['files'], metrictemplate.files)
         self.assertEqual(serialized_data['parameter'], metrictemplate.parameter)
-        self.assertEqual(
-            serialized_data['fileparameter'], metrictemplate.fileparameter
-        )
         self.assertFalse(mock_update.called)
         with schema_context('test2'):
             metric1 = poem_models.Metric.objects.get(name='argo.AMS-Check')
@@ -3222,9 +3098,7 @@ class UpdateMetricsTests(TenantTestCase):
             )
             self.assertEqual(serialized_data1['dependancy'], "")
             self.assertEqual(serialized_data1['flags'], '["OBSESS 1"]')
-            self.assertEqual(serialized_data1['files'], "")
             self.assertEqual(serialized_data1['parameter'], '["--project EGI"]')
-            self.assertEqual(serialized_data1['fileparameter'], "")
             self.assertFalse(mock_update.called)
 
     @patch('Poem.helpers.metrics_helpers.update_metric_in_schema')
@@ -3587,10 +3461,13 @@ class SyncMetricsTests(TenantTestCase):
         self.assertEqual(err, [])
         self.assertEqual(unavailable, [])
         self.assertEqual(
-            sorted(deleted),
-            ["eu.egi.cloud.OpenStack-Swift", "test.Metric-Template"]
+            sorted(deleted), [
+                "argo.poem-tools.check",
+                "eu.egi.cloud.OpenStack-Swift",
+                "test.Metric-Template"
+            ]
         )
-        self.assertEqual(len(poem_models.Metric.objects.all()), 5)
+        self.assertEqual(len(poem_models.Metric.objects.all()), 4)
         self.assertRaises(
             poem_models.Metric.DoesNotExist,
             poem_models.Metric.objects.get,
@@ -3635,10 +3512,13 @@ class SyncMetricsTests(TenantTestCase):
         self.assertEqual(err, [])
         self.assertEqual(unavailable, [])
         self.assertEqual(
-            sorted(deleted),
-            ["eu.egi.cloud.OpenStack-Swift", "test.Metric-Template"]
+            sorted(deleted), [
+                "argo.poem-tools.check",
+                "eu.egi.cloud.OpenStack-Swift",
+                "test.Metric-Template"
+            ]
         )
-        self.assertEqual(len(poem_models.Metric.objects.all()), 5)
+        self.assertEqual(len(poem_models.Metric.objects.all()), 4)
         self.assertRaises(
             poem_models.Metric.DoesNotExist,
             poem_models.Metric.objects.get,
@@ -3683,10 +3563,13 @@ class SyncMetricsTests(TenantTestCase):
         self.assertEqual(err, [])
         self.assertEqual(unavailable, [])
         self.assertEqual(
-            sorted(deleted),
-            ["eu.egi.cloud.OpenStack-Swift", "test.Metric-Template"]
+            sorted(deleted), [
+                "argo.poem-tools.check",
+                "eu.egi.cloud.OpenStack-Swift",
+                "test.Metric-Template"
+            ]
         )
-        self.assertEqual(len(poem_models.Metric.objects.all()), 5)
+        self.assertEqual(len(poem_models.Metric.objects.all()), 4)
         self.assertRaises(
             poem_models.Metric.DoesNotExist,
             poem_models.Metric.objects.get,
@@ -3731,10 +3614,13 @@ class SyncMetricsTests(TenantTestCase):
         self.assertEqual(err, [])
         self.assertEqual(unavailable, ["test.MetricTemplate"])
         self.assertEqual(
-            sorted(deleted),
-            ["eu.egi.cloud.OpenStack-Swift", "test.Metric-Template"]
+            sorted(deleted), [
+                "argo.poem-tools.check",
+                "eu.egi.cloud.OpenStack-Swift",
+                "test.Metric-Template"
+            ]
         )
-        self.assertEqual(len(poem_models.Metric.objects.all()), 4)
+        self.assertEqual(len(poem_models.Metric.objects.all()), 3)
         self.assertRaises(
             poem_models.Metric.DoesNotExist,
             poem_models.Metric.objects.get,

@@ -1,8 +1,8 @@
 #!/bin/bash
 
-VENV=/home/pyvenv/poem/
+VENV=/opt/poem/
 RUNASROOT="su -m -s /bin/bash root -c"
 
-$RUNASROOT "supervisord"
+$RUNASROOT "supervisord -nc /etc/supervisord.conf"
 . $VENV/bin/activate
 /bin/zsh -c $*

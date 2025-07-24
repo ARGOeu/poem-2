@@ -46,9 +46,7 @@ def build_metricconfigs(templates=False):
             attribute = two_value_inline_dict(m.attribute)
             dependency = two_value_inline_dict(m.dependency)
             flags = two_value_inline_dict(m.flags)
-            files = two_value_inline_dict(m.files)
             parameter = two_value_inline_dict(m.parameter)
-            fileparameter = two_value_inline_dict(m.fileparameter)
 
             tags = sorted([tag.name for tag in m.tags.all()])
 
@@ -75,9 +73,7 @@ def build_metricconfigs(templates=False):
                 attribute = two_value_inline_dict(mt.attribute)
                 dependency = two_value_inline_dict(mt.dependency)
                 flags = two_value_inline_dict(mt.flags)
-                files = two_value_inline_dict(mt.files)
                 parameter = two_value_inline_dict(mt.parameter)
-                fileparameter = two_value_inline_dict(mt.fileparameter)
 
                 tags = sorted([tag.name for tag in mt.tags.all()])
 
@@ -117,16 +113,6 @@ def build_metricconfigs(templates=False):
             mdict[m.name].update({'parameter': parameter})
         else:
             mdict[m.name].update({'parameter': dict()})
-
-        if fileparameter:
-            mdict[m.name].update({'file_parameter': fileparameter})
-        else:
-            mdict[m.name].update({'file_parameter': dict()})
-
-        if files:
-            mdict[m.name].update({'file_attribute': files})
-        else:
-            mdict[m.name].update({'file_attribute': dict()})
 
         if parent:
             mdict[m.name].update({'parent': parent})

@@ -1,31 +1,34 @@
-version: '2.2'
 services:
   web-poem:
     env_file:
       - .env
     image: $IMAGE
     command: /home/user/entrypoint.sh
-    container_name: poem-react-c7
+    container_name: poem-react-r9
     hostname: poem-react
     tty: true
     stdin_open: true
     user: user
     ports:
+      - "80:80"
+      - "443:443"
       - "8000:8000"
+      - "3000:3000"
     depends_on:
       - db-poem
     volumes:
       - $HOME:/mnt
       - /dev/log:/dev/log
       - /etc/localtime:/etc/localtime:ro
-      - ../docker/pysitepkg:/home/user/pysitepkg
-      - ../docker/syncsite.sh:/home/user/syncsite.sh
-      - ../docker/safety.sh:/home/user/safety.sh
-      - ../docker/collectstatic.sh:/home/user/collectstatic.sh
-      - ../docker/run-django-server.sh:/home/user/run-django-server.sh
-      - ../docker/restarthttpd.sh:/home/user/restarthttpd.sh
+      - ./pysitepkg:/home/user/pysitepkg
+      - ./syncsite.sh:/home/user/syncsite.sh
+      - ./safety.sh:/home/user/safety.sh
+      - ./collectstatic.sh:/home/user/collectstatic.sh
+      - ./run-django-server.sh:/home/user/run-django-server.sh
+      - ./run-frontdev-server.sh:/home/user/run-frontdev-server.sh
+      - ./restarthttpd.sh:/home/user/restarthttpd.sh
       - ../:/home/user/poem-source
-      - ../poem/Poem/:$VENV/lib/python3.6/site-packages/Poem
+      - ../poem/Poem/:$VENV/lib/python3.9/site-packages/Poem
       - ../poem/media/:$VENV/usr/share/poem/media
       - ../poem/static/:$VENV/usr/share/poem/static
       - ../poem/apache/poem.wsgi:$VENV/usr/share/poem/apache/poem.wsgi
@@ -38,14 +41,18 @@ services:
       - ../bin/poem-tenant:$VENV/bin/poem-tenant
       - ../bin/poem-token:$VENV/bin/poem-token
       - ../bin/poem-backup:$VENV/bin/poem-backup
+      - ../poem/Poem/:/home/user/frontend
+      - ../poetry.lock:/opt/poem/poetry.lock
+      - ../pyproject.toml:/opt/poem/pyproject.toml
+      - $HOME/.docker_zsh_history:/home/user/.zsh_history
     networks:
       app_net:
         ipv4_address: 172.19.0.2
   db-poem:
     env_file:
       - .env
-    container_name: poem-postgres10
-    image: postgres:10
+    container_name: poem-postgres16
+    image: postgres:16
     volumes:
       - $PSQLDATA:/var/lib/postgresql/data
     networks:

@@ -181,9 +181,7 @@ class ListProbesAPIViewTests(TenantTestCase):
             attribute=mt1.attribute,
             dependency=mt1.dependency,
             flags=mt1.flags,
-            files=mt1.files,
             parameter=mt1.parameter,
-            fileparameter=mt1.fileparameter,
             date_created=datetime.datetime.now(),
             version_comment='Initial version.',
             version_user=self.user.username
@@ -215,9 +213,7 @@ class ListProbesAPIViewTests(TenantTestCase):
             attribute=mt2.attribute,
             dependency=mt2.dependency,
             flags=mt2.flags,
-            files=mt2.files,
             parameter=mt2.parameter,
-            fileparameter=mt2.fileparameter,
             date_created=datetime.datetime.now(),
             version_comment='Initial version.',
             version_user=self.user.username
@@ -1508,9 +1504,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(serialized_data['dependancy'], "")
         self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
-        self.assertEqual(serialized_data['files'], "")
         self.assertEqual(serialized_data['parameter'], '["--project EGI"]')
-        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_without_new_version_sp_user(self):
         data = {
@@ -1595,9 +1589,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(serialized_data['dependancy'], "")
         self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
-        self.assertEqual(serialized_data['files'], "")
         self.assertEqual(serialized_data['parameter'], '["--project EGI"]')
-        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_without_new_version_tenant_superuser(self):
         data = {
@@ -1682,9 +1674,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(serialized_data['dependancy'], "")
         self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
-        self.assertEqual(serialized_data['files'], "")
         self.assertEqual(serialized_data['parameter'], '["--project EGI"]')
-        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_without_new_version_tenant_user(self):
         data = {
@@ -1769,9 +1759,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(serialized_data['dependancy'], "")
         self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
-        self.assertEqual(serialized_data['files'], "")
         self.assertEqual(serialized_data['parameter'], '["--project EGI"]')
-        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_no_new_name_metric_history_without_new_version_sp_spusr(
             self
@@ -1855,9 +1843,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(serialized_data['dependancy'], "")
         self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
-        self.assertEqual(serialized_data['files'], "")
         self.assertEqual(serialized_data['parameter'], '["--project EGI"]')
-        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_no_new_name_metric_history_without_new_version_sp_user(
             self
@@ -1944,9 +1930,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(serialized_data['dependancy'], "")
         self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
-        self.assertEqual(serialized_data['files'], "")
         self.assertEqual(serialized_data['parameter'], '["--project EGI"]')
-        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_no_new_name_metric_history_without_new_version_tn_spusr(
             self
@@ -2035,9 +2019,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(serialized_data['dependancy'], "")
         self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
-        self.assertEqual(serialized_data['files'], "")
         self.assertEqual(serialized_data['parameter'], '["--project EGI"]')
-        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_no_new_name_metric_history_without_new_version_tn_user(
             self
@@ -2124,9 +2106,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(serialized_data['dependancy'], "")
         self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
-        self.assertEqual(serialized_data['files'], "")
         self.assertEqual(serialized_data['parameter'], '["--project EGI"]')
-        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_with_new_version_without_metrictemplate_update_sp_spusr(
             self
@@ -2223,9 +2203,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(serialized_data['dependancy'], "")
         self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
-        self.assertEqual(serialized_data['files'], "")
         self.assertEqual(serialized_data['parameter'], "")
-        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_with_new_version_without_metrictemplate_update_sp_user(
             self
@@ -2312,9 +2290,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(serialized_data['dependancy'], "")
         self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
-        self.assertEqual(serialized_data['files'], "")
         self.assertEqual(serialized_data['parameter'], "")
-        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_with_new_version_without_metrictemplate_update_tn_sprusr(
             self
@@ -2401,9 +2377,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(serialized_data['dependancy'], "")
         self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
-        self.assertEqual(serialized_data['files'], "")
         self.assertEqual(serialized_data['parameter'], "")
-        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_with_new_version_without_metrictemplate_update_tn_user(
             self
@@ -2490,9 +2464,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(serialized_data['dependancy'], "")
         self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
-        self.assertEqual(serialized_data['files'], "")
         self.assertEqual(serialized_data['parameter'], "")
-        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_with_new_version_with_metrictemplate_update_sp_spruser(
             self
@@ -2574,9 +2546,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(serialized_data['dependancy'], "")
         self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
-        self.assertEqual(serialized_data['files'], "")
         self.assertEqual(serialized_data['parameter'], "")
-        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_with_new_version_with_metrictemplate_update_sp_user(
             self
@@ -2663,9 +2633,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(serialized_data['dependancy'], "")
         self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
-        self.assertEqual(serialized_data['files'], "")
         self.assertEqual(serialized_data['parameter'], "")
-        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_with_new_version_with_metrictemplate_update_tennt_sprusr(
             self
@@ -2752,9 +2720,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(serialized_data['dependancy'], "")
         self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
-        self.assertEqual(serialized_data['files'], "")
         self.assertEqual(serialized_data['parameter'], "")
-        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_with_new_version_with_metrictemplate_update_tenant_user(
             self
@@ -2841,9 +2807,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(serialized_data['dependancy'], "")
         self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
-        self.assertEqual(serialized_data['files'], "")
         self.assertEqual(serialized_data['parameter'], "")
-        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_with_nonexisting_probe_sp_superuser(self):
         data = {
@@ -3024,9 +2988,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(serialized_data['dependancy'], "")
         self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
-        self.assertEqual(serialized_data['files'], "")
         self.assertEqual(serialized_data['parameter'], '["--project EGI"]')
-        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_missing_data_key_sp_user(self):
         data = {
@@ -3111,9 +3073,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(serialized_data['dependancy'], "")
         self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
-        self.assertEqual(serialized_data['files'], "")
         self.assertEqual(serialized_data['parameter'], '["--project EGI"]')
-        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_missing_data_key_tenant_superuser(self):
         data = {
@@ -3198,9 +3158,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(serialized_data['dependancy'], "")
         self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
-        self.assertEqual(serialized_data['files'], "")
         self.assertEqual(serialized_data['parameter'], '["--project EGI"]')
-        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_put_probe_missing_data_key_tenant_user(self):
         data = {
@@ -3283,9 +3241,7 @@ class ListProbesAPIViewTests(TenantTestCase):
         )
         self.assertEqual(serialized_data['dependancy'], "")
         self.assertEqual(serialized_data['flags'], '["OBSESS 1"]')
-        self.assertEqual(serialized_data['files'], "")
         self.assertEqual(serialized_data['parameter'], '["--project EGI"]')
-        self.assertEqual(serialized_data['fileparameter'], "")
 
     def test_post_probe_sp_superuser(self):
         data = {

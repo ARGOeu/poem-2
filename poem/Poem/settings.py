@@ -3,7 +3,7 @@ import os
 from configparser import ConfigParser, NoSectionError, NoOptionError
 from django.core.exceptions import ImproperlyConfigured
 
-VENV = '/home/pyvenv/poem'
+VENV = '/opt/poem'
 APP_PATH = os.path.abspath(os.path.split(__file__)[0])
 CONFIG_FILE = '{}/etc/poem/poem.conf'.format(VENV)
 LOG_CONFIG = '{}/etc/poem/poem_logging.conf'.format(VENV)

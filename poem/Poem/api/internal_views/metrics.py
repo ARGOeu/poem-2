@@ -46,10 +46,11 @@ class ListMetric(APIView):
         if name:
             metrics = poem_models.Metric.objects.filter(name=name)
             if metrics.count() == 0:
-                raise NotFound(status=404,
-                               detail='Metric not found')
+                raise NotFound(status=404, detail='Metric not found')
         else:
             metrics = poem_models.Metric.objects.all()
+
+        profiles4metrics = get_metrics_in_profiles(request.tenant)
 
         results = []
         for metric in metrics:
@@ -74,9 +75,7 @@ class ListMetric(APIView):
             attribute = two_value_inline(mt.attribute)
             dependency = two_value_inline(mt.dependency)
             flags = two_value_inline(mt.flags)
-            files = two_value_inline(mt.files)
             parameter = two_value_inline(mt.parameter)
-            fileparameter = two_value_inline(mt.fileparameter)
 
             if metric.group:
                 group = metric.group.name
@@ -88,6 +87,8 @@ class ListMetric(APIView):
                 name=metric.name,
                 mtype=mt.mtype.name,
                 tags=[tag.name for tag in mt.tags.all()],
+                profiles=profiles4metrics[metric.name]
+                if metric.name in profiles4metrics else [],
                 probeversion=metric.probeversion if metric.probeversion else "",
                 group=group,
                 description=mt.description,
@@ -97,9 +98,7 @@ class ListMetric(APIView):
                 attribute=attribute,
                 dependancy=dependency,
                 flags=flags,
-                files=files,
-                parameter=parameter,
-                fileparameter=fileparameter
+                parameter=parameter
             ))
 
         results = sorted(results, key=lambda k: k['name'])

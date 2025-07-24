@@ -61,18 +61,30 @@ const mockDefaultPorts = [
 ]
 
 
-function renderView() {
-  const route = "/ui/administration/default_ports"
+function renderView(publicView=false) {
+  const route = `/ui/${publicView? "public_" : "administration/"}default_ports`
 
-  return {
-    ...render(
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter initialEntries={ [ route ] }>
-          <DefaultPortsList />
-        </MemoryRouter>
-      </QueryClientProvider>
-    )
-  }
+  if (publicView)
+    return {
+      ...render(
+        <QueryClientProvider client={queryClient}>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <DefaultPortsList publicView={ true } />
+          </MemoryRouter>
+        </QueryClientProvider>
+      )
+    }
+
+  else 
+    return {
+      ...render(
+        <QueryClientProvider client={queryClient}>
+          <MemoryRouter initialEntries={ [ route ] }>
+            <DefaultPortsList />
+          </MemoryRouter>
+        </QueryClientProvider>
+      )
+    }
 }
 
 
@@ -119,6 +131,34 @@ describe("Test default ports list", () => {
     expect(table.getAllByTestId(/insert-/i)).toHaveLength(4)
   })
 
+  test("Test that public page renders properly", async () => {
+    renderView(true);
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("columnheader")).toHaveLength(3)
+    })
+
+    expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
+
+    const table = within(screen.getByRole("table"))
+    expect(table.getByRole("columnheader", { name: "#" })).toBeInTheDocument()
+    expect(table.getByRole("columnheader", { name: "Port name" })).toBeInTheDocument()
+    expect(table.getByRole("columnheader", { name: "Port value" })).toBeInTheDocument()
+
+    const rows = table.getAllByRole("row")
+    expect(rows).toHaveLength(6)
+    expect(screen.getAllByPlaceholderText(/search/i)).toHaveLength(2)
+    expect(rows[0].textContent).toBe("#Port namePort value")
+    // row 1 is the one with search fields
+    expect(rows[2].textContent).toBe("1BDII_PORT2170")
+    expect(rows[3].textContent).toBe("2GRAM_PORT2119")
+    expect(rows[4].textContent).toBe("3MYPROXY_PORT7512")
+    expect(rows[5].textContent).toBe("4SITE_BDII_PORT2170")
+
+    expect(table.queryAllByTestId(/remove-/i)).toHaveLength(0)
+    expect(table.queryAllByTestId(/insert-/i)).toHaveLength(0)
+  })
+
   test("Test filter page by port name", async () => {
     renderView();
 
@@ -144,6 +184,31 @@ describe("Test default ports list", () => {
     expect(table.getAllByTestId(/insert-/i)).toHaveLength(2)
   })
 
+  test("Test filter page by port name if public view", async () => {
+    renderView(true);
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("columnheader")).toHaveLength(3)
+    })
+
+    expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
+
+    fireEvent.change(screen.getAllByPlaceholderText(/search/i)[0], { target: { value: "BDII" } })
+
+    const table = within(screen.getByRole("table"))
+
+    const rows = table.getAllByRole("row")
+    expect(rows).toHaveLength(4)
+    expect(screen.getAllByPlaceholderText(/search/i)).toHaveLength(2)
+    expect(rows[0].textContent).toBe("#Port namePort value")
+    // row 1 is the one with search fields
+    expect(rows[2].textContent).toBe("1BDII_PORT2170")
+    expect(rows[3].textContent).toBe("2SITE_BDII_PORT2170")
+
+    expect(table.queryAllByTestId(/remove-/i)).toHaveLength(0)
+    expect(table.queryAllByTestId(/insert-/i)).toHaveLength(0)
+  })
+
   test("Test filter page by port value", async () => {
     renderView();
 
@@ -166,6 +231,30 @@ describe("Test default ports list", () => {
 
     expect(table.getAllByTestId(/remove-/i)).toHaveLength(1)
     expect(table.getAllByTestId(/insert-/i)).toHaveLength(1)
+  })
+
+  test("Test filter page by port value if public view", async () => {
+    renderView(true);
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("columnheader")).toHaveLength(3)
+    })
+
+    expect(screen.getByRole("heading", { name: /port/i }).textContent).toBe("Default ports");
+
+    fireEvent.change(screen.getAllByPlaceholderText(/search/i)[1], { target: { value: "75" } })
+
+    const table = within(screen.getByRole("table"))
+
+    const rows = table.getAllByRole("row")
+    expect(rows).toHaveLength(3)
+    expect(screen.getAllByPlaceholderText(/search/i)).toHaveLength(2)
+    expect(rows[0].textContent).toBe("#Port namePort value")
+    // row 1 is the one with search fields
+    expect(rows[2].textContent).toBe("1MYPROXY_PORT7512")
+
+    expect(table.queryAllByTestId(/remove-/i)).toHaveLength(0)
+    expect(table.queryAllByTestId(/insert-/i)).toHaveLength(0)
   })
 
   test("Test adding new port", async () => {

@@ -58,7 +58,7 @@ const validationSchema = Yup.object().shape({
 })
 
 
-const PortsList = ({ data }) => {
+const PortsList = ({ data, publicView }) => {
   const backend = new Backend()
 
   const queryClient = useQueryClient()
@@ -154,14 +154,17 @@ const PortsList = ({ data }) => {
       <div className="d-flex align-items-center justify-content-between">
         <h2 className="ms-3 mt-1 mb-4">Default ports</h2>
         <span>
-          <Button
-            color="success"
-            disabled={!(isDeleted || [...fields.map(e => e.new)].includes(true))}
-            type="submit"
-            onClick={(e) => onSubmit(e)}
-          >
-            Save
-          </Button>
+          {
+            !publicView &&
+              <Button
+                color="success"
+                disabled={!(isDeleted || [...fields.map(e => e.new)].includes(true))}
+                type="submit"
+                onClick={(e) => onSubmit(e)}
+              >
+                Save
+              </Button>
+          }
         </span>
       </div>
       <div id="argo-contentwrap" className="ms-2 mb-2 mt-2 p-3 border rounded">
@@ -181,9 +184,19 @@ const PortsList = ({ data }) => {
                 <thead className="table-active table-bordered align-middle text-center">
                   <tr>
                     <th style={{width: "5%"}}>#</th>
-                    <th style={{width: "45%"}}>Port name</th>
-                    <th style={{width: "45%"}}>Port value</th>
-                    <th style={{ width: "5%" }}>Action</th>
+                    {
+                      publicView ?
+                        <>
+                          <th style={{width: `47%`}}>Port name</th>
+                          <th style={{width: "47%"}}>Port value</th>
+                        </>
+                      :
+                        <>
+                          <th style={{width: `45%`}}>Port name</th>
+                          <th style={{width: "45%"}}>Port value</th>
+                          <th style={{ width: "5%" }}>Action</th>
+                        </>
+                    }
                   </tr>
                 </thead>
                 <tbody style={{ lineHeight: "2.0" }}>
@@ -217,7 +230,9 @@ const PortsList = ({ data }) => {
                         }
                       />
                     </td>
-                    <td></td>
+                    {
+                      !publicView && <td></td>
+                    }
                   </tr>
                   {
                     fieldsView.map((entry, index) =>
@@ -283,32 +298,37 @@ const PortsList = ({ data }) => {
                               <span className="ms-2">{ entry.value }</span>
                           }
                         </td>
-                        <td className="align-middle text-center">
-                          <Button
-                            size="sm"
-                            color="light"
-                            type="button"
-                            data-testid={`remove-${index}`}
-                            onClick={() => {
-                              remove(index)
-                              if (!("new" in fields[index]))
-                                setIsDeleted(true)
-                            }}
-                          >
-                            <FontAwesomeIcon icon={faTimes} />
-                          </Button>
-                          <Button
-                            size="sm"
-                            color="light"
-                            type="button"
-                            data-testid={`insert-${index}`}
-                            onClick={() => {
-                              insert(index + 1, { name: "", value: "", new: true })
-                            }}
-                          >
-                            <FontAwesomeIcon icon={faPlus} />
-                          </Button>
-                        </td>
+                        {
+                          !publicView &&
+                            <>
+                              <td className="align-middle text-center">
+                                <Button
+                                  size="sm"
+                                  color="light"
+                                  type="button"
+                                  data-testid={`remove-${index}`}
+                                  onClick={() => {
+                                    remove(index)
+                                    if (!("new" in fields[index]))
+                                      setIsDeleted(true)
+                                  }}
+                                >
+                                  <FontAwesomeIcon icon={faTimes} />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  color="light"
+                                  type="button"
+                                  data-testid={`insert-${index}`}
+                                  onClick={() => {
+                                    insert(index + 1, { name: "", value: "", new: true })
+                                  }}
+                                >
+                                  <FontAwesomeIcon icon={faPlus} />
+                                </Button>
+                              </td>
+                            </>
+                        }
                       </tr>
                     )
                   }
@@ -323,12 +343,14 @@ const PortsList = ({ data }) => {
 }
 
 
-export const DefaultPortsList = () => {
+export const DefaultPortsList = (props) => {
+  const publicView = props.publicView
+
   const backend = new Backend();
 
   const { data: defaultPorts, error, status } = useQuery(
-    "defaultports", async () => {
-      return await backend.fetchData("/api/v2/internal/default_ports")
+    `${publicView ? "public_" : ""}defaultports`, async () => {
+      return await backend.fetchData(`/api/v2/internal/${publicView ? "public_" : ""}default_ports`)
     }
   )
 
@@ -337,7 +359,7 @@ export const DefaultPortsList = () => {
       <ListViewPlaceholder 
         title="Default ports" 
         buttons={
-          <Button color="success" disabled>Save</Button>
+          !publicView && <Button color="success" disabled>Save</Button>
         }
       />
     )
@@ -347,7 +369,10 @@ export const DefaultPortsList = () => {
 
   else if (defaultPorts) {
     return (
-      <PortsList data={defaultPorts} />
+      <PortsList 
+        data={ defaultPorts } 
+        publicView = { publicView }
+      />
     )
   }
   else

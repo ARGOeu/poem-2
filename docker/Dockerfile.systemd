@@ -64,9 +64,10 @@ RUN python3.9 -m venv /opt/poetry-tool/
 RUN sh -c '\
   . /opt/poetry-tool/bin/activate \
   && pip install -U pip \
-  && pip install -U poetry==1.*'
+  && pip install -U poetry'
 RUN ln -s /opt/poetry-tool/bin/poetry /usr/local/bin/
 RUN dnf module install -y nodejs:20
+RUN dnf module install -y postgresql:16
 RUN python3.9 -m venv /opt/poem
 RUN sh -c '\
   . /opt/poem/bin/activate \
@@ -86,4 +87,4 @@ USER user
 WORKDIR /home/user
 RUN curl -sfL https://git.io/chezmoi | sh
 COPY chezmoi-config-apply.sh /home/user
-ENTRYPOINT ["/home/user/entrypoint.sh"]
+CMD ["/sbin/init"]

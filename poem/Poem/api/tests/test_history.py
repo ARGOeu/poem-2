@@ -157,9 +157,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
             attribute=self.metrictemplate1.attribute,
             dependency=self.metrictemplate1.dependency,
             flags=self.metrictemplate1.flags,
-            files=self.metrictemplate1.files,
             parameter=self.metrictemplate1.parameter,
-            fileparameter=self.metrictemplate1.fileparameter,
             date_created=datetime.datetime.now(),
             version_comment='Initial version.',
             version_user=self.user.username
@@ -183,9 +181,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
             attribute=self.metrictemplate1.attribute,
             dependency=self.metrictemplate1.dependency,
             flags=self.metrictemplate1.flags,
-            files=self.metrictemplate1.files,
             parameter=self.metrictemplate1.parameter,
-            fileparameter=self.metrictemplate1.fileparameter,
             date_created=datetime.datetime.now(),
             version_comment=json.dumps(
                 [
@@ -217,9 +213,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
             attribute=self.metrictemplate2.attribute,
             dependency=self.metrictemplate2.dependency,
             flags=self.metrictemplate2.flags,
-            files=self.metrictemplate2.files,
             parameter=self.metrictemplate2.parameter,
-            fileparameter=self.metrictemplate2.fileparameter,
             date_created=datetime.datetime.now(),
             version_comment='Initial version.',
             version_user=self.user.username
@@ -241,9 +235,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
             attribute=self.metrictemplate2.attribute,
             dependency=self.metrictemplate2.dependency,
             flags=self.metrictemplate2.flags,
-            files=self.metrictemplate2.files,
             parameter=self.metrictemplate2.parameter,
-            fileparameter=self.metrictemplate2.fileparameter,
             date_created=datetime.datetime.now(),
             version_comment=json.dumps([{'changed': {'fields': ['name']}}]),
             version_user=self.user.username
@@ -394,9 +386,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                         ],
                         'dependency': [],
                         'flags': [],
-                        'files': [],
-                        'parameter': [],
-                        'fileparameter': []
+                        'parameter': []
                     },
                     'user': 'testuser',
                     'date_created': datetime.datetime.strftime(
@@ -434,9 +424,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                         ],
                         'dependency': [],
                         'flags': [],
-                        'files': [],
-                        'parameter': [],
-                        'fileparameter': []
+                        'parameter': []
                     },
                     'user': 'testuser',
                     'date_created': datetime.datetime.strftime(
@@ -485,9 +473,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                         ],
                         'dependency': [],
                         'flags': [],
-                        'files': [],
-                        'parameter': [],
-                        'fileparameter': []
+                        'parameter': []
                     },
                     'user': 'testuser',
                     'date_created': datetime.datetime.strftime(
@@ -525,9 +511,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                         ],
                         'dependency': [],
                         'flags': [],
-                        'files': [],
-                        'parameter': [],
-                        'fileparameter': []
+                        'parameter': []
                     },
                     'user': 'testuser',
                     'date_created': datetime.datetime.strftime(
@@ -565,9 +549,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                             {'key': 'OBSESS', 'value': '1'},
                             {'key': 'PASSIVE', 'value': '1'}
                         ],
-                        'files': [],
-                        'parameter': [],
-                        'fileparameter': []
+                        'parameter': []
                     },
                     'user': 'testuser',
                     'date_created': datetime.datetime.strftime(
@@ -597,9 +579,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
                             {'key': 'OBSESS', 'value': '1'},
                             {'key': 'PASSIVE', 'value': '1'}
                         ],
-                        'files': [],
-                        'parameter': [],
-                        'fileparameter': []
+                        'parameter': []
                     },
                     'user': 'testuser',
                     'date_created': datetime.datetime.strftime(

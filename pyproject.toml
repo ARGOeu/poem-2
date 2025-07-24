@@ -1,0 +1,109 @@
+[tool.poetry]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.9"
+cryptography = "36.*"
+deepdiff = "4.*"
+dj-rest-auth= "2.2.*"
+django-tenants = "3.4.*"
+django-webpack-loader = "*"
+Django = "3.*"
+djangorestframework = "*"
+djangorestframework-api-key = "*"
+djangosaml2 = "1.0.*"
+psycopg2-binary = "*"
+safety = "*"
+Unidecode = "*"
+typing_extensions = { git = "https://github.com/vrdel/typing_extensions", rev = "239445a35dc95ca30d54b2e227291ea7dad9cae4" }
+ipdb = "*"
+
+[tool.poetry.group.devel]
+optional = true
+
+[tool.poetry.group.devel.dependencies]
+build = "*"
+mock = "*"
+coverage = "*"
+unittest-xml-reporting = "*"
+tblib = "*"
+discover = "*"
+factory-boy = "*"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "poem"
+dynamic = ["version"]
+readme = "README.md"
+authors = [
+	{ name = "Katarina Zailac", email = "kzailac@srce.hr" },
+	{ name = "Daniel Vrcic", email = "dvrcic@srce.hr" }
+]
+description = "Reports, Profiles, Probes and Metric Configuration Management (POEM) for ARGO Monitoring framework."
+classifiers = [
+  "Programming Language :: Python :: 3.9",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: POSIX :: Linux",
+]
+
+[tool.setuptools]
+packages = [
+    'Poem',
+    'Poem.api',
+    'Poem.api.internal_views',
+    'Poem.api.migrations',
+    'Poem.api.tests',
+    'Poem.auth_backend.cust',
+    'Poem.auth_backend.saml2',
+    'Poem.helpers',
+    'Poem.poem',
+    'Poem.poem.dbmodels',
+    'Poem.poem.fixtures',
+    'Poem.poem.management',
+    'Poem.poem.management.commands',
+    'Poem.poem.migrations',
+    'Poem.poem.saml2',
+    'Poem.poem_super_admin',
+    'Poem.poem_super_admin.dbmodels',
+    'Poem.poem_super_admin.migrations',
+    'Poem.templates',
+    'Poem.tenants',
+    'Poem.tenants.migrations',
+    'Poem.users',
+    'Poem.users.migrations',
+]
+include-package-data = true
+
+[tool.setuptools.package-dir]
+Poem = "poem/Poem"
+
+[tool.setuptools.data-files]
+"" = ["pyproject.toml", "poetry.lock"]
+"bin" = [
+  "bin/poem-backup", "bin/poem-clearsessions", "bin/poem-db",
+  "bin/poem-genseckey", "bin/poem-manage", "bin/poem-tenant",
+  "bin/poem-token"
+]
+"etc/poem" = ["etc/*.conf.template", "etc/poem_logging.conf"]
+"etc/cron.d" = ["cron/poem-clearsessions", "cron/poem-db_backup"]
+"etc/logrotate.d" = ["logrotate.d/poem-db_backup"]
+"etc/httpd/conf.d" = ["poem/apache/poem.conf"]
+"usr/share/poem/apache" = ["poem/apache/poem.wsgi"]
+"usr/share/poem/static/" = ["poem/static/argo-poem.ico"]
+"usr/share/poem/static/reactbundle" = ["poem/static/reactbundle/*"]
+"usr/share/poem/static/rest_framework/css" = ["poem/static/rest_framework/css/*"]
+"usr/share/poem/static/rest_framework/fonts" = ["poem/static/rest_framework/fonts/*"]
+"usr/share/poem/static/rest_framework/img" = ["poem/static/rest_framework/img/*"]
+"usr/share/poem/static/rest_framework/js" = ["poem/static/rest_framework/js/*"]
+"usr/share/poem/static/rest_framework/docs/css" = ["poem/static/rest_framework/docs/css/*"]
+"usr/share/poem/static/rest_framework/docs/img" = ["poem/static/rest_framework/docs/img/*"]
+"usr/share/poem/static/rest_framework/docs/js" = ["poem/static/rest_framework/docs/js/*"]
+"var/log/" = ["helpers/empty"]
+"var/lib/" = ["helpers/empty"]
+"var/db_backups" = ["helpers/empty"]
+
+[tool.setuptools.dynamic]
+version = { attr = "version.vernum" }

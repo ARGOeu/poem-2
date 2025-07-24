@@ -1,10 +1,11 @@
-import React, { useState } from "react"
+import React, { useContext, useEffect, useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "react-query"
 import { Link, useLocation, useParams, useNavigate } from "react-router-dom"
 import { fetchMetricTags, fetchMetricTemplates, fetchUserDetails } from "./QueryFunctions"
 import {
   BaseArgoTable,
   BaseArgoView,
+  CustomError,
   CustomReactSelect,
   DefaultColumnFilter,
   ErrorComponent,
@@ -27,23 +28,44 @@ import {
   InputGroup,
   InputGroupText,
   Row,
-  Table
+  Table,
+  ButtonDropdown,
+  DropdownToggle,
+  DropdownMenu,
+  DropdownItem
  } from "reactstrap"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faSearch,faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { Controller, useForm, useWatch } from "react-hook-form"
+import { Controller, FormProvider, useFieldArray, useForm, useFormContext, useWatch } from "react-hook-form"
 import { ErrorMessage } from '@hookform/error-message'
 import { yupResolver } from '@hookform/resolvers/yup'
-import * as Yup from "yup"
+import * as yup from "yup"
 import { 
   ChangeViewPlaceholder,
   InputPlaceholder, 
   ListViewPlaceholder
 } from "./Placeholders"
+import PapaParse from 'papaparse';
+import { downloadCSV } from './FileDownload';
 
-const validationSchema = Yup.object().shape({
-  name: Yup.string().required("This field is required")
+
+const validationSchema = yup.object().shape({
+  name: yup.string().required("This field is required"),
+  view_metrics4tag: yup.array()
+    .of(yup.object().shape({
+      name: yup.string()
+        .test("predefined_metrics", "Must be one of predefined metrics", function (value) {
+          if (value && this.options.context.metrictemplates.indexOf(value) == -1)
+            return false
+
+          else
+            return true
+        })
+    }))
 })
+
+
+const MetricTagsContext = React.createContext()
 
 
 export const MetricTagsList = (props) => {
@@ -80,7 +102,7 @@ export const MetricTagsList = (props) => {
             :
               row.value.map((metric, i) =>
                 <Badge pill className="me-1" key={ i } color="info">
-                  { metric }
+                  { metric.name }
                 </Badge>
               )
           }
@@ -120,6 +142,141 @@ export const MetricTagsList = (props) => {
 }
 
 
+const MetricsList = () => {
+  const context = useContext(MetricTagsContext)
+
+  const { control, getValues, setValue, resetField, trigger, formState: { errors } } = useFormContext()
+
+  const { fields, insert, remove } = useFieldArray({ control, name: "view_metrics4tag" })
+
+  const onRemove = (index) => {
+    let tmp_metrics4tag = [ ...context.metrics4tag ]
+    let origIndex = tmp_metrics4tag.findIndex(e => e.name == getValues(`view_metrics4tag.${index}.name`))
+    tmp_metrics4tag.splice(origIndex, 1)
+    resetField("metrics4tag")
+    setValue("metrics4tag", tmp_metrics4tag)
+    remove(index)
+    trigger("view_metrics4tag")
+  }
+
+  const onInsert = (index) => {
+    let tmp_metrics4tag = [ ...context.metrics4tag ]
+    let origIndex = tmp_metrics4tag.findIndex(e => e.name == getValues(`view_metrics4tag.${index}.name`))
+    let new_element = { name: "" }
+    tmp_metrics4tag.splice(origIndex + 1, 0, new_element)
+    resetField("metrics4tag")
+    setValue("metrics4tag", tmp_metrics4tag)
+    insert(index + 1, new_element)
+  }
+
+  return (
+    <table className="table table-bordered table-sm table-hover" style={{width: "95%"}}>
+      <thead className="table-active">
+        <tr>
+          <th className="align-middle text-center" style={{width: "5%"}}>#</th>
+          <th style={{width: "85%"}}><Icon i="metrictemplates" />Metric template</th>
+          {
+            !context.publicView && <th className="align-middle text-center" style={{width: "10%"}}>Actions</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        <tr style={{background: "#ECECEC"}}>
+          <td className="align-middle text-center">
+            <FontAwesomeIcon icon={faSearch} />
+          </td>
+          <td>
+            <Controller
+              name="searchItem"
+              control={ control }
+              render={ ({ field }) =>
+                <SearchField
+                  field={ field }
+                  forwardedRef={ field.ref }
+                  data-testid="search_items"
+                  className="form-control"
+                />
+              }
+            />
+          </td>
+        </tr>
+        {
+          fields.map((item, index) =>
+            <React.Fragment key={index}>
+              <tr key={index}>
+                <td className="align-middle text-center">
+                  { index + 1 }
+                </td>
+                <td>
+                  {
+                    context.publicView ?
+                      item.name
+                    :
+                      <Controller
+                        name={ `view_metrics4tag.${index}.name` }
+                        control={ control }
+                        key={ item.id }
+                        render={ ({ field }) =>
+                          <CustomReactSelect
+                            forwardedRef={ field.ref }
+                            id={ `metric-${index}` }
+                            isClearable={ false }
+                            error={ errors?.view_metrics4tag?.[index]?.name }
+                            onChange={ (e) => {
+                              let origIndex = getValues("metrics4tag").findIndex(met => met.name == getValues(`view_metrics4tag.${index}.name`) )
+                              setValue(`metrics4tag.${origIndex}.name`, e.value)
+                              setValue(`view_metrics4tag.${index}.name`, e.value)
+                              trigger(`view_metrics4tag.${index}.name`)
+                            } }
+                            options={
+                              context.allMetrics.map(
+                                met => met.name
+                              ).filter(
+                                met => !context.metrics4tag.map(met => met.name).includes(met)
+                              ).map(
+                                option => new Object({ label: option, value: option })
+                            )}
+                            value={ { label: field.value, value: field.value } }
+                          />
+                        }
+                      />
+                  }
+                  {
+                    errors?.view_metrics4tag?.[index]?.name &&
+                      <CustomError error={ errors?.view_metrics4tag?.[index]?.name?.message } />
+                  }
+                </td>
+                {
+                  !context.publicView &&
+                    <td>
+                      <Button
+                        size="sm"
+                        color="light"
+                        data-testid={`remove-${index}`}
+                        onClick={() => onRemove(index)}
+                      >
+                        <FontAwesomeIcon icon={faTimes} />
+                      </Button>
+                      <Button
+                        size="sm"
+                        color="light"
+                        data-testid={`insert-${index}`}
+                        onClick={() => onInsert(index)}
+                      >
+                        <FontAwesomeIcon icon={faPlus} />
+                      </Button>
+                    </td>
+                }
+              </tr>
+            </React.Fragment>
+          )
+        }
+      </tbody>
+    </table>
+  )
+}
+
+
 const MetricTagsForm = ({
   name=undefined,
   tag=undefined,
@@ -137,24 +294,49 @@ const MetricTagsForm = ({
   const [modalFlag, setModalFlag] = useState(undefined);
   const [modalTitle, setModalTitle] = useState(undefined);
   const [modalMsg, setModalMsg] = useState(undefined);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const hiddenFileInput = React.useRef(null);
 
   const changeMutation = useMutation(async (values) => await backend.changeObject('/api/v2/internal/metrictags/', values));
   const addMutation = useMutation(async (values) => await backend.addObject('/api/v2/internal/metrictags/', values));
   const deleteMutation = useMutation(async () => await backend.deleteObject(`/api/v2/internal/metrictags/${name}`))
 
-  const { control, getValues, setValue, handleSubmit, formState: { errors } } = useForm({
+  const default_metrics4tag = tag?.metrics.length > 0 ? tag.metrics : [{ name: "" }]
+
+  const methods = useForm({
     defaultValues: {
       id: `${tag ? tag.id : ""}`,
       name: `${tag ? tag.name : ""}`,
-      metrics4tag: tag?.metrics.length > 0 ? tag.metrics : [""],
+      metrics4tag: default_metrics4tag,
+      view_metrics4tag: default_metrics4tag,
       searchItem: ""
     },
     mode: "all",
-    resolver: yupResolver(validationSchema)
+    resolver: yupResolver(validationSchema),
+    context: { metrictemplates: publicView ? new Array() : allMetrics.map(metric => metric.name) }
   })
+
+  const { control } = methods
 
   const searchItem = useWatch({ control, name: "searchItem" })
   const metrics4tag = useWatch({ control, name: "metrics4tag" })
+  const view_metrics4tag = useWatch({ control, name: "view_metrics4tag" })
+
+  useEffect(() => {
+    if (view_metrics4tag.length === 0) {
+      methods.setValue("view_metrics4tag", [{ name: "" }])
+    }
+  }, [view_metrics4tag])
+
+  useEffect(() => {
+    if (metrics4tag.length === 0) {
+      methods.setValue("metrics4tag", [{ name: "" }])
+    }
+  }, [metrics4tag])
+
+  useEffect(() => {
+    methods.setValue("view_metrics4tag", metrics4tag.filter(e => e.name.toLowerCase().includes(searchItem.toLowerCase())))
+  }, [searchItem])
 
   const toggleAreYouSure = () => {
     setAreYouSureModal(!areYouSureModal)
@@ -171,11 +353,11 @@ const MetricTagsForm = ({
   }
 
   const doChange = () => {
-    let formValues = getValues()
+    let formValues = methods.getValues()
 
     const sendValues = new Object({
       name: formValues.name,
-      metrics: formValues.metrics4tag.filter(met => met !== "")
+      metrics: formValues.metrics4tag.map(met => met.name).filter(met => met !== "")
     })
 
     if (addview)
@@ -277,180 +459,131 @@ const MetricTagsForm = ({
           :
             undefined
       }}
-      toggle={toggleAreYouSure}
-    >
-      <Form onSubmit={ handleSubmit(onSubmitHandle) } data-testid="form">
-        <FormGroup>
-          <Row>
-            <Col md={6}>
-              <InputGroup>
-                <InputGroupText>Name</InputGroupText>
-                <Controller
-                  name="name"
-                  control={ control }
-                  render={ ({ field }) =>
-                    <Input
-                      { ...field }
-                      data-testid="name"
-                      disabled={ publicView }
-                      className={ `form-control ${errors?.name && "is-invalid"}` }
-                    />
-                  }
-                />
-                <ErrorMessage
-                  errors={ errors }
-                  name="name"
-                  render={ ({ message }) =>
-                    <FormFeedback invalid="true" className="end-0">
-                      { message }
-                    </FormFeedback>
-                  }
-                />
-              </InputGroup>
-            </Col>
-          </Row>
-        </FormGroup>
-        <FormGroup>
-          <ParagraphTitle title="Metric templates" />
-          <table className="table table-bordered table-sm table-hover" style={{width: "95%"}}>
-            <thead className="table-active">
-              <tr>
-                <th className="align-middle text-center" style={{width: "5%"}}>#</th>
-                <th style={{width: "85%"}}><Icon i="metrictemplates" />Metric template</th>
-                {
-                  !publicView && <th className="align-middle text-center" style={{width: "10%"}}>Actions</th>
+      toggle={ toggleAreYouSure }
+      extra_button={
+        <ButtonDropdown isOpen={ dropdownOpen } toggle={ () => setDropdownOpen(!dropdownOpen) }>
+          <DropdownToggle caret color="secondary">CSV</DropdownToggle>
+          <DropdownMenu>
+            <DropdownItem 
+              onClick={ () => {
+                let csvContent = []
+                  metrics4tag.sort().forEach((metric) => {
+                    csvContent.push({ name: metric.name })
+                  })
+                const content = PapaParse.unparse(csvContent)
+                let filename = `${name}.csv`
+                downloadCSV(content, filename)
+              }}
+              disabled={ addview }
+            >
+              Export
+            </DropdownItem>
+            <DropdownItem
+              onClick={() => { hiddenFileInput.current.click() }}
+            >
+              Import
+            </DropdownItem>
+          </DropdownMenu>
+          <input
+            type='file'
+            data-testid='file_input'
+            ref={hiddenFileInput}
+            onChange={(e) => {
+              PapaParse.parse(e.target.files[0], {
+                header: true,
+                complete: (results) => {
+                  var imported = results.data;
+                  // remove entries without keys if there is any
+                  imported = imported.filter(
+                    obj => "name" in obj && obj["name"]
+                  )
+                  methods.resetField("view_metrics4tag")
+                  methods.setValue("view_metrics4tag", imported.sort())
+                  methods.trigger("view_metrics4tag")
+                  methods.resetField("searchItem")
+                  methods.resetField("metrics4tag")
+                  methods.setValue("metrics4tag", imported.sort()) 
                 }
-              </tr>
-            </thead>
-            <tbody>
-              <tr style={{background: "#ECECEC"}}>
-                <td className="align-middle text-center">
-                  <FontAwesomeIcon icon={faSearch} />
-                </td>
-                <td>
+              })
+            }}
+            style={{display: 'none'}}
+          />
+        </ButtonDropdown>
+      }
+    >
+      <FormProvider { ...methods }>
+        <Form onSubmit={ methods.handleSubmit(onSubmitHandle) } data-testid="form">
+          <FormGroup>
+            <Row>
+              <Col md={6}>
+                <InputGroup>
+                  <InputGroupText>Name</InputGroupText>
                   <Controller
-                    name="searchItem"
+                    name="name"
                     control={ control }
                     render={ ({ field }) =>
-                      <SearchField
-                        field={ field }
-                        forwardedRef={ field.ref }
-                        data-testid="search_items"
-                        className="form-control"
+                      <Input
+                        { ...field }
+                        data-testid="name"
+                        disabled={ publicView }
+                        className={ `form-control ${methods.formState.errors?.name && "is-invalid"}` }
                       />
                     }
                   />
-                </td>
-              </tr>
-              {
-                metrics4tag.filter(
-                  filteredRow => filteredRow.toLowerCase().includes(searchItem.toLowerCase())
-                ).map((item, index) =>
-                  <React.Fragment key={index}>
-                    <tr key={index}>
-                      <td className="align-middle text-center">
-                        { index + 1 }
-                      </td>
-                      <td>
-                        {
-                          publicView ?
-                            item
-                          :
-                            <Controller
-                              name={ item }
-                              control={ control }
-                              render={ ({ field }) =>
-                                <CustomReactSelect
-                                  name={ item }
-                                  forwardedRef={ field.ref }
-                                  id={ `metric-${index}` }
-                                  isClearable={ false }
-                                  onChange={ (e) => {
-                                    let tmpMetrics = getValues("metrics4tag")
-                                    tmpMetrics[index] = e.value
-                                    setValue("metrics4tag", tmpMetrics)
-                                  } }
-                                  options={
-                                    allMetrics.map(
-                                      met => met.name
-                                    ).filter(
-                                      met => !metrics4tag.includes(met)
-                                    ).map(
-                                      option => new Object({ label: option, value: option })
-                                  )}
-                                  value={ { label: item, value: item } }
-                                />
-                              }
-                            />
-                        }
-                      </td>
-                      {
-                        !publicView &&
-                          <td>
-                            <Button
-                              size="sm"
-                              color="light"
-                              data-testid={`remove-${index}`}
-                              onClick={() => {
-                                let tmpMetrics = metrics4tag
-                                tmpMetrics.splice(index, 1)
-                                if (tmpMetrics.length === 0)
-                                  tmpMetrics = [""]
-                                setValue("metrics4tag", tmpMetrics)
-                              }}
-                            >
-                              <FontAwesomeIcon icon={faTimes} />
-                            </Button>
-                            <Button
-                              size="sm"
-                              color="light"
-                              data-testid={`insert-${index}`}
-                              onClick={() => {
-                                let tmpMetrics = metrics4tag
-                                tmpMetrics.splice(index + 1, 0, "")
-                                setValue("metrics4tag", tmpMetrics)
-                              }}
-                            >
-                              <FontAwesomeIcon icon={faPlus} />
-                            </Button>
-                          </td>
-                      }
-                    </tr>
-                  </React.Fragment>
-                )
-              }
-            </tbody>
-          </table>
-        </FormGroup>
-        {
-          !publicView &&
-            <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
-              {
-                !addview ?
-                  <Button
-                    color="danger"
-                    onClick={() => {
-                      setModalMsg("Are you sure you want to delete metric tag?")
-                      setModalTitle("Delete metric tag")
-                      setModalFlag("delete")
-                      toggleAreYouSure()
-                    }}
-                  >
-                    Delete
-                  </Button>
-                :
-                  <div></div>
-              }
-              <Button
-                color="success"
-                id="submit-button"
-                type="submit"
-              >
-                Save
-              </Button>
-            </div>
-        }
-      </Form>
+                  <ErrorMessage
+                    errors={ methods.formState.errors }
+                    name="name"
+                    render={ ({ message }) =>
+                      <FormFeedback invalid="true" className="end-0">
+                        { message }
+                      </FormFeedback>
+                    }
+                  />
+                </InputGroup>
+              </Col>
+            </Row>
+          </FormGroup>
+          <FormGroup>
+            <ParagraphTitle title="Metric templates" />
+            <MetricTagsContext.Provider value={{
+              publicView: publicView,
+              searchItem: searchItem,
+              metrics4tag: metrics4tag,
+              allMetrics: allMetrics
+            }}>
+              <MetricsList />
+            </MetricTagsContext.Provider>
+          </FormGroup>
+          {
+            !publicView &&
+              <div className="submit-row d-flex align-items-center justify-content-between bg-light p-3 mt-5">
+                {
+                  !addview ?
+                    <Button
+                      color="danger"
+                      onClick={() => {
+                        setModalMsg("Are you sure you want to delete metric tag?")
+                        setModalTitle("Delete metric tag")
+                        setModalFlag("delete")
+                        toggleAreYouSure()
+                      }}
+                    >
+                      Delete
+                    </Button>
+                  :
+                    <div></div>
+                }
+                <Button
+                  color="success"
+                  id="submit-button"
+                  type="submit"
+                >
+                  Save
+                </Button>
+              </div>
+          }
+        </Form>
+      </FormProvider>
     </BaseArgoView>
   )
 }

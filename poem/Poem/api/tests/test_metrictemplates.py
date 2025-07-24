@@ -357,9 +357,7 @@ def mock_db():
         attribute=mt1.attribute,
         dependency=mt1.dependency,
         flags=mt1.flags,
-        files=mt1.files,
         parameter=mt1.parameter,
-        fileparameter=mt1.fileparameter,
         date_created=datetime.datetime.now(),
         version_user=superuser.username,
         version_comment='Initial version.',
@@ -385,9 +383,7 @@ def mock_db():
         attribute=mt1.attribute,
         dependency=mt1.dependency,
         flags=mt1.flags,
-        files=mt1.files,
         parameter=mt1.parameter,
-        fileparameter=mt1.fileparameter,
         date_created=datetime.datetime.now(),
         version_user=superuser.username,
         version_comment=create_comment(mt1)
@@ -412,9 +408,7 @@ def mock_db():
         attribute=mt2.attribute,
         dependency=mt2.dependency,
         flags=mt2.flags,
-        files=mt2.files,
         parameter=mt2.parameter,
-        fileparameter=mt2.fileparameter,
         date_created=datetime.datetime.now(),
         version_user=superuser.username,
         version_comment='Initial version.',
@@ -444,9 +438,7 @@ def mock_db():
         attribute=mt3.attribute,
         dependency=mt3.dependency,
         flags=mt3.flags,
-        files=mt3.files,
         parameter=mt3.parameter,
-        fileparameter=mt3.fileparameter,
         date_created=datetime.datetime.now(),
         version_user=superuser.username,
         version_comment='Initial version.',
@@ -477,9 +469,7 @@ def mock_db():
         attribute=mt4.attribute,
         dependency=mt4.dependency,
         flags=mt4.flags,
-        files=mt4.files,
         parameter=mt4.parameter,
-        fileparameter=mt4.fileparameter,
         date_created=datetime.datetime.now(),
         version_user=superuser.username,
         version_comment='Initial version.',
@@ -507,9 +497,7 @@ def mock_db():
         attribute=mt5.attribute,
         dependency=mt5.dependency,
         flags=mt5.flags,
-        files=mt5.files,
         parameter=mt5.parameter,
-        fileparameter=mt5.fileparameter,
         date_created=datetime.datetime.now(),
         version_user=superuser.username,
         version_comment='Initial version.',
@@ -530,9 +518,7 @@ def mock_db():
         attribute=mt5.attribute,
         dependency=mt5.dependency,
         flags=mt5.flags,
-        files=mt5.files,
         parameter=mt5.parameter,
-        fileparameter=mt5.fileparameter,
         date_created=datetime.datetime.now(),
         version_user=superuser.username,
         version_comment='Newer version.',
@@ -562,9 +548,7 @@ def mock_db():
         attribute=mt6.attribute,
         dependency=mt6.dependency,
         flags=mt6.flags,
-        files=mt6.files,
         parameter=mt6.parameter,
-        fileparameter=mt6.fileparameter,
         date_created=datetime.datetime.now(),
         version_user=superuser.username,
         version_comment='Initial version.',
@@ -595,9 +579,7 @@ def mock_db():
         attribute=mt7.attribute,
         dependency=mt7.dependency,
         flags=mt7.flags,
-        files=mt7.files,
         parameter=mt7.parameter,
-        fileparameter=mt7.fileparameter,
         date_created=datetime.datetime.now(),
         version_user=superuser.username,
         version_comment='Initial version.',
@@ -626,9 +608,7 @@ def mock_db():
         attribute=mt8.attribute,
         dependency=mt8.dependency,
         flags=mt8.flags,
-        files=mt8.files,
         parameter=mt8.parameter,
-        fileparameter=mt8.fileparameter,
         date_created=datetime.datetime.now(),
         version_user=superuser.username,
         version_comment='Initial version.'
@@ -651,9 +631,7 @@ def mock_db():
         attribute=mt8.attribute,
         dependency=mt8.dependency,
         flags=mt8.flags,
-        files=mt8.files,
         parameter=mt8.parameter,
-        fileparameter=mt8.fileparameter,
         date_created=datetime.datetime.now(),
         version_user=superuser.username,
         version_comment='Added parameter fields "-i" and "-v". '
@@ -681,9 +659,7 @@ def mock_db():
         attribute=mt8.attribute,
         dependency=mt8.dependency,
         flags=mt8.flags,
-        files=mt8.files,
         parameter=mt8.parameter,
-        fileparameter=mt8.fileparameter,
         date_created=datetime.datetime.now(),
         version_user=superuser.username,
         version_comment='Deleted flags field "NOHOSTNAME". '
@@ -973,14 +949,12 @@ class ListMetricTemplatesAPIViewGETTests(TenantTestCase):
                             'value': '1'
                         }
                     ],
-                    'files': [],
                     'parameter': [
                         {
                             'key': '--project',
                             'value': 'EGI'
                         }
-                    ],
-                    'fileparameter': []
+                    ]
                 },
                 {
                     'id': self.metrictemplate3.id,
@@ -1031,14 +1005,12 @@ class ListMetricTemplatesAPIViewGETTests(TenantTestCase):
                             'value': '1'
                         }
                     ],
-                    'files': [],
                     'parameter': [
                         {
                             'key': '-s',
                             'value': '/var/run/argo-nagios-ams-publisher/sock'
                         }
-                    ],
-                    'fileparameter': []
+                    ]
                 },
                 {
                     "id": self.metrictemplate5.id,
@@ -1076,14 +1048,12 @@ class ListMetricTemplatesAPIViewGETTests(TenantTestCase):
                     "attribute": [],
                     "dependency": [],
                     "flags": [],
-                    "files": [],
                     "parameter": [
                         {
                             "key": "-c",
                             "value": "check_connectors_egi"
                         }
-                    ],
-                    "fileparameter": []
+                    ]
                 },
                 {
                     "id": self.metrictemplate6.id,
@@ -1136,9 +1106,7 @@ class ListMetricTemplatesAPIViewGETTests(TenantTestCase):
                             "value": "1"
                         }
                     ],
-                    "files": [],
-                    "parameter": [],
-                    "fileparameter": []
+                    "parameter": []
                 },
                 {
                     "id": self.metrictemplate8.id,
@@ -1194,7 +1162,6 @@ class ListMetricTemplatesAPIViewGETTests(TenantTestCase):
                             "value": "1"
                         }
                     ],
-                    "files": [],
                     "parameter": [
                         {
                             "key": "-v",
@@ -1204,8 +1171,7 @@ class ListMetricTemplatesAPIViewGETTests(TenantTestCase):
                             "key": "-i",
                             "value": ""
                         }
-                    ],
-                    "fileparameter": []
+                    ]
                 },
                 {
                     'id': self.metrictemplate2.id,
@@ -1231,9 +1197,7 @@ class ListMetricTemplatesAPIViewGETTests(TenantTestCase):
                             'value': '1'
                         }
                     ],
-                    'files': [],
-                    'parameter': [],
-                    'fileparameter': []
+                    'parameter': []
                 },
                 {
                     "id": self.metrictemplate4.id,
@@ -1281,14 +1245,12 @@ class ListMetricTemplatesAPIViewGETTests(TenantTestCase):
                             "value": "1"
                         }
                     ],
-                    "files": [],
                     "parameter": [
                         {
                             "key": "--project",
                             "value": "EGI"
                         }
-                    ],
-                    "fileparameter": []
+                    ]
                 },
                 {
                     "id": self.metrictemplate7.id,
@@ -1336,14 +1298,12 @@ class ListMetricTemplatesAPIViewGETTests(TenantTestCase):
                             "value": "1"
                         }
                     ],
-                    "files": [],
                     "parameter": [
                         {
                             "key": "--project",
                             "value": "EGI"
                         }
-                    ],
-                    "fileparameter": []
+                    ]
                 }
             ]
         )
@@ -1401,14 +1361,12 @@ class ListMetricTemplatesAPIViewGETTests(TenantTestCase):
                             'value': '1'
                         }
                     ],
-                    'files': [],
                     'parameter': [
                         {
                             'key': '--project',
                             'value': 'EGI'
                         }
                     ],
-                    'fileparameter': []
                 },
                 {
                     'id': self.metrictemplate3.id,
@@ -1458,14 +1416,12 @@ class ListMetricTemplatesAPIViewGETTests(TenantTestCase):
                             'value': '1'
                         }
                     ],
-                    'files': [],
                     'parameter': [
                         {
                             'key': '-s',
                             'value': '/var/run/argo-nagios-ams-publisher/sock'
                         }
-                    ],
-                    'fileparameter': []
+                    ]
                 },
                 {
                     "id": self.metrictemplate5.id,
@@ -1502,14 +1458,12 @@ class ListMetricTemplatesAPIViewGETTests(TenantTestCase):
                     "attribute": [],
                     "dependency": [],
                     "flags": [],
-                    "files": [],
                     "parameter": [
                         {
                             "key": "-c",
                             "value": "check_connectors_egi"
                         }
-                    ],
-                    "fileparameter": []
+                    ]
                 },
                 {
                     "id": self.metrictemplate6.id,
@@ -1561,9 +1515,7 @@ class ListMetricTemplatesAPIViewGETTests(TenantTestCase):
                             "value": "1"
                         }
                     ],
-                    "files": [],
-                    "parameter": [],
-                    "fileparameter": []
+                    "parameter": []
                 },
                 {
                     "id": self.metrictemplate8.id,
@@ -1618,7 +1570,6 @@ class ListMetricTemplatesAPIViewGETTests(TenantTestCase):
                             "value": "1"
                         }
                     ],
-                    "files": [],
                     "parameter": [
                         {
                             "key": "-v",
@@ -1628,8 +1579,7 @@ class ListMetricTemplatesAPIViewGETTests(TenantTestCase):
                             "key": "-i",
                             "value": ""
                         }
-                    ],
-                    "fileparameter": []
+                    ]
                 },
                 {
                     'id': self.metrictemplate2.id,
@@ -1654,9 +1604,7 @@ class ListMetricTemplatesAPIViewGETTests(TenantTestCase):
                             'value': '1'
                         }
                     ],
-                    'files': [],
-                    'parameter': [],
-                    'fileparameter': []
+                    'parameter': []
                 },
                 {
                     "id": self.metrictemplate4.id,
@@ -1703,14 +1651,12 @@ class ListMetricTemplatesAPIViewGETTests(TenantTestCase):
                             "value": "1"
                         }
                     ],
-                    "files": [],
                     "parameter": [
                         {
                             "key": "--project",
                             "value": "EGI"
                         }
-                    ],
-                    "fileparameter": []
+                    ]
                 },
                 {
                     "id": self.metrictemplate7.id,
@@ -1757,14 +1703,12 @@ class ListMetricTemplatesAPIViewGETTests(TenantTestCase):
                             "value": "1"
                         }
                     ],
-                    "files": [],
                     "parameter": [
                         {
                             "key": "--project",
                             "value": "EGI"
                         }
-                    ],
-                    "fileparameter": []
+                    ]
                 }
             ]
         )
@@ -1820,14 +1764,12 @@ class ListMetricTemplatesAPIViewGETTests(TenantTestCase):
                         'value': '1'
                     }
                 ],
-                'files': [],
                 'parameter': [
                     {
                         'key': '--project',
                         'value': 'EGI'
                     }
-                ],
-                'fileparameter': []
+                ]
             }
         )
 
@@ -1881,14 +1823,12 @@ class ListMetricTemplatesAPIViewGETTests(TenantTestCase):
                         'value': '1'
                     }
                 ],
-                'files': [],
                 'parameter': [
                     {
                         'key': '--project',
                         'value': 'EGI'
                     }
-                ],
-                'fileparameter': []
+                ]
             }
         )
 
@@ -1993,9 +1933,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps([{'key': 'attr-key', 'value': 'attr-val'}]),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.public_tenant
@@ -2024,9 +1962,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["attr-key attr-val"]')
         self.assertEqual(mt.dependency, '["dep-key dep-val"]')
         self.assertEqual(mt.flags, '["flag-key flag-val"]')
-        self.assertEqual(mt.files, '["file-key file-val"]')
         self.assertEqual(mt.parameter, '["par-key par-val"]')
-        self.assertEqual(mt.fileparameter, '["fp-key fp-val"]')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertTrue(self.tag1 in versions[0].tags.all())
@@ -2040,9 +1976,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
         self.assertEqual(versions[0].version_user, 'poem')
         self.assertEqual(versions[0].version_comment, 'Initial version.')
 
@@ -2072,9 +2006,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps([{'key': 'attr-key', 'value': 'attr-val'}]),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.public_tenant
@@ -2125,9 +2057,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps([{'key': 'attr-key', 'value': 'attr-val'}]),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.tenant
@@ -2176,9 +2106,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps([{'key': 'attr-key', 'value': 'attr-val'}]),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.tenant
@@ -2229,9 +2157,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps([{'key': 'attr-key', 'value': 'attr-val'}]),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         self.assertRaises(
             admin_models.MetricTags.DoesNotExist,
@@ -2266,9 +2192,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["attr-key attr-val"]')
         self.assertEqual(mt.dependency, '["dep-key dep-val"]')
         self.assertEqual(mt.flags, '["flag-key flag-val"]')
-        self.assertEqual(mt.files, '["file-key file-val"]')
         self.assertEqual(mt.parameter, '["par-key par-val"]')
-        self.assertEqual(mt.fileparameter, '["fp-key fp-val"]')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertTrue(self.tag1 in versions[0].tags.all())
@@ -2282,9 +2206,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
         self.assertEqual(versions[0].version_user, 'poem')
         self.assertEqual(versions[0].version_comment, 'Initial version.')
 
@@ -2316,9 +2238,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps([{'key': 'attr-key', 'value': 'attr-val'}]),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         self.assertRaises(
             admin_models.MetricTags.DoesNotExist,
@@ -2379,9 +2299,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps([{'key': 'attr-key', 'value': 'attr-val'}]),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         self.assertRaises(
             admin_models.MetricTags.DoesNotExist,
@@ -2442,9 +2360,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps([{'key': 'attr-key', 'value': 'attr-val'}]),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         self.assertRaises(
             admin_models.MetricTags.DoesNotExist,
@@ -2505,9 +2421,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps([{'key': 'attr-key', 'value': 'attr-val'}]),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.public_tenant
@@ -2535,9 +2449,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["attr-key attr-val"]')
         self.assertEqual(mt.dependency, '["dep-key dep-val"]')
         self.assertEqual(mt.flags, '["flag-key flag-val"]')
-        self.assertEqual(mt.files, '["file-key file-val"]')
         self.assertEqual(mt.parameter, '["par-key par-val"]')
-        self.assertEqual(mt.fileparameter, '["fp-key fp-val"]')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertFalse(versions[0].tags.all())
@@ -2550,9 +2462,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
         self.assertEqual(versions[0].version_user, 'poem')
         self.assertEqual(versions[0].version_comment, 'Initial version.')
 
@@ -2584,9 +2494,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps([{'key': 'attr-key', 'value': 'attr-val'}]),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.public_tenant
@@ -2637,9 +2545,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps([{'key': 'attr-key', 'value': 'attr-val'}]),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.tenant
@@ -2690,9 +2596,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps([{'key': 'attr-key', 'value': 'attr-val'}]),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.tenant
@@ -2743,9 +2647,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps([{'key': 'attr-key', 'value': 'attr-val'}]),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.public_tenant
@@ -2778,9 +2680,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["attr-key attr-val"]')
         self.assertEqual(mt.dependency, '["dep-key dep-val"]')
         self.assertEqual(mt.flags, '["flag-key flag-val"]')
-        self.assertEqual(mt.files, '["file-key file-val"]')
         self.assertEqual(mt.parameter, '["par-key par-val"]')
-        self.assertEqual(mt.fileparameter, '["fp-key fp-val"]')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertTrue(self.tag1 in versions[0].tags.all())
@@ -2794,9 +2694,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
         self.assertEqual(versions[0].version_user, 'poem')
         self.assertEqual(versions[0].version_comment, 'Initial version.')
 
@@ -2828,9 +2726,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps([{'key': 'attr-key', 'value': 'attr-val'}]),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.public_tenant
@@ -2881,9 +2777,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps([{'key': 'attr-key', 'value': 'attr-val'}]),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.tenant
@@ -2934,9 +2828,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps([{'key': 'attr-key', 'value': 'attr-val'}]),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.tenant
@@ -2986,9 +2878,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps([{'key': '', 'value': ''}]),
             'dependency': json.dumps([{'key': '', 'value': ''}]),
             'parameter': json.dumps([{'key': '', 'value': ''}]),
-            'flags': json.dumps([{'key': '', 'value': ''}]),
-            'files': json.dumps([{'key': '', 'value': ''}]),
-            'fileparameter': json.dumps([{'key': '', 'value': ''}])
+            'flags': json.dumps([{'key': '', 'value': ''}])
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.public_tenant
@@ -3028,9 +2918,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps([{'key': '', 'value': ''}]),
             'dependency': json.dumps([{'key': '', 'value': ''}]),
             'parameter': json.dumps([{'key': '', 'value': ''}]),
-            'flags': json.dumps([{'key': '', 'value': ''}]),
-            'files': json.dumps([{'key': '', 'value': ''}]),
-            'fileparameter': json.dumps([{'key': '', 'value': ''}])
+            'flags': json.dumps([{'key': '', 'value': ''}])
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.public_tenant
@@ -3071,9 +2959,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps([{'key': '', 'value': ''}]),
             'dependency': json.dumps([{'key': '', 'value': ''}]),
             'parameter': json.dumps([{'key': '', 'value': ''}]),
-            'flags': json.dumps([{'key': '', 'value': ''}]),
-            'files': json.dumps([{'key': '', 'value': ''}]),
-            'fileparameter': json.dumps([{'key': '', 'value': ''}])
+            'flags': json.dumps([{'key': '', 'value': ''}])
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.tenant
@@ -3114,9 +3000,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps([{'key': '', 'value': ''}]),
             'dependency': json.dumps([{'key': '', 'value': ''}]),
             'parameter': json.dumps([{'key': '', 'value': ''}]),
-            'flags': json.dumps([{'key': '', 'value': ''}]),
-            'files': json.dumps([{'key': '', 'value': ''}]),
-            'fileparameter': json.dumps([{'key': '', 'value': ''}])
+            'flags': json.dumps([{'key': '', 'value': ''}])
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.tenant
@@ -3157,9 +3041,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps([{'key': '', 'value': ''}]),
             'dependency': json.dumps([{'key': '', 'value': ''}]),
             'parameter': json.dumps([{'key': '', 'value': ''}]),
-            'flags': json.dumps([{'key': '', 'value': ''}]),
-            'files': json.dumps([{'key': '', 'value': ''}]),
-            'fileparameter': json.dumps([{'key': '', 'value': ''}])
+            'flags': json.dumps([{'key': '', 'value': ''}])
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.public_tenant
@@ -3199,9 +3081,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps([{'key': '', 'value': ''}]),
             'dependency': json.dumps([{'key': '', 'value': ''}]),
             'parameter': json.dumps([{'key': '', 'value': ''}]),
-            'flags': json.dumps([{'key': '', 'value': ''}]),
-            'files': json.dumps([{'key': '', 'value': ''}]),
-            'fileparameter': json.dumps([{'key': '', 'value': ''}])
+            'flags': json.dumps([{'key': '', 'value': ''}])
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.public_tenant
@@ -3242,9 +3122,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps([{'key': '', 'value': ''}]),
             'dependency': json.dumps([{'key': '', 'value': ''}]),
             'parameter': json.dumps([{'key': '', 'value': ''}]),
-            'flags': json.dumps([{'key': '', 'value': ''}]),
-            'files': json.dumps([{'key': '', 'value': ''}]),
-            'fileparameter': json.dumps([{'key': '', 'value': ''}])
+            'flags': json.dumps([{'key': '', 'value': ''}])
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.tenant
@@ -3285,9 +3163,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps([{'key': '', 'value': ''}]),
             'dependency': json.dumps([{'key': '', 'value': ''}]),
             'parameter': json.dumps([{'key': '', 'value': ''}]),
-            'flags': json.dumps([{'key': '', 'value': ''}]),
-            'files': json.dumps([{'key': '', 'value': ''}]),
-            'fileparameter': json.dumps([{'key': '', 'value': ''}])
+            'flags': json.dumps([{'key': '', 'value': ''}])
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.tenant
@@ -3328,9 +3204,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps([{'key': '', 'value': ''}]),
             'dependency': json.dumps([{'key': '', 'value': ''}]),
             'parameter': json.dumps([{'key': '', 'value': ''}]),
-            'flags': json.dumps([{'key': '', 'value': ''}]),
-            'files': json.dumps([{'key': '', 'value': ''}]),
-            'fileparameter': json.dumps([{'key': '', 'value': ''}])
+            'flags': json.dumps([{'key': '', 'value': ''}])
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.public_tenant
@@ -3370,9 +3244,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps([{'key': '', 'value': ''}]),
             'dependency': json.dumps([{'key': '', 'value': ''}]),
             'parameter': json.dumps([{'key': '', 'value': ''}]),
-            'flags': json.dumps([{'key': '', 'value': ''}]),
-            'files': json.dumps([{'key': '', 'value': ''}]),
-            'fileparameter': json.dumps([{'key': '', 'value': ''}])
+            'flags': json.dumps([{'key': '', 'value': ''}])
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.public_tenant
@@ -3413,9 +3285,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps([{'key': '', 'value': ''}]),
             'dependency': json.dumps([{'key': '', 'value': ''}]),
             'parameter': json.dumps([{'key': '', 'value': ''}]),
-            'flags': json.dumps([{'key': '', 'value': ''}]),
-            'files': json.dumps([{'key': '', 'value': ''}]),
-            'fileparameter': json.dumps([{'key': '', 'value': ''}])
+            'flags': json.dumps([{'key': '', 'value': ''}])
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.tenant
@@ -3456,9 +3326,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps([{'key': '', 'value': ''}]),
             'dependency': json.dumps([{'key': '', 'value': ''}]),
             'parameter': json.dumps([{'key': '', 'value': ''}]),
-            'flags': json.dumps([{'key': '', 'value': ''}]),
-            'files': json.dumps([{'key': '', 'value': ''}]),
-            'fileparameter': json.dumps([{'key': '', 'value': ''}])
+            'flags': json.dumps([{'key': '', 'value': ''}])
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.tenant
@@ -3498,9 +3366,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'config': json.dumps(conf),
             'attribute': json.dumps([{'key': '', 'value': ''}]),
             'dependency': json.dumps([{'key': '', 'value': ''}]),
-            'parameter': json.dumps([{'key': '', 'value': ''}]),
-            'files': json.dumps([{'key': '', 'value': ''}]),
-            'fileparameter': json.dumps([{'key': '', 'value': ''}])
+            'parameter': json.dumps([{'key': '', 'value': ''}])
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.public_tenant
@@ -3539,9 +3405,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'config': json.dumps(conf),
             'attribute': json.dumps([{'key': '', 'value': ''}]),
             'dependency': json.dumps([{'key': '', 'value': ''}]),
-            'parameter': json.dumps([{'key': '', 'value': ''}]),
-            'files': json.dumps([{'key': '', 'value': ''}]),
-            'fileparameter': json.dumps([{'key': '', 'value': ''}])
+            'parameter': json.dumps([{'key': '', 'value': ''}])
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.public_tenant
@@ -3581,9 +3445,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'config': json.dumps(conf),
             'attribute': json.dumps([{'key': '', 'value': ''}]),
             'dependency': json.dumps([{'key': '', 'value': ''}]),
-            'parameter': json.dumps([{'key': '', 'value': ''}]),
-            'files': json.dumps([{'key': '', 'value': ''}]),
-            'fileparameter': json.dumps([{'key': '', 'value': ''}])
+            'parameter': json.dumps([{'key': '', 'value': ''}])
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.tenant
@@ -3623,9 +3485,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'config': json.dumps(conf),
             'attribute': json.dumps([{'key': '', 'value': ''}]),
             'dependency': json.dumps([{'key': '', 'value': ''}]),
-            'parameter': json.dumps([{'key': '', 'value': ''}]),
-            'files': json.dumps([{'key': '', 'value': ''}]),
-            'fileparameter': json.dumps([{'key': '', 'value': ''}])
+            'parameter': json.dumps([{'key': '', 'value': ''}])
         }
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.tenant
@@ -3672,9 +3532,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -3707,12 +3565,9 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                 '{"added": {"fields": ["dependency"], "object": ["dep-key"]}}',
                 '{"deleted": {"fields": ["flags"], "object": ["OBSESS"]}}',
                 '{"added": {"fields": ["flags"], "object": ["flag-key"]}}',
-                '{"added": {"fields": ["files"], "object": ["file-key"]}}',
                 '{"deleted": {"fields": ["parameter"], '
                 '"object": ["--project"]}}',
                 '{"added": {"fields": ["parameter"], "object": ["par-key"]}}',
-                '{"added": {"fields": ["fileparameter"], '
-                '"object": ["fp-key"]}}',
                 '{"added": {"fields": ["tags"], "object": ["internal"]}}',
                 '{"deleted": {"fields": ["tags"], "object": ["test_tag1"]}}',
                 '{"added": {"fields": ["description", "parent"]}}',
@@ -3738,9 +3593,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN2 --token"]')
         self.assertEqual(mt.dependency, '["dep-key dep-val"]')
         self.assertEqual(mt.flags, '["flag-key flag-val"]')
-        self.assertEqual(mt.files, '["file-key file-val"]')
         self.assertEqual(mt.parameter, '["par-key par-val"]')
-        self.assertEqual(mt.fileparameter, '["fp-key fp-val"]')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -3751,9 +3604,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -3788,9 +3639,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -3840,9 +3689,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -3853,9 +3700,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -3890,9 +3735,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -3942,9 +3785,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -3955,9 +3796,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -3992,9 +3831,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -4044,9 +3881,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -4057,9 +3892,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -4094,9 +3927,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -4133,12 +3964,9 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                 '{"added": {"fields": ["dependency"], "object": ["dep-key"]}}',
                 '{"deleted": {"fields": ["flags"], "object": ["OBSESS"]}}',
                 '{"added": {"fields": ["flags"], "object": ["flag-key"]}}',
-                '{"added": {"fields": ["files"], "object": ["file-key"]}}',
                 '{"deleted": {"fields": ["parameter"], '
                 '"object": ["--project"]}}',
                 '{"added": {"fields": ["parameter"], "object": ["par-key"]}}',
-                '{"added": {"fields": ["fileparameter"], '
-                '"object": ["fp-key"]}}',
                 '{"added": {"fields": ["tags"], "object": ["internal"]}}',
                 '{"deleted": {"fields": ["tags"], "object": ["test_tag1"]}}',
                 '{"added": {"fields": ["description", "parent"]}}',
@@ -4164,9 +3992,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN2 --token"]')
         self.assertEqual(mt.dependency, '["dep-key dep-val"]')
         self.assertEqual(mt.flags, '["flag-key flag-val"]')
-        self.assertEqual(mt.files, '["file-key file-val"]')
         self.assertEqual(mt.parameter, '["par-key par-val"]')
-        self.assertEqual(mt.fileparameter, '["fp-key fp-val"]')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -4177,9 +4003,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -4214,9 +4038,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -4266,9 +4088,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -4279,9 +4099,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -4316,9 +4134,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -4368,9 +4184,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -4381,9 +4195,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -4418,9 +4230,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -4470,9 +4280,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -4483,9 +4291,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -4520,9 +4326,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         self.assertRaises(
@@ -4561,12 +4365,9 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                 '{"added": {"fields": ["dependency"], "object": ["dep-key"]}}',
                 '{"deleted": {"fields": ["flags"], "object": ["OBSESS"]}}',
                 '{"added": {"fields": ["flags"], "object": ["flag-key"]}}',
-                '{"added": {"fields": ["files"], "object": ["file-key"]}}',
                 '{"deleted": {"fields": ["parameter"], '
                 '"object": ["--project"]}}',
                 '{"added": {"fields": ["parameter"], "object": ["par-key"]}}',
-                '{"added": {"fields": ["fileparameter"], '
-                '"object": ["fp-key"]}}',
                 '{"added": {"fields": ["tags"], "object": ["new_tag"]}}',
                 '{"deleted": {"fields": ["tags"], "object": ["test_tag2"]}}',
                 '{"added": {"fields": ["description", "parent"]}}',
@@ -4592,9 +4393,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN2 --token"]')
         self.assertEqual(mt.dependency, '["dep-key dep-val"]')
         self.assertEqual(mt.flags, '["flag-key flag-val"]')
-        self.assertEqual(mt.files, '["file-key file-val"]')
         self.assertEqual(mt.parameter, '["par-key par-val"]')
-        self.assertEqual(mt.fileparameter, '["fp-key fp-val"]')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -4605,9 +4404,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -4642,9 +4439,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         self.assertRaises(
@@ -4700,9 +4495,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -4713,9 +4506,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -4750,9 +4541,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         self.assertRaises(
@@ -4808,9 +4597,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -4821,9 +4608,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -4858,9 +4643,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         self.assertRaises(
@@ -4920,9 +4703,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -4933,9 +4714,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -4970,9 +4749,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -5005,12 +4782,9 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                 '{"added": {"fields": ["dependency"], "object": ["dep-key"]}}',
                 '{"deleted": {"fields": ["flags"], "object": ["OBSESS"]}}',
                 '{"added": {"fields": ["flags"], "object": ["flag-key"]}}',
-                '{"added": {"fields": ["files"], "object": ["file-key"]}}',
                 '{"deleted": {"fields": ["parameter"], '
                 '"object": ["--project"]}}',
                 '{"added": {"fields": ["parameter"], "object": ["par-key"]}}',
-                '{"added": {"fields": ["fileparameter"], '
-                '"object": ["fp-key"]}}',
                 '{"deleted": {"fields": ["tags"], "object": ["test_tag1"]}}',
                 '{"deleted": {"fields": ["tags"], "object": ["test_tag2"]}}',
                 '{"added": {"fields": ["description", "parent"]}}',
@@ -5034,9 +4808,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN2 --token"]')
         self.assertEqual(mt.dependency, '["dep-key dep-val"]')
         self.assertEqual(mt.flags, '["flag-key flag-val"]')
-        self.assertEqual(mt.files, '["file-key file-val"]')
         self.assertEqual(mt.parameter, '["par-key par-val"]')
-        self.assertEqual(mt.fileparameter, '["fp-key fp-val"]')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -5047,9 +4819,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -5084,9 +4854,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -5136,9 +4904,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -5149,9 +4915,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -5186,9 +4950,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -5238,9 +5000,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -5251,9 +5011,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -5288,9 +5046,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -5337,9 +5093,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -5350,9 +5104,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -5387,9 +5139,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -5419,12 +5169,9 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                 '{"added": {"fields": ["dependency"], "object": ["dep-key"]}}',
                 '{"deleted": {"fields": ["flags"], "object": ["OBSESS"]}}',
                 '{"added": {"fields": ["flags"], "object": ["flag-key"]}}',
-                '{"added": {"fields": ["files"], "object": ["file-key"]}}',
                 '{"deleted": {"fields": ["parameter"], '
                 '"object": ["--project"]}}',
                 '{"added": {"fields": ["parameter"], "object": ["par-key"]}}',
-                '{"added": {"fields": ["fileparameter"], '
-                '"object": ["fp-key"]}}',
                 '{"added": {"fields": ["description", "parent"]}}',
                 '{"changed": {"fields": ["name", '
                 '"probeexecutable", "probekey"]}}',
@@ -5448,9 +5195,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN2 --token"]')
         self.assertEqual(mt.dependency, '["dep-key dep-val"]')
         self.assertEqual(mt.flags, '["flag-key flag-val"]')
-        self.assertEqual(mt.files, '["file-key file-val"]')
         self.assertEqual(mt.parameter, '["par-key par-val"]')
-        self.assertEqual(mt.fileparameter, '["fp-key fp-val"]')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -5462,9 +5207,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -5499,9 +5242,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -5550,9 +5291,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -5564,9 +5303,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -5601,9 +5338,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -5652,9 +5387,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -5666,9 +5399,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -5703,9 +5434,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -5754,9 +5483,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -5768,9 +5495,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -5805,9 +5530,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         self.assertRaises(
@@ -5843,12 +5566,9 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                 '{"added": {"fields": ["dependency"], "object": ["dep-key"]}}',
                 '{"deleted": {"fields": ["flags"], "object": ["OBSESS"]}}',
                 '{"added": {"fields": ["flags"], "object": ["flag-key"]}}',
-                '{"added": {"fields": ["files"], "object": ["file-key"]}}',
                 '{"deleted": {"fields": ["parameter"], '
                 '"object": ["--project"]}}',
                 '{"added": {"fields": ["parameter"], "object": ["par-key"]}}',
-                '{"added": {"fields": ["fileparameter"], '
-                '"object": ["fp-key"]}}',
                 '{"added": {"fields": ["description", "parent"]}}',
                 '{"added": {"fields": ["tags"], "object": ["new_tag"]}}',
                 '{"deleted": {"fields": ["tags"], "object": ["test_tag2"]}}',
@@ -5874,9 +5594,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN2 --token"]')
         self.assertEqual(mt.dependency, '["dep-key dep-val"]')
         self.assertEqual(mt.flags, '["flag-key flag-val"]')
-        self.assertEqual(mt.files, '["file-key file-val"]')
         self.assertEqual(mt.parameter, '["par-key par-val"]')
-        self.assertEqual(mt.fileparameter, '["fp-key fp-val"]')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -5888,9 +5606,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -5925,9 +5641,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         self.assertRaises(
@@ -5986,9 +5700,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -6000,9 +5712,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -6037,9 +5747,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         self.assertRaises(
@@ -6098,9 +5806,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -6112,9 +5818,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -6149,9 +5853,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         self.assertRaises(
@@ -6210,9 +5912,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -6224,9 +5924,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -6261,9 +5959,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -6293,12 +5989,9 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                 '{"added": {"fields": ["dependency"], "object": ["dep-key"]}}',
                 '{"deleted": {"fields": ["flags"], "object": ["OBSESS"]}}',
                 '{"added": {"fields": ["flags"], "object": ["flag-key"]}}',
-                '{"added": {"fields": ["files"], "object": ["file-key"]}}',
                 '{"deleted": {"fields": ["parameter"], '
                 '"object": ["--project"]}}',
                 '{"added": {"fields": ["parameter"], "object": ["par-key"]}}',
-                '{"added": {"fields": ["fileparameter"], '
-                '"object": ["fp-key"]}}',
                 '{"added": {"fields": ["description", "parent"]}}',
                 '{"deleted": {"fields": ["tags"], "object": ["test_tag1"]}}',
                 '{"deleted": {"fields": ["tags"], "object": ["test_tag2"]}}',
@@ -6322,9 +6015,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN2 --token"]')
         self.assertEqual(mt.dependency, '["dep-key dep-val"]')
         self.assertEqual(mt.flags, '["flag-key flag-val"]')
-        self.assertEqual(mt.files, '["file-key file-val"]')
         self.assertEqual(mt.parameter, '["par-key par-val"]')
-        self.assertEqual(mt.fileparameter, '["fp-key fp-val"]')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -6336,9 +6027,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -6373,9 +6062,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -6424,9 +6111,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -6438,9 +6123,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -6475,9 +6158,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -6527,9 +6208,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -6541,9 +6220,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -6578,9 +6255,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -6629,9 +6304,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -6643,9 +6316,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -6680,9 +6351,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -6731,9 +6400,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -6745,9 +6412,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -6771,9 +6436,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps([{'key': '', 'value': ''}]),
             'dependency': json.dumps([{'key': '', 'value': ''}]),
             'parameter': json.dumps([{'key': '', 'value': ''}]),
-            'flags': json.dumps([{'key': 'PASSIVE', 'value': '1'}]),
-            'files': json.dumps([{'key': '', 'value': ''}]),
-            'fileparameter': json.dumps([{'key': '', 'value': ''}]),
+            'flags': json.dumps([{'key': 'PASSIVE', 'value': '1'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -6802,9 +6465,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["PASSIVE 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -6816,9 +6477,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -6842,9 +6501,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps([{'key': '', 'value': ''}]),
             'dependency': json.dumps([{'key': '', 'value': ''}]),
             'parameter': json.dumps([{'key': '', 'value': ''}]),
-            'flags': json.dumps([{'key': 'PASSIVE', 'value': '1'}]),
-            'files': json.dumps([{'key': '', 'value': ''}]),
-            'fileparameter': json.dumps([{'key': '', 'value': ''}]),
+            'flags': json.dumps([{'key': 'PASSIVE', 'value': '1'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -6874,9 +6531,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1", "PASSIVE 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -6888,9 +6543,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -6914,9 +6567,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps([{'key': '', 'value': ''}]),
             'dependency': json.dumps([{'key': '', 'value': ''}]),
             'parameter': json.dumps([{'key': '', 'value': ''}]),
-            'flags': json.dumps([{'key': 'PASSIVE', 'value': '1'}]),
-            'files': json.dumps([{'key': '', 'value': ''}]),
-            'fileparameter': json.dumps([{'key': '', 'value': ''}]),
+            'flags': json.dumps([{'key': 'PASSIVE', 'value': '1'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -6946,9 +6597,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1", "PASSIVE 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -6960,9 +6609,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -6986,9 +6633,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps([{'key': '', 'value': ''}]),
             'dependency': json.dumps([{'key': '', 'value': ''}]),
             'parameter': json.dumps([{'key': '', 'value': ''}]),
-            'flags': json.dumps([{'key': 'PASSIVE', 'value': '1'}]),
-            'files': json.dumps([{'key': '', 'value': ''}]),
-            'fileparameter': json.dumps([{'key': '', 'value': ''}]),
+            'flags': json.dumps([{'key': 'PASSIVE', 'value': '1'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -7018,9 +6663,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1", "PASSIVE 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -7032,9 +6675,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -7069,9 +6710,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -7119,9 +6758,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -7172,9 +6809,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -7185,9 +6820,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -7222,9 +6855,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -7275,9 +6906,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -7288,9 +6917,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -7325,9 +6952,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -7378,9 +7003,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -7391,9 +7014,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -7428,9 +7049,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -7480,9 +7099,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -7493,9 +7110,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -7530,9 +7145,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -7583,9 +7196,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -7596,9 +7207,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -7633,9 +7242,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -7686,9 +7293,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -7699,9 +7304,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -7736,9 +7339,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -7789,9 +7390,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -7802,9 +7401,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -7839,9 +7436,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -7891,9 +7486,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -7904,9 +7497,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -7941,9 +7532,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -7994,9 +7583,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -8007,9 +7594,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -8044,9 +7629,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -8097,9 +7680,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -8110,9 +7691,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -8147,9 +7726,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -8200,9 +7777,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -8213,9 +7788,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -8255,9 +7828,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
             'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'flags': json.dumps([{'key': 'flag-key', 'value': 'flag-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -8298,12 +7869,9 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
                 '{"added": {"fields": ["dependency"], "object": ["dep-key"]}}',
                 '{"deleted": {"fields": ["flags"], "object": ["OBSESS"]}}',
                 '{"added": {"fields": ["flags"], "object": ["flag-key"]}}',
-                '{"added": {"fields": ["files"], "object": ["file-key"]}}',
                 '{"deleted": {"fields": ["parameter"], '
                 '"object": ["--project"]}}',
                 '{"added": {"fields": ["parameter"], "object": ["par-key"]}}',
-                '{"added": {"fields": ["fileparameter"], '
-                '"object": ["fp-key"]}}',
                 '{"added": {"fields": ["description", "parent"]}}',
                 '{"changed": {"fields": ["name", "probekey"]}}'
             }
@@ -8327,9 +7895,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN2 --token"]')
         self.assertEqual(mt.dependency, '["dep-key dep-val"]')
         self.assertEqual(mt.flags, '["flag-key flag-val"]')
-        self.assertEqual(mt.files, '["file-key file-val"]')
         self.assertEqual(mt.parameter, '["par-key par-val"]')
-        self.assertEqual(mt.fileparameter, '["fp-key fp-val"]')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -8340,9 +7906,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -8376,9 +7940,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'config': json.dumps(conf),
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
-            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -8425,9 +7987,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -8438,9 +7998,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -8474,9 +8032,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'config': json.dumps(conf),
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
-            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -8526,9 +8082,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -8539,9 +8093,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -8575,9 +8127,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'config': json.dumps(conf),
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
-            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -8627,9 +8177,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -8640,9 +8188,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     @patch('Poem.api.internal_views.metrictemplates.update_metrics')
@@ -8676,9 +8222,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
             'config': json.dumps(conf),
             'attribute': json.dumps(attr),
             'dependency': json.dumps([{'key': 'dep-key', 'value': 'dep-val'}]),
-            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}]),
-            'files': json.dumps([{'key': 'file-key', 'value': 'file-val'}]),
-            'fileparameter': json.dumps([{'key': 'fp-key', 'value': 'fp-val'}])
+            'parameter': json.dumps([{'key': 'par-key', 'value': 'par-val'}])
         }
         content, content_type = encode_data(data)
         request = self.factory.put(self.url, content, content_type=content_type)
@@ -8728,9 +8272,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(mt.attribute, '["argo.ams_TOKEN --token"]')
         self.assertEqual(mt.dependency, '')
         self.assertEqual(mt.flags, '["OBSESS 1"]')
-        self.assertEqual(mt.files, '')
         self.assertEqual(mt.parameter, '["--project EGI"]')
-        self.assertEqual(mt.fileparameter, '')
         self.assertEqual(versions[0].name, mt.name)
         self.assertEqual(versions[0].mtype, mt.mtype)
         self.assertEqual(set(versions[0].tags.all()), set(mt.tags.all()))
@@ -8741,9 +8283,7 @@ class ListMetricTemplatesAPIViewTests(TenantTestCase):
         self.assertEqual(versions[0].attribute, mt.attribute)
         self.assertEqual(versions[0].dependency, mt.dependency)
         self.assertEqual(versions[0].flags, mt.flags)
-        self.assertEqual(versions[0].files, mt.files)
         self.assertEqual(versions[0].parameter, mt.parameter)
-        self.assertEqual(versions[0].fileparameter, mt.fileparameter)
 
     @patch("Poem.api.internal_views.metrictemplates.sync_tags_webapi")
     def test_delete_metric_template_sp_superuser(self, mock_sync):
@@ -10022,17 +9562,25 @@ class MetricTagsTests(TenantTestCase):
                 {
                     "id": self.tag1.id,
                     "name": "internal",
-                    "metrics": ["argo.AMS-Check"]
+                    "metrics": [{
+                        "name": "argo.AMS-Check"
+                    }]
                 },
                 {
                     "id": self.tag3.id,
                     "name": "test_tag1",
-                    "metrics": ["argo.AMS-Check", "argo.EGI-Connectors-Check"]
+                    "metrics": [
+                        {"name": "argo.AMS-Check"},
+                        {"name": "argo.EGI-Connectors-Check"}
+                    ]
                 },
                 {
                     "id": self.tag4.id,
                     "name": "test_tag2",
-                    "metrics": ["argo.AMS-Check", "org.apel.APEL-Pub"]
+                    "metrics": [
+                        {"name": "argo.AMS-Check"},
+                        {"name": "org.apel.APEL-Pub"}
+                    ]
                 }
             ]
         )
@@ -10052,17 +9600,25 @@ class MetricTagsTests(TenantTestCase):
                 {
                     "id": self.tag1.id,
                     "name": "internal",
-                    "metrics": ["argo.AMS-Check"]
+                    "metrics": [
+                        {"name": "argo.AMS-Check"}
+                    ]
                 },
                 {
                     "id": self.tag3.id,
                     "name": "test_tag1",
-                    "metrics": ["argo.AMS-Check", "argo.EGI-Connectors-Check"]
+                    "metrics": [
+                        {"name": "argo.AMS-Check"},
+                        {"name": "argo.EGI-Connectors-Check"}
+                    ]
                 },
                 {
                     "id": self.tag4.id,
                     "name": "test_tag2",
-                    "metrics": ["argo.AMS-Check", "org.apel.APEL-Pub"]
+                    "metrics": [
+                        {"name": "argo.AMS-Check"},
+                        {"name": "org.apel.APEL-Pub"}
+                    ]
                 }
             ]
         )
@@ -10082,17 +9638,25 @@ class MetricTagsTests(TenantTestCase):
                 {
                     "id": self.tag1.id,
                     "name": "internal",
-                    "metrics": ["argo.AMS-Check"]
+                    "metrics": [
+                        {"name": "argo.AMS-Check"}
+                    ]
                 },
                 {
                     "id": self.tag3.id,
                     "name": "test_tag1",
-                    "metrics": ["argo.AMS-Check", "argo.EGI-Connectors-Check"]
+                    "metrics": [
+                        {"name": "argo.AMS-Check"},
+                        {"name": "argo.EGI-Connectors-Check"}
+                    ]
                 },
                 {
                     "id": self.tag4.id,
                     "name": "test_tag2",
-                    "metrics": ["argo.AMS-Check", "org.apel.APEL-Pub"]
+                    "metrics": [
+                        {"name": "argo.AMS-Check"},
+                        {"name": "org.apel.APEL-Pub"}
+                    ]
                 }
             ]
         )
@@ -10112,17 +9676,25 @@ class MetricTagsTests(TenantTestCase):
                 {
                     "id": self.tag1.id,
                     "name": "internal",
-                    "metrics": ["argo.AMS-Check"]
+                    "metrics": [
+                        {"name": "argo.AMS-Check"}
+                    ]
                 },
                 {
                     "id": self.tag3.id,
                     "name": "test_tag1",
-                    "metrics": ["argo.AMS-Check", "argo.EGI-Connectors-Check"]
+                    "metrics": [
+                        {"name": "argo.AMS-Check"},
+                        {"name": "argo.EGI-Connectors-Check"}
+                    ]
                 },
                 {
                     "id": self.tag4.id,
                     "name": "test_tag2",
-                    "metrics": ["argo.AMS-Check", "org.apel.APEL-Pub"]
+                    "metrics": [
+                        {"name": "argo.AMS-Check"},
+                        {"name": "org.apel.APEL-Pub"}
+                    ]
                 }
             ]
         )
@@ -10141,7 +9713,9 @@ class MetricTagsTests(TenantTestCase):
             {
                 "id": self.tag1.id,
                 "name": "internal",
-                "metrics": ["argo.AMS-Check"]
+                "metrics": [
+                    {"name": "argo.AMS-Check"}
+                ]
             }
         )
 
@@ -10154,7 +9728,9 @@ class MetricTagsTests(TenantTestCase):
             {
                 "id": self.tag1.id,
                 "name": "internal",
-                "metrics": ["argo.AMS-Check"]
+                "metrics": [
+                    {"name": "argo.AMS-Check"}
+                ]
             }
         )
 
@@ -10167,7 +9743,9 @@ class MetricTagsTests(TenantTestCase):
             {
                 "id": self.tag1.id,
                 "name": "internal",
-                "metrics": ["argo.AMS-Check"]
+                "metrics": [
+                    {"name": "argo.AMS-Check"}
+                ]
             }
         )
 
@@ -10180,7 +9758,9 @@ class MetricTagsTests(TenantTestCase):
             {
                 "id": self.tag1.id,
                 "name": "internal",
-                "metrics": ["argo.AMS-Check"]
+                "metrics": [
+                    {"name": "argo.AMS-Check"}
+                ]
             }
         )
 

@@ -81,9 +81,7 @@ class ListMetricTemplates(APIView):
             attribute = two_value_inline(metrictemplate.attribute)
             dependency = two_value_inline(metrictemplate.dependency)
             flags = two_value_inline(metrictemplate.flags)
-            files = two_value_inline(metrictemplate.files)
             parameter = two_value_inline(metrictemplate.parameter)
-            fileparameter = two_value_inline(metrictemplate.fileparameter)
 
             ostag = []
             if metrictemplate.probekey:
@@ -113,9 +111,7 @@ class ListMetricTemplates(APIView):
                 "attribute": attribute,
                 "dependency": dependency,
                 "flags": flags,
-                "files": files,
-                "parameter": parameter,
-                "fileparameter": fileparameter
+                "parameter": parameter
             }
 
             if not name and request.tenant == public_tenant:
@@ -176,12 +172,8 @@ class ListMetricTemplates(APIView):
                             request.data['dependency']
                         ),
                         flags=inline_metric_for_db(request.data['flags']),
-                        files=inline_metric_for_db(request.data['files']),
                         parameter=inline_metric_for_db(
                             request.data['parameter']
-                        ),
-                        fileparameter=inline_metric_for_db(
-                            request.data['fileparameter']
                         )
                     )
                     if 'tags' in dict(request.data):
@@ -315,14 +307,8 @@ class ListMetricTemplates(APIView):
                     metrictemplate.flags = inline_metric_for_db(
                         request.data['flags']
                     )
-                    metrictemplate.files = inline_metric_for_db(
-                        request.data['files']
-                    )
                     metrictemplate.parameter = inline_metric_for_db(
                         request.data['parameter']
-                    )
-                    metrictemplate.fileparameter = inline_metric_for_db(
-                        request.data['fileparameter']
                     )
                     metrictemplate.save()
 
@@ -365,12 +351,8 @@ class ListMetricTemplates(APIView):
                             request.data['dependency']
                         ),
                         'flags': inline_metric_for_db(request.data['flags']),
-                        'files': inline_metric_for_db(request.data['files']),
                         'parameter': inline_metric_for_db(
                             request.data['parameter']
-                        ),
-                        'fileparameter': inline_metric_for_db(
-                            request.data['fileparameter']
                         )
                     }
                     admin_models.MetricTemplate.objects.filter(
@@ -758,7 +740,10 @@ class ListMetricTags(APIView):
                 return Response({
                     "id": tag.id,
                     "name": tag.name,
-                    "metrics": sorted([metric.name for metric in metrics])
+                    "metrics": sorted(
+                        [{"name": metric.name} for metric in metrics],
+                        key=lambda m: m["name"]
+                    )
                 })
 
             except admin_models.MetricTags.DoesNotExist:
@@ -777,7 +762,10 @@ class ListMetricTags(APIView):
                 data.append({
                     "id": tag.id,
                     "name": tag.name,
-                    "metrics": sorted([metric.name for metric in metrics])
+                    "metrics": sorted(
+                        [{"name": metric.name} for metric in metrics],
+                        key=lambda m: m["name"]
+                    )
                 })
 
             return Response(data)
@@ -831,14 +819,16 @@ class ListMetricTags(APIView):
 
                     if len(missing_metrics) > 0:
                         if len(missing_metrics) == 1:
-                            warn_msg = \
-                                f"{warn_msg}Metric {list(missing_metrics)[0]} " \
+                            warn_msg = (
+                                f"{warn_msg}Metric {list(missing_metrics)[0]} "
                                 f"does not exist."
+                            )
 
                         else:
-                            warn_msg = "{}Metrics {} do not exist.".format(
-                                warn_msg,
-                                ", ".join(sorted(list(missing_metrics)))
+                            warn_msg = (
+                                f"{warn_msg}Metrics "
+                                f"{', '.join(sorted(list(missing_metrics)))} "
+                                f"do not exist."
                             )
 
                     if warn_msg:
@@ -1103,3 +1093,14 @@ class ListDefaultPorts(APIView):
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="You do not have permission to add ports"
             )
+
+
+class ListPublicDefaultPorts(ListDefaultPorts):
+    authentication_classes = ()
+    permission_classes = ()
+
+    def _denied(self):
+        return Response(status=status.HTTP_403_FORBIDDEN)
+
+    def post(self, request):
+        return self._denied()

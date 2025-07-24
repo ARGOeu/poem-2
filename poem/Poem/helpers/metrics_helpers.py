@@ -386,9 +386,6 @@ def sync_metrics(tenant, user):
         key for key in get_metrics_in_profiles(tenant=tenant)
     ]
     metrics = poem_models.Metric.objects.all().values_list("name", flat=True)
-    internal = admin_models.MetricTemplate.objects.filter(
-        tags__name="internal"
-    ).values_list("name", flat=True)
 
     missing_metrics = list(set(metrics_in_profiles).difference(set(metrics)))
     extra_metrics = list(set(metrics).difference(set(metrics_in_profiles)))
@@ -399,15 +396,14 @@ def sync_metrics(tenant, user):
 
     deleted = list()
     for metric in extra_metrics:
-        if metric not in internal:
-            m = poem_models.Metric.objects.get(name=metric)
-            poem_models.TenantHistory.objects.filter(
-                object_id=m.id,
-                content_type=ContentType.objects.get_for_model(
-                    poem_models.Metric
-                )
-            ).delete()
-            m.delete()
-            deleted.append(metric)
+        m = poem_models.Metric.objects.get(name=metric)
+        poem_models.TenantHistory.objects.filter(
+            object_id=m.id,
+            content_type=ContentType.objects.get_for_model(
+                poem_models.Metric
+            )
+        ).delete()
+        m.delete()
+        deleted.append(metric)
 
     return imported, warn, err, unavailable, deleted
