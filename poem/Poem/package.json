@@ -108,7 +108,7 @@
     "react-query": "^3.39.3",
     "react-router": "^6.22.3",
     "react-select": "^5.8.0",
-    "universal-cookie": "^7.1.4"
+    "universal-cookie": "^7.2.2"
   },
   "bugs": {
     "url": "https://github.com/ARGOeu/poem-2/issues"
