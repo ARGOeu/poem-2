@@ -1,0 +1,26 @@
+
+/* You can override the default Infima variables here. */
+:root {
+  --ifm-color-primary: #006185;
+  --ifm-color-primary-dark: #005778;
+  --ifm-color-primary-darker: #005271;
+  --ifm-color-primary-darkest: #00445d;
+  --ifm-color-primary-light: #006b92;
+  --ifm-color-primary-lighter: #007099;
+  --ifm-color-primary-lightest: #007ead;
+}
+
+/* For readability concerns, you should choose a lighter palette in dark mode. */
+[data-theme='dark'] {
+  --ifm-color-primary: #5dceea;
+  --ifm-color-primary-dark: #40c5e6;
+  --ifm-color-primary-darker: #32c1e4;
+  --ifm-color-primary-darkest: #1aa8cb;
+  --ifm-color-primary-light: #7ad7ee;
+  --ifm-color-primary-lighter: #88dbf0;
+  --ifm-color-primary-lightest: #b4e8f5;
+}
+
+.hero-back {
+  background-color: #42AEE6;
+}
