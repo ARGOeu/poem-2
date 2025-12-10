@@ -80,9 +80,9 @@
     "style-loader": "^4.0.0",
     "url-loader": "^4.1.1",
     "webpack": "^5.103.0",
-    "webpack-bundle-tracker": "^1.8.1",
-    "webpack-cli": "^4.10.0",
-    "webpack-dev-server": "^4.15.2",
+    "webpack-bundle-tracker": "^3.2.3",
+    "webpack-cli": "^6.0.1",
+    "webpack-dev-server": "^5.2.2",
     "word-wrap": "^1.2.5",
     "yup": "^1.4.0"
   },
