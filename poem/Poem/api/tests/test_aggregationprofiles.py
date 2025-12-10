@@ -1174,7 +1174,7 @@ class ListAggregationsAPIViewTests(TenantTestCase):
         self.assertEqual(profile.groupname, 'ARGO')
         history = poem_models.TenantHistory.objects.filter(
             object_id=profile.id, content_type=self.ct
-        )
+        ).order_by("-date_created")
         self.assertEqual(history.count(), 2)
         serialized_data = json.loads(history[0].serialized_data)[0]['fields']
         self.assertEqual(serialized_data['name'], profile.name)
