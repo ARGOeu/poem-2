@@ -28,7 +28,7 @@ services:
       - ./run-frontdev-server.sh:/home/user/run-frontdev-server.sh
       - ./restarthttpd.sh:/home/user/restarthttpd.sh
       - ../:/home/user/poem-source
-      - ../poem/Poem/:$VENV/lib/python3.9/site-packages/Poem
+      - ../poem/Poem/:$VENV/lib/python3.12/site-packages/Poem
       - ../poem/media/:$VENV/usr/share/poem/media
       - ../poem/static/:$VENV/usr/share/poem/static
       - ../poem/apache/poem.wsgi:$VENV/usr/share/poem/apache/poem.wsgi

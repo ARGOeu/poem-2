@@ -2,21 +2,19 @@
 package-mode = false
 
 [tool.poetry.dependencies]
-python = "^3.9"
-cryptography = "36.*"
-deepdiff = "4.*"
-dj-rest-auth= "2.2.*"
-django-tenants = "3.4.*"
+python = "^3.12"
+cryptography = "*"
+deepdiff = "*"
+dj-rest-auth= "*"
+django-tenants = "*"
 django-webpack-loader = "*"
-Django = "3.*"
+Django = "5.2.*"
 djangorestframework = "*"
 djangorestframework-api-key = "*"
-djangosaml2 = "1.0.*"
+djangosaml2 = "*"
 psycopg2-binary = "*"
 safety = "*"
 Unidecode = "*"
-typing_extensions = { git = "https://github.com/vrdel/typing_extensions", rev = "239445a35dc95ca30d54b2e227291ea7dad9cae4" }
-ipdb = "*"
 
 [tool.poetry.group.devel]
 optional = true
@@ -29,6 +27,7 @@ unittest-xml-reporting = "*"
 tblib = "*"
 discover = "*"
 factory-boy = "*"
+ipdb = "*"
 
 [build-system]
 requires = ["setuptools"]
@@ -44,7 +43,7 @@ authors = [
 ]
 description = "Reports, Profiles, Probes and Metric Configuration Management (POEM) for ARGO Monitoring framework."
 classifiers = [
-  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.12",
   "License :: OSI Approved :: Apache Software License",
   "Operating System :: POSIX :: Linux",
 ]
