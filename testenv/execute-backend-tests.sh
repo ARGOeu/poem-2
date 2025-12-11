@@ -4,7 +4,7 @@
 source /etc/profile.d/venv_poem.sh
 
 cd /opt/poem/lib/python3.12/site-packages/Poem/
-sudo coverage run --source='.' manage.py test api --parallel
+sudo coverage run --source='.' manage.py test api --parallel $*
 retcode="$?"
 
 sudo coverage report
