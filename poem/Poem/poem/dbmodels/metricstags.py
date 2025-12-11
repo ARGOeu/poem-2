@@ -4,7 +4,7 @@ from django.contrib.auth.models import GroupManager, Permission
 from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django_tenants.utils import schema_context, get_public_schema_name
 
 
