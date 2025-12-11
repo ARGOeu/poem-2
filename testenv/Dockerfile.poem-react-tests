@@ -13,26 +13,29 @@ RUN dnf -y install epel-release rocky-repos && \
       mod_ssl \
       psmisc \
       python3-devel \
-      python3-mod_wsgi \
       python3-pip \
       python3-setuptools \
+      python3.12-devel \
+      python3.12-pip \
+      python3.12-setuptools \
+      python3.12-mod_wsgi \
       sudo
 RUN dnf -y makecache
 RUN dnf -y install \
       supervisor
 RUN passwd -d apache; usermod --shell /bin/bash apache
-RUN python3.9 -m venv /opt/poetry-tool/
+RUN python3.12 -m venv /opt/poetry-tool/
 RUN sh -c '\
   . /opt/poetry-tool/bin/activate \
-  && pip install -U pip \
+  && python -m pip install -U pip \
   && pip install -U poetry==2.*'
 RUN ln -s /opt/poetry-tool/bin/poetry /usr/local/bin/
 RUN dnf module install -y nodejs:20
 COPY venv_poem.sh /etc/profile.d/
-RUN python3.9 -m venv /opt/poem
+RUN python3.12 -m venv /opt/poem
 RUN sh -c '\
   . /opt/poem/bin/activate \
-  && pip install -U pip'
+  && python -m pip install -U pip'
 RUN mkdir -p /opt/poem/var/log && chmod a+rw /opt/poem/var/log
 WORKDIR /home/jenkins
 COPY \
