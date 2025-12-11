@@ -134,9 +134,9 @@ class GetConfigOptions(APIView):
         options = dict()
 
         try:
-            return version("poem")
+            poem_ver = version("poem")
         except PackageNotFoundError:
-            return "undefined_version"
+            poem_ver = "undefined_version"
 
         tenant = tenant_from_request(request)
         if tenant != 'all':
@@ -151,7 +151,7 @@ class GetConfigOptions(APIView):
         options.update(webapioperations=settings.WEBAPI_OPERATIONS)
         options.update(webapiservicetypes=settings.WEBAPI_SERVICETYPES)
         options.update(webapidatafeeds=settings.WEBAPI_DATAFEEDS)
-        options.update(version=version)
+        options.update(version=poem_ver)
         options.update(webapireports=dict(
             main=settings.WEBAPI_REPORTS,
             tags=settings.WEBAPI_REPORTSTAGS,
