@@ -2,7 +2,7 @@ from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
 from django.contrib.auth.models import GroupManager, Permission
 from django.db import models
-from django.db.models.signals import pre_save
+from django.db.models.signals import pre_save, m2m_changed
 from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 from django_tenants.utils import schema_context, get_public_schema_name
@@ -99,12 +99,13 @@ class ProbeCandidate(models.Model):
         return u"%s" % self.name
 
 
-@receiver(pre_save, sender=admin_models.Package)
+@receiver(m2m_changed, sender=admin_models.Package.repos.through)
 def update_metrics(sender, instance, **kwargs):
     schemas = list(
         Tenant.objects.all().values_list('schema_name', flat=True)
     )
     schemas.remove(get_public_schema_name())
+
     probes = admin_models.ProbeHistory.objects.filter(package=instance)
 
     for schema in schemas:
