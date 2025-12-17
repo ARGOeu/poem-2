@@ -104,7 +104,11 @@ def update_metrics(sender, instance, **kwargs):
     schemas = list(
         Tenant.objects.all().values_list('schema_name', flat=True)
     )
-    schemas.remove(get_public_schema_name())
+
+    # Metric model is available only in Tenant POEM (schema != public)
+    public_schema_name = get_public_schema_name()
+    if public_schema_name in schemas:
+        schemas.remove(get_public_schema_name())
 
     probes = admin_models.ProbeHistory.objects.filter(package=instance)
 
