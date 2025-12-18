@@ -2,7 +2,7 @@ from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
 from django.contrib.auth.models import GroupManager, Permission
 from django.db import models
-from django.db.models.signals import pre_save, m2m_changed
+from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 from django_tenants.utils import schema_context, get_public_schema_name
@@ -115,9 +115,7 @@ def update_metrics(sender, instance, **kwargs):
     for schema in schemas:
         with schema_context(schema):
             for probe in probes:
-                metrics = Metric.objects.filter(
-                    probeversion=f"{probe.name} ({probe.package.version})"
-                )
+                metrics = Metric.objects.filter(probeversion__contains=probe.name)
                 for metric in metrics:
                     metric.probeversion = f"{probe.name} ({instance.version})"
                     metric.save()
