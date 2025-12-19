@@ -2,7 +2,7 @@ from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
 from django.contrib.auth.models import GroupManager, Permission
 from django.db import models
-from django.db.models.signals import m2m_changed
+from django.db.models.signals import post_save, m2m_changed
 from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 from django_tenants.utils import schema_context, get_public_schema_name
@@ -119,3 +119,27 @@ def update_metrics(sender, instance, **kwargs):
                 for metric in metrics:
                     metric.probeversion = f"{probe.name} ({instance.version})"
                     metric.save()
+
+
+@receiver(post_save, sender=admin_models.Package)
+def update_metrics2(sender, instance, created, **kwargs):
+    if not created:
+        schemas = list(
+            Tenant.objects.all().values_list('schema_name', flat=True)
+        )
+
+        # Metric model is available only in Tenant POEM (schema != public)
+        public_schema_name = get_public_schema_name()
+        if public_schema_name in schemas:
+            schemas.remove(get_public_schema_name())
+
+        probes = admin_models.ProbeHistory.objects.filter(package=instance)
+
+        for schema in schemas:
+            with schema_context(schema):
+                for probe in probes:
+                    metrics = Metric.objects.filter(probeversion__contains=probe.name)
+                    for metric in metrics:
+                        if probe.package.version not in metric.probeversion:
+                            metric.probeversion = f"{probe.name} ({probe.package.version})"
+                            metric.save()
