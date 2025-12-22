@@ -1,10 +1,12 @@
 import datetime
+
 from collections import OrderedDict
 
 from Poem.api import views_internal as views
 from Poem.poem import models as poem_models
 from Poem.tenants.models import Tenant
 from Poem.users.models import CustUser
+from django.utils import timezone
 from django_tenants.test.cases import TenantTestCase
 from django_tenants.test.client import TenantRequestFactory
 from django_tenants.utils import schema_context, get_public_schema_name, \
@@ -25,7 +27,7 @@ class ListUsersAPIViewTests(TenantTestCase):
             first_name='Test',
             last_name='User',
             email='testuser@example.com',
-            date_joined=datetime.datetime(2015, 1, 1, 0, 0, 0),
+            date_joined=timezone.make_aware(datetime.datetime(2015, 1, 1, 0, 0, 0))
         )
 
         self.tenant_user2 = CustUser.objects.create_user(
@@ -34,7 +36,7 @@ class ListUsersAPIViewTests(TenantTestCase):
             last_name='User',
             email='otheruser@example.com',
             is_superuser=True,
-            date_joined=datetime.datetime(2015, 1, 2, 0, 0, 0)
+            date_joined=timezone.make_aware(datetime.datetime(2015, 1, 1, 0, 0, 0))
         )
 
         poem_models.UserProfile.objects.create(user=self.tenant_user1)
@@ -52,7 +54,7 @@ class ListUsersAPIViewTests(TenantTestCase):
                 first_name='Alan',
                 last_name='Ford',
                 email='alan.ford@tnt.com',
-                date_joined=datetime.datetime(2019, 1, 1, 0, 0, 0)
+                date_joined=timezone.make_aware(datetime.datetime(2019, 1, 1, 0, 0, 0))
             )
             self.user2 = CustUser.objects.create_user(
                 username='Number1',
@@ -60,7 +62,7 @@ class ListUsersAPIViewTests(TenantTestCase):
                 last_name='One',
                 email='num1@tnt.com',
                 is_superuser=True,
-                date_joined=datetime.datetime(1970, 1, 1, 0, 0, 0)
+                date_joined=timezone.make_aware(datetime.datetime(1970, 1, 1, 0, 0, 0))
             )
 
         self.groupofmetrics = poem_models.GroupOfMetrics.objects.create(
@@ -2474,7 +2476,7 @@ class ChangePasswordTests(TenantTestCase):
             first_name='Test',
             last_name='User',
             email='testuser@example.com',
-            date_joined=datetime.datetime(2015, 1, 1, 0, 0, 0)
+            date_joined=timezone.make_aware(datetime.datetime(2015, 1, 1, 0, 0, 0)),
         )
 
         self.user2 = CustUser.objects.create_user(
@@ -2482,7 +2484,7 @@ class ChangePasswordTests(TenantTestCase):
             first_name='Another',
             last_name='Test',
             email='anotheruser@example.com',
-            date_joined=datetime.datetime(2015, 1, 1, 0, 0, 0)
+            date_joined=timezone.make_aware(datetime.datetime(2015, 1, 1, 0, 0, 0)),
         )
 
         self.user3 = CustUser.objects.create_user(
@@ -2490,7 +2492,7 @@ class ChangePasswordTests(TenantTestCase):
             first_name='John',
             last_name='Doe',
             email='testuser3@example.com',
-            date_joined=datetime.datetime(2015, 1, 1, 0, 0, 0),
+            date_joined=timezone.make_aware(datetime.datetime(2015, 1, 1, 0, 0, 0)),
             is_superuser=True
         )
 
