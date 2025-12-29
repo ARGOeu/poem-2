@@ -27,7 +27,7 @@ class ListUsersAPIViewTests(TenantTestCase):
             first_name='Test',
             last_name='User',
             email='testuser@example.com',
-            date_joined=timezone.make_aware(datetime.datetime(2015, 1, 1, 0, 0, 0))
+            date_joined=datetime.datetime(2015, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
         )
 
         self.tenant_user2 = CustUser.objects.create_user(
@@ -36,7 +36,7 @@ class ListUsersAPIViewTests(TenantTestCase):
             last_name='User',
             email='otheruser@example.com',
             is_superuser=True,
-            date_joined=timezone.make_aware(datetime.datetime(2015, 1, 1, 0, 0, 0))
+            date_joined=datetime.datetime(2015, 1, 2, 0, 0, 0, tzinfo=datetime.timezone.utc)
         )
 
         poem_models.UserProfile.objects.create(user=self.tenant_user1)
@@ -54,7 +54,7 @@ class ListUsersAPIViewTests(TenantTestCase):
                 first_name='Alan',
                 last_name='Ford',
                 email='alan.ford@tnt.com',
-                date_joined=timezone.make_aware(datetime.datetime(2019, 1, 1, 0, 0, 0))
+                date_joined=datetime.datetime(2019, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
             )
             self.user2 = CustUser.objects.create_user(
                 username='Number1',
@@ -62,7 +62,7 @@ class ListUsersAPIViewTests(TenantTestCase):
                 last_name='One',
                 email='num1@tnt.com',
                 is_superuser=True,
-                date_joined=timezone.make_aware(datetime.datetime(1970, 1, 1, 0, 0, 0))
+                date_joined=datetime.datetime(1970, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
             )
 
         self.groupofmetrics = poem_models.GroupOfMetrics.objects.create(

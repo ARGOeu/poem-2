@@ -548,10 +548,10 @@ class ListProbesAPIViewTests(TenantTestCase):
                 'comment': 'Newer version.',
                 'repository': 'https://github.com/ARGOeu/nagios-plugins-argo',
                 'user': 'poem',
-                'datetime': timezone.make_aware(datetime.datetime.strftime(
+                'datetime': datetime.datetime.strftime(
                     self.probe1.datetime,
                     '%Y-%m-%dT%H:%M:%S.%f'
-                )),
+                ),
             }
         )
 
