@@ -14,6 +14,7 @@ from Poem.users.models import CustUser
 from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
 from django.db.models.signals import pre_save
+from django.utils import timezone
 from django_tenants.test.cases import TenantTestCase
 from django_tenants.utils import get_public_schema_name
 
@@ -448,7 +449,7 @@ class BasicResourceInfoTests(TenantTestCase):
             comment=probe1.comment,
             repository=probe1.repository,
             docurl=probe1.docurl,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_comment='Initial version.',
             version_user=user.username,
         )
@@ -465,7 +466,7 @@ class BasicResourceInfoTests(TenantTestCase):
             comment=probe1.comment,
             repository=probe1.repository,
             docurl=probe1.docurl,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_comment='[{"changed": {"fields": ["package", "comment"]}}]',
             version_user=user.username
         )
@@ -482,7 +483,7 @@ class BasicResourceInfoTests(TenantTestCase):
             comment=probe1.comment,
             repository=probe1.repository,
             docurl=probe1.docurl,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_comment='[{"changed": {"fields": ["package", "comment"]}}]',
             version_user=user.username
         )
@@ -505,7 +506,7 @@ class BasicResourceInfoTests(TenantTestCase):
             comment=probe2.comment,
             repository=probe2.repository,
             docurl=probe2.docurl,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_comment='Initial version.',
             version_user=user.username
         )
@@ -543,7 +544,7 @@ class BasicResourceInfoTests(TenantTestCase):
             dependency=metrictemplate1.dependency,
             flags=metrictemplate1.flags,
             parameter=metrictemplate1.parameter,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_user=user.username,
             version_comment='Initial version.',
         )
@@ -561,7 +562,7 @@ class BasicResourceInfoTests(TenantTestCase):
             dependency=metrictemplate2.dependency,
             flags=metrictemplate2.flags,
             parameter=metrictemplate2.parameter,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_user=user.username,
             version_comment='Initial version.',
         )
@@ -584,7 +585,7 @@ class BasicResourceInfoTests(TenantTestCase):
             dependency=metrictemplate1.dependency,
             flags=metrictemplate1.flags,
             parameter=metrictemplate1.parameter,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_user=user.username,
             version_comment=create_comment(metrictemplate1)
         )
@@ -614,7 +615,7 @@ class BasicResourceInfoTests(TenantTestCase):
             dependency=metrictemplate3.dependency,
             flags=metrictemplate3.flags,
             parameter=metrictemplate3.parameter,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_user=user.username,
             version_comment=create_comment(metrictemplate3)
         )
@@ -633,7 +634,7 @@ class BasicResourceInfoTests(TenantTestCase):
             object_repr=metric1.__str__(),
             serialized_data=serialize_metric(metric1),
             content_type=ct,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             comment='Initial version.',
             user=user.username
         )
@@ -650,7 +651,7 @@ class BasicResourceInfoTests(TenantTestCase):
             object_repr=metric2.__str__(),
             serialized_data=serialize_metric(metric2),
             content_type=ct,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             comment='Initial version.',
             user=user.username
         )

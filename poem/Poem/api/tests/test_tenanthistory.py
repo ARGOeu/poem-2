@@ -9,6 +9,7 @@ from Poem.tenants.models import Tenant
 from Poem.users.models import CustUser
 from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
+from django.utils import timezone
 from django_tenants.test.cases import TenantTestCase
 from django_tenants.test.client import TenantRequestFactory
 from django_tenants.utils import schema_context, get_public_schema_name, \
@@ -71,7 +72,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
             comment=probe1.comment,
             repository=probe1.repository,
             docurl=probe1.docurl,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_comment='Initial version.',
             version_user=self.user.username
         )
@@ -87,7 +88,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
             comment=probe1.comment,
             repository=probe1.repository,
             docurl=probe1.docurl,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_comment='Changed package.',
             version_user=self.user.username
         )
@@ -136,7 +137,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
             dependency=mt1.dependency,
             flags=mt1.flags,
             parameter=mt1.parameter,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_user="poem",
             version_comment="Initial version."
         )
@@ -166,7 +167,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
             dependency=mt1.dependency,
             flags=mt1.flags,
             parameter=mt1.parameter,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_user="poem",
             version_comment=create_comment(mt1)
         )
@@ -199,7 +200,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
             dependency=mt2.dependency,
             flags=mt2.flags,
             parameter=mt2.parameter,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_user="poem",
             version_comment="Initial version."
         )
@@ -224,7 +225,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
             dependency=mt3.dependency,
             flags=mt3.flags,
             parameter=mt3.parameter,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_user="poem",
             version_comment="Initial version."
         )
@@ -245,7 +246,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
             ),
             object_repr='argo.AMS-Check',
             content_type=ct_m,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             comment='Initial version.',
             user=self.user.username
         )
@@ -280,7 +281,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
             ),
             object_repr=self.metric1.__str__(),
             content_type=ct_m,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             comment=comment,
             user=self.user.username
         )
@@ -295,7 +296,7 @@ class ListTenantVersionsAPIViewTests(TenantTestCase):
             serialized_data=serialize_metric(self.metric2),
             object_repr=self.metric2.__str__(),
             content_type=ct_m,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             comment='Initial version.',
             user=self.user.username
         )

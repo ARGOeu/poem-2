@@ -14,6 +14,7 @@ from Poem.users.models import CustUser
 from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
 from django.db.models.signals import pre_save
+from django.utils import timezone
 from django_tenants.test.cases import TenantTestCase
 from django_tenants.test.client import TenantRequestFactory
 from django_tenants.utils import get_public_schema_name, schema_context, \
@@ -82,7 +83,7 @@ def mock_db():
         comment=probe1.comment,
         repository=probe1.repository,
         docurl=probe1.docurl,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_comment='Initial version.',
         version_user=user.username
     )
@@ -99,7 +100,7 @@ def mock_db():
         comment=probe1.comment,
         repository=probe1.repository,
         docurl=probe1.docurl,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_comment='Updated version.',
         version_user=user.username
     )
@@ -123,7 +124,7 @@ def mock_db():
         comment=probe2.comment,
         repository=probe2.repository,
         docurl=probe2.docurl,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_comment='Initial version.',
         version_user=user.username
     )
@@ -140,7 +141,7 @@ def mock_db():
         comment=probe2.comment,
         repository=probe2.repository,
         docurl=probe2.docurl,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_comment='Updated version.',
         version_user=user.username
     )
@@ -172,7 +173,7 @@ def mock_db():
         dependency=mt1.dependency,
         flags=mt1.flags,
         parameter=mt1.parameter,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_user=superuser.username,
         version_comment='Initial version.'
     )
@@ -193,7 +194,7 @@ def mock_db():
         dependency=mt1.dependency,
         flags=mt1.flags,
         parameter=mt1.parameter,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_user=superuser.username,
         version_comment='Updated version.'
     )
@@ -217,7 +218,7 @@ def mock_db():
         dependency=mt2.dependency,
         flags=mt2.flags,
         parameter=mt2.parameter,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_user=superuser.username,
         version_comment='Initial version.'
     )
@@ -248,7 +249,7 @@ def mock_db():
         dependency=mt3.dependency,
         flags=mt3.flags,
         parameter=mt3.parameter,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_user=superuser.username,
         version_comment='Initial version.'
     )
@@ -267,7 +268,7 @@ def mock_db():
         object_id=metric1.id,
         object_repr=metric1.__str__(),
         serialized_data=serialize_metric(metric1, tags=[mtag1, mtag2]),
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         user=user.username,
         comment='Initial version.',
         content_type=ct
@@ -282,7 +283,7 @@ def mock_db():
         object_id=metric2.id,
         object_repr=metric2.__str__(),
         serialized_data=serialize_metric(metric2),
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         user=user.username,
         comment='Initial version.',
         content_type=ct
@@ -299,7 +300,7 @@ def mock_db():
         object_id=metric3.id,
         object_repr=metric3.__str__(),
         serialized_data=serialize_metric(metric3, tags=[mtag1]),
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         user=user.username,
         comment='Initial version.',
         content_type=ct
@@ -350,7 +351,7 @@ class ListAllMetricsAPIViewTests(TenantTestCase):
             comment=probe1.comment,
             repository=probe1.repository,
             docurl=probe1.docurl,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_comment='Initial version.',
             version_user=self.user.username,
         )
@@ -2065,7 +2066,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             comment=self.probe1.comment,
             repository=self.probe1.repository,
             docurl=self.probe1.docurl,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_comment='Initial version.',
             version_user=self.user.username
         )
@@ -2078,7 +2079,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             comment=self.probe1.comment,
             repository=self.probe1.repository,
             docurl=self.probe1.docurl,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_comment='Newer version.',
             version_user=self.user.username
         )
@@ -2091,7 +2092,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             comment=probe2.comment,
             repository=probe2.repository,
             docurl=probe2.docurl,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_comment='New version.',
             version_user=self.user.username
         )
@@ -2104,7 +2105,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             comment=probe2.comment,
             repository=probe2.repository,
             docurl=probe2.docurl,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_comment='New version.',
             version_user=self.user.username
         )
@@ -2117,7 +2118,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             comment=probe3.comment,
             repository=probe3.repository,
             docurl=probe3.docurl,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_comment='Initial version.',
             version_user=self.user.username
         )
@@ -2157,7 +2158,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             dependency=self.mt1.dependency,
             flags=self.mt1.flags,
             parameter=self.mt1.parameter,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_user=self.user.username,
             version_comment='Initial version.'
         )
@@ -2179,7 +2180,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             dependency=self.mt1.dependency,
             flags=self.mt1.flags,
             parameter=self.mt1.parameter,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_user=self.user.username,
             version_comment='Newer version.'
         )
@@ -2210,7 +2211,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             dependency=mt2.dependency,
             flags=mt2.flags,
             parameter=mt2.parameter,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_user=self.user.username,
             version_comment='Initial version.'
         )
@@ -2232,7 +2233,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             dependency=mt2.dependency,
             flags=mt2.flags,
             parameter=mt2.parameter,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_user=self.user.username,
             version_comment='Newer version.'
         )
@@ -2255,7 +2256,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             dependency=mt3.dependency,
             flags=mt3.flags,
             parameter=mt3.parameter,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_user=self.user.username,
             version_comment='Initial version.'
         )
@@ -2299,7 +2300,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             ),
             object_repr=metric1.__str__(),
             content_type=ct,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             comment='Initial version.',
             user=self.user.username
         )
@@ -2309,7 +2310,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             serialized_data=serialize_metric(metric2, tags=[self.mtag2]),
             object_repr=metric2.__str__(),
             content_type=ct,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             comment='Initial version.',
             user=self.user.username
         )
@@ -2338,7 +2339,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             serialized_data=json.dumps([metric3_unserialized]),
             object_repr=metric3.__str__(),
             content_type=ct,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             comment='Initial version.',
             user=self.user.username
         )
@@ -2348,7 +2349,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             serialized_data=serialize_metric(metric4),
             object_repr=metric4.__str__(),
             content_type=ct,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             comment='Initial version.',
             user=self.user.username
         )
@@ -2449,7 +2450,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             comment=probe1.comment,
             repository=probe1.repository,
             docurl=probe1.docurl,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_comment='Newest version.',
             version_user=self.user.username
         )
@@ -2469,7 +2470,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             dependency=self.mt1.dependency,
             flags=self.mt1.flags,
             parameter=self.mt1.parameter,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_user=self.user.username,
             version_comment='Newest version.'
         )
@@ -2525,7 +2526,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             comment=self.probe1.comment,
             repository=self.probe1.repository,
             docurl=self.probe1.docurl,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_comment='Newest version.',
             version_user=self.user.username
         )
@@ -2543,7 +2544,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             dependency=self.mt1.dependency,
             flags=self.mt1.flags,
             parameter=self.mt1.parameter,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_user=self.user.username,
             version_comment='Newest version.'
         )
@@ -2626,7 +2627,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             comment=self.probe1.comment,
             repository=self.probe1.repository,
             docurl=self.probe1.docurl,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_comment='Newest version.',
             version_user=self.user.username
         )
@@ -2644,7 +2645,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             dependency=self.mt1.dependency,
             flags=self.mt1.flags,
             parameter=self.mt1.parameter,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_user=self.user.username,
             version_comment='Newest version.'
         )
@@ -2717,7 +2718,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             comment=self.probe1.comment,
             repository=self.probe1.repository,
             docurl=self.probe1.docurl,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_comment='Newest version.',
             version_user=self.user.username
         )
@@ -2735,7 +2736,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             dependency=self.mt1.dependency,
             flags=self.mt1.flags,
             parameter=self.mt1.parameter,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_user=self.user.username,
             version_comment='Newest version.'
         )
@@ -2811,7 +2812,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             comment=self.probe1.comment,
             repository=self.probe1.repository,
             docurl=self.probe1.docurl,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_comment='Newest version.',
             version_user=self.user.username
         )
@@ -2829,7 +2830,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             dependency=self.mt1.dependency,
             flags=self.mt1.flags,
             parameter=self.mt1.parameter,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_user=self.user.username,
             version_comment='Newest version.'
         )
@@ -2951,7 +2952,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             comment=probe1.comment,
             repository=probe1.repository,
             docurl=probe1.docurl,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_comment='Newest version.',
             version_user=self.user.username
         )
@@ -2971,7 +2972,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             dependency=self.mt1.dependency,
             flags=self.mt1.flags,
             parameter=self.mt1.parameter,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_user=self.user.username,
             version_comment='Newest version.'
         )
@@ -3016,7 +3017,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             comment=self.probe1.comment,
             repository=self.probe1.repository,
             docurl=self.probe1.docurl,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_comment='Newest version.',
             version_user=self.user.username
         )
@@ -3034,7 +3035,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             dependency=self.mt1.dependency,
             flags=self.mt1.flags,
             parameter=self.mt1.parameter,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_user=self.user.username,
             version_comment='Newest version.'
         )
@@ -3103,7 +3104,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             comment=self.probe1.comment,
             repository=self.probe1.repository,
             docurl=self.probe1.docurl,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_comment='Newest version.',
             version_user=self.user.username
         )
@@ -3121,7 +3122,7 @@ class UpdateMetricsVersionsTests(TenantTestCase):
             dependency=self.mt1.dependency,
             flags=self.mt1.flags,
             parameter=self.mt1.parameter,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_user=self.user.username,
             version_comment='Newest version.'
         )
