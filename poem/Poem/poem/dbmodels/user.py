@@ -2,7 +2,7 @@ from django.conf import settings
 from django.db import models, connection
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from Poem.poem.dbmodels.aggregations import GroupOfAggregations
 from Poem.poem.dbmodels.metricstags import GroupOfMetrics

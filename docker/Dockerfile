@@ -30,7 +30,10 @@ RUN dnf -y install epel-release rocky-repos && \
       python3-devel \
       python3-pip \
       python3-setuptools \
-      python3-mod_wsgi \
+      python3.12-devel \
+      python3.12-pip \
+      python3.12-setuptools \
+      python3.12-mod_wsgi \
       rpmdevtools \
       rsync \
       sudo \
@@ -60,17 +63,17 @@ RUN rm -rf /etc/pki/ca-trust/source/anchors/*; \
     cp /etc/grid-security/certificates/*.pem /etc/pki/ca-trust/source/anchors; \
     update-ca-trust
 ADD hostcert.pem hostkey.pem /etc/grid-security/
-RUN python3.9 -m venv /opt/poetry-tool/
+RUN python3.12 -m venv /opt/poetry-tool/
 RUN sh -c '\
   . /opt/poetry-tool/bin/activate \
-  && pip install -U pip \
+  && python -m pip install -U pip \
   && pip install -U poetry==2.*'
 RUN ln -s /opt/poetry-tool/bin/poetry /usr/local/bin/
 RUN dnf module install -y nodejs:20
-RUN python3.9 -m venv /opt/poem
+RUN python3.12 -m venv /opt/poem
 RUN sh -c '\
   . /opt/poem/bin/activate \
-  && pip install -U pip'
+  && python -m pip install -U pip'
 RUN mkdir -p /opt/poem/var/log && chmod a+rw /opt/poem/var/log
 RUN chown -R user:user /opt/poem
 COPY \

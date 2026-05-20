@@ -589,7 +589,7 @@ class ProbeCandidateAPI(APIView):
                 body = f"""
 Dear madam/sir,
 
-your probe '{request.data["name"]}' has been successfully submitted. 
+your probe '{request.data["name"]}' has been successfully submitted.
 
 You will receive further instructions after the probe has been inspected.
 

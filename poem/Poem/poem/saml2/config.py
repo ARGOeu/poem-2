@@ -1,7 +1,8 @@
-from distutils.sysconfig import get_python_lib
+import sysconfig
+import saml2
+
 from configparser import ConfigParser
 
-import saml2
 from saml2.config import SPConfig
 
 from django.conf import settings
@@ -60,7 +61,7 @@ def get_saml_config(request):
                     ],
                 },
                 'attribute_map_dir': '%s/saml2/attributemaps/' %
-                                     get_python_lib(),
+                sysconfig.get_paths()['purelib'],
             },
         },
         'key_file': settings.HOST_KEY,  # private part

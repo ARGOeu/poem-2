@@ -1,18 +1,21 @@
 import configparser
 
-import pkg_resources
 from Poem.api import serializers
 from Poem.api.internal_views.users import get_all_groups, get_groups_for_user
 from Poem.helpers.tenant_helpers import CombinedTenant
 from Poem.poem.saml2.config import tenant_from_request, saml_login_string
 from Poem.poem_super_admin.models import WebAPIKey
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import connection
 from django_tenants.utils import get_public_schema_name
+
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from importlib.metadata import version, PackageNotFoundError
 
 
 class ListGroupsForUser(APIView):
@@ -131,9 +134,9 @@ class GetConfigOptions(APIView):
         options = dict()
 
         try:
-            version = pkg_resources.get_distribution('poem').version
-        except pkg_resources.DistributionNotFound:
-            version = 'undefined_version'
+            poem_ver = version("poem")
+        except PackageNotFoundError:
+            poem_ver = "undefined_version"
 
         tenant = tenant_from_request(request)
         if tenant != 'all':
@@ -148,7 +151,7 @@ class GetConfigOptions(APIView):
         options.update(webapioperations=settings.WEBAPI_OPERATIONS)
         options.update(webapiservicetypes=settings.WEBAPI_SERVICETYPES)
         options.update(webapidatafeeds=settings.WEBAPI_DATAFEEDS)
-        options.update(version=version)
+        options.update(version=poem_ver)
         options.update(webapireports=dict(
             main=settings.WEBAPI_REPORTS,
             tags=settings.WEBAPI_REPORTSTAGS,

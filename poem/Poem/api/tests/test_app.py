@@ -2,7 +2,6 @@ import datetime
 import os
 from unittest.mock import patch
 
-import pkg_resources
 from Poem.api import views_internal as views
 from Poem.api.internal_views.app import get_use_service_titles
 from Poem.poem import models as poem_models
@@ -11,6 +10,8 @@ from Poem.users.models import CustUser
 from django_tenants.test.cases import TenantTestCase
 from django_tenants.test.client import TenantRequestFactory
 from django_tenants.utils import get_public_schema_name
+from django.utils import timezone
+from importlib.metadata import version
 from rest_framework.test import force_authenticate
 
 
@@ -208,9 +209,7 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
                         'webapiaggregation': 'https://aggregations.com',
                         'webapithresholds': 'https://thresholds.com',
                         'webapioperations': 'https://operations.com',
-                        'version': pkg_resources.get_distribution(
-                            'poem'
-                        ).version,
+                        'version': version('poem'),
                         'webapireports': {
                             'main': 'https://reports.com',
                             'tags': 'https://reports-tags.com',
@@ -233,6 +232,7 @@ class GetConfigOptionsAPIViewTests(TenantTestCase):
 
 class GetSessionDetailsAPIViewTests(TenantTestCase):
     def setUp(self):
+        self.maxDiff = None
         self.tenant.name = "TENANT"
         self.tenant.save()
         self.factory = TenantRequestFactory(self.tenant)
@@ -325,9 +325,7 @@ class GetSessionDetailsAPIViewTests(TenantTestCase):
                     "is_superuser": False,
                     "is_active": True,
                     "email": "",
-                    "date_joined": datetime.datetime.strftime(
-                        self.user.date_joined, "%Y-%m-%dT%H:%M:%S.%f"
-                    ),
+                    "date_joined": self.user.date_joined.astimezone().isoformat(),
                     "pk": self.user.id,
                     "groups": {
                         "aggregations": ["GROUP-aggregations"],
@@ -386,9 +384,7 @@ class GetSessionDetailsAPIViewTests(TenantTestCase):
                     "is_superuser": False,
                     "is_active": True,
                     "email": "",
-                    "date_joined": datetime.datetime.strftime(
-                        self.user.date_joined, "%Y-%m-%dT%H:%M:%S.%f"
-                    ),
+                    "date_joined": self.user.date_joined.astimezone().isoformat(),
                     "pk": self.user.id,
                     "groups": {
                         "aggregations": ["GROUP-aggregations"],
@@ -427,9 +423,7 @@ class GetSessionDetailsAPIViewTests(TenantTestCase):
                     "is_superuser": False,
                     "is_active": True,
                     "email": "",
-                    "date_joined": datetime.datetime.strftime(
-                        self.user.date_joined, "%Y-%m-%dT%H:%M:%S.%f"
-                    ),
+                    "date_joined": self.user.date_joined.astimezone().isoformat(),
                     "pk": self.user.id,
                     "groups": {
                         "aggregations": [],
@@ -465,9 +459,7 @@ class GetSessionDetailsAPIViewTests(TenantTestCase):
                     "is_superuser": False,
                     "is_active": True,
                     "email": "",
-                    "date_joined": datetime.datetime.strftime(
-                        self.user.date_joined, "%Y-%m-%dT%H:%M:%S.%f"
-                    ),
+                    "date_joined": self.user.date_joined.astimezone().isoformat(),
                     "pk": self.user.id,
                     "groups": {
                         "aggregations": [],

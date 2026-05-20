@@ -243,3 +243,6 @@ TEST_RUNNER = 'xmlrunner.extra.djangotestrunner.XMLTestRunner'
 TEST_OUTPUT_FILE_NAME = 'junit-backend.xml'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
+if TIME_ZONE:
+    USE_TZ = True

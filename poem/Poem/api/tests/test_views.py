@@ -9,6 +9,7 @@ from Poem.poem import models as poem_models
 from Poem.poem_super_admin import models as admin_models
 from django.core import mail
 from django.db.models.signals import post_save, pre_save
+from django.utils import timezone
 from django_tenants.test.cases import TenantTestCase
 from django_tenants.test.client import TenantRequestFactory
 from rest_framework import status
@@ -69,7 +70,7 @@ def mock_db_for_metrics_tests():
         repository='https://github.com/ARGOeu/nagios-plugins-argo',
         docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
                'README.md',
-        datetime=datetime.datetime.now(),
+        datetime=timezone.now(),
         user='testuser'
     )
 
@@ -81,7 +82,7 @@ def mock_db_for_metrics_tests():
         repository='https://github.com/ARGOeu/nagios-plugins-argo',
         docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
                'README.md',
-        datetime=datetime.datetime.now(),
+        datetime=timezone.now(),
         user='testuser'
     )
 
@@ -93,7 +94,7 @@ def mock_db_for_metrics_tests():
         repository='https://github.com/ARGOeu/nagios-plugins-cert',
         docurl='https://wiki.egi.eu/wiki/ROC_SAM_Tests#hr.srce.CREAMCE-'
                'CertLifetime',
-        datetime=datetime.datetime.now(),
+        datetime=timezone.now(),
         user='testuser'
     )
 
@@ -169,7 +170,7 @@ def mock_db_for_metrics_tests():
         dependency=mt1.dependency,
         flags=mt1.flags,
         parameter=mt1.parameter,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_user="poem",
         version_comment="Initial version."
     )
@@ -211,7 +212,7 @@ def mock_db_for_metrics_tests():
         dependency=mt2.dependency,
         flags=mt2.flags,
         parameter=mt2.parameter,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_user="poem",
         version_comment="Initial version."
     )
@@ -252,7 +253,7 @@ def mock_db_for_metrics_tests():
         dependency=mt3.dependency,
         flags=mt3.flags,
         parameter=mt3.parameter,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_user="poem",
         version_comment="Initial version."
     )
@@ -286,7 +287,7 @@ def mock_db_for_metrics_tests():
         dependency=mt4.dependency,
         flags=mt4.flags,
         parameter=mt4.parameter,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_user="poem",
         version_comment="Initial version."
     )
@@ -314,7 +315,7 @@ def mock_db_for_metrics_tests():
         dependency=mt5.dependency,
         flags=mt5.flags,
         parameter=mt5.parameter,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_user="poem",
         version_comment="Initial version."
     )
@@ -461,7 +462,7 @@ def mock_db_for_repos_tests():
         description='Probe is inspecting AMS service.',
         comment='Initial version.',
         user='testuser',
-        datetime=datetime.datetime.now()
+        datetime=timezone.now()
     )
 
     probe2 = admin_models.Probe.objects.create(
@@ -474,7 +475,7 @@ def mock_db_for_repos_tests():
                     'monitoring instances.',
         comment='Initial version.',
         user='testuser',
-        datetime=datetime.datetime.now()
+        datetime=timezone.now()
     )
 
     probe3 = admin_models.Probe.objects.create(
@@ -485,7 +486,7 @@ def mock_db_for_repos_tests():
         description='This plugin tests the HTTP service on the specified host.',
         comment='Initial version.',
         user='testuser',
-        datetime=datetime.datetime.now()
+        datetime=timezone.now()
     )
 
     probe4 = admin_models.Probe.objects.create(
@@ -498,7 +499,7 @@ def mock_db_for_repos_tests():
         description='Nagios plugin.',
         comment='Initial version.',
         user='testuser',
-        datetime=datetime.datetime.now()
+        datetime=timezone.now()
     )
 
     probe5 = admin_models.Probe.objects.create(
@@ -509,7 +510,7 @@ def mock_db_for_repos_tests():
         description='Probe checks the existence of OCCI Infra kinds.',
         comment='Initial version',
         user='testuser',
-        datetime=datetime.datetime.now()
+        datetime=timezone.now()
     )
 
     probe6 = admin_models.Probe.objects.create(
@@ -521,7 +522,7 @@ def mock_db_for_repos_tests():
         description='This plugin determines the size of a directory.',
         comment='Initial version',
         user='testuser',
-        datetime=datetime.datetime.now()
+        datetime=timezone.now()
     )
 
     probehistory1 = admin_models.ProbeHistory.objects.create(
@@ -532,7 +533,7 @@ def mock_db_for_repos_tests():
         docurl=probe1.docurl,
         description=probe1.description,
         comment=probe1.comment,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_comment='Initial version.',
         version_user='testuser'
     )
@@ -545,7 +546,7 @@ def mock_db_for_repos_tests():
         docurl=probe2.docurl,
         description=probe2.description,
         comment=probe2.comment,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_comment='Initial version.',
         version_user='testuser'
     )
@@ -558,7 +559,7 @@ def mock_db_for_repos_tests():
         docurl=probe3.docurl,
         description=probe3.description,
         comment=probe3.comment,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_comment='Initial version.',
         version_user='testuser'
     )
@@ -571,7 +572,7 @@ def mock_db_for_repos_tests():
         docurl=probe4.docurl,
         description=probe4.description,
         comment=probe4.comment,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_comment='Initial version.',
         version_user='testuser'
     )
@@ -584,7 +585,7 @@ def mock_db_for_repos_tests():
         docurl=probe5.docurl,
         description=probe5.description,
         comment=probe5.comment,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_comment='Initial version.',
         version_user='testuser'
     )
@@ -600,7 +601,7 @@ def mock_db_for_repos_tests():
         docurl=probe5.docurl,
         description=probe5.description,
         comment=probe5.comment,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_comment='["changed": {"fields": ["package"]}]',
         version_user='testuser'
     )
@@ -613,7 +614,7 @@ def mock_db_for_repos_tests():
         docurl=probe6.docurl,
         description=probe6.description,
         comment=probe6.comment,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_comment='Initial version',
         version_user='testuser'
     )
@@ -1706,7 +1707,7 @@ class ProbeCandidateAPITests(TenantTestCase):
                 """
 Dear madam/sir,
 
-your probe 'poem-probe' has been successfully submitted. 
+your probe 'poem-probe' has been successfully submitted.
 
 You will receive further instructions after the probe has been inspected.
 
@@ -1788,7 +1789,7 @@ ARGO Monitoring team
                 """
 Dear madam/sir,
 
-your probe 'poem-probe' has been successfully submitted. 
+your probe 'poem-probe' has been successfully submitted.
 
 You will receive further instructions after the probe has been inspected.
 
@@ -1869,7 +1870,7 @@ ARGO Monitoring team
                 """
 Dear madam/sir,
 
-your probe 'poem-probe' has been successfully submitted. 
+your probe 'poem-probe' has been successfully submitted.
 
 You will receive further instructions after the probe has been inspected.
 
@@ -1950,7 +1951,7 @@ ARGO Monitoring team
                 """
 Dear madam/sir,
 
-your probe 'test-probe' has been successfully submitted. 
+your probe 'test-probe' has been successfully submitted.
 
 You will receive further instructions after the probe has been inspected.
 
@@ -2112,7 +2113,7 @@ ARGO Monitoring team
                 """
 Dear madam/sir,
 
-your probe 'poem-probe' has been successfully submitted. 
+your probe 'poem-probe' has been successfully submitted.
 
 You will receive further instructions after the probe has been inspected.
 
@@ -2189,7 +2190,7 @@ ARGO Monitoring team
                 """
 Dear madam/sir,
 
-your probe 'poem-probe' has been successfully submitted. 
+your probe 'poem-probe' has been successfully submitted.
 
 You will receive further instructions after the probe has been inspected.
 
@@ -2443,7 +2444,7 @@ ARGO Monitoring team
                 """
 Dear madam/sir,
 
-your probe 'poem-probe' has been successfully submitted. 
+your probe 'poem-probe' has been successfully submitted.
 
 You will receive further instructions after the probe has been inspected.
 

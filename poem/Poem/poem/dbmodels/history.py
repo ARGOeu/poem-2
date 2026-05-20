@@ -51,9 +51,7 @@ def update_metric_history(sender, instance, created, **kwargs):
         for schema in schemas:
             with schema_context(schema):
                 for probe in probes:
-                    metrics = Metric.objects.filter(
-                        probeversion=f"{probe.name} ({probe.package.version})"
-                    )
+                    metrics = Metric.objects.filter(probeversion__contains=probe.name)
                     for metric in metrics:
                         vers = TenantHistory.objects.filter(
                             object_id=metric.id
