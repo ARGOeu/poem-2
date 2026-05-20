@@ -6,6 +6,7 @@ from Poem.api import views_internal as views
 from Poem.poem_super_admin import models as admin_models
 from Poem.users.models import CustUser
 from django.db.models.signals import pre_save
+from django.utils import timezone
 from django_tenants.test.cases import TenantTestCase
 from django_tenants.test.client import TenantRequestFactory
 from rest_framework import status
@@ -44,7 +45,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
             docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
                    'README.md',
             user=self.user.username,
-            datetime=datetime.datetime.now()
+            datetime=timezone.now()
         )
 
         self.ver1 = admin_models.ProbeHistory.objects.create(
@@ -55,7 +56,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
             comment=self.probe1.comment,
             repository=self.probe1.repository,
             docurl=self.probe1.docurl,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_comment='Initial version.',
             version_user=self.user.username
         )
@@ -79,7 +80,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
             comment=self.probe1.comment,
             repository=self.probe1.repository,
             docurl=self.probe1.docurl,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_user=self.user.username,
             version_comment='[{"changed": {"fields": ["name", '
                             '"comment", "description", "repository", '
@@ -96,7 +97,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
             docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
                    'README.md',
             user=self.user.username,
-            datetime=datetime.datetime.now()
+            datetime=timezone.now()
         )
 
         probe2 = admin_models.Probe.objects.create(
@@ -108,7 +109,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
             docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
                    'README.md',
             user=self.user.username,
-            datetime=datetime.datetime.now()
+            datetime=timezone.now()
         )
 
         self.ver3 = admin_models.ProbeHistory.objects.create(
@@ -119,7 +120,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
             comment=probe2.comment,
             repository=probe2.repository,
             docurl=probe2.docurl,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_comment='Initial version.',
             version_user=self.user.username
         )
@@ -158,7 +159,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
             dependency=self.metrictemplate1.dependency,
             flags=self.metrictemplate1.flags,
             parameter=self.metrictemplate1.parameter,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_comment='Initial version.',
             version_user=self.user.username
         )
@@ -182,7 +183,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
             dependency=self.metrictemplate1.dependency,
             flags=self.metrictemplate1.flags,
             parameter=self.metrictemplate1.parameter,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_comment=json.dumps(
                 [
                     {'added': {'fields': ['description']}},
@@ -214,7 +215,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
             dependency=self.metrictemplate2.dependency,
             flags=self.metrictemplate2.flags,
             parameter=self.metrictemplate2.parameter,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_comment='Initial version.',
             version_user=self.user.username
         )
@@ -236,7 +237,7 @@ class ListVersionsAPIViewTests(TenantTestCase):
             dependency=self.metrictemplate2.dependency,
             flags=self.metrictemplate2.flags,
             parameter=self.metrictemplate2.parameter,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_comment=json.dumps([{'changed': {'fields': ['name']}}]),
             version_user=self.user.username
         )

@@ -1,8 +1,8 @@
 import sys
 import os
-from distutils.sysconfig import get_python_lib
+import sysconfig
 
-sys.path.append(get_python_lib() + '/django/contrib/admin/static/admin/')
+sys.path.append(sysconfig.get_paths()['purelib'] + '/django/contrib/admin/static/admin/')
 os.environ['DJANGO_SETTINGS_MODULE'] = 'Poem.settings'
 
 from django.core.wsgi import get_wsgi_application

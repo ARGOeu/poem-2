@@ -16,8 +16,7 @@ cd /mnt/poem-source
 sudo make clean
 sudo make wheel-devel
 sudo sh -c '. /opt/poem/bin/activate; pip3 install *.whl'
-sudo sh -c '. /opt/poem/bin/activate; poetry install --sync --with devel'
-sudo sh -c '. /opt/poem/bin/activate; pip3 install *.whl'
+sudo sh -c '. /opt/poem/bin/activate; poetry sync --with devel'
 
 # prerequisites
 sudo cp -f /home/jenkins/fake-secret /opt/poem/etc/poem/fake-secret

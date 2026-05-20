@@ -1,4 +1,4 @@
-from distutils.version import StrictVersion
+from packaging.version import Version
 
 from Poem.api.views import NotFound
 from Poem.poem import models as poem_models
@@ -325,7 +325,7 @@ class ListPackagesVersions(APIView):
 
             try:
                 result = sorted(
-                    versions, key=lambda x: StrictVersion(x['version']),
+                    versions, key=lambda x: Version(x['version']),
                     reverse=True
                 )
 

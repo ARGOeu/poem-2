@@ -39,7 +39,7 @@ class Probe(models.Model):
 class ProbeHistory(models.Model):
     object_id = models.ForeignKey(Probe, on_delete=models.CASCADE)
     name = models.CharField(max_length=128)
-    package = models.ForeignKey(Package,  on_delete=models.PROTECT)
+    package = models.ForeignKey(Package, on_delete=models.PROTECT)
     description = models.CharField(max_length=1024)
     comment = models.CharField(max_length=512)
     repository = models.CharField(max_length=512)

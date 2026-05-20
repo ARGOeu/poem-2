@@ -23,6 +23,7 @@ from django.core.management import call_command
 from django.db import connection
 from django.db.models.signals import pre_save
 from django.test.testcases import TransactionTestCase
+from django.utils import timezone
 from django_tenants.test.cases import TenantTestCase
 from django_tenants.utils import get_tenant_model, get_public_schema_name, \
     schema_context, get_tenant_domain_model
@@ -143,7 +144,7 @@ def mock_db(tenant, tenant2=False):
         comment=probe1.comment,
         repository=probe1.repository,
         docurl=probe1.docurl,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_comment='Initial version.',
         version_user=user.username,
     )
@@ -160,7 +161,7 @@ def mock_db(tenant, tenant2=False):
         comment=probe1.comment,
         repository=probe1.repository,
         docurl=probe1.docurl,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_comment='[{"changed": {"fields": ["package", "comment"]}}]',
         version_user=user.username
     )
@@ -177,7 +178,7 @@ def mock_db(tenant, tenant2=False):
         comment=probe1.comment,
         repository=probe1.repository,
         docurl=probe1.docurl,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_comment='[{"changed": {"fields": ["package", "comment"]}}]',
         version_user=user.username
     )
@@ -200,7 +201,7 @@ def mock_db(tenant, tenant2=False):
         comment=probe2.comment,
         repository=probe2.repository,
         docurl=probe2.docurl,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_comment='Initial version.',
         version_user=user.username
     )
@@ -222,7 +223,7 @@ def mock_db(tenant, tenant2=False):
         comment=probe3.comment,
         repository=probe3.repository,
         docurl=probe3.docurl,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_comment='Initial version.',
         version_user=user.username
     )
@@ -245,7 +246,7 @@ def mock_db(tenant, tenant2=False):
         comment=probe4.comment,
         repository=probe4.repository,
         docurl=probe4.docurl,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_comment='Initial version.',
         version_user=user.username
     )
@@ -268,7 +269,7 @@ def mock_db(tenant, tenant2=False):
         comment=probe5.comment,
         repository=probe5.repository,
         docurl=probe5.docurl,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_comment='Initial version.',
         version_user=user.username
     )
@@ -285,7 +286,7 @@ def mock_db(tenant, tenant2=False):
         comment=probe5.comment,
         repository=probe5.repository,
         docurl=probe5.docurl,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_comment='Newer version.',
         version_user=user.username
     )
@@ -302,7 +303,7 @@ def mock_db(tenant, tenant2=False):
         comment=probe5.comment,
         repository=probe5.repository,
         docurl=probe5.docurl,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_comment='Newest version.',
         version_user=user.username
     )
@@ -324,7 +325,7 @@ def mock_db(tenant, tenant2=False):
         comment=probe6.comment,
         repository=probe6.repository,
         docurl=probe6.docurl,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_comment='Initial version.',
         version_user=user.username
     )
@@ -341,7 +342,7 @@ def mock_db(tenant, tenant2=False):
         comment=probe6.comment,
         repository=probe6.repository,
         docurl=probe6.docurl,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_comment='Newer version.',
         version_user=user.username
     )
@@ -363,7 +364,7 @@ def mock_db(tenant, tenant2=False):
         comment=probe7.comment,
         repository=probe7.repository,
         docurl=probe7.docurl,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_comment='Initial version.',
         version_user=user.username
     )
@@ -381,7 +382,7 @@ def mock_db(tenant, tenant2=False):
         comment=probe7.comment,
         repository=probe7.repository,
         docurl=probe7.docurl,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_comment='Changed version.',
         version_user=user.username
     )
@@ -405,7 +406,7 @@ def mock_db(tenant, tenant2=False):
         comment=probe8.comment,
         repository=probe8.repository,
         docurl=probe8.docurl,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_comment="Initial version.",
         version_user=user.username
     )
@@ -437,7 +438,7 @@ def mock_db(tenant, tenant2=False):
         dependency=metrictemplate1.dependency,
         flags=metrictemplate1.flags,
         parameter=metrictemplate1.parameter,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_user=user.username,
         version_comment='Initial version.',
     )
@@ -462,7 +463,7 @@ def mock_db(tenant, tenant2=False):
         dependency=metrictemplate1.dependency,
         flags=metrictemplate1.flags,
         parameter=metrictemplate1.parameter,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_user=user.username,
         version_comment=create_comment(metrictemplate1)
     )
@@ -483,7 +484,7 @@ def mock_db(tenant, tenant2=False):
         dependency=metrictemplate1.dependency,
         flags=metrictemplate1.flags,
         parameter=metrictemplate1.parameter,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_user=user.username,
         version_comment=create_comment(metrictemplate1)
     )
@@ -514,7 +515,7 @@ def mock_db(tenant, tenant2=False):
         dependency=metrictemplate2.dependency,
         flags=metrictemplate2.flags,
         parameter=metrictemplate2.parameter,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_user=user.username,
         version_comment='Initial version.',
     )
@@ -550,7 +551,7 @@ def mock_db(tenant, tenant2=False):
         dependency=metrictemplate3.dependency,
         flags=metrictemplate3.flags,
         parameter=metrictemplate3.parameter,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_comment='Initial version.',
         version_user='testuser'
     )
@@ -584,7 +585,7 @@ def mock_db(tenant, tenant2=False):
         dependency=metrictemplate4.dependency,
         flags=metrictemplate4.flags,
         parameter=metrictemplate4.parameter,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_comment='Initial version.',
         version_user='testuser'
     )
@@ -608,7 +609,7 @@ def mock_db(tenant, tenant2=False):
         dependency=metrictemplate5.dependency,
         flags=metrictemplate5.flags,
         parameter=metrictemplate5.parameter,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_user=user.username,
         version_comment='Initial version.',
     )
@@ -638,7 +639,7 @@ def mock_db(tenant, tenant2=False):
         dependency=metrictemplate6.dependency,
         flags=metrictemplate6.flags,
         parameter=metrictemplate6.parameter,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_user=user.username,
         version_comment='Initial version.',
     )
@@ -663,7 +664,7 @@ def mock_db(tenant, tenant2=False):
         dependency=metrictemplate7.dependency,
         flags=metrictemplate7.flags,
         parameter=metrictemplate7.parameter,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_user=user.username,
         version_comment='Initial version.',
     )
@@ -694,7 +695,7 @@ def mock_db(tenant, tenant2=False):
         dependency=metrictemplate8.dependency,
         flags=metrictemplate8.flags,
         parameter=metrictemplate8.parameter,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_user=user.username,
         version_comment='Initial version.',
     )
@@ -715,7 +716,7 @@ def mock_db(tenant, tenant2=False):
         dependency=metrictemplate8.dependency,
         flags=metrictemplate8.flags,
         parameter=metrictemplate8.parameter,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_user=user.username,
         version_comment='Newer version.'
     )
@@ -739,7 +740,7 @@ def mock_db(tenant, tenant2=False):
         dependency=metrictemplate8.dependency,
         flags=metrictemplate8.flags,
         parameter=metrictemplate8.parameter,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_user=user.username,
         version_comment='Newest version.',
     )
@@ -771,7 +772,7 @@ def mock_db(tenant, tenant2=False):
         dependency=metrictemplate9.dependency,
         flags=metrictemplate9.flags,
         parameter=metrictemplate9.parameter,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_user=user.username,
         version_comment='Initial version.',
     )
@@ -799,7 +800,7 @@ def mock_db(tenant, tenant2=False):
         dependency=metrictemplate10.dependency,
         flags=metrictemplate10.flags,
         parameter=metrictemplate10.parameter,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_user=user.username,
         version_comment='Initial version.'
     )
@@ -820,7 +821,7 @@ def mock_db(tenant, tenant2=False):
         dependency=metrictemplate10.dependency,
         flags=metrictemplate10.flags,
         parameter=metrictemplate10.parameter,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_user=user.username,
         version_comment='Newer version.'
     )
@@ -854,7 +855,7 @@ def mock_db(tenant, tenant2=False):
         dependency=metrictemplate11.dependency,
         flags=metrictemplate11.flags,
         parameter=metrictemplate11.parameter,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_user=user.username,
         version_comment='Initial version.'
     )
@@ -887,7 +888,7 @@ def mock_db(tenant, tenant2=False):
         dependency=metrictemplate12.dependency,
         flags=metrictemplate12.flags,
         parameter=metrictemplate12.parameter,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         version_user=user.username,
         version_comment='Initial version.'
     )
@@ -928,7 +929,7 @@ def mock_db(tenant, tenant2=False):
         object_repr=metric2.__str__(),
         serialized_data=serialize_metric(metric2, tags=[mtag2]),
         content_type=ct,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         comment='Initial version.',
         user=user.username
     )
@@ -947,7 +948,7 @@ def mock_db(tenant, tenant2=False):
         object_repr=metric3.__str__(),
         serialized_data=serialize_metric(metric3, tags=[mtag3]),
         content_type=ct,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         comment='Initial version.',
         user=user.username
     )
@@ -963,7 +964,7 @@ def mock_db(tenant, tenant2=False):
         object_repr=metric4.__str__(),
         serialized_data=serialize_metric(metric4),
         content_type=ct,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         comment='Initial version.',
         user=user.username
     )
@@ -980,7 +981,7 @@ def mock_db(tenant, tenant2=False):
         object_repr=metric5.__str__(),
         serialized_data=serialize_metric(metric5, tags=[mtag1, mtag2]),
         content_type=ct,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         comment='Initial version.',
         user=user.username
     )
@@ -997,7 +998,7 @@ def mock_db(tenant, tenant2=False):
         object_repr=metric6.__str__(),
         serialized_data=serialize_metric(metric6, tags=[mtag4]),
         content_type=ct,
-        date_created=datetime.datetime.now(),
+        date_created=timezone.now(),
         comment='Initial version.',
         user=user.username
     )
@@ -1040,7 +1041,7 @@ def mock_db(tenant, tenant2=False):
                 object_repr=metric2a.__str__(),
                 serialized_data=serialize_metric(metric2a, tags=[mtag2]),
                 content_type=ct,
-                date_created=datetime.datetime.now(),
+                date_created=timezone.now(),
                 comment='Initial version.',
                 user=user.username
             )
@@ -1059,7 +1060,7 @@ def mock_db(tenant, tenant2=False):
                 object_repr=metric3a.__str__(),
                 serialized_data=serialize_metric(metric3a, tags=[mtag3]),
                 content_type=ct,
-                date_created=datetime.datetime.now(),
+                date_created=timezone.now(),
                 comment='Initial version.',
                 user=user.username
             )
@@ -1075,7 +1076,7 @@ def mock_db(tenant, tenant2=False):
                 object_repr=metric4a.__str__(),
                 serialized_data=serialize_metric(metric4a),
                 content_type=ct,
-                date_created=datetime.datetime.now(),
+                date_created=timezone.now(),
                 comment='Initial version.',
                 user=user.username
             )
@@ -1092,7 +1093,7 @@ def mock_db(tenant, tenant2=False):
                 object_repr=metric5a.__str__(),
                 serialized_data=serialize_metric(metric5a, tags=[mtag1, mtag2]),
                 content_type=ct,
-                date_created=datetime.datetime.now(),
+                date_created=timezone.now(),
                 comment='Initial version.',
                 user=user.username
             )
@@ -1129,7 +1130,7 @@ class HistoryHelpersTests(TenantTestCase):
             repository='https://repository.url',
             docurl='https://doc.url',
             user='testuser',
-            datetime=datetime.datetime.now()
+            datetime=timezone.now()
         )
 
         self.ct_metric = ContentType.objects.get_for_model(poem_models.Metric)
@@ -1230,7 +1231,7 @@ class HistoryHelpersTests(TenantTestCase):
             dependency=self.mt1.dependency,
             flags=self.mt1.flags,
             parameter=self.mt1.parameter,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_comment='Initial version.',
             version_user='testuser'
         )
@@ -1254,7 +1255,7 @@ class HistoryHelpersTests(TenantTestCase):
             dependency=self.mt1.dependency,
             flags=self.mt1.flags,
             parameter=self.mt1.parameter,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_comment='[{"changed": {"fields": ["config"], '
                             '"object": ["timeout"]}}, {"changed": {"fields": '
                             '["probekey"]}}]',
@@ -1291,7 +1292,7 @@ class HistoryHelpersTests(TenantTestCase):
             dependency=self.mt2.dependency,
             flags=self.mt2.flags,
             parameter=self.mt2.parameter,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_comment='Initial version.',
             version_user='testuser'
         )
@@ -1326,7 +1327,7 @@ class HistoryHelpersTests(TenantTestCase):
             dependency=self.mt4.dependency,
             flags=self.mt4.flags,
             parameter=self.mt4.parameter,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_comment='Initial version.',
             version_user='testuser'
         )
@@ -1367,7 +1368,7 @@ class HistoryHelpersTests(TenantTestCase):
             dependency=mt5.dependency,
             flags=mt5.flags,
             parameter=mt5.parameter,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_comment='Newer version.',
             version_user='testuser'
         )
@@ -1648,7 +1649,7 @@ class HistoryHelpersTests(TenantTestCase):
             repository='https://repository.url',
             docurl='https://doc.url',
             user='testuser',
-            datetime=datetime.datetime.now()
+            datetime=timezone.now()
         )
         admin_models.ProbeHistory.objects.create(
             object_id=probe2,
@@ -1680,7 +1681,7 @@ class HistoryHelpersTests(TenantTestCase):
             repository='https://repository2.url',
             docurl='https://doc2.url',
             user='testuser',
-            datetime=datetime.datetime.now()
+            datetime=timezone.now()
         )
         comment = create_comment(probe2)
         self.assertEqual(comment, 'Initial version.')
@@ -2604,7 +2605,7 @@ class UpdateMetricsTests(TenantTestCase):
             flags=metrictemplate.flags,
             parameter=metrictemplate.parameter,
             parent=metrictemplate.parent,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_user="poem",
             version_comment='Test version.'
         )
@@ -2864,7 +2865,7 @@ class UpdateMetricsTests(TenantTestCase):
             dependency='["dep-key dep-val"]',
             parameter='["par-key par-val"]',
             flags='["flag-key flag-val"]',
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_user='testuser',
             version_comment=create_comment(metrictemplate1)
         )
