@@ -1,4 +1,4 @@
-from configparser import ConfigParser, NoSectionError, NoOptionError
+from configparser import NoSectionError, NoOptionError
 
 from Poem.poem.models import UserProfile
 from django.conf import settings
@@ -12,8 +12,7 @@ from django_tenants.utils import get_public_schema_name
 def tenant_superuser():
     tenant = connection.tenant.name
 
-    config = ConfigParser()
-    config.read(settings.CONFIG_FILE)
+    config = settings.GET_POEM_CONFIG()
 
     superuser_name = config.get('SUPERUSER_' + tenant.upper(), 'name')
     superuser_pass = config.get('SUPERUSER_' + tenant.upper(), 'password')

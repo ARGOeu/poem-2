@@ -14,10 +14,10 @@ def _split_comma_list(value):
     return [item.strip() for item in value.split(',') if item.strip()]
 
 
-def _merge_auto_config(config):
+def _merge_auto_config(config, auto_config_file=AUTO_CONFIG_FILE):
     auto_config = ConfigParser()
 
-    if not auto_config.read([AUTO_CONFIG_FILE]):
+    if not auto_config.read([auto_config_file]):
         return
 
     for option, value in auto_config.defaults().items():
@@ -46,13 +46,23 @@ def _merge_auto_config(config):
                 config.set(section, option, value)
 
 
-try:
+def get_poem_config(config_file=None, auto_config_file=None):
+    config_file = config_file or CONFIG_FILE
+    auto_config_file = auto_config_file or AUTO_CONFIG_FILE
+
     config = ConfigParser()
 
-    if not config.read([CONFIG_FILE]):
-        raise ImproperlyConfigured('Unable to parse config file %s' % CONFIG_FILE)
+    if not config.read([config_file]):
+        raise ImproperlyConfigured('Unable to parse config file %s' % config_file)
 
-    _merge_auto_config(config)
+    _merge_auto_config(config, auto_config_file)
+    return config
+
+
+try:
+    config = get_poem_config()
+    GET_POEM_CONFIG = get_poem_config
+    POEM_CONFIG = config
 
     # General
     DEBUG = bool(config.getboolean('GENERAL', 'debug'))

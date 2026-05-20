@@ -1,5 +1,3 @@
-from configparser import ConfigParser
-
 from Poem.poem import models as poem_models
 from Poem.tenants.models import Tenant
 from django.conf import settings
@@ -41,8 +39,7 @@ def create_tenant(name, hostname, combined=False):
 
 
 def get_public_schema_hostname():
-    config = ConfigParser()
-    config.read(settings.CONFIG_FILE)
+    config = settings.GET_POEM_CONFIG()
 
     hostname = config.get('GENERAL_ALL', 'publicpage')
 
