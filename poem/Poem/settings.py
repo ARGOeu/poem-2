@@ -6,13 +6,53 @@ from django.core.exceptions import ImproperlyConfigured
 VENV = '/opt/poem'
 APP_PATH = os.path.abspath(os.path.split(__file__)[0])
 CONFIG_FILE = '{}/etc/poem/poem.conf'.format(VENV)
+AUTO_CONFIG_FILE = '{}/etc/poem/poem.auto.conf'.format(VENV)
 LOG_CONFIG = '{}/etc/poem/poem_logging.conf'.format(VENV)
+
+
+def _split_comma_list(value):
+    return [item.strip() for item in value.split(',') if item.strip()]
+
+
+def _merge_auto_config(config):
+    auto_config = ConfigParser()
+
+    if not auto_config.read([AUTO_CONFIG_FILE]):
+        return
+
+    for option, value in auto_config.defaults().items():
+        config['DEFAULT'][option] = value
+
+    for section in auto_config.sections():
+        if not config.has_section(section):
+            config.add_section(section)
+
+        for option, value in auto_config._sections[section].items():
+            if option == '__name__':
+                continue
+
+            if (
+                    section == 'SECURITY' and
+                    option.lower() == 'allowedhosts' and
+                    config.has_option(section, option)
+            ):
+                allowed_hosts = _split_comma_list(
+                    config.get(section, option, raw=True)
+                )
+                allowed_hosts.extend(_split_comma_list(value))
+                config.set(section, option, ', '.join(allowed_hosts))
+
+            else:
+                config.set(section, option, value)
+
 
 try:
     config = ConfigParser()
 
     if not config.read([CONFIG_FILE]):
         raise ImproperlyConfigured('Unable to parse config file %s' % CONFIG_FILE)
+
+    _merge_auto_config(config)
 
     # General
     DEBUG = bool(config.getboolean('GENERAL', 'debug'))
