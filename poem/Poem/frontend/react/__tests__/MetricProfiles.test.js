@@ -5280,6 +5280,13 @@ describe('Tests for metric profile cloneview', () => {
     })
 
     const metricInstances = within(screen.getByRole("table"))
+    let rows
+    const waitForRows = async length => {
+      await waitFor(() => {
+        rows = metricInstances.getAllByRole("row")
+        expect(rows).toHaveLength(length)
+      })
+    }
 
     fireEvent.click(screen.getByTestId("remove-2"))
 
@@ -5287,8 +5294,7 @@ describe('Tests for metric profile cloneview', () => {
       expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
     })
 
-    var rows = metricInstances.getAllByRole("row")
-    expect(rows).toHaveLength(8)
+    await waitForRows(8)
     var row1 = within(rows[2])
     var row2 = within(rows[3])
     var row3 = within(rows[4])
@@ -5314,8 +5320,7 @@ describe('Tests for metric profile cloneview', () => {
       expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
     })
 
-    rows = metricInstances.getAllByRole("row")
-    expect(rows).toHaveLength(9)
+    await waitForRows(9)
     row1 = within(rows[2])
     row2 = within(rows[3])
     row3 = within(rows[4])
@@ -5343,8 +5348,7 @@ describe('Tests for metric profile cloneview', () => {
       expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
     })
 
-    rows = metricInstances.getAllByRole("row")
-    expect(rows).toHaveLength(9)
+    await waitForRows(9)
     row1 = within(rows[2])
     row2 = within(rows[3])
     row3 = within(rows[4])
@@ -5373,8 +5377,7 @@ describe('Tests for metric profile cloneview', () => {
       expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
     })
 
-    rows = metricInstances.getAllByRole("row")
-    expect(rows).toHaveLength(10)
+    await waitForRows(10)
     row1 = within(rows[2])
     row2 = within(rows[3])
     row3 = within(rows[4])
@@ -5413,8 +5416,7 @@ describe('Tests for metric profile cloneview', () => {
       expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
     })
 
-    rows = metricInstances.getAllByRole("row")
-    expect(rows).toHaveLength(9)
+    await waitForRows(9)
     row1 = within(rows[2])
     row2 = within(rows[3])
     row3 = within(rows[4])
@@ -5465,8 +5467,7 @@ describe('Tests for metric profile cloneview', () => {
       fireEvent.click(screen.getByTestId("remove-0"))
     })
 
-    rows = metricInstances.getAllByRole("row")
-    expect(rows).toHaveLength(3)
+    await waitForRows(3)
     row1 = within(rows[2])
     expect(row1.getAllByText("Select...")).toHaveLength(2)
   })
