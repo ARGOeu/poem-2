@@ -1,4 +1,4 @@
-from configparser import NoOptionError
+from configparser import NoOptionError, NoSectionError
 
 from Poem.api import serializers
 from Poem.api.internal_views.users import get_all_groups, get_groups_for_user
@@ -110,7 +110,7 @@ class IsSessionActive(APIView):
 
 
 def get_use_service_titles(tenant):
-    config = settings.GET_POEM_CONFIG()
+    config = settings.GET_POEM_CONFIG(settings.CONFIG_FILE)
 
     try:
         if config.get(
@@ -121,7 +121,7 @@ def get_use_service_titles(tenant):
         else:
             return False
 
-    except NoOptionError:
+    except (NoOptionError, NoSectionError):
         return False
 
 
