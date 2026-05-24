@@ -1276,12 +1276,7 @@ describe('Tests for metric profiles changeview', () => {
     expect(row8.getByText("Central-LFC")).toBeInTheDocument()
     expect(row8.getByText("ch.cern.LFC-Write")).toBeInTheDocument()
 
-    await waitFor(() => {
-      selectEvent.select(row2.getAllByText("Select...")[0], "Central-LFC")
-    })
-    await waitFor(() => {
-      selectEvent.select(row2.getAllByText("Select...")[1], "ch.cern.LFC-Write")
-    })
+    await selectMetricProfileTuple(row2, "Central-LFC", "ch.cern.LFC-Write")
 
     await waitFor(() => {
       expect(screen.queryByText(/duplicated/i)).toBeInTheDocument()
@@ -1333,9 +1328,7 @@ describe('Tests for metric profiles changeview', () => {
       expect(screen.queryAllByText(/duplicated/i)).toHaveLength(2)
     })
 
-    await waitFor(() => {
-      selectEvent.select(row2.getByText("ch.cern.LFC-Write"), "argo.AMS-Check")
-    })
+    await selectEvent.select(row2.getByText("ch.cern.LFC-Write"), "argo.AMS-Check")
 
     await waitFor(() => {
       expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
@@ -1578,12 +1571,7 @@ describe('Tests for metric profiles changeview', () => {
     const rows = metricInstances.getAllByRole('row');
     const row4 = within(rows[6])
 
-    await waitFor(() => {
-      selectEvent.select(row4.getAllByText("Select...")[0], "org.opensciencegrid.htcondorce")
-    })
-    await waitFor(() => {
-      selectEvent.select(row4.getAllByText("Select...")[1], "ch.cern.HTCondorCE-JobState")
-    })
+    await selectMetricProfileTuple(row4, "org.opensciencegrid.htcondorce", "ch.cern.HTCondorCE-JobState")
 
     await waitFor(() => {
       expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
@@ -1733,13 +1721,7 @@ describe('Tests for metric profiles changeview', () => {
     rows = metricInstances.getAllByRole('row');
     const row2 = within(rows[4])
 
-    await waitFor(() => {
-      selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
-    })
-    
-    await waitFor(() => {
-      selectEvent.select(row2.getAllByText("Select...")[1], "org.nagiosexchange.AppDB-WebCheck")
-    })
+    await selectMetricProfileTuple(row2, "egi.AppDB", "org.nagiosexchange.AppDB-WebCheck")
 
     await waitFor(() => {
       expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
@@ -1844,12 +1826,7 @@ describe('Tests for metric profiles changeview', () => {
     rows = metricInstances.getAllByRole('row');
     const row2 = within(rows[4])
 
-    await waitFor(() => {
-      selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
-    })
-    await waitFor(() => {
-      selectEvent.select(row2.getAllByText("Select...")[1], "org.nagiosexchange.AppDB-WebCheck")
-    })
+    await selectMetricProfileTuple(row2, "egi.AppDB", "org.nagiosexchange.AppDB-WebCheck")
 
     await waitFor(() => {
       expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
@@ -2717,13 +2694,7 @@ describe('Tests for metric profiles changeview', () => {
     rows = metricInstances.getAllByRole('row');
     const row2 = within(rows[4])
 
-    await  waitFor(() => {
-      selectEvent.select(row2.getAllByText("Select...")[0], "egi.AppDB")
-    })
-
-    await waitFor(() => {
-      selectEvent.select(row2.getAllByText("Select...")[1], "org.nagiosexchange.AppDB-WebCheck")
-    })
+    await selectMetricProfileTuple(row2, "egi.AppDB", "org.nagiosexchange.AppDB-WebCheck")
 
     await waitFor(() => {
       expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
@@ -2943,13 +2914,7 @@ describe('Tests for metric profiles changeview', () => {
     rows = metricInstances.getAllByRole("row")
     const row2 = within(rows[4])
 
-    await waitFor(() => {
-      selectEvent.select(row2.getAllByText("Select...")[0], "ARC-CE")
-    })
-    
-    await waitFor(() => {
-      selectEvent.select(row2.getAllByText("Select...")[1], "argo.AMS-Check")
-    })
+    await selectMetricProfileTuple(row2, "ARC-CE", "argo.AMS-Check")
 
     await waitFor(() => {
       expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
@@ -3428,8 +3393,8 @@ describe('Tests for metric profile addview', () => {
     expect(screen.queryByText('ARGO')).not.toBeInTheDocument()
     expect(screen.queryByText('TEST')).not.toBeInTheDocument()
     selectEvent.openMenu(groupField)
-    expect(screen.getByText('ARGO')).toBeInTheDocument()
-    expect(screen.getByText('TEST')).toBeInTheDocument()
+    expect(await screen.findByText('ARGO')).toBeInTheDocument()
+    expect(await screen.findByText('TEST')).toBeInTheDocument()
 
     expect(screen.queryByText("Combined from")).not.toBeInTheDocument()
     expect(screen.queryByLabelText(/profile/i)).not.toBeInTheDocument()
@@ -3536,8 +3501,7 @@ describe('Tests for metric profile addview', () => {
     var rows = metricInstances.getAllByRole("row")
     var row1 = within(rows[2])
 
-    await selectEvent.select(row1.getAllByText("Select...")[0], "argo.mon")
-    await selectEvent.select(row1.getAllByText("Select...")[0], "eu.egi.CertValidity")
+    await selectMetricProfileTuple(row1, "argo.mon", "eu.egi.CertValidity")
 
     await waitFor(() => {
       expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
@@ -4614,13 +4578,7 @@ describe('Tests for metric profile addview', () => {
     var rows = metricInstances.getAllByRole('row');
     var row1 = within(rows[2])
 
-    await waitFor(() => {
-      selectEvent.select(row1.getAllByText("Select...")[0], "eu.argo.ams")
-    })
-    
-    await waitFor(() => {
-      selectEvent.select(row1.getAllByText("Select...")[1], "argo.AMS-Check")
-    })
+    await selectMetricProfileTuple(row1, "eu.argo.ams", "argo.AMS-Check")
 
     fireEvent.click(screen.getByTestId('insert-0'));
 
