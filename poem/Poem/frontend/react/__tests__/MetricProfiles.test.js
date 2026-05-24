@@ -843,7 +843,7 @@ describe('Tests for metric profiles changeview', () => {
     expect(screen.queryByText('TEST')).not.toBeInTheDocument()
     selectEvent.openMenu(groupField)
 
-    expect(screen.getByText('TEST')).toBeInTheDocument()
+    expect(await screen.findByText('TEST')).toBeInTheDocument()
 
     expect(screen.queryByText("Combined from")).not.toBeInTheDocument()
     expect(screen.queryByLabelText(/profile/i)).not.toBeInTheDocument()
@@ -901,7 +901,7 @@ describe('Tests for metric profiles changeview', () => {
     expect(screen.queryByText('TEST')).not.toBeInTheDocument()
     selectEvent.openMenu(groupField)
 
-    expect(screen.getByText('TEST')).toBeInTheDocument()
+    expect(await screen.findByText('TEST')).toBeInTheDocument()
 
     expect(screen.queryByText("Combined from")).not.toBeInTheDocument()
     expect(screen.queryByLabelText(/profile/i)).not.toBeInTheDocument()
@@ -1435,7 +1435,7 @@ describe('Tests for metric profiles changeview', () => {
 
     expect(screen.queryByText('TEST')).not.toBeInTheDocument()
     selectEvent.openMenu(groupField)
-    expect(screen.getByText('TEST')).toBeInTheDocument()
+    expect(await screen.findByText('TEST')).toBeInTheDocument()
 
     expect(nameField.value).toBe('ARGO_MON');
     expect(nameField).toBeDisabled();
@@ -1497,7 +1497,7 @@ describe('Tests for metric profiles changeview', () => {
 
     expect(screen.queryByText('TEST')).not.toBeInTheDocument()
     selectEvent.openMenu(groupField)
-    expect(screen.getByText('TEST')).toBeInTheDocument()
+    expect(await screen.findByText('TEST')).toBeInTheDocument()
 
     expect(nameField.value).toBe('ARGO_MON');
     expect(nameField).toBeDisabled();
@@ -3430,8 +3430,8 @@ describe('Tests for metric profile addview', () => {
     expect(screen.queryByText('ARGO')).not.toBeInTheDocument()
     expect(screen.queryByText('TEST')).not.toBeInTheDocument()
     selectEvent.openMenu(groupField)
-    expect(screen.getByText('ARGO')).toBeInTheDocument()
-    expect(screen.getByText('TEST')).toBeInTheDocument()
+    expect(await screen.findByText('ARGO')).toBeInTheDocument()
+    expect(await screen.findByText('TEST')).toBeInTheDocument()
 
     expect(screen.queryByText("Combined from")).toBeInTheDocument()
     expect(screen.queryAllByLabelText(/profile/i)).toHaveLength(2)
@@ -5135,7 +5135,7 @@ describe('Tests for metric profile cloneview', () => {
 
     expect(screen.queryByText('TEST')).not.toBeInTheDocument()
     selectEvent.openMenu(groupField)
-    expect(screen.getByText('TEST')).toBeInTheDocument()
+    expect(await screen.findByText('TEST')).toBeInTheDocument()
 
     expect(screen.queryByText("Combined from")).not.toBeInTheDocument()
     expect(screen.queryByLabelText(/profile/i)).not.toBeInTheDocument()
@@ -5195,7 +5195,7 @@ describe('Tests for metric profile cloneview', () => {
 
     expect(screen.queryByText('TEST')).not.toBeInTheDocument()
     selectEvent.openMenu(groupField)
-    expect(screen.getByText('TEST')).toBeInTheDocument()
+    expect(await screen.findByText('TEST')).toBeInTheDocument()
 
     expect(screen.queryByText("Combined from")).not.toBeInTheDocument()
     expect(screen.queryByLabelText(/profile/i)).not.toBeInTheDocument()

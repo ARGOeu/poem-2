@@ -358,7 +358,7 @@ describe('Tests for YUM repos changeview on SuperAdmin POEM', () => {
 
     expect(screen.queryByText('CentOS 7')).not.toBeInTheDocument()
     selectEvent.openMenu(tagField)
-    expect(screen.getByText('CentOS 7')).toBeInTheDocument()
+    expect(await screen.findByText('CentOS 7')).toBeInTheDocument()
 
     expect(contentField.value).toBe('[argo-devel]\nname=ARGO Product Repository\nbaseurl=http://rpm-repo.argo.grnet.gr/ARGO/devel/centos6/\ngpgcheck=0enabled=1\npriority=99\nexclude=\nincludepkgs=')
     expect(contentField).toBeEnabled();
@@ -691,8 +691,8 @@ describe('Tests for YUM repo addview', () => {
     expect(screen.queryByText('CentOS 6')).not.toBeInTheDocument()
     expect(screen.queryByText('CentOS 7')).not.toBeInTheDocument()
     selectEvent.openMenu(tagField)
-    expect(screen.getByText('CentOS 6')).toBeInTheDocument()
-    expect(screen.getByText('CentOS 7')).toBeInTheDocument()
+    expect(await screen.findByText('CentOS 6')).toBeInTheDocument()
+    expect(await screen.findByText('CentOS 7')).toBeInTheDocument()
 
     expect(contentField.value).toBe('');
     expect(contentField).toBeEnabled();
@@ -874,7 +874,7 @@ describe('Tests for YUM repo cloneview', () => {
 
     expect(screen.queryByText('CentOS 7')).not.toBeInTheDocument()
     selectEvent.openMenu(tagField)
-    expect(screen.getByText('CentOS 7')).toBeInTheDocument()
+    expect(await screen.findByText('CentOS 7')).toBeInTheDocument()
 
     expect(contentField.value).toBe('[argo-devel]\nname=ARGO Product Repository\nbaseurl=http://rpm-repo.argo.grnet.gr/ARGO/devel/centos6/\ngpgcheck=0enabled=1\npriority=99\nexclude=\nincludepkgs=')
     expect(contentField).toBeEnabled();
