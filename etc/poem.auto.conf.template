@@ -1,0 +1,9 @@
+[GENERAL_TENANTNAME]
+# Extra tenant GENERAL options may be defined here.
+
+[SUPERUSER_TENANTNAME]
+# Extra tenant SUPERUSER options may be defined here.
+
+[SECURITY]
+# AllowedHosts values are appended to SECURITY.AllowedHosts from poem.conf.
+AllowedHosts =

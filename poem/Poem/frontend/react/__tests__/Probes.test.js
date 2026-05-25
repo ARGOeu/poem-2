@@ -612,10 +612,10 @@ describe('Test probe changeview on SuperAdmin POEM', () => {
     expect(screen.queryByText('nagios-plugins-globus (0.1.5)')).not.toBeInTheDocument()
     expect(screen.queryByText('nagios-plugins-http (present)')).not.toBeInTheDocument()
     selectEvent.openMenu(packageField)
-    expect(screen.queryByText('nagios-plugins-argo (0.1.12)')).toBeInTheDocument()
-    expect(screen.queryByText('nagios-plugins-fedcloud (0.5.0)')).toBeInTheDocument()
-    expect(screen.queryByText('nagios-plugins-globus (0.1.5)')).toBeInTheDocument()
-    expect(screen.queryByText('nagios-plugins-http (present)')).toBeInTheDocument()
+    expect(await screen.findByText('nagios-plugins-argo (0.1.12)')).toBeInTheDocument()
+    expect(await screen.findByText('nagios-plugins-fedcloud (0.5.0)')).toBeInTheDocument()
+    expect(await screen.findByText('nagios-plugins-globus (0.1.5)')).toBeInTheDocument()
+    expect(await screen.findByText('nagios-plugins-http (present)')).toBeInTheDocument()
 
     expect(metricLinks[0].closest('a')).toHaveAttribute('href', '/ui/metrictemplates/argo.AMS-Check');
     expect(metricLinks[1].closest('a')).toHaveAttribute('href', '/ui/metrictemplates/test.AMS-Check');
@@ -1083,11 +1083,11 @@ describe('Test probe addview', () => {
     expect(screen.queryByText('nagios-plugins-globus (0.1.5)')).not.toBeInTheDocument()
     expect(screen.queryByText('nagios-plugins-http (present)')).not.toBeInTheDocument()
     selectEvent.openMenu(packageField)
-    expect(screen.queryByText('nagios-plugins-argo (0.1.11)')).toBeInTheDocument()
-    expect(screen.queryByText('nagios-plugins-argo (0.1.12)')).toBeInTheDocument()
-    expect(screen.queryByText('nagios-plugins-fedcloud (0.5.0)')).toBeInTheDocument()
-    expect(screen.queryByText('nagios-plugins-globus (0.1.5)')).toBeInTheDocument()
-    expect(screen.queryByText('nagios-plugins-http (present)')).toBeInTheDocument()
+    expect(await screen.findByText('nagios-plugins-argo (0.1.11)')).toBeInTheDocument()
+    expect(await screen.findByText('nagios-plugins-argo (0.1.12)')).toBeInTheDocument()
+    expect(await screen.findByText('nagios-plugins-fedcloud (0.5.0)')).toBeInTheDocument()
+    expect(await screen.findByText('nagios-plugins-globus (0.1.5)')).toBeInTheDocument()
+    expect(await screen.findByText('nagios-plugins-http (present)')).toBeInTheDocument()
 
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
@@ -1341,10 +1341,10 @@ describe('Test probe cloneview', () => {
     expect(screen.queryByText('nagios-plugins-globus (0.1.5)')).not.toBeInTheDocument()
     expect(screen.queryByText('nagios-plugins-http (present)')).not.toBeInTheDocument()
     selectEvent.openMenu(packageField)
-    expect(screen.queryByText('nagios-plugins-argo (0.1.12)')).toBeInTheDocument()
-    expect(screen.queryByText('nagios-plugins-fedcloud (0.5.0)')).toBeInTheDocument()
-    expect(screen.queryByText('nagios-plugins-globus (0.1.5)')).toBeInTheDocument()
-    expect(screen.queryByText('nagios-plugins-http (present)')).toBeInTheDocument()
+    expect(await screen.findByText('nagios-plugins-argo (0.1.12)')).toBeInTheDocument()
+    expect(await screen.findByText('nagios-plugins-fedcloud (0.5.0)')).toBeInTheDocument()
+    expect(await screen.findByText('nagios-plugins-globus (0.1.5)')).toBeInTheDocument()
+    expect(await screen.findByText('nagios-plugins-http (present)')).toBeInTheDocument()
 
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
