@@ -16,7 +16,7 @@ wheel-devel: clean
   fi; \
 	echo "Version $$BUILD_VER"; \
 	poetry install --no-root --with devel; \
-  poetry run python3 -m build -w
+  poetry run python3.12 -m build -w
 	mv -f dist/*.whl .
 
 

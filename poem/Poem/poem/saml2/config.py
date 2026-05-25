@@ -1,8 +1,6 @@
 import sysconfig
 import saml2
 
-from configparser import ConfigParser
-
 from saml2.config import SPConfig
 
 from django.conf import settings
@@ -24,17 +22,15 @@ def get_hostname(request):
 
 
 def service_name_conf(tenant):
-    config = ConfigParser()
-    config.read(settings.CONFIG_FILE)
-
-    return config.get('GENERAL_' + tenant.upper(), 'samlservicename')
+    return settings.GET_POEM_CONFIG().get(
+        'GENERAL_' + tenant.upper(), 'samlservicename'
+    )
 
 
 def saml_login_string(tenant):
-    config = ConfigParser()
-    config.read(settings.CONFIG_FILE)
-
-    return config.get('GENERAL_' + tenant.upper(), 'samlloginstring')
+    return settings.GET_POEM_CONFIG().get(
+        'GENERAL_' + tenant.upper(), 'samlloginstring'
+    )
 
 
 def get_saml_config(request):

@@ -6,13 +6,63 @@ from django.core.exceptions import ImproperlyConfigured
 VENV = '/opt/poem'
 APP_PATH = os.path.abspath(os.path.split(__file__)[0])
 CONFIG_FILE = '{}/etc/poem/poem.conf'.format(VENV)
+AUTO_CONFIG_FILE = '{}/etc/poem/poem.auto.conf'.format(VENV)
 LOG_CONFIG = '{}/etc/poem/poem_logging.conf'.format(VENV)
 
-try:
+
+def _split_comma_list(value):
+    return [item.strip() for item in value.split(',') if item.strip()]
+
+
+def _merge_auto_config(config, auto_config_file=AUTO_CONFIG_FILE):
+    auto_config = ConfigParser()
+
+    if not auto_config.read([auto_config_file]):
+        return
+
+    for option, value in auto_config.defaults().items():
+        config['DEFAULT'][option] = value
+
+    for section in auto_config.sections():
+        if not config.has_section(section):
+            config.add_section(section)
+
+        for option, value in auto_config._sections[section].items():
+            if option == '__name__':
+                continue
+
+            if (
+                    section == 'SECURITY' and
+                    option.lower() == 'allowedhosts' and
+                    config.has_option(section, option)
+            ):
+                allowed_hosts = _split_comma_list(
+                    config.get(section, option, raw=True)
+                )
+                allowed_hosts.extend(_split_comma_list(value))
+                config.set(section, option, ', '.join(allowed_hosts))
+
+            else:
+                config.set(section, option, value)
+
+
+def get_poem_config(config_file=None, auto_config_file=None):
+    config_file = config_file or CONFIG_FILE
+    auto_config_file = auto_config_file or AUTO_CONFIG_FILE
+
     config = ConfigParser()
 
-    if not config.read([CONFIG_FILE]):
-        raise ImproperlyConfigured('Unable to parse config file %s' % CONFIG_FILE)
+    if not config.read([config_file]):
+        raise ImproperlyConfigured('Unable to parse config file %s' % config_file)
+
+    _merge_auto_config(config, auto_config_file)
+    return config
+
+
+try:
+    config = get_poem_config()
+    GET_POEM_CONFIG = get_poem_config
+    POEM_CONFIG = config
 
     # General
     DEBUG = bool(config.getboolean('GENERAL', 'debug'))
@@ -84,7 +134,6 @@ if ',' in ALLOWED_HOSTS:
     ALLOWED_HOSTS = [h.strip() for h in ALLOWED_HOSTS.split(',')]
 else:
     ALLOWED_HOSTS = [ALLOWED_HOSTS]
-
 
 # Make this unique, and don't share it with anybody.
 try:
