@@ -1,5 +1,6 @@
 import datetime
 import os
+import tempfile
 from unittest.mock import patch
 
 from Poem.api import views_internal as views
@@ -7,6 +8,8 @@ from Poem.api.internal_views.app import get_use_service_titles
 from Poem.poem import models as poem_models
 from Poem.poem_super_admin.models import WebAPIKey
 from Poem.users.models import CustUser
+from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django_tenants.test.cases import TenantTestCase
 from django_tenants.test.client import TenantRequestFactory
 from django_tenants.utils import get_public_schema_name
@@ -586,3 +589,43 @@ class ConfigTests(TenantTestCase):
         with self.settings(CONFIG_FILE=self.config_file_name):
             self.assertFalse(get_use_service_titles("EGI"))
             self.assertTrue(get_use_service_titles("EOSC"))
+
+    def test_merge_auto_config_allowed_hosts_from_file(self):
+        with tempfile.TemporaryDirectory() as config_dir:
+            config_file = os.path.join(config_dir, "poem.conf")
+            auto_config_file = os.path.join(config_dir, "poem.auto.conf")
+            allowed_hosts_file = os.path.join(config_dir, "allowed_hosts")
+
+            with open(config_file, "w") as f:
+                f.write(
+                    "[SECURITY]\n"
+                    "AllowedHosts = core1.example.com, core2.example.com\n"
+                )
+
+            with open(auto_config_file, "w") as f:
+                f.write("[SECURITY]\nAllowedHosts = allowed_hosts\n")
+
+            with open(allowed_hosts_file, "w") as f:
+                f.write("auto1.example.com\n\nauto2.example.com\n")
+
+            config = settings.GET_POEM_CONFIG(config_file, auto_config_file)
+
+            self.assertEqual(
+                config.get("SECURITY", "AllowedHosts"),
+                "core1.example.com, core2.example.com, "
+                "auto1.example.com, auto2.example.com"
+            )
+
+    def test_merge_auto_config_allowed_hosts_rejects_outside_file(self):
+        with tempfile.TemporaryDirectory() as config_dir:
+            config_file = os.path.join(config_dir, "poem.conf")
+            auto_config_file = os.path.join(config_dir, "poem.auto.conf")
+
+            with open(config_file, "w") as f:
+                f.write("[SECURITY]\nAllowedHosts = core.example.com\n")
+
+            with open(auto_config_file, "w") as f:
+                f.write("[SECURITY]\nAllowedHosts = ../allowed_hosts\n")
+
+            with self.assertRaises(ImproperlyConfigured):
+                settings.GET_POEM_CONFIG(config_file, auto_config_file)
