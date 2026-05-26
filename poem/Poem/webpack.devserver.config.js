@@ -1,4 +1,5 @@
 var BundleTracker = require('webpack-bundle-tracker');
+var path = require("path");
 
 module.exports = {
   context: __dirname,
