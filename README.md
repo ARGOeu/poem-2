@@ -220,6 +220,7 @@ Configuration is centered around one file `VENV/etc/poem/poem.conf` that is spli
 	SecretKeyPath = %(VENV)s/etc/poem/secret_key
 
 * `AllowedHosts` should have FQDN name of hosts that will be running POEM service. It can be provided as comma separated list of valid FQDNs and it is used as prevention of HTTP Host Header attacks. FQDNs listed here will be matched against request's Host header exactly.
+  Additional hosts may be configured in `poem.auto.conf` by setting `SECURITY.AllowedHosts` to a relative path to a file in the same `etc/poem` directory; that file should contain one FQDN per line and its values are appended to the core `poem.conf` hosts.
 * `CAFile`, `CAPath` are used by sync scripts to authenticate the server certificate
 * `HostCert`, `HostKey` are public and private part of client certificate
 * `SecretKeyPath` is the location of file containing Django SECRET_KEY that is used for cryptographic signing
