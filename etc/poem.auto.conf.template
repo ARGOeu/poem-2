@@ -5,6 +5,6 @@
 # Extra tenant SUPERUSER options may be defined here.
 
 [SECURITY]
-# Relative path to a file in this directory. Non-empty lines are appended to
-# SECURITY.AllowedHosts from poem.conf.
-AllowedHosts = allowed_hosts
+# Optional relative path to a file in this directory. Non-empty lines are
+# appended to SECURITY.AllowedHosts from poem.conf.
+# AllowedHosts = allowed_hosts

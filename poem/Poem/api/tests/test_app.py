@@ -616,6 +616,24 @@ class ConfigTests(TenantTestCase):
                 "auto1.example.com, auto2.example.com"
             )
 
+    def test_merge_auto_config_allows_missing_allowed_hosts_option(self):
+        with tempfile.TemporaryDirectory() as config_dir:
+            config_file = os.path.join(config_dir, "poem.conf")
+            auto_config_file = os.path.join(config_dir, "poem.auto.conf")
+
+            with open(config_file, "w") as f:
+                f.write("[SECURITY]\nAllowedHosts = core.example.com\n")
+
+            with open(auto_config_file, "w") as f:
+                f.write("[SECURITY]\n")
+
+            config = settings.GET_POEM_CONFIG(config_file, auto_config_file)
+
+            self.assertEqual(
+                config.get("SECURITY", "AllowedHosts"),
+                "core.example.com"
+            )
+
     def test_merge_auto_config_allowed_hosts_rejects_outside_file(self):
         with tempfile.TemporaryDirectory() as config_dir:
             config_file = os.path.join(config_dir, "poem.conf")
