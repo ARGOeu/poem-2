@@ -14,6 +14,31 @@ def _split_comma_list(value):
     return [item.strip() for item in value.split(',') if item.strip()]
 
 
+def _read_allowed_hosts_file(auto_config_file, value):
+    allowed_hosts_file = value.strip()
+    if not allowed_hosts_file:
+        return []
+
+    config_dir = os.path.abspath(os.path.dirname(auto_config_file))
+    allowed_hosts_path = os.path.abspath(
+        os.path.join(config_dir, allowed_hosts_file)
+    )
+
+    if os.path.commonpath([config_dir, allowed_hosts_path]) != config_dir:
+        raise ImproperlyConfigured(
+            'AllowedHosts file must be inside %s' % config_dir
+        )
+
+    try:
+        with open(allowed_hosts_path, 'r') as f:
+            return [line.strip() for line in f if line.strip()]
+
+    except OSError as e:
+        raise ImproperlyConfigured(
+            'Unable to read AllowedHosts file %s' % allowed_hosts_path
+        ) from e
+
+
 def _merge_auto_config(config, auto_config_file=AUTO_CONFIG_FILE):
     auto_config = ConfigParser()
 
@@ -33,13 +58,16 @@ def _merge_auto_config(config, auto_config_file=AUTO_CONFIG_FILE):
 
             if (
                     section == 'SECURITY' and
-                    option.lower() == 'allowedhosts' and
-                    config.has_option(section, option)
+                    option.lower() == 'allowedhosts'
             ):
-                allowed_hosts = _split_comma_list(
-                    config.get(section, option, raw=True)
+                allowed_hosts = []
+                if config.has_option(section, option):
+                    allowed_hosts = _split_comma_list(
+                        config.get(section, option, raw=True)
+                    )
+                allowed_hosts.extend(
+                    _read_allowed_hosts_file(auto_config_file, value)
                 )
-                allowed_hosts.extend(_split_comma_list(value))
                 config.set(section, option, ', '.join(allowed_hosts))
 
             else:
