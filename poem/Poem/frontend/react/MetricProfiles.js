@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useContext, useEffect } from 'react';
 import {Link, useLocation, useParams, useNavigate} from 'react-router-dom';
 import {
-  Backend, 
+  Backend,
   WebApi,
   fetchTenantsMetricProfiles
 } from './DataManager';
@@ -47,10 +47,10 @@ import './MetricProfiles.css';
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext, useWatch } from 'react-hook-form';
 import * as yup from "yup"
 import { yupResolver } from '@hookform/resolvers/yup';
-import { 
+import {
   ChangeViewPlaceholder,
-  ListViewPlaceholder, 
-  ProfileMainPlaceholder, 
+  ListViewPlaceholder,
+  ProfileMainPlaceholder,
   VersionComparePlaceholder
 } from './Placeholders';
 
@@ -58,7 +58,7 @@ export const MetricProfilesClone = (props) => {
   return <MetricProfilesComponent cloneview={true} {...props} />
 };
 
-export const MetricProfilesChange = (props) => { 
+export const MetricProfilesChange = (props) => {
   return <MetricProfilesComponent {...props} />
 };
 
@@ -554,7 +554,7 @@ const MetricProfilesForm = ({
           }
           {
             (combined && addview) &&
-            Object.keys(tenantsProfiles).sort().map(tenant => 
+            Object.keys(tenantsProfiles).sort().map(tenant =>
               <Row key={tenant}>
                 <Col md={7}>
                   <h6 className='mt-4 font-weight-bold text-uppercase'>{ tenant }</h6>
@@ -569,7 +569,7 @@ const MetricProfilesForm = ({
                         onChange={ e => {
                           let tenants = Object.keys(tenantsProfiles)
                           let old_profile = methods.getValues(`${tenant}-profile`)
-                          methods.setValue(`${tenant}-profile`, e.value) 
+                          methods.setValue(`${tenant}-profile`, e.value)
                           let old_profile_tuples = []
                           if (old_profile)
                             old_profile_tuples = flattenServices(tenantsProfiles[tenant].filter(profile => profile.name === old_profile)[0].services)
@@ -671,7 +671,7 @@ const MetricProfilesFormPlaceholder = ( props ) => {
     </ChangeViewPlaceholder>
   )
 }
-   
+
 
 export const MetricProfilesComponent = (props) => {
   const { name: profile_name } = useParams()
@@ -680,7 +680,7 @@ export const MetricProfilesComponent = (props) => {
   const cloneview = props.cloneview;
   const publicView = props.publicView;
   const tenantDetails = props.tenantDetails !== undefined ? props.tenantDetails : "";
-  const combined = props.tenantDetails && props.tenantDetails.combined !== undefined ? props.tenantDetails.combined : false;  
+  const combined = props.tenantDetails && props.tenantDetails.combined !== undefined ? props.tenantDetails.combined : false;
   const backend = new Backend();
   const webapi = new WebApi({
     token: props.webapitoken,
@@ -754,7 +754,7 @@ export const MetricProfilesComponent = (props) => {
   const { data: tenantsProfiles, error: errorTenantsProfiles, isLoading: loadingTenantsProfiles } = useQuery(
     ["metricprofile", "combined", profile_name],
     () => fetchTenantsMetricProfiles(props.webapimetric, tenantDetails.tenants),
-    { 
+    {
       enabled: combined && addview && !!userDetails,
       initialData: () => {
         if (userDetails)
@@ -789,7 +789,7 @@ export const MetricProfilesComponent = (props) => {
             onSuccess: (data) => {
               queryClient.invalidateQueries('metricprofile');
               queryClient.invalidateQueries('public_metricprofile');
-              
+
               let msg = "Metric profile successfully deleted"
 
               if ("deleted" in data)
@@ -936,7 +936,7 @@ export const MetricProfilesComponent = (props) => {
             onSuccess: (data) => {
               queryClient.invalidateQueries('metricprofile');
               queryClient.invalidateQueries('public_metricprofile');
-              
+
               let msg = "Metric profile successfully added"
               let warn_msg = ""
 

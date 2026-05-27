@@ -1,11 +1,10 @@
 from django.core.management.base import BaseCommand
 from django_tenants.management.commands import InteractiveTenantOption
 from django.db import connection
+from django.utils import timezone
 
 from Poem.api.models import MyAPIKey
 from Poem.poem_super_admin.models import WebAPIKey
-
-import datetime
 
 
 class Command(InteractiveTenantOption, BaseCommand):
@@ -64,7 +63,7 @@ class Command(InteractiveTenantOption, BaseCommand):
                 api_token, token = model.objects.create_key(**{
                     'name': tokenname,
                     'token': token,
-                    'created': datetime.datetime.now()
+                    'created': timezone.now()
                 })
                 self.stdout.write(self.style.WARNING(f"Token {api_token.name} recreated with value {api_token.token}"))
             elif obj:
