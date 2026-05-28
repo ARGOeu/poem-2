@@ -1520,7 +1520,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
 
     expect(screen.queryByText('Passive')).not.toBeInTheDocument()
     selectEvent.openMenu(typeField)
-    expect(screen.getByText('Passive')).toBeInTheDocument()
+    expect(await screen.findByText('Passive')).toBeInTheDocument()
 
     expect(probeField).toBeEnabled()
 
@@ -1659,7 +1659,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
 
     expect(screen.queryByText('Passive')).not.toBeInTheDocument()
     selectEvent.openMenu(typeField)
-    expect(screen.getByText('Passive')).toBeInTheDocument()
+    expect(await screen.findByText('Passive')).toBeInTheDocument()
 
     expect(probeField).toBeEnabled()
 
@@ -4588,7 +4588,7 @@ describe('Test metric template cloneview on SuperPOEM', () => {
 
     expect(screen.queryByText('Passive')).not.toBeInTheDocument()
     selectEvent.openMenu(typeField)
-    expect(screen.getByText('Passive')).toBeInTheDocument()
+    expect(await screen.findByText('Passive')).toBeInTheDocument()
 
     expect(probeField).toBeEnabled()
 
