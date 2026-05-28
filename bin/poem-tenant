@@ -31,6 +31,12 @@ def build_parser():
         "-l", dest="list_tenants", action="store_true",
         help="list all tenants",
     )
+    parser.add_argument(
+        "--run-as-user",
+        default=RUN_AS_USER,
+        metavar="<user>",
+        help="effective user used when running Django commands",
+    )
     parser.add_argument("-h", "--help", action="store_true")
     return parser
 
@@ -42,6 +48,7 @@ def print_usage(parser):
     print("       [-c] - use if tenant is combined tenant", file=sys.stderr)
     print("       [-r] - remove tenant and schema", file=sys.stderr)
     print("       [-l] - list all tenants", file=sys.stderr)
+    print("       [--run-as-user] - effective user (default: apache)", file=sys.stderr)
 
 
 def drop_privileges(user=RUN_AS_USER):
@@ -163,7 +170,7 @@ def main(argv=None):
     if not args.list_tenants:
         require_tenant_name(parser, args.name)
 
-    drop_privileges()
+    drop_privileges(args.run_as_user)
     setup_django()
 
     if args.list_tenants:
