@@ -90,15 +90,31 @@ def list_tenants():
 
 
 def create_tenant(name, hostname, combined):
-    if hostname:
-        call_management_command(
-            "poem_create_tenant",
-            name=name,
-            hostname=hostname,
-            combined=combined,
-        )
-    else:
-        call_management_command("create_tenant", name=name, combined=combined)
+    try:
+        if hostname:
+            call_management_command(
+                "poem_create_tenant",
+                name=name,
+                hostname=hostname,
+                combined=combined,
+            )
+        else:
+            call_management_command(
+                "create_tenant",
+                name=name,
+                combined=combined,
+            )
+
+    except Exception as exc:
+        message = str(exc)
+        schema = name.lower()
+        if (
+            "tenants_tenant_schema_name_key" in message
+            or f"Key (schema_name)=({schema}) already exists" in message
+        ):
+            print(f"Tenant with schema {schema} already exists.", file=sys.stderr)
+            return 1
+        raise
 
     return 0
 
