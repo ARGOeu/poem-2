@@ -118,7 +118,15 @@ def import_internal_metrics(schema):
 
 
 def remove_tenant(name):
-    call_management_command("poem_delete_tenant", name=name)
+    try:
+        call_management_command("poem_delete_tenant", name=name)
+    except Exception as exc:
+        message = str(exc)
+        if message == f"Tenant with name {name} does not exist":
+            print(message, file=sys.stderr)
+            return 1
+        raise
+
     return 0
 
 
