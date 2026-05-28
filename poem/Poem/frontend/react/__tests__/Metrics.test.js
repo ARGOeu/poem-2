@@ -845,7 +845,7 @@ describe('Tests for metric change', () => {
 
     expect(screen.queryByText('ARGOTEST')).not.toBeInTheDocument()
     selectEvent.openMenu(groupField)
-    expect(screen.getByText('ARGOTEST')).toBeInTheDocument()
+    expect(await screen.findByText('ARGOTEST')).toBeInTheDocument()
 
     expect(screen.getByRole('heading', { name: /metric configuration/i })).toBeInTheDocument()
 
@@ -967,7 +967,7 @@ describe('Tests for metric change', () => {
 
     expect(screen.queryByText('ARGOTEST')).not.toBeInTheDocument()
     selectEvent.openMenu(groupField)
-    expect(screen.getByText('ARGOTEST')).toBeInTheDocument()
+    expect(await screen.findByText('ARGOTEST')).toBeInTheDocument()
 
     expect(screen.getByRole('heading', { name: /metric configuration/i })).toBeInTheDocument()
 
@@ -1910,7 +1910,7 @@ describe('Tests for metric change', () => {
 
     expect(screen.queryByText('ARGOTEST')).not.toBeInTheDocument()
     selectEvent.openMenu(groupField)
-    expect(screen.getByText('ARGOTEST')).toBeInTheDocument()
+    expect(await screen.findByText('ARGOTEST')).toBeInTheDocument()
 
     expect(screen.getByRole('heading', { name: /metric conf/i }).textContent).toBe('Metric configuration');
     expect(screen.getByRole('heading', { name: /exec/i }).textContent).toBe('probe executable');
