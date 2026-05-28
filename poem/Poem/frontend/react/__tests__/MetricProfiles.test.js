@@ -1444,8 +1444,11 @@ describe('Tests for metric profiles changeview', () => {
     expect(groupField).toBeEnabled();
 
     const metricInstances = within(screen.getByRole('table'));
-    const rows = metricInstances.getAllByRole('row');
-    expect(rows).toHaveLength(4);
+    let rows;
+    await waitFor(() => {
+      rows = metricInstances.getAllByRole('row');
+      expect(rows).toHaveLength(4);
+    })
     const row1 = within(rows[2])
     const row2 = within(rows[3])
 
@@ -1506,8 +1509,11 @@ describe('Tests for metric profiles changeview', () => {
     expect(groupField).toBeEnabled();
 
     const metricInstances = within(screen.getByRole('table'));
-    const rows = metricInstances.getAllByRole('row');
-    expect(rows).toHaveLength(4);
+    let rows;
+    await waitFor(() => {
+      rows = metricInstances.getAllByRole('row');
+      expect(rows).toHaveLength(4);
+    })
     const row1 = within(rows[2])
     const row2 = within(rows[3])
     expect(row1.getByText("org.opensciencegrid.htcondorce")).toBeInTheDocument()
@@ -3433,20 +3439,22 @@ describe('Tests for metric profile addview', () => {
     expect(await screen.findByText('ARGO')).toBeInTheDocument()
     expect(await screen.findByText('TEST')).toBeInTheDocument()
 
-    expect(screen.queryByText("Combined from")).toBeInTheDocument()
-    expect(screen.queryAllByLabelText(/profile/i)).toHaveLength(2)
+    expect(await screen.findByText("Combined from")).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryAllByLabelText(/profile/i)).toHaveLength(2)
+    })
 
     expect(screen.queryByText("TENANT1-PROFILE1")).not.toBeInTheDocument()
     expect(screen.queryByText("TENANT1-PROFILE2")).not.toBeInTheDocument()
     expect(screen.queryByText("PROFILE3")).not.toBeInTheDocument()
 
     selectEvent.openMenu(screen.queryAllByLabelText(/profile/i)[0])
-    expect(screen.queryByText("TENANT1-PROFILE1")).toBeInTheDocument()
-    expect(screen.queryByText("TENANT1-PROFILE2")).toBeInTheDocument()
+    expect(await screen.findByText("TENANT1-PROFILE1")).toBeInTheDocument()
+    expect(await screen.findByText("TENANT1-PROFILE2")).toBeInTheDocument()
     expect(screen.queryByText("PROFILE3")).not.toBeInTheDocument()
 
     selectEvent.openMenu(screen.queryAllByLabelText(/profile/i)[1])
-    expect(screen.queryByText("PROFILE3")).toBeInTheDocument()
+    expect(await screen.findByText("PROFILE3")).toBeInTheDocument()
 
     const metricInstances = within(screen.getByRole('table'));
     const rows = metricInstances.getAllByRole("row")
@@ -3642,8 +3650,11 @@ describe('Tests for metric profile addview', () => {
     })
 
     const metricInstances = within(screen.getByRole('table'));
-    const rows = metricInstances.getAllByRole('row');
-    expect(rows).toHaveLength(4);
+    let rows;
+    await waitFor(() => {
+      rows = metricInstances.getAllByRole('row');
+      expect(rows).toHaveLength(4);
+    })
     const row1 = within(rows[2])
     const row2 = within(rows[3])
 
@@ -3711,8 +3722,11 @@ describe('Tests for metric profile addview', () => {
     })
 
     const metricInstances = within(screen.getByRole('table'));
-    const rows = metricInstances.getAllByRole('row');
-    expect(rows).toHaveLength(4);
+    let rows;
+    await waitFor(() => {
+      rows = metricInstances.getAllByRole('row');
+      expect(rows).toHaveLength(4);
+    })
     const row1 = within(rows[2])
     const row2 = within(rows[3])
 
