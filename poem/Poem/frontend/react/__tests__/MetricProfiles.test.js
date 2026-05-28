@@ -5288,7 +5288,7 @@ describe('Tests for metric profile cloneview', () => {
       })
     }
 
-    fireEvent.click(screen.getByTestId("remove-2"))
+    await useEvent.click(screen.getByTestId("remove-2"))
 
     await waitFor(() => {
       expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
@@ -5314,7 +5314,7 @@ describe('Tests for metric profile cloneview', () => {
     expect(row6.getByText("Central-LFC")).toBeInTheDocument()
     expect(row6.getByText("ch.cern.LFC-Write")).toBeInTheDocument()
 
-    fireEvent.click(screen.getByTestId("insert-3"))
+    await useEvent.click(screen.getByTestId("insert-3"))
 
     await waitFor(() => {
       expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
@@ -5371,7 +5371,7 @@ describe('Tests for metric profile cloneview', () => {
     expect(row7.getByText("Central-LFC")).toBeInTheDocument()
     expect(row7.getByText("ch.cern.LFC-Write")).toBeInTheDocument()
 
-    fireEvent.click(metricInstances.getByTestId("insert-0"))
+    await useEvent.click(metricInstances.getByTestId("insert-0"))
 
     await waitFor(() => {
       expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
@@ -5408,9 +5408,7 @@ describe('Tests for metric profile cloneview', () => {
       expect(screen.queryByText(/duplicated/i)).toBeInTheDocument()
     })
 
-    await waitFor(() => {
-      fireEvent.click(screen.getByTestId("remove-7"))
-    })
+    await useEvent.click(screen.getByTestId("remove-7"))
 
     await waitFor(() => {
       expect(screen.queryByText(/duplicated/i)).not.toBeInTheDocument()
@@ -5439,33 +5437,13 @@ describe('Tests for metric profile cloneview', () => {
     expect(row7.getByText("Central-LFC")).toBeInTheDocument()
     expect(row7.getByText("ch.cern.LFC-Read")).toBeInTheDocument()
 
-    await waitFor(() => {
-      fireEvent.click(screen.getByTestId("remove-6"))
-    })
-
-    await waitFor(() => {
-      fireEvent.click(screen.getByTestId("remove-5"))
-    })
-
-    await waitFor(() => {
-      fireEvent.click(screen.getByTestId("remove-4"))
-    })
-
-    await waitFor(() => {
-      fireEvent.click(screen.getByTestId("remove-3"))
-    })
-
-    await waitFor(() => {
-      fireEvent.click(screen.getByTestId("remove-2"))
-    })
-
-    await waitFor(() => {
-      fireEvent.click(screen.getByTestId("remove-1"))
-    })
-
-    await waitFor(() => {
-      fireEvent.click(screen.getByTestId("remove-0"))
-    })
+    await useEvent.click(screen.getByTestId("remove-6"))
+    await useEvent.click(screen.getByTestId("remove-5"))
+    await useEvent.click(screen.getByTestId("remove-4"))
+    await useEvent.click(screen.getByTestId("remove-3"))
+    await useEvent.click(screen.getByTestId("remove-2"))
+    await useEvent.click(screen.getByTestId("remove-1"))
+    await useEvent.click(screen.getByTestId("remove-0"))
 
     await waitForRows(3)
     row1 = within(rows[2])
