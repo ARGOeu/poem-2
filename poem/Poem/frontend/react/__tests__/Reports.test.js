@@ -8266,8 +8266,8 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText("NGI_BG_SERVICES")).not.toBeInTheDocument()
     expect(card_groups.queryByText("NL_EUDAT_CORE")).not.toBeInTheDocument()
     expect(card_groups.queryByText("EGI_NBISBILS_SLA")).not.toBeInTheDocument()
-    expect(card_groups.queryByText("NGI_AEGIS")).toBeInTheDocument()
-    expect(card_groups.queryByText("NGI_CH")).toBeInTheDocument()
+    expect(await card_groups.findByText("NGI_AEGIS")).toBeInTheDocument()
+    expect(await card_groups.findByText("NGI_CH")).toBeInTheDocument()
 
     expect(card_groups.queryByText("AEGIS11-MISANU")).not.toBeInTheDocument()
     expect(card_groups.queryByText("AEGIS03-ELEF-LEDA")).not.toBeInTheDocument()
@@ -8513,11 +8513,11 @@ describe('Tests for reports addview', () => {
     })
 
     selectEvent.openMenu(card_groups.getByText(/search/i))
-    expect(card_groups.queryByText("NGI_AEGIS_SERVICES")).toBeInTheDocument()
-    expect(card_groups.queryByText("NGI_ARMGRID_SERVICES")).toBeInTheDocument()
-    expect(card_groups.queryByText("NGI_BG_SERVICES")).toBeInTheDocument()
-    expect(card_groups.queryByText("NL_EUDAT_CORE")).toBeInTheDocument()
-    expect(card_groups.queryByText("EGI_NBISBILS_SLA")).toBeInTheDocument()
+    expect(await card_groups.findByText("NGI_AEGIS_SERVICES")).toBeInTheDocument()
+    expect(await card_groups.findByText("NGI_ARMGRID_SERVICES")).toBeInTheDocument()
+    expect(await card_groups.findByText("NGI_BG_SERVICES")).toBeInTheDocument()
+    expect(await card_groups.findByText("NL_EUDAT_CORE")).toBeInTheDocument()
+    expect(await card_groups.findByText("EGI_NBISBILS_SLA")).toBeInTheDocument()
     expect(card_groups.queryByText("NGI_AEGIS")).not.toBeInTheDocument()
     expect(card_groups.queryByText("NGI_CH")).not.toBeInTheDocument()
 
@@ -8561,9 +8561,9 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText("SRM")).not.toBeInTheDocument()
 
     selectEvent.openMenu(card_endpoints.queryAllByText(/search/i)[0])
-    expect(card_endpoints.queryByText("NGI_AEGIS_SERVICES")).toBeInTheDocument()
-    expect(card_endpoints.queryByText("NGI_BG_SERVICES")).toBeInTheDocument()
-    expect(card_endpoints.queryByText("EGI_NBISBILS_SLA")).toBeInTheDocument()
+    expect(await card_endpoints.findByText("NGI_AEGIS_SERVICES")).toBeInTheDocument()
+    expect(await card_endpoints.findByText("NGI_BG_SERVICES")).toBeInTheDocument()
+    expect(await card_endpoints.findByText("EGI_NBISBILS_SLA")).toBeInTheDocument()
 
     expect(card_endpoints.queryByText("AEGIS11-MISANU")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("CSCS-LCG2")).not.toBeInTheDocument()

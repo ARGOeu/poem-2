@@ -1425,7 +1425,7 @@ describe('Tests for metric change', () => {
 
     expect(screen.queryByText('EGI')).not.toBeInTheDocument()
     selectEvent.openMenu(groupField)
-    expect(screen.getByText('EGI')).toBeInTheDocument()
+    expect(await screen.findByText('EGI')).toBeInTheDocument()
 
     expect(screen.getByRole("heading", { name: /metric configuration/i })).toBeInTheDocument()
 

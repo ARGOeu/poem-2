@@ -535,7 +535,7 @@ describe('Tests for package changeview on SuperAdmin POEM', () => {
 
     expect(screen.queryByText('repo-3 (CentOS 7)')).not.toBeInTheDocument()
     selectEvent.openMenu(repo7Field)
-    expect(screen.getByText('repo-3 (CentOS 7)')).toBeInTheDocument()
+    expect(await screen.findByText('repo-3 (CentOS 7)')).toBeInTheDocument()
 
     expect(screen.getByRole('link', { name: /ams/i }).closest('a')).toHaveAttribute('href', '/ui/probes/ams-publisher-probe/history/0.1.11')
     expect(screen.getByRole('link', { name: /poem/i }).closest('a')).toHaveAttribute('href', '/ui/probes/poem-probe-new/history/0.1.11');
@@ -1008,8 +1008,8 @@ describe('Tests for package changeview on tenant POEM', () => {
     expect(screen.queryByText('0.1.12')).not.toBeInTheDocument()
     expect(screen.queryByText('0.1.7')).not.toBeInTheDocument()
     selectEvent.openMenu(versionField)
-    expect(screen.getByText('0.1.12')).toBeInTheDocument()
-    expect(screen.getByText('0.1.7')).toBeInTheDocument()
+    expect(await screen.findByText('0.1.12')).toBeInTheDocument()
+    expect(await screen.findByText('0.1.7')).toBeInTheDocument()
 
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
 
@@ -1348,18 +1348,18 @@ describe('Tests for package addview', () => {
     expect(screen.queryByText("repo-4 (Rocky 9)")).not.toBeInTheDocument()
 
     selectEvent.openMenu(repo6Field)
-    expect(screen.queryByText('repo-1 (CentOS 6)')).toBeInTheDocument()
+    expect(await screen.findByText('repo-1 (CentOS 6)')).toBeInTheDocument()
     expect(screen.queryByText('repo-2 (CentOS 7)')).not.toBeInTheDocument()
     expect(screen.queryByText('repo-3 (CentOS 7)')).not.toBeInTheDocument()
     expect(screen.queryByText("repo-4 (Rocky 9)")).not.toBeInTheDocument()
 
     selectEvent.openMenu(repo7Field)
-    expect(screen.queryByText('repo-2 (CentOS 7)')).toBeInTheDocument()
-    expect(screen.queryByText('repo-3 (CentOS 7)')).toBeInTheDocument()
+    expect(await screen.findByText('repo-2 (CentOS 7)')).toBeInTheDocument()
+    expect(await screen.findByText('repo-3 (CentOS 7)')).toBeInTheDocument()
     expect(screen.queryByText("repo-4 (Rocky 9)")).not.toBeInTheDocument()
 
     selectEvent.openMenu(repo9Field)
-    expect(screen.getByText("repo-4 (Rocky 9)")).toBeInTheDocument()
+    expect(await screen.findByText("repo-4 (Rocky 9)")).toBeInTheDocument()
 
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();

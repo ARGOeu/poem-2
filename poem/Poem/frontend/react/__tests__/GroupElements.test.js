@@ -453,7 +453,9 @@ describe('Tests for group elements changeview', () => {
     fireEvent.change(within(selectField).getByRole('combobox'), { target: { value: 'test' } })
     fireEvent.click(within(selectField).getByText('test.AMS-Check'))
     fireEvent.click(screen.getByRole('button', { name: /add/i }))
-    expect(screen.getAllByRole('row')).toHaveLength(7);
+    await waitFor(() => {
+      expect(screen.getAllByRole('row')).toHaveLength(7);
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
 

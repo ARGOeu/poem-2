@@ -1529,10 +1529,10 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(screen.queryByText('ams-publisher-probe (0.1.12)')).not.toBeInTheDocument()
     expect(screen.queryByText('ams-probe-new (0.1.13)')).not.toBeInTheDocument()
     selectEvent.openMenu(probeField)
-    expect(screen.queryByText('ams-probe (0.1.11)')).toBeInTheDocument()
-    expect(screen.queryByText('ams-publisher-probe (0.1.11)')).toBeInTheDocument()
-    expect(screen.queryByText('ams-publisher-probe (0.1.12)')).toBeInTheDocument()
-    expect(screen.queryByText('ams-probe-new (0.1.13)')).toBeInTheDocument()
+    expect(await screen.findByText('ams-probe (0.1.11)')).toBeInTheDocument()
+    expect(await screen.findByText('ams-publisher-probe (0.1.11)')).toBeInTheDocument()
+    expect(await screen.findByText('ams-publisher-probe (0.1.12)')).toBeInTheDocument()
+    expect(await screen.findByText('ams-probe-new (0.1.13)')).toBeInTheDocument()
 
     expect(packageField.value).toBe('nagios-plugins-argo (0.1.12)')
     expect(packageField).toBeDisabled();
@@ -1602,8 +1602,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(screen.queryByText('argo.AMS-Publisher')).not.toBeInTheDocument()
     expect(screen.queryByText('org.apel.APEL-Pub')).not.toBeInTheDocument()
     selectEvent.openMenu(parentField)
-    expect(screen.queryByText('argo.AMS-Publisher')).toBeInTheDocument()
-    expect(screen.queryByText('org.apel.APEL-Pub')).toBeInTheDocument()
+    expect(await screen.findByText('argo.AMS-Publisher')).toBeInTheDocument()
+    expect(await screen.findByText('org.apel.APEL-Pub')).toBeInTheDocument()
 
     expect(screen.getByRole('button', { name: /history/i }).closest('a')).toHaveAttribute('href', '/ui/metrictemplates/argo.AMS-Check/history');
     expect(screen.getByRole('button', { name: /clone/i }).closest('a')).toHaveAttribute('href', '/ui/metrictemplates/argo.AMS-Check/clone');
@@ -1668,10 +1668,10 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(screen.queryByText('ams-publisher-probe (0.1.12)')).not.toBeInTheDocument()
     expect(screen.queryByText('ams-probe-new (0.1.13)')).not.toBeInTheDocument()
     selectEvent.openMenu(probeField)
-    expect(screen.queryByText('ams-probe (0.1.11)')).toBeInTheDocument()
-    expect(screen.queryByText('ams-publisher-probe (0.1.11)')).toBeInTheDocument()
-    expect(screen.queryByText('ams-publisher-probe (0.1.12)')).toBeInTheDocument()
-    expect(screen.queryByText('ams-probe-new (0.1.13)')).toBeInTheDocument()
+    expect(await screen.findByText('ams-probe (0.1.11)')).toBeInTheDocument()
+    expect(await screen.findByText('ams-publisher-probe (0.1.11)')).toBeInTheDocument()
+    expect(await screen.findByText('ams-publisher-probe (0.1.12)')).toBeInTheDocument()
+    expect(await screen.findByText('ams-probe-new (0.1.13)')).toBeInTheDocument()
 
     expect(packageField.value).toBe('argo-probe-globus (0.2.0)')
     expect(packageField).toBeDisabled();
@@ -1754,8 +1754,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(screen.queryByText('argo.AMS-Publisher')).not.toBeInTheDocument()
     expect(screen.queryByText('org.apel.APEL-Pub')).not.toBeInTheDocument()
     selectEvent.openMenu(parentField)
-    expect(screen.queryByText('argo.AMS-Publisher')).toBeInTheDocument()
-    expect(screen.queryByText('org.apel.APEL-Pub')).toBeInTheDocument()
+    expect(await screen.findByText('argo.AMS-Publisher')).toBeInTheDocument()
+    expect(await screen.findByText('org.apel.APEL-Pub')).toBeInTheDocument()
 
     expect(screen.getByRole('button', { name: /history/i }).closest('a')).toHaveAttribute('href', '/ui/metrictemplates/srce.gridproxy.validity/history');
     expect(screen.getByRole('button', { name: /clone/i }).closest('a')).toHaveAttribute('href', '/ui/metrictemplates/srce.gridproxy.validity/clone');
@@ -2805,7 +2805,7 @@ describe('Test metric template changeview on SuperPOEM', () => {
 
     expect(screen.queryByText('Active')).not.toBeInTheDocument()
     selectEvent.openMenu(typeField)
-    expect(screen.queryByText('Active')).toBeInTheDocument()
+    expect(await screen.findByText('Active')).toBeInTheDocument()
 
     expect(probeField.value).toBe('');
     expect(probeField).toBeDisabled();
@@ -2846,8 +2846,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(screen.queryByText('argo.AMS-Publisher')).not.toBeInTheDocument()
     expect(screen.queryByText('argo.AMS-Check')).not.toBeInTheDocument()
     selectEvent.openMenu(parentField)
-    expect(screen.queryByText('argo.AMS-Publisher')).toBeInTheDocument()
-    expect(screen.queryByText('argo.AMS-Check')).toBeInTheDocument()
+    expect(await screen.findByText('argo.AMS-Publisher')).toBeInTheDocument()
+    expect(await screen.findByText('argo.AMS-Check')).toBeInTheDocument()
 
     expect(screen.getByRole('button', { name: /history/i }).closest('a')).toHaveAttribute('href', '/ui/metrictemplates/org.apel.APEL-Pub/history');
     expect(screen.getByRole('button', { name: /clone/i }).closest('a')).toHaveAttribute('href', '/ui/metrictemplates/org.apel.APEL-Pub/clone');
@@ -3116,8 +3116,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(descriptionField.value).toBe('Some description of argo.AMS-Check metric template.');
     expect(groupField).not.toBeInTheDocument();
     expect(tagsField).toBeInTheDocument();
-    expect(screen.queryByText("test_tag1")).toBeInTheDocument()
-    expect(screen.queryByText("test_tag2")).toBeInTheDocument()
+    expect(await screen.findByText("test_tag1")).toBeInTheDocument()
+    expect(await screen.findByText("test_tag2")).toBeInTheDocument()
     expect(screen.queryByText("internal")).not.toBeInTheDocument()
     expect(screen.queryByText("deprecated")).not.toBeInTheDocument()
 
@@ -3153,8 +3153,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
     const descriptionField2 = screen.getByTestId('description');
     const groupField2 = screen.queryByText(/group/i)
     const tagsField2 = screen.getByLabelText('Tags:');
-    expect(screen.queryByText("test_tag1")).toBeInTheDocument()
-    expect(screen.queryByText("test_tag2")).toBeInTheDocument()
+    expect(await screen.findByText("test_tag1")).toBeInTheDocument()
+    expect(await screen.findByText("test_tag2")).toBeInTheDocument()
     expect(screen.queryByText("internal")).not.toBeInTheDocument()
     expect(screen.queryByText("deprecated")).not.toBeInTheDocument()
 
@@ -3189,18 +3189,18 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(screen.queryByText('ams-publisher-probe (0.1.12)')).not.toBeInTheDocument()
     expect(screen.queryByText('ams-probe-new (0.1.13)')).not.toBeInTheDocument()
     selectEvent.openMenu(probeField2)
-    expect(screen.queryByText('ams-probe (0.1.11)')).toBeInTheDocument()
-    expect(screen.queryByText('ams-publisher-probe (0.1.11)')).toBeInTheDocument()
-    expect(screen.queryByText('ams-publisher-probe (0.1.12)')).toBeInTheDocument()
-    expect(screen.queryByText('ams-probe-new (0.1.13)')).toBeInTheDocument()
+    expect(await screen.findByText('ams-probe (0.1.11)')).toBeInTheDocument()
+    expect(await screen.findByText('ams-publisher-probe (0.1.11)')).toBeInTheDocument()
+    expect(await screen.findByText('ams-publisher-probe (0.1.12)')).toBeInTheDocument()
+    expect(await screen.findByText('ams-probe-new (0.1.13)')).toBeInTheDocument()
 
     expect(packageField2.value).toBe('nagios-plugins-argo (0.1.12)');
     expect(packageField2).toBeDisabled();
     expect(descriptionField2.value).toBe('Some description of argo.AMS-Check metric template.');
     expect(groupField2).not.toBeInTheDocument();
     expect(tagsField2).toBeInTheDocument();
-    expect(screen.queryByText("test_tag1")).toBeInTheDocument()
-    expect(screen.queryByText("test_tag2")).toBeInTheDocument()
+    expect(await screen.findByText("test_tag1")).toBeInTheDocument()
+    expect(await screen.findByText("test_tag2")).toBeInTheDocument()
     expect(screen.queryByText("internal")).not.toBeInTheDocument()
     expect(screen.queryByText("deprecated")).not.toBeInTheDocument()
 
@@ -4608,8 +4608,8 @@ describe('Test metric template cloneview on SuperPOEM', () => {
     expect(groupField).not.toBeInTheDocument();
 
     expect(tagsElement).toBeInTheDocument()
-    expect(screen.queryByText("test_tag1")).toBeInTheDocument()
-    expect(screen.queryByText("test_tag2")).toBeInTheDocument()
+    expect(await screen.findByText("test_tag1")).toBeInTheDocument()
+    expect(await screen.findByText("test_tag2")).toBeInTheDocument()
     expect(screen.queryByText("internal")).not.toBeInTheDocument()
     expect(screen.queryByText("deprecated")).not.toBeInTheDocument()
 
