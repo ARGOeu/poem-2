@@ -1,4 +1,3 @@
-import datetime
 import json
 
 import factory
@@ -9,6 +8,7 @@ from Poem.poem_super_admin import models as admin_models
 from Poem.users.models import CustUser
 from django.contrib.contenttypes.models import ContentType
 from django.db.models.signals import pre_save
+from django.utils import timezone
 from django_tenants.test.cases import TenantTestCase
 from django_tenants.test.client import TenantRequestFactory
 from rest_framework import status
@@ -59,7 +59,7 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
             docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
                    'README.md',
             user='testuser',
-            datetime=datetime.datetime.now()
+            datetime=timezone.now()
         )
 
         probe2 = admin_models.Probe.objects.create(
@@ -128,7 +128,7 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
             serialized_data=serialize_metric(self.metric1),
             object_repr=self.metric1.__str__(),
             content_type=self.ct,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             comment='Initial version.',
             user=self.user.username
         )
@@ -138,7 +138,7 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
             serialized_data=serialize_metric(self.metric2),
             object_repr=self.metric2.__str__(),
             content_type=self.ct,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             comment='Initial version.',
             user=self.user.username
         )
@@ -148,7 +148,7 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
             serialized_data=serialize_metric(self.metric3),
             object_repr=self.metric3.__str__(),
             content_type=self.ct,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             comment='Initial version.',
             user=self.user.username
         )
@@ -158,7 +158,7 @@ class ListMetricsInGroupAPIViewTests(TenantTestCase):
             serialized_data=serialize_metric(self.metric4),
             object_repr=self.metric4.__str__(),
             content_type=self.ct,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             comment='Initial version.',
             user=self.user.username
         )

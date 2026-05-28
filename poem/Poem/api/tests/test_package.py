@@ -1,4 +1,3 @@
-import datetime
 import json
 
 from Poem.api import views_internal as views
@@ -8,6 +7,7 @@ from Poem.poem_super_admin import models as admin_models
 from Poem.tenants.models import Tenant
 from Poem.users.models import CustUser
 from django.contrib.contenttypes.models import ContentType
+from django.utils import timezone
 from django_tenants.test.cases import TenantTestCase
 from django_tenants.test.client import TenantRequestFactory
 from django_tenants.utils import schema_context, get_public_schema_name, \
@@ -83,7 +83,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
             docurl='https://github.com/ARGOeu/nagios-plugins-argo/blob/master/'
                    'README.md',
             user='testuser',
-            datetime=datetime.datetime.now()
+            datetime=timezone.now()
         )
 
         pv1 = admin_models.ProbeHistory.objects.create(
@@ -132,7 +132,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
             dependency=mt.dependency,
             flags=mt.flags,
             parameter=mt.parameter,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             version_comment='Initial version.',
             version_user=self.user.username
         )
@@ -152,7 +152,7 @@ class ListPackagesAPIViewTests(TenantTestCase):
             serialized_data=serialize_metric(metric1, [mtag1]),
             object_repr=metric1.__str__(),
             content_type=ct,
-            date_created=datetime.datetime.now(),
+            date_created=timezone.now(),
             comment='Initial version.',
             user=self.user.username
         )
