@@ -1734,7 +1734,7 @@ describe('Tests for package cloneview', () => {
 
     expect(screen.queryByText('repo-3 (CentOS 7)')).not.toBeInTheDocument()
     selectEvent.openMenu(repo7Field)
-    expect(screen.queryByText('repo-3 (CentOS 7)')).toBeInTheDocument()
+    expect(await screen.findByText('repo-3 (CentOS 7)')).toBeInTheDocument()
 
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();

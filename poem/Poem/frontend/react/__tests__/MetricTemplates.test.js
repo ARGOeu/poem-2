@@ -3009,11 +3009,11 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(screen.queryByText('ams-publisher-probe (0.1.12)')).not.toBeInTheDocument()
     expect(screen.queryByText('ams-probe-new (0.1.13)')).not.toBeInTheDocument()
     selectEvent.openMenu(probeField)
-    expect(screen.queryByText('ams-probe (0.1.12)')).toBeInTheDocument()
-    expect(screen.queryByText('ams-probe (0.1.11)')).toBeInTheDocument()
-    expect(screen.queryByText('ams-publisher-probe (0.1.11)')).toBeInTheDocument()
-    expect(screen.queryByText('ams-publisher-probe (0.1.12)')).toBeInTheDocument()
-    expect(screen.queryByText('ams-probe-new (0.1.13)')).toBeInTheDocument()
+    expect(await screen.findByText('ams-probe (0.1.12)')).toBeInTheDocument()
+    expect(await screen.findByText('ams-probe (0.1.11)')).toBeInTheDocument()
+    expect(await screen.findByText('ams-publisher-probe (0.1.11)')).toBeInTheDocument()
+    expect(await screen.findByText('ams-publisher-probe (0.1.12)')).toBeInTheDocument()
+    expect(await screen.findByText('ams-probe-new (0.1.13)')).toBeInTheDocument()
 
     expect(packageField.value).toBe('');
     expect(packageField).toBeDisabled();
@@ -3063,8 +3063,8 @@ describe('Test metric template changeview on SuperPOEM', () => {
     expect(screen.queryByText('argo.AMS-Publisher')).not.toBeInTheDocument()
     expect(screen.queryByText('argo.AMS-Check')).not.toBeInTheDocument()
     selectEvent.openMenu(parentField)
-    expect(screen.queryByText('argo.AMS-Publisher')).toBeInTheDocument()
-    expect(screen.queryByText('argo.AMS-Check')).toBeInTheDocument()
+    expect(await screen.findByText('argo.AMS-Publisher')).toBeInTheDocument()
+    expect(await screen.findByText('argo.AMS-Check')).toBeInTheDocument()
   })
 
   test('Test changing active/passive metric template', async () => {
@@ -3366,7 +3366,7 @@ describe('Test metric template addview on SuperPOEM', () => {
 
     expect(screen.queryByText('Passive')).not.toBeInTheDocument()
     selectEvent.openMenu(typeField)
-    expect(screen.queryByText('Passive')).toBeInTheDocument()
+    expect(await screen.findByText('Passive')).toBeInTheDocument()
 
     expect(probeField).toBeEnabled()
 
@@ -3376,11 +3376,11 @@ describe('Test metric template addview on SuperPOEM', () => {
     expect(screen.queryByText('ams-publisher-probe (0.1.12)')).not.toBeInTheDocument()
     expect(screen.queryByText('ams-probe-new (0.1.13)')).not.toBeInTheDocument()
     selectEvent.openMenu(probeField)
-    expect(screen.queryByText('ams-probe (0.1.12)')).toBeInTheDocument()
-    expect(screen.queryByText('ams-probe (0.1.11)')).toBeInTheDocument()
-    expect(screen.queryByText('ams-publisher-probe (0.1.11)')).toBeInTheDocument()
-    expect(screen.queryByText('ams-publisher-probe (0.1.12)')).toBeInTheDocument()
-    expect(screen.queryByText('ams-probe-new (0.1.13)')).toBeInTheDocument()
+    expect(await screen.findByText('ams-probe (0.1.12)')).toBeInTheDocument()
+    expect(await screen.findByText('ams-probe (0.1.11)')).toBeInTheDocument()
+    expect(await screen.findByText('ams-publisher-probe (0.1.11)')).toBeInTheDocument()
+    expect(await screen.findByText('ams-publisher-probe (0.1.12)')).toBeInTheDocument()
+    expect(await screen.findByText('ams-probe-new (0.1.13)')).toBeInTheDocument()
 
     expect(packageField.value).toBe('');
     expect(packageField).toBeDisabled();
@@ -3424,9 +3424,9 @@ describe('Test metric template addview on SuperPOEM', () => {
     expect(screen.queryByText('argo.AMS-Publisher')).not.toBeInTheDocument()
     expect(screen.queryByText('org.apel.APEL-Pub')).not.toBeInTheDocument()
     selectEvent.openMenu(parentField)
-    expect(screen.queryByText('argo.AMS-Check')).toBeInTheDocument()
-    expect(screen.queryByText('argo.AMS-Publisher')).toBeInTheDocument()
-    expect(screen.queryByText('org.apel.APEL-Pub')).toBeInTheDocument()
+    expect(await screen.findByText('argo.AMS-Check')).toBeInTheDocument()
+    expect(await screen.findByText('argo.AMS-Publisher')).toBeInTheDocument()
+    expect(await screen.findByText('org.apel.APEL-Pub')).toBeInTheDocument()
 
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument();
@@ -4597,10 +4597,10 @@ describe('Test metric template cloneview on SuperPOEM', () => {
     expect(screen.queryByText('ams-publisher-probe (0.1.12)')).not.toBeInTheDocument()
     expect(screen.queryByText('ams-probe-new (0.1.13)')).not.toBeInTheDocument()
     selectEvent.openMenu(probeField)
-    expect(screen.queryByText('ams-probe (0.1.11)')).toBeInTheDocument()
-    expect(screen.queryByText('ams-publisher-probe (0.1.11)')).toBeInTheDocument()
-    expect(screen.queryByText('ams-publisher-probe (0.1.12)')).toBeInTheDocument()
-    expect(screen.queryByText('ams-probe-new (0.1.13)')).toBeInTheDocument()
+    expect(await screen.findByText('ams-probe (0.1.11)')).toBeInTheDocument()
+    expect(await screen.findByText('ams-publisher-probe (0.1.11)')).toBeInTheDocument()
+    expect(await screen.findByText('ams-publisher-probe (0.1.12)')).toBeInTheDocument()
+    expect(await screen.findByText('ams-probe-new (0.1.13)')).toBeInTheDocument()
 
     expect(packageField.value).toBe('nagios-plugins-argo (0.1.12)')
     expect(packageField).toBeDisabled();
@@ -4644,8 +4644,8 @@ describe('Test metric template cloneview on SuperPOEM', () => {
     expect(screen.queryByText('argo.AMS-Publisher')).not.toBeInTheDocument()
     expect(screen.queryByText('org.apel.APEL-Pub')).not.toBeInTheDocument()
     selectEvent.openMenu(parentField)
-    expect(screen.queryByText('argo.AMS-Publisher')).toBeInTheDocument()
-    expect(screen.queryByText('org.apel.APEL-Pub')).toBeInTheDocument()
+    expect(await screen.findByText('argo.AMS-Publisher')).toBeInTheDocument()
+    expect(await screen.findByText('org.apel.APEL-Pub')).toBeInTheDocument()
 
     expect(screen.queryByRole('button', { name: /history/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /clone/i })).not.toBeInTheDocument()
