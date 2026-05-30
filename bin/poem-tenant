@@ -37,6 +37,11 @@ def build_parser():
         metavar="<user>",
         help="effective user used when running Django commands",
     )
+    parser.add_argument(
+        "--no-internal-metrics",
+        action="store_true",
+        help="do not import internal metrics after tenant creation",
+    )
     parser.add_argument("-h", "--help", action="store_true")
     return parser
 
@@ -49,6 +54,7 @@ def print_usage(parser):
     print("       [-r] - remove tenant and schema", file=sys.stderr)
     print("       [-l] - list all tenants", file=sys.stderr)
     print("       [--run-as-user] - effective user (default: apache)", file=sys.stderr)
+    print("       [--no-internal-metrics] - do not import internal metrics after tenant creation", file=sys.stderr)
 
 
 def drop_privileges(user=RUN_AS_USER):
@@ -189,7 +195,7 @@ def main(argv=None):
     if result != 0:
         return result
 
-    if args.name != "all":
+    if args.name != "all" and not args.no_internal_metrics:
         return import_internal_metrics(schema)
 
     return 0
