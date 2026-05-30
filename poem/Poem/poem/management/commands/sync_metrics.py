@@ -1,3 +1,5 @@
+import requests
+
 from Poem.helpers.metrics_helpers import sync_metrics
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
@@ -63,12 +65,31 @@ class Command(BaseCommand):
         else:
             self.stdout.write(f"{title}: none")
 
+    def _raise_command_error_for_http_error(self, exc):
+        response = getattr(exc, "response", None)
+        status_code = getattr(response, "status_code", None)
+
+        if status_code:
+            raise CommandError(
+                "Failed fetching WEB API metric profiles: "
+                f"HTTP {status_code}."
+            )
+
+        raise CommandError(f"Failed fetching WEB API metric profiles: {exc}")
+
     def handle(self, *args, **options):
         tenant = self._get_tenant(options["tenant"])
         connection.set_tenant(tenant)
 
         user = self._get_user(options["username"])
-        imported, warn, err, unavailable, deleted = sync_metrics(tenant, user)
+
+        try:
+            imported, warn, err, unavailable, deleted = sync_metrics(
+                tenant, user
+            )
+
+        except requests.exceptions.HTTPError as exc:
+            self._raise_command_error_for_http_error(exc)
 
         self.stdout.write(
             self.style.SUCCESS(
