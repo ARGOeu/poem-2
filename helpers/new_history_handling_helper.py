@@ -4,6 +4,12 @@ import datetime
 import json
 
 
+def utc_timestamp():
+    return datetime.datetime.now(
+        datetime.timezone.utc
+    ).isoformat(timespec='milliseconds')
+
+
 def create_tenant_file(file):
     new_data = []
     with open(file, 'r') as f:
@@ -72,10 +78,7 @@ def create_public_file(file):
                     'files': item['fields']['files'],
                     'parameter': item['fields']['parameter'],
                     'fileparameter': item['fields']['fileparameter'],
-                    'date_created': datetime.datetime.strftime(
-                        datetime.datetime.now(),
-                        '%Y-%m-%dT%H:%M:%S.%f'
-                    )[0:-3],
+                    'date_created': utc_timestamp(),
                     'version_comment': 'Initial version.',
                     'version_user': 'poem'
                 }
@@ -101,10 +104,7 @@ def create_public_file(file):
                     'comment': item['fields']['comment'],
                     'repository': item['fields']['repository'],
                     'docurl': item['fields']['docurl'],
-                    'date_created': datetime.datetime.strftime(
-                        datetime.datetime.now(),
-                        '%Y-%m-%dT%H:%M:%S.%f'
-                    )[0:-3],
+                    'date_created': utc_timestamp(),
                     'version_comment': 'Initial version.',
                     'version_user': 'poem'
                 }

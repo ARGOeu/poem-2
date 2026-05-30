@@ -817,7 +817,7 @@ describe('Tests for aggregation profiles changeview', () => {
 
     expect(screen.queryByText('ARGO')).not.toBeInTheDocument()
     selectEvent.openMenu(groupField)
-    expect(screen.getByText('ARGO')).toBeInTheDocument()
+    expect(await screen.findByText('ARGO')).toBeInTheDocument()
 
     expect(metricOperation).toBeEnabled();
     expect(aggrOperation).toBeEnabled();
@@ -826,11 +826,11 @@ describe('Tests for aggregation profiles changeview', () => {
 
     expect(screen.queryByText('sites')).not.toBeInTheDocument()
     selectEvent.openMenu(endpointGroup)
-    expect(screen.getByText('sites')).toBeInTheDocument()
+    expect(await screen.findByText('sites')).toBeInTheDocument()
 
     expect(screen.queryByText('FEDCLOUD')).not.toBeInTheDocument()
     selectEvent.openMenu(metricProfileField)
-    expect(screen.getByText('FEDCLOUD')).toBeInTheDocument()
+    expect(await screen.findByText('FEDCLOUD')).toBeInTheDocument()
 
     expect(screen.getAllByTestId(/card/i)).toHaveLength(4);
     const card0 = within(screen.getByTestId('card-0'));
@@ -1307,11 +1307,11 @@ describe('Tests for aggregation profiles changeview', () => {
 
     expect(screen.queryByText('servicegroups')).not.toBeInTheDocument()
     selectEvent.openMenu(endpointGroup)
-    expect(screen.getByText('servicegroups')).toBeInTheDocument()
+    expect(await screen.findByText('servicegroups')).toBeInTheDocument()
 
     expect(screen.queryByText('ARGO_MON_CRITICAL')).not.toBeInTheDocument()
     selectEvent.openMenu(metricProfileField)
-    expect(screen.getByText('ARGO_MON_CRITICAL')).toBeInTheDocument()
+    expect(await screen.findByText('ARGO_MON_CRITICAL')).toBeInTheDocument()
 
     expect(screen.getAllByTestId(/card/i)).toHaveLength(1);
     const card0 = within(screen.getByTestId('card-0'));
@@ -2693,8 +2693,8 @@ describe('Tests for aggregation profile addview', () => {
     expect(screen.queryByText('EGI')).not.toBeInTheDocument()
     expect(screen.queryByText('ARGO')).not.toBeInTheDocument()
     selectEvent.openMenu(groupField)
-    expect(screen.getByText('EGI')).toBeInTheDocument()
-    expect(screen.getByText('ARGO')).toBeInTheDocument()
+    expect(await screen.findByText('EGI')).toBeInTheDocument()
+    expect(await screen.findByText('ARGO')).toBeInTheDocument()
 
     expect(metricOperation).toBeEnabled();
     expect(aggrOperation).toBeEnabled();
@@ -2704,14 +2704,14 @@ describe('Tests for aggregation profile addview', () => {
     expect(screen.queryByText('OR')).not.toBeInTheDocument()
     expect(screen.queryByText('AND')).not.toBeInTheDocument()
     selectEvent.openMenu(metricOperation)
-    expect(screen.getByText('OR')).toBeInTheDocument()
-    expect(screen.getByText('AND')).toBeInTheDocument()
+    expect(await screen.findByText('OR')).toBeInTheDocument()
+    expect(await screen.findByText('AND')).toBeInTheDocument()
 
     expect(screen.queryByText('ARGO_MON_CRITICAL')).not.toBeInTheDocument()
     expect(screen.queryByText('FEDCLOUD')).not.toBeInTheDocument()
     selectEvent.openMenu(metricProfileField)
-    expect(screen.getByText('ARGO_MON_CRITICAL')).toBeInTheDocument()
-    expect(screen.getByText('FEDCLOUD')).toBeInTheDocument()
+    expect(await screen.findByText('ARGO_MON_CRITICAL')).toBeInTheDocument()
+    expect(await screen.findByText('FEDCLOUD')).toBeInTheDocument()
 
     expect(screen.getByRole('button', { name: 'Add new group' })).toBeInTheDocument();
     expect(screen.queryAllByTestId(/card-/)).toHaveLength(0);

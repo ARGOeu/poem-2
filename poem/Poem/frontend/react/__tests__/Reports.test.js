@@ -7118,43 +7118,43 @@ describe('Tests for reports addview', () => {
     expect(screen.queryByText('TEST')).not.toBeInTheDocument()
 
     selectEvent.openMenu(groupField)
-    expect(screen.getByText('ARGO')).toBeInTheDocument()
-    expect(screen.getByText('TEST')).toBeInTheDocument()
+    expect(await screen.findByText('ARGO')).toBeInTheDocument()
+    expect(await screen.findByText('TEST')).toBeInTheDocument()
 
     expect(screen.queryByText('ARGO_MON_CRITICAL')).not.toBeInTheDocument()
     expect(screen.queryByText('FEDCLOUD')).not.toBeInTheDocument()
     expect(screen.queryByText('OPS_MONITOR_RHEL7')).not.toBeInTheDocument()
 
     selectEvent.openMenu(metricProfileField)
-    expect(screen.getByText('ARGO_MON_CRITICAL')).toBeInTheDocument()
-    expect(screen.getByText('FEDCLOUD')).toBeInTheDocument()
-    expect(screen.getByText('OPS_MONITOR_RHEL7')).toBeInTheDocument()
+    expect(await screen.findByText('ARGO_MON_CRITICAL')).toBeInTheDocument()
+    expect(await screen.findByText('FEDCLOUD')).toBeInTheDocument()
+    expect(await screen.findByText('OPS_MONITOR_RHEL7')).toBeInTheDocument()
 
     expect(screen.queryByText('critical')).not.toBeInTheDocument()
     expect(screen.queryByText('ops-mon-critical')).not.toBeInTheDocument()
 
     selectEvent.openMenu(aggrProfileField)
-    expect(screen.getByText('critical')).toBeInTheDocument()
-    expect(screen.getByText('ops-mon-critical')).toBeInTheDocument()
+    expect(await screen.findByText('critical')).toBeInTheDocument()
+    expect(await screen.findByText('ops-mon-critical')).toBeInTheDocument()
 
     expect(screen.queryByText('TEST_PROFILE')).not.toBeInTheDocument()
     expect(screen.queryByText('test-thresholds')).not.toBeInTheDocument()
 
     selectEvent.openMenu(thresholdsProfileField)
-    expect(screen.getByText('TEST_PROFILE')).toBeInTheDocument()
-    expect(screen.getByText('test-thresholds')).toBeInTheDocument()
+    expect(await screen.findByText('TEST_PROFILE')).toBeInTheDocument()
+    expect(await screen.findByText('test-thresholds')).toBeInTheDocument()
 
     expect(screen.queryByText('egi_ops')).not.toBeInTheDocument()
 
     selectEvent.openMenu(operationsProfileField)
-    expect(screen.getByText('egi_ops')).toBeInTheDocument()
+    expect(await screen.findByText('egi_ops')).toBeInTheDocument()
 
     expect(screen.queryByText('Sites')).not.toBeInTheDocument()
     expect(screen.queryByText('ServiceGroups')).not.toBeInTheDocument()
 
     selectEvent.openMenu(topologyTypeField)
-    expect(screen.getByText('Sites')).toBeInTheDocument()
-    expect(screen.getByText('ServiceGroups')).toBeInTheDocument()
+    expect(await screen.findByText('Sites')).toBeInTheDocument()
+    expect(await screen.findByText('ServiceGroups')).toBeInTheDocument()
 
     expect(screen.getAllByTestId(/card/i)).toHaveLength(2);
     const card_groups = within(screen.getByTestId('card-group-of-groups'));
@@ -7846,15 +7846,15 @@ describe('Tests for reports addview', () => {
     selectEvent.openMenu(card_endpoints.getByText("Select..."))
     expect(card_endpoints.queryByText('yes')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('no')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText("alice")).toBeInTheDocument()
-    expect(card_endpoints.queryByText("cms")).toBeInTheDocument()
-    expect(card_endpoints.queryByText("EGI")).toBeInTheDocument()
-    expect(card_endpoints.queryByText("EOSC")).toBeInTheDocument()
-    expect(card_endpoints.queryByText("EOSCCore")).toBeInTheDocument()
-    expect(card_endpoints.queryByText("FedCloud")).toBeInTheDocument()
-    expect(card_endpoints.queryByText("lhcb")).toBeInTheDocument()
-    expect(card_endpoints.queryByText("tier2")).toBeInTheDocument()
-    expect(card_endpoints.queryByText("wlcg")).toBeInTheDocument()
+    expect(await card_endpoints.findByText("alice")).toBeInTheDocument()
+    expect(await card_endpoints.findByText("cms")).toBeInTheDocument()
+    expect(await card_endpoints.findByText("EGI")).toBeInTheDocument()
+    expect(await card_endpoints.findByText("EOSC")).toBeInTheDocument()
+    expect(await card_endpoints.findByText("EOSCCore")).toBeInTheDocument()
+    expect(await card_endpoints.findByText("FedCloud")).toBeInTheDocument()
+    expect(await card_endpoints.findByText("lhcb")).toBeInTheDocument()
+    expect(await card_endpoints.findByText("tier2")).toBeInTheDocument()
+    expect(await card_endpoints.findByText("wlcg")).toBeInTheDocument()
     expect(card_endpoints.queryByText('1111G0')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('2222G0')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('3333G0')).not.toBeInTheDocument()
@@ -7907,8 +7907,8 @@ describe('Tests for reports addview', () => {
     selectEvent.openMenu(card_endpoints.queryAllByText(/select/i)[0])
     expect(card_endpoints.queryByText('certification')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('infrastructure')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('monitored')).toBeInTheDocument()
-    expect(card_endpoints.queryByText('production')).toBeInTheDocument()
+    expect(await card_endpoints.findByText('monitored')).toBeInTheDocument()
+    expect(await card_endpoints.findByText('production')).toBeInTheDocument()
     expect(card_endpoints.queryAllByText('scope')).toHaveLength(1)
     expect(card_endpoints.queryByText(/info_ext_/i)).not.toBeInTheDocument()
     expect(card_endpoints.queryByText(/info_/i)).not.toBeInTheDocument()
@@ -7955,8 +7955,8 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('0')).not.toBeInTheDocument()
 
     selectEvent.openMenu(card_endpoints.getByText("Select..."))
-    expect(card_endpoints.queryByText('yes')).toBeInTheDocument()
-    expect(card_endpoints.queryByText('no')).toBeInTheDocument()
+    expect(await card_endpoints.findByText('yes')).toBeInTheDocument()
+    expect(await card_endpoints.findByText('no')).toBeInTheDocument()
     expect(card_endpoints.queryByText('1111G0')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('2222G0')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('3333G0')).not.toBeInTheDocument()
@@ -8017,8 +8017,8 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText(/info_/i)).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('ID')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('URL')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('GLUE2EndpointID')).toBeInTheDocument()
-    expect(card_endpoints.queryByText('GLUE2EndpointImplementationName')).toBeInTheDocument()
+    expect(await card_endpoints.findByText('GLUE2EndpointID')).toBeInTheDocument()
+    expect(await card_endpoints.findByText('GLUE2EndpointImplementationName')).toBeInTheDocument()
     expect(card_endpoints.queryByText('GLUE2ComputingShareMappingQueue')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText(/vo_/i)).not.toBeInTheDocument()
 
@@ -8084,9 +8084,9 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText('4444G0')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('meh')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('mock_url')).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText('ce1.gridpp.ecdf.ed.ac.uk')).toBeInTheDocument()
-    expect(card_endpoints.queryByText('svr009.gla.scotgrid.ac.uk')).toBeInTheDocument()
-    expect(card_endpoints.queryByText('t3-mw1.ph.ed.ac.uk')).toBeInTheDocument()
+    expect(await card_endpoints.findByText('ce1.gridpp.ecdf.ed.ac.uk')).toBeInTheDocument()
+    expect(await card_endpoints.findByText('svr009.gla.scotgrid.ac.uk')).toBeInTheDocument()
+    expect(await card_endpoints.findByText('t3-mw1.ph.ed.ac.uk')).toBeInTheDocument()
     expect(card_endpoints.queryByText('ARC-CE')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('nordugrid-arc')).not.toBeInTheDocument()
     expect(card_endpoints.queryByText('/dpm/farm.particle.cz/home/a')).not.toBeInTheDocument()
@@ -8266,8 +8266,8 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText("NGI_BG_SERVICES")).not.toBeInTheDocument()
     expect(card_groups.queryByText("NL_EUDAT_CORE")).not.toBeInTheDocument()
     expect(card_groups.queryByText("EGI_NBISBILS_SLA")).not.toBeInTheDocument()
-    expect(card_groups.queryByText("NGI_AEGIS")).toBeInTheDocument()
-    expect(card_groups.queryByText("NGI_CH")).toBeInTheDocument()
+    expect(await card_groups.findByText("NGI_AEGIS")).toBeInTheDocument()
+    expect(await card_groups.findByText("NGI_CH")).toBeInTheDocument()
 
     expect(card_groups.queryByText("AEGIS11-MISANU")).not.toBeInTheDocument()
     expect(card_groups.queryByText("AEGIS03-ELEF-LEDA")).not.toBeInTheDocument()
@@ -8293,8 +8293,8 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText("NGI_BG_SERVICES")).not.toBeInTheDocument()
     expect(card_groups.queryByText("NL_EUDAT_CORE")).not.toBeInTheDocument()
     expect(card_groups.queryByText("EGI_NBISBILS_SLA")).not.toBeInTheDocument()
-    expect(card_groups.queryByText("NGI_AEGIS")).toBeInTheDocument()
-    expect(card_groups.queryByText("NGI_CH")).toBeInTheDocument()
+    expect(await card_groups.findByText("NGI_AEGIS")).toBeInTheDocument()
+    expect(await card_groups.findByText("NGI_CH")).toBeInTheDocument()
 
     expect(card_groups.queryByText("AEGIS11-MISANU")).not.toBeInTheDocument()
     expect(card_groups.queryByText("AEGIS03-ELEF-LEDA")).not.toBeInTheDocument()
@@ -8312,8 +8312,8 @@ describe('Tests for reports addview', () => {
     await selectEvent.select(card_groups.queryAllByText(/search/i)[0], "NGI_AEGIS")
 
     selectEvent.openMenu(card_groups.getByText(/search/i))
-    expect(card_groups.queryByText("AEGIS11-MISANU")).toBeInTheDocument()
-    expect(card_groups.queryByText("AEGIS03-ELEF-LEDA")).toBeInTheDocument()
+    expect(await card_groups.findByText("AEGIS11-MISANU")).toBeInTheDocument()
+    expect(await card_groups.findByText("AEGIS03-ELEF-LEDA")).toBeInTheDocument()
     expect(card_groups.queryByText("CSCS-LCG2")).not.toBeInTheDocument()
     expect(card_groups.queryByText("SWITCH")).not.toBeInTheDocument()
 
@@ -8330,12 +8330,12 @@ describe('Tests for reports addview', () => {
     })
 
     selectEvent.openMenu(card_groups.getByText(/search/i))
-    expect(card_groups.queryByText("AEGIS11-MISANU")).toBeInTheDocument()
-    expect(card_groups.queryByText("AEGIS03-ELEF-LEDA")).toBeInTheDocument()
+    expect(await card_groups.findByText("AEGIS11-MISANU")).toBeInTheDocument()
+    expect(await card_groups.findByText("AEGIS03-ELEF-LEDA")).toBeInTheDocument()
     await waitFor(() => {
       expect(card_groups.queryByText("CSCS-LCG2")).toBeInTheDocument()
     })
-    expect(card_groups.queryByText("SWITCH")).toBeInTheDocument()
+    expect(await card_groups.findByText("SWITCH")).toBeInTheDocument()
 
     expect(card_groups.queryByText("WMS")).not.toBeInTheDocument()
     expect(card_groups.queryByText("Top-BDII")).not.toBeInTheDocument()
@@ -8372,8 +8372,8 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText("NGI_BG_SERVICES")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("EGI_NBISBILS_SLA")).not.toBeInTheDocument()
 
-    expect(card_endpoints.queryByText("AEGIS11-MISANU")).toBeInTheDocument()
-    expect(card_endpoints.queryByText("CSCS-LCG2")).toBeInTheDocument()
+    expect(await card_endpoints.findByText("AEGIS11-MISANU")).toBeInTheDocument()
+    expect(await card_endpoints.findByText("CSCS-LCG2")).toBeInTheDocument()
 
     expect(card_endpoints.queryByText("WMS")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("Top-BDII")).not.toBeInTheDocument()
@@ -8400,7 +8400,7 @@ describe('Tests for reports addview', () => {
 
     expect(card_endpoints.queryByText("APEL")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("Site-BDII")).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText("SRM")).toBeInTheDocument()
+    expect(await card_endpoints.findByText("SRM")).toBeInTheDocument()
 
     await waitFor(() => {
       selectEvent.select(card_endpoints.getByText("CSCS-LCG2"), "AEGIS11-MISANU")
@@ -8415,8 +8415,8 @@ describe('Tests for reports addview', () => {
     await waitFor(() => {
       expect(card_endpoints.queryByText("APEL")).toBeInTheDocument()
     })
-    expect(card_endpoints.queryByText("Site-BDII")).toBeInTheDocument()
-    expect(card_endpoints.queryByText("SRM")).toBeInTheDocument()
+    expect(await card_endpoints.findByText("Site-BDII")).toBeInTheDocument()
+    expect(await card_endpoints.findByText("SRM")).toBeInTheDocument()
   })
 
   test("Test add entity filters - ServiceGroups", async () => {
@@ -8459,8 +8459,8 @@ describe('Tests for reports addview', () => {
     expect(card_groups.queryByText("NGI_BG_SERVICES")).not.toBeInTheDocument()
     expect(card_groups.queryByText("NL_EUDAT_CORE")).not.toBeInTheDocument()
     expect(card_groups.queryByText("EGI_NBISBILS_SLA")).not.toBeInTheDocument()
-    expect(card_groups.queryByText("NGI_AEGIS")).toBeInTheDocument()
-    expect(card_groups.queryByText("NGI_CH")).toBeInTheDocument()
+    expect(await card_groups.findByText("NGI_AEGIS")).toBeInTheDocument()
+    expect(await card_groups.findByText("NGI_CH")).toBeInTheDocument()
 
     expect(card_groups.queryByText("AEGIS11-MISANU")).not.toBeInTheDocument()
     expect(card_groups.queryByText("AEGIS03-ELEF-LEDA")).not.toBeInTheDocument()
@@ -8513,11 +8513,11 @@ describe('Tests for reports addview', () => {
     })
 
     selectEvent.openMenu(card_groups.getByText(/search/i))
-    expect(card_groups.queryByText("NGI_AEGIS_SERVICES")).toBeInTheDocument()
-    expect(card_groups.queryByText("NGI_ARMGRID_SERVICES")).toBeInTheDocument()
-    expect(card_groups.queryByText("NGI_BG_SERVICES")).toBeInTheDocument()
-    expect(card_groups.queryByText("NL_EUDAT_CORE")).toBeInTheDocument()
-    expect(card_groups.queryByText("EGI_NBISBILS_SLA")).toBeInTheDocument()
+    expect(await card_groups.findByText("NGI_AEGIS_SERVICES")).toBeInTheDocument()
+    expect(await card_groups.findByText("NGI_ARMGRID_SERVICES")).toBeInTheDocument()
+    expect(await card_groups.findByText("NGI_BG_SERVICES")).toBeInTheDocument()
+    expect(await card_groups.findByText("NL_EUDAT_CORE")).toBeInTheDocument()
+    expect(await card_groups.findByText("EGI_NBISBILS_SLA")).toBeInTheDocument()
     expect(card_groups.queryByText("NGI_AEGIS")).not.toBeInTheDocument()
     expect(card_groups.queryByText("NGI_CH")).not.toBeInTheDocument()
 
@@ -8561,9 +8561,9 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText("SRM")).not.toBeInTheDocument()
 
     selectEvent.openMenu(card_endpoints.queryAllByText(/search/i)[0])
-    expect(card_endpoints.queryByText("NGI_AEGIS_SERVICES")).toBeInTheDocument()
-    expect(card_endpoints.queryByText("NGI_BG_SERVICES")).toBeInTheDocument()
-    expect(card_endpoints.queryByText("EGI_NBISBILS_SLA")).toBeInTheDocument()
+    expect(await card_endpoints.findByText("NGI_AEGIS_SERVICES")).toBeInTheDocument()
+    expect(await card_endpoints.findByText("NGI_BG_SERVICES")).toBeInTheDocument()
+    expect(await card_endpoints.findByText("EGI_NBISBILS_SLA")).toBeInTheDocument()
 
     expect(card_endpoints.queryByText("AEGIS11-MISANU")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("CSCS-LCG2")).not.toBeInTheDocument()
@@ -8589,7 +8589,7 @@ describe('Tests for reports addview', () => {
     expect(card_endpoints.queryByText("WMS")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("Top-BDII")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("ngi.SAM")).not.toBeInTheDocument()
-    expect(card_endpoints.queryByText("org.openstack.nova")).toBeInTheDocument()
+    expect(await card_endpoints.findByText("org.openstack.nova")).toBeInTheDocument()
 
     expect(card_endpoints.queryByText("APEL")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("Site-BDII")).not.toBeInTheDocument()
@@ -8604,8 +8604,8 @@ describe('Tests for reports addview', () => {
     await waitFor(() => {
       expect(card_endpoints.queryByText("Top-BDII")).toBeInTheDocument()
     })
-    expect(card_endpoints.queryByText("ngi.SAM")).toBeInTheDocument()
-    expect(card_endpoints.queryByText("org.openstack.nova")).toBeInTheDocument()
+    expect(await card_endpoints.findByText("ngi.SAM")).toBeInTheDocument()
+    expect(await card_endpoints.findByText("org.openstack.nova")).toBeInTheDocument()
 
     expect(card_endpoints.queryByText("APEL")).not.toBeInTheDocument()
     expect(card_endpoints.queryByText("Site-BDII")).not.toBeInTheDocument()
