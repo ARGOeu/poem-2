@@ -9,6 +9,7 @@ from Poem.tenants.models import Tenant
 from django.conf import settings
 from django.core.mail import EmailMessage
 from django.db import IntegrityError
+from django.utils import timezone
 from django_tenants.utils import schema_context, get_public_schema_name
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication
@@ -243,7 +244,7 @@ class ListProbes(APIView):
                     description=request.data['description'],
                     comment=request.data['comment'],
                     user=request.user.username,
-                    datetime=datetime.datetime.now()
+                    datetime=timezone.now()
                 )
 
                 if 'cloned_from' in request.data and \

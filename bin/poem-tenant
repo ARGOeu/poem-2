@@ -1,90 +1,217 @@
-#!/bin/sh
+#!/usr/bin/env python
 
-RUNASUSER="apache"
-SITEPACK=$(python -c "import sysconfig; print(sysconfig.get_paths()['purelib'])")
+import argparse
+import contextlib
+import io
+import os
+import pwd
+import sys
 
-usage()
-{
-	printf "Usage: %s -t <tenant name> [-d <hostname> -c | -r] [-l] \n" $(basename $0) >&2
-	printf "       [-t] - tenant name\n" >&2
-	printf "       [-d] - hostname\n" >&2
-	printf "       [-c] - use if tenant is combined tenant\n" >&2
-	printf "       [-r] - remove tenant and schema\n" >&2
-	printf "       [-l] - list all tenants\n" >&2
-    exit 2
-}
 
-if [[ $# == 0 ]]
-then
-    usage
-fi
+RUN_AS_USER = "apache"
 
-while getopts 't:d:chlr' OPTION
-do
-    case $OPTION in
-        t)
-            name=$OPTARG
-            ;;
-        d)
-            hostname=$OPTARG
-            ;;
-        c)
-            combined=1
-            ;;
-        r)
-            if [ -z "$name" ]
-            then
-              echo "Tenant name should be given!"
-              usage
-            else
-              su -m -s /bin/sh $RUNASUSER -c \
-              "poem-manage poem_delete_tenant --name $name"
-              exit 0
-            fi
-            ;;
-        h)
-            usage
-            ;;
-        l)
-            su -m -s /bin/sh $RUNASUSER -c \
-            "poem-manage poem_list_tenants" | awk '{print $1}' | tr '\n' ' '
-            echo
-            exit 0
-            ;;
-        ?)
-            usage
-            ;;
-    esac
-done
 
-if [ -z "$hostname" ]
-then
-    if [ -z "$combined" ]
-    then
-      su -m -s /bin/sh $RUNASUSER -c \
-      "poem-manage create_tenant --name $name"
-    else
-      su -m -s /bin/sh $RUNASUSER -c \
-      "poem-manage create_tenant --name $name --combined"
-    fi
-else
-    if [ -z "$combined" ]
-    then
-      su -m -s /bin/sh $RUNASUSER -c \
-      "poem-manage poem_create_tenant --name $name --hostname $hostname"
-    else
-      su -m -s /bin/sh $RUNASUSER -c \
-      "poem-manage poem_create_tenant --name $name --hostname $hostname --combined"
-    fi
-fi
+def build_parser():
+    parser = argparse.ArgumentParser(
+        prog="poem-tenant",
+        usage="%(prog)s -t <tenant name> [-d <hostname> -c | -r] [-l]",
+        add_help=False,
+    )
+    parser.add_argument("-t", dest="name", metavar="<tenant name>")
+    parser.add_argument("-d", dest="hostname", metavar="<hostname>")
+    parser.add_argument(
+        "-c", dest="combined", action="store_true",
+        help="use if tenant is combined tenant",
+    )
+    parser.add_argument(
+        "-r", dest="remove", action="store_true",
+        help="remove tenant and schema",
+    )
+    parser.add_argument(
+        "-l", dest="list_tenants", action="store_true",
+        help="list all tenants",
+    )
+    parser.add_argument(
+        "--run-as-user",
+        default=RUN_AS_USER,
+        metavar="<user>",
+        help="effective user used when running Django commands",
+    )
+    parser.add_argument(
+        "--no-internal-metrics",
+        action="store_true",
+        help="do not import internal metrics after tenant creation",
+    )
+    parser.add_argument("-h", "--help", action="store_true")
+    return parser
 
-schema=$(echo "$name" | tr '[:upper:]' '[:lower:]')
 
-su -m -s /bin/sh $RUNASUSER -c \
-"poem-manage tenant_command poem_superuser --schema=$schema "
+def print_usage(parser):
+    parser.print_usage(sys.stderr)
+    print("       [-t] - tenant name", file=sys.stderr)
+    print("       [-d] - hostname", file=sys.stderr)
+    print("       [-c] - use if tenant is combined tenant", file=sys.stderr)
+    print("       [-r] - remove tenant and schema", file=sys.stderr)
+    print("       [-l] - list all tenants", file=sys.stderr)
+    print("       [--run-as-user] - effective user (default: apache)", file=sys.stderr)
+    print("       [--no-internal-metrics] - do not import internal metrics after tenant creation", file=sys.stderr)
 
-if [[ $name != 'all' ]]
-then
-    su -m -s /bin/sh $RUNASUSER -c \
-    "poem-manage tenant_command import_internal_metrics --schema=$schema"
-fi
+
+def drop_privileges(user=RUN_AS_USER):
+    target_user = pwd.getpwnam(user)
+    if os.getuid() == target_user.pw_uid:
+        return
+
+    os.setgid(target_user.pw_gid)
+    os.initgroups(user, target_user.pw_gid)
+    os.setuid(target_user.pw_uid)
+
+
+def setup_django():
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Poem.settings")
+
+    import django
+
+    django.setup()
+
+
+def call_management_command(command, *args, **options):
+    from django.core.management import call_command
+
+    call_command(command, *args, **options)
+
+
+def require_tenant_name(parser, name):
+    if not name:
+        print("Tenant name should be given!", file=sys.stderr)
+        print_usage(parser)
+        raise SystemExit(2)
+
+
+def list_tenants():
+    stdout = io.StringIO()
+    with contextlib.redirect_stdout(stdout):
+        call_management_command("poem_list_tenants")
+
+    tenant_names = [
+        line.split()[0]
+        for line in stdout.getvalue().splitlines()
+        if line.split()
+    ]
+    print(" ".join(tenant_names))
+    return 0
+
+
+def create_tenant(name, hostname, combined):
+    try:
+        if hostname:
+            call_management_command(
+                "poem_create_tenant",
+                name=name,
+                hostname=hostname,
+                combined=combined,
+            )
+        else:
+            call_management_command(
+                "create_tenant",
+                name=name,
+                combined=combined,
+            )
+
+    except Exception as exc:
+        message = str(exc)
+        schema = name.lower()
+        if (
+            "tenants_tenant_schema_name_key" in message
+            or f"Key (schema_name)=({schema}) already exists" in message
+        ):
+            print(f"Tenant with schema {schema} already exists.", file=sys.stderr)
+            return 1
+        raise
+
+    return 0
+
+
+def create_superuser(schema):
+    call_management_command("tenant_command", "poem_superuser", schema=schema)
+    return 0
+
+
+def import_internal_metrics(schema):
+    call_management_command(
+        "tenant_command",
+        "import_internal_metrics",
+        schema=schema,
+    )
+    return 0
+
+
+def delete_webapi_tokens(name):
+    from django_tenants.utils import get_public_schema_name, schema_context
+    from Poem.poem_super_admin.models import WebAPIKey
+
+    token_prefix = f"WEB-API-{name.upper()}"
+    token_names = [token_prefix, f"{token_prefix}-RO"]
+
+    with schema_context(get_public_schema_name()):
+        WebAPIKey.objects.filter(name__in=token_names).delete()
+
+
+def remove_tenant(name):
+    try:
+        call_management_command("poem_delete_tenant", name=name)
+    except Exception as exc:
+        message = str(exc)
+        if message == f"Tenant with name {name} does not exist":
+            print(message, file=sys.stderr)
+            return 1
+        raise
+
+    delete_webapi_tokens(name)
+    return 0
+
+
+def main(argv=None):
+    parser = build_parser()
+    argv = sys.argv[1:] if argv is None else argv
+
+    if not argv:
+        print_usage(parser)
+        return 2
+
+    args = parser.parse_args(argv)
+
+    if args.help:
+        print_usage(parser)
+        return 2
+
+    if not args.list_tenants:
+        require_tenant_name(parser, args.name)
+
+    drop_privileges(args.run_as_user)
+    setup_django()
+
+    if args.list_tenants:
+        return list_tenants()
+
+    if args.remove:
+        return remove_tenant(args.name)
+
+    result = create_tenant(args.name, args.hostname, args.combined)
+    if result != 0:
+        return result
+
+    schema = args.name.lower()
+
+    result = create_superuser(schema)
+    if result != 0:
+        return result
+
+    if args.name != "all" and not args.no_internal_metrics:
+        return import_internal_metrics(schema)
+
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

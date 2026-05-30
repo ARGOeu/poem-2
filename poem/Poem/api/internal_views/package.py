@@ -33,7 +33,7 @@ def get_packages_for_api(packages):
             'name': package.name,
             'version': package.version,
             'use_present_version': package.use_present_version,
-            'repos': repos
+            'repos': sorted(repos)
         })
 
     return results

@@ -3,6 +3,7 @@ import React from 'react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { GroupList, GroupChange } from '../GroupElements';
 import { render, waitFor, screen, fireEvent, within } from '@testing-library/react';
+import useEvent from '@testing-library/user-event';
 import { Backend } from '../DataManager';
 import { NotificationManager } from 'react-notifications';
 import { QueryClient, QueryClientProvider, setLogger } from 'react-query';
@@ -451,9 +452,11 @@ describe('Tests for group elements changeview', () => {
 
     const selectField = screen.getByTestId('available_metrics');
     fireEvent.change(within(selectField).getByRole('combobox'), { target: { value: 'test' } })
-    fireEvent.click(within(selectField).getByText('test.AMS-Check'))
-    fireEvent.click(screen.getByRole('button', { name: /add/i }))
-    expect(screen.getAllByRole('row')).toHaveLength(7);
+    await useEvent.click(within(selectField).getByText('test.AMS-Check'))
+    await useEvent.click(screen.getByRole('button', { name: /add/i }))
+    await waitFor(() => {
+      expect(screen.getAllByRole('row')).toHaveLength(7);
+    })
 
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
 
