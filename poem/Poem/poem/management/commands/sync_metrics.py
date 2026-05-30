@@ -69,6 +69,12 @@ class Command(BaseCommand):
         response = getattr(exc, "response", None)
         status_code = getattr(response, "status_code", None)
 
+        if status_code == 401:
+            raise CommandError(
+                "Unauthorized while fetching WEB API metric profiles. "
+                "Check the tenant WEB API token."
+            )
+
         if status_code:
             raise CommandError(
                 "Failed fetching WEB API metric profiles: "
@@ -76,6 +82,17 @@ class Command(BaseCommand):
             )
 
         raise CommandError(f"Failed fetching WEB API metric profiles: {exc}")
+
+    def _raise_command_error_for_sync_error(self, exc):
+        message = str(exc)
+
+        if message == "Error fetching WEB API data: API key not found.":
+            raise CommandError(
+                "WEB API token not found. Create WEB-API token for this "
+                "tenant before synchronizing metrics."
+            )
+
+        raise exc
 
     def handle(self, *args, **options):
         tenant = self._get_tenant(options["tenant"])
@@ -90,6 +107,9 @@ class Command(BaseCommand):
 
         except requests.exceptions.HTTPError as exc:
             self._raise_command_error_for_http_error(exc)
+
+        except Exception as exc:
+            self._raise_command_error_for_sync_error(exc)
 
         self.stdout.write(
             self.style.SUCCESS(
