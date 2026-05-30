@@ -146,6 +146,17 @@ def import_internal_metrics(schema):
     return 0
 
 
+def delete_webapi_tokens(name):
+    from django_tenants.utils import get_public_schema_name, schema_context
+    from Poem.poem_super_admin.models import WebAPIKey
+
+    token_prefix = f"WEB-API-{name.upper()}"
+    token_names = [token_prefix, f"{token_prefix}-RO"]
+
+    with schema_context(get_public_schema_name()):
+        WebAPIKey.objects.filter(name__in=token_names).delete()
+
+
 def remove_tenant(name):
     try:
         call_management_command("poem_delete_tenant", name=name)
@@ -156,6 +167,7 @@ def remove_tenant(name):
             return 1
         raise
 
+    delete_webapi_tokens(name)
     return 0
 
 
