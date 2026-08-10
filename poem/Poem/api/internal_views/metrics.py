@@ -55,7 +55,7 @@ class ListMetric(APIView):
 
         except requests.RequestException as exc:
             return error_response(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail='Error fetching metric profile data from WEB-API'
             )
 
