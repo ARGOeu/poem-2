@@ -50,7 +50,14 @@ class ListMetric(APIView):
         else:
             metrics = poem_models.Metric.objects.all()
 
-        profiles4metrics = get_metrics_in_profiles(request.tenant)
+        try:
+            profiles4metrics = get_metrics_in_profiles(request.tenant)
+
+        except requests.RequestException as exc:
+            return error_response(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='Error fetching metric profile data from WEB-API'
+            )
 
         results = []
         for metric in metrics:
