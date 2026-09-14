@@ -221,10 +221,10 @@ class ListMetricProfiles(APIView):
                         )
 
                     except poem_models.GroupOfMetricProfiles.DoesNotExist:
-                            return error_response(
-                                status_code=status.HTTP_404_NOT_FOUND,
-                                detail='Group of metric profiles does not exist.'
-                            )
+                        return error_response(
+                            status_code=status.HTTP_404_NOT_FOUND,
+                            detail='Group of metric profiles does not exist.'
+                        )
 
                     else:
                         if not request.user.is_superuser and \
