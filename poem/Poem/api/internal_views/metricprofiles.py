@@ -203,10 +203,16 @@ class ListMetricProfiles(APIView):
                         profile = poem_models.MetricProfiles.objects.get(
                             apiid=request.data['apiid']
                         )
-                        init_group = \
-                            poem_models.GroupOfMetricProfiles.objects.get(
-                                name=profile.groupname
-                            )
+                        if profile.groupname:
+                            init_group = \
+                                poem_models.GroupOfMetricProfiles.objects.get(
+                                    name=profile.groupname
+                                )
+                        else:
+                            init_group = \
+                                poem_models.GroupOfMetricProfiles.objects.get(
+                                    name=groupprofile
+                                )
 
                     except poem_models.MetricProfiles.DoesNotExist:
                         return error_response(
@@ -215,10 +221,10 @@ class ListMetricProfiles(APIView):
                         )
 
                     except poem_models.GroupOfMetricProfiles.DoesNotExist:
-                        return error_response(
-                            status_code=status.HTTP_404_NOT_FOUND,
-                            detail='Group of metric profiles does not exist.'
-                        )
+                            return error_response(
+                                status_code=status.HTTP_404_NOT_FOUND,
+                                detail='Group of metric profiles does not exist.'
+                            )
 
                     else:
                         if not request.user.is_superuser and \
