@@ -203,10 +203,16 @@ class ListMetricProfiles(APIView):
                         profile = poem_models.MetricProfiles.objects.get(
                             apiid=request.data['apiid']
                         )
-                        init_group = \
-                            poem_models.GroupOfMetricProfiles.objects.get(
-                                name=profile.groupname
-                            )
+                        if profile.groupname:
+                            init_group = \
+                                poem_models.GroupOfMetricProfiles.objects.get(
+                                    name=profile.groupname
+                                )
+                        else:
+                            init_group = \
+                                poem_models.GroupOfMetricProfiles.objects.get(
+                                    name=groupprofile
+                                )
 
                     except poem_models.MetricProfiles.DoesNotExist:
                         return error_response(
