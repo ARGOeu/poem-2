@@ -501,6 +501,8 @@ export class WebApi {
         catch (err2) {
           throw Error(err2)
         }
+      else
+        throw err;
     }
   }
 
