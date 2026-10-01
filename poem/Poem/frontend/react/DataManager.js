@@ -489,7 +489,9 @@ export class WebApi {
   }
 
   async addServiceTypes(service_types) {
-    await this.deleteProfile(this.servicetypes);
+    const existingServiceTypes = await this.fetchServiceTypes();
+    if (existingServiceTypes.length > 0)
+      await this.deleteProfile(this.servicetypes);
     await this.addProfile(this.servicetypes, service_types);
   }
 
