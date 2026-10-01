@@ -489,19 +489,10 @@ export class WebApi {
   }
 
   async addServiceTypes(service_types) {
-    try {
-      await this.addProfile(this.servicetypes, service_types);
-    }
-    catch (err) {
-      if (err.message.includes('409'))
-        try {
-          await this.deleteProfile(this.servicetypes);
-          await this.addProfile(this.servicetypes, service_types);
-        }
-        catch (err2) {
-          throw Error(err2)
-        }
-    }
+    const existingServiceTypes = await this.fetchServiceTypes();
+    if (existingServiceTypes.length > 0)
+      await this.deleteProfile(this.servicetypes);
+    await this.addProfile(this.servicetypes, service_types);
   }
 
   changeReport(report) {
