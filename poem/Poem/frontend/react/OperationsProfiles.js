@@ -1,5 +1,4 @@
 import React from 'react';
-import { WebApi } from './DataManager';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import {
   ErrorComponent,
@@ -19,7 +18,7 @@ import {
   Input
 } from 'reactstrap';
 import { useQuery, useQueryClient } from 'react-query';
-import { fetchOperationsProfiles } from './QueryFunctions';
+import { fetchOperationsProfiles, fetchOperationProfile } from './QueryFunctions';
 import { 
   ListViewPlaceholder,
   ChangeViewPlaceholder,
@@ -29,13 +28,9 @@ import {
 export const OperationsProfilesList = (props) => {
   const location = useLocation();
   const publicView = props.publicView;
-  const webapi = new WebApi({
-    token: props.webapitoken,
-    operationsProfiles: props.webapioperations
-  });
 
   const { data: profiles, error, status } = useQuery(
-    `${publicView ? 'public_' : ''}operationsprofile`, () => fetchOperationsProfiles(webapi)
+    `${publicView ? 'public_' : ''}operationsprofile`, () => fetchOperationsProfiles(publicView)
   );
 
   const columns = React.useMemo(() => [
@@ -94,20 +89,13 @@ export const OperationsProfilesList = (props) => {
 
 export const OperationsProfileDetails = (props) => {
   const { name } = useParams();
-  const token = props.webapitoken;
-  const webapioperations = props.webapioperations;
   const publicView = props.publicView;
-
-  const webapi = new WebApi({
-    token: token,
-    operationsProfiles: webapioperations
-  });
 
   const queryClient = useQueryClient();
 
   const { data: profile, error, status } = useQuery(
     [`${publicView ? 'public_' : ''}operationsprofile`, name], async () => {
-      return await webapi.fetchOperationProfile(name);
+      return await fetchOperationProfile(name, publicView);
     },
     {
       initialData: () => {
