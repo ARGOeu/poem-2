@@ -34,3 +34,15 @@ a:hover {
 .table > :not(:first-child) {
   border-top: 0 !important;
 }
+.home-card-icon {
+  color: #416090;
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.home-names {
+  max-height: 140px;
+  overflow-y: auto;
+  border-top: 1px solid #e3e3e3;
+  padding-top: 0.5rem;
+}

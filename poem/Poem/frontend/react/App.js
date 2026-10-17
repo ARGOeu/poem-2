@@ -164,7 +164,7 @@ const TenantRouteSwitch = ({
       path="/ui/login"
       element={<RedirectAfterLogin isSuperUser={isSuperUser} />}
     />
-    <Route path="/ui/home" element={<Home />} />
+    <Route path="/ui/home" element={<Home isTenantSchema={true} />} />
     <Route path="/ui/probes" element={<ProbeList isTenantSchema={true} />} />
     <Route
       path="/ui/probes/:name/history"
