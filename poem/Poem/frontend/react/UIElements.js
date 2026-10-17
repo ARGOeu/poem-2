@@ -730,7 +730,7 @@ export const NavigationAbout = ({ poemVersion, termsLink, privacyLink }) => {
       <Nav vertical pills id="argo-navlinks" className="border-left border-right sticky-top rounded-bottom border-bottom pb-2 mb-0">
         <NavLink
           tag="a"
-          href='http://argoeu.github.io/poem/v1/'
+          href='https://argoeu.github.io/poem-2/'
           className="text-dark"
           target="_blank" rel="noopener noreferrer"
         >
