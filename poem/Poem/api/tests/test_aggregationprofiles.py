@@ -54,6 +54,27 @@ class ListAggregationsAPIViewTests(TenantTestCase):
 
         self.ct = ContentType.objects.get_for_model(poem_models.Aggregation)
 
+        # Mock the upstream WEB-API write primitives so the refactored views
+        # do not make real HTTP requests.
+        self.create_profile_patcher = patch(
+            "Poem.api.internal_views.aggregationprofiles.create_profile",
+            return_value="mocked-upstream-id"
+        )
+        self.create_profile_patcher.start()
+        self.addCleanup(self.create_profile_patcher.stop)
+
+        self.update_profile_patcher = patch(
+            "Poem.api.internal_views.aggregationprofiles.update_profile"
+        )
+        self.update_profile_patcher.start()
+        self.addCleanup(self.update_profile_patcher.stop)
+
+        self.delete_profile_patcher = patch(
+            "Poem.api.internal_views.aggregationprofiles.delete_profile"
+        )
+        self.delete_profile_patcher.start()
+        self.addCleanup(self.delete_profile_patcher.stop)
+
         data = json.loads(
             serializers.serialize(
                 'json', [self.aggr1],
@@ -222,7 +243,7 @@ class ListAggregationsAPIViewTests(TenantTestCase):
 
     def test_post_aggregation(self):
         data = {
-            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'apiid': 'mocked-upstream-id',
             'name': 'new-profile',
             'groupname': 'EGI',
             'endpoint_group': 'sites',
@@ -252,7 +273,7 @@ class ListAggregationsAPIViewTests(TenantTestCase):
         profile = poem_models.Aggregation.objects.get(name='new-profile')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(profile.name, 'new-profile')
-        self.assertEqual(profile.apiid, '12341234-aaaa-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.apiid, 'mocked-upstream-id')
         self.assertEqual(profile.groupname, 'EGI')
         history = poem_models.TenantHistory.objects.filter(
             object_id=profile.id, content_type=self.ct
@@ -287,7 +308,7 @@ class ListAggregationsAPIViewTests(TenantTestCase):
 
     def test_post_aggregation_superuser(self):
         data = {
-            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'apiid': 'mocked-upstream-id',
             'name': 'new-profile',
             'groupname': 'EGI',
             'endpoint_group': 'sites',
@@ -317,7 +338,7 @@ class ListAggregationsAPIViewTests(TenantTestCase):
         profile = poem_models.Aggregation.objects.get(name='new-profile')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(profile.name, 'new-profile')
-        self.assertEqual(profile.apiid, '12341234-aaaa-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.apiid, 'mocked-upstream-id')
         self.assertEqual(profile.groupname, 'EGI')
         history = poem_models.TenantHistory.objects.filter(
             object_id=profile.id, content_type=self.ct
@@ -357,7 +378,7 @@ class ListAggregationsAPIViewTests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
-            response.data, {'detail': 'apiid: This field is required.'}
+            response.data, {'detail': 'You must provide a group of aggregations.'}
         )
 
     def test_post_aggregations_invalid_data_superuser(self):
@@ -367,12 +388,12 @@ class ListAggregationsAPIViewTests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
-            response.data, {'detail': 'apiid: This field is required.'}
+            response.data, {'detail': 'You must provide a group of aggregations.'}
         )
 
     def test_post_aggregations_no_group_permission(self):
         data = {
-            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'apiid': 'mocked-upstream-id',
             'name': 'new-profile',
             'groupname': 'new-group',
             'endpoint_group': 'sites',
@@ -410,7 +431,7 @@ class ListAggregationsAPIViewTests(TenantTestCase):
 
     def test_post_aggregations_no_group_permission_superuser(self):
         data = {
-            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'apiid': 'mocked-upstream-id',
             'name': 'new-profile',
             'groupname': 'new-group',
             'endpoint_group': 'sites',
@@ -439,7 +460,7 @@ class ListAggregationsAPIViewTests(TenantTestCase):
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         profile = poem_models.Aggregation.objects.get(name='new-profile')
-        self.assertEqual(profile.apiid, '12341234-aaaa-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.apiid, 'mocked-upstream-id')
         self.assertEqual(profile.groupname, 'new-group')
         history = poem_models.TenantHistory.objects.filter(
             object_id=profile.id, content_type=self.ct
@@ -474,7 +495,7 @@ class ListAggregationsAPIViewTests(TenantTestCase):
 
     def test_post_aggregations_nonexisting_group(self):
         data = {
-            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'apiid': 'mocked-upstream-id',
             'name': 'new-profile',
             'groupname': 'nonexisting-group',
             'endpoint_group': 'sites',
@@ -511,7 +532,7 @@ class ListAggregationsAPIViewTests(TenantTestCase):
 
     def test_post_aggregations_nonexisting_group_superuser(self):
         data = {
-            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'apiid': 'mocked-upstream-id',
             'name': 'new-profile',
             'groupname': 'nonexisting-group',
             'endpoint_group': 'sites',
@@ -548,7 +569,7 @@ class ListAggregationsAPIViewTests(TenantTestCase):
 
     def test_post_aggregations_without_groupname(self):
         data = {
-            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'apiid': 'mocked-upstream-id',
             'name': 'new-profile',
             'groupname': '',
             'endpoint_group': 'sites',
@@ -585,7 +606,7 @@ class ListAggregationsAPIViewTests(TenantTestCase):
 
     def test_post_aggregations_without_groupname_superuser(self):
         data = {
-            'apiid': '12341234-aaaa-kkkk-aaaa-aaeekkccnnee',
+            'apiid': 'mocked-upstream-id',
             'name': 'new-profile',
             'groupname': '',
             'endpoint_group': 'sites',

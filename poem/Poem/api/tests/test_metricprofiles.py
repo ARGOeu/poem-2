@@ -30,6 +30,27 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
 
         self.ct = ContentType.objects.get_for_model(poem_models.MetricProfiles)
 
+        # Mock the upstream WEB-API write primitives so the refactored views
+        # do not make real HTTP requests.
+        self.create_profile_patcher = patch(
+            "Poem.api.internal_views.metricprofiles.create_profile",
+            return_value="mocked-upstream-id"
+        )
+        self.create_profile_patcher.start()
+        self.addCleanup(self.create_profile_patcher.stop)
+
+        self.update_profile_patcher = patch(
+            "Poem.api.internal_views.metricprofiles.update_profile"
+        )
+        self.update_profile_patcher.start()
+        self.addCleanup(self.update_profile_patcher.stop)
+
+        self.delete_profile_patcher = patch(
+            "Poem.api.internal_views.metricprofiles.delete_profile"
+        )
+        self.delete_profile_patcher.start()
+        self.addCleanup(self.delete_profile_patcher.stop)
+
         self.mp1 = poem_models.MetricProfiles.objects.create(
             name='TEST_PROFILE',
             apiid='00000000-oooo-kkkk-aaaa-aaeekkccnnee',
@@ -276,7 +297,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             object_id=profile.id, content_type=self.ct
         )
         self.assertEqual(profile.name, 'new-profile')
-        self.assertEqual(profile.apiid, '12341234-aaaa-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.apiid, 'mocked-upstream-id')
         self.assertEqual(profile.groupname, 'EGI')
         self.assertEqual(history.count(), 1)
         self.assertEqual(history[0].comment, 'Initial version.')
@@ -313,7 +334,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             object_id=profile.id, content_type=self.ct
         )
         self.assertEqual(profile.name, 'new-profile')
-        self.assertEqual(profile.apiid, '12341234-aaaa-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.apiid, 'mocked-upstream-id')
         self.assertEqual(profile.groupname, 'EGI')
         self.assertEqual(history.count(), 1)
         self.assertEqual(history[0].comment, 'Initial version.')
@@ -353,7 +374,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             object_id=profile.id, content_type=self.ct
         )
         self.assertEqual(profile.name, 'new-profile')
-        self.assertEqual(profile.apiid, '12341234-aaaa-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.apiid, 'mocked-upstream-id')
         self.assertEqual(profile.groupname, 'EGI')
         self.assertEqual(history.count(), 1)
         self.assertEqual(history[0].comment, 'Initial version.')
@@ -391,7 +412,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             object_id=profile.id, content_type=self.ct
         )
         self.assertEqual(profile.name, 'new-profile')
-        self.assertEqual(profile.apiid, '12341234-aaaa-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.apiid, 'mocked-upstream-id')
         self.assertEqual(profile.groupname, 'EGI')
         self.assertEqual(history.count(), 1)
         self.assertEqual(history[0].comment, 'Initial version.')
@@ -432,7 +453,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             object_id=profile.id, content_type=self.ct
         )
         self.assertEqual(profile.name, 'new-profile')
-        self.assertEqual(profile.apiid, '12341234-aaaa-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.apiid, 'mocked-upstream-id')
         self.assertEqual(profile.groupname, 'EGI')
         self.assertEqual(history.count(), 1)
         self.assertEqual(history[0].comment, 'Initial version.')
@@ -470,7 +491,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             object_id=profile.id, content_type=self.ct
         )
         self.assertEqual(profile.name, 'new-profile')
-        self.assertEqual(profile.apiid, '12341234-aaaa-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.apiid, 'mocked-upstream-id')
         self.assertEqual(profile.groupname, 'EGI')
         self.assertEqual(history.count(), 1)
         self.assertEqual(history[0].comment, 'Initial version.')
@@ -510,7 +531,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             object_id=profile.id, content_type=self.ct
         )
         self.assertEqual(profile.name, 'new-profile')
-        self.assertEqual(profile.apiid, '12341234-aaaa-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.apiid, 'mocked-upstream-id')
         self.assertEqual(profile.groupname, 'EGI')
         self.assertEqual(history.count(), 1)
         self.assertEqual(history[0].comment, 'Initial version.')
@@ -547,7 +568,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             object_id=profile.id, content_type=self.ct
         )
         self.assertEqual(profile.name, 'new-profile')
-        self.assertEqual(profile.apiid, '12341234-aaaa-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.apiid, 'mocked-upstream-id')
         self.assertEqual(profile.groupname, 'EGI')
         self.assertEqual(history.count(), 1)
         self.assertEqual(history[0].comment, 'Initial version.')
@@ -591,7 +612,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             object_id=profile.id, content_type=self.ct
         )
         self.assertEqual(profile.name, 'new-profile')
-        self.assertEqual(profile.apiid, '12341234-aaaa-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.apiid, 'mocked-upstream-id')
         self.assertEqual(profile.groupname, 'EGI')
         self.assertEqual(history.count(), 1)
         self.assertEqual(history[0].comment, 'Initial version.')
@@ -622,7 +643,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             object_id=profile.id, content_type=self.ct
         )
         self.assertEqual(profile.name, 'new-profile')
-        self.assertEqual(profile.apiid, '12341234-aaaa-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.apiid, 'mocked-upstream-id')
         self.assertEqual(profile.groupname, 'EGI')
         self.assertEqual(history.count(), 1)
         self.assertEqual(history[0].comment, 'Initial version.')
@@ -814,7 +835,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             object_id=profile.id, content_type=self.ct
         )
         self.assertEqual(profile.name, 'new-profile')
-        self.assertEqual(profile.apiid, '12341234-aaaa-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.apiid, 'mocked-upstream-id')
         self.assertEqual(profile.groupname, 'EGI')
         self.assertEqual(profile.description, '')
         self.assertEqual(history.count(), 1)
@@ -848,7 +869,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             object_id=profile.id, content_type=self.ct
         )
         self.assertEqual(profile.name, 'new-profile')
-        self.assertEqual(profile.apiid, '12341234-aaaa-kkkk-aaaa-aaeekkccnnee')
+        self.assertEqual(profile.apiid, 'mocked-upstream-id')
         self.assertEqual(profile.groupname, 'EGI')
         self.assertEqual(profile.description, '')
         self.assertEqual(history.count(), 1)
@@ -925,14 +946,14 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             self, mock_sync_metrics
     ):
         mock_sync_metrics.return_value = [], [], [], [], []
-        data = {'name': 'new-profile'}
+        data = {}
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.tenant
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
-            response.data, {'detail': 'apiid: This field is required.'}
+            response.data, {'detail': 'name: This field is required.'}
         )
         self.assertEqual(len(poem_models.MetricProfiles.objects.all()), 2)
         self.assertEqual(mock_sync_metrics.call_count, 0)
@@ -942,14 +963,14 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             self, mock_sync_metrics
     ):
         mock_sync_metrics.return_value = [], [], [], [], []
-        data = {'name': 'new-profile'}
+        data = {}
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.tenant
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
-            response.data['detail'], 'apiid: This field is required.'
+            response.data['detail'], 'name: This field is required.'
         )
         self.assertEqual(len(poem_models.MetricProfiles.objects.all()), 2)
         self.assertEqual(mock_sync_metrics.call_count, 0)
@@ -959,7 +980,7 @@ class ListMetricProfilesAPIViewTests(TenantTestCase):
             self, mock_sync_metrics
     ):
         mock_sync_metrics.return_value = [], [], [], [], []
-        data = {'name': 'new-profile'}
+        data = {}
         request = self.factory.post(self.url, data, format='json')
         request.tenant = self.tenant
         force_authenticate(request, user=self.limited_user)

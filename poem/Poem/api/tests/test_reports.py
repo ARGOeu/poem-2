@@ -45,6 +45,27 @@ class ListReportsAPIViewTests(TenantTestCase):
         poem_models.UserProfile.objects.create(user=self.limited_user)
         poem_models.UserProfile.objects.create(user=self.superuser)
 
+        # Mock the upstream WEB-API write primitives so the refactored views
+        # do not make real HTTP requests.
+        self.create_profile_patcher = patch(
+            "Poem.api.internal_views.reports.create_profile",
+            return_value="mocked-upstream-id"
+        )
+        self.create_profile_patcher.start()
+        self.addCleanup(self.create_profile_patcher.stop)
+
+        self.update_profile_patcher = patch(
+            "Poem.api.internal_views.reports.update_profile"
+        )
+        self.update_profile_patcher.start()
+        self.addCleanup(self.update_profile_patcher.stop)
+
+        self.delete_profile_patcher = patch(
+            "Poem.api.internal_views.reports.delete_profile"
+        )
+        self.delete_profile_patcher.start()
+        self.addCleanup(self.delete_profile_patcher.stop)
+
     @patch('Poem.api.internal_views.reports.sync_webapi')
     def test_get_all_reports_superuser(self, func):
         func.side_effect = mocked_func
@@ -200,7 +221,7 @@ class ListReportsAPIViewTests(TenantTestCase):
 
     def test_post_report_superuser(self):
         data = {
-            'apiid': 'yoohoo6t-1fwt-nf98-uem6-uc1zie9ahk8u',
+            'apiid': 'mocked-upstream-id',
             'name': 'sla',
             'groupname': 'ARGO',
             'description': 'Some description.'
@@ -212,20 +233,20 @@ class ListReportsAPIViewTests(TenantTestCase):
         self.assertEqual(poem_models.Reports.objects.all().count(), 3)
         report = poem_models.Reports.objects.get(name='sla')
         self.assertEqual(report.name, 'sla')
-        self.assertEqual(report.apiid, 'yoohoo6t-1fwt-nf98-uem6-uc1zie9ahk8u')
+        self.assertEqual(report.apiid, 'mocked-upstream-id')
         self.assertEqual(report.description, 'Some description.')
         self.assertEqual(report.groupname, 'ARGO')
         group = poem_models.GroupOfReports.objects.get(name='ARGO')
         self.assertEqual(group.reports.all().count(), 1)
         self.assertTrue(
             group.reports.filter(
-                apiid='yoohoo6t-1fwt-nf98-uem6-uc1zie9ahk8u'
+                apiid='mocked-upstream-id'
             ).exists()
         )
 
     def test_post_report_regular_user(self):
         data = {
-            'apiid': 'yoohoo6t-1fwt-nf98-uem6-uc1zie9ahk8u',
+            'apiid': 'mocked-upstream-id',
             'name': 'sla',
             'groupname': 'ARGO',
             'description': 'Some description.'
@@ -237,20 +258,20 @@ class ListReportsAPIViewTests(TenantTestCase):
         self.assertEqual(poem_models.Reports.objects.all().count(), 3)
         report = poem_models.Reports.objects.get(name='sla')
         self.assertEqual(report.name, 'sla')
-        self.assertEqual(report.apiid, 'yoohoo6t-1fwt-nf98-uem6-uc1zie9ahk8u')
+        self.assertEqual(report.apiid, 'mocked-upstream-id')
         self.assertEqual(report.description, 'Some description.')
         self.assertEqual(report.groupname, 'ARGO')
         group = poem_models.GroupOfReports.objects.get(name='ARGO')
         self.assertEqual(group.reports.all().count(), 1)
         self.assertTrue(
             group.reports.filter(
-                apiid='yoohoo6t-1fwt-nf98-uem6-uc1zie9ahk8u'
+                apiid='mocked-upstream-id'
             ).exists()
         )
 
     def test_post_report_regular_user_wrong_group(self):
         data = {
-            'apiid': 'yoohoo6t-1fwt-nf98-uem6-uc1zie9ahk8u',
+            'apiid': 'mocked-upstream-id',
             'name': 'sla',
             'groupname': 'TEST',
             'description': 'Some description.'
@@ -274,7 +295,7 @@ class ListReportsAPIViewTests(TenantTestCase):
 
     def test_post_report_limited_user(self):
         data = {
-            'apiid': 'yoohoo6t-1fwt-nf98-uem6-uc1zie9ahk8u',
+            'apiid': 'mocked-upstream-id',
             'name': 'sla',
             'groupname': 'ARGO',
             'description': 'Some description.'
@@ -298,7 +319,7 @@ class ListReportsAPIViewTests(TenantTestCase):
 
     def test_post_report_nonexisting_group_superuser(self):
         data = {
-            'apiid': 'yoohoo6t-1fwt-nf98-uem6-uc1zie9ahk8u',
+            'apiid': 'mocked-upstream-id',
             'name': 'sla',
             'groupname': 'nonexisting',
             'description': 'Some description.'
@@ -317,7 +338,7 @@ class ListReportsAPIViewTests(TenantTestCase):
 
     def test_post_report_nonexisting_group_regular_user(self):
         data = {
-            'apiid': 'yoohoo6t-1fwt-nf98-uem6-uc1zie9ahk8u',
+            'apiid': 'mocked-upstream-id',
             'name': 'sla',
             'groupname': 'nonexisting',
             'description': 'Some description.'
@@ -336,7 +357,7 @@ class ListReportsAPIViewTests(TenantTestCase):
 
     def test_post_report_nonexisting_group_limited_user(self):
         data = {
-            'apiid': 'yoohoo6t-1fwt-nf98-uem6-uc1zie9ahk8u',
+            'apiid': 'mocked-upstream-id',
             'name': 'sla',
             'groupname': 'nonexisting',
             'description': 'Some description.'
@@ -358,7 +379,7 @@ class ListReportsAPIViewTests(TenantTestCase):
 
     def test_post_report_without_description_superuser(self):
         data = {
-            'apiid': 'yoohoo6t-1fwt-nf98-uem6-uc1zie9ahk8u',
+            'apiid': 'mocked-upstream-id',
             'name': 'sla',
             'groupname': 'ARGO',
             'description': ''
@@ -369,20 +390,20 @@ class ListReportsAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(poem_models.Reports.objects.all().count(), 3)
         report = poem_models.Reports.objects.get(name='sla')
-        self.assertEqual(report.apiid, 'yoohoo6t-1fwt-nf98-uem6-uc1zie9ahk8u')
+        self.assertEqual(report.apiid, 'mocked-upstream-id')
         self.assertEqual(report.description, '')
         self.assertEqual(report.groupname, 'ARGO')
         group = poem_models.GroupOfReports.objects.get(name='ARGO')
         self.assertEqual(group.reports.all().count(), 1)
         self.assertTrue(
             group.reports.filter(
-                apiid='yoohoo6t-1fwt-nf98-uem6-uc1zie9ahk8u'
+                apiid='mocked-upstream-id'
             ).exists()
         )
 
     def test_post_report_without_description_regular_user(self):
         data = {
-            'apiid': 'yoohoo6t-1fwt-nf98-uem6-uc1zie9ahk8u',
+            'apiid': 'mocked-upstream-id',
             'name': 'sla',
             'groupname': 'ARGO',
             'description': ''
@@ -393,20 +414,20 @@ class ListReportsAPIViewTests(TenantTestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(poem_models.Reports.objects.all().count(), 3)
         report = poem_models.Reports.objects.get(name='sla')
-        self.assertEqual(report.apiid, 'yoohoo6t-1fwt-nf98-uem6-uc1zie9ahk8u')
+        self.assertEqual(report.apiid, 'mocked-upstream-id')
         self.assertEqual(report.description, '')
         self.assertEqual(report.groupname, 'ARGO')
         group = poem_models.GroupOfReports.objects.get(name='ARGO')
         self.assertEqual(group.reports.all().count(), 1)
         self.assertTrue(
             group.reports.filter(
-                apiid='yoohoo6t-1fwt-nf98-uem6-uc1zie9ahk8u'
+                apiid='mocked-upstream-id'
             ).exists()
         )
 
     def test_post_report_without_description_regular_user_wrong_group(self):
         data = {
-            'apiid': 'yoohoo6t-1fwt-nf98-uem6-uc1zie9ahk8u',
+            'apiid': 'mocked-upstream-id',
             'name': 'sla',
             'groupname': 'TEST',
             'description': ''
@@ -430,7 +451,7 @@ class ListReportsAPIViewTests(TenantTestCase):
 
     def test_post_report_without_description_limited_user(self):
         data = {
-            'apiid': 'yoohoo6t-1fwt-nf98-uem6-uc1zie9ahk8u',
+            'apiid': 'mocked-upstream-id',
             'name': 'sla',
             'groupname': 'ARGO',
             'description': ''
@@ -453,29 +474,29 @@ class ListReportsAPIViewTests(TenantTestCase):
         self.assertEqual(group.reports.all().count(), 0)
 
     def test_post_report_invalid_data_superuser(self):
-        data = {'name': 'sla'}
+        data = {}
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.superuser)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
-            response.data['detail'], 'apiid: This field is required.'
+            response.data['detail'], 'name: This field may not be blank. groupname: This field may not be blank.'
         )
         self.assertEqual(poem_models.Reports.objects.all().count(), 2)
 
     def test_post_report_invalid_data_regular_user(self):
-        data = {'name': 'sla'}
+        data = {}
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.user)
         response = self.view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
-            response.data['detail'], 'apiid: This field is required.'
+            response.data['detail'], 'name: This field may not be blank. groupname: This field may not be blank.'
         )
         self.assertEqual(poem_models.Reports.objects.all().count(), 2)
 
     def test_post_report_invalid_data_limited_user(self):
-        data = {'name': 'sla'}
+        data = {}
         request = self.factory.post(self.url, data, format='json')
         force_authenticate(request, user=self.limited_user)
         response = self.view(request)
