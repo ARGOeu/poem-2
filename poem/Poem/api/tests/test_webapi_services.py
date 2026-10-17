@@ -39,7 +39,10 @@ class CredentialResolutionTests(TenantTestCase):
         self.tenant.save()
 
     def _create_key(self, name, token, **extra):
-        return WebAPIKey.objects.create(name=name, token=token, **extra)
+        obj, _ = WebAPIKey.objects.create_key(
+            name=name, token=token, **extra
+        )
+        return obj
 
     def test_resolve_read_returns_ro_token(self):
         self._create_key("WEB-API-TENANT-RO", "ro-token")
@@ -92,8 +95,8 @@ class WebApiClientTests(TenantTestCase):
     def setUp(self):
         self.tenant.name = "TENANT"
         self.tenant.save()
-        WebAPIKey.objects.create(name="WEB-API-TENANT-RO", token="ro-token")
-        WebAPIKey.objects.create(name="WEB-API-TENANT", token="rw-token")
+        WebAPIKey.objects.create_key(name="WEB-API-TENANT-RO", token="ro-token")
+        WebAPIKey.objects.create_key(name="WEB-API-TENANT", token="rw-token")
 
     def _client(self):
         return WebApiClient("TENANT")
@@ -199,7 +202,10 @@ class ServiceTypeReplacementTests(TenantTestCase):
     def setUp(self):
         self.tenant.name = "TENANT"
         self.tenant.save()
-        WebAPIKey.objects.create(name="WEB-API-TENANT", token="rw-token")
+        WebAPIKey.objects.create_key(
+            name="WEB-API-TENANT-RO", token="ro-token"
+        )
+        WebAPIKey.objects.create_key(name="WEB-API-TENANT", token="rw-token")
 
     @patch("Poem.services.webapi_client.requests.request")
     def test_empty_collection_skips_delete(self, mock_request):
@@ -297,11 +303,11 @@ class CombinedTenantServiceTests(TenantTestCase):
     def setUp(self):
         self.tenant.name = "TENANT"
         self.tenant.save()
-        WebAPIKey.objects.create(name="WEB-API-TENANT", token="rw-token")
-        WebAPIKey.objects.create(
+        WebAPIKey.objects.create_key(name="WEB-API-TENANT", token="rw-token")
+        WebAPIKey.objects.create_key(
             name="WEB-API-TENANT_X-RO", token="x-ro-token"
         )
-        WebAPIKey.objects.create(
+        WebAPIKey.objects.create_key(
             name="WEB-API-TENANT_Y-RO", token="y-ro-token"
         )
 
@@ -357,7 +363,7 @@ class ProfileOperationTests(TenantTestCase):
     def setUp(self):
         self.tenant.name = "TENANT"
         self.tenant.save()
-        WebAPIKey.objects.create(name="WEB-API-TENANT", token="rw-token")
+        WebAPIKey.objects.create_key(name="WEB-API-TENANT", token="rw-token")
 
     @patch("Poem.services.webapi_client.requests.request")
     def test_create_profile_returns_upstream_id(self, mock_request):

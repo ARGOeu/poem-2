@@ -1,5 +1,6 @@
 """Tests for the WEB-API read views (api/internal_views/webapi.py)."""
 
+import json
 from unittest.mock import patch
 
 from Poem.api import views_internal as views
@@ -18,14 +19,14 @@ class WebApiReadViewTests(TenantTestCase):
         self.tenant.save()
         self.factory = TenantRequestFactory(self.tenant)
         self.user = CustUser.objects.create_user(username="testuser")
-        WebAPIKey.objects.create(name="WEB-API-TENANT-RO", token="ro-token")
-        WebAPIKey.objects.create(name="WEB-API-TENANT", token="rw-token")
+        WebAPIKey.objects.create_key(name="WEB-API-TENANT-RO", token="ro-token")
+        WebAPIKey.objects.create_key(name="WEB-API-TENANT", token="rw-token")
 
-    def _get(self, view, url, authenticated=True):
+    def _get(self, view, url, authenticated=True, **kwargs):
         request = self.factory.get(url)
         if authenticated:
             force_authenticate(request, user=self.user)
-        return view(request)
+        return view(request, **kwargs)
 
     @patch("Poem.services.webapi_client.requests.request")
     def test_list_metric_profiles_authenticated(self, mock_request):
@@ -50,6 +51,7 @@ class WebApiReadViewTests(TenantTestCase):
             response = self._get(
                 views.DetailWebApiMetricProfile.as_view(),
                 "/api/v2/internal/webapi/metricprofiles/1",
+                identifier="1",
             )
 
         self.assertEqual(response.status_code, 200)
@@ -151,6 +153,7 @@ class WebApiReadViewTests(TenantTestCase):
             response = self._get(
                 views.DetailWebApiOperationsProfile.as_view(),
                 "/api/v2/internal/webapi/operationsprofiles/op2",
+                name="op2",
             )
 
         self.assertEqual(response.status_code, 200)
@@ -171,6 +174,7 @@ class WebApiReadViewTests(TenantTestCase):
             response = self._get(
                 views.DetailWebApiReport.as_view(),
                 "/api/v2/internal/webapi/reports/r2",
+                name="r2",
             )
 
         self.assertEqual(response.status_code, 200)
@@ -188,13 +192,16 @@ class ReplaceServiceTypesViewTests(TenantTestCase):
         self.superuser = CustUser.objects.create_user(
             username="superuser", is_superuser=True
         )
-        WebAPIKey.objects.create(name="WEB-API-TENANT", token="rw-token")
+        WebAPIKey.objects.create_key(
+            name="WEB-API-TENANT-RO", token="ro-token"
+        )
+        WebAPIKey.objects.create_key(name="WEB-API-TENANT", token="rw-token")
 
     def _put(self, data, user):
         request = self.factory.put(
             "/api/v2/internal/webapi/topology/service-types/",
-            data,
-            format="json",
+            json.dumps(data),
+            content_type="application/json",
         )
         force_authenticate(request, user=user)
         return views.ReplaceServiceTypes.as_view()(request)
@@ -253,8 +260,8 @@ class CombinedTenantViewTests(TenantTestCase):
         self.tenant.save()
         self.factory = TenantRequestFactory(self.tenant)
         self.user = CustUser.objects.create_user(username="testuser")
-        WebAPIKey.objects.create(name="WEB-API-TENANT", token="rw-token")
-        WebAPIKey.objects.create(
+        WebAPIKey.objects.create_key(name="WEB-API-TENANT", token="rw-token")
+        WebAPIKey.objects.create_key(
             name="WEB-API-TENANT_X-RO", token="x-ro-token"
         )
 
