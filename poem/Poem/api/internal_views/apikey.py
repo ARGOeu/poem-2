@@ -94,13 +94,17 @@ class ListAPIKeys(APIView):
                 api_format = dict(
                     id=apikey.id,
                     name=apikey.name,
-                    token=apikey.token,
                     created=datetime.datetime.strftime(
                         apikey.created, '%Y-%m-%d %H:%M:%S'
                     ),
                     revoked=apikey.revoked,
                     used_by=used_by
                 )
+
+                # Only POEM's own API keys expose their token; WEB-API
+                # credentials are never returned to the browser.
+                if used_by == "poem":
+                    api_format['token'] = apikey.token
 
             else:
                 return error_response(
@@ -281,27 +285,3 @@ class ListAPIKeys(APIView):
                 detail='You do not have permission to delete API keys',
                 status_code=status.HTTP_401_UNAUTHORIZED
             )
-
-
-class ListPublicAPIKey(APIView):
-    authentication_classes = ()
-    permission_classes = ()
-
-    def get(self, request):
-        try:
-            apikey = WebAPIKey.objects.get(
-                name=f"WEB-API-{request.tenant.name}-RO"
-            )
-            api_format = dict(
-                id=apikey.id,
-                name=apikey.name,
-                token=apikey.token,
-                created=datetime.datetime.strftime(apikey.created,
-                                                   '%Y-%m-%d %H:%M:%S'),
-                revoked=apikey.revoked
-            )
-
-        except WebAPIKey.DoesNotExist:
-            raise NotFound(status=404, detail='API key not found')
-
-        return Response(api_format)
