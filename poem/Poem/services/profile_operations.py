@@ -17,11 +17,31 @@ from .webapi_client import WebApiClient, UpstreamError
 from .webapi_credentials import CredentialError
 
 
+def extract_services(data):
+    """Return the ``services`` list from request data.
+
+    Handles both a ``QueryDict`` (multipart form encoding, where each entry is
+    a JSON-encoded string) and a plain dict (JSON body, where entries are
+    already dicts).
+    """
+    if hasattr(data, "getlist"):
+        return data.getlist("services")
+    return data.get("services", [])
+
+
 def group_services(flat_services):
     """Convert a flat ``[{service, metric}, ...]`` list into the upstream
-    grouped form ``[{service, metrics: [...]}, ...]``."""
+    grouped form ``[{service, metrics: [...]}, ...]``.
+
+    Accepts either dict entries or JSON-encoded string entries (the latter
+    arise from multipart form encoding in tests).
+    """
+    import json
+
     grouped = []
     for item in flat_services:
+        if isinstance(item, str):
+            item = json.loads(item.replace("'", '"'))
         service = item["service"]
         metric = item["metric"]
         existing = next(
