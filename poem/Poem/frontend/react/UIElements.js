@@ -656,7 +656,11 @@ export const NavigationBar = ({onLogout, isOpenModal, toggle,
         <NavbarBrand className="text-light">
           <img src={ArgoLogo} alt="ARGO logo" className="img-responsive"/>
           <span className="ps-3">
-            <strong>ARGO</strong> POEM
+            <strong>ARGO</strong>{' '}
+            {
+              isTenantSchema !== undefined &&
+                <em>{ isTenantSchema ? 'Tenant' : 'Super' }</em>
+            }POEM
           </span>
         </NavbarBrand>
         <NavbarToggler/>
