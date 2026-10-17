@@ -17,6 +17,81 @@ from .webapi_client import WebApiClient, UpstreamError
 from .webapi_credentials import CredentialError
 
 
+def group_services(flat_services):
+    """Convert a flat ``[{service, metric}, ...]`` list into the upstream
+    grouped form ``[{service, metrics: [...]}, ...]``."""
+    grouped = []
+    for item in flat_services:
+        service = item["service"]
+        metric = item["metric"]
+        existing = next(
+            (s for s in grouped if s["service"] == service), None
+        )
+        if existing is None:
+            grouped.append({"service": service, "metrics": [metric]})
+        else:
+            existing["metrics"].append(metric)
+    return grouped
+
+
+def flatten_services(grouped_services):
+    """Convert the upstream grouped form ``[{service, metrics: [...]}, ...]``
+    into a flat ``[{service, metric}, ...]`` list (used for history)."""
+    flat = []
+    for service in grouped_services:
+        for metric in service.get("metrics", []):
+            flat.append({"service": service["service"], "metric": metric})
+    return flat
+
+
+def thresholds_to_string(rules):
+    """Convert structured threshold rules into the upstream string format.
+
+    Mirrors the frontend ``thresholdsToString`` helper: each rule's
+    ``thresholds`` list is collapsed into a space-joined string of
+    ``label=value+uom;warn1:warn2;crit1:crit2[;min;max]`` entries, and empty
+    ``host``/``endpoint_group`` keys are dropped.
+
+    Accepts either a list of rules or a JSON-encoded string of rules; rules
+    whose ``thresholds`` is already a string are left unchanged.
+    """
+    import json
+
+    if isinstance(rules, str):
+        rules = json.loads(rules)
+
+    result = []
+    for rule in rules:
+        rule = dict(rule)
+        if not rule.get("host"):
+            rule.pop("host", None)
+        if not rule.get("endpoint_group"):
+            rule.pop("endpoint_group", None)
+
+        thresholds = rule.get("thresholds", [])
+        if isinstance(thresholds, str):
+            rule["thresholds"] = thresholds
+        else:
+            entries = []
+            for thresh in thresholds:
+                thresh = dict(thresh)
+                value = thresh.get("value") or "0"
+                entry = (
+                    f"{thresh.get('label', '')}={value}"
+                    f"{thresh.get('uom', '')};"
+                    f"{thresh.get('warn1', '')}:{thresh.get('warn2', '')};"
+                    f"{thresh.get('crit1', '')}:{thresh.get('crit2', '')}"
+                )
+                if thresh.get("min") and thresh.get("max"):
+                    entry += f";{thresh['min']};{thresh['max']}"
+                entries.append(entry)
+            rule["thresholds"] = " ".join(entries)
+
+        result.append(rule)
+
+    return result
+
+
 class ProfileOperationError(Exception):
     """An upstream profile/report write failed."""
 
