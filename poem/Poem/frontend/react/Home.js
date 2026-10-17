@@ -29,6 +29,8 @@ import {
   fetchMetricTemplates,
   fetchUsers,
   fetchAPIKeys,
+  fetchTenants,
+  fetchMetricTags,
 } from './QueryFunctions';
 
 
@@ -410,14 +412,173 @@ const TenantHome = ({ isTenantAdmin = false }) => {
 };
 
 
+const SuperAdminHome = () => {
+  const backend = new Backend();
+
+  const tenants = useQuery(
+    'tenant', () => fetchTenants()
+  );
+
+  const users = useQuery(
+    'user', () => fetchUsers()
+  );
+
+  const apiKeys = useQuery(
+    'apikey', () => fetchAPIKeys()
+  );
+
+  const metricTemplates = useQuery(
+    'metrictemplate', () => fetchMetricTemplates()
+  );
+
+  const metricTags = useQuery(
+    'metrictags', () => fetchMetricTags()
+  );
+
+  const probes = useQuery(
+    'probe', () => fetchProbes()
+  );
+
+  const probeVersions = useQuery(
+    ['probe', 'version'], () => fetchProbeVersions()
+  );
+
+  const packages = useQuery(
+    'package', () => fetchPackages()
+  );
+
+  const yumRepos = useQuery(
+    'yumrepo', () => fetchYumRepos()
+  );
+
+  const defaultPorts = useQuery(
+    'defaultports', () => backend.fetchData('/api/v2/internal/default_ports')
+  );
+
+  return (
+    <div>
+      <h2 className='ms-3 mt-1 mb-4'>Dashboard</h2>
+
+      <HomeSection title='Platform'>
+        <Col lg={ 4 } md={ 6 }>
+          <HomeSummaryCard
+            title='Tenants'
+            icon='tenants'
+            count={ tenants.data ? tenants.data.length : 0 }
+            linkTo='/ui/tenants'
+            linkText='tenants'
+            isLoading={ tenants.isLoading }
+            error={ tenants.error }
+          />
+        </Col>
+        <Col lg={ 4 } md={ 6 }>
+          <HomeSummaryCard
+            title='Users'
+            icon='users'
+            count={ users.data ? users.data.length : 0 }
+            linkTo='/ui/administration/users'
+            linkText='users'
+            isLoading={ users.isLoading }
+            error={ users.error }
+          />
+        </Col>
+        <Col lg={ 4 } md={ 6 }>
+          <HomeSummaryCard
+            title='API keys'
+            icon='apikey'
+            count={ apiKeys.data ? apiKeys.data.length : 0 }
+            linkTo='/ui/administration/apikey'
+            linkText='API keys'
+            isLoading={ apiKeys.isLoading }
+            error={ apiKeys.error }
+          />
+        </Col>
+      </HomeSection>
+
+      <HomeSection title='Shared resources'>
+        <Col lg={ 4 } md={ 6 }>
+          <HomeSummaryCard
+            title='Metric templates'
+            icon='metrictemplates'
+            count={
+              metricTemplates.data ? metricTemplates.data.length : 0
+            }
+            linkTo='/ui/metrictemplates'
+            linkText='metric templates'
+            isLoading={ metricTemplates.isLoading }
+            error={ metricTemplates.error }
+          />
+        </Col>
+        <Col lg={ 4 } md={ 6 }>
+          <HomeSummaryCard
+            title='Metric tags'
+            icon='metrictags'
+            count={ metricTags.data ? metricTags.data.length : 0 }
+            linkTo='/ui/metrictags'
+            linkText='metric tags'
+            isLoading={ metricTags.isLoading }
+            error={ metricTags.error }
+          />
+        </Col>
+        <Col lg={ 4 } md={ 6 }>
+          <HomeSummaryCard
+            title='Probes'
+            icon='probes'
+            count={ probes.data ? probes.data.length : 0 }
+            extra={
+              <HomeExtraMetric label='Probe versions' query={ probeVersions } />
+            }
+            linkTo='/ui/probes'
+            linkText='probes'
+            isLoading={ probes.isLoading }
+            error={ probes.error }
+          />
+        </Col>
+        <Col lg={ 4 } md={ 6 }>
+          <HomeSummaryCard
+            title='Packages'
+            icon='packages'
+            count={ packages.data ? packages.data.length : 0 }
+            linkTo='/ui/packages/'
+            linkText='packages'
+            isLoading={ packages.isLoading }
+            error={ packages.error }
+          />
+        </Col>
+        <Col lg={ 4 } md={ 6 }>
+          <HomeSummaryCard
+            title='YUM repos'
+            icon='yumrepos'
+            count={ yumRepos.data ? yumRepos.data.length : 0 }
+            linkTo='/ui/yumrepos/'
+            linkText='YUM repos'
+            isLoading={ yumRepos.isLoading }
+            error={ yumRepos.error }
+          />
+        </Col>
+        <Col lg={ 4 } md={ 6 }>
+          <HomeSummaryCard
+            title='Default ports'
+            icon='default_ports'
+            count={ defaultPorts.data ? defaultPorts.data.length : 0 }
+            linkTo='/ui/administration/default_ports'
+            linkText='default ports'
+            isLoading={ defaultPorts.isLoading }
+            error={ defaultPorts.error }
+          />
+        </Col>
+      </HomeSection>
+    </div>
+  );
+};
+
+
 const Home = ({ isTenantSchema = false, isTenantAdmin = false }) =>
 (
   isTenantSchema ?
     <TenantHome isTenantAdmin={ isTenantAdmin } />
   :
-    <div>
-      &quot;I am Home&quot;
-    </div>
+    <SuperAdminHome />
 )
 
 export default Home;

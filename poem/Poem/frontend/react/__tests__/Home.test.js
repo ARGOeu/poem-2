@@ -18,6 +18,8 @@ import {
   fetchMetricTemplates,
   fetchUsers,
   fetchAPIKeys,
+  fetchTenants,
+  fetchMetricTags,
 } from '../QueryFunctions';
 
 jest.mock('../QueryFunctions', () => ({
@@ -34,9 +36,17 @@ jest.mock('../QueryFunctions', () => ({
   fetchMetricTemplates: jest.fn(),
   fetchUsers: jest.fn(),
   fetchAPIKeys: jest.fn(),
+  fetchTenants: jest.fn(),
+  fetchMetricTags: jest.fn(),
 }));
 
-jest.mock('../DataManager', () => ({ Backend: jest.fn(() => ({})) }));
+jest.mock('../DataManager', () => ({
+  Backend: jest.fn(() => ({
+    fetchData: jest.fn(() => Promise.resolve(
+      [{ name: 'port1' }, { name: 'port2' }]
+    ))
+  }))
+}));
 jest.mock('../Administration', () => ({
   CustomCardHeader: ({ title }) => <div>{title}</div>
 }));
@@ -246,8 +256,82 @@ describe('Tests for tenant home page', () => {
     expect(fetchAPIKeys).toHaveBeenCalled();
   })
 
-  test('Test that placeholder renders for non-tenant schema', () => {
+})
+
+describe('Tests for superadmin home page', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    queryClient.clear();
+    fetchTenants.mockResolvedValue([
+      { name: 'EGI' }, { name: 'EOSC' }, { name: 'FEDCLOUD' }
+    ]);
+    fetchUsers.mockResolvedValue([{ username: 'u1' }, { username: 'u2' }]);
+    fetchAPIKeys.mockResolvedValue([{ name: 'k1' }]);
+    fetchMetricTemplates.mockResolvedValue([{ name: 'mt1' }, { name: 'mt2' }]);
+    fetchMetricTags.mockResolvedValue([{ name: 'tag1' }]);
+    fetchProbes.mockResolvedValue([{ name: 'p1' }]);
+    fetchProbeVersions.mockResolvedValue([{ name: 'pv1' }, { name: 'pv2' }]);
+    fetchPackages.mockResolvedValue([{ name: 'pkg1' }]);
+    fetchYumRepos.mockResolvedValue([{ name: 'repo1' }]);
+  })
+
+  test('Test that dashboard sections render', async () => {
     renderHome(false);
-    expect(screen.getByText(/"I am Home"/)).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByText('Dashboard')).toBeInTheDocument();
+    })
+
+    expect(screen.getByText('Platform')).toBeInTheDocument();
+    expect(screen.getByText('Shared resources')).toBeInTheDocument();
+  })
+
+  test('Test that platform cards render counts only', async () => {
+    renderHome(false);
+
+    await waitFor(() => {
+      expect(screen.getByText('View users →')).toBeInTheDocument();
+    })
+
+    expect(screen.getByText('Tenants')).toBeInTheDocument();
+    expect(screen.getByText('Users')).toBeInTheDocument();
+    expect(screen.getByText('API keys')).toBeInTheDocument();
+
+    // Tenant names are not listed on the card, only the count.
+    expect(screen.queryByText('FEDCLOUD')).not.toBeInTheDocument();
+
+    expect(
+      screen.getByText('View tenants →').closest('a')
+    ).toHaveAttribute('href', '/ui/tenants');
+    expect(
+      screen.getByText('View users →').closest('a')
+    ).toHaveAttribute('href', '/ui/administration/users');
+    expect(
+      screen.getByText('View API keys →').closest('a')
+    ).toHaveAttribute('href', '/ui/administration/apikey');
+  })
+
+  test('Test that shared resource cards render', async () => {
+    renderHome(false);
+
+    await waitFor(() => {
+      expect(screen.getByText('Probe versions:')).toBeInTheDocument();
+    })
+
+    expect(screen.getByText('Metric templates')).toBeInTheDocument();
+    expect(screen.getByText('Metric tags')).toBeInTheDocument();
+    expect(screen.getByText('Probes')).toBeInTheDocument();
+    expect(screen.getByText('Packages')).toBeInTheDocument();
+    expect(screen.getByText('YUM repos')).toBeInTheDocument();
+    expect(screen.getByText('Default ports')).toBeInTheDocument();
+
+    // Metric template names are not listed on the card, only the count.
+    expect(screen.queryByText('mt1')).not.toBeInTheDocument();
+    expect(
+      screen.getByText('View metric tags →').closest('a')
+    ).toHaveAttribute('href', '/ui/metrictags');
+    expect(
+      screen.getByText('View default ports →').closest('a')
+    ).toHaveAttribute('href', '/ui/administration/default_ports');
   })
 })
