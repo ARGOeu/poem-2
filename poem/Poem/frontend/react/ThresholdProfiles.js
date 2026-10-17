@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
-import { Backend, WebApi } from './DataManager';
+import { Backend } from './DataManager';
 import {
   BaseArgoView,
   NotifyOk,
@@ -38,7 +38,10 @@ import {
   fetchUserDetails,
   fetchAllMetrics,
   fetchBackendThresholdsProfiles,
-  fetchMetricProfiles
+  fetchMetricProfiles,
+  fetchThresholdsProfile,
+  fetchTopologyEndpoints,
+  fetchReports
 } from './QueryFunctions';
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext, useWatch } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -1041,11 +1044,6 @@ const ThresholdsProfilesFormPlaceholder = ( props ) => {
 }
 
 
-const fetchTopologyEndpoints = async ( webapi ) => {
-  return await webapi.fetchReportsTopologyEndpoints()
-}
-
-
 export const ThresholdsProfilesList = (props) => {
   const location = useLocation();
   const publicView = props.publicView;
@@ -1137,26 +1135,13 @@ export const ThresholdsProfilesChange = (props) => {
   const navigate = useNavigate();
   const addview = props.addview;
   const publicView = props.publicView;
-  const webapitoken = props.webapitoken
-  const webapithresholds = props.webapithresholds;
-  const webapimetric = props.webapimetric;
-  const webapireports = props.webapireports;
 
   const backend = new Backend();
-  const webapi = new WebApi({
-    token: webapitoken,
-    thresholdsProfiles: webapithresholds,
-    metricProfiles: webapimetric,
-    reportsConfigurations: webapireports
-  });
 
   const queryClient = useQueryClient();
 
-  const webapiAddMutation = useMutation(async (values) => await webapi.addThresholdsProfile(values));
   const backendAddMutation = useMutation(async (values) => await backend.addObject('/api/v2/internal/thresholdsprofiles/', values));
-  const webapiChangeMutation = useMutation(async (values) => await webapi.changeThresholdsProfile(values));
   const backendChangeMutation = useMutation(async (values) => await backend.changeObject('/api/v2/internal/thresholdsprofiles/', values));
-  const webapiDeleteMutation = useMutation(async (profileId) => await webapi.deleteThresholdsProfile(profileId));
   const backendDeleteMutation = useMutation(async (profileId) => await backend.deleteObject(`/api/v2/internal/thresholdsprofiles/${profileId}`));
 
   const { data: userDetails, isLoading: loadingUserDetails } = useQuery(
@@ -1185,7 +1170,7 @@ export const ThresholdsProfilesChange = (props) => {
   const { data: webApiTP, error: errorWebApiTP, isLoading: loadingWebApiTP } = useQuery(
     [`${publicView ? 'public_' : ''}thresholdsprofile`, "webapi", profile_name],
     async () => {
-      return webapi.fetchThresholdsProfile(backendTP.apiid)
+      return fetchThresholdsProfile(backendTP.apiid, publicView)
     },
     {
       enabled: !!backendTP && !addview,
@@ -1202,17 +1187,17 @@ export const ThresholdsProfilesChange = (props) => {
   );
 
   const { data: topologyEndpoints, error: errorTopologyEndpoints, isLoading: loadingTopologyEndpoints } = useQuery(
-    "topologyendpoints", () => fetchTopologyEndpoints(webapi),
+    "topologyendpoints", () => fetchTopologyEndpoints(publicView),
     { enabled: !!userDetails }
   );
 
   const { data: metricProfiles, error: errorMetricProfiles, isLoading: loadingMetricProfiles } = useQuery(
-    ['metricprofile', 'webapi'], () => fetchMetricProfiles(webapi),
+    ['metricprofile', 'webapi'], () => fetchMetricProfiles(publicView),
     { enabled: !!userDetails }
   )
 
   const { data: reports, error: errorReports, isLoading: loadingReports } = useQuery(
-    ["report", "webapi"], async () => webapi.fetchReports(),
+    ["report", "webapi"], async () => fetchReports(publicView),
     { enabled: !addview && !!userDetails }
   )
 
@@ -1253,72 +1238,47 @@ export const ThresholdsProfilesChange = (props) => {
   function doChange(formValues) {
     let values_send = JSON.parse(JSON.stringify(formValues));
     if (addview) {
-      webapiAddMutation.mutate(
-        { name: values_send.name, rules: thresholdsToString(values_send.rules) }, {
-          onSuccess: (data) => {
-            backendAddMutation.mutate({
-              apiid: data.data.id,
-              name: values_send.name,
-              groupname: formValues.groupname,
-              rules: values_send.rules
-            }, {
-              onSuccess: () => {
-                queryClient.invalidateQueries('thresholdsprofile');
-                queryClient.invalidateQueries('public_thresholdsprofile');
-                NotifyOk({
-                  msg: 'Thresholds profile successfully added',
-                  title: 'Added',
-                  callback: () => navigate('/ui/thresholdsprofiles')
-                })
-              },
-              onError: (error) => {
-                NotifyError({
-                  title: 'Internal API error',
-                  msg: error.message ? error.message : 'Internal API error adding thresholds profile'
-                })
-              }
-            })
-          },
-          onError: (error) => {
-            NotifyError({
-              title: 'Web API error',
-              msg: error.message ? error.message : 'Web API error adding thresholds profile'
-            })
-          }
-        }
-      )
-    } else {
-      webapiChangeMutation.mutate({
-        id: values_send.id, name: profile_name, rules: thresholdsToString(values_send.rules)
+      backendAddMutation.mutate({
+        name: values_send.name,
+        groupname: formValues.groupname,
+        rules: values_send.rules
       }, {
         onSuccess: () => {
-          backendChangeMutation.mutate({
-            apiid: values_send.id,
-            name: profile_name,
-            groupname: formValues.groupname,
-            rules: values_send.rules
-          }, {
-            onSuccess: () => {
-              queryClient.invalidateQueries('thresholdsprofile');
-              queryClient.invalidateQueries('public_thresholdsprofile');
-              NotifyOk({
-                msg: 'Thresholds profile successfully changed',
-                title: 'Changed',
-                callback: () => navigate('/ui/thresholdsprofiles')
-              })
-            },
-            onError: (error) => {
-              NotifyError({
-                title: 'Internal API error',
-                msg: error.message ? error.message : 'Internal API error changing thresholds profile'
-              })
-            }
+          queryClient.invalidateQueries('thresholdsprofile');
+          queryClient.invalidateQueries('public_thresholdsprofile');
+          NotifyOk({
+            msg: 'Thresholds profile successfully added',
+            title: 'Added',
+            callback: () => navigate('/ui/thresholdsprofiles')
           })
         },
         onError: (error) => {
           NotifyError({
-            title: 'Web API error',
-            msg: error.message ? error.message : 'Web API error changing thresholds profile'
+            title: 'Internal API error',
+            msg: error.message ? error.message : 'Internal API error adding thresholds profile'
+          })
+        }
+      })
+    } else {
+      backendChangeMutation.mutate({
+        apiid: values_send.id,
+        name: profile_name,
+        groupname: formValues.groupname,
+        rules: values_send.rules
+      }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries('thresholdsprofile');
+          queryClient.invalidateQueries('public_thresholdsprofile');
+          NotifyOk({
+            msg: 'Thresholds profile successfully changed',
+            title: 'Changed',
+            callback: () => navigate('/ui/thresholdsprofiles')
+          })
+        },
+        onError: (error) => {
+          NotifyError({
+            title: 'Internal API error',
+            msg: error.message ? error.message : 'Internal API error changing thresholds profile'
           })
         }
       })
@@ -1328,30 +1288,20 @@ export const ThresholdsProfilesChange = (props) => {
   function doDelete(profileId) {
     let reportsWithThreshold = getAssociatedReports(profileId)
     if (reportsWithThreshold.length === 0)
-      webapiDeleteMutation.mutate(profileId, {
+      backendDeleteMutation.mutate(profileId, {
         onSuccess: () => {
-          backendDeleteMutation.mutate(profileId, {
-            onSuccess: () => {
-              queryClient.invalidateQueries('thresholdsprofile');
-              queryClient.invalidateQueries('public_thresholdsprofile');
-              NotifyOk({
-                msg: 'Thresholds profile successfully deleted',
-                title: 'Deleted',
-                callback: () => navigate('/ui/thresholdsprofiles')
-              })
-            },
-            onError: (error) => {
-              NotifyError({
-                title: 'Internal API error',
-                msg: error.message ? error.message : 'Internal API error deleting thresholds profile'
-              })
-            }
+          queryClient.invalidateQueries('thresholdsprofile');
+          queryClient.invalidateQueries('public_thresholdsprofile');
+          NotifyOk({
+            msg: 'Thresholds profile successfully deleted',
+            title: 'Deleted',
+            callback: () => navigate('/ui/thresholdsprofiles')
           })
         },
         onError: (error) => {
           NotifyError({
-            title: 'Web API error',
-            msg: error.message ? error.message : 'Web API error deleting thresholds profile'
+            title: 'Internal API error',
+            msg: error.message ? error.message : 'Internal API error deleting thresholds profile'
           })
         }
       })
